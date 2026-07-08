@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ApEdition, FilteredPieceBehavior, isComponentVisible, isPieceVisible, PieceSet, PiecesFilterType, PlatformPlan, PlatformWithoutFederatedAuth } from '@activepieces/shared'
+import { ApEdition, isComponentVisible, isPieceVisible, PieceSet, PiecesFilterType, PlatformPlan, PlatformWithoutFederatedAuth } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
@@ -39,20 +39,11 @@ export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
             return summaries
         }
         const { platform, platformPlan } = context
-        const platformFilteredSummaries = summaries.map((summary) => ({
-            ...summary,
-            suggestedActions: summary.suggestedActions?.filter(
-                (action) => !(platform.filteredActionNames[summary.name] ?? []).includes(action.name),
-            ),
-            suggestedTriggers: summary.suggestedTriggers?.filter(
-                (trigger) => !(platform.filteredTriggerNames[summary.name] ?? []).includes(trigger.name),
-            ),
-        }))
         if (isNil(projectId) || !platformPlan.managePiecesEnabled) {
-            return platformFilteredSummaries
+            return summaries
         }
         const pieceSet = context.pieceSet ?? await resolvePieceSetForProject({ log, projectId, platformId: platform.id })
-        return platformFilteredSummaries.map((summary) => ({
+        return summaries.map((summary) => ({
             ...summary,
             suggestedActions: summary.suggestedActions?.filter(
                 (action) => isComponentVisible({ selected: pieceSet.config.selectedActions[summary.name], name: action.name }),
@@ -73,30 +64,25 @@ export const enterpriseFilteringUtils = (log: FastifyBaseLogger) => ({
         if (isNil(context)) {
             return pieces
         }
-        const platformFilteredPieces = await filterPiecesBasedPlatform(context.platform, pieces)
         if (isNil(projectId)) {
-            return platformFilteredPieces
+            return pieces
         }
         if (context.platformPlan.managePiecesEnabled) {
             const pieceSet = context.pieceSet ?? await resolvePieceSetForProject({ log, projectId, platformId: context.platform.id })
-            return platformFilteredPieces.filter((p) => isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }))
+            return pieces.filter((p) => isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }))
         }
-        return filterBasedOnProject(log, projectId, platformFilteredPieces)
+        return filterBasedOnProject(log, projectId, pieces)
     },
     async filterPieceComponents({ piece, platformId, projectId }: FilterPieceComponentsParams): Promise<PieceMetadataModel> {
         const context = await this.loadFilterContext({ platformId, projectId })
-        if (isNil(context)) {
+        if (isNil(context) || isNil(context.pieceSet)) {
             return piece
         }
-        const { platform, pieceSet } = context
-        const hiddenActions = platform.filteredActionNames[piece.name] ?? []
-        const hiddenTriggers = platform.filteredTriggerNames[piece.name] ?? []
+        const { pieceSet } = context
         const actionVisible = (name: string): boolean =>
-            !hiddenActions.includes(name)
-            && (isNil(pieceSet) || isComponentVisible({ selected: pieceSet.config.selectedActions[piece.name], name }))
+            isComponentVisible({ selected: pieceSet.config.selectedActions[piece.name], name })
         const triggerVisible = (name: string): boolean =>
-            !hiddenTriggers.includes(name)
-            && (isNil(pieceSet) || isComponentVisible({ selected: pieceSet.config.selectedTriggers[piece.name], name }))
+            isComponentVisible({ selected: pieceSet.config.selectedTriggers[piece.name], name })
         return {
             ...piece,
             actions: Object.fromEntries(Object.entries(piece.actions).filter(([name]) => actionVisible(name))),
@@ -146,29 +132,6 @@ async function filterBasedOnProject(
 
     const predicate = filterPredicate[piecesFilterType]
     return pieces.slice().filter(predicate)
-}
-
-/*
-    @deprecated This function is deprecated and will be removed in the future. replaced with project filtering
-*/
-async function filterPiecesBasedPlatform(
-    platformWithPlan: PlatformWithoutFederatedAuth,
-    pieces: PieceMetadataSchema[],
-): Promise<PieceMetadataSchema[]> {
-
-    const filterPredicate: Record<
-    FilteredPieceBehavior,
-    (p: PieceMetadataSchema) => boolean
-    > = {
-        [FilteredPieceBehavior.ALLOWED]: (p) =>
-            platformWithPlan.filteredPieceNames.includes(p.name),
-        [FilteredPieceBehavior.BLOCKED]: (p) =>
-            !platformWithPlan.filteredPieceNames.includes(p.name),
-    }
-
-    const predicate = filterPredicate[platformWithPlan.filteredPieceBehavior]
-    const filteredPieces = pieces.slice().filter(predicate)
-    return filteredPieces
 }
 
 export type PieceFilterContext = {

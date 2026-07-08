@@ -1,7 +1,7 @@
 import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, FilteredPieceBehavior, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, TeamProjectsLimit, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, TeamProjectsLimit, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
@@ -211,12 +211,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
         pinnedPieces: platform?.pinnedPieces ?? [],
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
-        filteredPieceNames: platform?.filteredPieceNames ?? [],
-        filteredPieceBehavior:
-            platform?.filteredPieceBehavior ??
-            faker.helpers.enumValue(FilteredPieceBehavior),
-        filteredActionNames: platform?.filteredActionNames ?? {},
-        filteredTriggerNames: platform?.filteredTriggerNames ?? {},
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
         ssoDomain: platform?.ssoDomain ?? null,
@@ -613,7 +607,6 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
-        filteredPieceBehavior: params?.platform?.filteredPieceBehavior ?? FilteredPieceBehavior.BLOCKED,
     })
 
     await databaseConnection().getRepository('platform').save(mockPlatform)

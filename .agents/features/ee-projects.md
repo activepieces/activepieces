@@ -101,7 +101,6 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 
 - `NONE`: All pieces available
 - `ALLOWED`: Only pieces in `pieces[]` array visible
-- Platform-level filtering (`FilteredPieceBehavior.ALLOWED/BLOCKED`) applied first, then project-level
 
 ## Platform Project Service
 

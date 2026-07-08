@@ -36,15 +36,6 @@ export class CreatePieceSetTable1807000000000 implements Migration {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD COLUMN IF NOT EXISTS "filteredActionNames" jsonb NOT NULL DEFAULT '{}'
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD COLUMN IF NOT EXISTS "filteredTriggerNames" jsonb NOT NULL DEFAULT '{}'
-        `)
-
-        await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "piece_set" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -168,9 +159,6 @@ export class CreatePieceSetTable1807000000000 implements Migration {
         await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_is_default"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_created_id"')
         await queryRunner.query('DROP TABLE IF EXISTS "piece_set"')
-
-        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "filteredTriggerNames"')
-        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "filteredActionNames"')
     }
 }
 
