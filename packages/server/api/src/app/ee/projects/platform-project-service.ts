@@ -6,6 +6,10 @@ import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
+import { batchDeleteByFlowId } from '../../flows/flow/flow.jobs'
+import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -206,6 +210,36 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         })
         return (await enrichProjects([project], log))[0]
     },
+    async hardDeletePersonalProjectForUser({ userId, platformId }: DeletePersonalProjectForUserParams): Promise<void> {
+        const personalProject = await projectRepo().findOneBy({
+            platformId,
+            ownerId: userId,
+            type: ProjectType.PERSONAL,
+        })
+        if (isNil(personalProject)) {
+            return
+        }
+        const allFlows = await flowRepo().find({ where: { projectId: personalProject.id } })
+        for (const flow of allFlows) {
+            if (await flowRepo().existsBy({ id: flow.id })) {
+                await flowSideEffects(log).preDelete({ flowToDelete: flow })
+            }
+        }
+        const flowIds = allFlows.map((flow) => flow.id)
+        for (const flowId of flowIds) {
+            await batchDeleteByFlowId(flowId)
+            await flowRepo().delete({ id: flowId })
+        }
+        await transaction(async (entityManager) => {
+            await appConnectionsRepo(entityManager).delete({
+                scope: AppConnectionScope.PROJECT,
+                projectIds: ArrayContains([personalProject.id]),
+            })
+            await projectRepo(entityManager).delete({ id: personalProject.id, platformId })
+        })
+        await flowExecutionCache(log).invalidate(...flowIds)
+    },
+
     async deletePersonalProjectForUser({ userId, platformId }: DeletePersonalProjectForUserParams): Promise<void> {
         const personalProject = await projectRepo().findOneBy({
             platformId,

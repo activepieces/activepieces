@@ -146,7 +146,7 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
-        await platformProjectService(log).deletePersonalProjectForUser({
+        await platformProjectService(log).hardDeletePersonalProjectForUser({
             userId: id,
             platformId,
         })
