@@ -116,7 +116,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
   );
 
   const inputs = useRef<FormInputWithName[]>(
-    form.props.inputs.map((input) => {
+    (Array.isArray(form.props.inputs) ? form.props.inputs : []).map((input) => {
       return {
         ...input,
         name: createKeyForFormInput(input.displayName),
