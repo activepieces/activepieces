@@ -34,6 +34,10 @@ AP_FILE_STORAGE_LOCATION=S3
 AP_S3_USE_SIGNED_URLS=true
 ```
 
+<Note>
+On [Separate Workers](./separate-workers), the execution vars (`AP_WORKER_CONCURRENCY`, `AP_REUSE_SANDBOX`, `AP_EXECUTION_MODE`) go on the **worker** containers and the S3 vars on the **app** containers. Running a single container for both (`AP_CONTAINER_TYPE=WORKER_AND_APP`, the default)? Set them all on it.
+</Note>
+
 ## Sizing
 
 A concurrency-1 worker is busy for a flow's **whole duration** (up to 10 min), so size by **concurrent flows**, not trigger rate:
@@ -88,6 +92,8 @@ AP_REUSE_SANDBOX=true
 AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
 AP_USE_CDN_FOR_BUNDLES=true
 ```
+On [Separate Workers](./separate-workers), the first three go on the workers; `AP_USE_CDN_FOR_BUNDLES` goes on the app.
+
 On [Worker Groups](./worker-groups), keep `AP_EXECUTION_MODE=SANDBOX_PROCESS`; code-only mode is rejected for grouped workers.
 </Step>
 <Step title="Resize and scale">
