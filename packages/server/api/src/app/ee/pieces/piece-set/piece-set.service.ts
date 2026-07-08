@@ -10,6 +10,8 @@ import { PieceSetEntity } from './piece-set.entity'
 
 export const pieceSetRepo = repoFactory<PieceSet>(PieceSetEntity)
 
+const MAX_PIECE_SET_PAGE_SIZE = 100
+
 type ListParams = {
     platformId: string
     cursor?: string
@@ -72,23 +74,24 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
     },
 
     async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {
+        const boundedLimit = Math.min(limit, MAX_PIECE_SET_PAGE_SIZE)
         const qb = pieceSetRepo()
             .createQueryBuilder('ps')
             .where('ps.platformId = :platformId', { platformId })
             .orderBy('ps.created', 'ASC')
             .addOrderBy('ps.id', 'ASC')
-            .take(limit + 1)
+            .take(boundedLimit + 1)
 
         if (cursor) {
             qb.andWhere(
-                '(ps.created, ps.id) > (SELECT created, id FROM piece_set WHERE id = :cursorId)',
-                { cursorId: cursor },
+                '(ps.created, ps.id) > (SELECT created, id FROM piece_set WHERE id = :cursorId AND "platformId" = :platformId)',
+                { cursorId: cursor, platformId },
             )
         }
 
         const rows = await qb.getMany()
-        const hasMore = rows.length > limit
-        const data = hasMore ? rows.slice(0, limit) : rows
+        const hasMore = rows.length > boundedLimit
+        const data = hasMore ? rows.slice(0, boundedLimit) : rows
 
         return {
             data,

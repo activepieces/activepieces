@@ -38,8 +38,8 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
     },
     indices: [
         {
-            name: 'idx_piece_set_platform_id',
-            columns: ['platformId'],
+            name: 'idx_piece_set_platform_id_created_id',
+            columns: ['platformId', 'created', 'id'],
             unique: false,
         },
         {

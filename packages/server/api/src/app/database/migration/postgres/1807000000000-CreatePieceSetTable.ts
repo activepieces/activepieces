@@ -62,8 +62,8 @@ export class CreatePieceSetTable1807000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE INDEX IF NOT EXISTS "idx_piece_set_platform_id"
-            ON "piece_set" ("platformId")
+            CREATE INDEX IF NOT EXISTS "idx_piece_set_platform_id_created_id"
+            ON "piece_set" ("platformId", "created", "id")
         `)
 
         await queryRunner.query(`
@@ -166,7 +166,7 @@ export class CreatePieceSetTable1807000000000 implements Migration {
         await queryRunner.query('ALTER TABLE "project" DROP COLUMN IF EXISTS "pieceSetId"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_external_id"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_is_default"')
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_created_id"')
         await queryRunner.query('DROP TABLE IF EXISTS "piece_set"')
 
         await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "filteredTriggerNames"')
