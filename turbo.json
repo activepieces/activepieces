@@ -105,7 +105,7 @@
     },
     "lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", ".eslintrc.json", "../../.eslintrc.json"],
       "outputs": []
     },
     "test": {

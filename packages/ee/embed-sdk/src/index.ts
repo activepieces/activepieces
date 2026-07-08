@@ -148,6 +148,7 @@ type newWindowFeatures = {
 }
 type EmbeddingParam = {
   containerId?: string;
+  initialRoute?: string;
   styling?: {
     fontUrl?: string;
     fontFamily?: string;
@@ -193,7 +194,7 @@ export type McpCredentials = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.11.0";
+  readonly _sdkVersion = "0.12.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -221,12 +222,22 @@ class ActivepiecesEmbedded {
     projectId:string
   };
   _embeddingState?: EmbeddingParam;
+  _pendingRoute?: string;
+  _dashboardConfigurationFinished = false;
+  _cleanDashboardIframe?: () => void;
   configure({
     jwtToken,
     instanceUrl,
     embedding,
     prefix,
   }: ConfigureParams) {
+    this._cleanDashboardIframe?.();
+    this._cleanDashboardIframe = undefined;
+    this._cleanConnectionIframe();
+    this._cleanMcpIframe();
+    this._embeddingAuth = undefined;
+    this._pendingRoute = undefined;
+    this._dashboardConfigurationFinished = false;
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
     this._jwtToken = jwtToken;
     this._prefix = this._removeTrailingSlashes(this._prependForwardSlashToRoute(prefix ?? '/'));
@@ -246,23 +257,43 @@ class ActivepiecesEmbedded {
     containerSelector: string
   }) => {
     return new Promise((resolve, reject) => {
+      const abortController = new AbortController();
+      let iframe: IframeWithWindow | undefined;
+      this._cleanDashboardIframe = () => {
+        abortController.abort();
+        if (iframe) {
+          this._removeEmbedding(iframe);
+        }
+        this._dashboardAndBuilderIframeWindow = undefined;
+        resolve({ status: "superseded" });
+      };
       this._addGracePeriodBeforeMethod({
         condition: () => {
           return !!document.querySelector(containerSelector);
         },
         method: () => {
+          if (abortController.signal.aborted) {
+            return;
+          }
           const iframeContainer = document.querySelector(containerSelector);
           if (iframeContainer) {
-            const iframeWindow = this.connectToEmbed({
+            iframe = this.connectToEmbed({
               iframeContainer,
               callbackAfterConfigurationFinished: () => {
+                this._dashboardConfigurationFinished = true;
+                const pendingRoute = this._pendingRoute;
+                this._pendingRoute = undefined;
+                if (pendingRoute) {
+                  this.navigate({ route: pendingRoute });
+                }
                 resolve({ status: "success" });
               },
-              initialRoute: '/'
-            }).contentWindow;
-            this._dashboardAndBuilderIframeWindow = iframeWindow;
-            this._checkForClientRouteChanges(iframeWindow);
-            this._checkForBuilderHomeButtonClicked(iframeWindow);
+              initialRoute: this._prependForwardSlashToRoute(this._embeddingState?.initialRoute ?? '/'),
+              signal: abortController.signal
+            });
+            this._dashboardAndBuilderIframeWindow = iframe.contentWindow;
+            this._checkForClientRouteChanges({ source: iframe.contentWindow, signal: abortController.signal });
+            this._checkForBuilderHomeButtonClicked({ source: iframe.contentWindow, signal: abortController.signal });
           }
           else {
             reject({
@@ -280,7 +311,12 @@ class ActivepiecesEmbedded {
 
   };
 
-  private _setupInitialMessageHandler(targetWindow: Window, initialRoute: string, callbackAfterConfigurationFinished?: () => void) {
+  private _setupInitialMessageHandler({ targetWindow, initialRoute, callbackAfterConfigurationFinished, signal }: {
+    targetWindow: Window,
+    initialRoute: string,
+    callbackAfterConfigurationFinished?: () => void,
+    signal?: AbortSignal
+  }) {
     const initialMessageHandler = (event: MessageEvent<ActivepiecesClientEvent>) => {
       if (event.source === targetWindow && event.origin === new URL(this._instanceUrl).origin) {
         switch (event.data.type) {
@@ -309,21 +345,22 @@ class ActivepiecesEmbedded {
               },
             };
             targetWindow.postMessage(apEvent, '*');
-            this._createAuthenticationSuccessListener(targetWindow);
-            this._createAuthenticationFailedListener(targetWindow);
-            this._createConfigurationFinishedListener(targetWindow, callbackAfterConfigurationFinished);
+            this._createAuthenticationSuccessListener({ targetWindow, signal });
+            this._createAuthenticationFailedListener({ targetWindow, signal });
+            this._createConfigurationFinishedListener({ targetWindow, callbackAfterConfigurationFinished, signal });
             window.removeEventListener('message', initialMessageHandler);
             break;
           }
         }
       }
     };
-    window.addEventListener('message', initialMessageHandler);
+    window.addEventListener('message', initialMessageHandler, { signal });
   }
-  private connectToEmbed({ iframeContainer, initialRoute, callbackAfterConfigurationFinished }: {
+  private connectToEmbed({ iframeContainer, initialRoute, callbackAfterConfigurationFinished, signal }: {
     iframeContainer: Element,
     initialRoute: string,
-    callbackAfterConfigurationFinished?: () => void
+    callbackAfterConfigurationFinished?: () => void,
+    signal?: AbortSignal
   }): IframeWithWindow {
     const iframe = this._createIframe({ src: `${this._instanceUrl}/embed?currentDate=${Date.now()}` });
     iframeContainer.appendChild(iframe);
@@ -331,11 +368,15 @@ class ActivepiecesEmbedded {
       this._errorCreator('iframe window not accessible');
     }
     const iframeWindow = iframe.contentWindow;
-    this._setupInitialMessageHandler(iframeWindow, initialRoute, callbackAfterConfigurationFinished);
+    this._setupInitialMessageHandler({ targetWindow: iframeWindow, initialRoute, callbackAfterConfigurationFinished, signal });
     return iframe;
   }
 
-  private _createConfigurationFinishedListener = (targetWindow: Window, callbackAfterConfigurationFinished?: () => void) => {
+  private _createConfigurationFinishedListener = ({ targetWindow, callbackAfterConfigurationFinished, signal }: {
+    targetWindow: Window,
+    callbackAfterConfigurationFinished?: () => void,
+    signal?: AbortSignal
+  }) => {
     const configurationFinishedHandler = (event: MessageEvent<ActivepiecesClientConfigurationFinished>) => {
       if (event.data.type === ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED && event.source === targetWindow) {
         this._logger().log('Configuration finished')
@@ -344,26 +385,32 @@ class ActivepiecesEmbedded {
         }
       }
     }
-    window.addEventListener('message', configurationFinishedHandler);
+    window.addEventListener('message', configurationFinishedHandler, { signal });
   }
 
-  private _createAuthenticationFailedListener = (targetWindow: Window) => {
+  private _createAuthenticationFailedListener = ({ targetWindow, signal }: {
+    targetWindow: Window,
+    signal?: AbortSignal
+  }) => {
     const authenticationFailedHandler = (event: MessageEvent<ActivepiecesClientAuthenticationFailed>) => {
         if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED && event.source === targetWindow) {
            this._errorCreator('Authentication failed',event.data.data);
       }
     }
-    window.addEventListener('message', authenticationFailedHandler);
+    window.addEventListener('message', authenticationFailedHandler, { signal });
   }
 
-  private _createAuthenticationSuccessListener = (targetWindow: Window) => {
+  private _createAuthenticationSuccessListener = ({ targetWindow, signal }: {
+    targetWindow: Window,
+    signal?: AbortSignal
+  }) => {
     const authenticationSuccessHandler = (event: MessageEvent<ActivepiecesClientAuthenticationSuccess>) => {
       if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS && event.source === targetWindow) {
         this._logger().log('Authentication success')
         window.removeEventListener('message', authenticationSuccessHandler);
       }
     }
-    window.addEventListener('message', authenticationSuccessHandler);
+    window.addEventListener('message', authenticationSuccessHandler, { signal });
   }
   private _createIframe({ src }: { src: string }) {
     const iframe = document.createElement('iframe');
@@ -396,7 +443,7 @@ class ActivepiecesEmbedded {
     if (!popup) {
       this._errorCreator('Failed to open popup window');
     }
-    this._setupInitialMessageHandler(popup, `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`);
+    this._setupInitialMessageHandler({ targetWindow: popup, initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}` });
     return popup;
   }
   async connect({ pieceName, connectionName, newWindow }: { 
@@ -434,8 +481,13 @@ class ActivepiecesEmbedded {
 
 
   navigate({ route }: { route: string }) {
-    if (!this._dashboardAndBuilderIframeWindow) {
-      this._logger().error('dashboard iframe not found');
+    if (!this._dashboardConfigurationFinished || !this._dashboardAndBuilderIframeWindow) {
+      if (!this._embeddingState?.containerId) {
+        this._logger().error('dashboard iframe not found');
+        return;
+      }
+      this._logger().warn(`dashboard iframe is not ready yet, deferring navigation to ${route}`);
+      this._pendingRoute = route;
       return;
     }
     const event: ActivepiecesVendorRouteChanged = {
@@ -562,30 +614,31 @@ class ActivepiecesEmbedded {
   private _prependForwardSlashToRoute(route: string) {
     return route.startsWith('/') ? route : `/${route}`;
   }
-  private _checkForClientRouteChanges = (source: Window) => {
+  private _checkForClientRouteChanges = ({ source, signal }: { source: Window, signal?: AbortSignal }) => {
     window.addEventListener(
       'message',
       (event: MessageEvent<ActivepiecesClientRouteChanged>) => {
         if (
           event.data.type ===
           ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
-          event.source === source && 
-          this._embeddingState?.navigation?.handler         
+          event.source === source &&
+          this._embeddingState?.navigation?.handler
         ) {
           const routeWithPrefix =  this._prefix + this._prependForwardSlashToRoute(event.data.data.route);
           this._embeddingState.navigation.handler({ route: routeWithPrefix });
           return;
         }
-      }
+      },
+      { signal }
     );
   };
 
-  private _checkForBuilderHomeButtonClicked = (source: Window) => {
+  private _checkForBuilderHomeButtonClicked = ({ source, signal }: { source: Window, signal?: AbortSignal }) => {
     window.addEventListener('message', (event: MessageEvent<ActivepiecesBuilderHomeButtonClicked>) => {
       if (event.data.type === ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED && event.source === source) {
         this._embeddingState?.builder?.homeButtonClickedHandler?.(event.data.data);
       }
-    });
+    }, { signal });
   }
 
   private _extractRouteAfterPrefix(vendorUrl: string, parentOriginWithPrefix: string) {
@@ -644,6 +697,7 @@ class ActivepiecesEmbedded {
     );
     this._cleanConnectionIframe = () => {
       window.removeEventListener('message', connectionRelatedMessageHandler);
+      this._resolveNewConnectionDialogClosed?.({ connection: undefined });
       this._resolveNewConnectionDialogClosed = undefined;
       this._rejectNewConnectionDialogClosed = undefined;
       this._removeEmbedding(target);
@@ -762,3 +816,5 @@ class ActivepiecesEmbedded {
 
 (window as any).activepieces = new ActivepiecesEmbedded();
 (window as any).ActivepiecesEmbedded = ActivepiecesEmbedded;
+
+export { ActivepiecesEmbedded };

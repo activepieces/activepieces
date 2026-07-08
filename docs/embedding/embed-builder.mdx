@@ -68,6 +68,7 @@ Please check the [navigation](./navigation) section, as it's very important to u
 | jwtToken | ✅  |  string | The jwt token you generated to authenticate your users to Activepieces. |
 | prefix | ❌ | string | Some customers have an embedding prefix, like this `<embedding_url_prefix>/<Activepieces_url>`. For example if the prefix is `/automation` and the Activepieces url is `/flows` the full url would be `/automation/flows`. |
 | embedding.containerId | ❌ | string | The html element's id that is going to be containing Activepieces's iframe. |
+| embedding.initialRoute | ❌ | string | The route the iframe loads on, instead of the default page (added in [0.12.0](./sdk-changelog#07%2F08%2F2026-0-12-0)). Accepts the same routes as the [navigate method](/embedding/navigation#navigate-method). |
 | embedding.builder.disableNavigation | ❌ |  boolean \| `keep_home_button_only` | Hides the folder name, home button (if not set to [`keep_home_button_only`](./sdk-changelog#20%2F05%2F2025-0-4-0)) and delete option in the builder, by default it is false. |
 | embedding.builder.hideFlowName | ❌ |  boolean | Hides the flow name and flow actions dropdown in the builder's header, by default it is false. |
 | embedding.builder.homeButtonClickedHandler | ❌ | `()=>void` | Callback that stops home button from navigating to dashboard and overrides it with this handler (added in [0.4.0](./sdk-changelog#20%2F05%2F2025-0-4-0))
