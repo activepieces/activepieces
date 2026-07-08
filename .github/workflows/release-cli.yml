@@ -2,14 +2,37 @@ name: Release CLI
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/cli/package.json'
 
 concurrency:
   group: release-cli
   cancel-in-progress: false
 
 jobs:
-  Release-CLI:
+  Check-Version:
     if: github.repository == 'activepieces/activepieces'
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.version.outputs.publish }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v5
+
+      - name: Compare local version against npm
+        id: version
+        run: |
+          LOCAL=$(node -p "require('./packages/cli/package.json').version")
+          EXISTS=$(npm view "@activepieces/cli@$LOCAL" version 2>/dev/null || true)
+          echo "publish=$([ -z "$EXISTS" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "local=$LOCAL already-on-npm=${EXISTS:-no}"
+
+  Release-CLI:
+    needs: Check-Version
+    if: needs.Check-Version.outputs.publish == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
