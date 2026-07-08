@@ -9,7 +9,7 @@ The Human Input feature exposes public-facing endpoints that allow external user
 - `packages/server/api/src/app/flows/flow/human-input/human-input.service.ts` — resolves flow, validates trigger type, builds response
 - `packages/server/api/src/app/flows/flow/human-input/human-input.module.ts` — registers both controllers
 - `packages/core/shared/src/lib/automation/flows/form.ts` — `FormInputType`, `FormInput`, `FormProps`, `FormResponse`, `ChatUIProps`, `ChatUIResponse`, `USE_DRAFT_QUERY_PARAM_NAME`
-- `packages/web/src/features/forms/components/ap-form.tsx` — form rendering component
+- `packages/web/src/features/forms/components/ap-form.tsx` — form rendering component; guards against a non-array stored `inputs` (GIT-1598 fx-toggle corruption, details in `mcp.md`) by rendering an empty form instead of crashing
 - `packages/web/src/features/forms/api/` — frontend API client for form metadata
 - `packages/web/src/features/forms/hooks/` — TanStack Query hooks
 - `packages/web/src/features/chat/` — chat UI components (bubble, input, message list, intro)
