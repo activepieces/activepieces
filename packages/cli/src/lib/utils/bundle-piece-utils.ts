@@ -275,10 +275,8 @@ const HAZARD_WARNING_IDS = new Set<string>([
     'commonjs-variable-in-esm',
 ])
 
-// Packages that cannot be safely inlined: they ship a `.node` binary, load a native addon via a
-// runtime-computed path, or read sibling JS/asset files (protos, keyword tables) relative to their
-// own on-disk location — inlining strands those files. Always kept external, even under
-// inline-by-default, so the runtime installer resolves them with their assets intact.
+// Known-native packages: they ship a `.node` binary (or load one via a runtime-computed path)
+// and cannot be inlined. Always kept external, even under inline-by-default.
 const NATIVE_EXTERNALS = new Set<string>([
     'oracledb', 'duckdb', '@duckdb/node-api', '@duckdb/node-bindings',
     'better-sqlite3', 'sqlite3', 'cpu-features',
