@@ -147,7 +147,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
                 return flowPermissionError
             }
 
-            const returnsResponse = mcpTrigger.input?.returnsResponse
+            const returnsResponse = mcpTrigger.input?.returnsResponse === true
             const response = await webhookService.handleWebhook({
                 data: () => Promise.resolve({
                     body: {},
