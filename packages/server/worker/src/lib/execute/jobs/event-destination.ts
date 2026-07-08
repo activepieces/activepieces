@@ -18,8 +18,6 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
             validateStatus: () => true,
         }))
 
-        // Delivery is fire-and-forget, so an error-level log is the only trace an operator gets when
-        // the destination never receives the event — never downgrade these to warn (GIT-1539).
         if (error !== null) {
             ctx.log.error({
                 webhookUrl: data.webhookUrl,

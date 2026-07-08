@@ -29,12 +29,6 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
     ApplicationEventName.FLOW_RUN_RETRIED,
 ])
 
-// Only routes whose semantics survive being rewritten to an async production dispatch qualify for
-// internal delivery: '' (the plain async route) and '/sync' (same execution, only the discarded
-// response differs). '/draft' and '/test' run a different flow version with different sample-data
-// semantics, so they keep going through the outbound HTTP path instead of being silently rewritten.
-const INTERNAL_DISPATCH_ROUTE_SUFFIXES: ReadonlySet<string> = new Set(['', '/sync'])
-
 export const eventDestinationService = (log: FastifyBaseLogger) => ({
     setup(): void {
         applicationEvents(log).registerListeners(log, {
@@ -156,23 +150,16 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             projectId,
             destinationId: apId(),
             destinationUrl: url,
-            internalFlowId: toInternalFlowId(matchInternalWebhookUrl({
+            internalFlowId: matchInternalWebhookFlowId({
                 destinationUrl: url,
                 webhookUrlPrefix,
-            })),
+            }),
             event: mockEvent,
         })
     },
 })
 
 
-// Same-origin handler-flow destinations are dispatched straight to the webhook handler instead of
-// making an outbound HTTP POST back to this instance: on self-hosted deployments the instance's own
-// hostname resolves to a private/loopback IP and the POST is rejected by the SSRF filter (safeHttp).
-// The bypass is tightly scoped — only URLs whose parsed origin exactly equals the instance's
-// configured public API origin, whose path sits under /v1/webhooks/, AND whose route suffix is
-// rewrite-safe (see INTERNAL_DISPATCH_ROUTE_SUFFIXES) qualify; everything else keeps going through
-// the SSRF-protected worker job.
 const dispatchEventToDestination = async ({
     log,
     platformId,
@@ -214,17 +201,23 @@ const dispatchToInternalFlow = async ({
     flowId,
     event,
 }: DispatchToInternalFlowParams): Promise<void> => {
+    const routeSuffix = webhookRouteSuffix({ destinationUrl, flowId })
+    const isDraftOrTest = routeSuffix.startsWith('/draft') || routeSuffix === '/test'
     const { data: response, error } = await tryCatch(async () => webhookService.handleWebhook({
         logger: log,
         flowId,
         async: true,
-        saveSampleData: await triggerSourceService(log).existsByFlowId({
-            flowId,
-            simulate: true,
-        }),
-        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+        saveSampleData: isDraftOrTest
+            ? true
+            : await triggerSourceService(log).existsByFlowId({
+                flowId,
+                simulate: true,
+            }),
+        flowVersionToRun: isDraftOrTest
+            ? WebhookFlowVersionToRun.LATEST
+            : WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
         data: () => Promise.resolve(buildInternalWebhookPayload({ destinationUrl, event })),
-        execute: true,
+        execute: routeSuffix !== '/test',
         failParentOnFailure: false,
     }))
     if (error !== null) {
@@ -254,28 +247,14 @@ const buildInternalWebhookPayload = ({ destinationUrl, event }: BuildInternalWeb
     }
 }
 
-const classifyDestination = ({ destination, webhookUrlPrefix }: ClassifyDestinationParams): ClassifiedDestination => {
-    const match = matchInternalWebhookUrl({
+const classifyDestination = ({ destination, webhookUrlPrefix }: ClassifyDestinationParams): ClassifiedDestination => ({
+    destination,
+    internalFlowId: matchInternalWebhookFlowId({
         destinationUrl: destination.url,
         webhookUrlPrefix,
-    })
-    return {
-        destination,
-        targetFlowId: isNil(match) ? null : match.flowId,
-        internalFlowId: toInternalFlowId(match),
-    }
-}
+    }),
+})
 
-const toInternalFlowId = (match: InternalWebhookUrlMatch | null): string | null => {
-    if (isNil(match) || !INTERNAL_DISPATCH_ROUTE_SUFFIXES.has(match.routeSuffix)) {
-        return null
-    }
-    return match.flowId
-}
-
-// The cycle guard keys off targetFlowId (any same-origin webhook route, regardless of suffix) so
-// that a self-targeting '/draft' or '/test' destination is still dropped instead of looping through
-// the outbound HTTP path — matching the guard's behavior before internal dispatch existed.
 const skipInternalDestinationsOnFlowCycle = ({
     classifiedDestinations,
     event,
@@ -286,7 +265,7 @@ const skipInternalDestinationsOnFlowCycle = ({
     }
     const targetedFlowIds = new Set(
         classifiedDestinations
-            .map(({ targetFlowId }) => targetFlowId)
+            .map(({ internalFlowId }) => internalFlowId)
             .filter((flowId): flowId is string => !isNil(flowId)),
     )
     const eventFlowId = event.data.flowRun.flowId
@@ -297,17 +276,17 @@ const skipInternalDestinationsOnFlowCycle = ({
         flow: { id: eventFlowId },
         action: event.action,
     }, '[eventDestinationService#trigger] Source flow is wired as an internal webhook target; dropping internal destinations to break the cycle, external destinations will still fire')
-    return classifiedDestinations.filter(({ targetFlowId }) => isNil(targetFlowId))
+    return classifiedDestinations.filter(({ internalFlowId }) => isNil(internalFlowId))
 }
 
 const isFlowRunEvent = (
     event: Pick<ApplicationEvent, 'action' | 'data'>,
 ): event is Pick<FlowRunEvent, 'action' | 'data'> => FLOW_RUN_EVENT_ACTIONS.has(event.action)
 
-const matchInternalWebhookUrl = ({
+const matchInternalWebhookFlowId = ({
     destinationUrl,
     webhookUrlPrefix,
-}: MatchInternalWebhookUrlParams): InternalWebhookUrlMatch | null => {
+}: MatchInternalWebhookFlowIdParams): string | null => {
     const { data: destination } = tryCatchSync(() => new URL(destinationUrl))
     const { data: prefix } = tryCatchSync(() => new URL(webhookUrlPrefix))
     if (isNil(destination) || isNil(prefix) || destination.origin !== prefix.origin) {
@@ -317,16 +296,18 @@ const matchInternalWebhookUrl = ({
     if (!destination.pathname.startsWith(prefixPath)) {
         return null
     }
-    const destinationWithoutPrefix = destination.pathname.slice(prefixPath.length)
-    const slashIndex = destinationWithoutPrefix.indexOf('/')
-    const flowId = slashIndex === -1 ? destinationWithoutPrefix : destinationWithoutPrefix.slice(0, slashIndex)
-    if (!flowId) {
-        return null
+    const flowId = destination.pathname.slice(prefixPath.length).split('/')[0]
+    return flowId || null
+}
+
+const webhookRouteSuffix = ({ destinationUrl, flowId }: WebhookRouteSuffixParams): string => {
+    const { data: url } = tryCatchSync(() => new URL(destinationUrl))
+    if (isNil(url)) {
+        return ''
     }
-    return {
-        flowId,
-        routeSuffix: slashIndex === -1 ? '' : destinationWithoutPrefix.slice(slashIndex),
-    }
+    const flowIdSegment = `/${flowId}`
+    const flowIdIndex = url.pathname.indexOf(flowIdSegment)
+    return flowIdIndex === -1 ? '' : url.pathname.slice(flowIdIndex + flowIdSegment.length)
 }
 
 
@@ -359,16 +340,8 @@ type TestParams = {
     event?: ApplicationEventName
 }
 
-type InternalWebhookUrlMatch = {
-    flowId: string
-    routeSuffix: string
-}
-
 type ClassifiedDestination = {
     destination: EventDestinationSchema
-    // flow this same-origin webhook URL targets, regardless of route suffix (cycle guard)
-    targetFlowId: string | null
-    // set only when the route suffix is safe to rewrite to an internal async dispatch
     internalFlowId: string | null
 }
 
@@ -406,7 +379,12 @@ type BuildInternalWebhookPayloadParams = {
     event: ApplicationEvent
 }
 
-type MatchInternalWebhookUrlParams = {
+type MatchInternalWebhookFlowIdParams = {
     destinationUrl: string
     webhookUrlPrefix: string
+}
+
+type WebhookRouteSuffixParams = {
+    destinationUrl: string
+    flowId: string
 }

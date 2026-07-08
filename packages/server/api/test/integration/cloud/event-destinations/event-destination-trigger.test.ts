@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { applicationEvents } from '../../../../src/app/helper/application-events'
 import { domainHelper } from '../../../../src/app/helper/domain-helper'
-import { webhookService } from '../../../../src/app/webhooks/webhook.service'
+import { WebhookFlowVersionToRun, webhookService } from '../../../../src/app/webhooks/webhook.service'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockEventDestination } from '../../../helpers/mocks'
@@ -596,8 +596,10 @@ describe('Event Destination Trigger', () => {
             )
         })
 
-        it('should keep /draft and /test route URLs on the outbound path (their execution semantics differ from async production dispatch)', async () => {
+        it('should dispatch same-origin /draft and /test route URLs internally with their own version/execute semantics', async () => {
             const ctx = await createTestContext(app)
+            const draftFlowId = apId()
+            const testFlowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',
             })
@@ -605,13 +607,13 @@ describe('Event Destination Trigger', () => {
                 platformId: ctx.platform.id,
                 events: [ApplicationEventName.FLOW_CREATED],
                 scope: EventDestinationScope.PLATFORM,
-                url: `${webhookUrlPrefix}/${apId()}/draft`,
+                url: `${webhookUrlPrefix}/${draftFlowId}/draft`,
             })
             const testRouteDestination = createMockEventDestination({
                 platformId: ctx.platform.id,
                 events: [ApplicationEventName.FLOW_CREATED],
                 scope: EventDestinationScope.PLATFORM,
-                url: `${webhookUrlPrefix}/${apId()}/test`,
+                url: `${webhookUrlPrefix}/${testFlowId}/test`,
             })
             await db.save('event_destination', [draftDestination, testRouteDestination])
 
@@ -619,13 +621,27 @@ describe('Event Destination Trigger', () => {
                 event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
             })
 
-            expect(handleWebhookSpy).not.toHaveBeenCalled()
-            expect(addSpy).toHaveBeenCalledTimes(2)
-            const queuedUrls = addSpy.mock.calls.map((call: unknown[]) => (call[0] as { data: { webhookUrl: string } }).data.webhookUrl)
-            expect(queuedUrls).toEqual(expect.arrayContaining([draftDestination.url, testRouteDestination.url]))
+            expect(addSpy).not.toHaveBeenCalled()
+            expect(handleWebhookSpy).toHaveBeenCalledTimes(2)
+            expect(handleWebhookSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    flowId: draftFlowId,
+                    flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+                    saveSampleData: true,
+                    execute: true,
+                }),
+            )
+            expect(handleWebhookSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    flowId: testFlowId,
+                    flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+                    saveSampleData: true,
+                    execute: false,
+                }),
+            )
         })
 
-        it('should still drop a self-targeting /draft destination on its own flow-run event (cycle guard keys off the target flow, not the dispatch mode)', async () => {
+        it('should drop a self-targeting same-origin destination on its own flow-run event (cycle guard)', async () => {
             const ctx = await createTestContext(app)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
