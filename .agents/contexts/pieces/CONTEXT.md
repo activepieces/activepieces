@@ -40,6 +40,10 @@ The single per-platform Piece Set (`isDefault: true`, `externalId: 'default'`) t
 The piece-level rule inside a Piece Set: a `mode` (`include_all` = everything incl. future minus exceptions; `exclude_all` = only the exceptions) and an `exceptions` list. `include_all` is the "auto-include new pieces" policy.
 _Avoid_: disabledPieces, includeNewPieces, curatedPieces (all retired)
 
+**Component**:
+An action or a trigger belonging to a piece — the umbrella term when a distinction between the two doesn't matter. Carried in code as `componentType: 'action' | 'trigger'` plus a `componentName`. Used by the MCP flow-building tools (`lookupPieceComponent`, `validatePieceComponent`, `diagnosePieceProps`) and the piece action/trigger visibility feature (`isComponentVisible`, `ComponentIntent`).
+_Avoid_: step, node, capability
+
 **Selected components**:
 A per-piece allow-list of visible actions/triggers (`selectedActions`/`selectedTriggers`). A piece with an entry is "curated" — only listed components are visible and new ones stay hidden; a piece with no entry shows all components including future ones.
 _Avoid_: disabledActions, disabledTriggers
