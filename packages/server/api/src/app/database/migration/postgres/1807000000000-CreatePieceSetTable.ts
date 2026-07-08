@@ -116,6 +116,16 @@ export class CreatePieceSetTable1807000000000 implements Migration {
 
         log.info('[CreatePieceSetTable1807000000000#up] Starting piece-set backfill')
 
+        // Backfill-only index: without it, migrateAllowedProjects' per-project NOT EXISTS
+        // probe seq-scans a piece_set that grows with every insert (O(J²), hangs a large
+        // single-tenant install). The app never queries by this column, so it is dropped
+        // once the backfill finishes rather than kept as a permanent index.
+        await queryRunner.query(`
+            CREATE INDEX IF NOT EXISTS "idx_piece_set_generated_for_project_id"
+            ON "piece_set" ("generatedForProjectId")
+            WHERE "generatedForProjectId" IS NOT NULL
+        `)
+
         // Only platforms with custom configuration to preserve are migrated. A project
         // with a NULL "pieceSetId" self-heals at runtime (resolvePieceSetForProject falls
         // back to getOrCreateDefaultPieceSet), so platforms whose projects all use the
@@ -141,6 +151,8 @@ export class CreatePieceSetTable1807000000000 implements Migration {
         for (const { id: platformId } of platforms) {
             await migratePlatform(queryRunner, platformId)
         }
+
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_generated_for_project_id"')
 
         log.info(
             { platformCount: platforms.length },
