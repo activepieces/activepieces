@@ -611,7 +611,7 @@
                      "handbook/engineering/playbooks/building-for-self-hosting",
                      "handbook/engineering/playbooks/setup-betterstack",
                      "handbook/engineering/playbooks/releases",
-                     "handbook/engineering/playbooks/canary-deployment",
+                     "handbook/engineering/playbooks/canary-deployment", "handbook/engineering/playbooks/queue-metrics",
                      "handbook/engineering/playbooks/infrastructure",
                      "handbook/engineering/playbooks/database-migration",
                      "handbook/engineering/playbooks/structured-logging",
