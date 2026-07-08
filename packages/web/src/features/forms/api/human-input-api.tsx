@@ -30,7 +30,7 @@ export const humanInputApi = {
     );
     const suffix = getSuffix(
       useDraft ? 'draft' : 'locked',
-      formResult.props.waitForResponse,
+      formResult.props.waitForResponse === true,
     );
     return api.post<HumanInputFormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
