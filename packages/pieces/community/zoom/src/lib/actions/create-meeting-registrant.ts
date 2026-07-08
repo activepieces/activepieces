@@ -58,7 +58,6 @@ export const zoomCreateMeetingRegistrant = createAction({
     };
 
     const result = await httpClient.sendRequest<RegistrationResponse>(request);
-    console.debug('Meeting registration response', result);
 
     if (result.status === 201) {
       return result.body;
