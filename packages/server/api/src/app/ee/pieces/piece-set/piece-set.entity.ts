@@ -19,7 +19,7 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
         name: {
             type: String,
         },
-        externalId: {
+        key: {
             type: String,
             nullable: true,
         },
@@ -49,9 +49,9 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
             unique: true,
         },
         {
-            name: 'idx_piece_set_platform_id_external_id',
-            columns: ['platformId', 'externalId'],
-            where: '"externalId" IS NOT NULL',
+            name: 'idx_piece_set_platform_id_key',
+            columns: ['platformId', 'key'],
+            where: '"key" IS NOT NULL',
             unique: true,
         },
     ],

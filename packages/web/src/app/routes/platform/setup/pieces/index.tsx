@@ -11,6 +11,7 @@ import {
   Package,
   Hash,
   GitBranch,
+  Info,
   Layers,
   Puzzle,
   Trash,
@@ -21,7 +22,6 @@ import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { RequestTrial } from '@/app/components/request-trial';
-import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
@@ -229,16 +229,6 @@ const PiecesListTab = () => {
           previous: null,
         }}
         isLoading={isLoading}
-        bulkActions={[
-          {
-            render: (selectedRows) => (
-              <ApplyTags
-                selectedPieces={selectedRows}
-                onApplyTags={() => refetchPieces()}
-              />
-            ),
-          },
-        ]}
         toolbarButtons={[
           <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
           <SyncPiecesButton key="sync" />,
@@ -248,7 +238,6 @@ const PiecesListTab = () => {
             scope={PieceScope.PLATFORM}
           />,
         ]}
-        selectColumn={true}
         virtualizeRows={true}
         hidePagination={true}
       />
@@ -276,6 +265,14 @@ const PlatformPiecesPage = () => {
         description={t('Manage the pieces that are available to your users')}
         title={t('Pieces')}
       />
+      <div className="flex items-center gap-2 px-4 pb-4 text-sm text-muted-foreground shrink-0">
+        <Info className="size-4 shrink-0" />
+        <span>
+          {t(
+            'Piece tags are deprecated. Use Piece Sets to control which pieces are available to your projects.',
+          )}
+        </span>
+      </div>
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
         <Tabs
           value={activeTab}

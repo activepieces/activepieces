@@ -106,16 +106,28 @@ describe('Piece Sets API', () => {
             expect(body.config).toEqual(emptyConfig)
         })
 
-        it('creates a piece set with externalId', async () => {
+        it('creates a piece set with an explicit key', async () => {
             const { token } = await setupPlatformWithPieceSets()
             const response = await app!.inject({
                 method: 'POST',
                 url: '/api/v1/piece-sets',
                 headers: { authorization: `Bearer ${token}` },
-                body: { name: 'Sales', externalId: 'sales-set' },
+                body: { name: 'Sales', key: 'sales-set' },
             })
             expect(response.statusCode).toBe(StatusCodes.CREATED)
-            expect(response.json<PieceSet>().externalId).toBe('sales-set')
+            expect(response.json<PieceSet>().key).toBe('sales-set')
+        })
+
+        it('auto-generates a key from the name when none is provided', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Sales Team' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            expect(response.json<PieceSet>().key).toMatch(/^sales-team-[a-zA-Z0-9]+$/)
         })
     })
 
@@ -270,7 +282,7 @@ describe('Piece Sets API', () => {
                 id: apId(),
                 platformId: mockPlatform.id,
                 name: 'Default',
-                externalId: null,
+                key: null,
                 isDefault: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
@@ -290,7 +302,7 @@ describe('Piece Sets API', () => {
                 id: apId(),
                 platformId: mockPlatform.id,
                 name: 'Default',
-                externalId: null,
+                key: null,
                 isDefault: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
@@ -349,7 +361,9 @@ describe('Piece Sets API', () => {
             const clone = response.json<PieceSet>()
             expect(clone.name).toBe('Original (Copy)')
             expect(clone.isDefault).toBe(false)
-            expect(clone.externalId).toBeNull()
+            // A clone gets its own auto-generated key rather than inheriting the original's.
+            expect(clone.key).not.toBe(original.key)
+            expect(clone.key).not.toBeNull()
             expect(clone.generatedForProjectId).toBeNull()
             expect(clone.id).not.toBe(original.id)
             expect(clone.config.pieces.mode).toBe(PieceSelectionMode.EXCLUDE_ALL)
@@ -422,7 +436,7 @@ describe('Piece Sets API', () => {
                 id: apId(),
                 platformId: mockPlatform.id,
                 name: 'Default',
-                externalId: null,
+                key: null,
                 isDefault: true,
                 generatedForProjectId: null,
                 config: emptyConfig,

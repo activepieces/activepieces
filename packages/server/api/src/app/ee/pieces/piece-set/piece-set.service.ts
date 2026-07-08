@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
 import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
@@ -27,7 +27,7 @@ type CreateParams = CreatePieceSetRequestBody & {
     platformId: string
     isDefault?: boolean
     generatedForProjectId?: string | null
-    externalId?: string | null
+    key?: string | null
     config?: PieceSetConfig
 }
 
@@ -111,13 +111,13 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         return set
     },
 
-    async create({ platformId, name, externalId, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
+    async create({ platformId, name, key, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
         const id = apId()
         await pieceSetRepo().save({
             id,
             platformId,
             name,
-            externalId: externalId ?? null,
+            key: resolveKey({ key, name }),
             isDefault,
             generatedForProjectId,
             config: config ?? pieceSetConfig.emptyConfig(),
@@ -132,7 +132,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
 
         await pieceSetRepo().update({ id, platformId }, {
             ...spreadIfDefined('name', request.name),
-            ...(request.externalId !== undefined ? { externalId: request.externalId } : {}),
+            ...(request.key !== undefined ? { key: request.key } : {}),
             config: updatedConfig,
         })
 
@@ -169,7 +169,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         return this.create({
             platformId,
             name,
-            externalId: undefined,
+            key: undefined,
             isDefault: false,
             generatedForProjectId: null,
             config: original.config,
@@ -212,3 +212,15 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         )
     },
 })
+
+// The key is the embed-facing handle (referenced from the provision token's `pieceSet`
+// claim). When the admin doesn't supply one, derive a readable slug from the name and
+// append a short random suffix so it's unique per platform without a collision probe.
+// ponytail: suffix collision is astronomically unlikely at per-platform set counts; if it
+// ever trips the unique index, catch the violation and regenerate.
+function resolveKey({ key, name }: { key?: string | null, name: string }): string {
+    if (!isNil(key) && key.trim().length > 0) {
+        return key
+    }
+    return `${kebabCase(name)}-${apId().slice(0, 8)}`
+}

@@ -42,7 +42,7 @@ export class CreatePieceSetTable1807000000000 implements Migration {
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "platformId" character varying(21) NOT NULL,
                 "name" character varying NOT NULL,
-                "externalId" character varying,
+                "key" character varying,
                 "isDefault" boolean NOT NULL DEFAULT false,
                 "generatedForProjectId" character varying(21),
                 "config" jsonb NOT NULL DEFAULT '{"pieces":{"mode":"include_all","exceptions":[]},"selectedActions":{},"selectedTriggers":{}}',
@@ -64,9 +64,9 @@ export class CreatePieceSetTable1807000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE UNIQUE INDEX IF NOT EXISTS "idx_piece_set_platform_id_external_id"
-            ON "piece_set" ("platformId", "externalId")
-            WHERE "externalId" IS NOT NULL
+            CREATE UNIQUE INDEX IF NOT EXISTS "idx_piece_set_platform_id_key"
+            ON "piece_set" ("platformId", "key")
+            WHERE "key" IS NOT NULL
         `)
 
         await queryRunner.query(`
@@ -149,13 +149,26 @@ export class CreatePieceSetTable1807000000000 implements Migration {
             { platformCount: platforms.length },
             '[CreatePieceSetTable1807000000000#up] Backfill complete',
         )
+
+        // Piece sets replace the old platform-level piece filters, so drop those columns now
+        // that the data they held is superseded.
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+                DROP COLUMN IF EXISTS "filteredPieceNames",
+                DROP COLUMN IF EXISTS "filteredPieceBehavior"
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+                ADD COLUMN IF NOT EXISTS "filteredPieceNames" character varying array NOT NULL DEFAULT '{}',
+                ADD COLUMN IF NOT EXISTS "filteredPieceBehavior" character varying NOT NULL DEFAULT 'BLOCKED'
+        `)
         await queryRunner.query('DROP INDEX IF EXISTS "idx_project_piece_set_id"')
         await queryRunner.query('ALTER TABLE "project" DROP CONSTRAINT IF EXISTS "fk_project_piece_set_id"')
         await queryRunner.query('ALTER TABLE "project" DROP COLUMN IF EXISTS "pieceSetId"')
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_external_id"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_key"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_is_default"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_created_id"')
         await queryRunner.query('DROP TABLE IF EXISTS "piece_set"')
@@ -182,7 +195,7 @@ async function ensureDefaultSet(queryRunner: QueryRunner, platformId: string): P
 
     const id = apId()
     await queryRunner.query(
-        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "externalId", config)
+        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "key", config)
          VALUES ($1, NOW(), NOW(), $2, 'Default', true, NULL, 'default', $3)`,
         [id, platformId, JSON.stringify(DEFAULT_CONFIG)],
     )
@@ -200,7 +213,7 @@ async function migrateTagSets(queryRunner: QueryRunner, platformId: string): Pro
            )
            AND NOT EXISTS (
                SELECT 1 FROM piece_set ps
-               WHERE ps."platformId" = $1 AND ps."externalId" = t.name
+               WHERE ps."platformId" = $1 AND ps."key" = t.name
            )
          ORDER BY t.created ASC`,
         [platformId],
@@ -225,7 +238,7 @@ async function migrateTagSets(queryRunner: QueryRunner, platformId: string): Pro
     for (const { tagId, tagName } of tags) {
         const taggedPieces = [...(piecesByTagId.get(tagId) ?? new Set<string>())]
         await queryRunner.query(
-            `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "externalId", config)
+            `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "key", config)
              VALUES ($1, NOW(), NOW(), $2, $3, false, NULL, $4, $5)`,
             [apId(), platformId, tagName, tagName, JSON.stringify(allowListConfig(taggedPieces))],
         )
@@ -284,7 +297,7 @@ async function insertProjectSets(
     const params: unknown[] = rows.flatMap((r) => [r.id, platformId, r.name, r.projectId, JSON.stringify(r.config)])
 
     await queryRunner.query(
-        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "externalId", config)
+        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "key", config)
          VALUES ${valuePlaceholders}`,
         params,
     )

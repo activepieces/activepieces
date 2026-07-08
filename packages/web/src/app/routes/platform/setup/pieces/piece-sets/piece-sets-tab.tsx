@@ -70,17 +70,13 @@ export const PieceSetsTab = () => {
         ),
       },
       {
-        accessorKey: 'externalId',
+        accessorKey: 'key',
         header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('External ID')}
-            icon={Hash}
-          />
+          <DataTableColumnHeader column={column} title={t('Key')} icon={Hash} />
         ),
         cell: ({ row }) =>
-          row.original.externalId ? (
-            <span className="font-mono text-sm">{row.original.externalId}</span>
+          row.original.key ? (
+            <span className="font-mono text-sm">{row.original.key}</span>
           ) : (
             <span className="text-muted-foreground">—</span>
           ),
@@ -206,7 +202,7 @@ export const PieceSetsTab = () => {
           }}
           id={editingSet.id}
           currentName={editingSet.name}
-          currentExternalId={editingSet.externalId ?? null}
+          currentKey={editingSet.key ?? null}
         />
       )}
     </>

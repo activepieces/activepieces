@@ -46,7 +46,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
         await applyProjectPieceAccess({
             platformId: project.platformId,
             projectId: project.id,
-            pieceSetExternalId: externalPrincipal.pieceSetExternalId,
+            pieceSetKey: externalPrincipal.pieceSetKey,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
             log,
@@ -93,30 +93,30 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
 type ApplyProjectPieceAccessParams = {
     platformId: string
     projectId: string
-    pieceSetExternalId: string | undefined
+    pieceSetKey: string | undefined
     piecesTags: string[]
     piecesFilterType: PiecesFilterType
     log: FastifyBaseLogger
 }
 
-const applyProjectPieceAccess = async ({ platformId, projectId, pieceSetExternalId, piecesTags, piecesFilterType, log }: ApplyProjectPieceAccessParams): Promise<void> => {
-    // Resolve which named set to assign: the explicit SDK externalId, or (legacy) the first
+const applyProjectPieceAccess = async ({ platformId, projectId, pieceSetKey, piecesTags, piecesFilterType, log }: ApplyProjectPieceAccessParams): Promise<void> => {
+    // Resolve which named set to assign: the explicit SDK piece-set key, or (legacy) the first
     // pieces tag. Multi-tag is unused, so only the first tag is honored; each tag maps to a
-    // named set (externalId = tagName) created by the backfill migration.
-    const targetExternalId = pieceSetExternalId
+    // named set (key = tagName) created by the backfill migration.
+    const targetKey = pieceSetKey
         ?? (piecesFilterType === PiecesFilterType.ALLOWED ? piecesTags[0] : undefined)
 
-    const set = isNil(targetExternalId)
+    const set = isNil(targetKey)
         ? null
-        : await pieceSetRepo().findOneBy({ platformId, externalId: targetExternalId })
+        : await pieceSetRepo().findOneBy({ platformId, key: targetKey })
 
     if (!isNil(set)) {
         await pieceSetService(log).assignProject({ pieceSet: set, projectId })
         return
     }
 
-    if (!isNil(targetExternalId)) {
-        log.warn({ platform: { id: platformId }, project: { id: projectId } }, `[managedAuthn] pieceSet externalId "${targetExternalId}" not found — falling back to default`)
+    if (!isNil(targetKey)) {
+        log.warn({ platform: { id: platformId }, project: { id: projectId } }, `[managedAuthn] pieceSet key "${targetKey}" not found — falling back to default`)
     }
     const defaultSet = await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
     await pieceSetService(log).assignProject({ pieceSet: defaultSet, projectId })

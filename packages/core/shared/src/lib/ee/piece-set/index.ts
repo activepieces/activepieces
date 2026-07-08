@@ -36,7 +36,7 @@ export const PieceSet = z.object({
     ...BaseModelSchema,
     platformId: ApId,
     name: z.string(),
-    externalId: Nullable(z.string()),
+    key: Nullable(z.string()),
     isDefault: z.boolean(),
     generatedForProjectId: Nullable(ApId),
     config: PieceSetConfig,
@@ -51,13 +51,13 @@ export type ComponentIntent = z.infer<typeof ComponentIntent>
 
 export const CreatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }),
-    externalId: z.string().optional(),
+    key: z.string().optional(),
 })
 export type CreatePieceSetRequestBody = z.infer<typeof CreatePieceSetRequestBody>
 
 export const UpdatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }).optional(),
-    externalId: z.string().nullable().optional(),
+    key: z.string().nullable().optional(),
     pieces: PieceSelection.optional(),
     actions: z.record(z.string(), ComponentIntent).optional(),
     triggers: z.record(z.string(), ComponentIntent).optional(),

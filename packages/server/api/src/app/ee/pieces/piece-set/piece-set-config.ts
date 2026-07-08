@@ -7,7 +7,7 @@ export const pieceSetConfig = {
             id: apId(),
             platformId,
             name: 'Default',
-            externalId: 'default',
+            key: 'default',
             isDefault: true,
             generatedForProjectId: null,
             config: emptyConfig(),

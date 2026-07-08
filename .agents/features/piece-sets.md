@@ -17,7 +17,7 @@ EE / Cloud only, gated behind `platform.plan.managePiecesEnabled`. On CE (or whe
 
 ## Domain Terms
 - **Piece Set** — named, reusable visibility config assignable to many projects
-- **Default Set** — the per-platform set (`isDefault: true`, `externalId: 'default'`) that unassigned projects resolve to; cannot be deleted, and projects cannot be removed from it (they reassign to it)
+- **Default Set** — the per-platform set (`isDefault: true`, `key: 'default'`) that unassigned projects resolve to; cannot be deleted, and projects cannot be removed from it (they reassign to it)
 - **PieceSetConfig** — `{ pieces: PieceSelection, selectedActions: Record<piece, action[]>, selectedTriggers: Record<piece, trigger[]> }`
 - **PieceSelection** — `{ mode: 'include_all' | 'exclude_all', exceptions: string[] }`. `include_all` shows everything (present + future) except `exceptions` (the "auto-include new pieces" policy); `exclude_all` shows only `exceptions`, hiding future pieces
 - **Selected components** — presence of a piece key in `selectedActions`/`selectedTriggers` means the piece is "curated": only the listed components are visible and new ones stay hidden. Absent key ⇒ all components visible incl. future
@@ -29,20 +29,20 @@ EE / Cloud only, gated behind `platform.plan.managePiecesEnabled`. On CE (or whe
 | id / created / updated | base | `BaseColumnSchemaPart` |
 | platformId | ApId | owner; CASCADE on platform delete |
 | name | string | |
-| externalId | string (nullable) | vendor-supplied id; unique per platform when set. For tag-derived sets this is the tag name |
+| key | string (nullable) | embed-facing handle (referenced by the v4 token's `pieceSet` claim); unique per platform when set. Auto-generated as `kebabCase(name)-<random>` on create when not supplied. For tag-derived sets this is the tag name |
 | isDefault | boolean | one per platform (partial unique index) |
 | generatedForProjectId | ApId (nullable) | set when auto-generated per project by the backfill |
 | config | jsonb | `PieceSetConfig` |
 
-Indexes: `(platformId)`; unique partial `(platformId) WHERE isDefault`; unique partial `(platformId, externalId) WHERE externalId IS NOT NULL`. Projects reference a set via `project.pieceSetId` (FK `SET NULL`).
+Indexes: `(platformId)`; unique partial `(platformId) WHERE isDefault`; unique partial `(platformId, key) WHERE key IS NOT NULL`. Projects reference a set via `project.pieceSetId` (FK `SET NULL`).
 
 ## Endpoints (`/v1/piece-sets`, platformAdminOnly: USER + SERVICE)
 | Method | Path | Description |
 |---|---|---|
 | GET | `/` | List sets for the platform (cursor paginated) |
-| POST | `/` | Create a set (starts fully permissive: `pieces.mode = include_all`) |
+| POST | `/` | Create a set (starts fully permissive: `pieces.mode = include_all`); `key` is optional and auto-generated from `name` when omitted |
 | GET | `/:id` | Get a set |
-| POST | `/:id` | Update name/externalId + declaratively patch config: `pieces` (full replace), `actions`/`triggers` as per-piece `ComponentIntent` |
+| POST | `/:id` | Update name/key + declaratively patch config: `pieces` (full replace), `actions`/`triggers` as per-piece `ComponentIntent` |
 | DELETE | `/:id` | Delete (Default protected); reassigns its projects to Default |
 | POST | `/:id/duplicate` | Clone config under a new name |
 | POST | `/:id/projects` | Assign one or more projects to the set |
@@ -59,5 +59,5 @@ There is **no** install-time sync method. New pieces/actions are handled purely 
 
 ## Integration Notes
 - **Project creation** (`ee-project-hooks.ts`): new EE projects are assigned the Default set on `postCreate` when `managePiecesEnabled`.
-- **Managed auth** (`managed-authn-service.ts`): applies only when `managePiecesEnabled` — an embed JWT may carry a `pieceSet` externalId claim, or (legacy) `piecesTags`. Only the **first** tag is honored and resolved to the named set with `externalId = tag` (reusing the assign-by-externalId path); if no such set exists, the project falls back to Default. New integrations should use the `pieceSet` claim. When the flag is off, managed auth instead runs the deprecated legacy project-plan upsert (tags → `pieces`/`piecesFilterType`) and assigns no set. See [managed-auth.md](./managed-auth.md).
-- **Migration**: a single `1807000000000-CreatePieceSetTable` creates the table + `project.pieceSetId`, and backfills Default/tag/ALLOWED-project sets from legacy filtering (allow-lists map straight to `exclude_all` exceptions — no catalog inversion).
+- **Managed auth** (`managed-authn-service.ts`): `applyProjectPieceAccess` runs unconditionally (not gated by `managePiecesEnabled` — that flag gates the management endpoints and the postCreate default-set assignment, not this enforcement path). A **v4** embed JWT carries a `pieceSet` key claim; legacy v2/v3 tokens carry `piecesTags` instead. Only the **first** tag is honored and resolved to the named set with `key = tag`; if no such set exists, the project falls back to Default. New integrations should use the v4 `pieceSet` claim. See [managed-auth.md](./managed-auth.md).
+- **Migration**: a single `1807000000000-CreatePieceSetTable` creates the table + `project.pieceSetId`, backfills Default/tag/ALLOWED-project sets from legacy filtering (allow-lists map straight to `exclude_all` exceptions — no catalog inversion), and finally drops the superseded platform-level piece-filter columns (`filteredPieceNames`/`filteredPieceBehavior`).
