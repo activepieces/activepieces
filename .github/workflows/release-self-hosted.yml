@@ -108,3 +108,67 @@ jobs:
         with:
           image: ghcr.io/activepieces/activepieces:${{ inputs.tag }}
           version: ${{ inputs.tag }}
+
+  sync-version-to-main:
+    needs: release
+    if: ${{ !cancelled() && needs.release.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          token: ${{ secrets.CROWDIN_PRS }}
+
+      - name: Check if main version is behind release
+        id: compare
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          TAG_BASE="${TAG%%-*}"
+          MAIN_VERSION="$(jq -r .version package.json)"
+          HIGHEST="$(printf '%s\n%s\n' "$MAIN_VERSION" "$TAG_BASE" | sort -V | tail -1)"
+          if [ "$HIGHEST" = "$MAIN_VERSION" ]; then
+            echo "main version $MAIN_VERSION is not behind released $TAG_BASE, nothing to sync."
+          else
+            echo "main version $MAIN_VERSION is behind released $TAG_BASE, opening sync PR."
+            echo "tag_base=$TAG_BASE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push version sync branch
+        if: steps.compare.outputs.tag_base != ''
+        env:
+          TAG: ${{ inputs.tag }}
+          TAG_BASE: ${{ steps.compare.outputs.tag_base }}
+        run: |
+          git config --local user.email "abdulyki+automatedcommits@activepieces.com"
+          git config --local user.name "automated-commits-ap"
+          npm pkg set version="$TAG_BASE"
+          sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
+          grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
+          git checkout -b "automated/sync-version-$TAG_BASE"
+          git add package.json docker-compose.yml
+          git commit -m "chore(release): sync version to $TAG_BASE after off-cycle release"
+          git push -f origin "automated/sync-version-$TAG_BASE"
+
+      - name: Open sync PR
+        if: steps.compare.outputs.tag_base != ''
+        env:
+          GH_TOKEN: ${{ secrets.CROWDIN_PRS }}
+          TAG: ${{ inputs.tag }}
+          TAG_BASE: ${{ steps.compare.outputs.tag_base }}
+        run: |
+          BRANCH="automated/sync-version-$TAG_BASE"
+          OPEN_PR_COUNT="$(gh pr list --head "$BRANCH" --state open --json number --jq length)"
+          if [ "$OPEN_PR_COUNT" -gt 0 ]; then
+            echo "An open sync PR from $BRANCH already exists, the branch was force-pushed with the latest sync."
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(release): sync version to $TAG_BASE after off-cycle release" \
+              --body "The self-hosted release \`$TAG\` was published from a branch whose version bump is not on \`main\`. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin so the next weekly release does not read a stale version. Merge before the next release-candidate cut (Thursday 5 PM UTC). See GIT-1595." \
+              --label skip-changelog \
+              --label automated
+          fi
