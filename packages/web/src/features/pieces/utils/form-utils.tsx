@@ -1,6 +1,7 @@
 import { Metadata, isNil } from '@activepieces/core-utils';
 import {
   piecePropertiesUtils,
+  BasePropertySchema,
   OAuth2Props,
   PieceAuthProperty,
   PieceMetadata,
@@ -168,6 +169,10 @@ function getDefaultPropertyValue({
   }
 }
 
+function isDynamicInputAllowed({ property }: { property: BasePropertySchema }) {
+  return property.allowDynamicValues !== false;
+}
+
 function getDefaultValueForProperties({
   props,
   existingInput,
@@ -185,8 +190,9 @@ function getDefaultValueForProperties({
           ? getDefaultPropertyValue({
               property,
               dynamicInputModeToggled:
+                isDynamicInputAllowed({ property }) &&
                 propertySettings?.[propertyName]?.type ===
-                PropertyExecutionType.DYNAMIC,
+                  PropertyExecutionType.DYNAMIC,
             })
           : existingInput[propertyName];
       return defaultValues;
@@ -594,6 +600,7 @@ export const formUtils = {
   getDefaultValueForProperties,
   buildConnectionSchema,
   getDefaultPropertyValue,
+  isDynamicInputAllowed,
 };
 
 export type BuildConnectionSchemaOptions = {

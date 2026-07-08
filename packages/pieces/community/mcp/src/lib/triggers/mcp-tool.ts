@@ -26,6 +26,7 @@ export const mcpTool = createTrigger({
       displayName: 'Parameters',
       description: 'Define the input parameters that this tool accepts. Parameters will be shown to users when calling the tool.',
       required: false,
+      allowDynamicValues: false,
       defaultValue: [
         {
           name: '',
@@ -66,6 +67,7 @@ export const mcpTool = createTrigger({
       description: 'Keep the MCP client waiting until it receives a response via the Reply to MCP Client action',
       defaultValue: false,
       required: true,
+      allowDynamicValues: false,
     }),
   },
   type: TriggerStrategy.WEBHOOK,
@@ -88,7 +90,7 @@ export const mcpTool = createTrigger({
       : rawPayload;
     const inputSchema = context.propsValue.inputSchema as McpProperty[] | undefined;
 
-    if (inputSchema) {
+    if (Array.isArray(inputSchema)) {
       const missingFields: string[] = [];
       for (const param of inputSchema) {
         if (param.required && isNil(payload[param.name])) {
@@ -104,7 +106,7 @@ export const mcpTool = createTrigger({
   },
   async test(context) {
     const inputSchema = context.propsValue.inputSchema as McpProperty[] | undefined;
-    if (!inputSchema || inputSchema.length === 0) {
+    if (!Array.isArray(inputSchema) || inputSchema.length === 0) {
       return [{}];
     }
     const sampleData: Record<string, unknown> = {};

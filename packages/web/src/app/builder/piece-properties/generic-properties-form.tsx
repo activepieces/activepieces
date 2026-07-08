@@ -9,6 +9,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { FormField } from '@/components/ui/form';
+import { formUtils } from '@/features/pieces';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import {
@@ -32,9 +33,14 @@ export const GenericPropertiesForm = React.memo(
       Object.keys(props).length > 0 && (
         <div className={cn('flex flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
           {Object.entries(props).map(([propertyName]) => {
+            const property = props[propertyName];
+            const dynamicValuesAllowed = formUtils.isDynamicInputAllowed({
+              property,
+            });
             const dynamicInputModeToggled =
+              dynamicValuesAllowed &&
               propertySettings?.[propertyName]?.type ===
-              PropertyExecutionType.DYNAMIC;
+                PropertyExecutionType.DYNAMIC;
             return (
               <FormField
                 key={propertyName}
@@ -61,8 +67,9 @@ export const GenericPropertiesForm = React.memo(
                       prefixValue.length > 0
                         ? `${prefixValue}.${propertyName}`
                         : propertyName,
-                    property: props[propertyName],
-                    allowDynamicValues: !isNil(propertySettings),
+                    property,
+                    allowDynamicValues:
+                      !isNil(propertySettings) && dynamicValuesAllowed,
                     markdownVariables: markdownVariables ?? {},
                     useMentionTextInput: useMentionTextInput,
                     disabled: disabled ?? false,

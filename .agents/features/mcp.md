@@ -80,6 +80,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 
 **Dynamic flow tools**: Each enabled flow with MCP trigger piece is registered as a callable tool. Name format: `{toolName}_{flowId.substring(0, 4)}`. Execution: submits webhook to flow (sync if `returnsResponse`, async otherwise).
 
+**inputSchema integrity (GIT-1598)**: `registerFlowTools` reads the trigger's `settings.input` RAW (mentions are never resolved there), so all `mcp_tool` props are design-time config. The builder's fx (dynamic value) toggle used to replace the `inputSchema` array with `{}` (inline-item mode default), crashing the editor and 500ing the whole MCP server build. Fixed by: `allowDynamicValues: false` on the `inputSchema` and `returnsResponse` props (a `BasePropertySchema` opt-out honored in `generic-properties-form.tsx`, which also ignores stale `DYNAMIC` propertySettings at render so an already-corrupted flow opens in the manual editor; the stored `{}` value and `DYNAMIC` mode persist until the user edits the field, which rewrites the value as an array), plus `Array.isArray` guards in `mcp-server-builder.ts`, `mcp-tool.ts` run/test, `mcp-tool-testing-dialog.tsx`, and `array-property.tsx`. The same opt-out is set on the forms piece trigger (`form-trigger.ts` `inputs`/`waitForResponse`), which shares the schema-defining-array shape and serves the raw value to the public form page. Regression test: `packages/server/api/test/unit/app/mcp/mcp-server-builder.test.ts`.
+
 ## Tool Pattern
 
 ```typescript

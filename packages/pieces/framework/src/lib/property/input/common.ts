@@ -6,7 +6,8 @@ import { PropertyType } from "./property-type";
 
 export const BasePropertySchema = z.object({
     displayName: z.string(),
-    description: z.optional(z.string())
+    description: z.optional(z.string()),
+    allowDynamicValues: z.optional(z.boolean())
 })
 
 export type BasePropertySchema = z.infer<typeof BasePropertySchema>

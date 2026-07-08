@@ -64,10 +64,12 @@ export const onFormSubmission = createTrigger({
       displayName: 'Wait for Response',
       defaultValue: false,
       required: true,
+      allowDynamicValues: false,
     }),
     inputs: Property.Array({
       displayName: 'Inputs',
       required: true,
+      allowDynamicValues: false,
       properties: {
         displayName: Property.ShortText({
           displayName: 'Field Name',
@@ -106,7 +108,8 @@ export const onFormSubmission = createTrigger({
   },
   async run(context) {
     const payload = context.payload.body as Record<string, unknown>;
-    const inputs = context.propsValue.inputs as FormInput[];
+    const storedInputs = context.propsValue.inputs as FormInput[];
+    const inputs = Array.isArray(storedInputs) ? storedInputs : [];
 
     const processedPayload: Record<string, unknown> = {};
     for (const input of inputs) {

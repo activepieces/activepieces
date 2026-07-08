@@ -133,7 +133,8 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
         const mcpTrigger = flow.version.trigger.settings as McpTrigger
-        const mcpInputs = mcpTrigger.input?.inputSchema ?? []
+        const storedInputSchema = mcpTrigger.input?.inputSchema
+        const mcpInputs = Array.isArray(storedInputSchema) ? storedInputSchema : []
         const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
 
         const baseName = (mcpTrigger.input?.toolName ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
