@@ -30,7 +30,7 @@ Event Destinations streams platform and project activity events to webhook URLs 
 - **EventDestination**: A persisted webhook subscription — one URL receiving a chosen set of events for a platform or project scope.
 - **ApplicationEventName**: The 27-value enum that names every auditable action in the system.
 - **Scope**: PLATFORM (all platform-level events) or PROJECT (currently only `FLOW_RUN_FINISHED`).
-- **Event Delivery**: Async BullMQ `ONE_TIME` job that POSTs the event payload to the destination URL.
+- **Event Delivery**: External destinations get an async BullMQ `ONE_TIME` job that POSTs the event payload to the destination URL; same-origin handler-flow destinations (rewrite-safe routes only) skip BullMQ and are dispatched internally through `webhookService.handleWebhook`.
 - **Test Delivery**: Sends a mock payload for a selected event type (defaults to `FLOW_CREATED`) synchronously so the operator can verify connectivity. Backed by `buildMockEvent()`.
 - **Handler Flow**: An optional internal Activepieces flow generated from `handler-flow-builder.ts` that consumes the webhook and routes each event to its own branch (Slack/Gmail/Teams/HTTP).
 
