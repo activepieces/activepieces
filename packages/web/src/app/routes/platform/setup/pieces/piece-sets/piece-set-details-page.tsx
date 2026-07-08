@@ -1,4 +1,4 @@
-import { PieceSelection } from '@activepieces/shared';
+import { PieceSelection, PieceSelectionMode } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -25,7 +25,9 @@ function flipSelectionMode({
 }): PieceSelection {
   const excluded = new Set(current.exceptions);
   return {
-    mode: include ? 'include_all' : 'exclude_all',
+    mode: include
+      ? PieceSelectionMode.INCLUDE_ALL
+      : PieceSelectionMode.EXCLUDE_ALL,
     exceptions: knownPieceNames.filter((name) => !excluded.has(name)),
   };
 }
@@ -107,7 +109,9 @@ const PieceSetDetailsPage = () => {
               </span>
               <AutoIncludePill
                 label={t('New pieces')}
-                checked={pieceSet.config.pieces.mode === 'include_all'}
+                checked={
+                  pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
+                }
                 disabled={isPending || piecesLoading}
                 onCheckedChange={handleToggle}
               />

@@ -1,4 +1,4 @@
-import { PieceSet } from '@activepieces/shared';
+import { PieceSelectionMode, PieceSet } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -97,7 +97,7 @@ export const PieceSetsTab = () => {
         ),
         cell: ({ row }) => {
           const includesNewPieces =
-            row.original.config.pieces.mode === 'include_all';
+            row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
           return (
             <Badge variant={includesNewPieces ? 'success' : 'outline'}>
               {includesNewPieces ? t('Yes') : t('No')}

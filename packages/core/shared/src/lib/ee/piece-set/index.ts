@@ -4,7 +4,7 @@ import { formErrors } from '../../form-errors'
 
 export function isPieceVisible({ pieces, name }: { pieces: PieceSelection, name: string }): boolean {
     const listed = pieces.exceptions.includes(name)
-    return pieces.mode === 'include_all' ? !listed : listed
+    return pieces.mode === PieceSelectionMode.INCLUDE_ALL ? !listed : listed
 }
 
 export function isComponentVisible({ selected, name }: { selected: string[] | undefined, name: string }): boolean {
@@ -14,17 +14,19 @@ export function isComponentVisible({ selected, name }: { selected: string[] | un
     return selected.includes(name)
 }
 
-export const PieceSelectionMode = z.enum(['include_all', 'exclude_all'])
-export type PieceSelectionMode = z.infer<typeof PieceSelectionMode>
+export enum PieceSelectionMode {
+    INCLUDE_ALL = 'include_all',
+    EXCLUDE_ALL = 'exclude_all',
+}
 
 export const PieceSelection = z.object({
-    mode: PieceSelectionMode.default('include_all'),
+    mode: z.enum([PieceSelectionMode.INCLUDE_ALL, PieceSelectionMode.EXCLUDE_ALL]).default(PieceSelectionMode.INCLUDE_ALL),
     exceptions: z.array(z.string()).default([]),
 })
 export type PieceSelection = z.infer<typeof PieceSelection>
 
 export const PieceSetConfig = z.object({
-    pieces: PieceSelection.default({ mode: 'include_all', exceptions: [] }),
+    pieces: PieceSelection.default({ mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }),
     selectedActions: z.record(z.string(), z.array(z.string())).default({}),
     selectedTriggers: z.record(z.string(), z.array(z.string())).default({}),
 })

@@ -1,5 +1,5 @@
 import { apId, ProjectRole } from '@activepieces/core-utils'
-import { DefaultProjectRole, PiecesFilterType } from '@activepieces/shared'
+import { DefaultProjectRole, PieceSelectionMode, PiecesFilterType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Redis } from 'ioredis'
@@ -149,7 +149,7 @@ describe('Managed Authentication API', () => {
                 externalId: 'free',
                 isDefault: false,
                 generatedForProjectId: null,
-                config: { pieces: { mode: 'exclude_all', exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
             }
             await db.save('piece_set', tagSet)
 

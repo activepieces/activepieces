@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { PieceSet, PrincipalType } from '@activepieces/shared'
+import { PieceSelectionMode, PieceSet, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -41,7 +41,7 @@ async function setupPlatformWithoutPieceSets() {
     return { mockOwner, mockPlatform, token }
 }
 
-const emptyConfig = { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
 
 describe('Piece Sets API', () => {
     describe('Feature Gate', () => {
@@ -165,12 +165,12 @@ describe('Piece Sets API', () => {
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
-                    pieces: { mode: 'include_all', exceptions: ['@activepieces/piece-gmail'] },
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['@activepieces/piece-gmail'] },
                 },
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json<PieceSet>()
-            expect(body.config.pieces.mode).toBe('include_all')
+            expect(body.config.pieces.mode).toBe(PieceSelectionMode.INCLUDE_ALL)
             expect(body.config.pieces.exceptions).toContain('@activepieces/piece-gmail')
             expect(body.config.pieces.exceptions).not.toContain('@activepieces/piece-slack')
 
@@ -179,7 +179,7 @@ describe('Piece Sets API', () => {
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
-                    pieces: { mode: 'include_all', exceptions: [] },
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
                 },
             })
             expect(reenabledResponse.statusCode).toBe(StatusCodes.OK)
@@ -200,11 +200,11 @@ describe('Piece Sets API', () => {
                 method: 'POST',
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
-                body: { pieces: { mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] } },
+                body: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] } },
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json<PieceSet>()
-            expect(body.config.pieces).toEqual({ mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] })
+            expect(body.config.pieces).toEqual({ mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] })
         })
 
         it('selecting actions on a piece stores the allow-list; other component maps stay empty', async () => {
@@ -336,7 +336,7 @@ describe('Piece Sets API', () => {
                 method: 'POST',
                 url: `/api/v1/piece-sets/${original.id}`,
                 headers: { authorization: `Bearer ${token}` },
-                body: { pieces: { mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] } },
+                body: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] } },
             })
 
             const response = await app!.inject({
@@ -352,7 +352,7 @@ describe('Piece Sets API', () => {
             expect(clone.externalId).toBeNull()
             expect(clone.generatedForProjectId).toBeNull()
             expect(clone.id).not.toBe(original.id)
-            expect(clone.config.pieces.mode).toBe('exclude_all')
+            expect(clone.config.pieces.mode).toBe(PieceSelectionMode.EXCLUDE_ALL)
             expect(clone.config.pieces.exceptions).toContain('@activepieces/piece-slack')
         })
     })

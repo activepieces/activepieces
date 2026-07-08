@@ -2,6 +2,7 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   isPieceVisible,
   PieceSelection,
+  PieceSelectionMode,
   PieceSet,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
@@ -42,7 +43,8 @@ function setPieceVisible(
   visible: boolean,
 ): PieceSelection {
   const isException = pieces.exceptions.includes(name);
-  const shouldBeException = pieces.mode === 'include_all' ? !visible : visible;
+  const shouldBeException =
+    pieces.mode === PieceSelectionMode.INCLUDE_ALL ? !visible : visible;
   if (isException === shouldBeException) {
     return pieces;
   }

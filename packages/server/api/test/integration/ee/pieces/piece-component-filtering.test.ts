@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { PackageType, PieceType, PrincipalType, SuggestionType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
+import { PackageType, PieceSelectionMode, PieceType, PrincipalType, SuggestionType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
@@ -44,7 +44,7 @@ const makeTrigger = (name: string) => ({
 
 describe('Piece Component Filtering (EE)', () => {
     describe('GET /v1/pieces (with piece sets)', () => {
-        const emptyConfig = { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+        const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
 
         async function setupPieceSetScenario(hiddenPieces: string[]) {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
@@ -60,7 +60,7 @@ describe('Piece Component Filtering (EE)', () => {
                 externalId: null,
                 isDefault: false,
                 generatedForProjectId: null,
-                config: { pieces: { mode: 'include_all', exceptions: hiddenPieces }, selectedActions: {}, selectedTriggers: {} },
+                config: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: hiddenPieces }, selectedActions: {}, selectedTriggers: {} },
             }
             await databaseConnection().getRepository('piece_set').save(pieceSet)
             await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
@@ -201,7 +201,7 @@ describe('Piece Component Filtering (EE)', () => {
                 isDefault: false,
                 generatedForProjectId: null,
                 config: {
-                    pieces: { mode: 'include_all', exceptions: [] },
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
                     selectedActions: opts.selectedActions ?? {},
                     selectedTriggers: opts.selectedTriggers ?? {},
                 },
@@ -350,7 +350,7 @@ describe('Piece Component Filtering (EE)', () => {
                 isDefault: false,
                 generatedForProjectId: null,
                 config: {
-                    pieces: { mode: 'include_all', exceptions: [] },
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
                     selectedActions: { 'test-piece': ['visible_action'] },
                     selectedTriggers: {},
                 },

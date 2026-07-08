@@ -1,5 +1,5 @@
 import { apId, isNil, unique } from '@activepieces/core-utils'
-import { ComponentIntent, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
+import { ComponentIntent, PieceSelectionMode, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
 
 export const pieceSetConfig = {
     buildDefaultSet(platformId: string) {
@@ -27,7 +27,7 @@ export const pieceSetConfig = {
 
 function emptyConfig(): PieceSetConfig {
     return {
-        pieces: { mode: 'include_all', exceptions: [] },
+        pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
         selectedActions: {},
         selectedTriggers: {},
     }
