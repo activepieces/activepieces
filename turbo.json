@@ -19,7 +19,10 @@
     "AP_SMTP_USERNAME",
     "AP_SMTP_PASSWORD",
     "AP_SMTP_SENDER_EMAIL",
-    "AP_SMTP_SENDER_NAME"
+    "AP_SMTP_SENDER_NAME",
+    "AP_TOOL_SEARCH_ENABLED",
+    "AP_OPENAI_API_KEY",
+    "AP_PIECES_SYNC_MODE"
   ],
   "tasks": {
     "build": {
