@@ -9,7 +9,6 @@ import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod'
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
-import { adhocRunModule } from './adhoc-run/adhoc-run.module'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
@@ -48,7 +47,6 @@ import { appearanceHelper } from './ee/helper/appearance-helper'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
-import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
@@ -228,7 +226,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(collaborativeModule)
     await app.register(flowModule)
     await app.register(flowRunModule)
-    await app.register(adhocRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
     await app.register(platformAppConnectionModule)
@@ -309,7 +306,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
-            await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
@@ -344,7 +340,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
-            await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)

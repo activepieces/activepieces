@@ -6,7 +6,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -73,16 +72,11 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
-            const piece = await pieceMetadataService(req.log).getOrThrow({
+            return pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
-            })
-            return enterpriseFilteringUtils(req.log).filterPieceComponents({
-                piece,
-                platformId,
-                projectId: req.query.projectId,
             })
         },
     )
@@ -95,16 +89,11 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
-            const piece = await pieceMetadataService(req.log).getOrThrow({
+            return pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: decodedName,
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
-            })
-            return enterpriseFilteringUtils(req.log).filterPieceComponents({
-                piece,
-                platformId,
-                projectId: req.query.projectId,
             })
         },
     )

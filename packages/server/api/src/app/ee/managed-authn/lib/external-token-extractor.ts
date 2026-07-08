@@ -38,7 +38,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
 
                 const projectRole = await getProjectRole(payload, signingKey.platformId)
 
-                const { piecesFilterType, piecesTags, pieceSetExternalId } = extractPieces(payload)
+                const { piecesFilterType, piecesTags } = extractPieces(payload)
                 return {
                     platformId: signingKey.platformId,
                     externalUserId: payload.externalUserId,
@@ -50,7 +50,6 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                         filterType: piecesFilterType ?? PiecesFilterType.NONE,
                         tags: piecesTags ?? [],
                     },
-                    pieceSetExternalId,
                     concurrencyPoolKey: payload.concurrencyPoolKey,
                     concurrencyPoolLimit: payload.concurrencyPoolLimit,
                 }
@@ -94,20 +93,17 @@ function extractPieces(payload: ExternalTokenPayload) {
         return {
             piecesFilterType: payload.piecesFilterType,
             piecesTags: payload.piecesTags,
-            pieceSetExternalId: payload.pieceSet,
         }
     }
     if ('pieces' in payload) {
         return {
             piecesFilterType: payload.pieces?.filterType,
             piecesTags: payload.pieces?.tags,
-            pieceSetExternalId: payload.pieceSet,
         }
     }
     return {
         piecesFilterType: PiecesFilterType.NONE,
         piecesTags: [],
-        pieceSetExternalId: undefined,
     }
 }
 
@@ -137,7 +133,6 @@ function externalTokenPayload() {
             filterType: z.nativeEnum(PiecesFilterType),
             tags: z.array(z.string()).optional(),
         }).optional(),
-        pieceSet: z.string().optional(),
         concurrencyPoolKey: z.string().optional(),
         concurrencyPoolLimit: z.number().int().positive().optional(),
     })
@@ -166,7 +161,6 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
-    pieceSetExternalId?: string
     projectDisplayName?: string
     concurrencyPoolKey?: string
     concurrencyPoolLimit?: number
