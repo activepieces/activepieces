@@ -380,6 +380,7 @@ class ActivepiecesEmbedded {
     const configurationFinishedHandler = (event: MessageEvent<ActivepiecesClientConfigurationFinished>) => {
       if (event.data.type === ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED && event.source === targetWindow) {
         this._logger().log('Configuration finished')
+        window.removeEventListener('message', configurationFinishedHandler);
         if (callbackAfterConfigurationFinished) {
           callbackAfterConfigurationFinished();
         }
@@ -728,6 +729,7 @@ class ActivepiecesEmbedded {
       }
       const checker = setInterval(() => {
         if (checkCounter >= this._MAX_CONTAINER_CHECK_COUNT) {
+          clearInterval(checker);
           this._logger().error(errorMessage);
           reject(errorMessage);
           return;
