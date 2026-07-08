@@ -1,4 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
+import { checkboxProcessor } from './checkbox'
 import { dateTimeProcessor } from './date-time'
 import { fileProcessor } from './file'
 import { jsonProcessor } from './json'
@@ -16,4 +17,5 @@ export const processors: Partial<Record<PropertyType, ProcessorFn>> = {
     SECRET_TEXT: textProcessor,
     DATE_TIME: dateTimeProcessor,
     FILE: fileProcessor,
+    CHECKBOX: checkboxProcessor,
 }
