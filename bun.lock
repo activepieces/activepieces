@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -358,7 +357,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -403,7 +402,11 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
+<<<<<<< HEAD
       "version": "0.113.0",
+=======
+      "version": "0.113.1",
+>>>>>>> upstream/main
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -5297,7 +5300,7 @@
     },
     "packages/pieces/community/linear": {
       "name": "@activepieces/piece-linear",
-      "version": "0.4.3",
+      "version": "0.4.4",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7327,6 +7330,16 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/produktly": {
+      "name": "@activepieces/piece-produktly",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/promotekit": {
@@ -12191,6 +12204,8 @@
     "@activepieces/piece-presentation": ["@activepieces/piece-presentation@workspace:packages/pieces/community/presentation"],
 
     "@activepieces/piece-productboard": ["@activepieces/piece-productboard@workspace:packages/pieces/community/productboard"],
+
+    "@activepieces/piece-produktly": ["@activepieces/piece-produktly@workspace:packages/pieces/community/produktly"],
 
     "@activepieces/piece-promotekit": ["@activepieces/piece-promotekit@workspace:packages/pieces/community/promotekit"],
 
