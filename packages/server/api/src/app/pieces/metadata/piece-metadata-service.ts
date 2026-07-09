@@ -457,9 +457,10 @@ export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string):
         .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
         .getRawMany<PieceKey>()
 
-    const compatibleKeys = allKeys.filter((piece) => !RENAMED_PIECE_NAMES.has(piece.name) && isSupportedRelease(currentRelease, piece))
+    const compatibleKeys = allKeys.filter((piece) => isSupportedRelease(currentRelease, piece))
     const latestIds = pickLatestVersionIds(compatibleKeys)
-    return latestIds.length > 0 ? pieceRepos().find({ where: { id: In(latestIds) } }) : []
+    const latestPieces = latestIds.length > 0 ? await pieceRepos().find({ where: { id: In(latestIds) } }) : []
+    return markDeprecatedRenamedPieces(latestPieces)
 }
 
 function pickLatestVersionIds(pieces: PieceKey[]): string[] {
@@ -475,18 +476,30 @@ function pickLatestVersionIds(pieces: PieceKey[]): string[] {
 }
 
 function translatePieces(pieces: PieceMetadataSchema[], locale: LocalesEnum): PieceMetadataSchema[] {
-    return pieces.map((piece) => {
-        const translated = locale === LocalesEnum.ENGLISH
+    const translated = pieces.map((piece) => {
+        const translatedPiece = locale === LocalesEnum.ENGLISH
             ? { ...piece }
             : pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
-        translated.i18n = undefined
-        return translated
+        translatedPiece.i18n = undefined
+        return translatedPiece
+    })
+    return markDeprecatedRenamedPieces(translated)
+}
+
+function markDeprecatedRenamedPieces(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
+    return pieces.map((piece) => {
+        if (!DEPRECATED_RENAMED_PIECES.has(piece.name) || piece.displayName.endsWith(DEPRECATED_DISPLAY_NAME_SUFFIX)) {
+            return piece
+        }
+        return { ...piece, displayName: `${piece.displayName}${DEPRECATED_DISPLAY_NAME_SUFFIX}` }
     })
 }
 
-const RENAMED_PIECE_NAMES = new Set([
+const DEPRECATED_RENAMED_PIECES = new Set([
     '@activepieces/piece-aws-bedrock',
 ])
+
+const DEPRECATED_DISPLAY_NAME_SUFFIX = ' (Deprecated)'
 
 const inflightFetches = new Map<string, Promise<unknown>>()
 
