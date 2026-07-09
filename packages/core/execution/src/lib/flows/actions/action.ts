@@ -288,7 +288,7 @@ export type RouterActionSettings = z.infer<typeof RouterActionSettings>
 // Union of all actions
 
 export const FlowAction: z.ZodType<FlowAction> = z.lazy(() =>
-    z.union([
+    z.discriminatedUnion('type', [
         CodeActionSchema.extend({
             nextAction: FlowAction.optional(),
             continueOnFailureBranches: ContinueOnFailureBranches.optional(),
