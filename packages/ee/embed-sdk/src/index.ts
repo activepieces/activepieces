@@ -154,6 +154,7 @@ type EmbeddingParam = {
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
+  initialRoute?: string;
 }
 type ConfigureParams = {
   instanceUrl: string;
@@ -187,12 +188,17 @@ class ActivepiecesEmbedded {
     projectId:string
   };
   _embeddingState?: EmbeddingParam;
+  _pendingNavigationRoutes: string[] = [];
+  _isConfigured = false;
+  _dashboardAndBuilderIframe?: IframeWithWindow;
+  _cleanupDashboardListeners?: () => void;
   configure({
     jwtToken,
     instanceUrl,
     embedding,
     prefix,
   }: ConfigureParams) {
+    this._tearDownDashboardIframe();
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
     this._jwtToken = jwtToken;
     this._prefix = this._removeTrailingSlashes(this._prependForwardSlashToRoute(prefix ?? '/'));
@@ -219,16 +225,22 @@ class ActivepiecesEmbedded {
         method: () => {
           const iframeContainer = document.querySelector(containerSelector);
           if (iframeContainer) {
-            const iframeWindow = this.connectToEmbed({
+            const iframe = this.connectToEmbed({
               iframeContainer,
               callbackAfterConfigurationFinished: () => {
                 resolve({ status: "success" });
               },
-              initialRoute: '/'
-            }).contentWindow;
+              initialRoute: this._embeddingState?.initialRoute ?? '/'
+            });
+            const iframeWindow = iframe.contentWindow;
+            this._dashboardAndBuilderIframe = iframe;
             this._dashboardAndBuilderIframeWindow = iframeWindow;
-            this._checkForClientRouteChanges(iframeWindow);
-            this._checkForBuilderHomeButtonClicked(iframeWindow);
+            const cleanupRouteChanges = this._checkForClientRouteChanges(iframeWindow);
+            const cleanupHomeButton = this._checkForBuilderHomeButtonClicked(iframeWindow);
+            this._cleanupDashboardListeners = () => {
+              cleanupRouteChanges();
+              cleanupHomeButton();
+            };
           }
           else {
             reject({
@@ -305,6 +317,11 @@ class ActivepiecesEmbedded {
     const configurationFinishedHandler = (event: MessageEvent<ActivepiecesClientConfigurationFinished>) => {
       if (event.data.type === ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED && event.source === targetWindow) {
         this._logger().log('Configuration finished')
+        this._isConfigured = true;
+        for (const route of this._pendingNavigationRoutes) {
+          this._postNavigateEvent(route);
+        }
+        this._pendingNavigationRoutes = [];
         if (callbackAfterConfigurationFinished) {
           callbackAfterConfigurationFinished();
         }
@@ -405,46 +422,60 @@ class ActivepiecesEmbedded {
 
 
   navigate({ route }: { route: string }) {
-    if (!this._dashboardAndBuilderIframeWindow) {
-      this._logger().error('dashboard iframe not found');
+    const normalizedRoute = this._prependForwardSlashToRoute(route);
+    if (!this._dashboardAndBuilderIframeWindow || !this._isConfigured) {
+      this._pendingNavigationRoutes.push(normalizedRoute);
       return;
     }
+    this._postNavigateEvent(normalizedRoute);
+  }
+
+  private _postNavigateEvent(route: string) {
     const event: ActivepiecesVendorRouteChanged = {
       type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-      data: {
-        vendorRoute: this._prependForwardSlashToRoute(route),
-      },
+      data: { vendorRoute: route },
     };
-    this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
+    this._dashboardAndBuilderIframeWindow!.postMessage(event, '*');
+  }
+
+  private _tearDownDashboardIframe() {
+    if (this._dashboardAndBuilderIframe) {
+      this._dashboardAndBuilderIframe.remove();
+      this._dashboardAndBuilderIframe = undefined;
+      this._dashboardAndBuilderIframeWindow = undefined;
+    }
+    this._cleanupDashboardListeners?.();
+    this._cleanupDashboardListeners = undefined;
+    this._isConfigured = false;
+    this._pendingNavigationRoutes = [];
   }
 
   private _prependForwardSlashToRoute(route: string) {
     return route.startsWith('/') ? route : `/${route}`;
   }
-  private _checkForClientRouteChanges = (source: Window) => {
-    window.addEventListener(
-      'message',
-      (event: MessageEvent<ActivepiecesClientRouteChanged>) => {
-        if (
-          event.data.type ===
-          ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
-          event.source === source && 
-          this._embeddingState?.navigation?.handler         
-        ) {
-          const routeWithPrefix =  this._prefix + this._prependForwardSlashToRoute(event.data.data.route);
-          this._embeddingState.navigation.handler({ route: routeWithPrefix });
-          return;
-        }
+  private _checkForClientRouteChanges = (source: Window): (() => void) => {
+    const handler = (event: MessageEvent<ActivepiecesClientRouteChanged>) => {
+      if (
+        event.data.type === ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
+        event.source === source &&
+        this._embeddingState?.navigation?.handler
+      ) {
+        const routeWithPrefix = this._prefix + this._prependForwardSlashToRoute(event.data.data.route);
+        this._embeddingState.navigation.handler({ route: routeWithPrefix });
       }
-    );
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
   };
 
-  private _checkForBuilderHomeButtonClicked = (source: Window) => {
-    window.addEventListener('message', (event: MessageEvent<ActivepiecesBuilderHomeButtonClicked>) => {
+  private _checkForBuilderHomeButtonClicked = (source: Window): (() => void) => {
+    const handler = (event: MessageEvent<ActivepiecesBuilderHomeButtonClicked>) => {
       if (event.data.type === ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED && event.source === source) {
         this._embeddingState?.builder?.homeButtonClickedHandler?.(event.data.data);
       }
-    });
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
   }
 
   private _extractRouteAfterPrefix(vendorUrl: string, parentOriginWithPrefix: string) {
