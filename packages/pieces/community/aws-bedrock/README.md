@@ -1,5 +1,5 @@
-# pieces-amazon-bedrock
+# pieces-aws-bedrock
 
 ## Building
 
-Run `turbo run build --filter=@activepieces/piece-amazon-bedrock` to build the library.
+Run `turbo run build --filter=@activepieces/piece-aws-bedrock` to build the library.
