@@ -112,3 +112,9 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 **Endpoints** (`platform-project-controller.ts`):
 - `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` accepts `workerGroupId` (validated against `^[a-z0-9_-]+$`, applied in `platformProjectService.update()` only when `platform_plan.workerGroupsEnabled` is on).
 - `GET /v1/projects/worker-groups` — platform-admin only; returns `{ groups: [{ label, slots }], sharedSlots }` from online project-scope workers (those started with `AP_PROJECT_WORKER=true`) via `machineService.listProjectWorkerGroups()` for the assignment UI; returns 402 `FEATURE_DISABLED` when `workerGroupsEnabled` is off.
+
+`platformProjectService.hardDeletePersonalProjectForUser({ userId, platformId })` — synchronously hard-deletes a user's personal project (runs flow side-effect cleanup, removes flows, connections, and project row). Called by `userService.delete()` to avoid an FK constraint violation (`fk_project_owner_id`) that occurs when the project row still references the user. Delegates to the shared `hardDeleteProject()` helper.
+
+`platformProjectService.deletePersonalProjectForUser({ userId, platformId })` — soft-deletes a user's personal project and queues an async `HARD_DELETE_PROJECT` job. Used by `userService.removeFromPlatform()` where the user row is not deleted.
+
+`hardDeleteProject({ projectId, platformId, log, skipFlowIds? })` — exported module-level helper. Runs preDelete side effects on all flows (skipping `skipFlowIds` for flows already pre-deleted), batch-deletes flow data, deletes project connections and project row in a transaction, and invalidates the flow execution cache. Used by both `hardDeletePersonalProjectForUser` and `platformProjectBackgroundJobs.hardDeleteProjectHandler`.

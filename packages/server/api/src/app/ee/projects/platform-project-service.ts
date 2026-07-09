@@ -219,25 +219,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         if (isNil(personalProject)) {
             return
         }
-        const allFlows = await flowRepo().find({ where: { projectId: personalProject.id } })
-        for (const flow of allFlows) {
-            if (await flowRepo().existsBy({ id: flow.id })) {
-                await flowSideEffects(log).preDelete({ flowToDelete: flow })
-            }
-        }
-        const flowIds = allFlows.map((flow) => flow.id)
-        for (const flowId of flowIds) {
-            await batchDeleteByFlowId(flowId)
-            await flowRepo().delete({ id: flowId })
-        }
-        await transaction(async (entityManager) => {
-            await appConnectionsRepo(entityManager).delete({
-                scope: AppConnectionScope.PROJECT,
-                projectIds: ArrayContains([personalProject.id]),
-            })
-            await projectRepo(entityManager).delete({ id: personalProject.id, platformId })
-        })
-        await flowExecutionCache(log).invalidate(...flowIds)
+        await hardDeleteProject({ projectId: personalProject.id, platformId, log })
     },
 
     async deletePersonalProjectForUser({ userId, platformId }: DeletePersonalProjectForUserParams): Promise<void> {
@@ -286,6 +268,31 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+export async function hardDeleteProject({ projectId, platformId, log, skipFlowIds = [] }: HardDeleteProjectParams): Promise<void> {
+    const allFlows = await flowRepo().find({ where: { projectId } })
+    for (const flow of allFlows) {
+        if (skipFlowIds.includes(flow.id)) {
+            continue
+        }
+        if (await flowRepo().existsBy({ id: flow.id })) {
+            await flowSideEffects(log).preDelete({ flowToDelete: flow })
+        }
+    }
+    const flowIds = allFlows.map((flow) => flow.id)
+    for (const flowId of flowIds) {
+        await batchDeleteByFlowId(flowId)
+        await flowRepo().delete({ id: flowId })
+    }
+    await transaction(async (entityManager) => {
+        await appConnectionsRepo(entityManager).delete({
+            scope: AppConnectionScope.PROJECT,
+            projectIds: ArrayContains([projectId]),
+        })
+        await projectRepo(entityManager).delete({ id: projectId, platformId })
+    })
+    await flowExecutionCache(log).invalidate(...flowIds)
+}
 
 async function enrichProjects(
     projects: Project[],
@@ -407,4 +414,11 @@ type CreateProjectParams = {
 type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
+}
+
+type HardDeleteProjectParams = {
+    projectId: ProjectId
+    platformId: PlatformId
+    log: FastifyBaseLogger
+    skipFlowIds?: string[]
 }

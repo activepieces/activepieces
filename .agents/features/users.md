@@ -59,3 +59,9 @@ Manages user identity, platform membership, roles, and session security. A `User
 - `GET /v1/users/me` — get current user with identity info
 - `POST /v1/users/me` — update profile (firstName, lastName, profilePicture)
 - User CRUD managed via platform admin endpoints (EE): list users, update role/status, delete user
+
+## Delete Behavior
+
+`userService.delete({ id, platformId })` — hard-deletes a user. Before deleting the user row, it synchronously calls `platformProjectService.hardDeletePersonalProjectForUser()` which fully removes the personal project (flows, connections, project row) in-process. This avoids an FK constraint violation (`fk_project_owner_id`) that occurs if the project row still references the user at deletion time.
+
+`userService.removeFromPlatform({ id, platformId })` — removes a user from a platform without deleting the user row. Calls `platformProjectService.deletePersonalProjectForUser()` which soft-deletes the personal project and queues an async `HARD_DELETE_PROJECT` job for eventual cleanup.
