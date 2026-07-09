@@ -23,7 +23,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                     scheduleOptions: undefined,
                 }
             }
-            const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
+            const { flowId, flowVersionId, projectId, simulate, pieceTrigger, isRepublish } = params
 
             const platformId = await projectService(log).getPlatformId(projectId)
             const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_ENABLE>>>({
@@ -34,6 +34,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 platformId,
                 projectId,
                 test: simulate,
+                isRepublish,
             }, log)
 
             assertEngineResponseIsOk(engineHelperResponse, flowId, flowVersionId)
@@ -220,6 +221,7 @@ type EnableFlowTriggerParams = {
     projectId: string
     pieceTrigger: TriggerBase
     simulate: boolean
+    isRepublish?: boolean
 }
 
 type DisableFlowTriggerParams = EnableFlowTriggerParams & {

@@ -81,9 +81,9 @@ export const pollingHelper = {
           lastEpochMilliSeconds
         );
         await store.put('lastPoll', newLastEpochMilliSeconds);
-        return items
-          .filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds)
-          .map((item) => item.data);
+        const newItems = items.filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds);
+        console.log(`[pollingHelper.poll] TIMEBASED lastPoll=${lastEpochMilliSeconds} (${logTime(lastEpochMilliSeconds)}) -> newLastPoll=${newLastEpochMilliSeconds} (${logTime(newLastEpochMilliSeconds)}) fetched=${items.length} new=${newItems.length}`);
+        return newItems.map((item) => item.data);
       }
       case DedupeStrategy.LAST_ITEM: {
         const lastItemId = await store.get<unknown>('lastItem');
@@ -123,14 +123,25 @@ export const pollingHelper = {
       auth,
       propsValue,
       server,
-    }: { store: Store; auth: AuthValue; propsValue: PropsValue; server?: ServerContext }
+      isRepublish,
+    }: { store: Store; auth: AuthValue; propsValue: PropsValue; server?: ServerContext; isRepublish?: boolean }
   ): Promise<void> {
     switch (polling.strategy) {
       case DedupeStrategy.TIMEBASED: {
-        await store.put('lastPoll', Date.now());
+        const existingLastPoll = await store.get<number>('lastPoll');
+        if (isRepublish && !isNil(existingLastPoll)) {
+          console.log(`[pollingHelper.onEnable] TIMEBASED isRepublish=true, preserving lastPoll=${existingLastPoll} (${logTime(existingLastPoll)})`);
+          break;
+        }
+        const now = Date.now();
+        await store.put('lastPoll', now);
+        console.log(`[pollingHelper.onEnable] TIMEBASED isRepublish=${isRepublish ?? false}, existingLastPoll=${existingLastPoll ?? 'none'}, reset lastPoll=${now} (${logTime(now)})`);
         break;
       }
       case DedupeStrategy.LAST_ITEM: {
+        if (isRepublish && !isNil(await store.get('lastItem'))) {
+          break;
+        }
         const items = await polling.items({
           store,
           auth,
@@ -195,6 +206,10 @@ export const pollingHelper = {
     return getFirstFiveOrAll(items.map((item) => item.data));
   },
 };
+
+function logTime(epochMs: number) {
+  return new Date(epochMs).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
+}
 
 function getFirstFiveOrAll(array: unknown[]) {
   if (array.length <= 5) {

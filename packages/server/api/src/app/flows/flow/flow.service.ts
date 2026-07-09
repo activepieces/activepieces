@@ -318,6 +318,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         operation,
     }: UpdateParams): Promise<PopulatedFlow> {
 
+        let isRepublish = false
         if (operation.type === FlowOperationType.LOCK_AND_PUBLISH || operation.type === FlowOperationType.CHANGE_STATUS) {
             const flow = await this.getOneOrThrow({
                 id,
@@ -331,6 +332,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
+            isRepublish = operation.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)
         }
 
         switch (operation.type) {
@@ -341,7 +343,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     projectId,
                     platformId,
                 })
-                await applyStatusChange({ id, projectId, newStatus: operation.request.status ?? FlowStatus.ENABLED }, log)
+                await applyStatusChange({ id, projectId, newStatus: operation.request.status ?? FlowStatus.ENABLED, isRepublish }, log)
                 break
             }
 
@@ -662,6 +664,7 @@ async function applyStatusChange(params: {
     id: FlowId
     projectId: ProjectId
     newStatus: FlowStatus
+    isRepublish?: boolean
 }, log: FastifyBaseLogger): Promise<void> {
     const triggerTimeout = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
     await distributedLock(log).runExclusive({
@@ -688,6 +691,7 @@ async function applyStatusChange(params: {
                 publishedFlowVersion,
                 newStatus: params.newStatus,
                 templateId: flowToUpdate.templateId ?? undefined,
+                isRepublish: params.isRepublish ?? false,
             })
 
             await flowRepo().save({

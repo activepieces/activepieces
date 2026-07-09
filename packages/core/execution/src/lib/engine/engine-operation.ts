@@ -136,6 +136,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     triggerPayload?: JobPayload
     appWebhookUrl?: string
     webhookSecret?: string | Record<string, string>
+    isRepublish?: boolean
 }
 
 

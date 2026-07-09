@@ -86,6 +86,7 @@ type PollingTriggerHookContext<
 > = BaseContext<PieceAuth, TriggerProps> & {
   server: ServerContext;
   setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
+  isRepublish?: boolean;
 };
 
 type WebhookTriggerHookContext<
