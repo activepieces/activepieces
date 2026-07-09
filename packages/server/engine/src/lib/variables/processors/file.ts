@@ -1,12 +1,17 @@
 import { isBase64, isNil, isString } from '@activepieces/core-utils'
-import { ApFile } from '@activepieces/pieces-framework'
+import { ApFile, ApFileRef, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { ProcessorFn } from './types'
 
-export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
+export const fileProcessor: ProcessorFn = async (property, urlOrBase64) => {
     if (isNil(urlOrBase64) || !isString(urlOrBase64)) {
         return null
     }
     try {
+        if (isStreamFileProperty(property)) {
+            // Lazy by design: a File Reference carries the URL only — no bytes are
+            // fetched until the piece calls .stream() or .buffer().
+            return createFileRef(urlOrBase64)
+        }
         const file = handleBase64File(urlOrBase64)
         if (!isNil(file)) {
             return file
@@ -17,6 +22,21 @@ export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
         console.error(e)
         return null
     }
+}
+
+function isStreamFileProperty(property: PieceProperty): boolean {
+    return property.type === PropertyType.FILE && 'stream' in property && property.stream === true
+}
+
+function createFileRef(value: string): ApFileRef {
+    if (value.startsWith('data:')) {
+        const mimetype = value.slice('data:'.length, value.indexOf(';'))
+        const extension = mimeExtension(mimetype) ?? 'bin'
+        return new ApFileRef({ url: value, filename: `unknown.${extension}`, mimetype })
+    }
+    const lastSegment = new URL(value).pathname.split('/').pop()
+    const filename = !isNil(lastSegment) && lastSegment.includes('.') ? lastSegment : 'unknown'
+    return new ApFileRef({ url: value, filename })
 }
 
 function handleBase64File(propertyValue: string): ApFile | null {

@@ -11,7 +11,7 @@ import {
   StaticMultiSelectDropdownProperty,
 } from './dropdown/static-dropdown';
 import { DynamicProperties } from './dynamic-prop';
-import { FileProperty } from './file-property';
+import { FileProperty, FileRefProperty } from './file-property';
 import { JsonProperty } from './json-property';
 import { MarkDownProperty } from './markdown-property';
 import { MarkdownVariant } from '@activepieces/core-piece-types';
@@ -59,6 +59,7 @@ export type InputProperty =
   | DynamicProperties<boolean, PieceAuthProperty | PieceAuthProperty[] | undefined>
   | DateTimeProperty<boolean>
   | FileProperty<boolean>
+  | FileRefProperty<boolean>
   | CustomProperty<boolean>
   | ColorProperty<boolean>;
 
@@ -67,6 +68,24 @@ type Properties<T> = Omit<
   T,
   'valueSchema' | 'type' | 'defaultValidators' | 'defaultProcessors'
 >;
+
+// `stream: true` opts the property into pass-by-reference resolution: the piece
+// receives a lazy ApFileRef instead of an eagerly buffered ApFile.
+function createFileProperty<R extends boolean>(
+  request: Properties<FileRefProperty<R>> & { stream: true }
+): R extends true ? FileRefProperty<true> : FileRefProperty<false>;
+function createFileProperty<R extends boolean>(
+  request: Properties<FileProperty<R>>
+): R extends true ? FileProperty<true> : FileProperty<false>;
+function createFileProperty<R extends boolean>(
+  request: Properties<FileProperty<R>> | (Properties<FileRefProperty<R>> & { stream: true })
+): unknown {
+  return {
+    ...request,
+    valueSchema: undefined,
+    type: PropertyType.FILE,
+  };
+}
 
 export const Property = {
   ShortText<R extends boolean>(
@@ -228,15 +247,7 @@ export const Property = {
       ? DateTimeProperty<true>
       : DateTimeProperty<false>;
   },
-  File<R extends boolean>(
-    request: Properties<FileProperty<R>>
-  ): R extends true ? FileProperty<true> : FileProperty<false> {
-    return {
-      ...request,
-      valueSchema: undefined,
-      type: PropertyType.FILE,
-    } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
-  },
+  File: createFileProperty,
   Custom<R extends boolean>(
     request: Omit<Properties<CustomProperty<R>>, 'code'> & {
       /**

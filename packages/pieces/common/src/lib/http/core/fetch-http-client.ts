@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 import { HttpError } from './http-error';
@@ -72,7 +73,8 @@ export class FetchHttpClient extends BaseHttpClient {
 
     const successCeiling = followRedirects ? 300 : 400;
     if (response.status < 200 || response.status >= successCeiling) {
-      const errorBody = await parseResponseBody(response, responseType);
+      // An error body is small and useful as text — never surface it as a stream.
+      const errorBody = await parseResponseBody(response, responseType === 'stream' ? 'text' : responseType);
       const httpError = new HttpError(request.body, { status: response.status, responseBody: errorBody });
       console.error('[HttpClient#(sanitized error message)] Request failed:', httpError);
       throw httpError;
@@ -120,6 +122,8 @@ async function parseResponseBody(response: Response, responseType: ResponseType)
   switch (responseType) {
     case 'arraybuffer':
       return Buffer.from(await response.arrayBuffer());
+    case 'stream':
+      return toReadable(response);
     case 'blob':
       return await response.blob();
     case 'text':
@@ -183,6 +187,27 @@ function toHttpHeaders(headers: Headers): HttpHeaders {
     result[key] = value;
   });
   return result;
+}
+
+function toReadable(response: Response): Readable {
+  const body = response.body;
+  if (body === null) {
+    return Readable.from([]);
+  }
+  return Readable.from((async function* () {
+    const reader = body.getReader();
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) {
+          return;
+        }
+        yield value;
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  })());
 }
 
 function isNodeFormData(body: unknown): body is NodeFormData {

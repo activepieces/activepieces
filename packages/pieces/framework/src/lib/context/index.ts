@@ -277,6 +277,18 @@ export interface FilesService {
     fileName: string;
     data: Buffer;
   }): Promise<string>;
+  /**
+   * Streams a file to storage without buffering it in memory, returning its
+   * read URL. On installs without S3-compatible file storage this falls back
+   * to buffering the whole stream, capped at `AP_MAX_FILE_SIZE_MB`.
+   */
+  writeStream({
+    fileName,
+    stream,
+  }: {
+    fileName: string;
+    stream: AsyncIterable<Uint8Array> | ReadableStream<Uint8Array>;
+  }): Promise<string>;
 }
 
 export interface ConnectionsManager {

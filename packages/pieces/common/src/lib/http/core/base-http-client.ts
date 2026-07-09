@@ -1,3 +1,4 @@
+import type { Readable } from 'stream';
 import { Authentication } from '../../authentication';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 import type { HttpClient } from './http-client';
@@ -19,6 +20,21 @@ export abstract class BaseHttpClient implements HttpClient {
     RequestBody extends HttpMessageBody,
     ResponseBody extends HttpMessageBody
   >(request: HttpRequest<RequestBody>): Promise<HttpResponse<ResponseBody>>;
+
+  /**
+   * Sends the request and returns the response body as a Node Readable stream,
+   * so large downloads are never buffered in memory. Pairs with
+   * `context.files.writeStream`.
+   */
+  async stream<RequestBody extends HttpRequestBody>(
+    request: Omit<HttpRequest<RequestBody>, 'responseType'>
+  ): Promise<Readable> {
+    const response = await this.sendRequest<RequestBody, Readable>({
+      ...request,
+      responseType: 'stream',
+    });
+    return response.body;
+  }
 
   protected getUrl<RequestBody extends HttpMessageBody>(
     request: HttpRequest<RequestBody>

@@ -27,6 +27,10 @@ _Avoid_: table trigger
 A stored blob (S3 or DB) with type classification, optional compression, and expiry.
 _Avoid_: attachment, blob
 
+**File Reference**:
+A pass-by-reference handle to a stored File, carrying its read URL and metadata but no bytes; bytes are fetched on demand. What flow steps exchange instead of file contents.
+_Avoid_: file handle, file pointer, lazy file
+
 **Store Entry**:
 A key-value pair scoped to a project, used by pieces to persist state across flow runs.
 _Avoid_: kv store, project store
