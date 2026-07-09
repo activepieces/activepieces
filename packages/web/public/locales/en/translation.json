@@ -2117,5 +2117,6 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Some input values were too large to keep in the run logs and are shown as truncated. The step ran with the full values.": "Some input values were too large to keep in the run logs and are shown as truncated. The step ran with the full values."
 }
