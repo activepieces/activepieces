@@ -1,6 +1,7 @@
 import {
   Activity,
   BookOpen,
+  Braces,
   Code,
   Columns3,
   Copy,
@@ -97,6 +98,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   ap_load_guide: BookOpen,
   ap_generate_image: Image,
   ap_run_code: Code,
+  ap_run_tools: Braces,
   ap_fetch_url: Link,
   ap_scrape_url: Globe,
 };

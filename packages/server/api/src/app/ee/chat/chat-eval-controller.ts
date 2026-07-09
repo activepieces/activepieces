@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { ChatConversationStatus, ChatPromptOverride, LATEST_JOB_DATA_SCHEMA_VERSION, PersistedChatRole, SimulateChatRequest, WorkerJobType } from '@activepieces/shared'
+import { ChatConversationStatus, ChatPromptOverride, PersistedChatRole, SimulateChatRequest } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -8,8 +8,8 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
-import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
+import { chatJob } from './chat-job'
 import { chatService } from './chat-service'
 import { chatPrompt } from './prompt/chat-prompt'
 
@@ -59,10 +59,14 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         const platform = await platformService(log).getOneOrThrow(platformId)
         const evalUserId = platform.ownerId
 
+        // Carry the eval id prefix (Fix 3) so the stale-STREAMING sweeper skips this conversation — a
+        // resume would re-run it as a REAL (non-dry) turn. simulate polls the row directly and owns its
+        // own timeout, so it needs no recovery. turn/start already prefixes; this makes both uniform.
         const conversation = await chatService(log).createConversation({
             platformId,
             userId: evalUserId,
             request: {},
+            id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21),
         })
 
         // Replay the turns sequentially in one conversation: each turn's history accumulates,
@@ -72,22 +76,17 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         let priorAssistantTurns = 0
         for (const turn of turns) {
             lastRunId = apId()
-            await jobQueue(log).add({
-                id: apId(),
-                type: JobType.ONE_TIME,
-                data: {
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
-                    conversationId: conversation.id,
-                    runId: lastRunId,
-                    projectId: null,
-                    platformId,
-                    userId: evalUserId,
-                    userMessage: turn,
-                    modelName: null,
-                    promptOverride,
-                    dryRun: true,
-                },
+            await chatJob.enqueueChatAgentJob({
+                conversationId: conversation.id,
+                runId: lastRunId,
+                projectId: null,
+                platformId,
+                userId: evalUserId,
+                userMessage: turn,
+                modelName: null,
+                promptOverride,
+                dryRun: true,
+                log,
             })
 
             settled = await waitForSimulationResult({ conversationId: conversation.id, platformId, userId: evalUserId, priorAssistantTurns, log })
@@ -148,25 +147,20 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         }
 
         const runId = apId()
-        await jobQueue(log).add({
-            id: apId(),
-            type: JobType.ONE_TIME,
-            data: {
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
-                conversationId: convId,
-                runId,
-                projectId: null,
-                platformId: evalPlatformId,
-                userId: evalUserId,
-                userMessage,
-                modelName: null,
-                promptOverride,
-                // discovery-only still needs the real tool set (dry-run strips MCP piece tools
-                // entirely), so it runs non-dry but with execution neutralized in the worker.
-                dryRun: executeTools !== true && discoveryOnly !== true,
-                discoveryOnly: discoveryOnly === true,
-            },
+        await chatJob.enqueueChatAgentJob({
+            conversationId: convId,
+            runId,
+            projectId: null,
+            platformId: evalPlatformId,
+            userId: evalUserId,
+            userMessage,
+            modelName: null,
+            promptOverride,
+            // discovery-only still needs the real tool set (dry-run strips MCP piece tools
+            // entirely), so it runs non-dry but with execution neutralized in the worker.
+            dryRun: executeTools !== true && discoveryOnly !== true,
+            discoveryOnly: discoveryOnly === true,
+            log,
         })
 
         return reply.status(StatusCodes.OK).send({ conversationId: convId, runId, priorAssistantTurns })
