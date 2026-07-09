@@ -190,4 +190,11 @@ jobs:
 
       - name: Run tool-search integration tests on Postgres
         working-directory: packages/server/api
-        run: npx vitest run test/integration/ce/tool-search --bail 1 --passWithNoTests=false
+        # --no-file-parallelism: these files all point at the one shared `activepieces`
+        # service DB and each runs migrations on `DataSource.initialize()`. Vitest's default
+        # forked parallelism runs those migration passes concurrently, which collide on
+        # shared catalog objects (the migrations table, en_natural collation, added columns)
+        # and fail non-deterministically. Serial execution migrates once; later files skip
+        # via the migrations table. (PGLITE gives each file its own DB, so the default suite
+        # is unaffected — only this shared-Postgres job needs serializing.)
+        run: npx vitest run test/integration/ce/tool-search --bail 1 --passWithNoTests=false --no-file-parallelism

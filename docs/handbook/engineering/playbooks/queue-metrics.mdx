@@ -1,0 +1,39 @@
+---
+title: 'BullMQ Prometheus Metrics'
+icon: 'chart-line'
+---
+
+The app exposes per-queue BullMQ job counts in Prometheus text format so a scraper can track queue depth by state (`waiting`, `active`, `completed`, `failed`, `delayed`, `paused`).
+
+## Endpoint
+
+```
+GET /v1/admin/queues/metrics/:queueName
+```
+
+- `:queueName` is optional and defaults to `workerJobs` (the shared queue). Pass a worker-group queue name (e.g. `platformJobs:<groupId>`) to scrape a dedicated queue.
+- Auth: internal admin endpoint — send the `api-key` header set to `AP_API_KEY` (the same key used by the other `/v1/admin/*` routes), **not** a platform bearer token.
+- Returns `text/plain`. Responds `404` if the queue has not been initialized on this app instance.
+
+## Example
+
+```bash
+curl -H "api-key: $AP_API_KEY" \
+  https://cloud.activepieces.com/api/v1/admin/queues/metrics/workerJobs
+```
+
+```
+# HELP bullmq_job_count Number of jobs in the queue by state
+# TYPE bullmq_job_count gauge
+bullmq_job_count{queue="workerJobs", state="waiting"} 0
+bullmq_job_count{queue="workerJobs", state="active"} 3
+bullmq_job_count{queue="workerJobs", state="completed"} 0
+bullmq_job_count{queue="workerJobs", state="failed"} 1
+bullmq_job_count{queue="workerJobs", state="delayed"} 0
+```
+
+<Note>
+Prometheus does not send arbitrary request headers, and this endpoint expects the `api-key` header (not `Authorization`). Point Prometheus at a reverse proxy that injects `api-key: $AP_API_KEY`, or scrape it from a sidecar that adds the header.
+</Note>
+
+Metrics come from BullMQ's built-in `Queue.exportPrometheusMetrics()`. Each queue only reports the states it holds on the app instance being scraped; in a multi-worker-group deployment, scrape each group's queue by name.
