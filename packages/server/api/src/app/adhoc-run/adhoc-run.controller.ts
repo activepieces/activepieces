@@ -1,5 +1,5 @@
 import { ApId, OptionalArrayFromQuery, OptionalBooleanFromQuery, Permission, SeekPage } from '@activepieces/core-utils'
-import { AdhocRunSource, BulkArchiveAdhocRunsRequestBody, FlowRunStatus, PopulatedAdhocRun, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { AdhocRunListItem, AdhocRunSource, BulkArchiveAdhocRunsRequestBody, FlowRunStatus, PopulatedAdhocRun, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -70,7 +70,7 @@ const ListRequest = {
             includeArchived: OptionalBooleanFromQuery,
         }),
         response: {
-            [StatusCodes.OK]: SeekPage(PopulatedAdhocRun),
+            [StatusCodes.OK]: SeekPage(AdhocRunListItem),
         },
     },
 }

@@ -1,9 +1,9 @@
 import { Permission } from '@activepieces/core-utils';
 import {
+  AdhocRunListItem,
   AdhocRunSource,
   FlowRunStatus,
   isFlowRunStateTerminal,
-  PopulatedAdhocRun,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -48,9 +48,7 @@ const ADHOC_RUN_STATUSES = [
 export const AdhocRunsTable = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
-  const [selectedRun, setSelectedRun] = useState<PopulatedAdhocRun | null>(
-    null,
-  );
+  const [selectedRun, setSelectedRun] = useState<AdhocRunListItem | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<SelectedRow[]>([]);
   const [selectedAll, setSelectedAll] = useState(false);
@@ -108,7 +106,7 @@ export const AdhocRunsTable = () => {
       });
     },
     refetchInterval: (query) => {
-      const allRuns = query.state.data?.data as PopulatedAdhocRun[] | undefined;
+      const allRuns = query.state.data?.data as AdhocRunListItem[] | undefined;
       const hasNonTerminal = allRuns?.some(
         (run) =>
           !isFlowRunStateTerminal({
@@ -222,7 +220,7 @@ export const AdhocRunsTable = () => {
     },
   });
 
-  const bulkActions: BulkAction<PopulatedAdhocRun>[] = useMemo(
+  const bulkActions: BulkAction<AdhocRunListItem>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => {

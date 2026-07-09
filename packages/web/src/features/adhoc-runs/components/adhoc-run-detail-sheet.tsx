@@ -1,11 +1,12 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   AdhocRunKind,
+  AdhocRunListItem,
   FlowActionType,
   FlowRunStatus,
   isFailedState,
-  PopulatedAdhocRun,
 } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Fragment } from 'react';
 
@@ -25,6 +26,8 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { CORE_STEP_METADATA } from '@/features/pieces/utils/step-utils';
 import { formatUtils } from '@/lib/format-utils';
 
+import { adhocRunsApi } from '../api/adhoc-runs-api';
+
 import { formatSource } from './adhoc-runs-columns';
 
 export const AdhocRunDetailSheet = ({
@@ -32,6 +35,14 @@ export const AdhocRunDetailSheet = ({
   open,
   onOpenChange,
 }: AdhocRunDetailSheetProps) => {
+  // The list row carries only the summary; input/output/logs are offloaded to the
+  // file table and hydrated by fetching the single run.
+  const { data: fullRun } = useQuery({
+    queryKey: ['adhoc-run-detail', run?.id],
+    queryFn: () => adhocRunsApi.get({ id: run!.id }),
+    enabled: open && !isNil(run?.id),
+    staleTime: 0,
+  });
   const { variant, Icon } = flowRunUtils.getStatusIcon(
     run?.status ?? FlowRunStatus.RUNNING,
   );
@@ -104,7 +115,7 @@ export const AdhocRunDetailSheet = ({
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               {t('Input')}
             </p>
-            <SimpleJsonViewer data={run?.input ?? {}} />
+            <SimpleJsonViewer data={fullRun?.input ?? {}} />
           </div>
 
           {failed && !isNil(run?.errorMessage) && (
@@ -121,19 +132,19 @@ export const AdhocRunDetailSheet = ({
             </>
           )}
 
-          {!isNil(run?.output) && (
+          {!isNil(fullRun?.output) && (
             <>
               <Separator />
               <div className="px-6 py-5 flex flex-col gap-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   {t('Output')}
                 </p>
-                <SimpleJsonViewer data={run.output} />
+                <SimpleJsonViewer data={fullRun.output} />
               </div>
             </>
           )}
 
-          {!isNil(run?.logs) && (
+          {!isNil(fullRun?.logs) && (
             <>
               <Separator />
               <div className="px-6 py-5 flex flex-col gap-4">
@@ -141,7 +152,7 @@ export const AdhocRunDetailSheet = ({
                   {t('Logs')}
                 </p>
                 <pre className="whitespace-pre-wrap break-all text-sm text-muted-foreground">
-                  {run.logs}
+                  {fullRun.logs}
                 </pre>
               </div>
             </>
@@ -156,7 +167,7 @@ function buildTitle({
   run,
   pieceDisplayName,
   actionDisplayName,
-}: BuildParams & { run: PopulatedAdhocRun | null }): string {
+}: BuildParams & { run: AdhocRunListItem | null }): string {
   if (isNil(run)) {
     return t('Run Details');
   }
@@ -170,7 +181,7 @@ function buildOverviewRows({
   run,
   pieceDisplayName,
   actionDisplayName,
-}: BuildParams & { run: PopulatedAdhocRun }): OverviewRow[] {
+}: BuildParams & { run: AdhocRunListItem }): OverviewRow[] {
   const duration =
     run.startTime && run.finishTime
       ? formatUtils.formatDuration(
@@ -215,7 +226,7 @@ function buildOverviewRows({
 }
 
 type AdhocRunDetailSheetProps = {
-  run: PopulatedAdhocRun | null;
+  run: AdhocRunListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };

@@ -43,6 +43,11 @@ export const PopulatedAdhocRun = AdhocRun.extend({
     userImageUrl: Nullable(z.string()),
 })
 
+// The heavy fields (input/output/logs) are offloaded to the file table and never
+// returned in list responses; the list carries only the summary. Fetch a single run
+// to hydrate the payload from its file.
+export const AdhocRunListItem = PopulatedAdhocRun.omit({ input: true, output: true, logs: true })
+
 export const BulkArchiveAdhocRunsRequestBody = z.object({
     projectId: ApId,
     adhocRunIds: z.array(ApId).optional(),
@@ -56,4 +61,5 @@ export const BulkArchiveAdhocRunsRequestBody = z.object({
 
 export type AdhocRun = z.infer<typeof AdhocRun>
 export type PopulatedAdhocRun = z.infer<typeof PopulatedAdhocRun>
+export type AdhocRunListItem = z.infer<typeof AdhocRunListItem>
 export type BulkArchiveAdhocRunsRequestBody = z.infer<typeof BulkArchiveAdhocRunsRequestBody>

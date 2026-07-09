@@ -28,6 +28,7 @@ export enum JobStatus {
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
     RUNS_METADATA = 'runsMetadata',
+    ADHOC_RUN_PERSIST = 'adhocRunPersist',
 }
 
 export const getPlatformGroupQueueName = (workerGroupId: string): string => {

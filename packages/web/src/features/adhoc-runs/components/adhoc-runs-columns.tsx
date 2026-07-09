@@ -1,11 +1,11 @@
 import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   AdhocRunKind,
+  AdhocRunListItem,
   AdhocRunSource,
   FlowActionType,
   FlowRunStatus,
   isFailedState,
-  PopulatedAdhocRun,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -47,7 +47,7 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { CORE_STEP_METADATA } from '@/features/pieces/utils/step-utils';
 import { formatUtils } from '@/lib/format-utils';
 
-function PieceCell({ run }: { run: PopulatedAdhocRun }) {
+function PieceCell({ run }: { run: AdhocRunListItem }) {
   const { kind, actionName, pieceName, archivedAt } = run;
   const { pieceModel } = piecesHooks.usePiece({
     name: pieceName ?? '',
@@ -117,7 +117,7 @@ export const adhocRunsColumns = ({
   setExcludedRows,
   data,
 }: AdhocRunsColumnsProps): ColumnDef<
-  RowDataWithActions<PopulatedAdhocRun>
+  RowDataWithActions<AdhocRunListItem>
 >[] => [
   {
     id: 'select',
@@ -404,7 +404,7 @@ type SelectedRow = {
 };
 
 type AdhocRunsColumnsProps = {
-  data: SeekPage<PopulatedAdhocRun> | undefined;
+  data: SeekPage<AdhocRunListItem> | undefined;
   selectedRows: SelectedRow[];
   setSelectedRows: Dispatch<SetStateAction<SelectedRow[]>>;
   selectedAll: boolean;

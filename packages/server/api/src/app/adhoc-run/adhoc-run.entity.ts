@@ -58,14 +58,17 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
         input: {
             type: 'jsonb',
             nullable: true,
+            select: false,
         },
         output: {
             type: 'jsonb',
             nullable: true,
+            select: false,
         },
         logs: {
             type: 'text',
             nullable: true,
+            select: false,
         },
         errorMessage: {
             type: 'text',

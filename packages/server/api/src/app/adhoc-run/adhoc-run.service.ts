@@ -1,12 +1,14 @@
-import { apId, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
+import { apId, isNil, tryCatch, unique } from '@activepieces/core-utils'
 import {
+    ActivepiecesError,
     AdhocRun,
     AdhocRunKind,
+    AdhocRunListItem,
     AdhocRunSource,
     CodeAction,
     Cursor,
-    EngineResponseStatus,
-    ExecuteActionResponse,
+    ErrorCode,
+    FileType,
     FlowActionType,
     FlowRunStatus,
     PieceAction,
@@ -19,6 +21,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, In, IsNull, LessThan, Not, SelectQueryBuilder } from 'typeorm'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { repoFactory } from '../core/db/repo-factory'
+import { fileService } from '../file/file.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { Order } from '../helper/pagination/paginator'
@@ -27,49 +30,13 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { getPiecePackageWithoutArchive } from '../pieces/metadata/piece-metadata-service'
 import { UserEntity } from '../user/user-entity'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
+import { adhocRunOutcome, EngineActionResponse, EngineResult } from './adhoc-run-outcome'
+import { adhocRunPersistQueue } from './adhoc-run-persist-queue'
 import { AdhocRunEntity } from './adhoc-run.entity'
 
 const adhocRunRepo = repoFactory<AdhocRun>(AdhocRunEntity)
 const appConnectionRepo = repoFactory(AppConnectionEntity)
 const userRepo = repoFactory(UserEntity)
-
-type EngineActionResponse = {
-    status: EngineResponseStatus
-    response: ExecuteActionResponse
-    error?: string
-    logs?: string
-}
-
-function deriveStatus(engineResponse: EngineActionResponse): FlowRunStatus {
-    switch (engineResponse.status) {
-        case EngineResponseStatus.OK:
-            return engineResponse.response.success ? FlowRunStatus.SUCCEEDED : FlowRunStatus.FAILED
-        case EngineResponseStatus.TIMEOUT:
-            return FlowRunStatus.TIMEOUT
-        default:
-            return FlowRunStatus.INTERNAL_ERROR
-    }
-}
-
-function deriveErrorMessage(engineResponse: EngineActionResponse, status: FlowRunStatus): string | null {
-    if (status === FlowRunStatus.SUCCEEDED) {
-        return null
-    }
-    if (!isNil(engineResponse.response?.message)) {
-        return String(engineResponse.response.message)
-    }
-    if (!isNil(engineResponse.error)) {
-        return engineResponse.error
-    }
-    return null
-}
-
-function sanitizeValue(value: unknown): unknown {
-    if (isNil(value) || typeof value !== 'object') {
-        return value
-    }
-    return sanitizeObjectForPostgresql(value as Record<string, unknown>)
-}
 
 async function buildConnectionDisplayNames(params: { runs: AdhocRun[], projectId: string }): Promise<Map<string, string>> {
     const externalIds = unique(params.runs.map((run) => run.connectionExternalId).filter((id): id is string => !isNil(id)))
@@ -140,6 +107,32 @@ async function populateRuns(params: { runs: AdhocRun[], projectId: string }): Pr
     })
 }
 
+function parseAdhocRunPayload(raw: string): AdhocRunPayload {
+    return JSON.parse(raw)
+}
+
+async function hydratePayload(params: { run: AdhocRun, log: FastifyBaseLogger }): Promise<AdhocRun> {
+    const { run, log } = params
+    if (isNil(run.logsFileId)) {
+        return run
+    }
+    const file = await fileService(log).getDataOrUndefined({
+        projectId: run.projectId,
+        fileId: run.logsFileId,
+        type: FileType.ADHOC_RUN_LOG,
+    })
+    if (isNil(file)) {
+        return run
+    }
+    const payload = parseAdhocRunPayload(file.data.toString('utf-8'))
+    return {
+        ...run,
+        input: payload.input ?? null,
+        output: payload.output ?? null,
+        logs: payload.logs ?? null,
+    }
+}
+
 export const adhocRunService = (log: FastifyBaseLogger) => ({
     async run(params: RunParams): Promise<AdhocRun> {
         const { projectId, platformId, userId, source, step, connectionExternalId, conversationId } = params
@@ -152,11 +145,25 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
             })
             : undefined
 
-        const now = dayjs().toISOString()
-        const created = await adhocRunRepo().save({
+        const startTime = dayjs().toISOString()
+        const result = await tryCatch(() => userInteractionWatcher.submitAndWaitForResponse<EngineActionResponse>({
+            jobType: WorkerJobType.EXECUTE_ACTION,
+            projectId,
+            platformId,
+            step,
+            piece,
+        }, log))
+        const finishTime = dayjs().toISOString()
+
+        const engineResult: EngineResult = result.error
+            ? { kind: 'error', error: result.error }
+            : { kind: 'response', value: result.data }
+        const outcome = adhocRunOutcome.derive({ engineResult, input: step.settings.input })
+
+        const run: AdhocRun = {
             id: apId(),
-            created: now,
-            updated: now,
+            created: startTime,
+            updated: finishTime,
             projectId,
             platformId,
             userId: userId ?? null,
@@ -167,51 +174,27 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
             connectionExternalId: connectionExternalId ?? null,
             conversationId: conversationId ?? null,
             source,
-            status: FlowRunStatus.RUNNING,
-            input: sanitizeValue(step.settings.input),
-            output: null,
-            logs: null,
-            errorMessage: null,
-            startTime: now,
-            finishTime: null,
-            logsFileId: null,
+            status: outcome.status,
+            input: outcome.input,
+            output: outcome.output,
+            logs: outcome.logs,
+            errorMessage: outcome.errorMessage,
+            startTime,
+            finishTime,
+            logsFileId: outcome.hasPayload ? apId() : null,
             archivedAt: null,
-        })
-
-        const { data: engineResponse, error: engineError } = await tryCatch(() => userInteractionWatcher.submitAndWaitForResponse<EngineActionResponse>({
-            jobType: WorkerJobType.EXECUTE_ACTION,
-            projectId,
-            platformId,
-            step,
-            piece,
-        }, log))
-
-        if (engineError) {
-            await adhocRunRepo().save({
-                ...created,
-                status: FlowRunStatus.INTERNAL_ERROR,
-                errorMessage: engineError instanceof Error ? engineError.message : String(engineError),
-                finishTime: dayjs().toISOString(),
-                updated: dayjs().toISOString(),
-            })
-            throw engineError
         }
 
-        const status = deriveStatus(engineResponse)
-        const output = status === FlowRunStatus.SUCCEEDED ? sanitizeValue(engineResponse.response.output) : null
+        // Single write, off the request path: the persist job offloads {input,output,logs} to
+        // the file table and inserts the thinned row. The caller already holds the result in `run`.
+        await adhocRunPersistQueue(log).add({ run, platformId })
 
-        const updated = await adhocRunRepo().save({
-            ...created,
-            status,
-            output,
-            logs: isNil(engineResponse.logs) ? null : engineResponse.logs,
-            errorMessage: deriveErrorMessage(engineResponse, status),
-            finishTime: dayjs().toISOString(),
-            updated: dayjs().toISOString(),
-        })
-        return updated
+        if (result.error) {
+            throw result.error
+        }
+        return run
     },
-    async list(params: ListParams): Promise<SeekPage<PopulatedAdhocRun>> {
+    async list(params: ListParams): Promise<SeekPage<AdhocRunListItem>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
         const paginator = buildPaginator<AdhocRun>({
             entity: AdhocRunEntity,
@@ -225,6 +208,7 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
+        // input/output/logs are `select: false`, so the list never fetches the heavy columns.
         let query = adhocRunRepo().createQueryBuilder('adhoc_run').where({ projectId: params.projectId })
         if (!params.includeArchived) {
             query = query.andWhere({ archivedAt: IsNull() })
@@ -232,11 +216,21 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
         query = applyAdhocRunFilters(query, params)
         const { data, cursor } = await paginator.paginate(query)
         const populated = await populateRuns({ runs: data, projectId: params.projectId })
-        return paginationHelper.createPage<PopulatedAdhocRun>(populated, cursor)
+        return paginationHelper.createPage<AdhocRunListItem>(populated, cursor)
     },
     async getOneOrThrow(params: GetOneParams): Promise<PopulatedAdhocRun> {
-        const run = await adhocRunRepo().findOneByOrFail({ id: params.id, projectId: params.projectId })
-        const [populated] = await populateRuns({ runs: [run], projectId: params.projectId })
+        const run = await adhocRunRepo().createQueryBuilder('adhoc_run')
+            .addSelect(['adhoc_run.input', 'adhoc_run.output', 'adhoc_run.logs'])
+            .where({ id: params.id, projectId: params.projectId })
+            .getOne()
+        if (isNil(run)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'adhoc_run', entityId: params.id, message: 'Adhoc run not found' },
+            })
+        }
+        const hydrated = await hydratePayload({ run, log })
+        const [populated] = await populateRuns({ runs: [hydrated], projectId: params.projectId })
         return populated
     },
     async bulkArchive(params: BulkArchiveParams): Promise<void> {
@@ -295,6 +289,12 @@ type AdhocRunUser = {
     name: string
     email: string
     imageUrl: string | null
+}
+
+type AdhocRunPayload = {
+    input?: unknown
+    output?: unknown
+    logs?: string | null
 }
 
 type RunParams = {

@@ -1,5 +1,6 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
+  AdhocRunListItem,
   AdhocRunSource,
   BulkArchiveAdhocRunsRequestBody,
   FlowRunStatus,
@@ -29,8 +30,8 @@ export const adhocRunsApi = {
     createdAfter?: string;
     createdBefore?: string;
     includeArchived?: boolean;
-  }): Promise<SeekPage<PopulatedAdhocRun>> {
-    return api.get<SeekPage<PopulatedAdhocRun>>('/v1/adhoc-runs', {
+  }): Promise<SeekPage<AdhocRunListItem>> {
+    return api.get<SeekPage<AdhocRunListItem>>('/v1/adhoc-runs', {
       projectId,
       cursor,
       limit,

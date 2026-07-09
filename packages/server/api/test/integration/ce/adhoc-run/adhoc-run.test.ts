@@ -1,8 +1,9 @@
 import { apId } from '@activepieces/core-utils'
-import { AdhocRun, AdhocRunKind, AdhocRunSource, FlowRunStatus } from '@activepieces/shared'
+import { AdhocRun, AdhocRunKind, AdhocRunSource, FileCompression, FileType, FlowRunStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { fileService } from '../../../../src/app/file/file.service'
 import { db } from '../../../helpers/db'
 import { createMockConnection } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -259,6 +260,36 @@ describe('Adhoc Run API', () => {
             expect(body.id).toBe(run.id)
             expect(body.status).toBe(FlowRunStatus.SUCCEEDED)
             expect(body.output).toEqual({ value: 42 })
+        })
+
+        it('hydrates input/output/logs from the offloaded log file', async () => {
+            const ctx = await createTestContext(app!)
+            const payload = Buffer.from(JSON.stringify({ input: { text: 'hi' }, output: { value: 99 }, logs: 'ran ok' }), 'utf-8')
+            const file = await fileService(app!.log).save({
+                projectId: ctx.project.id,
+                platformId: ctx.platform.id,
+                type: FileType.ADHOC_RUN_LOG,
+                data: payload,
+                size: payload.length,
+                compression: FileCompression.NONE,
+            })
+            const run = createMockAdhocRun({
+                projectId: ctx.project.id,
+                platformId: ctx.platform.id,
+                input: null,
+                output: null,
+                logs: null,
+                logsFileId: file.id,
+            })
+            await db.save('adhoc_run', run)
+
+            const response = await ctx.get(`/v1/adhoc-runs/${run.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.input).toEqual({ text: 'hi' })
+            expect(body.output).toEqual({ value: 99 })
+            expect(body.logs).toBe('ran ok')
         })
 
         it('blocks access to a run from another project', async () => {
