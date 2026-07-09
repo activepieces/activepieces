@@ -13,7 +13,7 @@ The pieces feature manages the metadata catalog of automation integrations (call
 - `packages/server/api/src/app/pieces/piece-sync-service.ts` — syncs canonical piece registry from NPM/bundled artifacts into DB
 - `packages/server/api/src/app/pieces/tags/` — tag entity, tag service, tag-module for organizing pieces into groups
 - `packages/web/src/features/pieces/api/pieces-api.ts` — frontend HTTP client
-- `packages/web/src/features/pieces/hooks/pieces-hooks.ts` — React Query hooks for piece listing, piece model, piece options
+- `packages/web/src/features/pieces/hooks/pieces-hooks.ts` — React Query hooks for piece listing, piece model, piece options. `usePiece` skips retries on HTTP 404 and exposes `isNotFound: boolean` so callers can distinguish a genuinely-missing piece from a transient network error without waiting for the full retry backoff
 - `packages/web/src/features/pieces/hooks/use-piece-output-schema.ts` — reads `outputSchema` for a given step (PIECE action or trigger) off the cached piece model; shares the existing `['piece', name, version]` React Query cache so no extra network call is made
 - `packages/web/src/features/pieces/components/` — `PieceIcon`, `PieceIconList`, `PieceSelectorSearch`, `InstallPieceDialog`
 - `packages/pieces/framework/src/lib/output-schema.ts` — `OutputSchema` / `OutputSchemaField` / `FieldFormat` plain TypeScript types (embedded into the piece metadata via `z.custom`)
