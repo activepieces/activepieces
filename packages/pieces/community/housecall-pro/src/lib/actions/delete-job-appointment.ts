@@ -7,6 +7,11 @@ export const deleteJobAppointment = createAction({
   name: "delete_job_appointment",
   displayName: "Delete appointment",
   description: "Delete a job appointment",
+  audience: 'both',
+  aiMetadata: {
+    description: "Permanently delete an appointment from a Housecall Pro job, identified by job ID and appointment ID. Idempotent on the target since the appointment ends up gone; a repeat call on an already-deleted appointment simply has no further effect. Destructive and not reversible.",
+    idempotent: true,
+  },
   props: {
     appointment_id: Property.ShortText({
       displayName: "Appointment ID",

@@ -11,6 +11,12 @@ export const runQuery = createAction({
   name: 'runQuery',
   displayName: 'Run Query',
   description: 'Execute a query synchronously and return results',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Executes an arbitrary SQL query against the Roe AI database synchronously and returns the results, optionally scoped to a worksheet ID or run with admin privileges. Use to read or manipulate data directly via SQL. Because the query can mutate data and each run executes independently, treat this as not idempotent.',
+    idempotent: false,
+  },
   props: {
     query: Property.LongText({
       displayName: 'SQL Query',

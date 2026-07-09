@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 
 export const chatWithCopilot = createAction({
+  audience: 'human',
   auth: microsoft365CopilotAuth,
   name: 'chatWithCopilot',
   displayName: 'Chat with Copilot',

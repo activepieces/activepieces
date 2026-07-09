@@ -1,10 +1,5 @@
-import { apId,
-    isNil,
-    PiecesFilterType,
-    ProjectPlan,
-    ProjectPlanLimits,
-    spreadIfDefined,
-} from '@activepieces/shared'
+import { apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { PiecesFilterType, ProjectPlan, ProjectPlanLimits } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'

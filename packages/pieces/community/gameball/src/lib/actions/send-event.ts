@@ -8,6 +8,8 @@ export const sendEvent = createAction({
   auth: gameballAuth,
   displayName: 'Send event',
   description: 'Send an event to gameball',
+  audience: 'both',
+  aiMetadata: { description: 'Records a custom behavioral event (by event name) for a specific player in Gameball, identified by their player unique ID, so it can drive loyalty/gamification rules. Use when an agent needs to log that a player performed an action. Not idempotent: each call posts the event again, so repeats register as additional occurrences.', idempotent: false },
   props: {
     playerUniqueId: Property.ShortText({
       displayName: 'Your Player Unique Id',

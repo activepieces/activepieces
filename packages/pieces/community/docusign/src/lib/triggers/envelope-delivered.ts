@@ -5,6 +5,10 @@ export const envelopeDelivered = createEnvelopeEventTrigger({
   displayName: 'Signing Request Opened by All',
   description:
     'Triggers when every recipient has opened and viewed the signing request at least once.',
+  aiMetadata: {
+    description:
+      'Fires when every recipient on a DocuSign envelope has opened and viewed it at least once. Represents confirmed delivery to the full recipient set, but not yet signing completion.',
+  },
   docusignEvent: 'envelope-delivered',
   sampleData: {
     event: 'envelope-delivered',

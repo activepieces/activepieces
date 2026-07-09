@@ -12,6 +12,12 @@ export const listOpportunityFeedback = createAction({
   displayName: 'List opportunity feedback',
   description:
     'Get all feedback for a given opportunity, optionally for a given template',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve the interview feedback forms recorded against a Lever opportunity, identified by opportunity ID. Returns all feedback by default, or only feedback matching a chosen feedback template when one is supplied (filtered client-side by base template). Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: leverAuth,
   props: {
     opportunityId: Property.ShortText({

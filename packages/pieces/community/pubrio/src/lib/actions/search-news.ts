@@ -8,6 +8,12 @@ export const searchNews = createAction({
   name: 'search_news',
   displayName: 'Search News',
   description: 'Search company news and press releases',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search company news articles and press releases by keyword, company domain, category, location, or publish date, with pagination (max 25 per page). Read-only and repeatable. Pick this for news/PR monitoring of companies; use Search Companies for firmographic discovery instead.',
+    idempotent: true,
+  },
   props: {
     search_term: Property.ShortText({
       displayName: 'Search Term',

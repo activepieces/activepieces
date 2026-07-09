@@ -9,6 +9,11 @@ export const uploadFileFromUrl = createAction({
   displayName: 'Upload File from URL',
   description:
     'Upload a media file from a URL to Postiz. Returns the file path to use when creating posts.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Downloads an image or video from a public URL and uploads it into Postiz media storage, returning a file path to attach to Create Post. Use this first whenever a post needs media. Requires a publicly reachable file URL. Not idempotent — each call uploads a new media file.',
+    idempotent: false,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'File URL',

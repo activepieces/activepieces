@@ -9,6 +9,8 @@ export const getRecord = createAction({
     name: 'get_record',
     displayName: 'Get Record',
     description: 'Get a record by ID from a specified Insightly object',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieves a single record by its ID from a chosen Insightly CRM object (Contact, Lead, Opportunity, etc.). Use to look up the full details of one known entity. Read-only and idempotent. Requires the matching Insightly pod (e.g. "na1") and the record ID.', idempotent: true },
     props: {
         pod: Property.ShortText({
             displayName: 'Pod',

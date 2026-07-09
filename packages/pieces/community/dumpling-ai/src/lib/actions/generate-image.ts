@@ -7,6 +7,8 @@ export const generateImage = createAction({
 	auth: dumplingAuth,
 	displayName: 'Generate Image',
 	description: 'Generate images based on a text prompt using AI.',
+	audience: 'both',
+	aiMetadata: { description: 'Generates one or more images from a text prompt using a selectable FLUX or recraft model on Dumpling AI, with optional aspect ratio, output format, image count, and seed. Use when the agent needs to create images from a description. Not idempotent: each call is a fresh billed generation; even with a fixed seed it produces new output and consumes credits.', idempotent: false },
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',

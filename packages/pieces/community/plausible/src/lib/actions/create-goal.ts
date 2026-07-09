@@ -8,6 +8,8 @@ export const createGoal = createAction({
   name: 'create_goal',
   displayName: 'Create Goal',
   description: 'Find or create a goal for a site',
+  audience: 'both',
+  aiMetadata: { description: 'Returns a conversion goal for a site, creating it if it does not already exist (find-or-create). Supports two goal types: an event goal (matched by event name) or a page goal (matched by page path, which may use wildcards); supply the field matching the chosen type. Idempotent, as repeating with the same definition returns the existing goal rather than duplicating it.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
     goal_type: Property.StaticDropdown({

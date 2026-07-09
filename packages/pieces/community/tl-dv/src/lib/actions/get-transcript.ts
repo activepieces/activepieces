@@ -9,6 +9,11 @@ export const getTranscript = createAction({
   name: 'get_transcript',
   displayName: 'Get Transcript',
   description: 'Get meeting transcript by meeting ID',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the full speaker-attributed, time-stamped transcript for a tl;dv meeting identified by its meeting id. Use when you need the spoken content of a meeting (the transcript must already be generated). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     meetingId: meetingIdProperty,
   },

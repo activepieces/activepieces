@@ -11,6 +11,8 @@ export const findRecordAction = createAction({
   name: 'bika_find_record',
   displayName: 'Get Record',
   description: 'Retrieves a record in database by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single record from a Bika.ai database by its record ID. Use when you already know the exact record ID; to search by field values or fetch multiple rows use Find Records instead. Read-only and idempotent.', idempotent: true },
   props: {
     space_id: BikaCommon.space_id,
     database_id: BikaCommon.database_id,

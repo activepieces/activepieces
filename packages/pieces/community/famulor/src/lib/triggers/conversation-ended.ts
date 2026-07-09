@@ -54,6 +54,9 @@ export const conversationEnded = createTrigger({
   name: 'conversationEnded',
   displayName: 'Conversation Ended',
   description: 'Triggers when a chat conversation ends.',
+  aiMetadata: {
+    description: 'Fires when a Famulor chat conversation (WhatsApp or web widget) for the selected assistant ends, delivering the full result via webhook. The payload includes the conversation and assistant IDs, channel type, message count, status, AI-extracted variables and summary, input variables, the raw and formatted transcript, customer name/phone, and start and end timestamps. Use to act on the outcome of a completed text conversation.',
+  },
   props: {
     assistant_id: assistantDropdownForConversationWebhook(),
   },

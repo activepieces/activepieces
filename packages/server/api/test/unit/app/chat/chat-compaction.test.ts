@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode } from '@activepieces/shared'
+import { AIProviderName, ErrorCode } from '@activepieces/core-utils'
 import { ModelMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { chatCompaction } from '../../../../src/app/chat/chat-compaction'

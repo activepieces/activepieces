@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { sendMediaGroupActionOutputSchema } from '../output-schemas';
 
 const MEDIA_GROUP_LIMIT = 10;
 
@@ -60,6 +61,7 @@ export const telegramSendMediaGroupAction = createAction({
     protect_content: telegramCommons.protectContentProp(),
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
   },
+  outputSchema: sendMediaGroupActionOutputSchema,
   async run(ctx) {
     const items = (ctx.propsValue.media ?? []) as Array<Record<string, unknown>>;
     if (items.length < 2 || items.length > MEDIA_GROUP_LIMIT) {

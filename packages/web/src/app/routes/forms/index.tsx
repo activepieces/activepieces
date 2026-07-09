@@ -1,4 +1,5 @@
-import { isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 

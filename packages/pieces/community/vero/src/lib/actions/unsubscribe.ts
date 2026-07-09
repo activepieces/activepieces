@@ -8,6 +8,12 @@ export const unsubscribe = createAction({
   name: 'unsubscribe',
   displayName: 'Unsubscribe',
   description: 'Globally unsubscribe a user from all communications',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Globally unsubscribes a Vero user, identified by user ID, withdrawing their consent so they no longer receive any communications. Use to honor an opt-out. Repeating the call leaves the user unsubscribed, so it is idempotent.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'User ID',

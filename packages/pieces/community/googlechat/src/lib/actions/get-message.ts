@@ -8,6 +8,11 @@ export const getMessageDetails = createAction({
   name: 'getMessageDetails',
   displayName: 'Get Message Details',
   description: 'Retrieve details of a specific message by ID. Supports both system-generated and custom message IDs.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetches a single Google Chat message by its full resource name (spaces/{space}/messages/{message}); accepts either a system-generated or a custom message ID. Use when you already know the message identifier and need its content or metadata. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Message Resource Name',

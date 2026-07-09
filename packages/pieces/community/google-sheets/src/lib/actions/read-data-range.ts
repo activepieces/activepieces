@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import {
 	areSheetIdsValid,
 	createGoogleClient,
@@ -8,6 +8,7 @@ import {
 } from '../common/common';
 import { commonProps } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
+import { readDataRangeActionOutputSchema } from '../output-schemas';
 
 export const readDataRangeAction = createAction({
 	auth: googleSheetsAuth,
@@ -52,6 +53,7 @@ export const readDataRangeAction = createAction({
 			},
 		}),
 	},
+	outputSchema: readDataRangeActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { spreadsheetId, sheetId, range, majorDimension, valueRenderOption } = propsValue;
 
@@ -61,7 +63,7 @@ export const readDataRangeAction = createAction({
 
 		const sheetName = await getWorkSheetName(auth, spreadsheetId as string, sheetId as number);
 		const authClient = await createGoogleClient(auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const a1Range = range && range.trim().length > 0 ? `${sheetName}!${range}` : sheetName;
 

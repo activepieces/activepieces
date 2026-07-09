@@ -9,6 +9,8 @@ export const getTeam = createAction({
   name: 'get_team',
   displayName: 'Get Team',
   description: 'Gets an existing team',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single Onfleet team by team ID. Read-only and idempotent. Requires a known team ID; to list all teams and discover IDs use get-teams instead.', idempotent: true },
   props: {
     team: common.team,
   },

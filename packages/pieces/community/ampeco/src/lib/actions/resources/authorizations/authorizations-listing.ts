@@ -15,6 +15,8 @@ export const authorizationsListingAction = createAction({
   name: 'authorizationsListing',
   displayName: 'Resources - Authorizations - Authorizations Listing',
   description: 'Get all authorizations.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO authorization records (EV charging access requests), optionally filtered by status (accepted/rejected/pending), method, partner, or created/updated date range. Read-only and idempotent. Enable pagination to retrieve all matches across pages. Use this to discover authorizations before reading one by ID.', idempotent: true },
   props: {
         
   filter__createdAfter: Property.DateTime({

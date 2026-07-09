@@ -8,6 +8,12 @@ export const createUserAction = createAction({
     name: 'create_user',
     displayName: 'Create User',
     description: 'Creates a new user in Microsoft Entra ID.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Provisions a new Microsoft Entra ID (Azure AD) user with a unique user principal name, initial password, and optional profile fields; set usageLocation if licenses will be assigned afterwards. Not idempotent — a retry fails on the duplicate UPN rather than updating the account. Use Update User to change an existing user instead.',
+        idempotent: false,
+    },
     props: {
         displayName: Property.ShortText({
             displayName: 'Display Name',

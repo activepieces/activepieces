@@ -2,6 +2,15 @@
 
 Used in both `createAction({ props: {...} })` and `createTrigger({ props: {...} })`.
 
+## Property descriptions are the agent's only signal
+
+The `description` on a property is what an LLM/MCP agent (and the human in the builder) reads to decide how to fill it — write it as a one-or-two-sentence spec, not a label:
+
+- **State the format, not just the concept.** `"Issue title. Max 255 characters."` beats `"The title"`.
+- **Bake a realistic sample into the prose** when format matters — actual ID shapes (`'cus_abc123xyz'`), ISO 8601 dates (`'2026-04-17T10:30:00Z'`), full URLs with protocol. There is no separate example field; the description carries the whole signal. E.g. `"Current status of the record. One of: 'open', 'in_progress', 'closed'."`
+- **Skip samples** when the prop is self-explanatory (a boolean checkbox), or when values come from the API at runtime (`Property.Dropdown`, `Property.DynamicProperties`).
+- **Never use placeholder-only samples** — `'string'`, `'value'`, `'<your API key>'`, empty `{}`/`[]`.
+
 ---
 
 ## Text

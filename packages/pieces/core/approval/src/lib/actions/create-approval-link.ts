@@ -1,7 +1,8 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const createApprovalLink = createAction({
+  audience: 'human',
   auth: PieceAuth.None(),
   name: 'create_approval_links',
   displayName: 'Create Approval Links',

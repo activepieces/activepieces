@@ -8,6 +8,8 @@ export const deleteCustomProperty = createAction({
   name: 'delete_custom_property',
   displayName: 'Delete Custom Property',
   description: 'Delete a custom property from a site',
+  audience: 'both',
+  aiMetadata: { description: 'Removes a custom event property from a site, identified by the site and the property name. Use to stop tracking a custom dimension. Idempotent in effect, since the property ends up removed regardless of repeats.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
     property: customPropertyDropdown,

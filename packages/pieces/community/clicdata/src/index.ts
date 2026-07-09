@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { clicdataAuth } from "./lib/common/auth";
 import { insertRow, refreshTable } from "./lib/actions";
 

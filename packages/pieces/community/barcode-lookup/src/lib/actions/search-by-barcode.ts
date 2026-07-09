@@ -7,6 +7,12 @@ export const searchByBarcode = createAction({
   name: 'searchByBarcode',
   displayName: 'Search By Barcode',
   description: 'Search for product information by barcode',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up product information from the Barcode Lookup API for a single barcode/UPC/EAN number. Use it to resolve a barcode into product details such as name, brand, and category. Requires the exact barcode number as input; this is a read-only lookup that is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     barcode: Property.ShortText({
       displayName: 'Barcode',

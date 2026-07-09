@@ -9,6 +9,8 @@ export const generateCreatorTitles = createAction({
   name: 'generateCreatorTitles',
   displayName: 'Generate Creator Titles',
   description: 'Generates engaging titles for a YouTube video based on its content.',
+  audience: 'both',
+  aiMetadata: { description: 'Calls the Bumpups AI model on a public YouTube video URL to generate engaging title suggestions from the video content. Use when an agent needs candidate titles for a specific YouTube video; the video URL is required and an optional language code sets the output language. Not idempotent — each call invokes the model and may produce different titles.', idempotent: false },
   props: {
     videoUrl: Property.ShortText({
       displayName: 'Video URL',

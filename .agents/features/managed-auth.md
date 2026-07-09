@@ -8,13 +8,16 @@ Managed Auth (also called "Embedding" or "Managed Authentication") enables SaaS 
 - `packages/server/api/src/app/ee/managed-authn/managed-authn-controller.ts` — single `POST /external-token` endpoint
 - `packages/server/api/src/app/ee/managed-authn/managed-authn-service.ts` — orchestration: token extraction, user/project provisioning, token issuance
 - `packages/server/api/src/app/ee/managed-authn/lib/external-token-extractor.ts` — JWT verification using the platform's signing key; parses v1/v2/v3 token payloads
-- `packages/shared/src/lib/ee/managed-authn/managed-authn-requests.ts` — `ManagedAuthnRequestBody` schema
+- `packages/core/shared/src/lib/ee/managed-authn/managed-authn-requests.ts` — `ManagedAuthnRequestBody` schema
 - `packages/web/src/features/authentication/api/managed-auth-api.ts` — frontend API client (used by embed SDK integration)
 
 ## Edition Availability
 Enterprise and Cloud. The endpoint itself is public (`securityAccess.public()`), but functional only when valid signing keys exist. Signing keys are gated by `platform.plan.embeddingEnabled`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **External Access Token**: A signed JWT issued by the vendor's backend, containing user and project information.
 - **Signing Key**: An RSA key pair registered on the platform; the public key is stored in Activepieces, the private key is kept by the vendor.
 - **External Principal**: The parsed, verified identity extracted from the JWT (platformId, externalUserId, externalProjectId, etc.).

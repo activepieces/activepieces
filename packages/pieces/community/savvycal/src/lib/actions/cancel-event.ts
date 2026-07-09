@@ -8,6 +8,8 @@ export const cancelEventAction = createAction({
   name: 'cancel_event',
   displayName: 'Cancel Event',
   description: 'Cancels a scheduled meeting in SavvyCal.',
+  audience: 'both',
+  aiMetadata: { description: 'Cancels a scheduled SavvyCal meeting identified by its event id. Use when a booking needs to be called off; obtain the event id from a trigger, List Events, or Get Event. Cancelling an already-cancelled event has no further effect, but this mutates state and is not a read.', idempotent: false },
   props: {
     event_id: Property.ShortText({
       displayName: 'Event ID',

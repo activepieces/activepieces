@@ -8,8 +8,8 @@ The Store Entry feature provides a persistent key-value store that piece steps c
 - `packages/server/api/src/app/store-entry/store-entry.service.ts` — CRUD service
 - `packages/server/api/src/app/store-entry/store-entry-entity.ts` — TypeORM entity
 - `packages/server/api/src/app/store-entry/store-entry.module.ts` — Fastify plugin registration
-- `packages/shared/src/lib/core/store-entry/store-entry.ts` — `StoreEntry` type, `STORE_KEY_MAX_LENGTH`, `STORE_VALUE_MAX_SIZE`
-- `packages/shared/src/lib/core/store-entry/dto/store-entry-request.ts` — `PutStoreEntryRequest`, `GetStoreEntryRequest`, `DeleteStoreEntryRequest`
+- `packages/core/shared/src/lib/core/store-entry/store-entry.ts` — `StoreEntry` type, `STORE_KEY_MAX_LENGTH`, `STORE_VALUE_MAX_SIZE`
+- `packages/core/shared/src/lib/core/store-entry/dto/store-entry-request.ts` — `PutStoreEntryRequest`, `GetStoreEntryRequest`, `DeleteStoreEntryRequest`
 
 ## Edition Availability
 - **Community (CE)**: Fully available — no plan flag required.
@@ -17,6 +17,9 @@ The Store Entry feature provides a persistent key-value store that piece steps c
 - **Cloud**: Fully available.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **StoreEntry**: A project-scoped key-value record. The `value` field is `unknown` (any JSON-serializable value).
 - **STORE_KEY_MAX_LENGTH**: 128 characters — enforced on the `key` column and in the request schema.
 - **STORE_VALUE_MAX_SIZE**: 512 KB (512 × 1024 bytes) — checked server-side using `object-sizeof` before upsert. Returns HTTP 413 if exceeded.

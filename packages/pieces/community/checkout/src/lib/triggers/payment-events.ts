@@ -6,6 +6,9 @@ export const paymentEventsTrigger = createTrigger({
   name: 'payment_events',
   displayName: 'Payment Events',
   description: 'Trigger order fulfillment when payment is approved.',
+  aiMetadata: {
+    description: 'Fires when a Checkout.com payment-gateway event occurs for one of the event types you subscribe to (such as payment approved, declined, captured, refunded, or voided, and card-verification events). Use it to react to payment lifecycle changes, for example to start order fulfillment once a payment is approved.',
+  },
   auth: checkoutComAuth,
   props: {
     eventTypes: Property.MultiSelectDropdown({

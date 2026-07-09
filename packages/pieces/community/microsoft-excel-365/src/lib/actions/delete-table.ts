@@ -7,6 +7,8 @@ export const deleteTableAction = createAction({
   auth: excelAuth,
   name: 'delete_table',
   description: 'Delete a table from a worksheet',
+  audience: 'both',
+  aiMetadata: { description: 'Delete a defined Excel table (by table id) from a worksheet, removing the table object while leaving the underlying cell values in place. Use to drop table formatting/structure, not to clear data. Idempotent in effect — once the table is gone, re-running on the same id targets a non-existent table.', idempotent: true },
   displayName: 'Delete Table',
   props: {
     storageSource: commonProps.storageSource,

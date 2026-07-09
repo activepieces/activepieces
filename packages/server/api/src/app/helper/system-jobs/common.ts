@@ -1,4 +1,5 @@
-import { Flow, FlowId, FlowRunId, PlatformId, ProjectId, UserId } from '@activepieces/shared'
+import { FlowId, FlowRunId, PlatformId, ProjectId, UserId } from '@activepieces/core-utils'
+import { Flow } from '@activepieces/shared'
 import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
@@ -12,7 +13,15 @@ export enum SystemJobName {
     AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
     HARD_DELETE_PROJECT = 'hard-delete-project',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
+    FLOW_RUN_TRACKING = 'flow-run-tracking',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
+    TOOL_SEARCH_REINDEX = 'tool-search-reindex',
+    BUNDLE_PIECE = 'bundle-piece',
+}
+
+type BundlePieceSystemJobData = {
+    name: string
+    version: string
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -43,6 +52,12 @@ type ResumeDelayWaitpointSystemJobData = {
     waitpointId: string
 }
 
+// Scope shape kept inline (structurally equal to tool-search's ReindexScope) so this generic
+// job framework does not depend on the tool-search feature module.
+type ToolSearchReindexSystemJobData = {
+    scope: { type: 'all' } | { type: 'platform', platformId: PlatformId }
+}
+
 type SystemJobDataMap = {
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
@@ -53,7 +68,10 @@ type SystemJobDataMap = {
     [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
+    [SystemJobName.FLOW_RUN_TRACKING]: Record<string, never>
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
+    [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
+    [SystemJobName.BUNDLE_PIECE]: BundlePieceSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

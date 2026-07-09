@@ -9,6 +9,8 @@ export const getLinkByPathAction = createAction({
   name: 'get-short-link-info-by-path',
   displayName: 'Get Link by Path',
   description: 'Retrieve detailed information about a short link using its domain and path.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single short link and its full details by its domain plus path/slug (rather than by link ID). Use when you know the public short URL path but not the internal link ID. Requires a domain and the bare slug (no domain or slashes in the path); read-only and idempotent.', idempotent: true },
   props: {
     domain: domainIdDropdown,
     path: Property.ShortText({

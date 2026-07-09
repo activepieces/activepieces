@@ -8,6 +8,12 @@ export const createContact = createAction({
   name: 'createContact',
   displayName: 'Create Contact',
   description: 'Creates a new Contact resource',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new contact in the VoIPstudio address book, capturing name, company, email, multiple phone/mobile/speed-dial numbers, labels, groups, and notes. All fields are optional, so pass whatever identifying details are available. Not idempotent: each call adds another contact record, so re-running with the same input produces duplicates.',
+    idempotent: false,
+  },
   props: {
     type: Property.ShortText({
       displayName: 'Type',

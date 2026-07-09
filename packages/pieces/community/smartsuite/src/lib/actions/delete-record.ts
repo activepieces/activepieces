@@ -8,6 +8,11 @@ export const deleteRecord = createAction({
 	name: 'delete_record',
 	displayName: 'Delete a Record',
 	description: 'Deletes a record from the specified table',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Permanently deletes a single SmartSuite record identified by its record ID from the given solution and table. Use when an agent needs to remove a known record. Idempotent in effect — once the record is gone the call has no further effect, though deleting an already-removed record returns a not-found error.',
+		idempotent: true,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,

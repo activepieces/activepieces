@@ -9,6 +9,9 @@ export const newTaskCreated = createTrigger({
   name: 'new_task_created',
   displayName: 'New Task Created',
   description: 'Triggers when a new task is successfully created in Manus',
+  aiMetadata: {
+    description: 'Fires when a new task is successfully created in the connected Manus account, carrying the new task\'s ID, title, and URL. Use to react to newly started Manus work.',
+  },
   props: {},
   auth: manusAuth,
   sampleData: {

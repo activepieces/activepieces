@@ -1,0 +1,79 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.stage{width:1000px;padding:42px 56px 34px;background:#fff}
+.head{text-align:center;margin-bottom:34px}
+.head h1{font-size:29px;font-weight:750;color:#0f172a;letter-spacing:-.025em}
+.head p{font-size:15px;color:#64748b;margin-top:9px;font-weight:450;line-height:1.45}
+.chart{position:relative}
+.lane{display:flex;align-items:center;margin-bottom:20px}
+.lab{width:110px;flex:0 0 auto;text-align:right;padding-right:18px}
+.lab .t{font-size:17px;font-weight:740;color:#0f172a;line-height:1}
+.lab .s{font-size:12px;color:#94a3b8;font-weight:550;margin-top:4px;line-height:1.3}
+.plot{position:relative;width:700px;flex:0 0 auto;height:46px}
+.grid{position:absolute;top:-8px;bottom:-8px;width:1px;background:#eef2f7}
+.tick{position:absolute;top:-26px;font-size:11.5px;color:#cbd5e1;font-weight:600;transform:translateX(-50%)}
+.bar{display:flex;height:46px;border-radius:9px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.seg{display:flex;flex-direction:column;justify-content:center;padding:0 12px;color:#fff;overflow:hidden;white-space:nowrap}
+.seg .n{font-size:12.5px;font-weight:700;line-height:1.1;text-shadow:0 1px 1px rgba(0,0,0,.12)}
+.seg .m{font-size:11px;font-weight:600;opacity:.92;margin-top:2px}
+.total{position:absolute;top:50%;transform:translateY(-50%);font-size:16px;font-weight:760;white-space:nowrap}
+.legend{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 18px;margin-top:30px;padding-top:24px;border-top:1px solid #eef2f7}
+.lg{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569;font-weight:600}
+.lg i{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.note{text-align:center;font-size:13px;color:#94a3b8;margin-top:24px;font-weight:500;line-height:1.5}
+.note b{color:#475569;font-weight:650}
+</style></head><body>
+<div class="stage">
+  <div class="head">
+    <h1>Warm vs cold: where a sync webhook's time goes</h1>
+    <p>Cold is the first request on a fresh worker that has never seen this flow. Installing pieces and booting the engine dominate. After it, the worker is warm.</p>
+  </div>
+
+  <div class="chart">
+    <div style="position:relative;height:0">
+      <div style="position:absolute;left:128px;width:700px;height:0">
+        <div class="grid" style="left:0"></div><div class="tick" style="left:0">0</div>
+        <div class="grid" style="left:159px"></div><div class="tick" style="left:159px">0.5s</div>
+        <div class="grid" style="left:318px"></div><div class="tick" style="left:318px">1.0s</div>
+        <div class="grid" style="left:477px"></div><div class="tick" style="left:477px">1.5s</div>
+        <div class="grid" style="left:636px"></div><div class="tick" style="left:636px">2.0s</div>
+      </div>
+    </div>
+
+    <div style="height:34px"></div>
+
+    <div class="lane">
+      <div class="lab"><div class="t">Warm</div><div class="s">the normal case</div></div>
+      <div class="plot">
+        <div class="bar" style="width:64px"><div class="seg" style="background:#10b981;flex:1"></div></div>
+        <div class="total" style="left:76px;color:#059669">~0.2 s</div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lab"><div class="t">Cold</div><div class="s">first request,<br>fresh worker</div></div>
+      <div class="plot">
+        <div class="bar">
+          <div class="seg" style="background:#94a3b8;width:127px"><div class="n">Queue + route</div><div class="m">~0.4 s</div></div>
+          <div class="seg" style="background:#f59e0b;width:159px"><div class="n">Install pieces</div><div class="m">~0.5 s</div></div>
+          <div class="seg" style="background:#38bdf8;width:48px"></div>
+          <div class="seg" style="background:#8b5cf6;width:302px"><div class="n">Boot engine</div><div class="m">~0.9 s</div></div>
+          <div class="seg" style="background:#10b981;width:64px"></div>
+        </div>
+        <div class="total" style="left:712px;color:#7c3aed">~2 s</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="lg"><i style="background:#94a3b8"></i>Queue + route to a worker</div>
+      <div class="lg"><i style="background:#f59e0b"></i>Install pieces (bun install)</div>
+      <div class="lg"><i style="background:#38bdf8"></i>Fetch flow bundle</div>
+      <div class="lg"><i style="background:#8b5cf6"></i>Boot engine (fork + isolated-vm)</div>
+      <div class="lg"><i style="background:#10b981"></i>Run flow</div>
+    </div>
+  </div>
+
+  <div class="note">A worker restart wipes its cache, so its first request is cold again. Keep workers warm with <b>AP_REUSE_SANDBOX=true</b> and a pre-sized fleet.</div>
+</div>
+</body></html>

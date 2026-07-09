@@ -8,6 +8,8 @@ export const getCurrentUserAction = createAction({
   name: 'get_current_user',
   displayName: 'Get Current User',
   description: 'Retrieves the profile of the currently authenticated SavvyCal user.',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the profile of the SavvyCal account the connection is authenticated as (id, name, email, slug, time zone). Use to identify the current user or fetch their default time zone. Read-only and idempotent.', idempotent: true },
   props: {},
   async run(context) {
     const response = await savvyCalApiCall<{

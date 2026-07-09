@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown, planUidDropdown } from '../common/dropdowns';
+import { planUidDropdown } from '../common/dropdowns';
 
 export const changeAccountPlanAction = createAction({
   name: 'change_account_plan',
@@ -9,9 +9,19 @@ export const changeAccountPlanAction = createAction({
   displayName: 'Change Account Plan',
   description:
     "Change an account's current subscription plan (upgrade, downgrade, or switch to free).",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Changes the plan on an account's current subscription (upgrade, downgrade, or switch to free) and sets the billing renewal term, identified by account UID. Use to move an account between plans. Requires the account to already have an active subscription, otherwise it errors. Not idempotent: it is a billing mutation that can prorate/charge, so repeating may have further effect.",
+    idempotent: false,
+  },
   props: {
-    accountUid: accountUidDropdown(),
-    planUid: planUidDropdown({ displayName: 'New Plan' }),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account whose plan to change.',
+      required: true,
+    }),
+    planUid: planUidDropdown({ displayName: 'New Plan', refreshers: ['accountUid'] }),
     billingRenewalTerm: Property.StaticDropdown({
       displayName: 'Billing Renewal Term',
       required: true,

@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export const sendgridCommon = {
   baseUrl: (residency = 'US'): string => {

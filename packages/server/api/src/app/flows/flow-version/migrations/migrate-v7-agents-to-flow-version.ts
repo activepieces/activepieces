@@ -1,11 +1,5 @@
-import {
-    AgentPieceProps,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-    isNil,
-    PopulatedFlow,
-} from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { AgentPieceProps, FlowActionType, flowStructureUtil, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { databaseConnection } from '../../../database/database-connection'
 import { Migration } from '.'
 

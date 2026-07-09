@@ -6,7 +6,7 @@ import {
 } from './lib/common/helpers';
 import { sendMultipleLogs } from './lib/actions/send-multiple-logs';
 import { sendOneLog } from './lib/actions/send-one-log';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { datadogAuth } from './lib/common/auth';
 
 export const datadog = createPiece({

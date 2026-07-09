@@ -15,6 +15,8 @@ export const drupalUpdateEntityAction = createAction({
   name: 'drupal-update-entity',
   displayName: 'Update Entity',
   description: 'Update an existing entity in Drupal with smart field discovery and validation',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Drupal entity identified by its entity type, bundle, and UUID via a JSON:API PATCH, changing only the fields you provide (empty fields are left untouched); at least one field value is required. Use to modify known content. Idempotent: re-applying the same field values to the same UUID yields the same end state.', idempotent: true },
   props: {
     entity_type: Property.Dropdown({
       auth: drupalAuth,

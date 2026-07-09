@@ -10,6 +10,9 @@ export const bookingCreated = createTrigger({
   name: 'bookingCreated',
   displayName: 'Booking Created',
   description: 'Triggers when a new booking is created.  Only available if you have a MotionToolsadmin account',
+  aiMetadata: {
+    description: 'Fires when a new booking is created in MotionTools (the booking.created webhook event). Each event carries the booking id, customer, service, and scheduling details. Requires a MotionTools admin account to register the webhook.',
+  },
   props: {
     instructions: Property.MarkDown({
       value: `# Motiontools Webhook Setup

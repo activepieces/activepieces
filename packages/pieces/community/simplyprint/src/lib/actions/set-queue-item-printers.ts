@@ -10,6 +10,12 @@ export const setQueueItemPrintersAction = createAction({
   displayName: 'Set Queue Item Printer Assignments',
   description:
     'Assign one or more queue items to specific printers, printer models, and/or printer groups. Replaces the current assignments on each item.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets which printers, printer models, and/or printer groups each given queue item may be assigned to, fully replacing the item\'s current assignments. Pass empty arrays for a dimension to clear that set of assignments. Requires numeric queue-item IDs; idempotent because it overwrites assignments to a fixed target state rather than appending.',
+    idempotent: true,
+  },
   props: {
     queueItemIds: Property.Array({
       displayName: 'Queue item IDs',

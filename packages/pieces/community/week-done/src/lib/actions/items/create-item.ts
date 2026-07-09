@@ -17,6 +17,8 @@ export const createItemAction = createAction({
   name: 'create_item',
   displayName: 'Create Item',
   description: 'Create a new item.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new Weekdone item (a progress, plan, problem, or other typed entry) for a user/team within a reporting period. Requires a description and a type ID. Not idempotent; each call adds a distinct item.', idempotent: false },
   props: {
     description: Property.LongText({
       displayName: 'Description',

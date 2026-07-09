@@ -8,6 +8,8 @@ export const createProject = createAction({
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Create a new project in a workspace.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new project in a Toggl Track workspace, given a workspace ID and project name; optionally links a client and sets billing, rate, color, and timeframe (several rate/estimate options require a premium plan). Use when an agent needs to set up a project to track time against. Not idempotent: each call creates a new project regardless of name.', idempotent: false },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({

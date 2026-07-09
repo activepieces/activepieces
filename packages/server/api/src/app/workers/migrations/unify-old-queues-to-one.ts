@@ -1,4 +1,5 @@
-import { BeginExecuteFlowJobData, ExecuteFlowJobData, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, StreamStepProgress, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { BeginExecuteFlowJobData, ExecuteFlowJobData, LATEST_JOB_DATA_SCHEMA_VERSION, StreamStepProgress, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'

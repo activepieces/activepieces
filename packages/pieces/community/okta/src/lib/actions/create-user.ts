@@ -8,6 +8,8 @@ export const createUserAction = createAction({
   name: 'create_user',
   displayName: 'Create User',
   description: 'Creates a user without credentials and sends account creation prompt via email',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new user account in Okta from a first name, last name, and email (login defaults to the email). Use to provision a person into the org; optionally activates and sends the account-setup email when Send Email is enabled. Not idempotent — each call creates another user, so guard against duplicates by checking for an existing account first.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

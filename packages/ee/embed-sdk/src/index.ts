@@ -11,6 +11,10 @@ export enum ActivepiecesClientEventName {
   CLIENT_CONFIGURATION_FINISHED = 'CLIENT_CONFIGURATION_FINISHED',
   CLIENT_CONNECTION_PIECE_NOT_FOUND = 'CLIENT_CONNECTION_PIECE_NOT_FOUND',
   CLIENT_BUILDER_HOME_BUTTON_CLICKED = 'CLIENT_BUILDER_HOME_BUTTON_CLICKED',
+  CLIENT_SHOW_MCP_IFRAME = 'CLIENT_SHOW_MCP_IFRAME',
+  CLIENT_MCP_SETTINGS_DIALOG_CLOSED = 'CLIENT_MCP_SETTINGS_DIALOG_CLOSED',
+  CLIENT_MCP_OAUTH_APPROVED = 'CLIENT_MCP_OAUTH_APPROVED',
+  CLIENT_MCP_OAUTH_DENIED = 'CLIENT_MCP_OAUTH_DENIED',
 }
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
@@ -63,6 +67,22 @@ export interface ActivepiecesBuilderHomeButtonClicked {
     route: string;
   };
 }
+export interface ActivepiecesClientShowMcpIframe {
+  type: ActivepiecesClientEventName.CLIENT_SHOW_MCP_IFRAME;
+  data: Record<string, never>;
+}
+export interface ActivepiecesClientMcpSettingsDialogClosed {
+  type: ActivepiecesClientEventName.CLIENT_MCP_SETTINGS_DIALOG_CLOSED;
+  data: Record<string, never>;
+}
+export interface ActivepiecesClientMcpOAuthApproved {
+  type: ActivepiecesClientEventName.CLIENT_MCP_OAUTH_APPROVED;
+  data: { redirectUrl: string };
+}
+export interface ActivepiecesClientMcpOAuthDenied {
+  type: ActivepiecesClientEventName.CLIENT_MCP_OAUTH_DENIED;
+  data: Record<string, never>;
+}
 
 type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 
@@ -104,7 +124,7 @@ export interface ActivepiecesVendorInit {
     hideTables?: boolean;
     sdkVersion?: string;
     jwtToken: string;
-    initialRoute?: string 
+    initialRoute?: string
     fontUrl?: string;
     fontFamily?: string;
     hideExportAndImportFlow?: boolean;
@@ -115,6 +135,7 @@ export interface ActivepiecesVendorInit {
     mode?: 'light' | 'dark';
     hideFlowsPageNavbar?: boolean;
     hidePageHeader?: boolean;
+    hideActiveUsers?: boolean;
   };
 }
 
@@ -151,6 +172,7 @@ type EmbeddingParam = {
   hideDuplicateFlow?: boolean;
   hideFolders?: boolean;
   hideTables?: boolean;
+  hideActiveUsers?: boolean;
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -163,9 +185,18 @@ type ConfigureParams = {
   embedding?: EmbeddingParam;
 }
 
+export type McpOAuthDialogResult =
+  | { redirectUrl: string }
+  | { denied: true };
+
+export type McpCredentials = {
+  mcpServerUrl: string;
+  mcpToken: string;
+};
+
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.9.0";
+  readonly _sdkVersion = "0.11.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -174,6 +205,10 @@ class ActivepiecesEmbedded {
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
   _dashboardAndBuilderIframeWindow?: Window;
   _rejectNewConnectionDialogClosed?: (error: unknown) => void;
+  _resolveMcpSettingsDialogClosed?: () => void;
+  _resolveMcpOAuthDialogClosed?: (result: McpOAuthDialogResult) => void;
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  _cleanMcpIframe: () => void = () => { };
   _resolveStepSettingsDialogClosed?: () => void;
   _rejectStepSettingsDialogClosed?: (error: unknown) => void;
   _handleVendorNavigation?: (data: { route: string }) => void;
@@ -181,6 +216,7 @@ class ActivepiecesEmbedded {
   _parentOrigin = window.location.origin;
   readonly _MAX_CONTAINER_CHECK_COUNT = 100;
   readonly _HUNDRED_MILLISECONDS = 100;
+  readonly _OVERLAY_IFRAME_CSS = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
   _embeddingAuth?: {
     //this is used to do authentication with the backend
     userJwtToken:string,
@@ -284,6 +320,7 @@ class ActivepiecesEmbedded {
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
+                hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');
@@ -371,12 +408,7 @@ class ActivepiecesEmbedded {
   }
     
   private _addConnectionIframe({pieceName, connectionName}:{pieceName:string, connectionName?:string}) {
-    const connectionsIframe = this.connectToEmbed({
-      iframeContainer: document.body,
-      initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
-    });
-    connectionsIframe.style.cssText = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
-    return connectionsIframe;
+    return this._addOverlayIframe(`/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`);
   }
 
   private _openNewWindowForConnections({pieceName, connectionName,newWindow}:{pieceName:string, connectionName?:string, newWindow:newWindowFeatures}) {
@@ -448,6 +480,118 @@ class ActivepiecesEmbedded {
     this._cleanupDashboardListeners = undefined;
     this._isConfigured = false;
     this._pendingNavigationRoutes = [];
+  }
+
+  /**
+   * Opens the MCP settings (connection URL, tools, exposed flows) for the
+   * embedded user's project in an overlay dialog. Resolves when the dialog is
+   * closed.
+   */
+  async mcpSettings() {
+    this._cleanMcpIframe();
+    return this._addGracePeriodBeforeMethod({
+      condition: () => !!document.body,
+      method: async () => {
+        const target = this._addOverlayIframe('/embed/mcp');
+        return new Promise<void>((resolve) => {
+          this._resolveMcpSettingsDialogClosed = resolve;
+          this._setMcpIframeEventsListener(target);
+        });
+      },
+      errorMessage: 'unable to add mcp settings embedding',
+    });
+  }
+
+  /**
+   * Opens an MCP OAuth consent dialog for the given authRequestId (obtained by
+   * your backend from the /authorize redirect). The embedded user approves
+   * using their embed session. Resolves with `{ redirectUrl }` on approval (the
+   * client's redirect URI carrying the auth code), or `{ denied: true }`.
+   */
+  async authorizeMcp({ authRequestId }: { authRequestId: string }): Promise<McpOAuthDialogResult> {
+    this._cleanMcpIframe();
+    return this._addGracePeriodBeforeMethod({
+      condition: () => !!document.body,
+      method: async () => {
+        const target = this._addOverlayIframe(
+          `/embed/mcp-authorize?authRequestId=${encodeURIComponent(authRequestId)}&randomId=${Date.now()}`,
+        );
+        return new Promise<McpOAuthDialogResult>((resolve) => {
+          this._resolveMcpOAuthDialogClosed = resolve;
+          this._setMcpIframeEventsListener(target);
+        });
+      },
+      errorMessage: 'unable to add mcp oauth embedding',
+    });
+  }
+
+  /**
+   * Mints a short-lived MCP access token for the embedded user's project and
+   * returns it together with the MCP server URL — the same credentials the chat
+   * assistant uses internally. Drop these straight into your own MCP client
+   * (`Authorization: Bearer <mcpToken>` against `mcpServerUrl`) without running
+   * the full OAuth flow. Uses the embed session, so no extra auth is needed.
+   */
+  async generateMcpToken(): Promise<McpCredentials> {
+    const auth = await this.fetchEmbeddingAuth({ jwtToken: this._jwtToken });
+    return this.request(
+      { path: `projects/${auth.projectId}/mcp-server/token`, method: 'POST' },
+      true,
+    );
+  }
+
+  private _addOverlayIframe(initialRoute: string): IframeWithWindow {
+    const iframe = this.connectToEmbed({
+      iframeContainer: document.body,
+      initialRoute,
+    });
+    iframe.style.cssText = this._OVERLAY_IFRAME_CSS;
+    return iframe;
+  }
+
+  private _setMcpIframeEventsListener(target: IframeWithWindow) {
+    const mcpMessageHandler = (event: MessageEvent<ActivepiecesClientShowMcpIframe | ActivepiecesClientMcpSettingsDialogClosed | ActivepiecesClientMcpOAuthApproved | ActivepiecesClientMcpOAuthDenied>) => {
+      if (event.source !== target.contentWindow) {
+        return;
+      }
+      switch (event.data.type) {
+        case ActivepiecesClientEventName.CLIENT_SHOW_MCP_IFRAME: {
+          target.style.display = 'block';
+          break;
+        }
+        case ActivepiecesClientEventName.CLIENT_MCP_SETTINGS_DIALOG_CLOSED: {
+          const resolve = this._resolveMcpSettingsDialogClosed;
+          this._resolveMcpSettingsDialogClosed = undefined;
+          resolve?.();
+          this._cleanMcpIframe();
+          break;
+        }
+        case ActivepiecesClientEventName.CLIENT_MCP_OAUTH_APPROVED: {
+          const resolve = this._resolveMcpOAuthDialogClosed;
+          this._resolveMcpOAuthDialogClosed = undefined;
+          resolve?.({ redirectUrl: event.data.data.redirectUrl });
+          this._cleanMcpIframe();
+          break;
+        }
+        case ActivepiecesClientEventName.CLIENT_MCP_OAUTH_DENIED: {
+          const resolve = this._resolveMcpOAuthDialogClosed;
+          this._resolveMcpOAuthDialogClosed = undefined;
+          resolve?.({ denied: true });
+          this._cleanMcpIframe();
+          break;
+        }
+      }
+    };
+    window.addEventListener('message', mcpMessageHandler);
+    this._cleanMcpIframe = () => {
+      window.removeEventListener('message', mcpMessageHandler);
+      // Resolve any dialog still pending (e.g. superseded by a new open) so its caller never hangs.
+      this._resolveMcpSettingsDialogClosed?.();
+      this._resolveMcpOAuthDialogClosed?.({ denied: true });
+      this._resolveMcpSettingsDialogClosed = undefined;
+      this._resolveMcpOAuthDialogClosed = undefined;
+      this._removeEmbedding(target);
+    };
   }
 
   private _prependForwardSlashToRoute(route: string) {
@@ -546,17 +690,17 @@ class ActivepiecesEmbedded {
     return str.startsWith('/') ? str.slice(1) : str;
   }
   /**Adds a grace period before executing the method depending on the condition */
-  private _addGracePeriodBeforeMethod({
+  private _addGracePeriodBeforeMethod<T>({
     method,
     condition,
     errorMessage,
   }: {
-    method: () => Promise<any> | void;
+    method: () => Promise<T> | T;
     condition: () => boolean;
     /**Error message to show when grace period passes */
     errorMessage: string;
-  }) {
-    return new Promise((resolve, reject) => {
+  }): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
       let checkCounter = 0;
       if (condition()) {
         resolve(method());

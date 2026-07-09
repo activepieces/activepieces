@@ -8,6 +8,8 @@ export const addCommentAction = createAction({
   name: 'add_comment',
   displayName: 'Add Comment',
   description: 'Adds a comment to an existing work item in Azure DevOps',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a new comment (HTML supported) on an existing Azure DevOps work item identified by its numeric ID. Use to add a note or update to a known work item. Requires the project, numeric work item ID, and comment text; not idempotent, as each call appends a separate comment.', idempotent: false },
   props: {
     project: azureDevOpsCommon.projectDropdown,
     work_item_id: Property.Number({

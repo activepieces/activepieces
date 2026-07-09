@@ -9,6 +9,12 @@ export const chatCompletionAction = createAction({
   displayName: 'Chat Completion',
   description:
     "Get a chat completion using a Parallel processor. OpenAI-compatible interface; processor names like 'speed', 'base', 'core', 'pro', 'ultra' map to Parallel tiers.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Generate a chat completion from Parallel's web-grounded research models through an OpenAI-compatible interface, sending a user message plus an optional system message. Use it for a one-shot answer backed by Parallel's research rather than starting a tracked task run; choose a processor tier via the model name (speed, base, core, pro, ultra) and optionally force free text, a JSON object, or a named JSON Schema response. Not idempotent: each call generates a fresh completion.",
+    idempotent: false,
+  },
   props: {
     model: Property.ShortText({
       displayName: 'Model / Processor',

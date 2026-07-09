@@ -1,8 +1,7 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookCommon } from '../common/client';
 
 export const createDraftEmailAction = createAction({
 	auth: microsoftOutlookAuth,
@@ -98,15 +97,9 @@ export const createDraftEmailAction = createAction({
 			})),
 		};
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(context.auth.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = outlookCommon.createClient(context.auth);
 
-		const response = await client.api('/me/messages').post(mailPayload);
+		const response = await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/messages`).post(mailPayload);
 
 		return response;
 	},

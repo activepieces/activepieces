@@ -9,6 +9,12 @@ export const getJobCount = createAction({
   displayName: 'Get Job Count',
   description:
     'Count the number of jobs posted by a company (2 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Return only the number of job postings from a company matching optional filters (keyword, job type, experience level, recency, flexibility), not the listings themselves. Read-only and safe to retry. Use when you need a hiring-volume metric; to retrieve the actual postings use Search Company Jobs. Requires the company search_id from a company profile lookup.',
+    idempotent: true,
+  },
   props: {
     search_id: Property.ShortText({
       displayName: 'Company Search ID',

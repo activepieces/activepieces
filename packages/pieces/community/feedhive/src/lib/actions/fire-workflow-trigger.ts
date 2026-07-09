@@ -8,6 +8,8 @@ export const fireWorkflowTriggerAction = createAction({
   name: 'fire_workflow_trigger',
   displayName: 'Create Post via Trigger',
   description: 'Fires a FeedHive Workflow Trigger to create a post. The workflow defines which accounts to post to, the AI model to use, and any default content.',
+  audience: 'both',
+  aiMetadata: { description: 'Fires a pre-configured FeedHive workflow trigger (identified by its Trigger ID) to create a post, letting the workflow decide accounts, AI model, and defaults; you can optionally override with explicit text, an AI prompt, schedule, media URLs, title/link, or template variables that fill [[placeholder]] tokens in the workflow template. Use when posting through an existing FeedHive workflow rather than building the post directly. Not idempotent: each call fires the workflow and creates a new post.', idempotent: false },
   props: {
     setup_instructions: Property.MarkDown({
       value: `### How to find your Trigger ID

@@ -180,6 +180,60 @@ Inside `validate`, the callback receives the flat shape — `auth.base_url`, `au
 
 ---
 
+### Custom Auth with Token Refresh
+
+Use this when the API requires a login call to get a short-lived token (e.g. username/password → JWT). Without caching, every action triggers a login request and can cause **429 rate limit errors**.
+
+Add a `refresh` field to cache the token server-side. Activepieces renews it automatically up to 15 minutes before expiry (clamped to half the token lifetime for short-lived tokens).
+
+```typescript
+export const myAppAuth = PieceAuth.CustomAuth({
+  displayName: 'Connection',
+  required: true,
+  props: {
+    baseUrl: Property.ShortText({ displayName: 'Instance URL', required: true }),
+    username: Property.ShortText({ displayName: 'Username', required: true }),
+    password: PieceAuth.SecretText({ displayName: 'Password', required: true }),
+  },
+  validate: async ({ auth }) => {
+    // validate as usual
+  },
+  refresh: {
+    generate: async ({ auth }) => {
+      // auth is the flat props shape: auth.baseUrl, auth.username, etc.
+      const res = await httpClient.sendRequest<{ token: string }>({
+        method: HttpMethod.POST,
+        url: `${auth.baseUrl}/api/auth/login`,
+        body: { username: auth.username, password: auth.password },
+      });
+      return {
+        access_token: res.body.token,
+        // expires_in: 3600, // optional, seconds — omit if API doesn't return it
+      };
+    },
+    defaultExpiresIn: 3300, // fallback TTL in seconds (default 3300 = 55 min)
+  },
+});
+```
+
+**Access in actions/triggers:** `context.auth.access_token` holds the cached token. Still use `context.auth.props.<field>` for the raw credential fields.
+
+```typescript
+async run(context) {
+  const token = context.auth.access_token; // server-cached, no login call here
+  const baseUrl = context.auth.props.baseUrl;
+  await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: `${baseUrl}/api/resource`,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+```
+
+**Real example:** `packages/pieces/community/umami/src/lib/auth.ts`
+
+---
+
 ## No Auth
 
 For public APIs or utility pieces that don't need credentials.

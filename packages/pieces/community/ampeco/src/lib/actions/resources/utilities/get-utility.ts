@@ -14,6 +14,8 @@ export const getUtilityAction = createAction({
   name: 'getUtility',
   displayName: 'Resources - Utilities - Get Utility',
   description: 'Get a single Utility.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single AMPECO utility (electricity provider) record by its numeric ID. Read-only and safe to repeat. Use when you already know the utility ID; use the list utilities action to browse or find IDs.', idempotent: true },
   props: {
         
   utility: Property.Number({

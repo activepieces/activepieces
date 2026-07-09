@@ -1,0 +1,240 @@
+---
+title: 'Environment Variables'
+description: 'The complete reference of every environment variable and its default'
+icon: 'gear'
+---
+
+This is the exhaustive lookup — every variable Activepieces reads, grouped by
+concern, with its default. For *how* to apply them to a production deployment,
+see [Configure & Operate](/install/configure-operate/production-setup).
+
+<Tip>
+When you run [tools/deploy.sh](https://github.com/activepieces/activepieces/blob/main/tools/deploy.sh)
+from the Docker installation tutorial, it generates a root `.env` file
+pre-filled with these values.
+</Tip>
+
+<Info>
+Variables marked ❗ are required for a self-hosted production deployment.
+</Info>
+
+<CardGroup cols={2}>
+  <Card title="Core" icon="gear" href="#core">
+    URLs, encryption keys, telemetry.
+  </Card>
+  <Card title="Database" icon="database" href="#database">
+    Postgres / PGLite connection and pooling.
+  </Card>
+  <Card title="Redis & queue" icon="layer-group" href="#redis-&-queue">
+    Standalone, Sentinel, and the queue UI.
+  </Card>
+  <Card title="Execution & sandboxing" icon="box" href="#execution-&-sandboxing">
+    Run mode, memory, concurrency, network egress.
+  </Card>
+  <Card title="Limits & retention" icon="gauge" href="#limits-&-retention">
+    File, log, webhook, and table limits.
+  </Card>
+  <Card title="File storage (S3)" icon="hard-drive" href="#file-storage-s3">
+    Object storage for files and logs.
+  </Card>
+  <Card title="Email (SMTP)" icon="envelope" href="#email-smtp">
+    Outbound mail configuration.
+  </Card>
+  <Card title="Authentication & SSO" icon="lock" href="#authentication-&-sso">
+    Google sign-in, SCIM, cloud OAuth.
+  </Card>
+  <Card title="Pieces & flows" icon="puzzle-piece" href="#pieces-&-flows">
+    Piece syncing, polling, publish behavior.
+  </Card>
+</CardGroup>
+
+---
+
+### Core
+
+Identity and connectivity for the platform: the public URL, the keys that
+protect connections and tokens, and telemetry.
+
+| Variable | Description | Default |
+|---|---|---|
+| ❗ `AP_FRONTEND_URL` | The public URL used to build redirect URLs and webhook URLs. It must be reachable by third parties for webhooks and app triggers to work. | `None` |
+| ❗ `AP_ENCRYPTION_KEY` | 32-character (16-byte) hexadecimal key used to encrypt connections. Generate one with `openssl rand -hex 16`. | `None` |
+| ❗ `AP_JWT_SECRET` | 32-character hexadecimal key used to sign JWT tokens. Generate one with `openssl rand -hex 32`. | `None` |
+| `AP_CONFIG_PATH` | Path where the PGLite database and local settings are stored. | `~/.activepieces` |
+| `AP_INTERNAL_URL` | (Beta) Internal URL used for SSO authentication, e.g. `https://demo.activepieces.com/api`. | `None` |
+| `AP_TELEMETRY_ENABLED` | Collect anonymous telemetry. | `true` |
+
+<Warning>
+`AP_FRONTEND_URL` is essential for webhooks and app triggers. It must be
+accessible to third parties so they can send data.
+</Warning>
+
+The default URL is the machine's IP address. If that address isn't reachable
+from the internet, set `AP_FRONTEND_URL` explicitly. For local development you
+can expose the frontend port (4200) with a tunneling service such as
+[ngrok](https://ngrok.com/).
+
+---
+
+### Database
+
+Activepieces stores its data in PostgreSQL (recommended for production) or an
+embedded PGLite database. Set the connection with discrete fields or a single
+`AP_POSTGRES_URL`.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_DB_TYPE` | `POSTGRES` for external PostgreSQL, `PGLITE` for the embedded database. `SQLITE3` is deprecated and auto-migrated to `PGLITE`. | `POSTGRES` |
+| `AP_POSTGRES_URL` | Full connection string (e.g. `postgres://user:password@host:5432/database`). When set, the discrete fields below are ignored. | `None` |
+| ❗ `AP_POSTGRES_HOST` | Hostname or IP address of the PostgreSQL server. | `None` |
+| ❗ `AP_POSTGRES_PORT` | Port number of the PostgreSQL server. | `None` |
+| ❗ `AP_POSTGRES_DATABASE` | Name of the PostgreSQL database. | `None` |
+| ❗ `AP_POSTGRES_USERNAME` | PostgreSQL user. | `None` |
+| ❗ `AP_POSTGRES_PASSWORD` | PostgreSQL password. Generate one with `openssl rand -hex 32`. | `None` |
+| `AP_POSTGRES_USE_SSL` | Connect to PostgreSQL over SSL. | `false` |
+| `AP_POSTGRES_SSL_CA` | SSL certificate (CA) used to connect to PostgreSQL. | `None` |
+| `AP_POSTGRES_POOL_SIZE` | Maximum number of clients in the connection pool. | `None` |
+| `AP_POSTGRES_IDLE_TIMEOUT_MS` | Idle timeout (ms) for pooled PostgreSQL connections. | `300000` |
+
+---
+
+### Redis & queue
+
+Redis backs the BullMQ job queue. Connect with discrete fields, a single
+`AP_REDIS_URL`, or Sentinel. The queue UI is an optional dashboard for
+inspecting jobs.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_REDIS_TYPE` | Where Redis runs: `MEMORY` (in-process), `STANDALONE` (dedicated instance), or `SENTINEL`. | `STANDALONE` |
+| `AP_REDIS_URL` | Full Redis connection URL. When set, all other Redis properties are ignored. | `None` |
+| ❗ `AP_REDIS_HOST` | Hostname or IP address of the Redis server. | `None` |
+| ❗ `AP_REDIS_PORT` | Port number of the Redis server. | `None` |
+| ❗ `AP_REDIS_USER` | Username used to connect to Redis. | `None` |
+| ❗ `AP_REDIS_PASSWORD` | Password used to connect to Redis. | `None` |
+| `AP_REDIS_DB` | Redis database index to use. | `0` |
+| `AP_REDIS_USE_SSL` | Connect to Redis over SSL. | `false` |
+| `AP_REDIS_SSL_CA_FILE` | Path to the CA file for the Redis server. | `None` |
+| `AP_REDIS_SENTINEL_HOSTS` | Comma-separated `host:port` pairs for Redis Sentinels, e.g. `sentinel-1:26379,sentinel-2:26379`. Requires `AP_REDIS_TYPE=SENTINEL`. | `None` |
+| `AP_REDIS_SENTINEL_NAME` | Name of the master node monitored by the sentinels. | `None` |
+| `AP_REDIS_SENTINEL_ROLE` | Role to connect to, either `master` or `slave`. | `None` |
+| `AP_REDIS_FAILED_JOB_RETENTION_DAYS` | Days to retain failed jobs in Redis. | `30` |
+| `AP_REDIS_FAILED_JOB_RETENTION_MAX_COUNT` | Maximum number of failed jobs to retain in Redis. | `100000` |
+| `AP_QUEUE_UI_ENABLED` | Enable the queue UI (Redis only). | `true` |
+| `AP_QUEUE_UI_USERNAME` | Username for the queue UI. Required when `AP_QUEUE_UI_ENABLED` is `true`. | `None` |
+| `AP_QUEUE_UI_PASSWORD` | Password for the queue UI. Required when `AP_QUEUE_UI_ENABLED` is `true`. | `None` |
+
+<Info>
+If `AP_REDIS_URL` is set, all other **Redis properties are ignored**. The same
+applies to `AP_REDIS_SENTINEL_HOSTS` when running in Sentinel mode.
+</Info>
+
+---
+
+### Execution & sandboxing
+
+Controls how flows run: the sandbox mode, per-process memory and concurrency,
+run timeouts, and the network egress posture for user code. Read
+[Sandboxing](/install/architecture/sandboxing) before changing `AP_EXECUTION_MODE`.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_EXECUTION_MODE` | Sandbox strategy: `UNSANDBOXED`, `SANDBOX_PROCESS`, `SANDBOX_CODE_ONLY`, or `SANDBOX_CODE_AND_PROCESS`. | `UNSANDBOXED` |
+| `AP_CONTAINER_TYPE` | Which services run in the container: `APP` (API only), `WORKER` (worker only), or `WORKER_AND_APP` (both). | `WORKER_AND_APP` |
+| `AP_WORKER_CONCURRENCY` | Concurrent jobs a worker processes at once. Each job uses one sandbox instance. | `5` |
+| `AP_SANDBOX_MEMORY_LIMIT` | Maximum memory (KB) a single sandboxed engine process can use. Each process runs at most one execution at a time. | `1048576` |
+| `AP_SANDBOX_PROPAGATED_ENV_VARS` | Comma-separated environment variables propagated into sandboxed code. For pieces, keep everything in the authentication object so it works across instances. | `None` |
+| `AP_FLOW_TIMEOUT_SECONDS` | Maximum runtime for a single flow run, in seconds. | `600` |
+| `AP_TRIGGER_TIMEOUT_SECONDS` | Maximum runtime for a trigger's polling, in seconds. | `60` |
+| `AP_DEFAULT_CONCURRENT_JOBS_LIMIT` | Default maximum concurrent runs per project. Can be overridden per project in settings. | `5` |
+| `AP_PROJECT_RATE_LIMITER_ENABLED` | Enforce per-project rate limits to prevent excessive usage. | `false` |
+| `AP_NETWORK_MODE` | Egress posture for user code. `STRICT` installs the engine's in-process SSRF guard, blocking outbound connections to private, loopback, link-local, and cloud-metadata IPs across every Node egress path (`axios`, `fetch`, `undici`, raw `http`/`net`). This is best-effort, in-process protection — enforce the real boundary in infrastructure (see [Network Security](/install/architecture/network-security)). `UNRESTRICTED` disables the guard. | `UNRESTRICTED` |
+| `AP_SSRF_ALLOW_LIST` | Comma-separated IPs or CIDR ranges that bypass `AP_NETWORK_MODE=STRICT`, e.g. `10.0.0.5,10.10.0.0/24`. Only applies when `AP_NETWORK_MODE=STRICT`. | `None` |
+
+---
+
+### Limits & retention
+
+Caps on file sizes, run-log size, webhook payloads, table sizes, and how long
+run data is kept. The **Cloud** values and how these interact are covered in
+[Limits](/install/reference/limits).
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_EXECUTION_DATA_RETENTION_DAYS` | Days to retain execution data, logs, and events. | `30` |
+| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`. | `30` |
+| `AP_ISSUE_ARCHIVE_DAYS` | Issues not updated for this many days are automatically archived. | `7` |
+| `AP_MAX_FILE_SIZE_MB` | Maximum size (MB) for files uploaded in steps or triggers. Larger files are rejected. | `25` |
+| `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | Maximum combined size (MB) of all step inputs and outputs in a single run. Exceeding it ends the run with `LOG_SIZE_EXCEEDED`. | `50` |
+| `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | Step outputs larger than this (KB) are offloaded to object storage instead of inlined in the run log. | `32` |
+| `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | Step inputs larger than this (KB) are replaced with a placeholder in the run log; the step still receives the full value at runtime. | `2` |
+| `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` | Maximum incoming webhook payload size (MB). Larger payloads are rejected with HTTP 413. | `25` |
+| `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | Webhook payloads below this (KB) are stored inline in Redis; larger ones are offloaded to file storage to protect Redis memory. | `512` |
+| `AP_WEBHOOK_TIMEOUT_SECONDS` | Default timeout for synchronous webhooks. Maximum 15 minutes; note Cloudflare caps it at 30 seconds. | `30` |
+| `AP_MAX_RECORDS_PER_TABLE` | Maximum number of records per table. | `10000` |
+| `AP_MAX_FIELDS_PER_TABLE` | Maximum number of fields per table. | `100` |
+
+---
+
+### File storage (S3)
+
+Files emitted by steps and triggers are stored in the database or an
+S3-compatible bucket.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_FILE_STORAGE_LOCATION` | Where files are stored: `DB` (database) or `S3` (S3-compatible storage). | `DB` |
+| `AP_S3_ENDPOINT` | Endpoint URL of the S3-compatible service, e.g. `https://s3.amazonaws.com`. Not required if `AWS_ENDPOINT_URL` is set. | `None` |
+| `AP_S3_BUCKET` | Name of the S3 bucket. | `None` |
+| `AP_S3_REGION` | Region of the S3 bucket, e.g. `us-east-1`. Not required if `AWS_REGION` is set. | `None` |
+| `AP_S3_ACCESS_KEY_ID` | Access key ID. Not required when `AP_S3_USE_IRSA` is `true`. | `None` |
+| `AP_S3_SECRET_ACCESS_KEY` | Secret access key. Not required when `AP_S3_USE_IRSA` is `true`. | `None` |
+| `AP_S3_USE_SIGNED_URLS` | Route file traffic directly to S3 via pre-signed URLs, bypassing the API server. Keep the bucket private; signed URLs grant temporary access. | `false` |
+| `AP_S3_USE_IRSA` | Use IAM Roles for Service Accounts (IRSA) to authenticate to S3. When `true`, the access key variables are not required. | `None` |
+
+---
+
+### Email (SMTP)
+
+Outbound mail for invitations, notifications, and password resets.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_SMTP_HOST` | SMTP server host, e.g. `mail.example.com`. | `None` |
+| `AP_SMTP_PORT` | SMTP server port, e.g. `587`. | `None` |
+| `AP_SMTP_USERNAME` | SMTP username. | `None` |
+| `AP_SMTP_PASSWORD` | SMTP password. | `None` |
+| `AP_SMTP_SENDER_EMAIL` | Email address that mail is sent from. | `None` |
+| `AP_SMTP_SENDER_NAME` | Sender name shown on outgoing mail. | `None` |
+
+SMTP can be configured from the platform admin screen or through these
+variables. The environment variables are used **only when the admin screen has
+no email configuration**, and only when `AP_SMTP_HOST`, `AP_SMTP_PORT`,
+`AP_SMTP_USERNAME`, and `AP_SMTP_PASSWORD` are all set. TLS is supported.
+
+---
+
+### Authentication & SSO
+
+Sign-in providers and SCIM provisioning.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_GOOGLE_CLIENT_ID` | Google OAuth2 client ID for "Sign in with Google". Both this and `AP_GOOGLE_CLIENT_SECRET` must be set for the button to appear; it can no longer be configured from the admin SSO page. | `None` |
+| `AP_GOOGLE_CLIENT_SECRET` | Google OAuth2 client secret. Required together with `AP_GOOGLE_CLIENT_ID`. | `None` |
+| `AP_CLOUD_AUTH_ENABLED` | Use Activepieces-hosted OAuth2 apps for piece connections. Set to `false` to disable them. | `true` |
+| `AP_SCIM_DEFAULT_PROJECT_ROLE` | Default project role for members added via SCIM group sync. One of `Admin`, `Editor`, `Viewer`. | `Editor` |
+
+---
+
+### Pieces & flows
+
+How piece metadata is synced, how often scheduled triggers poll, and
+flow-authoring defaults.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_PIECES_SYNC_MODE` | `OFFICIAL_AUTO` syncs piece metadata automatically from the cloud; `NONE` disables syncing. | `OFFICIAL_AUTO` |
+| `AP_TRIGGER_DEFAULT_POLL_INTERVAL` | Minutes between checks for new data on pieces with scheduled triggers (e.g. new Google Contacts). | `5` |
+| `AP_ENABLE_FLOW_ON_PUBLISH` | Automatically enable a flow when a new version is published. | `true` |
+| `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES` | Load translations for dev pieces (configured via `AP_DEV_PIECES`). Affects development mode only. | `false` |

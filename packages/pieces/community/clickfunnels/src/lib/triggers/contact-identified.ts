@@ -11,6 +11,10 @@ export const contactIdentified = createTrigger({
   name: 'contactIdentified',
   displayName: MODULE_NAME,
   description: 'Triggers when a new contact is identified by email/phone.',
+  aiMetadata: {
+    description:
+      'Fires when a contact is identified (by email or phone) in the selected ClickFunnels workspace, representing a visitor becoming a known contact. Delivers the contact payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

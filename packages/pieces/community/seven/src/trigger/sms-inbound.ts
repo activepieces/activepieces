@@ -21,6 +21,9 @@ const triggerNameInStore = 'seven_new_sms_trigger';
 export const smsInbound = createTrigger({
   auth: sevenAuth,
   description: 'Triggers when a new SMS message is received',
+  aiMetadata: {
+    description: 'Fires when an inbound SMS is received at the seven gateway (a mobile-originated sms_mo event), delivering the incoming message. Can optionally be limited to messages from a single sender phone number.',
+  },
   displayName: 'New Incoming SMS',
   name: 'new_incoming_sms',
   props: {

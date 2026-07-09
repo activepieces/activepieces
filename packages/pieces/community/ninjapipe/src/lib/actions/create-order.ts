@@ -8,6 +8,8 @@ export const createOrder = createAction({
   name: 'create_order',
   displayName: 'Create Order',
   description: 'Creates a new order. Line items, currency, and custom fields go in Settings JSON.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new order with customer details, amounts, status, payment status, dates, priority, and tracking; line items, currency, and custom fields go in Settings JSON. Only Customer Name is required, and Order Number defaults to ORD-<timestamp> if omitted. Not idempotent: each call creates another order.', idempotent: false },
   props: {
     customerName: Property.ShortText({
       displayName: 'Customer Name',

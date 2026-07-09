@@ -10,6 +10,12 @@ export const skipPrintObjectsAction = createAction({
   displayName: 'Skip Print Objects',
   description:
     'Skip one or more individual model objects on the current print (printer must be in PRINTING / PAUSED / PAUSING / CANCELLING / RESUMING state). Single printer per call.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Skips individual model objects on the print currently running on one printer, by their slicer/printer object indices. Use mid-print to abandon failed or unwanted objects while letting the rest finish; the target printer must be actively PRINTING/PAUSED/PAUSING/CANCELLING/RESUMING and only one printer is allowed per call. Not idempotent: each call instructs the firmware to abandon more objects on the live print.',
+    idempotent: false,
+  },
   props: {
     printerId: Property.Number({
       displayName: 'Printer ID',

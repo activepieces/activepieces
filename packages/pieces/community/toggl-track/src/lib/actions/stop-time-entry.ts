@@ -8,6 +8,8 @@ export const stopTimeEntry = createAction({
   name: 'stop_time_entry',
   displayName: 'Stop Time Entry',
   description: 'Stops the currently running time entry.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up the current user\'s running time entry and stops it, setting its stop time in the given workspace. Use to end an active timer started by Start Time Entry. Returns a no-op message if no entry is running; effectively idempotent once stopped, but treated as a state-mutating call.', idempotent: false },
   props: {
     workspace_id: togglCommon.workspace_id,
   },

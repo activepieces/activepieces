@@ -1,20 +1,5 @@
-import {
-    ActivepiecesError,
-    apId,
-    Cell,
-    chunk,
-    CreateRecordsRequest,
-    Cursor,
-    ErrorCode,
-    Field,
-    Filter,
-    FilterOperator,
-    isNil,
-    PopulatedRecord,
-    SeekPage,
-    TableWebhookEventType,
-    UpdateRecordRequest,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
+import { Cell, CreateRecordsRequest, Field, Filter, FilterOperator, PopulatedRecord, TableWebhookEventType, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -128,9 +113,7 @@ export const recordService = {
             }
             return filters.every((filter) => {
                 const cell = record.cells.find(c => c.fieldId === filter.fieldId)
-                if (!cell) {
-                    return filter.operator === FilterOperator.NOT_EXISTS
-                }
+                    ?? { fieldId: filter.fieldId, value: '' }
                 return doesCellValueMatchFilters(cell, [filter])
             })
         })
@@ -501,7 +484,7 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
     })
 }
 
-function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
+function doesCellValueMatchFilters(cell: Pick<Cell, 'fieldId' | 'value'>, filters: Filter[]): boolean {
     if (filters.length === 0) {
         return true
     }

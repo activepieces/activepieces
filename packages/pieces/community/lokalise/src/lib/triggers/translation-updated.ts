@@ -42,6 +42,9 @@ export const translationUpdated = createTrigger({
   name: 'translationUpdated',
   displayName: 'Translation Updated',
   description: 'Trigger when a translation is updated in your Lokalise project',
+  aiMetadata: {
+    description: 'Fires when a translation is modified in the selected Lokalise project, emitting that translation. Polls the project translations list and detects changes by modification timestamp.',
+  },
   props: {
     projectId: projectDropdown,
   },

@@ -8,6 +8,8 @@ export const generateArticleAction = createAction({
   auth: rapidTextAiAuth,
   displayName: 'Generate Article',
   description: 'Generates an article.',
+  audience: 'both',
+  aiMetadata: { description: 'Generates a long-form article from a text prompt using a selected RapidTextAI model. Choose this for full article/blog drafting rather than short freeform chat completions (use Send Prompt for that). Requires a prompt and a model selection; each call produces fresh non-deterministic output, so it is not idempotent.', idempotent: false },
   props: {
     model: modelDropdown,
     prompt: Property.LongText({

@@ -11,6 +11,10 @@ export const newCallRecording = createTrigger({
   displayName: 'New Call Recording',
   description:
     'Triggers when a new call recording is ready for a completed call.',
+  aiMetadata: {
+    description:
+      'Fires when a recording audio file becomes available for a completed VoIPstudio call, representing a ready-to-retrieve recording with its call, monitor, duration, and file size. Requires the Call Recording webhook event to be enabled in the VoIPstudio integrations panel.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `

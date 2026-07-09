@@ -15,6 +15,8 @@ export const listCurrencyRatesAction = createAction({
   name: 'listCurrencyRates',
   displayName: 'Resources - Currency Rates - List',
   description: 'Get all Currency Rates.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO currency-rate records, optionally filtered by base currency, target currency, or an updated-before/after datetime window. Read-only and safe to repeat; supports automatic pagination across pages. Use to discover currency-rate IDs or survey configured exchange rates; use the get currency rate action when you already know a single ID.', idempotent: true },
   props: {
         
   filter__base: Property.ShortText({

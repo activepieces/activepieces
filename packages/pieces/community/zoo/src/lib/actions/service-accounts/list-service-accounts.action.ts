@@ -6,6 +6,8 @@ export const listServiceAccountsAction = createAction({
   name: 'list_service_accounts',
   displayName: 'List Service Accounts',
   description: 'List all service accounts for your organization',
+  audience: 'both',
+  aiMetadata: { description: 'List the service accounts belonging to the organization, with optional limit and offset paging. Use to enumerate service accounts or find a token to pass to the get or delete service account actions. Read-only and idempotent.', idempotent: true },
   auth: zooAuth,
   // category: 'Service Accounts',
   props: {

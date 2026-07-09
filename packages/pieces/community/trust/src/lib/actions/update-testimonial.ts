@@ -8,6 +8,12 @@ export const updateTestimonialAction = createAction({
   name: 'update_testimonial',
   displayName: 'Update Testimonial',
   description: 'Updates an existing testimonial in the system.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing Trust testimonial identified by its testimonial ID; the ID and the author email are required, while content fields (text, rating, media URLs, published and consent flags) are optional. Pick this to edit or publish/unpublish a known testimonial rather than Create Testimonial, which would add a duplicate. It overwrites via PUT with the supplied fields, so repeating the same call yields the same state (idempotent).',
+    idempotent: true,
+  },
   props: {
     testimonialId: Property.ShortText({
       displayName: 'Testimonial ID',

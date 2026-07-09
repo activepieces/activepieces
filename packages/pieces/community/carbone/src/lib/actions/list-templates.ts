@@ -15,6 +15,11 @@ export const listTemplatesAction = createAction({
   displayName: 'List Templates',
   description:
     'Retrieve a list of deployed Carbone templates with filtering and pagination.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists deployed Carbone templates, optionally narrowed by template ID, version ID, category, or a fuzzy name search, with cursor-based pagination. Leaving all filters empty returns all templates; supplying a filter restricts to matches. Use to discover available templates or look up a template ID before rendering, updating, or deleting. Idempotent: read-only lookup.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Template ID Filter (optional)',

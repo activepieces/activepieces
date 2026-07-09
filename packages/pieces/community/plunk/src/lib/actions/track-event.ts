@@ -12,6 +12,12 @@ export const trackEvent = createAction({
   displayName: 'Track Event',
   description:
     'Track a Plunk event for a contact. Plunk auto-creates the contact if they do not exist. Requires the public API key.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a named event (e.g. order.completed) against a contact identified by email, optionally with arbitrary event metadata, to drive Plunk automations. Use it to signal that something happened for a contact. Requires the Plunk public API key in the connection, and auto-creates the contact if it does not exist. Not idempotent: each call appends another occurrence of the event.',
+    idempotent: false,
+  },
   props: {
     event: Property.ShortText({
       displayName: 'Event Name',

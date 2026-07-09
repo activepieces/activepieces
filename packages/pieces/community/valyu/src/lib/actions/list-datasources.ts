@@ -7,6 +7,8 @@ export const listDatasourcesAction = createAction({
   name: 'list_datasources',
   displayName: 'List Datasources',
   description: 'List all available datasources with metadata, schemas, and pricing. Useful for discovering available data sources.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the Valyu datasources available to the account, with their metadata, schemas, and pricing, optionally filtered by category. Use to discover which proprietary data sources exist before scoping a search or research task. Read-only listing, so repeating the call is safe.', idempotent: true },
   auth: valyuAuth,
   props: {
     category: Property.StaticDropdown({

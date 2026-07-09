@@ -9,6 +9,8 @@ export const runReport = createAction({
 	displayName: 'Run Report',
 	description:
 		'Execute a Salesforce analytics report and return the results as easy-to-use rows.',
+	audience: 'both',
+	aiMetadata: { description: 'Run an existing Salesforce analytics report by its report Id and get back flattened rows (detail and grouping columns) instead of raw factMap structures. Optionally pass dynamic filters to override the report\'s saved filters for this run. Use to read aggregated/reported data rather than to query raw records. Read-only and idempotent — it executes the report without changing it.', idempotent: true },
 	props: {
 		report_id: salesforcesCommon.report,
 		filters: Property.Json({

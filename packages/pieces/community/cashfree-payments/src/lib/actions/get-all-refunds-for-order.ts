@@ -7,6 +7,11 @@ export const getAllRefundsForOrder = createAction({
   name: 'get-all-refunds-for-order',
   displayName: 'Get All Refunds for Order',
   description: 'Fetch all refunds processed against an order in Cashfree Payment Gateway',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists all refunds processed against a Cashfree order, identified by its Order ID, with summary totals and per-refund status. Use this to check refund progress or reconcile refunds for an order. Read-only listing, so it is idempotent.',
+    idempotent: true,
+  },
   requireAuth: true,
   props: {
     environment: Property.StaticDropdown({

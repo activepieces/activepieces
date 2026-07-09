@@ -24,6 +24,12 @@ export const createContactListAction = createAction({
   name: 'create_contact_list',
   displayName: 'Create Contact List',
   description: 'Creates a new contact list in INBOX where you can later add contacts.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new, empty contact list in INBOX that contacts can later be added to. Use when a list does not yet exist and one is needed before enrolling contacts; optionally nest it under a group and tag it with a consent legislation basis (GDPR, CASL, CAN-SPAM, or none). Requires a list name. Not idempotent: each call creates a separate list even if the name matches an existing one.',
+    idempotent: false,
+  },
   props: {
     listName: Property.ShortText({
       displayName: 'List Name',

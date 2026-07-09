@@ -1,5 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { OAuth2GrantType } from '@activepieces/shared';
+import { OAuth2GrantType } from '@activepieces/pieces-framework';
 
 export const lightfunnelsAuth = PieceAuth.OAuth2({
   grantType: OAuth2GrantType.AUTHORIZATION_CODE,

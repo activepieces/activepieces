@@ -9,6 +9,12 @@ export const addComment = createAction({
   name: 'addComment',
   displayName: 'Add Comment',
   description: 'Add a comment (internal note) to a conversation in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Post an internal comment (private note) on a Front conversation, visible only to teammates and never sent to the customer. Use for team collaboration or context; to send a customer-facing message use "Send Reply" instead. Not idempotent: each call adds another comment.',
+    idempotent: false,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     author_id: teammateIdDropdown,

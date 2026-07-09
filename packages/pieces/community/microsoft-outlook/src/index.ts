@@ -1,7 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { getGraphBaseUrl } from './lib/common/microsoft-cloud';
 import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addLabelToEmailAction } from './lib/actions/add-label-to-email';
 import { createDraftEmailAction } from './lib/actions/create-draft-email';
 import { downloadAttachmentAction } from './lib/actions/download-email-attachment';
@@ -21,7 +21,7 @@ import { requestApprovalInMail } from './lib/actions/request-approval-send-email
 export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
-	minimumSupportedRelease: '0.82.0',
+	minimumSupportedRelease: '0.87.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['lucaslimasouza', 'kishanprmr', 'sanket-a11y'],

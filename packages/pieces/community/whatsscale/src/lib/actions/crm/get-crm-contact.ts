@@ -9,6 +9,8 @@ export const getCrmContactAction = createAction({
   name: 'whatsscale_get_crm_contact',
   displayName: 'Get a CRM Contact',
   description: 'Retrieve a CRM contact by ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single WhatsScale CRM contact by its contact ID. Read-only; pick this when you already hold the ID (e.g. from List CRM Contacts), versus Find a CRM Contact by Phone when you only have the phone number.', idempotent: true },
   props: {
     contactId: whatsscaleProps.crmContact,
   },

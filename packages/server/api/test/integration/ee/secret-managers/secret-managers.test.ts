@@ -1,5 +1,6 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { ErrorCode } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
+import { AppConnectionScope, AppConnectionType, PrincipalType, SecretManagerConnectionScope, SecretManagerFieldsSeparator, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
@@ -7,11 +8,11 @@ import { appConnectionService } from '../../../../src/app/app-connection/app-con
 import { secretManagersService } from '../../../../src/app/ee/secret-managers/secret-managers.service'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockAndSaveBasicSetup, mockPieceMetadata } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     hashicorpMock,
     mockVaultConfig,
 } from './hashicorp-mock'
-import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, SecretManagerConnectionScope, SecretManagerFieldsSeparator, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { validatePathFormat } from 'packages/server/api/src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 
 let app: FastifyInstance | null = null

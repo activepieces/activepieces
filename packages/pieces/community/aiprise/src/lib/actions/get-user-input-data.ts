@@ -9,6 +9,12 @@ export const getUserInputDataAction = createAction({
   displayName: 'Get Person\'s Submitted Verification Data',
   description:
     'Returns the information the person entered and the documents they uploaded during their identity check (e.g. name, date of birth, ID document details).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the raw data a person submitted during an identity verification — the details they typed and the documents they uploaded — for a single verification session. Use this when you need the person\'s submitted input itself rather than the pass/fail decision (see Get Identity Verification Result for the outcome). Requires the verification session ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     session_id: Property.ShortText({
       displayName: 'Verification Session ID',

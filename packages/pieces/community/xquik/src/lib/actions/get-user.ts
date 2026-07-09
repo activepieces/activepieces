@@ -7,6 +7,12 @@ export const getUser = createAction({
   name: 'get_user',
   displayName: 'Get User',
   description: 'Look up a public X/Twitter user by username or user ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single public X/Twitter user profile, identified either by username (with or without the @) or by numeric user ID. Use to resolve an account to its profile details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     user: Property.ShortText({
       displayName: 'User',

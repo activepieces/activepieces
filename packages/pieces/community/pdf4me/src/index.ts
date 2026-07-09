@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { pdf4meAuth } from './lib/auth';
 import { pdf4meCommon } from './lib/common';
 import { convertToPdfAction } from './lib/actions/convert-to-pdf';

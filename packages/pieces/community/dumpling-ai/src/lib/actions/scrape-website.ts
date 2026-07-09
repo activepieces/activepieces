@@ -7,6 +7,8 @@ export const scrapeWebsite = createAction({
 	auth: dumplingAuth,
 	displayName: 'Scrape Website',
 	description: 'Scrapes data from a specified URL and format the result.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetches the content of a single given URL via Dumpling AI and returns it as markdown, HTML, or a screenshot, with optional content cleaning and JavaScript rendering. Use to read one specific page; use Crawl Website instead to follow links across many pages. Not idempotent: each call is a fresh billed fetch reflecting the live page.', idempotent: false },
 	props: {
 		url: Property.ShortText({
 			displayName: 'URL',

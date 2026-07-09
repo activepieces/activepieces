@@ -8,6 +8,8 @@ export const linkIssuesAction = createAction({
   name: 'link_issues',
   displayName: 'Link Issues',
   description: 'Creates a relationship between two issues (e.g. "relates to", "depends on", "is duplicated by").',
+  audience: 'both',
+  aiMetadata: { description: 'Create a directional relationship between two issues, given the source issue ID, the readable target issue ID (e.g. "NP-92"), and a link type (relates to, depends on, duplicates, parent for, subtask of, etc.). Idempotent: re-creating an existing link of the same type leaves the relationship unchanged.', idempotent: true },
   props: {
     sourceIssue: issueDropdown,
     targetIssueId: Property.ShortText({

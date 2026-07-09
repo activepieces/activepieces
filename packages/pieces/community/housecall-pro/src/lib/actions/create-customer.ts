@@ -1,15 +1,20 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { housecallProAuth, makeHousecallProRequest } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
-import { z } from "zod";
+import * as z from 'zod/mini'
 import { propsValidation } from "@activepieces/pieces-common";
-import { MarkdownVariant } from "@activepieces/shared";
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const createCustomer = createAction({
   auth: housecallProAuth,
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Creates a new customer in Housecall Pro.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create a new Housecall Pro customer record with contact details, tags, and optional inline addresses. Not idempotent: each call creates a separate customer, so repeating it can produce duplicates. At least one of first name, last name, email, mobile/home/work number is required. To change an existing customer use Update Customer.',
+    idempotent: false,
+  },
   props: {
     info:Property.MarkDown({
       value:'At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.',
@@ -84,10 +89,10 @@ export const createCustomer = createAction({
     }
 
     await propsValidation.validateZod(propsValue, {
-      email: z.string().email().optional(),
-      mobile_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      home_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      work_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
+      email: z.optional(z.string().check(z.email())),
+      mobile_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
+      home_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
+      work_number: z.optional(z.string().check(z.regex(/^\+?[1-9]\d{1,14}$/))),
     });
 
     const customerData: Record<string, any> = {};

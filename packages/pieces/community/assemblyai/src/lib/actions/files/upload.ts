@@ -8,6 +8,12 @@ export const uploadFile = createAction({
   requireAuth: true,
   displayName: 'Upload File',
   description: "Upload a media file to AssemblyAI's servers.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Uploads a local audio or video file to AssemblyAI and returns an upload URL that can be passed to the Transcribe action. Use this when the media is a file (not already a publicly reachable URL) that AssemblyAI must access. Each call uploads a new copy, so it is not idempotent.",
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'Audio File',

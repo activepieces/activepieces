@@ -1,9 +1,9 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   CountTablesRequest,
   CreateTableRequest,
   ExportTableResponse,
   ListTablesRequest,
-  SeekPage,
   Table,
   TableTemplate,
   UpdateTableRequest,

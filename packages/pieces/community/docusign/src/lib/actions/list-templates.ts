@@ -11,6 +11,12 @@ export const listTemplates = createAction({
   name: 'listTemplates',
   displayName: 'Find Templates by Name',
   description: 'Search for reusable signing templates by name.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches an account for reusable DocuSign envelope templates whose name matches the given full or partial template name, auto-paginating through all matches. Use to discover a template ID or confirm a template exists before building an envelope from it; requires the account ID and a template name to search for. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

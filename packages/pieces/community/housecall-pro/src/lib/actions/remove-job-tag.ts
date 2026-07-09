@@ -7,6 +7,11 @@ export const removeJobTag = createAction({
   name: "remove_job_tag",
   displayName: "Remove job tag",
   description: "Remove a tag from a job",
+  audience: 'both',
+  aiMetadata: {
+    description: "Detach a tag (by tag ID) from a Housecall Pro job. Effectively idempotent since removing a tag that is not present leaves the job's tag set unchanged. To attach a tag use Add job tag.",
+    idempotent: true,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

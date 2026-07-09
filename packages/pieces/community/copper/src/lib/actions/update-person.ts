@@ -12,6 +12,12 @@ export const updatePerson = createAction({
   name: 'updatePerson',
   displayName: 'Update Person',
   description: 'Updates a person based on matching criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing person (contact) in Copper CRM, identified by person ID, overwriting name, emails, phone numbers, and address with the supplied values. Use to modify a known contact; requires the target person ID and at least one valid email. Idempotent: re-applying the same values leaves the record in the same state.',
+    idempotent: true,
+  },
   props: {
     personId: peopleDropdown(['auth']),
     fields: Property.DynamicProperties({

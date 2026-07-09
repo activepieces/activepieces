@@ -8,6 +8,8 @@ export const listContacts = createAction({
   name: 'list_contacts',
   displayName: 'List Contacts',
   description: 'Retrieves a list of contacts.',
+  audience: 'both',
+  aiMetadata: { description: 'List contacts with optional search text and status/owner filters. Read-only; supports single-page paging or "Return All" to follow pagination across every page. Use to discover contact IDs or find a contact by name/email before acting on it.', idempotent: true },
   props: {
     limit: ninjapipeCommon.limitProperty,
     search: ninjapipeCommon.searchProperty,

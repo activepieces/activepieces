@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { StoredWebhookId, Tag, WebhookResponse } from '../common/constants';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const CACHE_KEY = 'zagomail_tagged_subscriber_trigger';
 
@@ -15,6 +15,9 @@ export const taggedSubscriber = createTrigger({
   name: 'taggedSubscriber',
   displayName: 'Tagged Subscriber',
   description: 'Trigers when subscriber is tagged with a tag.',
+  aiMetadata: {
+    description: 'Fires when a subscriber is tagged in Zagomail with the specific tag configured on this trigger, representing that contact being labeled or segmented. The event payload includes the subscriber UID, list UID, tag ID, email, and status.',
+  },
   props: {
     tagName: Property.ShortText({
       displayName: 'Tag Name',

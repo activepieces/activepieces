@@ -1,4 +1,5 @@
-import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, apId, FlowStatus, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, ProjectLeaderboardItem, RunEnvironment, UserLeaderboardItem, UserWithMetaInformation } from '@activepieces/shared'
+import { apId, isNil, PlatformId } from '@activepieces/core-utils'
+import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, FlowStatus, FlowVersionState, PlatformAnalyticsReport, RunEnvironment, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
@@ -48,39 +49,6 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
             report = await platformAnalyticsReportService(log).refreshReport(platformId)
         }
         return filterReportByTimePeriod(report, timePeriod)
-    },
-    getProjectLeaderboard: async (platformId: PlatformId, timePeriod: AnalyticsTimePeriod): Promise<ProjectLeaderboardItem[]> => {
-        const report = await platformAnalyticsReportService(log).getOrGenerateReport(platformId)
-        const projects = await listProjects(platformId)
-        
-        return projects.map((project) => {
-            const projectFlows = report.flows.filter((flow) => flow.projectId === project.id)
-            const flowIds = projectFlows.map((flow) => flow.flowId)
-            const flowCount = projectFlows.length
-            const minutesSaved = calculateTimeSaved(flowIds, report, timePeriod)
-            return {
-                projectId: project.id,
-                projectName: project.displayName,
-                flowCount,
-                minutesSaved,
-            }
-        })
-    },
-    getUserLeaderboard: async (platformId: PlatformId, timePeriod: AnalyticsTimePeriod): Promise<UserLeaderboardItem[]> => {
-        const report = await platformAnalyticsReportService(log).getOrGenerateReport(platformId)
-        const users = report.users ?? []
-        
-        return users.map((user) => {
-            const flowsOfUser = report.flows.filter((flow) => flow.ownerId === user.id)
-            const flowIds = flowsOfUser.map((flow) => flow.flowId)
-            const flowCount = flowsOfUser.length
-            const minutesSaved = calculateTimeSaved(flowIds, report, timePeriod)
-            return {
-                userId: user.id,
-                flowCount,
-                minutesSaved,
-            }
-        })
     },
 })
 
@@ -226,19 +194,4 @@ function getDateRange(timePeriod: AnalyticsTimePeriod): string {
         default:
             throw new Error(`Invalid time period: ${timePeriod}`)
     }
-}
-
-function calculateTimeSaved(flowIds: string[], report: PlatformAnalyticsReport, timePeriod: AnalyticsTimePeriod): number | null {
-    const flowsWithTimeSaved = report.flows.filter((flow) => flowIds.includes(flow.flowId) && flow.timeSavedPerRun !== null)
-    if (flowsWithTimeSaved.length === 0) {
-        return null
-    }
-    const dateRange = getDateRange(timePeriod)
-    return flowsWithTimeSaved.reduce((acc, flow) => {
-        const timeSavedPerRun = flow.timeSavedPerRun ?? 0
-        const totalRuns = report.runs
-            .filter((run) => dayjs(run.day).isAfter(dayjs(dateRange)) && run.flowId === flow.flowId)
-            .reduce((sum, run) => sum + (run.runs ?? 0), 0)
-        return acc + timeSavedPerRun * totalRuns
-    }, 0)
 }

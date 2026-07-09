@@ -8,6 +8,8 @@ export const findContact = createAction({
   name: 'findContact',
   displayName: 'Find Contact',
   description: 'Finds contact based on phone or email.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Aircall contacts by phone number and/or email and returns the single best match. Use to resolve a contact ID before updating a contact or to check whether someone already exists. Provide at least one of phone number or email. Read-only and idempotent.', idempotent: true },
   props: {
     phone_number: Property.ShortText({
       displayName: 'Phone Number',

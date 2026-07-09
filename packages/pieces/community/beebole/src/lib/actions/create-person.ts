@@ -20,6 +20,11 @@ export const createPersonAction = createAction({
   name: 'create_person',
   displayName: 'Create Person',
   description: 'Creates a new person in Beebole. An available license is required for the person to be active.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a person (employee, project lead, or admin) under a given company in Beebole, optionally emailing them a login invitation when an email is provided. Use to onboard a new team member or contact. Not idempotent: each call creates a new person record and may re-send an invite, with no de-duplication on name or email.',
+    idempotent: false,
+  },
   props: {
     company: beeboleProps.companyDropdown({
       required: true,

@@ -1,9 +1,10 @@
-import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { formatPopulatedRecord, resolveFieldNamesForTable } from './table-utils'
+import { formatPopulatedRecord, resolveFieldNamesForTable, resolveInternalTableId, tableNotFoundError } from './table-utils'
 
 const updateRecordInput = z.object({
     tableId: z.string().describe('The table ID'),
@@ -27,7 +28,12 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     return { content: [{ type: 'text', text: '❌ No fields provided to update.' }] }
                 }
 
-                const { fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, tableId, fieldNames)
+                const resolvedTableId = await resolveInternalTableId({ projectId: mcp.projectId, tableId })
+                if (isNil(resolvedTableId)) {
+                    return tableNotFoundError(tableId)
+                }
+
+                const { fieldMap, errors } = await resolveFieldNamesForTable(mcp.projectId, resolvedTableId, fieldNames)
                 if (errors.length > 0) {
                     return { content: [{ type: 'text', text: `❌ Field resolution error:\n${errors.join('\n')}` }] }
                 }
@@ -40,7 +46,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 const updated = await recordService.update({
                     id: recordId,
                     projectId: mcp.projectId,
-                    request: { tableId, cells },
+                    request: { tableId: resolvedTableId, cells },
                 })
 
                 return {
@@ -51,7 +57,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_update_record failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_update_record failed')
                 return mcpUtils.mcpToolError('Failed to update record', err)
             }
         },

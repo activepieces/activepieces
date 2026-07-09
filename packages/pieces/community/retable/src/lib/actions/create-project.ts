@@ -9,6 +9,8 @@ export const retableCreateProjectAction = createAction({
   name: 'retable_create_project',
   displayName: 'Create a Project',
   description: 'Creates a project in the given workspace',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new project inside an existing Retable workspace, with a name and optional description and color. Use to set up a project container for retables; requires the target workspace ID. Not idempotent — each call creates another project.', idempotent: false },
   props: {
     workspace_id: retableCommon.workspace_id(),
     name: Property.ShortText({

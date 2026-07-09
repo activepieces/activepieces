@@ -13,6 +13,8 @@ export const bubbleDeleteThingAction = createAction({
   name: 'bubble_delete_thing',
   displayName: 'Delete Thing',
   description: 'Delete a thing',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a single record ("thing") from a Bubble app by its unique id and data type, via the Bubble Data API. Use when an agent must remove a specific record it already knows the id of. Effectively idempotent (deleting an already-deleted id is a no-op) but destructive — verify the id before calling.', idempotent: true },
   props: {
     typename: bubbleCommon.typename,
     thing_id: bubbleCommon.thing_id,

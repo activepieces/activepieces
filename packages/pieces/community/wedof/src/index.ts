@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { wedofCommon } from './lib/common/wedof';
 import { newRegistrationFolderNotProcessed } from './lib/triggers/registration-folders/new-registration-folder-created';

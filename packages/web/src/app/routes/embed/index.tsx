@@ -124,7 +124,9 @@ const EmbedPage = React.memo(() => {
               authenticationSession.saveResponse(data, true);
               const configuredRoute = event.data.data.initialRoute ?? '/';
 
-              const defaultRoute = determineDefaultRoute(checkAccess);
+              const defaultRoute = determineDefaultRoute({
+                checkAccess,
+              });
               const initialRoute =
                 configuredRoute === '/' ? defaultRoute : configuredRoute;
               //must use it to ensure that the correct router in RouterProvider is used before navigation
@@ -157,6 +159,7 @@ const EmbedPage = React.memo(() => {
                   hideFlowsPageNavbar:
                     event.data.data.hideFlowsPageNavbar ?? false,
                   hidePageHeader: event.data.data.hidePageHeader ?? false,
+                  hideActiveUsers: event.data.data.hideActiveUsers ?? false,
                 });
               });
               memoryRouter.navigate(initialRoute);

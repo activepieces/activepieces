@@ -8,6 +8,8 @@ export const createChatbotAction = createAction({
 	name: 'create_chatbot',
 	displayName: 'Create Chatbot',
 	description: 'Creates a new chatbot.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new Chatbase chatbot, optionally seeding it with inline training text. Use when an agent needs to provision a fresh chatbot before sending prompts to it. Not idempotent: each call creates a separate chatbot even with identical input.', idempotent: false },
 	props: {
 		chatbotName: Property.ShortText({
 			displayName: 'Chatbot Name',

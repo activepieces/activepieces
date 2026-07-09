@@ -2,6 +2,7 @@ import { stripHtml } from 'string-strip-html';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const stripHtmlContent = createAction({
+  audience: 'human',
   name: 'stripHtml',
   displayName: 'Remove HTML Tags',
   description: 'Removes every HTML tag and returns plain text',

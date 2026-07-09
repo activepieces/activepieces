@@ -1,4 +1,5 @@
-import { isNil, McpToolDefinition } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { projectService } from '../../project/project-service'

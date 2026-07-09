@@ -56,6 +56,10 @@ export const assistantRunCompletes = createTrigger({
   displayName: 'Assistant Run Completes',
   description:
     'Trigger when an assistant run is completed (succeeded, failed, or cancelled)',
+  aiMetadata: {
+    description:
+      'Fires when a run for the selected Griptape Cloud assistant reaches any terminal state, including SUCCEEDED, FAILED, ERROR, or CANCELLED. Polls for newly completed runs; use when you need to react to a finished assistant run regardless of whether it succeeded.',
+  },
   props,
   sampleData: {
     assistant_run_id: 'sample-run-id',

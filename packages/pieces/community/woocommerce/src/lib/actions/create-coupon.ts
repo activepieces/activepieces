@@ -9,7 +9,7 @@ import {
   AuthenticationType,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 import { wooAuth } from '../auth';
 
@@ -68,7 +68,7 @@ export const wooCreateCoupon = createAction({
   },
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
-      minimum_amount: z.number().min(0),
+      minimum_amount: z.number().check(z.minimum(0)),
     });
 
     const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');

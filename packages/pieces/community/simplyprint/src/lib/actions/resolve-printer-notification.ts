@@ -10,6 +10,8 @@ export const resolvePrinterNotificationAction = createAction({
   displayName: 'Resolve Printer Notification',
   description:
     'Mark a printer notification as resolved (or dismissed). For notifications with multiple actions, pass `action` to pick one or `force: true` to resolve without choosing.',
+  audience: 'both',
+  aiMetadata: { description: 'Resolve or dismiss one printer notification by its event ID. For multi-action notifications, pick a specific action key, or force-resolve to clear it without choosing; set dismiss to mark it dismissed instead of resolved. Idempotent: resolving an already-handled notification has no further effect.', idempotent: true },
   props: {
     printerId: Property.Number({
       displayName: 'Printer ID',

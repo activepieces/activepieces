@@ -1,9 +1,10 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PopulatedRecord } from '@activepieces/shared';
+import { PopulatedRecord } from '@activepieces/pieces-framework';
 
 export const getRecord = createAction({
+  audience: 'human',
   name: 'tables-get-record',
   displayName: 'Get Record',
   description: 'Get single record by its id.',

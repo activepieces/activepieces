@@ -7,7 +7,7 @@ The User Invitations feature lets platform owners and project members with the `
 - `packages/server/api/src/app/user-invitations/user-invitation.module.ts` — Fastify plugin registration + all route handlers (acts as both module and controller)
 - `packages/server/api/src/app/user-invitations/user-invitation.service.ts` — core invitation lifecycle: create, accept, list, delete, provision
 - `packages/server/api/src/app/user-invitations/user-invitation.entity.ts` — TypeORM entity
-- `packages/shared/src/lib/management/invitations/index.ts` — `UserInvitation`, `InvitationType`, `InvitationStatus`, `SendUserInvitationRequest`, `AcceptUserInvitationRequest`, `ListUserInvitationsRequest`
+- `packages/core/shared/src/lib/management/invitations/index.ts` — `UserInvitation`, `InvitationType`, `InvitationStatus`, `SendUserInvitationRequest`, `AcceptUserInvitationRequest`, `ListUserInvitationsRequest`
 - `packages/web/src/features/members/components/invite-user/` — invite user dialog
 - `packages/web/src/features/members/components/invitation-card.tsx` — displays a pending invitation with revoke action
 - `packages/web/src/features/members/components/accept-invitation.tsx` — accept flow for incoming invitation links
@@ -20,6 +20,9 @@ The User Invitations feature lets platform owners and project members with the `
 - **Cloud**: Both platform and project invitations available; subject to plan `projectRolesEnabled` flag.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **InvitationType**: `PLATFORM` (adds user to the platform with a PlatformRole) or `PROJECT` (adds user to a specific project with a ProjectRole).
 - **InvitationStatus**: `PENDING` (email sent, awaiting click) or `ACCEPTED` (user provisioned).
 - **PlatformRole**: Role granted at platform level (`ADMIN` or `MEMBER`).

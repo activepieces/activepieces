@@ -1,9 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { isNil, PropertySettings } from '@activepieces/shared';
+import { PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ControllerRenderProps, UseFormReturn } from 'react-hook-form';
 
@@ -287,6 +288,7 @@ export const selectGenericFormComponentForProperty = ({
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:
+    case PropertyType.OIDC:
       return <></>;
     case PropertyType.CUSTOM:
       return (

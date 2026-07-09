@@ -9,6 +9,12 @@ export const getPersonalContact = createAction({
   displayName: 'Look Up Personal Contact Numbers',
   description:
     'Find personal phone numbers from a social media profile (1 credit per number returned)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Find a person's personal phone numbers from one social profile URL (professional-network, Twitter/X, or Facebook — supply exactly one). Read-only and safe to retry. Use when you have a profile link and need phone contact details; the email counterpart is Look Up Personal Email.",
+    idempotent: true,
+  },
   props: {
     profile_url: Property.ShortText({
       displayName: 'Profile URL',

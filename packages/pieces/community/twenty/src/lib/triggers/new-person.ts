@@ -41,6 +41,9 @@ export const newPerson = createTrigger({
   name: 'new_person',
   displayName: 'New Person',
   description: 'Triggers when a new person is created in Twenty CRM.',
+  aiMetadata: {
+    description: 'Fires when a new person (contact) is created in the connected Twenty CRM workspace. Polls for recently created people, emitting one event per newly added person.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {

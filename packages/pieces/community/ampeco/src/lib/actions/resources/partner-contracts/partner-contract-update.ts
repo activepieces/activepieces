@@ -15,6 +15,8 @@ export const partnerContractUpdateAction = createAction({
   name: 'partnerContractUpdate',
   displayName: 'Resources - Partner Contracts - Update',
   description: 'Update a Partner Contract.',
+  audience: 'both',
+  aiMetadata: { description: 'Replaces an existing partner contract in AMPECO by its numeric ID, setting title, partner, start/end dates, auto-renewal, access permissions, revenue-sharing terms, and monthly platform fees. Use to edit a known contract; title, partner ID, and start date are always required. This is a full PUT replace, so sending the same payload converges to the same state and is idempotent.', idempotent: true },
   props: {
         
   partnerContract: Property.Number({

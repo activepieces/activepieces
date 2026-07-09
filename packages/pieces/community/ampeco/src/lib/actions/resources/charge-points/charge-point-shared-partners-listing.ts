@@ -15,6 +15,8 @@ export const chargePointSharedPartnersListingAction = createAction({
   name: 'chargePointSharedPartnersListing',
   displayName: 'Resources - Charge Points - Charge Point Shared Partners Listing',
   description: 'Get all Shared Partners of the Charge Point.',
+  audience: 'both',
+  aiMetadata: { description: 'List the partners a specific charge point is shared with, identified by its numeric charge point ID. Read-only and safe to retry; enable pagination to fetch all results across pages rather than a single page.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

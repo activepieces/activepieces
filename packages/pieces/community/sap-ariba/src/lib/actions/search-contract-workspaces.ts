@@ -8,6 +8,8 @@ export const searchContractWorkspaces = createAction({
     name: 'search_contract_workspaces',
     displayName: 'Search Contract Workspaces',
     description: 'Search contract workspaces based on attributes such as title, contract ID, region, etc.',
+    audience: 'both',
+    aiMetadata: { description: 'Search contract workspaces in a SAP Ariba Contracts realm, acting on behalf of a user (requires realm, user, and password adapter). Use to find contracts by attributes when you do not have an exact ID; an optional filter expression narrows matches and leaving it empty returns all accessible workspaces paginated. Read-only and idempotent.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

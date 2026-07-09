@@ -15,6 +15,8 @@ export const createPaymentTerminalAction = createAction({
   name: 'createPaymentTerminal',
   displayName: 'Resources - Payment Terminals - Create Payment Terminal',
   description: 'Create a new payment terminal.',
+  audience: 'both',
+  aiMetadata: { description: 'Register a new payment terminal in AMPECO, supplying fields specific to the selected terminal variant (Payter, Valina, Nayax, Adyen, etc.). Not idempotent: each call creates a separate terminal, so calling twice yields duplicates. Use updatePaymentTerminal to modify an existing terminal instead.', idempotent: false },
   props: {
         
   requestBody_VariantType: Property.StaticDropdown({

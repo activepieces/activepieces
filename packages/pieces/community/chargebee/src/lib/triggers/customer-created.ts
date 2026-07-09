@@ -15,6 +15,10 @@ export const customerCreated = createTrigger({
   name: 'customer_created',
   displayName: 'Customer Created',
   description: 'Triggers when a new customer is created in Chargebee.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records a customer_created event — a new customer record has been created. The payload carries the created customer.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

@@ -8,6 +8,8 @@ export const getMessageAction = createAction({
   name: 'get_message',
   displayName: 'Get Post Details',
   description: 'Retrieves the details of a specific scheduled or published post by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a single Hootsuite post by its ID and returns its current details and state (e.g. scheduled, sent, errored). Use to inspect or confirm a post created earlier or referenced from the dashboard. Idempotent read-only lookup. Requires the post ID, obtainable from a Schedule Post output or the Hootsuite dashboard URL.', idempotent: true },
   props: {
     messageId: Property.ShortText({
       displayName: 'Post ID',

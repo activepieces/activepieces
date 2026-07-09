@@ -8,6 +8,12 @@ export const getGroupByIdAction = createAction({
     name: 'get_group_by_id',
     displayName: 'Get Group by ID',
     description: 'Retrieves an Azure AD group by its object ID.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Retrieves one Azure AD group profile (name, description, mail settings, security flags) by its object ID. Read-only and idempotent; use it to confirm a group exists or inspect it before membership changes or deletion. For extension attributes, use Get Group Custom Attributes instead.',
+        idempotent: true,
+    },
     props: {
         groupId: groupDropdown,
     },

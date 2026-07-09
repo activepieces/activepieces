@@ -11,6 +11,10 @@ export const scheduledAppointmentEventCreated = createTrigger({
   name: 'scheduledAppointmentEventCreated',
   displayName: `${MODULE_NAME} Created`,
   description: 'Triggers when a scheduled appointment event is created.',
+  aiMetadata: {
+    description:
+      'Fires when a scheduled appointment event is created in the selected ClickFunnels workspace, representing a newly booked appointment. Delivers the appointment event payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

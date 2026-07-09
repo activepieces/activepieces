@@ -14,6 +14,12 @@ export const createMessage = createAction({
   displayName: 'Create Message',
   description:
     'Post a plain text or rich text message to a Webex room or send a direct message',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a message via Webex, in one of two modes selected by the message type: post to a room (by room ID) or send a direct message to a person (by person ID or email). Use it to deliver notifications, replies, or rich-text/markdown content with an optional file attachment. Each call posts a new message, so it is not idempotent; for direct messages either a person ID or email is required.',
+    idempotent: false,
+  },
   props: {
     messageType: Property.StaticDropdown({
       displayName: 'Message Type',

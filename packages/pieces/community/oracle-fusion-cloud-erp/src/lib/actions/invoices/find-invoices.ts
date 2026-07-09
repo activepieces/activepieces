@@ -7,6 +7,8 @@ export const findInvoices = createAction({
     name: 'find_invoices',
     displayName: 'Find Invoices',
     description: 'Search for payables invoices with optional filters.',
+    audience: 'both',
+    aiMetadata: { description: 'List or search payables (supplier) invoices, optionally filtering by invoice number, supplier, business unit, or validation status, with limit/offset paging (default 25, max 500). Read-only and idempotent. Use to discover supplier bills or resolve an InvoiceId; for customer-billing invoices use Find Receivables Invoices instead.', idempotent: true },
     props: {
         invoiceNumber: Property.ShortText({
             displayName: 'Invoice Number',

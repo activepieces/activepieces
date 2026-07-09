@@ -1,8 +1,5 @@
-import {
-  ProjectRelease,
-  ProjectReleaseType,
-  Permission,
-} from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {

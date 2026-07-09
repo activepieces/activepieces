@@ -8,6 +8,8 @@ export const createRecord = createAction({
     name: 'create_record',
     displayName: 'Create Record',
     description: 'Create a record of a given object.',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new Salesforce record of any standard or custom object (Account, Contact, Lead, etc.) by supplying the object API name plus a JSON map of field values. Pick this for the general "insert one record" case; use Create Object (Advanced) only when you need the raw API response envelope rather than the record body. Not idempotent: each call inserts a new record with a new Id, so re-running creates duplicates.', idempotent: false },
     props: {
         object: salesforcesCommon.object,
         data: Property.Json({

@@ -8,6 +8,8 @@ export const createCrmContactAction = createAction({
   name: 'whatsscale_create_crm_contact',
   displayName: 'Create a CRM Contact',
   description: 'Add a new contact to your WhatsScale CRM',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new WhatsScale CRM contact from a phone number (with country code), optionally setting a name and comma-separated tags. Not idempotent: calling it again may produce a duplicate contact, so look the phone up first with Find a CRM Contact by Phone if you need to avoid duplicates.', idempotent: false },
   props: {
     phone: Property.ShortText({
       displayName: 'Phone Number',

@@ -7,6 +7,12 @@ export const addExecutionTag = createAction({
   displayName: 'Associer le run à wedof',
   description:
     "Permet d'associer une exécution de workflow à un ou plusieurs dossiers de (formations / certifications) dans wedof",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Tags the current workflow run with one or more Wedof folder numbers (training or certification), linking this execution to those folders in Wedof. Idempotent: re-adding the same folder numbers does not create duplicates. This makes no external API call; it only attaches run metadata.',
+    idempotent: true,
+  },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

@@ -15,6 +15,8 @@ export const chargePointsListingAction = createAction({
   name: 'chargePointsListing',
   displayName: 'Resources - Charge Points - Charge Points Listing',
   description: 'Get all charge points.',
+  audience: 'both',
+  aiMetadata: { description: 'List charge points across the account, with optional filters by type, network, location, user, partner, tag, model, external ID, and update window. Read-only and safe to repeat. Enable Paginate Results to fetch every match; to look up a single known charge point by ID use charge-point-read instead.', idempotent: true },
   props: {
         
   filter__desiredSecurityProfileStatus: Property.StaticDropdown({

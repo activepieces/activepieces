@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { edenAiAuth } from '../..';
 
 import FormData from 'form-data';
@@ -176,6 +176,12 @@ export const invoiceParserAction = createAction({
   name: 'invoice_parser',
   displayName: 'Invoice Parser',
   description: 'Extract structured invoice data from files using Eden AI. Supports multiple providers, languages, and document types.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Parse an uploaded financial document (PDF/image) into structured fields via Eden AI financial parser, routed to a chosen provider. The document type can be fixed to invoice or receipt or left on auto-detection. Use it to extract line items, totals, and metadata from invoices or receipts; takes an actual file upload (not a URL) and optionally a password for protected PDFs. Read-only extraction with no side effect, so it is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,
@@ -241,15 +247,15 @@ export const invoiceParserAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
      
-      document_type: z.string().nullish(),
-      language: z.string().nullish(),
-      model: z.string().nullish(),
-      file_password: z.string().nullish(),
-      convert_to_pdf: z.boolean().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      document_type: z.nullish(z.string()),
+      language: z.nullish(z.string()),
+      model: z.nullish(z.string()),
+      file_password: z.nullish(z.string()),
+      convert_to_pdf: z.nullish(z.boolean()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 

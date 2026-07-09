@@ -13,6 +13,8 @@ export const getSubmissionDetails = createAction({
   name: 'getSubmissionDetails',
   displayName: 'Get Submission Details',
   description: 'Get details of a form submission',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the field values and timestamp of a single Formstack submission by its submission ID, optionally including technical metadata (IP, user agent, location). Use when you have a submission ID and need its contents. Encrypted forms require the encryption password. Read-only and idempotent.', idempotent: true },
   props: {
     form_id: formIdDropdown,
     submission_id: submissionIdDropdown,

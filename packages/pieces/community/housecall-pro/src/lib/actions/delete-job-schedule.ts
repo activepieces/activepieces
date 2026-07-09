@@ -7,6 +7,8 @@ export const deleteJobSchedule = createAction({
   name: "delete_job_schedule",
   displayName: "Delete Job Schedule",
   description: "Deletes schedule on a job.",
+  audience: 'both',
+  aiMetadata: { description: "Remove the schedule (start/end times) from a Housecall Pro job by job ID, leaving the job itself intact. Idempotent: deleting an already-unscheduled job's schedule has no further effect.", idempotent: true },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

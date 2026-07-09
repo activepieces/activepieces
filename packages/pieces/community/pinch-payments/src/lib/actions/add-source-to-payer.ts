@@ -8,6 +8,8 @@ export const addSourceToPayerAction = createAction({
   name: 'add_source_to_payer',
   displayName: 'Add Source to Payer',
   description: 'Add a payment source (bank account or credit card) to an existing payer',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a payment source (bank account or credit card) to an existing Pinch Payments payer. Two input modes: a capture-script token (works for both source types, IP address recommended) or manual bank-account details (account number, BSB, name — bank accounts only; credit cards must use a token). Requires the target payer id. Not idempotent: each call appends a new source to the payer.', idempotent: false },
   props: {
     payerId: Property.Dropdown({
       displayName: 'Payer',

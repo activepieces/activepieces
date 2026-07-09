@@ -11,6 +11,8 @@ export const searchAnalytics = createAction({
   displayName: 'Search Analytics',
   description:
     'Query traffic data for your site using the Google Search Console API.',
+  audience: 'both',
+  aiMetadata: { description: 'Query Google Search Console search-performance metrics (clicks, impressions, CTR, position) for a verified site over a date range, optionally grouped by dimensions (query, page, country, device, searchAppearance, date, hour), filtered by search type, and narrowed with dimension filters. Choose this to analyze or report on a site\'s organic search traffic. Requires a verified siteUrl and a start/end date; read-only and idempotent.', idempotent: true },
   props: {
     siteUrl: commonProps.siteUrl,
     startDate: Property.DateTime({

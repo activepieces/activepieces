@@ -44,6 +44,9 @@ export const updatedChange = createTrigger({
   name: 'updated_change',
   displayName: 'Updated Change',
   description: 'Triggers when an existing change request is updated in Freshservice. Note: newly created changes may also fire this trigger because their updated_at matches created_at.',
+  aiMetadata: {
+    description: 'Fires when an existing change request is modified in Freshservice (e.g. status, risk, or schedule change), representing the latest state of that change. Polls newest-first by last-updated time across all changes; note that newly created changes can also fire this because their updated time initially equals their creation time.',
+  },
   props: {},
   sampleData: {
     id: 1,

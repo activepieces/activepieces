@@ -1,13 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import FormData from 'form-data';
-import { googleDriveAuth, getAccessToken } from '../auth';
+import { Readable } from 'stream';
 import mime from 'mime-types';
+import { drive as googleDrive } from '@googleapis/drive';
+import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
+import { uploadGdriveFileActionOutputSchema } from '../output-schemas';
 
 export const googleDriveUploadFile = createAction({
   auth: googleDriveAuth,
@@ -30,45 +27,29 @@ export const googleDriveUploadFile = createAction({
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
   },
+  outputSchema: uploadGdriveFileActionOutputSchema,
   async run(context) {
     const fileData = context.propsValue.file;
-    const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
+    const mimeType = mime.lookup(fileData.extension ?? '') || 'application/octet-stream';
 
-    const meta = {
-      mimeType: mimeType,
-      name: context.propsValue.fileName,
-      ...(context.propsValue.parentFolder
-        ? { parents: [context.propsValue.parentFolder] }
-        : {}),
-    };
+    const authClient = await createGoogleClient(context.auth);
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
-    const metaBuffer = Buffer.from(JSON.stringify(meta), 'utf-8');
-    const fileBuffer = Buffer.from(fileData.base64, 'base64');
-
-    const form = new FormData();
-    form.append('Metadata', metaBuffer, { contentType: 'application/json' });
-    form.append('Media', fileBuffer);
-
-    const result = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://www.googleapis.com/upload/drive/v3/files`,
-      queryParams: {
-        uploadType: 'multipart',
-        supportsAllDrives: String(
-          context.propsValue.include_team_drives || false
-        ),
+    const response = await drive.files.create({
+      requestBody: {
+        name: context.propsValue.fileName,
+        ...(context.propsValue.parentFolder
+          ? { parents: [context.propsValue.parentFolder] }
+          : {}),
       },
-      body: form,
-      headers: {
-        ...form.getHeaders(),
+      media: {
+        mimeType,
+        body: Readable.from(Buffer.from(fileData.base64, 'base64')),
       },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: await getAccessToken(context.auth),
-      },
+      supportsAllDrives: context.propsValue.include_team_drives ?? false,
+      fields: 'id, name, mimeType, kind',
     });
 
-    console.debug('File upload response', result);
-    return result.body;
+    return response.data;
   },
 });

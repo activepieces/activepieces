@@ -23,6 +23,9 @@ export const newUser = createTrigger({
   displayName: 'New User',
   description:
     'Triggers when a new user is added to your storefront.',
+  aiMetadata: {
+    description: 'Fires when a new user account is created on the Uscreen storefront. Represents a newly registered viewer or subscriber, including their email, name, and any storefront custom fields.',
+  },
   props: { setupInstructions: uscreenProps.webhookInstructions() },
   sampleData: sampleData.data,
   type: TriggerStrategy.WEBHOOK,

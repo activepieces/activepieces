@@ -11,6 +11,12 @@ export const createItem = createAction({
   displayName: 'Create Item',
   description:
     'Add a product or service to your Wafeq catalog. Catalog items can be quickly added to invoices, bills, and quotes without retyping descriptions or prices.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a catalog item (product or service) in Wafeq with optional pricing, SKU, accounts, and inventory tracking, so it can be reused on invoices, bills, and quotes. Choose this to register a reusable item; only name is required. Not idempotent — each call adds a new catalog item.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

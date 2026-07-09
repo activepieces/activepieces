@@ -7,6 +7,8 @@ export const listCustomProperties = createAction({
   name: 'list_custom_properties',
   displayName: 'List Custom Properties',
   description: 'Get a list of custom properties for a site',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the custom event properties configured for a site. Use to discover which custom properties exist before creating or deleting one. Read-only and safe to repeat.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
   },

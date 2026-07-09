@@ -10,6 +10,12 @@ export const editMonitorAction = createAction({
   name: 'edit_monitor',
   displayName: 'Edit Monitor',
   description: 'Update the settings of an existing UptimeRobot monitor',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Updates an existing UptimeRobot monitor's name, monitored URL, and/or check interval. The target monitor can be chosen from the dropdown or, to drive it from a prior step, passed as a raw Monitor ID that overrides the dropdown. Only the fields you set are changed; omitted fields keep their current value. Repeating the same call leaves the monitor in the same state.",
+    idempotent: true,
+  },
   props: {
     monitor: uptimeRobotCommon.monitorDropdownOptional,
     monitor_id_override: Property.ShortText({

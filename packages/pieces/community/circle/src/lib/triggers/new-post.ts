@@ -76,6 +76,9 @@ export const newPostCreated = createTrigger({
 	name: 'new_post_created',
 	displayName: 'New Post Created',
 	description: 'Triggers when a new post is created in a specific space.',
+	aiMetadata: {
+		description: 'Fires when a new published post appears in the selected Circle space. Each event represents one newly published post in that space.',
+	},
 	props: {
 		space_id: spaceIdDropdown,
 	},

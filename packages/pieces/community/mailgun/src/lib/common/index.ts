@@ -8,7 +8,7 @@ import {
   HttpError,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 import { mailgunAuth } from '../..';
 
 export function verifyMailgunSignature(

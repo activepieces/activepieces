@@ -8,6 +8,8 @@ export const getExecution = createAction({
   name: 'get_execution',
   displayName: 'Get Execution',
   description: 'Get an execution by UUID.',
+  audience: 'both',
+  aiMetadata: { description: "Retrieve a single workflow execution and its status, inputs, and output by looking up its UUID within a selected AirOps workflow. Use to poll or check the result of an execution started by Run Workflow (Async), or to inspect any past run. Requires both the workflow and the execution UUID, and throws if no matching execution exists. Read-only, so repeated calls are idempotent.", idempotent: true },
   props: {
     app: Property.Dropdown({
       displayName: 'Workflow',

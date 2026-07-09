@@ -14,7 +14,7 @@ import { createContractWorkspace } from "./lib/actions/create-contract-workspace
 import { updateContractWorkspace } from "./lib/actions/update-contract-workspace";
 import { updateContractStatus } from "./lib/actions/update-contract-status";
 import { deleteContractWorkspace } from "./lib/actions/delete-contract-workspace";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const sapAriba = createPiece({
   displayName: "SAP Ariba",

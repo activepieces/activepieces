@@ -8,6 +8,12 @@ export const getIssueAttachmentAction = createAction({
 	name: 'get-issue-attachment',
 	displayName: 'Get Issue Attachment',
 	description: 'Retrieves an attachment from an issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Downloads a single attachment from Jira Data Center/Server by its attachment ID, returning the attachment metadata and the file contents. Use when an agent already has an attachment ID (e.g. from reading an issue) and needs the actual file. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		attachmentId: Property.ShortText({
 			displayName: 'Attachment ID',

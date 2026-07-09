@@ -8,6 +8,8 @@ export const addCommentAction = createAction({
   name: 'add_comment',
   displayName: 'Add Comment',
   description: 'Adds a comment to an issue. Supports Markdown formatting.',
+  audience: 'both',
+  aiMetadata: { description: 'Post a comment on an issue, given the issue ID and Markdown text; optionally restrict visibility to a specific group. Use to add a note or reply on an issue. Not idempotent: each call appends a new comment.', idempotent: false },
   props: {
     issue: issueDropdown,
     text: Property.LongText({

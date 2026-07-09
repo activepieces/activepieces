@@ -3,7 +3,8 @@ import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { hubspotAuth } from '../auth';
-import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 
@@ -75,6 +76,10 @@ export const newTaskTrigger = createTrigger({
 	name: 'new-task',
 	displayName: 'New Task',
 	description: 'Trigger when a new task is added.',
+	aiMetadata: {
+		description:
+			'Fires when a new task is created in the HubSpot CRM. Each event represents one task record (call, to-do, or email follow-up) with its properties such as subject, type, priority, owner, due timestamp, and associated contacts/companies/deals. Polls for tasks by creation date.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

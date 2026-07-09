@@ -8,6 +8,12 @@ export const mollieCreatePaymentRefund = createAction({
   name: 'create_payment_refund',
   displayName: 'Create Payment Refund',
   description: 'Creates refund for payment',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Refunds an existing Mollie payment, fully or partially, by specifying the refund amount and currency against a target payment ID. Use to return funds for a charged payment. Not idempotent: each call issues another refund against the payment, so repeating it can over-refund.',
+    idempotent: false,
+  },
   props: {
     paymentId: Property.Dropdown({
   auth: mollieAuth,

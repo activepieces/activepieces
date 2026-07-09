@@ -6,6 +6,8 @@ export const listFiles = createAction({
   name: "list_files",
   displayName: "List Files",
   description: "Returns a list of all the files in the current deploy.",
+  audience: 'both',
+  aiMetadata: { description: 'Lists all files in the current (published) deploy of a Netlify site, identified by its site ID. Use it to inspect which files are served for the live site. Read-only and idempotent.', idempotent: true },
   props: {
     siteId: Property.Dropdown({
       auth: netlifyAuth,      displayName: "Site",

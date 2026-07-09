@@ -8,6 +8,8 @@ export const listEventsAction = createAction({
   name: 'list_events',
   displayName: 'List Events',
   description: 'Returns a list of scheduled meetings from your SavvyCal account.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists SavvyCal events across the account, optionally filtered by state(s), start date window, team, or specific scheduling links. Use to browse or find bookings when you do not have an event id; leave all filters empty to return every event. Read-only and idempotent.', idempotent: true },
   props: {
     states: Property.StaticMultiSelectDropdown({
       displayName: 'State',

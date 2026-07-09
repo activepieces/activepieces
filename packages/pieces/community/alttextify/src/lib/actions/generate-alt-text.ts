@@ -8,6 +8,8 @@ export const generateAltTextAction = createAction({
     auth: alttextifyAuth,
     displayName: 'Generate Image Alt Text',
     description: 'Generates alt text for specified image.',
+    audience: 'both',
+    aiMetadata: { description: 'Generates descriptive alt text for an image file by sending it to AltTextify. Use when an agent needs accessibility alt text or an SEO caption for an image. Requires the image as a file input; optionally accepts a language code and keyword/negative-keyword lists to steer the output. Idempotent: the same image and options yield the same alt text and create nothing.', idempotent: true },
     props: {
         image: Property.File({
             displayName: 'Image File',

@@ -1,7 +1,8 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
-import { google } from 'googleapis';
+import { drive as googleDrive } from '@googleapis/drive';
+import { googleDriveMoveFileActionOutputSchema } from '../output-schemas';
 
 export const moveFileAction = createAction({
   auth: googleDriveAuth,
@@ -19,13 +20,14 @@ export const moveFileAction = createAction({
     include_team_drives: common.properties.include_team_drives,
     folderId: common.properties.parentFolder,
   },
+  outputSchema: googleDriveMoveFileActionOutputSchema,
   async run(context) {
     const fileId = context.propsValue.fileId;
     const folderId = context.propsValue.folderId;
 
     const authClient = await createGoogleClient(context.auth);
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const file = await drive.files.get({
       fileId,

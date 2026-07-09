@@ -8,6 +8,10 @@ export const certificationFolderSuccess = createTrigger({
   displayName: 'Dossier de certification réussi',
   description:
     "Se déclenche lorsqu'un dossier de formation passe à l'état réussi",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof certification folder (dossier de certification) transitions to the 'success' (réussi) state, meaning the candidate passed the certification. Emits the full certification-folder record.",
+  },
   props: {},
   sampleData: {
     attendeeLink: 'https://test.wedof.fr/candidat-1234-123456789',

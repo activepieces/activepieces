@@ -1,11 +1,10 @@
-import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { AlertChannel, ApEdition, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
@@ -19,8 +18,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendInvitation] sending invitation email',
             email: userInvitation.email,
-            platformId: userInvitation.platformId,
-            projectId: userInvitation.projectId,
+            platform: { id: userInvitation.platformId },
+            project: { id: userInvitation.projectId },
             type: userInvitation.type,
             projectRole: userInvitation.projectRole,
             platformRole: userInvitation.platformRole,
@@ -44,8 +43,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendProjectMemberAdded] sending project member added email',
             email: userInvitation.email,
-            platformId: userInvitation.platformId,
-            projectId: userInvitation.projectId,
+            platform: { id: userInvitation.platformId },
+            project: { id: userInvitation.projectId },
             type: userInvitation.type,
             projectRole: userInvitation.projectRole,
             platformRole: userInvitation.platformRole,
@@ -78,7 +77,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendScimUserWelcome] sending welcome email',
             email,
-            platformId,
+            platform: { id: platformId },
         })
 
         const loginLink = await domainHelper.getPublicUrl({
@@ -114,7 +113,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         log.info({
             name: '[emailService#sendIssueCreatedNotification]',
-            projectId,
+            project: { id: projectId },
             flowName,
             createdAt,
         })
@@ -191,24 +190,24 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
-        const user = await userService(log).getMetaInformation({ id: userId })
+    async sendChatNotification({ platformId, to, subject, body, senderName, senderEmail }: SendChatNotificationArgs): Promise<void> {
+        log.info({
+            platform: { id: platformId },
+            recipientCount: to.length,
+            subject,
+        }, '[emailService#sendChatNotification] sending chat notification email')
 
-        if (isNil(user) || !isValidEmail(user.email)) {
-            log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
-            return
-        }
-        const badge = BADGES[badgeName as keyof typeof BADGES]
         await emailSender(log).send({
-            emails: [user.email],
-            platformId: user.platformId!,
+            emails: to,
+            platformId,
+            replyTo: senderEmail,
             templateData: {
-                name: 'badge-awarded',
+                name: 'chat-notification',
                 vars: {
-                    firstName: user.firstName,
-                    badgeTitle: badge.title,
-                    badgeDescription: badge.description,
-                    badgeImageUrl: badge.imageUrl,
+                    subject,
+                    body,
+                    senderName,
+                    senderEmail,
                 },
             },
         })
@@ -244,10 +243,6 @@ function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
-function isValidEmail(email: string): boolean {
-    return z.email().safeParse(email).success
-}
-
 type SendInvitationArgs = {
     userInvitation: UserInvitation
     invitationLink: string
@@ -267,6 +262,15 @@ type SendOtpArgs = {
 type SendScimUserWelcomeArgs = {
     email: string
     platformId: string
+}
+
+type SendChatNotificationArgs = {
+    platformId: string
+    to: string[]
+    subject: string
+    body: string
+    senderName: string
+    senderEmail: string
 }
 
 type IssueCreatedArgs = {

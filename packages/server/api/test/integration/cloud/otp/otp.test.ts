@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -7,6 +6,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { db } from '../../../helpers/db'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -29,7 +29,6 @@ beforeEach(() => {
         sendQuotaAlert: vi.fn(),
         sendReminderJobHandler: vi.fn(),
         sendExceedFailureThresholdAlert: vi.fn(),
-        sendBadgeAwardedEmail: vi.fn(),
         sendProjectMemberAdded: vi.fn(),
     }))
 

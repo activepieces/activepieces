@@ -10,6 +10,11 @@ export const updateRecordAction = createAction({
 	name: 'teable_update_record',
 	displayName: 'Update Record',
 	description: 'Updates an existing record in a Teable table.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Updates the field values of an existing record in a Teable table, identified by its record ID. Use to modify a known row; only the supplied non-empty fields are sent. Idempotent — re-applying the same field values to the same record yields the same state.',
+		idempotent: true,
+	},
 	props: {
 		base_id: TeableCommon.base_id,
 		table_id: TeableCommon.table_id,

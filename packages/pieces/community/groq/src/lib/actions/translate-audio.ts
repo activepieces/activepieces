@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { groqAuth } from '../..';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { translateAudioActionOutputSchema } from '../output-schemas';
 
 export const translateAudio = createAction({
+  audience: 'human',
 	auth: groqAuth,
 	name: 'translate-audio',
 	displayName: 'Translate Audio',
@@ -88,6 +90,7 @@ export const translateAudio = createAction({
 			},
 		}),
 	},
+	outputSchema: translateAudioActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { file, model, prompt, temperature, responseFormat } = propsValue;
 

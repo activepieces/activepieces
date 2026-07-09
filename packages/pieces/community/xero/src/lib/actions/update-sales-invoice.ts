@@ -13,6 +13,12 @@ export const xeroUpdateSalesInvoice = createAction({
   name: 'xero_update_sales_invoice',
   displayName: 'Update Sales Invoice',
   description: 'Updates details of an existing sales invoice (ACCREC).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing ACCREC sales invoice identified by its ID, changing fields like reference, due date, status, contact, or line items. Idempotent on a fixed invoice ID. By default line-item changes merge into the existing lines (matching by LineItemID, appending new ones); enable Replace All Line Items to overwrite the full set instead. AUTHORISED invoices can only be edited when the allow-authorised flag is set.',
+    idempotent: true,
+  },
   props: {
     tenant_id: props.tenant_id,
     allow_authorised: Property.Checkbox({

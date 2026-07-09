@@ -23,6 +23,9 @@ export const newSuccessfulInstallmentPaymentViaRespaid = createTrigger({
     name: 'new_successful_installment_payment_via_respaid',
     displayName: 'New Successful Installment Payment via Respaid',
     description: "Triggers when one of the installment payments is made for a given case within a collection's payment plan.",
+    aiMetadata: {
+      description: "Fires when a debtor makes one installment payment within a Respaid payment plan, carrying the debtor/invoice details, paid amount, current installment step, total installments, and remaining balance. Use to track progress through a collection's installment schedule.",
+    },
     auth: respaidAuth,
     props: {},
     sampleData: {

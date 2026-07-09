@@ -5,6 +5,10 @@ export const productUpdated = createQawafelEventTrigger({
   displayName: 'Product Updated',
   description:
     'Fires when a product is updated (price change, description edit, activated/deactivated). Use it to keep external storefronts in sync.',
+  aiMetadata: {
+    description:
+      'Fires when an existing product is updated in Qawafel (the product.updated event) — for example a price change, description edit, or activation/deactivation. Each event represents one product in its post-update state, useful for keeping external storefronts in sync.',
+  },
   event: 'product.updated',
   sampleData: {
     id: 'prod_01jk5jtv3x6e5hjkfcwzvubejq',

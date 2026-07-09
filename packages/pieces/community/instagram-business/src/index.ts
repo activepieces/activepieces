@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { uploadPhoto } from './lib/actions/upload-photo';
 import { uploadReel } from './lib/actions/upload-reel';
 import { instagramCommon } from './lib/common';

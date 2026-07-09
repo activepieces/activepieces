@@ -15,6 +15,8 @@ export const updateContact = createAction({
   name: 'update_contact',
   displayName: 'Update Contact',
   description: 'Update an existing contact in your OpenPhone workspace',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing OpenPhone contact identified by its contact ID, changing any of name, company, role, emails, phone numbers, custom fields, or source. Choose this to modify a contact that already exists rather than create one. Requires a valid contact ID and at least one field to change; supplied email/phone arrays replace the existing ones. Idempotent — re-applying the same field values leaves the contact in the same state.', idempotent: true },
   props: {
     contactId: contactDropdown,
     firstName: Property.ShortText({

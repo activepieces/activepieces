@@ -1,15 +1,25 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { accountUidDropdown } from '../common/dropdowns';
+import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
 
 export const updateAccountAction = createAction({
   name: 'update_account',
   auth: outsetaAuth,
   displayName: 'Update Account',
   description: 'Update an existing account in Outseta.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Outseta CRM account identified by UID, setting only the provided fields (name, stage, client identifier, invoice notes, billing address) via a PUT. Use to change account details when you have its UID; requires at least one field. Idempotent: re-running with the same input leaves the account in the same state.',
+    idempotent: true,
+  },
   props: {
-    accountUid: accountUidDropdown(),
+    accountUid: Property.ShortText({
+      displayName: 'Account UID',
+      description: 'The UID of the account to update.',
+      required: true,
+    }),
     name: Property.ShortText({
       displayName: 'Name',
       required: false,
@@ -63,6 +73,7 @@ export const updateAccountAction = createAction({
       displayName: 'Country',
       required: false,
     }),
+    customProperties: customPropertiesProp('Account'),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -71,12 +82,12 @@ export const updateAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // // Fetch full account first to avoid wiping fields with a partial PUT
-    // const account = await client.get<any>(
-    //   `/api/v1/crm/accounts/${context.propsValue.accountUid}`
-    // );
-    const account: any = {}; 
-    console.log('Fetched account:', account);
+    // Fetch full account with nested collections expanded to avoid wiping
+    // fields like PersonAccount / BillingAddress / Subscriptions on PUT
+    const account = await client.get<any>(
+      `/api/v1/crm/accounts/${context.propsValue.accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PersonAccount.*,PersonAccount.Person.*,Subscriptions.*`
+    );
+
     let changed = false;
     if (context.propsValue.name) { account.Name = context.propsValue.name; changed = true; }
     if (context.propsValue.accountStage != null) { account.AccountStage = context.propsValue.accountStage; changed = true; }
@@ -96,8 +107,25 @@ export const updateAccountAction = createAction({
       changed = true;
     }
 
+    if (context.propsValue.customProperties) {
+      mergeCustomProperties(account, context.propsValue.customProperties);
+      changed = true;
+    }
+
     if (!changed) {
       throw new Error('At least one field must be provided.');
+    }
+
+    // Defensive: ensure PersonAccount is a flat array on the way out, so we
+    // never PUT back a {items: [...]} envelope that the server might
+    // misinterpret as "no memberships" and wipe.
+    if (account.PersonAccount && !Array.isArray(account.PersonAccount)) {
+      account.PersonAccount =
+        account.PersonAccount.items ?? account.PersonAccount.Items ?? [];
+    }
+    if (account.Subscriptions && !Array.isArray(account.Subscriptions)) {
+      account.Subscriptions =
+        account.Subscriptions.items ?? account.Subscriptions.Items ?? [];
     }
 
     const updatedAccount = await client.put<any>(

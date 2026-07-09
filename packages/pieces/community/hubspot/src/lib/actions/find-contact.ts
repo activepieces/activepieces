@@ -1,4 +1,4 @@
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { hubspotAuth } from '../auth';
@@ -11,6 +11,8 @@ export const findContactAction = createAction({
 	name: 'find-contact',
 	displayName: 'Find Contact',
 	description: 'Finds a contact by searching.',
+	audience: 'both',
+	aiMetadata: { description: 'Search HubSpot contacts by one or two property/value pairs (matched with equality) and return the matching contacts. Read-only and repeatable. Use this to resolve a contact before updating or enrolling it; pick a create action instead when no match should exist.', idempotent: true },
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{

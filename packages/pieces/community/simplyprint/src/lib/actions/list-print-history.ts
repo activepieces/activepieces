@@ -9,6 +9,12 @@ export const listPrintHistoryAction = createAction({
   name: 'list_print_history',
   displayName: 'List Print History',
   description: 'List completed print jobs, optionally filtered to a single printer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists completed print jobs page by page, optionally restricted to a single printer ID. Use to browse or search print history and obtain job UIDs before calling "Get Print Job" or "Download File"; leave the printer filter empty to span all printers. Supports page/limit paging (default 25, max 100 per page). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     printerId: Property.Number({
       displayName: 'Printer ID (optional)',

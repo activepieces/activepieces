@@ -7,6 +7,10 @@ export const bookingNoshow = createTrigger({
   name: 'bookingNoshow',
   displayName: 'Booking No-Show',
   description: 'Triggered when User sets the completed booking to No-show',
+  aiMetadata: {
+    description:
+      'Fires when a user marks a completed booking as a no-show in OnceHub, indicating the customer did not attend. The event carries the affected booking with its contact and owner details.',
+  },
   props: {},
   sampleData: {
     id: 'EVNT-KN56U3YL7C',

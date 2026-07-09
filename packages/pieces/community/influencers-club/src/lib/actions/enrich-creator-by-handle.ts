@@ -8,6 +8,12 @@ export const enrichCreatorByHandle = createAction({
   name: 'enrichCreatorByHandle',
   displayName: 'Enrich Creator Social Profile by Handle',
   description: 'Enrich creator data by social media handle with full mode including all connected platforms and detailed stats',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up and enrich a creator/influencer profile from a social media handle plus the platform it belongs to (Instagram, TikTok, YouTube, Twitter/X, Twitch, or OnlyFans), returning their connected platforms and detailed stats. Choose this when you have a handle rather than an email; use the by-email action when you only have an email. The platform is required, and you can require a valid email be present (must_have) or accept partial data (preferred). This is a read-only lookup and is idempotent.',
+    idempotent: true,
+  },
   props: {
     handle: Property.ShortText({
       displayName: 'Handle',

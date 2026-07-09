@@ -4,7 +4,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newFeedbackTrigger } from './lib/triggers/new-feedback';
 import { newSurveyResponseTrigger } from './lib/triggers/new-survey-response';
 

@@ -1,27 +1,5 @@
-import {
-    ActivepiecesError,
-    ApEdition,
-    apId,
-    AuthenticationResponse,
-    ErrorCode,
-    FilteredPieceBehavior,
-    isNil,
-    OPEN_SOURCE_PLAN,
-    Platform,
-    PlatformId,
-    PlatformPlanLimits,
-    PlatformRole,
-    PlatformUsage,
-    PlatformWithoutFederatedAuth,
-    PlatformWithoutSensitiveData,
-    ProjectType,
-    spreadIfDefined,
-    SsoDomainVerification,
-    SsoDomainVerificationStatus,
-    UpdatePlatformRequestBody,
-    UserId,
-    UserStatus,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
+import { ApEdition, AuthenticationResponse, FilteredPieceBehavior, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'
@@ -82,6 +60,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             federatedAuthProviders: { saml: null },
             cloudAuthEnabled: true,
             pinnedPieces: [],
+            pieceSelectorConfig: null,
             allowedEmbedOrigins: [],
             googleAuthEnabled: true,
         }
@@ -92,7 +71,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             platformId: savedPlatform.id,
         })
 
-        log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
+        log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
     },
     async createPlatformWithProject({ identityId, name, invalidatePreviousTokens }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
@@ -172,6 +151,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
+            ...spreadIfNotUndefined('themeColors', params.themeColors),
             ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
             ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
@@ -189,6 +169,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('ssoDomain', params.ssoDomain),
             ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
+            ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
         }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
@@ -199,7 +180,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         if (!isNil(params.federatedAuthProviders?.saml)) {
             invalidateSamlClientCache(params.id)
         }
-        log.info({ platformId: params.id }, 'Platform updated')
+        log.info({ platform: { id: params.id } }, 'Platform updated')
         const saved = await platformRepo().save(updatedPlatform)
         return stripFederatedAuth(saved)
     },

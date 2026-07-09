@@ -14,6 +14,8 @@ export const taxCreateAction = createAction({
   name: 'taxCreate',
   displayName: 'Resources - Taxes - Create',
   description: 'Create new Tax.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new tax rate in AMPECO, supplying a name and percentage (optionally localized display names and a linked tax identification number). Not idempotent: each call adds another tax record even with identical inputs, so check existing taxes first to avoid duplicates.', idempotent: false },
   props: {
         
   name: Property.ShortText({

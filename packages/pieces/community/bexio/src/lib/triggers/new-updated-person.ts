@@ -88,6 +88,9 @@ export const newUpdatedPersonTrigger = createTrigger({
   name: 'new_updated_person',
   displayName: 'New/Updated Person',
   description: 'Triggers when a person is added or updated',
+  aiMetadata: {
+    description: 'Fires when a person contact is created or its updated timestamp changes in Bexio. Emits each matching person with their name, address, contact details (email, phone), birthday, group memberships, and lead status. Use to react to new or modified individual contacts.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

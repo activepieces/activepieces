@@ -7,6 +7,8 @@ export const findNotebookOrComment = createAction({
 	name: 'find_notebook_or_comment',
 	displayName: 'Find Notebook / Notebook Comment',
 	description: 'Locate notebooks or note comments by search parameters.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Teamwork by keyword for either notebooks or notebook comments (selected via the search-for mode), optionally scoped to a single project. Use to locate a notebook or its comments and obtain their details. Requires choosing the item type and a search term. Idempotent — a read-only search with no side effects.', idempotent: true },
 	auth: teamworkAuth,
 	props: {
 		searchFor: Property.StaticDropdown({

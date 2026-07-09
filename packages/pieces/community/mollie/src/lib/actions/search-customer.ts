@@ -8,6 +8,12 @@ export const mollieSearchCustomer = createAction({
   name: 'search_customer',
   displayName: 'Search Customer',
   description: 'Retrieve a list of all customers',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists customers in the connected Mollie account, paginated with an optional cursor (from customer ID), limit, and sort direction. Use to look up existing customers or page through the customer list. Idempotent: read-only listing with no side effects.',
+    idempotent: true,
+  },
   props: {
     from: Property.ShortText({
       displayName: 'From Customer ID',
