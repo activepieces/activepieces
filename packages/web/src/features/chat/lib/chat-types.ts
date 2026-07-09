@@ -1,9 +1,11 @@
+import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
 import {
   BatchProgressData,
+  ChatContextCompression,
   ChatToolName,
   ChatToolOutputs,
-  isObject,
-  parseToJsonIfPossible,
+  chatPersistenceUtils,
+  chatToolClassification,
 } from '@activepieces/shared';
 import {
   DynamicToolUIPart,
@@ -45,6 +47,7 @@ const HIDDEN_TOOL_NAMES = new Set([
 
 const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_connection_required',
+  'ap_show_mcp_reconnect',
   'ap_show_connection_picker',
   'ap_show_project_picker',
   'ap_show_questions',
@@ -53,6 +56,37 @@ const DISPLAY_TOOL_NAMES = new Set([
 
 function isDisplayTool(name: string): boolean {
   return DISPLAY_TOOL_NAMES.has(name);
+}
+
+// Tools whose result renders as a rich card AND that block on server-side
+// execution, leaving a visible gap before the card appears. We render a
+// shape-matched skeleton for these during that gap. Deliberately excludes:
+// ap_run_code (its CodeRecipeReveal already fills the gap and it often produces
+// no card), display tools (interactive, render instantly from input), and
+// flow builds (stream progressively).
+function getPendingCardKind(name: string): PendingCardKind | null {
+  if (name === 'ap_execute_action') return 'action-receipt';
+  if (name === 'ap_generate_image') return 'image';
+  return null;
+}
+
+// A read-only ap_execute_action (read-verb action, or safe-method custom_api_call
+// HTTP GET) is a lookup, not an outcome — it folds into the thinking accordion as a
+// step and earns no card or skeleton. Mirrors the backend, which skips the receipt
+// event for the same calls. Writes/outcomes still produce a card.
+function isReadOnlyExecuteAction(part: AnyToolPart): boolean {
+  if (getToolPartName(part) !== 'ap_execute_action') return false;
+  const input = isObject(part.input) ? part.input : undefined;
+  const actionName =
+    input && typeof input.actionName === 'string'
+      ? input.actionName
+      : undefined;
+  if (!actionName) return false;
+  const actionInput = isObject(input?.input) ? input.input : undefined;
+  return chatToolClassification.isReadOnlyActionCall({
+    actionName,
+    input: actionInput,
+  });
 }
 
 function parseToolOutput(part: AnyToolPart): ToolOutput {
@@ -87,6 +121,20 @@ function parseTypedToolOutput<T extends ChatToolName>(
   _toolName: T,
 ): TypedToolOutput<ChatToolOutputs[T]> {
   return parseToolOutput(part) as TypedToolOutput<ChatToolOutputs[T]>;
+}
+
+// The "Context compression" metadata the worker rides on a reduced tool result's
+// structuredContent. Code Mode (ap_run_tools) already shows its own savings line on
+// its card, so it never double-badges here.
+function extractContextCompression(
+  part: AnyToolPart,
+): ChatContextCompression | null {
+  if (getToolPartName(part) === 'ap_run_tools') return null;
+  const parsed = parseToolOutput(part);
+  if (parsed.state !== 'success' || !isObject(parsed.data)) return null;
+  const structured = (parsed.data as { structuredContent?: unknown })
+    .structuredContent;
+  return chatPersistenceUtils.readContextCompression(structured);
 }
 
 function isThinkingStatusTool(name: string): boolean {
@@ -173,6 +221,19 @@ function extractBatchProgressFromOutput(
   return record['batchProgress'] as BatchProgressData;
 }
 
+function extractBuildIdFromOutput(part: AnyToolPart): string | null {
+  if (part.state !== 'output-available' || !part.output) return null;
+  const output = parseToJsonIfPossible(part.output);
+  if (!output || typeof output !== 'object') return null;
+  const buildId = (output as Record<string, unknown>)['buildId'];
+  return typeof buildId === 'string' ? buildId : null;
+}
+
+function extractBuildPhaseFromInput(part: AnyToolPart): string | undefined {
+  const input = isObject(part.input) ? part.input : undefined;
+  return typeof input?.phase === 'string' ? input.phase : undefined;
+}
+
 function extractToolTitles(part: AnyToolPart): {
   title: string;
   activeTitle: string | undefined;
@@ -192,8 +253,20 @@ function extractToolTitles(part: AnyToolPart): {
   return { title, activeTitle, doneTitle };
 }
 
-function extractQuickRepliesFromParts(message: ChatUIMessage | null): string[] {
-  if (!message || message.role !== 'assistant') return [];
+function readQuickRepliesInput(input: unknown): QuickRepliesData {
+  const typed = input as
+    | { replies?: string[]; offerRecurringAutomation?: boolean }
+    | undefined;
+  return {
+    replies: typed?.replies ?? [],
+    offerRecurringAutomation: typed?.offerRecurringAutomation === true,
+  };
+}
+
+function extractQuickRepliesFromParts(
+  message: ChatUIMessage | null,
+): QuickRepliesData {
+  if (!message || message.role !== 'assistant') return EMPTY_QUICK_REPLIES_DATA;
   for (let i = message.parts.length - 1; i >= 0; i--) {
     const p = message.parts[i];
     if (
@@ -201,11 +274,10 @@ function extractQuickRepliesFromParts(message: ChatUIMessage | null): string[] {
       getToolPartName(p) === 'ap_show_quick_replies' &&
       (p.state === 'output-available' || p.state === 'input-available')
     ) {
-      const input = p.input as { replies?: string[] } | undefined;
-      return input?.replies ?? [];
+      return readQuickRepliesInput(p.input);
     }
   }
-  return [];
+  return EMPTY_QUICK_REPLIES_DATA;
 }
 
 export const chatPartUtils = {
@@ -214,22 +286,31 @@ export const chatPartUtils = {
   getToolCallId,
   isReady,
   isDisplayTool,
+  getPendingCardKind,
+  isReadOnlyExecuteAction,
   isThinkingStatusTool,
   deriveToolStatus,
   extractToolOutputText,
   extractToolTitles,
   extractPieceNames,
+  extractContextCompression,
   parseToolOutput,
   parseTypedToolOutput,
   findLastToolPart,
   extractBatchProgressFromOutput,
+  extractBuildIdFromOutput,
+  extractBuildPhaseFromInput,
   extractQuickRepliesFromParts,
+  readQuickRepliesInput,
   HIDDEN_TOOL_NAMES,
   DISPLAY_TOOL_NAMES,
 };
 
+export type PendingCardKind = 'action-receipt' | 'image';
+
+export type CardSkeletonPhase = 'pending' | 'failed';
+
 export type ThinkingStep =
-  | { kind: 'reasoning'; text: string }
   | { kind: 'thinking-status'; text: string }
   | { kind: 'tool'; part: AnyToolPart; description: string | null };
 
@@ -247,4 +328,14 @@ export type TypedToolOutput<T> =
 
 export type CreditsWarning = {
   percentage: number;
+};
+
+export type QuickRepliesData = {
+  replies: string[];
+  offerRecurringAutomation: boolean;
+};
+
+export const EMPTY_QUICK_REPLIES_DATA: QuickRepliesData = {
+  replies: [],
+  offerRecurringAutomation: false,
 };

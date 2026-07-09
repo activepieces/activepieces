@@ -1,17 +1,8 @@
-import {
-    FlowActionType,
-    FlowOperationRequest,
-    FlowOperationType,
-    flowStructureUtil,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    PieceActionSettings,
-    ProjectScopedMcpServer,
-    UpdateActionRequest,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolDefinition, PieceActionSettings, ProjectScopedMcpServer, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
@@ -41,7 +32,7 @@ export const apUpdateStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),
             displayName: z.string().optional().describe('New display name for the step'),
-            input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the step (key-value pairs matching the action schema). ${mcpUtils.STEP_REFERENCE_HINT}`),
+            input: z.preprocess(mcpUtils.parseJsonStringArg, z.record(z.string(), z.unknown()).optional()).describe(`Input settings for the step (key-value pairs matching the action schema). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
             actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_research_pieces to get valid values.'),
             loopItems: z.string().optional().describe('For LOOP steps: expression for the items to iterate over'),
@@ -230,7 +221,7 @@ async function diagnoseMissingInputs({ settings, platformId, log }: {
         return parts.join(' ')
     }
     catch (err) {
-        log.warn({ err, pieceName, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, actionName }, 'diagnoseMissingInputs: failed to fetch piece metadata')
         return null
     }
 }

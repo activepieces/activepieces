@@ -1,8 +1,7 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AIProviderModel,
-  AIProviderName,
   ALLOWED_CHAT_MODELS_BY_PROVIDER,
-  isNil,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 

@@ -1,10 +1,10 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
   ConnectionOption,
   CreateChatConversationRequest,
-  SeekPage,
   UpdateChatConversationRequest,
 } from '@activepieces/shared';
 
@@ -73,14 +73,20 @@ async function approveToolCall({
   gateId,
   approved,
   payload,
+  conversationId,
 }: {
   gateId: string;
   approved: boolean;
   payload?: Record<string, unknown>;
-}): Promise<void> {
-  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, {
+  conversationId: string;
+}): Promise<{ success: boolean }> {
+  // conversationId lets the server route a PARKED answer without the Redis gate mapping (which has a
+  // 15-min TTL and is wiped on a Redis restart) — the server validates it against the persisted
+  // pending gate card. `success: false` means the answer routed nowhere; the caller keeps the card.
+  return api.post<{ success: boolean }>(`/v1/chat/tool-approvals/${gateId}`, {
     approved,
     payload,
+    conversationId,
   });
 }
 
@@ -109,6 +115,10 @@ async function getPendingGate(conversationId: string): Promise<{
   return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
 }
 
+async function recordLanding(): Promise<void> {
+  return api.post<void>('/v1/chat/funnel/landing');
+}
+
 export const chatApi = {
   createConversation,
   listConversations,
@@ -121,4 +131,5 @@ export const chatApi = {
   cancelConversation,
   getPickerConnections,
   getPendingGate,
+  recordLanding,
 };

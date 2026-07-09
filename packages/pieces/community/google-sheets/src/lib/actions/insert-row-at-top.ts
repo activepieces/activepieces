@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
-import { google } from 'googleapis';
+import { isNil } from '@activepieces/pieces-framework';
+import { sheets as googleSheets } from '@googleapis/sheets';
 import {
 	areSheetIdsValid,
 	createGoogleClient,
@@ -12,6 +12,7 @@ import {
 } from '../common/common';
 import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
 import { getWorkSheetName } from '../triggers/helpers';
+import { insertRowAtTopActionOutputSchema } from '../output-schemas';
 
 export const insertRowAtTopAction = createAction({
 	auth: googleSheetsAuth,
@@ -36,6 +37,7 @@ export const insertRowAtTopAction = createAction({
 		}),
 		values: rowValuesProp(),
 	},
+	outputSchema: insertRowAtTopActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const {
 			spreadsheetId: inputSpreadsheetId,
@@ -62,7 +64,7 @@ export const insertRowAtTopAction = createAction({
 
 		const sheetName = await getWorkSheetName(auth, spreadsheetId, sheetId);
 		const authClient = await createGoogleClient(auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		await sheets.spreadsheets.batchUpdate({
 			spreadsheetId,

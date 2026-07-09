@@ -1,4 +1,5 @@
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PlatformRole, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, PlatformRole, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -201,15 +202,23 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         projectId,
     }: SendTelemetryParams): Promise<void> {
         try {
-            const { email, firstName, lastName } = identity
             await telemetry(log).identify(identity, user)
             await telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.SIGNED_UP,
-                payload: { userId: user.id, email, firstName, lastName, projectId },
+                payload: {
+                    userId: user.id,
+                    projectId,
+                    ...pickTelemetryPii({
+                        edition: system.getEdition(),
+                        email: identity.email,
+                        firstName: identity.firstName,
+                        lastName: identity.lastName,
+                    }),
+                },
             })
         }
         catch (e) {
-            log.warn({ err: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
+            log.warn({ error: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
         }
     },
 
@@ -232,7 +241,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             await response.json()
         }
         catch (error) {
-            log.warn({ err: error }, '[authenticationUtils#saveNewsLetterSubscriber] Failed to save newsletter subscriber')
+            log.warn({ error }, '[authenticationUtils#saveNewsLetterSubscriber] Failed to save newsletter subscriber')
         }
     },
     async extractUserIdFromRequest(request: FastifyRequest): Promise<string> {

@@ -1,4 +1,5 @@
-import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { executeAdhocAction } from './flow-run-utils'
@@ -21,7 +22,9 @@ export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
         execute: async (args) => {
             try {
                 const { pieceName, actionName, input, connectionExternalId } = runActionInput.parse(args)
-                return await executeAdhocAction({
+                // returnRawOutput is left off, so this always resolves to an McpToolResult; the guard
+                // narrows the union (the raw branch is unreachable here) without a type cast.
+                const result = await executeAdhocAction({
                     projectId: mcp.projectId,
                     pieceName,
                     actionName,
@@ -29,9 +32,12 @@ export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                     connectionExternalId,
                     log,
                 })
+                return 'rawOutput' in result
+                    ? { content: [{ type: 'text', text: JSON.stringify(result.rawOutput) }] }
+                    : result
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_run_action failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_run_action failed')
                 return mcpUtils.mcpToolError('Failed to run action', err)
             }
         },

@@ -1,7 +1,7 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 
 let app: FastifyInstance | null = null

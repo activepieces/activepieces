@@ -124,7 +124,7 @@ export interface ActivepiecesVendorInit {
     hideTables?: boolean;
     sdkVersion?: string;
     jwtToken: string;
-    initialRoute?: string 
+    initialRoute?: string
     fontUrl?: string;
     fontFamily?: string;
     hideExportAndImportFlow?: boolean;
@@ -135,6 +135,7 @@ export interface ActivepiecesVendorInit {
     mode?: 'light' | 'dark';
     hideFlowsPageNavbar?: boolean;
     hidePageHeader?: boolean;
+    hideActiveUsers?: boolean;
   };
 }
 
@@ -171,6 +172,7 @@ type EmbeddingParam = {
   hideDuplicateFlow?: boolean;
   hideFolders?: boolean;
   hideTables?: boolean;
+  hideActiveUsers?: boolean;
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -186,9 +188,14 @@ export type McpOAuthDialogResult =
   | { redirectUrl: string }
   | { denied: true };
 
+export type McpCredentials = {
+  mcpServerUrl: string;
+  mcpToken: string;
+};
+
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.10.0";
+  readonly _sdkVersion = "0.11.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -301,6 +308,7 @@ class ActivepiecesEmbedded {
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
+                hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');
@@ -483,6 +491,21 @@ class ActivepiecesEmbedded {
       },
       errorMessage: 'unable to add mcp oauth embedding',
     });
+  }
+
+  /**
+   * Mints a short-lived MCP access token for the embedded user's project and
+   * returns it together with the MCP server URL — the same credentials the chat
+   * assistant uses internally. Drop these straight into your own MCP client
+   * (`Authorization: Bearer <mcpToken>` against `mcpServerUrl`) without running
+   * the full OAuth flow. Uses the embed session, so no extra auth is needed.
+   */
+  async generateMcpToken(): Promise<McpCredentials> {
+    const auth = await this.fetchEmbeddingAuth({ jwtToken: this._jwtToken });
+    return this.request(
+      { path: `projects/${auth.projectId}/mcp-server/token`, method: 'POST' },
+      true,
+    );
   }
 
   private _addOverlayIframe(initialRoute: string): IframeWithWindow {

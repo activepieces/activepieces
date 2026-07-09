@@ -1,29 +1,51 @@
+import { apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
-  apId,
+  BuildPlanEvent,
   ChatAllowedMimeType,
+  FileProducedEvent,
+  ImageGeneratedEvent,
   ChatConversationStatus,
   ChatHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
+  CHAT_INTERRUPTED_MESSAGE,
   DEFAULT_CHAT_TIER_ID,
-  ErrorCode,
-  isNil,
   PersistedChatMessage,
   ToolProgressEvent,
-  tryCatch,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { api } from '@/lib/api';
+import { chatDebug } from '@/lib/chat-debug-logger';
 
 import { chatApi } from './chat-api';
-import { chatStoreSelectors, SetChatStore, ToolCallMeta } from './chat-store';
+import {
+  chatBuildUtils,
+  chatStoreSelectors,
+  SetChatStore,
+  ToolCallMeta,
+} from './chat-store';
 import { useChatStoreApi } from './chat-store-context';
-import { ChatUIMessage, chatPartUtils } from './chat-types';
+import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { chatUtils } from './chat-utils';
 import { useStreamingReducer } from './use-streaming-reducer';
+
+function applyQuickRepliesToStore({
+  setState,
+  data,
+}: {
+  setState: SetChatStore;
+  data: QuickRepliesData;
+}): void {
+  if (data.replies.length === 0 && !data.offerRecurringAutomation) return;
+  setState({
+    quickReplies: data.replies,
+    offerRecurringAutomation: data.offerRecurringAutomation,
+  });
+}
 
 function restoreReceiptsIntoStore({
   data,
@@ -33,13 +55,35 @@ function restoreReceiptsIntoStore({
   setState: SetChatStore;
 }): void {
   const receipts = chatUtils.extractReceiptsFromHistory(data);
-  if (Object.keys(receipts).length === 0) return;
+  const images = chatUtils.extractImagesFromHistory(data);
+  const files = chatUtils.extractFilesFromHistory(data);
+  const builds = chatUtils.extractBuildsFromHistory(data);
+  if (
+    Object.keys(receipts).length === 0 &&
+    Object.keys(images).length === 0 &&
+    Object.keys(files).length === 0 &&
+    Object.keys(builds).length === 0
+  ) {
+    return;
+  }
   setState((prev) => {
     const merged = { ...prev.toolCallMeta };
     for (const [toolCallId, receipt] of Object.entries(receipts)) {
       merged[toolCallId] = { ...merged[toolCallId], actionReceipt: receipt };
     }
-    return { toolCallMeta: merged };
+    for (const [toolCallId, image] of Object.entries(images)) {
+      merged[toolCallId] = { ...merged[toolCallId], image };
+    }
+    for (const [toolCallId, toolFiles] of Object.entries(files)) {
+      merged[toolCallId] = { ...merged[toolCallId], files: toolFiles };
+    }
+    const mergedBuilds = { ...prev.builds };
+    for (const [buildId, build] of Object.entries(builds)) {
+      const existing = mergedBuilds[buildId];
+      if (existing && existing.updatedAt >= build.updatedAt) continue;
+      mergedBuilds[buildId] = build;
+    }
+    return { toolCallMeta: merged, builds: mergedBuilds };
   });
 }
 
@@ -190,6 +234,8 @@ export function useAgentChat({
   persistedMessagesRef.current = persistedMessages;
   const [optimisticUserMessage, setOptimisticUserMessage] =
     useState<ChatUIMessage | null>(null);
+  const optimisticUserMessageRef = useRef(optimisticUserMessage);
+  optimisticUserMessageRef.current = optimisticUserMessage;
 
   const pendingFilesRef = useRef<
     { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
@@ -263,43 +309,90 @@ export function useAgentChat({
     [updateToolCallMeta],
   );
 
+  const handleImageGenerated = useCallback(
+    (event: ImageGeneratedEvent) => {
+      updateToolCallMeta('image', event);
+    },
+    [updateToolCallMeta],
+  );
+
+  const handleFileProduced = useCallback(
+    (event: FileProducedEvent) => {
+      store.setState((prev) => {
+        const existing = prev.toolCallMeta[event.toolCallId]?.files ?? [];
+        if (existing.some((file) => file.fileId === event.fileId)) return prev;
+        return {
+          toolCallMeta: {
+            ...prev.toolCallMeta,
+            [event.toolCallId]: {
+              ...prev.toolCallMeta[event.toolCallId],
+              files: [...existing, event],
+            },
+          },
+        };
+      });
+    },
+    [store],
+  );
+
+  const handleBuildPlan = useCallback(
+    (event: BuildPlanEvent) => {
+      store.setState((prev) => {
+        const builds = chatBuildUtils.mergeBuildPlan({
+          builds: prev.builds,
+          event,
+        });
+        if (builds === prev.builds) return prev;
+        return { builds };
+      });
+    },
+    [store],
+  );
+
   const updateSendStatus = useCallback((next: SendStatus) => {
     sendStatusRef.current = next;
     setSendStatus(next);
   }, []);
 
   const reconcile = useCallback(
-    async (convId: string) => {
-      if (conversationIdRef.current !== convId) return;
+    async (convId: string): Promise<ChatUIMessage[] | null> => {
+      if (conversationIdRef.current !== convId) return null;
       const { data: result } = await tryCatch(() =>
         chatApi.getMessages(convId),
       );
-      if (conversationIdRef.current !== convId) return;
-      if (result) {
-        const mapped = chatUtils.mapHistoryToUIMessages(result.data);
-        setPersistedMessages(mapped);
-        const restoredReplies =
-          chatUtils.extractQuickRepliesFromHistory(mapped);
-        if (restoredReplies.length > 0) {
-          store.setState({ quickReplies: restoredReplies });
-        }
-        restoreReceiptsIntoStore({
-          data: result.data,
-          setState: store.setState,
-        });
-      }
-      setOptimisticUserMessage(null);
+      if (conversationIdRef.current !== convId) return null;
+      if (!result) return null;
+      const mapped = chatUtils.mapHistoryToUIMessages(result.data);
+      setPersistedMessages(mapped);
+      const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
+      applyQuickRepliesToStore({ setState: store.setState, data: restored });
+      restoreReceiptsIntoStore({
+        data: result.data,
+        setState: store.setState,
+      });
+      return mapped;
     },
     [store],
   );
 
-  const reconcileAndClearRef = useRef<(convId: string) => void>(() => {});
+  const settleStreamRef = useRef<
+    (
+      convId: string,
+      opts?: { errorMessage?: string; suppressNoReply?: boolean },
+    ) => void
+  >(() => {});
+
+  // Assigned after startStream/isStreamActiveRef exist (they come from useStreamingReducer below).
+  // Called from onStaleCheck when a resume run is pending, so the client re-attaches to the
+  // conversation's live stream instead of settling the turn as a failure.
+  const attachToResumeRef = useRef<(convId: string) => void>(() => {});
 
   const {
     streamingMessage,
     streamPhase,
     streamError,
     streamGeneration,
+    isResumedStream,
     startStream,
     setActiveRunId,
     stopStream,
@@ -309,30 +402,105 @@ export function useAgentChat({
     onToolProgress: handleToolProgress,
     onActionPreview: handleActionPreview,
     onActionReceipt: handleActionReceipt,
+    onImageGenerated: handleImageGenerated,
+    onFileProduced: handleFileProduced,
+    onBuildPlan: handleBuildPlan,
     onStreamFinished: (convId) => {
-      reconcileAndClearRef.current(convId);
+      chatDebug.info({ conversation: { id: convId } }, 'stream finished');
+      settleStreamRef.current(convId);
     },
-    onStreamError: ({ conversationId: convId, errorCode }) => {
+    onStreamError: ({ conversationId: convId, errorCode, errorMessage }) => {
+      chatDebug.error(
+        { conversation: { id: convId }, errorCode, error: errorMessage },
+        'stream error',
+      );
       if (errorCode === ErrorCode.AI_CREDIT_LIMIT_EXCEEDED) {
         onCreditsExhaustedRef.current?.();
+        settleStreamRef.current(convId, { suppressNoReply: true });
+        return;
       }
-      reconcileAndClearRef.current(convId);
+      settleStreamRef.current(convId, { errorMessage });
     },
     onStaleCheck: (convId) => {
       void tryCatch(async () => {
         const conv = await chatApi.getConversation(convId);
         if (isNil(conv) || conversationIdRef.current !== convId) return;
 
-        if (conv.status !== ChatConversationStatus.STREAMING) {
-          reconcileAndClearRef.current(convId);
+        if (conv.status === ChatConversationStatus.ERROR) {
+          // The watchdog reclaimed a turn whose worker went silent — the interrupted note is
+          // already persisted as a bubble; surface the retry banner so one click re-sends.
+          settleStreamRef.current(convId, {
+            errorMessage: t(CHAT_INTERRUPTED_MESSAGE),
+            suppressNoReply: true,
+          });
+          return;
         }
+        if (conv.status === ChatConversationStatus.STREAMING) return;
+
+        // Not STREAMING and not ERROR. Attach to a resume ONLY when a run actually owns the
+        // conversation (Fix R6b): activeRunId set means a crash-resume / parked-gate resume claimed
+        // it and the row will flip back to STREAMING momentarily, so keep the stale-check/poll alive.
+        //
+        // When activeRunId is NULL the turn is settled — do NOT keep polling. A parked gate (IDLE,
+        // activeRunId NULL, a pending card awaiting the user's answer) previously looped here every
+        // 15s forever because it had no reply; it must instead settle into the quiet waiting-for-answer
+        // state (chip visible, no shimmer, no request loop). A genuinely-finished IDLE with no reply
+        // settles with the existing "no response" affordance.
+        if (!isNil(conv.activeRunId)) {
+          attachToResumeRef.current(convId);
+          return;
+        }
+        const { data: history } = await tryCatch(() =>
+          chatApi.getMessages(convId),
+        );
+        if (conversationIdRef.current !== convId) return;
+        const mapped = history
+          ? chatUtils.mapHistoryToUIMessages(history.data)
+          : null;
+        // A parked gate is waiting on the user, not on the agent — settle quietly (no "no response"
+        // error). The pending card in history keeps the chip/answer affordance up.
+        const hasPendingGate =
+          mapped !== null && chatUtils.hasPendingGateCard(mapped);
+        settleStreamRef.current(
+          convId,
+          hasPendingGate ? { suppressNoReply: true } : undefined,
+        );
       });
     },
   });
 
-  reconcileAndClearRef.current = (convId: string) => {
+  // Settles a stream once the run ends. Reconciles server history into the view,
+  // but never wipes the user's message on an empty reconcile (e.g. the worker
+  // never ran), and surfaces an error — explicit, or a "no response" fallback
+  // when the run ended without an assistant reply — instead of blanking the panel.
+  settleStreamRef.current = (convId, opts) => {
     const gen = streamGeneration.current;
-    void reconcile(convId).then(() => clearStreamingState(gen));
+    void reconcile(convId).then((mapped) => {
+      if (conversationIdRef.current !== convId) return;
+      // Defense-in-depth: a settled turn's history should only ever grow (it now
+      // includes the just-finished reply). Refuse a strictly-shorter reconcile so
+      // a transient server hiccup can never collapse the visible conversation.
+      const isShrink =
+        mapped !== null && mapped.length < persistedMessagesRef.current.length;
+      const history = mapped && mapped.length > 0 && !isShrink ? mapped : null;
+      if (history) {
+        setPersistedMessages(history);
+        setOptimisticUserMessage(null);
+      }
+      const hasReply =
+        history !== null &&
+        history.findLastIndex((m) => m.role === 'assistant') >
+          history.findLastIndex((m) => m.role === 'user');
+      if (opts?.errorMessage) {
+        updateSendStatus({ type: 'error', message: opts.errorMessage });
+      } else if (!hasReply && !opts?.suppressNoReply) {
+        updateSendStatus({
+          type: 'error',
+          message: t('The assistant did not respond. Please try again.'),
+        });
+      }
+      clearStreamingState(gen);
+    });
   };
 
   const streamingQuickReplies = useMemo(
@@ -341,9 +509,10 @@ export function useAgentChat({
   );
 
   useEffect(() => {
-    if (streamingQuickReplies.length > 0) {
-      store.setState({ quickReplies: streamingQuickReplies });
-    }
+    applyQuickRepliesToStore({
+      setState: store.setState,
+      data: streamingQuickReplies,
+    });
   }, [streamingQuickReplies, store]);
 
   const isStreamActive = streamPhase !== 'idle';
@@ -351,6 +520,39 @@ export function useAgentChat({
     isStreamActive ||
     sendStatusRef.current.type === 'submitting' ||
     isPollingForAgentReply;
+
+  const isStreamActiveRef = useRef(isStreamActive);
+  isStreamActiveRef.current = isStreamActive;
+
+  attachToResumeRef.current = (convId) => {
+    if (!isStreamActiveRef.current) {
+      startStream(convId);
+    }
+    setIsPollingForAgentReply(true);
+  };
+  // Answering a gate whose turn had parked (worker gone) enqueues a resume turn server-side. If we
+  // aren't already connected to a live stream, reconnect to the conversation's stream so the resume
+  // streams in without a reload; the poll below is a fallback that reconciles the final history.
+  useEffect(() => {
+    store.getState().setOnGateAnswered(() => {
+      const convId = conversationIdRef.current;
+      if (!convId || isStreamActiveRef.current) return;
+      startStream(convId);
+      setIsPollingForAgentReply(true);
+    });
+    return () => store.getState().setOnGateAnswered(null);
+  }, [store, startStream]);
+
+  // Keep the store's conversationId in sync so a gate answer carries it to the server (parked-answer
+  // routing fallback that survives the Redis gate mapping's TTL / a Redis restart).
+  useEffect(() => {
+    store.getState().setConversationId(conversationId);
+  }, [store, conversationId]);
+
+  const isAwaitingResponse =
+    streamPhase === 'awaiting-stream' ||
+    streamPhase === 'streaming' ||
+    sendStatus.type === 'submitting';
 
   const messages: ChatUIMessage[] = useMemo(() => {
     const base = [...persistedMessages];
@@ -374,20 +576,46 @@ export function useAgentChat({
   const streamingMessageRef = useRef(streamingMessage);
   streamingMessageRef.current = streamingMessage;
 
+  // Folds the in-flight turn (optimistic user message + live streaming assistant)
+  // into persisted history so it stays painted continuously when the turn is
+  // preempted or cancelled — otherwise both halves live only in ephemeral state
+  // and vanish until the next end-of-turn reconcile. Deduped by id so it can
+  // never double-add; the reconcile later replaces persisted with authoritative
+  // server history.
+  const commitInFlightTurn = useCallback(() => {
+    const inflightUser = optimisticUserMessageRef.current;
+    const inflightStreaming = streamingMessageRef.current;
+    const hasStreaming =
+      !!inflightStreaming && inflightStreaming.parts.length > 0;
+    if (!inflightUser && !hasStreaming) return;
+    setPersistedMessages((prev) => {
+      const existingIds = new Set(prev.map((m) => m.id));
+      const additions: ChatUIMessage[] = [];
+      if (inflightUser && !existingIds.has(inflightUser.id)) {
+        additions.push(inflightUser);
+      }
+      if (
+        hasStreaming &&
+        inflightStreaming &&
+        !existingIds.has(inflightStreaming.id)
+      ) {
+        additions.push(inflightStreaming);
+      }
+      return additions.length > 0 ? [...prev, ...additions] : prev;
+    });
+  }, []);
+
   const cancelStream = useCallback(() => {
-    const currentStreaming = streamingMessageRef.current;
+    commitInFlightTurn();
     stopStream();
-    if (currentStreaming && currentStreaming.parts.length > 0) {
-      setPersistedMessages((prev) => [...prev, currentStreaming]);
-    }
+    setOptimisticUserMessage(null);
     setIsPollingForAgentReply(false);
     updateSendStatus({ type: 'cancelled' });
-    setOptimisticUserMessage(null);
     const convId = conversationIdRef.current;
     if (convId) {
       void chatApi.cancelConversation(convId);
     }
-  }, [stopStream, updateSendStatus]);
+  }, [commitInFlightTurn, stopStream, updateSendStatus]);
 
   const createConversation = useCallback(
     async ({
@@ -421,6 +649,11 @@ export function useAgentChat({
         ],
       };
 
+      // Preempting an in-flight turn: keep its messages on screen by folding them
+      // into persisted history before they get overwritten/reset below, then clear
+      // the live stream so it isn't shown twice during the send.
+      commitInFlightTurn();
+      stopStream();
       setOptimisticUserMessage(optimisticUser);
       store.getState().resetInteractions();
 
@@ -486,6 +719,15 @@ export function useAgentChat({
       startStream(convId);
       setActiveRunId(runId);
       updateSendStatus({ type: 'idle' });
+      chatDebug.info(
+        {
+          conversation: { id: convId },
+          run: { id: runId },
+          contentLength: content.length,
+          filesCount: pendingFilesRef.current?.length ?? 0,
+        },
+        'sending chat message',
+      );
 
       const { error: sendError } = await tryCatch(async () =>
         chatApi.sendMessage({
@@ -496,6 +738,14 @@ export function useAgentChat({
         }),
       );
       if (sendError) {
+        chatDebug.error(
+          {
+            conversation: { id: convId },
+            run: { id: runId },
+            error: sendError.message,
+          },
+          'chat message send failed',
+        );
         stopStream();
         setOptimisticUserMessage(null);
         if (api.isApError(sendError, ErrorCode.AI_CREDIT_LIMIT_EXCEEDED)) {
@@ -515,6 +765,7 @@ export function useAgentChat({
       setActiveRunId,
       stopStream,
       updateSendStatus,
+      commitInFlightTurn,
       store,
     ],
   );
@@ -527,6 +778,7 @@ export function useAgentChat({
       conversationIdRef.current = id;
       setConversationIdState(id);
       store.getState().resetInteractions();
+      store.getState().resetBuilds();
 
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
@@ -549,10 +801,8 @@ export function useAgentChat({
         return;
       }
       const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
-      const restoredReplies = chatUtils.extractQuickRepliesFromHistory(mapped);
-      if (restoredReplies.length > 0) {
-        store.setState({ quickReplies: restoredReplies });
-      }
+      const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
+      applyQuickRepliesToStore({ setState: store.setState, data: restored });
       restoreReceiptsIntoStore({
         data: historyResult.data.data,
         setState: store.setState,
@@ -576,8 +826,20 @@ export function useAgentChat({
         const baseParts = isCurrentStreamingResponse
           ? mapped[lastAssistantIdx].parts
           : undefined;
+        // The gate card may already live in persisted history (Fix 2 persists it PENDING on open).
+        // Only synthesize it from the pending-gate endpoint when history doesn't already carry it,
+        // so a reload mid-gate never renders the card twice.
+        const gateAlreadyInHistory =
+          !!gate &&
+          !!baseParts?.some(
+            (p) =>
+              chatPartUtils.isAnyToolPart(p) &&
+              chatPartUtils.getToolCallId(p) === gate.gateId,
+          );
         const displayGatePart =
-          gate && chatPartUtils.isDisplayTool(gate.toolName)
+          gate &&
+          chatPartUtils.isDisplayTool(gate.toolName) &&
+          !gateAlreadyInHistory
             ? {
                 type: 'dynamic-tool' as const,
                 toolCallId: gate.gateId,
@@ -602,6 +864,20 @@ export function useAgentChat({
         }
       } else {
         setPersistedMessages(mapped);
+        // Reopening a conversation the watchdog reclaimed: the interrupted note is already in
+        // history; also surface the retry banner so the user can re-send in one click.
+        if (convResult.data.status === ChatConversationStatus.ERROR) {
+          const lastAssistant = mapped.findLast((m) => m.role === 'assistant');
+          const wasInterrupted = lastAssistant?.parts.some(
+            (p) => p.type === 'text' && p.text === CHAT_INTERRUPTED_MESSAGE,
+          );
+          if (wasInterrupted) {
+            updateSendStatus({
+              type: 'error',
+              message: t(CHAT_INTERRUPTED_MESSAGE),
+            });
+          }
+        }
       }
       setIsLoadingHistory(false);
     },
@@ -620,16 +896,16 @@ export function useAgentChat({
       if (conversationIdRef.current !== conversationId) return null;
       const mapped = chatUtils.mapHistoryToUIMessages(messagesResult.data);
       const current = persistedMessagesRef.current;
+      // Never let a poll shrink the visible history — only apply growth or
+      // in-place part updates, never a truncation.
       const hasChanged =
-        mapped.length !== current.length ||
-        mapped.some((m, i) => m.parts.length !== current[i]?.parts.length);
+        mapped.length >= current.length &&
+        (mapped.length !== current.length ||
+          mapped.some((m, i) => m.parts.length !== current[i]?.parts.length));
       if (hasChanged) {
         setPersistedMessages(mapped);
-        const restoredReplies =
-          chatUtils.extractQuickRepliesFromHistory(mapped);
-        if (restoredReplies.length > 0) {
-          store.setState({ quickReplies: restoredReplies });
-        }
+        const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
+        applyQuickRepliesToStore({ setState: store.setState, data: restored });
       }
       if (convResult.status !== ChatConversationStatus.STREAMING) {
         setIsPollingForAgentReply(false);
@@ -674,6 +950,8 @@ export function useAgentChat({
     modelName,
     messages,
     isStreaming,
+    isResumedStream,
+    isAwaitingResponse,
     wasCancelled,
     isLoadingHistory,
     error,

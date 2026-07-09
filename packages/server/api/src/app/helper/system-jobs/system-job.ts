@@ -1,5 +1,5 @@
+import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -36,7 +36,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
 
         const { error } = await tryCatch(async () => removeDeprecatedJobs())
         if (!isNil(error)) {
-            log.error({ err: error }, '[systemJob#init] Error removing deprecated jobs')
+            log.error({ error }, '[systemJob#init] Error removing deprecated jobs')
         }
     },
 
@@ -116,6 +116,7 @@ async function removeDeprecatedJobs(): Promise<void> {
         'update-flow-status',
         'expire-pending-sso-domains',
         'console-usage-report',
+        'chat-funnel-sync',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
     const knownJobNames = Object.values(SystemJobName) as string[]

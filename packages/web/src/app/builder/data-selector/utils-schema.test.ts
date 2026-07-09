@@ -39,6 +39,20 @@ describe('schemaTreeUtils.buildTreeFromArray', () => {
     ]);
   });
 
+  it('keeps schemaless sample-data keys verbatim instead of humanizing camelCase', () => {
+    const tree = schemaTreeUtils.buildTreeFromArray({
+      stepName: 'step_1',
+      displayName: '1. Code',
+      items: [{ varOrigen: 'a', varDestino: 'b' }],
+    });
+
+    const firstItem = (tree.children ?? [])[0];
+    const displayNames = (firstItem.children ?? []).map((child) =>
+      child.data.type === 'value' ? child.data.displayName : undefined,
+    );
+    expect(displayNames).toEqual(['varOrigen', 'varDestino']);
+  });
+
   it("exposes the whole array as an insertable step['output'] root with a stepName", () => {
     const tree = schemaTreeUtils.buildTreeFromArray({
       stepName: 'step_1',

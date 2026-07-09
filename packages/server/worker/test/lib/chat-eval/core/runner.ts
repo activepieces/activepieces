@@ -1,5 +1,6 @@
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatPhase, PersistedChatPartType, tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils';
+import { ChatPhase, PersistedChatPartType } from '@activepieces/shared';
 import { hasToolCall, isLoopFinished, ModelMessage, ToolSet } from 'ai'
 import { ChatEvalFixture } from './fixture'
 import { llmJudge } from './llm-judge'
@@ -123,7 +124,7 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
         tier: fixture.model.tier,
         phaseState,
         abortSignal: new AbortController().signal,
-        log: { info: () => {}, warn: () => {}, error: (obj) => obj.err !== undefined && capturedErrors.push(obj.err) },
+        log: { debug: () => {}, info: () => {}, warn: () => {}, error: (obj) => obj.err !== undefined && capturedErrors.push(obj.err) },
         stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall)],
     }))
 

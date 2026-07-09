@@ -1,0 +1,115 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.stage{width:1180px;padding:40px 64px 30px;background:#fff}
+.head{text-align:center;margin-bottom:30px}
+.head h1{font-size:30px;font-weight:750;color:#0f172a;letter-spacing:-.025em}
+.head p{font-size:15.5px;color:#64748b;margin-top:9px;font-weight:450}
+.grid5{display:grid;grid-template-columns:236px 60px 232px 60px 1fr;align-items:center}
+.cols{margin:0 18px 12px;}
+.cols span{font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#94a3b8}
+.cols span:nth-child(3){text-align:center}
+.cols span:nth-child(5){padding-left:4px}
+.lane{position:relative;border:1px solid;border-radius:18px;padding:22px;margin-bottom:24px;overflow:hidden}
+.lane::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px}
+.lane.shared{background:#f8fafc;border-color:#e8edf3}
+.lane.shared::before{background:#cbd5e1}
+.lane.a{background:#f0fdf9;border-color:#cdeee0}
+.lane.a::before{background:#10b981}
+.lane.b{background:#fffcf2;border-color:#f6e8c8}
+.lane.b::before{background:#f59e0b}
+.tenants{display:flex;gap:12px}
+.chip{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e6eaf0;border-radius:11px;padding:11px 14px;box-shadow:0 1px 2px rgba(16,24,40,.05);min-width:104px}
+.chip .ti{font-size:14px;font-weight:650;color:#0f172a;line-height:1.1;white-space:nowrap}
+.chip .ts{font-size:11.5px;color:#94a3b8;margin-top:2px}
+.badge{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+ svg.ic{width:19px;height:19px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.arrow{display:flex;align-items:center;justify-content:center}
+.cap{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #e6eaf0;border-radius:999px;padding:13px 20px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.cap .ct{font-size:14.5px;font-weight:650;color:#0f172a}
+.dots{display:flex;gap:4px;margin-left:2px}
+.dots i{width:7px;height:7px;border-radius:2px;display:block}
+.pool{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e6eaf0;border-radius:14px;padding:13px 16px;box-shadow:0 1px 2px rgba(16,24,40,.05);width:fit-content}
+.pool .ptitle{font-size:13px;font-weight:650;color:#0f172a;margin-right:2px}
+.tiles{display:flex;gap:8px}
+.tile{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid}
+.xn{font-size:13px;font-weight:700;color:#475569;background:#f1f5f9;border-radius:8px;padding:6px 9px}
+.tag{position:absolute;top:14px;right:16px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:650;padding:5px 11px;border-radius:999px}
+.tag svg{width:13px;height:13px;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.note{text-align:center;font-size:13.5px;color:#64748b;margin-top:8px}
+.note b{color:#334155;font-weight:650}
+</style></head><body>
+<div class="stage">
+  <div class="head"><h1>Worker Groups</h1><p>Give the tenants that need it their own workers &mdash; so a busy neighbour can&rsquo;t crowd them out.</p></div>
+
+  <div class="grid5 cols"><span>Projects</span><span></span><span>Dedicated queue</span><span></span><span>Worker pool</span></div>
+
+  <!-- SHARED -->
+  <div class="lane shared">
+    <span class="tag" style="background:#eef2f7;color:#64748b"><svg viewBox="0 0 24 24" stroke="#64748b"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>best-effort &middot; shared</span>
+    <div class="grid5">
+      <div class="tenants">
+        <div class="chip" style="min-width:188px"><div class="badge" style="background:#eef2f7"><svg class="ic" viewBox="0 0 24 24" stroke="#64748b"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="ti">Every other project</div><div class="ts">no group set</div></div></div>
+      </div>
+      <div class="arrow"><svg width="58" height="24"><line x1="0" y1="12" x2="46" y2="12" stroke="#94a3b8" stroke-width="2"/><path d="M44,6 L57,12 L44,18 Z" fill="#94a3b8"/></svg></div>
+      <div class="cap"><div class="badge" style="background:#eef2f7;width:30px;height:30px"><svg class="ic" viewBox="0 0 24 24" stroke="#64748b"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg></div><div class="ct">Shared queue</div><div class="dots"><i style="background:#cbd5e1"></i><i style="background:#cbd5e1"></i><i style="background:#cbd5e1"></i></div></div>
+      <div class="arrow"><svg width="58" height="24"><line x1="0" y1="12" x2="46" y2="12" stroke="#94a3b8" stroke-width="2"/><path d="M44,6 L57,12 L44,18 Z" fill="#94a3b8"/></svg></div>
+      <div class="pool">
+        <div class="ptitle">Workers</div>
+        <div class="tiles">
+          <div class="tile" style="border-color:#e2e8f0;background:#f8fafc"><svg class="ic" viewBox="0 0 24 24" stroke="#64748b"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+          <div class="tile" style="border-color:#e2e8f0;background:#f8fafc"><svg class="ic" viewBox="0 0 24 24" stroke="#64748b"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+          <div class="tile" style="border-color:#e2e8f0;background:#f8fafc"><svg class="ic" viewBox="0 0 24 24" stroke="#64748b"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+        </div>
+        <div class="xn">&times; N</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUP A -->
+  <div class="lane a">
+    <span class="tag" style="background:#d1fae5;color:#047857"><svg viewBox="0 0 24 24" stroke="#047857"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Reserved &middot; Group A</span>
+    <div class="grid5">
+      <div class="tenants">
+        <div class="chip"><div class="badge" style="background:#d1fae5"><svg class="ic" viewBox="0 0 24 24" stroke="#059669"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div><div><div class="ti">Project C</div><div class="ts">needs guaranteed speed</div></div></div>
+      </div>
+      <div class="arrow"><svg width="58" height="24"><line x1="0" y1="12" x2="46" y2="12" stroke="#10b981" stroke-width="2"/><path d="M44,6 L57,12 L44,18 Z" fill="#10b981"/></svg></div>
+      <div class="cap" style="border-color:#bbf0d8"><div class="badge" style="background:#d1fae5;width:30px;height:30px"><svg class="ic" viewBox="0 0 24 24" stroke="#059669"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg></div><div class="ct">Group A queue</div><div class="dots"><i style="background:#34d399"></i><i style="background:#34d399"></i><i style="background:#34d399"></i></div></div>
+      <div class="arrow"><svg width="58" height="24"><line x1="0" y1="12" x2="46" y2="12" stroke="#10b981" stroke-width="2"/><path d="M44,6 L57,12 L44,18 Z" fill="#10b981"/></svg></div>
+      <div class="pool" style="border-color:#bbf0d8">
+        <div class="ptitle">Workers</div>
+        <div class="tiles">
+          <div class="tile" style="border-color:#bbf0d8;background:#ecfdf5"><svg class="ic" viewBox="0 0 24 24" stroke="#059669"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+          <div class="tile" style="border-color:#bbf0d8;background:#ecfdf5"><svg class="ic" viewBox="0 0 24 24" stroke="#059669"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+          <div class="tile" style="border-color:#bbf0d8;background:#ecfdf5"><svg class="ic" viewBox="0 0 24 24" stroke="#059669"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+        </div>
+        <div class="xn" style="background:#d1fae5;color:#047857">&times; N</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUP B -->
+  <div class="lane b">
+    <span class="tag" style="background:#fde9c8;color:#b45309"><svg viewBox="0 0 24 24" stroke="#b45309"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Reserved &middot; Group B</span>
+    <div class="grid5">
+      <div class="tenants">
+        <div class="chip"><div class="badge" style="background:#fde9c8"><svg class="ic" viewBox="0 0 24 24" stroke="#d97706"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div><div><div class="ti">Project D</div><div class="ts">noisy neighbour</div></div></div>
+      </div>
+      <div class="arrow"><svg width="58" height="24"><line x1="0" y1="12" x2="46" y2="12" stroke="#f59e0b" stroke-width="2"/><path d="M44,6 L57,12 L44,18 Z" fill="#f59e0b"/></svg></div>
+      <div class="cap" style="border-color:#f6e0b5"><div class="badge" style="background:#fde9c8;width:30px;height:30px"><svg class="ic" viewBox="0 0 24 24" stroke="#d97706"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg></div><div class="ct">Group B queue</div><div class="dots"><i style="background:#fbbf24"></i><i style="background:#fbbf24"></i><i style="background:#fbbf24"></i></div></div>
+      <div class="arrow"><svg width="58" height="24"><line x1="0" y1="12" x2="46" y2="12" stroke="#f59e0b" stroke-width="2"/><path d="M44,6 L57,12 L44,18 Z" fill="#f59e0b"/></svg></div>
+      <div class="pool" style="border-color:#f6e0b5">
+        <div class="ptitle">Workers</div>
+        <div class="tiles">
+          <div class="tile" style="border-color:#f6e0b5;background:#fffbeb"><svg class="ic" viewBox="0 0 24 24" stroke="#d97706"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+          <div class="tile" style="border-color:#f6e0b5;background:#fffbeb"><svg class="ic" viewBox="0 0 24 24" stroke="#d97706"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+          <div class="tile" style="border-color:#f6e0b5;background:#fffbeb"><svg class="ic" viewBox="0 0 24 24" stroke="#d97706"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+        </div>
+        <div class="xn" style="background:#fde9c8;color:#b45309">&times; N</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">Assigning a project to a worker group gives it <b>guaranteed, reserved capacity</b>. &nbsp;An optional <b>soft cap</b> throttles how much a project can use.</div>
+</div>
+</body></html>

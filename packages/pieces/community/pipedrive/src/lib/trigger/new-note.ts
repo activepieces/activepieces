@@ -5,7 +5,7 @@ import {
     pipedriveApiCall,
     pipedriveCommon,
 } from '../common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 interface PipedriveNoteV2 {
     id: number;

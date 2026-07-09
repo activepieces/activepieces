@@ -1,15 +1,8 @@
-import {
-    FlowOperationRequest,
-    FlowOperationType,
-    FlowTriggerType,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    PieceTrigger,
-    ProjectScopedMcpServer,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowOperationRequest, FlowOperationType, FlowTriggerType, McpToolDefinition, PieceTrigger, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
@@ -33,7 +26,7 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
             flowId: z.string().describe('The id of the flow'),
             pieceName: z.string().describe('The piece name for the trigger (e.g. "@activepieces/piece-gmail"). Use ap_research_pieces to get valid values.'),
             triggerName: z.string().describe('The trigger name within the piece (e.g. "new_email"). Use ap_research_pieces with includeTriggers=true to get valid values.'),
-            input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the trigger (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
+            input: z.preprocess(mcpUtils.parseJsonStringArg, z.record(z.string(), z.unknown()).optional()).describe(`Input settings for the trigger (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
@@ -163,7 +156,7 @@ async function diagnoseMissingTriggerInputs({ pieceName, pieceVersion, triggerNa
         return parts.join(' ')
     }
     catch (err) {
-        log.warn({ err, pieceName, triggerName }, 'diagnoseMissingTriggerInputs: failed to fetch piece metadata')
+        log.warn({ error: err, piece: { name: pieceName }, trigger: { name: triggerName } }, 'diagnoseMissingTriggerInputs: failed to fetch piece metadata')
         return null
     }
 }

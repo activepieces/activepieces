@@ -1,10 +1,6 @@
+import { tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import {
-    EngineResponseStatus,
-    EventDestinationJobData,
-    tryCatch,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { EngineResponseStatus, EventDestinationJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 
@@ -13,7 +9,7 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
     async execute(ctx: JobContext, data: EventDestinationJobData): Promise<FireAndForgetJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().EVENT_DESTINATION_TIMEOUT_SECONDS
 
-        const { error } = await tryCatch(() => safeHttp.axios.request({
+        const { data: response, error } = await tryCatch(() => safeHttp.axios.request({
             url: data.webhookUrl,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -22,14 +18,23 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
             validateStatus: () => true,
         }))
 
-        if (error) {
-            ctx.log.warn({
+        if (error !== null) {
+            ctx.log.error({
                 webhookUrl: data.webhookUrl,
-                webhookId: data.webhookId,
+                webhook: { id: data.webhookId },
                 error: error.message,
-            }, 'Event destination request failed before reaching the server')
+            }, 'Event destination delivery failed before reaching the destination')
+        }
+        else if (response.status >= MIN_FAILURE_HTTP_STATUS) {
+            ctx.log.error({
+                webhookUrl: data.webhookUrl,
+                webhook: { id: data.webhookId },
+                response: { status: response.status },
+            }, 'Event destination responded with a failure status')
         }
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
 }
+
+const MIN_FAILURE_HTTP_STATUS = 400

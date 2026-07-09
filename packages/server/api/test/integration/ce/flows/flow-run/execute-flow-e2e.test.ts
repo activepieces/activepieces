@@ -12,6 +12,8 @@
  *   - bun must be available for piece installation
  *   - Redis (in-memory via AP_REDIS_TYPE=MEMORY) is started automatically
  */
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
     ExecutionType,
     FlowActionType,
@@ -20,14 +22,19 @@ import {
     FlowTriggerType,
     FlowVersionState,
     PackageType,
+    PieceScope,
     PieceType,
+    RunEnvironment,
     StepOutputType,
     StreamStepProgress,
-    RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { worker } from '../../../../../../worker/src/lib/worker'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { db } from '../../../../helpers/db'
+import { createTestContext } from '../../../../helpers/test-context'
 import { setupE2eEnvironment } from '../../../../helpers/e2e-setup'
 import {
     createMockFlow,
@@ -35,8 +42,12 @@ import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
-import { db } from '../../../../helpers/db'
-import { worker } from '../../../../../../worker/src/lib/worker'
+
+const CUSTOM_PIECE_NAME = 'e2e-custom-echo'
+const CUSTOM_PIECE_VERSION = '0.0.1'
+const customPieceArchive = readFileSync(
+    join(__dirname, '../../../../../src/assets/e2e-custom-echo-0.0.1.tgz'),
+)
 
 let app: FastifyInstance
 
@@ -89,8 +100,8 @@ async function setupSubflowFixtures() {
                 mode: 'simple',
                 response: {
                     response: {
-                        greeting: "{{step_1['output'].greeting}}",
-                        processed: "{{step_1['output'].processed}}",
+                        greeting: '{{step_1[\'output\'].greeting}}',
+                        processed: '{{step_1[\'output\'].processed}}',
                     },
                 },
             },
@@ -115,7 +126,7 @@ async function setupSubflowFixtures() {
                 packageJson: '{}',
             },
             input: {
-                name: "{{trigger['output'].data.name}}",
+                name: '{{trigger[\'output\'].data.name}}',
             },
             errorHandlingOptions: {},
         },
@@ -182,7 +193,7 @@ async function setupSubflowFixtures() {
                 mode: 'simple',
                 flowProps: {
                     payload: {
-                        name: "{{trigger['output'].body.name}}",
+                        name: '{{trigger[\'output\'].body.name}}',
                     },
                 },
                 waitForResponse: true,
@@ -254,7 +265,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 mode: 'simple',
                 response: {
                     response: {
-                        echo: "{{trigger['output'].data.message}}",
+                        echo: '{{trigger[\'output\'].data.message}}',
                     },
                 },
             },
@@ -316,7 +327,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 fields: {
                     status: 200,
                     headers: {},
-                    body: { echo: "{{step_1['output'].data.echo}}" },
+                    body: { echo: '{{step_1[\'output\'].data.echo}}' },
                 },
             },
             propertySettings: {},
@@ -345,7 +356,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 mode: 'simple',
                 flowProps: {
                     payload: {
-                        message: "{{trigger['output'].body.message}}",
+                        message: '{{trigger[\'output\'].body.message}}',
                     },
                 },
                 waitForResponse: true,
@@ -451,7 +462,7 @@ describe('Execute Flow E2E', () => {
                     packageJson: '{}',
                 },
                 input: {
-                    data: "{{step_1['output']}}",
+                    data: '{{step_1[\'output\']}}',
                 },
                 errorHandlingOptions: {},
             },
@@ -468,8 +479,8 @@ describe('Execute Flow E2E', () => {
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
-                        fullName: "{{trigger['output'].body.name}}",
-                        emailAddress: "{{trigger['output'].body.email}}",
+                        fullName: '{{trigger[\'output\'].body.name}}',
+                        emailAddress: '{{trigger[\'output\'].body.email}}',
                     },
                 },
                 propertySettings: {},
@@ -556,6 +567,103 @@ describe('Execute Flow E2E', () => {
             }),
         )
     }, 120_000)
+
+    it('installs a tar.gz custom piece and executes a flow that runs its action', async () => {
+        const ctx = await createTestContext(app)
+
+        // Install the custom piece straight from its packed .tgz archive through the
+        // real public API — this exercises archive upload → engine metadata extraction →
+        // worker install, the full private-piece path.
+        const formData = new FormData()
+        formData.append(
+            'pieceArchive',
+            new Blob([customPieceArchive], { type: 'application/gzip' }),
+            'e2e-custom-echo-0.0.1.tgz',
+        )
+        formData.append('pieceName', CUSTOM_PIECE_NAME)
+        formData.append('pieceVersion', CUSTOM_PIECE_VERSION)
+        formData.append('packageType', PackageType.ARCHIVE)
+        formData.append('scope', PieceScope.PLATFORM)
+
+        const installResponse = await ctx.inject({
+            method: 'POST',
+            url: '/api/v1/pieces',
+            body: formData,
+        })
+        // Surface the response body in the failure message so a regressed archive
+        // upload is diagnosable from the CI log without re-running locally.
+        expect(installResponse.statusCode, installResponse.body).toBe(StatusCodes.CREATED)
+
+        const webhookPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-webhook',
+            version: '0.1.29',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        await databaseConnection().getRepository('piece_metadata').save([webhookPiece])
+
+        const echoAction = {
+            type: FlowActionType.PIECE as const,
+            name: 'step_1',
+            displayName: 'Echo Message',
+            valid: true,
+            settings: {
+                pieceName: CUSTOM_PIECE_NAME,
+                pieceVersion: CUSTOM_PIECE_VERSION,
+                actionName: 'echo',
+                input: {},
+                propertySettings: {},
+                errorHandlingOptions: {},
+            },
+        }
+
+        const mockFlow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', mockFlow)
+
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.DRAFT,
+            trigger: {
+                type: FlowTriggerType.PIECE,
+                name: 'trigger',
+                displayName: 'Catch Webhook',
+                valid: true,
+                lastUpdatedDate: new Date().toISOString(),
+                settings: {
+                    pieceName: '@activepieces/piece-webhook',
+                    pieceVersion: '0.1.29',
+                    triggerName: 'catch_webhook',
+                    input: { authType: 'none' },
+                    propertySettings: {},
+                },
+                nextAction: echoAction,
+            },
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: mockFlow.id,
+            payload: { body: { trigger: 'custom-piece' } },
+            platformId: ctx.platform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: mockFlowVersion.id,
+            projectId: ctx.project.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, ctx.project.id)
+
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        expect(result.steps.step_1.output).toEqual(
+            expect.objectContaining({ message: 'custom-piece-works' }),
+        )
+    }, 180_000)
 
     it('handles concurrent flow run executions without jobs getting stuck', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
@@ -871,7 +979,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 sourceCode: {
-                    code: `export const code = async () => ({ big: 'x'.repeat(40000) });`,
+                    code: 'export const code = async () => ({ big: \'x\'.repeat(40000) });',
                     packageJson: '{}',
                 },
                 input: {},

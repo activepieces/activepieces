@@ -1,17 +1,21 @@
 {
   "name": "@activepieces/piece-bolna",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
     "tslib": "^2.3.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

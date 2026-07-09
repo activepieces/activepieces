@@ -1,5 +1,6 @@
 import { createClient } from '@1password/sdk'
-import { ActivepiecesError, ErrorCode, OnePasswordProviderConfig, SecretManagerProviderId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { OnePasswordProviderConfig, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 

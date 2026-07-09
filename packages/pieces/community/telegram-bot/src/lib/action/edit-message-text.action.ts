@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { editMessageTextActionOutputSchema } from '../output-schemas';
 
 export const telegramEditMessageTextAction = createAction({
   auth: telegramBotAuth,
@@ -43,6 +44,7 @@ export const telegramEditMessageTextAction = createAction({
     }),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
+  outputSchema: editMessageTextActionOutputSchema,
   async run(ctx) {
     const hasChatTarget = Boolean(ctx.propsValue.chat_id && ctx.propsValue.message_id);
     const hasInlineTarget = Boolean(ctx.propsValue.inline_message_id);

@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { publicationId } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { beehiivApiCall, BeehiivPaginatedApiCall } from '../common/client';
 
 export const listPostsAction = createAction({

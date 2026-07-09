@@ -11,7 +11,7 @@ The Knowledge Base feature lets users upload documents (PDF, DOCX, TXT, CSV) int
 - `packages/server/api/src/app/knowledge-base/knowledge-base-schema.ts` — `knowledgeBaseSchema`: `ensure()` (creates the `vector` extension + `knowledge_base_chunk` table when available, never throws) and `isVectorExtensionInstalled()` (cached availability check)
 - `packages/server/api/src/app/knowledge-base/knowledge-base.module.ts` — registers routes + a `preHandler` that returns `FEATURE_DISABLED` when pgvector is unavailable
 - `packages/server/api/src/app/database/seeds/knowledge-base-seed.ts` — runs `knowledgeBaseSchema.ensure()` on every boot
-- `packages/shared/src/lib/automation/knowledge-base/index.ts` — `KnowledgeBaseFile` Zod schema
+- `packages/core/shared/src/lib/automation/knowledge-base/index.ts` — `KnowledgeBaseFile` Zod schema
 - `packages/web/src/features/agents/agent-tools/knowledge-base-dialog/knowledge-base-api.ts` — frontend API client
 - `packages/web/src/features/agents/agent-tools/knowledge-base-dialog/knowledge-base-hooks.ts` — React Query hooks
 - `packages/web/src/features/agents/agent-tools/components/knowledge-base-tool.tsx` — `KnowledgeBaseSection` component rendered in agent tool list
@@ -27,6 +27,9 @@ Knowledge base requires the PostgreSQL `vector` extension. It is **not** created
 - **Frontend gate** — the `PGVECTOR_AVAILABLE` flag (`ApFlagId`, computed in `flag.service.ts` from `isVectorExtensionInstalled()`) drives the UI: `KnowledgeBaseSection` renders `null` (hides entirely) when the flag is `false`.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **KnowledgeBaseFile** — a record linking a project, a stored file (in the `file` table), and a display name
 - **KnowledgeBaseChunk** — a text segment extracted from a file; optionally has a 768-dim vector embedding
 - **chunkIndex** — 0-based position of the chunk within its source file

@@ -4,7 +4,7 @@ import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const smartScrapeAction = createAction({
 	name: 'smart-scrape',
@@ -45,8 +45,8 @@ export const smartScrapeAction = createAction({
 		} = context.propsValue;
 
 		await propsValidation.validateZod(context.propsValue, {
-			costThresholdCredits: z.number().min(0).optional(),
-			timeThresholdSeconds: z.number().min(0).optional(),
+			costThresholdCredits: z.optional(z.number().check(z.minimum(0))),
+			timeThresholdSeconds: z.optional(z.number().check(z.minimum(0))),
 		});
 
 		const body: Record<string, any> = {};

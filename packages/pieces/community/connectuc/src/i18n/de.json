@@ -66,14 +66,19 @@
   "Triggers when a new incoming call is received": "Wird ausgelöst, wenn ein neuer eingehender Anruf empfangen wird",
   "Triggers when a new outgoing call is initiated": "Wird ausgelöst, wenn ein neuer ausgehender Anruf gestartet wird",
   "Triggers when a new voicemail is received": "Wird ausgelöst, wenn eine neue Sprachnachricht empfangen wird",
-  "Triggers when a new SMS message is received": "Wird ausgelöst, wenn eine neue SMS empfangen wird",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent",
   "Users": "Benutzer",
   "Status": "Status",
-  "Select Recipients": "Empfänger auswählen",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
   "Select users to which this trigger applies": "Benutzer auswählen, für die dieser Trigger angewendet wird",
   "Filter by call status": "Filtern nach Anrufstatus",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "Select the SMS recipient numbers to which this trigger applies": "Wählen Sie die SMS-Empfängernummern, auf die dieser Trigger angewendet wird",
+  "Filter by message direction": "Filter by message direction",
   "Ringing": "Klingeln",
   "Answered": "Beantwortet",
-  "Both": "Beides"
+  "Both": "Beides",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing"
 }

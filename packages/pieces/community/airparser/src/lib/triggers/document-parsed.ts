@@ -4,7 +4,7 @@ import {
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { airparserAuth } from '../auth';
 import { airparserApiCall, GetDocumentResponse } from '../common';
 import { inboxIdDropdown } from '../common/props';

@@ -12,7 +12,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 
 const polling: Polling<

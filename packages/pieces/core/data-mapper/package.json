@@ -5,16 +5,18 @@
   "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
-    "tslib": "2.6.2"
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "3.0.8"
+    "vitest": "3.2.6",
+    "tslib": "2.6.2"
   }
 }

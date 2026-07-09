@@ -23,11 +23,13 @@
     "nanoid": "3.3.8",
     "socket.io-client": "4.8.1",
     "tslib": "2.6.2",
-    "undici": "7.24.6",
-    "zod": "4.3.6"
+    "undici": "7.28.0",
+    "zod": "4.3.6",
+    "@activepieces/core-utils": "workspace:*",
+    "@activepieces/core-formula": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "24.11.0",
-    "vitest": "3.0.8"
+    "vitest": "3.2.6"
   }
 }

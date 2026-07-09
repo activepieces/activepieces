@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import { Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { jobQueue } from './job-queue/job-queue'
@@ -84,7 +84,7 @@ async function migrateSchedulers({ sourceQueue, targetQueue, platformId, batchSi
             ).then(async (data) => {
                 if (!isNil(data)) { // to make sure job is not removed unless it is upserted in target queue
                     log.info({
-                        platformId,
+                        platform: { id: platformId },
                         schedulerId,
                         batch: `${offset}-${offset + batchSize - 1}`,
                     }, '[platformQueueMigrationService#migrateSchedulers] Migrated scheduler to new queue')
@@ -93,7 +93,7 @@ async function migrateSchedulers({ sourceQueue, targetQueue, platformId, batchSi
                 }
                 else {
                     log.error({
-                        platformId,
+                        platform: { id: platformId },
                         schedulerId,
                         batch: `${offset}-${offset + batchSize - 1}`,
                     }, '[platformQueueMigrationService#migrateSchedulers] Failed to migrate scheduler to new queue')
@@ -112,14 +112,14 @@ async function migrateSchedulers({ sourceQueue, targetQueue, platformId, batchSi
     if (!migrationFailed) {
         await removeOrphanedDelayedJobs({ sourceQueue, schedulerIds: migratedSchedulerIds, batchSize })
         log.info({
-            platformId,
+            platform: { id: platformId },
             migratedSchedulers: migratedSchedulerIds.length,
         }, '[platformQueueMigrationService#migrateSchedulers] Migrated schedulers to new queue')
         return
     }
 
     log.error({
-        platformId,
+        platform: { id: platformId },
         migratedSchedulers: migratedSchedulerIds.length,
     }, '[platformQueueMigrationService#migrateSchedulers] Some batches failed to migrate schedulers, delayed orphaned jobs not deleted')
 }

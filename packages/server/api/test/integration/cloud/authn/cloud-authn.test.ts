@@ -1,18 +1,5 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    ApEdition,
-    DefaultProjectRole,
-
-    InvitationStatus,
-    InvitationType,
-    OtpType,
-    PlatformRole,
-    Principal,
-    PrincipalType,
-    Project,
-    ProjectRole,
-    ProjectType,
-    UserStatus } from '@activepieces/shared'
+import { ProjectRole } from '@activepieces/core-utils'
+import { ApEdition, DefaultProjectRole, InvitationStatus, InvitationType, OtpType, PlatformRole, Principal, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -21,8 +8,8 @@ import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { system } from '../../../../src/app/helper/system/system'
-import { db } from '../../../helpers/db'
 import { decodeToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     CLOUD_PLATFORM_ID,
     createMockPlatform,
@@ -37,6 +24,7 @@ import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { jwtUtils } from 'packages/server/api/src/app/helper/jwt-utils'
 
 let app: FastifyInstance | null = null
@@ -61,7 +49,6 @@ beforeEach(async () => {
         sendTrialReminder: vi.fn(),
         sendReminderJobHandler: vi.fn(),
         sendExceedFailureThresholdAlert: vi.fn(),
-        sendBadgeAwardedEmail: vi.fn(),
         sendProjectMemberAdded: vi.fn(),
     }))
 

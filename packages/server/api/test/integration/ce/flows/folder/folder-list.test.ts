@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import qs from 'qs'

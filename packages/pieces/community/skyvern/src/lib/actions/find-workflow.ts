@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { skyvernAuth } from '../common/auth';
 import { skyvernApiCall } from '../common/client';
 import { ListWorkflowResponse } from '../common/props';

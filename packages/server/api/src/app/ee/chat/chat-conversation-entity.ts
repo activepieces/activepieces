@@ -37,6 +37,10 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             nullable: false,
             default: ChatConversationStatus.IDLE,
         },
+        activeRunId: {
+            type: String,
+            nullable: true,
+        },
         messages: {
             type: 'jsonb',
             nullable: false,
@@ -59,6 +63,11 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
         {
             name: 'idx_chat_conversation_platform_user_created_id',
             columns: ['platformId', 'userId', 'created', 'id'],
+        },
+        {
+            name: 'idx_chat_conversation_streaming_updated',
+            columns: ['updated'],
+            where: `status = '${ChatConversationStatus.STREAMING}'`,
         },
     ],
     relations: {

@@ -4,7 +4,8 @@ import {
     slackSendMessage,
     textToSectionBlocks,
 } from './utils';
-import { assertNotNullOrUndefined, ExecutionType } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { ChatPostMessageResponse } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from './auth-helpers';
 

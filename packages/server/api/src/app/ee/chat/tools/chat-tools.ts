@@ -1,10 +1,14 @@
-import { AppConnectionStatus, AppConnectionType, chatToolClassification, FlowRunStatus, FlowStatus, isNil, isObject, parseToJsonIfPossible, Project, RunEnvironment } from '@activepieces/shared'
+import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { chatAiUtils } from '@activepieces/server-utils'
+import { AppConnectionStatus, AppConnectionType, chatCodeModeUtils, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
+import { fileService } from '../../../file/file.service'
+import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { executeAdhocAction, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -20,6 +24,10 @@ const OAUTH_TYPES: ReadonlySet<AppConnectionType> = new Set([
 ])
 const CLOCK_SKEW_BUFFER_S = 5 * 60
 const CROSS_PROJECT_FLOW_LIMIT = 200
+const MAX_PRODUCED_FILES = 10
+const MAX_PRODUCED_FILE_BYTES = 25 * 1024 * 1024
+const MAX_RESULT_TEXT_CHARS = 20_000
+const LARGE_RESULT_OFFLOAD_BYTES = 64 * 1024
 const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
 const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
 
@@ -103,6 +111,47 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     }
 
     return { pickConnection: true, piece: shortName, displayName, connections: flat, requiredScopes }
+}
+
+// Auto-bind a connection for a connection-gated piece when none was picked and none was passed
+// inline — the case Code Mode always hits (its tool calls can't pop an interactive picker). Scans
+// the working project for ACTIVE connections of this piece: exactly one → use it; several → report
+// ambiguity so the caller can ask the user; none → fall through (let the normal missing-auth path
+// surface, e.g. the model shows the picker / offers to connect).
+async function autoResolveActiveConnection({ pieceName, projectId, platformId, log }: {
+    pieceName: string
+    projectId: string
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<AutoResolveConnectionResult> {
+    if (isNil(platformId)) {
+        return { kind: 'none' }
+    }
+    const { data: connections, error } = await tryCatch(() => appConnectionService(log).list({
+        projectId,
+        platformId,
+        pieceName,
+        status: [AppConnectionStatus.ACTIVE],
+        cursorRequest: null,
+        displayName: undefined,
+        scope: undefined,
+        externalIds: undefined,
+        limit: CROSS_PROJECT_CONNECTION_LIMIT,
+    }))
+    if (error || isNil(connections) || connections.data.length === 0) {
+        return { kind: 'none' }
+    }
+    if (connections.data.length === 1) {
+        const only = connections.data[0]
+        return { kind: 'single', externalId: only.externalId, label: only.displayName }
+    }
+    const shortName = pieceShortName(pieceName)
+    return {
+        kind: 'ambiguous',
+        piece: shortName,
+        displayName: pieceDisplayLabel(shortName),
+        labels: connections.data.map((c) => c.displayName),
+    }
 }
 
 async function listFlowsAcrossProjects({ projects, status, log }: {
@@ -214,10 +263,24 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 
     switch (toolName) {
         case 'ap_discover_action_auth': {
+            const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
+            // Sticky connection: if the user already chose a connection for this piece this
+            // conversation, reuse it instead of popping another picker for the next action.
+            if (conversationId) {
+                const selected = await chatApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+                if (selected) {
+                    return {
+                        alreadyConnected: true,
+                        piece: normalizedPiece,
+                        auth: selected.externalId,
+                        connectionLabel: selected.label,
+                        note: 'A connection for this piece was already selected this conversation — pass this auth and do NOT show another connection picker.',
+                    }
+                }
+            }
             const discoveryResult = await findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
 
             if (conversationId && 'pickConnection' in discoveryResult && discoveryResult.pickConnection) {
-                const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
                 await chatApprovalGate.storeAvailableConnections({
                     conversationId,
                     pieceName: normalizedPiece,
@@ -234,14 +297,18 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_execute_action': {
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log })
+        }
+        case 'ap_run_code': {
+            return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
         }
         case 'ap_explore_data': {
             const actionName = toolInput.actionName as string
-            if (!chatToolClassification.isReadActionName(actionName)) {
+            const exploreInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : undefined
+            if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log })
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -273,11 +340,49 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
     }
 }
 
-async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, log }: {
+// A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
+// the model context with a compact shape preview + the fileId. The agent then processes the FULL
+// data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
+function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }: {
+    projectId: string
+    platformId?: string
+    pieceName: string
+    actionName: string
+    log: FastifyBaseLogger
+}): AdhocOffload | undefined {
+    if (isNil(platformId)) {
+        return undefined
+    }
+    return {
+        thresholdBytes: LARGE_RESULT_OFFLOAD_BYTES,
+        handle: async ({ payload, byteSize, label, statusNote }) => {
+            const json = JSON.stringify(payload, null, 2)
+            const fileName = `${pieceName.replace('@activepieces/piece-', '')}-${actionName}.json`
+            const { data: saved, error } = await tryCatch(() => fileService(log).save({
+                projectId,
+                platformId,
+                data: Buffer.from(json, 'utf8'),
+                size: Buffer.byteLength(json, 'utf8'),
+                type: FileType.FLOW_STEP_FILE,
+                fileName,
+                compression: FileCompression.NONE,
+                metadata: { mimetype: 'application/json' },
+            }))
+            if (error || isNil(saved)) {
+                log.warn({ error, pieceName, actionName }, '[chat] large-result offload failed; falling back to inline truncation')
+                return null
+            }
+            return chatAiUtils.buildLargeResultPreview({ payload, byteSize, fileId: saved.id, label, statusNote })
+        },
+    }
+}
+
+async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
     conversationId?: string
+    platformId?: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const pieceName = toolInput.pieceName as string
@@ -311,19 +416,225 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
             parsedInput = parsed as Record<string, unknown>
         }
     }
+
+    // Resolve + validate the action before running it, so the agent self-corrects a
+    // wrong action name (with a "did you mean" hint), a bad input shape, or a missing
+    // connection — instead of guessing and crashing at runtime.
+    const lookup = await mcpUtils.lookupPieceComponent({ pieceName, componentName: actionName, componentType: 'action', projectId: resolvedProjectId, log })
+    if (lookup.error) {
+        return { success: false, error: lookup.error.content[0]?.text ?? `Action "${actionName}" not found on "${normalizedPiece}".` }
+    }
+    const baseInput = isObject(parsedInput) ? parsedInput : {}
+
+    // No connection picked yet and none passed inline. The interactive picker can't fire from
+    // inside Code Mode (model-written JS calling tools.ap_execute_action can't show a UI card and
+    // wait), so a connection-gated call would otherwise run auth-less and come back empty. Auto-bind
+    // the project's single ACTIVE connection for this piece (and make it sticky so the rest of the
+    // turn — and any picker the model later shows — agrees). Multiple actives are genuinely
+    // ambiguous: return a corrective the model can act on instead of guessing an account.
+    const pieceRequiresAuth = lookup.component.requireAuth && !isNil(lookup.piece.auth)
+    const inlineAuth = typeof baseInput.auth === 'string' ? baseInput.auth : undefined
+    if (isNil(connectionExternalId) && isNil(inlineAuth) && pieceRequiresAuth) {
+        const auto = await autoResolveActiveConnection({ pieceName: normalizedPiece, projectId: resolvedProjectId, platformId, log })
+        if (auto.kind === 'ambiguous') {
+            return { success: false, error: `Multiple connected ${auto.displayName} accounts exist (${auto.labels.join(', ')}). I can't pick one for you from inside code — call ap_show_connection_picker for "${auto.piece}" first so the user chooses, then re-run.` }
+        }
+        if (auto.kind === 'single') {
+            connectionExternalId = auto.externalId
+            connectionLabel = auto.label
+            if (conversationId) {
+                await chatApprovalGate.storeSelectedConnection({
+                    conversationId,
+                    pieceName: normalizedPiece,
+                    externalId: auto.externalId,
+                    label: auto.label,
+                    projectId: resolvedProjectId,
+                })
+            }
+        }
+    }
+
+    const diagnosis = mcpUtils.diagnosePieceProps({
+        props: lookup.component.props,
+        input: connectionExternalId ? { ...baseInput, auth: connectionExternalId } : baseInput,
+        pieceAuth: lookup.piece.auth,
+        requireAuth: lookup.component.requireAuth,
+        componentType: 'action',
+    })
+    if (diagnosis.missing.length > 0 || diagnosis.unknownKeys.length > 0) {
+        return { success: false, error: `Fix the input for "${normalizedPiece}/${actionName}" before running:\n${diagnosis.parts.join('\n')}` }
+    }
+
+    // Code Mode bridged call: return the action's FULL raw output payload and DO NOT offload it to a
+    // file. The offload (preview + fileId) exists to keep the MODEL's context lean; here the result
+    // is consumed by the in-VM code, which returns only a small value. Offloading it would collapse
+    // Code Mode back into fetch→file→ap_run_code with zero in-VM advantage.
+    const wantsRawResult = chatCodeModeUtils.isRawArgs(toolInput)
+
     const result = await executeAdhocAction({
         projectId: resolvedProjectId,
         pieceName,
         actionName,
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
+        returnRawOutput: wantsRawResult,
+        ...(wantsRawResult ? {} : spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log }))),
         log,
     })
 
-    if (connectionLabel && typeof result === 'object' && result !== null) {
-        return { ...(result as Record<string, unknown>), _meta: { connectionLabel, pieceName: normalizedPiece } }
+    // Hand the bare payload to the bridge so the in-VM code gets the data directly (the bridge's
+    // unwrapToolResult passes a non-envelope value through untouched). On a failed/empty run
+    // executeAdhocAction returns its normal formatted result instead, so the code still sees status.
+    if (wantsRawResult && isObject(result) && 'rawOutput' in result) {
+        return result.rawOutput
+    }
+
+    if (typeof result === 'object' && result !== null) {
+        const resultObj = result as Record<string, unknown>
+        const structured = isObject(resultObj.structuredContent) ? resultObj.structuredContent as Record<string, unknown> : undefined
+        const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
+        if (isNil(connectionLabel) && isNil(errorSummary)) {
+            return result
+        }
+        return {
+            ...resultObj,
+            _meta: {
+                ...spreadIfDefined('connectionLabel', connectionLabel),
+                ...spreadIfDefined('errorSummary', errorSummary),
+                pieceName: normalizedPiece,
+            },
+        }
     }
     return result
+}
+
+async function runChatCode({ toolInput, projects, platformId, userId, conversationId, log }: {
+    toolInput: Record<string, unknown>
+    projects: Project[]
+    platformId: string
+    userId: string
+    conversationId?: string
+    log: FastifyBaseLogger
+}): Promise<RunCodeToolResult> {
+    const code = typeof toolInput.code === 'string' ? toolInput.code : undefined
+    if (isNil(code) || code.trim().length === 0) {
+        return { text: '❌ `code` is required and must be a non-empty string.', producedFiles: [] }
+    }
+    const packageJson = typeof toolInput.packageJson === 'string' ? toolInput.packageJson : undefined
+
+    let projectId = projects[0]?.id
+    if (conversationId) {
+        // skipStaleRecovery: called by the live worker mid-turn (Code Mode) only to resolve the
+        // conversation's project. A lagged heartbeat must not let this read crash-resume the running turn.
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log, skipStaleRecovery: true })
+        if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
+            projectId = conversation.projectId
+        }
+    }
+    if (isNil(projectId)) {
+        return { text: '❌ No projects available. Create a project first.', producedFiles: [] }
+    }
+
+    const baseInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : {}
+    const inputFileIds = Array.isArray(toolInput.inputFileIds)
+        ? toolInput.inputFileIds.filter((id): id is string => typeof id === 'string')
+        : []
+    const inputFiles: { name: string, mimeType: string, base64: string }[] = []
+    for (const fileId of inputFileIds) {
+        const { data: file, error: lookupError } = await tryCatch(() => fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE }))
+        // Confine to the current conversation's project, not just the platform — otherwise a
+        // model-supplied fileId from another project on the same platform could be read.
+        if (lookupError || isNil(file) || file.platformId !== platformId || file.projectId !== projectId) {
+            return { text: `❌ Couldn't load attachment ${fileId}. If this is an image you generated, pass its URL into the code and fetch() it instead of using inputFileIds.`, producedFiles: [] }
+        }
+        const { data: fileData, error: dataError } = await tryCatch(() => fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE }))
+        if (dataError || isNil(fileData)) {
+            return { text: `❌ Couldn't read attachment ${fileId}.`, producedFiles: [] }
+        }
+        const mimeType = isObject(fileData.metadata) && typeof fileData.metadata.mimetype === 'string' ? fileData.metadata.mimetype : 'application/octet-stream'
+        inputFiles.push({ name: fileData.fileName ?? fileId, mimeType, base64: fileData.data.toString('base64') })
+    }
+    const jsonValues = inputFiles
+        .filter((f) => f.mimeType.includes('json') || f.name.toLowerCase().endsWith('.json'))
+        .map((f) => parseToJsonIfPossible(Buffer.from(f.base64, 'base64').toString('utf8')))
+        .filter((v) => isObject(v) || Array.isArray(v))
+    const input: Record<string, unknown> = { ...baseInput }
+    if (inputFiles.length > 0) {
+        input.files = inputFiles
+    }
+    // JSON attachments (e.g. an offloaded large tool result) are parsed and handed over as
+    // `inputs.data` so the agent can process them in two lines instead of base64-decoding by hand.
+    if (jsonValues.length > 0 && baseInput.data === undefined) {
+        input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
+    }
+
+    const result = await executeAdhocCode({ projectId, code, packageJson, input, log })
+
+    if (result.status !== 'succeeded') {
+        const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'
+        return { text: `❌ ${reason}`, producedFiles: [] }
+    }
+
+    return persistProducedFiles({ output: result.output, projectId, platformId, log })
+}
+
+function extractFilesFromOutput(output: unknown): { files: RawProducedFile[], rest: unknown } {
+    if (!isObject(output) || !Array.isArray(output.files)) {
+        return { files: [], rest: output }
+    }
+    const files = output.files.filter((f): f is RawProducedFile =>
+        isObject(f) && typeof f.name === 'string' && typeof f.mimeType === 'string' && typeof f.base64 === 'string')
+    const rest: Record<string, unknown> = { ...output }
+    delete rest.files
+    return { files, rest }
+}
+
+function decodeBase64(value: string): Buffer | undefined {
+    const stripped = value.replace(/^data:[^;]+;base64,/, '')
+    const buffer = Buffer.from(stripped, 'base64')
+    return buffer.length > 0 ? buffer : undefined
+}
+
+async function persistProducedFiles({ output, projectId, platformId, log }: {
+    output: unknown
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<RunCodeToolResult> {
+    const { files, rest } = extractFilesFromOutput(output)
+    const producedFiles: ProducedFile[] = []
+    for (const file of files.slice(0, MAX_PRODUCED_FILES)) {
+        const buffer = decodeBase64(file.base64)
+        if (isNil(buffer) || buffer.length > MAX_PRODUCED_FILE_BYTES) {
+            continue
+        }
+        const saved = await fileService(log).save({
+            projectId,
+            platformId,
+            data: buffer,
+            size: buffer.length,
+            type: FileType.FLOW_STEP_FILE,
+            fileName: file.name,
+            compression: FileCompression.NONE,
+            metadata: { mimetype: file.mimeType },
+        })
+        const url = await filesService.constructReadUrl({ fileId: saved.id, fileType: saved.type, platformId })
+        producedFiles.push({ fileId: saved.id, url, mediaType: file.mimeType, fileName: file.name, byteSize: buffer.length })
+    }
+    return { text: buildCodeResultText({ rest, producedFiles }), producedFiles }
+}
+
+function buildCodeResultText({ rest, producedFiles }: { rest: unknown, producedFiles: ProducedFile[] }): string {
+    const fileNote = producedFiles.length > 0
+        ? `Returned ${producedFiles.length} file(s) to the user: ${producedFiles.map((f) => f.fileName).join(', ')}.`
+        : ''
+    const hasRest = !isNil(rest) && !(isObject(rest) && Object.keys(rest).length === 0)
+    if (!hasRest) {
+        return fileNote.length > 0 ? `✅ Code ran. ${fileNote}` : '✅ Code ran (no output returned).'
+    }
+    const outStr = typeof rest === 'string' ? rest : JSON.stringify(rest)
+    const truncated = outStr.length > MAX_RESULT_TEXT_CHARS ? `${outStr.slice(0, MAX_RESULT_TEXT_CHARS)}… (truncated)` : outStr
+    return ['✅ Code ran.', truncated, fileNote].filter((s) => s.length > 0).join('\n\n')
 }
 
 function resolveConnectionInfo({ status, type, value }: { status: AppConnectionStatus, type: AppConnectionType, value: unknown }): { status: AppConnectionStatus, grantedScopes: string[] } {
@@ -362,5 +673,29 @@ type FindConnectionsResult =
     | { noAuthRequired: true, piece: string }
     | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
     | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
+
+type AutoResolveConnectionResult =
+    | { kind: 'none' }
+    | { kind: 'single', externalId: string, label: string }
+    | { kind: 'ambiguous', piece: string, displayName: string, labels: string[] }
+
+type RawProducedFile = {
+    name: string
+    mimeType: string
+    base64: string
+}
+
+type ProducedFile = {
+    fileId: string
+    url: string
+    mediaType: string
+    fileName: string
+    byteSize: number
+}
+
+type RunCodeToolResult = {
+    text: string
+    producedFiles: ProducedFile[]
+}
 
 export { executeCrossProjectTool, findConnectionsForPiece }

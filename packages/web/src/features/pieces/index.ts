@@ -41,3 +41,8 @@ export {
   extractPieceNamesAndCoreMetadata,
   stepUtils,
 } from './utils/step-utils';
+export {
+  pieceSelectorCustomization,
+  PIECE_SELECTOR_TAB_ICON_OPTIONS,
+} from './utils/piece-selector-customization';
+export type { ResolvedPieceSelectorTab } from './utils/piece-selector-customization';

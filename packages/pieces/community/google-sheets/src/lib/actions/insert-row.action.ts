@@ -10,7 +10,7 @@ import {
 	ValueInputOption,
 } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import {
 	AuthenticationType,
 	httpClient,
@@ -18,6 +18,7 @@ import {
 	HttpRequest,
 } from '@activepieces/pieces-common';
 import { commonProps, isFirstRowHeaderProp, rowValuesProp } from '../common/props';
+import { insertRowActionOutputSchema } from '../output-schemas';
 
 export const insertRowAction = createAction({
 	auth: googleSheetsAuth,
@@ -41,6 +42,7 @@ export const insertRowAction = createAction({
 		}),
 		values: rowValuesProp(),
 	},
+	outputSchema: insertRowActionOutputSchema,
 	async run({ propsValue, auth }) {
 		const {
 			values,

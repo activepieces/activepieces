@@ -8,6 +8,7 @@ import qs from 'qs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon, listTags } from '../../common';
 import { ClickupTask } from '../../common/models';
+import { filterWorkspaceTasksOutputSchema } from '../../output-schemas';
 
 export const filterClickupWorkspaceTasks = createAction({
   auth: clickupAuth,
@@ -91,6 +92,7 @@ export const filterClickupWorkspaceTasks = createAction({
       },
     }),
   },
+  outputSchema: filterWorkspaceTasksOutputSchema,
   async run(configValue) {
     const { list_id, folder_id, space_id, workspace_id, ...params } =
       configValue.propsValue;

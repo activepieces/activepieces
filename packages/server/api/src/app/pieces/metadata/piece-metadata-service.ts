@@ -1,30 +1,15 @@
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, LocalesEnum, PlatformId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { apVersionUtil } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    apId,
-    assertNotNullOrUndefined,
-    ErrorCode,
-    EXACT_VERSION_REGEX,
-    isNil,
-    LocalesEnum,
-    PackageType,
-    PieceCategory,
-    PieceOrderBy,
-    PiecePackage,
-    PieceSortBy,
-    PieceType,
-    PlatformId,
-    PrivatePiecePackage,
-    PublicPiecePackage,
-    SuggestionType,
-} from '@activepieces/shared'
+import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
+import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
@@ -178,7 +163,71 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 await pieceCache(log).invalidate()
             }
         },
+
+        async delete({ id, platformId }: DeleteParams): Promise<void> {
+            const piece = await pieceRepos().findOneBy({ id })
+            if (isNil(piece) || piece.platformId !== platformId) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: { entityType: 'piece', entityId: id },
+                })
+            }
+            if (piece.pieceType !== PieceType.CUSTOM) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Only custom pieces can be deleted' },
+                })
+            }
+            const flowsUsingPiece = await findFlowsUsingPiece({ pieceName: piece.name, platformId, log })
+            if (flowsUsingPiece.length > 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: buildPieceInUseMessage(flowsUsingPiece) },
+                })
+            }
+            await pieceRepos().delete({ name: piece.name, platformId, pieceType: PieceType.CUSTOM })
+            await pieceCache(log).invalidate()
+        },
     }
+}
+
+async function findFlowsUsingPiece({ pieceName, platformId, log }: FindFlowsUsingPieceParams): Promise<string[]> {
+    const projectIds = await projectService(log).getProjectIdsByPlatform(platformId)
+    if (projectIds.length === 0) {
+        return []
+    }
+    const latestVersionSubquery = flowVersionRepo()
+        .createQueryBuilder('fv_latest')
+        .select('fv_latest.id')
+        .where('fv_latest."flowId" = flow.id')
+        .orderBy('fv_latest.created', 'DESC')
+        .limit(1)
+
+    const candidates = await flowVersionRepo().createQueryBuilder('flow_version')
+        .innerJoin('flow_version.flow', 'flow')
+        .where('flow."projectId" IN (:...projectIds)', { projectIds })
+        .andWhere('flow_version.trigger::text LIKE :needle', { needle: `%"${pieceName}"%` })
+        .andWhere(`(flow_version.id = flow."publishedVersionId" OR flow_version.id = (${latestVersionSubquery.getQuery()}))`)
+        .getMany()
+
+    const flowNamesById = new Map<string, string>()
+    for (const flowVersion of candidates) {
+        if (!flowNamesById.has(flowVersion.flowId) && flowPieceUtil.getUsedPieces(flowVersion.trigger).includes(pieceName)) {
+            flowNamesById.set(flowVersion.flowId, flowVersion.displayName)
+        }
+    }
+    return [...flowNamesById.values()]
+}
+
+function buildPieceInUseMessage(flowNames: string[]): string {
+    const previewLimit = 3
+    const preview = flowNames.slice(0, previewLimit).map((name) => `"${name}"`).join(', ')
+    const remaining = flowNames.length - previewLimit
+    const flowList = remaining > 0 ? `${preview} and ${remaining} more` : preview
+    if (flowNames.length === 1) {
+        return `Cannot delete this piece because it is still used by the flow ${flowList}. Remove the piece from that flow first.`
+    }
+    return `Cannot delete this piece because it is still used by ${flowNames.length} flows: ${flowList}. Remove the piece from those flows first.`
 }
 
 export const getPiecePackageWithoutArchive = async (
@@ -220,6 +269,9 @@ export const getPiecePackageWithoutArchive = async (
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
             }
+        }
+        default: {
+            throw new Error(`Unhandled packageType: ${(pieceMetadata as { packageType: string }).packageType}`)
         }
     }
 }
@@ -399,7 +451,7 @@ async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchP
     return foundPiece ?? null
 }
 
-async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
+export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
     const allKeys = await pieceRepos()
         .createQueryBuilder('pm')
         .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
@@ -485,6 +537,17 @@ type GetOrThrowParams = {
     projectId?: string
     platformId?: string
     locale?: LocalesEnum
+}
+
+type DeleteParams = {
+    id: string
+    platformId: string
+}
+
+type FindFlowsUsingPieceParams = {
+    pieceName: string
+    platformId: string
+    log: FastifyBaseLogger
 }
 
 type CreateParams = {

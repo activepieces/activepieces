@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { isNil, spreadIfDefined } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -51,6 +51,7 @@ import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/175
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { AddUiMessagesToChatConversation1778983371000 } from './migration/common/1778983371000-AddUiMessagesToChatConversation'
 import { AddStatusToChatConversation1779500000000 } from './migration/common/1779500000000-AddStatusToChatConversation'
+import { AddTimelineToFlowRun1800000000000 } from './migration/common/1800000000000-AddTimelineToFlowRun'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -383,6 +384,18 @@ import { AddVariableTable1793000000000 } from './migration/postgres/179300000000
 import { AddCreatedByToFlow1794000000000 } from './migration/postgres/1794000000000-AddCreatedByToFlow'
 import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migration/postgres/1794000000000-AddDataManipulationEnabledToPlatformPlan'
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
+import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
+import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
+import { AddWorkerGroupsEnabledToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddWorkerGroupsEnabledToPlatformPlan'
+import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
+import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/1798000000000-AddWorkerGroupIdToProject'
+import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
+import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
+import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
+import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
+import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
+import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
+import { AddChatConversationStreamingUpdatedIndex1807000000000 } from './migration/postgres/1807000000000-AddChatConversationStreamingUpdatedIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -781,6 +794,19 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDataManipulationEnabledToPlatformPlan1794000000000,
         AddThemeColorsToPlatform1781206955649,
         AddExternalIdToFolder1795000000000,
+        AddPieceSelectorConfigToPlatform1796000000000,
+        AddWorkerGroupsEnabledToPlatformPlan1797000000000,
+        AddWorkerGroupIdToProject1798000000000,
+        AddAiToolConfigTable1797000000000,
+        AddChatConversationActiveRunId1798000000000,
+        AddChatRolloutUserTable1799000000000,
+        AddTimelineToFlowRun1800000000000,
+        AddToolSearchIndexTable1801000000000,
+        AddChatRolloutFreeCreditGrant1802000000000,
+        DropDataManipulationEnabledFromPlatformPlan1803000000000,
+        DropBadges1804000000000,
+        AddConnectionIdsGinIndexToFlowVersion1806000000000,
+        AddChatConversationStreamingUpdatedIndex1807000000000,
     ]
     return migrations
 }

@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { wufooApiCall } from './common/client';
 
 export const wufooAuth = PieceAuth.CustomAuth({

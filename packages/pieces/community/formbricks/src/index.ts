@@ -9,16 +9,16 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { triggers } from './lib/triggers';
 
 const markdownPropertyDescription = `
   **Enable Basic Authentication:**
   1. Login to your Formbricks account
-  2. On the top-right, click on your account dropdown
-  3. Select 'Product Settings'
-  4. On the left, select 'API Keys'
-  5. Click on 'Add Production API Key'
+  2. On the bottom-left, click on your account dropdown
+  3. Select 'Account Settings' -> 'Setting'
+  4. select 'API Keys'
+  5. Click on 'Add API Key'
   6. On the popup form, enter the 'API Key Label' to name the Key
   7. Copy the API key and paste it below.
 

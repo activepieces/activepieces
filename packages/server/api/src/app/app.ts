@@ -1,16 +1,18 @@
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { wideEvent } from '@activepieces/server-utils'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, spreadIfDefined, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
+import { apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
-import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod'
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
+import { aiToolConfigModule } from './ai/ai-tool-config.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -41,6 +43,7 @@ import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.modul
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { flowRunTrackingModule } from './ee/flow-run-tracking/flow-run-tracking-module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
+import { appearanceHelper } from './ee/helper/appearance-helper'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
@@ -68,11 +71,14 @@ import { flagHooks } from './flags/flags.hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
+import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
 import { exceptionHandler } from './helper/exception-handler'
+import { clientLogsModule } from './helper/logs/client-logs.module'
 import { openapiModule } from './helper/openapi/openapi.module'
+import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
@@ -96,15 +102,16 @@ import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
+import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
-import { userBadgeModule } from './user/badges/badge-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
+import { workerCapacity } from './workers/machine/worker-capacity'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
@@ -180,9 +187,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('preHandler', (request, _reply, done) => {
         try {
             const principal = request.principal
+            const projectId = extractProjectId(principal)
+            const platformId = extractPlatformId(principal)
             wideEvent.set({
-                ...spreadIfDefined('projectId', extractProjectId(principal)),
-                ...spreadIfDefined('platformId', extractPlatformId(principal)),
+                ...spreadIfDefined('project', isNil(projectId) ? undefined : { id: projectId }),
+                ...spreadIfDefined('platform', isNil(platformId) ? undefined : { id: platformId }),
                 ...spreadIfDefined('principalType', principal?.type),
             })
         }
@@ -207,6 +216,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(storeEntryModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
+    toolSearchReindexJob(app.log).register()
+    // Cold-start backfill: build the tool-search index once if the flag is on but it has never been
+    // built (existing deployment whose piece_metadata is already populated, so no sync delta fires).
+    // Fire-and-forget — a no-op once the index has rows, and must never block or fail boot.
+    rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfEmpty(), app.log)
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
@@ -230,6 +244,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
+    await workerCapacity.setup()
     await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
@@ -239,8 +254,15 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(knowledgeBaseModule)
     await app.register(userModule)
     await app.register(templateModule)
-    await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
+
+    // Dev-only: accept browser debug logs into the shared evlog fs drain so a
+    // chat run can be reconstructed end-to-end (web + api + worker). Never in cloud/prod.
+    const clientLogsEnabled = system.get(AppSystemProp.LOG_FILE) === 'true' && system.getEdition() !== ApEdition.CLOUD
+    if (clientLogsEnabled) {
+        await app.register(clientLogsModule)
+    }
+
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
@@ -300,9 +322,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
             await app.register(chatEvalModule)
+            await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -332,9 +356,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
             await app.register(chatEvalModule)
+            await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)
@@ -389,6 +415,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const pieces = process.env.AP_DEV_PIECES
 
+    assertReleaseReadable(app.log)
     systemSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
@@ -401,6 +428,27 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         )
     }
     void startDevPieceWatcher(app)
+}
+
+// Front-loads the release-read failure signal to boot time. Without this the only alert is
+// emitted lazily on the first worker poll (worker-rpc-service.ts), so a mis-packaged app that
+// no worker has polled yet looks healthy. A '0.0.0' read fail-closes the dispatch gate and will
+// NOT self-heal on deploy completion, so page immediately and log at error (see the "Release
+// Version Detection" section in packages/server/AGENTS.md).
+function assertReleaseReadable(log: FastifyBaseLogger): void {
+    const version = apVersionUtil.getCurrentRelease()
+    if (version !== UNKNOWN_VERSION) {
+        log.info({ release: { version } }, '[appPostBoot] Release version detected from package.json')
+        return
+    }
+    log.error({ release: { version } }, '[appPostBoot] App could not read its release version from package.json (reported as 0.0.0); worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)')
+    onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
+        code: 'RELEASE_VERSION_UNREADABLE',
+        message: 'App could not read its release version from package.json (reported as 0.0.0) at startup; worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)',
+        params: { appVersion: version },
+    }).catch((pageError) => {
+        log.error({ pageError }, '[appPostBoot] Failed to send on-call page for unreadable release version')
+    })
 }
 
 function extractPlatformId(principal: { platform?: { id?: string } } | null | undefined): string | undefined {

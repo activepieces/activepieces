@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { doctlyAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { convertPdfToTextAction } from './lib/actions/convert-pdf-to-text';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/constants';

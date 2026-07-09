@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { filetopdfAuth } from './lib/common/auth';
 import { getAccount } from './lib/actions/get-account';
 import { convertFile } from './lib/actions/convert-file';

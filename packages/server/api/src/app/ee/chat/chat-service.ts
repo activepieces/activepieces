@@ -1,14 +1,5 @@
-import {
-    apId,
-    ChatConversation,
-    ChatConversationStatus,
-    ChatHistoryMessage,
-    CreateChatConversationRequest,
-    PersistedChatMessage,
-    SeekPage,
-    spreadIfDefined,
-    UpdateChatConversationRequest,
-} from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ChatConversation, ChatConversationStatus, ChatHistoryMessage, CreateChatConversationRequest, PersistedChatMessage, UpdateChatConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -16,13 +7,13 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { chatApprovalGate } from './chat-approval-gate'
 import { ChatConversationEntity } from './chat-conversation-entity'
-import { chatHelpers } from './chat-helpers'
+import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
 import { chatHistory } from './history/chat-history'
 
 export const chatService = (log: FastifyBaseLogger) => ({
-    async createConversation({ platformId, userId, request }: CreateConversationParams): Promise<ChatConversation> {
+    async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<ChatConversation> {
         const conversation = await chatHelpers.conversationRepo().save({
-            id: apId(),
+            id: id ?? apId(),
             platformId,
             projectId: null,
             userId,
@@ -30,7 +21,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             modelName: request.modelName ?? null,
             messages: [],
         })
-        log.info({ conversationId: conversation.id, platformId, userId }, '[chatService] Conversation created')
+        log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[chatService] Conversation created')
         return conversation
     },
 
@@ -63,13 +54,20 @@ export const chatService = (log: FastifyBaseLogger) => ({
                 'chat_conversation.status',
             ])
             .where({ platformId, userId })
+            // Eval conversations are owned by the platform owner; keep them out of the regular list.
+            .andWhere('chat_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(data, paginationCursor)
     },
 
-    async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<ChatConversation> {
-        return chatHelpers.getConversationOrThrow({ id, platformId, userId })
+    async getConversationOrThrow({ id, platformId, userId, skipStaleRecovery }: ConversationIdentifier & { skipStaleRecovery?: boolean }): Promise<ChatConversation> {
+        // Eval conversations must never be opened or messaged through the regular (non-dry-run) chat
+        // path — that would run real tools against a conversation meant to be side-effect-free.
+        if (isEvalConversationId(id)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'ChatConversation' } })
+        }
+        return chatHelpers.getConversationOrThrow({ id, platformId, userId, log, skipStaleRecovery })
     },
 
     async updateConversation({ id, platformId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
@@ -94,7 +92,7 @@ export const chatService = (log: FastifyBaseLogger) => ({
             })
         }
         await chatHelpers.conversationRepo().delete(conversation.id)
-        log.info({ conversationId: id, platformId, userId }, '[chatService] Conversation deleted')
+        log.info({ conversation: { id }, platform: { id: platformId }, user: { id: userId } }, '[chatService] Conversation deleted')
     },
 
     async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {
@@ -112,6 +110,7 @@ type CreateConversationParams = {
     platformId: string
     userId: string
     request: CreateChatConversationRequest
+    id?: string
 }
 
 type ListConversationsParams = {

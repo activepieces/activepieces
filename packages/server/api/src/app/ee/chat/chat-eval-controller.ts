@@ -1,24 +1,15 @@
-import {
-    ActivepiecesError,
-    apId,
-    ChatConversationStatus,
-    ErrorCode,
-    isNil,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    PersistedChatRole,
-    SimulateChatRequest,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { ChatConversationStatus, ChatPromptOverride, PersistedChatRole, SimulateChatRequest } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
-import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
-import { chatApprovalGate } from './chat-approval-gate'
-import { chatHelpers } from './chat-helpers'
+import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
+import { chatJob } from './chat-job'
 import { chatService } from './chat-service'
 import { chatPrompt } from './prompt/chat-prompt'
 
@@ -64,22 +55,18 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         const { platformId, userMessage, userMessages, promptOverride } = request.body
         const turns = userMessages ?? [userMessage as string]
 
-        // dryRun runs as the platform owner with tools disabled — no side effects. Gate it behind
-        // the same chatEnabled plan flag the production chat path requires, so the eval can't run the
-        // chat loop for a platform that isn't entitled to it.
-        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-        if (!platform.plan.chatEnabled) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: { message: 'Chat is disabled for this platform' },
-            })
-        }
+        // Eval is an internal api-key dry-run, so it doesn't require the platform's chatEnabled entitlement.
+        const platform = await platformService(log).getOneOrThrow(platformId)
         const evalUserId = platform.ownerId
 
+        // Carry the eval id prefix (Fix 3) so the stale-STREAMING sweeper skips this conversation — a
+        // resume would re-run it as a REAL (non-dry) turn. simulate polls the row directly and owns its
+        // own timeout, so it needs no recovery. turn/start already prefixes; this makes both uniform.
         const conversation = await chatService(log).createConversation({
             platformId,
             userId: evalUserId,
             request: {},
+            id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21),
         })
 
         // Replay the turns sequentially in one conversation: each turn's history accumulates,
@@ -89,23 +76,17 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
         let priorAssistantTurns = 0
         for (const turn of turns) {
             lastRunId = apId()
-            await chatApprovalGate.storeActiveRunId({ conversationId: conversation.id, runId: lastRunId })
-            await jobQueue(log).add({
-                id: apId(),
-                type: JobType.ONE_TIME,
-                data: {
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
-                    conversationId: conversation.id,
-                    runId: lastRunId,
-                    projectId: null,
-                    platformId,
-                    userId: evalUserId,
-                    userMessage: turn,
-                    modelName: null,
-                    promptOverride,
-                    dryRun: true,
-                },
+            await chatJob.enqueueChatAgentJob({
+                conversationId: conversation.id,
+                runId: lastRunId,
+                projectId: null,
+                platformId,
+                userId: evalUserId,
+                userMessage: turn,
+                modelName: null,
+                promptOverride,
+                dryRun: true,
+                log,
             })
 
             settled = await waitForSimulationResult({ conversationId: conversation.id, platformId, userId: evalUserId, priorAssistantTurns, log })
@@ -122,6 +103,84 @@ const chatEvalController: FastifyPluginAsyncZod = async (app) => {
             uiMessages: settled.uiMessages ?? [],
         })
     })
+
+    // Enqueue one turn and return; the caller polls /state for progress. Dry-run by default (tools
+    // not executed); pass executeTools:true to run tools live against the owner's real connections.
+    app.post('/eval/turn/start', EvalTurnStartRoute, async (request, reply) => {
+        const log = request.log
+        const { conversationId, platformId, userMessage, promptOverride, executeTools, discoveryOnly } = request.body
+
+        let convId: string
+        let evalPlatformId: string
+        let evalUserId: string
+        let priorAssistantTurns: number
+        if (!isNil(conversationId)) {
+            // Only continue conversations this eval flow created — never an arbitrary (e.g. a real
+            // user's) conversation, even with a valid API key.
+            if (!isEvalConversationId(conversationId)) {
+                return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
+            }
+            const existing = await chatHelpers.conversationRepo().findOneBy({ id: conversationId })
+            if (isNil(existing)) {
+                return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
+            }
+            // Reject overlapping turns: a turn is already in flight for this conversation. The caller
+            // serializes turns, so this only fires on a double-submit — don't race two workers on one row.
+            if (existing.status === ChatConversationStatus.STREAMING) {
+                return reply.status(StatusCodes.CONFLICT).send({ message: 'A turn is already running for this conversation' })
+            }
+            convId = existing.id
+            evalPlatformId = existing.platformId
+            evalUserId = existing.userId
+            priorAssistantTurns = countAssistantTurns(existing.uiMessages)
+        }
+        else {
+            if (isNil(platformId)) {
+                return reply.status(StatusCodes.BAD_REQUEST).send({ message: 'platformId is required to start a new conversation' })
+            }
+            const platform = await platformService(log).getOneOrThrow(platformId)
+            evalPlatformId = platformId
+            evalUserId = platform.ownerId
+            const conversation = await chatService(log).createConversation({ platformId, userId: evalUserId, request: {}, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
+            convId = conversation.id
+            priorAssistantTurns = 0
+        }
+
+        const runId = apId()
+        await chatJob.enqueueChatAgentJob({
+            conversationId: convId,
+            runId,
+            projectId: null,
+            platformId: evalPlatformId,
+            userId: evalUserId,
+            userMessage,
+            modelName: null,
+            promptOverride,
+            // discovery-only still needs the real tool set (dry-run strips MCP piece tools
+            // entirely), so it runs non-dry but with execution neutralized in the worker.
+            dryRun: executeTools !== true && discoveryOnly !== true,
+            discoveryOnly: discoveryOnly === true,
+            log,
+        })
+
+        return reply.status(StatusCodes.OK).send({ conversationId: convId, runId, priorAssistantTurns })
+    })
+
+    // Pure observer of an eval conversation's live state — read the row directly (not
+    // getConversationOrThrow, which resets a stale STREAMING row to IDLE).
+    app.get('/eval/conversations/:conversationId/state', EvalStateRoute, async (request, reply) => {
+        if (!isEvalConversationId(request.params.conversationId)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
+        }
+        const conversation = await chatHelpers.conversationRepo().findOneBy({ id: request.params.conversationId })
+        if (isNil(conversation)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Conversation not found' })
+        }
+        return reply.status(StatusCodes.OK).send({
+            status: conversation.status,
+            uiMessages: conversation.uiMessages ?? [],
+        })
+    })
 }
 
 async function waitForSimulationResult({ conversationId, platformId, userId, priorAssistantTurns, log }: { conversationId: string, platformId: string, userId: string, priorAssistantTurns: number, log: FastifyBaseLogger }): Promise<{ status: SimulationStatus, uiMessages: unknown[] | null }> {
@@ -134,7 +193,7 @@ async function waitForSimulationResult({ conversationId, platformId, userId, pri
             return settled
         }
     }
-    log.warn({ conversationId }, 'Chat simulation timed out before completing')
+    log.warn({ conversation: { id: conversationId } }, 'Chat simulation timed out before completing')
     return { status: SIMULATION_TIMEOUT_STATUS, uiMessages: null }
 }
 
@@ -186,5 +245,44 @@ const SimulateRoute = {
     schema: {
         tags: ['chat'],
         body: SimulateChatRequest,
+    },
+}
+
+const EvalTurnStartRequest = z.object({
+    conversationId: z.string().optional(),
+    platformId: z.string().optional(),
+    userMessage: z.string().min(1).max(51200),
+    promptOverride: ChatPromptOverride.optional(),
+    // Opt-in (default off): run the turn with tools actually executing against the platform
+    // owner's real connections, instead of the dry-run playground stub. The failure-mode eval
+    // harness needs real discovery/execution results to measure how the agent uses pieces;
+    // dry-run returns "not executed" for every cross-project tool, which hides piece-use behavior.
+    executeTools: z.boolean().optional(),
+    // Opt-in (default off): real discovery, but ap_execute_action neutralized and approval gates
+    // auto-resolved — measures how the agent navigates to a runnable call with zero side effects.
+    discoveryOnly: z.boolean().optional(),
+})
+
+const EvalStateParams = z.object({
+    conversationId: z.string(),
+})
+
+const EvalTurnStartRoute = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['chat'],
+        body: EvalTurnStartRequest,
+    },
+}
+
+const EvalStateRoute = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['chat'],
+        params: EvalStateParams,
     },
 }

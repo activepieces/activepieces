@@ -31,6 +31,7 @@ function buildFacade(): FastifyBaseLogger {
                 betterstackToken: environmentVariables.getEnvironment(AppSystemProp.BETTERSTACK_TOKEN),
                 betterstackHost: environmentVariables.getEnvironment(AppSystemProp.BETTERSTACK_HOST),
                 otlpEnabled: environmentVariables.getEnvironment(AppSystemProp.OTEL_ENABLED) === 'true',
+                fileEnabled: environmentVariables.getEnvironment(AppSystemProp.LOG_FILE) === 'true',
             },
         },
     })
@@ -44,7 +45,7 @@ export const pinoLogging = {
         return globalFacade
     },
     createRunContextLog({ log, runId, webhookId, flowId, flowVersionId }: { log: FastifyBaseLogger, runId: string, webhookId: string | undefined, flowId: string, flowVersionId: string }): FastifyBaseLogger {
-        return log.child({ runId, webhookId, flowId, flowVersionId })
+        return log.child({ flowRunId: runId, webhookId, flowId, flowVersionId })
     },
     createWebhookContextLog({ log, webhookId, flowId }: { log: FastifyBaseLogger, webhookId: string, flowId: string }): FastifyBaseLogger {
         return log.child({ webhookId, flowId })

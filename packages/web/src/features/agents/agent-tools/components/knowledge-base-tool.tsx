@@ -1,7 +1,7 @@
+import { AIProviderName } from '@activepieces/core-utils';
 import {
   AgentKnowledgeBaseTool,
   AgentTool,
-  AIProviderName,
   ApFlagId,
   KnowledgeBaseSourceType,
 } from '@activepieces/shared';

@@ -1,5 +1,6 @@
+import { apId, ApId } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { apId, ApId, FailedStep, FlowRunStatus, RunEnvironment } from '@activepieces/shared'
+import { FailedStep, FlowRunStatus, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import Redis from 'ioredis'
 import { DistributedStore } from '../../database/redis/distributed-store-factory'
@@ -70,6 +71,7 @@ const RUNS_METADATA_UPSERT_KEYS: (keyof RunsMetadataUpsertData)[] = [
     'triggeredBy', 'startTime', 'finishTime', 'status', 'tags',
     'failedStep', 'stepNameToTest', 'parentRunId', 'failParentOnFailure',
     'logsFileId', 'updated', 'stepsCount', 'requestId',
+    'provisionMs', 'bootMs', 'runMs',
 ]
 
 function stripToRunsMetadataUpsertData(params: RunsMetadataUpsertData): RunsMetadataUpsertData {
@@ -117,4 +119,8 @@ export type RunsMetadataUpsertData = {
     updated?: string
     stepsCount?: number
     requestId?: string
+    // Transient worker-measured phase durations, merged then folded into the `timeline` column. Not persisted directly.
+    provisionMs?: number
+    bootMs?: number
+    runMs?: number
 }

@@ -1,43 +1,11 @@
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    apId,
-    Cursor,
-    ErrorCode,
-    ExecuteFlowJobData,
-    ExecutionType,
-    ExecutioOutputFile,
-    FileType,
-    FlowId,
-    FlowRetryStrategy,
-    FlowRun,
-    FlowRunCountByStatus,
-    FlowRunId,
-    FlowRunStatus,
-    FlowRunWithRetryError,
-    FlowVersionId,
-    isFlowRunStateTerminal,
-    isNil,
-    JobPayload,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    LogSliceRef,
-    PlatformId,
-    ProjectId,
-    ResumeReason,
-    RunEnvironment,
-    RunInternalError,
-    SampleDataFileType,
-    SeekPage,
-    StepOutput,
-    StepOutputStatus,
-    StepOutputType,
-    StreamStepProgress,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { distributedLock } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -53,6 +21,7 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
+import { waitpointService } from './waitpoint/waitpoint-service'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 
@@ -146,7 +115,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             id: flowRunId,
             projectId,
         })
-        log.info({ runId: flowRunId, flowId: oldFlowRun.flowId, strategy }, 'Flow run retry initiated')
+        log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
         const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         if (
@@ -181,7 +150,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 })
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
-                await flowRunSideEffects(log).onRetry(updatedFlowRun)
+                await flowRunSideEffects(log).onRetry({ flowRun: updatedFlowRun, platformId })
                 if (triggerFailed) {
                     return addToQueue({
                         flowRun: updatedFlowRun,
@@ -318,10 +287,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         wideEvent.set({
             flowRun: {
                 id: newFlowRun.id,
-                flowId,
                 environment,
                 executionType,
             },
+            flow: { id: flowId },
         })
 
         await addToQueue({
@@ -335,8 +304,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             streamStepProgress,
         }, log)
 
-        await flowRunSideEffects(log).onStart(newFlowRun)
-        log.info({ runId: newFlowRun.id, flowId, projectId, executionType }, 'Flow run started')
+        await flowRunSideEffects(log).onStart({ flowRun: newFlowRun, platformId })
+        log.info({ flowRun: { id: newFlowRun.id }, flow: { id: flowId }, project: { id: projectId }, executionType }, 'Flow run started')
         return newFlowRun
     },
 
@@ -471,18 +440,22 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
 
 async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
-    await jobQueue(log).removeOneTimeJob({
-        jobId: flowRun.id,
-        platformId,
-    })
-    await runsMetadataQueue(log).add({
-        id: flowRun.id,
-        projectId: flowRun.projectId,
-        status: FlowRunStatus.CANCELED,
+    await distributedLock(log).runExclusive({
+        key: `runs_metadata_${flowRun.id}`,
+        timeoutInSeconds: 30,
+        fn: async () => {
+            await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId })
+            await waitpointService(log).deleteByFlowRunId(flowRun.id)
+            await runsMetadataQueue(log).add({
+                id: flowRun.id,
+                projectId: flowRun.projectId,
+                status: FlowRunStatus.CANCELED,
+            })
+        },
     })
     log.info({
-        runId: flowRun.id,
-        flowId: flowRun.flowId,
+        flowRun: { id: flowRun.id },
+        flow: { id: flowRun.flowId },
     }, 'Flow run cancelled')
 }
 
@@ -620,7 +593,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             executeTrigger: params.executeTrigger,
         }
     await jobQueue(log).add({
-        id: params.flowRun.id,
+        id: params.jobId ?? params.flowRun.id,
         type: JobType.ONE_TIME,
         data,
     })
@@ -764,6 +737,7 @@ type AddToQueueParamsCommon = {
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
+    jobId?: string
 }
 
 export type AddToQueueParams = AddToQueueParamsCommon & (

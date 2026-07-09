@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   type AgentResult,
   AgentTaskStatus,
   ContentBlockType,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 

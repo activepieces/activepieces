@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const getContact = createAction({
   auth: tarventAuth,
@@ -24,7 +24,7 @@ export const getContact = createAction({
     const { audienceId, email } = context.propsValue;
 
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().min(1).max(255, 'Email has no more than 255 characters.'),
+      email: z.string().check(z.minLength(1), z.maxLength(255, 'Email has no more than 255 characters.')),
     });
 
     const client = makeClient(context.auth);

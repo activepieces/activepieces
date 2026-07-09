@@ -5,7 +5,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { createClient } from '@supabase/supabase-js';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { uploadFile } from './lib/actions/upload-file';
 import { createRow } from './lib/actions/create-row';
 import { deleteRows } from './lib/actions/delete-rows';

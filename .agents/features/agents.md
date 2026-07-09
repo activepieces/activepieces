@@ -6,8 +6,8 @@ Agents is a flow step type (backed by `@activepieces/piece-agent`) that executes
 ## Key Files
 
 ### Shared Types
-- `packages/shared/src/lib/automation/agents/index.ts` — enums (`AgentToolType`, `AgentTaskStatus`, `ContentBlockType`, `ToolCallType`, `AgentOutputFieldType`), types (`AgentProviderModel`, `AgentResult`, `AgentStepBlock`, `AgentOutputField`), and `AgentPieceProps` property name enum
-- `packages/shared/src/lib/automation/agents/tools.ts` — all tool Zod schemas: `AgentPieceTool`, `AgentFlowTool`, `AgentMcpTool`, `AgentKnowledgeBaseTool`, `AgentTool` discriminated union; `McpAuthConfig`, `PredefinedInputsStructure`
+- `packages/core/shared/src/lib/automation/agents/index.ts` — enums (`AgentToolType`, `AgentTaskStatus`, `ContentBlockType`, `ToolCallType`, `AgentOutputFieldType`), types (`AgentProviderModel`, `AgentResult`, `AgentStepBlock`, `AgentOutputField`), and `AgentPieceProps` property name enum
+- `packages/core/shared/src/lib/automation/agents/tools.ts` — all tool Zod schemas: `AgentPieceTool`, `AgentFlowTool`, `AgentMcpTool`, `AgentKnowledgeBaseTool`, `AgentTool` discriminated union; `McpAuthConfig`, `PredefinedInputsStructure`
 
 ### Frontend
 - `packages/web/src/features/agents/index.ts` — barrel export
@@ -29,6 +29,9 @@ Agents is a flow step type (backed by `@activepieces/piece-agent`) that executes
 Gated by `platform.plan.agentsEnabled`. When disabled, the agent step type is hidden from the piece selector. All editions can run agents if the flag is enabled; by default it is off on Community, on on Cloud plans that include it.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **AgentTool** — a discriminated union of the four tool types a user can attach to an agent step
 - **AgentToolType** — `PIECE`, `FLOW`, `MCP`, `KNOWLEDGE_BASE`
 - **AgentPieceTool** — references a specific piece action by `pieceName`, `pieceVersion`, `actionName`; can carry `predefinedInput` locking certain fields

@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 
 export const mixmaxAuth = PieceAuth.SecretText({
   displayName: 'API Token',

@@ -1,5 +1,6 @@
+import { ensureTrailingSlash, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, Project, ProjectId, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -148,7 +149,7 @@ export class EngineConstants {
             triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_MCP_DATA.flowRunId,
             publicApiUrl: input.publicApiUrl,
-            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
@@ -172,7 +173,7 @@ export class EngineConstants {
             triggerPieceName: input.flowVersion?.trigger?.settings.pieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_EXECUTE_PROPERTY,
             publicApiUrl: input.publicApiUrl,
-            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
@@ -196,7 +197,7 @@ export class EngineConstants {
             triggerPieceName: input.flowVersion.trigger.settings.pieceName,
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
             publicApiUrl: input.publicApiUrl,
-            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
             retryConstants: DEFAULT_RETRY_CONSTANTS,
             engineToken: input.engineToken,
             projectId: input.projectId,
@@ -241,11 +242,6 @@ export class EngineConstants {
         const project = await this.getProject()
         return project.externalId ?? undefined
     }
-}
-
-
-const addTrailingSlashIfMissing = (url: string): string => {
-    return url.endsWith('/') ? url : url + '/'
 }
 
 export type ResolvedBeginExecuteFlowOperation = Omit<BeginExecuteFlowOperation, 'triggerPayload'> & {

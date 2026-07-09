@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const createVideoFromTemplate = createAction({
@@ -229,19 +229,15 @@ export const createVideoFromTemplate = createAction({
     } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      template_id: z.number().min(1, 'Template ID is required'),
-      lang: z.string().min(1, 'Language cannot be empty'),
-      video_name: z.string().min(1, 'Video name cannot be empty').optional(),
-      variables: z
-        .array(
-          z.object({
+      template_id: z.number().check(z.minimum(1, 'Template ID is required')),
+      lang: z.string().check(z.minLength(1, 'Language cannot be empty')),
+      video_name: z.optional(z.string().check(z.minLength(1, 'Video name cannot be empty'))),
+      variables: z.optional(z.array(z.object({
             type: z.enum(['text', 'image', 'video', 'script']),
-            name: z.string().min(1, 'Variable name is required'),
-            content: z.string().optional(),
-            url: z.string().url('URL must be valid').optional(),
-          })
-        )
-        .optional(),
+            name: z.string().check(z.minLength(1, 'Variable name is required')),
+            content: z.optional(z.string()),
+            url: z.optional(z.string().check(z.url('URL must be valid'))),
+          }))),
     });
 
     const processedVariables =

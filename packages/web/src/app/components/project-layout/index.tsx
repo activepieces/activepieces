@@ -1,11 +1,11 @@
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
-import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
@@ -73,13 +73,6 @@ export function ProjectDashboardLayout({
       hasPermission: true,
     },
     {
-      to: '/leaderboard',
-      label: t('Leaderboard'),
-      show: !isEmbedded,
-      icon: TrophyIcon,
-      hasPermission: true,
-    },
-    {
       to: '/chat',
       label: t('Chat'),
       show: !isEmbedded,
@@ -122,7 +115,7 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider hoverMode={!searchOpen}>
+    <SidebarProvider defaultOpen={false} hoverMode={!searchOpen}>
       {!isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
         <div

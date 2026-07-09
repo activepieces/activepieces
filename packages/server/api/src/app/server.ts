@@ -1,6 +1,7 @@
 import path from 'path'
+import { apId, ApMultipartFile, spreadIfDefined } from '@activepieces/core-utils'
 import { apLogger, wideEvent } from '@activepieces/server-utils'
-import { ApEnvironment, apId, ApMultipartFile, maxSocketHttpBufferSizeBytes, spreadIfDefined } from '@activepieces/shared'
+import { ApEnvironment, maxSocketHttpBufferSizeBytes } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyHttpProxy from '@fastify/http-proxy'
@@ -64,33 +65,38 @@ export const setupServer = async (): Promise<FastifyInstance> => {
                 .catch(() => next(new Error('Authentication error')))
         })
         app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app!.log), app!.log))
-        app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app!.log))
     }
 
     if (system.isApp()) {
         const posthogIngestionHost = 'https://us.i.posthog.com'
         const posthogAssetsHost = 'https://us-assets.i.posthog.com'
-        await app.register(fastifyHttpProxy, {
-            upstream: posthogIngestionHost,
-            prefix: '/ingest',
-            rewritePrefix: '',
-            replyOptions: {
-                getUpstream: (originalReq) => {
-                    const url = originalReq.url ?? ''
-                    const isAsset = url.includes('/static') || url.includes('/array')
-                    return isAsset ? posthogAssetsHost : posthogIngestionHost
+        await app.register(async (ingestScope) => {
+            ingestScope.removeAllContentTypeParsers()
+            ingestScope.addContentTypeParser('*', (_request, payload, done) => {
+                done(null, payload)
+            })
+            await ingestScope.register(fastifyHttpProxy, {
+                upstream: '',
+                prefix: '/ingest',
+                rewritePrefix: '',
+                replyOptions: {
+                    getUpstream: (originalReq) => {
+                        const url = originalReq.url ?? ''
+                        const isAsset = url.includes('/static') || url.includes('/array')
+                        return isAsset ? posthogAssetsHost : posthogIngestionHost
+                    },
+                    rewriteRequestHeaders: (originalReq, headers) => {
+                        const forwardedFor = originalReq.headers['x-forwarded-for']
+                        if (forwardedFor === undefined) {
+                            return headers
+                        }
+                        return {
+                            ...headers,
+                            'x-forwarded-for': Array.isArray(forwardedFor) ? forwardedFor.join(', ') : forwardedFor,
+                        }
+                    },
                 },
-                rewriteRequestHeaders: (originalReq, headers) => {
-                    const forwardedFor = originalReq.headers['x-forwarded-for']
-                    if (forwardedFor === undefined) {
-                        return headers
-                    }
-                    return {
-                        ...headers,
-                        'x-forwarded-for': Array.isArray(forwardedFor) ? forwardedFor.join(', ') : forwardedFor,
-                    }
-                },
-            },
+            })
         })
     }
 

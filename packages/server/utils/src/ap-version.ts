@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils';
 import fs from 'fs'
 import path from 'path'
 import { apLogger } from './ap-logger'
@@ -6,7 +6,6 @@ import { apLogger } from './ap-logger'
 const logger = apLogger.create()
 
 let cachedCurrentRelease: string | undefined
-let cachedLatestRelease: string | undefined
 
 function readCurrentRelease(): string {
     if (cachedCurrentRelease !== undefined) {
@@ -24,7 +23,7 @@ function readCurrentRelease(): string {
         }
     }
     catch (e) {
-        logger.warn({ err: e, packageJsonPath, cwd: process.cwd() }, 'failed to read package.json, defaulting current release to 0.0.0')
+        logger.warn({ error: e, packageJsonPath, cwd: process.cwd() }, 'failed to read package.json, defaulting current release to 0.0.0')
         cachedCurrentRelease = UNKNOWN_VERSION
     }
     return cachedCurrentRelease
@@ -36,9 +35,6 @@ export const apVersionUtil = {
     },
     async getLatestRelease(): Promise<string> {
         try {
-            if (cachedLatestRelease) {
-                return cachedLatestRelease
-            }
             const response = await fetch(
                 'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
                 {
@@ -46,7 +42,6 @@ export const apVersionUtil = {
                 },
             )
             const data = await response.json() as PackageJson
-            cachedLatestRelease = data.version
             return data.version
         }
         catch (ex) {

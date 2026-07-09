@@ -1,23 +1,23 @@
 import {
   DedupeStrategy,
+  httpClient,
+  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
   AppConnectionValueForAuthProperty,
   PieceAuth,
-  PieceAuthProperty,
-  PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { rssFeedUrls } from '../common/props';
 import FeedParser from 'feedparser';
-import axios from 'axios';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { getId } from '../common/getId';
 import { sampleData } from '../common/sampleData';
+import { newItemListTriggerOutputSchema } from '../output-schemas';
 
 type PollingProps = {
   rss_feed_urls: string[];
@@ -37,6 +37,7 @@ export const rssNewItemListTrigger = createTrigger({
   props: {
     rss_feed_urls: rssFeedUrls,
   },
+  outputSchema: newItemListTriggerOutputSchema,
   async test({ auth, propsValue, store, files }): Promise<unknown[]> {
     return await pollingHelper.test(polling, {
       auth,
@@ -147,37 +148,36 @@ const polling: Polling<AppConnectionValueForAuthProperty<undefined>, PollingProp
   },
 };
 
-function getRssItems(url: string): Promise<any[]> {
+async function getRssItems(url: string): Promise<any[]> {
+  const response = await httpClient.sendRequest<Buffer>({
+    method: HttpMethod.GET,
+    url,
+    responseType: 'arraybuffer',
+  });
+
   return new Promise((resolve, reject) => {
-    axios
-      .get(url, {
-        responseType: 'stream',
-      })
-      .then((response) => {
-        const feedparser = new FeedParser({
-          addmeta: true,
-        });
-        response.data.pipe(feedparser);
-        const items: any[] = [];
+    const feedparser = new FeedParser({
+      addmeta: true,
+    });
+    const items: any[] = [];
 
-        feedparser.on('readable', () => {
-          let item = feedparser.read();
-          while (item) {
-            items.push(item);
-            item = feedparser.read();
-          }
-        });
+    feedparser.on('readable', () => {
+      let item = feedparser.read();
+      while (item) {
+        items.push(item);
+        item = feedparser.read();
+      }
+    });
 
-        feedparser.on('end', () => {
-          resolve(items);
-        });
+    feedparser.on('end', () => {
+      resolve(items);
+    });
 
-        feedparser.on('error', (error: any) => {
-          reject(error);
-        });
-      })
-      .catch((error) => {
-        reject(error);
-      });
+    feedparser.on('error', (error: any) => {
+      reject(error);
+    });
+
+    feedparser.write(response.body);
+    feedparser.end();
   });
 }

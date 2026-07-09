@@ -8,7 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { BASE_URL } from '../common/constants';
 import { CreateWebhookResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'youform-new-submission-trigger';
 

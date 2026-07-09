@@ -1,4 +1,4 @@
-import { ExecutionType } from '@activepieces/shared';
+import { ExecutionType } from '@activepieces/core-piece-types';
 import { ActionContext } from '../context';
 import { InputPropertyMap, StaticPropsValue } from '../property';
 

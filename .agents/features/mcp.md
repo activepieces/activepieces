@@ -5,12 +5,13 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 
 ## Key Files
 - `packages/server/api/src/app/mcp/mcp-service.ts` — server build logic, tool registration, token auth
-- `packages/server/api/src/app/mcp/mcp-server-controller.ts` — HTTP endpoints (get, update, rotate, protocol handler, agent validator)
+- `packages/server/api/src/app/mcp/mcp-server-controller.ts` — HTTP endpoints (get, update, rotate, issue embed token, protocol handler, agent validator)
 - `packages/server/api/src/app/mcp/mcp-entity.ts` — McpServer entity
 - `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports
+- `packages/server/api/src/app/mcp/tools/piece-expertise.ts` — curated, piece-specific guidance (expert notes, example inputs) surfaced through MCP property discovery
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
-- `packages/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
-- `packages/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
+- `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
+- `packages/core/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
 - `packages/web/src/app/components/project-settings/mcp-server/index.tsx` — project settings panel for MCP
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-credentials.tsx` — token display and rotate UI
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-flows.tsx` — list of flows exposed as tools
@@ -19,7 +20,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/web/src/app/routes/mcp-authorize/permission-item.tsx` — shared permission-item component used by the MCP OAuth consent screens
 - `packages/web/src/app/routes/embed/embedded-mcp-authorize-dialog.tsx` — in-embed MCP OAuth consent dialog for managed-auth (embedded) users
 - `packages/web/src/app/routes/embed/embedded-mcp-settings-dialog.tsx` — in-embed MCP settings dialog for managed-auth (embedded) users
-- `packages/ee/embed-sdk/src/index.ts` — embed SDK; adds `authorizeMcp()` (in-embed OAuth consent) and `mcpSettings()` (MCP settings dialog) public methods
+- `packages/ee/embed-sdk/src/index.ts` — embed SDK; adds `authorizeMcp()` (in-embed OAuth consent), `mcpSettings()` (MCP settings dialog), and `generateMcpToken()` (mints `{ mcpServerUrl, mcpToken }` for the embed user's project without the OAuth flow) public methods
 - `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/index.tsx` — dialog to add an external MCP server as an agent tool
 - `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/add-mcp-tool-form.tsx` — form inside the dialog
 - `packages/web/src/features/agents/agent-tools/components/mcp-tool.tsx` — inline display of an MCP tool in agent settings
@@ -31,6 +32,9 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - Cloud: available
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **McpServer** — the per-project MCP server record (token, disabledTools)
 - **Locked tools** — tools that are always active when the MCP server is enabled; cannot be disabled
 - **Controllable tools** — tools that platform or project owners can enable/disable individually
@@ -52,7 +56,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
 - `ap_validate_flow`, `ap_validate_step_config` — validation helpers
-- `ap_research_pieces`, `ap_get_piece_props` — piece discovery and schema
+- `ap_research_pieces` — piece discovery with intent-based recommended-action ranking
+- `ap_get_piece_props` — action/trigger input schema with required-input summaries and example input, action cardinality, curated expert notes (via `piece-expertise.ts`), AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
 - `ap_resolve_property_options`, `ap_resolve_property_chain` — dropdown/property resolution
 - `ap_list_connections` — list app connections
 - `ap_list_ai_models` — list AI providers and models
@@ -86,6 +91,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `GET /v1/mcp/:projectId` — get MCP server config + populated flows
 - `POST /v1/mcp/:projectId` — update disabledTools
 - `POST /v1/mcp/:projectId/rotate` — rotate auth token
+- `POST /v1/projects/:projectId/mcp-server/token` — mint a short-lived (15-min, `scopes: ['mcp']`), project-scoped MCP OAuth access token and return `{ mcpServerUrl, mcpToken }`. Secured with `securityAccess.project([USER], READ_MCP, { PARAM })`; reuses `mcpOAuthTokenService.issueInternalAccessToken` (the same path the chat assistant uses internally). Powers the embed SDK's `generateMcpToken()` — a no-OAuth alternative to the `authorizeMcp()` consent flow for hosts that already have an embed session.
 - `POST /v1/mcp/:projectId/http` — StreamableHTTP MCP protocol endpoint (main protocol handler)
 
 External MCP server validation for the **agent piece** lives under `packages/server/api/src/app/agents/` (endpoint: `POST /v1/projects/:projectId/agent-tools/mcp/validate`), not here — it's a probe for URLs the agent will later connect to, not part of the Activepieces-as-MCP-server feature.
@@ -96,9 +102,13 @@ Bearer token (`Authorization: Bearer {token}`) or query param (`?token={token}`)
 
 OAuth 2.0 PKCE flow is supported for AI clients that require OAuth. The MCP OAuth module (`mcp-oauth.module.ts`) registers metadata, authorization, token, and revocation endpoints.
 
+**Telemetry** — `resolveMcpAndUser` (the OAuth token-resolution path in `mcp-oauth.controller.ts`) runs on every authenticated MCP request, so `MCP_SERVER_CONNECTED` is deduped via `telemetryDedupe.onceToday` to at most one event per user+server per day (per API process) — a daily-active signal, not request volume. Per-invocation usage is tracked separately by `MCP_TOOL_CALLED`.
+
 **Discovery & base-path awareness** — The OAuth issuer, `authorize`/`token`/`register`/`revoke` endpoints, the `resource`, and the `/mcp-authorize` redirect are built via `domainHelper.getPublicUrlFromRequest({ req, path })`. It keeps the request-derived host (so cloud custom domains still work) but appends the path prefix from `AP_FRONTEND_URL`, so subpath-hosted instances (`host/<prefix>/mcp` behind a reverse proxy) advertise URLs under the prefix. On root deployments the prefix is empty and behavior is unchanged.
 
 **RFC 9728 §5.1** — MCP `401` responses include a `WWW-Authenticate: Bearer resource_metadata="…"` header pointing at the prefixed protected-resource metadata URL (`/.well-known/oauth-protected-resource/mcp` for project, `/mcp/platform` for platform), so clients can locate discovery without guessing host-root well-known paths. Clients that ignore the header and probe host-root well-known paths still require the operator to forward `host/.well-known/oauth-*` to AP (that namespace is host-root-anchored by RFC 8414/9728).
+
+**Conversation-project scoping** — The optional `x-ap-conversation-id` request header (sent by the EE chat path) switches the built server to the project a prior conversation is bound to. The override is scoped to the token so it can never widen the grant: a project-scoped token resolves the header only when the conversation's project equals the token's own project, otherwise the header is ignored; a platform-scoped token requires the conversation's `platformId` to match the token's and re-validates the user's current project membership (`chatHelpers.getUserProjects`) before honoring it. A conversation with no `projectId` is ignored.
 
 ## Server Building
 
@@ -107,6 +117,10 @@ OAuth 2.0 PKCE flow is supported for AI clients that require OAuth. The MCP OAut
 2. Registers dynamic flow tools (from MCP trigger flows)
 3. Registers controllable + locked static tools
 4. Registers empty resources/prompts (MCP spec compliance)
+
+## Tool Input Parsing
+
+The structured flow-building tools (`ap_add_step`, `ap_build_flow`, `ap_create_table`, `ap_update_step`, `ap_update_trigger`) wrap their object/array inputs (`input`, `trigger`, `steps`, `fields`) in `z.preprocess(mcpUtils.parseJsonStringArg, …)`: some models emit object/array tool args as JSON **strings**, so the preprocess parses a string back to JSON before Zod validation. `.describe()` stays on the OUTER `preprocess` schema so the field description still reaches the generated JSON schema (and the drift/description tests). Chat Code Mode bridged calls tag their args with an internal raw-result marker; each MCP tool handler strips that marker (`chatCodeModeUtils.stripRawArgs`) before execution so it never reaches the piece input.
 
 ## Agent Integration
 

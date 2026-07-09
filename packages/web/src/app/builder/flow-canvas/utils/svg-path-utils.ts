@@ -1,4 +1,4 @@
-import { chunk } from '@activepieces/shared';
+import { chunk } from '@activepieces/core-utils';
 
 const COMMAND_REGEX = /([MmLlHhVvAa])([^MmLlHhVvAa]*)/g;
 const NUMBER_REGEX = /-?\d*\.?\d+(?:e[+-]?\d+)?/gi;

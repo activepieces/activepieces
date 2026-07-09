@@ -1,16 +1,7 @@
 import os from 'os'
 import path from 'path'
-import {
-    ActivepiecesError,
-    ApEdition,
-    DefaultProjectRole,
-    ErrorCode,
-    ExecutionMode,
-    FileLocation,
-    isNil,
-    NetworkMode,
-    PieceSyncMode,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ApEdition, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../../database/database-type'
 import { RedisType } from '../../database/redis/types'
@@ -35,6 +26,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
+    [AppSystemProp.USE_CDN_FOR_BUNDLES]: 'false',
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',

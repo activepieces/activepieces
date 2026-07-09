@@ -22,6 +22,9 @@ The pieces feature manages the metadata catalog of automation integrations (call
 All editions. Piece filtering by allowed/blocked list and EE-specific filtering are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Piece** — a named integration (e.g. `@activepieces/piece-gmail`) providing actions and triggers
 - **PieceType** — `OFFICIAL` (bundled) or `CUSTOM` (platform-installed)
 - **PackageType** — `REGISTRY` (NPM) or `ARCHIVE` (uploaded tarball)
@@ -71,6 +74,7 @@ Unique index on `(name, version, platformId)`.
 | POST | `/v1/pieces/sync` | publicPlatform (USER) | Trigger registry re-sync |
 | POST | `/v1/pieces/options` | project (USER, BODY) | Evaluate dynamic piece property options (dropdown values) |
 | POST | `/v1/pieces` | platformAdminOnly (USER, SERVICE) | Install a custom piece onto the platform |
+| DELETE | `/v1/pieces/:id` | platformAdminOnly (USER, SERVICE) | Delete all versions of a custom piece from the platform |
 
 ## Service Methods
 
@@ -79,10 +83,11 @@ Unique index on `(name, version, platformId)`.
 - `getOrThrow({ platformId, name, version, locale? })` — returns full `PieceMetadataModel` for exact piece; prefers platform-specific over official; applies i18n translation
 - `listVersions({ name, platformId, projectId })` — returns all available semver versions from registry cache
 - `create({ pieceMetadata, packageType, platformId, pieceType, archiveId? })` — inserts metadata record and invalidates cache
+- `delete({ id, platformId })` — looks up the piece by id, asserts it belongs to the caller's platform and is `CUSTOM` type, deletes all versions sharing the same name on that platform, then invalidates cache
 - `registry({ release? })` — returns lightweight name+version list for all pieces
 
 ### `pieceInstallService`
-- `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`
+- `installPiece(platformId, params)` — saves archive file if needed, dispatches `EXECUTE_METADATA` engine job to extract piece metadata from the package, then stores via `pieceMetadataService.create`. When tool-search is enabled (`isToolSearchEnabled()`), also enqueues a platform-scoped tool-search reindex (`{ type: 'platform', platformId }`) fire-and-forget so the new piece's actions/triggers become searchable; no-op when the flag is off.
 
 ### `pieceSyncService`
-- `sync({ publishCacheRefresh })` — reads bundled piece registry file, upserts official piece metadata records, optionally publishes cache refresh event
+- `sync({ publishCacheRefresh })` — reads bundled piece registry file, upserts official piece metadata records, optionally publishes cache refresh event. When pieces were added or deleted and tool-search is enabled (`isToolSearchEnabled()`), also enqueues a global tool-search reindex (`{ type: 'all' }`) fire-and-forget; no-op when the flag is off.

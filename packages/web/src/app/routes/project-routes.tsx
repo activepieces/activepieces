@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
 import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -21,10 +21,6 @@ const FlowBuilderPage = lazyWithRetry(
   'flow-builder',
 );
 const AnalyticsPage = lazyWithRetry(() => import('./impact'), 'analytics');
-const LeaderboardPage = lazyWithRetry(
-  () => import('./leaderboard'),
-  'leaderboard',
-);
 const ProjectReleasesPage = lazyWithRetry(
   () =>
     import('./project-release').then((m) => ({
@@ -242,18 +238,6 @@ export const projectRoutes = [
         <PageTitle title="Impact">
           <SuspenseWrapper>
             <AnalyticsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
-  {
-    path: '/leaderboard',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Leaderboard">
-          <SuspenseWrapper>
-            <LeaderboardPage />
           </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>

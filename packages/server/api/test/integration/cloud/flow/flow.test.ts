@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     DefaultProjectRole,
     FlowOperationType,
@@ -17,7 +16,8 @@ import {
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
 import { describeRolePermissions } from '../../../helpers/permission-test'
-import { createTestContext, TestContext } from '../../../helpers/test-context'
+import { TestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
