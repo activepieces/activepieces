@@ -34,6 +34,7 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
         await validateUserOperation({
             log: req.log,
             principalId,
+            principalType: req.principal.type,
             targetUser,
             platformId,
         })
@@ -58,6 +59,7 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
         await validateUserOperation({
             log: req.log,
             principalId,
+            principalType: req.principal.type,
             targetUser,
             platformId,
         })
@@ -103,23 +105,39 @@ const ensureNotSelf = (principalId: string, targetUserId: string): void => {
     }
 }
 
-async function validateUserOperation({ log, principalId, targetUser, platformId }: {
+async function validateUserOperation({ log, principalId, principalType, targetUser, platformId }: {
     log: FastifyBaseLogger
     principalId: string
+    principalType: PrincipalType
     targetUser: User
     platformId: PlatformId
 }): Promise<void> {
+    // ensure the target user belongs to the acting principal's platform
+    // to prevent cross-tenant enumeration or modifications.
     ensureSamePlatform(targetUser, platformId)
+
+    // API Keys (SERVICE principal) represent platform-level automation and do not correspond
+    // to a specific user. They bypass lockout checks and role restrictions to support programmatic workflows.
+    if (principalType === PrincipalType.SERVICE) {
+        return
+    }
+
+    // self-modification/deletion is blocked for all user principals (including the owner)
+    // to prevent administrative lockout or leaving the platform without a valid owner.
     ensureNotSelf(principalId, targetUser.id)
 
     const platform = await platformService(log).getOneOrThrow(platformId)
     const isActingUserOwner = platform.ownerId === principalId
 
+    // platform owners possess root authorization and can perform any administrative action
+    // on any user under their platform.
     if (isActingUserOwner) {
         return
     }
 
     const actingUser = await userService(log).getOrThrow({ id: principalId })
+    
+    // Restrict user updates/deletions to platform administrators or the platform owner.
     if (actingUser.platformRole !== PlatformRole.ADMIN) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
@@ -128,6 +146,9 @@ async function validateUserOperation({ log, principalId, targetUser, platformId 
     }
 
     const isTargetOwner = platform.ownerId === targetUser.id
+    
+    // Prevent non-owner administrators from modifying or deleting the platform owner
+    // to protect the platform's primary administrative account from takeover or demotion.
     if (isTargetOwner) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
@@ -136,6 +157,9 @@ async function validateUserOperation({ log, principalId, targetUser, platformId 
     }
 
     const isTargetAdmin = targetUser.platformRole === PlatformRole.ADMIN
+    
+    // Prevent administrators from modifying or deleting peer administrators to enforce
+    // privilege separation and block potential privilege escalation or hostile administrative actions.
     if (isTargetAdmin) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,

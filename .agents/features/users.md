@@ -23,7 +23,7 @@ Manages user identity, platform membership, roles, and session security. A `User
 
 ## Edition Availability
 - Community (CE): User, UserIdentity, session management, `GET /v1/users/me`, `POST /v1/users/me`
-- Enterprise (EE): Platform admin user CRUD via `platform-user-controller.ts` (list, update role, deactivate, delete)
+- Enterprise (EE): Platform admin user CRUD via `platform-user-controller.ts` (list, update role, deactivate, delete). Non-owner admins may only modify users with MEMBER (or lower) role; the platform owner and peer admins are protected from modification by non-owner admins.
 - Cloud: same as EE for multi-tenant platform management
 
 ## Domain Terms

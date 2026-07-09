@@ -308,6 +308,110 @@ describe('Enterprise User API', () => {
             expect(responseJson.status).toBe(UserStatus.ACTIVE)
         })
 
+        it('Fails if admin updates another admin', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin1 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+            const { mockUser: mockAdmin2 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            const mockAdmin1Token = await generateMockToken({
+                id: mockAdmin1.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/users/${mockAdmin2.id}`,
+                headers: {
+                    authorization: `Bearer ${mockAdmin1Token}`,
+                },
+                body: {
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('Fails if admin updates platform owner', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            const mockAdminToken = await generateMockToken({
+                id: mockAdmin.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/users/${mockOwner.id}`,
+                headers: {
+                    authorization: `Bearer ${mockAdminToken}`,
+                },
+                body: {
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('Fails if owner updates self', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/users/${mockOwner.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+                body: {
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
 
     })
 
@@ -370,6 +474,125 @@ describe('Enterprise User API', () => {
                 url: `/api/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('Fails if admin deletes another admin', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin1 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+            const { mockUser: mockAdmin2 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            const mockAdmin1Token = await generateMockToken({
+                id: mockAdmin1.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockAdmin2.id}`,
+                headers: {
+                    authorization: `Bearer ${mockAdmin1Token}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('Fails if admin deletes platform owner', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockAdmin } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            const mockAdminToken = await generateMockToken({
+                id: mockAdmin.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockOwner.id}`,
+                headers: {
+                    authorization: `Bearer ${mockAdminToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('Fails if owner deletes self', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockOwner.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('Allows service accounts to delete user', async () => {
+            // arrange
+            const { mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
                 },
             })
 
