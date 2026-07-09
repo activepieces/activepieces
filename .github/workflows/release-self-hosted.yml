@@ -160,15 +160,17 @@ jobs:
           TAG_BASE: ${{ steps.compare.outputs.tag_base }}
         run: |
           BRANCH="automated/sync-version-$TAG_BASE"
-          OPEN_PR_COUNT="$(gh pr list --head "$BRANCH" --state open --json number --jq length)"
-          if [ "$OPEN_PR_COUNT" -gt 0 ]; then
-            echo "An open sync PR from $BRANCH already exists, the branch was force-pushed with the latest sync."
+          BODY="The self-hosted release \`$TAG\` was published from a branch whose version bump is not on \`main\`. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin so the next weekly release does not read a stale version. Merge before the next release-candidate cut (Thursday 5 PM UTC). See GIT-1595."
+          PR_NUMBER="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$PR_NUMBER" ]; then
+            echo "An open sync PR from $BRANCH already exists, refreshing its body for $TAG."
+            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" -X PATCH -f body="$BODY"
           else
             gh pr create \
               --base main \
               --head "$BRANCH" \
               --title "chore(release): sync version to $TAG_BASE after off-cycle release" \
-              --body "The self-hosted release \`$TAG\` was published from a branch whose version bump is not on \`main\`. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin so the next weekly release does not read a stale version. Merge before the next release-candidate cut (Thursday 5 PM UTC). See GIT-1595." \
+              --body "$BODY" \
               --label skip-changelog \
               --label automated
           fi
