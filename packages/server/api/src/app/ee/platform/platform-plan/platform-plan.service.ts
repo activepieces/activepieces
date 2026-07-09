@@ -32,7 +32,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const existingPlatformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(existingPlatformPlan)) {
-            triggerLazyAutumnSync({ platformId, autumnCustomerId: existingPlatformPlan.autumnCustomerId }, log)
+            triggerLazyBillingProviderSync({ platformId, autumnCustomerId: existingPlatformPlan.autumnCustomerId }, log)
             return existingPlatformPlan
         }
 
@@ -45,12 +45,13 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
                 return createInitialBilling(platformId)
             },
         })
-        triggerLazyAutumnSync({ platformId, autumnCustomerId: null }, log)
+        triggerLazyBillingProviderSync({ platformId, autumnCustomerId: null }, log)
         return platformPlan
     },
 
-    onPlatformCreated(platformId: string): void {
-        triggerLazyAutumnSync({ platformId, autumnCustomerId: null }, log)
+    async onPlatformCreated(platformId: string): Promise<void> {
+        await createInitialBilling(platformId)
+        triggerLazyBillingProviderSync({ platformId, autumnCustomerId: null }, log)
     },
 
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
@@ -178,24 +179,24 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function triggerLazyAutumnSync({ platformId, autumnCustomerId }: TriggerLazyAutumnSyncParams, log: FastifyBaseLogger): void {
+function triggerLazyBillingProviderSync({ platformId, autumnCustomerId }: TriggerLazyBillingProviderSyncParams, log: FastifyBaseLogger): void {
     if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
         return
     }
     if (isNil(autumnCustomerId)) {
-        rejectedPromiseHandler(throttledAutumnEnrollment(platformId, log), log)
+        rejectedPromiseHandler(throttledBillingProviderEnrollment(platformId, log), log)
         return
     }
-    rejectedPromiseHandler(throttledAutumnRefresh(platformId, log), log)
+    rejectedPromiseHandler(throttledBillingProviderRefresh(platformId, log), log)
 }
 
-async function throttledAutumnEnrollment(platformId: string, log: FastifyBaseLogger): Promise<void> {
+async function throttledBillingProviderEnrollment(platformId: string, log: FastifyBaseLogger): Promise<void> {
     await distributedStore.runOnceWithin(getEnrollAttemptKey(platformId), ENROLL_ATTEMPT_TTL_SECONDS, () =>
         billingProvider.get(log).ensureEnrolled(platformId),
     )
 }
 
-async function throttledAutumnRefresh(platformId: string, log: FastifyBaseLogger): Promise<void> {
+async function throttledBillingProviderRefresh(platformId: string, log: FastifyBaseLogger): Promise<void> {
     await distributedStore.runOnceWithin(getEntitlementsRefreshKey(platformId), REFRESH_CLAIM_TTL_SECONDS, async () => {
         await billingProvider.get(log).refreshEntitlements(platformId)
         await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
@@ -233,7 +234,7 @@ type AutumnCredentials = {
     autumnApiKey: string | null
 }
 
-type TriggerLazyAutumnSyncParams = {
+type TriggerLazyBillingProviderSyncParams = {
     platformId: string
     autumnCustomerId: string | null | undefined
 }

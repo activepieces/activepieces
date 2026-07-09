@@ -71,7 +71,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             platformId: savedPlatform.id,
         })
 
-        platformPlanService(log).onPlatformCreated(savedPlatform.id)
+        await platformPlanService(log).onPlatformCreated(savedPlatform.id)
 
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
