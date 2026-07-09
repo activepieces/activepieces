@@ -70,7 +70,6 @@ export const createShopifyWebhookTrigger = ({
       await context.store?.put(`shopify_webhook_id`, null);
     },
     async run(context) {
-      console.debug('trigger running', context);
       return [context.payload.body];
     },
   });

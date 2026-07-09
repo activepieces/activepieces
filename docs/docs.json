@@ -276,6 +276,7 @@
                   "icon": "shield-check",
                   "pages": [
                      "install/guarantees/crash-recovery",
+                     "install/guarantees/disaster-recovery",
                      "install/guarantees/reserved-resources",
                      "install/guarantees/execution-isolation"
                   ]
@@ -291,7 +292,8 @@
                      "install/architecture/network-security",
                      "install/architecture/piece-syncing",
                      "install/architecture/benchmark",
-                     "install/architecture/latency"
+                     "install/architecture/latency",
+                     "install/architecture/autoscaling"
                   ]
                }
             ]
@@ -451,6 +453,7 @@
                            "endpoints/connections/schema",
                            "endpoints/connections/upsert",
                            "endpoints/connections/list",
+                           "endpoints/connections/get",
                            "endpoints/connections/delete"
                         ]
                      },
@@ -610,6 +613,7 @@
                      "handbook/engineering/playbooks/setup-betterstack",
                      "handbook/engineering/playbooks/releases",
                      "handbook/engineering/playbooks/canary-deployment",
+                     "handbook/engineering/playbooks/queue-metrics",
                      "handbook/engineering/playbooks/infrastructure",
                      "handbook/engineering/playbooks/database-migration",
                      "handbook/engineering/playbooks/structured-logging",

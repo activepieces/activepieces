@@ -10,6 +10,7 @@ import { migratePieceCommand } from './lib/commands/migrate-piece';
 import { generateWorkerTokenCommand } from './lib/commands/generate-worker-token';
 import { generateTranslationFileForAllPiecesCommand, generateTranslationFileForPieceCommand } from './lib/commands/generate-translation-file-for-piece';
 import { replaceProjectCommand } from './lib/commands/replace-project';
+import { benchmarkCommand } from './lib/commands/benchmark';
 
 const pieceCommand = new Command('pieces')
   .description('Manage pieces');
@@ -52,4 +53,5 @@ program.addCommand(actionCommand);
 program.addCommand(triggerCommand);
 program.addCommand(workerCommand);
 program.addCommand(projectCommand);
+program.addCommand(benchmarkCommand);
 program.parse(process.argv);
