@@ -176,6 +176,32 @@ describe('Field API', () => {
         })
     })
 
+    describeWithAuth('POST /v1/fields (Create) — position', () => app!, (setup) => {
+        it('should append created fields with increasing positions', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+
+            const fields = await createFieldsInOrder(ctx, table.id, ['First', 'Second', 'Third'])
+
+            expect(fields.map((f) => f.position)).toEqual([0, 1, 2])
+        })
+
+        it('should respect an explicit position on create', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+
+            const response = await ctx.post('/v1/fields', {
+                name: 'Explicit',
+                type: FieldType.TEXT,
+                tableId: table.id,
+                position: 7,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            expect(response?.json().position).toBe(7)
+        })
+    })
+
     describeWithAuth('POST /v1/fields/:id (Update)', () => app!, (setup) => {
         it('should update field name', async () => {
             const ctx = await setup()
@@ -191,6 +217,41 @@ describe('Field API', () => {
             const body = response?.json()
             expect(body.name).toBe('Updated Field Name')
             expect(body.id).toBe(field.id)
+        })
+
+        it('should move a field to a new position and resequence the others', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const fields = await createFieldsInOrder(ctx, table.id, ['A', 'B', 'C', 'D'])
+
+            const response = await ctx.post(`/v1/fields/${fields[3].id}`, {
+                position: 1,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().position).toBe(1)
+
+            const listResponse = await ctx.get('/v1/fields', { tableId: table.id })
+            const listed = listResponse?.json()
+            expect(listed.map((f: { name: string }) => f.name)).toEqual(['A', 'D', 'B', 'C'])
+            expect(listed.map((f: { position: number }) => f.position)).toEqual([0, 1, 2, 3])
+        })
+
+        it('should clamp a position beyond the last index to the end', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const fields = await createFieldsInOrder(ctx, table.id, ['A', 'B', 'C'])
+
+            const response = await ctx.post(`/v1/fields/${fields[0].id}`, {
+                position: 99,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const listResponse = await ctx.get('/v1/fields', { tableId: table.id })
+            const listed = listResponse?.json()
+            expect(listed.map((f: { name: string }) => f.name)).toEqual(['B', 'C', 'A'])
+            expect(listed.map((f: { position: number }) => f.position)).toEqual([0, 1, 2])
         })
     })
 
@@ -231,4 +292,17 @@ async function createAndSaveTable(ctx: TestContext) {
     const table = createMockTable({ projectId: ctx.project.id })
     await db.save('table', table)
     return table
+}
+
+async function createFieldsInOrder(ctx: TestContext, tableId: string, names: string[]) {
+    const fields = []
+    for (const name of names) {
+        const response = await ctx.post('/v1/fields', {
+            name,
+            type: FieldType.TEXT,
+            tableId,
+        })
+        fields.push(response?.json())
+    }
+    return fields
 }

@@ -32,8 +32,8 @@ export const tableService = {
             folderId,
         })
         if (request.fields) {
-            await Promise.all(request.fields.map(async (field) => {
-                await fieldService.createFromState({ projectId, field, tableId: table.id })
+            await Promise.all(request.fields.map(async (field, position) => {
+                await fieldService.createFromState({ projectId, field, tableId: table.id, position })
             }))
         }
         return table

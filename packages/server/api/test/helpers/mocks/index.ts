@@ -514,6 +514,7 @@ export const createMockField = ({ tableId, projectId }: { tableId: string, proje
         },
         externalId: apId(),
         projectId,
+        position: 0,
         type: FieldType.STATIC_DROPDOWN,
     }
 }

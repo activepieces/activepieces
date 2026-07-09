@@ -2,6 +2,7 @@ import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil } f
 import { CreateFieldRequest, Field, FieldState, FieldType, UpdateFieldRequest } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { FieldEntity } from './field.entity'
@@ -11,8 +12,10 @@ const fieldRepo = repoFactory<Field>(FieldEntity)
 export const fieldService = {
     async create({ request, projectId }: CreateParams): Promise<Field> {
         await this.validateCount({ projectId, tableId: request.tableId })
+        const maxPosition = await fieldRepo().maximum('position', { projectId, tableId: request.tableId })
         const field = await fieldRepo().save({
             ...request,
+            position: request.position ?? (maxPosition ?? -1) + 1,
             projectId,
             id: apId(),
             externalId: request.externalId ?? apId(),
@@ -20,7 +23,7 @@ export const fieldService = {
         return field
     },
 
-    async createFromState({ projectId, field, tableId }: CreateFromStateParams): Promise<Field> {
+    async createFromState({ projectId, field, tableId, position }: CreateFromStateParams): Promise<Field> {
         switch (field.type) {
             case FieldType.STATIC_DROPDOWN: {
                 assertNotNullOrUndefined(field.data, 'Data is required for static dropdown field')
@@ -32,6 +35,7 @@ export const fieldService = {
                         tableId,
                         data: field.data,
                         externalId: field.externalId,
+                        position,
                     },
                 })
             }
@@ -45,6 +49,7 @@ export const fieldService = {
                         type: field.type,
                         tableId,
                         externalId: field.externalId,
+                        position,
                     },
                 })
             }
@@ -63,6 +68,7 @@ export const fieldService = {
         return fieldRepo().find({
             where: { projectId, tableId },
             order: {
+                position: 'ASC',
                 created: 'ASC',
             },
         })
@@ -72,6 +78,7 @@ export const fieldService = {
         const fields = await fieldRepo().find({
             where: { projectId, tableId: In(tableIds) },
             order: {
+                position: 'ASC',
                 created: 'ASC',
             },
         })
@@ -111,12 +118,17 @@ export const fieldService = {
     },
 
     async update({ id, projectId, request }: UpdateParams): Promise<Field> {
-        await fieldRepo().update({
-            id,
-            projectId,
-        }, {
-            name: request.name,
-        })
+        if (!isNil(request.name)) {
+            await fieldRepo().update({
+                id,
+                projectId,
+            }, {
+                name: request.name,
+            })
+        }
+        if (!isNil(request.position)) {
+            await moveFieldToPosition({ id, projectId, targetPosition: request.position })
+        }
         return this.getById({ id, projectId })
     },
 
@@ -137,6 +149,46 @@ export const fieldService = {
     },
 }
 
+async function moveFieldToPosition({ id, projectId, targetPosition }: MoveFieldToPositionParams): Promise<void> {
+    await transaction(async (entityManager) => {
+        const repo = entityManager.getRepository<Field>(FieldEntity)
+        const field = await repo.findOneBy({ id, projectId })
+        if (isNil(field)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Field',
+                    entityId: id,
+                },
+            })
+        }
+        const fields = await repo.find({
+            where: { projectId, tableId: field.tableId },
+            order: {
+                position: 'ASC',
+                created: 'ASC',
+            },
+        })
+        const currentIndex = fields.findIndex((f) => f.id === id)
+        const targetIndex = Math.min(targetPosition, fields.length - 1)
+        const reordered = [...fields]
+        reordered.splice(currentIndex, 1)
+        reordered.splice(targetIndex, 0, fields[currentIndex])
+        const changed = reordered
+            .map((f, index) => ({ id: f.id, position: index }))
+            .filter(({ id: fieldId, position }) => fields.find((f) => f.id === fieldId)?.position !== position)
+        for (const { id: fieldId, position } of changed) {
+            await repo.update({ id: fieldId, projectId }, { position })
+        }
+    })
+}
+
+type MoveFieldToPositionParams = {
+    id: string
+    projectId: string
+    targetPosition: number
+}
+
 type CreateParams = {
     projectId: string
     request: CreateFieldRequest
@@ -146,6 +198,7 @@ type CreateFromStateParams = {
     projectId: string
     field: FieldState
     tableId: string
+    position?: number
 }
 
 type GetAllParams = {

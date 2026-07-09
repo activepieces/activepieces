@@ -61,9 +61,10 @@ A built-in relational database feature that lets users store structured data dir
 
 **Table**: id, projectId, name, folderId (nullable), externalId, trigger (nullable), status (nullable). Relations: project, folder, fields[], records[], tableWebhooks[].
 
-**Field**: id, tableId, projectId, name, type, externalId, data (JSONB — e.g., `{ options: [{ value }] }` for STATIC_DROPDOWN).
+**Field**: id, tableId, projectId, name, type, externalId, position, data (JSONB — e.g., `{ options: [{ value }] }` for STATIC_DROPDOWN).
 - **FieldType**: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`
 - System limit: `AP_MAX_FIELDS_PER_TABLE` (default 100)
+- **position** (canonical term; avoid: order, displayOrder, index) — 0-based column order within a table. Fields are listed `position ASC, created ASC` (created breaks ties for pre-migration rows and creation races). Creates default to `MAX(position)+1` (append); imports pass the source array index explicitly so order never depends on insert timing. Updating `position` via `POST /v1/fields/:id` moves the field to that index and resequences the table's fields to contiguous `0..n-1` inside a transaction (self-healing for gaps left by deletes). Concurrent reorders are last-write-wins, same as rename — no distributed lock. Reordering existing fields through project-release apply is NOT supported (`FieldState` carries no position; array order only applies to newly created fields). UI reorder is react-data-grid native column dragging (`draggable` columns + `onColumnsReorder`); the client store must remap each record's positional `cell.fieldIndex` references when fields move.
 
 **Record**: id, tableId, projectId. Relations: table, cells[].
 
@@ -78,7 +79,8 @@ A built-in relational database feature that lets users store structured data dir
 - `table.list()` — paginated with optional row count, name filter, single-folder filter (`folderId`), multi-folder filter (`folderIds`), externalIds filter
 - `table.update()` — rename, move to folder, change trigger/status
 - `table.delete()` — cascades to fields, records, cells, webhooks
-- `table.exportTable()` — returns fields + rows as JSON
+- `table.exportTable()` — returns fields + rows as JSON (fields in position order)
+- `field.update()` — rename and/or move to a position (column reorder)
 - `table.createWebhook()` / `table.deleteWebhook()` — link table events to flows
 - `record.create()` — bulk insert (max 50 per batch, transactional), validates field count
 - `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS); filtering is in-memory and a missing cell is treated as an empty value (`''`), so NEQ/NOT_EXISTS match unset columns

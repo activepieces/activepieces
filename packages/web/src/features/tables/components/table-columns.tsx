@@ -79,6 +79,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
       width: 207,
       minHeight: 37,
       resizable: true,
+      draggable: canEdit,
       name: '',
       renderHeaderCell: () => <ApFieldHeader field={{ ...field, index }} />,
       renderCell: ({
