@@ -158,7 +158,6 @@ type EmbeddingParam = {
   builder?: {
     disableNavigation?: boolean;
     hideFlowName?: boolean;
-    hideActiveUsers?: boolean;
     homeButtonIcon: 'back' | 'logo';
     homeButtonClickedHandler?: (data: {
       route: string;
@@ -173,6 +172,7 @@ type EmbeddingParam = {
   hideDuplicateFlow?: boolean;
   hideFolders?: boolean;
   hideTables?: boolean;
+  hideActiveUsers?: boolean;
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -308,7 +308,7 @@ class ActivepiecesEmbedded {
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
-                hideActiveUsers: this._embeddingState?.builder?.hideActiveUsers ?? false,
+                hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');
