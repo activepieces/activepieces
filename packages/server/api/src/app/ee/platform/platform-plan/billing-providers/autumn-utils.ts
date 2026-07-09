@@ -23,7 +23,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://distinction-eliminate-trio-scripts.trycloudflare.com'
+const AUTUMN_CONSOLE_URL = 'https://console-testing.activepieces.com/'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
