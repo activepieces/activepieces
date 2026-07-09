@@ -118,7 +118,8 @@ export const FlowStepInputOutput = () => {
 
   if (
     run.status === FlowRunStatus.INTERNAL_ERROR &&
-    !isNil(run.internalError)
+    !isNil(run.internalError) &&
+    isNil(selectedStepOutput)
   ) {
     return <InternalErrorPanel internalError={run.internalError} />;
   }
@@ -126,17 +127,23 @@ export const FlowStepInputOutput = () => {
   if (
     !isRunDone &&
     run.status !== FlowRunStatus.PAUSED &&
+    run.status !== FlowRunStatus.INTERNAL_ERROR &&
     isNil(selectedStepOutput)
   ) {
     return <StepOutputSkeleton className="p-4" />;
   }
 
-  const message = handleRunFailureOrEmptyLog(run, rententionDays);
+  const message =
+    run.status === FlowRunStatus.INTERNAL_ERROR && isNil(selectedStepOutput)
+      ? t(
+          'There are no logs captured for this run, because of an internal error, please contact support.',
+        )
+      : handleRunFailureOrEmptyLog(run, rententionDays);
   if (message) {
     return (
-      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8  px-5">
+      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8 px-5">
         <Info size={36} className="text-muted-foreground" />
-        <h4 className="px-6 text-sm text-center text-muted-foreground ">
+        <h4 className="px-6 text-sm text-center text-muted-foreground">
           {message}
         </h4>
       </div>
@@ -364,12 +371,6 @@ function handleRunFailureOrEmptyLog(
     !isFlowRunStateTerminal({ status: run.status, ignoreInternalError: true })
   ) {
     return null;
-  }
-
-  if ([FlowRunStatus.INTERNAL_ERROR].includes(run.status)) {
-    return t(
-      'There are no logs captured for this run, because of an internal error, please contact support.',
-    );
   }
 
   if (isNil(run.logsFileId)) {

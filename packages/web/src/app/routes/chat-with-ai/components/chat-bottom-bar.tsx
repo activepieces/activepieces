@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { MessageCircleQuestion } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
@@ -116,6 +117,7 @@ export function ChatBottomBar({
 
   return (
     <div className="flex flex-col gap-2">
+      {activeCard && <WaitingForAnswerChip />}
       {activeCard}
       <div className="overflow-hidden rounded-2xl border border-foreground/20 transition-colors hover:border-foreground/40 focus-within:border-foreground/40">
         {banner}
@@ -137,6 +139,17 @@ export function ChatBottomBar({
           }
         />
       </div>
+    </div>
+  );
+}
+
+// Distinct from the "Thinking…" shimmer: signals the turn is parked on the user, not the model, so
+// the paused turn doesn't read as the assistant still working. Shown above any open gate card.
+function WaitingForAnswerChip() {
+  return (
+    <div className="flex items-center gap-1.5 self-start rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+      <MessageCircleQuestion className="h-3.5 w-3.5 shrink-0" />
+      <span>{t('Waiting for your answer')}</span>
     </div>
   );
 }

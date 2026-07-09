@@ -137,6 +137,7 @@ describe('chatMcpClient.withToolTimeouts circuit breaker', () => {
 
         const wrapped = chatMcpClient.withToolTimeouts({
             mcpToolSet: { [ATTIO_TOOL]: listRecords.tool, [ATTIO_SEARCH]: searchRecords.tool },
+            conversationId: 'test-conversation',
             brokenConnectors,
         }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
 
@@ -156,6 +157,7 @@ describe('chatMcpClient.withToolTimeouts circuit breaker', () => {
 
         const wrapped = chatMcpClient.withToolTimeouts({
             mcpToolSet: { [ATTIO_TOOL]: listRecords.tool },
+            conversationId: 'test-conversation',
             brokenConnectors,
         }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
 

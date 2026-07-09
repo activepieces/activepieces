@@ -124,7 +124,7 @@ export interface ActivepiecesVendorInit {
     hideTables?: boolean;
     sdkVersion?: string;
     jwtToken: string;
-    initialRoute?: string 
+    initialRoute?: string
     fontUrl?: string;
     fontFamily?: string;
     hideExportAndImportFlow?: boolean;
@@ -135,6 +135,7 @@ export interface ActivepiecesVendorInit {
     mode?: 'light' | 'dark';
     hideFlowsPageNavbar?: boolean;
     hidePageHeader?: boolean;
+    hideActiveUsers?: boolean;
   };
 }
 
@@ -171,6 +172,7 @@ type EmbeddingParam = {
   hideDuplicateFlow?: boolean;
   hideFolders?: boolean;
   hideTables?: boolean;
+  hideActiveUsers?: boolean;
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -306,6 +308,7 @@ class ActivepiecesEmbedded {
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
+                hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');

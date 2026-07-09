@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddPieceRunTable1805000000000 implements Migration {
-    name = 'AddPieceRunTable1805000000000'
+export class AddPieceRunTable1808000000000 implements Migration {
+    name = 'AddPieceRunTable1808000000000'
     breaking = false
     release = '0.85.4'
 

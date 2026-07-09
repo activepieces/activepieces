@@ -103,6 +103,8 @@ Bearer token (`Authorization: Bearer {token}`) or query param (`?token={token}`)
 
 OAuth 2.0 PKCE flow is supported for AI clients that require OAuth. The MCP OAuth module (`mcp-oauth.module.ts`) registers metadata, authorization, token, and revocation endpoints.
 
+**Telemetry** — `resolveMcpAndUser` (the OAuth token-resolution path in `mcp-oauth.controller.ts`) runs on every authenticated MCP request, so `MCP_SERVER_CONNECTED` is deduped via `telemetryDedupe.onceToday` to at most one event per user+server per day (per API process) — a daily-active signal, not request volume. Per-invocation usage is tracked separately by `MCP_TOOL_CALLED`.
+
 **Discovery & base-path awareness** — The OAuth issuer, `authorize`/`token`/`register`/`revoke` endpoints, the `resource`, and the `/mcp-authorize` redirect are built via `domainHelper.getPublicUrlFromRequest({ req, path })`. It keeps the request-derived host (so cloud custom domains still work) but appends the path prefix from `AP_FRONTEND_URL`, so subpath-hosted instances (`host/<prefix>/mcp` behind a reverse proxy) advertise URLs under the prefix. On root deployments the prefix is empty and behavior is unchanged.
 
 **RFC 9728 §5.1** — MCP `401` responses include a `WWW-Authenticate: Bearer resource_metadata="…"` header pointing at the prefixed protected-resource metadata URL (`/.well-known/oauth-protected-resource/mcp` for project, `/mcp/platform` for platform), so clients can locate discovery without guessing host-root well-known paths. Clients that ignore the header and probe host-root well-known paths still require the operator to forward `host/.well-known/oauth-*` to AP (that namespace is host-root-anchored by RFC 8414/9728).
@@ -116,6 +118,10 @@ OAuth 2.0 PKCE flow is supported for AI clients that require OAuth. The MCP OAut
 2. Registers dynamic flow tools (from MCP trigger flows)
 3. Registers controllable + locked static tools
 4. Registers empty resources/prompts (MCP spec compliance)
+
+## Tool Input Parsing
+
+The structured flow-building tools (`ap_add_step`, `ap_build_flow`, `ap_create_table`, `ap_update_step`, `ap_update_trigger`) wrap their object/array inputs (`input`, `trigger`, `steps`, `fields`) in `z.preprocess(mcpUtils.parseJsonStringArg, …)`: some models emit object/array tool args as JSON **strings**, so the preprocess parses a string back to JSON before Zod validation. `.describe()` stays on the OUTER `preprocess` schema so the field description still reaches the generated JSON schema (and the drift/description tests). Chat Code Mode bridged calls tag their args with an internal raw-result marker; each MCP tool handler strips that marker (`chatCodeModeUtils.stripRawArgs`) before execution so it never reaches the piece input.
 
 ## Agent Integration
 

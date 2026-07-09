@@ -296,6 +296,13 @@ export const ExecuteChatAgentJobData = z.object({
     })).optional(),
     promptOverride: ChatPromptOverride.optional(),
     dryRun: z.boolean().optional(),
+    // Set on a resume turn — a turn that continues an existing user turn rather than starting a new
+    // one, so it carries NO new user message. 'gate' resumes a turn parked on an unanswered gate
+    // whose answer was just persisted as the tool result (the model simply continues). 'crash'
+    // resumes a turn whose worker died mid-flight, injecting a system note to verify-before-redo any
+    // side-effecting call whose result is missing. The controller/watchdog persist history first,
+    // then enqueue with this set; getChatConfig then rebuilds from history instead of a user message.
+    resumeKind: z.enum(['gate', 'crash']).optional(),
     // Measurement mode: run real discovery (research/get-props/resolve/reads) but neutralize
     // ap_execute_action and auto-resolve approval gates, so the eval harness can measure how the
     // agent navigates to a runnable call with zero side effects and no approval stalls.
