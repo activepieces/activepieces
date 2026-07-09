@@ -79,7 +79,7 @@ Unique index on `(name, version, platformId)`.
 ## Service Methods
 
 ### `pieceMetadataService`
-- `list(params)` — returns filtered + sorted `PieceMetadataModelSummary[]` from cache; applies platform piece filters and EE filtering
+- `list(params)` — returns filtered + sorted `PieceMetadataModelSummary[]` from cache; applies platform piece filters and EE filtering. Packages listed in `RENAMED_PIECE_NAMES` (piece packages that were renamed shortly after release, e.g. `@activepieces/piece-aws-bedrock` → `@activepieces/piece-amazon-bedrock`) are excluded in `fetchLatestCompatiblePiecesFromDB`, which feeds both listing and tool-search reindexing, because their stale rows survive in the cloud registry (`pieceSyncService.sync` upserts and never deletes) and would show as duplicate entries in the piece selector. They stay resolvable via `getOrThrow` by name/version so existing flows keep working. Entries must never be removed from `RENAMED_PIECE_NAMES`: the stale DB rows live forever, so removing an entry silently reintroduces the duplicate selector entry.
 - `getOrThrow({ platformId, name, version, locale? })` — returns full `PieceMetadataModel` for exact piece; prefers platform-specific over official; applies i18n translation
 - `listVersions({ name, platformId, projectId })` — returns all available semver versions from registry cache
 - `create({ pieceMetadata, packageType, platformId, pieceType, archiveId? })` — inserts metadata record and invalidates cache

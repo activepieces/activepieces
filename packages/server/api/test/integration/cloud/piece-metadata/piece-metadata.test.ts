@@ -278,6 +278,47 @@ describe('Piece Metadata API', () => {
             expect(bodyB?.[0].pieceType).toBe(PieceType.OFFICIAL)
         })
 
+        it('Should exclude renamed piece packages from listing while keeping them resolvable by name', async () => {
+            // arrange
+            const renamedPiece = createMockPieceMetadata({
+                name: '@activepieces/piece-aws-bedrock',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'AWS Bedrock',
+                version: '0.0.2',
+            })
+            const currentPiece = createMockPieceMetadata({
+                name: '@activepieces/piece-amazon-bedrock',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'AWS Bedrock',
+                version: '0.2.0',
+            })
+            await db.save('piece_metadata', [renamedPiece, currentPiece])
+
+            await pieceCache(mockLog).setup()
+
+            const ctx = await createTestContext(app!, {
+                platform: {
+                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+                    filteredPieceNames: [],
+                },
+            })
+
+            // act
+            const listResponse = await ctx.get(`/v1/pieces?projectId=${ctx.project.id}`)
+            const getResponse = await ctx.get(`/v1/pieces/@activepieces/piece-aws-bedrock?projectId=${ctx.project.id}`)
+
+            // assert
+            const listBody = listResponse?.json()
+            expect(listResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(listBody).toHaveLength(1)
+            expect(listBody?.[0].name).toBe('@activepieces/piece-amazon-bedrock')
+
+            const getBody = getResponse?.json()
+            expect(getResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(getBody.name).toBe('@activepieces/piece-aws-bedrock')
+            expect(getBody.version).toBe('0.0.2')
+        })
+
         it('Should list correct version by piece name', async () => {
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({

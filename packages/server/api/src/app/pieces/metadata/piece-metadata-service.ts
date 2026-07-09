@@ -457,7 +457,7 @@ export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string):
         .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
         .getRawMany<PieceKey>()
 
-    const compatibleKeys = allKeys.filter((piece) => isSupportedRelease(currentRelease, piece))
+    const compatibleKeys = allKeys.filter((piece) => !RENAMED_PIECE_NAMES.has(piece.name) && isSupportedRelease(currentRelease, piece))
     const latestIds = pickLatestVersionIds(compatibleKeys)
     return latestIds.length > 0 ? pieceRepos().find({ where: { id: In(latestIds) } }) : []
 }
@@ -483,6 +483,10 @@ function translatePieces(pieces: PieceMetadataSchema[], locale: LocalesEnum): Pi
         return translated
     })
 }
+
+const RENAMED_PIECE_NAMES = new Set([
+    '@activepieces/piece-aws-bedrock',
+])
 
 const inflightFetches = new Map<string, Promise<unknown>>()
 
