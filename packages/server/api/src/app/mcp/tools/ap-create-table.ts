@@ -14,7 +14,7 @@ const createTableInput = z.object({
         name: z.string().describe('Field name'),
         type: fieldTypeSchema.describe('Field type'),
         options: z.array(z.string()).optional().describe('Dropdown options (required when type is STATIC_DROPDOWN)'),
-    })).describe('Fields to create. Max 100 fields per table.')),
+    }))).describe('Fields to create. Max 100 fields per table.'),
 })
 
 export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {

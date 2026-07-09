@@ -11,9 +11,12 @@ import { delayWithJitter, runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
-const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
+// Short grace window a turn blocks on an open gate (question/approval/connection/email). Within it
+// the fast path is unchanged: the user answers, the same turn continues. When it expires the turn
+// parks cleanly (see waitForApproval) — the persisted PENDING card stays, status goes IDLE, and a
+// later answer resumes via a fresh turn. Kept short so a dead worker never holds a turn for long.
+const GATE_GRACE_MS = 2 * 60 * 1_000
 const APPROVAL_BLOCK_MS = 50_000
-const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
 const HEARTBEAT_INTERVAL_MS = 15_000
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
@@ -34,13 +37,14 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_c
 export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_CHAT_AGENT,
     async execute(ctx: JobContext, data: ExecuteChatAgentJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly } = data
+        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, resumeKind } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
         const config = await ctx.apiClient.getChatConfig({
             conversationId, runId, platformId, userId, userMessage, modelName, files,
             ...spreadIfDefined('promptOverride', promptOverride),
             ...spreadIfDefined('dryRun', dryRun),
+            ...spreadIfDefined('resumeKind', resumeKind),
         })
 
         const provider = config.provider as AIProviderName
@@ -135,6 +139,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
+                onGateParked: () => abortController.abort(),
             })
 
             const thinkingStartTime = Date.now()
@@ -315,7 +320,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, onGateParked }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -334,6 +339,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     discoveryOnly: boolean
     emailEnabled: boolean
     abortSignal: AbortSignal
+    onGateParked: () => void
 }) {
     const brokenConnectors = new Set<string>()
 
@@ -352,11 +358,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
 
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
         // Auto-resolve in dry-run (playground) and discovery-only (eval): there's no UI to click
-        // approve, so a real wait would stall the entire turn for APPROVAL_TIMEOUT_MS.
+        // approve, so a real wait would stall the entire turn for the grace window.
         if (dryRun || discoveryOnly) {
             return { approved: true }
         }
-        const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
+        const deadline = Date.now() + (timeoutMs ?? GATE_GRACE_MS)
         while (Date.now() < deadline) {
             // A preempted/cancelled turn must stop waiting immediately instead of
             // holding the gate for up to APPROVAL_TIMEOUT_MS — frees the MCP client
@@ -369,7 +375,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
             const blockMs = Math.min(remainingMs, APPROVAL_BLOCK_MS)
             const { data: response, error } = await tryCatch(() => Promise.race([
                 ctx.apiClient.executeChatTool({
-                    toolName: '__approval_wait', toolInput: { gateId, timeoutMs: blockMs }, platformId, userId,
+                    toolName: '__approval_wait', toolInput: { gateId, timeoutMs: blockMs }, platformId, userId, conversationId, runId,
                 }),
                 waitForAbort(abortSignal).then(() => ({ result: 'aborted' as const })),
             ]))
@@ -386,7 +392,14 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
                 return { approved: decision.approved, payload: decision.payload }
             }
         }
-        return { approved: false }
+        // Grace expired with no answer: park the turn cleanly and silently. We abort so the turn
+        // tears down through the cancel-save branch (status → IDLE) WITHOUT finalizing this gate's
+        // tool-call into the LLM history — the persisted PENDING card and the "Waiting for your
+        // answer" chip stay exactly as they are. When the user answers later, the answer endpoint
+        // resolves the PENDING card and enqueues a resume turn (no canned "didn't hear back" note).
+        log.info({ gate: { id: gateId } }, '[executeChatAgent] Gate grace expired — parking turn for later resume')
+        onGateParked()
+        return { approved: false, parked: true }
     }
 
     // Restore the conversation's already-chosen project so a continued turn doesn't
@@ -418,9 +431,24 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         }))
     }
 
+    // One-shot pre-approval check (Fix 1): a resume turn re-issuing a late-approved approval-gate
+    // action consumes the stored pre-approval instead of opening a second card. Returns the decision
+    // so the caller can proceed as approved without asking the user again.
+    const consumePreApproval = async ({ toolName: gateTool, reissuedInput }: { toolName: string, reissuedInput?: Record<string, unknown> }): Promise<{ approved: boolean, payload?: Record<string, unknown> }> => {
+        // Pass the re-issued action's input + this run's id (Fix R1) so the server can verify the token
+        // was minted for the SAME action the user approved and belongs to THIS resume run.
+        const { data: response } = await tryCatch(() => ctx.apiClient.executeChatTool({
+            toolName: '__consume_pre_approval',
+            toolInput: { toolName: gateTool, ...(isObject(reissuedInput) ? { reissuedInput } : {}) },
+            platformId, userId, conversationId, runId,
+        }))
+        const result = isObject(response?.result) ? response.result as Record<string, unknown> : {}
+        return { approved: result['approved'] === true, ...(isObject(result['payload']) ? { payload: result['payload'] as Record<string, unknown> } : {}) }
+    }
+
     const displayTools = chatWorkerTools.createDisplayTools({
         waitForApproval,
-        displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS,
+        displayToolTimeoutMs: GATE_GRACE_MS,
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
             await tryCatch(() => ctx.apiClient.executeChatTool({
@@ -432,7 +460,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, consumePreApproval, guides })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -461,6 +489,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         },
         waitForApproval,
         storePendingGate,
+        consumePreApproval,
         eventEmitter,
         log,
     })
@@ -657,4 +686,5 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
 type GateDecision = {
     approved: boolean
     payload?: Record<string, unknown>
+    parked?: boolean
 }

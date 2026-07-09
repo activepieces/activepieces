@@ -41,6 +41,14 @@ export enum PersistedChatPartType {
 export enum PersistedToolCallStatus {
     COMPLETED = 'completed',
     ERROR = 'error',
+    // A gate/approval card that has opened but not yet resolved. Persisted the moment the gate
+    // opens so the interactive card survives a page reload from history alone (independent of the
+    // in-memory pending-gate cache). Replaced in place by COMPLETED/ERROR once the gate resolves.
+    PENDING = 'pending',
+    // A PENDING gate the user abandoned by sending a NEW message instead of answering it. Flipped
+    // on the next send so an ignored card can't hijack every future crash-recovery (Fix R3): it
+    // renders as a non-interactive, dismissed card and is invisible to gate/recovery routing.
+    SUPERSEDED = 'superseded',
 }
 
 export enum PersistedChatRole {
@@ -66,7 +74,7 @@ const PersistedToolCallPartSchema = z.object({
     description: z.string().optional(),
     input: z.record(z.string(), z.unknown()),
     output: z.unknown().optional(),
-    status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR]),
+    status: z.enum([PersistedToolCallStatus.COMPLETED, PersistedToolCallStatus.ERROR, PersistedToolCallStatus.PENDING, PersistedToolCallStatus.SUPERSEDED]),
     errorText: z.string().optional(),
 })
 
@@ -175,6 +183,50 @@ export enum ChatConversationStatus {
     STREAMING = 'STREAMING',
     ERROR = 'ERROR',
 }
+
+// Shown to the user (and persisted as a normal assistant text bubble) when a turn is reclaimed
+// because its worker went silent — a deploy, crash, or reload dropped the in-flight job. Shared so
+// the API writes it, the sweeper de-dupes on it, and the web can key its retry affordance off it.
+export const CHAT_INTERRUPTED_MESSAGE = 'This response was interrupted — the run stopped unexpectedly. Send your last message again to retry.'
+
+// Injected (as a system-role message in the LLM history, never shown to the user) when a resume
+// turn picks up after the previous run was interrupted mid-flight by a crash/deploy/reload. Tells
+// the model the transcript above is everything already done and to verify-before-redo any write
+// whose result is missing, rather than blindly re-executing side effects.
+export const CHAT_CRASH_RESUME_NOTE = [
+    '[system note — not from the user] The previous run handling this task was interrupted before it finished (a deploy, crash, or reload dropped it).',
+    'The transcript above is everything that was already done — treat it as the source of truth.',
+    'For any action you were about to take or may have started but whose result is not visible above AND which could have a side effect (sent an email, created/updated a record, triggered a run), VERIFY the current state with a read BEFORE doing it again — never blindly re-execute a write, to avoid duplicates.',
+    'Then continue the task to completion from where it left off.',
+].join(' ')
+
+// How many times the watchdog will auto-resume a single user turn after crashes before giving up
+// and falling back to the ERROR + interrupted-message banner. The spent count is derived durably by
+// counting CHAT_CRASH_RESUME_NOTE occurrences in the conversation's LLM history since the last real
+// user message — no DB column, and it survives a full worker restart.
+export const CHAT_MAX_AUTO_RESUMES = 3
+
+// Persisted as the tool result of an approval-gate (ap_execute_action / ap_send_email / ap_test_flow)
+// that the user approved AFTER its worker died. The side-effecting execution died with the worker, so
+// this is explicitly NOT an execution — it tells the resumed model the action is pre-approved and must
+// be re-issued now. Paired with a one-shot pre-approval in the store so the re-issued call runs
+// without opening a second card. `executed: false` keeps the flipped card from reading as "done".
+export const CHAT_LATE_APPROVAL_MARKER = {
+    approved: true,
+    executed: false,
+    note: 'The user approved this after the original run ended — the action was NOT executed. Re-run it now; it is pre-approved, so do not ask again.',
+} as const
+
+// Email's late-approve marker (Fix R1d). ap_send_email deliberately re-opens its confirmation card
+// on resume (the SMTP boundary re-verifies the exact recipients/subject/body against the recorded
+// decision), so — unlike the generic marker above — this one must NOT say "do not ask again". No
+// pre-approval token is stored for email; the resumed model re-issues the send and the user confirms
+// it once more on the card that reappears.
+export const CHAT_LATE_APPROVAL_MARKER_EMAIL = {
+    approved: true,
+    executed: false,
+    note: 'The user approved this after the original run ended — the email was NOT sent. Re-issue the send now. A confirmation card will be shown again to confirm the recipients and content before it goes out.',
+} as const
 
 export const ChatConversation = z.object({
     ...BaseModelSchema,

@@ -524,7 +524,9 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
 
     let projectId = projects[0]?.id
     if (conversationId) {
-        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+        // skipStaleRecovery: called by the live worker mid-turn (Code Mode) only to resolve the
+        // conversation's project. A lagged heartbeat must not let this read crash-resume the running turn.
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log, skipStaleRecovery: true })
         if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
             projectId = conversation.projectId
         }

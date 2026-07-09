@@ -35,14 +35,31 @@ const MAX_RETURN_BYTES = 64 * 1024
 const MAX_CONSOLE_LINES = 200
 const MAX_CONSOLE_LINE_CHARS = 2_000
 const MAX_BRIDGED_CALLS = 1_000
+// Bridged calls hand the FULL raw result to the in-VM code (offload/truncation is skipped so the
+// code can process everything), so a pathological read — a huge sheet/table/API dump, or a loop
+// pulling many large pages — could pile the raw payloads into the worker heap and OOM it before the
+// 64 KB return clamp ever runs. Bound both a single result and the run's cumulative raw bytes; on
+// breach, throw a helpful error INTO the code so the model retries with a page size/filter instead
+// of crashing the worker. Generous vs. real reads (a few MB), tight vs. the crash case.
+const MAX_BRIDGED_RESULT_BYTES = 25 * 1024 * 1024
+const MAX_BRIDGED_TOTAL_BYTES = 60 * 1024 * 1024
 
 // ap_run_tools must never call itself (infinite recursion) and the silent UI-control tools add no
-// value from inside code — keep the callable surface to the real work tools.
+// value from inside code — keep the callable surface to the real work tools. The interactive
+// display/gate tools (ap_show_*) are excluded too: they open a UI card and block on the user's
+// answer, which can't arrive mid-VM — calling one from inside code would just stall the run until
+// the grace window parks the whole turn. The model must show those cards OUTSIDE Code Mode.
 const NON_CALLABLE_TOOL_NAMES = new Set<string>([
     'ap_run_tools',
     'ap_update_thinking_status',
     'ap_set_phase',
     'ap_set_build_plan',
+    'ap_show_connection_picker',
+    'ap_show_connection_required',
+    'ap_show_project_picker',
+    'ap_show_questions',
+    'ap_show_quick_replies',
+    'ap_show_mcp_reconnect',
 ])
 
 type ToolExecute = (args: unknown, options: ToolExecutionOptions) => unknown
@@ -320,8 +337,18 @@ function buildBridge({ tools, log, signal }: { tools: ToolSet, log: ApLogger, si
         // entire advantage back into fetch→file→ap_run_code.
         const rawArgs = chatCodeModeUtils.markRawArgs(isNil(args) ? {} : args)
         const result = await Promise.resolve(entry.execute(rawArgs, options))
-        serverSideBytes += byteLengthOf(result)
-        log.debug({ tool: { name: entry.realName }, resultBytes: byteLengthOf(result) }, '[chat][code-mode] bridged tool call')
+        const resultBytes = byteLengthOf(result)
+        // Guard the worker heap against a runaway raw payload (see MAX_BRIDGED_* above). Throwing
+        // here surfaces as a catchable error inside the code, so the model can retry the read with a
+        // smaller page size or a filter instead of the whole chat worker OOM-ing.
+        if (resultBytes > MAX_BRIDGED_RESULT_BYTES) {
+            throw new Error(`tools.${jsName} returned ${Math.round(resultBytes / (1024 * 1024))} MB, over the ${Math.round(MAX_BRIDGED_RESULT_BYTES / (1024 * 1024))} MB per-call limit. Re-run with a smaller page size / limit or a tighter filter.`)
+        }
+        serverSideBytes += resultBytes
+        if (serverSideBytes > MAX_BRIDGED_TOTAL_BYTES) {
+            throw new Error(`Code Mode processed over ${Math.round(MAX_BRIDGED_TOTAL_BYTES / (1024 * 1024))} MB of tool results in one run. Narrow the reads (smaller pages, filters) or return a summary sooner.`)
+        }
+        log.debug({ tool: { name: entry.realName }, resultBytes }, '[chat][code-mode] bridged tool call')
         // Hand the CODE clean, directly-usable data — not the raw MCP content-wrapper. The model's
         // Code Mode scripts naturally do `JSON.parse(result.content[0].text)`, but `content[0].text`
         // is prefixed with a status line (e.g. "✅ Research …\n{json}"), so that parse throws and
