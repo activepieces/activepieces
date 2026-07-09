@@ -395,7 +395,6 @@ import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
 import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
 import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
-import { AddChatConversationStreamingUpdatedIndex1807000000000 } from './migration/postgres/1807000000000-AddChatConversationStreamingUpdatedIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -806,7 +805,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
         DropBadges1804000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,
-        AddChatConversationStreamingUpdatedIndex1807000000000,
     ]
     return migrations
 }
