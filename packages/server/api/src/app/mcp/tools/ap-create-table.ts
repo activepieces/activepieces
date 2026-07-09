@@ -2,6 +2,7 @@ import { apId, Permission } from '@activepieces/core-utils'
 import { FieldType, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
 import { mcpUtils } from './mcp-utils'
@@ -9,11 +10,11 @@ import { fieldTypeSchema, formatFieldInfo } from './table-utils'
 
 const createTableInput = z.object({
     name: z.string().describe('The name of the table'),
-    fields: z.array(z.object({
+    fields: z.preprocess(mcpUtils.parseJsonStringArg, z.array(z.object({
         name: z.string().describe('Field name'),
         type: fieldTypeSchema.describe('Field type'),
         options: z.array(z.string()).optional().describe('Dropdown options (required when type is STATIC_DROPDOWN)'),
-    })).describe('Fields to create. Max 100 fields per table.'),
+    }))).describe('Fields to create. Max 100 fields per table.'),
 })
 
 export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {

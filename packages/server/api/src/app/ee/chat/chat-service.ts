@@ -61,13 +61,13 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage(data, paginationCursor)
     },
 
-    async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<ChatConversation> {
+    async getConversationOrThrow({ id, platformId, userId, skipStaleRecovery }: ConversationIdentifier & { skipStaleRecovery?: boolean }): Promise<ChatConversation> {
         // Eval conversations must never be opened or messaged through the regular (non-dry-run) chat
         // path — that would run real tools against a conversation meant to be side-effect-free.
         if (isEvalConversationId(id)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'ChatConversation' } })
         }
-        return chatHelpers.getConversationOrThrow({ id, platformId, userId, log })
+        return chatHelpers.getConversationOrThrow({ id, platformId, userId, log, skipStaleRecovery })
     },
 
     async updateConversation({ id, platformId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {

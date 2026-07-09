@@ -88,6 +88,14 @@ export function buildMessageBlocks({
     // skeleton. They already show as a step in the thinking accordion above.
     if (chatPartUtils.isReadOnlyExecuteAction(p)) return;
 
+    // Code Mode (ap_run_tools) carries its own structured result on the tool
+    // part's output, so its card reads straight from the part — no toolCallMeta
+    // round-trip. Emit it the moment the output lands.
+    if (toolName === 'ap_run_tools' && p.state === 'output-available') {
+      result.push({ kind: 'code-mode', toolCallId, part: p });
+      return;
+    }
+
     const hasReceipt =
       toolName === 'ap_execute_action' &&
       !!toolCallMeta[toolCallId]?.actionReceipt;
@@ -350,6 +358,7 @@ export type MessageBlock =
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
+  | { kind: 'code-mode'; toolCallId: string; part: AnyToolPart }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }
