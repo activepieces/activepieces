@@ -1,11 +1,11 @@
-import { AdhocRunsTable } from '@/features/adhoc-runs/components/adhoc-runs-table';
+import { PieceRunsTable } from '@/features/piece-runs/components/piece-runs-table';
 
 import { RunsLayout } from '../runs/runs-layout';
 
 const PieceRunsPage = () => {
   return (
     <RunsLayout>
-      <AdhocRunsTable />
+      <PieceRunsTable />
     </RunsLayout>
   );
 };

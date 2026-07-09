@@ -3,8 +3,8 @@ import { EngineConstants } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 
-export const adhocStepRunner = {
-    async run({ step, operation }: RunAdhocStepParams): Promise<StepOutput> {
+export const pieceRunStepRunner = {
+    async run({ step, operation }: RunPieceRunStepParams): Promise<StepOutput> {
         const executionState = await flowExecutor.getExecutorForAction(step.type).handle({
             action: step,
             executionState: FlowExecutorContext.empty(),
@@ -14,7 +14,7 @@ export const adhocStepRunner = {
     },
 }
 
-type RunAdhocStepParams = {
+type RunPieceRunStepParams = {
     step: PieceAction | CodeAction
     operation: BaseEngineOperation
 }

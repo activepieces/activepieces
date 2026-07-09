@@ -30,7 +30,7 @@ type EngineConstantsParams = {
     timeoutInSeconds: number
     platformId: PlatformId
     stepNames: string[]
-    adhocMode?: boolean
+    pieceRunMode?: boolean
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -69,7 +69,7 @@ export class EngineConstants {
     public readonly stepNameToTest?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
-    public readonly adhocMode: boolean
+    public readonly pieceRunMode: boolean
     private project: Project | null = null
 
     public get isRunningApTests(): boolean {
@@ -116,7 +116,7 @@ export class EngineConstants {
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
-        this.adhocMode = params.adhocMode ?? false
+        this.pieceRunMode = params.pieceRunMode ?? false
     }
   
     public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
@@ -165,7 +165,7 @@ export class EngineConstants {
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
             stepNames: [],
-            adhocMode: true,
+            pieceRunMode: true,
         })
     }
 

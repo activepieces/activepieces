@@ -9,7 +9,6 @@ import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod'
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
-import { adhocRunModule } from './adhoc-run/adhoc-run.module'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
@@ -91,6 +90,7 @@ import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
+import { pieceRunModule } from './piece-run/piece-run.module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
@@ -227,7 +227,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(collaborativeModule)
     await app.register(flowModule)
     await app.register(flowRunModule)
-    await app.register(adhocRunModule)
+    await app.register(pieceRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
     await app.register(platformAppConnectionModule)

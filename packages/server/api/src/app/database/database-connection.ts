@@ -3,7 +3,6 @@ import {
     DataSource,
     EntitySchema,
 } from 'typeorm'
-import { AdhocRunEntity } from '../adhoc-run/adhoc-run.entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
@@ -45,6 +44,7 @@ import { McpServerEntity } from '../mcp/mcp-entity'
 import { McpOAuthClientEntity } from '../mcp/oauth/client/mcp-oauth-client.entity'
 import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/code/mcp-oauth-code.entity'
 import { McpOAuthTokenEntity } from '../mcp/oauth/token/mcp-oauth-token.entity'
+import { PieceRunEntity } from '../piece-run/piece-run.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
@@ -79,7 +79,7 @@ function getEntities(): EntitySchema<unknown>[] {
         FlowEntity,
         FlowVersionEntity,
         FlowRunEntity,
-        AdhocRunEntity,
+        PieceRunEntity,
         ProjectEntity,
         StoreEntryEntity,
         UserEntity,

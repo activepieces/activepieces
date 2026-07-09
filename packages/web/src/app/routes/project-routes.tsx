@@ -156,7 +156,7 @@ export const projectRoutes = [
     element: (
       <ProjectDashboardLayout>
         <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
-          <PageTitle title="Action Runs">
+          <PageTitle title="Piece Runs">
             <SuspenseWrapper>
               <PieceRunsPage />
             </SuspenseWrapper>

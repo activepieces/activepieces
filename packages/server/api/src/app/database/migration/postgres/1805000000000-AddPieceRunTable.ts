@@ -1,14 +1,14 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddAdhocRunTable1805000000000 implements Migration {
-    name = 'AddAdhocRunTable1805000000000'
+export class AddPieceRunTable1805000000000 implements Migration {
+    name = 'AddPieceRunTable1805000000000'
     breaking = false
     release = '0.85.4'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE TABLE "adhoc_run" (
+            CREATE TABLE "piece_run" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -31,77 +31,77 @@ export class AddAdhocRunTable1805000000000 implements Migration {
                 "finishTime" TIMESTAMP WITH TIME ZONE,
                 "logsFileId" character varying(21),
                 "archivedAt" character varying,
-                CONSTRAINT "PK_adhoc_run" PRIMARY KEY ("id")
+                CONSTRAINT "PK_piece_run" PRIMARY KEY ("id")
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_adhoc_run_project_id_created" ON "adhoc_run" ("projectId", "created")
+            CREATE INDEX "idx_piece_run_project_id_created" ON "piece_run" ("projectId", "created")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_adhoc_run_project_id_status" ON "adhoc_run" ("projectId", "status")
+            CREATE INDEX "idx_piece_run_project_id_status" ON "piece_run" ("projectId", "status")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_adhoc_run_project_id_piece_name_created" ON "adhoc_run" ("projectId", "pieceName", "created")
+            CREATE INDEX "idx_piece_run_project_id_piece_name_created" ON "piece_run" ("projectId", "pieceName", "created")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_adhoc_run_user_id" ON "adhoc_run" ("userId")
+            CREATE INDEX "idx_piece_run_user_id" ON "piece_run" ("userId")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_adhoc_run_conversation_id" ON "adhoc_run" ("conversationId")
+            CREATE INDEX "idx_piece_run_conversation_id" ON "piece_run" ("conversationId")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_adhoc_run_project_id_created_archived_at" ON "adhoc_run" ("projectId", "created", "archivedAt")
+            CREATE INDEX "idx_piece_run_project_id_created_archived_at" ON "piece_run" ("projectId", "created", "archivedAt")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_adhoc_run_created" ON "adhoc_run" ("created")
+            CREATE INDEX "idx_piece_run_created" ON "piece_run" ("created")
         `)
         await queryRunner.query(`
-            ALTER TABLE "adhoc_run"
-            ADD CONSTRAINT "fk_adhoc_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            ALTER TABLE "piece_run"
+            ADD CONSTRAINT "fk_piece_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
-            ALTER TABLE "adhoc_run"
-            ADD CONSTRAINT "fk_adhoc_run_logs_file_id" FOREIGN KEY ("logsFileId") REFERENCES "file"("id") ON DELETE SET NULL ON UPDATE NO ACTION
+            ALTER TABLE "piece_run"
+            ADD CONSTRAINT "fk_piece_run_logs_file_id" FOREIGN KEY ("logsFileId") REFERENCES "file"("id") ON DELETE SET NULL ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
-            ALTER TABLE "adhoc_run"
-            ADD CONSTRAINT "fk_adhoc_run_user_id" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION
+            ALTER TABLE "piece_run"
+            ADD CONSTRAINT "fk_piece_run_user_id" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "adhoc_run" DROP CONSTRAINT "fk_adhoc_run_user_id"
+            ALTER TABLE "piece_run" DROP CONSTRAINT "fk_piece_run_user_id"
         `)
         await queryRunner.query(`
-            ALTER TABLE "adhoc_run" DROP CONSTRAINT "fk_adhoc_run_logs_file_id"
+            ALTER TABLE "piece_run" DROP CONSTRAINT "fk_piece_run_logs_file_id"
         `)
         await queryRunner.query(`
-            ALTER TABLE "adhoc_run" DROP CONSTRAINT "fk_adhoc_run_project_id"
+            ALTER TABLE "piece_run" DROP CONSTRAINT "fk_piece_run_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_adhoc_run_created"
+            DROP INDEX "idx_piece_run_created"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_adhoc_run_project_id_created_archived_at"
+            DROP INDEX "idx_piece_run_project_id_created_archived_at"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_adhoc_run_conversation_id"
+            DROP INDEX "idx_piece_run_conversation_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_adhoc_run_user_id"
+            DROP INDEX "idx_piece_run_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_adhoc_run_project_id_piece_name_created"
+            DROP INDEX "idx_piece_run_project_id_piece_name_created"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_adhoc_run_project_id_status"
+            DROP INDEX "idx_piece_run_project_id_status"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_adhoc_run_project_id_created"
+            DROP INDEX "idx_piece_run_project_id_created"
         `)
         await queryRunner.query(`
-            DROP TABLE "adhoc_run"
+            DROP TABLE "piece_run"
         `)
     }
 }

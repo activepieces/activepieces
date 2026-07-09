@@ -865,7 +865,7 @@
   "Flow import returned no flow.": "Flow import returned no flow.",
   "Flow run started": "Flow run started",
   "Flow runs": "Flow runs",
-  "Action runs": "Action runs",
+  "Piece runs": "Piece runs",
   "These are individual piece actions run outside of a flow by your chat agents, MCP servers, or the API.": "These are individual piece actions run outside of a flow by your chat agents, MCP servers, or the API.",
   "Flow run finished": "Flow run finished",
   "Fires for every finished run — successful and failed.": "Fires for every finished run — successful and failed.",
@@ -2101,7 +2101,7 @@
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
   "{count} hours ago": "{count} hours ago",
-  "No action runs yet": "No action runs yet",
+  "No piece runs yet": "No piece runs yet",
   "Runs of individual actions (via MCP, chat, or the API) will appear here.": "Runs of individual actions (via MCP, chat, or the API) will appear here.",
   "Code": "Code"
 }

@@ -1,6 +1,6 @@
 import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { AdhocRunSource, AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, PieceRunSource, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -8,7 +8,7 @@ import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { executePieceRunAction, executePieceRunCode, formatRunSummary, PieceRunOffload } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -256,7 +256,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_execute_action': {
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runChatPieceRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_run_code': {
             return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
@@ -267,7 +267,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runChatPieceRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -302,13 +302,13 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 // A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
 // the model context with a compact shape preview + the fileId. The agent then processes the FULL
 // data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
-function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }: {
+function buildPieceRunOffload({ projectId, platformId, pieceName, actionName, log }: {
     projectId: string
     platformId?: string
     pieceName: string
     actionName: string
     log: FastifyBaseLogger
-}): AdhocOffload | undefined {
+}): PieceRunOffload | undefined {
     if (isNil(platformId)) {
         return undefined
     }
@@ -355,7 +355,7 @@ async function resolveConversationProjectId({ conversationId, platformId, userId
     return projects.some((p) => p.id === conversation.projectId) ? conversation.projectId : undefined
 }
 
-async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log }: {
+async function runChatPieceRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -396,7 +396,7 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
             parsedInput = parsed as Record<string, unknown>
         }
     }
-    const result = await executeAdhocAction({
+    const result = await executePieceRunAction({
         projectId: resolvedProjectId,
         userId,
         pieceName,
@@ -404,8 +404,8 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
         conversationId,
-        source: AdhocRunSource.CHAT,
-        ...spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
+        source: PieceRunSource.CHAT,
+        ...spreadIfDefined('offload', buildPieceRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
 
@@ -480,7 +480,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
         input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
     }
 
-    const result = await executeAdhocCode({ projectId, userId, code, packageJson, input, conversationId, source: AdhocRunSource.CHAT, log })
+    const result = await executePieceRunCode({ projectId, userId, code, packageJson, input, conversationId, source: PieceRunSource.CHAT, log })
 
     if (result.status !== 'succeeded') {
         const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'

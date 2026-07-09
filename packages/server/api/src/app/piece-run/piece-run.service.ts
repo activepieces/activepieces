@@ -1,10 +1,6 @@
 import { apId, isNil, tryCatch, unique } from '@activepieces/core-utils'
 import {
     ActivepiecesError,
-    AdhocRun,
-    AdhocRunKind,
-    AdhocRunListItem,
-    AdhocRunSource,
     CodeAction,
     Cursor,
     ErrorCode,
@@ -12,7 +8,11 @@ import {
     FlowActionType,
     FlowRunStatus,
     PieceAction,
-    PopulatedAdhocRun,
+    PieceRun,
+    PieceRunKind,
+    PieceRunListItem,
+    PieceRunSource,
+    PopulatedPieceRun,
     SeekPage,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -30,15 +30,15 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { getPiecePackageWithoutArchive } from '../pieces/metadata/piece-metadata-service'
 import { UserEntity } from '../user/user-entity'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import { adhocRunOutcome, EngineActionResponse, EngineResult } from './adhoc-run-outcome'
-import { adhocRunPersistQueue } from './adhoc-run-persist-queue'
-import { AdhocRunEntity } from './adhoc-run.entity'
+import { EngineActionResponse, EngineResult, pieceRunOutcome } from './piece-run-outcome'
+import { pieceRunPersistQueue } from './piece-run-persist-queue'
+import { PieceRunEntity } from './piece-run.entity'
 
-const adhocRunRepo = repoFactory<AdhocRun>(AdhocRunEntity)
+const pieceRunRepo = repoFactory<PieceRun>(PieceRunEntity)
 const appConnectionRepo = repoFactory(AppConnectionEntity)
 const userRepo = repoFactory(UserEntity)
 
-async function buildConnectionDisplayNames(params: { runs: AdhocRun[], projectId: string }): Promise<Map<string, string>> {
+async function buildConnectionDisplayNames(params: { runs: PieceRun[], projectId: string }): Promise<Map<string, string>> {
     const externalIds = unique(params.runs.map((run) => run.connectionExternalId).filter((id): id is string => !isNil(id)))
     if (externalIds.length === 0) {
         return new Map()
@@ -50,7 +50,7 @@ async function buildConnectionDisplayNames(params: { runs: AdhocRun[], projectId
     return new Map(connections.map((connection) => [connection.externalId, connection.displayName]))
 }
 
-async function buildUsers(runs: AdhocRun[]): Promise<Map<string, AdhocRunUser>> {
+async function buildUsers(runs: PieceRun[]): Promise<Map<string, PieceRunUser>> {
     const userIds = unique(runs.map((run) => run.userId).filter((id): id is string => !isNil(id)))
     if (userIds.length === 0) {
         return new Map()
@@ -68,7 +68,7 @@ async function buildUsers(runs: AdhocRun[]): Promise<Map<string, AdhocRunUser>> 
         }]))
 }
 
-function applyAdhocRunFilters(query: SelectQueryBuilder<AdhocRun>, params: AdhocRunFilterParams): SelectQueryBuilder<AdhocRun> {
+function applyPieceRunFilters(query: SelectQueryBuilder<PieceRun>, params: PieceRunFilterParams): SelectQueryBuilder<PieceRun> {
     let filtered = query
     if (!isNil(params.status) && params.status.length > 0) {
         filtered = filtered.andWhere({ status: In(params.status) })
@@ -80,15 +80,15 @@ function applyAdhocRunFilters(query: SelectQueryBuilder<AdhocRun>, params: Adhoc
         filtered = filtered.andWhere({ userId: In(params.userId) })
     }
     if (!isNil(params.createdAfter)) {
-        filtered = filtered.andWhere('adhoc_run.created >= :createdAfter', { createdAfter: params.createdAfter })
+        filtered = filtered.andWhere('piece_run.created >= :createdAfter', { createdAfter: params.createdAfter })
     }
     if (!isNil(params.createdBefore)) {
-        filtered = filtered.andWhere('adhoc_run.created <= :createdBefore', { createdBefore: params.createdBefore })
+        filtered = filtered.andWhere('piece_run.created <= :createdBefore', { createdBefore: params.createdBefore })
     }
     return filtered
 }
 
-async function populateRuns(params: { runs: AdhocRun[], projectId: string }): Promise<PopulatedAdhocRun[]> {
+async function populateRuns(params: { runs: PieceRun[], projectId: string }): Promise<PopulatedPieceRun[]> {
     const [connectionDisplayNames, users] = await Promise.all([
         buildConnectionDisplayNames(params),
         buildUsers(params.runs),
@@ -107,11 +107,11 @@ async function populateRuns(params: { runs: AdhocRun[], projectId: string }): Pr
     })
 }
 
-function parseAdhocRunPayload(raw: string): AdhocRunPayload {
+function parsePieceRunPayload(raw: string): PieceRunPayload {
     return JSON.parse(raw)
 }
 
-async function hydratePayload(params: { run: AdhocRun, log: FastifyBaseLogger }): Promise<AdhocRun> {
+async function hydratePayload(params: { run: PieceRun, log: FastifyBaseLogger }): Promise<PieceRun> {
     const { run, log } = params
     if (isNil(run.logsFileId)) {
         return run
@@ -119,12 +119,12 @@ async function hydratePayload(params: { run: AdhocRun, log: FastifyBaseLogger })
     const file = await fileService(log).getDataOrUndefined({
         projectId: run.projectId,
         fileId: run.logsFileId,
-        type: FileType.ADHOC_RUN_LOG,
+        type: FileType.PIECE_RUN_LOG,
     })
     if (isNil(file)) {
         return run
     }
-    const payload = parseAdhocRunPayload(file.data.toString('utf-8'))
+    const payload = parsePieceRunPayload(file.data.toString('utf-8'))
     return {
         ...run,
         input: payload.input ?? null,
@@ -133,10 +133,10 @@ async function hydratePayload(params: { run: AdhocRun, log: FastifyBaseLogger })
     }
 }
 
-export const adhocRunService = (log: FastifyBaseLogger) => ({
-    async run(params: RunParams): Promise<AdhocRun> {
+export const pieceRunService = (log: FastifyBaseLogger) => ({
+    async run(params: RunParams): Promise<PieceRun> {
         const { projectId, platformId, userId, source, step, connectionExternalId, conversationId } = params
-        const kind = step.type === FlowActionType.CODE ? AdhocRunKind.CODE : AdhocRunKind.PIECE
+        const kind = step.type === FlowActionType.CODE ? PieceRunKind.CODE : PieceRunKind.PIECE
 
         const piece = step.type === FlowActionType.PIECE
             ? await getPiecePackageWithoutArchive(log, platformId, {
@@ -158,9 +158,9 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
         const engineResult: EngineResult = result.error
             ? { kind: 'error', error: result.error }
             : { kind: 'response', value: result.data }
-        const outcome = adhocRunOutcome.derive({ engineResult, input: step.settings.input })
+        const outcome = pieceRunOutcome.derive({ engineResult, input: step.settings.input })
 
-        const run: AdhocRun = {
+        const run: PieceRun = {
             id: apId(),
             created: startTime,
             updated: finishTime,
@@ -187,17 +187,17 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
 
         // Single write, off the request path: the persist job offloads {input,output,logs} to
         // the file table and inserts the thinned row. The caller already holds the result in `run`.
-        await adhocRunPersistQueue(log).add({ run, platformId })
+        await pieceRunPersistQueue(log).add({ run, platformId })
 
         if (result.error) {
             throw result.error
         }
         return run
     },
-    async list(params: ListParams): Promise<SeekPage<AdhocRunListItem>> {
+    async list(params: ListParams): Promise<SeekPage<PieceRunListItem>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
-        const paginator = buildPaginator<AdhocRun>({
-            entity: AdhocRunEntity,
+        const paginator = buildPaginator<PieceRun>({
+            entity: PieceRunEntity,
             query: {
                 limit: params.limit,
                 orderBy: [
@@ -209,24 +209,24 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
             },
         })
         // input/output/logs are `select: false`, so the list never fetches the heavy columns.
-        let query = adhocRunRepo().createQueryBuilder('adhoc_run').where({ projectId: params.projectId })
+        let query = pieceRunRepo().createQueryBuilder('piece_run').where({ projectId: params.projectId })
         if (!params.includeArchived) {
             query = query.andWhere({ archivedAt: IsNull() })
         }
-        query = applyAdhocRunFilters(query, params)
+        query = applyPieceRunFilters(query, params)
         const { data, cursor } = await paginator.paginate(query)
         const populated = await populateRuns({ runs: data, projectId: params.projectId })
-        return paginationHelper.createPage<AdhocRunListItem>(populated, cursor)
+        return paginationHelper.createPage<PieceRunListItem>(populated, cursor)
     },
-    async getOneOrThrow(params: GetOneParams): Promise<PopulatedAdhocRun> {
-        const run = await adhocRunRepo().createQueryBuilder('adhoc_run')
-            .addSelect(['adhoc_run.input', 'adhoc_run.output', 'adhoc_run.logs'])
+    async getOneOrThrow(params: GetOneParams): Promise<PopulatedPieceRun> {
+        const run = await pieceRunRepo().createQueryBuilder('piece_run')
+            .addSelect(['piece_run.input', 'piece_run.output', 'piece_run.logs'])
             .where({ id: params.id, projectId: params.projectId })
             .getOne()
         if (isNil(run)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'adhoc_run', entityId: params.id, message: 'Adhoc run not found' },
+                params: { entityType: 'piece_run', entityId: params.id, message: 'piece run not found' },
             })
         }
         const hydrated = await hydratePayload({ run, log })
@@ -237,21 +237,21 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
         const maximumRunsToArchivePerIteration = 4000
         let affected: number | undefined = undefined
         while (isNil(affected) || affected === maximumRunsToArchivePerIteration) {
-            let query = adhocRunRepo().createQueryBuilder('adhoc_run')
-                .select('adhoc_run.id')
+            let query = pieceRunRepo().createQueryBuilder('piece_run')
+                .select('piece_run.id')
                 .where({ projectId: params.projectId, archivedAt: IsNull() })
-            if (!isNil(params.adhocRunIds) && params.adhocRunIds.length > 0) {
-                query = query.andWhere({ id: In(params.adhocRunIds) })
+            if (!isNil(params.pieceRunIds) && params.pieceRunIds.length > 0) {
+                query = query.andWhere({ id: In(params.pieceRunIds) })
             }
-            if (!isNil(params.excludeAdhocRunIds) && params.excludeAdhocRunIds.length > 0) {
-                query = query.andWhere({ id: Not(In(params.excludeAdhocRunIds)) })
+            if (!isNil(params.excludePieceRunIds) && params.excludePieceRunIds.length > 0) {
+                query = query.andWhere({ id: Not(In(params.excludePieceRunIds)) })
             }
-            query = applyAdhocRunFilters(query, params)
+            query = applyPieceRunFilters(query, params)
             const runs = await query.take(maximumRunsToArchivePerIteration).getMany()
             if (runs.length === 0) {
                 break
             }
-            const result = await adhocRunRepo().update({
+            const result = await pieceRunRepo().update({
                 id: In(runs.map((run) => run.id)),
                 projectId: params.projectId,
             }, {
@@ -268,7 +268,7 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
         let totalAffected = 0
         let affected: number | undefined = undefined
         while ((isNil(affected) || affected === maximumRunsToDeletePerIteration) && totalAffected < maximumRunsToDeletePerRun) {
-            const staleRuns = await adhocRunRepo().find({
+            const staleRuns = await pieceRunRepo().find({
                 select: ['id'],
                 where: { created: LessThan(cutoff) },
                 take: maximumRunsToDeletePerIteration,
@@ -276,22 +276,22 @@ export const adhocRunService = (log: FastifyBaseLogger) => ({
             if (staleRuns.length === 0) {
                 break
             }
-            const result = await adhocRunRepo().delete({ id: In(staleRuns.map((run) => run.id)) })
+            const result = await pieceRunRepo().delete({ id: In(staleRuns.map((run) => run.id)) })
             affected = result.affected ?? 0
             totalAffected += affected
-            log.info({ count: affected }, '[adhocRunService#deleteStale] iteration completed')
+            log.info({ count: affected }, '[pieceRunService#deleteStale] iteration completed')
         }
-        log.info({ totalAffected }, '[adhocRunService#deleteStale] completed')
+        log.info({ totalAffected }, '[pieceRunService#deleteStale] completed')
     },
 })
 
-type AdhocRunUser = {
+type PieceRunUser = {
     name: string
     email: string
     imageUrl: string | null
 }
 
-type AdhocRunPayload = {
+type PieceRunPayload = {
     input?: unknown
     output?: unknown
     logs?: string | null
@@ -301,21 +301,21 @@ type RunParams = {
     projectId: string
     platformId: string
     userId?: string
-    source: AdhocRunSource
+    source: PieceRunSource
     step: PieceAction | CodeAction
     connectionExternalId?: string
     conversationId?: string
 }
 
-type AdhocRunFilterParams = {
+type PieceRunFilterParams = {
     status?: FlowRunStatus[]
-    source?: AdhocRunSource[]
+    source?: PieceRunSource[]
     userId?: string[]
     createdAfter?: string
     createdBefore?: string
 }
 
-type ListParams = AdhocRunFilterParams & {
+type ListParams = PieceRunFilterParams & {
     projectId: string
     cursor: Cursor | undefined
     limit: number
@@ -327,8 +327,8 @@ type GetOneParams = {
     id: string
 }
 
-type BulkArchiveParams = AdhocRunFilterParams & {
+type BulkArchiveParams = PieceRunFilterParams & {
     projectId: string
-    adhocRunIds?: string[]
-    excludeAdhocRunIds?: string[]
+    pieceRunIds?: string[]
+    excludePieceRunIds?: string[]
 }

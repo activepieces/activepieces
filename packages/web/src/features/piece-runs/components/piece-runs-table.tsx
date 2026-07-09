@@ -1,7 +1,7 @@
 import { Permission } from '@activepieces/core-utils';
 import {
-  AdhocRunListItem,
-  AdhocRunSource,
+  PieceRunListItem,
+  PieceRunSource,
   FlowRunStatus,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
@@ -21,23 +21,23 @@ import {
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
-import { adhocRunsApi } from '@/features/adhoc-runs/api/adhoc-runs-api';
 import { DEFAULT_DATE_PRESET } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
+import { pieceRunsApi } from '@/features/piece-runs/api/piece-runs-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
-import { AdhocRunDetailSheet } from './adhoc-run-detail-sheet';
-import { adhocRunsColumns, formatSource } from './adhoc-runs-columns';
+import { PieceRunDetailSheet } from './piece-run-detail-sheet';
+import { pieceRunsColumns, formatSource } from './piece-runs-columns';
 
 type SelectedRow = {
   id: string;
 };
 
-const ADHOC_RUN_STATUSES = [
+const PIECE_RUN_STATUSES = [
   FlowRunStatus.RUNNING,
   FlowRunStatus.SUCCEEDED,
   FlowRunStatus.FAILED,
@@ -45,10 +45,10 @@ const ADHOC_RUN_STATUSES = [
   FlowRunStatus.INTERNAL_ERROR,
 ];
 
-export const AdhocRunsTable = () => {
+export const PieceRunsTable = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
-  const [selectedRun, setSelectedRun] = useState<AdhocRunListItem | null>(null);
+  const [selectedRun, setSelectedRun] = useState<PieceRunListItem | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<SelectedRow[]>([]);
   const [selectedAll, setSelectedAll] = useState(false);
@@ -78,7 +78,7 @@ export const AdhocRunsTable = () => {
   }, [hasSeededDefaultRange, setSearchParams]);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['adhoc-runs-table', searchParams.toString(), projectId],
+    queryKey: ['piece-runs-table', searchParams.toString(), projectId],
     enabled: hasSeededDefaultRange,
     staleTime: 0,
     gcTime: 0,
@@ -88,12 +88,12 @@ export const AdhocRunsTable = () => {
       const limitParam = searchParams.get(LIMIT_QUERY_PARAM);
       const limit = limitParam ? parseInt(limitParam) : 10;
       const status = searchParams.getAll('status') as FlowRunStatus[];
-      const source = searchParams.getAll('source') as AdhocRunSource[];
+      const source = searchParams.getAll('source') as PieceRunSource[];
       const userId = searchParams.getAll('userId');
       const createdAfter = searchParams.get('createdAfter');
       const createdBefore = searchParams.get('createdBefore');
       const includeArchived = searchParams.get('archivedAt') === 'true';
-      return adhocRunsApi.list({
+      return pieceRunsApi.list({
         projectId,
         cursor: cursor ?? undefined,
         limit,
@@ -106,7 +106,7 @@ export const AdhocRunsTable = () => {
       });
     },
     refetchInterval: (query) => {
-      const allRuns = query.state.data?.data as AdhocRunListItem[] | undefined;
+      const allRuns = query.state.data?.data as PieceRunListItem[] | undefined;
       const hasNonTerminal = allRuns?.some(
         (run) =>
           !isFlowRunStateTerminal({
@@ -126,7 +126,7 @@ export const AdhocRunsTable = () => {
         type: 'select',
         title: t('Status'),
         accessorKey: 'status',
-        options: ADHOC_RUN_STATUSES.map((status) => ({
+        options: PIECE_RUN_STATUSES.map((status) => ({
           label: formatUtils.convertEnumToHumanReadable(status),
           value: status,
           icon: flowRunUtils.getStatusIcon(status).Icon,
@@ -137,7 +137,7 @@ export const AdhocRunsTable = () => {
         type: 'select',
         title: t('Source'),
         accessorKey: 'source',
-        options: Object.values(AdhocRunSource).map((source) => ({
+        options: Object.values(PieceRunSource).map((source) => ({
           label: formatSource(source),
           value: source,
         })),
@@ -177,7 +177,7 @@ export const AdhocRunsTable = () => {
 
   const columns = useMemo(
     () =>
-      adhocRunsColumns({
+      pieceRunsColumns({
         data,
         selectedRows,
         setSelectedRows,
@@ -191,19 +191,19 @@ export const AdhocRunsTable = () => {
 
   const archiveRuns = useMutation({
     mutationFn: () =>
-      adhocRunsApi.bulkArchive({
+      pieceRunsApi.bulkArchive({
         projectId,
-        adhocRunIds: selectedAll
+        pieceRunIds: selectedAll
           ? undefined
           : selectedRows.map((row) => row.id),
-        excludeAdhocRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        excludePieceRunIds: selectedAll ? Array.from(excludedRows) : undefined,
         status:
           searchParams.getAll('status').length > 0
             ? (searchParams.getAll('status') as FlowRunStatus[])
             : undefined,
         source:
           searchParams.getAll('source').length > 0
-            ? (searchParams.getAll('source') as AdhocRunSource[])
+            ? (searchParams.getAll('source') as PieceRunSource[])
             : undefined,
         userId:
           searchParams.getAll('userId').length > 0
@@ -220,7 +220,7 @@ export const AdhocRunsTable = () => {
     },
   });
 
-  const bulkActions: BulkAction<AdhocRunListItem>[] = useMemo(
+  const bulkActions: BulkAction<PieceRunListItem>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => {
@@ -285,7 +285,7 @@ export const AdhocRunsTable = () => {
         </span>
       </div>
       <DataTable
-        emptyStateTextTitle={t('No action runs yet')}
+        emptyStateTextTitle={t('No piece runs yet')}
         emptyStateTextDescription={t(
           'Runs of individual actions (via MCP, chat, or the API) will appear here.',
         )}
@@ -300,7 +300,7 @@ export const AdhocRunsTable = () => {
           setIsSheetOpen(true);
         }}
       />
-      <AdhocRunDetailSheet
+      <PieceRunDetailSheet
         run={selectedRun}
         open={isSheetOpen}
         onOpenChange={setIsSheetOpen}

@@ -2,29 +2,29 @@ import { ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 
-export enum AdhocRunSource {
+export enum PieceRunSource {
     MCP = 'MCP',
     CHAT = 'CHAT',
     API = 'API',
 }
 
-export enum AdhocRunKind {
+export enum PieceRunKind {
     PIECE = 'PIECE',
     CODE = 'CODE',
 }
 
-export const AdhocRun = z.object({
+export const PieceRun = z.object({
     ...BaseModelSchema,
     projectId: z.string(),
     platformId: z.string(),
     userId: Nullable(z.string()),
-    kind: z.enum(AdhocRunKind),
+    kind: z.enum(PieceRunKind),
     pieceName: Nullable(z.string()),
     pieceVersion: Nullable(z.string()),
     actionName: Nullable(z.string()),
     connectionExternalId: Nullable(z.string()),
     conversationId: Nullable(z.string()),
-    source: z.enum(AdhocRunSource),
+    source: z.enum(PieceRunSource),
     status: z.enum(FlowRunStatus),
     input: z.unknown(),
     output: Nullable(z.unknown()),
@@ -36,7 +36,7 @@ export const AdhocRun = z.object({
     archivedAt: Nullable(z.string()),
 })
 
-export const PopulatedAdhocRun = AdhocRun.extend({
+export const PopulatedPieceRun = PieceRun.extend({
     connectionDisplayName: Nullable(z.string()),
     userName: Nullable(z.string()),
     userEmail: Nullable(z.string()),
@@ -46,20 +46,20 @@ export const PopulatedAdhocRun = AdhocRun.extend({
 // The heavy fields (input/output/logs) are offloaded to the file table and never
 // returned in list responses; the list carries only the summary. Fetch a single run
 // to hydrate the payload from its file.
-export const AdhocRunListItem = PopulatedAdhocRun.omit({ input: true, output: true, logs: true })
+export const PieceRunListItem = PopulatedPieceRun.omit({ input: true, output: true, logs: true })
 
-export const BulkArchiveAdhocRunsRequestBody = z.object({
+export const BulkArchivePieceRunsRequestBody = z.object({
     projectId: ApId,
-    adhocRunIds: z.array(ApId).optional(),
-    excludeAdhocRunIds: z.array(ApId).optional(),
+    pieceRunIds: z.array(ApId).optional(),
+    excludePieceRunIds: z.array(ApId).optional(),
     status: z.array(z.enum(FlowRunStatus)).optional(),
-    source: z.array(z.enum(AdhocRunSource)).optional(),
+    source: z.array(z.enum(PieceRunSource)).optional(),
     userId: z.array(ApId).optional(),
     createdAfter: z.string().optional(),
     createdBefore: z.string().optional(),
 })
 
-export type AdhocRun = z.infer<typeof AdhocRun>
-export type PopulatedAdhocRun = z.infer<typeof PopulatedAdhocRun>
-export type AdhocRunListItem = z.infer<typeof AdhocRunListItem>
-export type BulkArchiveAdhocRunsRequestBody = z.infer<typeof BulkArchiveAdhocRunsRequestBody>
+export type PieceRun = z.infer<typeof PieceRun>
+export type PopulatedPieceRun = z.infer<typeof PopulatedPieceRun>
+export type PieceRunListItem = z.infer<typeof PieceRunListItem>
+export type BulkArchivePieceRunsRequestBody = z.infer<typeof BulkArchivePieceRunsRequestBody>

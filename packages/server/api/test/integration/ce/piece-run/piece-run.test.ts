@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { AdhocRun, AdhocRunKind, AdhocRunSource, FileCompression, FileType, FlowRunStatus } from '@activepieces/shared'
+import { PieceRun, PieceRunKind, PieceRunSource, FileCompression, FileType, FlowRunStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -19,7 +19,7 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-function createMockAdhocRun(params: { projectId: string, platformId: string } & Partial<AdhocRun>): AdhocRun {
+function createMockPieceRun(params: { projectId: string, platformId: string } & Partial<PieceRun>): PieceRun {
     const now = dayjs().toISOString()
     return {
         id: apId(),
@@ -28,12 +28,12 @@ function createMockAdhocRun(params: { projectId: string, platformId: string } & 
         projectId: params.projectId,
         platformId: params.platformId,
         userId: null,
-        kind: AdhocRunKind.PIECE,
+        kind: PieceRunKind.PIECE,
         pieceName: '@activepieces/piece-slack',
         pieceVersion: '0.1.0',
         actionName: 'send_channel_message',
         connectionExternalId: null,
-        source: AdhocRunSource.MCP,
+        source: PieceRunSource.MCP,
         status: FlowRunStatus.SUCCEEDED,
         input: { text: 'hi' },
         output: { ok: true },
@@ -47,16 +47,16 @@ function createMockAdhocRun(params: { projectId: string, platformId: string } & 
     }
 }
 
-describe('Adhoc Run API', () => {
-    describe('GET /v1/adhoc-runs (List)', () => {
-        it('returns the project ad-hoc runs newest-first', async () => {
+describe('Piece Run API', () => {
+    describe('GET /v1/piece-runs (List)', () => {
+        it('returns the project piece runs newest-first', async () => {
             const ctx = await createTestContext(app!)
-            const older = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().subtract(2, 'minute').toISOString(), actionName: 'older' })
-            const newer = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().toISOString(), actionName: 'newer' })
-            await db.save('adhoc_run', older)
-            await db.save('adhoc_run', newer)
+            const older = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().subtract(2, 'minute').toISOString(), actionName: 'older' })
+            const newer = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().toISOString(), actionName: 'newer' })
+            await db.save('piece_run', older)
+            await db.save('piece_run', newer)
 
-            const response = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id })
+            const response = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
@@ -68,16 +68,16 @@ describe('Adhoc Run API', () => {
         it('paginates with a cursor', async () => {
             const ctx = await createTestContext(app!)
             for (let i = 0; i < 3; i++) {
-                await db.save('adhoc_run', createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().add(i, 'second').toISOString() }))
+                await db.save('piece_run', createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().add(i, 'second').toISOString() }))
             }
 
-            const firstPage = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id, limit: '2' })
+            const firstPage = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id, limit: '2' })
             expect(firstPage?.statusCode).toBe(StatusCodes.OK)
             const firstBody = firstPage?.json()
             expect(firstBody.data).toHaveLength(2)
             expect(firstBody.next).toBeDefined()
 
-            const secondPage = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id, limit: '2', cursor: firstBody.next })
+            const secondPage = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id, limit: '2', cursor: firstBody.next })
             expect(secondPage?.statusCode).toBe(StatusCodes.OK)
             expect(secondPage?.json().data).toHaveLength(1)
         })
@@ -90,15 +90,15 @@ describe('Adhoc Run API', () => {
                 displayName: 'My Slack',
             }, ctx.user.id)
             await db.save('app_connection', connection)
-            const run = createMockAdhocRun({
+            const run = createMockPieceRun({
                 projectId: ctx.project.id,
                 platformId: ctx.platform.id,
                 userId: ctx.user.id,
                 connectionExternalId: connection.externalId,
             })
-            await db.save('adhoc_run', run)
+            await db.save('piece_run', run)
 
-            const response = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id })
+            const response = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
@@ -109,9 +109,9 @@ describe('Adhoc Run API', () => {
 
         it('returns null enrichment when the connection and user are absent', async () => {
             const ctx = await createTestContext(app!)
-            await db.save('adhoc_run', createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id }))
+            await db.save('piece_run', createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id }))
 
-            const response = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id })
+            const response = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
@@ -122,9 +122,9 @@ describe('Adhoc Run API', () => {
         it('does not leak runs from another project', async () => {
             const ctxA = await createTestContext(app!)
             const ctxB = await createTestContext(app!)
-            await db.save('adhoc_run', createMockAdhocRun({ projectId: ctxB.project.id, platformId: ctxB.platform.id }))
+            await db.save('piece_run', createMockPieceRun({ projectId: ctxB.project.id, platformId: ctxB.platform.id }))
 
-            const response = await ctxA.get('/v1/adhoc-runs', { projectId: ctxA.project.id })
+            const response = await ctxA.get('/v1/piece-runs', { projectId: ctxA.project.id })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.json().data).toHaveLength(0)
@@ -132,12 +132,12 @@ describe('Adhoc Run API', () => {
 
         it('filters by status', async () => {
             const ctx = await createTestContext(app!)
-            const succeeded = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, status: FlowRunStatus.SUCCEEDED })
-            const failed = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, status: FlowRunStatus.FAILED })
-            await db.save('adhoc_run', succeeded)
-            await db.save('adhoc_run', failed)
+            const succeeded = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, status: FlowRunStatus.SUCCEEDED })
+            const failed = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, status: FlowRunStatus.FAILED })
+            await db.save('piece_run', succeeded)
+            await db.save('piece_run', failed)
 
-            const response = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id, status: [FlowRunStatus.FAILED] })
+            const response = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id, status: [FlowRunStatus.FAILED] })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
@@ -147,12 +147,12 @@ describe('Adhoc Run API', () => {
 
         it('filters by source', async () => {
             const ctx = await createTestContext(app!)
-            const mcp = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, source: AdhocRunSource.MCP })
-            const chat = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, source: AdhocRunSource.CHAT })
-            await db.save('adhoc_run', mcp)
-            await db.save('adhoc_run', chat)
+            const mcp = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, source: PieceRunSource.MCP })
+            const chat = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, source: PieceRunSource.CHAT })
+            await db.save('piece_run', mcp)
+            await db.save('piece_run', chat)
 
-            const response = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id, source: [AdhocRunSource.CHAT] })
+            const response = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id, source: [PieceRunSource.CHAT] })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
@@ -162,12 +162,12 @@ describe('Adhoc Run API', () => {
 
         it('filters by created date range', async () => {
             const ctx = await createTestContext(app!)
-            const old = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().subtract(10, 'day').toISOString() })
-            const recent = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().toISOString() })
-            await db.save('adhoc_run', old)
-            await db.save('adhoc_run', recent)
+            const old = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().subtract(10, 'day').toISOString() })
+            const recent = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, created: dayjs().toISOString() })
+            await db.save('piece_run', old)
+            await db.save('piece_run', recent)
 
-            const response = await ctx.get('/v1/adhoc-runs', {
+            const response = await ctx.get('/v1/piece-runs', {
                 projectId: ctx.project.id,
                 createdAfter: dayjs().subtract(2, 'day').toISOString(),
                 createdBefore: dayjs().add(1, 'day').toISOString(),
@@ -181,35 +181,35 @@ describe('Adhoc Run API', () => {
 
         it('excludes archived runs by default and includes them when requested', async () => {
             const ctx = await createTestContext(app!)
-            const active = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
-            const archived = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, archivedAt: dayjs().toISOString() })
-            await db.save('adhoc_run', active)
-            await db.save('adhoc_run', archived)
+            const active = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
+            const archived = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, archivedAt: dayjs().toISOString() })
+            await db.save('piece_run', active)
+            await db.save('piece_run', archived)
 
-            const defaultResponse = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id })
+            const defaultResponse = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id })
             expect(defaultResponse?.statusCode).toBe(StatusCodes.OK)
             const defaultBody = defaultResponse?.json()
             expect(defaultBody.data).toHaveLength(1)
             expect(defaultBody.data[0].id).toBe(active.id)
 
-            const includeResponse = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id, includeArchived: 'true' })
+            const includeResponse = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id, includeArchived: 'true' })
             expect(includeResponse?.statusCode).toBe(StatusCodes.OK)
             expect(includeResponse?.json().data).toHaveLength(2)
         })
     })
 
-    describe('POST /v1/adhoc-runs/archive (Archive)', () => {
+    describe('POST /v1/piece-runs/archive (Archive)', () => {
         it('archives the selected runs', async () => {
             const ctx = await createTestContext(app!)
-            const target = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
-            const other = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
-            await db.save('adhoc_run', target)
-            await db.save('adhoc_run', other)
+            const target = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
+            const other = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
+            await db.save('piece_run', target)
+            await db.save('piece_run', other)
 
-            const response = await ctx.post('/v1/adhoc-runs/archive', { projectId: ctx.project.id, adhocRunIds: [target.id] })
+            const response = await ctx.post('/v1/piece-runs/archive', { projectId: ctx.project.id, pieceRunIds: [target.id] })
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const list = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id })
+            const list = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id })
             const body = list?.json()
             expect(body.data).toHaveLength(1)
             expect(body.data[0].id).toBe(other.id)
@@ -217,17 +217,17 @@ describe('Adhoc Run API', () => {
 
         it('archives all matching runs except the excluded ones', async () => {
             const ctx = await createTestContext(app!)
-            const kept = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
-            const archivedA = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
-            const archivedB = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
-            await db.save('adhoc_run', kept)
-            await db.save('adhoc_run', archivedA)
-            await db.save('adhoc_run', archivedB)
+            const kept = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
+            const archivedA = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
+            const archivedB = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id })
+            await db.save('piece_run', kept)
+            await db.save('piece_run', archivedA)
+            await db.save('piece_run', archivedB)
 
-            const response = await ctx.post('/v1/adhoc-runs/archive', { projectId: ctx.project.id, excludeAdhocRunIds: [kept.id] })
+            const response = await ctx.post('/v1/piece-runs/archive', { projectId: ctx.project.id, excludePieceRunIds: [kept.id] })
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const list = await ctx.get('/v1/adhoc-runs', { projectId: ctx.project.id })
+            const list = await ctx.get('/v1/piece-runs', { projectId: ctx.project.id })
             const body = list?.json()
             expect(body.data).toHaveLength(1)
             expect(body.data[0].id).toBe(kept.id)
@@ -236,24 +236,24 @@ describe('Adhoc Run API', () => {
         it('does not archive runs from another project', async () => {
             const ctxA = await createTestContext(app!)
             const ctxB = await createTestContext(app!)
-            const runB = createMockAdhocRun({ projectId: ctxB.project.id, platformId: ctxB.platform.id })
-            await db.save('adhoc_run', runB)
+            const runB = createMockPieceRun({ projectId: ctxB.project.id, platformId: ctxB.platform.id })
+            await db.save('piece_run', runB)
 
-            const response = await ctxA.post('/v1/adhoc-runs/archive', { projectId: ctxA.project.id, adhocRunIds: [runB.id] })
+            const response = await ctxA.post('/v1/piece-runs/archive', { projectId: ctxA.project.id, pieceRunIds: [runB.id] })
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const list = await ctxB.get('/v1/adhoc-runs', { projectId: ctxB.project.id })
+            const list = await ctxB.get('/v1/piece-runs', { projectId: ctxB.project.id })
             expect(list?.json().data).toHaveLength(1)
         })
     })
 
-    describe('GET /v1/adhoc-runs/:id (Get)', () => {
-        it('returns the ad-hoc run with its output', async () => {
+    describe('GET /v1/piece-runs/:id (Get)', () => {
+        it('returns the piece run with its output', async () => {
             const ctx = await createTestContext(app!)
-            const run = createMockAdhocRun({ projectId: ctx.project.id, platformId: ctx.platform.id, output: { value: 42 } })
-            await db.save('adhoc_run', run)
+            const run = createMockPieceRun({ projectId: ctx.project.id, platformId: ctx.platform.id, output: { value: 42 } })
+            await db.save('piece_run', run)
 
-            const response = await ctx.get(`/v1/adhoc-runs/${run.id}`)
+            const response = await ctx.get(`/v1/piece-runs/${run.id}`)
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
@@ -268,12 +268,12 @@ describe('Adhoc Run API', () => {
             const file = await fileService(app!.log).save({
                 projectId: ctx.project.id,
                 platformId: ctx.platform.id,
-                type: FileType.ADHOC_RUN_LOG,
+                type: FileType.PIECE_RUN_LOG,
                 data: payload,
                 size: payload.length,
                 compression: FileCompression.NONE,
             })
-            const run = createMockAdhocRun({
+            const run = createMockPieceRun({
                 projectId: ctx.project.id,
                 platformId: ctx.platform.id,
                 input: null,
@@ -281,9 +281,9 @@ describe('Adhoc Run API', () => {
                 logs: null,
                 logsFileId: file.id,
             })
-            await db.save('adhoc_run', run)
+            await db.save('piece_run', run)
 
-            const response = await ctx.get(`/v1/adhoc-runs/${run.id}`)
+            const response = await ctx.get(`/v1/piece-runs/${run.id}`)
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
@@ -295,10 +295,10 @@ describe('Adhoc Run API', () => {
         it('blocks access to a run from another project', async () => {
             const ctxA = await createTestContext(app!)
             const ctxB = await createTestContext(app!)
-            const runB = createMockAdhocRun({ projectId: ctxB.project.id, platformId: ctxB.platform.id })
-            await db.save('adhoc_run', runB)
+            const runB = createMockPieceRun({ projectId: ctxB.project.id, platformId: ctxB.platform.id })
+            await db.save('piece_run', runB)
 
-            const response = await ctxA.get(`/v1/adhoc-runs/${runB.id}`)
+            const response = await ctxA.get(`/v1/piece-runs/${runB.id}`)
 
             expect(response?.statusCode).not.toBe(StatusCodes.OK)
         })

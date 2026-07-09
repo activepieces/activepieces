@@ -24,7 +24,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - `packages/server/api/src/app/ee/alerts/alerts-service.ts` — sends the failure email via the EE Alerts feature (see `.agents/features/alerts.md`)
 - `packages/web/src/features/flow-runs/components/step-status-icon.tsx` — per-step status badge
 - `packages/web/src/app/routes/runs/index.tsx` — runs list page; wraps `RunsTable` in `RunsLayout`
-- `packages/web/src/app/routes/runs/runs-layout.tsx` — shared tab bar over the runs pages: "Flow runs" (`/runs`, this feature) and "Action runs" (`/piece-runs`, the ad-hoc runs table — see `.agents/features/adhoc-run.md`)
+- `packages/web/src/app/routes/runs/runs-layout.tsx` — shared tab bar over the runs pages: "Flow runs" (`/runs`, this feature) and "Action runs" (`/piece-runs`, the piece runs table — see `.agents/features/piece-run.md`)
 - `packages/web/src/app/routes/runs/id/index.tsx` — individual run detail page
 - `packages/web/src/app/builder/run-details/` — step input/output inspector inside the builder
 - `packages/web/src/app/builder/run-list/` — recent runs sidebar in the builder

@@ -1,6 +1,6 @@
 import {
-    AdhocRun,
     File,
+    PieceRun,
     Project,
     User,
 } from '@activepieces/shared'
@@ -10,14 +10,14 @@ import {
     BaseColumnSchemaPart,
 } from '../database/database-common'
 
-type AdhocRunSchema = AdhocRun & {
+type PieceRunSchema = PieceRun & {
     project: Project
     logsFile: File
     user: User
 }
 
-export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
-    name: 'adhoc_run',
+export const PieceRunEntity = new EntitySchema<PieceRunSchema>({
+    name: 'piece_run',
     columns: {
         ...BaseColumnSchemaPart,
         projectId: ApIdSchema,
@@ -93,31 +93,31 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
     },
     indices: [
         {
-            name: 'idx_adhoc_run_project_id_created',
+            name: 'idx_piece_run_project_id_created',
             columns: ['projectId', 'created'],
         },
         {
-            name: 'idx_adhoc_run_project_id_created_archived_at',
+            name: 'idx_piece_run_project_id_created_archived_at',
             columns: ['projectId', 'created', 'archivedAt'],
         },
         {
-            name: 'idx_adhoc_run_created',
+            name: 'idx_piece_run_created',
             columns: ['created'],
         },
         {
-            name: 'idx_adhoc_run_project_id_status',
+            name: 'idx_piece_run_project_id_status',
             columns: ['projectId', 'status'],
         },
         {
-            name: 'idx_adhoc_run_project_id_piece_name_created',
+            name: 'idx_piece_run_project_id_piece_name_created',
             columns: ['projectId', 'pieceName', 'created'],
         },
         {
-            name: 'idx_adhoc_run_user_id',
+            name: 'idx_piece_run_user_id',
             columns: ['userId'],
         },
         {
-            name: 'idx_adhoc_run_conversation_id',
+            name: 'idx_piece_run_conversation_id',
             columns: ['conversationId'],
         },
     ],
@@ -129,7 +129,7 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'projectId',
-                foreignKeyConstraintName: 'fk_adhoc_run_project_id',
+                foreignKeyConstraintName: 'fk_piece_run_project_id',
             },
         },
         logsFile: {
@@ -139,7 +139,7 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
             onDelete: 'SET NULL',
             joinColumn: {
                 name: 'logsFileId',
-                foreignKeyConstraintName: 'fk_adhoc_run_logs_file_id',
+                foreignKeyConstraintName: 'fk_piece_run_logs_file_id',
             },
         },
         user: {
@@ -148,7 +148,7 @@ export const AdhocRunEntity = new EntitySchema<AdhocRunSchema>({
             onDelete: 'SET NULL',
             joinColumn: {
                 name: 'userId',
-                foreignKeyConstraintName: 'fk_adhoc_run_user_id',
+                foreignKeyConstraintName: 'fk_piece_run_user_id',
             },
         },
     },

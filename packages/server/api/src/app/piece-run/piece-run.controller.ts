@@ -1,18 +1,18 @@
 import { ApId, OptionalArrayFromQuery, OptionalBooleanFromQuery, Permission, SeekPage } from '@activepieces/core-utils'
-import { AdhocRunListItem, AdhocRunSource, BulkArchiveAdhocRunsRequestBody, FlowRunStatus, PopulatedAdhocRun, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { BulkArchivePieceRunsRequestBody, FlowRunStatus, PieceRunListItem, PieceRunSource, PopulatedPieceRun, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { AdhocRunEntity } from './adhoc-run.entity'
-import { adhocRunService } from './adhoc-run.service'
+import { PieceRunEntity } from './piece-run.entity'
+import { pieceRunService } from './piece-run.service'
 
 const DEFAULT_PAGING_LIMIT = 10
 
-export const adhocRunController: FastifyPluginAsyncZod = async (app) => {
+export const pieceRunController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListRequest, async (request) => {
-        return adhocRunService(request.log).list({
+        return pieceRunService(request.log).list({
             projectId: request.query.projectId,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
@@ -26,17 +26,17 @@ export const adhocRunController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/:id', GetRequest, async (request) => {
-        return adhocRunService(request.log).getOneOrThrow({
+        return pieceRunService(request.log).getOneOrThrow({
             projectId: request.projectId,
             id: request.params.id,
         })
     })
 
     app.post('/archive', ArchiveRequest, async (request) => {
-        return adhocRunService(request.log).bulkArchive({
+        return pieceRunService(request.log).bulkArchive({
             projectId: request.projectId,
-            adhocRunIds: request.body.adhocRunIds,
-            excludeAdhocRunIds: request.body.excludeAdhocRunIds,
+            pieceRunIds: request.body.pieceRunIds,
+            excludePieceRunIds: request.body.excludePieceRunIds,
             status: request.body.status,
             source: request.body.source,
             userId: request.body.userId,
@@ -55,22 +55,22 @@ const ListRequest = {
             }),
     },
     schema: {
-        tags: ['adhoc-runs'],
-        description: 'List ad-hoc piece/code runs',
+        tags: ['piece-runs'],
+        description: 'List piece runs',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: z.object({
             projectId: ApId,
             cursor: z.string().optional(),
             limit: z.coerce.number().optional(),
             status: OptionalArrayFromQuery(z.enum(FlowRunStatus)),
-            source: OptionalArrayFromQuery(z.enum(AdhocRunSource)),
+            source: OptionalArrayFromQuery(z.enum(PieceRunSource)),
             userId: OptionalArrayFromQuery(ApId),
             createdAfter: z.string().optional(),
             createdBefore: z.string().optional(),
             includeArchived: OptionalBooleanFromQuery,
         }),
         response: {
-            [StatusCodes.OK]: SeekPage(AdhocRunListItem),
+            [StatusCodes.OK]: SeekPage(PieceRunListItem),
         },
     },
 }
@@ -81,18 +81,18 @@ const GetRequest = {
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_RUN, {
                 type: ProjectResourceType.TABLE,
-                tableName: AdhocRunEntity,
+                tableName: PieceRunEntity,
             }),
     },
     schema: {
-        tags: ['adhoc-runs'],
-        description: 'Get an ad-hoc run',
+        tags: ['piece-runs'],
+        description: 'Get a piece run',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: PopulatedAdhocRun,
+            [StatusCodes.OK]: PopulatedPieceRun,
         },
     },
 }
@@ -106,9 +106,9 @@ const ArchiveRequest = {
             }),
     },
     schema: {
-        tags: ['adhoc-runs'],
-        description: 'Archive ad-hoc piece/code runs',
+        tags: ['piece-runs'],
+        description: 'Archive piece runs',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        body: BulkArchiveAdhocRunsRequestBody,
+        body: BulkArchivePieceRunsRequestBody,
     },
 }

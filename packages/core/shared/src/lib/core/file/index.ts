@@ -20,10 +20,10 @@ export enum FileType {
      */
     FLOW_RUN_LOG_SLICE = 'FLOW_RUN_LOG_SLICE',
     /**
-     * Compressed (ZSTD) `{ input, output, logs }` blob for a single ad-hoc run,
-     * offloaded out of the adhoc_run row. Expires on the file-cleanup schedule.
+     * Compressed (ZSTD) `{ input, output, logs }` blob for a single piece run,
+     * offloaded out of the piece_run row. Expires on the file-cleanup schedule.
      */
-    ADHOC_RUN_LOG = 'ADHOC_RUN_LOG',
+    PIECE_RUN_LOG = 'PIECE_RUN_LOG',
     /**
      * Tarball of a custom piece's source, downloaded and extracted by the worker
      * to load piece code. Stored in DB, kept indefinitely.

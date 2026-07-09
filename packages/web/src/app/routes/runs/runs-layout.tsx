@@ -22,7 +22,7 @@ const RunsLayout = ({ children }: { children: React.ReactNode }) => {
     icon: ComponentType<{ className?: string; size?: number }>;
   }[] = [
     { to: flowRunsPath, label: t('Flow runs'), icon: WorkflowIcon },
-    { to: pieceRunsPath, label: t('Action runs'), icon: PuzzleIcon },
+    { to: pieceRunsPath, label: t('Piece runs'), icon: PuzzleIcon },
   ];
 
   const activeView = location.pathname.includes(pieceRunsPath)

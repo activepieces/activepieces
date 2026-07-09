@@ -1,15 +1,15 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
-  AdhocRunListItem,
-  AdhocRunSource,
-  BulkArchiveAdhocRunsRequestBody,
+  PieceRunListItem,
+  PieceRunSource,
+  BulkArchivePieceRunsRequestBody,
   FlowRunStatus,
-  PopulatedAdhocRun,
+  PopulatedPieceRun,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
-export const adhocRunsApi = {
+export const pieceRunsApi = {
   list({
     projectId,
     cursor,
@@ -25,13 +25,13 @@ export const adhocRunsApi = {
     cursor?: string;
     limit?: number;
     status?: FlowRunStatus[];
-    source?: AdhocRunSource[];
+    source?: PieceRunSource[];
     userId?: string[];
     createdAfter?: string;
     createdBefore?: string;
     includeArchived?: boolean;
-  }): Promise<SeekPage<AdhocRunListItem>> {
-    return api.get<SeekPage<AdhocRunListItem>>('/v1/adhoc-runs', {
+  }): Promise<SeekPage<PieceRunListItem>> {
+    return api.get<SeekPage<PieceRunListItem>>('/v1/piece-runs', {
       projectId,
       cursor,
       limit,
@@ -43,10 +43,10 @@ export const adhocRunsApi = {
       includeArchived,
     });
   },
-  get({ id }: { id: string }): Promise<PopulatedAdhocRun> {
-    return api.get<PopulatedAdhocRun>(`/v1/adhoc-runs/${id}`);
+  get({ id }: { id: string }): Promise<PopulatedPieceRun> {
+    return api.get<PopulatedPieceRun>(`/v1/piece-runs/${id}`);
   },
-  bulkArchive(request: BulkArchiveAdhocRunsRequestBody): Promise<void> {
-    return api.post<void>('/v1/adhoc-runs/archive', request);
+  bulkArchive(request: BulkArchivePieceRunsRequestBody): Promise<void> {
+    return api.post<void>('/v1/piece-runs/archive', request);
   },
 };

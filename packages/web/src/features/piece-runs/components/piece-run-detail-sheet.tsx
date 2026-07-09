@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  AdhocRunKind,
-  AdhocRunListItem,
+  PieceRunKind,
+  PieceRunListItem,
   FlowActionType,
   FlowRunStatus,
   isFailedState,
@@ -26,20 +26,20 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { CORE_STEP_METADATA } from '@/features/pieces/utils/step-utils';
 import { formatUtils } from '@/lib/format-utils';
 
-import { adhocRunsApi } from '../api/adhoc-runs-api';
+import { pieceRunsApi } from '../api/piece-runs-api';
 
-import { formatSource } from './adhoc-runs-columns';
+import { formatSource } from './piece-runs-columns';
 
-export const AdhocRunDetailSheet = ({
+export const PieceRunDetailSheet = ({
   run,
   open,
   onOpenChange,
-}: AdhocRunDetailSheetProps) => {
+}: PieceRunDetailSheetProps) => {
   // The list row carries only the summary; input/output/logs are offloaded to the
   // file table and hydrated by fetching the single run.
   const { data: fullRun } = useQuery({
-    queryKey: ['adhoc-run-detail', run?.id],
-    queryFn: () => adhocRunsApi.get({ id: run!.id }),
+    queryKey: ['piece-run-detail', run?.id],
+    queryFn: () => pieceRunsApi.get({ id: run!.id }),
     enabled: open && !isNil(run?.id),
     staleTime: 0,
   });
@@ -49,7 +49,7 @@ export const AdhocRunDetailSheet = ({
   const failed = !isNil(run) && isFailedState(run.status);
   const { pieceModel } = piecesHooks.usePiece({
     name: run?.pieceName ?? '',
-    enabled: run?.kind === AdhocRunKind.PIECE && !isNil(run?.pieceName),
+    enabled: run?.kind === PieceRunKind.PIECE && !isNil(run?.pieceName),
   });
   const actionName = run?.actionName ?? null;
   const pieceDisplayName = pieceModel?.displayName ?? run?.pieceName ?? null;
@@ -65,7 +65,7 @@ export const AdhocRunDetailSheet = ({
       <SheetContent className="w-[520px] sm:max-w-[520px] flex flex-col p-0">
         <SheetHeader className="px-6 py-4 border-b shrink-0">
           <SheetTitle className="text-base flex items-center gap-2">
-            {!isNil(run) && run.kind === AdhocRunKind.CODE && (
+            {!isNil(run) && run.kind === PieceRunKind.CODE && (
               <PieceIcon
                 size="sm"
                 border={true}
@@ -75,7 +75,7 @@ export const AdhocRunDetailSheet = ({
               />
             )}
             {!isNil(run) &&
-              run.kind === AdhocRunKind.PIECE &&
+              run.kind === PieceRunKind.PIECE &&
               !isNil(run.pieceName) && (
                 <PieceIconWithPieceName
                   pieceName={run.pieceName}
@@ -167,11 +167,11 @@ function buildTitle({
   run,
   pieceDisplayName,
   actionDisplayName,
-}: BuildParams & { run: AdhocRunListItem | null }): string {
+}: BuildParams & { run: PieceRunListItem | null }): string {
   if (isNil(run)) {
     return t('Run Details');
   }
-  if (run.kind === AdhocRunKind.CODE) {
+  if (run.kind === PieceRunKind.CODE) {
     return t('Code');
   }
   return actionDisplayName ?? pieceDisplayName ?? t('Run Details');
@@ -181,7 +181,7 @@ function buildOverviewRows({
   run,
   pieceDisplayName,
   actionDisplayName,
-}: BuildParams & { run: AdhocRunListItem }): OverviewRow[] {
+}: BuildParams & { run: PieceRunListItem }): OverviewRow[] {
   const duration =
     run.startTime && run.finishTime
       ? formatUtils.formatDuration(
@@ -196,7 +196,7 @@ function buildOverviewRows({
       value: formatSource(run.source),
     },
   ];
-  if (run.kind === AdhocRunKind.PIECE && !isNil(pieceDisplayName)) {
+  if (run.kind === PieceRunKind.PIECE && !isNil(pieceDisplayName)) {
     rows.push({ label: t('Piece'), value: pieceDisplayName });
   }
   if (!isNil(actionDisplayName)) {
@@ -225,8 +225,8 @@ function buildOverviewRows({
   return rows;
 }
 
-type AdhocRunDetailSheetProps = {
-  run: AdhocRunListItem | null;
+type PieceRunDetailSheetProps = {
+  run: PieceRunListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };

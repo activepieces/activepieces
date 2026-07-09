@@ -1,10 +1,10 @@
 import { isNil } from '@activepieces/core-utils'
 import { EngineResponse, EngineResponseStatus, ExecuteActionOperation, ExecuteActionResponse, StepOutputStatus } from '@activepieces/shared'
-import { adhocStepRunner } from '../handler/adhoc-step-runner'
+import { pieceRunStepRunner } from '../handler/piece-run-step-runner'
 
 export const actionOperation = {
     execute: async (operation: ExecuteActionOperation): Promise<EngineResponse<ExecuteActionResponse>> => {
-        const stepOutput = await adhocStepRunner.run({ step: operation.step, operation })
+        const stepOutput = await pieceRunStepRunner.run({ step: operation.step, operation })
         const success = stepOutput.status === StepOutputStatus.SUCCEEDED
         return {
             status: EngineResponseStatus.OK,

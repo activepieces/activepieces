@@ -32,12 +32,12 @@ function sanitizeValue(value: unknown): unknown {
     return sanitizeObjectForPostgresql(value as Record<string, unknown>)
 }
 
-function withPayloadGate(outcome: Omit<AdhocRunOutcome, 'hasPayload'>): AdhocRunOutcome {
+function withPayloadGate(outcome: Omit<PieceRunOutcome, 'hasPayload'>): PieceRunOutcome {
     const hasPayload = !isNil(outcome.input) || !isNil(outcome.output) || !isNil(outcome.logs)
     return { ...outcome, hasPayload }
 }
 
-function derive({ engineResult, input }: { engineResult: EngineResult, input: unknown }): AdhocRunOutcome {
+function derive({ engineResult, input }: { engineResult: EngineResult, input: unknown }): PieceRunOutcome {
     const sanitizedInput = sanitizeValue(input)
     if (engineResult.kind === 'error') {
         return withPayloadGate({
@@ -59,7 +59,7 @@ function derive({ engineResult, input }: { engineResult: EngineResult, input: un
     })
 }
 
-export const adhocRunOutcome = { derive }
+export const pieceRunOutcome = { derive }
 
 export type EngineActionResponse = {
     status: EngineResponseStatus
@@ -72,7 +72,7 @@ export type EngineResult =
     | { kind: 'response', value: EngineActionResponse }
     | { kind: 'error', error: unknown }
 
-export type AdhocRunOutcome = {
+export type PieceRunOutcome = {
     status: FlowRunStatus
     input: unknown
     output: unknown

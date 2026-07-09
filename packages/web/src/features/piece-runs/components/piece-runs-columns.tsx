@@ -1,8 +1,8 @@
 import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
-  AdhocRunKind,
-  AdhocRunListItem,
-  AdhocRunSource,
+  PieceRunKind,
+  PieceRunListItem,
+  PieceRunSource,
   FlowActionType,
   FlowRunStatus,
   isFailedState,
@@ -47,14 +47,14 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { CORE_STEP_METADATA } from '@/features/pieces/utils/step-utils';
 import { formatUtils } from '@/lib/format-utils';
 
-function PieceCell({ run }: { run: AdhocRunListItem }) {
+function PieceCell({ run }: { run: PieceRunListItem }) {
   const { kind, actionName, pieceName, archivedAt } = run;
   const { pieceModel } = piecesHooks.usePiece({
     name: pieceName ?? '',
-    enabled: kind === AdhocRunKind.PIECE && !isNil(pieceName),
+    enabled: kind === PieceRunKind.PIECE && !isNil(pieceName),
   });
 
-  if (kind === AdhocRunKind.CODE) {
+  if (kind === PieceRunKind.CODE) {
     return (
       <div className="flex items-center gap-2 text-left min-w-0">
         {!isNil(archivedAt) && (
@@ -108,7 +108,7 @@ function PieceCell({ run }: { run: AdhocRunListItem }) {
   );
 }
 
-export const adhocRunsColumns = ({
+export const pieceRunsColumns = ({
   selectedRows,
   setSelectedRows,
   selectedAll,
@@ -116,8 +116,8 @@ export const adhocRunsColumns = ({
   excludedRows,
   setExcludedRows,
   data,
-}: AdhocRunsColumnsProps): ColumnDef<
-  RowDataWithActions<AdhocRunListItem>
+}: PieceRunsColumnsProps): ColumnDef<
+  RowDataWithActions<PieceRunListItem>
 >[] => [
   {
     id: 'select',
@@ -393,7 +393,7 @@ export const adhocRunsColumns = ({
 ];
 
 export function formatSource(source: string): string {
-  if (source === AdhocRunSource.MCP || source === AdhocRunSource.API) {
+  if (source === PieceRunSource.MCP || source === PieceRunSource.API) {
     return source;
   }
   return formatUtils.convertEnumToReadable(source);
@@ -403,8 +403,8 @@ type SelectedRow = {
   id: string;
 };
 
-type AdhocRunsColumnsProps = {
-  data: SeekPage<AdhocRunListItem> | undefined;
+type PieceRunsColumnsProps = {
+  data: SeekPage<PieceRunListItem> | undefined;
   selectedRows: SelectedRow[];
   setSelectedRows: Dispatch<SetStateAction<SelectedRow[]>>;
   selectedAll: boolean;

@@ -1,8 +1,8 @@
 import { FastifyPluginAsync } from 'fastify'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { adhocRunController } from './adhoc-run.controller'
+import { pieceRunController } from './piece-run.controller'
 
-export const adhocRunModule: FastifyPluginAsync = async (app) => {
+export const pieceRunModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    await app.register(adhocRunController, { prefix: '/v1/adhoc-runs' })
+    await app.register(pieceRunController, { prefix: '/v1/piece-runs' })
 }
