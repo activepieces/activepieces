@@ -596,6 +596,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         id: params.jobId ?? params.flowRun.id,
         type: JobType.ONE_TIME,
         data,
+        syncRun: params.syncRun ?? !isNil(params.workerHandlerId),
     })
     return params.flowRun
 }
@@ -738,6 +739,10 @@ type AddToQueueParamsCommon = {
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
     jobId?: string
+    // Overrides the workerHandlerId-based sync-queue eligibility. Resume paths must pass false
+    // when the handler id is inherited from a stored waitpoint: it then only addresses a
+    // best-effort response to a caller that may be long gone, and must not claim sync capacity.
+    syncRun?: boolean
 }
 
 export type AddToQueueParams = AddToQueueParamsCommon & (

@@ -1,10 +1,12 @@
 import { isNil } from '@activepieces/core-utils'
+import { apVersionUtil } from '@activepieces/server-utils'
 import { ApEnvironment, WorkerGroupScope } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { QueueName } from '../job'
 import { workerMachineCache } from './machine-cache'
 
 dayjs.extend(utc)
@@ -42,8 +44,10 @@ export const workerCapacity = {
         }
         const allWorkers = await workerMachineCache().find()
         const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
+        const appVersion = apVersionUtil.getCurrentRelease()
         const projectGroups = new Map<string, PoolCapacity>()
         const shared: PoolCapacity = { slots: 0, online: 0 }
+        const sync: PoolCapacity = { slots: 0, online: 0 }
         for (const worker of allWorkers) {
             if (!dayjs(worker.updated).isAfter(offlineThreshold)) {
                 continue
@@ -53,12 +57,23 @@ export const workerCapacity = {
                 const current = projectGroups.get(worker.workerGroupId) ?? { slots: 0, online: 0 }
                 projectGroups.set(worker.workerGroupId, { slots: current.slots + slots, online: current.online + 1 })
             }
+            else if (worker.workerQueue === QueueName.SYNC_JOBS) {
+                // Sync routing keys on sync.online, so only count a worker that can actually serve.
+                // During a rolling deploy the poll gate withholds jobs from a version-mismatched worker;
+                // counting it would divert /sync runs into syncJobs where nothing drains them while
+                // healthy shared workers sit idle. The shared pool is exempt — it is the unconditional
+                // fallback, never gated on its own online count.
+                if (apVersionUtil.versionsAreCompatible({ versionA: worker.information.workerProps.version, versionB: appVersion })) {
+                    sync.slots += slots
+                    sync.online += 1
+                }
+            }
             else if (isNil(worker.workerGroupScope)) {
                 shared.slots += slots
                 shared.online += 1
             }
         }
-        capacitySnapshot = { projectGroups, shared }
+        capacitySnapshot = { projectGroups, shared, sync }
         return capacitySnapshot
     },
     async invalidate(): Promise<void> {
@@ -79,4 +94,5 @@ export type PoolCapacity = {
 export type WorkerCapacitySnapshot = {
     projectGroups: Map<string, PoolCapacity>
     shared: PoolCapacity
+    sync: PoolCapacity
 }

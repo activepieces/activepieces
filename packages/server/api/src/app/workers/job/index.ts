@@ -18,6 +18,18 @@ export const parseWorkerGroupValue = ({ value, projectWorker }: { value: string 
     }
 }
 
+// Only class queues a worker may subscribe to via AP_WORKER_QUEUE — never runsMetadata
+// (dedicated processor) and never group queues (those travel via AP_WORKER_GROUP_ID).
+export const parseWorkerQueueValue = ({ value }: { value: string | undefined }): ParsedWorkerQueue => {
+    if (isNil(value) || value.length === 0 || value === QueueName.WORKER_JOBS) {
+        return { queue: null, invalidValue: null }
+    }
+    if (value === QueueName.SYNC_JOBS) {
+        return { queue: QueueName.SYNC_JOBS, invalidValue: null }
+    }
+    return { queue: null, invalidValue: value }
+}
+
 export * from './runs-metadata-queue-factory'
 
 export enum JobStatus {
@@ -27,6 +39,7 @@ export enum JobStatus {
 
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
+    SYNC_JOBS = 'syncJobs',
     RUNS_METADATA = 'runsMetadata',
 }
 
@@ -37,6 +50,15 @@ export const getPlatformGroupQueueName = (workerGroupId: string): string => {
 
 export const getProjectGroupQueueName = (workerGroupId: string): string => {
     return `project-${workerGroupId}-jobs`
+}
+
+export const getPollQueueName = ({ assignment, workerQueue }: GetPollQueueNameParams): string => {
+    if (!isNil(assignment)) {
+        return assignment.scope === WorkerGroupScope.PROJECT
+            ? getProjectGroupQueueName(assignment.id)
+            : getPlatformGroupQueueName(assignment.id)
+    }
+    return workerQueue ?? QueueName.WORKER_JOBS
 }
 
 export const ApQueueJob = z.object({
@@ -94,4 +116,14 @@ export function getEngineTimeout(operationType: EngineOperationType, flowTimeout
 export type WorkerGroupAssignment = {
     scope: WorkerGroupScope
     id: string
+}
+
+export type ParsedWorkerQueue = {
+    queue: QueueName.SYNC_JOBS | null
+    invalidValue: string | null
+}
+
+export type GetPollQueueNameParams = {
+    assignment: WorkerGroupAssignment | null
+    workerQueue: QueueName.SYNC_JOBS | null
 }

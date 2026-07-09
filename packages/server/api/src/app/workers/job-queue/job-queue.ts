@@ -1,4 +1,4 @@
-import { ApId, isNil } from '@activepieces/core-utils'
+import { ApId, isNil, unique } from '@activepieces/core-utils'
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
 import { EventDestinationJobData, ExecuteChatAgentJobData, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
@@ -20,6 +20,10 @@ const dedicatedWorkersQueues = new Map<string, Queue>()
 export const jobQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         await ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS })
+        // Materialize on every API replica at boot (not lazily on first sync enqueue) so the queue is
+        // present in getAllQueues on all replicas — Bull Board lists it and /queue-metrics reports a
+        // deterministic depth (0 when idle) instead of omitting it, which an autoscaler would misread.
+        await ensureQueueExists({ log, queueName: QueueName.SYNC_JOBS })
         log.info('[jobQueue#init] Dynamic queue system initialized')
     },
     async add(params: AddJobParams<JobType>): Promise<Job | null> {
@@ -27,7 +31,8 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
 
         const platformId = data.platformId
         const projectId = 'projectId' in data ? data.projectId : null
-        const queueName = await getQueueName({ platformId, projectId, jobType: data.jobType }, log)
+        const syncRun = params.type === JobType.ONE_TIME && params.syncRun === true
+        const queueName = await getQueueName({ platformId, projectId, jobType: data.jobType, syncRun }, log)
         const queue = await ensureQueueExists({ log, queueName })
 
         switch (type) {
@@ -107,12 +112,19 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         return queue
     },
     async removeAllFlowRunJobs({ flowRunId, platformId, projectId }: RemoveAllFlowRunJobsParams): Promise<void> {
-        const queueName = await getQueueName({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW }, log)
-        const queue = await ensureQueueExists({ log, queueName })
-        const allJobs = await queue.getJobs(['waiting', 'delayed'])
-        const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
-        await Promise.allSettled(matching.map((j) => j.remove()))
-        log.info({ flowRun: { id: flowRunId }, queueName, removedIds: matching.map((j) => j.id) }, '[jobQueue#removeAllFlowRunJobs] done')
+        // The run's job may sit in the sync queue (routed there while a sync worker was online),
+        // and the routed queue is recomputed here, so scan both instead of trusting one answer.
+        const routedQueueName = await getQueueName({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW }, log)
+        const queueNames = unique([routedQueueName, QueueName.SYNC_JOBS])
+        const removedIds: (string | undefined)[] = []
+        for (const queueName of queueNames) {
+            const queue = await ensureQueueExists({ log, queueName })
+            const allJobs = await queue.getJobs(['waiting', 'delayed'])
+            const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
+            await Promise.allSettled(matching.map((j) => j.remove()))
+            removedIds.push(...matching.map((j) => j.id))
+        }
+        log.info({ flowRun: { id: flowRunId }, queueNames, removedIds }, '[jobQueue#removeAllFlowRunJobs] done')
     },
 
     async close(): Promise<void> {
@@ -187,7 +199,7 @@ const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
     WorkerJobType.EXECUTE_WEBHOOK,
 ])
 
-async function getQueueName({ platformId, projectId, jobType }: GetQueueNameParams, log: FastifyBaseLogger): Promise<string> {
+async function getQueueName({ platformId, projectId, jobType, syncRun }: GetQueueNameParams, log: FastifyBaseLogger): Promise<string> {
     if (!isNil(platformId) && !isNil(projectId) && !isNil(jobType) && PROJECT_GROUP_ROUTABLE_JOB_TYPES.has(jobType)) {
         const workerGroupsEnabled = await workerGroupService(log).isWorkerGroupsEnabled({ platformId })
         if (workerGroupsEnabled) {
@@ -203,14 +215,22 @@ async function getQueueName({ platformId, projectId, jobType }: GetQueueNamePara
             }
         }
     }
-    if (!platformId) {
-        return QueueName.WORKER_JOBS
+    if (platformId) {
+        const groupId = await workerGroupService(log).getWorkerGroupId({ platformId })
+        if (!isNil(groupId)) {
+            return getPlatformGroupQueueName(groupId)
+        }
     }
-    const groupId = await workerGroupService(log).getWorkerGroupId({ platformId })
-    if (isNil(groupId)) {
-        return QueueName.WORKER_JOBS
+    // Same live-capacity gate as project groups: a run whose HTTP caller is actively waiting
+    // routes to the dedicated sync queue only while a sync worker is online, so the queue can
+    // never become a black hole when the sync pool scales to zero.
+    if (syncRun === true) {
+        const { sync } = await workerCapacity.get()
+        if (sync.online > 0) {
+            return QueueName.SYNC_JOBS
+        }
     }
-    return getPlatformGroupQueueName(groupId)
+    return QueueName.WORKER_JOBS
 }
 
 
@@ -223,6 +243,7 @@ type GetQueueNameParams = {
     platformId: string | null
     projectId?: string | null
     jobType?: WorkerJobType
+    syncRun?: boolean
 }
 
 type RemoveOneTimeJobParams = {
@@ -247,6 +268,10 @@ type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> 
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteChatAgentJobData, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteChatAgentJobData, JobType.ONE_TIME> & {
+    // Routing hint, not persisted on the job: the enqueuing context attests an HTTP caller is
+    // actively awaiting this run's response, making it eligible for the dedicated sync queue.
+    syncRun?: boolean
+}
 
 export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams

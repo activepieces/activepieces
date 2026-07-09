@@ -82,8 +82,9 @@ export const worker = {
         assertReleaseReadable()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
+        const workerQueue = system.get(WorkerSystemProp.WORKER_QUEUE)
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker, workerQueue },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,

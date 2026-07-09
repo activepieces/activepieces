@@ -1,9 +1,10 @@
+import { isNil } from '@activepieces/core-utils'
 import { createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { websocketService } from '../../core/websockets.service'
-import { parseWorkerGroupValue } from '../job'
+import { parseWorkerGroupValue, parseWorkerQueueValue } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { jobQueue } from '../job-queue/job-queue'
 import { createHandlers } from '../rpc/worker-rpc-service'
@@ -16,9 +17,20 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
             const rawWorkerGroupValue = socket.handshake.auth?.workerGroupId
             const projectWorker = socket.handshake.auth?.projectWorker === true
             const assignment = parseWorkerGroupValue({ value: typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined, projectWorker })
-            const response = await machineService(app.log).onConnection(request, assignment)
+            const rawWorkerQueueValue = socket.handshake.auth?.workerQueue
+            const { queue, invalidValue } = parseWorkerQueueValue({ value: typeof rawWorkerQueueValue === 'string' ? rawWorkerQueueValue : undefined })
+            if (!isNil(invalidValue)) {
+                app.log.error({ worker: { id: request.workerId }, workerQueue: invalidValue }, '[workerMachineController] Unknown AP_WORKER_QUEUE value — falling back to the shared queue, check for typos')
+            }
+            // A worker group is a stronger claim than a class queue: dedicated tenancy pools
+            // keep their routing, so a misconfigured pair never silently splits a group's capacity.
+            const workerQueue = isNil(assignment) ? queue : null
+            if (!isNil(assignment) && !isNil(queue)) {
+                app.log.warn({ worker: { id: request.workerId }, workerGroup: assignment, workerQueue: queue }, '[workerMachineController] AP_WORKER_QUEUE is ignored because AP_WORKER_GROUP_ID is set — the worker polls its group queue')
+            }
+            const response = await machineService(app.log).onConnection({ request, assignment, workerQueue })
             callback?.(response)
-            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, assignment, socket.id))
+            createRpcServer<WorkerToApiContract>(socket, createHandlers({ log: app.log, assignment, connectionId: socket.id, workerQueue }))
         }
     })
 

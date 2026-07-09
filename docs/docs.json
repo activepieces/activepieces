@@ -246,6 +246,7 @@
                         "icon": "screwdriver-wrench",
                         "pages": [
                            "install/configure-operate/worker-groups",
+                           "install/configure-operate/sync-webhook-workers",
                            "install/configure-operate/setup-app-webhooks",
                            "install/configure-operate/setup-opentelemetry",
                            "install/configure-operate/telemetry",

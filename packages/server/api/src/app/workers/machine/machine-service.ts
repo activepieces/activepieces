@@ -9,7 +9,7 @@ import { workerGroupService } from '../../ee/platform/platform-plan/worker-group
 import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { WorkerGroupAssignment } from '../job'
+import type { QueueName, WorkerGroupAssignment } from '../job'
 import { workerMachineCache } from './machine-cache'
 import { parseWorkerConcurrency, workerCapacity } from './worker-capacity'
 
@@ -71,16 +71,17 @@ export const machineService = (log: FastifyBaseLogger) => {
             await workerMachineCache().delete([request.workerId])
             await workerCapacity.invalidate()
         },
-        async onConnection(request: WorkerMachineHealthcheckRequest, assignment: WorkerGroupAssignment | null = null): Promise<WorkerSettingsResponse> {
+        async onConnection({ request, assignment = null, workerQueue = null }: OnConnectionParams): Promise<WorkerSettingsResponse> {
             const existingWorker = await workerMachineCache().findOne(request.workerId)
 
-            const type = isNil(assignment) ? 'SHARED' : 'DEDICATED'
+            const type = isNil(assignment) && isNil(workerQueue) ? 'SHARED' : 'DEDICATED'
             await workerMachineCache().upsert({
                 id: request.workerId,
                 information: request,
                 type,
                 workerGroupId: assignment?.id,
                 workerGroupScope: assignment?.scope,
+                workerQueue: workerQueue ?? undefined,
             }, existingWorker)
             // Only a newly-seen worker changes capacity; heartbeats from known workers don't.
             if (isNil(existingWorker)) {
@@ -129,7 +130,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 if (worker.workerGroupScope === WorkerGroupScope.PROJECT && !isNil(worker.workerGroupId) && worker.workerGroupId.length > 0) {
                     slotsByLabel.set(worker.workerGroupId, (slotsByLabel.get(worker.workerGroupId) ?? 0) + slots)
                 }
-                else if (isNil(worker.workerGroupScope)) {
+                else if (isNil(worker.workerGroupScope) && isNil(worker.workerQueue)) {
                     sharedSlots += slots
                 }
             }
@@ -153,4 +154,10 @@ type WorkerPoolCapacity = {
 
 type OnDisconnectParams = {
     workerId: string
+}
+
+type OnConnectionParams = {
+    request: WorkerMachineHealthcheckRequest
+    assignment?: WorkerGroupAssignment | null
+    workerQueue?: QueueName.SYNC_JOBS | null
 }
