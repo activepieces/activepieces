@@ -5,6 +5,7 @@ import { readdir, stat } from 'node:fs/promises'
 import { resolve, join, relative } from 'node:path'
 import { cwd } from 'node:process'
 import * as semver from 'semver'
+import { tryCatch } from '@activepieces/core-utils'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
 import { pieceTranslation, PieceMetadata } from '@activepieces/pieces-framework'
@@ -51,12 +52,6 @@ const validateMetadata = (pieceMetadata: PieceMetadata): void => {
 }
 
 
-const byDisplayNameIgnoreCase = (a: PieceMetadata, b: PieceMetadata) => {
-    const aName = a.displayName.toUpperCase();
-    const bName = b.displayName.toUpperCase();
-    return aName.localeCompare(bName, 'en');
-};
-
 export function getCommunityPieceFolder(pieceName: string): string {
     return join(COMMUNITY_PIECE_FOLDER, pieceName)
 }
@@ -91,13 +86,14 @@ export const pieceMetadataExists = async (
     return pieceExist[cloudResponse.status];
 };
 
-export async function findNewPieces(): Promise<PieceMetadata[]> {
+export async function findNewPieces(): Promise<FindNewPiecesResult> {
     const changedDistPaths = getChangedPiecesDistPaths()
     const paths = changedDistPaths ?? await findAllDistPaths()
 
     console.info(`[findNewPieces] scanning ${paths.length} dist paths${changedDistPaths ? ' (scoped to changed)' : ' (all)'}`)
 
-    const changedPieces: PieceMetadata[] = []
+    const pieces: PieceMetadata[] = []
+    const failures: PieceLoadFailure[] = []
 
     // Adding batches because of memory limit when we have a lot of pieces
     const batchSize = 75
@@ -109,21 +105,31 @@ export async function findNewPieces(): Promise<PieceMetadata[]> {
                 return null;
             }
             const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
-            if (!exists) {
-                try {
-                    return loadPieceFromFolder(folderPath);
-                } catch (ex) {
-                    return null;
-                }
+            if (exists) {
+                return null;
             }
-            return null;
+            const result = await tryCatch(() => loadPieceFromFolder(folderPath))
+            if (result.error !== null) {
+                const failure: PieceLoadFailure = { path: folderPath, error: result.error.message }
+                return failure
+            }
+            return result.data
         }))
 
-        const validResults = batchResults.filter((piece): piece is PieceMetadata => piece !== null)
-        changedPieces.push(...validResults)
+        for (const result of batchResults) {
+            if (result === null) {
+                continue
+            }
+            if ('error' in result) {
+                failures.push(result)
+            }
+            else {
+                pieces.push(result)
+            }
+        }
     }
 
-    return changedPieces;
+    return { pieces, failures };
 }
 
 function getChangedPiecesDistPaths(): string[] | null {
@@ -140,12 +146,6 @@ function getChangedPiecesDistPaths(): string[] | null {
         }
         return exists
     })
-}
-
-export async function findAllPieces(): Promise<PieceMetadata[]> {
-    const paths = await findAllDistPaths()
-    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-    return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
 }
 
 async function findAllDistPaths(): Promise<string[]> {
@@ -183,29 +183,23 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
     return paths
 }
 
-async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
-    try {
-        const packageJson = await readPackageJson(folderPath);
-        const payload = loadPieceViaChildProcess(folderPath);
-        const i18n = await pieceTranslation.initializeI18n(folderPath)
-        const metadata: PieceMetadata = {
-            ...payload.metadata,
-            name: packageJson.name,
-            version: packageJson.version,
-            i18n,
-            authors: payload.authors,
-            directoryPath: folderPath,
-            minimumSupportedRelease: payload.minimumSupportedRelease ?? '0.0.0',
-            maximumSupportedRelease: payload.maximumSupportedRelease ?? '99999.99999.9999',
-        };
+async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata> {
+    const packageJson = await readPackageJson(folderPath);
+    const payload = loadPieceViaChildProcess(folderPath);
+    const i18n = await pieceTranslation.initializeI18n(folderPath)
+    const metadata: PieceMetadata = {
+        ...payload.metadata,
+        name: packageJson.name,
+        version: packageJson.version,
+        i18n,
+        authors: payload.authors,
+        directoryPath: folderPath,
+        minimumSupportedRelease: payload.minimumSupportedRelease ?? '0.0.0',
+        maximumSupportedRelease: payload.maximumSupportedRelease ?? '99999.99999.9999',
+    };
 
-        validateMetadata(metadata);
-        return metadata;
-    }
-    catch (ex) {
-        console.error(ex)
-    }
-    return null
+    validateMetadata(metadata);
+    return metadata;
 }
 
 function loadPieceViaChildProcess(folderPath: string): LoadedPieceChildPayload {
@@ -215,5 +209,15 @@ function loadPieceViaChildProcess(folderPath: string): LoadedPieceChildPayload {
         maxBuffer: 64 * 1024 * 1024,
     })
     return JSON.parse(stdout) as LoadedPieceChildPayload
+}
+
+export type PieceLoadFailure = {
+    path: string
+    error: string
+}
+
+export type FindNewPiecesResult = {
+    pieces: PieceMetadata[]
+    failures: PieceLoadFailure[]
 }
 

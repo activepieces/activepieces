@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-scrapeless",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -9,7 +9,9 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@scrapeless-ai/sdk": "1.5.1",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@activepieces/core-utils": "workspace:*",
+    "puppeteer-core": "^24.9.0",
+    "playwright-core": "^1.52.0"
   },
   "devDependencies": {
     "tslib": "2.6.2"
