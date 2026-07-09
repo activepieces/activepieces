@@ -230,6 +230,8 @@ class ActivepiecesEmbedded {
   _isConfigured = false;
   _dashboardAndBuilderIframe?: IframeWithWindow;
   _cleanupDashboardListeners?: () => void;
+  _cleanupAuthFailedListener?: () => void;
+  _cleanupConfigFinishedListener?: () => void;
   configure({
     jwtToken,
     instanceUrl,
@@ -328,8 +330,8 @@ class ActivepiecesEmbedded {
             };
             targetWindow.postMessage(apEvent, '*');
             this._createAuthenticationSuccessListener(targetWindow);
-            this._createAuthenticationFailedListener(targetWindow);
-            this._createConfigurationFinishedListener(targetWindow, callbackAfterConfigurationFinished);
+            this._cleanupAuthFailedListener = this._createAuthenticationFailedListener(targetWindow);
+            this._cleanupConfigFinishedListener = this._createConfigurationFinishedListener(targetWindow, callbackAfterConfigurationFinished);
             window.removeEventListener('message', initialMessageHandler);
             break;
           }
@@ -353,7 +355,7 @@ class ActivepiecesEmbedded {
     return iframe;
   }
 
-  private _createConfigurationFinishedListener = (targetWindow: Window, callbackAfterConfigurationFinished?: () => void) => {
+  private _createConfigurationFinishedListener = (targetWindow: Window, callbackAfterConfigurationFinished?: () => void): (() => void) => {
     const configurationFinishedHandler = (event: MessageEvent<ActivepiecesClientConfigurationFinished>) => {
       if (event.data.type === ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED && event.source === targetWindow) {
         this._logger().log('Configuration finished')
@@ -368,15 +370,17 @@ class ActivepiecesEmbedded {
       }
     }
     window.addEventListener('message', configurationFinishedHandler);
+    return () => window.removeEventListener('message', configurationFinishedHandler);
   }
 
-  private _createAuthenticationFailedListener = (targetWindow: Window) => {
+  private _createAuthenticationFailedListener = (targetWindow: Window): (() => void) => {
     const authenticationFailedHandler = (event: MessageEvent<ActivepiecesClientAuthenticationFailed>) => {
         if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED && event.source === targetWindow) {
            this._errorCreator('Authentication failed',event.data.data);
       }
     }
     window.addEventListener('message', authenticationFailedHandler);
+    return () => window.removeEventListener('message', authenticationFailedHandler);
   }
 
   private _createAuthenticationSuccessListener = (targetWindow: Window) => {
@@ -481,6 +485,10 @@ class ActivepiecesEmbedded {
     }
     this._cleanupDashboardListeners?.();
     this._cleanupDashboardListeners = undefined;
+    this._cleanupAuthFailedListener?.();
+    this._cleanupAuthFailedListener = undefined;
+    this._cleanupConfigFinishedListener?.();
+    this._cleanupConfigFinishedListener = undefined;
     this._isConfigured = false;
     this._pendingNavigationRoutes = [];
   }
