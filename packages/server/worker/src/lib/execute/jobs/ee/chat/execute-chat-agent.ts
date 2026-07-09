@@ -276,7 +276,8 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         catch (err) {
             log.error({ error: err, conversation: { id: conversationId } }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-            const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.QUOTA_EXCEEDED : undefined
+            const isCreditError = isCreditExhaustedError(errorMessage)
+            const errorCode = isCreditError ? ErrorCode.QUOTA_EXCEEDED : undefined
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveChatMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateChatProgress) and only flips status, so an errored turn keeps

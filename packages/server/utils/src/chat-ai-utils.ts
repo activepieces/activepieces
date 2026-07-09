@@ -115,7 +115,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
                 ...spreadIfDefined('headers', metadata ? {
                     'x-ap-platform-id': metadata.platformId,
                     'x-ap-conversation-id': metadata.conversationId,
-                    'x-ap-run-id': metadata.runId,
+                    ...spreadIfDefined('x-ap-run-id', metadata.runId),
                 } : undefined),
             }).chat(modelId) as LanguageModel
         }
@@ -529,7 +529,7 @@ export type { ContentPartLike }
 type ChatModelMetadata = {
     platformId: string
     conversationId: string
-    runId: string
+    runId?: string
 }
 
 export type { ChatModelMetadata }
