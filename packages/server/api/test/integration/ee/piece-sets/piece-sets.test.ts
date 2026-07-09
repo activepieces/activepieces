@@ -243,6 +243,58 @@ describe('Piece Sets API', () => {
             expect(body.config.selectedTriggers).toEqual({})
         })
 
+        it('normalizes an empty-string key to a generated slug instead of storing it verbatim', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const makeSet = async (name: string) => (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name },
+            })).json<PieceSet>()
+
+            const updateKey = (id: string) => app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { key: '' },
+            })
+
+            const first = await makeSet('First')
+            const second = await makeSet('Second')
+
+            const firstResponse = await updateKey(first.id)
+            const secondResponse = await updateKey(second.id)
+
+            expect(firstResponse.statusCode).toBe(StatusCodes.OK)
+            expect(secondResponse.statusCode).toBe(StatusCodes.OK)
+            const firstKey = firstResponse.json<PieceSet>().key
+            const secondKey = secondResponse.json<PieceSet>().key
+            expect(firstKey).not.toBe('')
+            expect(secondKey).not.toBe('')
+            expect(firstKey).not.toBe(secondKey)
+        })
+
+        it('returns 409 (not 500) when updating to a key already used on the platform', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const makeSet = async (name: string, key: string) => (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name, key },
+            })).json<PieceSet>()
+
+            await makeSet('Taken', 'shared-key')
+            const other = await makeSet('Other', 'other-key')
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${other.id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { key: 'shared-key' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
         it('resetting a piece to "all" removes its selection key', async () => {
             const { token } = await setupPlatformWithPieceSets()
             const created = await app!.inject({

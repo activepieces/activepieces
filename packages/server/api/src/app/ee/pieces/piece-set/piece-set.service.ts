@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
 import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In } from 'typeorm'
+import { EntityManager, In, QueryFailedError } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { distributedLock } from '../../../database/redis-connections'
@@ -113,15 +113,20 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
 
     async create({ platformId, name, key, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
         const id = apId()
-        await pieceSetRepo().save({
-            id,
-            platformId,
-            name,
-            key: resolveKey({ key, name }),
-            isDefault,
-            generatedForProjectId,
-            config: config ?? pieceSetConfig.emptyConfig(),
-        })
+        try {
+            await pieceSetRepo().save({
+                id,
+                platformId,
+                name,
+                key: resolveKey({ key, name }),
+                isDefault,
+                generatedForProjectId,
+                config: config ?? pieceSetConfig.emptyConfig(),
+            })
+        }
+        catch (error) {
+            rethrowKeyConflict(error)
+        }
         return pieceSetRepo().findOneByOrFail({ id })
     },
 
@@ -130,11 +135,16 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
 
         const updatedConfig = pieceSetConfig.applyUpdate({ current: existing.config, request })
 
-        await pieceSetRepo().update({ id, platformId }, {
-            ...spreadIfDefined('name', request.name),
-            ...(request.key !== undefined ? { key: request.key } : {}),
-            config: updatedConfig,
-        })
+        try {
+            await pieceSetRepo().update({ id, platformId }, {
+                ...spreadIfDefined('name', request.name),
+                ...(request.key !== undefined ? { key: resolveKey({ key: request.key, name: request.name ?? existing.name }) } : {}),
+                config: updatedConfig,
+            })
+        }
+        catch (error) {
+            rethrowKeyConflict(error)
+        }
 
         return this.getOne({ id, platformId })
     },
@@ -213,14 +223,20 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
     },
 })
 
-// The key is the embed-facing handle (referenced from the provision token's `pieceSet`
-// claim). When the admin doesn't supply one, derive a readable slug from the name and
-// append a short random suffix so it's unique per platform without a collision probe.
-// ponytail: suffix collision is astronomically unlikely at per-platform set counts; if it
-// ever trips the unique index, catch the violation and regenerate.
 function resolveKey({ key, name }: { key?: string | null, name: string }): string {
     if (!isNil(key) && key.trim().length > 0) {
         return key
     }
     return `${kebabCase(name)}-${apId().slice(0, 8)}`
+}
+
+function rethrowKeyConflict(error: unknown): never {
+    const driverError: unknown = error instanceof QueryFailedError ? error.driverError : undefined
+    if (typeof driverError === 'object' && driverError !== null && 'code' in driverError && driverError.code === '23505') {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'Piece set key already used' },
+        })
+    }
+    throw error
 }
