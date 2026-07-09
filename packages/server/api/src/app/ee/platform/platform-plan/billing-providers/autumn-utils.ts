@@ -13,6 +13,7 @@ import {
     Range,
     type TrackParams,
 } from 'autumn-js'
+import { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
@@ -236,15 +237,14 @@ export const autumnUtils = {
 
 export const autumnConsole = {
     async listPlans({ platformId }: { platformId: string }): Promise<PurchasablePlan[]> {
-        const response = await safeHttp.axios.post<ConsolePlansEnvelope>(
+        const response = await consoleGet<ConsolePlansEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/plans`,
-            { version: apVersionUtil.getCurrentRelease(), platformId },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
+            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, params: { version: apVersionUtil.getCurrentRelease(), platformId } },
         )
         return response.data.data
     },
     async enrollFree({ email }: { email: string }): Promise<AutumnEnrollmentCredentials> {
-        const response = await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        const response = await consolePost<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/enroll`,
             { email },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
@@ -252,7 +252,7 @@ export const autumnConsole = {
         return response.data.data
     },
     async activate({ licenseKey }: { licenseKey: string }): Promise<AutumnEnrollmentCredentials> {
-        const response = await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        const response = await consolePost<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/activate`,
             {},
             {
@@ -263,7 +263,7 @@ export const autumnConsole = {
         return response.data.data
     },
     async checkout({ autumnCustomerId, autumnApiKey, planId, successUrl }: ConsoleCustomerCall & { planId: string, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
-        const response = await safeHttp.axios.post<{ data: { paymentUrl: string | null } }>(
+        const response = await consolePost<{ data: { paymentUrl: string | null } }>(
             `${AUTUMN_CONSOLE_URL}/api/billing/checkout`,
             { autumnCustomerId, planId, successUrl },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
@@ -271,10 +271,9 @@ export const autumnConsole = {
         return response.data.data
     },
     async toppableFeatures({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<ToppableFeature[]> {
-        const response = await safeHttp.axios.post<{ data: RawToppableFeature[] }>(
+        const response = await consoleGet<{ data: RawToppableFeature[] }>(
             `${AUTUMN_CONSOLE_URL}/api/billing/toppable-features`,
-            { autumnCustomerId },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
+            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, params: { autumnCustomerId }, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
         return response.data.data.flatMap((feature) => {
             if (!autumnUtils.isAutumnFeatureId(feature.featureId)) {
@@ -284,7 +283,7 @@ export const autumnConsole = {
         })
     },
     async topUp({ autumnCustomerId, autumnApiKey, featureId, quantity, successUrl }: ConsoleCustomerCall & { featureId: string, quantity: number, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
-        const response = await safeHttp.axios.post<{ data: { paymentUrl: string | null } }>(
+        const response = await consolePost<{ data: { paymentUrl: string | null } }>(
             `${AUTUMN_CONSOLE_URL}/api/billing/topup`,
             { autumnCustomerId, featureId, quantity, successUrl },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
@@ -292,7 +291,7 @@ export const autumnConsole = {
         return response.data.data
     },
     async portal({ autumnCustomerId, autumnApiKey, returnUrl }: ConsoleCustomerCall & { returnUrl?: string }): Promise<{ url: string | null }> {
-        const response = await safeHttp.axios.post<{ data: { url: string | null } }>(
+        const response = await consolePost<{ data: { url: string | null } }>(
             `${AUTUMN_CONSOLE_URL}/api/billing/portal`,
             { autumnCustomerId, returnUrl },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
@@ -301,14 +300,14 @@ export const autumnConsole = {
     },
     async configureAutoTopUp(params: ConsoleCustomerCall & ConfigureAutoTopUpOnConsoleParams): Promise<void> {
         const { autumnCustomerId, autumnApiKey, ...body } = params
-        await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        await consolePost<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/auto-topup`,
             { autumnCustomerId, ...body },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
     },
     async setupPayment({ autumnCustomerId, autumnApiKey, redirectUrl }: ConsoleCustomerCall & { redirectUrl?: string }): Promise<{ url: string | null }> {
-        const response = await safeHttp.axios.post<{ data: { url: string | null } }>(
+        const response = await consolePost<{ data: { url: string | null } }>(
             `${AUTUMN_CONSOLE_URL}/api/billing/setup-payment`,
             { autumnCustomerId, redirectUrl },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
@@ -316,7 +315,7 @@ export const autumnConsole = {
         return response.data.data
     },
     async provisionLicenseKey({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<{ licenseKey: string | null }> {
-        const response = await safeHttp.axios.post<{ data: { licenseKey: string | null } }>(
+        const response = await consolePost<{ data: { licenseKey: string | null } }>(
             `${AUTUMN_CONSOLE_URL}/api/billing/provision-license-key`,
             { autumnCustomerId },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
@@ -324,14 +323,14 @@ export const autumnConsole = {
         return response.data.data
     },
     async cancel({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<void> {
-        await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        await consolePost<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/cancel`,
             { autumnCustomerId },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
     },
     async reactivate({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<void> {
-        await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        await consolePost<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/reactivate`,
             { autumnCustomerId },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
@@ -341,7 +340,7 @@ export const autumnConsole = {
         const creds = await autumnConsole.getCreds(log, platformId)
         assertNotNullOrUndefined(creds, 'Autumn credentials must exist before applying an AppSumo plan')
         const token = system.get(AppSystemProp.APPSUMO_TOKEN)
-        await safeHttp.axios.post<ConsoleBillingEnvelope>(
+        await consolePost<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/billing/appsumo`,
             { autumnCustomerId: creds.autumnCustomerId, action },
             {
@@ -353,6 +352,26 @@ export const autumnConsole = {
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
         return autumnUtils.loadAutumnCreds(log, platformId)
     },
+}
+
+async function consolePost<T>(url: string, body: unknown, config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    const { data: response, error } = await tryCatch(() => safeHttp.axios.post<T>(url, body, config))
+    if (!isNil(error)) {
+        system.globalLogger().error({ error, url }, 'Autumn console request failed')
+        throw error
+    }
+    assertNotNullOrUndefined(response, 'response')
+    return response
+}
+
+async function consoleGet<T>(url: string, config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    const { data: response, error } = await tryCatch(() => safeHttp.axios.get<T>(url, config))
+    if (!isNil(error)) {
+        system.globalLogger().error({ error, url }, 'Autumn console request failed')
+        throw error
+    }
+    assertNotNullOrUndefined(response, 'response')
+    return response
 }
 
 function toCreditUsage(response: AggregateEventsResponse): CreditUsage {
