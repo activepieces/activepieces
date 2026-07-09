@@ -276,6 +276,7 @@
                   "icon": "shield-check",
                   "pages": [
                      "install/guarantees/crash-recovery",
+                     "install/guarantees/disaster-recovery",
                      "install/guarantees/reserved-resources",
                      "install/guarantees/execution-isolation"
                   ]
