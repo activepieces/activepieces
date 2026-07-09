@@ -18,7 +18,7 @@ Workers are separate Node processes that poll the app for jobs and execute flows
 
 ## Edition Availability
 - Community / Enterprise / Cloud: all editions run workers; topology differs (embedded `WORKER_AND_APP` for self-host single-container vs dedicated worker fleets on Cloud).
-- **Per-project worker routing** is an enterprise feature gated behind `platform_plan.isolatedWorkersEnabled`. The routing itself (queue resolution) is edition-agnostic, but assigning a project's `workerGroupId` and listing available project groups (`GET /v1/projects/worker-groups`) require the flag; unassigned projects always use the shared/platform queue.
+- **Per-project worker routing** is an enterprise feature gated behind `platform_plan.workerGroupsEnabled`. The routing itself (queue resolution) is edition-agnostic, but assigning a project's `workerGroupId` and listing available project groups (`GET /v1/projects/worker-groups`) require the flag; unassigned projects always use the shared/platform queue.
 
 ## Domain Terms
 
