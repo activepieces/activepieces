@@ -1296,6 +1296,8 @@
   "Show this piece for all projects": "Show this piece for all projects",
   "Unpin this piece": "Unpin this piece",
   "Pin this piece": "Pin this piece",
+  "Pin to nearest step": "Pin to nearest step",
+  "Pinned to {stepName}": "Pinned to {stepName}",
   "Configure OAuth2 App": "Configure OAuth2 App",
   "Delete OAuth2 App": "Delete OAuth2 App",
   "Template is required": "Template is required",

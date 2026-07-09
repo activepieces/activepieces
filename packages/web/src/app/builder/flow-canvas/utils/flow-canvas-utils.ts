@@ -676,13 +676,19 @@ const getStepStatus = (
   );
   return stepOutput?.status;
 };
-function buildNotesGraph(notes: Note[]): ApGraph {
+function buildNotesGraph({
+  notes,
+  stepNodes,
+}: {
+  notes: Note[];
+  stepNodes: ApGraph['nodes'];
+}): ApGraph {
   return {
     nodes: notes.map((note) => ({
       id: note.id,
       type: ApNodeType.NOTE,
       draggable: true,
-      position: note.position,
+      position: resolveNotePosition({ note, stepNodes }),
       data: {
         content: note.content,
         creatorId: note.ownerId,
@@ -691,6 +697,29 @@ function buildNotesGraph(notes: Note[]): ApGraph {
       },
     })),
     edges: [],
+  };
+}
+
+function resolveNotePosition({
+  note,
+  stepNodes,
+}: {
+  note: Note;
+  stepNodes: ApGraph['nodes'];
+}): { x: number; y: number } {
+  const anchor = note.anchor;
+  if (isNil(anchor)) {
+    return note.position;
+  }
+  const stepNode = stepNodes.find(
+    (node) => node.type === ApNodeType.STEP && node.id === anchor.stepName,
+  );
+  if (isNil(stepNode)) {
+    return note.position;
+  }
+  return {
+    x: stepNode.position.x + anchor.offset.x,
+    y: stepNode.position.y + anchor.offset.y,
   };
 }
 
@@ -731,7 +760,6 @@ export const flowCanvasUtils = {
       step: version.trigger,
       orientation,
     });
-    const notesGraph = buildNotesGraph(notes);
     const graphEndWidget = stepsGraph.nodes.findLast(
       (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
     ) as ApGraphEndNode;
@@ -744,6 +772,10 @@ export const flowCanvasUtils = {
       orientation === 'horizontal'
         ? transposeGraphPositions(stepsGraph)
         : stepsGraph;
+    const notesGraph = buildNotesGraph({
+      notes,
+      stepNodes: orientedGraph.nodes,
+    });
     return mergeGraph(orientedGraph, notesGraph);
   },
   createFocusStepInGraphParams,

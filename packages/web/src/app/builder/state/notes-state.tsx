@@ -19,7 +19,12 @@ export enum NoteDragOverlayMode {
 export type NotesState = {
   addNote: (request: Omit<AddNoteRequest, 'id'>) => void;
   deleteNote: (id: string) => void;
-  moveNote: (id: string, position: { x: number; y: number }) => void;
+  moveNote: (params: {
+    id: string;
+    position: { x: number; y: number };
+    anchor?: Note['anchor'];
+  }) => void;
+  setNoteAnchor: (params: { id: string; anchor: Note['anchor'] }) => void;
   resizeNote: (id: string, size: { width: number; height: number }) => void;
   draggedNote: Note | null;
   updateContent: (id: string, content: string) => void;
@@ -99,7 +104,15 @@ export const createNotesState = (
         },
       });
     },
-    moveNote: (id: string, position: { x: number; y: number }) => {
+    moveNote: ({
+      id,
+      position,
+      anchor,
+    }: {
+      id: string;
+      position: { x: number; y: number };
+      anchor?: Note['anchor'];
+    }) => {
       set(() => {
         return {
           noteDragOverlayMode: null,
@@ -115,6 +128,20 @@ export const createNotesState = (
         request: {
           ...note,
           position,
+          ...(anchor !== undefined ? { anchor } : {}),
+        },
+      });
+    },
+    setNoteAnchor: ({ id, anchor }: { id: string; anchor: Note['anchor'] }) => {
+      const note = get().getNoteById(id);
+      if (!note) {
+        return;
+      }
+      get().applyOperation({
+        type: FlowOperationType.UPDATE_NOTE,
+        request: {
+          ...note,
+          anchor,
         },
       });
     },

@@ -1,10 +1,16 @@
-import { NoteColorVariant } from '@activepieces/shared';
+import {
+  flowStructureUtil,
+  isNil,
+  NoteColorVariant,
+} from '@activepieces/shared';
 import { Editor } from '@tiptap/core';
+import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { TrashIcon } from 'lucide-react';
+import { Pin, PinOff, TrashIcon } from 'lucide-react';
 import { forwardRef, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { ApNodeType } from '@/app/builder/flow-canvas/utils/types';
 import {
   MarkdownTools,
   ToolWrapper,
@@ -20,10 +26,57 @@ import { cn } from '@/lib/utils';
 
 export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [updateNoteColor, deleteNote] = useBuilderStateContext((state) => [
+  const [
+    updateNoteColor,
+    deleteNote,
+    getNoteById,
+    setNoteAnchor,
+    moveNote,
+    flowVersion,
+  ] = useBuilderStateContext((state) => [
     state.updateNoteColor,
     state.deleteNote,
+    state.getNoteById,
+    state.setNoteAnchor,
+    state.moveNote,
+    state.flowVersion,
   ]);
+  const reactFlow = useReactFlow();
+  const note = getNoteById(id);
+  const anchor = note?.anchor ?? null;
+  const anchoredStepDisplayName = anchor
+    ? flowStructureUtil.getStep(anchor.stepName, flowVersion.trigger)
+        ?.displayName ?? anchor.stepName
+    : null;
+  const togglePin = () => {
+    if (isNil(note)) {
+      return;
+    }
+    const notePosition = reactFlow.getNode(id)?.position ?? note.position;
+    if (anchor) {
+      moveNote({ id, position: notePosition, anchor: null });
+      return;
+    }
+    const nearestStepNode = findNearestStepNode({
+      stepNodes: reactFlow
+        .getNodes()
+        .filter((node) => node.type === ApNodeType.STEP),
+      origin: notePosition,
+    });
+    if (isNil(nearestStepNode)) {
+      return;
+    }
+    setNoteAnchor({
+      id,
+      anchor: {
+        stepName: nearestStepNode.id,
+        offset: {
+          x: notePosition.x - nearestStepNode.position.x,
+          y: notePosition.y - nearestStepNode.position.y,
+        },
+      },
+    });
+  };
   return (
     <div
       ref={containerRef}
@@ -40,6 +93,23 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
           />
           <MarkdownTools editor={editor} />
           <Separator orientation="vertical" className="h-[30px]"></Separator>
+          <ToolWrapper
+            tooltip={
+              anchor
+                ? t('Pinned to {stepName}', {
+                    stepName: anchoredStepDisplayName,
+                  })
+                : t('Pin to nearest step')
+            }
+          >
+            <Button variant="ghost" size="icon" onClick={togglePin}>
+              {anchor ? (
+                <PinOff className="size-4" />
+              ) : (
+                <Pin className="size-4" />
+              )}
+            </Button>
+          </ToolWrapper>
           <ToolWrapper tooltip={t('Delete')}>
             <Button
               variant="ghost"
@@ -56,6 +126,37 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
     </div>
   );
 };
+
+function findNearestStepNode({
+  stepNodes,
+  origin,
+}: {
+  stepNodes: { id: string; position: { x: number; y: number } }[];
+  origin: { x: number; y: number };
+}): { id: string; position: { x: number; y: number } } | null {
+  return stepNodes.reduce<{
+    id: string;
+    position: { x: number; y: number };
+  } | null>((nearest, node) => {
+    if (isNil(nearest)) {
+      return node;
+    }
+    return squaredDistance({ from: origin, to: node.position }) <
+      squaredDistance({ from: origin, to: nearest.position })
+      ? node
+      : nearest;
+  }, null);
+}
+
+function squaredDistance({
+  from,
+  to,
+}: {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+}): number {
+  return (from.x - to.x) ** 2 + (from.y - to.y) ** 2;
+}
 
 const NoteColorPickerClassName = {
   [NoteColorVariant.YELLOW]: 'bg-amber-400',

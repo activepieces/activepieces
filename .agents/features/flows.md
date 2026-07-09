@@ -61,7 +61,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 
 **Flow**: id, projectId, folderId (nullable), status (ENABLED/DISABLED), externalId, publishedVersionId (nullable, unique FK), metadata (JSONB), operationStatus (NONE/DELETING/ENABLING/DISABLING), timeSavedPerRun, ownerId, templateId, createdBy (nullable JSONB — `FlowCreator`). Relations: project, folder, owner, publishedVersion (one-to-one), versions (one-to-many), runs, events, tableWebhooks.
 
-**FlowVersion**: id, flowId, displayName, schemaVersion (current latest: `'22'`), trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB). Relations: flow, updatedByUser.
+**FlowVersion**: id, flowId, displayName, schemaVersion (current latest: `'22'`), trigger (JSONB — full flow graph), connectionIds[], agentIds[], updatedBy, valid, state (DRAFT/LOCKED), backupFiles (JSONB), notes[] (JSONB — each note may carry a nullable `anchor { stepName, offset }`). Relations: flow, updatedByUser.
 
 **Folder**: id, projectId, displayName. Used to organize flows and tables. Case-insensitive uniqueness.
 
@@ -79,7 +79,7 @@ All flow modifications go through `POST /v1/flows/:id` with a `FlowOperationRequ
 - Publishing: LOCK_AND_PUBLISH, USE_AS_DRAFT, LOCK_FLOW, CHANGE_STATUS
 - Organization: CHANGE_FOLDER, CHANGE_NAME, UPDATE_OWNER, UPDATE_METADATA, IMPORT_FLOW
 - Data: SAVE_SAMPLE_DATA, UPDATE_SAMPLE_DATA_INFO, UPDATE_MINUTES_SAVED
-- Notes: ADD_NOTE, UPDATE_NOTE, DELETE_NOTE
+- Notes: ADD_NOTE, UPDATE_NOTE, DELETE_NOTE. A note optionally carries `anchor { stepName, offset }` (nullable) pinning it to a step; DELETE_ACTION and DELETE_BRANCH null anchors whose step no longer exists in the version, including descendants of deleted containers (`notesOperations.clearDanglingNoteAnchors`) — auto-generated `step_N` names get reused, so stale anchors would re-capture unrelated new steps.
 
 ## Draft vs Published
 
@@ -121,7 +121,7 @@ The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas.
 - `canvas-state.ts` — viewport, selected node, drag state, plus the `userManuallySelectedStepDuringRun` flag and `resumeLiveFollow` action that gate auto-follow. The auto-focus effect lives in `useFocusOnStep` (`flow-canvas/hooks.tsx`): it calls `selectStepByName(step, { fromAutoFocus: true })` to pan the canvas to the latest engine step, and short-circuits whenever `userManuallySelectedStepDuringRun` is set. The flag flips to `true` when the user picks a different step mid-run (any `selectStepByName` call without `fromAutoFocus`) and clears via `resumeLiveFollow` or when `setRun` receives a new run id. Also owns the step-data-panel layout state: `stepDataPanelView` (`StepDataPanelView` = `'split' | 'drawer'`, persisted via localStorage) and `isStepDataPanelOpen`. Also owns the canvas-orientation state: `canvasOrientation` (`'vertical' | 'horizontal'`, persisted in localStorage as `ap.builder.canvasOrientation`)
 - `step-form-state.ts` — open/focused step configuration
 - `piece-selector-state.ts` — piece browser visibility and search
-- `notes-state.tsx` — sticky notes overlay
+- `notes-state.tsx` — sticky notes overlay. `moveNote`/`setNoteAnchor` send UPDATE_NOTE; unpin must send `anchor: null` (not `undefined` — JSON drops undefined keys and the server-side spread would keep the stale anchor). Anchored notes render at the step node's post-orientation position + offset (`buildNotesGraph` in `flow-canvas-utils.ts`, fallback to stored `position` when the step is missing); pin/unpin UI lives in `note-node/note-tools.tsx` (nearest step by distance). Anchor offsets are stored in final-orientation space and applied verbatim in both orientations.
 - `chat-state.ts` — embedded chat drawer state for testing `chat_submission`-trigger flows from the builder
 
 ### Canvas Orientation (Horizontal Layout)
