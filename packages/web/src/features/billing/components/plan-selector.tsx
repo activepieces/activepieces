@@ -5,9 +5,9 @@ import { Check, Info } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -18,6 +18,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
+import { useConfirmPurchaseDialogStore } from '../stores/confirm-purchase-dialog-state';
 
 import {
   DROP_TO_FREE_MESSAGE,
@@ -42,12 +43,16 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
   } = billingMutations.useCheckout(onSelected);
   const { mutateAsync: cancelSubscription } =
     billingMutations.useCancelSubscription(onSelected);
+  const { mutate: reactivate, isPending: isReactivating } =
+    billingMutations.useReactivateSubscription(onSelected);
   const { data: subscription } = billingQueries.usePlatformSubscription(
     platform.id,
     enabled,
   );
+  const { openDialog: openConfirmDialog } = useConfirmPurchaseDialogStore();
 
   const currentPlanId = subscription?.plan.plan ?? platform.plan.plan;
+  const hasScheduledChange = !isNil(subscription?.cancelAt);
   const allPlans = plans ?? [];
   const currentPlan = allPlans.find((plan) => plan.id === currentPlanId);
   const hasAnnualOption = allPlans.some(
@@ -60,10 +65,29 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
       ? 'year'
       : 'month');
 
+  const handleCheckout = (intent: CheckoutIntent) => {
+    const successUrl = planSelectorUtils.buildSuccessUrl(intent.action);
+    if (subscription?.billingPortalAvailable) {
+      openConfirmDialog({
+        planId: intent.planId,
+        planName: intent.planName,
+        priceAmount: intent.priceAmount,
+        billingCycle,
+        features: intent.features,
+        successUrl,
+      });
+      onSelected?.();
+      return;
+    }
+    checkout({ planId: intent.planId, successUrl });
+  };
+
   if (isLoading || isNil(plans)) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <LoadingSpinner />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <PlanColumnSkeleton key={index} />
+        ))}
       </div>
     );
   }
@@ -111,14 +135,12 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
                 monthlySibling,
               })}
               currentPlanId={currentPlanId}
+              hasScheduledChange={hasScheduledChange}
+              isReactivating={isReactivating}
               isPending={isPending}
               checkoutPlanId={isPending ? checkoutVariables?.planId : undefined}
-              onCheckout={(planId, action) =>
-                checkout({
-                  planId,
-                  successUrl: planSelectorUtils.buildSuccessUrl(action),
-                })
-              }
+              onCheckout={handleCheckout}
+              onKeepPlan={() => reactivate()}
               onDowngrade={async () => {
                 await cancelSubscription();
               }}
@@ -130,30 +152,56 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
   );
 }
 
+function PlanColumnSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border p-5">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+      <Skeleton className="h-9 w-28" />
+      <Skeleton className="h-9 w-full" />
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-4 w-32" />
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Skeleton key={index} className="h-4 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PlanColumn({
   entry,
   apiPlan,
   pricing,
   currentPlanId,
+  hasScheduledChange,
+  isReactivating,
   isPending,
   checkoutPlanId,
   onCheckout,
+  onKeepPlan,
   onDowngrade,
-}: {
-  entry: PlanCatalogEntry;
-  apiPlan?: PurchasablePlan;
-  pricing: PlanPricing | null;
-  currentPlanId: string | null | undefined;
-  isPending: boolean;
-  checkoutPlanId: string | undefined;
-  onCheckout: (planId: string, action: CheckoutAction) => void;
-  onDowngrade: () => Promise<void>;
-}) {
+}: PlanColumnProps) {
   const isFree = entry.key === 'free';
   const isEnterprise = entry.key === 'enterprise';
   const isCurrent = !isNil(apiPlan) && apiPlan.id === currentPlanId;
   const isOnPaidPlan =
     !isNil(currentPlanId) && currentPlanId !== planSelectorUtils.FREE_PLAN_ID;
+
+  const chargeAmount = isNil(apiPlan?.price)
+    ? apiPlan?.priceDisplay ?? ''
+    : `$${apiPlan.price.toLocaleString()}`;
+  const handleCtaCheckout = (planId: string, action: CheckoutAction) =>
+    onCheckout({
+      planId,
+      action,
+      planName: t(entry.name),
+      priceAmount: chargeAmount,
+      features: entry.features.map((feature) => feature.label),
+    });
 
   return (
     <div
@@ -204,12 +252,15 @@ function PlanColumn({
         isEnterprise={isEnterprise}
         isCurrent={isCurrent}
         isOnPaidPlan={isOnPaidPlan}
+        hasScheduledChange={hasScheduledChange}
+        isReactivating={isReactivating}
         highlighted={entry.highlighted}
         apiPlan={apiPlan}
         currentPlanId={currentPlanId}
         isPending={isPending}
         checkoutPlanId={checkoutPlanId}
-        onCheckout={onCheckout}
+        onCheckout={handleCtaCheckout}
+        onKeepPlan={onKeepPlan}
         onDowngrade={onDowngrade}
       />
 
@@ -246,26 +297,17 @@ function PlanCta({
   isEnterprise,
   isCurrent,
   isOnPaidPlan,
+  hasScheduledChange,
+  isReactivating,
   highlighted,
   apiPlan,
   currentPlanId,
   isPending,
   checkoutPlanId,
   onCheckout,
+  onKeepPlan,
   onDowngrade,
-}: {
-  isFree: boolean;
-  isEnterprise: boolean;
-  isCurrent: boolean;
-  isOnPaidPlan: boolean;
-  highlighted?: boolean;
-  apiPlan?: PurchasablePlan;
-  currentPlanId: string | null | undefined;
-  isPending: boolean;
-  checkoutPlanId: string | undefined;
-  onCheckout: (planId: string, action: CheckoutAction) => void;
-  onDowngrade: () => Promise<void>;
-}) {
+}: PlanCtaProps) {
   if (isEnterprise) {
     return (
       <Button variant="default" className="w-full bg-foreground" asChild>
@@ -281,6 +323,18 @@ function PlanCta({
   }
 
   if (isCurrent) {
+    if (hasScheduledChange) {
+      return (
+        <Button
+          variant="default"
+          className="w-full"
+          loading={isReactivating}
+          onClick={onKeepPlan}
+        >
+          {t('Keep current plan')}
+        </Button>
+      );
+    }
     return (
       <Button variant="outline" className="w-full" disabled>
         {t('Current plan')}
@@ -332,4 +386,43 @@ function PlanCta({
 type PlanSelectorProps = {
   enabled: boolean;
   onSelected?: () => void;
+};
+
+type PlanColumnProps = {
+  entry: PlanCatalogEntry;
+  apiPlan?: PurchasablePlan;
+  pricing: PlanPricing | null;
+  currentPlanId: string | null | undefined;
+  hasScheduledChange: boolean;
+  isReactivating: boolean;
+  isPending: boolean;
+  checkoutPlanId: string | undefined;
+  onCheckout: (intent: CheckoutIntent) => void;
+  onKeepPlan: () => void;
+  onDowngrade: () => Promise<void>;
+};
+
+type PlanCtaProps = {
+  isFree: boolean;
+  isEnterprise: boolean;
+  isCurrent: boolean;
+  isOnPaidPlan: boolean;
+  hasScheduledChange: boolean;
+  isReactivating: boolean;
+  highlighted?: boolean;
+  apiPlan?: PurchasablePlan;
+  currentPlanId: string | null | undefined;
+  isPending: boolean;
+  checkoutPlanId: string | undefined;
+  onCheckout: (planId: string, action: CheckoutAction) => void;
+  onKeepPlan: () => void;
+  onDowngrade: () => Promise<void>;
+};
+
+type CheckoutIntent = {
+  planId: string;
+  action: CheckoutAction;
+  planName: string;
+  priceAmount: string;
+  features: string[];
 };

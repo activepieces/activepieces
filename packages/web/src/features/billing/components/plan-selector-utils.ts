@@ -98,6 +98,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
       { label: '1 user' },
       { label: 'Automation flows' },
       { label: 'Tables' },
+      { label: 'API Keys' },
     ],
   },
   {

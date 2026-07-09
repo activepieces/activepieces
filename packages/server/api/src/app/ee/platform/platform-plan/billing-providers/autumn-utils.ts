@@ -23,7 +23,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://lounge-greatest-comprehensive-wives.trycloudflare.com'
+const AUTUMN_CONSOLE_URL = 'https://distinction-eliminate-trio-scripts.trycloudflare.com'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
@@ -391,10 +391,16 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
             nextResetAt: balance.nextResetAt,
         }
     }
-    // A lifetime plan (e.g. AppSumo) is a one-off `purchase`, not a subscription — the only base subscription
+    // A lifetime plan (e.g. AppSumo) is a one-off `purchase`, not a subscription — the only base subscription.
+    // Resolve from the ACTIVE base subscription (mirroring toBillingInfo): a scheduled future plan (e.g. a
+    // pending end-of-cycle downgrade) also lives in `subscriptions`, and picking it here would mislabel the
+    // customer as already on the plan they only switch to later.
+    const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
+    const activeBaseSubscriptions = baseSubscriptions.filter((subscription) => subscription.status === 'active')
     const baseSubscriptionPlanId =
-        customer.subscriptions.find((subscription) => !subscription.addOn && subscription.planId !== PlanName.FREE)?.planId
-        ?? customer.subscriptions.find((subscription) => !subscription.addOn)?.planId
+        activeBaseSubscriptions.find((subscription) => subscription.planId !== PlanName.FREE)?.planId
+        ?? activeBaseSubscriptions[0]?.planId
+        ?? baseSubscriptions[0]?.planId
         ?? null
     const purchasedPlanId = (customer.purchases ?? [])
         .find((purchase) => !isNil(purchase.planId) && purchase.planId !== PlanName.FREE)?.planId ?? null
