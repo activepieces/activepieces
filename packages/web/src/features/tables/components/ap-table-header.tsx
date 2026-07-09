@@ -18,6 +18,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import EditableText from '@/components/custom/editable-text';
 import { PageHeader } from '@/components/custom/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -60,6 +61,7 @@ export function ApTableHeader({
   lockedBy,
   takeOver,
 }: ApTableHeaderProps) {
+  const { embedState } = useEmbedding();
   const [
     selectedRecords,
     setSelectedRecords,
@@ -236,7 +238,9 @@ export function ApTableHeader({
           </button>
         </div>
       )}
-      <ActiveUsersWidget resourceId={table.id} />
+      {!embedState.hideActiveUsers && (
+        <ActiveUsersWidget resourceId={table.id} />
+      )}
       {selectedRecords.size > 0 && (
         <PermissionNeededTooltip hasPermission={canEdit}>
           <ConfirmationDeleteDialog
