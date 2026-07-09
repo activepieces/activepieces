@@ -24,7 +24,6 @@ export type NotesState = {
     position: { x: number; y: number };
     anchor?: Note['anchor'];
   }) => void;
-  setNoteAnchor: (params: { id: string; anchor: Note['anchor'] }) => void;
   resizeNote: (id: string, size: { width: number; height: number }) => void;
   draggedNote: Note | null;
   updateContent: (id: string, content: string) => void;
@@ -129,19 +128,6 @@ export const createNotesState = (
           ...note,
           position,
           ...(anchor !== undefined ? { anchor } : {}),
-        },
-      });
-    },
-    setNoteAnchor: ({ id, anchor }: { id: string; anchor: Note['anchor'] }) => {
-      const note = get().getNoteById(id);
-      if (!note) {
-        return;
-      }
-      get().applyOperation({
-        type: FlowOperationType.UPDATE_NOTE,
-        request: {
-          ...note,
-          anchor,
         },
       });
     },

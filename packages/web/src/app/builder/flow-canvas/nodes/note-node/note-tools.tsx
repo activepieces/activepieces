@@ -26,21 +26,14 @@ import { cn } from '@/lib/utils';
 
 export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [
-    updateNoteColor,
-    deleteNote,
-    getNoteById,
-    setNoteAnchor,
-    moveNote,
-    flowVersion,
-  ] = useBuilderStateContext((state) => [
-    state.updateNoteColor,
-    state.deleteNote,
-    state.getNoteById,
-    state.setNoteAnchor,
-    state.moveNote,
-    state.flowVersion,
-  ]);
+  const [updateNoteColor, deleteNote, getNoteById, moveNote, flowVersion] =
+    useBuilderStateContext((state) => [
+      state.updateNoteColor,
+      state.deleteNote,
+      state.getNoteById,
+      state.moveNote,
+      state.flowVersion,
+    ]);
   const reactFlow = useReactFlow();
   const note = getNoteById(id);
   const anchor = note?.anchor ?? null;
@@ -66,8 +59,9 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
     if (isNil(nearestStepNode)) {
       return;
     }
-    setNoteAnchor({
+    moveNote({
       id,
+      position: notePosition,
       anchor: {
         stepName: nearestStepNode.id,
         offset: {
