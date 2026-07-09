@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
-import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, PlanName, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { In } from 'typeorm'
@@ -7,6 +7,8 @@ import { repoFactory } from '../core/db/repo-factory'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
+import { billingProvider } from '../platform/billing-provider'
+import { platformService } from '../platform/platform.service'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
 
@@ -14,7 +16,8 @@ const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
 const modelsCache = new Map<string, AIProviderModel[]>()
 
-const MANAGED_OPENROUTER_KEY_LIMIT_USD = 20
+const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 1000
+const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
@@ -47,13 +50,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
-        return configuredProviders.map((p): AIProviderWithoutSensitiveData => ({
-            id: p.id,
-            name: p.displayName,
-            provider: p.provider,
-            config: p.config,
-            enabledForChat: p.enabledForChat ?? false,
-        }))
+        const hasActivepiecesProvider = configuredProviders.some((p) => p.provider === AIProviderName.ACTIVEPIECES)
+        const hideActivepiecesProvider = hasActivepiecesProvider && await shouldHideManagedAiProvider({ platformId, log })
+
+        return configuredProviders
+            .filter((p) => !(hideActivepiecesProvider && p.provider === AIProviderName.ACTIVEPIECES))
+            .map((p): AIProviderWithoutSensitiveData => ({
+                id: p.id,
+                name: p.displayName,
+                provider: p.provider,
+                config: p.config,
+                enabledForChat: p.enabledForChat ?? false,
+            }))
     },
 
     async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
@@ -273,6 +281,16 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function shouldHideManagedAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
+    const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
+    if (plan.embeddingEnabled) {
+        return true
+    }
+    const isAppSumoPlan = plan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false
+    const { credits } = await billingProvider.get(log).getCreditsAndAppSumoState(platformId)
+    return credits.unlimited && !isAppSumoPlan
+}
+
 type GetOrCreateActivepiecesConfigResponse = {
     platformId: PlatformId
     provider: AIProviderName
@@ -281,7 +299,8 @@ type GetOrCreateActivepiecesConfigResponse = {
 async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId): Promise<GetProviderConfigResponse> {
     const { key, data } = await openRouterApi.createKey({
         name: `Platform ${platformId}`,
-        limit: MANAGED_OPENROUTER_KEY_LIMIT_USD,
+        limit: MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD,
+        limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
     })
     const rawAuth: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
     const savedAiProvider = await aiProviderRepo().save({

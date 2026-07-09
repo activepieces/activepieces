@@ -54,8 +54,10 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` env var set):
 1. `getOrCreateActivePiecesProviderAuthConfig()` auto-creates provider
 2. `enrichWithKeysIfNeeded()` calls OpenRouter API to create API key
-3. Key limit set to `platform.plan.includedAiCredits / 1000` (1000 credits = $1)
+3. Key minted with a fixed spend guardrail of **$1000 / month** (`limit: 1000, limit_reset: 'monthly'`) — a hard ceiling against runaway cost, independent of the Autumn-metered credit balance. See `MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD` in `ai-provider-service.ts`.
 4. Schedules `AI_CREDIT_UPDATE_CHECK` system job for auto-renewal and top-up
+
+> **Older keys predate the monthly guardrail** (they were minted with a lifetime `limit: 20` and no reset). Normalize them with the one-off backfill script below **before deploying** the monthly-limit change.
 
 ## Credit System
 
@@ -64,6 +66,127 @@ Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` en
 - Usage cached 180 seconds
 - Monthly reset of included credits via system job
 - Auto top-up: when remaining < threshold, creates Stripe invoice
+
+## Operational: OpenRouter key-limit backfill (run before deployment)
+
+The creation path mints new managed keys at `$1000 / monthly`, but keys created before that change carry the old lifetime `$20` cap. Because the per-key limits live in **OpenRouter, not our database**, this is not a DB migration — it's a one-off HTTP backfill you run with the provisioning key from any machine (Node 18+, no Activepieces deps, no repo checkout needed).
+
+**Run it once, against production's `OPENROUTER_PROVISION_KEY`, right before deploying the monthly-limit change.**
+
+```bash
+# 1) Dry run first — lists exactly what would change, touches nothing:
+OPENROUTER_PROVISION_KEY=sk-or-... node backfill-openrouter-limits.mjs
+
+# 2) Apply once the dry run looks right:
+OPENROUTER_PROVISION_KEY=sk-or-... node backfill-openrouter-limits.mjs --apply
+```
+
+Behavior: paginates all keys (`offset`, 100/page, incl. disabled), filters to names starting with `Platform ` (the managed per-platform keys — override with `--name-prefix=`), skips any key already at `1000`/`monthly` (idempotent), goes sequential with a 250ms delay (`--delay=`) and backs off on `429`. It **forces** `limit: 1000` on every matching key — this overwrites any prior admin `increaseAiCredits` top-ups (intentional: the monthly guardrail replaces the lifetime top-up model).
+
+<details>
+<summary><code>backfill-openrouter-limits.mjs</code></summary>
+
+```js
+#!/usr/bin/env node
+// One-off backfill: normalize managed OpenRouter keys to $1000 / monthly.
+//
+// Runs anywhere with Node 18+ (global fetch). No Activepieces deps.
+//
+//   OPENROUTER_PROVISION_KEY=sk-or-... node backfill-openrouter-limits.mjs           # dry run
+//   OPENROUTER_PROVISION_KEY=sk-or-... node backfill-openrouter-limits.mjs --apply   # actually patch
+//
+// Flags:
+//   --apply            perform PATCHes (omit for a dry run that only prints what would change)
+//   --name-prefix=STR  only touch keys whose name starts with STR (default "Platform ")
+//   --delay=MS         delay between requests (default 250)
+
+const BASE_URL = 'https://openrouter.ai/api/v1'
+const TARGET_LIMIT = 1000
+const TARGET_RESET = 'monthly'
+const PAGE_SIZE = 100
+
+const apiKey = process.env.OPENROUTER_PROVISION_KEY
+if (!apiKey) {
+    console.error('Set OPENROUTER_PROVISION_KEY in the environment.')
+    process.exit(1)
+}
+
+const args = process.argv.slice(2)
+const apply = args.includes('--apply')
+const namePrefix = (args.find((a) => a.startsWith('--name-prefix=')) ?? '--name-prefix=Platform ').split('=').slice(1).join('=')
+const delayMs = Number((args.find((a) => a.startsWith('--delay=')) ?? '--delay=250').split('=')[1])
+
+const authHeaders = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+async function request(method, path, body) {
+    for (let attempt = 0; attempt < 6; attempt++) {
+        const res = await fetch(`${BASE_URL}${path}`, {
+            method,
+            headers: authHeaders,
+            body: body ? JSON.stringify(body) : undefined,
+        })
+        if (res.status === 429) {
+            const wait = Math.min(30000, 1000 * 2 ** attempt)
+            console.warn(`  429 rate limited, backing off ${wait}ms`)
+            await sleep(wait)
+            continue
+        }
+        if (!res.ok) {
+            throw new Error(`${method} ${path} -> ${res.status} ${await res.text()}`)
+        }
+        return res.json()
+    }
+    throw new Error(`${method} ${path} -> gave up after repeated 429s`)
+}
+
+async function listAllKeys() {
+    const all = []
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+        const { data } = await request('GET', `/keys?offset=${offset}&include_disabled=true`)
+        all.push(...data)
+        if (data.length < PAGE_SIZE) break
+        await sleep(delayMs)
+    }
+    return all
+}
+
+async function main() {
+    console.log(`Mode: ${apply ? 'APPLY' : 'DRY RUN'} | name prefix: "${namePrefix}" | target: $${TARGET_LIMIT}/${TARGET_RESET}`)
+    const keys = await listAllKeys()
+    const managed = keys.filter((k) => (k.name ?? '').startsWith(namePrefix))
+    console.log(`Fetched ${keys.length} keys; ${managed.length} match the name prefix.`)
+
+    let updated = 0, skipped = 0, failed = 0
+    for (const key of managed) {
+        const alreadyCorrect = key.limit === TARGET_LIMIT && key.limit_reset === TARGET_RESET
+        if (alreadyCorrect) {
+            skipped++
+            continue
+        }
+        console.log(`${apply ? 'PATCH' : 'would patch'} ${key.hash} (${key.name}) limit=${key.limit}->${TARGET_LIMIT} reset=${key.limit_reset}->${TARGET_RESET}`)
+        if (apply) {
+            try {
+                await request('PATCH', `/keys/${key.hash}`, { limit: TARGET_LIMIT, limit_reset: TARGET_RESET })
+                updated++
+            }
+            catch (err) {
+                failed++
+                console.error(`  FAILED ${key.hash}: ${err.message}`)
+            }
+            await sleep(delayMs)
+        }
+    }
+    console.log(`\nDone. ${apply ? 'updated' : 'would update'}=${updated + (apply ? 0 : managed.length - skipped)} skipped(already correct)=${skipped} failed=${failed}`)
+}
+
+main().catch((err) => {
+    console.error(err)
+    process.exit(1)
+})
+```
+
+</details>
 
 ## Model Caching
 
