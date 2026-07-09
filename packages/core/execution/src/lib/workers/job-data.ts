@@ -4,7 +4,6 @@ import { isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
-import { CodeAction, PieceAction } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
@@ -64,9 +63,6 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_TOKEN_REFRESH:
             return 'critical'
         case WorkerJobType.EXECUTE_CHAT_AGENT:
-        // Ad-hoc actions run synchronously but must never starve the truly-interactive (critical)
-        // property/validation/trigger-hook jobs a human is waiting on in the builder.
-        case WorkerJobType.EXECUTE_ACTION:
             return 'high'
     }
 }
@@ -84,7 +80,6 @@ export enum WorkerJobType {
     EVENT_DESTINATION = 'EVENT_DESTINATION',
     EXECUTE_CHAT_AGENT = 'EXECUTE_CHAT_AGENT',
     EXECUTE_TOKEN_REFRESH = 'EXECUTE_TOKEN_REFRESH',
-    EXECUTE_ACTION = 'EXECUTE_ACTION',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -96,7 +91,6 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_CHAT_AGENT,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
-    WorkerJobType.EXECUTE_ACTION,
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
@@ -239,25 +233,12 @@ export const ExecuteExtractPieceMetadataJobData = z.object({
 })
 export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPieceMetadataJobData>
 
-export const ExecuteActionJobData = z.object({
-    jobType: z.literal(WorkerJobType.EXECUTE_ACTION),
-    projectId: z.string(),
-    platformId: z.string(),
-    schemaVersion: z.number(),
-    step: z.custom<PieceAction | CodeAction>(),
-    piece: z.optional(PiecePackage),
-    requestId: z.string(),
-    webserverId: z.string(),
-})
-export type ExecuteActionJobData = z.infer<typeof ExecuteActionJobData>
-
 export const UserInteractionJobData = z.union([
     ExecuteValidateAuthJobData,
     ExecuteTokenRefreshJobData,
     ExecuteTriggerHookJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
-    ExecuteActionJobData,
 ])
 export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
@@ -267,7 +248,6 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
     ExecuteTriggerHookJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
-    ExecuteActionJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
@@ -296,6 +276,13 @@ export const ExecuteChatAgentJobData = z.object({
     })).optional(),
     promptOverride: ChatPromptOverride.optional(),
     dryRun: z.boolean().optional(),
+    // Set on a resume turn — a turn that continues an existing user turn rather than starting a new
+    // one, so it carries NO new user message. 'gate' resumes a turn parked on an unanswered gate
+    // whose answer was just persisted as the tool result (the model simply continues). 'crash'
+    // resumes a turn whose worker died mid-flight, injecting a system note to verify-before-redo any
+    // side-effecting call whose result is missing. The controller/watchdog persist history first,
+    // then enqueue with this set; getChatConfig then rebuilds from history instead of a user message.
+    resumeKind: z.enum(['gate', 'crash']).optional(),
     // Measurement mode: run real discovery (research/get-props/resolve/reads) but neutralize
     // ap_execute_action and auto-resolve approval gates, so the eval harness can measure how the
     // agent navigates to a runnable call with zero side effects and no approval stalls.

@@ -29,8 +29,8 @@ export const toolSearchService = (log: FastifyBaseLogger) => ({
      * action-row envelope and flagged `mode:"keyword"`. The tool never hard-fails.
      */
     async searchActions(query: string, opts: ToolSearchParams): Promise<ToolSearchActionResponse> {
-        const { results, mode } = await searchObjects('action', query, opts, log)
-        return { results: results.map(toActionResult), mode }
+        const { results, mode, degradeReason } = await searchObjects('action', query, opts, log)
+        return { results: results.map(toActionResult), mode, degradeReason }
     },
     /**
      * Trigger search — the same retrieval engine over `objectKind = 'trigger'` rows (mirrors
@@ -41,8 +41,8 @@ export const toolSearchService = (log: FastifyBaseLogger) => ({
      * least as strong (E6 note, plan Phase 6).
      */
     async searchTriggers(query: string, opts: ToolSearchParams): Promise<ToolSearchTriggerResponse> {
-        const { results, mode } = await searchObjects('trigger', query, opts, log)
-        return { results: results.map(toTriggerResult), mode }
+        const { results, mode, degradeReason } = await searchObjects('trigger', query, opts, log)
+        return { results: results.map(toTriggerResult), mode, degradeReason }
     },
 })
 
@@ -56,13 +56,13 @@ async function searchObjects(objectKind: ObjectKind, query: string, opts: ToolSe
         ? null
         : await resolveEmbedder({ platformId: opts.platformId, log }))
     if (isNil(embedder)) {
-        return keywordSearch({ objectKind, query, opts, log })
+        return keywordSearch({ objectKind, query, opts, log, degradeReason: 'no-embedder' })
     }
 
     const semantic = await tryCatch(() => semanticSearch({ objectKind, query, opts, embedder, log }))
     if (semantic.error !== null) {
         log.warn({ error: semantic.error, objectKind }, '[toolSearchService#searchObjects] Semantic search failed — degrading to the keyword floor.')
-        return keywordSearch({ objectKind, query, opts, log })
+        return keywordSearch({ objectKind, query, opts, log, degradeReason: 'embed-failed' })
     }
     return semantic.data
 }
@@ -147,7 +147,7 @@ async function semanticSearch({ objectKind, query, opts, embedder, log }: Semant
  * the matched actions/triggers. A best-effort lexical fallback: it does not replicate the semantic
  * path's audience or connection filters (no embeddings means no τ gate either). Flagged `mode:"keyword"`.
  */
-async function keywordSearch({ objectKind, query, opts, log }: KeywordSearchParams): Promise<ToolSearchObjectResponse> {
+async function keywordSearch({ objectKind, query, opts, log, degradeReason }: KeywordSearchParams): Promise<ToolSearchObjectResponse> {
     const limit = opts.limit ?? DEFAULT_LIMIT
     const pieces = await pieceMetadataService(log).list({
         platformId: opts.platformId,
@@ -157,7 +157,14 @@ async function keywordSearch({ objectKind, query, opts, log }: KeywordSearchPara
         suggestionType: objectKind === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
     })
 
-    const results = pieces.flatMap((piece) => {
+    // Honor the caller's pieceName scope in the keyword floor too. `pieceMetadataService.list`
+    // searches the whole catalog, so without this the semantic path's pieceName restriction would
+    // silently vanish on degrade — a piece-scoped query would return arbitrary other pieces' rows.
+    const scopedPieces = isNil(opts.pieceName)
+        ? pieces
+        : pieces.filter((piece) => piece.name === opts.pieceName)
+
+    const results = scopedPieces.flatMap((piece) => {
         const suggestions = objectKind === 'action' ? (piece.suggestedActions ?? []) : (piece.suggestedTriggers ?? [])
         return suggestions.map((object): ToolSearchObjectResult => ({
             pieceName: piece.name,
@@ -167,7 +174,7 @@ async function keywordSearch({ objectKind, query, opts, log }: KeywordSearchPara
             requiresConnection: object.requireAuth,
         }))
     }).slice(0, limit)
-    return { results, mode: 'keyword' }
+    return { results, mode: 'keyword', degradeReason }
 }
 
 const CONNECTION_LOOKUP_CAP = 1000
@@ -273,6 +280,8 @@ type KeywordSearchParams = {
     query: string
     opts: ToolSearchParams
     log: FastifyBaseLogger
+    /** Why the semantic path was skipped — surfaced so the tool note names the real cause. */
+    degradeReason: ToolSearchDegradeReason
 }
 
 type SearchRow = {
@@ -300,6 +309,8 @@ type ToolSearchObjectResult = {
 type ToolSearchObjectResponse = {
     results: ToolSearchObjectResult[]
     mode: 'semantic' | 'keyword'
+    /** Present only in keyword mode: distinguishes an unconfigured model from a failed embed call. */
+    degradeReason?: ToolSearchDegradeReason
 }
 
 export type ToolSearchActionResult = Omit<ToolSearchObjectResult, 'objectName'> & {
@@ -310,12 +321,21 @@ export type ToolSearchTriggerResult = Omit<ToolSearchObjectResult, 'objectName'>
     triggerName: string
 }
 
+/**
+ * Why a search degraded to the keyword floor. `no-embedder` = no embedding model is configured
+ * (nothing to fund the semantic path); `embed-failed` = a model IS configured but its embed/query
+ * call failed (a transient outage). The tool text names the real cause instead of always blaming config.
+ */
+export type ToolSearchDegradeReason = 'no-embedder' | 'embed-failed'
+
 export type ToolSearchActionResponse = {
     results: ToolSearchActionResult[]
     mode: 'semantic' | 'keyword'
+    degradeReason?: ToolSearchDegradeReason
 }
 
 export type ToolSearchTriggerResponse = {
     results: ToolSearchTriggerResult[]
     mode: 'semantic' | 'keyword'
+    degradeReason?: ToolSearchDegradeReason
 }

@@ -2,6 +2,7 @@ import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
+import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { ChatAgentEvent } from './chat-agent-events'
 import { ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
@@ -59,6 +60,12 @@ export type UploadFlowBundleRequest = {
     data: Buffer
 }
 
+export type RecordTriggerRunRequest = {
+    platformId: string
+    pieceName: string
+    status: TriggerRunStatus
+}
+
 export type WorkerToApiContract = {
     poll(input: WorkerMachineHealthcheckRequest): Promise<ConsumeJobRequest | null>
     completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void>
@@ -67,10 +74,12 @@ export type WorkerToApiContract = {
     savePayloads(input: SavePayloadRequest): Promise<void>
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
+    getPrewarmData(input: PrewarmDataRequest): Promise<PrewarmDataResponse>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
+    recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendChatEvent(input: SendChatEventRequest): Promise<void>
@@ -101,6 +110,7 @@ export type GetChatConfigRequest = {
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: ChatPromptOverride
     dryRun?: boolean
+    resumeKind?: 'gate' | 'crash'
 }
 
 export type ResolvedAiToolConfig = {
@@ -181,6 +191,9 @@ export type ExecuteChatToolRequest = {
     platformId: string
     userId: string
     conversationId?: string
+    // The owning run of the caller. Threaded so control RPCs that fence on the resume run — e.g.
+    // __consume_pre_approval verifying a one-shot token belongs to THIS run (Fix R1) — can match it.
+    runId?: string
 }
 
 export type ExecuteChatToolResponse = {
@@ -207,4 +220,20 @@ export type SendChatEmailResponse = {
 export type DisableFlowRequest = {
     flowId: string
     projectId: string
+}
+
+export type PrewarmDataRequest = {
+    workerGroupId: string | undefined
+    projectWorker: boolean | undefined
+    flow?: { id: string, versionId: string, projectId: string }
+}
+
+export type PrewarmDataResponse = {
+    flows: { id: string, versionId: string, projectId: string }[]
+    platformId: string
+    engineToken: string
+}
+
+export type ApiToWorkerContract = {
+    flowPublished(input: { flowId: string, flowVersionId: string, projectId: string }): void
 }
