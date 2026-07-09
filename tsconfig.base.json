@@ -1283,6 +1283,9 @@
       "@activepieces/piece-straico": [
         "packages/pieces/community/straico/src/index.ts"
       ],
+      "@activepieces/piece-stream-test": [
+        "packages/pieces/community/stream-test/src/index.ts"
+      ],
       "@activepieces/piece-streak": [
         "packages/pieces/community/streak/src/index.ts"
       ],

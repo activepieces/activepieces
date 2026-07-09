@@ -3,8 +3,11 @@ import {
   httpClient,
   HttpMethod,
   AuthenticationType,
+  HttpMessageBody,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+
+const CHUNK_SIZE_BYTES = 8 * 1024 * 1024;
 
 export const dropboxUploadFile = createAction({
   auth: dropboxAuth,
@@ -24,6 +27,7 @@ export const dropboxUploadFile = createAction({
       displayName: 'File',
       description: 'The file URL or base64 to upload',
       required: true,
+      stream: true,
     }),
     autorename: Property.Checkbox({
       displayName: 'Auto Rename',
@@ -46,34 +50,94 @@ export const dropboxUploadFile = createAction({
     }),
   },
   async run(context) {
-    const fileData = context.propsValue.file;
-
-    const params = {
+    const rawPath = context.propsValue.path;
+    const commit = {
       autorename: context.propsValue.autorename,
-      path: context.propsValue.path,
+      // Dropbox rejects paths without a leading / (or id:/ns: prefix) — and only at session finish, after the bytes are already uploaded
+      path: /^(\/|id:|ns:)/.test(rawPath) ? rawPath : `/${rawPath}`,
       mode: 'add',
       mute: context.propsValue.mute,
       strict_conflict: context.propsValue.strict_conflict,
     };
+    const token = context.auth.access_token;
 
-    const fileBuffer = Buffer.from(fileData.base64, 'base64');
-    // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
-    const dropboxApiArg = JSON.stringify(params).replace(/[\u007f-\uffff]/g, (c) => '\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4));
+    const stream = await context.propsValue.file.stream();
+    const chunks = chunkStream({ stream });
 
-    const result = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://content.dropboxapi.com/2/files/upload`,
-      body: fileBuffer,
-      headers: {
-        'Dropbox-API-Arg': dropboxApiArg,
-        'Content-Type': 'application/octet-stream',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
+    const first = await chunks.next();
+    const firstChunk = first.done ? Buffer.alloc(0) : first.value;
+    const second = await chunks.next();
+
+    if (second.done) {
+      return sendContentRequest({
+        endpoint: 'files/upload',
+        apiArg: commit,
+        body: firstChunk,
+        token,
+      });
+    }
+
+    const session = await sendContentRequest<{ session_id: string }>({
+      endpoint: 'files/upload_session/start',
+      apiArg: { close: false },
+      body: firstChunk,
+      token,
     });
-
-    return result.body;
+    let offset = firstChunk.length;
+    let current = second.value;
+    for (;;) {
+      const next = await chunks.next();
+      const cursor = { session_id: session.session_id, offset };
+      if (next.done) {
+        return sendContentRequest({
+          endpoint: 'files/upload_session/finish',
+          apiArg: { cursor, commit },
+          body: current,
+          token,
+        });
+      }
+      await sendContentRequest({
+        endpoint: 'files/upload_session/append_v2',
+        apiArg: { cursor, close: false },
+        body: current,
+        token,
+      });
+      offset += current.length;
+      current = next.value;
+    }
   },
 });
+
+async function sendContentRequest<T extends HttpMessageBody>({ endpoint, apiArg, body, token }: { endpoint: string, apiArg: unknown, body: Buffer, token: string }): Promise<T> {
+  const result = await httpClient.sendRequest<T>({
+    method: HttpMethod.POST,
+    url: `https://content.dropboxapi.com/2/${endpoint}`,
+    body,
+    headers: {
+      // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
+      'Dropbox-API-Arg': JSON.stringify(apiArg).replace(/[\u007f-\uffff]/g, (c) => '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4)),
+      'Content-Type': 'application/octet-stream',
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token,
+    },
+  });
+  return result.body;
+}
+
+async function* chunkStream({ stream }: { stream: AsyncIterable<Uint8Array> }): AsyncGenerator<Buffer, void, undefined> {
+  let pending: Uint8Array[] = [];
+  let pendingBytes = 0;
+  for await (const chunk of stream) {
+    pending.push(chunk);
+    pendingBytes += chunk.length;
+    while (pendingBytes >= CHUNK_SIZE_BYTES) {
+      const merged = Buffer.concat(pending);
+      yield merged.subarray(0, CHUNK_SIZE_BYTES);
+      pending = [merged.subarray(CHUNK_SIZE_BYTES)];
+      pendingBytes = pending[0].length;
+    }
+  }
+  yield Buffer.concat(pending);
+}

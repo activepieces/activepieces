@@ -27,7 +27,7 @@ export const dropboxDownloadFile = createAction({
      // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
     const dropboxApiArg = JSON.stringify({path:context.propsValue.path}).replace(/[\u007f-\uffff]/g, (c) => '\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4));
 
-    const result = await httpClient.sendRequest({
+    const stream = await httpClient.stream({
       method: HttpMethod.POST,
       url: `https://content.dropboxapi.com/2/files/download`,
       headers: {
@@ -38,13 +38,12 @@ export const dropboxDownloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType:'arraybuffer'
     });
 
     return {
-      file: await context.files.write({
-        fileName: fileName,
-        data: Buffer.from(result.body)
+      file: await context.files.writeStream({
+        fileName,
+        stream,
       })
     }
   },
