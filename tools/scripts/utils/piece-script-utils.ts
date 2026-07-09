@@ -110,7 +110,8 @@ export async function findNewPieces(): Promise<FindNewPiecesResult> {
             }
             const result = await tryCatch(() => loadPieceFromFolder(folderPath))
             if (result.error !== null) {
-                const failure: PieceLoadFailure = { path: folderPath, error: result.error.message }
+                const message = result.error instanceof Error ? result.error.message : String(result.error)
+                const failure: PieceLoadFailure = { path: folderPath, error: message }
                 return failure
             }
             return result.data
