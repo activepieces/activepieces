@@ -26,7 +26,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
             const response = await webhookService.handleWebhook({
-                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                data: () => convertRequest(request),
                 logger: request.log,
                 flowId: request.params.flowId,
                 async: false,
@@ -59,7 +59,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
             const response = await webhookService.handleWebhook({
-                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                data: () => convertRequest(request),
                 logger: request.log,
                 flowId: request.params.flowId,
                 async: true,
@@ -82,7 +82,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
 
     app.all('/:flowId/draft/sync', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await webhookService.handleWebhook({
-            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+            data: () => convertRequest(request),
             logger: request.log,
             flowId: request.params.flowId,
             async: false,
@@ -102,7 +102,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
 
     app.all('/:flowId/draft', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await webhookService.handleWebhook({
-            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+            data: () => convertRequest(request),
             logger: request.log,
             flowId: request.params.flowId,
             async: true,
@@ -119,7 +119,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
 
     app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await webhookService.handleWebhook({
-            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+            data: () => convertRequest(request),
             logger: request.log,
             flowId: request.params.flowId,
             async: true,
@@ -140,7 +140,6 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
 const WEBHOOK_PARAMS = {
     config: {
         security: securityAccess.public(),
-        rawBody: true,
     },
     schema: {
         params: WebhookUrlParams,

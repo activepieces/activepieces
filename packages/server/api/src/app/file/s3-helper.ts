@@ -114,6 +114,20 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         log.info({ s3Key }, 'multipart upload created')
         return response.UploadId
     },
+    async uploadPart({ s3Key, uploadId, partNumber, body }: UploadPartParams): Promise<string> {
+        const response = await getS3Client().send(new UploadPartCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+            UploadId: uploadId,
+            PartNumber: partNumber,
+            Body: body,
+            ContentLength: body.length,
+        }))
+        if (isNil(response.ETag)) {
+            throw new Error(`S3 did not return an ETag for part ${partNumber} of ${s3Key}`)
+        }
+        return response.ETag
+    },
     async signPartUrl({ s3Key, uploadId, partNumber }: SignPartUrlParams): Promise<string> {
         const command = new UploadPartCommand({
             Bucket: getS3BucketName(),
@@ -253,6 +267,13 @@ type PutS3SignedUrlParams = {
 type CreateMultipartUploadParams = {
     s3Key: string
     contentType?: string
+}
+
+type UploadPartParams = {
+    s3Key: string
+    uploadId: string
+    partNumber: number
+    body: Buffer
 }
 
 type SignPartUrlParams = {

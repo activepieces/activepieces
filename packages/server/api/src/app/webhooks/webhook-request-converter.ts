@@ -1,10 +1,11 @@
-import { ApMultipartFile, isMultipartFile } from '@activepieces/core-utils'
-import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { Readable } from 'stream'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
+import { MultipartFile } from '@fastify/multipart'
+import { FastifyRequest } from 'fastify'
 import mime from 'mime-types'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
-import { projectService } from '../project/project-service'
 
 const BINARY_CONTENT_TYPE_PATTERNS = [
     /^image\//,
@@ -22,19 +23,16 @@ export function isBinaryContentType(contentType: string | undefined): boolean {
     return BINARY_CONTENT_TYPE_PATTERNS.some(pattern => pattern.test(baseContentType))
 }
 
-export async function convertRequest(
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<EventPayload> {
-    const contentType = request.headers['content-type']
-    const isBinary = isBinaryContentType(contentType) && Buffer.isBuffer(request.body)
+// Both streaming paths save the file while the request body is still being parsed (binary in the
+// content-type parser, multipart in the global onFile hook), replacing the value with a readUrl.
+// So convertRequest only ever passes the already-converted body through.
+export async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
     return {
         method: request.method,
         headers: request.headers as Record<string, string>,
-        body: await convertBody(request, projectId, flowId),
+        body: request.body,
         queryParams: request.query as Record<string, string>,
-        rawBody: isBinary ? undefined : request.rawBody,
+        rawBody: request.rawBody,
     }
 }
 
@@ -45,91 +43,38 @@ export function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun,
     }
 }
 
-async function convertBody(
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<unknown> {
-    if (request.isMultipart()) {
-        const jsonResult: Record<string, unknown> = {}
-        const requestBodyEntries = Object.entries(
-            request.body as Record<string, unknown>,
-        )
-
-        const platformId = await projectService(request.log).getPlatformId(projectId)
-
-        for (const [key, value] of requestBodyEntries) {
-            if (isMultipartFile(value)) {
-                jsonResult[key] = await saveMultipartFileAsUrl({
-                    file: value,
-                    request,
-                    flowId,
-                    projectId,
-                    platformId,
-                })
-            }
-            else if (Array.isArray(value) && value.every(isMultipartFile)) {
-                jsonResult[key] = await Promise.all(value.map((file) => saveMultipartFileAsUrl({
-                    file,
-                    request,
-                    flowId,
-                    projectId,
-                    platformId,
-                })))
-            }
-            else {
-                jsonResult[key] = value
-            }
-        }
-        return jsonResult
-    }
-    const contentType = request.headers['content-type']
-    if (isBinaryContentType(contentType) && Buffer.isBuffer(request.body)) {
-        const platformId = await projectService(request.log).getPlatformId(projectId)
-        const extension = mime.extension(contentType?.split(';')[0] || '') || 'bin'
-        const fileName = `file.${extension}`
-
-        const url = await saveStepFileAndConstructUrl({
-            log: request.log,
-            data: request.body,
-            fileName,
-            flowId,
-            contentLength: request.body.length,
-            platformId,
-            projectId,
-        })
-        return {
-            fileUrl: url,
-        }
-    }
-
-    return request.body
+export async function streamWebhookBinaryBody(request: FastifyRequest, stream: Readable): Promise<{ fileUrl: string }> {
+    const baseContentType = request.headers['content-type']?.split(';')[0]
+    const extension = mime.extension(baseContentType || '') || 'bin'
+    const url = await streamToStepFileUrl({
+        request,
+        stream,
+        fileName: `file.${extension}`,
+        contentType: baseContentType,
+    })
+    return { fileUrl: url }
 }
 
-async function saveMultipartFileAsUrl(params: SaveMultipartFileAsUrlParams): Promise<string> {
-    const { file, request, flowId, projectId, platformId } = params
-    return saveStepFileAndConstructUrl({
-        log: request.log,
-        data: file.data,
-        fileName: file.filename,
-        flowId,
-        contentLength: file.data.length,
-        platformId,
-        projectId,
+export async function streamWebhookMultipartFile(request: FastifyRequest, part: MultipartFile): Promise<string> {
+    return streamToStepFileUrl({
+        request,
+        stream: part.file,
+        fileName: part.filename,
+        contentType: part.mimetype,
     })
 }
 
-async function saveStepFileAndConstructUrl(params: SaveStepFileParams): Promise<string> {
-    const { log, data, fileName, flowId, contentLength, platformId, projectId } = params
-    const file = await fileService(log).save({
-        data,
-        metadata: { stepName: 'trigger', flowId },
+async function streamToStepFileUrl(params: StreamToStepFileUrlParams): Promise<string> {
+    const { request, stream, fileName, contentType } = params
+    const { projectId, platformId, flowId } = getWebhookContextOrThrow(request)
+    const file = await fileService(request.log).saveStream({
+        stream,
         fileName,
         type: FileType.FLOW_STEP_FILE,
-        compression: FileCompression.NONE,
         projectId,
         platformId,
-        size: contentLength,
+        metadata: { stepName: 'trigger', flowId },
+        contentType,
     })
     return filesService.constructReadUrl({
         fileId: file.id,
@@ -138,20 +83,14 @@ async function saveStepFileAndConstructUrl(params: SaveStepFileParams): Promise<
     })
 }
 
-type SaveMultipartFileAsUrlParams = {
-    file: ApMultipartFile
-    request: FastifyRequest
-    flowId: string
-    projectId: string
-    platformId: string
+function getWebhookContextOrThrow(request: FastifyRequest): NonNullable<FastifyRequest['webhookContext']> {
+    assertNotNullOrUndefined(request.webhookContext, 'webhookContext')
+    return request.webhookContext
 }
 
-type SaveStepFileParams = {
-    log: FastifyBaseLogger
-    data: Buffer
-    fileName: string
-    flowId: string
-    contentLength: number
-    platformId: string
-    projectId: string
+type StreamToStepFileUrlParams = {
+    request: FastifyRequest
+    stream: Readable
+    fileName?: string
+    contentType?: string
 }
