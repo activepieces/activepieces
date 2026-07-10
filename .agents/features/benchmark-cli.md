@@ -12,7 +12,7 @@
 - `benchmark/run-gke.sh` — GKE harness used to produce the published reference numbers
 
 ## Edition Availability
-Community, Enterprise, Cloud. Setup discovery + infra diagnostics require a **platform-admin** token (`worker-machines` and `health/*` are `platformAdminOnly` USER); without it the CLI still runs the load test and per-run latency attribution, but skips specs/split validation and the infra round-trip block.
+Community, Enterprise, Cloud. The CLI authenticates with a **platform API key only** (`AP_API_KEY` / `--api-key` + `--project-id`), same as the other CLI commands — email/password login was removed. The diagnostic endpoints (`GET /v1/worker-machines`, `/v1/health/system`, `/v1/health/diagnostics`) accept a platform API key (`PrincipalType.SERVICE`), so a single API key gets the full bundle. The infra-diagnostics block is still self-hosted only (`FEATURE_DISABLED` on `AP_EDITION=cloud`).
 
 ## Reproduction basis
 To compare our reference deployment against a customer deployment apples-to-apples, the invariant is **concurrency = each deployment's own execution slots** (the CLI default), so neither side queues. The comparable numbers are then the server/worker-measured RUN/service-time and the infra round-trip — not a fixed concurrency (which would make a smaller deployment queue and reproduce the original "over-drove their slots" confusion). Edition note: the infra round-trip block is **self-hosted only** — `GET /v1/health/diagnostics` returns `FEATURE_DISABLED` on `AP_EDITION=cloud` (a Cloud platform-admin is a tenant, not the infra operator), and the CLI degrades gracefully to the rest of the report.

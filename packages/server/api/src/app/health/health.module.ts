@@ -54,7 +54,7 @@ const healthController: FastifyPluginAsyncZod = async (app) => {
 
 const GetSystemHealthChecks = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     response: {
         200: {
@@ -104,7 +104,7 @@ const GetHealthHistoryRequest = {
 
 const GetDiagnosticsRequest = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['health'],

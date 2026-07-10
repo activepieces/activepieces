@@ -11,10 +11,8 @@ export const benchmarkCommand = new Command('benchmark')
     .option('--url <url>', 'Activepieces base URL (dev env API port)', 'http://localhost:3000')
     .option('--requests <n>', 'Total requests to fire (default: 40 x concurrency)')
     .option('--concurrency <c>', 'Concurrent connections (default: auto = sum of worker execution slots)')
-    .option('--api-key <key>', 'Platform API key or user token (Bearer). Or set AP_API_KEY. Requires --project-id.')
-    .option('--project-id <id>', 'Project to create the benchmark flow in (required with --api-key)')
-    .option('--email <email>', 'Login email (alternative to --api-key; resolves the project automatically)')
-    .option('--password <password>', 'Login password')
+    .option('--api-key <key>', 'Platform API key (Bearer). Or set AP_API_KEY. Requires --project-id.')
+    .option('--project-id <id>', 'Project to create the benchmark flow in (required)')
     .option('--body <json>', 'JSON request body sent to the webhook', '{"test":true}')
     .option('--json', 'Emit machine-readable JSON output')
     .action(async (opts) => {
@@ -22,7 +20,7 @@ export const benchmarkCommand = new Command('benchmark')
         try {
             const client = axios.create({ baseURL: config.url, validateStatus: () => true });
             await waitForReady(client);
-            const auth = await authenticate({ client, config });
+            const auth = authenticate({ config });
             const authed = axios.create({
                 baseURL: config.url,
                 headers: { Authorization: `Bearer ${auth.token}` },
@@ -102,8 +100,6 @@ function normalizeOptions(opts: Record<string, string | boolean | undefined>): B
         concurrency,
         apiKey: typeof opts.apiKey === 'string' ? opts.apiKey : undefined,
         projectId: typeof opts.projectId === 'string' ? opts.projectId : undefined,
-        email: typeof opts.email === 'string' ? opts.email : undefined,
-        password: typeof opts.password === 'string' ? opts.password : undefined,
         body,
         json: opts.json === true,
     };
@@ -317,29 +313,15 @@ async function waitForReady(client: AxiosInstance): Promise<void> {
     throw new Error('Server did not become ready in time (checked /api/v1/flags)');
 }
 
-async function authenticate({ client, config }: { client: AxiosInstance; config: BenchmarkConfig }): Promise<AuthResult> {
+function authenticate({ config }: { config: BenchmarkConfig }): AuthResult {
     const apiKey = config.apiKey ?? process.env.AP_API_KEY;
-    if (apiKey) {
-        if (!config.projectId) {
-            throw new Error('When using --api-key (or AP_API_KEY), also pass --project-id.');
-        }
-        return { token: apiKey, projectId: config.projectId };
+    if (!apiKey) {
+        throw new Error('Provide a platform API key via --api-key or the AP_API_KEY env var.');
     }
-
-    if (config.email && config.password) {
-        const signIn = await client.post('/api/v1/authentication/sign-in', { email: config.email, password: config.password });
-        const token: string | undefined = signIn.data?.token;
-        if (!token) {
-            throw new Error(`Login failed: ${JSON.stringify(signIn.data)}`);
-        }
-        const projectId: string | undefined = config.projectId ?? signIn.data?.projectId ?? undefined;
-        if (!projectId) {
-            throw new Error('Login succeeded but returned no project; pass --project-id.');
-        }
-        return { token, projectId };
+    if (!config.projectId) {
+        throw new Error('Pass --project-id (the project to create the benchmark flow in).');
     }
-
-    throw new Error('Provide credentials: --api-key (or AP_API_KEY) with --project-id, or --email and --password.');
+    return { token: apiKey, projectId: config.projectId };
 }
 
 async function createBenchmarkFlow({ client, projectId }: { client: AxiosInstance; projectId: string }): Promise<string> {
@@ -660,8 +642,6 @@ type BenchmarkConfig = {
     concurrency?: number;
     apiKey?: string;
     projectId?: string;
-    email?: string;
-    password?: string;
     body: string;
     json: boolean;
 };
