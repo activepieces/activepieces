@@ -16,9 +16,9 @@ export const testmuaiBrowsercloud = createPiece({
   description:
     'Launch and drive real cloud browsers on TestMu AI (formerly LambdaTest) infrastructure — navigate, snapshot, click, type, read, and screenshot pages. Built for AI agents.',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/testmuai-browsercloud.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/testmuai-browsercloud.svg',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['hrajora'],
+  authors: ['harishrajora'],
   auth: testmuaiAuth,
   actions: [
     createSession,
