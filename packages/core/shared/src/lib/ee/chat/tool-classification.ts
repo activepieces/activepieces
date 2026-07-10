@@ -64,22 +64,11 @@ function readOnlyRejection(actionName: string): { success: false, error: string 
     }
 }
 
-// Approval-gates: the worker executes a real side effect AFTER the user approves (that code dies with
-// a parked worker). A late approval must therefore RE-RUN the action, not fabricate its result. Every
-// other gate is an answer-gate: the user's payload IS the result (questions, connection/project
-// pickers, quick replies, mcp reconnect), so a late answer is complete on its own.
-const APPROVAL_GATE_TOOL_NAMES = new Set(['ap_execute_action', 'ap_send_email', 'ap_test_flow'])
-
-function isApprovalGate(toolName: string): boolean {
-    return APPROVAL_GATE_TOOL_NAMES.has(toolName)
-}
-
 export const chatToolClassification = {
     requiresActionPreview,
     isReadActionName,
     isReadOnlyActionCall,
     isWriteActionName,
-    isApprovalGate,
     readOnlyRejection,
     hasFailureTextPrefix,
 }

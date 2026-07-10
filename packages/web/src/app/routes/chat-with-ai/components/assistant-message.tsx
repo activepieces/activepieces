@@ -38,7 +38,6 @@ import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
-import { CodeModeCard } from './code-mode-card';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
 import { FlowBuildCard } from './flow-build-card';
@@ -380,12 +379,6 @@ function MessageBlocks({
             }
             return null;
           }
-          case 'code-mode':
-            return (
-              <div key={`code-mode-${block.toolCallId}`} className="py-1">
-                <CodeModeCard part={block.part} />
-              </div>
-            );
           case 'batch-progress':
             return (
               <div key={`batch-${i}`} className="py-2">
