@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { gmailAuth, createGoogleClient } from '../auth';
+import { gmailAuth, createGoogleClient, handleGmailError } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailProps } from '../common/props';
 
@@ -25,14 +25,18 @@ export const gmailRemoveLabelFromEmailAction = createAction({
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
-    const response = await gmail.users.messages.modify({
-      userId: 'me',
-      id: context.propsValue.message_id,
-      requestBody: {
-        removeLabelIds: [context.propsValue.label.id],
-      },
-    });
+    try {
+      const response = await gmail.users.messages.modify({
+        userId: 'me',
+        id: context.propsValue.message_id,
+        requestBody: {
+          removeLabelIds: [context.propsValue.label.id],
+        },
+      });
 
-    return response.data;
+      return response.data;
+    } catch (error) {
+      return handleGmailError(error, 'Remove Label from Email');
+    }
   },
 });

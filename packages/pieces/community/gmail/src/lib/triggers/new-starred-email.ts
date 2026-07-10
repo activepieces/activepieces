@@ -159,6 +159,18 @@ export const gmailNewStarredEmailTrigger = createTrigger({
       } catch (error: any) {
         console.error(`Failed to enrich starred message ${messageId}:`, error);
         const status = error.status || error.code;
+        const errorMsg = error.message?.toLowerCase() || '';
+        const isRateLimit =
+          status === 429 ||
+          (status === 403 &&
+            (errorMsg.includes('rate') ||
+              errorMsg.includes('quota') ||
+              errorMsg.includes('limit')));
+
+        if (isRateLimit) {
+          throw error;
+        }
+
         if (status === 404 || status === 403 || status === 400) {
           continue;
         }

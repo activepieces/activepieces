@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth, createGoogleClient } from '../auth';
+import { gmailAuth, createGoogleClient, handleGmailError } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 
 export const gmailCreateLabelAction = createAction({
@@ -50,15 +50,19 @@ export const gmailCreateLabelAction = createAction({
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
-    const response = await gmail.users.labels.create({
-      userId: 'me',
-      requestBody: {
-        name: context.propsValue.name,
-        labelListVisibility: context.propsValue.label_list_visibility || undefined,
-        messageListVisibility: context.propsValue.message_list_visibility || undefined,
-      },
-    });
+    try {
+      const response = await gmail.users.labels.create({
+        userId: 'me',
+        requestBody: {
+          name: context.propsValue.name,
+          labelListVisibility: context.propsValue.label_list_visibility || undefined,
+          messageListVisibility: context.propsValue.message_list_visibility || undefined,
+        },
+      });
 
-    return response.data;
+      return response.data;
+    } catch (error) {
+      return handleGmailError(error, 'Create Label');
+    }
   },
 });

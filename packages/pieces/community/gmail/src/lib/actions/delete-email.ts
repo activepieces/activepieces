@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { gmailAuth, createGoogleClient } from '../auth';
+import { gmailAuth, createGoogleClient, handleGmailError } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailProps } from '../common/props';
 
@@ -20,11 +20,15 @@ export const gmailDeleteEmailAction = createAction({
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
-    const response = await gmail.users.messages.trash({
-      userId: 'me',
-      id: context.propsValue.message_id,
-    });
+    try {
+      const response = await gmail.users.messages.trash({
+        userId: 'me',
+        id: context.propsValue.message_id,
+      });
 
-    return response.data;
+      return response.data;
+    } catch (error) {
+      return handleGmailError(error, 'Delete Email');
+    }
   },
 });

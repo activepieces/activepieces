@@ -115,3 +115,20 @@ export async function getUserEmail(
       .data.email ?? undefined
   );
 }
+
+export function handleGmailError(error: any, actionName: string): never {
+  const status = error.status || error.code;
+  const message = error.message || '';
+  const isInsufficientScope =
+    status === 403 &&
+    (message.toLowerCase().includes('insufficient') ||
+      message.toLowerCase().includes('permission') ||
+      message.toLowerCase().includes('scope'));
+
+  if (isInsufficientScope) {
+    throw new Error(
+      `Failed to execute "${actionName}" because the connection lacks the required permissions. Please reconnect your Gmail account in Activepieces to grant the new permissions.`
+    );
+  }
+  throw error;
+}
