@@ -118,10 +118,10 @@ Authenticate with an API key or user token, **or** with email + password. A **pl
 
 ```bash
 # platform-admin login (full diagnostics)
-npx @activepieces/cli benchmark --url https://your-instance.example.com --email admin@company.com --password '...'
+npx @activepieces/cli@latest benchmark --url https://your-instance.example.com --email admin@company.com --password '...'
 
 # or API key + project (load test + latency attribution; admin-only sections skipped)
-AP_API_KEY=<key> npx @activepieces/cli benchmark --url https://your-instance.example.com --project-id <id>
+AP_API_KEY=<key> npx @activepieces/cli@latest benchmark --url https://your-instance.example.com --project-id <id>
 ```
 
 By default the load runs at **concurrency = your deployment's execution slots** (the sum of `AP_WORKER_CONCURRENCY` across connected workers), so requests don't queue and the latency you read is real service time, not backlog. This is also the invariant to hold when **comparing two deployments** (e.g. yours vs. a reference): match concurrency to each deployment's own slots so neither queues, then compare the worker-measured RUN time and the infra round-trip — never a fixed concurrency, which would make the smaller deployment queue.
