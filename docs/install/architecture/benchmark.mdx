@@ -153,6 +153,7 @@ Infra round-trip (server-measured, in-region — authoritative, not reachable fr
   redis    : 17 ms
   storage  : 237 ms   (S3/GCS write+read round-trip; same cost is inside every RUN as the end-of-run log backup)
   config   : execution=SANDBOX_CODE_ONLY storage=S3 signedUrls=true sandboxMemKB=1048576 s3=https://storage.googleapis.com/europe-west1
+  app      : app-7984d59d8c v0.86.2 | 1.5 core | cpu 73.2% | ram 2.0GB 34.1% | disk 12%  (this instance — one of N behind the load balancer)
   workers  : 4 connected
     - ONLINE worker-z | 0.5 core | cpu 100.0% | ram 13.8%
     - ONLINE worker-N | 0.5 core | cpu  63.9% | ram 15.2%
@@ -191,7 +192,7 @@ Each block answers a specific question:
 | Section | What it measures | Where it's measured |
 |---|---|---|
 | **Version & health** | App release, whether every connected worker matches it (a version-skewed worker is silently withheld jobs), and app/worker/DB CPU-RAM-disk health | `GET /v1/health/system` |
-| **Infra round-trip** | Authoritative **in-region** DB / Redis / **S3** write+read latency, the effective execution/storage config, and the worker fleet with live per-worker CPU. The S3 round-trip is the same cost folded into every run's end-of-run log backup — a slow object store shows up here **and** in RUN. Self-hosted only. | `GET /v1/health/diagnostics` |
+| **Infra round-trip** | Authoritative **in-region** DB / Redis / **S3** write+read latency, the effective execution/storage config, the **app instance** that served the request (CPU/RAM/disk — one of N replicas, since apps don't self-register), and the worker fleet with live per-worker CPU. The S3 round-trip is the same cost folded into every run's end-of-run log backup — a slow object store shows up here **and** in RUN. Self-hosted only. | `GET /v1/health/diagnostics` |
 | **Config flags** | The limits and throttles that silently cap throughput — a `PROJECT_RATE_LIMITER_ENABLED` or a low `DEFAULT_CONCURRENT_JOBS_LIMIT` re-queues jobs (latency, not errors); the memory/timeout/log ceilings that turn into `MEMORY_LIMIT_EXCEEDED` / `TIMEOUT` / `LOG_SIZE_EXCEEDED` statuses | `GET /v1/flags` |
 | **Setup** | Execution slots (Σ `AP_WORKER_CONCURRENCY`) and a PASS/WARN check of every worker's specs, sandbox mode, reuse, and concurrency against the recommended shape | `GET /v1/worker-machines` |
 | **Network** | CLI→server round-trip, so cross-region distance is quantified and subtracted rather than blamed on the server | timed `GET /v1/flags` |

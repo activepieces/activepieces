@@ -47,11 +47,24 @@ export const DiagnosticsWorker = z.object({
     status: z.string(),
 })
 
+// The app instance that served the request. Apps are stateless behind the load balancer and do not
+// self-register (unlike workers), so this is one of N app replicas, not the whole app tier.
+export const DiagnosticsApp = z.object({
+    hostname: z.string(),
+    version: z.string(),
+    cpuCores: z.number(),
+    cpuUsagePercentage: z.number(),
+    ramTotalBytes: z.number(),
+    ramUsagePercentage: z.number(),
+    diskPercentage: z.number(),
+})
+
 export const GetDiagnosticsResponse = z.object({
     database: InfraCheck,
     redis: InfraCheck,
     storage: InfraCheck,
     config: DeploymentConfig,
+    app: DiagnosticsApp,
     workers: z.object({
         count: z.number(),
         machines: z.array(DiagnosticsWorker),
@@ -63,4 +76,5 @@ export type GetSystemHealthChecksResponse = z.infer<typeof GetSystemHealthChecks
 export type InfraCheck = z.infer<typeof InfraCheck>
 export type DeploymentConfig = z.infer<typeof DeploymentConfig>
 export type DiagnosticsWorker = z.infer<typeof DiagnosticsWorker>
+export type DiagnosticsApp = z.infer<typeof DiagnosticsApp>
 export type GetDiagnosticsResponse = z.infer<typeof GetDiagnosticsResponse>

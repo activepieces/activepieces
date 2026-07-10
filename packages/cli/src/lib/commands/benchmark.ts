@@ -489,6 +489,10 @@ function renderReport(report: BenchmarkReport): void {
         if (d.config) {
             console.log(`  config   : execution=${d.config.executionMode} storage=${d.config.fileStorageLocation} signedUrls=${d.config.s3SignedUrls} sandboxMemKB=${d.config.sandboxMemoryLimitKb} s3=${d.config.s3Endpoint ?? 'n/a'}/${d.config.s3Region ?? 'n/a'}`);
         }
+        if (d.app) {
+            const a = d.app;
+            console.log(`  app      : ${a.hostname} v${a.version} | ${a.cpuCores} core | cpu ${a.cpuUsagePercentage.toFixed(1)}% | ram ${(a.ramTotalBytes / BYTES_PER_GB).toFixed(1)}GB ${a.ramUsagePercentage.toFixed(1)}% | disk ${a.diskPercentage.toFixed(0)}%  ${chalk.gray('(this instance — one of N behind the load balancer)')}`);
+        }
         if (d.workers) {
             console.log(`  workers  : ${d.workers.count} connected`);
             for (const w of d.workers.machines) {
@@ -750,6 +754,15 @@ type DiagnosticsInfo = {
         s3SignedUrls: boolean | null;
         s3Endpoint: string | null;
         s3Region: string | null;
+    };
+    app?: {
+        hostname: string;
+        version: string;
+        cpuCores: number;
+        cpuUsagePercentage: number;
+        ramTotalBytes: number;
+        ramUsagePercentage: number;
+        diskPercentage: number;
     };
     workers?: {
         count: number;
