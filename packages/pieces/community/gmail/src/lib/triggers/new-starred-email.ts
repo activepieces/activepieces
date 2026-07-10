@@ -29,7 +29,7 @@ async function enrichGmailMessage({
   });
 
   const parsedMailResponse = await parseStream(
-    Buffer.from(rawMailResponse.data.raw as string, 'base64').toString('utf-8')
+    Buffer.from(rawMailResponse.data.raw as string, 'base64url').toString('utf-8')
   );
 
   return {
@@ -81,7 +81,7 @@ export const gmailNewStarredEmailTrigger = createTrigger({
       return [];
     }
 
-    const starredMessages = new Map<string, string>();
+    const starredMessages = new Set<string>();
     const results = [];
     let nextPageToken: string | undefined = undefined;
     let newHistoryId: string | undefined = undefined;
@@ -104,10 +104,7 @@ export const gmailNewStarredEmailTrigger = createTrigger({
                   labelAdded.labelIds?.includes('STARRED') &&
                   labelAdded.message?.id
                 ) {
-                  starredMessages.set(
-                    labelAdded.message.id,
-                    history.id?.toString() || ''
-                  );
+                  starredMessages.add(labelAdded.message.id);
                 }
               }
             }
@@ -117,10 +114,7 @@ export const gmailNewStarredEmailTrigger = createTrigger({
                   messageAdded.message?.id &&
                   messageAdded.message.labelIds?.includes('STARRED')
                 ) {
-                  starredMessages.set(
-                    messageAdded.message.id,
-                    history.id?.toString() || ''
-                  );
+                  starredMessages.add(messageAdded.message.id);
                 }
               }
             }
@@ -134,11 +128,12 @@ export const gmailNewStarredEmailTrigger = createTrigger({
       } while (nextPageToken);
     } catch (error: any) {
       const status = error.status || error.code;
+      const errorMsg = error.message?.toLowerCase() || '';
       const isExpiredHistory =
         status === 404 ||
         status === 410 ||
         status === 412 ||
-        status === 400;
+        (status === 400 && errorMsg.includes('historyid'));
 
       if (isExpiredHistory) {
         console.warn('History ID expired, resetting to latest profile history ID', error);
@@ -149,7 +144,7 @@ export const gmailNewStarredEmailTrigger = createTrigger({
       throw error;
     }
 
-    for (const [messageId, historyId] of starredMessages) {
+    for (const messageId of starredMessages) {
       try {
         const enrichedMessage = await enrichGmailMessage({
           gmail,
@@ -157,12 +152,10 @@ export const gmailNewStarredEmailTrigger = createTrigger({
           files: context.files,
         });
 
-        if (lastHistoryId.toString() !== historyId) {
-          results.push({
-            id: historyId,
-            data: enrichedMessage,
-          });
-        }
+        results.push({
+          id: messageId,
+          data: enrichedMessage,
+        });
       } catch (error) {
         console.error(`Failed to enrich starred message ${messageId}:`, error);
       }
