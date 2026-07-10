@@ -46,7 +46,11 @@ export const benchmarkCommand = new Command('benchmark')
             for (const phase of phases) {
                 const requests = config.requests ?? Math.max(200, phase.connections * 40);
                 log(config, `Running ${phase.label}: ${requests} requests @ ${phase.connections} connections`);
-                const startedAt = new Date().toISOString();
+                // createdAfter is compared against the server clock, but this timestamp is the CLI's.
+                // The CLI runs cross-region, so its clock can lead the server's — widen the window by a
+                // skew buffer so runs aren't silently dropped. Safe because each benchmark builds a fresh
+                // flow, so the flowId filter still admits only this run's flow runs.
+                const startedAt = new Date(Date.now() - CLOCK_SKEW_BUFFER_MS).toISOString();
                 const queueSampler = startQueueSampler(authed);
                 const result = await autocannon({
                     url: `${config.url}/api/v1/webhooks/${flowId}/sync`,
@@ -605,7 +609,10 @@ function parseSlot(value: string | undefined): number {
 function percentile(values: number[], p: number): number {
     if (values.length === 0) return 0;
     const sorted = [...values].sort((a, b) => a - b);
-    const idx = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length));
+    // Nearest-rank: rank = ceil(p/100 * N), 1-based. Avoids the floor()-based right bias that
+    // returned the max as the "p50" of a 2-element sample.
+    const rank = Math.ceil((p / 100) * sorted.length);
+    const idx = Math.min(sorted.length - 1, Math.max(0, rank - 1));
     return sorted[idx];
 }
 
@@ -635,6 +642,7 @@ const BYTES_PER_GB = 1024 * 1024 * 1024;
 const RECOMMENDED_MAX_CPU_CORES = 0.5;
 const RECOMMENDED_MAX_RAM_GB = 1;
 const QUEUE_SAMPLE_INTERVAL_MS = 500;
+const CLOCK_SKEW_BUFFER_MS = 5 * 60 * 1000;
 // Flags that matter for a perf triage — edition, version, execution mode, resource limits, and the
 // two throttles (project concurrency cap + rate limiter) that silently cap throughput and emit 429s.
 const DIAGNOSTIC_FLAGS = [

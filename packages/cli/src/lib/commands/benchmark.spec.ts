@@ -112,9 +112,10 @@ describe('benchmarkUtils.aggregateTimeline', () => {
     it('splits queue-wait (non-RUN phases) from service (RUN)', () => {
         const agg = benchmarkUtils.aggregateTimeline([run(100, 10, 5, 50), run(300, 10, 5, 60)]);
         expect(agg.sampleCount).toBe(2);
-        expect(agg.serviceP50).toBe(60);
-        // queue-wait per run = queue + provision + boot = 115 and 315
-        expect(agg.queueWaitP50).toBe(315);
+        // nearest-rank p50 of [50, 60] is the lower element (rank 1)
+        expect(agg.serviceP50).toBe(50);
+        // queue-wait per run = queue + provision + boot = 115 and 315; p50 = 115
+        expect(agg.queueWaitP50).toBe(115);
     });
 
     it('ignores runs without a timeline', () => {
