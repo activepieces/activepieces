@@ -1,18 +1,21 @@
 {
   "name": "@activepieces/cli",
-  "version": "1.0.2",
+  "version": "1.2.0",
   "bin": {
     "pieces-cli": "../../dist/packages/cli/src/index.js"
   },
   "scripts": {
     "start": "ts-node src/index.ts",
     "build": "tsc -p tsconfig.lib.json",
+    "build-publish": "node scripts/build-publish.mjs",
+    "test": "vitest run",
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "*",
     "@activepieces/shared": "*",
+    "autocannon": "8.0.0",
     "axios": "1.16.0",
     "chalk": "4.1.2",
     "commander": "11.1.0",
@@ -26,6 +29,7 @@
     "tslib": "2.6.2"
   },
   "devDependencies": {
+    "@types/autocannon": "7.12.7",
     "@types/node": "24.11.0"
   }
 }
