@@ -114,13 +114,9 @@ To load-test and **diagnose** your own deployment — no cluster scripts require
 
 Because the CLI runs from a **different host and region** than your API and workers, every client-side number it sees (autocannon latency, round-trip time) is polluted by that network distance. So the authoritative numbers come from the **server and workers themselves**: the per-run QUEUE/PROVISION/BOOT/RUN split is timed *inside the worker*, and the DB/Redis/S3 round-trip latency is measured *in-region* by a platform-admin diagnostics endpoint. Client-side numbers are shown but clearly marked observational.
 
-Authenticate with an API key or user token, **or** with email + password. A **platform-admin** login unlocks the full bundle (setup validation, infra round-trip, worker fleet); a plain API key still runs the load test and per-run latency attribution.
+Authenticate with your **platform API key** — the same credential the other CLI commands use (`AP_API_KEY`). It gets the **full** bundle: setup validation, the in-region infra round-trip, and the worker + app fleet.
 
 ```bash
-# platform-admin login (full diagnostics)
-npx @activepieces/cli@latest benchmark --url https://your-instance.example.com --email admin@company.com --password '...'
-
-# or API key + project (load test + latency attribution; admin-only sections skipped)
 AP_API_KEY=<key> npx @activepieces/cli@latest benchmark --url https://your-instance.example.com --project-id <id>
 ```
 
@@ -131,9 +127,8 @@ By default the load runs at **concurrency = your deployment's execution slots** 
 | `--url` | `http://localhost:3000` | Base URL of your Activepieces instance |
 | `--concurrency` | auto = execution slots | Concurrent connections; omit to match your fleet's slot count |
 | `--requests` | `40 × concurrency` | Total requests to fire |
-| `--api-key` | `AP_API_KEY` env var | Platform API key or user token (Bearer); requires `--project-id` |
-| `--project-id` | | Project to create the benchmark flow in (required with `--api-key`) |
-| `--email` / `--password` | | Login instead of an API key; a platform-admin unlocks the full diagnostics |
+| `--api-key` | `AP_API_KEY` env var | Platform API key (Bearer) — gets the full bundle; required |
+| `--project-id` | | Project to create the benchmark flow in (required) |
 | `--body` | `{"test":true}` | JSON body sent to the webhook |
 | `--json` | | Emit the full machine-readable bundle (share this with support) |
 

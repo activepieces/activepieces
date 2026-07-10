@@ -17,7 +17,7 @@ describe('benchmarkUtils.normalizeOptions', () => {
     it('leaves auth and load fields undefined when not provided', () => {
         const config = benchmarkUtils.normalizeOptions({ url: 'http://x', body: '{}' });
         expect(config.apiKey).toBeUndefined();
-        expect(config.email).toBeUndefined();
+        expect(config.projectId).toBeUndefined();
         expect(config.requests).toBeUndefined();
         expect(config.concurrency).toBeUndefined();
     });
