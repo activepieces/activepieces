@@ -353,12 +353,12 @@ describe('User API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
             expect(response?.json().code).toBe('VALIDATION')
         })
     })
 
-    describe('Delete user endpoint', () =>>,StartLine:200,TargetContent: {
+    describe('Delete user endpoint', () => {
         it('Removes a user', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
@@ -559,7 +559,7 @@ describe('User API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
             expect(response?.json().code).toBe('VALIDATION')
         })
     })
