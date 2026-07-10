@@ -110,32 +110,99 @@ This benchmark runs in `SANDBOX_CODE_ONLY` mode. It does **not** represent the p
 
 ## Benchmark your own installation
 
-To load-test **your own** deployment — no cluster scripts required — use the CLI. It creates a 3-step synchronous flow (webhook trigger → data mapper → return response), publishes it, then fires load at its sync webhook endpoint with [autocannon](https://github.com/mcollina/autocannon), reporting throughput, mean latency, p50/p90/p99, and failure counts.
+To load-test and **diagnose** your own deployment — no cluster scripts required — use the CLI. It builds a synchronous flow (webhook trigger → data mapper → return response), publishes it, then fires load at its sync webhook endpoint with [autocannon](https://github.com/mcollina/autocannon). But it does far more than a load test: it **auto-discovers your deployment's shape and attributes latency to the phase that owns it**, producing a single self-contained diagnostic bundle you can hand to support with no back-and-forth.
 
-Authenticate with an API key or user token (pass the project explicitly), **or** with email + password (the project is resolved automatically):
+Because the CLI runs from a **different host and region** than your API and workers, every client-side number it sees (autocannon latency, round-trip time) is polluted by that network distance. So the authoritative numbers come from the **server and workers themselves**: the per-run QUEUE/PROVISION/BOOT/RUN split is timed *inside the worker*, and the DB/Redis/S3 round-trip latency is measured *in-region* by a platform-admin diagnostics endpoint. Client-side numbers are shown but clearly marked observational.
+
+Authenticate with an API key or user token, **or** with email + password. A **platform-admin** login unlocks the full bundle (setup validation, infra round-trip, worker fleet); a plain API key still runs the load test and per-run latency attribution.
 
 ```bash
-# API key or user token (Bearer)
-AP_API_KEY=<key> npx @activepieces/cli benchmark --url https://your-instance.example.com --project-id <id>
+# platform-admin login (full diagnostics)
+npx @activepieces/cli benchmark --url https://your-instance.example.com --email admin@company.com --password '...'
 
-# or email/password login
-npx @activepieces/cli benchmark --url https://your-instance.example.com --email you@company.com --password '...'
+# or API key + project (load test + latency attribution; admin-only sections skipped)
+AP_API_KEY=<key> npx @activepieces/cli benchmark --url https://your-instance.example.com --project-id <id>
 ```
+
+By default the load runs at **concurrency = your deployment's execution slots** (the sum of `AP_WORKER_CONCURRENCY` across connected workers), so requests don't queue and the latency you read is real service time, not backlog. This is also the invariant to hold when **comparing two deployments** (e.g. yours vs. a reference): match concurrency to each deployment's own slots so neither queues, then compare the worker-measured RUN time and the infra round-trip — never a fixed concurrency, which would make the smaller deployment queue.
 
 | Option | Default | Description |
 |---|---|---|
 | `--url` | `http://localhost:3000` | Base URL of your Activepieces instance |
-| `--requests` | `500` | Total requests to fire |
-| `--concurrency` | `10` | Concurrent connections |
+| `--concurrency` | auto = execution slots | Concurrent connections; omit to match your fleet's slot count |
+| `--requests` | `40 × concurrency` | Total requests to fire |
 | `--api-key` | `AP_API_KEY` env var | Platform API key or user token (Bearer); requires `--project-id` |
 | `--project-id` | | Project to create the benchmark flow in (required with `--api-key`) |
-| `--email` / `--password` | | Login instead of an API key; resolves the project automatically |
+| `--email` / `--password` | | Login instead of an API key; a platform-admin unlocks the full diagnostics |
 | `--body` | `{"test":true}` | JSON body sent to the webhook |
-| `--json` | | Emit machine-readable JSON output |
+| `--json` | | Emit the full machine-readable bundle (share this with support) |
+
+### Reference numbers — what the report measures
+
+The bundle below is a **real run against the Activepieces GKE reference deployment** — the recommended shape from the [results table](#results): **4 workers at 0.5 vCPU / 1 GB, concurrency 1, `SANDBOX_CODE_ONLY`, `AP_REUSE_SANDBOX=true`**, with a same-region GCS object store and signed URLs, warm, load = `concurrency 4 (= slots) × 200 requests`. Every latency number that matters is measured **on the server or inside the worker**, so it is not distorted by the region the CLI runs from.
+
+Run the CLI against **your own** deployment and compare **tier by tier** against these reference figures. Because the workers here are the recommended 0.5-vCPU size, a matching setup should land in the same ballpark — and a number that is several times larger localizes the problem to a specific tier: your `RUN` far above ~200 ms means the engine/flow is heavier (or the worker is CPU-starved); your `storage` round-trip far above ~240 ms means the object store is mis-regioned or throttled; a large `QUEUE` with `queue depth` climbing means you drove more concurrency than you have slots.
+
+```text
+Version & health
+  app version : 0.86.2 (latest available: 0.86.2) — all workers match app version
+  health      : app-cpu=ok app-ram=ok disk=ok worker-cpu=ok worker-ram=ok db=ok
+
+Infra round-trip (server-measured, in-region — authoritative, not reachable from the CLI)
+  database : 21 ms
+  redis    : 17 ms
+  storage  : 237 ms   (S3/GCS write+read round-trip; same cost is inside every RUN as the end-of-run log backup)
+  config   : execution=SANDBOX_CODE_ONLY storage=S3 signedUrls=true sandboxMemKB=1048576 s3=https://storage.googleapis.com/europe-west1
+  workers  : 4 connected
+    - ONLINE worker-z | 0.5 core | cpu 100.0% | ram 13.8%
+    - ONLINE worker-N | 0.5 core | cpu  63.9% | ram 15.2%
+    - ONLINE worker-u | 0.5 core | cpu 100.0% | ram 15.5%
+    - ONLINE worker-e | 0.5 core | cpu 100.0% | ram 15.5%
+
+Config flags (server-reported)
+  EDITION "ce"   DEFAULT_CONCURRENT_JOBS_LIMIT 1000   PROJECT_RATE_LIMITER_ENABLED false
+  FLOW_RUN_MEMORY_LIMIT_KB 1048576   WEBHOOK_TIMEOUT_SECONDS 30   FLOW_RUN_TIME_SECONDS 600  ...
+
+Setup
+  workers online : 4, execution slots : 4
+  [PASS] sandbox mode / reuse sandbox / worker concurrency / worker CPU / worker RAM   (all match the recommended shape)
+
+Network (CLI -> server, cross-region)
+  RTT min / p50 : 43.0 / 46.9 ms over 20 probes
+
+conc 4 (= slots)
+  throughput   : 10.0 req/s   (200 reqs in 20.0s)
+  run outcomes : 200 SUCCEEDED   (server-truth: 200 2xx, 0 non-2xx, 0 errors, 0 timeouts)
+  queue depth  : max waiting 3, max active 4, avg waiting 1   (sampled server-side during load)
+  worker-measured latency (authoritative — each phase timed inside the worker, 200 runs):
+    QUEUE      p50 100 ms   — wait for a free execution slot  (±app↔worker clock skew; cross-check the queue-depth)
+    PROVISION  p50   1 ms   — piece install / cache provision
+    BOOT       p50   0 ms   — engine fork + Node boot + isolate + socket connect
+    RUN        p50/p90 201 / 244 ms   — engine executes the flow, incl. end-of-run S3 log backup
+    => queue-wait p50 102 ms vs service p50 201 ms  =>  verdict: service-bound
+  observational (CLI-side, cross-region — NOT authoritative): client latency p50/p90/p99 256/311/5638 ms
+
+Storage (log persistence)
+  50/50 sampled runs have a persisted log — the worker->storage write path is healthy
+```
+
+Each block answers a specific question:
+
+| Section | What it measures | Where it's measured |
+|---|---|---|
+| **Version & health** | App release, whether every connected worker matches it (a version-skewed worker is silently withheld jobs), and app/worker/DB CPU-RAM-disk health | `GET /v1/health/system` |
+| **Infra round-trip** | Authoritative **in-region** DB / Redis / **S3** write+read latency, the effective execution/storage config, and the worker fleet with live per-worker CPU. The S3 round-trip is the same cost folded into every run's end-of-run log backup — a slow object store shows up here **and** in RUN. Self-hosted only. | `GET /v1/health/diagnostics` |
+| **Config flags** | The limits and throttles that silently cap throughput — a `PROJECT_RATE_LIMITER_ENABLED` or a low `DEFAULT_CONCURRENT_JOBS_LIMIT` re-queues jobs (latency, not errors); the memory/timeout/log ceilings that turn into `MEMORY_LIMIT_EXCEEDED` / `TIMEOUT` / `LOG_SIZE_EXCEEDED` statuses | `GET /v1/flags` |
+| **Setup** | Execution slots (Σ `AP_WORKER_CONCURRENCY`) and a PASS/WARN check of every worker's specs, sandbox mode, reuse, and concurrency against the recommended shape | `GET /v1/worker-machines` |
+| **Network** | CLI→server round-trip, so cross-region distance is quantified and subtracted rather than blamed on the server | timed `GET /v1/flags` |
+| **Load + latency split** | Throughput, run-status outcomes (server truth, not just HTTP codes), live **queue depth** during load, and the per-run latency split into **QUEUE / PROVISION / BOOT / RUN** — measured inside the worker, so it's the same on any deployment regardless of where the CLI runs. The verdict says whether latency is **queue-bound** (too much concurrency for the slot count) or **service-bound** (real engine time) | `FlowRun.timeline` + `GET /v1/worker-machines/queue-metrics` |
+| **Storage** | Fraction of runs whose logs were persisted — proves the worker→storage write path works end to end | `FlowRun.logsFileId` |
+
+In this example the read is unambiguous: workers pegged at ~100% of their 0.5-core limit and RUN ≈ 200 ms dominate, while QUEUE (~100 ms at concurrency = slots) and the infra round-trips are small — the deployment is **service-bound on worker CPU**, so the lever is more/bigger workers, not a code change.
 
 The command exits non-zero when any request fails, so it can gate CI. The flow it creates stays in the project afterwards — delete it when you're done.
 
 <Note>
-Numbers from this command are **not** comparable to the results table above — your flow shape, hardware, sandbox mode, and network differ from the GKE setup in [Test environment](#test-environment). Use it to compare your own configurations against each other, e.g. before and after scaling workers.
+The reference figures above come from the recommended-setup GKE deployment in [Test environment](#test-environment). If you run the **same recommended shape** (0.5 vCPU / 1 GB workers, `SANDBOX_CODE_ONLY`, one flow per worker, same-region object store), your per-tier numbers should be in the same ballpark and any large gap points to a specific tier. If your hardware or sandbox mode differs, the absolute numbers shift — but the **shape** still holds: match concurrency to your own slot count so nothing queues, then read whether you are queue-bound or service-bound and which tier dominates.
 </Note>
 
