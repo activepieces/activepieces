@@ -21,6 +21,7 @@ function createQueueDispatcher(params: {
 
     async function poll(): Promise<ConsumeJobRequest | null> {
         activePolls++
+        log.info({ queueName, activePolls }, '[QueueDispatcher] poll started')
         try {
             const deadline = Date.now() + WAITER_TIMEOUT_MS
             while (!closed && Date.now() < deadline) {
@@ -32,9 +33,11 @@ function createQueueDispatcher(params: {
                     continue
                 }
                 if (!isNil(job)) {
+                    log.info({ queueName, job: { id: job.jobId, type: job.jobData.jobType } }, '[QueueDispatcher] dequeued job')
                     return job
                 }
             }
+            log.info({ queueName, closed }, '[QueueDispatcher] poll returned no job (timed out or closed)')
             return null
         }
         finally {

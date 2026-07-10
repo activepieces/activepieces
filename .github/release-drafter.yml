@@ -14,9 +14,11 @@ categories:
   - title: "✨ Exciting New Features"
     labels:
       - "🌟 feature"
+      - "feature"
   - title: "🐞 Bug Fixes"
     labels:
       - "🐛 bug"
+      - "bug"
   - title: "🎨 Enhancements & Polish"
     labels:
       - "✨ polishing"
