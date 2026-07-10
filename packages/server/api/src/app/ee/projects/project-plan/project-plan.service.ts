@@ -1,11 +1,14 @@
-import { apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { PiecesFilterType, ProjectPlan, ProjectPlanLimits } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric, spreadIfDefined, spreadIfNotUndefined } from '@activepieces/core-utils'
+import { ApEdition, FlowStatus, PiecesFilterType, ProjectPlan, ProjectPlanLimits } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { flowService } from '../../../flows/flow/flow.service'
+import { system } from '../../../helper/system/system'
 import { ProjectPlanEntity } from './project-plan.entity'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
+const edition = system.getEdition()
 
 export const projectLimitsService = (_log: FastifyBaseLogger) => ({
     async upsert(
@@ -19,8 +22,31 @@ export const projectLimitsService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('locked', planLimits.locked),
             ...spreadIfDefined('pieces', planLimits.pieces),
             ...spreadIfDefined('piecesFilterType', planLimits.piecesFilterType),
+            ...spreadIfNotUndefined('activeFlowsLimit', planLimits.activeFlowsLimit),
         })
         return projectPlanRepo().findOneByOrFail({ projectId })
+    },
+
+    async checkActiveFlowsExceededLimit({ projectId }: { projectId: string }): Promise<void> {
+        if (edition === ApEdition.COMMUNITY) {
+            return
+        }
+        const projectPlan = await projectPlanRepo().findOneBy({ projectId })
+        if (isNil(projectPlan) || isNil(projectPlan.activeFlowsLimit)) {
+            return
+        }
+        const activeFlows = await flowService(_log).count({
+            projectId,
+            status: FlowStatus.ENABLED,
+        })
+        if (activeFlows >= projectPlan.activeFlowsLimit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: PlatformUsageMetric.ACTIVE_FLOWS,
+                },
+            })
+        }
     },
 
     async getOrCreateDefaultPlan(projectId: string): Promise<ProjectPlan> {

@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, TeamProjectsLimit, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -186,6 +186,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                         {
                             ...spreadIfDefined('pieces', request.plan.pieces),
                             ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
+                            ...spreadIfNotUndefined('activeFlowsLimit', request.plan.activeFlowsLimit),
                         },
                         projectId,
                         entityManager,
