@@ -104,6 +104,10 @@ benchmark/run-gke.sh [total_requests] [concurrency]
 
 The script mints a worker token, deploys `benchmark/k8s-sandbox.yaml` to the cluster, runs the load test against the app LoadBalancer, and reports warm throughput and the per-run breakdown from worker-pod logs. Set `APP_REPLICAS` and `WORKER_REPLICAS` (keeping the 1:10 ratio) to reproduce any row in the results table.
 
+<Tip>
+This benchmark runs in `SANDBOX_CODE_ONLY` mode. It does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism for multi-tenancy. See [Sandboxing](/install/architecture/sandboxing).
+</Tip>
+
 ## Benchmark your own installation
 
 To load-test **your own** deployment — no cluster scripts required — use the CLI. It creates a 3-step synchronous flow (webhook trigger → data mapper → return response), publishes it, then fires load at its sync webhook endpoint with [autocannon](https://github.com/mcollina/autocannon), reporting throughput, mean latency, p50/p90/p99, and failure counts.
@@ -135,6 +139,3 @@ The command exits non-zero when any request fails, so it can gate CI. The flow i
 Numbers from this command are **not** comparable to the results table above — your flow shape, hardware, sandbox mode, and network differ from the GKE setup in [Test environment](#test-environment). Use it to compare your own configurations against each other, e.g. before and after scaling workers.
 </Note>
 
-<Tip>
-This benchmark runs in `SANDBOX_CODE_ONLY` mode. It does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism for multi-tenancy. See [Sandboxing](/install/architecture/sandboxing).
-</Tip>
