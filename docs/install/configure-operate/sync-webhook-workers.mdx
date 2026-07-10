@@ -1,0 +1,44 @@
+---
+title: "Sync Webhook Workers"
+description: "Reserve dedicated worker capacity for synchronous webhook responses"
+icon: "bolt"
+---
+
+Synchronous webhooks (`POST /api/v1/webhooks/{id}/sync`) answer a caller that is actively waiting — a live phone call, a chat widget, a checkout flow. By default they share one queue and one worker pool with everything else, and queue priority only orders **waiting** jobs: it cannot preempt a job that is already running. A burst of long-running scheduled flows can occupy every worker slot for a minute or more, and the real-time caller times out.
+
+**Sync webhook workers** fix that. Point one or more workers at the dedicated `syncJobs` queue and every run with a live waiting caller routes there, served by capacity that background work can never take.
+
+## How it works
+
+A worker subscribes to the sync queue with a single environment variable:
+
+```bash
+AP_WORKER_QUEUE=syncJobs
+```
+
+That worker now polls **only** `syncJobs`. It stays idle when there is no synchronous traffic — that idleness *is* the reserved capacity.
+
+Routing is automatic and capacity-aware:
+
+- While at least one **version-matched** sync worker is online, runs with a live waiting HTTP caller (sync webhook runs and synchronous resume links) are enqueued to `syncJobs`.
+- If no sync worker is online, those runs fall through to the shared `workerJobs` queue and execute exactly as before — so routing new runs is never a dead end. (Runs already sitting in `syncJobs` when the last sync worker disconnects wait for a sync worker to return, exactly like any other queued job; keep at least one sync worker running while the queue is non-empty.)
+
+There is nothing to enable on the API side and no migration — deployments without `AP_WORKER_QUEUE` are unaffected.
+
+## What routes to the sync queue
+
+- Production and test runs started by a **synchronous webhook call** (`/sync` and builder `/draft/sync` endpoints), including flows triggered synchronously through MCP tools.
+- **Synchronous resume links** (`/waitpoints/{id}/sync`) where the caller waits for the flow's response.
+
+Everything else stays in the shared queue, deliberately:
+
+- Scheduled, polling, and async-webhook runs.
+- **Delayed continuations** of sync flows (e.g. a "Delay 24 hours" step): by the time the delay fires, the original caller has long timed out, so the resume does not claim reserved sync capacity.
+- **Resumes driven by an internal signal rather than the original caller** — approval-link callbacks and subflow (Call Flow) completions. These re-enter through the shared queue even when they ultimately deliver a response to a still-waiting sync caller, because the enqueue path cannot confirm the caller is live. A sync webhook whose flow pauses on a subflow or approval therefore gets isolation for its initial request but not for the resume that produces the final response. The direct request/response path (the common real-time case) is fully isolated.
+
+## Scaling and operations
+
+- Size the pool with replicas of small workers, the same way you scale the shared fleet — see [Separate Workers](/install/configure-operate/separate-workers). As with the shared fleet, **size statically for peak**: autoscaling's boot lag cannot defend the 30-second sync-webhook budget (see [Production Setup](/install/configure-operate/production-setup)). Watch `syncJobs` depth via the [queue metrics endpoint](/endpoints/worker-machines/queue-metrics) (`GET /api/v1/worker-machines/queue-metrics`) to right-size it.
+- `AP_WORKER_QUEUE` accepts one queue. A worker is either a sync worker or a shared worker — a worker cannot poll both without reintroducing the latency problem this feature removes.
+- `AP_WORKER_QUEUE` is ignored (with a warning in the API logs) when `AP_WORKER_GROUP_ID` is set: [worker groups](/install/configure-operate/worker-groups) are tenancy pools and keep their own routing. Projects assigned to a worker group already have reserved capacity; their sync runs stay in the group's queue.
+- A typo in the value (anything other than `syncJobs`) is rejected with an error in the API logs and the worker falls back to the shared queue, so a misconfiguration degrades to today's behavior instead of a dead pool.

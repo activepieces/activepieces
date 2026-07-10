@@ -2,6 +2,7 @@ import { parseToJsonIfPossible } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { MachineInformation, WorkerGroupScope } from '@activepieces/shared'
 import { redisConnections } from '../../database/redis-connections'
+import type { QueueName } from '../job'
 
 export type WorkerMachine = {
     id: string
@@ -11,6 +12,7 @@ export type WorkerMachine = {
     type?: 'SHARED' | 'DEDICATED'
     workerGroupId?: string
     workerGroupScope?: WorkerGroupScope
+    workerQueue?: QueueName.SYNC_JOBS
 }
 
 const REDIS_KEY = 'workerMachines'

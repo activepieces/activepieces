@@ -139,6 +139,10 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
         flowRun,
         platformId,
         workerHandlerId: workerHandlerId ?? waitpoint?.workerHandlerId ?? undefined,
+        // An explicit handler id means this resume was minted by a live HTTP caller (sync resume
+        // link). The waitpoint fallback merged above addresses a caller from pause time — likely
+        // timed out (delay/approval resumes fire hours later) — so it must not claim sync capacity.
+        syncRun: !isNil(workerHandlerId),
         httpRequestId: httpRequestId ?? waitpoint?.httpRequestId ?? apId(),
         streamStepProgress: flowRun.environment === RunEnvironment.TESTING
             ? StreamStepProgress.WEBSOCKET

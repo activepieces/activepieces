@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
@@ -22,18 +22,9 @@ import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerRunStats } from '../../trigger/trigger-run/trigger-run-stats'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
+import { getPollQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
-
-const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
-    if (isNil(assignment)) {
-        return QueueName.WORKER_JOBS
-    }
-    return assignment.scope === WorkerGroupScope.PROJECT
-        ? getProjectGroupQueueName(assignment.id)
-        : getPlatformGroupQueueName(assignment.id)
-}
 
 let pagedForUnreadableAppVersion = false
 
@@ -51,11 +42,11 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
     })
 }
 
-export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
+export function createHandlers({ log, assignment = null, connectionId, workerQueue = null }: CreateHandlersParams): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input, assignment)
+            log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined, workerQueue: workerQueue ?? undefined }, '[workerRpc#poll] Poll request received')
+            await machineService(log).onConnection({ request: input, assignment, workerQueue })
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
             if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
@@ -71,7 +62,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 }
                 return null
             }
-            const pollQueueName = getPollQueueName(assignment)
+            const pollQueueName = getPollQueueName({ assignment, workerQueue })
             const job = await jobBroker(log).poll(pollQueueName, connectionId)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
@@ -327,4 +318,11 @@ function chatRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runI
         ...spreadIfDefined('platform', isNil(ids.platformId) ? undefined : { id: ids.platformId }),
         ...spreadIfDefined('user', isNil(ids.userId) ? undefined : { id: ids.userId }),
     })
+}
+
+type CreateHandlersParams = {
+    log: FastifyBaseLogger
+    assignment?: WorkerGroupAssignment | null
+    connectionId?: string
+    workerQueue?: QueueName.SYNC_JOBS | null
 }

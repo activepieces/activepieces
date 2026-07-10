@@ -1,4 +1,4 @@
-import { ExecutionMode } from '@activepieces/shared'
+import { ExecutionMode, WorkerGroupScope } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../../../../src/app/workers/machine/machine-cache', () => ({
@@ -59,7 +59,7 @@ describe('machineService — execution mode', () => {
         vi.mocked(system.getOrThrow).mockReturnValue(ExecutionMode.SANDBOX_PROCESS as any)
 
         const { machineService: freshMachineService } = await import('../../../../../src/app/workers/machine/machine-service')
-        const result = await freshMachineService(mockLog).onConnection(mockHealthcheck)
+        const result = await freshMachineService(mockLog).onConnection({ request: mockHealthcheck })
 
         expect(result.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_PROCESS)
     })
@@ -68,7 +68,10 @@ describe('machineService — execution mode', () => {
         vi.mocked(system.getOrThrow).mockReturnValue(ExecutionMode.SANDBOX_CODE_AND_PROCESS as any)
 
         const { machineService: freshMachineService } = await import('../../../../../src/app/workers/machine/machine-service')
-        const result = await freshMachineService(mockLog).onConnection(mockHealthcheck, 'my-worker-group')
+        const result = await freshMachineService(mockLog).onConnection({
+            request: mockHealthcheck,
+            assignment: { scope: WorkerGroupScope.PLATFORM, id: 'my-worker-group' },
+        })
 
         expect(result.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_AND_PROCESS)
     })

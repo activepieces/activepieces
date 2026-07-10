@@ -72,7 +72,7 @@ async function getMaxConcurrentJobs({ poolId, platformId, projectId, log }: { po
 }
 
 async function resolveRoutedPoolSlots({ platformId, projectId, log }: { platformId: PlatformId, projectId: string, log: FastifyBaseLogger }): Promise<number> {
-    const { projectGroups, shared } = await workerCapacity.get()
+    const { projectGroups, shared, sync } = await workerCapacity.get()
     const { data: projectGroupId } = await tryCatch(() => projectWorkerGroupService(log).getProjectWorkerGroup({ projectId, platformId }))
     if (!isNil(projectGroupId)) {
         const groupCapacity = projectGroups.get(projectGroupId)
@@ -80,7 +80,10 @@ async function resolveRoutedPoolSlots({ platformId, projectId, log }: { platform
             return groupCapacity.slots
         }
     }
-    return shared.slots
+    // An ungrouped project's runs execute on shared workers, and its sync-webhook runs on the
+    // sync pool, so the physical ceiling for its concurrency cap spans both — otherwise a
+    // sync-routed run would be throttled against the shared pool alone while sync slots sit idle.
+    return shared.slots + sync.slots
 }
 
 async function tryAcquireSlot({ jobId, jobData, log }: { jobId: string, jobData: ExecuteFlowJobData, log: FastifyBaseLogger }): Promise<boolean> {
