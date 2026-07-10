@@ -15,5 +15,20 @@
   "Callable Flow": "Callable Flow",
   "Waiting to be triggered from another flow": "Waiting to be triggered from another flow",
   "Sample Data": "Sample Data",
-  "The schema to be passed to the flow": "The schema to be passed to the flow"
+  "The schema to be passed to the flow": "The schema to be passed to the flow",
+  "Process CSV in Chunks": "Process CSV in Chunks",
+  "Split a CSV file into chunks and dispatch each chunk to a subflow (\"Callable Flow\") for processing. Set the chunk size below; when left empty it defaults to 5000 rows.": "Split a CSV file into chunks and dispatch each chunk to a subflow (\"Callable Flow\") for processing. Set the chunk size below; when left empty it defaults to 5000 rows.",
+  "CSV File": "CSV File",
+  "The CSV file to split and process.": "The CSV file to split and process.",
+  "The subflow that processes each chunk. Only published flows with a \"Callable Flow\" trigger appear here; disabled flows are marked \"(inactive)\".": "The subflow that processes each chunk. Only published flows with a \"Callable Flow\" trigger appear here; disabled flows are marked \"(inactive)\".",
+  "Does the CSV have headers?": "Does the CSV have headers?",
+  "Delimiter": "Delimiter",
+  "The delimiter used in the CSV file.": "The delimiter used in the CSV file.",
+  "Comma": "Comma",
+  "Tab": "Tab",
+  "Semicolon": "Semicolon",
+  "Additional Data": "Additional Data",
+  "Static data merged into every chunk payload sent to the subflow.": "Static data merged into every chunk payload sent to the subflow.",
+  "Chunk Size (rows)": "Chunk Size (rows)",
+  "Number of rows per chunk. Defaults to 5000 when left empty.": "Number of rows per chunk. Defaults to 5000 when left empty."
 }
