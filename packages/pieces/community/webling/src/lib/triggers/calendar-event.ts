@@ -56,11 +56,26 @@ export const onEventChanged = createTrigger({
     });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onEnable(polling, {
+      store,
+      auth,
+      propsValue: {
+        calendarId: propsValue.calendarId,
+      },
+      isRepublish: context.isRepublish,
+    });
   },
 
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onDisable(polling, {
+      store,
+      auth,
+      propsValue: {
+        calendarId: propsValue.calendarId,
+      },
+    });
   },
 
   async run(context) {

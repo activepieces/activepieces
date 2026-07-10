@@ -26,10 +26,19 @@ export const newChatTrigger = createTrigger({
 	props: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, context);
+		await pollingHelper.onEnable(polling, {
+			auth: context.auth,
+			store: context.store,
+			propsValue: context.propsValue as Props,
+			isRepublish: context.isRepublish,
+		});
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, context);
+		await pollingHelper.onDisable(polling, {
+			auth: context.auth,
+			store: context.store,
+			propsValue: context.propsValue as Props,
+		});
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context as any);
