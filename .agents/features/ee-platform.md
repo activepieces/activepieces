@@ -10,7 +10,7 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 - `packages/core/shared/src/lib/management/platform/` — `PlatformPlan` type and all feature-flag fields
 - `packages/web/src/features/billing/api/billing-plans-api.ts` — `platformBillingApi` (portal, checkout, AI credits, auto top-up)
 - `packages/web/src/features/billing/hooks/billing-hooks.ts` — `billingQueries`, `billingMutations`
-- `packages/web/src/features/billing/components/` — `SubscriptionInfo`, `ActiveFlowAddon`, `AICreditUsage`, `LicenseKey`, `PurchaseAICreditsDialog`, `AutoTopUpConfigDialog`
+- `packages/web/src/features/billing/components/` — `SubscriptionInfo`, `ActiveFlowAddon`, `AICreditUsage`, `AiCreditUsageByProject` (see [ai-credit-usage.md](./ai-credit-usage.md)), `LicenseKey`, `PurchaseAICreditsDialog`, `AutoTopUpConfigDialog`
 - `packages/web/src/app/routes/platform/billing/index.tsx` — Billing page (gated by edition, uses `LockedFeatureGuard`)
 
 ## Edition Availability

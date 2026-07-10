@@ -5,6 +5,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { AiCreditUsageEntity, AiCreditUsageSchema } from './ai-credit-usage-entity'
 
 const aiCreditUsageRepo = repoFactory<AiCreditUsageSchema>(AiCreditUsageEntity)
+const MAX_PROJECT_ROWS = 1000
 
 export const aiCreditUsageService = {
     async record({ platformId, projectId, provider, model, cost }: RecordParams): Promise<void> {
@@ -38,6 +39,7 @@ export const aiCreditUsageService = {
             .groupBy('usage."projectId"')
             .addGroupBy('project."displayName"')
             .orderBy('credits', 'DESC')
+            .limit(MAX_PROJECT_ROWS)
             .getRawMany<RawUsageRow>()
         return rows.map((row) => ({
             projectId: row.projectId,

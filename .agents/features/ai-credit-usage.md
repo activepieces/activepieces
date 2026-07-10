@@ -7,14 +7,14 @@ Attributes AI credit consumption to the project that generated it, so platform a
 1. `createAIModel` in the AI piece enables OpenRouter usage accounting (`usage: { include: true }`) for the ACTIVEPIECES provider only and wraps the chat model with an AI-SDK middleware.
 2. The middleware reads `providerMetadata.openrouter.usage.cost` (USD) from each generate call or from the stream's `finish` part, then POSTs `{provider, model, cost}` to `POST /v1/ai-credit-usage` with the engine token. Errors are swallowed so reporting can never fail an AI step; the report is awaited (in the stream case inside the transform's `flush`) so it is not lost when the run ends.
 3. The server derives `projectId`/`platformId` from the engine principal (a project can only attribute usage to itself), converts cost to credits (× `AI_CREDITS_PER_DOLLAR` = 1000), and upserts into the day bucket: an `orIgnore` insert of a zero row followed by an atomic `increment` (race-safe on both postgres and sqlite without dialect-specific SQL). Day bucketing keeps growth slow (one row per project × provider × model × day); per-run granularity is out of scope (tracked as GIT-1557).
-4. `GET /v1/ai-credit-usage` returns `ProjectAiCreditUsage[]` (soft-deleted projects included via `withDeleted()` so the per-project sum keeps reconciling with the platform total) (total + current calendar month UTC, matching OpenRouter's `usage_monthly` window), sorted by credits desc.
+4. `GET /v1/ai-credit-usage` returns `ProjectAiCreditUsage[]` (capped at 1000 project rows, credits desc) (soft-deleted projects included via `withDeleted()` so the per-project sum keeps reconciling with the platform total) (total + current calendar month UTC, matching OpenRouter's `usage_monthly` window), sorted by credits desc.
 
 ## Known gaps (accepted)
 - Embeddings (knowledge base) and server-side chat AI calls do not flow through the piece's chat model and are not attributed.
 - A stream cancelled mid-generation (user stops an agent run) never reaches the `finish` part, so that call's cost is billed by OpenRouter but not attributed; the table can undercount vs the platform total.
 - The report POST is awaited with a 5s timeout, so a degraded API server adds up to 5s latency per managed AI call; the timeout caps it.
 - BYO providers (OpenRouter/OpenAI/... with the customer's own key) are not metered — they do not consume AP AI credits.
-- The legacy `ai_usage` table (dropped on postgres by `DropLegacyTables`) is dropped on sqlite by the dedicated `DropLegacyAiUsageSqlite` migration shipped alongside this feature.
+- SQLite migrations are deprecated repo-wide (postgres-only since Dec 2025), so no sqlite migration ships with this feature; the stale legacy `ai_usage` sqlite table is left untouched like every other post-Dec-2025 table.
 
 ## Key Files
 - `packages/pieces/community/ai/src/lib/common/ai-sdk.ts` — usage-reporting middleware (`createCreditUsageReportingMiddleware`)
