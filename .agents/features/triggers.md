@@ -75,6 +75,8 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 - Submits ON_DISABLE hook to worker (unregisters webhook)
 - Deletes AppEventRouting records
 
+**Republish checkpoint preservation** (`isRepublish` flag): republishing a running flow does `onDisable(old) → onEnable(new)`, which used to reset the polling checkpoint (`lastPoll`/`lastItem`) to now and silently drop events created in between (#13311). `flowService.update` sets `isRepublish=true` only for a `LOCK_AND_PUBLISH` of an already-`ENABLED` flow whose **trigger is unchanged** (same piece + trigger name — see `isSameTrigger`); the flag is threaded through the ON_ENABLE job → `ExecuteTriggerOperation` → trigger context (`context.isRepublish`). `pollingHelper.onEnable` then preserves the existing checkpoint instead of resetting. A fresh enable, a manual off→on toggle, and a trigger swap all reset to now. Custom polling triggers (not using `pollingHelper`) can opt in by reading `context.isRepublish` in their own `onEnable`.
+
 ## Deduplication (`dedupeService`)
 
 For polling triggers — prevents duplicate payloads:
