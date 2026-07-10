@@ -7,6 +7,8 @@ export const saveFileAction = createAction({
   auth: cmsAuth,
   displayName: 'Save File',
   description: 'Save file to Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a single file to a file-type CMS field in Total CMS, identified by its CMS ID (slug), with an explicit file extension. Use to set or replace the file stored at a given CMS ID. Idempotent: the field holds one file keyed on the slug, so repeating with the same input replaces it.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

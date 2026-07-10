@@ -7,6 +7,12 @@ export const deleteContacts = createAction({
   displayName: 'Delete Contacts',
   auth: krispcallAuth,
   description: 'Delete contacts from krispcall.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Delete one or more contacts from the connected KrispCall account, given a list of contacts to remove. Use when an agent needs to clean up or remove KrispCall contacts. Idempotent in effect — re-running after the contacts are gone leaves the account in the same state.',
+    idempotent: true,
+  },
   props: {
     contacts: Property.Array({
       displayName: 'Contacts',

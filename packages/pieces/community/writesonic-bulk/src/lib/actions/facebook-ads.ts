@@ -12,6 +12,8 @@ export const facebookAds = createAction({
   name: 'facebookAds',
   displayName: 'Facebook Ads',
   description: 'Generate Facebook ad copies that make your ads truly stand out',
+  audience: 'both',
+  aiMetadata: { description: 'Generates AI-written Facebook ad copy via Writesonic from a product name, with optional description, occasion, and promotion details plus engine/language/copy-count controls. Use when an agent needs social ad creative for a product. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     product_name: Property.ShortText({
       displayName: 'Product Name',

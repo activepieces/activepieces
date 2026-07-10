@@ -1,4 +1,5 @@
-import { isNil, McpOAuthClient } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { McpOAuthClient } from '@activepieces/shared'
 import { FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
@@ -28,7 +29,7 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
                     error_description: e.errorDescription,
                 })
             }
-            req.log.error({ err: e, clientId: client_id }, 'OAuth token error')
+            req.log.error({ error: e, clientId: client_id }, 'OAuth token error')
             return reply.status(500).send({ error: 'server_error' })
         }
     })

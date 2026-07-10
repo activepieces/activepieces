@@ -8,6 +8,8 @@ export const createArticleAction = createAction({
 	name: 'create-article',
 	displayName: 'Create Article',
 	description: 'Creates a new article in your Help Center.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new Help Center article with title, optional description and body, an author admin, and a draft or published state, optionally nested under a parent collection. Always creates a new article, so it is not idempotent and repeated calls produce duplicates.', idempotent: false },
 	props: {
 		title: Property.LongText({
 			displayName: 'Title',

@@ -37,6 +37,10 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             nullable: false,
             default: ChatConversationStatus.IDLE,
         },
+        activeRunId: {
+            type: String,
+            nullable: true,
+        },
         messages: {
             type: 'jsonb',
             nullable: false,

@@ -12,6 +12,12 @@ export const captureScreenshot = createAction({
   name: 'captureScreenshot',
   displayName: 'Capture Screenshot',
   description: 'Captures Screenshot of a URL.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Captures a screenshot of a given web page URL via PeekShot and waits (polling up to ~5 minutes) for the rendered image to be ready. Use when an agent needs to render a live web page to an image; supports optional viewport width/height, PNG/JPEG output, full-page capture, and injecting custom CSS/JS before the shot. Requires a PeekShot project id and a target URL. Not idempotent: each call submits a new capture request.',
+    idempotent: false,
+  },
   props: {
     projectId: projectId,
     url: Property.ShortText({ displayName: 'Target URL', required: true }),

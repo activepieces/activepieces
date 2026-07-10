@@ -27,7 +27,7 @@ import { findContact } from "./lib/actions/find-contact";
 import { findConversation } from "./lib/actions/find-conversation";
 import { newConversationStateChange } from "./lib/triggers/new-conversation-state-change";
 import { frontAuth } from "./lib/common/auth";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const front = createPiece({
   displayName: "Front",

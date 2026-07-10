@@ -8,6 +8,8 @@ export const updateProductAction = createAction({
   name: 'update_product',
   displayName: 'Update Product',
   description: 'Update an existing product.',
+  audience: 'both',
+  aiMetadata: { description: 'Update fields on an existing Shopify product by product ID (title, description, type, vendor, tags, status, and an optional image). Pick this to edit a known product rather than creating one; the product ID is required. Sets absolute field values, so re-running with the same input is idempotent (though a supplied image is appended each time).', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Product',

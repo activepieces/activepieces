@@ -7,6 +7,9 @@ export const subscriptionPaymentRecoveredTrigger = createTrigger({
   name: 'subscription_payment_recovered',
   displayName: 'Subscription Payment Recovered',
   description: 'Triggers when a subscription has a successful payment after a failed payment',
+  aiMetadata: {
+    description: 'Fires when a subscription payment in Lemon Squeezy succeeds after a prior failed attempt (dunning recovery). Represents the recovered subscription invoice, signaling the account is back in good standing.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

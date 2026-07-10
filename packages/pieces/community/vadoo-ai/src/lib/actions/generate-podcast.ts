@@ -6,13 +6,19 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { generatePodcastSchema } from '../schemas';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 export const generatePodcast = createAction({
   auth: vadooAiAuth,
   name: 'generate_podcast',
   displayName: 'Generate Podcast',
   description: 'Generates a podcast-style video.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates a two-speaker podcast-style video on Vadoo from source content and waits (polls up to ~5 minutes) for it to finish, returning the completed video URL. The content source is selectable: either a website/PDF URL or custom text, and the matching field is required for the chosen source. Requires host and guest names; optional voices, theme, language, duration, and tone shape the output. Each call starts a new generation job, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     content_source: Property.StaticDropdown({
       displayName: 'Content Source',

@@ -12,6 +12,8 @@ export const createAgentFromTemplate = createAction({
   name: 'createAgentFromTemplate',
   displayName: 'Create Agent From Template',
   description: 'Creates an agent from a template',
+  audience: 'both',
+  aiMetadata: { description: 'Deploys a new stateful Letta agent from an existing template version (identified by its template version ID), optionally seeding it with a name, identities, tags, memory/tool variables, and an initial message sequence. Use to provision a fresh agent instance from a reusable blueprint. Not idempotent: each call creates a new agent (or deployment) even with identical input.', idempotent: false },
   props: {
     templateVersion: Property.ShortText({
       displayName: 'Template Version',

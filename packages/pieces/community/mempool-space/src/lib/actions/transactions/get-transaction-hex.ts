@@ -7,6 +7,8 @@ export const getTransactionHex = createAction({
   name: 'get_transaction_hex',
   displayName: 'Get Transaction Hex',
   description: 'Get the raw transaction in hex format',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the hex-encoded serialized form of a transaction by its transaction ID from the /hex endpoint. Functionally equivalent to Get Raw Transaction; use Get Transaction instead for parsed/structured detail. Read-only.', idempotent: true },
   // category: 'Transactions',
   props: {
     txid: Property.ShortText({

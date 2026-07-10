@@ -9,6 +9,8 @@ export const updateContact = createAction({
   name: 'updateContact',
   displayName: 'Update Contact',
   description: 'Update an existing contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields (first name, last name, company name, information) on an existing Aircall contact identified by its contact ID; only the fields you supply are changed. Use to edit a known contact rather than create one. Idempotent: applying the same values repeatedly leaves the contact in the same state.', idempotent: true },
   props: {
     contactId: contactIdDropdown,
     first_name: Property.ShortText({

@@ -13,6 +13,9 @@ export const dripTagAppliedEvent = createTrigger({
   name: 'tag_applied_to_subscribers',
   displayName: 'Tag Applied',
   description: 'Triggers when a tag is applied.',
+  aiMetadata: {
+    description: 'Fires when a tag is applied to a subscriber in the selected Drip account, emitting the subscriber.applied_tag event. Represents a contact being labeled or segmented; the payload includes the applied tag.',
+  },
   props: {
     account_id: dripCommon.account_id,
   },

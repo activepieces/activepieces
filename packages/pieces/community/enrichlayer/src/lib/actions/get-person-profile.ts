@@ -9,6 +9,12 @@ export const getPersonProfile = createAction({
   displayName: 'Get Person Profile',
   description:
     'Get structured data of a Person Profile from a professional network URL (1 credit)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Retrieve a full structured person profile from a known professional-network, Twitter/X, or Facebook URL (supply exactly one); read-only and safe to retry. Use when you already have the profile URL. If you only have a name and company, call Look Up Person first to resolve the URL. Optional enrichments (contact numbers, personal emails, social IDs, Live Fetch) add credits.",
+    idempotent: true,
+  },
   props: {
     profile_url: Property.ShortText({
       displayName: 'Profile URL',

@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   ApSubscriptionStatus,
   AiCreditsAutoTopUpState,
   ApEdition,
   ApFlagId,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 

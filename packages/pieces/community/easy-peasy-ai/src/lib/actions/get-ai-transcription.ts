@@ -9,6 +9,12 @@ export const getAiTranscription = createAction({
   displayName: 'Get AI Transcription',
   description:
     'Generate AI transcriptions from audio files with speaker detection and enhanced quality options',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Submit an audio file (by URL) to Easy-Peasy.AI for transcription, with optional speaker detection and enhanced-quality processing. Choose this to convert podcasts, interviews, meetings, lectures, or other recordings into text; the audio URL, a name, and an audio type are required. Each call creates a new transcription, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'Audio File URL',

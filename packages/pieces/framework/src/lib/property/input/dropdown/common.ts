@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 
 export const DropdownOption = z.object({
@@ -12,8 +12,8 @@ export type DropdownOption<T> = {
 }
 
 export const DropdownState = z.object({
-    disabled: z.boolean().optional(),
-    placeholder: z.string().optional(),
+    disabled: z.optional(z.boolean()),
+    placeholder: z.optional(z.string()),
     options: z.array(DropdownOption)
 })
 

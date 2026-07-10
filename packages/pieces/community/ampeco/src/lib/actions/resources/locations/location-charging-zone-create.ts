@@ -15,6 +15,8 @@ export const locationChargingZoneCreateAction = createAction({
   name: 'locationChargingZoneCreate',
   displayName: 'Resources - Locations - Create Charging Zone',
   description: 'Create a new Charging Zone.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new charging zone under a given AMPECO location; requires the location ID, a zone name, and a status (enabled/disabled). Use to add a zone to an existing location; to change an existing zone use the Update Charging Zone action. Not idempotent: each call creates a separate zone, so guard against duplicates.', idempotent: false },
   props: {
         
   location: Property.Number({

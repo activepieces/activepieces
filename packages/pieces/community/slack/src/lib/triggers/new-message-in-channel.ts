@@ -10,6 +10,10 @@ export const newMessageInChannelTrigger = createTrigger({
 	name: 'new-message-in-channel',
 	displayName: 'New Message Posted to Channel',
 	description: 'Triggers when a new message is posted to a specific #channel you choose.',
+	aiMetadata: {
+		description:
+			'Fires when a new message is posted to the specific channel selected in the trigger configuration. Only channel or group messages in the chosen channel fire; bot messages can be optionally ignored. The event payload is the Slack message event, including its channel, text, and sender.',
+	},
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),

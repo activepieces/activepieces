@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const parseUrl = createAction({
+  audience: 'human',
   name: 'parse_url',
   displayName: 'Parse URL',
   description: 'Extract the domain, path, and query parameters from a URL.',

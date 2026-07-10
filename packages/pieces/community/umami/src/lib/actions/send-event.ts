@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { umamiAuth, UmamiAuthValue } from '../auth';
 import { umamiCommon } from '../common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export const sendEvent = createAction({
   auth: umamiAuth,
@@ -10,6 +10,12 @@ export const sendEvent = createAction({
   displayName: 'Send Event',
   description:
     'Records a custom event or pageview on a website. Leave the event name blank to track a plain pageview.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send a tracking hit to Umami for one website: with an event name it records a named custom event (optionally with extra event properties), or with the event name left blank it records a plain pageview. Use to push analytics data into Umami, not to read it. Requires a website ID and a page path. Not idempotent — each call appends a new event.',
+    idempotent: false,
+  },
   props: {
     websiteId: umamiCommon.websiteDropdown,
     url: Property.ShortText({

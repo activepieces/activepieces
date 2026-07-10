@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { googleAuth } from '../..';
 import { HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const createReply = createAction({
   name: 'create-reply',
@@ -29,7 +29,7 @@ export const createReply = createAction({
     const { reviewName, comment } = ctx.propsValue;
 
     await propsValidation.validateZod(ctx.propsValue, {
-      reviewName: z.string().regex(/accounts\/.*\/locations\/.*\/reviews\/.*/),
+      reviewName: z.string().check(z.regex(/accounts\/.*\/locations\/.*\/reviews\/.*/)),
     });
 
     const response = await httpClient.sendRequest({

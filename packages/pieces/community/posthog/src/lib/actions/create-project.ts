@@ -7,6 +7,8 @@ export const posthogCreateProject = createAction({
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Create a new PostHog project in your organization',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new project within a chosen PostHog organization, optionally anonymizing incoming IP addresses. Use when provisioning a fresh analytics project. Not idempotent: each call creates a separate project even with the same name.', idempotent: false },
   props: {
     organization_id: Property.Dropdown({
       displayName: 'Organization',

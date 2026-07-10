@@ -7,6 +7,12 @@ export const listOrders = createAction({
   name: 'listOrders',
   displayName: 'List Orders',
   description: 'Lists all orders',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists orders from a BigCommerce store. With no filters it returns all orders; optionally narrow by customer_id and/or status_id to a subset. Use to browse or find orders when you do not have a specific order id. Idempotent read-only query with no side effects.',
+    idempotent: true,
+  },
   props: {
     customer_id: Property.Number({
       displayName: 'Customer ID',

@@ -63,6 +63,8 @@ export const changeVariableForSubscriberAction = createAction({
   name: 'change-variable-for-subscriber',
   displayName: 'Change Variable for Subscriber',
   description: 'Update subscriber variable',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a single named variable (custom field) to a given value for one subscriber, identified by email, within a specific SendPulse mailing list. Use to overwrite a single field value; the variable must already exist on the list and its type (number/date) is validated against the value. Idempotent — repeating with the same value leaves the field unchanged.', idempotent: true },
   props: {
     mailingListId: mailingListDropdown,
     email: Property.ShortText({

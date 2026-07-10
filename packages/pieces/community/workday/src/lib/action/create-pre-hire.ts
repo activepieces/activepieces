@@ -11,6 +11,12 @@ export const createPreHire = createAction({
 	name: 'create_pre_hire',
 	displayName: 'Create Pre-Hire',
 	description: 'Creates a new pre-hire record in Workday.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a pre-hire/applicant record in Workday with legal name, contact details (email plus optional phone), and an ISO 3166-1 Alpha-3 country code. Use to register a candidate before running the Hire Employee action against them. Country is required by Workday. Not idempotent: each call submits a new applicant, with no key to update an existing one.',
+		idempotent: false,
+	},
 	props: {
 		firstName: Property.ShortText({
 			displayName: 'First Name',

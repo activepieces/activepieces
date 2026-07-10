@@ -10,6 +10,8 @@ export const emptyQueueAction = createAction({
   name: 'empty_queue',
   displayName: 'Empty Queue',
   description: 'Delete every item from the print queue (optionally filtered to a group or done-only). Destructive.',
+  audience: 'both',
+  aiMetadata: { description: 'Bulk-delete print-queue items, optionally scoped to a single queue group and/or restricted to only completed items. Destructive and irreversible — prefer the single-item delete/move tools unless a full clear is intended. Idempotent in effect: re-running on an already-empty queue is a no-op.', idempotent: true },
   props: {
     groupId: simplyprintProps.queueGroupDropdown({ required: false }),
     doneOnly: Property.Checkbox({

@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { runUserVerificationProfileAction } from './lib/actions/run-user-verification-profile';
 import { getVerificationUrlAction } from './lib/actions/get-verification-url';

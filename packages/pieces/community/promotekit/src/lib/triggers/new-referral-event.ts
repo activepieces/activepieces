@@ -13,6 +13,9 @@ export const newReferralEvent = createTrigger({
   name: 'new_referral_event',
   displayName: 'New Referral Event',
   description: 'Triggers when a PromoteKit referral webhook event is received.',
+  aiMetadata: {
+    description: 'Fires on a PromoteKit referral webhook event — when a referral is created or converted. Optionally filter to specific event types; leave the selection empty to fire on any referral event. Requires the webhook endpoint to be configured in the PromoteKit dashboard.',
+  },
   props: {
     eventTypes: Property.StaticMultiSelectDropdown({
       displayName: 'Referral Event Types',

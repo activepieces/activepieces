@@ -8,6 +8,12 @@ export const listGroupMembersAction = createAction({
     name: 'list_group_members',
     displayName: 'List Group Members',
     description: 'Lists members of an Azure AD group.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Lists the direct members (users, groups, devices) of an Azure AD group, returning only the first page of up to 999 entries. Read-only and idempotent. Note it does not expand transitive/nested group membership.',
+        idempotent: true,
+    },
     props: {
         groupId: groupDropdown,
         top: Property.Number({

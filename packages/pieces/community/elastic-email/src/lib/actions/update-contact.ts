@@ -9,6 +9,12 @@ export const updateContactAction = createAction({
   name: 'update_contact',
   displayName: 'Update Contact',
   description: 'Update an existing contact in Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing contact in Elastic Email, identified by email address, setting first name, last name, and/or custom fields. Use to edit contact details after creation. Idempotent: applying the same values yields the same contact state.',
+    idempotent: true,
+  },
   auth: elasticEmailAuth,
   props: {
     contact: contactEmailProp,

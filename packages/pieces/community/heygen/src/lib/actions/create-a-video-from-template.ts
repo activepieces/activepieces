@@ -8,13 +8,18 @@ import {
 	templateDropdown,
 	templateVariables,
 } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const createVideoFromTemplateAction = createAction({
 	auth: heygenAuth,
 	name: 'create-video-from-template',
 	displayName: 'Create Video from Template',
 	description: 'Create a video using a selected template.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Submits a new HeyGen avatar-video render from an existing template, filling in the template variables (text, image/video/audio URLs, character, voice). Use to programmatically generate videos at scale from a reusable template; requires a valid template ID and produces a new render each call (not idempotent). Rendering is asynchronous — poll Retrieve Video Status or use the completion trigger for the finished output.',
+		idempotent: false,
+	},
 	props: {
 		templateId: templateDropdown,
 		title: Property.ShortText({

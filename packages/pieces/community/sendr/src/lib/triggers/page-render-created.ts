@@ -8,6 +8,9 @@ export const pageRenderCreated = createTrigger({
   name: 'page_render_created',
   displayName: 'New Page Render',
   description: 'Triggers when a new Sendr Page is rendered.',
+  aiMetadata: {
+    description: 'Fires when a new personalized Sendr Page is rendered, delivering the page id, URL, slug, and source template. Use it to act each time a page is freshly generated.',
+  },
   props: {},
   sampleData: {
     event_type: 'page_render:created',

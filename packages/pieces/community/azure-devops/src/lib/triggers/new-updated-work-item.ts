@@ -115,6 +115,9 @@ export const newUpdatedWorkItemTrigger = createTrigger({
   displayName: 'New or Updated Work Item (Polling)',
   description:
     'Polls Azure DevOps every few minutes and fires when a work item is created or updated. Use this when your Activepieces instance is not reachable from the public internet; otherwise prefer the Instant trigger. Pick a work item type to unlock the state filter.',
+  aiMetadata: {
+    description: 'Fires for each Azure DevOps work item created or changed since the last poll in the chosen project, discovered by periodic polling rather than instantly. Optionally narrow to a single work item type and, once a type is set, to a specific state. Prefer the Instant trigger when the Activepieces instance is publicly reachable.',
+  },
   props,
   sampleData: sampleWorkItem,
   type: TriggerStrategy.POLLING,

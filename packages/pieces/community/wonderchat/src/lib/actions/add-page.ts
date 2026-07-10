@@ -6,6 +6,12 @@ export const addPage = createAction({
   name: 'addPage',
   displayName: 'Add Page',
   description: 'Add new pages to your chatbot’s knowledge base.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds one or more webpage URLs to a specific Wonderchat chatbot’s knowledge base (identified by chatbotId), triggering Wonderchat to crawl and ingest them. Use when an agent needs to expand or update what a bot can answer from. Optionally provide a session cookie to crawl pages behind a login. Not idempotent: each call appends/re-ingests pages into the knowledge base.',
+    idempotent: false,
+  },
   auth: wonderchatAuth,
   props: {
     chatbotId: Property.ShortText({

@@ -7,6 +7,8 @@ export const findEventsByEmailAction = createAction({
   name: 'find_events_by_email',
   displayName: 'Find Events by Attendee Email',
   description: "Returns all events where the attendee's email matches the given address.",
+  audience: 'both',
+  aiMetadata: { description: 'Finds all SavvyCal events that have a given email among their attendees. Use to look up a specific person\'s bookings when you only know their email; optionally narrow with a start-date window to limit the scan. Match is case-insensitive on the attendee email. Read-only and idempotent.', idempotent: true },
   props: {
     attendee_email: Property.ShortText({
       displayName: 'Attendee Email',

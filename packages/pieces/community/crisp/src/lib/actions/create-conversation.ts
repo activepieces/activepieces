@@ -4,13 +4,14 @@ import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { crispAuth } from '../common/auth';
 import { websiteIdProp } from '../common/props';
 import { crispApiCall } from '../common/client';
-import { HttpStatusCode } from 'axios';
 
 export const createConversationAction = createAction({
 	auth: crispAuth,
 	name: 'create_conversation',
 	displayName: 'Create Conversation',
 	description: 'Creates a new conversation.',
+	audience: 'both',
+	aiMetadata: { description: 'Starts a new Crisp conversation in a website inbox: ensures the customer profile exists (upserted by email), creates an empty conversation, posts the first message (sent as either user or operator), and attaches the customer email/nickname to it. Use to open a fresh support thread. Not idempotent: each call creates a separate conversation.', idempotent: false },
 	props: {
 		websiteId: websiteIdProp,
 		email: Property.ShortText({
@@ -55,7 +56,7 @@ export const createConversationAction = createAction({
 			});
 		} catch (e) {
 			const err = e as HttpError;
-			if (err.response.status === HttpStatusCode.NotFound) {
+			if (err.response.status === 404) {
 				await crispApiCall({
 					auth: context.auth,
 					method: HttpMethod.POST,

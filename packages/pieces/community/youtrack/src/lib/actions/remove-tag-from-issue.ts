@@ -9,6 +9,8 @@ export const removeTagFromIssueAction = createAction({
   name: 'remove_tag_from_issue',
   displayName: 'Remove Tag from Issue',
   description: 'Removes a tag from an issue.',
+  audience: 'both',
+  aiMetadata: { description: 'Detach a tag from an issue, given both the issue ID and the tag ID. Idempotent: removing a tag that is not present has no further effect.', idempotent: true },
   props: {
     issue: issueDropdown,
     tag: tagDropdown,

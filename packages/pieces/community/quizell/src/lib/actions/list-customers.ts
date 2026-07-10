@@ -10,6 +10,8 @@ export const listCustomers = createAction({
   name: 'list_customers',
   displayName: 'List Customers',
   description: 'Retrieves a list of customers (quiz leads) from Quizell.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a paginated list of Quizell customers (quiz leads); an empty search returns all customers, while a search term filters by name or email. Use to browse leads or resolve a customer by name/email when you do not have an ID. Read-only and idempotent.', idempotent: true },
   props: {
     search: Property.ShortText({
       displayName: 'Search',

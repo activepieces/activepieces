@@ -2,7 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { zagomailAuth } from '../auth';
 import { zagoMailApiService, } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';
@@ -14,6 +14,9 @@ export const addedSubscriber = createTrigger({
   name: 'addedSubscriber',
   displayName: 'Subscriber Added',
   description: 'Triggers when subscriber is signed up or confirmed.',
+  aiMetadata: {
+    description: 'Fires when a subscriber is activated in Zagomail (signed up and confirmed), representing a new confirmed contact joining a list. The event payload includes the subscriber UID, list UID, email, status, and custom fields.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

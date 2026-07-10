@@ -6,6 +6,10 @@ export const emailClickedTrigger = createNotifyWebhookTrigger({
   displayName: 'Email Link Clicked',
   description:
     'Triggers when a recipient clicks a tracked link inside a transactional email.',
+  aiMetadata: {
+    description:
+      'Fires when a recipient clicks a tracked link inside a transactional email sent through INBOX Notify. Represents a link-click engagement event and emits the clicked URL; can fire multiple times for the same message and recipient.',
+  },
   sampleData: {
     event: 'Clicked',
     eventId: 7,

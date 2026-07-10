@@ -8,6 +8,8 @@ export const getActiveCatalogs = createAction({
     name: 'get_active_catalogs',
     displayName: 'Get Active Catalogs',
     description: 'Get list of active catalog data & supplier values from the specified date.',
+    audience: 'both',
+    aiMetadata: { description: 'List active catalogs and their supplier values in a SAP Ariba realm, returning those activated on or after a required date. Use to discover available catalogs; optional filters narrow by supplier domain or subscription name. Read-only and idempotent.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

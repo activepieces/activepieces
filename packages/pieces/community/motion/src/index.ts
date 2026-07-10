@@ -5,7 +5,7 @@ import { createProject } from './lib/actions/create-project';
 import { getTask } from './lib/actions/get-task';
 import { taskCreated } from './lib/triggers/task-created';
 import { moveTask } from './lib/actions/move-task';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { findTask } from './lib/actions/find-task';
 import {
   createCustomApiCallAction,

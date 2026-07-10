@@ -8,6 +8,8 @@ export const findSubscriptionAction = createAction({
   name: 'find_subscription',
   displayName: 'Find Subscription',
   description: 'Find a subscription using the Subscription ID',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single Pinch Payments subscription by its subscription id (sub_ prefix). Use to check the status or details of a known recurring subscription. Read-only and idempotent; requires a known subscription id (this does not list or search subscriptions).', idempotent: true },
   props: {
     subscriptionId: Property.ShortText({
       displayName: 'Subscription ID',

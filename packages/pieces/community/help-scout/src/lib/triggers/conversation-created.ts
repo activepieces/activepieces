@@ -12,6 +12,10 @@ export const conversationCreated = createTrigger({
   name: 'conversation_created',
   displayName: 'Conversation Created',
   description: 'Triggers when a new conversation is started in a mailbox.',
+  aiMetadata: {
+    description:
+      'Fires when a new conversation is created in the selected Help Scout mailbox (convo.created webhook event), representing a freshly opened support thread. Can optionally be narrowed to conversations assigned to a specific user.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     mailboxId: mailboxIdDropdown(true),

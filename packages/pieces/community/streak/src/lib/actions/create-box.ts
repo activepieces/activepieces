@@ -11,6 +11,12 @@ export const createBoxAction = createAction({
   name: 'create_box',
   displayName: 'Create Box',
   description: 'Create a new box (record) in a pipeline.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new box (Streak\'s CRM record, e.g. a deal, lead, or candidate) inside a pipeline. Use when an agent needs to add a new record to a Streak pipeline; requires the target pipeline and a name, with optional starting stage, notes, and assignee emails. Not idempotent: each call creates another box even with identical inputs.',
+    idempotent: false,
+  },
   props: {
     pipelineKey: pipelineDropdown,
     name: Property.ShortText({

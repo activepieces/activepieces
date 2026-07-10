@@ -119,6 +119,10 @@ export const issueAssigned = createTrigger({
   displayName: 'Issue Assigned',
   description:
     'Fires when a Jira issue is assigned to someone. Use it to ping people in Slack/Teams the moment work lands on them, auto-create a to-do when tickets hit your queue, or track hand-offs between teammates.',
+  aiMetadata: {
+    description:
+      'Fires when the assignee of a Jira issue changes, optionally filtered to a specific assignee, the connected user, or a JQL scope. Each event represents one assignment change and includes the issue plus the previous/new assignee, who made the change, and when. Polling-based; events arrive on the next poll, not instantly.',
+  },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
   props: {

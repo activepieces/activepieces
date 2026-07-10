@@ -14,6 +14,8 @@ export const chargePointDowntimePeriodDeleteAction = createAction({
   name: 'chargePointDowntimePeriodDelete',
   displayName: 'Resources - Charge Point Downtime Periods - Delete',
   description: 'Delete Manual Created Charge Point Downtime Period.',
+  audience: 'both',
+  aiMetadata: { description: 'Delete a manually created charge-point downtime period by its numeric ID. Only manually created periods can be removed (automatically generated ones cannot). Effectively idempotent on the target but destructive and irreversible, so confirm the ID first.', idempotent: true },
   props: {
         
   chargePointDowntimePeriod: Property.Number({

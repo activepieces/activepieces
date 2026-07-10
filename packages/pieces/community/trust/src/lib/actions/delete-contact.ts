@@ -8,6 +8,12 @@ export const deleteContactAction = createAction({
   name: 'delete_contact',
   displayName: 'Delete Contact',
   description: 'Deletes a contact by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete a Trust contact identified by its contact ID. Pick this only when the contact record should be removed entirely; this is destructive and cannot be undone via the API. Deleting by a fixed ID is idempotent in effect — repeating the call leaves the same end state, though a second attempt may return an error since the contact no longer exists.',
+    idempotent: true,
+  },
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',

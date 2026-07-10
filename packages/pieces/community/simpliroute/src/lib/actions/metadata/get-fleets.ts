@@ -8,6 +8,8 @@ export const get_fleets = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Fleets',
     description: 'Retrieve the list of fleets available in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'List all fleets configured in the account, returning their ids and names. Use to resolve a valid fleet reference before grouping vehicles or filtering planning by fleet. Read-only and idempotent; takes no inputs.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/fleets/`;

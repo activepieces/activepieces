@@ -9,6 +9,8 @@ export const unarchivePrintJobsAction = createAction({
   name: 'unarchive_print_jobs',
   displayName: 'Unarchive Print Jobs',
   description: 'Restore one or more archived print jobs to the active history view.',
+  audience: 'both',
+  aiMetadata: { description: 'Restore previously archived print jobs back into the active print-history view, given their numeric job IDs. Pick it to reverse an archive action; the inverse archive operation is a separate tool. Re-running with the same IDs is safe (already-active jobs stay active), so the effect is idempotent.', idempotent: true },
   props: {
     jobIds: Property.Array({
       displayName: 'Job IDs',

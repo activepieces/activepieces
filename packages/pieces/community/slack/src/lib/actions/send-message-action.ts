@@ -20,6 +20,8 @@ export const slackSendMessageAction = createAction({
   name: 'send_channel_message',
   displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
+  audience: 'both',
+  aiMetadata: { description: 'Post a message to a channel, with optional Block Kit blocks, file attachment, custom username/icon, and link unfurling; can post as the bot or as the authenticated user. Provide a thread timestamp to reply within a thread (and optionally broadcast that reply to the channel). Each call posts a new message, so it is not idempotent; requires either message text or blocks. Use Send Message To A User for a private DM.', idempotent: false },
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),

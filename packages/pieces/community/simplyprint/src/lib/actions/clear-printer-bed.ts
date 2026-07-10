@@ -10,6 +10,8 @@ export const clearPrinterBedAction = createAction({
   displayName: 'Clear Printer Bed',
   description:
     'Mark a printer\'s bed as cleared after a print finishes. Bread-and-butter step in AutoPrint flows — pair with a "print done" trigger to automate bed clearing.',
+  audience: 'both',
+  aiMetadata: { description: 'Mark the bed of one or more printers as cleared after a finished print, optionally recording success/failure, a 1-4 star print rating, and an AutoPrint clear-count reset. Pick it as the post-print confirmation step in AutoPrint flows so the next queued job can start. Not idempotent — each call records a clear event and advances AutoPrint state.', idempotent: false },
   props: {
     printerIds: Property.Array({
       displayName: 'Printer IDs',

@@ -9,6 +9,12 @@ export const getDirectReports = createAction({
   displayName: 'Get Employee Direct Reports',
   description:
     'Retrieves a list of employees who directly report to the specified employee',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists the OmniHR employees who report directly to a given employee, identified by that employee\'s numeric ID. Use to find a manager\'s immediate team; for the broader hierarchy (management chain and peers) use the organizational chart action instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     system_id: Property.Number({
       displayName: 'User ID',

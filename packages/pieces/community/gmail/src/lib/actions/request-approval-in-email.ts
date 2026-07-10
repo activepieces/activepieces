@@ -5,10 +5,12 @@ import {
   getAccessToken,
   getUserEmail,
 } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
-import { assertNotNullOrUndefined, ExecutionType } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
+import { requestApprovalInMailActionOutputSchema } from '../output-schemas';
 
 export const requestApprovalInEmail = createAction({
   auth: gmailAuth,
@@ -19,7 +21,7 @@ export const requestApprovalInEmail = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Sends an email containing Approve and Disapprove links to a recipient, then pauses the flow until the recipient clicks one, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
+      'Sends an email with a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
     idempotent: false,
   },
   props: {
@@ -73,6 +75,7 @@ export const requestApprovalInEmail = createAction({
       required: false,
     }),
   },
+  outputSchema: requestApprovalInMailActionOutputSchema,
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       try {
@@ -89,27 +92,21 @@ export const requestApprovalInEmail = createAction({
           type: 'WEBHOOK',
         });
 
-        const approvalLink = waitpoint.buildResumeUrl({
-          queryParams: { action: 'approve' },
-        });
-        const disapprovalLink = waitpoint.buildResumeUrl({
-          queryParams: { action: 'disapprove' },
-        });
+        const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
 
         const htmlBody = `
         <div>
           <p>${body}</p>
           <br />
           <p>
-            <a href="${approvalLink}" style="display: inline-block; padding: 10px 20px; margin-right: 10px; background-color: #2acc50; color: white; text-decoration: none; border-radius: 4px;">Approve</a>
-            <a href="${disapprovalLink}" style="display: inline-block; padding: 10px 20px; background-color: #e4172b; color: white; text-decoration: none; border-radius: 4px;">Disapprove</a>
+            <a href="${confirmationLink}" style="display: inline-block; padding: 10px 20px; background-color: #6e41e2; color: white; text-decoration: none; border-radius: 4px;">Review &amp; Respond</a>
           </p>
         </div>
       `;
 
         const authClient = await createGoogleClient(context.auth);
 
-        const gmail = google.gmail({ version: 'v1', auth: authClient });
+        const gmail = googleGmail({ version: 'v1', auth: authClient });
 
         const subjectBase64 = Buffer.from(
           context.propsValue['subject']

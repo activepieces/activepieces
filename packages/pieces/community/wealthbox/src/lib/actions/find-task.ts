@@ -8,6 +8,8 @@ export const findTask = createAction({
   name: 'find_task',
   displayName: 'Find Task',
   description: 'Finds existing tasks using comprehensive search filters. Search by assignment, resource, completion status, and date ranges.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Wealthbox tasks by linked resource, assignee, creator, completion status, type, or update date. Supplying a Task ID alone fetches that single record directly; otherwise it runs a filtered list query and can return all matches or just the first. Use to look up existing tasks or resolve a task id; at least one criterion is required. Idempotent: read-only, no data is modified.', idempotent: true },
   props: {
     task_id: Property.Number({
       displayName: 'Task ID (Optional)',

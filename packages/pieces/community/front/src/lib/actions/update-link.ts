@@ -9,6 +9,12 @@ export const updateLink = createAction({
   name: 'updateLink',
   displayName: 'Update Link',
   description: 'Update the name or external URL of a Link in Front.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update the name and/or external URL of an existing Front Link identified by link ID. Use to edit a link already created with "Create Link"; only the fields you supply change. Idempotent: re-applying the same values yields the same result.',
+    idempotent: true,
+  },
   props: {
     link_id: linkIdDropdown,
     name: Property.ShortText({

@@ -1,4 +1,4 @@
-import { FlowTriggerType, isNil, PopulatedFlow } from "@activepieces/shared";
+import { FlowTriggerType, isNil, PopulatedFlow } from "@activepieces/pieces-framework";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 
 
@@ -19,7 +19,9 @@ export async function listFlowsWithSubflowTrigger({
     flowsContext,
     params,
 }: ListParams): Promise<PopulatedFlow[]> {
-    const allFlows = (await flowsContext.list(params)).data;
+    // The framework context types this leanly as PopulatedFlowSummary, but the
+    // engine returns full PopulatedFlow records (with version) at runtime.
+    const allFlows = (await flowsContext.list(params)).data as unknown as PopulatedFlow[];
     const flows = allFlows.filter(
         (flow) =>
             flow.version.trigger.type === FlowTriggerType.PIECE &&

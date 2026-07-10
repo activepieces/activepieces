@@ -8,6 +8,8 @@ export const runWorkflowAction = createAction({
 	name: 'run_workflow',
 	displayName: 'Run Workflow',
 	description: 'Start a Copy.ai workflow execution.',
+	audience: 'both',
+	aiMetadata: { description: 'Starts a new execution of a Copy.ai workflow by its workflow ID, passing the supplied inputs as the run\'s start variables. Use this to kick off content generation or any configured Copy.ai workflow; it returns a run ID you then poll with Get Workflow Run Status and fetch results from with Get Workflow Run Outputs. Not idempotent: each call launches a separate run.', idempotent: false },
 	props: {
 		workflowId: Property.ShortText({
 			displayName: 'Workflow ID',

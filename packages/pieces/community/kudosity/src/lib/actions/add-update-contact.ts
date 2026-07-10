@@ -8,6 +8,12 @@ export const addUpdateContact = createAction({
   name: 'addUpdateContact',
   displayName: 'Add / Update Contact',
   description: 'Create or update a list member in Kudosity',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upsert a contact (list member) in a Kudosity recipient list, keyed on the MSISDN phone number — creates the member if absent or updates their fields if already present. Use to add subscribers or keep contact details in sync. Requires the numeric list ID, the MSISDN (phone with country code), and an email. Safe to repeat: the same input produces the same final record.',
+    idempotent: true,
+  },
   props: {
     listId: Property.ShortText({
       displayName: 'List ID',

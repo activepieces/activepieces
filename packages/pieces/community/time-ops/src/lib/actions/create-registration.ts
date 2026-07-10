@@ -8,6 +8,8 @@ export const createRegistration = createAction({
   name: 'create_registration',
   displayName: 'Create Registration',
   description: 'Creates a registration.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a complete time-entry registration in TimeOps with an explicit start (and optional stop) time for a given user, optionally tied to a project, description, billable flag, and tags. Use to log a past or fully specified time entry rather than tracking live (unlike Start Timer / Stop Timer). Requires the user id and a start time. Not idempotent: each call creates another registration with a new id.', idempotent: false },
   props: {
     userId: Property.Dropdown({
       displayName: 'User',

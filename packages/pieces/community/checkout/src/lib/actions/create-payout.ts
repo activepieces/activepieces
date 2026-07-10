@@ -7,6 +7,8 @@ export const createPayoutAction = createAction({
   auth: checkoutComAuth,
   displayName: 'Create Payment',
   description: 'Process and manage payments from various sources including card payments and payouts.',
+  audience: 'both',
+  aiMetadata: { description: 'Submits a payment to Checkout.com for a given currency and amount, drawing from one of several source types selected by the source type field: raw card details, a saved customer ID, a token, or a stored instrument. Choose it to actually charge a payer (or run a zero-amount card verification), as opposed to generating a shareable link. Supports capture, 3D Secure, and risk options. Not idempotent: each call initiates a new payment and moves money.', idempotent: false },
   props: {
     // Core Payment Information
     currency: Property.ShortText({

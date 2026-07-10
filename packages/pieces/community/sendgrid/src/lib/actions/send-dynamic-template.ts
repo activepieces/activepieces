@@ -13,6 +13,8 @@ export const sendDynamicTemplate = createAction({
   name: 'send_dynamic_template',
   displayName: 'Send Dynamic Template',
   description: 'Send an email using a dynamic template',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an email rendered from a SendGrid dynamic template, merging the provided JSON template data into the template referenced by its ID. Use when the message design lives in SendGrid and you only need to supply variables; for composing the body inline use Send Email instead. Requires a valid template ID, a verified sender, and at least one recipient. Not idempotent — each call dispatches a new email.', idempotent: false },
   props: {
     to: Property.Array({
       displayName: 'To',

@@ -7,6 +7,8 @@ export const makeRequest = createAction({
   name: 'make_request',
   displayName: 'API Request',
   description: 'Makes a raw HTTP request to the MyCase API',
+  audience: 'both',
+  aiMetadata: { description: 'Escape hatch that sends an arbitrary authenticated HTTP request (GET/POST/PUT/PATCH/DELETE) to any MyCase API path with custom query params, body, and headers. Use only for endpoints not covered by a dedicated action; prefer the specific actions when one fits. Idempotency depends entirely on the method and path you supply, so treat write methods as unsafe to retry.', idempotent: false },
   props: {
     method: Property.StaticDropdown({
       displayName: 'Method',

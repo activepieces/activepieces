@@ -1,9 +1,30 @@
 import { t } from 'i18next';
 import { Goal } from 'lucide-react';
 
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { cn } from '@/lib/utils';
 
 const TriggerWidget = ({ isSelected }: { isSelected: boolean }) => {
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
+
+  if (canvasOrientation === 'horizontal') {
+    return (
+      <div
+        className={cn(
+          'absolute right-full top-1/2 -translate-y-1/2 mr-2 flex size-7 items-center justify-center rounded-full border border-border bg-background text-muted-foreground z-10 transition-all',
+          {
+            'border-primary text-primary': isSelected,
+            'group-hover:border-ring': !isSelected,
+          },
+        )}
+      >
+        <Goal className="size-3.5"></Goal>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(

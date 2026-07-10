@@ -7,6 +7,8 @@ export const uploadAttachment = createAction({
     name: 'upload_attachment',
     displayName: 'Upload Attachment',
     description: 'Upload a file and attach it to a task or folder',
+    audience: 'both',
+    aiMetadata: { description: 'Upload a file and attach it to a Wrike task or folder, chosen via the entity type and entity ID, with an optional custom file name. Use when an agent needs to add a document or asset to an item. Each call uploads a new attachment, so it is not idempotent.', idempotent: false },
     auth: wrikeAuth,
     props: {
         entityType: Property.StaticDropdown({

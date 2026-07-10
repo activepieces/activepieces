@@ -8,6 +8,12 @@ export const searchJobs = createAction({
   name: 'search_jobs',
   displayName: 'Search Jobs',
   description: 'Search job postings across companies',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search job postings across companies, filtering by keywords, job titles, posted-date ranges, locations (or excluded locations), and target companies/domains/LinkedIn URLs, with paging (per_page max 25). Read-only and repeatable. Use to find hiring signals or open roles, then pass a job_search_id to Lookup Job for full detail.',
+    idempotent: true,
+  },
   props: {
     search_term: Property.ShortText({
       displayName: 'Search Term',

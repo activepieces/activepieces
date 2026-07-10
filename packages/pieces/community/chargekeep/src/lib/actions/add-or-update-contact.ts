@@ -7,6 +7,8 @@ export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',
   displayName: 'Add or Update Contact',
   description: 'Creates a new contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Imports a contact (Lead, Client, or Partner) into the ChargeKeep/Sperse CRM, creating it or updating an existing record. When Match Existing is enabled it upserts by matching on email and full name (or the supplied Contact ID); otherwise it always creates a new record. Use to add or sync a person; requires First Name or Last Name (or Company Name if both are empty). Repeating with the same identifying input upserts the same contact rather than duplicating.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     importType: Property.StaticDropdown({

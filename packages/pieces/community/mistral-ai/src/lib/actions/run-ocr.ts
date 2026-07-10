@@ -10,6 +10,7 @@ const OCR_MODEL_OPTIONS = [
 ];
 
 export const runOcr = createAction({
+  audience: 'human',
 	auth: mistralAuth,
 	name: 'run_ocr',
 	displayName: 'Run OCR',

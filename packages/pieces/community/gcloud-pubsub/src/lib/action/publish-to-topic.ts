@@ -7,6 +7,8 @@ export const publishToTopic = createAction({
   auth: googlePubsubAuth,
   displayName: 'Publish to topic',
   description: 'Publish message to topic',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a message to a Google Cloud Pub/Sub topic, base64-encoding the provided JSON object as the message payload. Use to emit an event or hand data to downstream Pub/Sub subscribers. The topic must already exist (selected from the project), and each call delivers a new message, so it is not idempotent.', idempotent: false },
   props: {
     message: Property.Object({
       displayName: 'Message',
@@ -40,15 +42,12 @@ export const publishToTopic = createAction({
       messages: [{ data: Buffer.from(json).toString('base64') }],
     });
 
-    const { data } = await client.request<{ messageIds: string[] }>({
+    await client.request<{ messageIds: string[] }>({
       url,
       method: 'POST',
       body,
     });
 
-    console.debug(
-      `Message sended to topic[${topic}]: ${json}, ack: ${data.messageIds[0]}`
-    );
     return json;
   },
 });

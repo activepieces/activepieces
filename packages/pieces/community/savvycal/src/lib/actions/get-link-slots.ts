@@ -15,6 +15,8 @@ export const getLinkSlotsAction = createAction({
   name: 'get_link_slots',
   displayName: 'Get Available Slots',
   description: 'Returns available time slots for booking on a scheduling link. Useful for displaying availability or for picking a slot before calling Create Event.',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the currently bookable time slots for a given scheduling link. Use to check availability or to pick a valid start/end time before calling Create Event. Requires the link id. Read-only and idempotent, though results reflect live availability and change over time.', idempotent: true },
   props: {
     team_id: Property.Dropdown({
       auth: savvyCalAuth,

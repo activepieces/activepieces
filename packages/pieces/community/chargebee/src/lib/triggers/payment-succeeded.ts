@@ -15,6 +15,10 @@ export const paymentSucceeded = createTrigger({
   name: 'payment_succeeded',
   displayName: 'Payment Succeeded',
   description: 'Triggers when a payment is successfully collected.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records a payment_succeeded event — a payment was successfully collected. The payload carries the transaction along with the related invoice, customer, and subscription.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

@@ -8,6 +8,8 @@ export const update_user = createAction({
     auth: simplirouteAuth,
     displayName: 'Update User',
     description: 'Update information of an existing user.',
+    audience: 'both',
+    aiMetadata: { description: 'Fully update an existing user/driver (PUT) by ID, requiring username and name along with the user_id. Idempotent for a fixed payload since it overwrites the user record. Use the get-drivers action to find the user_id first.', idempotent: true },
     props: {
         user_id: Property.Number({ displayName: 'user_id', description: 'User ID to update.', required: true }),
         username: Property.ShortText({ displayName: 'username', description: 'Username (login).', required: true }),

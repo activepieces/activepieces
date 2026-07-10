@@ -9,6 +9,12 @@ export const setPrinterOutOfOrderAction = createAction({
   name: 'set_printer_out_of_order',
   displayName: 'Set Printer Out of Order',
   description: 'Mark one or more printers as out-of-order (or clear that flag). Requires the Out-of-Order feature on the account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets or clears the out-of-order flag on one or more printers by numeric ID; a boolean toggles between marking them out-of-order and clearing it. Use to take printers in/out of service in the fleet. Requires the Out-of-Order feature enabled on the account. Idempotent: it sets a flag to a fixed value rather than accumulating changes.',
+    idempotent: true,
+  },
   props: {
     printerIds: Property.Array({
       displayName: 'Printer IDs',

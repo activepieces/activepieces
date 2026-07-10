@@ -9,6 +9,12 @@ export const getOrder = createAction({
   displayName: 'Get Order',
   description:
     'Fetch a single order by its Qawafel ID. Returns the full order including line items, totals, delivery details, and current state.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single order by its Qawafel order id (the `ord_` identifier), including line items, totals, delivery details, and current state. Use when you have an order id and need its current details, e.g. to check status before acting. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

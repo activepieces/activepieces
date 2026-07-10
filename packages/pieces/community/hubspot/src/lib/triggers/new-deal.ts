@@ -5,7 +5,8 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import dayjs from 'dayjs';
 import { hubspotAuth } from '../auth';
-import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
@@ -75,6 +76,10 @@ export const newDealTrigger = createTrigger({
 	name: 'new-deal',
 	displayName: 'New Deal',
 	description: 'Trigger when a new deal is added.',
+	aiMetadata: {
+		description:
+			'Fires when a new deal is created in HubSpot. Each event represents one deal record with properties such as deal name, type, amount, close date, owner, forecast, and associated contacts. Polls for deals by creation date; does not fire on updates to existing deals.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

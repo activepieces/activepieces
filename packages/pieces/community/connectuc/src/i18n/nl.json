@@ -66,14 +66,19 @@
   "Triggers when a new incoming call is received": "Activeert wanneer een nieuwe inkomende oproep wordt ontvangen",
   "Triggers when a new outgoing call is initiated": "Triggert wanneer een nieuwe uitgaande oproep wordt gestart",
   "Triggers when a new voicemail is received": "Triggert wanneer een nieuwe voicemail wordt ontvangen",
-  "Triggers when a new SMS message is received": "Triggert wanneer een nieuw SMS-bericht wordt ontvangen",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent",
   "Users": "Gebruikers",
   "Status": "status",
-  "Select Recipients": "Selecteer Ontvangers",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
   "Select users to which this trigger applies": "Selecteer gebruikers waarop deze trigger van toepassing is",
   "Filter by call status": "Filteren op oproepstatus",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "Select the SMS recipient numbers to which this trigger applies": "Selecteer de SMS ontvangersnummers waarop deze trigger van toepassing is",
+  "Filter by message direction": "Filter by message direction",
   "Ringing": "Bellen",
   "Answered": "beantwoord",
-  "Both": "Allebei"
+  "Both": "Allebei",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing"
 }

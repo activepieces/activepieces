@@ -14,6 +14,8 @@ export const chargePointVendorsListingAction = createAction({
   name: 'chargePointVendorsListing',
   displayName: 'Resources - Charge Point Vendors - Listing',
   description: 'Get all Charge Point Vendors.',
+  audience: 'both',
+  aiMetadata: { description: 'List charge-point vendor (manufacturer) reference records from the AMPECO catalog. Read-only and idempotent; use it to look up or enumerate available vendors, optionally auto-paginating across all pages when Paginate Results is enabled.', idempotent: true },
   props: {
         
     per_page: Property.Number({

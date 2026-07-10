@@ -22,6 +22,8 @@ export const createObjectiveAction = createAction({
   name: 'create_objective',
   displayName: 'Create New Objective',
   description: 'Creates a new OKR objective in Weekdone.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new OKR objective in Weekdone at a chosen level — company, department, team, or personal (user) — which determines the required scoping field (a department ID, team, or team+user). Use to set up a new goal; the objective text and level are required and it targets the current quarter unless a YYYYQ period is supplied. Not idempotent — each call creates a new objective.', idempotent: false },
   props: {
     description: Property.LongText({
       displayName: 'Description',

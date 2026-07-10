@@ -2230,6 +2230,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "yusufgurdogan",
+      "name": "Yusuf Gürdoğan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13736056?v=4",
+      "profile": "http://yusufgurdogan.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "nirajmchauhan",
+      "name": "Niraj Chauhan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1540451?v=4",
+      "profile": "https://github.com/nirajmchauhan",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

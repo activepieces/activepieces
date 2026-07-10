@@ -8,6 +8,12 @@ export const createDocumentFromTemplateAndSendInviteAction = createAction({
   displayName: 'Create Document From Template & Send Free Form Invite',
   description:
     'Creates a new document from a template and sends a free form invite to a signer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Copies a SignNow template into a new document and sends a free-form (no predefined roles) signing invite to a single signer, returning the new document ID. Use for templates where the signer fills fields freely rather than by assigned role; for role-based templates use the role-based invite action instead. Requires the template ID, the signer email, and the sender email tied to the SignNow account. Each call creates a new document and dispatches an invite, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     template_id: Property.ShortText({
       displayName: 'Template ID',

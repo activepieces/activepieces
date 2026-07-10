@@ -4,12 +4,16 @@ import {
 } from '@activepieces/pieces-framework';
 import { common, OnfleetWebhookTriggers } from '../common';
 import { onfleetAuth } from '../..';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const taskAssigned = createTrigger({
   auth: onfleetAuth,
   name: 'task_assigned',
   displayName: 'Task Assigned',
   description: 'Triggers when a task is assigned',
+  aiMetadata: {
+    description:
+      'Fires when an Onfleet task is assigned to a worker, either manually or through dispatch. Represents a task gaining an owning driver responsible for completing it, useful for notifying the worker or recipient that a delivery has been allocated. The payload includes the full task object with the assigned worker.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

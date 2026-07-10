@@ -1,4 +1,4 @@
-import { isNil, Permission } from '@activepieces/shared';
+import { isNil, Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
 

@@ -7,6 +7,8 @@ export const createEstimateOptionLink = createAction({
   name: "create_estimate_option_link",
   displayName: "Create estimate option link",
   description: "Create a new estimate option link",
+  audience: 'both',
+  aiMetadata: { description: "Attach a titled hyperlink (title + URL) to a specific option within a Housecall Pro estimate, identified by estimate ID and option ID. Not idempotent: repeated calls add duplicate links to the option.", idempotent: false },
   props: {
     estimate_id: Property.ShortText({ displayName: "Estimate ID", required: true }),
     option_id: Property.ShortText({ displayName: "Option ID", required: true }),

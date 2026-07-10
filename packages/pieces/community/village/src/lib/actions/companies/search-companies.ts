@@ -8,6 +8,12 @@ export const searchCompanies = createAction({
   displayName: 'Search Companies',
   description:
     'Search for companies using natural language (in the "prompt" field) and/or structured filters. Returns matching companies with relevance and connection-strength scores; supports cursor-based pagination.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only discovery search for companies by a natural-language prompt and/or structured firmographic filters (at least one required); scope restricts to your network or searches globally. Use when you do not already have a domain or URL — for a known company use Enrich Company. Cursor-paginated and safe to retry.',
+    idempotent: true,
+  },
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

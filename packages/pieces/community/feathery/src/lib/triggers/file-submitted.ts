@@ -79,6 +79,9 @@ export const fileSubmittedTrigger = createTrigger({
   name: 'file_submitted',
   displayName: 'File Submitted',
   description: 'Triggers when a file is submitted in your form, or when a document is signed/generated.',
+  aiMetadata: {
+    description: 'Fires when a document envelope is created — i.e. a file is submitted, signed, or generated in Feathery. Monitors either by a document template ID or by a user (selected via the lookup-by mode), and each event represents one envelope including its file URL, signer/sender, and signed/viewed status.',
+  },
   props: {
     lookup_type: Property.StaticDropdown({
       displayName: 'Lookup By',

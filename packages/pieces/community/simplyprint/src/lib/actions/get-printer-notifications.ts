@@ -10,6 +10,8 @@ export const getPrinterNotificationsAction = createAction({
   displayName: 'Get Printer Notifications',
   description:
     'Fetch the open notifications/events on one or more printers. Pairs well with the `requires_attention` bucket from "Get Farm Overview".',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the open notifications/events for one or more printers by their numeric IDs. Read-only; pick it to discover notification IDs (and which need attention) before calling the resolve-notification tool. Idempotent.', idempotent: true },
   props: {
     printerIds: Property.Array({
       displayName: 'Printer IDs',

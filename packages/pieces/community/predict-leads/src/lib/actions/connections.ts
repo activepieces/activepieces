@@ -12,6 +12,8 @@ export const findConnectionsByDomainAction = createAction({
   name: 'predict-leads_find_connections_by_domain',
   displayName: 'Get Company Connections',
   description: 'Retrieves company connections by domain.',
+  audience: 'both',
+  aiMetadata: { description: "Lists a company's business connections (related/linked companies) in PredictLeads, keyed by its domain. Use to map a known company's relationship graph; requires the company domain. Read-only and idempotent; supports pagination.", idempotent: true },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
@@ -50,6 +52,8 @@ export const findConnectionsAction = createAction({
   name: 'predict-leads_find_connections',
   displayName: 'List Connections',
   description: 'Finds all portfolio companies.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all portfolio-company connections available to the authenticated PredictLeads account, across companies (not scoped to a single domain). Use to retrieve the full connection set rather than one company\'s connections. Read-only and idempotent; supports pagination.', idempotent: true },
   props: {
     // first_seen_at_from: firstSeenAtFromField,
     // first_seen_at_until: firstSeenAtUntilField,

@@ -14,6 +14,9 @@ export const workflowActionTriggeredTrigger = createTrigger({
   name: 'workflow_action_triggered',
   displayName: 'Workflow Action Triggered',
   description: 'Triggers when a workflow action is triggered in SavvyCal.',
+  aiMetadata: {
+    description: 'Fires via webhook when a SavvyCal automation workflow runs one of its configured actions. Each firing represents a single workflow action execution with its associated payload.',
+  },
   props: {},
   sampleData: SAMPLE_DATA,
   type: TriggerStrategy.WEBHOOK,

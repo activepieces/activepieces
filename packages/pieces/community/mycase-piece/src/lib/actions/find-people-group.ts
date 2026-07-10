@@ -7,6 +7,8 @@ export const findPeopleGroup = createAction({
   name: 'find_people_group',
   displayName: 'Find People Group',
   description: 'Searches for people groups with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'List or search MyCase people groups, optionally filtering by last-updated date and limiting page size. Use to browse contact groupings or resolve a group to its ID. Read-only and idempotent.', idempotent: true },
   props: {
     updated_after: Property.DateTime({
       displayName: 'Updated After',

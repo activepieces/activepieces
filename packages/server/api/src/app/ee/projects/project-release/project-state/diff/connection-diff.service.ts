@@ -1,4 +1,5 @@
-import { ConnectionOperation, ConnectionOperationType, isNil, ProjectState } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ConnectionOperation, ConnectionOperationType, ProjectState } from '@activepieces/shared'
 
 export const connectionDiffService = {
     diff({ newState, currentState }: DiffParams): ConnectionOperation[] {

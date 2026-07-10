@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
-import { google } from 'googleapis';
+import { calendar as googleCalendar } from '@googleapis/calendar';
 import { randomUUID } from 'crypto';
+import { eventOutputSchema } from '../output-schemas';
 
 export const createEvent = createAction({
   auth: googleCalendarAuth,
@@ -83,6 +84,7 @@ export const createEvent = createAction({
       required: false,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/insert
     const {
@@ -126,7 +128,7 @@ export const createEvent = createAction({
 
     const authClient = await createGoogleClient(configValue.auth);
 
-    const calendar = google.calendar({ version: 'v3', auth: authClient });
+    const calendar = googleCalendar({ version: 'v3', auth: authClient });
 
     const requestBody: any = {
       summary,

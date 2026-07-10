@@ -12,6 +12,8 @@ export const sendMessageToAgent = createAction({
   name: 'sendMessageToAgent',
   displayName: 'Send Message to Agent',
   description: 'Send message to an agent',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a message to a specific Letta agent (by agent ID) and returns the agent\'s non-streaming response, optionally capping how many reasoning steps it may take. Use to converse with or prompt an existing agent. Not idempotent: each call appends a new message and advances the agent\'s stateful memory.', idempotent: false },
   props: {
     agentId: agentIdDropdown,
     input: Property.LongText({

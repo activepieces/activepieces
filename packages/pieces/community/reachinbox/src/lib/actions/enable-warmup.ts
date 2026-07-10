@@ -17,6 +17,12 @@ export const enableWarmup = createAction({
   displayName: 'Enable Warmup',
   description:
     'Enable warmup for specific email accounts where it is currently disabled.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Turns on inbox warmup for a connected ReachInbox email account, identified by its account id. Use to start gradually building sending reputation for a mailbox. Idempotent: re-running for an account already warming up leaves it enabled.',
+    idempotent: true,
+  },
   props: {
     accountId: Property.Dropdown({
   auth: ReachinboxAuth,

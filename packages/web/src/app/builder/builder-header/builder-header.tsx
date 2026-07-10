@@ -1,8 +1,8 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   FlowOperationType,
   FlowVersionState,
-  Permission,
   supportUrl,
   UncategorizedFolderId,
 } from '@activepieces/shared';
@@ -187,7 +187,9 @@ export const BuilderHeader = () => {
           {t('Support')}
         </Button>
       )}
-      <ActiveUsersWidget resourceId={flow.id} />
+      {!embedState.hideActiveUsers && (
+        <ActiveUsersWidget resourceId={flow.id} />
+      )}
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"

@@ -8,6 +8,8 @@ export const getAggregateStats = createAction({
   auth: plausibleAuth,
   displayName: 'Get Aggregate Stats',
   description: 'Get aggregated analytics metrics for a time period',
+  audience: 'both',
+  aiMetadata: { description: 'Returns aggregated analytics metrics (such as visitors, pageviews, bounce rate, or visit duration) for a site over a preset time period like the last 7 or 30 days. Use for high-level totals across a window rather than per-dimension breakdowns. Requires a site and at least one metric; read-only and safe to repeat.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
     period: Property.StaticDropdown({

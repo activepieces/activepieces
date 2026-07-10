@@ -8,6 +8,12 @@ export const deleteTestimonialAction = createAction({
   name: 'delete_testimonial',
   displayName: 'Delete Testimonial',
   description: 'Deletes a testimonial by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently delete a Trust testimonial identified by its testimonial ID. Pick this only for outright removal; to merely hide a testimonial from public view, use Update Testimonial and set published to false instead. Deleting by a fixed ID is idempotent in effect — repeats leave the same end state, though a second attempt may error because the testimonial is already gone.',
+    idempotent: true,
+  },
   props: {
     testimonialId: Property.ShortText({
       displayName: 'Testimonial ID',

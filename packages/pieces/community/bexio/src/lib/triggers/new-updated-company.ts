@@ -88,6 +88,9 @@ export const newUpdatedCompanyTrigger = createTrigger({
   name: 'new_updated_company',
   displayName: 'New/Updated Company',
   description: 'Triggers when a company is added or updated',
+  aiMetadata: {
+    description: 'Fires when a company contact is created or its updated timestamp changes in Bexio. Emits each matching company with its name, address, contact details (email, phone), group memberships, and lead status. Use to react to new or modified organization contacts.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

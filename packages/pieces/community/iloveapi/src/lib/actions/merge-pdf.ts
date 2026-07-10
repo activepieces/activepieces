@@ -10,6 +10,12 @@ export const mergePdfAction = createAction({
   displayName: 'Merge PDF',
   description:
     'Combine multiple PDF files into a single document, in the order provided.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Concatenate two or more PDF files into one document, preserving the order in which they are listed. Requires at least two input files. Each run generates a new merged file, so re-running does not deduplicate against earlier outputs.',
+    idempotent: false,
+  },
   props: {
     files: Property.Array({
       displayName: 'PDF Files',

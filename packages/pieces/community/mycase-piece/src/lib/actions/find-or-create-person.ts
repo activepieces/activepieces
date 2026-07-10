@@ -7,6 +7,8 @@ export const findOrCreatePerson = createAction({
   name: 'find_or_create_person',
   displayName: 'Find or Create Person (Client)',
   description: 'Finds a person by first and last name or creates a new one if not found',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the MyCase client (individual person) matching the given first and last name (case-insensitive), creating it with the optional contact, address, people-group, and case fields only if no match exists. Use to guarantee a client exists without creating duplicates; matching is name-only, so distinct people sharing a name collapse to the first match. The extra fields apply only on creation. Use Create Person to always insert.', idempotent: true },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

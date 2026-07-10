@@ -21,6 +21,8 @@ export const chargePointConfigurationsListingAction = createAction({
   displayName:
     'Resources - Charge Points - Charge Point Configurations Listing',
   description: "Get a charge point's all cached configurations.",
+  audience: 'both',
+  aiMetadata: { description: 'List the cached OCPP configuration keys for a charge point (by charge point ID), with optional filters by name, instance, component name, or EVSE ID. Read-only and safe to retry; returns the values already cached by the platform rather than re-reading the device.', idempotent: true },
   props: {
     chargePoint: Property.Number({
       displayName: 'Charge Point',

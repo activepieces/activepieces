@@ -149,6 +149,10 @@ export const mollieNewOrder = createTrigger({
   name: 'new_order',
   displayName: 'New Order',
   description: 'Fires when a new order is created in Mollie',
+  aiMetadata: {
+    description:
+      'Fires when a new order is created in Mollie via the legacy Orders API. Polls the order list and emits each newly created order. Relevant only for the deprecated Orders API; for current payment flows use the New Payment trigger.',
+  },
 
   type: TriggerStrategy.POLLING,
 

@@ -8,6 +8,8 @@ export const createOpportunity = createAction({
   auth: wealthboxAuth,
   displayName: 'Create Opportunity',
   description: 'Logs an opportunity including stage, close date, amount. Automate opportunity tracking after meetings.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a sales opportunity in Wealthbox with name, target close date, probability, amount/currency, pipeline stage, and a linked contact. Use to record a deal in the pipeline; requires name, target close, probability (0-100), amount, stage, and a contact id. Not idempotent: each call creates a separate opportunity.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Opportunity Name',

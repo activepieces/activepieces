@@ -21,6 +21,12 @@ export const sendTransactionalEmailAction = createAction({
   displayName: 'Send Transactional Email',
   description:
     'Sends a one-off transactional email through INBOX Notify (e.g. password reset, receipt, welcome).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a single one-off transactional HTML email to one recipient through INBOX Notify, for messages like password resets, receipts, or welcome emails. Use for direct triggered email rather than list campaigns. Requires from name, from email, recipient, subject, and HTML body; the from-email domain must already be authenticated in INBOX Notify. Optional merge-field values replace #key# placeholders in the HTML. Not idempotent: each call sends another email.',
+    idempotent: false,
+  },
   props: {
     fromName: Property.ShortText({
       displayName: 'From Name',

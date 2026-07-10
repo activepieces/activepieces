@@ -17,6 +17,12 @@ export const createWootricSurvey = createAction({
   auth: wootricAuth,
   displayName: 'Trigger Wootric Survey',
   description: 'Trigger a survey from Wootric',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Dispatches a Wootric (InMoment) NPS email survey to a list of end-user email addresses. Use this to send/send-out customer satisfaction surveys to specific recipients. Set survey-immediately to true to bypass Wootric eligibility/throttle checks and send right away, or false to respect them. Not idempotent: each call sends new survey emails, so repeating it re-sends to the same recipients.',
+    idempotent: false,
+  },
   props: {
     emails: Property.Array({
       displayName: 'Emails',

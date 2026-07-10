@@ -1,10 +1,11 @@
-import { AIProviderName } from '@activepieces/shared';
+import { AIProviderName } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { aiProps } from '../../common/props';
 
 export const summarizeText = createAction({
+  audience: 'human',
   name: 'summarizeText',
   displayName: 'Summarize Text',
   description: 'Summarize long emails, articles, or documents into what matters.',

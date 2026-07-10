@@ -15,6 +15,8 @@ export const listFilesAction = createAction({
   displayName: 'List Files',
   description:
     'List files in your SimplyPrint account, optionally within a folder and/or filtered by a search term.',
+  audience: 'both',
+  aiMetadata: { description: 'Browse the SimplyPrint file system, optionally scoped to a folder ID and/or filtered by a filename search term (with an option to search across all folders). Read-only; pick it to discover user-file UIDs and folder IDs needed by upload-to-folder or add-to-queue. Idempotent.', idempotent: true },
   props: {
     folderId: Property.Number({
       displayName: 'Folder ID',

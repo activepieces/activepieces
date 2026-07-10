@@ -10,6 +10,9 @@ export const conversationPartTagged = createTrigger({
   name: 'conversationPartTagged',
   displayName: 'Tag added to a conversation part',
   description: 'Triggers when a conversation part is tagged.',
+  aiMetadata: {
+    description: 'Fires when a tag is applied to an individual part (message) within a conversation in Intercom. An optional Tag input limits the trigger to a specific tag; if left empty it fires for any tag added to a conversation part. Outputs the affected conversation and the tag that was added.',
+  },
   props: {
     tagId: tagIdProp('Tag', false),
   },

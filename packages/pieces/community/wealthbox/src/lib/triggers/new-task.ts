@@ -83,6 +83,9 @@ export const newTask = createTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Fires when a new task is created',
+  aiMetadata: {
+    description: 'Fires when a new task is created in Wealthbox, optionally narrowed to a specific assignee, team, creator, task type, or linked resource. Each fired item represents one newly created task record.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     assigned_to: Property.Dropdown({

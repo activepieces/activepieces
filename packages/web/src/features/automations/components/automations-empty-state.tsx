@@ -1,5 +1,5 @@
+import { Permission } from '@activepieces/core-utils';
 import {
-  Permission,
   Template,
   TemplateType,
   UncategorizedFolderId,

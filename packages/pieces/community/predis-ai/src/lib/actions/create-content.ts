@@ -17,6 +17,8 @@ export const createContent = createAction({
   name: 'create_content',
   displayName: 'Create Content',
   description: 'Generate posts including videos, carousels, images, quotes, and memes.',
+  audience: 'both',
+  aiMetadata: { description: 'Generates social media content (single image, carousel, video, quote, or meme) on Predis.ai from a text topic for a given brand. Use to produce ready-to-post creatives; the media type, post type, model version, languages, and quantity (1-10 posts) are configurable. Requires a Predis.ai brand_id and a topic of at least 20 characters and 3 words. Not idempotent: each call kicks off a new generation job and produces new posts.', idempotent: false },
   props: {
     brand_id: Property.ShortText({
       displayName: 'Brand ID',

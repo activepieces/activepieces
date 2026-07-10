@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesError, AIProviderName, aiProviderUtils, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
+import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -9,6 +10,7 @@ const RECENT_WINDOW_RATIO = 0.3
 const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const ESTIMATED_TOKENS_PER_MESSAGE = 200
+const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -160,6 +162,12 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     return finalPayload
 }
 
+function truncateForSummary(output: string): string {
+    const codePoints = [...output]
+    if (codePoints.length <= MAX_TOOL_RESULT_CHARS_FOR_SUMMARY) return output
+    return `${codePoints.slice(0, MAX_TOOL_RESULT_CHARS_FOR_SUMMARY).join('')}…[truncated ${codePoints.length - MAX_TOOL_RESULT_CHARS_FOR_SUMMARY} chars]`
+}
+
 function extractTextContent(message: ModelMessage): string {
     if (typeof message.content === 'string') return message.content
     if (!Array.isArray(message.content)) return ''
@@ -177,7 +185,7 @@ function extractTextContent(message: ModelMessage): string {
             }
             else if (part.type === 'tool-result' && 'output' in part) {
                 const output = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
-                text += `[Tool result: ${output.slice(0, 500)}]`
+                text += `[Tool result: ${truncateForSummary(output)}]`
             }
         }
     }

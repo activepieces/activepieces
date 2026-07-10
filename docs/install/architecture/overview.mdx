@@ -1,14 +1,16 @@
 ---
 title: "Overview"
-description: ""
+description: "How Activepieces is put together, and why it runs flows the way it does"
 icon: "cube"
 ---
 
-This page focuses on describing the main components of Activepieces and focus mainly on workflow executions.
+This section explains **why** Activepieces works the way it does: the components, the execution model, and the trade-offs behind them. If you want to *do* something (size a deployment, set up SSL, scale workers), start with [Configure & Operate](../configure-operate/production-setup). Come here when you want the reasoning under those choices.
+
+This page describes the main components, with a focus on how flows run.
 
 ## Components
 
-![Architecture](/resources/architecture.png)
+<img src="/resources/diagrams/activepieces-architecture.png" alt="Activepieces production architecture: client, app, Redis job queue, Postgres, S3, and one-flow-per-worker execution tier" />
 
 **Activepieces:**
 
@@ -20,7 +22,7 @@ This page focuses on describing the main components of Activepieces and focus ma
 
 **Third Party**:
 - **Postgres**: The main database for Activepieces.
-- **Redis**: This is used to power the queue using [BullMQ](https://docs.bullmq.io/).
+- **Redis**: Powers the queue using [BullMQ](https://docs.bullmq.io/).
 
 ## Reliability & Scalability
 
@@ -28,21 +30,14 @@ This page focuses on describing the main components of Activepieces and focus ma
 Postgres and Redis availability is outside the scope of this documentation, as many cloud providers already implement best practices to ensure their availability.
 </Tip>
 
-- **Webhooks**:
-  All webhooks are sent to the Activepieces app, which performs basic validation and adds them to the queue. In case of a spike, webhooks will be added to the queue.
+Everything is queue-backed: webhooks and recurring jobs land on Redis, and workers poll them off it. A spike does not drop work. It queues and drains as slots free. For exactly what survives a crash, what runs at-least-once, and where each promise stops, see [Guarantees](../guarantees/crash-recovery).
 
-- **Polling Trigger**:
-  All recurring jobs are added to Redis. In case of a failure, the missed jobs will be executed again.
-
-- **Flow Execution**:
-  Workers poll jobs from the queue. In the event of a spike, the flow execution will still work but may be delayed depending on the size of the spike.
-
-To scale Activepieces, you typically need to increase the replicas of either workers, the app, or the Postgres database. A small Redis instance is sufficient as it can handle thousands of jobs per second and rarely acts as a bottleneck.
+To scale Activepieces, add replicas of the workers, the app, or the Postgres database. A small Redis instance is enough: it handles thousands of jobs per second and rarely becomes a bottleneck. For the concrete sizing model, see [Production Setup](../configure-operate/production-setup).
 
 ## Repository Structure
 
 
-The repository is structured as a monorepo using Turbo, with TypeScript as the primary language. It is divided into several packages:
+The repository is a monorepo built with Turbo, with TypeScript as the primary language. It is divided into several packages:
 
 ```
 .

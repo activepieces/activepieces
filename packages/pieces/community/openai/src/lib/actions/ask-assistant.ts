@@ -6,10 +6,11 @@ import {
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 import { sleep } from '../common/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askAssistant = createAction({
+  audience: 'human',
   auth: openaiAuth,
   name: 'ask_assistant',
   displayName: 'Ask Assistant',
@@ -66,7 +67,7 @@ export const askAssistant = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      memoryKey: z.string().max(128).optional(),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
 
     const openai = new OpenAI({

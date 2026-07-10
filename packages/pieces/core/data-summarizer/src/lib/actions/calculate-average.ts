@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
 
 export const calculateAverage = createAction({
+  audience: 'human',
   name: 'calculateAverage',
   displayName: 'Calculate Average',
   description: 'Calculates the average of a list of values.',

@@ -13,11 +13,10 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined, isEmpty } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isEmpty } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import axios from 'axios';
+import { ProxyAgent } from 'undici';
 
 enum AuthType {
   NONE = 'NONE',
@@ -26,6 +25,7 @@ enum AuthType {
 }
 
 export const httpSendRequestAction = createAction({
+  audience: 'human',
   name: 'send_request',
   displayName: 'Send HTTP request',
   description: 'Send HTTP request',
@@ -359,12 +359,9 @@ export const httpSendRequestAction = createAction({
           proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
         }
 
-        const httpsAgent = new HttpsProxyAgent(proxyUrl);
-        const axiosClient = axios.create({
-          httpsAgent,
+        return await httpClient.sendRequest(request, {
+          dispatcher: new ProxyAgent(proxyUrl),
         });
-
-        return await httpClient.sendRequest(request, axiosClient);
       }
       return await httpClient.sendRequest(request);
     };

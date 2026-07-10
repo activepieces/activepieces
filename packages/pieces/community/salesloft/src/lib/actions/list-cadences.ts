@@ -8,6 +8,12 @@ export const listCadencesAction = createAction({
   name: 'list_cadences',
   displayName: 'List Cadences',
   description: 'Fetch a paginated list of cadences from Salesloft.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists the available cadences (outreach sequences) in Salesloft with pagination. Use to browse cadences or resolve a cadence ID before adding a person to one. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: salesloftAuth,
   props: {
     per_page: Property.Number({

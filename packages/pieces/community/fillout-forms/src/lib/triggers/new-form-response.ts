@@ -3,7 +3,7 @@ import { formIdDropdown } from '../common/props';
 import { filloutFormsAuth } from '../auth';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'new-form-response-trigger';
 

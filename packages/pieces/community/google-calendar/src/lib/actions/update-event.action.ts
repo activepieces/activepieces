@@ -1,7 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { google, calendar_v3 } from 'googleapis';
+import { calendar as googleCalendar, calendar_v3 } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
+import { eventOutputSchema } from '../output-schemas';
 
 export const updateEventAction = createAction({
   displayName: 'Update Event',
@@ -59,6 +60,7 @@ export const updateEventAction = createAction({
       required: false,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run(context) {
     const {
       calendar_id,
@@ -77,7 +79,7 @@ export const updateEventAction = createAction({
     const attendees = context.propsValue.attendees as string[];
 
     const authClient = await createGoogleClient(context.auth);
-    const calendar = google.calendar({ version: 'v3', auth: authClient });
+    const calendar = googleCalendar({ version: 'v3', auth: authClient });
 
     // Note that each patch request consumes three quota units;
     // prefer using a get followed by an update

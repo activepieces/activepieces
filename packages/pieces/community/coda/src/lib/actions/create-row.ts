@@ -2,7 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { codaAuth } from '../auth';
 import { codaClient } from '../common/types';
 import { docIdDropdown, tableIdDropdown, tableRowsDynamicProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const createRowAction = createAction({
 	auth: codaAuth,

@@ -7,6 +7,8 @@ export const addComment = createAction({
     name: 'add_comment',
     displayName: 'Add Comment',
     description: 'Add a comment or internal note to a task or folder',
+    audience: 'both',
+    aiMetadata: { description: 'Post a comment on a Wrike task or folder, selected via the entity type and entity ID; the comment text can be HTML or plain text. Use when an agent needs to annotate or leave a note on an item. Each call appends a new comment, so it is not idempotent.', idempotent: false },
     auth: wrikeAuth,
     props: {
         entityType: Property.StaticDropdown({

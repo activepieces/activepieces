@@ -15,6 +15,8 @@ export const subscriptionPlansListingAction = createAction({
   name: 'subscriptionPlansListing',
   displayName: 'Resources - Subscription Plans - Listing',
   description: 'Get all Subscription plans.',
+  audience: 'both',
+  aiMetadata: { description: 'List all AMPECO subscription plans configured on the platform. Read-only and idempotent. Enable the pagination option to fetch every plan across pages; otherwise a single page (up to per_page results) is returned. Use this to discover plan IDs before reading, updating, or deleting a specific plan.', idempotent: true },
   props: {
         
     per_page: Property.Number({

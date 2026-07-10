@@ -8,6 +8,12 @@ export const enrichPerson = createAction({
   displayName: 'Enrich Person',
   description:
     'Get detailed profile information (name, headline, current company, location, photo, LinkedIn URL) for a person identified by LinkedIn URL or generic URL.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only profile lookup for one person you can already identify by their LinkedIn URL (or a generic url to auto-detect; supply exactly one). Use when you have the URL and want their profile attributes; to find candidates by criteria use Search People, and to get someone\'s email use Enrich Person Email (Bulk). Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     linkedin_url: Property.ShortText({
       displayName: 'LinkedIn URL',

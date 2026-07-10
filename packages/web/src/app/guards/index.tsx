@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import {
   RouterProvider,
   createBrowserRouter,
@@ -12,17 +12,21 @@ import { projectRoutes } from '@/app/routes/project-routes';
 import { publicRoutes } from '@/app/routes/public-routes';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
+import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
 
 import { DefaultRoute } from './default-route';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
-const ChatWithAIPage = React.lazy(() =>
-  import('@/app/routes/chat-with-ai').then((m) => ({
-    default: m.ChatWithAIPage,
-  })),
+const ChatWithAIPage = lazyWithRetry(
+  () =>
+    import('@/app/routes/chat-with-ai').then((m) => ({
+      default: m.ChatWithAIPage,
+    })),
+  'chat-with-ai',
 );
 
 function chatElement() {
@@ -44,7 +48,30 @@ const chatRoutes = [
   { path: '/chat/:conversationId', element: chatElement() },
 ];
 
+const CrashTestPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('../routes/crash-test').then((m) => ({
+        default: m.CrashTestPage,
+      })),
+    )
+  : null;
+
+const devRoutes =
+  import.meta.env.DEV && CrashTestPage
+    ? [
+        {
+          path: '/__crashtest',
+          element: (
+            <Suspense fallback={<RouteLoadingBar />}>
+              <CrashTestPage />
+            </Suspense>
+          ),
+        },
+      ]
+    : [];
+
 const routes = [
+  ...devRoutes,
   ...publicRoutes,
   ...projectRoutes,
   ...authRoutes,
@@ -68,8 +95,13 @@ const routes = [
   },
 ];
 
-export const memoryRouter = createMemoryRouter(routes);
-const browserRouter = createBrowserRouter(routes);
+const routesWithErrorBoundary = routes.map((route) => ({
+  errorElement: <RouteErrorBoundary />,
+  ...route,
+}));
+
+export const memoryRouter = createMemoryRouter(routesWithErrorBoundary);
+const browserRouter = createBrowserRouter(routesWithErrorBoundary);
 
 const ApRouter = () => {
   const { embedState } = useEmbedding();

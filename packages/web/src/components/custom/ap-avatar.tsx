@@ -1,7 +1,6 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
 import { Mail } from 'lucide-react';
 
-import { UserBadges } from '@/components/custom/user-badges';
 import {
   HoverCard,
   HoverCardTrigger,
@@ -94,8 +93,6 @@ export const ApAvatar = ({
             </div>
           </div>
         </div>
-
-        <UserBadges user={user} showLockedBadges={false} showBorder={true} />
       </HoverCardContent>
     </HoverCard>
   );

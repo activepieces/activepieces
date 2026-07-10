@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { greenptAuth } from '../common/auth';
 
 export const transcribeAudio = createAction({
+  audience: 'human',
   auth: greenptAuth,
   name: 'transcribeAudio',
   displayName: 'Transcribe Audio',

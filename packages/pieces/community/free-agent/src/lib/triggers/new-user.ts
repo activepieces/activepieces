@@ -80,6 +80,9 @@ export const freeAgentNewUserTrigger = createTrigger({
   name: 'new_user',
   displayName: 'New User',
   description: 'Triggers when a new user is added',
+  aiMetadata: {
+    description: 'Fires when a new user is added to the FreeAgent account, detected by polling. Can be filtered by user type (staff, advisors, active staff/advisors) or left to watch all users.',
+  },
   type: TriggerStrategy.POLLING,
   props,
   sampleData: {

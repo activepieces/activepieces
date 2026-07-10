@@ -6,10 +6,19 @@ import {
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRight, CircleHelp, Magnet } from 'lucide-react';
+import { ArrowRight, CircleHelp, Info, Magnet } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import { flowRunUtils } from '@/features/flow-runs';
+import {
+  isTimelineEmpty,
+  TimelineBar,
+} from '@/features/flow-runs/components/timeline-bar';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
@@ -61,7 +70,7 @@ function getStatusText({
         timeout,
       });
     case FlowRunStatus.INTERNAL_ERROR:
-      return t('Run failed for an unknown reason, contact support.');
+      return t('Run failed with an internal error, contact support.');
     case FlowRunStatus.CANCELED:
       return t('Run Cancelled');
   }
@@ -134,6 +143,16 @@ const RunInfoWidget = () => {
               </>
             )}
           </div>
+          {isRunTerminal && !isTimelineEmpty(run.timeline) && (
+            <HoverCard openDelay={200} closeDelay={100}>
+              <HoverCardTrigger className="ml-1 inline-flex cursor-default items-center">
+                <Info className="size-4 text-muted-foreground" />
+              </HoverCardTrigger>
+              <HoverCardContent className="w-[28rem] p-3">
+                <TimelineBar timeline={run.timeline} />
+              </HoverCardContent>
+            </HoverCard>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

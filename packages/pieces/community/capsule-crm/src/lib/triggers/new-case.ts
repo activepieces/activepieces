@@ -4,6 +4,10 @@ export const newCaseTrigger = capsuleCrmCreateTrigger({
   name: 'new_case',
   displayName: 'New Case',
   description: 'Fires when a new case (project) is created in Capsule CRM.',
+  aiMetadata: {
+    description:
+      'Fires when a new case (project) is created in Capsule CRM, delivering the created case record. Use to react to newly opened cases.',
+  },
   event: 'kase/created',
   sampleData: {
     event: 'kase/created',

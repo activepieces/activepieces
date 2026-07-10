@@ -9,6 +9,8 @@ export const getBudget = createAction({
   name: 'get_budget',
   displayName: 'Get Budget',
   description: 'Get your monthly budget',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the budget for a single month from an Actual Budget server, including each category group and category for that month. Use it to read budgeted, spent, and balance figures for a specific period; the month and year must be supplied as separate inputs. Read-only and idempotent.', idempotent: true },
   props: {
     month: Property.StaticDropdown({
       displayName: 'Month',

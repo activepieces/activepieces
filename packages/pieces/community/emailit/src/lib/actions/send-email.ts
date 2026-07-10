@@ -7,6 +7,8 @@ export const sendEmailAction = createAction({
     name: 'send_email',
     displayName: 'Send Email',
     description: 'Send an email to one or more recipients via Emailit.',
+    audience: 'both',
+    aiMetadata: { description: 'Sends a transactional email through Emailit to one or more To recipients (with optional CC/BCC, reply-to, and custom headers). Choose this to deliver a message via Emailit; the body is sent as either plain text or HTML depending on the content type. The sender email must be verified in the Emailit account, and the combined To/CC/BCC list is capped at 50 addresses. Not idempotent: each call dispatches a new email.', idempotent: false },
     props: {
         to: Property.Array({
             displayName: 'To',

@@ -9,6 +9,12 @@ export const getOrderList = createAction({
   name: 'get-order-list',
   displayName: 'Get Orders List',
   description: 'Find Orders',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List orders from the VTEX store order management system (OMS) created within a date range, specified as from/to year (required) plus optional month and day. Use to find orders over a period rather than by a single ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     fromYear: Property.Number({
       displayName: 'From (Year)',

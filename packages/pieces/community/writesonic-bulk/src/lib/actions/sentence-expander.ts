@@ -14,6 +14,8 @@ export const sentenceExpander = createAction({
   displayName: 'Sentence Expander',
   description:
     'Expand short sentences into more descriptive and interesting ones',
+  audience: 'both',
+  aiMetadata: { description: 'Expands a short sentence into more descriptive text via Writesonic, with optional tone of voice and keyword plus engine/language/copy-count controls. Use when an agent needs to elaborate or lengthen a brief sentence rather than shorten or generate from scratch. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     content_to_expand: Property.LongText({
       displayName: 'Sentence',

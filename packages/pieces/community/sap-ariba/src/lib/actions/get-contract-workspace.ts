@@ -8,6 +8,8 @@ export const getContractWorkspace = createAction({
     name: 'get_contract_workspace',
     displayName: 'Get Contract Workspace',
     description: 'Search for a contract workspace using a unique identifier.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetch a single contract workspace by its contract ID from a SAP Ariba Contracts realm, acting on behalf of a user (requires realm, user, and password adapter). Use when you already know the exact contract ID; for attribute-based discovery use Search Contract Workspaces instead. Read-only and idempotent.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

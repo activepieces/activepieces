@@ -10,6 +10,8 @@ export const pushToCampaignAction = createAction({
   displayName: 'Push Contact to Campaign',
   description:
     'Enrol an existing contact in a campaign so they start receiving outreach emails. Enable "Force Push" to move the contact even if they are already active in another campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Enrol an already-existing Reply.io contact (by email) into a campaign so outbound outreach begins; the optional Force Push flag moves them in even if they are already active in another campaign (otherwise such contacts are skipped). Use when the contact already exists and only needs to be added to a sequence; use Add Contact to Campaign instead if you also need to create the contact. Requires a target campaign id and the contact email. Not idempotent: it enrolls and starts sending outreach on each call.', idempotent: false },
   auth: replyIoAuth,
   props: {
     campaignId: campaignIdProp,

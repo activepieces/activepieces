@@ -7,6 +7,8 @@ export const getProductVariantAction = createAction({
   name: 'get_product_variant',
   displayName: 'Get Product Variant',
   description: `Get a product variant.`,
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single product variant by its variant ID, returning details like price, SKU, and inventory item. Use when you have a specific variant ID; to find variants browse products first via Get Products. Read-only and idempotent.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Product Variant',

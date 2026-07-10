@@ -10,6 +10,12 @@ export const getDraftAction = createAction({
 	name: 'typefully_get_draft',
 	displayName: 'Get Draft',
 	description: 'Retrieve a specific draft by its ID.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Fetches a single Typefully draft by its draft ID within a social set. Use to read the current content, status, or schedule of a known draft. Requires both the social set ID and the draft ID. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		social_set_id: socialSetDropdown,
 		draft_id: Property.ShortText({

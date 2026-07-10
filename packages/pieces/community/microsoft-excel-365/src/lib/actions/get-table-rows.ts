@@ -8,6 +8,8 @@ export const getTableRowsAction = createAction({
   auth: excelAuth,
   name: 'get_table_rows',
   description: 'List rows of a table in a worksheet',
+  audience: 'both',
+  aiMetadata: { description: 'List the data rows of a defined Excel table (by table id) in a worksheet, returning each row as an array of cell values. Use for structured tables; for arbitrary worksheet rows use Get Worksheet Rows, or a specific range with Get Cells in Range. Read-only and idempotent; an optional limit caps how many rows are returned.', idempotent: true },
   displayName: 'Get Table Rows',
   props: {
     storageSource: commonProps.storageSource,

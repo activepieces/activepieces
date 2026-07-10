@@ -8,6 +8,12 @@ export const findUserByEmailAction = createAction({
   name: 'slack-find-user-by-email',
   displayName: 'Find User by Email',
   description: 'Finds a user by matching against their email address.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up a single Slack user by their exact email address, returning their profile and user ID. Pick this to resolve an email into a Slack user ID before messaging or referencing that user. Read-only and idempotent; errors if no workspace member matches the email.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

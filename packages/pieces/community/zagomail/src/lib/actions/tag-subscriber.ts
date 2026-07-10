@@ -9,6 +9,8 @@ export const tagSubscriber = createAction({
   name: 'tagSubscriber',
   displayName: 'Tag Subscriber',
   description: 'Adds A Tag to A Subscriber.',
+  audience: 'both',
+  aiMetadata: { description: 'Applies one or more tags to a subscriber in a Zagomail list, creating any tag that does not already exist before attaching it. Use to label or segment a contact; requires the list UID and the subscriber UID. Not idempotent: it mutates the subscriber and may create new tags on each run.', idempotent: false },
   props: {
     tags: Property.Array({
       displayName: 'Tags',

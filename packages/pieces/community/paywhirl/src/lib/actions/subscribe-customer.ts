@@ -9,6 +9,12 @@ export const subscribeCustomer = createAction({
   displayName: 'Subscribe Customer',
   description:
     'Enroll a customer in an existing plan. The customer must have a valid payment method on file.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrolls an existing customer into an existing plan, creating a recurring subscription. Requires customer ID and plan ID; optionally set a trial end timestamp, promo code, or quantity. The customer must already have a valid payment method on file. Use to start recurring billing. Not idempotent: each call creates another subscription.',
+    idempotent: false,
+  },
   props: {
     customer_id: Property.Number({
       displayName: 'Customer ID',

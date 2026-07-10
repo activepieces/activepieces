@@ -2,13 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
 import { makeClient, tarventCommon } from '../common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const getContact = createAction({
   auth: tarventAuth,
   name: 'tarvent_get_contact',
   displayName: 'Find Contact',
   description: 'Finds a contact by your custom key data field (typically this is by email).',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a contact within a Tarvent audience by email (the audience\'s key field). Use to retrieve a contact or its ID before acting on it. If the audience uses a custom identifier, this returns the first contact matching the email, so target a specific record by ID when precision matters. Idempotent read-only lookup.', idempotent: true },
   props: {
     audienceId: tarventCommon.audienceId(true, ''),
     email: Property.ShortText({
@@ -22,7 +24,7 @@ export const getContact = createAction({
     const { audienceId, email } = context.propsValue;
 
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().min(1).max(255, 'Email has no more than 255 characters.'),
+      email: z.string().check(z.minLength(1), z.maxLength(255, 'Email has no more than 255 characters.')),
     });
 
     const client = makeClient(context.auth);

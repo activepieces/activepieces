@@ -9,6 +9,12 @@ export const getMinimalSessionDates = createAction({
   displayName: 'Date minimale de début de session de formation',
   description:
     'Récupération des dates minimales de début de session de formation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the earliest allowed training-session start dates for registration folders. Read-only, takes no input, and safe to call repeatedly. Use to determine the minimum valid start date before creating or scheduling a session.',
+    idempotent: true,
+  },
   props: {},
 
   async run(context) {

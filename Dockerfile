@@ -74,6 +74,13 @@ COPY . .
 # Build frontend, engine, server API, and worker
 RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
+# The web build emits hidden source maps (vite build.sourcemap='hidden') used to
+# symbolicate production stack traces in Sentry/BetterStack error tracking. Upload
+# them here (cloud CI, guarded by a token) BEFORE stripping, then always remove the
+# .map files so source is never served from the shipped image (self-hosted too).
+# TODO(cloud-ci): inject + upload maps with sentry-cli when SENTRY_AUTH_TOKEN is set.
+RUN find dist/packages/web -name '*.map' -delete
+
 # Generate migration manifest (ordered list of migration names) for image-tag-based rollback
 RUN node -e "\
   const {getMigrations} = require('./packages/server/api/dist/src/app/database/postgres-connection');\
@@ -127,6 +134,10 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
 LABEL service=activepieces
+
+# WORKER containers have no HTTP server; treat them as healthy (probe only the app).
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
+    CMD [ "$AP_CONTAINER_TYPE" = "WORKER" ] && exit 0 || curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/health" || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 EXPOSE 80

@@ -10,6 +10,7 @@ interface TriggerConfig {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata?: { description: string };
   sampleData?: unknown;
 }
 
@@ -19,6 +20,7 @@ export function createHedyWebhookTrigger(config: TriggerConfig) {
     name: config.name,
     displayName: config.displayName,
     description: config.description,
+    aiMetadata: config.aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {
       verifySignature: Property.Checkbox({

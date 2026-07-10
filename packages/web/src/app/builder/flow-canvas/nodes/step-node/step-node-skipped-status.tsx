@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowTriggerType,
   FlowVersionState,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { RouteOff } from 'lucide-react';
@@ -11,6 +11,8 @@ import { flowRunUtils } from '@/features/flow-runs';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
+
+import { StepNodeBadgeContainer } from './step-node-badge-container';
 
 const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
   const [run, stepType, isInDraft, isSkipped] = useBuilderStateContext(
@@ -31,14 +33,14 @@ const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
   }
 
   return (
-    <div className="absolute right-[1px] h-[20px] -top-[28px]">
+    <StepNodeBadgeContainer>
       <div
         className={flowRunUtils.getStatusContainerClassName('default', true)}
       >
         <RouteOff className="size-3" />
         <div>{t('Skipped')}</div>
       </div>
-    </div>
+    </StepNodeBadgeContainer>
   );
 };
 

@@ -6,8 +6,10 @@ import {
 } from '@activepieces/pieces-framework';
 import { googleGeminiAuth } from '../auth';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
+import { generateContentFromImageActionOutputSchema } from '../output-schemas';
 
 export const generateContentFromImageAction = createAction({
+  audience: 'human',
   description:
     'Generate content using Google Gemini using the "gemini-pro-vision" model',
   displayName: 'Generate Content from Image',
@@ -35,6 +37,7 @@ export const generateContentFromImageAction = createAction({
         getGeminiModelOptions({ auth }),
     }),
   },
+  outputSchema: generateContentFromImageActionOutputSchema,
 
   async run({ auth, propsValue }) {
     const { image, model, prompt } = propsValue;

@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { GetField } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { searchFieldProp, searchFieldValueProp } from '../common/props';
 import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
 
@@ -16,6 +16,12 @@ export const findOrganizationAction = createAction({
 	name: 'find-organization',
 	displayName: 'Find Organization',
 	description: 'Finds an organization.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Finds a single organization by matching a chosen field to a value (exact match), returning the most recently updated match. Use to locate an organization before reading or updating it; pick the field via Search Field and supply its value. Read-only and idempotent (a temporary search filter is created and removed internally).',
+		idempotent: true,
+	},
 	props: {
 		searchField: searchFieldProp('organization'),
 		searchFieldValue: searchFieldValueProp('organization'),

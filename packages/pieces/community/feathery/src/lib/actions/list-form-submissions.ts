@@ -8,6 +8,8 @@ export const listFormSubmissionsAction = createAction({
   name: 'list_form_submissions',
   displayName: 'List Form Submissions',
   description: 'List submission data for a particular form.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves submission records for a given Feathery form, with optional filters for creation/update time windows, completion status, specific field IDs, exact field-value matches, and fuzzy search across weighted fields. Use to read or search existing form submissions; the form ID is required and all filters are optional (omitting them returns all submissions). Read-only and idempotent.', idempotent: true },
   props: {
     form_id: Property.Dropdown({
       displayName: 'Form',

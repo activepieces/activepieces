@@ -1,8 +1,16 @@
-import { Field, Table, PopulatedRecord, isNil } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { isNil } from '@activepieces/core-utils';
+import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
-import { createContext, useContext, useRef } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
@@ -13,6 +21,7 @@ import {
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/stores/store/ap-tables-client-state';
+import { useResourceLock } from '@/hooks/use-resource-lock';
 import { cn } from '@/lib/utils';
 
 import { fieldsApi } from '../api/fields-api';
@@ -20,6 +29,8 @@ import { recordsApi } from '../api/records-api';
 import { tablesApi } from '../api/tables-api';
 
 const TableContext = createContext<ApTableStore | null>(null);
+const TableRefreshContext = createContext<(() => Promise<void>) | null>(null);
+const TableLockContext = createContext<TableLockContextValue | null>(null);
 
 export const TableStateProviderWithTable = ({
   children,
@@ -48,6 +59,8 @@ export function ApTableStateProvider({
   children: React.ReactNode;
 }) {
   const tableId = useParams().tableId;
+  const queryClient = useQueryClient();
+  const [refreshKey, setRefreshKey] = useState(0);
   const {
     data: table,
     isLoading: isTableLoading,
@@ -97,6 +110,18 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
+  // rebuilds the table store from freshly fetched server state without
+  // reloading the document (a full reload breaks the embed SDK handshake
+  // inside an iframe)
+  const refreshTableState = useCallback(async () => {
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ['table', tableId] }),
+      queryClient.refetchQueries({ queryKey: ['fields', tableId] }),
+      queryClient.refetchQueries({ queryKey: ['records', tableId] }),
+    ]);
+    setRefreshKey((key) => key + 1);
+  }, [queryClient, tableId]);
+
   if (isTableLoading || isFieldsLoading || isRecordsLoading) {
     return <RouteLoadingBar />;
   }
@@ -135,13 +160,18 @@ export function ApTableStateProvider({
   }
 
   return (
-    <TableStateProviderWithTable
-      table={table}
-      fields={fields}
-      records={records.data}
-    >
-      {children}
-    </TableStateProviderWithTable>
+    <TableRefreshContext.Provider value={refreshTableState}>
+      <TableLockProvider resourceId={table.id} onTakeOver={refreshTableState}>
+        <TableStateProviderWithTable
+          key={refreshKey}
+          table={table}
+          fields={fields}
+          records={records.data}
+        >
+          {children}
+        </TableStateProviderWithTable>
+      </TableLockProvider>
+    </TableRefreshContext.Provider>
   );
 }
 
@@ -153,7 +183,47 @@ export function useTableState<T>(selector: (state: TableState) => T) {
   return useStore(tableStore, selector);
 }
 
+export function useRefreshTableState() {
+  const refreshTableState = useContext(TableRefreshContext);
+  if (!refreshTableState) {
+    throw new Error('Table refresh context not found');
+  }
+  return refreshTableState;
+}
+
+export function useTableLock() {
+  const lock = useContext(TableLockContext);
+  if (!lock) {
+    throw new Error('Table lock context not found');
+  }
+  return lock;
+}
+
 export function useOptionalTableStore() {
   const tableStore = useContext(TableContext);
   return tableStore ?? null;
 }
+
+// mounted above the keyed remount of TableStateProviderWithTable so a
+// take-over refresh never unmounts the lock hook — unmounting it would emit
+// a spurious UNLOCK_RESOURCE/LOCK_RESOURCE pair and briefly release the
+// just-acquired lock for other clients
+function TableLockProvider({
+  resourceId,
+  onTakeOver,
+  children,
+}: {
+  resourceId: string;
+  onTakeOver: () => void | Promise<void>;
+  children: React.ReactNode;
+}) {
+  const { lockedBy, takeOver } = useResourceLock({ resourceId, onTakeOver });
+  const lock = useMemo(() => ({ lockedBy, takeOver }), [lockedBy, takeOver]);
+  return (
+    <TableLockContext.Provider value={lock}>
+      {children}
+    </TableLockContext.Provider>
+  );
+}
+
+type TableLockContextValue = ReturnType<typeof useResourceLock>;

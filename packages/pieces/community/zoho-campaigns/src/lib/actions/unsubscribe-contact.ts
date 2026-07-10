@@ -7,6 +7,12 @@ export const unsubscribeContact = createAction({
   name: 'unsubscribeContact',
   displayName: 'Unsubscribe Contact',
   description: 'Remove a contact from a mailing list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Unsubscribes a contact (matched by email) from a specified mailing list, optionally scoped to a particular topic. Use to opt a subscriber out of a list or topic. Idempotent: an already-unsubscribed contact stays unsubscribed on repeat calls.',
+    idempotent: true,
+  },
   props: zohoCampaignsCommon.unsubscribeContactProperties(),
   async run({ auth, propsValue }) {
     const location = auth.props?.['location'] as string || 'zoho.com';

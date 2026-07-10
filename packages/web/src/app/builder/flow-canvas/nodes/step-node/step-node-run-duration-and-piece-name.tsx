@@ -5,6 +5,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { flowRunUtils } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 const StepNodeRunDuration = ({ duration }: { duration: number }) => {
   return (
@@ -22,11 +23,14 @@ const StepNodeRunDurationAndPieceName = ({
   stepName: string;
   pieceDisplayName: string;
 }) => {
-  const [run, loopIndexes, flowVersion] = useBuilderStateContext((state) => [
-    state.run,
-    state.loopsIndexes,
-    state.flowVersion,
-  ]);
+  const [run, loopIndexes, flowVersion, canvasOrientation] =
+    useBuilderStateContext((state) => [
+      state.run,
+      state.loopsIndexes,
+      state.flowVersion,
+      state.canvasOrientation,
+    ]);
+  const isHorizontal = canvasOrientation === 'horizontal';
   const selectedStepOutput = useMemo(() => {
     return run && run.steps
       ? flowRunUtils.extractStepOutput(stepName, loopIndexes, run.steps)
@@ -34,12 +38,22 @@ const StepNodeRunDurationAndPieceName = ({
   }, [run, stepName, loopIndexes, flowVersion.trigger]);
 
   return (
-    <div className="flex justify-between mt-0.5 w-full items-center">
+    <div
+      className={cn('flex mt-0.5 w-full items-center', {
+        'justify-between': !isHorizontal,
+        'justify-center': isHorizontal,
+      })}
+    >
       <TextWithTooltip
         tooltipMessage={pieceDisplayName}
         key={pieceDisplayName + selectedStepOutput?.duration}
       >
-        <div className="text-xs text-muted-foreground truncate  grow shrink w-full">
+        <div
+          className={cn('text-xs text-muted-foreground truncate grow shrink', {
+            'w-full': !isHorizontal,
+            'text-center': isHorizontal,
+          })}
+        >
           {pieceDisplayName}
         </div>
       </TextWithTooltip>

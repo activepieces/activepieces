@@ -15,6 +15,8 @@ export const faqCreateAction = createAction({
   name: 'faqCreate',
   displayName: 'Resources - Faqs - Create',
   description: 'Create new FAQ.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new FAQ entry with localized question and answer text (one entry per locale). Not idempotent: each call adds a new FAQ, so retrying can create duplicates. To change an existing entry use Faq Update instead.', idempotent: false },
   props: {
         
   question: Property.Array({

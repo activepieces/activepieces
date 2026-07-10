@@ -8,6 +8,8 @@ export const listSheets = createAction({
   name: 'list_sheets',
   displayName: 'List Sheets',
   description: 'Lists all available contact lists (sheets) in your Sendr workspace.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all contact lists (sheets) in the Sendr workspace, returning each sheet id and name. Use it to discover the sheet id needed by sheet-scoped actions like Get Sheet, Get Sheet Columns, or Add Row to Sheet. Read-only; takes no input.', idempotent: true },
   props: {},
   async run(context) {
     const response = await sendrApiCall<{

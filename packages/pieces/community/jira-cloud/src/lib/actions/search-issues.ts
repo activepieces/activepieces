@@ -1,14 +1,20 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { searchIssuesByJql, mapFieldNames } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const searchIssues = createAction({
   name: 'search_issues',
   displayName: 'Search Issues',
   description: 'Search for issues with JQL',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search Jira issues with an arbitrary JQL query, paginating automatically up to a max-results cap (1-5000) and optionally restricting which fields are returned or mapping field IDs to readable names. The go-to tool for finding issues by project, status, assignee, dates, or any JQL-expressible criteria; limit returned fields on large result sets to avoid memory issues. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: jiraCloudAuth,
   props: {
     memoryWarning: Property.MarkDown({
@@ -50,7 +56,7 @@ Example: *all and -comment returns everything except comments.`,
   },
   run: async ({ auth, propsValue }) => {
     await propsValidation.validateZod(propsValue, {
-      maxResults: z.number().min(1).max(5000),
+      maxResults: z.number().check(z.minimum(1), z.maximum(5000)),
     });
 
     const { jql, maxResults, sanitizeJql, fields, mapNames } = propsValue;

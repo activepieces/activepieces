@@ -7,6 +7,10 @@ export const newSavedMessageTrigger = createTrigger({
 	name: 'new-saved-message',
 	displayName: 'New Saved Message',
 	description: 'Triggers when you save a message.',
+	aiMetadata: {
+		description:
+			'Fires when the connected Slack user saves (stars) a message. Only star_added events whose saved item is a message fire; saving other item types does not trigger. The event payload is the saved item, including its channel and message reference.',
+	},
 	props: {},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: undefined,

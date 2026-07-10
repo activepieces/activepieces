@@ -8,6 +8,7 @@ const markdown = `
 * The JSON object will be flattened If nested and the keys will be used as headers.
 `
 export const jsonToCsvAction = createAction({
+  audience: 'human',
   name: 'convert_json_to_csv',
   displayName: 'Convert JSON to CSV',
   description: 'This function reads a JSON array and converts it into CSV format.',

@@ -11,6 +11,10 @@ export const oneTimeOrderPaid = createTrigger({
   name: 'OneTimeOrderPaid',
   displayName: MODULE_NAME,
   description: 'Triggers when a customer pays a one-time order.',
+  aiMetadata: {
+    description:
+      'Fires when a one-time (non-subscription) order is completed/paid in the selected ClickFunnels workspace, representing a successful single-purchase payment. Delivers the order payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

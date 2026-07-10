@@ -9,6 +9,8 @@ export const commentACall = createAction({
   name: 'commentACall',
   displayName: 'Comment a Call',
   description: 'Adds a comment (note) to a specific call.',
+  audience: 'both',
+  aiMetadata: { description: 'Appends a free-text comment (note) to an Aircall call identified by its call ID. Use to annotate a call with context after it happens. Not idempotent: each call adds a new comment, so repeating it duplicates the note.', idempotent: false },
   props: {
     callId: callIdDropdown,
     content: Property.LongText({

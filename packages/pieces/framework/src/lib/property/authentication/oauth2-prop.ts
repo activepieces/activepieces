@@ -1,5 +1,5 @@
-import { BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE, OAuth2GrantType } from '@activepieces/shared';
-import { z } from 'zod';
+import { BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE, OAuth2GrantType } from '@activepieces/core-piece-types';
+import * as z from "zod/mini";
 import { ShortTextProperty } from '../input/text-property';
 import { SecretTextProperty } from './secret-text-property';
 import { BasePieceAuthSchema } from './common';
@@ -36,16 +36,16 @@ type OAuthPropsValue<T extends OAuth2Props> = StaticPropsValue<T>;
 
 
 const OAuth2ExtraProps = z.object({
-  props: z.record(z.string(), OAuthProp).optional(),
+  props: z.optional(z.record(z.string(), OAuthProp)),
   authUrl: z.string(),
   tokenUrl: z.string(),
   scope: z.array(z.string()),
-  prompt: z.union([z.literal('none'), z.literal('consent'), z.literal('login'), z.literal('omit')]).optional(),
-  pkce: z.boolean().optional(),
-  pkceMethod: z.union([z.literal('plain'), z.literal('S256')]).optional(),
-  authorizationMethod: z.nativeEnum(OAuth2AuthorizationMethod).optional(),
-  grantType: z.union([z.nativeEnum(OAuth2GrantType), z.literal(BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)]).optional(),
-  extra: z.record(z.string(), z.string()).optional(),
+  prompt: z.optional(z.union([z.literal('none'), z.literal('consent'), z.literal('login'), z.literal('omit')])),
+  pkce: z.optional(z.boolean()),
+  pkceMethod: z.optional(z.union([z.literal('plain'), z.literal('S256')])),
+  authorizationMethod: z.optional(z.enum(OAuth2AuthorizationMethod)),
+  grantType: z.optional(z.union([z.enum(OAuth2GrantType), z.literal(BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)])),
+  extra: z.optional(z.record(z.string(), z.string())),
 })
 
 type OAuth2ExtraProps = {
@@ -63,7 +63,7 @@ type OAuth2ExtraProps = {
 
 export const OAuth2PropertyValue = z.object({
   access_token: z.string(),
-  props: OAuth2Props.optional(),
+  props: z.optional(OAuth2Props),
   data: z.record(z.string(), z.any())
 })
 

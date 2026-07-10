@@ -3,13 +3,18 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, customFields, listId } from '../common/props';
-import { HttpStatusCode } from 'axios';
 
 export const updateSubscriberDetailsAction = createAction({
   auth: campaignMonitorAuth,
   name: 'update_subscriber_details',
   displayName: 'Update Subscriber',
   description: 'Update an existing subscriber in a list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing subscriber, identified by their current email address, in a specific Campaign Monitor list under a client — changing name, phone, custom fields, and tracking/SMS consent. Choose this to modify a contact already on a list rather than to add one. Idempotent: it keys on the email and overwrites the same record, so repeating with identical input leaves the subscriber in the same state.',
+    idempotent: true,
+  },
   props: {
     clientId: clientId,
     listId: listId,
@@ -92,7 +97,7 @@ export const updateSubscriberDetailsAction = createAction({
       payload
     );
 
-    if (response.status === HttpStatusCode.Ok) {
+    if (response.status === 200) {
       return {
         success: true,
       };

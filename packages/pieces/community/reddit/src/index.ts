@@ -9,8 +9,8 @@ import { editRedditPost } from './lib/actions/edit-reddit-post';
 import { editRedditComment } from './lib/actions/edit-reddit-comment';
 import { deleteRedditPost } from './lib/actions/delete-reddit-post';
 import { deleteRedditComment } from './lib/actions/delete-reddit-comment';
-import { PieceCategory } from '@activepieces/shared';
-import { OAuth2GrantType } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
+import { OAuth2GrantType } from '@activepieces/pieces-framework';
 import { redditAuth } from './lib/auth';
 
 const markdown = `

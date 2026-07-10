@@ -7,6 +7,8 @@ export const createContact = createAction({
     name: 'create_contact',
     displayName: 'Create Contact',
     description: 'Create a new contact record',
+    audience: 'both',
+    aiMetadata: { description: 'Create a new person contact in Teamleader Focus CRM with name, emails, phones, addresses, and other profile fields. Use to add an individual; for a business entity use Create Company instead. Requires first and last name. Not idempotent: each call creates a separate contact even with identical input, so guard against duplicates (e.g. search by email first).', idempotent: false },
     auth: teamleaderAuth,
     props: {
         first_name: Property.ShortText({

@@ -1,9 +1,10 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { FileResponseInterface, HumanInputFormResult, HumanInputFormResultTypes } from '@activepieces/shared';
+import { FileResponseInterface, HumanInputFormResult, HumanInputFormResultTypes } from '@activepieces/pieces-framework';
 import { StatusCodes } from 'http-status-codes';
 import mime from 'mime-types';
 
 export const returnResponse = createAction({
+  audience: 'human',
   name: 'return_response',
   displayName: 'Respond on UI',
   description: 'Return a file or text (markdown) as a response.',

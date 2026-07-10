@@ -10,6 +10,12 @@ export const cancelSubscription = createAction({
   displayName: 'Cancel Subscription',
   description:
     'Cancel a Chargebee subscription immediately, at end of term, or on a specific date.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Cancel a Chargebee subscription by ID, with control over timing (immediately, end of term, or a specific date) and, for subscriptions with a contract term, a separate contract-term cancel option plus optional termination fee. Use when an agent needs to end a subscription rather than pause or change it. Requires the subscription ID; the timing and credit/refund handling depend on whether the subscription has a contract term. Repeating the call does not re-cancel an already-cancelled subscription, but it is treated as non-idempotent since options like decommission are irreversible.',
+    idempotent: false,
+  },
   props: {
     subscription_id: Property.ShortText({
       displayName: 'Subscription ID',

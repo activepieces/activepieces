@@ -14,6 +14,12 @@ export const createDraftReply = createAction({
   displayName: 'Create Draft Reply',
   description:
     'Create a draft reply to an existing conversation (subject/quote etc.) without sending immediately.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create an unsent draft reply within an existing conversation (by conversation ID), optionally private to the author or shared (Mode). Use when a human should review before sending; "Send Reply" dispatches immediately, and "Create Draft" drafts a new conversation instead. Not idempotent: each call creates a new draft.',
+    idempotent: false,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     body: Property.LongText({

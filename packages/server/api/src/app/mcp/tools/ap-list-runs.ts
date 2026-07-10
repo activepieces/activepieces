@@ -1,4 +1,5 @@
-import { FlowRunStatus, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer, RunEnvironment } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowRunStatus, McpToolDefinition, ProjectScopedMcpServer, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -71,7 +72,7 @@ export const apListRunsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_list_runs failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_list_runs failed')
                 return mcpUtils.mcpToolError('Failed to list runs', err)
             }
         },

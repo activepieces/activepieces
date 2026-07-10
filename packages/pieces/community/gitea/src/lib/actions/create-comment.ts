@@ -9,6 +9,8 @@ export const createComment = createAction({
   name: 'create_comment',
   displayName: 'Add Comment to Issue/PR',
   description: 'Adds a comment to an issue or pull request.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a comment on a Gitea issue or pull request, identified by its index number within the repository (issues and PRs share the same number space). Use to reply, give feedback, or note status. Each call appends a new comment, so it is not idempotent.', idempotent: false },
   props: {
     repository: giteaCommon.repositoryDropdown,
     index: Property.Number({

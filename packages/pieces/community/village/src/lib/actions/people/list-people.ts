@@ -8,6 +8,12 @@ export const listPeople = createAction({
   displayName: 'List People',
   description:
     'Get your network contacts ranked by connection strength. Returns a paginated list with enrichment data, supporting cursor-based pagination and optional connection-degree filtering.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only browse of your own network contacts ranked by connection strength, with optional filtering by connection degree or current company domain. Use to enumerate who you already know; for criteria-based discovery beyond your contacts use Search People. Cursor-paginated and safe to retry.',
+    idempotent: true,
+  },
   props: {
     cursor: Property.ShortText({
       displayName: 'Cursor',

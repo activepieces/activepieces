@@ -1,4 +1,5 @@
-import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { recordService } from '../../tables/record/record.service'
@@ -37,7 +38,7 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_delete_records failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_delete_records failed')
                 return mcpUtils.mcpToolError('Failed to delete records', err)
             }
         },

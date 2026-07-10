@@ -75,6 +75,10 @@ export const newCampaignTrigger = createTrigger({
   displayName: 'New Campaign',
   description:
     'Triggers when a new campaign is created in your INBOX account.',
+  aiMetadata: {
+    description:
+      'Fires when a new campaign is created in the INBOX account. Represents a newly created campaign record and emits its details.',
+  },
   props: {},
   sampleData: {
     campaign_id: '5df9d4b691183c000106cb90',

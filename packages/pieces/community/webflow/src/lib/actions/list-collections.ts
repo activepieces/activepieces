@@ -8,6 +8,8 @@ export const webflowListCollections = createAction({
 	name: 'list_collections',
 	description: 'List all collections in a site',
 	displayName: 'List Collections',
+	audience: 'both',
+	aiMetadata: { description: 'Lists all CMS collections within a given Webflow site, identified by site ID, returning their IDs and metadata. Use to discover a collection ID before reading, creating, or updating collection items. Read-only and idempotent.', idempotent: true },
 	props: {
 		site_id: webflowProps.site_id,
 	},

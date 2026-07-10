@@ -9,6 +9,8 @@ export const createComment = createAction({
   name: 'createComment',
   displayName: 'Create Comment',
   description: 'Add comments to a key in your Lokalise project',
+  audience: 'both',
+  aiMetadata: { description: 'Post a new comment on a specific translation key in a Lokalise project. Requires the project ID and key ID. Not idempotent: each call appends another comment.', idempotent: false },
   props: {
     projectId: projectDropdown,
     keyId: keyIdProp,

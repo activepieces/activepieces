@@ -30,22 +30,39 @@ export enum WorkerSystemProp {
     CONTAINER_TYPE = 'AP_CONTAINER_TYPE',
     WORKER_TOKEN = 'AP_WORKER_TOKEN',
     PORT = 'AP_PORT',
+    LOG_FILE = 'AP_LOG_FILE',
     LOG_LEVEL = 'AP_LOG_LEVEL',
     LOG_PRETTY = 'AP_LOG_PRETTY',
+    LOG_SAMPLE_RATE_INFO = 'AP_LOG_SAMPLE_RATE_INFO',
+    LOG_KEEP_SLOW_MS = 'AP_LOG_KEEP_SLOW_MS',
     OTEL_ENABLED = 'AP_OTEL_ENABLED',
+    HYPERDX_TOKEN = 'AP_HYPERDX_TOKEN',
+    AXIOM_TOKEN = 'AP_AXIOM_TOKEN',
+    AXIOM_DATASET = 'AP_AXIOM_DATASET',
+    LOKI_URL = 'AP_LOKI_URL',
+    LOKI_USERNAME = 'AP_LOKI_USERNAME',
+    LOKI_PASSWORD = 'AP_LOKI_PASSWORD',
+    BETTERSTACK_TOKEN = 'AP_BETTERSTACK_TOKEN',
+    BETTERSTACK_HOST = 'AP_BETTERSTACK_HOST',
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
     WORKER_GROUP_ID = 'AP_WORKER_GROUP_ID',
+    PROJECT_WORKER = 'AP_PROJECT_WORKER',
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
+    CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     [WorkerSystemProp.PORT]: '3000',
     [WorkerSystemProp.LOG_LEVEL]: 'info',
     [WorkerSystemProp.LOG_PRETTY]: 'false',
+    [WorkerSystemProp.LOG_FILE]: 'false',
     [WorkerSystemProp.OTEL_ENABLED]: 'false',
+    // Transitional default (ADR 0004): N boxes per worker preserves main's historical behavior.
+    // The destination is concurrency 1 + horizontal replicas (ADR 0003).
     [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
+    [WorkerSystemProp.CACHE_BASE_PATH]: 'cache',
 }
 
 export const system = {

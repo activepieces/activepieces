@@ -12,6 +12,8 @@ export const deleteRecord = createAction({
   auth: vtigerAuth,
   displayName: 'Delete Record',
   description: 'Delete a Record',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a Vtiger record by its id within a given module (element type). Choose this to remove a known record. Idempotent in effect: once deleted, repeating the call leaves the record absent.', idempotent: true },
   props: {
     elementType: elementTypeProperty,
     record: recordIdProperty(),

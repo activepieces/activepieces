@@ -10,7 +10,7 @@ A Project is the workspace within a platform where flows, connections, tables, a
 - `packages/server/api/src/app/project/project-repo.ts` — `repoFactory` wrapper with optional `EntityManager` support
 - `packages/server/api/src/app/project/project-hooks.ts` — `hooksFactory` hook point for EE post-create behavior
 - `packages/server/api/src/app/project/project-worker-controller.ts` — internal endpoint used by engine to read project data
-- `packages/shared/src/lib/management/project/project.ts` — `Project`, `ProjectPlan`, `ProjectIcon`, `UpdateProjectRequestInCommunity` schemas
+- `packages/core/shared/src/lib/management/project/project.ts` — `Project`, `ProjectPlan`, `ProjectIcon`, `UpdateProjectRequestInCommunity` schemas
 - `packages/web/src/features/projects/components/projects-selector.tsx` — project-switcher dropdown in the sidebar
 - `packages/web/src/features/projects/components/platform-switcher.tsx` — platform-level switcher component
 - `packages/web/src/features/projects/stores/project-collection.ts` — Zustand store for current project
@@ -19,6 +19,9 @@ A Project is the workspace within a platform where flows, connections, tables, a
 All editions. The CE controller exposes a minimal set: get, list (returns only the personal project), and update display name/metadata. EE adds `ee-projects` module with `platformProjectService` for full admin CRUD, project limits, and per-project piece filters.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **ProjectType** — `PERSONAL` (auto-created on sign-up, one per user per platform) or `TEAM` (EE multi-member workspace)
 - **ProjectIcon** — `{ color: ColorName }` stored as JSONB; color chosen from a 12-color palette
 - **externalId** — optional opaque string for embedding integrations to map projects to their own IDs

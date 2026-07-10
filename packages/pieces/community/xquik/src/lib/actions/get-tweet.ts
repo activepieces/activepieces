@@ -7,6 +7,12 @@ export const getTweet = createAction({
   name: 'get_tweet',
   displayName: 'Get Tweet',
   description: 'Look up a public X/Twitter post by ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single public X/Twitter post by its numeric post ID. Use when you already have a tweet ID and need its full details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     tweetId: Property.ShortText({
       displayName: 'Tweet ID',

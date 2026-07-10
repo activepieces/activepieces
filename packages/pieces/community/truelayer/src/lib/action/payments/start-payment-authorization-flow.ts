@@ -7,6 +7,8 @@ export const startPaymentAuthorizationFlow = createAction({
   name: 'start-payment-authorization-flow',
   displayName: 'Start Payment Authorization Flow',
   description: 'Start the authorization flow for a payment. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Begin the authorization flow for an existing payment, returning the first action the user must take (e.g. provider selection or redirect). Use after create-payment to start driving the user through authorization. This mutates the payment\'s flow state and should be called once per payment, not repeatedly.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Payment ID',

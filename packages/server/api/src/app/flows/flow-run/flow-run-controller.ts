@@ -1,25 +1,5 @@
-import {
-    ActivepiecesError,
-    ApEdition,
-    ApId,
-    BulkActionOnRunsRequestBody,
-    BulkArchiveActionOnRunsRequestBody,
-    BulkCancelFlowRequestBody,
-    CountFlowRunsByStatusRequest,
-    CountFlowRunsByStatusResponse,
-    ErrorCode,
-    FlowRun,
-    isNil,
-    ListFlowRunsRequestQuery,
-    omit,
-    Permission,
-    PlatformRole,
-    PrincipalType,
-    RetryFlowRequestBody,
-    RunEnvironment,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-} from '@activepieces/shared'
+import { ActivepiecesError, ApId, ErrorCode, isNil, omit, Permission, SeekPage } from '@activepieces/core-utils'
+import { ApEdition, BulkActionOnRunsRequestBody, BulkArchiveActionOnRunsRequestBody, BulkCancelFlowRequestBody, CountFlowRunsByStatusRequest, CountFlowRunsByStatusResponse, FlowRun, ListFlowRunsRequestQuery, PlatformRole, PrincipalType, RetryFlowRequestBody, RunEnvironment, RunInternalErrorSource, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -69,7 +49,8 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
                 projectId: request.projectId,
                 id: request.params.id,
             })
-            const canViewInternalError = system.getEdition() !== ApEdition.CLOUD && await isRequesterPlatformAdmin(request)
+            const internalErrorEnabled = flowRun.internalError?.source === RunInternalErrorSource.ENGINE || system.getEdition() !== ApEdition.CLOUD
+            const canViewInternalError = internalErrorEnabled && await isRequesterPlatformAdmin(request)
             await reply.send(canViewInternalError ? flowRun : omit(flowRun, ['internalError']))
         },
     )

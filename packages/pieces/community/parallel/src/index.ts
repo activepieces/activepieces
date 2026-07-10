@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { parallelAuth } from './lib/auth';
 import { chatCompletionAction } from './lib/actions/chat-completion';
 import { createFindAllRunAction } from './lib/actions/create-findall-run';

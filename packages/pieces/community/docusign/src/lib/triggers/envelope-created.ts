@@ -5,6 +5,10 @@ export const envelopeCreated = createEnvelopeEventTrigger({
   displayName: 'Signing Request Created',
   description:
     'Triggers when a new signing request (envelope) is created in DocuSign — whether sent immediately or saved as a draft.',
+  aiMetadata: {
+    description:
+      'Fires when a new DocuSign envelope (signing request) is created on the account, whether it was sent immediately or saved as a draft. Represents the earliest point in an envelope lifecycle, before any recipient action.',
+  },
   docusignEvent: 'envelope-created',
   sampleData: {
     event: 'envelope-created',

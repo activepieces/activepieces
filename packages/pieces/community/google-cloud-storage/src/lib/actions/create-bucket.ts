@@ -9,6 +9,8 @@ export const createBucket = createAction({
   name: 'create_bucket',
   displayName: 'Create Bucket',
   description: 'Create a new bucket in a specified location/configuration. Perfect for automating storage provisioning for new projects.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Cloud Storage bucket in the given project, with optional location, storage class, versioning, uniform bucket-level access, and labels. Use to provision storage before uploading objects. Not idempotent: bucket names are globally unique, so re-running with the same name fails. Requires a project ID and a globally-unique bucket name.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     name: bucketNameProperty,

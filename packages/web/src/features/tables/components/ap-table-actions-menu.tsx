@@ -1,4 +1,5 @@
-import { Permission, Table } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import { Table } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Download,

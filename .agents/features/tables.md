@@ -17,12 +17,12 @@ A built-in relational database feature that lets users store structured data dir
 - `packages/server/api/src/app/tables/record/cell.entity.ts` — Cell entity
 - `packages/server/api/src/app/tables/record/record-side-effects.ts` — fires TableWebhook flows on record events
 - `packages/server/api/src/app/tables/tables.module.ts` — module registration
-- `packages/shared/src/lib/automation/tables/table.ts` — Table schema
-- `packages/shared/src/lib/automation/tables/field.ts` — Field schema and FieldType enum
-- `packages/shared/src/lib/automation/tables/record.ts` — Record schema
-- `packages/shared/src/lib/automation/tables/cell.ts` — Cell schema
-- `packages/shared/src/lib/automation/tables/table-webhook.ts` — TableWebhook schema
-- `packages/shared/src/lib/automation/tables/dto/` — request/response DTOs
+- `packages/core/shared/src/lib/automation/tables/table.ts` — Table schema
+- `packages/core/shared/src/lib/automation/tables/field.ts` — Field schema and FieldType enum
+- `packages/core/shared/src/lib/automation/tables/record.ts` — Record schema
+- `packages/core/shared/src/lib/automation/tables/cell.ts` — Cell schema
+- `packages/core/shared/src/lib/automation/tables/table-webhook.ts` — TableWebhook schema
+- `packages/core/shared/src/lib/automation/tables/dto/` — request/response DTOs
 - `packages/web/src/app/routes/tables/id/index.tsx` — the table editor page (react-data-grid based)
 - `packages/web/src/features/tables/components/ap-table-header.tsx` — header bar with table name, actions
 - `packages/web/src/features/tables/components/ap-table-state-provider.tsx` — state context for the table
@@ -45,6 +45,9 @@ A built-in relational database feature that lets users store structured data dir
 - Cloud: available
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Table** — a named collection of typed columns (fields) and rows (records), scoped to a project
 - **Field** — a typed column definition; types: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`
 - **Record** — a single row in a table; stored as a row entity with associated cells
@@ -78,7 +81,7 @@ A built-in relational database feature that lets users store structured data dir
 - `table.exportTable()` — returns fields + rows as JSON
 - `table.createWebhook()` / `table.deleteWebhook()` — link table events to flows
 - `record.create()` — bulk insert (max 50 per batch, transactional), validates field count
-- `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS)
+- `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS); filtering is in-memory and a missing cell is treated as an empty value (`''`), so NEQ/NOT_EXISTS match unset columns
 - `record.update()` — update cells (empty fields unchanged)
 - `record.delete()` / `record.deleteAll()` — bulk delete
 

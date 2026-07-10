@@ -14,6 +14,8 @@ export const locationChargingZoneDeleteAction = createAction({
   name: 'locationChargingZoneDelete',
   displayName: 'Resources - Locations - Delete Charging Zone',
   description: 'Location / Charging Zone / Delete.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes one charging zone from a given AMPECO location; requires both the location ID and the charging zone ID. Use to remove a single zone. Idempotent in effect: the end state is the zone being gone, though repeating may report it as already removed.', idempotent: true },
   props: {
         
   location: Property.Number({

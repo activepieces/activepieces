@@ -7,6 +7,8 @@ export const getConstraints = createAction({
   name: 'get-constraints',
   displayName: 'Get Mandate Constraints',
   description: 'Retrieve the constraints defined on the mandate, as well as the current utilization of those constraints within the periods.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up the spending constraints set on a mandate and how much has already been used within each period. Use to check remaining headroom or limits before initiating a payment under the mandate. Read-only and safe to repeat.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',

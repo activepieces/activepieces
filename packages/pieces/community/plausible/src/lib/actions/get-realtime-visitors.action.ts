@@ -8,6 +8,8 @@ export const getRealtimeVisitors = createAction({
   auth: plausibleAuth,
   displayName: 'Get Realtime Visitors',
   description: 'Get the number of current visitors on your site',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the count of visitors active on a Plausible-tracked site in real time. Use to check current live traffic on a specific site (chosen by domain). Read-only; safe to call repeatedly.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
   },

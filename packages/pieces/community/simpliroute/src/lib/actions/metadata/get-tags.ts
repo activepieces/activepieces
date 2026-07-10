@@ -8,6 +8,8 @@ export const get_tags = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Tags',
     description: 'Retrieve the list of tags available in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'List all route tags defined in the account, returning their ids and names. Use to resolve a valid tag reference before applying tags to routes or visits. Read-only and idempotent; takes no inputs.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/routes/tags/`;

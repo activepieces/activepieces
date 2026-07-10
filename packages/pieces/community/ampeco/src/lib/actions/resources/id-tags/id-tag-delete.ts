@@ -14,6 +14,8 @@ export const idTagDeleteAction = createAction({
   name: 'idTagDelete',
   displayName: 'Resources - Id Tags - Delete',
   description: 'Delete a Id Tag.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an id tag by its numeric ID. Idempotent: deleting an already-removed id tag leaves it absent.', idempotent: true },
   props: {
         
   idTag: Property.Number({

@@ -1,7 +1,8 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { ExecutionType, MarkdownVariant } from '@activepieces/shared';
+import { ExecutionType, MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const waitForApprovalLink = createAction({
+  audience: 'human',
   auth: PieceAuth.None(),
   name: 'wait_for_approval',
   displayName: 'Wait for Approval',

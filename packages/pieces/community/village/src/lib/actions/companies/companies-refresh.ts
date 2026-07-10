@@ -8,6 +8,12 @@ export const companiesRefresh = createAction({
   displayName: 'Refresh Companies',
   description:
     'Refresh/import company data from LinkedIn URLs or domains. Realtime mode returns enriched data synchronously (or times out after 25s); async mode returns job IDs for later status checking. At least one of linkedin_urls or domains must be provided.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Trigger a re-fetch or first-time import of companies from LinkedIn URLs and/or domains; it kicks off backend processing, so treat it as a non-idempotent write. Set realtime=true to wait up to ~25s for inline data, or false to get job IDs; pass those job_ids back on a later call to poll async results. To read an already-imported company without re-fetching, use Enrich Company.',
+    idempotent: false,
+  },
   props: {
     job_ids: Property.Array({
       displayName: 'Job IDs',

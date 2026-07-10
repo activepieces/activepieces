@@ -8,6 +8,8 @@ export const createTransactionAction = createAction({
   name: 'create_transaction',
   displayName: 'Create Transaction',
   description: 'Create a new transaction.',
+  audience: 'both',
+  aiMetadata: { description: 'Record a payment transaction (capture, refund, void, etc.) against an existing Shopify order; the transaction type/kind and order ID are required, with optional amount, currency, and parent transaction. Use to capture or refund payment on an order. Each call creates a new financial transaction, so it is not idempotent.', idempotent: false },
   props: {
     orderId: Property.Number({
       displayName: 'Order',

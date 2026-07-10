@@ -1,18 +1,15 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Package, Trash, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
+import { Package, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { RequestTrial } from '@/app/components/request-trial';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LockedAlert } from '@/components/custom/locked-alert';
-import { Button } from '@/components/ui/button';
-import { piecesApi, PieceIcon, piecesHooks } from '@/features/pieces';
+import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
@@ -74,34 +71,6 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
     ),
     cell: ({ row }) => {
       return <div className="text-left">{row.original.version}</div>;
-    },
-  },
-  {
-    accessorKey: 'actions',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
-    cell: ({ row }) => {
-      if (row.original.pieceType !== PieceType.CUSTOM) {
-        return null;
-      }
-      return (
-        <ConfirmationDeleteDialog
-          title={t('Delete {name}', { name: row.original.name })}
-          entityName={t('Piece')}
-          message={t(
-            'This will permanently delete this piece, all steps using it will fail.',
-          )}
-          mutationFn={async () => {
-            row.original.delete();
-            await piecesApi.delete(row.original.id!);
-          }}
-        >
-          <div className="flex items-end justify-end">
-            <Button variant="ghost" className="size-8 p-0">
-              <Trash className="size-4 text-destructive" />
-            </Button>
-          </div>
-        </ConfirmationDeleteDialog>
-      );
     },
   },
 ];

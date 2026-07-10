@@ -8,6 +8,8 @@ export const createBudgetExpense = createAction({
   name: 'create_budget_expense',
   displayName: 'Create Budget Expense',
   description: 'Adds an expense to a budget. The expense amount is added to the budget\'s spent amount.',
+  audience: 'both',
+  aiMetadata: { description: 'Records an expense against a specific budget, increasing that budget\'s spent total by the amount given. Requires budget ID, description, amount, category, and date. Not idempotent: each call adds another expense and further increases the spent amount, so avoid duplicate retries.', idempotent: false },
   props: {
     budgetId: ninjapipeCommon.budgetDropdownRequired,
     description: Property.ShortText({

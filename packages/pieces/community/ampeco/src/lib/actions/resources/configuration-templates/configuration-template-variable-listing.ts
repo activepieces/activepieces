@@ -15,6 +15,8 @@ export const configurationTemplateVariableListingAction = createAction({
   name: 'configurationTemplateVariableListing',
   displayName: 'Resources - Configuration Templates - Configuration Template Variable Listing',
   description: 'Get all Configuration Template Variables.',
+  audience: 'both',
+  aiMetadata: { description: 'List all configuration variables belonging to one OCPP configuration template, identified by template id. Read-only and idempotent; use this to inspect a template contents or to find a variable id before updating or deleting it. Enable pagination to fetch all results.', idempotent: true },
   props: {
         
   template: Property.Number({
