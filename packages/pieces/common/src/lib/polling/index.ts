@@ -81,9 +81,9 @@ export const pollingHelper = {
           lastEpochMilliSeconds
         );
         await store.put('lastPoll', newLastEpochMilliSeconds);
-        const newItems = items.filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds);
-        console.log(`[pollingHelper.poll] TIMEBASED lastPoll=${lastEpochMilliSeconds} (${logTime(lastEpochMilliSeconds)}) -> newLastPoll=${newLastEpochMilliSeconds} (${logTime(newLastEpochMilliSeconds)}) fetched=${items.length} new=${newItems.length}`);
-        return newItems.map((item) => item.data);
+        return items
+          .filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds)
+          .map((item) => item.data);
       }
       case DedupeStrategy.LAST_ITEM: {
         const lastItemId = await store.get<unknown>('lastItem');
@@ -128,14 +128,10 @@ export const pollingHelper = {
   ): Promise<void> {
     switch (polling.strategy) {
       case DedupeStrategy.TIMEBASED: {
-        const existingLastPoll = await store.get<number>('lastPoll');
-        if (isRepublish && !isNil(existingLastPoll)) {
-          console.log(`[pollingHelper.onEnable] TIMEBASED isRepublish=true, preserving lastPoll=${existingLastPoll} (${logTime(existingLastPoll)})`);
+        if (isRepublish && !isNil(await store.get<number>('lastPoll'))) {
           break;
         }
-        const now = Date.now();
-        await store.put('lastPoll', now);
-        console.log(`[pollingHelper.onEnable] TIMEBASED isRepublish=${isRepublish ?? false}, existingLastPoll=${existingLastPoll ?? 'none'}, reset lastPoll=${now} (${logTime(now)})`);
+        await store.put('lastPoll', Date.now());
         break;
       }
       case DedupeStrategy.LAST_ITEM: {
@@ -206,10 +202,6 @@ export const pollingHelper = {
     return getFirstFiveOrAll(items.map((item) => item.data));
   },
 };
-
-function logTime(epochMs: number) {
-  return new Date(epochMs).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
-}
 
 function getFirstFiveOrAll(array: unknown[]) {
   if (array.length <= 5) {

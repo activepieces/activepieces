@@ -331,7 +331,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            isRepublish = operation.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)
+            if (operation.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
+                const [publishedVersion, versionToPublish] = await Promise.all([
+                    flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: flow.publishedVersionId }),
+                    flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined }),
+                ])
+                isRepublish = isSameTrigger(publishedVersion.trigger, versionToPublish.trigger)
+            }
         }
 
         switch (operation.type) {
@@ -660,6 +666,11 @@ const lockFlowVersionIfNotLocked = async ({
     })
 }
 
+
+function isSameTrigger(a: FlowVersion['trigger'], b: FlowVersion['trigger']): boolean {
+    return a.settings.pieceName === b.settings.pieceName
+        && a.settings.triggerName === b.settings.triggerName
+}
 
 async function applyStatusChange(params: {
     id: FlowId
