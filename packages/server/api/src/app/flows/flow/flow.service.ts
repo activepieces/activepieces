@@ -668,7 +668,9 @@ const lockFlowVersionIfNotLocked = async ({
 
 
 function isSameTrigger(a: FlowVersion['trigger'], b: FlowVersion['trigger']): boolean {
-    return a.settings.pieceName === b.settings.pieceName
+    return a.type === FlowTriggerType.PIECE
+        && b.type === FlowTriggerType.PIECE
+        && a.settings.pieceName === b.settings.pieceName
         && a.settings.triggerName === b.settings.triggerName
 }
 
