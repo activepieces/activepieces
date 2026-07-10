@@ -271,19 +271,11 @@ export const newTask = createTrigger({
   },
 
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      propsValue: context.propsValue,
-      auth: context.auth
-    });
+    await pollingHelper.onEnable(polling, context);
   },
 
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      propsValue: context.propsValue,
-      auth: context.auth
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   run: async (context) => {

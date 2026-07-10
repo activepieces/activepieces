@@ -161,18 +161,10 @@ export const newProfileTrigger = createTrigger({
     });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
     return await pollingHelper.poll(polling, {

@@ -94,19 +94,11 @@ export const newRowTrigger = createTrigger({
   sampleData: {},
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      propsValue: context.propsValue,
-      auth: context.auth,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      propsValue: context.propsValue,
-      auth: context.auth,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

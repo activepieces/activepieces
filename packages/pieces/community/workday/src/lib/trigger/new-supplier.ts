@@ -32,7 +32,7 @@ export const newSupplier = createTrigger({
 	sampleData: { id: 'sup-001', descriptor: 'Acme Corp', createdDate: '2026-04-01T10:00:00Z' },
 	type: TriggerStrategy.POLLING,
 	async test(ctx) { return await pollingHelper.test(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue, files: ctx.files }); },
-	async onEnable(ctx) { await pollingHelper.onEnable(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue }); },
-	async onDisable(ctx) { await pollingHelper.onDisable(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue }); },
+	async onEnable(ctx) { await pollingHelper.onEnable(polling, ctx); },
+	async onDisable(ctx) { await pollingHelper.onDisable(polling, ctx); },
 	async run(ctx) { return await pollingHelper.poll(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue, files: ctx.files }); },
 });

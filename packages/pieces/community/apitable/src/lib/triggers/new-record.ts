@@ -71,18 +71,10 @@ export const newRecordTrigger = createTrigger({
     });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
     return await pollingHelper.poll(polling, {

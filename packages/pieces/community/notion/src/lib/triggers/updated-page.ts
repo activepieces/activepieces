@@ -87,18 +87,10 @@ export const updatedPage = createTrigger({
     });
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onEnable(polling, ctx);
   },
   async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onDisable(polling, ctx);
   },
   async run(ctx) {
     return await pollingHelper.poll(polling, {
