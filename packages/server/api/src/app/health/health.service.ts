@@ -1,10 +1,10 @@
-import os from 'os'
 import { apVersionUtil, systemUsage, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, apId, DiagnosticsApp, ErrorCode, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, tryCatch, unique } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, ErrorCode, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, tryCatch, unique } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
 import { redisConnections } from '../database/redis-connections'
 import { s3Helper } from '../file/s3-helper'
+import { appMachineCache } from '../helper/app-machine-cache'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { machineService } from '../workers/machine/machine-service'
@@ -71,18 +71,21 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
                 params: { message: 'Infra diagnostics are not available on the cloud edition' },
             })
         }
-        const [database, redis, storage, machines, app] = await Promise.all([
+        const [database, redis, storage, machines, apps] = await Promise.all([
             measureDatabase(log),
             measureRedis(log),
             measureStorage(log),
             machineService(log).list(platformId),
-            collectAppInstance(),
+            appMachineCache.list(),
         ])
         return {
             database,
             redis,
             storage,
-            app,
+            apps: {
+                count: apps.length,
+                instances: apps,
+            },
             workers: {
                 count: machines.length,
                 machines: machines.map(worker => ({
@@ -104,25 +107,6 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         }
     },
 })
-
-// The app instance serving this request — one of N replicas behind the load balancer (apps do not
-// self-register the way workers do), so it is a spot check of the app tier, not the whole tier.
-async function collectAppInstance(): Promise<DiagnosticsApp> {
-    const [cores, memory, disk] = await Promise.all([
-        systemUsage.getCpuCores(),
-        systemUsage.getContainerMemoryUsage(),
-        systemUsage.getDiskInfo(),
-    ])
-    return {
-        hostname: os.hostname(),
-        version: apVersionUtil.getCurrentRelease(),
-        cpuCores: cores,
-        cpuUsagePercentage: systemUsage.getCpuUsage(),
-        ramTotalBytes: memory.totalRamInBytes,
-        ramUsagePercentage: memory.ramUsage,
-        diskPercentage: disk.percentage,
-    }
-}
 
 async function measureDatabase(log: FastifyBaseLogger): Promise<InfraCheck> {
     const startedAt = Date.now()

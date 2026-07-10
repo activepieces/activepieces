@@ -93,7 +93,7 @@ This is the time the **worker** is occupied per job — and at concurrency 1 it 
 - **App**: 1 vCPU / 1 GB
 - **Object store**: same-region GCS bucket (`europe-west1`) over the S3-interop endpoint, path-style SigV4 presigned URLs (`AP_S3_USE_SIGNED_URLS=true`)
 - **Piece bundles**: official tarballs served from the Activepieces CDN (`AP_USE_CDN_FOR_BUNDLES=true`)
-- **Postgres + Redis**: in-cluster singletons, deliberately over-provisioned so they stay off the critical path — Postgres at 3 vCPU / 3 GB with `max_connections=2000` (the default 100 would starve the app pools past ~10 apps), durability off, and its data dir on tmpfs; Redis at 2 vCPU / 2 GB with `io-threads`. Under load both stay near-idle (Postgres <0.6 core, Redis <0.2), confirming the worker tier, not the singletons, is the ceiling.
+- **Postgres + Redis**: in-cluster singletons, deliberately over-provisioned so they stay off the critical path — Postgres at 3 vCPU / 3 GB with `max_connections=2000` (the default 100 would starve the app pools past ~10 apps), durability off, and its data dir on tmpfs; Redis at 2 vCPU / 2 GB with `io-threads`. Under load both stay near-idle (Postgres `<0.6` core, Redis `<0.2`), confirming the worker tier, not the singletons, is the ceiling.
 - **Load**: `hey`, concurrency matched to worker count (40/80/120/160) so requests don't queue behind the concurrency-1 workers — latency reflects real service time, not backlog
 
 ## How to reproduce
@@ -153,7 +153,6 @@ Infra round-trip (server-measured, in-region — authoritative, not reachable fr
   redis    : 17 ms
   storage  : 237 ms   (S3/GCS write+read round-trip; same cost is inside every RUN as the end-of-run log backup)
   config   : execution=SANDBOX_CODE_ONLY storage=S3 signedUrls=true sandboxMemKB=1048576 s3=https://storage.googleapis.com/europe-west1
-  app      : app-7984d59d8c v0.86.2 | 1.5 core | cpu 73.2% | ram 2.0GB 34.1% | disk 12%  (this instance — one of N behind the load balancer)
   workers  : 4 connected
     - ONLINE worker-z | 0.5 core | cpu 100.0% | ram 13.8%
     - ONLINE worker-N | 0.5 core | cpu  63.9% | ram 15.2%
@@ -192,7 +191,7 @@ Each block answers a specific question:
 | Section | What it measures | Where it's measured |
 |---|---|---|
 | **Version & health** | App release, whether every connected worker matches it (a version-skewed worker is silently withheld jobs), and app/worker/DB CPU-RAM-disk health | `GET /v1/health/system` |
-| **Infra round-trip** | Authoritative **in-region** DB / Redis / **S3** write+read latency, the effective execution/storage config, the **app instance** that served the request (CPU/RAM/disk — one of N replicas, since apps don't self-register), and the worker fleet with live per-worker CPU. The S3 round-trip is the same cost folded into every run's end-of-run log backup — a slow object store shows up here **and** in RUN. Self-hosted only. | `GET /v1/health/diagnostics` |
+| **Infra round-trip** | Authoritative **in-region** DB / Redis / **S3** write+read latency, the effective execution/storage config, the **app tier** (every app replica's CPU / RAM / disk / event-loop — apps self-register into a diagnostics cache on their metrics tick), and the worker fleet with live per-worker CPU. The S3 round-trip is the same cost folded into every run's end-of-run log backup — a slow object store shows up here **and** in RUN. Self-hosted only. | `GET /v1/health/diagnostics` |
 | **Config flags** | The limits and throttles that silently cap throughput — a `PROJECT_RATE_LIMITER_ENABLED` or a low `DEFAULT_CONCURRENT_JOBS_LIMIT` re-queues jobs (latency, not errors); the memory/timeout/log ceilings that turn into `MEMORY_LIMIT_EXCEEDED` / `TIMEOUT` / `LOG_SIZE_EXCEEDED` statuses | `GET /v1/flags` |
 | **Setup** | Execution slots (Σ `AP_WORKER_CONCURRENCY`) and a PASS/WARN check of every worker's specs, sandbox mode, reuse, and concurrency against the recommended shape | `GET /v1/worker-machines` |
 | **Network** | CLI→server round-trip, so cross-region distance is quantified and subtracted rather than blamed on the server | timed `GET /v1/flags` |

@@ -47,9 +47,10 @@ export const DiagnosticsWorker = z.object({
     status: z.string(),
 })
 
-// The app instance that served the request. Apps are stateless behind the load balancer and do not
-// self-register (unlike workers), so this is one of N app replicas, not the whole app tier.
-export const DiagnosticsApp = z.object({
+// One live app replica, self-registered into the appMachines cache on its metrics tick. Unlike a
+// worker (which registers over its healthcheck socket), an app has no inbound connection, so it
+// writes its own row; `updated` drives offline detection since an app dies without a disconnect.
+export const AppInstance = z.object({
     hostname: z.string(),
     version: z.string(),
     cpuCores: z.number(),
@@ -57,6 +58,8 @@ export const DiagnosticsApp = z.object({
     ramTotalBytes: z.number(),
     ramUsagePercentage: z.number(),
     diskPercentage: z.number(),
+    eventLoopDelayMs: z.number(),
+    updated: z.string(),
 })
 
 export const GetDiagnosticsResponse = z.object({
@@ -64,7 +67,10 @@ export const GetDiagnosticsResponse = z.object({
     redis: InfraCheck,
     storage: InfraCheck,
     config: DeploymentConfig,
-    app: DiagnosticsApp,
+    apps: z.object({
+        count: z.number(),
+        instances: z.array(AppInstance),
+    }),
     workers: z.object({
         count: z.number(),
         machines: z.array(DiagnosticsWorker),
@@ -76,5 +82,5 @@ export type GetSystemHealthChecksResponse = z.infer<typeof GetSystemHealthChecks
 export type InfraCheck = z.infer<typeof InfraCheck>
 export type DeploymentConfig = z.infer<typeof DeploymentConfig>
 export type DiagnosticsWorker = z.infer<typeof DiagnosticsWorker>
-export type DiagnosticsApp = z.infer<typeof DiagnosticsApp>
+export type AppInstance = z.infer<typeof AppInstance>
 export type GetDiagnosticsResponse = z.infer<typeof GetDiagnosticsResponse>
