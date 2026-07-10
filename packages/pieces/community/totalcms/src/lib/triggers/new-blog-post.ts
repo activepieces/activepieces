@@ -46,10 +46,19 @@ export const newBlogPost = createTrigger({
   },
   sampleData: {},
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, context);
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth as TotalCMSAuthType,
+      store: context.store,
+      propsValue: context.propsValue,
+      isRepublish: context.isRepublish,
+    });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, context);
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth as TotalCMSAuthType,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
   run: async (context) => {
     return await pollingHelper.poll(polling, {

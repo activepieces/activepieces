@@ -152,10 +152,19 @@ export const googleContactNewOrUpdatedContact = createTrigger({
 
   type: TriggerStrategy.POLLING,
   async onEnable(ctx) {
-    return await pollingHelper.onEnable(polling, ctx);
+    return await pollingHelper.onEnable(polling, {
+      store: ctx.store,
+      auth: ctx.auth,
+      propsValue: {},
+      isRepublish: ctx.isRepublish,
+    });
   },
   async onDisable(ctx) {
-    return await pollingHelper.onEnable(polling, ctx);
+    return await pollingHelper.onDisable(polling, {
+      store: ctx.store,
+      auth: ctx.auth,
+      propsValue: {},
+    });
   },
   async run(ctx) {
     return await pollingHelper.poll(polling, {

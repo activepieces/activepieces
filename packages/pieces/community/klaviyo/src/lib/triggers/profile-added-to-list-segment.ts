@@ -254,10 +254,19 @@ export const profileAddedToListOrSegmentTrigger = createTrigger({
     });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await pollingHelper.onEnable(polling, {
+      store: context.store,
+      auth: context.auth as KlaviyoAuthValue,
+      propsValue: context.propsValue as StaticPropsValue<typeof props>,
+      isRepublish: context.isRepublish,
+    });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+    await pollingHelper.onDisable(polling, {
+      store: context.store,
+      auth: context.auth as KlaviyoAuthValue,
+      propsValue: context.propsValue as StaticPropsValue<typeof props>,
+    });
   },
   async run(context) {
     return await pollingHelper.poll(polling, {

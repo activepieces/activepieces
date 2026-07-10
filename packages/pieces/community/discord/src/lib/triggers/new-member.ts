@@ -74,10 +74,25 @@ export const newMember = createTrigger({
   },
   sampleData: {},
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, context);
+     await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: {
+        guildId: context.propsValue.guildId,
+        limit: context.propsValue.limit ?? 50,
+      },
+      isRepublish:context.isRepublish
+    })
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, context);
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: {
+        guildId: context.propsValue.guildId,
+        limit: context.propsValue.limit ?? 50,
+      },
+    });
   },
   run: async (context) => {
     return await pollingHelper.poll(polling, {
