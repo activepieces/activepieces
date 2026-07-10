@@ -59,7 +59,8 @@ Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` en
 
 ## Credit System
 
-- Rate: 1000 credits = $1 USD
+- Rate: 1000 credits = $1 USD (`AI_CREDITS_PER_DOLLAR` in `@activepieces/shared`)
+- Per-project attribution of credit usage is a sibling feature — see [ai-credit-usage.md](./ai-credit-usage.md)
 - OpenRouter meters usage per API key
 - Usage cached 180 seconds
 - Monthly reset of included credits via system job

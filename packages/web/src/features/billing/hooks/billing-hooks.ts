@@ -16,6 +16,8 @@ import { platformBillingApi } from '../api/billing-plans-api';
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
     ['platform-billing-subscription', platformId] as const,
+  aiCreditUsageByProject: (platformId: string) =>
+    ['ai-credit-usage-by-project', platformId] as const,
 };
 
 export const billingMutations = {
@@ -110,6 +112,12 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
+    });
+  },
+  useAiCreditUsageByProject: (platformId: string) => {
+    return useQuery({
+      queryKey: billingKeys.aiCreditUsageByProject(platformId),
+      queryFn: platformBillingApi.listAiCreditUsageByProject,
     });
   },
 };

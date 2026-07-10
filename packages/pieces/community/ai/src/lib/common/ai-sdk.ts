@@ -5,10 +5,12 @@ import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
-import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
+import { EmbeddingModel, ImageModel, LanguageModel, LanguageModelMiddleware, wrapLanguageModel } from 'ai'
+import { LanguageModelV3StreamPart, SharedV3ProviderMetadata } from '@ai-sdk/provider'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
+import { tryCatch } from '@activepieces/core-utils'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
@@ -206,11 +208,77 @@ export async function createAIModel({
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             const openRouterProvider = createOpenRouter({ apiKey })
+            if (provider === AIProviderName.ACTIVEPIECES) {
+                return wrapLanguageModel({
+                    model: openRouterProvider.chat(modelId, { usage: { include: true } }),
+                    middleware: createCreditUsageReportingMiddleware({ engineToken, apiUrl, provider, modelId }),
+                })
+            }
             return openRouterProvider.chat(modelId) as LanguageModel
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)
     }
+}
+
+function createCreditUsageReportingMiddleware({ engineToken, apiUrl, provider, modelId }: CreditUsageMiddlewareParams): LanguageModelMiddleware {
+    const report = async (providerMetadata: SharedV3ProviderMetadata | undefined): Promise<void> => {
+        const cost = extractOpenRouterCost(providerMetadata)
+        if (cost === undefined || cost <= 0) {
+            return
+        }
+        await tryCatch(() => httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: `${apiUrl}v1/ai-credit-usage`,
+            headers: {
+                Authorization: `Bearer ${engineToken}`,
+            },
+            body: { provider, model: modelId, cost },
+            timeout: 5000,
+        }))
+    }
+    return {
+        specificationVersion: 'v3',
+        wrapGenerate: async ({ doGenerate }) => {
+            const result = await doGenerate()
+            await report(result.providerMetadata)
+            return result
+        },
+        wrapStream: async ({ doStream }) => {
+            const { stream, ...rest } = await doStream()
+            let finishMetadata: SharedV3ProviderMetadata | undefined
+            const reportingStream = stream.pipeThrough(
+                new TransformStream<LanguageModelV3StreamPart, LanguageModelV3StreamPart>({
+                    transform(part, controller) {
+                        if (part.type === 'finish') {
+                            finishMetadata = part.providerMetadata
+                        }
+                        controller.enqueue(part)
+                    },
+                    async flush() {
+                        await report(finishMetadata)
+                    },
+                }),
+            )
+            return { stream: reportingStream, ...rest }
+        },
+    }
+}
+
+function extractOpenRouterCost(providerMetadata: SharedV3ProviderMetadata | undefined): number | undefined {
+    const usage = providerMetadata?.['openrouter']?.['usage']
+    if (typeof usage !== 'object' || usage === null || Array.isArray(usage)) {
+        return undefined
+    }
+    const cost = usage['cost']
+    return typeof cost === 'number' ? cost : undefined
+}
+
+type CreditUsageMiddlewareParams = {
+    engineToken: string
+    apiUrl: string
+    provider: AIProviderName
+    modelId: string
 }
 
 

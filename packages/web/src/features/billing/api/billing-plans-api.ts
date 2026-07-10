@@ -2,6 +2,7 @@ import {
   UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
   CreateAICreditCheckoutSessionParamsSchema,
+  ProjectAiCreditUsage,
   UpdateAICreditsAutoTopUpParamsSchema,
   PlatformBillingInformation,
 } from '@activepieces/shared';
@@ -40,5 +41,8 @@ export const platformBillingApi = {
       '/v1/platform-billing/ai-credits/auto-topup',
       params,
     );
+  },
+  listAiCreditUsageByProject() {
+    return api.get<ProjectAiCreditUsage[]>('/v1/ai-credit-usage');
   },
 };

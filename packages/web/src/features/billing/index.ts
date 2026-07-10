@@ -1,6 +1,7 @@
 export { ActiveFlowAddon } from './components/active-flows-addon';
 export { PurchaseExtraFlowsDialog } from './components/active-flows-addon/purchase-active-flows-dialog';
 export { AICreditUsage } from './components/ai-credits/ai-credit-usage';
+export { AiCreditUsageByProject } from './components/ai-credits/ai-credit-usage-by-project';
 export { Error } from './components/error';
 export { FeatureStatus } from './components/features-status';
 export { LicenseKey } from './components/license-key';
