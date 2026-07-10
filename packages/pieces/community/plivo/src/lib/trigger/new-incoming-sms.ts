@@ -54,17 +54,19 @@ export const plivoNewIncomingSms = createTrigger({
     const headers = context.payload.headers;
     const signatureHeader = headers['x-plivo-signature-v3'];
     const nonce = headers['x-plivo-signature-v3-nonce'];
-    if (signatureHeader && nonce) {
-      const valid = isValidPlivoSignature({
-        url: context.webhookUrl,
-        body: params,
-        signatureHeader,
-        nonce,
-        authToken: context.auth.password,
-      });
-      if (!valid) {
-        return [];
-      }
+    if (!signatureHeader || !nonce) {
+      return [];
+    }
+
+    const valid = isValidPlivoSignature({
+      url: context.webhookUrl,
+      body: params,
+      signatureHeader,
+      nonce,
+      authToken: context.auth.password,
+    });
+    if (!valid) {
+      return [];
     }
 
     if (typeof params['Text'] !== 'string') {
