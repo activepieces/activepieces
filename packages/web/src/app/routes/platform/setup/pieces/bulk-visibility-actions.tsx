@@ -2,6 +2,7 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -24,6 +25,7 @@ const BulkVisibilityActions = ({
 
   const {
     mutate: setVisibility,
+    mutateAsync: setVisibilityAsync,
     isPending,
     variables,
   } = platformPiecesMutations.useBulkSetPiecesVisibility({
@@ -63,26 +65,33 @@ const BulkVisibilityActions = ({
         <Eye className="mr-1 size-4" />
         {t('Show')}
       </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        loading={isPending && variables?.hidden === true}
-        disabled={!isEnabled || allHidden}
-        onClick={() => {
-          setVisibility(
-            { pieceNames: selectedNames, hidden: true },
-            {
-              onSuccess: () => {
-                onComplete();
-                resetSelection();
-              },
-            },
-          );
+      <ConfirmationDeleteDialog
+        title={t('Hide Pieces')}
+        message={t('These pieces will be hidden from all projects.')}
+        warning={
+          <div>
+            {t('Any active flows using these pieces')}{' '}
+            <strong>{t('may be disabled unexpectedly')}</strong>.
+          </div>
+        }
+        entityName={t('Pieces')}
+        buttonText={t('Hide')}
+        mutationFn={async () => {
+          await setVisibilityAsync({ pieceNames: selectedNames, hidden: true });
+          onComplete();
+          resetSelection();
         }}
       >
-        <EyeOff className="mr-1 size-4" />
-        {t('Hide')}
-      </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          loading={isPending && variables?.hidden === true}
+          disabled={!isEnabled || allHidden}
+        >
+          <EyeOff className="mr-1 size-4" />
+          {t('Hide')}
+        </Button>
+      </ConfirmationDeleteDialog>
     </>
   );
 };

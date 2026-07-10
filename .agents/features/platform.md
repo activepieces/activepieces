@@ -13,6 +13,9 @@ A Platform is the top-level tenant namespace in Activepieces. Every installation
 - `packages/core/shared/src/lib/management/platform/platform.request.ts` — `UpdatePlatformRequestBody`
 - `packages/web/src/hooks/platform-hooks.ts` — `useCurrentPlatform()` React Query hook
 - `packages/web/src/features/platform-admin/hooks/branding-hooks.ts` — branding mutation hooks
+- `packages/web/src/features/platform-admin/hooks/platform-pieces-hooks.ts` — `platformPiecesMutations`: `useTogglePieceVisibility`, `useTogglePiecePin`, `useBulkSetPiecesVisibility`, `useUpdatePieceSelectorConfig`, `useSyncPieces`
+- `packages/web/src/app/routes/platform/setup/pieces/piece-actions.tsx` — per-piece eye (visibility) / pin icon buttons
+- `packages/web/src/app/routes/platform/setup/pieces/bulk-visibility-actions.tsx` — bulk Show/Hide actions for a multi-selected set of pieces
 
 ## Edition Availability
 All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, `ssoEnabled`, `agentsEnabled`) control which capabilities are active. Community edition uses `OPEN_SOURCE_PLAN` with all booleans set to their CE defaults. `usage` is only populated on non-Community editions.
@@ -30,6 +33,16 @@ All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, 
 - **PieceSelectorConfig** — JSONB config controlling the order, visibility, names, and icons of the piece-selector tab strip in the flow builder; `null` means use the default built-in layout
 - **PieceSelectorTabConfig** — a single tab entry: either `BUILTIN` (referencing one of the five built-in tabs) or `CUSTOM` (a user-created tab with its own ordered piece list and optional sections)
 - **PieceSelectorTabSection** — a named sub-group inside a `CUSTOM` tab; holds a title and an ordered list of piece names
+
+## Piece Visibility Filter (Hide/Show)
+
+Hiding a piece via the platform admin Pieces eye icon (or bulk Hide) adds it to `filteredPieceNames` under `FilteredPieceBehavior.BLOCKED` — the only behavior ever reachable in practice, since no frontend path sets `filteredPieceBehavior` to `ALLOWED` (it's fixed at platform creation, `platform.service.ts`). This is nominally a **catalog-visibility** action: it governs which pieces can be newly added to a flow in the builder.
+
+In practice it can also silently disable **already-active** flows that reference the hidden piece, but only when a worker container resolves that flow with no local piece-cache entry for that exact `(pieceName, version, platformId)` — `piece-cache.ts` (sandbox) persists resolved pieces to the container's local disk with no expiry, so a container that already resolved the piece keeps succeeding indefinitely even after it's hidden. The disable only surfaces on the next container that hits a genuine cache miss (post-deploy, autoscale-up, OOM restart, node eviction) — which happens routinely on Cloud, just not deterministically or immediately after the hide action. This makes the failure intermittent and easy to miss when testing on a single long-lived box (see activepieces/activepieces#13768).
+
+`piece-actions.tsx` (single) and `bulk-visibility-actions.tsx` (bulk) confirm before hiding, via `ConfirmationDeleteDialog` with a static warning — matching the existing precedent in `DeleteConnectionWarning` (`components/custom/global-connection-utils.tsx`) rather than computing a live affected-flow count. Un-hiding (Show) never warns; it isn't destructive.
+
+**Known follow-up (not yet built):** the worker's `disableFlow` RPC (`worker-rpc-service.ts`) that actually flips a flow to `DISABLED` for this reason only logs a `log.warn` today — there is no user-facing signal when it fires, and since it can land long after (and disconnected from) the original hide action, an admin has no way to discover it happened short of noticing the flow is off.
 
 ## Entity
 
