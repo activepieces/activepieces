@@ -135,20 +135,12 @@ export const updatedRowTrigger = createTrigger({
         if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
             throw new Error('please select SharePoint site and document library.');
         }
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onEnable(polling, context);
     },
 
     onDisable: async (context) => {
 
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onDisable(polling, context);
     },
 
     run: async (context) => {

@@ -43,11 +43,12 @@ export const rssNewItemTrigger = createTrigger({
       files: files,
     });
   },
-  async onEnable({ auth, propsValue, store }): Promise<void> {
+  async onEnable({ auth, propsValue, store, isRepublish }): Promise<void> {
     await pollingHelper.onEnable(polling, {
       auth,
       store: store,
       propsValue: propsValue,
+      isRepublish,
     });
   },
 

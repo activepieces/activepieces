@@ -128,18 +128,10 @@ export const xeroNewQuote = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async onEnable(context: any) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context: any) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context: any) {
     return await pollingHelper.test(polling, context);

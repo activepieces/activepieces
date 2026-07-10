@@ -33,7 +33,7 @@ export const employeeTerminated = createTrigger({
 	sampleData: { id: '3aa5550b7fe348b98d7b5741afc65534', descriptor: 'Jane Doe', terminationDate: '2026-04-01' },
 	type: TriggerStrategy.POLLING,
 	async test(ctx) { return await pollingHelper.test(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue, files: ctx.files }); },
-	async onEnable(ctx) { await pollingHelper.onEnable(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue }); },
-	async onDisable(ctx) { await pollingHelper.onDisable(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue }); },
+	async onEnable(ctx) { await pollingHelper.onEnable(polling, ctx); },
+	async onDisable(ctx) { await pollingHelper.onDisable(polling, ctx); },
 	async run(ctx) { return await pollingHelper.poll(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue, files: ctx.files }); },
 });

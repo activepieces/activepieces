@@ -66,18 +66,10 @@ export const newRecordTrigger = createTrigger({
     sys_updated_on: '2023-01-01 00:00:00',
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth as any,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth as any,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
     return await pollingHelper.poll(polling, {

@@ -78,10 +78,10 @@ export const newOrUpdatedRecord = createTrigger({
     return await pollingHelper.test(polling, { ...ctx });
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, { ...ctx });
+    await pollingHelper.onEnable(polling, ctx);
   },
   async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, { ...ctx });
+    await pollingHelper.onDisable(polling, ctx);
   },
   async run(ctx) {
     return await pollingHelper.poll(polling, { ...ctx });

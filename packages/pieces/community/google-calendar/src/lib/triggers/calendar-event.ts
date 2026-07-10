@@ -110,7 +110,7 @@ export const calendarEventChanged = createTrigger({
 			files,
 		});
 	},
-	async onEnable({ store, auth, propsValue }) {
+	async onEnable({ store, auth, propsValue, isRepublish }) {
 		await pollingHelper.onEnable(polling, {
 			store,
 			auth,
@@ -118,6 +118,7 @@ export const calendarEventChanged = createTrigger({
 				calendarId: propsValue.calendar_id,
 				expandRecurringEvent: propsValue.expandRecurringEvent,
 			},
+			isRepublish,
 		});
 	},
 	async onDisable({ store, auth, propsValue }) {

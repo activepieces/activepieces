@@ -102,12 +102,10 @@ export const newParsedDocumentByTemplate = createTrigger({
     return await pollingHelper.test(polling, { store, auth, propsValue, files });
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
     const { store, auth, propsValue, files } = context;
