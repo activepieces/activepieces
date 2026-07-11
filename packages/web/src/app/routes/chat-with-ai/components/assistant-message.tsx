@@ -3,7 +3,7 @@ import { ActionReceiptEvent, ImageGeneratedEvent } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
@@ -56,6 +56,14 @@ import { previewUtils } from './previews/preview-utils';
 import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
 import { ReceiptListGroup } from './receipt-list-group';
+import {
+  ReferralCelebrationCard,
+  ReferralCelebrationData,
+} from './referral-celebration';
+import {
+  ReferralShareCard,
+  ReferralShareCardSkeleton,
+} from './referral-share-card';
 import { ShowcaseCard, ShowcaseContent } from './showcase-card/showcase-card';
 import { ShowcaseCardSkeleton } from './showcase-card/showcase-skeleton';
 import { ShowcaseTileData } from './showcase-card/showcase-tile';
@@ -69,6 +77,12 @@ const ACTION_BUTTON_CLASS =
 
 const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
 
+// The referral greeting streams in once; after it has played we mark its id here so switching tabs
+// / remounting the chat renders it static instead of re-typing every time. Marked after the
+// animation finishes (and cleared on unmount) so StrictMode's dev double-mount can't suppress the
+// first play.
+const streamedSeededGreetingIds = new Set<string>();
+
 export const AssistantMessage = memo(function AssistantMessage({
   message,
   isStreaming,
@@ -76,6 +90,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   onSendPrompt,
   claimedBuildIds = EMPTY_BUILD_IDS,
   isResumed = false,
+  latestReferralPhrase,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
@@ -83,6 +98,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   onSendPrompt?: (text: string) => void;
   claimedBuildIds?: ReadonlySet<string>;
   isResumed?: boolean;
+  latestReferralPhrase?: string;
 }) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
@@ -139,6 +155,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             isAccordionOpen={isAccordionOpen}
             setIsAccordionOpen={setIsAccordionOpen}
             isResumed={isResumed}
+            latestReferralPhrase={latestReferralPhrase}
           />
 
           {!isStreaming && sources.length > 0 && (
@@ -226,6 +243,7 @@ function MessageBlocks({
   isAccordionOpen,
   setIsAccordionOpen,
   isResumed = false,
+  latestReferralPhrase,
 }: {
   blocks: MessageBlock[];
   isStreaming: boolean;
@@ -236,6 +254,7 @@ function MessageBlocks({
   isAccordionOpen: boolean;
   setIsAccordionOpen: (open: boolean) => void;
   isResumed?: boolean;
+  latestReferralPhrase?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const piecePlugins = usePieceTagPlugins();
@@ -243,11 +262,37 @@ function MessageBlocks({
     () => [...(piecePlugins ?? []), rehypeEmailGroup],
     [piecePlugins],
   );
+  // The celebration show auto-plays only when its part arrives on the live stream — a history
+  // reload renders just the mini-card (the Replay button re-runs the show on demand).
+  const isFromHistory = message.id.startsWith('hist-');
   const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
   const lastTextIdx = blocks.findLastIndex((b) => b.kind === 'text');
   const hasActiveDisplayCard = blocks.some(
     (b) => b.kind === 'display-tool' && b.part.state === 'input-available',
   );
+  // The referral chat's seeded opener is stored history (so it wouldn't animate), but we want it to
+  // "type in" like a real streamed turn. Detect it by its known quick-reply toolCallId and run its
+  // text through StreamingText on mount.
+  const isSeededGreeting = message.parts.some(
+    (p) =>
+      chatPartUtils.isAnyToolPart(p) &&
+      chatPartUtils.getToolCallId(p) === 'referral-intro-quick-replies',
+  );
+  // Play the type-in animation only the first time this greeting is shown; after it finishes it's
+  // marked so later remounts (tab switches) render it static.
+  const [animateGreeting] = useState(
+    () => isSeededGreeting && !streamedSeededGreetingIds.has(message.id),
+  );
+  useEffect(() => {
+    if (!animateGreeting) {
+      return;
+    }
+    const timer = setTimeout(
+      () => streamedSeededGreetingIds.add(message.id),
+      4000,
+    );
+    return () => clearTimeout(timer);
+  }, [animateGreeting, message.id]);
 
   return (
     <>
@@ -366,7 +411,7 @@ function MessageBlocks({
             }
             return (
               <div key={`text-${i}`} className={cn('py-1', PROSE_CLASSES)}>
-                {isActiveText && !isResumed ? (
+                {(isActiveText && !isResumed) || animateGreeting ? (
                   <StreamingText
                     text={block.text}
                     components={markdownPreviewComponents}
@@ -395,6 +440,8 @@ function MessageBlocks({
                     onResolve={approveGate}
                     onSendPrompt={onSendPrompt}
                     isInteractive={false}
+                    latestReferralPhrase={latestReferralPhrase}
+                    celebrationAutoPlay={!isFromHistory}
                   />
                 </div>
               );
@@ -405,6 +452,16 @@ function MessageBlocks({
               return (
                 <div key={block.part.toolCallId} className="py-2">
                   <ShowcaseCardSkeleton />
+                </div>
+              );
+            }
+            if (
+              chatPartUtils.getToolPartName(block.part) ===
+              'ap_show_referral_card'
+            ) {
+              return (
+                <div key={block.part.toolCallId} className="py-2">
+                  <ReferralShareCardSkeleton />
                 </div>
               );
             }
@@ -463,6 +520,7 @@ function MessageBlocks({
                 <FlowBuildCard
                   buildId={block.buildId}
                   onSendPrompt={onSendPrompt}
+                  isStreaming={isStreaming}
                   activity={
                     children.length > 0 ? (
                       <MessageBlocks
@@ -622,11 +680,15 @@ function DisplayToolCard({
   onResolve,
   onSendPrompt,
   isInteractive,
+  latestReferralPhrase,
+  celebrationAutoPlay = false,
 }: {
   part: AnyToolPart;
   onResolve: (gateId: string, payload?: Record<string, unknown>) => void;
   onSendPrompt?: (text: string) => void;
   isInteractive: boolean;
+  latestReferralPhrase?: string;
+  celebrationAutoPlay?: boolean;
 }) {
   if (!chatPartUtils.isReady(part)) return null;
   const data = part.input as Record<string, unknown>;
@@ -694,6 +756,24 @@ function DisplayToolCard({
         <ShowcaseCard content={showcaseContent} onSendPrompt={onSendPrompt} />
       );
     }
+    case 'ap_show_referral_card': {
+      const phrase =
+        typeof data?.['phrase'] === 'string' ? (data['phrase'] as string) : '';
+      return (
+        <ReferralShareCard
+          phrase={phrase}
+          latestPhrase={latestReferralPhrase}
+        />
+      );
+    }
+    case 'ap_show_referral_celebration':
+      return (
+        <ReferralCelebrationCard
+          data={data as ReferralCelebrationData}
+          toolCallId={toolCallId}
+          autoPlay={celebrationAutoPlay}
+        />
+      );
     default:
       return null;
   }

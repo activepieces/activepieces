@@ -53,6 +53,23 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
     ],
   },
   {
+    capability: AiToolCapability.ENRICHMENT,
+    name: t('People & Company Enrichment'),
+    description: t(
+      'Let the assistant enrich people and companies — verified job titles, company size, industry, and firmographics. Also powers personalized onboarding.',
+    ),
+    providers: [
+      {
+        id: AiToolProvider.APOLLO,
+        name: 'Apollo',
+        description: t(
+          'B2B database of 275M+ contacts for people and organization enrichment.',
+        ),
+        signupUrl: 'https://app.apollo.io/#/settings/integrations/api',
+      },
+    ],
+  },
+  {
     capability: AiToolCapability.IMAGE_GENERATION,
     name: t('Image Generation'),
     description: t(

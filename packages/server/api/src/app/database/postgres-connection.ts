@@ -395,6 +395,13 @@ import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres
 import { AddUiPreferencesToUserIdentity1803000000000 } from './migration/postgres/1803000000000-AddUiPreferencesToUserIdentity'
 import { AddDeletedToRecord1804000000000 } from './migration/postgres/1804000000000-AddDeletedToRecord'
 import { AddColorToRecordAndCell1805000000000 } from './migration/postgres/1805000000000-AddColorToRecordAndCell'
+import { AddReferralTables1806000000000 } from './migration/postgres/1806000000000-AddReferralTables'
+import { AddChatModeToChatConversation1807000000000 } from './migration/postgres/1807000000000-AddChatModeToChatConversation'
+import { AddChatPersonalization1808000000000 } from './migration/postgres/1808000000000-AddChatPersonalization'
+import { AddRoleToChatPersonalization1809000000000 } from './migration/postgres/1809000000000-AddRoleToChatPersonalization'
+import { AddCelebrationEmojisToReferralPhrase1810000000000 } from './migration/postgres/1810000000000-AddCelebrationEmojisToReferralPhrase'
+import { AddCelebrationSceneToReferralPhrase1811000000000 } from './migration/postgres/1811000000000-AddCelebrationSceneToReferralPhrase'
+import { AddCelebrationImageToReferralPhrase1812000000000 } from './migration/postgres/1812000000000-AddCelebrationImageToReferralPhrase'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -805,6 +812,13 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddUiPreferencesToUserIdentity1803000000000,
         AddDeletedToRecord1804000000000,
         AddColorToRecordAndCell1805000000000,
+        AddReferralTables1806000000000,
+        AddChatModeToChatConversation1807000000000,
+        AddChatPersonalization1808000000000,
+        AddRoleToChatPersonalization1809000000000,
+        AddCelebrationEmojisToReferralPhrase1810000000000,
+        AddCelebrationSceneToReferralPhrase1811000000000,
+        AddCelebrationImageToReferralPhrase1812000000000,
     ]
     return migrations
 }

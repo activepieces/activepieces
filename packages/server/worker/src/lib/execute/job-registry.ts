@@ -47,6 +47,7 @@ const registry: Partial<Record<WorkerJobType, JobHandler>> = {
 // far the largest weight — so deferring its evaluation keeps a flow-only worker's idle RSS small.
 const lazyLoaders: Partial<Record<WorkerJobType, () => Promise<JobHandler>>> = {
     [WorkerJobType.EXECUTE_CHAT_AGENT]: async () => (await import('./jobs/ee/chat/execute-chat-agent')).executeChatAgentJob,
+    [WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH]: async () => (await import('./jobs/ee/chat/execute-personalization-research')).executePersonalizationResearchJob,
 }
 
 const lazyCache = new Map<WorkerJobType, JobHandler>()

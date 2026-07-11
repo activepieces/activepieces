@@ -16,6 +16,7 @@ import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ChatConversationEntity } from '../ee/chat/chat-conversation-entity'
 import { ChatRolloutUserEntity } from '../ee/chat/chat-rollout-user-entity'
+import { ChatPersonalizationEntity } from '../ee/chat/personalization/chat-personalization-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
@@ -26,6 +27,8 @@ import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.enti
 import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.entity'
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
+import { ReferralPhraseEntity } from '../ee/referral/referral-phrase.entity'
+import { ReferralRedemptionEntity } from '../ee/referral/referral-redemption.entity'
 import { SecretManagerEntity } from '../ee/secret-managers/secret-manager.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { EventDestinationEntity } from '../event-destinations/event-destinations.entity'
@@ -110,6 +113,7 @@ function getEntities(): EntitySchema<unknown>[] {
         ToolSearchIndexEntity,
         ChatConversationEntity,
         ChatRolloutUserEntity,
+        ChatPersonalizationEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         WaitpointEntity,
@@ -133,6 +137,8 @@ function getEntities(): EntitySchema<unknown>[] {
         AppCredentialEntity,
         PlatformPlanEntity,
         EventDestinationEntity,
+        ReferralPhraseEntity,
+        ReferralRedemptionEntity,
 
     ]
 }

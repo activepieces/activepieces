@@ -9,6 +9,7 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -32,6 +33,12 @@ export const ChatMentionEditor = forwardRef<
   onSubmitRef.current = onSubmit;
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  // The editor is created once and never recreated (useEditor deps are []), so
+  // a static placeholder string would freeze at its first-mount value. Read it
+  // from a ref inside a function placeholder so the Placeholder plugin picks up
+  // the current value each time it recomputes decorations.
+  const placeholderRef = useRef(placeholder);
+  placeholderRef.current = placeholder;
 
   const extensions = useMemo(
     () => [
@@ -41,7 +48,7 @@ export const ChatMentionEditor = forwardRef<
       HardBreak,
       History,
       Placeholder.configure({
-        placeholder: placeholder ?? '',
+        placeholder: () => placeholderRef.current ?? '',
         emptyEditorClass:
           'before:content-[attr(data-placeholder)] before:text-muted-foreground before:opacity-75 before:float-left before:pointer-events-none before:h-0',
       }),
@@ -58,7 +65,7 @@ export const ChatMentionEditor = forwardRef<
         },
       }),
     ],
-    [placeholder],
+    [],
   );
 
   const editor = useEditor({
@@ -89,6 +96,16 @@ export const ChatMentionEditor = forwardRef<
       onChangeRef.current?.({ ...value, isEmpty: instance.isEmpty });
     },
   });
+
+  // The Placeholder plugin only recomputes its decoration on an editor
+  // transaction, so an external placeholder change (e.g. entering the working
+  // "take over" state) wouldn't refresh on its own. Dispatch an empty
+  // transaction to force a re-read; it changes no content, so onUpdate (which
+  // gates on docChanged) does not fire.
+  useEffect(() => {
+    if (!editor) return;
+    editor.view.dispatch(editor.state.tr);
+  }, [placeholder, editor]);
 
   const clear = useCallback(() => {
     editor?.commands.clearContent(true);

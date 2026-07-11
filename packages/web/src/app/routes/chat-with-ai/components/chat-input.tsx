@@ -1,6 +1,6 @@
 import { ChatMention } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
+import { ArrowUp, Hand, Mic, Paperclip, Square, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -110,8 +110,15 @@ export function ChatInput({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRecording, cancelRecording]);
 
+  const canSend = !isEmpty || attachedFiles.length > 0;
+
+  // Submitting while streaming is intentional: it preempts the in-flight turn
+  // (sendMessage folds the partial response into history + starts a fresh run,
+  // and the server auto-cancels the old run on the new message). We do NOT call
+  // onStop here — that path flashes "Response stopped"; this should read as the
+  // user taking over, not aborting.
   const handleSubmit = useCallback(() => {
-    if (!isStreaming && (!isEmpty || attachedFiles.length > 0)) {
+    if (canSend) {
       onSend(
         content.trim(),
         attachedFiles.length > 0 ? attachedFiles : undefined,
@@ -120,13 +127,15 @@ export function ChatInput({
       editorRef.current?.clear();
       setAttachedFiles([]);
     }
-  }, [isStreaming, isEmpty, content, mentions, attachedFiles, onSend]);
+  }, [canSend, content, mentions, attachedFiles, onSend]);
 
   const handleFilesAdded = useCallback((files: File[]) => {
     setAttachedFiles((prev) => [...prev, ...files]);
   }, []);
 
-  const canSend = !isEmpty || attachedFiles.length > 0;
+  const composerPlaceholder = isStreaming
+    ? t('Type to take over…')
+    : placeholder ?? t('Tell me what you need... (@ to mention, : for emoji)');
 
   return (
     <FileUpload onFilesAdded={handleFilesAdded} multiple>
@@ -180,10 +189,7 @@ export function ChatInput({
           <ChatMentionEditor
             ref={editorRef}
             autoFocus
-            placeholder={
-              placeholder ??
-              t('Tell me what you need... (@ to mention, : for emoji)')
-            }
+            placeholder={composerPlaceholder}
             onChange={handleEditorChange}
             onSubmit={handleSubmit}
             className={cn(
@@ -219,14 +225,20 @@ export function ChatInput({
           <div className="flex items-center gap-1">
             {rightActions}
             {isStreaming && onStop ? (
-              <PromptInputAction tooltip={t('Stop')}>
+              <PromptInputAction
+                tooltip={canSend && !isRecording ? t('Take over') : t('Stop')}
+              >
                 <Button
                   variant="default"
                   size="icon"
-                  className="h-9 w-9 sm:h-7 sm:w-7 rounded-full"
-                  onClick={onStop}
+                  className="h-9 w-9 sm:h-7 sm:w-7 rounded-full transition-transform active:scale-90"
+                  onClick={canSend && !isRecording ? handleSubmit : onStop}
                 >
-                  <Square className="size-3 fill-current" />
+                  {canSend && !isRecording ? (
+                    <Hand className="size-4 animate-in zoom-in-75 duration-150" />
+                  ) : (
+                    <Square className="size-3 fill-current animate-in zoom-in-75 duration-150" />
+                  )}
                 </Button>
               </PromptInputAction>
             ) : isRecording ? (
@@ -247,7 +259,6 @@ export function ChatInput({
                   size="icon"
                   className="h-9 w-9 sm:h-7 sm:w-7 rounded-full"
                   onClick={handleSubmit}
-                  disabled={isStreaming}
                 >
                   <ArrowUp className="size-4" />
                 </Button>

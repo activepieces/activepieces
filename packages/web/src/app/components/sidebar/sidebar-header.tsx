@@ -1,31 +1,66 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronsUpDown } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, ChevronsUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   SidebarHeader,
-  SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PlatformSwitcher } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 
-function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
+// Collapsed: the logo is the expand affordance — it cross-fades to an expand icon while the
+// rail is hovered and expands the sidebar on click. Expanded: the logo returns to a plain
+// brand mark that navigates home.
+function SidebarLogo() {
   const branding = flagsHooks.useWebsiteBranding();
   const navigate = useNavigate();
+  const { state, setOpen } = useSidebar();
+  const isCollapsed = state === 'collapsed';
+
+  if (isCollapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('Expand sidebar')}
+            onClick={() => setOpen(true)}
+            className="relative h-10! w-8! p-0! items-center justify-center"
+          >
+            <img
+              src={branding.logos.logoIconUrl}
+              alt={t('home')}
+              className="h-5! w-5! shrink-0 transition-opacity duration-150 group-hover:opacity-0"
+              draggable={false}
+            />
+            <ChevronsRight className="absolute size-[18px] opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">{t('Expand sidebar')}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => navigate(linkTo || '/')}
-      className="h-10! w-8! p-0! group-data-[collapsible=icon]:h-10! items-center justify-center"
+      aria-label={t('home')}
+      onClick={() => navigate(`${CHAT_ROUTE}?new=1`)}
+      className="h-10! w-8! p-0! items-center justify-center"
     >
       <img
         src={branding.logos.logoIconUrl}
@@ -37,6 +72,26 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   );
 }
 
+function SidebarCollapseButton() {
+  const { setOpen } = useSidebar();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t('Collapse sidebar')}
+          onClick={() => setOpen(false)}
+          className="h-7 w-7 shrink-0"
+        >
+          <ChevronsLeft className="size-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{t('Collapse sidebar')}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export const AppSidebarHeader = () => {
   const { embedState } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -44,41 +99,34 @@ export const AppSidebarHeader = () => {
   const { state } = useSidebar();
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
-
-  if (!showSwitcher) {
-    return (
-      <SidebarHeader className="pb-0">
-        <div className="w-full flex items-center gap-2">
-          <SidebarLogoCollapsed linkTo={`${CHAT_ROUTE}?new=1`} />
-          {state !== 'collapsed' && (
-            <h1 className="truncate text-sm font-medium">
-              {branding.websiteName}
-            </h1>
-          )}
-        </div>
-      </SidebarHeader>
-    );
-  }
+  const isCollapsed = state === 'collapsed';
 
   return (
-    <SidebarHeader>
-      <SidebarMenu>
-        <SidebarMenuItem className="flex items-center">
-          <SidebarLogoCollapsed linkTo={`${CHAT_ROUTE}?new=1`} />
-          {state !== 'collapsed' && (
-            <div className="flex-1 min-w-0">
-              <PlatformSwitcher>
-                <SidebarMenuButton className="h-10! w-full">
-                  <span className="truncate font-medium flex-1 text-left text-sm">
-                    {currentPlatform?.name ?? t('platform')}
-                  </span>
-                  <ChevronsUpDown className="ml-auto size-3! shrink-0" />
-                </SidebarMenuButton>
-              </PlatformSwitcher>
-            </div>
-          )}
-        </SidebarMenuItem>
-      </SidebarMenu>
+    <SidebarHeader className="pb-0">
+      <div className="w-full flex items-center gap-2">
+        <SidebarLogo />
+        {!isCollapsed && (
+          <>
+            {showSwitcher ? (
+              <div className="flex-1 min-w-0">
+                <PlatformSwitcher>
+                  <SidebarMenuButton className="h-10! w-full">
+                    <span className="truncate font-medium flex-1 text-left text-sm">
+                      {currentPlatform?.name ?? t('platform')}
+                    </span>
+                    <ChevronsUpDown className="ml-auto size-3! shrink-0" />
+                  </SidebarMenuButton>
+                </PlatformSwitcher>
+              </div>
+            ) : (
+              <h1 className="flex-1 truncate text-sm font-medium">
+                {branding.websiteName}
+              </h1>
+            )}
+            <SidebarCollapseButton />
+          </>
+        )}
+      </div>
     </SidebarHeader>
   );
 };

@@ -175,6 +175,25 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         // (in the same request) sees the topped-up balance instead of a stale within-TTL zero.
         await distributedStore.delete(openRouterUsageCacheKey(apiKeyHash))
     },
+
+    async devOverrideUsageRemaining({ platformId, creditsRemaining }: DevOverrideUsageRemainingParams): Promise<void> {
+        const auth = await aiProviderService(log).getActivepiecesProviderIfEnriched(platformId)
+        if (isNil(auth) || isNil(auth.apiKeyHash)) {
+            return
+        }
+
+        const remainingInDollars = creditsRemaining / CREDIT_PER_DOLLAR
+        const cacheKey = openRouterUsageCacheKey(auth.apiKeyHash)
+        const existing = await distributedStore.get<OpenRouterApikey>(cacheKey)
+        const limit = Math.max(existing?.limit ?? 0, remainingInDollars)
+
+        await distributedStore.put(cacheKey, {
+            limit,
+            limit_remaining: remainingInDollars,
+            usage: Math.max(0, limit - remainingInDollars),
+            usage_monthly: Math.max(0, limit - remainingInDollars),
+        }, USAGE_CACHE_TTL_SECONDS)
+    },
 })
 
 function openRouterUsageCacheKey(apiKeyHash: string): string {
@@ -284,4 +303,9 @@ type APIKeyUsage = {
     usage: number
     usageMonthly: number
     usageRemaining: number
+}
+
+type DevOverrideUsageRemainingParams = {
+    platformId: string
+    creditsRemaining: number
 }

@@ -56,6 +56,8 @@ const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_questions',
   'ap_show_quick_replies',
   'ap_show_showcase',
+  'ap_show_referral_card',
+  'ap_show_referral_celebration',
 ]);
 
 function isDisplayTool(name: string): boolean {
@@ -235,20 +237,10 @@ function extractToolTitles(part: AnyToolPart): {
   return { title, activeTitle, doneTitle };
 }
 
-function readQuickRepliesInput(input: unknown): QuickRepliesData {
-  const typed = input as
-    | { replies?: string[]; offerRecurringAutomation?: boolean }
-    | undefined;
-  return {
-    replies: typed?.replies ?? [],
-    offerRecurringAutomation: typed?.offerRecurringAutomation === true,
-  };
-}
-
 function extractQuickRepliesFromParts(
   message: ChatUIMessage | null,
 ): QuickRepliesData {
-  if (!message || message.role !== 'assistant') return EMPTY_QUICK_REPLIES_DATA;
+  if (!message || message.role !== 'assistant') return { replies: [] };
   for (let i = message.parts.length - 1; i >= 0; i--) {
     const p = message.parts[i];
     if (
@@ -259,7 +251,27 @@ function extractQuickRepliesFromParts(
       return readQuickRepliesInput(p.input);
     }
   }
-  return EMPTY_QUICK_REPLIES_DATA;
+  return { replies: [] };
+}
+
+function readQuickRepliesInput(input: unknown): QuickRepliesData {
+  const record = isObject(input) ? input : undefined;
+  const replies = Array.isArray(record?.replies)
+    ? record.replies.filter((r): r is string => typeof r === 'string')
+    : [];
+  const rawAuto = isObject(record?.automationSuggestion)
+    ? record.automationSuggestion
+    : undefined;
+  const automationSuggestion =
+    rawAuto &&
+    typeof rawAuto.label === 'string' &&
+    typeof rawAuto.prompt === 'string'
+      ? { label: rawAuto.label, prompt: rawAuto.prompt }
+      : undefined;
+  return {
+    replies,
+    ...(automationSuggestion ? { automationSuggestion } : {}),
+  };
 }
 
 function isSameActiveContext(
@@ -326,16 +338,6 @@ export const chatPartUtils = {
   DISPLAY_TOOL_NAMES,
 };
 
-export type QuickRepliesData = {
-  replies: string[];
-  offerRecurringAutomation: boolean;
-};
-
-export const EMPTY_QUICK_REPLIES_DATA: QuickRepliesData = {
-  replies: [],
-  offerRecurringAutomation: false,
-};
-
 export type PendingCardKind = 'action-receipt' | 'image';
 
 export type CardSkeletonPhase = 'pending' | 'failed';
@@ -375,4 +377,14 @@ export type ActiveChatContextFocus = {
   label: string;
   ref?: string;
   detail?: string;
+};
+
+export type AutomationSuggestion = {
+  label: string;
+  prompt: string;
+};
+
+export type QuickRepliesData = {
+  replies: string[];
+  automationSuggestion?: AutomationSuggestion;
 };

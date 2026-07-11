@@ -10,6 +10,7 @@ Reach for a Table whenever a flow needs to **remember or look up data**:
 - Logging records (every lead, order, inbound email, error)
 - Small datasets the flow reads from (lookup/mapping tables, allow-lists)
 - Collecting submissions to review later
+- **Capturing structured research or analysis you just produced** — when you've gathered a *set* the user will keep and act on (gigs, leads, competitors, options, products, papers), land it in a Table and `ap_open_in_stage` it instead of pasting a markdown list into chat. It becomes sortable, annotatable, and something a later automation can write into. Add a light `Status`/`Notes` column when they'll work the rows over time; skip the extra columns for a pure reference snapshot.
 
 **Prefer Tables over Google Sheets** when the data lives inside Activepieces and doesn't need a spreadsheet UI — Tables are faster, typed, and need no connection/auth. Use **Google Sheets** only when the user already works in that sheet or needs to share/edit it as a spreadsheet. Use an **external database piece** (Postgres, MySQL, …) only for large or relational data.
 

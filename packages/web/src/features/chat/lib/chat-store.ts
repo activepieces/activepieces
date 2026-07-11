@@ -15,7 +15,12 @@ import {
   RawMultiQuestion,
   normalizeQuestion,
 } from './chat-store-types';
-import { AnyToolPart, ChatUIMessage, chatPartUtils } from './chat-types';
+import {
+  AnyToolPart,
+  AutomationSuggestion,
+  ChatUIMessage,
+  chatPartUtils,
+} from './chat-types';
 
 function sendApprovalDecision({
   gateId,
@@ -55,7 +60,7 @@ export type BuildState = BuildPlanEvent;
 
 export type ChatStoreState = {
   quickReplies: string[];
-  offerRecurringAutomation: boolean;
+  automationSuggestion: AutomationSuggestion | undefined;
   toolCallMeta: Record<string, ToolCallMeta>;
   builds: Record<string, BuildState>;
   dismissedGateIds: Record<string, true>;
@@ -84,7 +89,7 @@ function dismissAndCleanup(
 export const createChatStore = () =>
   create<ChatStoreState>((set) => ({
     quickReplies: [],
-    offerRecurringAutomation: false,
+    automationSuggestion: undefined,
     toolCallMeta: {},
     builds: {},
     dismissedGateIds: {},
@@ -107,7 +112,7 @@ export const createChatStore = () =>
     resetInteractions: () => {
       set({
         quickReplies: [],
-        offerRecurringAutomation: false,
+        automationSuggestion: undefined,
         toolCallMeta: {},
         dismissedGateIds: {},
         lastDismissedFormId: null,
@@ -131,6 +136,7 @@ function selectActiveDisplayTool({
       chatPartUtils.isDisplayTool(name) &&
       name !== 'ap_show_quick_replies' &&
       name !== 'ap_show_showcase' &&
+      name !== 'ap_show_referral_card' &&
       p.state === 'input-available',
   });
   return isNotDismissed(part, state) ? part : null;
@@ -216,7 +222,8 @@ function selectHasBlockingCard({
       if (
         chatPartUtils.isDisplayTool(name) &&
         name !== 'ap_show_quick_replies' &&
-        name !== 'ap_show_showcase'
+        name !== 'ap_show_showcase' &&
+        name !== 'ap_show_referral_card'
       )
         return true;
       return !!state.toolCallMeta[id]?.actionPreview;

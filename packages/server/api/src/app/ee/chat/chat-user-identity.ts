@@ -36,11 +36,12 @@ function companyHintFromEmail(email: string): { domain: string, company: string 
 // personalise), their email (the "email me" destination), a company hint from the email
 // domain, and the platform's white-label brand name (so it never assumes "Activepieces").
 // Mirrors chat-account-overview's buildNote style.
-function buildUserIdentityNote({ firstName, lastName, email, platformName }: {
+function buildUserIdentityNote({ firstName, lastName, email, platformName, personalization }: {
     firstName: string
     lastName: string
     email: string
     platformName: string | null
+    personalization?: UserIdentityPersonalization | null
 }): string {
     const name = fullName({ firstName, lastName })
     const lines: string[] = ['\n\n## Who you\'re talking to']
@@ -48,9 +49,17 @@ function buildUserIdentityNote({ firstName, lastName, email, platformName }: {
         ? `You're helping **${name}** (${email}). Use their first name when it feels natural.`
         : `You're helping the person at **${email}**.`)
 
-    const hint = companyHintFromEmail(email)
-    if (hint) {
-        lines.push(`- Their email domain is **${hint.domain}** — likely the company **${hint.company}**. Treat this as a hint to ground your help (their industry, their goals, sensible defaults); verify before stating it as fact.`)
+    if (personalization) {
+        lines.push(`- They work at **${personalization.companyName}** — ${personalization.description} (industry: ${personalization.industry}). This is verified research, not a guess — use it to ground your suggestions in their world.`)
+        if (personalization.userRole) {
+            lines.push(`- Their role is most likely **${personalization.userRole}** — pick examples and defaults that fit that role.`)
+        }
+    }
+    else {
+        const hint = companyHintFromEmail(email)
+        if (hint) {
+            lines.push(`- Their email domain is **${hint.domain}** — likely the company **${hint.company}**. Treat this as a hint to ground your help (their industry, their goals, sensible defaults); verify before stating it as fact.`)
+        }
     }
 
     if (platformName) {
@@ -64,4 +73,12 @@ function buildUserIdentityNote({ firstName, lastName, email, platformName }: {
 
 export const chatUserIdentity = {
     buildNote: buildUserIdentityNote,
+    companyHintFromEmail,
+}
+
+type UserIdentityPersonalization = {
+    companyName: string
+    description: string
+    industry: string
+    userRole?: string
 }

@@ -19,6 +19,7 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { TextShimmer } from '@/components/ui/text-shimmer';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -30,8 +31,10 @@ import {
   activeContextUtils,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
+import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
 
 import { AssistantMessage } from './components/assistant-message';
@@ -102,6 +105,7 @@ function ChatBoxContent({
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
+  const personalization = usePersonalization({ enabled: !incognito });
 
   const activeContext = useStageContext();
   const activeContextRef = useRef(activeContext);
@@ -149,8 +153,8 @@ function ChatBoxContent({
   });
 
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
-  const offerRecurringAutomation = useChatStoreContext(
-    (s) => s.offerRecurringAutomation,
+  const automationSuggestion = useChatStoreContext(
+    (s) => s.automationSuggestion,
   );
 
   useEffect(() => {
@@ -197,6 +201,14 @@ function ChatBoxContent({
     [sendMessage],
   );
 
+  // Let Stage content (e.g. the browser hand-off "continue" button, which lives outside the chat
+  // panel) post a message into the chat to resume the agent.
+  useEffect(() => {
+    if (!stage) return;
+    stage.registerChatSend((text) => void handleSend(text));
+    return () => stage.registerChatSend(null);
+  }, [stage, handleSend]);
+
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
     if (lastUser) void sendMessage(getTextFromParts(lastUser.parts));
@@ -223,6 +235,11 @@ function ChatBoxContent({
 
   const claimedBuildIdsByMessage = useMemo(
     () => computeClaimedBuildIds(messages),
+    [messages],
+  );
+
+  const latestReferralPhrase = useMemo(
+    () => chatUtils.findLatestReferralPhrase(messages),
     [messages],
   );
 
@@ -309,6 +326,7 @@ function ChatBoxContent({
                       isLastMessage={isLastAssistant}
                       onSendPrompt={(text) => void handleSend(text)}
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
+                      latestReferralPhrase={latestReferralPhrase}
                     />
                   );
                 })}
@@ -316,11 +334,11 @@ function ChatBoxContent({
                 {!isAwaitingResponse &&
                   !wasCancelled &&
                   !hasBlockingCard &&
-                  (quickReplies.length > 0 || offerRecurringAutomation) && (
+                  (quickReplies.length > 0 || automationSuggestion) && (
                     <div className="mt-auto pt-2">
                       <QuickReplies
                         replies={quickReplies}
-                        offerRecurringAutomation={offerRecurringAutomation}
+                        automationSuggestion={automationSuggestion}
                         onSend={handleSend}
                       />
                     </div>
@@ -364,6 +382,18 @@ function ChatBoxContent({
 
       <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-3xl mx-auto relative">
+          {/* While the onboarding research runs, the composer is locked — the
+              cards it produces ARE the opening move, so let it land first. */}
+          {personalization.isResearching && isEmpty && (
+            <div
+              className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl border border-border/60 bg-background/80 backdrop-blur-sm"
+              aria-live="polite"
+            >
+              <TextShimmer className="text-sm">
+                {t('Personalizing your workspace — about 20 seconds…')}
+              </TextShimmer>
+            </div>
+          )}
           <ChatBottomBar
             isStreaming={isStreaming}
             onSend={handleSend}

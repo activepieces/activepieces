@@ -350,6 +350,19 @@
     }
   }
 
+  @keyframes stage-enter {
+    0% {
+      opacity: 0;
+      transform: translateY(5px);
+      filter: blur(2px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+
   @keyframes dash {
     to {
       stroke-dashoffset: -20;
@@ -447,6 +460,29 @@
   }
 }
 
+/* "The $10 mission" sidebar label — animated gradient text. Self-contained keyframe
+   (kept top-level, outside @theme, so Tailwind v4 always emits it). */
+@keyframes referral-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.referral-gradient-text {
+  background-image: linear-gradient(90deg, #8142e3, #a855f7, #d946ef, #a855f7, #8142e3);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: referral-shimmer 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .referral-gradient-text {
+    animation: none;
+  }
+}
+
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
@@ -467,6 +503,10 @@
 
 @utility animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out;
+}
+
+@utility animate-stage-enter {
+  animation: stage-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @utility animate-dash {

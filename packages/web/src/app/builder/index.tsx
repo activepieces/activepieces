@@ -15,6 +15,7 @@ import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import {
   computeFitViewport,
   fitZoomFloorForTier,
+  tweenViewport,
 } from '@/app/builder/flow-canvas/canvas-controls/use-fit-to-view';
 import { ApNode } from '@/app/builder/flow-canvas/utils/types';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
@@ -51,6 +52,9 @@ const SIDEBAR_MIN_PX = 400;
 const SIDEBAR_OPEN_WIDTH = `clamp(${SIDEBAR_MIN_PX}px, ${
   SIDEBAR_OPEN_FRACTION * 100
 }%, ${SIDEBAR_MAX_FRACTION * 100}%)`;
+// Minimum canvas-width change (px) that counts as a real resize and earns a
+// re-centre. Above sub-pixel/reflow jitter, below any genuine stage open/resize.
+const STAGE_RESIZE_REFIT_EPSILON_PX = 8;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -326,6 +330,46 @@ const BuilderPage = () => {
   }, [
     isRightPanelOpen,
     chatDockedVisible,
+    hasCanvasBeenInitialised,
+    getNodes,
+    getViewport,
+    setViewport,
+  ]);
+
+  // The Stage (chat side panel) itself is resized outside the builder — when a
+  // flow opens (0→70%) or the user drags the workspace divider. That changes the
+  // canvas width but none of the deps above, so the flow would keep a fit computed
+  // for the wrong width. `middlePanelSize` is a debounced ResizeObserver, so it
+  // lands once the width has SETTLED (never mid-animation, never mid-drag); on a
+  // meaningful change we glide the viewport to a fresh centred fit. The first
+  // measurement is skipped so the initial-mount fit (useFitToView) stays in charge.
+  const prevMiddleWidthRef = useRef(0);
+  useEffect(() => {
+    if (!hasCanvasBeenInitialised) return;
+    const width = middlePanelSize.width;
+    const height = middlePanelSize.height;
+    if (width <= 0 || height <= 0) return;
+    const prev = prevMiddleWidthRef.current;
+    prevMiddleWidthRef.current = width;
+    if (prev === 0) return;
+    if (Math.abs(width - prev) < STAGE_RESIZE_REFIT_EPSILON_PX) return;
+    const target = computeFitViewport({
+      nodes: getNodes(),
+      canvasWidth: width,
+      canvasHeight: height,
+      orientation: settleParamsRef.current.canvasOrientation,
+      zoomFloor: fitZoomFloorForTier(settleParamsRef.current.stageTier),
+    });
+    if (!target) return;
+    return tweenViewport({
+      getViewport,
+      setViewport,
+      target,
+      durationMs: STAGE_TRANSITION_MS,
+    });
+  }, [
+    middlePanelSize.width,
+    middlePanelSize.height,
     hasCanvasBeenInitialised,
     getNodes,
     getViewport,

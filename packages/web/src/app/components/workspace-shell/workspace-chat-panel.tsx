@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation } from '@activepieces/shared';
+import { ChatConversation, ChatMode } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -7,6 +7,7 @@ import {
   Pencil,
   PictureInPicture,
   PictureInPicture2,
+  RotateCcw,
   Trash2,
   X,
 } from 'lucide-react';
@@ -26,8 +27,7 @@ import { toast } from 'sonner';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationSidebarToggle } from '@/app/routes/chat-with-ai/components/conversation-sidebar-toggle';
 import { TypewriterText } from '@/app/routes/chat-with-ai/components/typewriter-text';
-import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
-import { SquarePenIcon } from '@/components/icons/square-pen';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -54,7 +54,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { mathUtils } from '@/lib/math-utils';
 import { cn } from '@/lib/utils';
 
-const SIDEBAR_PINNED_STORAGE_KEY = 'chat-sidebar-pinned';
 const FLOAT_POS_STORAGE_KEY = 'chat-float-pos';
 const FLOAT_SIZE_STORAGE_KEY = 'chat-float-size';
 const FLOAT_MIN_WIDTH = 400;
@@ -146,24 +145,20 @@ export function WorkspaceChatPanel({
     null,
   );
   const [titleResolved, setTitleResolved] = useState(false);
+  // The referral ("$10 mission") chat carries chatMode=REFERRAL. It's never in the
+  // conversations list cache (the list is scoped to NORMAL), so mode is only known
+  // once we fetch the conversation — keyed by id so it never reads stale on switch.
+  const [resolvedConversation, setResolvedConversation] = useState<{
+    id: string;
+    chatMode: ChatMode;
+  } | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const renameCancelledRef = useRef(false);
-  const [sidebarPinned, setSidebarPinned] = useState(
-    () => localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY) === 'true',
-  );
   const isMobile = useIsMobile();
   const [floatSize, setFloatSize] = useState(readFloatSize);
   const [floatPos, setFloatPos] = useState(() => readFloatPos(floatSize));
   const innerRef = useRef<HTMLDivElement | null>(null);
-
-  const toggleSidebar = useCallback(() => {
-    setSidebarPinned((prev) => {
-      const next = !prev;
-      localStorage.setItem(SIDEBAR_PINNED_STORAGE_KEY, String(next));
-      return next;
-    });
-  }, []);
 
   // react-rnd owns the live drag/resize gesture (smooth, rAF-batched, clamped to
   // the inset bounds box); we only fold the result into React state + localStorage
@@ -359,6 +354,7 @@ export function WorkspaceChatPanel({
       .then((conv) => {
         if (cancelled) return;
         if (conv.title) setConversationTitle(conv.title);
+        setResolvedConversation({ id: conv.id, chatMode: conv.chatMode });
         setTitleResolved(true);
       })
       .catch(() => {
@@ -405,8 +401,10 @@ export function WorkspaceChatPanel({
   const displayTitle = cachedTitle
     ? chatUtils.sanitizeTitle(cachedTitle)
     : t('New Chat');
-  const effectivePinned = !isMobile && sidebarPinned && !floating;
-
+  const isReferralChat =
+    !!selectedConversationId &&
+    resolvedConversation?.id === selectedConversationId &&
+    resolvedConversation.chatMode === ChatMode.REFERRAL;
   const renderHeader = (draggable?: boolean) => (
     <div
       className={cn(
@@ -414,33 +412,12 @@ export function WorkspaceChatPanel({
         draggable && `${FLOAT_DRAG_HANDLE_CLASS} cursor-grab select-none`,
       )}
     >
-      <ConversationSidebarToggle
-        pinned={effectivePinned}
-        isMobile={isMobile}
-        onTogglePin={toggleSidebar}
-        onNewChat={handleNewChat}
-        onSelect={handleSelectConversation}
-        selectedId={selectedConversationId}
-      />
-      {!effectivePinned && (
-        <TooltipProvider delayDuration={400}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
-                onClick={handleNewChat}
-              >
-                <SquarePenIcon size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="flex items-center gap-2">
-              {t('New chat')}
-              <span className="text-[11px] opacity-50">⇧⌘O</span>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      {isMobile && (
+        <ConversationSidebarToggle
+          onNewChat={handleNewChat}
+          onSelect={handleSelectConversation}
+          selectedId={selectedConversationId}
+        />
       )}
       {isRenaming ? (
         <Input
@@ -505,6 +482,32 @@ export function WorkspaceChatPanel({
         </>
       )}
       <div className="flex-1" />
+      {isReferralChat && (
+        <Badge
+          variant="ghost"
+          className="shrink-0 bg-muted px-2 py-0.5 font-normal text-muted-foreground"
+        >
+          {t("This chat doesn't consume credits")}
+        </Badge>
+      )}
+      <TooltipProvider delayDuration={400}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0"
+              onClick={handleNewChat}
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="flex items-center gap-2">
+            {t('New chat')}
+            <span className="text-[11px] opacity-50">⇧⌘O</span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       {!floating && canPopOut && onPopOut && (
         <TooltipProvider delayDuration={400}>
           <Tooltip>
@@ -603,20 +606,9 @@ export function WorkspaceChatPanel({
 
   if (!floating) {
     return (
-      <div className="flex h-full overflow-hidden bg-background">
-        {effectivePinned && (
-          <div className="shrink-0 overflow-hidden border-r animate-in slide-in-from-left-2 duration-200">
-            <ConversationList
-              onNewChat={handleNewChat}
-              onSelect={handleSelectConversation}
-              selectedId={selectedConversationId}
-            />
-          </div>
-        )}
-        <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-          {renderHeader()}
-          {body}
-        </div>
+      <div className="flex h-full flex-col min-w-0 min-h-0 overflow-hidden bg-background">
+        {renderHeader()}
+        {body}
       </div>
     );
   }

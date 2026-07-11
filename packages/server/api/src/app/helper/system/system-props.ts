@@ -92,6 +92,11 @@ export enum AppSystemProp {
     REDIS_URL = 'REDIS_URL',
     REDIS_USER = 'REDIS_USER',
     REDIS_USE_SSL = 'REDIS_USE_SSL',
+    REFERRAL_DEV_ENABLED = 'REFERRAL_DEV_ENABLED',
+    // Dev-only: new platforms get chat working with zero setup — the initial
+    // plan ships chatEnabled=true and a chat provider is seeded automatically.
+    // Ignored in production.
+    CHAT_DEV_AUTO_SETUP = 'CHAT_DEV_AUTO_SETUP',
     RUNS_METADATA_UPDATE_CONCURRENCY = 'RUNS_METADATA_UPDATE_CONCURRENCY',
     S3_ACCESS_KEY_ID = 'S3_ACCESS_KEY_ID',
     S3_BUCKET = 'S3_BUCKET',

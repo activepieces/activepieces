@@ -48,6 +48,36 @@ export const aiToolConfigService = (_log: FastifyBaseLogger) => ({
         await aiToolConfigRepo().delete({ platformId, id })
     },
 
+    // Dev-only companion to the chat-provider auto-seed: copies the enabled AI
+    // tool capabilities (web search, scraping, image gen, enrichment) from the
+    // most recently updated platform that has them, so a fresh dev platform
+    // gets the full toolbelt with zero setup. Row-level clone — the instance
+    // encryption key makes the encrypted auth transferable.
+    async cloneDevConfigs({ platformId }: { platformId: PlatformId }): Promise<void> {
+        const existing = await aiToolConfigRepo().findBy({ platformId })
+        const existingCapabilities = new Set(existing.map((config) => config.capability))
+        const sources = await aiToolConfigRepo().find({
+            where: { enabled: true },
+            order: { updated: 'DESC' },
+        })
+        const seen = new Set<string>()
+        for (const source of sources) {
+            if (source.platformId === platformId || existingCapabilities.has(source.capability) || seen.has(source.capability)) {
+                continue
+            }
+            seen.add(source.capability)
+            await aiToolConfigRepo().save({
+                id: apId(),
+                platformId,
+                capability: source.capability,
+                provider: source.provider,
+                auth: source.auth,
+                config: source.config,
+                enabled: true,
+            })
+        }
+    },
+
     async getEnabledTools({ platformId }: { platformId: PlatformId }): Promise<GetEnabledAiToolsResponse> {
         const configs = await aiToolConfigRepo().findBy({ platformId, enabled: true })
         const result: GetEnabledAiToolsResponse = {}
@@ -65,6 +95,9 @@ export const aiToolConfigService = (_log: FastifyBaseLogger) => ({
                     break
                 case AiToolCapability.IMAGE_GENERATION:
                     result.imageGeneration = resolved
+                    break
+                case AiToolCapability.ENRICHMENT:
+                    result.enrichment = resolved
                     break
             }
         }

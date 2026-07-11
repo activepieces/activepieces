@@ -2,38 +2,31 @@ import { CornerDownRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { AutomationSuggestion } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
-import { RECURRING_AUTOMATION_REPLY, RecurringChip } from './recurring-chip';
+import { AutomationChip } from './automation-chip';
 
 export function QuickReplies({
   replies,
-  offerRecurringAutomation = false,
+  automationSuggestion,
   onSend,
   max = 3,
   className,
 }: {
   replies: string[];
-  offerRecurringAutomation?: boolean;
+  automationSuggestion?: AutomationSuggestion;
   onSend: (text: string, files?: File[]) => void;
   max?: number;
   className?: string;
 }) {
-  const contextualReplies = offerRecurringAutomation
-    ? replies
-        .filter(
-          (reply) =>
-            reply.trim().toLowerCase() !==
-            RECURRING_AUTOMATION_REPLY.toLowerCase(),
-        )
-        .slice(0, Math.min(max, 2))
-    : replies.slice(0, max);
-
-  if (contextualReplies.length === 0 && !offerRecurringAutomation) return null;
+  const normalMax = automationSuggestion ? Math.max(0, max - 1) : max;
+  const shown = replies.slice(0, normalMax);
+  if (shown.length === 0 && !automationSuggestion) return null;
 
   return (
     <div className={cn('flex flex-col gap-3 px-1 pb-3', className)}>
-      {contextualReplies.map((reply, i) => (
+      {shown.map((reply, i) => (
         <motion.button
           key={`${i}-${reply}`}
           type="button"
@@ -49,18 +42,12 @@ export function QuickReplies({
           </TextWithTooltip>
         </motion.button>
       ))}
-      {offerRecurringAutomation && (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.25,
-            delay: contextualReplies.length * 0.06,
-            ease: 'easeOut',
-          }}
-        >
-          <RecurringChip onSend={() => onSend(RECURRING_AUTOMATION_REPLY)} />
-        </motion.div>
+      {automationSuggestion && (
+        <AutomationChip
+          label={automationSuggestion.label}
+          onClick={() => onSend(automationSuggestion.prompt)}
+          index={shown.length}
+        />
       )}
     </div>
   );

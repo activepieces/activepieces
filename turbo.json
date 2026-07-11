@@ -24,7 +24,9 @@
     "AP_FRONTEND_URL",
     "AP_DEV_WEB_PORT",
     "AP_DEV_API_PORT",
-    "AP_REDIS_DB"
+    "AP_REDIS_DB",
+    "AP_REFERRAL_DEV_ENABLED",
+    "AP_CHAT_DEV_AUTO_SETUP"
   ],
   "tasks": {
     "build": {

@@ -150,6 +150,19 @@ export function useBrowseController({
     setSettingsOpen(true);
   }, [ensureCurrentProject]);
 
+  const openProject = useCallback(
+    (projectId: string) => {
+      if (projectId !== activeProjectId) {
+        projectCollectionUtils.setCurrentProject(projectId);
+      }
+      const chat = new URLSearchParams(window.location.search).get('chat');
+      const base = `/projects/${projectId}/automations`;
+      navigate(chat ? `${base}?chat=${chat}` : base);
+      onClose();
+    },
+    [navigate, onClose, activeProjectId],
+  );
+
   const switchProject = useCallback(
     (projectId: string) => {
       browse.selectProject(projectId, 'project');
@@ -332,7 +345,7 @@ export function useBrowseController({
     else nav.action.onSelect();
   }, [navItems, clampedIndex, openItem]);
 
-  const pinProjectSidebar = uiPrefs.prefs.pinProjectSidebar ?? false;
+  const pinProjectSidebar = uiPrefs.prefs.pinProjectSidebar ?? true;
   const togglePinProjectSidebar = useCallback(() => {
     uiPrefs.update(
       { pinProjectSidebar: !pinProjectSidebar },
@@ -367,6 +380,7 @@ export function useBrowseController({
     openSelected,
     openItem,
     openDestination,
+    openProject,
     projectActions,
     hideTables: embedState.hideTables,
     canWriteFlow,
@@ -431,6 +445,7 @@ export type BrowseController = {
     stageType: StageResource['type'];
     path: string;
   }) => void;
+  openProject: (projectId: string) => void;
   projectActions: BrowseAction[];
   hideTables: boolean;
   canWriteFlow: boolean;

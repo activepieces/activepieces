@@ -88,7 +88,6 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
   const { search, pathname } = useLocation();
   const stageRef = useRef<HTMLDivElement>(null);
   const { width } = useElementSize(stageRef);
-  const [stack, setStack] = useState<StageResource[]>([]);
   const [stageFocus, setStageFocus] = useState<StageFocus | null>(null);
   const [stageExcerpt, setStageExcerpt] = useState<StageExcerpt | null>(null);
   const [browserView, setBrowserView] = useState<BrowserViewData | null>(null);
@@ -140,24 +139,6 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
     return { type: 'none' };
   }, [pathname]);
 
-  useEffect(() => {
-    setStack((prev) => {
-      if (current.type === 'none') {
-        return [];
-      }
-      const key = resourceKey(current);
-      const top = prev[prev.length - 1];
-      if (top && resourceKey(top) === key) {
-        return prev;
-      }
-      const below = prev[prev.length - 2];
-      if (below && resourceKey(below) === key) {
-        return prev.slice(0, -1);
-      }
-      return [...prev, current];
-    });
-  }, [current]);
-
   const open = useCallback(
     (resource: StageResource) => {
       const chat = new URLSearchParams(search).get('chat');
@@ -167,16 +148,6 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
     },
     [navigate, search],
   );
-
-  const back = useCallback(() => {
-    const target = stack[stack.length - 2];
-    if (!target) {
-      return;
-    }
-    const chat = new URLSearchParams(search).get('chat');
-    const path = resourcePath(target);
-    navigate(chat ? `${path}?chat=${chat}` : path);
-  }, [navigate, search, stack]);
 
   const closeStage = useCallback(() => {
     setBrowserView(null);
@@ -222,10 +193,32 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
   // swap the live iframe for a paused state immediately — both because the iframe shows nothing
   // useful once the agent stops driving, and to avoid an Unauthorized flash if the session is
   // closed. The worker's awaited trailing event then settles the final state ('idle' or 'closed').
+  //
+  // EXCEPTION — a human hand-off (interactive): the agent handed the browser to the user to clear a
+  // login / 2FA / CAPTCHA / final submit, so the iframe is exactly what they need. Leave it live +
+  // interactive (do NOT downgrade to a paused screenshot); the worker's trailing 'handoff' frame
+  // then settles it. Downgrading here would strand the takeover the agent just asked for.
   const pauseBrowserViewIfLive = useCallback(() => {
     setBrowserView((prev) =>
-      prev && prev.status === 'live' ? { ...prev, status: 'idle' } : prev,
+      prev && prev.status === 'live' && !prev.interactive
+        ? { ...prev, status: 'idle' }
+        : prev,
     );
+  }, []);
+
+  // Cross-panel send bridge. The chat panel registers its send fn (registerChatSend) and the Stage
+  // content invokes requestChatSend to post a message into the chat — used by the browser hand-off
+  // "continue" button, which lives in the Stage (outside the chat panel) but must resume the agent.
+  // Ref-backed so registering never re-renders; both panels live under this provider.
+  const chatSendRef = useRef<((text: string) => void) | null>(null);
+  const registerChatSend = useCallback(
+    (fn: ((text: string) => void) | null) => {
+      chatSendRef.current = fn;
+    },
+    [],
+  );
+  const requestChatSend = useCallback((text: string) => {
+    chatSendRef.current?.(text);
   }, []);
 
   useEffect(() => {
@@ -250,9 +243,6 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
       stageKey,
       activeProjectId,
       open,
-      back,
-      canGoBack: stack.length > 1,
-      previous: stack.length > 1 ? stack[stack.length - 2] : null,
       closeStage,
       isStageOpen,
       stageRef,
@@ -267,14 +257,14 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
       showBrowserView,
       dismissBrowserView,
       pauseBrowserViewIfLive,
+      registerChatSend,
+      requestChatSend,
     }),
     [
       current,
       stageKey,
       activeProjectId,
       open,
-      back,
-      stack,
       closeStage,
       isStageOpen,
       width,
@@ -288,6 +278,8 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
       showBrowserView,
       dismissBrowserView,
       pauseBrowserViewIfLive,
+      registerChatSend,
+      requestChatSend,
     ],
   );
 
@@ -343,9 +335,6 @@ export type StageContextValue = {
   stageKey: string;
   activeProjectId: string | null;
   open: (resource: StageResource) => void;
-  back: () => void;
-  canGoBack: boolean;
-  previous: StageResource | null;
   closeStage: () => void;
   isStageOpen: boolean;
   stageRef: React.RefObject<HTMLDivElement | null>;
@@ -360,6 +349,8 @@ export type StageContextValue = {
   showBrowserView: (event: BrowserViewEvent) => void;
   dismissBrowserView: () => void;
   pauseBrowserViewIfLive: () => void;
+  registerChatSend: (fn: ((text: string) => void) | null) => void;
+  requestChatSend: (text: string) => void;
 };
 
 export type BrowserViewData = BrowserViewEvent;

@@ -1,4 +1,9 @@
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApEnvironment,
+  ApFlagId,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -50,6 +55,9 @@ import { SidebarUser } from '../sidebar-user';
 export function PlatformSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
+    ApFlagId.ENVIRONMENT,
+  );
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute({
     checkAccess,
@@ -211,6 +219,22 @@ export function PlatformSidebar() {
       ],
     },
   ];
+
+  if (
+    environment === ApEnvironment.DEVELOPMENT &&
+    edition !== ApEdition.COMMUNITY
+  ) {
+    groups.push({
+      label: t('Developer'),
+      items: [
+        {
+          to: '/platform/setup/dev-tools',
+          label: t('Dev Tools'),
+          icon: Settings2Icon,
+        },
+      ],
+    });
+  }
 
   return (
     <Sidebar className="border-r-0!">

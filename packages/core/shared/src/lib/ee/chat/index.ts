@@ -177,6 +177,11 @@ export enum ChatConversationStatus {
     ERROR = 'ERROR',
 }
 
+export enum ChatMode {
+    NORMAL = 'NORMAL',
+    REFERRAL = 'REFERRAL',
+}
+
 export const ChatConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
@@ -186,6 +191,7 @@ export const ChatConversation = z.object({
     modelName: Nullable(z.string()),
     status: z.nativeEnum(ChatConversationStatus).default(ChatConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
+    chatMode: z.enum([ChatMode.NORMAL, ChatMode.REFERRAL]).default(ChatMode.NORMAL),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
     uiMessages: z.array(PersistedChatMessageSchema).nullable().default(null),
     summary: Nullable(z.string()),
@@ -312,6 +318,7 @@ export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
 export { ChatMention, ChatMentionType } from '@activepieces/core-execution'
+export * from './chat-personalization'
 export { chatHarnessCatalog, type HarnessTool, type HarnessToolCategory } from './chat-harness-catalog'
 export { chatToolClassification } from './tool-classification'
 export { chatToolPhases, type ChatPhase } from './tool-phases'

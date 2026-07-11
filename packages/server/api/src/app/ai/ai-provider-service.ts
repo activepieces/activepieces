@@ -1,5 +1,5 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
-import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderWithoutSensitiveData, ApEnvironment, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, UpdateAIProviderRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -10,9 +10,12 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
+import { aiToolConfigService } from './ai-tool-config-service'
 import { aiProviders } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
@@ -28,6 +31,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
+        await this.ensureDefaultChatProvider({ platformId })
         const activepiecesExists = await aiProviderRepo().existsBy({
             platformId,
             provider: AIProviderName.ACTIVEPIECES,
@@ -144,8 +148,45 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return chatProvider?.provider ?? null
     },
 
+    // Chat works out of the box on fresh platforms: when AI credits are
+    // available (OpenRouter provision key set, i.e. cloud) the ACTIVEPIECES
+    // provider is created and chat-enabled automatically instead of stranding
+    // new signups on the "set up an AI provider" screen. In dev (opt-in via
+    // AP_CHAT_DEV_AUTO_SETUP, never production) an existing chat provider row
+    // from this single-developer instance is cloned as a stand-in.
+    async ensureDefaultChatProvider({ platformId }: { platformId: PlatformId }): Promise<void> {
+        const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
+        if (hasChatProvider) {
+            return
+        }
+        if (flagService(log).aiCreditsEnabled()) {
+            const activepieces = await aiProviderRepo().findOneBy({ platformId, provider: AIProviderName.ACTIVEPIECES })
+            if (isNil(activepieces)) {
+                await aiProviderRepo().save({
+                    id: apId(),
+                    auth: await encryptUtils.encryptObject({}),
+                    config: {},
+                    provider: AIProviderName.ACTIVEPIECES,
+                    displayName: 'Activepieces',
+                    platformId,
+                    enabledForChat: true,
+                })
+            }
+            else {
+                await aiProviderRepo().update(activepieces.id, { enabledForChat: true })
+            }
+            log.info({ platform: { id: platformId } }, '[aiProviderService] Auto-enabled Activepieces provider for chat')
+            return
+        }
+        await seedDevChatProvider(platformId, log)
+    },
+
     async getChatProvider({ platformId }: { platformId: PlatformId }): Promise<GetProviderConfigResponse | null> {
-        const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+        let chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+        if (isNil(chatProvider)) {
+            await this.ensureDefaultChatProvider({ platformId })
+            chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+        }
         if (isNil(chatProvider)) {
             return null
         }
@@ -316,6 +357,40 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
     return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config, platformId }
 }
 
+
+// Dev-only stand-in for the cloud AI-credits provisioning: clones the most
+// recently updated chat-enabled provider row (same instance encryption key, so
+// the auth transfers) onto the platform. Opt-in via AP_CHAT_DEV_AUTO_SETUP and
+// hard-disabled in production — cross-platform credential reuse is only
+// acceptable on a single-developer instance.
+async function seedDevChatProvider(platformId: PlatformId, log: FastifyBaseLogger): Promise<void> {
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    const devAutoSetup = system.getBoolean(AppSystemProp.CHAT_DEV_AUTO_SETUP) ?? false
+    if (environment === ApEnvironment.PRODUCTION || !devAutoSetup) {
+        return
+    }
+    const source = await aiProviderRepo().findOne({
+        where: { enabledForChat: true },
+        order: { updated: 'DESC' },
+    })
+    if (isNil(source) || source.platformId === platformId) {
+        log.warn({ platform: { id: platformId } }, '[aiProviderService] CHAT_DEV_AUTO_SETUP is on but no chat provider exists to clone — configure one in admin AI settings first')
+        return
+    }
+    await aiProviderRepo().save({
+        id: apId(),
+        platformId,
+        provider: source.provider,
+        displayName: source.displayName,
+        auth: source.auth,
+        config: source.config,
+        enabledForChat: true,
+    })
+    // The AI tool capabilities (search/scrape/image/enrichment) ride along so
+    // the fresh dev platform gets the whole toolbelt, not just chat.
+    await tryCatch(() => aiToolConfigService(log).cloneDevConfigs({ platformId }))
+    log.warn({ platform: { id: platformId }, sourcePlatform: { id: source.platformId }, provider: { name: source.provider } }, '[aiProviderService] Dev auto-setup: cloned chat provider onto new platform')
+}
 
 async function doesActivepiecesProviderHasKeys(aiProvider: AIProviderSchema): Promise<boolean> {
     if (isNil(aiProvider) || isNil(aiProvider.auth)) {

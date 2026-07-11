@@ -1,117 +1,107 @@
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-
+import { DynamicToolUIPart } from 'ai';
 import { describe, expect, it } from 'vitest';
 
-import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { chatPartUtils, ChatUIMessage } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 
-function readFromWeb(relative: string): string {
-  return readFileSync(path.join(process.cwd(), relative), 'utf8');
-}
-
-function quickRepliesMessage(
-  input: { replies?: string[]; offerRecurringAutomation?: boolean },
-  state: 'input-available' | 'output-available' = 'output-available',
-): ChatUIMessage {
+function quickRepliesPart(input: unknown): DynamicToolUIPart {
   return {
-    id: 'assistant-1',
-    role: 'assistant',
-    parts: [
-      { type: 'text', text: 'All done.' },
-      {
-        type: 'tool-ap_show_quick_replies',
-        toolCallId: 'call-1',
-        state,
-        input,
-        ...(state === 'output-available' ? { output: { displayed: true } } : {}),
-      },
-    ],
-  } as ChatUIMessage;
+    type: 'dynamic-tool',
+    toolCallId: 't1',
+    toolName: 'ap_show_quick_replies',
+    state: 'output-available',
+    input,
+    output: JSON.stringify({ displayed: true }),
+  };
 }
 
-describe('quick replies extraction', () => {
-  describe('extractQuickRepliesFromParts', () => {
-    it('returns replies with offerRecurringAutomation false by default', () => {
-      const result = chatPartUtils.extractQuickRepliesFromParts(
-        quickRepliesMessage({ replies: ['A', 'B'] }),
-      );
-      expect(result).toEqual({
-        replies: ['A', 'B'],
-        offerRecurringAutomation: false,
-      });
-    });
+function assistantMessage(parts: ChatUIMessage['parts']): ChatUIMessage {
+  return { id: 'm1', role: 'assistant', parts };
+}
 
-    it('surfaces offerRecurringAutomation when set', () => {
-      const result = chatPartUtils.extractQuickRepliesFromParts(
-        quickRepliesMessage({ replies: ['A'], offerRecurringAutomation: true }),
-      );
-      expect(result.offerRecurringAutomation).toBe(true);
-      expect(result.replies).toEqual(['A']);
-    });
+function userMessage(text: string): ChatUIMessage {
+  return { id: 'u1', role: 'user', parts: [{ type: 'text', text }] };
+}
 
-    it('reads from input-available (streaming) parts too', () => {
-      const result = chatPartUtils.extractQuickRepliesFromParts(
-        quickRepliesMessage(
-          { replies: ['A'], offerRecurringAutomation: true },
-          'input-available',
-        ),
-      );
-      expect(result.offerRecurringAutomation).toBe(true);
+describe('extractQuickRepliesFromParts', () => {
+  it('returns empty replies for null or non-assistant messages', () => {
+    expect(chatPartUtils.extractQuickRepliesFromParts(null)).toEqual({
+      replies: [],
     });
+    expect(
+      chatPartUtils.extractQuickRepliesFromParts(userMessage('hey')),
+    ).toEqual({ replies: [] });
+  });
 
-    it('returns empty for a non-assistant message', () => {
-      const result = chatPartUtils.extractQuickRepliesFromParts({
-        id: 'u1',
-        role: 'user',
-        parts: [{ type: 'text', text: 'hi' }],
-      } as ChatUIMessage);
-      expect(result).toEqual({ replies: [], offerRecurringAutomation: false });
+  it('extracts replies and a well-formed automation suggestion', () => {
+    const msg = assistantMessage([
+      quickRepliesPart({
+        replies: ['Draft the follow-ups', 'Show me stalled deals'],
+        automationSuggestion: {
+          label: 'Never chase deals by hand again',
+          prompt: 'Set this up to run automatically for me',
+        },
+      }),
+    ]);
+    expect(chatPartUtils.extractQuickRepliesFromParts(msg)).toEqual({
+      replies: ['Draft the follow-ups', 'Show me stalled deals'],
+      automationSuggestion: {
+        label: 'Never chase deals by hand again',
+        prompt: 'Set this up to run automatically for me',
+      },
     });
   });
 
-  describe('extractQuickRepliesFromHistory', () => {
-    it('reads replies and the recurring flag from the last message', () => {
-      const result = chatUtils.extractQuickRepliesFromHistory([
-        quickRepliesMessage({ replies: ['A', 'B'], offerRecurringAutomation: true }),
-      ]);
-      expect(result).toEqual({
-        replies: ['A', 'B'],
-        offerRecurringAutomation: true,
-      });
-    });
-
-    it('returns empty when there is no quick-replies part', () => {
-      const result = chatUtils.extractQuickRepliesFromHistory([
-        {
-          id: 'a1',
-          role: 'assistant',
-          parts: [{ type: 'text', text: 'no chips' }],
-        } as ChatUIMessage,
-      ]);
-      expect(result).toEqual({ replies: [], offerRecurringAutomation: false });
+  it('drops a malformed automation suggestion but keeps replies', () => {
+    const msg = assistantMessage([
+      quickRepliesPart({
+        replies: ['Do X'],
+        automationSuggestion: { label: 'Missing prompt' },
+      }),
+    ]);
+    expect(chatPartUtils.extractQuickRepliesFromParts(msg)).toEqual({
+      replies: ['Do X'],
     });
   });
 
-  // The chip text, the message sent on click, and the agent's trigger phrase are
-  // the same literal in 3 files. This guards against a rename silently breaking it.
-  describe('recurring-automation trigger phrase contract', () => {
-    it('matches the phrase the prompt guides watch for', () => {
-      const component = readFromWeb(
-        'src/app/routes/chat-with-ai/components/recurring-chip.tsx',
-      );
-      const phrase = component.match(
-        /RECURRING_AUTOMATION_REPLY = '([^']+)'/,
-      )?.[1];
-      expect(phrase).toBeTruthy();
+  it('filters out non-string replies', () => {
+    const msg = assistantMessage([
+      quickRepliesPart({ replies: ['keep', 42, null, 'also'] }),
+    ]);
+    expect(chatPartUtils.extractQuickRepliesFromParts(msg)).toEqual({
+      replies: ['keep', 'also'],
+    });
+  });
 
-      const guides = [
-        '../server/api/src/assets/prompts/guides/one_time_task.md',
-        '../server/api/src/assets/prompts/guides/build_flow.md',
-      ];
-      for (const guide of guides) {
-        expect(readFromWeb(guide)).toContain(phrase!);
-      }
+  it('returns empty replies when there is no quick-replies part', () => {
+    const msg = assistantMessage([{ type: 'text', text: 'hello' }]);
+    expect(chatPartUtils.extractQuickRepliesFromParts(msg)).toEqual({
+      replies: [],
+    });
+  });
+});
+
+describe('extractQuickRepliesFromHistory', () => {
+  it('reads the last assistant message and returns the same shape', () => {
+    const messages: ChatUIMessage[] = [
+      assistantMessage([{ type: 'text', text: 'earlier' }]),
+      userMessage('hey'),
+      assistantMessage([
+        quickRepliesPart({
+          replies: ['Latest'],
+          automationSuggestion: { label: 'Put it on autopilot', prompt: 'do it' },
+        }),
+      ]),
+    ];
+    expect(chatUtils.extractQuickRepliesFromHistory(messages)).toEqual({
+      replies: ['Latest'],
+      automationSuggestion: { label: 'Put it on autopilot', prompt: 'do it' },
+    });
+  });
+
+  it('returns empty replies for an empty history', () => {
+    expect(chatUtils.extractQuickRepliesFromHistory([])).toEqual({
+      replies: [],
     });
   });
 });

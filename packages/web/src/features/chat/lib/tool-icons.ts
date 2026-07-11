@@ -27,6 +27,8 @@ import {
   StickyNote,
   Table,
   Trash2,
+  Trophy,
+  Wand2,
   Workflow,
   Wrench,
   Zap,
@@ -99,6 +101,9 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   ap_run_code: Code,
   ap_fetch_url: Link,
   ap_scrape_url: Globe,
+
+  ap_generate_referral_phrase: Wand2,
+  ap_show_referral_status: Trophy,
 };
 
 export const toolIconUtils = { getToolIcon };

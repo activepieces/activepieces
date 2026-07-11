@@ -87,6 +87,9 @@ export type WorkerToApiContract = {
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
     sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse>
+    getPersonalizationConfig(input: GetPersonalizationConfigRequest): Promise<PersonalizationConfigResponse>
+    savePersonalizationResult(input: SavePersonalizationResultRequest): Promise<void>
+    sendPersonalizationProgress(input: SendPersonalizationProgressRequest): Promise<void>
 }
 
 export type SendChatEventRequest = {
@@ -184,6 +187,7 @@ export type BuildPlanEvent = {
     flowId?: string
     flowName?: string
     tagline?: string
+    outcome?: string
     iconName?: string
     projectId?: string
     phase: BuildPlanPhase
@@ -203,9 +207,11 @@ export type BrowserViewEvent = {
     sessionId: string
     liveViewUrl: string
     interactiveLiveViewUrl?: string
-    // 'live' = the agent is actively driving it. 'idle' = parked between turns, the session is
-    // still alive and resumable on the next message. 'closed' = the session ended for good.
-    status: 'live' | 'idle' | 'closed'
+    // 'live' = the agent is actively driving it. 'handoff' = the agent's turn ended but the session
+    // is still alive and INTERACTIVE, waiting for the human to clear a wall in the browser (login /
+    // 2FA / CAPTCHA / final submit). 'idle' = parked between turns (agent paused, no human wall), the
+    // session is still alive and resumable on the next message. 'closed' = the session ended for good.
+    status: 'live' | 'handoff' | 'idle' | 'closed'
     interactive: boolean
     displayName?: string
     finalScreenshot?: string
@@ -269,10 +275,27 @@ export type ChatConfigResponse = {
     aiTools: ChatAiToolsConfig
     emailEnabled: boolean
     userEmail: string
+    // 'NORMAL' | 'REFERRAL' (ChatMode). The worker uses this to scope the tool set: a REFERRAL
+    // conversation is a locked-down "Refer & earn" chat that gets only the referral tools.
+    chatMode: string
     // toolName -> the arg holding the resource id ('tableId' | 'flowId'). The worker announces
     // the Stage AI lock (which gates realtime deltas) for exactly these tools. Derived on the API
     // from each tool's permission + id arg so the worker never hand-maintains a drifting name list.
     mutatingResourceTools: Record<string, string>
+    // Set when this turn's user message matched a referral phrase (verified redemption or the
+    // inviter saying their own phrase). The worker prepends an ap_show_referral_celebration
+    // tool-call part so the frontend plays the celebration show instantly, before the LLM text.
+    referralCelebration?: ReferralCelebrationConfig
+}
+
+export type ReferralCelebrationConfig = {
+    outcome: 'released' | 'self_referral'
+    phrase: string
+    amountUsd?: number
+    // A signed, cross-user-readable URL to the hero scene generated at mint (the phrase depicted as a
+    // real illustration). Absent for pre-feature phrases / gen failures → the frontend shows a
+    // tasteful gradient fallback.
+    heroImageUrl?: string
 }
 
 export type SaveChatMessagesRequest = {
@@ -347,4 +370,65 @@ export type SendChatEmailResponse = {
 export type DisableFlowRequest = {
     flowId: string
     projectId: string
+}
+
+// Chat-personalization research RPCs. Profile/use-case payloads stay loosely
+// typed here because core-execution cannot import the shared ee/chat zod
+// models; the API validates them with PersonalizationProfile on save.
+export type PersonalizationScope = 'company' | 'user'
+
+export type GetPersonalizationConfigRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+}
+
+export type PersonalizationConfigResponse = {
+    // false = another job owns the row (CAS claim lost); the worker exits silently.
+    claimed: boolean
+    provider: string
+    auth: Record<string, unknown>
+    providerConfig: Record<string, unknown>
+    modelId: string
+    fastModelId: string
+    user: { firstName: string, lastName: string, email: string }
+    platformName: string
+    website: string | null
+    // The role the user typed during onboarding — authoritative over enrichment.
+    role: string | null
+    companyProfile: Record<string, unknown> | null
+    // Apollo-style people/company enrichment credentials when the platform has
+    // the ENRICHMENT AI capability configured.
+    enrichment: { provider: string, apiKey: string } | null
+    // Direct web-search credentials (Tavily) when the platform has the
+    // WEB_SEARCH AI capability configured — powers the parallel research
+    // queries that keep personalization deep AND fast.
+    webSearch: { provider: string, apiKey: string } | null
+}
+
+export type PersonalizationUseCaseResult = {
+    id: string
+    title: string
+    prompt: string
+    imageId: string
+    app?: string
+    kind?: 'mission' | 'routine'
+}
+
+export type SavePersonalizationResultRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+    status: 'READY' | 'FAILED'
+    profile: Record<string, unknown> | null
+    useCases: PersonalizationUseCaseResult[] | null
+    placeholderPlatformName: string | null
+}
+
+export type SendPersonalizationProgressRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+    phase: string
+    message: string
 }

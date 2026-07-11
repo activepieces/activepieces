@@ -1,8 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
+import { ChevronsUpDown, CreditCard, LogOut, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -22,6 +24,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -33,10 +36,14 @@ export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  // Billing (and usage) only exists on Cloud.
+  const showBilling = edition === ApEdition.CLOUD;
   if (!user || embedState.isEmbedded) {
     return null;
   }
@@ -52,7 +59,7 @@ export function SidebarUser() {
       <SidebarMenuItem>
         <DropdownMenu modal>
           <DropdownMenuTrigger asChild className="w-full">
-            <SidebarMenuButton className="h-10! pl-2! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-2!">
+            <SidebarMenuButton className="h-10! group-data-[collapsible=icon]:h-10!">
               <div className="size-[18px] shrink-0 overflow-hidden flex items-center justify-center rounded-full">
                 <UserAvatar
                   className={cn('size-full object-cover', {
@@ -109,6 +116,15 @@ export function SidebarUser() {
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
+
+              {showBilling && (
+                <DropdownMenuItem
+                  onClick={() => navigate('/platform/setup/billing')}
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {t('Billing & Usage')}
+                </DropdownMenuItem>
+              )}
 
               <HelpAndFeedback />
             </DropdownMenuGroup>

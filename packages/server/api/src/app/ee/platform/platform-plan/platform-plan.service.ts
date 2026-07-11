@@ -139,13 +139,23 @@ function getPriceIdFor(price: PRICE_NAMES): string {
 }
 
 function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
-    switch (edition) {
-        case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
-            return OPEN_SOURCE_PLAN
-        case ApEdition.CLOUD:
-            return STANDARD_CLOUD_PLAN
+    const plan = ((): PlatformPlanWithOnlyLimits => {
+        switch (edition) {
+            case ApEdition.COMMUNITY:
+            case ApEdition.ENTERPRISE:
+                return OPEN_SOURCE_PLAN
+            case ApEdition.CLOUD:
+                return STANDARD_CLOUD_PLAN
+        }
+    })()
+    // Dev-only: chat works out of the box on fresh platforms (paired with the
+    // chat-provider auto-seed in aiProviderService.ensureDefaultChatProvider).
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    const devAutoChat = system.getBoolean(AppSystemProp.CHAT_DEV_AUTO_SETUP) ?? false
+    if (devAutoChat && environment !== ApEnvironment.PRODUCTION) {
+        return { ...plan, chatEnabled: true }
     }
+    return plan
 }
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
@@ -178,6 +188,12 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
 async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | undefined> {
     const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
     if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING || environment === ApEnvironment.DEVELOPMENT) {
+        return undefined
+    }
+    // Local cloud-mode dev has no Stripe key; a missing customer must not brick
+    // the platform's first plan-gated request. Production still fails loudly.
+    if (environment !== ApEnvironment.PRODUCTION && isNil(stripeSecretKey)) {
+        log.warn({ platform: { id: platformId } }, '[platformPlanService] STRIPE_SECRET_KEY not set, skipping Stripe customer creation (non-production)')
         return undefined
     }
     const stripeCustomerId = await stripeHelper(log).createCustomer(

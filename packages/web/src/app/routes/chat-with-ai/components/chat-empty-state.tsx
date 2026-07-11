@@ -1,3 +1,8 @@
+import {
+  ChatPersonalizationStatus,
+  PersonalizationProfile,
+  PersonalizationUseCase,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowUpRight,
@@ -6,7 +11,7 @@ import {
   ChevronRight,
   Settings,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
   ReactNode,
@@ -21,11 +26,18 @@ import { useNavigate } from 'react-router-dom';
 import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
-import { QuickReplies } from './quick-replies';
+import { PersonalizationJourney } from './personalization-journey';
+import { PersonalizationBar } from './personalized-for-chip';
+
+// After the final 'done' event the journey holds briefly so the last step
+// visibly crosses out before the personalized cards take the stage.
+const JOURNEY_EXIT_HOLD_MS = 900;
 
 export function EmptyState({
   onSuggestionClick,
@@ -39,7 +51,27 @@ export function EmptyState({
 }) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const firstName = currentUser?.firstName ?? '';
+  const branding = flagsHooks.useWebsiteBranding();
   const stage = useStageOptional();
+  const personalization = usePersonalization({ enabled: !incognito });
+  const reducedMotion = useReducedMotion();
+  const journeyVisible = useTrailingEdgeHold(
+    personalization.isResearching,
+    reducedMotion ? 0 : JOURNEY_EXIT_HOLD_MS,
+  );
+
+  const personalizedCards = useMemo(
+    () => resolvePersonalizedCards({ useCases: personalization.useCases }),
+    [personalization.useCases],
+  );
+  // Defaults render immediately — the personalization query must never delay
+  // or skeleton the empty state; null (failed/skipped/non-cloud) keeps today's
+  // experience pixel-identical.
+  const cards = personalizedCards ?? EXAMPLE_CARDS.map(resolveDefaultCard);
+  // During the exit hold all steps show crossed out.
+  const journeyPhase = personalization.isResearching
+    ? personalization.phase
+    : 'done';
 
   if (incognito) {
     return (
@@ -51,41 +83,113 @@ export function EmptyState({
     );
   }
 
+  // When the chat is the secondary panel (Stage open), the empty state stays
+  // quiet: no headline, no marquee, no use-case cards. Just the product mark and
+  // one subtle line that step out of the way the moment the user starts typing.
   if (stage?.isStageOpen) {
     return (
-      <div className="flex min-h-full flex-col justify-center px-4 sm:px-6 py-10">
-        <div className="mx-auto w-full max-w-md flex flex-col gap-6">
-          <Greeting firstName={firstName} incognito={false} compact />
-          <CollapseOnInput collapsed={hasInput}>
-            <QuickReplies
-              replies={EXAMPLE_CARDS.map((card) => t(card.prompt))}
-              onSend={onSuggestionClick}
-              max={EXAMPLE_CARDS.length}
-              className="gap-5"
-            />
-          </CollapseOnInput>
-        </div>
+      <div className="flex min-h-full flex-col items-center justify-center px-4 sm:px-6 py-10 text-center">
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className={cn(
+            'flex flex-col items-center gap-2.5 transition-opacity duration-300',
+            hasInput && 'opacity-0',
+          )}
+        >
+          <img
+            src={branding.logos.logoIconUrl}
+            alt=""
+            aria-hidden
+            className="size-5 object-contain opacity-30 brightness-0 dark:invert"
+          />
+          <p className="max-w-[13rem] text-sm text-muted-foreground">
+            {t("Tell me what you need. I'll handle the rest.")}
+          </p>
+        </motion.div>
       </div>
     );
   }
 
+  // While researching, the journey takes over the whole empty chat space —
+  // the user is entering the world of AI, not waiting on a spinner.
   return (
-    <div className="flex min-h-full flex-col pt-12 sm:pt-16 pb-6">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
-          <div className="min-w-0 sm:flex-1 sm:max-w-md">
-            <Greeting firstName={firstName} incognito={false} />
+    <AnimatePresence mode="wait" initial={false}>
+      {journeyVisible ? (
+        <motion.div
+          key="journey"
+          className="flex min-h-full flex-col justify-center pt-12 sm:pt-16 pb-6"
+          exit={
+            reducedMotion
+              ? { opacity: 0 }
+              : { opacity: 0, y: -20, scale: 0.985 }
+          }
+          transition={{ duration: 0.35, ease: 'easeIn' }}
+        >
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+            <div className="max-w-xl">
+              <PersonalizationJourney
+                phase={journeyPhase}
+                message={personalization.feedMessage}
+                firstName={firstName}
+              />
+            </div>
           </div>
-          <div className="hidden sm:contents">
-            <AppMarquee />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="content"
+          className="flex min-h-full flex-col pt-12 sm:pt-16 pb-6"
+          initial={reducedMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        >
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
+              <div className="min-w-0 sm:flex-1 sm:max-w-md">
+                <Greeting firstName={firstName} incognito={false} />
+              </div>
+              <div className="hidden sm:contents">
+                <AppMarquee />
+              </div>
+            </div>
+            <CollapseOnInput collapsed={hasInput}>
+              <ExampleCards
+                cards={cards}
+                personalized={personalizedCards !== null}
+                status={personalization.status}
+                profile={personalization.profile}
+                onRerun={personalization.rerun}
+                onReset={personalization.reset}
+                onPersonalizeAgain={personalization.personalizeAgain}
+                onSuggestionClick={onSuggestionClick}
+              />
+            </CollapseOnInput>
           </div>
-        </div>
-        <CollapseOnInput collapsed={hasInput}>
-          <ExampleCards onSuggestionClick={onSuggestionClick} />
-        </CollapseOnInput>
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
+}
+
+// Rising edge passes through immediately; the falling edge is held for
+// `holdMs` (timer sync — a legitimate useEffect escape hatch).
+function useTrailingEdgeHold(value: boolean, holdMs: number): boolean {
+  const [held, setHeld] = useState(value);
+  useEffect(() => {
+    if (value) {
+      setHeld(true);
+      return;
+    }
+    if (holdMs === 0) {
+      setHeld(false);
+      return;
+    }
+    const timer = setTimeout(() => setHeld(false), holdMs);
+    return () => clearTimeout(timer);
+  }, [value, holdMs]);
+  return held;
 }
 
 function CollapseOnInput({
@@ -151,11 +255,9 @@ export function MessageSkeletons() {
 function Greeting({
   firstName,
   incognito,
-  compact = false,
 }: {
   firstName: string;
   incognito: boolean;
-  compact?: boolean;
 }) {
   const headline = useMemo(
     () =>
@@ -170,28 +272,18 @@ function Greeting({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h1
-        className={cn(
-          'font-bold leading-[1.1] text-balance font-sentient',
-          compact ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl',
-        )}
-      >
+      <h1 className="text-4xl sm:text-5xl font-bold leading-[1.1] text-balance font-sentient">
         {incognito
           ? t('Private Chat')
           : firstName
           ? t(headline.withName, { name: firstName })
           : t(headline.plain)}
       </h1>
-      {!incognito && !compact && (
+      {!incognito && (
         <p className="text-base text-muted-foreground max-w-xl">
           {t(
             "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.",
           )}
-        </p>
-      )}
-      {!incognito && compact && (
-        <p className="text-sm text-muted-foreground">
-          {t("Tell me what you need — I'll handle the rest.")}
         </p>
       )}
     </motion.div>
@@ -315,8 +407,22 @@ const MarqueeColumn = memo(function MarqueeColumn({
 });
 
 function ExampleCards({
+  cards,
+  personalized,
+  status,
+  profile,
+  onRerun,
+  onReset,
+  onPersonalizeAgain,
   onSuggestionClick,
 }: {
+  cards: ResolvedCard[];
+  personalized: boolean;
+  status: ChatPersonalizationStatus | null;
+  profile: PersonalizationProfile | null;
+  onRerun: (input: { website: string; role: string }) => void;
+  onReset: () => void;
+  onPersonalizeAgain: () => void;
   onSuggestionClick: (text: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -324,8 +430,22 @@ function ExampleCards({
 
   const handleToggle = () => setExpanded((value) => !value);
 
+  // Headline row shows the strongest 4; the expanded grid holds the whole
+  // personalized set (no stock filler ever mixes into a personalized set).
+  const carouselCards = personalized ? cards.slice(0, 4) : cards;
+  const expandedCards = personalized
+    ? cards
+    : ALL_EXAMPLE_CARDS.map(resolveDefaultCard);
+
   return (
     <div className="mt-16">
+      <PersonalizationBar
+        status={status}
+        profile={profile}
+        onRerun={onRerun}
+        onReset={onReset}
+        onPersonalizeAgain={onPersonalizeAgain}
+      />
       {expanded ? (
         <motion.div
           className="grid grid-cols-1 gap-4 sm:grid-cols-6"
@@ -333,9 +453,9 @@ function ExampleCards({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
-          {ALL_EXAMPLE_CARDS.map((card, i) => (
+          {expandedCards.map((card, i) => (
             <ExampleCard
-              key={card.title}
+              key={card.key}
               card={card}
               delay={0}
               animateIn={false}
@@ -347,9 +467,9 @@ function ExampleCards({
         </motion.div>
       ) : (
         <CardCarousel>
-          {EXAMPLE_CARDS.map((card, i) => (
+          {carouselCards.map((card, i) => (
             <ExampleCard
-              key={card.title}
+              key={card.key}
               card={card}
               delay={0.15 + i * 0.08}
               onSuggestionClick={onSuggestionClick}
@@ -519,7 +639,7 @@ function ExampleCard({
   animateIn = true,
   className,
 }: {
-  card: ExampleCardData;
+  card: ResolvedCard;
   delay: number;
   onSuggestionClick: (text: string) => void;
   large?: boolean;
@@ -529,9 +649,12 @@ function ExampleCard({
 }) {
   const emphasized = large || largeText;
   const [imgError, setImgError] = useState(false);
-  const src = `/chat-suggestions/cards/${card.id}.webp`;
 
   return (
+    // One springy entrance + a light hover lift, no exit/layout/blur
+    // animation: the journey→cards hand-off is a single parent-level
+    // crossfade — per-card morphs stacked on top of it caused visible flicker
+    // inside the snap-scroll carousel.
     <motion.button
       type="button"
       className={cn(
@@ -543,13 +666,15 @@ function ExampleCard({
         className,
       )}
       onClick={() => onSuggestionClick(card.prompt)}
-      initial={animateIn ? { opacity: 0, y: 8 } : false}
+      initial={animateIn ? { opacity: 0, y: 14 } : false}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay }}
+      whileHover={{ y: -3 }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 26, delay }}
     >
       {!imgError && (
         <img
-          src={src}
+          src={card.imageSrc}
           alt=""
           aria-hidden
           loading="lazy"
@@ -573,7 +698,7 @@ function ExampleCard({
             emphasized ? 'text-2xl sm:text-3xl' : 'text-lg',
           )}
         >
-          {t(card.title)}
+          {card.title}
         </h3>
       </div>
       <ArrowUpRight className="absolute right-3 top-3 z-10 size-4 text-white/0 transition-colors duration-300 group-hover:text-white/90" />
@@ -581,17 +706,19 @@ function ExampleCard({
   );
 }
 
+// Absolute forms only — comparatives ("think bigGER", "aim highER") read as
+// telling the user they aren't doing enough.
 const GREETING_HEADLINES: GreetingHeadline[] = [
   { withName: 'Dream big, {name}.', plain: 'Dream big.' },
-  { withName: 'Think bigger, {name}.', plain: 'Think bigger.' },
-  { withName: 'Aim higher, {name}.', plain: 'Aim higher.' },
-  { withName: 'Reach further, {name}.', plain: 'Reach further.' },
+  { withName: 'Think big, {name}.', plain: 'Think big.' },
+  { withName: 'Aim high, {name}.', plain: 'Aim high.' },
+  { withName: 'Go bold, {name}.', plain: 'Go bold.' },
   { withName: 'Go all in, {name}.', plain: 'Go all in.' },
-  { withName: 'Push harder, {name}.', plain: 'Push harder.' },
-  { withName: 'Expect more, {name}.', plain: 'Expect more.' },
-  { withName: 'Raise the bar, {name}.', plain: 'Raise the bar.' },
-  { withName: 'Go bolder, {name}.', plain: 'Go bolder.' },
   { withName: 'Be ambitious, {name}.', plain: 'Be ambitious.' },
+  { withName: 'Make it happen, {name}.', plain: 'Make it happen.' },
+  { withName: 'Own the day, {name}.', plain: 'Own the day.' },
+  { withName: 'Take the leap, {name}.', plain: 'Take the leap.' },
+  { withName: 'Start something big, {name}.', plain: 'Start something big.' },
 ];
 
 const FEATURED_APP_NAMES = [
@@ -677,6 +804,40 @@ const ALL_EXAMPLE_CARDS: ExampleCardData[] = [
   ...MORE_EXAMPLE_CARDS,
 ];
 
+function resolveDefaultCard(card: ExampleCardData): ResolvedCard {
+  return {
+    key: card.id,
+    imageId: card.id,
+    title: t(card.title),
+    prompt: t(card.prompt),
+    imageSrc: `/chat-suggestions/cards/${card.id}.webp`,
+  };
+}
+
+// Personalized use cases reuse the stock card art (their imageId is validated
+// against the shared CHAT_SUGGESTION_CARD_IMAGE_IDS enum) and carry a subtle
+// mission/routine glyph instead of app logos — the cards are crowded enough.
+function resolvePersonalizedCards({
+  useCases,
+}: {
+  useCases: PersonalizationUseCase[] | null;
+}): ResolvedCard[] | null {
+  if (!useCases || useCases.length === 0) {
+    return null;
+  }
+  return useCases.map((useCase) => ({
+    key: `p-${useCase.id}`,
+    imageId: useCase.imageId,
+    title: useCase.title,
+    // Tapping sends the clean TITLE (same behavior as the stock cards); the
+    // crafted mission prompt is injected server-side as grounding when the
+    // suggestion matches a stored use case.
+    prompt: useCase.title,
+    imageSrc: `/chat-suggestions/cards/${useCase.imageId}.webp`,
+    kind: useCase.kind,
+  }));
+}
+
 type ResolvedApp = {
   name: string;
   displayName: string;
@@ -687,6 +848,15 @@ type ExampleCardData = {
   id: string;
   title: string;
   prompt: string;
+};
+
+type ResolvedCard = {
+  key: string;
+  imageId: string;
+  title: string;
+  prompt: string;
+  imageSrc: string;
+  kind?: 'mission' | 'routine';
 };
 
 type GreetingHeadline = {

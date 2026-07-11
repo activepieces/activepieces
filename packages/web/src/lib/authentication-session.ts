@@ -13,6 +13,7 @@ import { queryClient } from '@/app/query-client';
 import { ApStorage } from './ap-browser-storage';
 const tokenKey = 'token';
 const projectIdKey = 'projectId';
+const currentUserEmailKey = 'currentUserEmail';
 export const authenticationSession = {
   setProjectId(projectId: string) {
     ApStorage.getInstance().setItem(projectIdKey, projectId);
@@ -25,8 +26,16 @@ export const authenticationSession = {
     if (!isNil(response.projectId)) {
       ApStorage.getInstance().setItem(projectIdKey, response.projectId);
     }
+    // The ONBOARDING JWT carries no email claim, so /create-platform reads the
+    // signup email from storage (survives refresh across all auth entry paths).
+    if (!isNil(response.email)) {
+      ApStorage.getInstance().setItem(currentUserEmailKey, response.email);
+    }
     queryClient.invalidateQueries({ queryKey: ['flags'] });
     window.dispatchEvent(new Event('storage'));
+  },
+  getCurrentUserEmail(): string | null {
+    return ApStorage.getInstance().getItem(currentUserEmailKey) ?? null;
   },
   isJwtExpired(token: string): boolean {
     if (!token) {
@@ -126,6 +135,7 @@ export const authenticationSession = {
   clearSession() {
     ApStorage.getInstance().removeItem(projectIdKey);
     ApStorage.getInstance().removeItem(tokenKey);
+    ApStorage.getInstance().removeItem(currentUserEmailKey);
   },
   logOut() {
     this.clearSession();

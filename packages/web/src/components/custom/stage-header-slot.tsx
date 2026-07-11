@@ -28,8 +28,8 @@ export function StageHeaderSlotProvider({
   const registerTitle = useCallback(() => setTitleCount((c) => c + 1), []);
   const unregisterTitle = useCallback(() => setTitleCount((c) => c - 1), []);
   // Remembers each visited resource's human title keyed by `${type}:${id}`, so the
-  // back control can name exactly where it returns to (e.g. "Back to Lead scoring")
-  // even though the navigation stack only carries resource type + id.
+  // Stage breadcrumb can name a detail resource (e.g. "Lead scoring") before — or in
+  // place of — the page's own injected title.
   const reportResourceTitle = useCallback((key: string, title: string) => {
     setResourceTitles((prev) =>
       prev[key] === title ? prev : { ...prev, [key]: title },
@@ -98,9 +98,9 @@ export function useStageHeaderActions(
   return active ? createPortal(content, actionsSlot) : null;
 }
 
-// Reports the currently-open resource's human title into the registry so the back
-// control can name where it returns to. No-op outside a provider, or until both the
-// key and title are known.
+// Reports the currently-open resource's human title into the registry so the Stage
+// breadcrumb can label it. No-op outside a provider, or until both the key and title
+// are known.
 export function useReportStageResourceTitle(
   key: string | null,
   title: string | null | undefined,

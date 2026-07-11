@@ -6,6 +6,7 @@ import {
   CornerDownLeft,
   FileText,
   Folder,
+  PanelRightOpen,
   Table2,
   User,
   Workflow,
@@ -19,6 +20,7 @@ import {
   useState,
 } from 'react';
 
+import { CreateProjectButton } from '@/features/projects/components/create-project-button';
 import { cn } from '@/lib/utils';
 
 import { type BrowseController } from './use-browse-controller';
@@ -462,33 +464,56 @@ function ProjectMenu({
               const name = project.displayName;
               const isCurrent = project.id === controller.projectId;
               return (
-                <button
+                <div
                   key={project.id}
-                  type="button"
-                  onClick={() => controller.switchProject(project.id)}
                   className={cn(
-                    'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm transition-colors hover:bg-foreground/[0.05]',
+                    'group flex items-center gap-1 rounded-xl pr-1 transition-colors hover:bg-foreground/[0.05]',
                     isCurrent && 'bg-foreground/[0.04]',
                   )}
                 >
-                  <span
-                    className="flex size-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
-                    style={{
-                      backgroundColor: palette?.color,
-                      color: palette?.textColor,
-                    }}
+                  <button
+                    type="button"
+                    onClick={() => controller.switchProject(project.id)}
+                    className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm"
                   >
-                    {name.charAt(0).toUpperCase()}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {name}
-                  </span>
-                  {isCurrent && (
-                    <Check className="size-4 shrink-0 text-primary" />
-                  )}
-                </button>
+                    <span
+                      className="flex size-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
+                      style={{
+                        backgroundColor: palette?.color,
+                        color: palette?.textColor,
+                      }}
+                    >
+                      {name.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate font-medium">
+                      {name}
+                    </span>
+                    {isCurrent && (
+                      <Check className="size-4 shrink-0 text-primary" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      controller.openProject(project.id);
+                    }}
+                    aria-label={t('Open full view')}
+                    title={t('Open full view')}
+                    className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+                  >
+                    <PanelRightOpen className="size-4" />
+                  </button>
+                </div>
               );
             })}
+            <div className="mt-1 border-t border-foreground/[0.06] pt-1">
+              <CreateProjectButton
+                variant="menu-item"
+                projects={controller.allProjects}
+                onCreate={(project) => controller.openProject(project.id)}
+              />
+            </div>
           </motion.div>
         </>
       )}
