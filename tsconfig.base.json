@@ -1425,6 +1425,9 @@
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
       ],
+      "@activepieces/piece-veezee": [
+        "packages/pieces/community/veezee/src/index.ts"
+      ],
       "@activepieces/piece-video-ai": [
         "packages/pieces/community/video-ai/src/index.ts"
       ],

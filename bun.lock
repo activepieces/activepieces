@@ -9502,6 +9502,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/veezee": {
+      "name": "@activepieces/piece-veezee",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/vercel": {
       "name": "@activepieces/piece-vercel",
       "version": "0.0.4",
@@ -12546,6 +12559,8 @@
     "@activepieces/piece-vapi": ["@activepieces/piece-vapi@workspace:packages/pieces/community/vapi"],
 
     "@activepieces/piece-vbout": ["@activepieces/piece-vbout@workspace:packages/pieces/community/vbout"],
+
+    "@activepieces/piece-veezee": ["@activepieces/piece-veezee@workspace:packages/pieces/community/veezee"],
 
     "@activepieces/piece-vercel": ["@activepieces/piece-vercel@workspace:packages/pieces/community/vercel"],
 
