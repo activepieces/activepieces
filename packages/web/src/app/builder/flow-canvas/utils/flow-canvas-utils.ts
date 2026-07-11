@@ -714,9 +714,8 @@ function deriveStepNodeData(trigger: FlowTrigger): Map<string, StepNodeData> {
     derivedData.set(step.name, {
       stepIndex,
       isSkipped:
-        step.type !== FlowTriggerType.EMPTY &&
-        step.type !== FlowTriggerType.PIECE &&
-        (isSkippedByParent || !!step.skip),
+        !flowStructureUtil.isTrigger(step.type) &&
+        (isSkippedByParent || ('skip' in step && !!step.skip)),
     });
 
     const isSkippedByStep =

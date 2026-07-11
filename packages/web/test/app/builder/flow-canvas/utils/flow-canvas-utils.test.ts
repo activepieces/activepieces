@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import {
   CodeAction,
+  FlowAction,
   EmptyTrigger,
   FlowActionType,
   FlowTriggerType,
   FlowVersion,
   FlowVersionState,
+  PieceAction,
 } from '@activepieces/shared';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -41,7 +43,23 @@ const createCodeAction = (
   nextAction,
 });
 
-const createFlowVersion = (firstAction?: CodeAction): FlowVersion => {
+const createPieceAction = (name: string, skip = false): PieceAction => ({
+  name,
+  skip,
+  valid: true,
+  displayName: name,
+  lastUpdatedDate: '2026-01-01T00:00:00.000Z',
+  type: FlowActionType.PIECE,
+  settings: {
+    pieceName: '@activepieces/piece-test',
+    pieceVersion: '0.0.1',
+    actionName: 'test',
+    input: {},
+    errorHandlingOptions: {},
+  },
+});
+
+const createFlowVersion = (firstAction?: FlowAction): FlowVersion => {
   const trigger: EmptyTrigger = {
     name: 'trigger',
     valid: false,
@@ -138,6 +156,16 @@ describe('flowCanvasUtils.createFlowGraph', () => {
       stepIndex: 3,
       isSkipped: false,
     });
+  });
+
+  it('keeps skipped piece actions distinct from piece triggers', () => {
+    const graph = flowCanvasUtils.createFlowGraph({
+      version: createFlowVersion(createPieceAction('piece_action', true)),
+      notes: [],
+      orientation: 'vertical',
+    });
+
+    expect(getStepNode(graph, 'piece_action').data.isSkipped).toBe(true);
   });
 
   it('counts stored continue-on-failure branches when numbering visible steps', () => {
