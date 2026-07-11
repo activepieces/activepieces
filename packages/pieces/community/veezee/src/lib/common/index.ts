@@ -68,7 +68,7 @@ export const freshnessProp = Property.StaticDropdown({
 export const maxCreditsProp = Property.Number({
   displayName: 'Max Credits',
   description:
-    'Spend ceiling for this one call. The call is rejected (and nothing is charged) if its quote exceeds this.',
+    'Spend ceiling for this one call. The call is rejected (and nothing is charged) if its quote exceeds this. 0 is valid: the error returns the call's quoted price without running it.',
   required: false,
 });
 

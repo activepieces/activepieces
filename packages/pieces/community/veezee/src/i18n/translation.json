@@ -5,7 +5,7 @@
   "Freshness": "Freshness",
   "Recent (default) serves cached data from the last few hours when available; Realtime forces a live fetch for +2 credits (refunded if the live fetch falls back to cached data).": "Recent (default) serves cached data from the last few hours when available; Realtime forces a live fetch for +2 credits (refunded if the live fetch falls back to cached data).",
   "Max Credits": "Max Credits",
-  "Spend ceiling for this one call. The call is rejected (and nothing is charged) if its quote exceeds this.": "Spend ceiling for this one call. The call is rejected (and nothing is charged) if its quote exceeds this.",
+  "Spend ceiling for this one call. The call is rejected (and nothing is charged) if its quote exceeds this. 0 is valid: the error returns the call's quoted price without running it.": "Spend ceiling for this one call. The call is rejected (and nothing is charged) if its quote exceeds this. 0 is valid: the error returns the call's quoted price without running it.",
   "Get Company": "Get Company",
   "Company Identifier": "Company Identifier",
   "Company URL (e.g. https://www.linkedin.com/company/microsoft), the slug after /company/ (e.g. microsoft), or a website domain (e.g. microsoft.com).": "Company URL (e.g. https://www.linkedin.com/company/microsoft), the slug after /company/ (e.g. microsoft), or a website domain (e.g. microsoft.com).",
