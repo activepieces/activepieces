@@ -87,6 +87,16 @@ export async function veezeeApiCall<T>({
   resourceUri,
   query,
 }: VeezeeApiCallParams): Promise<T> {
+  const maxCreditsValue = query?.['max_credits'];
+  if (
+    maxCreditsValue !== undefined &&
+    maxCreditsValue !== null &&
+    maxCreditsValue !== '' &&
+    (!Number.isInteger(Number(maxCreditsValue)) || Number(maxCreditsValue) < 0)
+  ) {
+    throw new Error('Max Credits must be a whole number of 0 or more.');
+  }
+
   const queryParams: QueryParams = {};
 
   if (query) {

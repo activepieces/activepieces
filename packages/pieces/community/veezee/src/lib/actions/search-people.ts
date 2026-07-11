@@ -83,10 +83,22 @@ export const searchPeopleAction = createAction({
       max_credits,
     } = context.propsValue;
 
-    if (!keywords && !first_name && !last_name && !title) {
+    if (
+      ![keywords, first_name, last_name, title].some(
+        (value) => typeof value === 'string' && value.trim().length > 0
+      )
+    ) {
       throw new Error(
         'Provide Keywords or at least one of First Name, Last Name, or Job Title. School or company filters alone are rejected by the API.'
       );
+    }
+
+    const limitNumber = limit == null ? undefined : Number(limit);
+    if (
+      limitNumber !== undefined &&
+      (!Number.isInteger(limitNumber) || limitNumber < 1 || limitNumber > 30)
+    ) {
+      throw new Error('Limit must be a whole number between 1 and 30.');
     }
 
     return veezeeApiCall({
