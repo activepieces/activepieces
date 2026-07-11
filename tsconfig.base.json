@@ -411,6 +411,9 @@
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
       ],
+      "@activepieces/piece-dixa": [
+        "packages/pieces/community/dixa/src/index.ts"
+      ],
       "@activepieces/piece-dittofeed": [
         "packages/pieces/community/dittofeed/src/index.ts"
       ],
