@@ -19,9 +19,9 @@ import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { pieceSelectorUtils } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
 import { StepNodeBadgeContainer } from './step-node-badge-container';
+
 type DraftStepStatus =
   | 'invalid'
   | 'testing'
@@ -30,7 +30,13 @@ type DraftStepStatus =
   | 'tested'
   | 'untested';
 
-const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
+const ApStepNodeStatusInDraft = ({
+  stepName,
+  isSkipped,
+}: {
+  stepName: string;
+  isSkipped: boolean;
+}) => {
   const [
     run,
     isBeingTested,
@@ -41,7 +47,6 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     isInDraft,
     isStepValid,
     isManualTrigger,
-    isSkipped,
   ] = useBuilderStateContext((state) => {
     const step = flowStructureUtil.getStep(stepName, state.flowVersion.trigger);
     const isManualTrigger =
@@ -60,7 +65,6 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       state.flowVersion.state === FlowVersionState.DRAFT,
       !!step?.valid,
       isManualTrigger,
-      flowCanvasUtils.isSkipped(stepName, state.flowVersion.trigger),
     ];
   });
 

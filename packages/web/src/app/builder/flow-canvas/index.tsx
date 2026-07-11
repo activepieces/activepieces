@@ -315,7 +315,7 @@ const createGraphKey = (
       const childrenKey = getChildrenKey(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
-      }-${
+      }-${'skip' in step && !!step.skip}-${
         step.type === FlowActionType.PIECE ||
         step.type === FlowTriggerType.PIECE
           ? `${step.settings.pieceName}-${step.settings.pieceVersion}`

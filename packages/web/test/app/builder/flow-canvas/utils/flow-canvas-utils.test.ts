@@ -22,8 +22,10 @@ vi.mock('@/features/flow-runs', () => ({
 const createCodeAction = (
   name: string,
   nextAction?: CodeAction,
+  skip = false,
 ): CodeAction => ({
   name,
+  skip,
   valid: true,
   displayName: name,
   lastUpdatedDate: '2026-01-01T00:00:00.000Z',
@@ -113,5 +115,85 @@ describe('flowCanvasUtils.createFlowGraph', () => {
     expect(triggerEdge?.target).toEqual('trigger-subgraph-end');
     const lastEdge = graph.edges.find((edge) => edge.source === 'step_1');
     expect(lastEdge?.target).toEqual('step_1-subgraph-end');
+  });
+
+  it('derives stable step indexes and skip state for canvas nodes', () => {
+    const graph = flowCanvasUtils.createFlowGraph({
+      version: createFlowVersion(
+        createCodeAction('step_1', createCodeAction('step_2'), true),
+      ),
+      notes: [],
+      orientation: 'vertical',
+    });
+
+    expect(getStepNode(graph, 'trigger').data).toMatchObject({
+      stepIndex: 1,
+      isSkipped: false,
+    });
+    expect(getStepNode(graph, 'step_1').data).toMatchObject({
+      stepIndex: 2,
+      isSkipped: true,
+    });
+    expect(getStepNode(graph, 'step_2').data).toMatchObject({
+      stepIndex: 3,
+      isSkipped: false,
+    });
+  });
+
+  it('counts stored continue-on-failure branches when numbering visible steps', () => {
+    const parent = createCodeAction('parent', createCodeAction('tail'));
+    parent.settings.errorHandlingOptions = {
+      continueOnFailure: { value: false },
+      retryOnFailure: { value: false },
+    };
+    parent.continueOnFailureBranches = {
+      onSuccess: createCodeAction('hidden_success'),
+      onFailure: createCodeAction('hidden_failure'),
+    };
+
+    const graph = flowCanvasUtils.createFlowGraph({
+      version: createFlowVersion(parent),
+      notes: [],
+      orientation: 'vertical',
+    });
+
+    expect(getStepNode(graph, 'tail').data.stepIndex).toBe(5);
+    expect(graph.nodes.some((node) => node.id === 'hidden_success')).toBe(
+      false,
+    );
+    expect(graph.nodes.some((node) => node.id === 'hidden_failure')).toBe(
+      false,
+    );
+  });
+
+  it('derives branch order and inherited skip state before the next action', () => {
+    const parent = createCodeAction('parent', createCodeAction('tail'), true);
+    parent.settings.errorHandlingOptions = {
+      continueOnFailure: { value: true },
+      retryOnFailure: { value: false },
+    };
+    parent.continueOnFailureBranches = {
+      onSuccess: createCodeAction('success', createCodeAction('success_next')),
+      onFailure: createCodeAction('failure'),
+    };
+
+    const graph = flowCanvasUtils.createFlowGraph({
+      version: createFlowVersion(parent),
+      notes: [],
+      orientation: 'vertical',
+    });
+
+    expect(
+      ['parent', 'success', 'success_next', 'failure', 'tail'].map((name) => {
+        const { stepIndex, isSkipped } = getStepNode(graph, name).data;
+        return { name, stepIndex, isSkipped };
+      }),
+    ).toEqual([
+      { name: 'parent', stepIndex: 2, isSkipped: true },
+      { name: 'success', stepIndex: 3, isSkipped: true },
+      { name: 'success_next', stepIndex: 4, isSkipped: true },
+      { name: 'failure', stepIndex: 5, isSkipped: true },
+      { name: 'tail', stepIndex: 6, isSkipped: false },
+    ]);
   });
 });
