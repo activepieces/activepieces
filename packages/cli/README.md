@@ -12,24 +12,19 @@ Creates a flow (webhook trigger → data mapper → return response), publishes 
 its synchronous webhook endpoint with [autocannon](https://github.com/mcollina/autocannon).
 Defaults target a local dev environment.
 
-Authenticate with an API key/token **or** email + password (no sign-up):
+Authenticate with a platform-admin API key. The CLI provisions a throwaway project for the run
+(with a high concurrency cap so a project rate limiter can't skew the numbers) and deletes it after:
 
 ```bash
-# API key or user token (Bearer) — project must be given explicitly
-AP_API_KEY=<key> npx @activepieces/cli benchmark --project-id <id> --requests 500 --concurrency 10
-
-# or email/password login — project is resolved automatically
-npx @activepieces/cli benchmark --email you@dev.local --password '…' --requests 500 --concurrency 10
+AP_API_KEY=<key> npx @activepieces/cli benchmark --url https://your-instance.example.com
 ```
 
 | Option | Default | Description |
 |---|---|---|
 | `--url` | `http://localhost:3000` | Activepieces base URL (dev env API port) |
-| `--requests` | `500` | Total requests to fire |
-| `--concurrency` | `10` | Concurrent connections |
-| `--api-key` | `AP_API_KEY` env | Platform API key or user token (Bearer); requires `--project-id` |
-| `--project-id` | | Project to create the flow in (required with `--api-key`) |
-| `--email` / `--password` | | Login instead of an API key; resolves the project automatically |
+| `--requests` | `40 × concurrency` | Total requests to fire |
+| `--concurrency` | auto = execution slots | Concurrent connections |
+| `--api-key` | `AP_API_KEY` env | Platform-admin API key (Bearer) |
 | `--body` | `{"test":true}` | JSON body sent to the webhook |
 | `--json` | | Machine-readable output |
 

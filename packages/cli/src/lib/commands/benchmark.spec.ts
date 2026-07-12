@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { benchmarkUtils } from './benchmark';
 
-const baseOpts = { url: 'http://localhost:3000/', requests: '10', concurrency: '2', apiKey: 'k', projectId: 'p1', body: '{"x":1}' };
+const baseOpts = { url: 'http://localhost:3000/', requests: '10', concurrency: '2', apiKey: 'k', body: '{"x":1}' };
 
 describe('benchmarkUtils.normalizeOptions', () => {
     it('parses valid options and strips the trailing slash', () => {
@@ -10,14 +10,12 @@ describe('benchmarkUtils.normalizeOptions', () => {
         expect(config.requests).toBe(10);
         expect(config.concurrency).toBe(2);
         expect(config.apiKey).toBe('k');
-        expect(config.projectId).toBe('p1');
         expect(config.body).toBe('{"x":1}');
     });
 
     it('leaves auth and load fields undefined when not provided', () => {
         const config = benchmarkUtils.normalizeOptions({ url: 'http://x', body: '{}' });
         expect(config.apiKey).toBeUndefined();
-        expect(config.projectId).toBeUndefined();
         expect(config.requests).toBeUndefined();
         expect(config.concurrency).toBeUndefined();
     });
