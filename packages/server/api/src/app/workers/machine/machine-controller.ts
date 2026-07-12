@@ -53,7 +53,7 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
 
 const ListWorkersParams = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
