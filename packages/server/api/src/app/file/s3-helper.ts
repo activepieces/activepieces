@@ -182,6 +182,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                         Objects: deleteObjects,
                         Quiet: true,
                     },
+                    ChecksumAlgorithm: 'CRC32C',
                 }))
                 log.info({ count: chunk.length }, 'files deleted from s3')
             }
@@ -241,6 +242,10 @@ const getS3Client = (): S3 => {
             requestTimeout: 120_000,
         }),
         maxAttempts: 3,
+    }
+    if (!isNil(endpoint)) {
+        options.requestChecksumCalculation = 'WHEN_REQUIRED'
+        options.responseChecksumValidation = 'WHEN_REQUIRED'
     }
     if (!useIRSA) {
         const accessKeyId = system.getOrThrow<string>(AppSystemProp.S3_ACCESS_KEY_ID)
