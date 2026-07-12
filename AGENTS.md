@@ -89,12 +89,12 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 ## Pull Requests
 
 - When creating a PR with `gh pr create`, always apply exactly one of these labels based on the nature of the change:
-  - **`feature`** — new functionality
-  - **`bug`** — bug fix
+  - **`🌟 feature`** — new functionality
+  - **`🐛 bug`** — bug fix
   - **`skip-changelog`** — changes that should not appear in the changelog (docs, CI tweaks, internal refactors, etc.)
 - If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the appropriate pieces label (in addition to the primary label above):
-  - **`area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
-  - **`area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
+  - **`🧩 area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
+  - **`🧩 area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
 
 ## Database Migrations
 
