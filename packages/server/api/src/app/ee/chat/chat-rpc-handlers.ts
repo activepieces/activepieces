@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, isObject, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PersistedToolCallPart, PersistedToolCallStatus, ProjectType, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -16,7 +16,6 @@ import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatCompaction } from './chat-compaction'
-import { ChatConversationEntity } from './chat-conversation-entity'
 import { buildAttachmentNote, buildUserContentWithFiles, persistChatAttachments } from './chat-file-utils'
 import { chatHelpers } from './chat-helpers'
 import { chatAnalyticsTelemetry } from './chat-sync-job'
@@ -52,113 +51,6 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
     }
     return builder.execute()
-}
-
-// Merges a just-opened gate into the conversation's stored uiMessages as a PENDING tool-call part,
-// so a page reload mid-gate rebuilds the interactive card from history alone. Idempotent: keyed by
-// gateId (== toolCallId), so re-opening the same gate never double-adds. The read-merge-write runs
-// under a pessimistic row lock so parallel gates (Code Mode / concurrent tool calls) can't each read
-// the same stale uiMessages and clobber the other's card — the whole point of persisting is lost if
-// a card is dropped here. Still fenced on the owning run inside the locked window.
-async function persistPendingGatePart({ conversationId, runId, gateId, toolName, displayName, toolInput }: {
-    conversationId: string
-    runId?: string
-    gateId: string
-    toolName: string
-    displayName: string
-    toolInput: Record<string, unknown>
-}): Promise<void> {
-    await chatHelpers.conversationRepo().manager.transaction(async (manager) => {
-        const conversation = await manager
-            .createQueryBuilder(ChatConversationEntity, 'c')
-            .select(['c.id', 'c.activeRunId', 'c.uiMessages'])
-            .setLock('pessimistic_write')
-            .where('c.id = :id', { id: conversationId })
-            .getOne()
-        if (isNil(conversation)) {
-            return
-        }
-        if (!isNil(runId) && !isNil(conversation.activeRunId) && conversation.activeRunId !== runId) {
-            return
-        }
-        const uiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
-        const gatePart: PersistedToolCallPart = {
-            type: PersistedChatPartType.TOOL_CALL,
-            toolCallId: gateId,
-            toolName,
-            title: displayName,
-            input: toolInput,
-            status: PersistedToolCallStatus.PENDING,
-        }
-        const nextUiMessages = mergeGatePartIntoUiMessages({ uiMessages, gatePart })
-        if (isNil(nextUiMessages)) {
-            return
-        }
-        await manager
-            .createQueryBuilder()
-            .update(ChatConversationEntity)
-            .set({ uiMessages: () => ':uiMessages' })
-            .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(nextUiMessages)))
-            .where('id = :id', { id: conversationId })
-            .execute()
-    })
-}
-
-// Attaches the pending gate part to the trailing assistant message (or opens a fresh one when the
-// last message is the user's), skipping when a part with this gateId is already present. Returns
-// null when nothing needs to change so callers can avoid a no-op write.
-function mergeGatePartIntoUiMessages({ uiMessages, gatePart }: {
-    uiMessages: PersistedChatMessage[]
-    gatePart: PersistedToolCallPart
-}): PersistedChatMessage[] | null {
-    const alreadyPresent = uiMessages.some((message) => message.parts.some((part) =>
-        part.type === PersistedChatPartType.TOOL_CALL && part.toolCallId === gatePart.toolCallId))
-    if (alreadyPresent) {
-        return null
-    }
-    const lastMessage = uiMessages[uiMessages.length - 1]
-    if (lastMessage?.role === PersistedChatRole.ASSISTANT) {
-        return [
-            ...uiMessages.slice(0, -1),
-            { ...lastMessage, parts: [...lastMessage.parts, gatePart] },
-        ]
-    }
-    return [...uiMessages, { role: PersistedChatRole.ASSISTANT, parts: [gatePart] }]
-}
-
-// A gate part the worker persisted as PENDING (Fix 2) lives in the DB's trailing assistant message
-// but is absent from the worker's in-memory uiParts until the gate resolves at step-finish. A raw
-// overwrite from updateChatProgress would drop it and the card would vanish mid-gate. Carry any
-// still-PENDING gate parts from the stored message forward, unless the incoming parts already
-// include the same tool-call id (i.e. the gate resolved and the real part supersedes it).
-function preservePendingGateParts({ storedUiMessages, incomingUiMessages }: {
-    storedUiMessages: PersistedChatMessage[]
-    incomingUiMessages: PersistedChatMessage[]
-}): PersistedChatMessage[] {
-    const storedLast = storedUiMessages[storedUiMessages.length - 1]
-    if (isNil(storedLast) || storedLast.role !== PersistedChatRole.ASSISTANT) {
-        return incomingUiMessages
-    }
-    const pendingGateParts = storedLast.parts.filter((part): part is PersistedToolCallPart =>
-        part.type === PersistedChatPartType.TOOL_CALL && part.status === PersistedToolCallStatus.PENDING)
-    if (pendingGateParts.length === 0) {
-        return incomingUiMessages
-    }
-    const incomingToolCallIds = new Set(incomingUiMessages.flatMap((message) => message.parts
-        .filter((part): part is PersistedToolCallPart => part.type === PersistedChatPartType.TOOL_CALL)
-        .map((part) => part.toolCallId)))
-    const survivingGateParts = pendingGateParts.filter((part) => !incomingToolCallIds.has(part.toolCallId))
-    if (survivingGateParts.length === 0) {
-        return incomingUiMessages
-    }
-    const incomingLast = incomingUiMessages[incomingUiMessages.length - 1]
-    if (incomingLast?.role === PersistedChatRole.ASSISTANT) {
-        return [
-            ...incomingUiMessages.slice(0, -1),
-            { ...incomingLast, parts: [...incomingLast.parts, ...survivingGateParts] },
-        ]
-    }
-    return [...incomingUiMessages, { role: PersistedChatRole.ASSISTANT, parts: survivingGateParts }]
 }
 
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
@@ -231,14 +123,10 @@ function buildConnectionInventoryNote({ connections, truncated }: {
 
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, resumeKind } = input
-        const isResume = !isNil(resumeKind)
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
 
         const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta] = await Promise.all([
-            // skipStaleRecovery: getChatConfig is the worker claiming this turn (it flips the row to
-            // STREAMING and handles resume itself below). A lazy crash-resume fired from this read would
-            // race the very run that is starting — recovery is owned here, not by the read.
-            chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log, skipStaleRecovery: true }),
+            chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
             chatHelpers.resolveChatProvider({ platformId, log }),
             chatHelpers.getUserProjects({ platformId, userId, log }),
             chatMcp.getCredentials({ platformId, userId, log }),
@@ -253,21 +141,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             ? await persistChatAttachments({ files, projectId: attachmentProjectId, platformId, log })
             : []
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
-
-        // A worker killed mid-turn leaves its BullMQ job stalled; BullMQ re-delivers it (up to
-        // maxStalledCount) with the ORIGINAL data — same runId, original userMessage, no resumeKind.
-        // By the time it re-runs, the crash watchdog has already claimed a fresh activeRunId for the
-        // resume turn, so this replay no longer owns the conversation. Rejecting it here is what stops
-        // the re-delivered original from re-appending the user bubble a second time (the duplicate
-        // uiMessage). Only fence a run that carries a runId (dryRun/eval have none) and only when the
-        // conversation has a different owner — a NULL activeRunId or a match writes freely.
-        if (!isNil(input.runId) && !isNil(conversation.activeRunId) && conversation.activeRunId !== input.runId) {
-            log.warn({ conversation: { id: conversationId }, run: { id: input.runId } }, '[chatRpc#getChatConfig] Rejected superseded run (stalled-job re-delivery) — a newer run owns this conversation')
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: 'This run has been superseded by a newer one' },
-            })
-        }
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const emailEnabled = !dryRun && smtpEmailSender(log).isSmtpConfigured()
@@ -294,15 +167,11 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const validCandidateProjectId = candidateProjectId && userProjects.some((p) => p.id === candidateProjectId)
             ? candidateProjectId
             : null
-        // Default to the user's own personal project when none is chosen (falling back to their
-        // first accessible one) so the agent never hits a cold "No project selected" on the first
-        // data tool. The chat MCP server resolves its project from conversation.projectId per
-        // request, so persist it (the user can switch via the dropdown / ap_select_project, which
-        // overwrites this).
-        const defaultProjectId = userProjects.find((p) => p.ownerId === userId && p.type === ProjectType.PERSONAL)?.id
-            ?? userProjects[0]?.id
-            ?? null
-        const selectedProjectId = validCandidateProjectId ?? defaultProjectId
+        // Default to the user's first project when none is chosen so the agent never hits a cold
+        // "No project selected" on the first data tool. The chat MCP server resolves its project
+        // from conversation.projectId per request, so persist it (the user can switch via the
+        // dropdown / ap_select_project, which overwrites this).
+        const selectedProjectId = validCandidateProjectId ?? userProjects[0]?.id ?? null
         if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
             await chatHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
@@ -356,35 +225,20 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             ? { ...chatPrompt.guides, ...promptOverride.guides }
             : chatPrompt.guides
 
-        // A resume turn carries no new user message — the controller (gate answer) or watchdog
-        // (crash) has already persisted the messages that let the model continue (the answered
-        // gate's tool result, or a crash-resume note). So rebuild straight from stored history and
-        // never append a user bubble.
         const previousMessages = conversation.messages as ModelMessage[]
-        const allMessages = isResume
-            ? previousMessages
-            : [...previousMessages, { role: 'user' as const, content: userContent }]
+        const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
+        const allMessages = [...previousMessages, newUserMessage]
         const llmHistory = chatAiUtils.collapseStaleToolOutputs({ messages: allMessages })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
-        const uiMessagesWithUser: PersistedChatMessage[] = isResume
-            ? previousUiMessages
-            : [
-                ...previousUiMessages,
-                { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text: userMessage }] },
-            ]
-        if (!isResume) {
-            // Fence on the owning run so a run superseded between the STREAMING lock above and this
-            // write can't overwrite the newer run's messages/uiMessages (Fix 5).
-            await updateConversationForRun({
-                conversationId,
-                runId: input.runId,
-                updates: {
-                    messages: allMessages,
-                    uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
-                },
-            })
-        }
+        const uiMessagesWithUser: PersistedChatMessage[] = [
+            ...previousUiMessages,
+            { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text: userMessage }] },
+        ]
+        await chatHelpers.conversationRepo().update(conversationId, {
+            messages: allMessages,
+            uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
+        })
         await chatApprovalGate.clearCancel({ conversationId })
 
         const estimatedTokens = chatCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
@@ -482,12 +336,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const isSuccessfulCompletion = input.messages.length > 0
         const updates: Record<string, unknown> = {
             status: isSuccessfulCompletion ? ChatConversationStatus.IDLE : ChatConversationStatus.ERROR,
-            // Clear the active run on terminal completion (Fix R6a): this is the final save for the
-            // turn, so no run owns the conversation afterwards. Leaving it set left a stale activeRunId
-            // that made a settled IDLE row look like it still had a resume in flight — the client's
-            // onStaleCheck then polled forever (Fix R6b). The write is fenced on this run below, so it
-            // only nulls when THIS run still owns the row (a newer run's claim is left intact).
-            activeRunId: null,
         }
 
         // No-shrink guard against silent context loss. The LLM history only ever grows within a
@@ -498,22 +346,13 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         // that case — keep the richer history that updateChatProgress persisted incrementally. The
         // status still reflects success/error so the UI is correct; only the destructive content
         // overwrite is suppressed. (uiMessages tracks messages, so we gate both on the same check.)
-        const storedConversation = await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        const storedMessageCount = (storedConversation?.messages as unknown[] | undefined)?.length ?? 0
+        const storedMessageCount = ((await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId }))?.messages as unknown[] | undefined)?.length ?? 0
         const wouldShrinkHistory = input.messages.length < storedMessageCount
         const persistContent = isSuccessfulCompletion && !wouldShrinkHistory
 
         if (persistContent) {
-            // Carry any still-open gate card forward: a turn can complete a step-finish save while an
-            // earlier gate is unresolved. Resolved gates dedupe by tool-call id, so this only keeps
-            // cards that are genuinely still pending.
-            const storedUiForMerge = (storedConversation?.uiMessages ?? []) as PersistedChatMessage[]
-            const mergedUiMessages = preservePendingGateParts({
-                storedUiMessages: storedUiForMerge,
-                incomingUiMessages: input.uiMessages as PersistedChatMessage[],
-            })
             updates.messages = input.messages
-            updates.uiMessages = sanitizeObjectForPostgresql(mergedUiMessages)
+            updates.uiMessages = sanitizeObjectForPostgresql(input.uiMessages)
             if (input.title) updates.title = input.title
             if (input.modelName) updates.modelName = input.modelName
         }
@@ -549,41 +388,14 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async updateChatProgress(input: UpdateChatProgressRequest): Promise<void> {
-        // Same pessimistic_write row-lock as persistPendingGatePart so the two writers serialize: a
-        // progress save reads the stored uiMessages, merges any still-PENDING gate card forward, and
-        // writes back atomically. Without the lock, a gate-open write and a progress write can read the
-        // same stale uiMessages and clobber each other — dropping the gate card mid-turn. Still fenced
-        // on the owning run inside the lock.
-        await chatHelpers.conversationRepo().manager.transaction(async (manager) => {
-            const conversation = await manager
-                .createQueryBuilder(ChatConversationEntity, 'c')
-                .select(['c.id', 'c.activeRunId', 'c.uiMessages'])
-                .setLock('pessimistic_write')
-                .where('c.id = :id', { id: input.conversationId })
-                .getOne()
-            if (isNil(conversation)) {
-                return
-            }
-            if (!isNil(input.runId) && !isNil(conversation.activeRunId) && conversation.activeRunId !== input.runId) {
-                return
-            }
-            const storedUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
-            const mergedUiMessages = preservePendingGateParts({ storedUiMessages, incomingUiMessages: input.uiMessages as PersistedChatMessage[] })
-            const updates: Record<string, unknown> = {
-                uiMessages: () => ':uiMessages',
-            }
-            if (!isNil(input.messages)) {
-                updates.messages = input.messages
-            }
-            await manager
-                .createQueryBuilder()
-                .update(ChatConversationEntity)
-                .set(updates)
-                .setParameter('uiMessages', JSON.stringify(sanitizeObjectForPostgresql(mergedUiMessages)))
-                .where('id = :id', { id: input.conversationId })
-                .execute()
-            log.debug({ conversation: { id: input.conversationId }, uiMessageCount: mergedUiMessages.length, messageCount: input.messages?.length }, '[chatRpc#updateChatProgress] Progress persisted')
-        })
+        const updates: Record<string, unknown> = {
+            uiMessages: JSON.parse(JSON.stringify(input.uiMessages)),
+        }
+        if (!isNil(input.messages)) {
+            updates.messages = input.messages
+        }
+        await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
+        log.debug({ conversation: { id: input.conversationId }, uiMessageCount: input.uiMessages.length, messageCount: input.messages?.length }, '[chatRpc#updateChatProgress] Progress persisted')
     },
 
     async heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void> {
@@ -624,78 +436,23 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             const rawTimeout = input.toolInput.timeoutMs
             const timeoutMs = Math.min(typeof rawTimeout === 'number' ? rawTimeout : MAX_APPROVAL_BLOCK_MS, MAX_APPROVAL_BLOCK_MS)
             const decision = await chatApprovalGate.waitForDecision({ gateId, timeoutMs })
-            // A real (non-pending) decision handed back here means THIS live worker just consumed the
-            // answer. Mark it so the controller's dead-STREAMING handshake (Fix R2) sees the live path
-            // took it and does not park+resume the same turn (double-execution). Also clear the
-            // pending-gate mapping (Fix R5d): the live path owns this gate now, so GET /pending-gate
-            // must not resurrect the answered card after a mid-run reload (it only TTL'd out before).
-            if (decision !== 'pending') {
-                await tryCatch(() => chatApprovalGate.markGateConsumed({ gateId }))
-                // Now that the worker threads conversationId (Fix 2), the live path clears the pending-gate
-                // mapping the instant it consumes the answer — so an answered gate no longer lingers until
-                // TTL and recovery can't re-ask (which would re-run the action → double email). Scoped to
-                // THIS gateId so a preempted run's late return can't wipe a newer gate's mapping.
-                if (typeof input.conversationId === 'string') {
-                    await tryCatch(() => chatApprovalGate.clearPendingGate({ conversationId: input.conversationId!, gateId }))
-                }
-            }
             return { result: decision }
         }
         if (input.toolName === '__store_pending_gate') {
             const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
             if (typeof convId === 'string' && typeof gateId === 'string' && typeof gateTool === 'string') {
-                const normalizedInput = typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {}
                 await chatApprovalGate.storePendingGate({
                     conversationId: convId,
                     gate: {
                         gateId,
                         toolName: gateTool,
                         displayName: typeof displayName === 'string' ? displayName : gateTool,
-                        toolInput: normalizedInput,
+                        toolInput: typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {},
                         ...(typeof gateRunId === 'string' ? { runId: gateRunId } : {}),
                     },
                 })
-                // Persist the card into history the instant the gate opens, so it survives a page
-                // reload from stored uiMessages alone — not only from the in-memory pending-gate cache.
-                // The worker's caller discards the RPC error, so log failures here or they are invisible.
-                const { error } = await tryCatch(() => persistPendingGatePart({
-                    conversationId: convId,
-                    runId: typeof gateRunId === 'string' ? gateRunId : undefined,
-                    gateId,
-                    toolName: gateTool,
-                    displayName: typeof displayName === 'string' ? displayName : gateTool,
-                    toolInput: normalizedInput,
-                }))
-                if (!isNil(error)) {
-                    log.error({ error, conversation: { id: convId }, gate: { id: gateId }, tool: { name: gateTool } }, '[chatRpc#storePendingGate] Failed to persist pending gate card')
-                }
             }
             return { result: { success: true } }
-        }
-        if (input.toolName === '__consume_pre_approval') {
-            // A late-approved approval-gate (Fix 1) left a one-shot pre-approval. When the resumed
-            // model re-issues the action, the worker calls this BEFORE opening a new card: if a
-            // pre-approval exists it is consumed (single-use) and the worker proceeds as approved
-            // without asking the user again.
-            const gateTool = input.toolInput.toolName
-            if (typeof input.conversationId !== 'string' || typeof gateTool !== 'string') {
-                return { result: { approved: false } }
-            }
-            // Verify the re-issued action matches the approved identity AND this resume run (Fix R1):
-            // the worker passes the re-issued action's identity fields (piece/action or flowId) and
-            // input, plus its runId. A mismatch fails closed (a normal card opens instead).
-            const reissuedInput = isObject(input.toolInput.reissuedInput) ? input.toolInput.reissuedInput as Record<string, unknown> : undefined
-            const preApproval = await chatApprovalGate.consumePreApproval({
-                conversationId: input.conversationId,
-                toolName: gateTool,
-                toolInput: reissuedInput,
-                ...spreadIfDefined('runId', input.runId),
-            })
-            if (isNil(preApproval) || !preApproval.approved) {
-                return { result: { approved: false } }
-            }
-            log.info({ conversation: { id: input.conversationId }, tool: { name: gateTool } }, '[chatRpc#executeChatTool] Consumed one-shot pre-approval — proceeding without a new gate')
-            return { result: { approved: true, ...spreadIfDefined('payload', preApproval.payload) } }
         }
         if (input.toolName === '__store_selected_connection') {
             const { pieceName, connectionExternalId, label, projectId } = input.toolInput
@@ -715,10 +472,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {
                 return { result: { hasWrites: false } }
             }
-            // skipStaleRecovery: this RPC is called by the live worker mid-turn, so the owning run is
-            // this read's caller. A lagged heartbeat must not let this read crash-resume the very turn
-            // that is asking — recovery is never wanted from a worker-internal read.
-            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId, log, skipStaleRecovery: true })
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
             if (isNil(conversation.projectId)) {
                 return { result: { hasWrites: false } }
             }
@@ -772,10 +526,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             return { sent: false, message: 'Email is not configured on this instance.' }
         }
 
-        // skipStaleRecovery: this read feeds the STREAMING+activeRunId ownership fence below. Lazy
-        // recovery would flip the row IDLE (or reclaim activeRunId via crash-resume) and spuriously
-        // fail ownsActiveTurn, blocking a legitimate live send. The owning worker is this read's caller.
-        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log, skipStaleRecovery: true })
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
 
         // Fence the send to the active streaming owner. A run parked on an email approval must not
         // resume and send once it's been superseded (activeRunId changed) OR cancelled/finished

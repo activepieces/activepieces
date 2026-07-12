@@ -9,7 +9,6 @@ import {
   ChatConversationStatus,
   ChatHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
-  CHAT_INTERRUPTED_MESSAGE,
   DEFAULT_CHAT_TIER_ID,
   PersistedChatMessage,
   ToolProgressEvent,
@@ -382,11 +381,6 @@ export function useAgentChat({
     ) => void
   >(() => {});
 
-  // Assigned after startStream/isStreamActiveRef exist (they come from useStreamingReducer below).
-  // Called from onStaleCheck when a resume run is pending, so the client re-attaches to the
-  // conversation's live stream instead of settling the turn as a failure.
-  const attachToResumeRef = useRef<(convId: string) => void>(() => {});
-
   const {
     streamingMessage,
     streamPhase,
@@ -426,45 +420,9 @@ export function useAgentChat({
         const conv = await chatApi.getConversation(convId);
         if (isNil(conv) || conversationIdRef.current !== convId) return;
 
-        if (conv.status === ChatConversationStatus.ERROR) {
-          // The watchdog reclaimed a turn whose worker went silent — the interrupted note is
-          // already persisted as a bubble; surface the retry banner so one click re-sends.
-          settleStreamRef.current(convId, {
-            errorMessage: t(CHAT_INTERRUPTED_MESSAGE),
-            suppressNoReply: true,
-          });
-          return;
+        if (conv.status !== ChatConversationStatus.STREAMING) {
+          settleStreamRef.current(convId);
         }
-        if (conv.status === ChatConversationStatus.STREAMING) return;
-
-        // Not STREAMING and not ERROR. Attach to a resume ONLY when a run actually owns the
-        // conversation (Fix R6b): activeRunId set means a crash-resume / parked-gate resume claimed
-        // it and the row will flip back to STREAMING momentarily, so keep the stale-check/poll alive.
-        //
-        // When activeRunId is NULL the turn is settled — do NOT keep polling. A parked gate (IDLE,
-        // activeRunId NULL, a pending card awaiting the user's answer) previously looped here every
-        // 15s forever because it had no reply; it must instead settle into the quiet waiting-for-answer
-        // state (chip visible, no shimmer, no request loop). A genuinely-finished IDLE with no reply
-        // settles with the existing "no response" affordance.
-        if (!isNil(conv.activeRunId)) {
-          attachToResumeRef.current(convId);
-          return;
-        }
-        const { data: history } = await tryCatch(() =>
-          chatApi.getMessages(convId),
-        );
-        if (conversationIdRef.current !== convId) return;
-        const mapped = history
-          ? chatUtils.mapHistoryToUIMessages(history.data)
-          : null;
-        // A parked gate is waiting on the user, not on the agent — settle quietly (no "no response"
-        // error). The pending card in history keeps the chip/answer affordance up.
-        const hasPendingGate =
-          mapped !== null && chatUtils.hasPendingGateCard(mapped);
-        settleStreamRef.current(
-          convId,
-          hasPendingGate ? { suppressNoReply: true } : undefined,
-        );
       });
     },
   });
@@ -520,34 +478,6 @@ export function useAgentChat({
     isStreamActive ||
     sendStatusRef.current.type === 'submitting' ||
     isPollingForAgentReply;
-
-  const isStreamActiveRef = useRef(isStreamActive);
-  isStreamActiveRef.current = isStreamActive;
-
-  attachToResumeRef.current = (convId) => {
-    if (!isStreamActiveRef.current) {
-      startStream(convId);
-    }
-    setIsPollingForAgentReply(true);
-  };
-  // Answering a gate whose turn had parked (worker gone) enqueues a resume turn server-side. If we
-  // aren't already connected to a live stream, reconnect to the conversation's stream so the resume
-  // streams in without a reload; the poll below is a fallback that reconciles the final history.
-  useEffect(() => {
-    store.getState().setOnGateAnswered(() => {
-      const convId = conversationIdRef.current;
-      if (!convId || isStreamActiveRef.current) return;
-      startStream(convId);
-      setIsPollingForAgentReply(true);
-    });
-    return () => store.getState().setOnGateAnswered(null);
-  }, [store, startStream]);
-
-  // Keep the store's conversationId in sync so a gate answer carries it to the server (parked-answer
-  // routing fallback that survives the Redis gate mapping's TTL / a Redis restart).
-  useEffect(() => {
-    store.getState().setConversationId(conversationId);
-  }, [store, conversationId]);
 
   const isAwaitingResponse =
     streamPhase === 'awaiting-stream' ||
@@ -826,20 +756,8 @@ export function useAgentChat({
         const baseParts = isCurrentStreamingResponse
           ? mapped[lastAssistantIdx].parts
           : undefined;
-        // The gate card may already live in persisted history (Fix 2 persists it PENDING on open).
-        // Only synthesize it from the pending-gate endpoint when history doesn't already carry it,
-        // so a reload mid-gate never renders the card twice.
-        const gateAlreadyInHistory =
-          !!gate &&
-          !!baseParts?.some(
-            (p) =>
-              chatPartUtils.isAnyToolPart(p) &&
-              chatPartUtils.getToolCallId(p) === gate.gateId,
-          );
         const displayGatePart =
-          gate &&
-          chatPartUtils.isDisplayTool(gate.toolName) &&
-          !gateAlreadyInHistory
+          gate && chatPartUtils.isDisplayTool(gate.toolName)
             ? {
                 type: 'dynamic-tool' as const,
                 toolCallId: gate.gateId,
@@ -864,20 +782,6 @@ export function useAgentChat({
         }
       } else {
         setPersistedMessages(mapped);
-        // Reopening a conversation the watchdog reclaimed: the interrupted note is already in
-        // history; also surface the retry banner so the user can re-send in one click.
-        if (convResult.data.status === ChatConversationStatus.ERROR) {
-          const lastAssistant = mapped.findLast((m) => m.role === 'assistant');
-          const wasInterrupted = lastAssistant?.parts.some(
-            (p) => p.type === 'text' && p.text === CHAT_INTERRUPTED_MESSAGE,
-          );
-          if (wasInterrupted) {
-            updateSendStatus({
-              type: 'error',
-              message: t(CHAT_INTERRUPTED_MESSAGE),
-            });
-          }
-        }
       }
       setIsLoadingHistory(false);
     },

@@ -1,6 +1,6 @@
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -395,8 +395,7 @@ import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
 import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
 import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
-import { AddChatConversationStreamingUpdatedIndex1807000000000 } from './migration/postgres/1807000000000-AddChatConversationStreamingUpdatedIndex'
-import { CreatePieceSetTable1808000000000 } from './migration/postgres/1808000000000-CreatePieceSetTable'
+import { CreatePieceSetTable1807000000000 } from './migration/postgres/1808000000000-CreatePieceSetTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -807,8 +806,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
         DropBadges1804000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,
-        AddChatConversationStreamingUpdatedIndex1807000000000,
-        CreatePieceSetTable1808000000000,
+        CreatePieceSetTable1807000000000,
     ]
     return migrations
 }
