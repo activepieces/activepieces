@@ -56,6 +56,10 @@ export const MachineInformation = z.object({
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
     ip: z.string(),
+    // Worker→app round-trip (ms) measured on the healthcheck: the engine posts run callbacks over
+    // this path, so it's the latency that inflates a run's RUN phase when workers are network-distant
+    // from the app. Optional: absent on older workers / when the probe fails.
+    serverPingMs: z.number().optional(),
     sandboxes: z.array(SandboxInformation).default([]),
 })
 

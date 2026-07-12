@@ -93,6 +93,7 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
                     cpuCores: worker.information.totalCpuCores,
                     cpuUsagePercentage: worker.information.cpuUsagePercentage,
                     ramUsagePercentage: worker.information.ramUsagePercentage,
+                    serverPingMs: worker.information.serverPingMs ?? null,
                     status: worker.status,
                 })),
             },
