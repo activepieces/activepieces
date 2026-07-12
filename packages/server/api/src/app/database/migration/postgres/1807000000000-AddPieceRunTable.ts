@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddPieceRunTable1808000000000 implements Migration {
-    name = 'AddPieceRunTable1808000000000'
+export class AddPieceRunTable1807000000000 implements Migration {
+    name = 'AddPieceRunTable1807000000000'
     breaking = false
     release = '0.85.4'
 
@@ -35,22 +35,22 @@ export class AddPieceRunTable1808000000000 implements Migration {
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_piece_run_project_id_created" ON "piece_run" ("projectId", "created")
+            CREATE INDEX "idx_piece_run_project_id_created_archived_at" ON "piece_run" ("projectId", "created", "archivedAt")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_piece_run_project_id_status" ON "piece_run" ("projectId", "status")
+            CREATE INDEX "idx_piece_run_project_id_status_created" ON "piece_run" ("projectId", "status", "created")
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_piece_run_project_id_source_created" ON "piece_run" ("projectId", "source", "created")
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_piece_run_project_id_user_id_created" ON "piece_run" ("projectId", "userId", "created")
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_piece_run_project_id_piece_name_created" ON "piece_run" ("projectId", "pieceName", "created")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_piece_run_user_id" ON "piece_run" ("userId")
-        `)
-        await queryRunner.query(`
             CREATE INDEX "idx_piece_run_conversation_id" ON "piece_run" ("conversationId")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_piece_run_project_id_created_archived_at" ON "piece_run" ("projectId", "created", "archivedAt")
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_piece_run_created" ON "piece_run" ("created")
@@ -83,22 +83,22 @@ export class AddPieceRunTable1808000000000 implements Migration {
             DROP INDEX "idx_piece_run_created"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_piece_run_project_id_created_archived_at"
-        `)
-        await queryRunner.query(`
             DROP INDEX "idx_piece_run_conversation_id"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "idx_piece_run_user_id"
         `)
         await queryRunner.query(`
             DROP INDEX "idx_piece_run_project_id_piece_name_created"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_piece_run_project_id_status"
+            DROP INDEX "idx_piece_run_project_id_user_id_created"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_piece_run_project_id_created"
+            DROP INDEX "idx_piece_run_project_id_source_created"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "idx_piece_run_project_id_status_created"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "idx_piece_run_project_id_created_archived_at"
         `)
         await queryRunner.query(`
             DROP TABLE "piece_run"

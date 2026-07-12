@@ -93,10 +93,6 @@ export const PieceRunEntity = new EntitySchema<PieceRunSchema>({
     },
     indices: [
         {
-            name: 'idx_piece_run_project_id_created',
-            columns: ['projectId', 'created'],
-        },
-        {
             name: 'idx_piece_run_project_id_created_archived_at',
             columns: ['projectId', 'created', 'archivedAt'],
         },
@@ -105,16 +101,20 @@ export const PieceRunEntity = new EntitySchema<PieceRunSchema>({
             columns: ['created'],
         },
         {
-            name: 'idx_piece_run_project_id_status',
-            columns: ['projectId', 'status'],
+            name: 'idx_piece_run_project_id_status_created',
+            columns: ['projectId', 'status', 'created'],
+        },
+        {
+            name: 'idx_piece_run_project_id_source_created',
+            columns: ['projectId', 'source', 'created'],
+        },
+        {
+            name: 'idx_piece_run_project_id_user_id_created',
+            columns: ['projectId', 'userId', 'created'],
         },
         {
             name: 'idx_piece_run_project_id_piece_name_created',
             columns: ['projectId', 'pieceName', 'created'],
-        },
-        {
-            name: 'idx_piece_run_user_id',
-            columns: ['userId'],
         },
         {
             name: 'idx_piece_run_conversation_id',

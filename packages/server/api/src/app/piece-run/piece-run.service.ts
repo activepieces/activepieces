@@ -219,10 +219,13 @@ export const pieceRunService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage<PieceRunListItem>(populated, cursor)
     },
     async getOneOrThrow(params: GetOneParams): Promise<PopulatedPieceRun> {
-        const run = await pieceRunRepo().createQueryBuilder('piece_run')
+        let query = pieceRunRepo().createQueryBuilder('piece_run')
             .addSelect(['piece_run.input', 'piece_run.output', 'piece_run.logs'])
             .where({ id: params.id, projectId: params.projectId })
-            .getOne()
+        if (!params.includeArchived) {
+            query = query.andWhere({ archivedAt: IsNull() })
+        }
+        const run = await query.getOne()
         if (isNil(run)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -325,6 +328,7 @@ type ListParams = PieceRunFilterParams & {
 type GetOneParams = {
     projectId: string
     id: string
+    includeArchived?: boolean
 }
 
 type BulkArchiveParams = PieceRunFilterParams & {

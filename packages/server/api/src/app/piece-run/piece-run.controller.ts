@@ -29,6 +29,7 @@ export const pieceRunController: FastifyPluginAsyncZod = async (app) => {
         return pieceRunService(request.log).getOneOrThrow({
             projectId: request.projectId,
             id: request.params.id,
+            includeArchived: request.query.includeArchived,
         })
     })
 
@@ -90,6 +91,9 @@ const GetRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({
             id: ApId,
+        }),
+        querystring: z.object({
+            includeArchived: OptionalBooleanFromQuery,
         }),
         response: {
             [StatusCodes.OK]: PopulatedPieceRun,

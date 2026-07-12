@@ -39,7 +39,11 @@ export const PieceRunDetailSheet = ({
   // file table and hydrated by fetching the single run.
   const { data: fullRun } = useQuery({
     queryKey: ['piece-run-detail', run?.id],
-    queryFn: () => pieceRunsApi.get({ id: run!.id }),
+    queryFn: () =>
+      pieceRunsApi.get({
+        id: run!.id,
+        includeArchived: !isNil(run!.archivedAt),
+      }),
     enabled: open && !isNil(run?.id),
     staleTime: 0,
   });

@@ -43,8 +43,16 @@ export const pieceRunsApi = {
       includeArchived,
     });
   },
-  get({ id }: { id: string }): Promise<PopulatedPieceRun> {
-    return api.get<PopulatedPieceRun>(`/v1/piece-runs/${id}`);
+  get({
+    id,
+    includeArchived,
+  }: {
+    id: string;
+    includeArchived?: boolean;
+  }): Promise<PopulatedPieceRun> {
+    return api.get<PopulatedPieceRun>(`/v1/piece-runs/${id}`, {
+      includeArchived,
+    });
   },
   bulkArchive(request: BulkArchivePieceRunsRequestBody): Promise<void> {
     return api.post<void>('/v1/piece-runs/archive', request);
