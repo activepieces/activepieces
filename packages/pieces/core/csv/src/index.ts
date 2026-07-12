@@ -8,7 +8,7 @@ import { chunkCsvFileAction } from './lib/actions/chunk-csv-file';
 export const csv = createPiece({
   displayName: 'CSV',
   description: 'Manipulate CSV text',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/csv.svg',
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],

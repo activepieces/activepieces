@@ -20,7 +20,7 @@ import { dropboxAuth } from './lib/auth';
 import { dropboxNewFolder } from './lib/triggers/new-folder';
 
 export const dropbox = createPiece({
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dropbox.png',
   actions: [
     dropboxSearch,

@@ -8,7 +8,7 @@ export const http = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/http.svg',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.20.3',
+  minimumSupportedRelease: '0.87.0',
   actions: [httpSendRequestAction, parseUrl],
   authors: [
     'bibhuty-did-this',

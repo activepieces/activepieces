@@ -17,7 +17,7 @@ export { getProtocolBackwardCompatibility, getClient, endClient } from './lib/co
 export const ftpSftp = createPiece({
   displayName: 'FTP/SFTP',
   description: 'Connect to FTP, FTPS or SFTP servers',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/sftp.svg',
   categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
   authors: [
