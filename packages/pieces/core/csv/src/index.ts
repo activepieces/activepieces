@@ -3,6 +3,7 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 import { csvToJsonAction } from './lib/actions/convert-csv-to-json';
 import { jsonToCsvAction } from './lib/actions/convert-json-to-csv';
 import { excelToCsvAction } from './lib/actions/convert-excel-to-csv';
+import { chunkCsvFileAction } from './lib/actions/chunk-csv-file';
 
 export const csv = createPiece({
   displayName: 'CSV',
@@ -11,7 +12,7 @@ export const csv = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/csv.svg',
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
-  actions: [csvToJsonAction, jsonToCsvAction, excelToCsvAction],
+  actions: [csvToJsonAction, jsonToCsvAction, excelToCsvAction, chunkCsvFileAction],
   authors: ["kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", 'sanket-a11y'],
   triggers: [],
 });

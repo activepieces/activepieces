@@ -195,6 +195,13 @@ export const httpSendRequestAction = createAction({
       required: false,
       defaultValue: false,
     }),
+    response_to_file: Property.Checkbox({
+      displayName: 'Save Response to File',
+      description:
+        'Stream the response body straight to storage and return a file reference instead of an inline base64 body. Recommended for large downloads to avoid loading the whole file into memory.',
+      required: false,
+      defaultValue: false,
+    }),
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
       defaultValue: false,
@@ -273,6 +280,7 @@ export const httpSendRequestAction = createAction({
       body,
       body_type,
       response_is_binary,
+      response_to_file,
       timeout,
       failureMode,
       use_proxy,
@@ -313,8 +321,10 @@ export const httpSendRequestAction = createAction({
         break;
     }
 
-    // Set response type to arraybuffer if binary response is expected
-    if (response_is_binary) {
+    // Streaming the body to storage wins over inline base64 when both are set.
+    if (response_to_file) {
+      request.responseType = 'stream';
+    } else if (response_is_binary) {
       request.responseType = 'arraybuffer';
     }
 
@@ -334,7 +344,7 @@ export const httpSendRequestAction = createAction({
           if (fieldType === 'text' && !isEmpty(textFieldValue)) {
             formData.append(fieldName, textFieldValue);
           } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
-            formData.append(fieldName, fileFieldValue!.data,{filename:fileFieldValue?.filename});
+            formData.append(fieldName, fileFieldValue!.data, { filename: fileFieldValue?.filename });
           }
         }
 
@@ -371,6 +381,16 @@ export const httpSendRequestAction = createAction({
     while (attempts < 3) {
       try {
         const response = await apiRequest();
+        if (response_to_file) {
+          return {
+            status: response.status,
+            headers: response.headers,
+            file: await context.files.writeStream({
+              fileName: fileNameFromUrl(url),
+              stream: response.body,
+            }),
+          };
+        }
         return handleBinaryResponse(
           response.body,
           response.status,
@@ -438,4 +458,13 @@ const handleBinaryResponse = (
 
 const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
   return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};
+
+const fileNameFromUrl = (url: string): string => {
+  try {
+    const last = new URL(url).pathname.split('/').filter(Boolean).pop();
+    return last && last.length > 0 ? decodeURIComponent(last) : 'response';
+  } catch {
+    return 'response';
+  }
 };

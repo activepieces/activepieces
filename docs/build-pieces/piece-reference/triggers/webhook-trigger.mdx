@@ -14,6 +14,10 @@ Some services require a successful handshake request usually consisting of some 
 **Run:**
 You can find the HTTP body inside `context.payload.body`. If needed, alter the body; otherwise, return an array with a single item `context.payload.body`.
 
+<Note>
+Large binary bodies (e.g. `application/octet-stream`, images, video, PDFs) and multipart file uploads are streamed straight to storage instead of being buffered — `context.payload.body` receives a file-reference URL rather than the raw bytes. The per-file ceiling is `AP_MAX_STREAM_FILE_SIZE_MB` (S3 storage only; on `DB` storage the smaller `AP_MAX_FILE_SIZE_MB` cap applies). This is async-only territory: a **synchronous** webhook streaming a huge upload will hit the HTTP timeout, so use published flows for large ingestion.
+</Note>
+
 **Disable:**
 Using the `context.store`, fetch the webhook ID from the enable step and delete the webhook on the third-party app.
 

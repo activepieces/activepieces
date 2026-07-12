@@ -1,7 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { ApFileRef, Property, createAction } from '@activepieces/pieces-framework';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
 import { ObjectCannedACL } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import mime from 'mime-types';
 
 export const amazons3UploadFile = createAction({
@@ -19,6 +20,7 @@ export const amazons3UploadFile = createAction({
       displayName: 'File',
       description: 'The file to upload to S3.',
       required: true,
+      stream: true,
     }),
     fileName: Property.ShortText({
       displayName: 'File Name (Optional)',
@@ -75,34 +77,23 @@ export const amazons3UploadFile = createAction({
 
     const s3 = await resolveS3Client({ authProps, server: context.server });
 
-    let contentType, extension = null
-
-    if(!type) {
-      if (!file.extension || file.extension === undefined || !mime.contentType(file.extension)) {
-        throw new Error("Content type could not be interpreted, please check the input file.")
-      }
-
-      extension = '.' + file.extension
-      contentType = mime.contentType(extension) as string
-    } 
-    else if (!mime.extension(type as string)) {
-      throw new Error("The content type entered does not exist or is misspelled, please check your input.")
-    } else {
-      contentType = type
-      extension = '.' + mime.extension(type)
-    }
+    const { contentType, extension } = resolveContentType({ file, type });
 
     const generatedName = new Date().toISOString() + Date.now() + extension;
 
     const finalFileName = fileName ? (fileName.endsWith(extension) ? fileName : fileName + extension) : generatedName;
 
-    const uploadResponse = await s3.putObject({
-      Bucket: bucket,
-      Key: finalFileName,
-      ACL: acl as ObjectCannedACL | undefined,
-      ContentType: contentType,
-      Body: file.data,
+    const upload = new Upload({
+      client: s3,
+      params: {
+        Bucket: bucket,
+        Key: finalFileName,
+        ACL: acl as ObjectCannedACL | undefined,
+        ContentType: contentType,
+        Body: await file.stream(),
+      },
     });
+    const uploadResponse = await upload.done();
 
     return {
       fileName: finalFileName,
@@ -110,3 +101,18 @@ export const amazons3UploadFile = createAction({
     };
   },
 });
+
+function resolveContentType({ file, type }: { file: ApFileRef; type: string | undefined }): { contentType: string; extension: string } {
+  if (type) {
+    const ext = mime.extension(type);
+    if (!ext) {
+      throw new Error("The content type entered does not exist or is misspelled, please check your input.");
+    }
+    return { contentType: type, extension: '.' + ext };
+  }
+
+  // ponytail: S3 doesn't require a content type; fall back to octet-stream rather than reject a storable file.
+  const contentType = file.mimetype ?? (mime.lookup(file.filename) || 'application/octet-stream');
+  const ext = mime.extension(contentType);
+  return { contentType, extension: ext ? '.' + ext : '' };
+}

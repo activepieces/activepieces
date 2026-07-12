@@ -6,20 +6,19 @@ import { sftpAuth } from '../auth';
 import { Readable } from 'stream';
 import { getSftpError } from './common';
 
-async function uploadFileToFTP(client: FTPClient, fileName: string, fileContent: { data: any }) {
+async function uploadFileToFTP(client: FTPClient, fileName: string, stream: Readable) {
   const remoteDirectory = fileName.substring(0, fileName.lastIndexOf('/'));
   await client.ensureDir(remoteDirectory);
-  await client.uploadFrom(Readable.from(fileContent.data), fileName);
+  await client.uploadFrom(stream, fileName);
 }
 
-async function uploadFileToSFTP(client: Client, fileName: string, fileContent: { data: any }) {
+async function uploadFileToSFTP(client: Client, fileName: string, stream: Readable) {
   const remotePathExists = await client.exists(fileName);
   if (!remotePathExists) {
     const remoteDirectory = fileName.substring(0, fileName.lastIndexOf('/'));
     await client.mkdir(remoteDirectory, true);
   }
-  await client.put(fileContent.data, fileName);
-  await client.end();
+  await client.put(stream, fileName);
 }
 
 export const uploadFileAction = createAction({
@@ -38,6 +37,7 @@ export const uploadFileAction = createAction({
     fileContent: Property.File({
       displayName: 'File content',
       required: true,
+      stream: true,
     }),
   },
   async run(context) {
@@ -46,14 +46,15 @@ export const uploadFileAction = createAction({
     const fileContent = context.propsValue['fileContent'];
     const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);
     try {
+      const stream = await fileContent.stream();
       switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
-          await uploadFileToFTP(client as FTPClient, fileName, fileContent);
+          await uploadFileToFTP(client as FTPClient, fileName, stream);
           break;
         default:
         case 'sftp':
-          await uploadFileToSFTP(client as Client, fileName, fileContent);
+          await uploadFileToSFTP(client as Client, fileName, stream);
           break;
       }
       return {

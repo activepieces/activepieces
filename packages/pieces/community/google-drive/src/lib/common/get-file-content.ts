@@ -36,27 +36,31 @@ const googledlCall = async (
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
-  })
-    .then((response) =>
-      response.ok ? response.blob() : Promise.reject(response)
+  }).catch((error) =>
+    Promise.reject(
+      new Error(
+        `Error when download file:\n\tDownload file response: ${
+          (error as Error).message ?? error
+        }`
+      )
     )
-    .catch((error) =>
-      Promise.reject(
-        new Error(
-          `Error when download file:\n\tDownload file response: ${
-            (error as Error).message ?? error
-          }`
-        )
+  );
+
+  if (!download.ok || !download.body) {
+    return Promise.reject(
+      new Error(
+        `Error when download file:\n\tDownload file response: ${download.status} ${download.statusText}`
       )
     );
+  }
 
   const extensionResult = extension(mimeType);
   const fileExtension = extensionResult ? '.' + extensionResult : '';
   const srcFileName = fileName ?? fileId + fileExtension;
 
-  return files.write({
+  return files.writeStream({
     fileName: srcFileName,
-    data: Buffer.from(await download.arrayBuffer()),
+    stream: download.body,
   });
 };
 

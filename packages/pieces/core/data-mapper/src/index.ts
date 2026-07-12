@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { advancedMapping } from './lib/actions/advanced-mapping';
+import { chunkArray } from './lib/actions/chunk-array';
 
 export const dataMapper = createPiece({
   displayName: 'Data Mapper',
@@ -11,6 +12,6 @@ export const dataMapper = createPiece({
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
-  actions: [advancedMapping],
+  actions: [advancedMapping, chunkArray],
   triggers: [],
 });

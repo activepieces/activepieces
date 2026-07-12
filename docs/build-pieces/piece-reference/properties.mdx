@@ -212,6 +212,8 @@ Property.File({
 });
 ```
 
+By default the file resolves to an `ApFile` (buffered, with `.data` and `.base64`). For large files, add `stream: true` to resolve it to an `ApFileRef` instead — a pass-by-reference handle you consume via `.stream()` or `.buffer()` without buffering the whole file up front. See [Files](./files#reading-files).
+
 ### Array of Strings
 
 This property collects an array of strings from the user.
