@@ -611,7 +611,7 @@ export type PieceRunOffload = {
 }
 
 // The raw action output payload returned (instead of a model-facing McpToolResult) when
-// executePieceRunAction is called with returnRawOutput — the full result Code Mode's in-VM code
+// executePieceRunAction is called with returnRawOutput — the full raw result a bridged caller
 // consumes. Distinct shape so callers can tell it apart from a formatted/offloaded result.
 export type RawPieceRunActionResult = {
     rawOutput: unknown

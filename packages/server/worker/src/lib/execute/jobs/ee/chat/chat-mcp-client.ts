@@ -1,6 +1,6 @@
-import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { chatCodeModeUtils, ChatContextCompression, ChatContextCompressionMethod, chatToolPhases } from '@activepieces/shared'
+import { chatToolPhases } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,24 +8,6 @@ import { chatWorkerTools } from './chat-worker-tools'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
-// Only badge a reduction the user would actually care about: skip sub-512-byte savings and
-// reductions under ~10%, so a trivial trim never advertises itself as "Context compression".
-const COMPRESSION_MIN_SAVED_BYTES = 512
-const COMPRESSION_MIN_SAVED_RATIO = 0.1
-const PIECE_PROPS_TOOL_NAME = 'ap_get_piece_props'
-const RESOLVE_OPTIONS_TOOL_NAME = 'ap_resolve_property_options'
-const RESOLVE_CHAIN_TOOL_NAME = 'ap_resolve_property_chain'
-const CACHEABLE_TOOL_NAMES = new Set<string>([PIECE_PROPS_TOOL_NAME, RESOLVE_OPTIONS_TOOL_NAME, RESOLVE_CHAIN_TOOL_NAME])
-const RESOLVE_TOOL_NAMES = new Set<string>([RESOLVE_OPTIONS_TOOL_NAME, RESOLVE_CHAIN_TOOL_NAME])
-const RESOLVE_FAILED_PREFIX = '⚠️ Options could not be loaded'
-const TRANSIENT_RESOLVE_MARKERS = ['Could not resolve', 'Timed out', RESOLVE_FAILED_PREFIX]
-const PROP_VERBOSE_KEYS = new Set<string>(['description', 'defaultValue', 'sampleData', 'examples', 'sampleOutput'])
-const PROP_RECURSE_KEYS = new Set<string>(['items', 'dynamicFields', 'children', 'listItems'])
-const SCHEMA_ROOT_VERBOSE_KEYS = new Set<string>(['sampleData', 'examples', 'sampleOutput'])
-
-const TOOL_RESULT_CACHE_TTL_MS = 10 * 60 * 1_000
-const TOOL_RESULT_CACHE_MAX_ENTRIES = 200
-const toolResultCache = new Map<string, { result: unknown, expiresAt: number }>()
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
 // High-precision: matched against tool RESULT text (which can contain user/CRM data), so it
@@ -197,48 +179,8 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text: chatAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
 }
 
-function serializedByteSize(value: unknown): number {
-    const { data: serialized } = tryCatchSync(() => JSON.stringify(value))
-    return typeof serialized === 'string' ? Buffer.byteLength(serialized, 'utf8') : 0
-}
-
-// Decide whether a before→after reduction is worth surfacing as a "Context compression" badge.
-// Returns null for no-ops and trivial trims so the UI only ever shows a genuine win.
-function measureCompression({ method, originalBytes, returnedBytes }: {
-    method: ChatContextCompressionMethod
-    originalBytes: number
-    returnedBytes: number
-}): ChatContextCompression | null {
-    if (originalBytes <= 0 || returnedBytes <= 0 || returnedBytes >= originalBytes) {
-        return null
-    }
-    const savedBytes = originalBytes - returnedBytes
-    if (savedBytes < COMPRESSION_MIN_SAVED_BYTES || savedBytes / originalBytes < COMPRESSION_MIN_SAVED_RATIO) {
-        return null
-    }
-    return { method, originalBytes, returnedBytes }
-}
-
-// Rides the compression metadata alongside the result on `structuredContent.contextCompression`,
-// mirroring how Code Mode threads its structured payload to the UI. The model still reads the
-// (already-reduced) content/text; this only adds a few numbers + a short method string.
-function attachCompressionMetadata({ result, compression }: {
-    result: unknown
-    compression: ChatContextCompression | null
-}): unknown {
-    if (compression === null || !isObject(result)) {
-        return result
-    }
-    const existingStructured = isObject(result['structuredContent']) ? result['structuredContent'] : {}
-    return {
-        ...result,
-        structuredContent: { ...existingStructured, contextCompression: compression },
-    }
-}
-
-function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSelectedAuth, saveLargeResult }: {
+function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult }: {
     mcpToolSet: Record<string, unknown>
-    conversationId: string
     brokenConnectors: Set<string>
     getSelectedAuth?: (params: { pieceName: string }) => string | undefined
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
@@ -256,24 +198,9 @@ function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSel
 
         result[name] = Object.assign({}, tool, {
             execute: async (rawArgs: unknown, options?: ToolExecutionOptions) => {
-                // Code Mode bridged call: the in-VM code consumes the FULL result, so the digest/
-                // offload/truncate reductions (which exist to keep the MODEL's context lean) must NOT
-                // run. Strip the marker so it never reaches the MCP tool's own input.
-                const wantsRawResult = chatCodeModeUtils.isRawArgs(rawArgs)
-                const args = injectSelectedAuth({ name, args: chatCodeModeUtils.stripRawArgs(rawArgs), getSelectedAuth })
+                const args = injectSelectedAuth({ name, args: rawArgs, getSelectedAuth })
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
-                }
-                // Raw (Code Mode) calls bypass the cache: it stores results already reduced for the
-                // model, and the raw path must never serve or seed a reduced entry.
-                const cacheKey = !wantsRawResult && CACHEABLE_TOOL_NAMES.has(name)
-                    ? buildToolCacheKey({ conversationId, toolName: name, args })
-                    : null
-                if (cacheKey !== null) {
-                    const cached = readToolResultCache(cacheKey)
-                    if (cached.hit) {
-                        return cached.result
-                    }
                 }
                 const { data: toolResult, error } = await tryCatch(() => chatWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
@@ -288,9 +215,6 @@ function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSel
                         }
                         return buildReconnectGuidance({ connectorUuid })
                     }
-                    if (RESOLVE_TOOL_NAMES.has(name)) {
-                        return buildResolveFailFastResult({ args })
-                    }
                     throw error
                 }
                 const { isAuthError, connectorUuid } = classifyMcpAuthError({ result: toolResult, toolName: name })
@@ -300,208 +224,16 @@ function withToolTimeouts({ mcpToolSet, conversationId, brokenConnectors, getSel
                     }
                     return buildReconnectGuidance({ connectorUuid })
                 }
-                // Hand Code Mode the FULL, un-reduced result by reference (the bridge injects it into
-                // the vm context as-is — no file, no JSON round-trip). The reductions below are only
-                // for the model's context. Caching is also skipped: the cacheable tools are small
-                // schema reads, not the big payloads Code Mode pulls, so there is nothing to gain.
-                if (wantsRawResult) {
-                    return toolResult
+                const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
+                if (offloaded !== null) {
+                    return offloaded
                 }
-                const originalBytes = serializedByteSize(toolResult)
-                const digested = digestMcpResult({ toolName: name, result: toolResult })
-                const offloaded = await maybeOffloadMcpResult({ result: digested, toolName: name, saveLargeResult })
-                const reduced = offloaded !== null ? offloaded : chatWorkerTools.truncateLargeResult(digested)
-                const method: ChatContextCompressionMethod = offloaded !== null
-                    ? 'offloaded'
-                    : reduced !== digested
-                        ? 'truncated'
-                        : 'condensed'
-                const compression = measureCompression({ method, originalBytes, returnedBytes: serializedByteSize(reduced) })
-                const finalResult = attachCompressionMetadata({ result: reduced, compression })
-                if (cacheKey !== null) {
-                    writeToolResultCache({ key: cacheKey, result: finalResult })
-                }
-                return finalResult
+                return chatWorkerTools.truncateLargeResult(toolResult)
             },
         })
     }
 
     return result
-}
-
-function buildToolCacheKey({ conversationId, toolName, args }: { conversationId: string, toolName: string, args: unknown }): string | null {
-    if (!isObject(args)) {
-        return null
-    }
-    const pieceName = typeof args['pieceName'] === 'string' ? args['pieceName'] : null
-    const actionOrTriggerName = typeof args['actionOrTriggerName'] === 'string' ? args['actionOrTriggerName'] : null
-    const type = typeof args['type'] === 'string' ? args['type'] : null
-    if (pieceName === null || actionOrTriggerName === null || type === null) {
-        return null
-    }
-    const keyParts = {
-        pieceName,
-        actionOrTriggerName,
-        type,
-        auth: typeof args['auth'] === 'string' && args['auth'].length > 0,
-        flowId: typeof args['flowId'] === 'string' ? args['flowId'] : null,
-        propertyName: typeof args['propertyName'] === 'string' ? args['propertyName'] : null,
-        propertyChain: Array.isArray(args['propertyChain']) ? JSON.stringify(args['propertyChain']) : null,
-        searchValue: typeof args['searchValue'] === 'string' ? args['searchValue'] : null,
-        input: isObject(args['input']) ? JSON.stringify(args['input']) : null,
-        currentInput: isObject(args['currentInput']) ? JSON.stringify(args['currentInput']) : null,
-    }
-    return `${conversationId}::${toolName}::${JSON.stringify(keyParts)}`
-}
-
-function readToolResultCache(key: string): { hit: boolean, result: unknown } {
-    const entry = toolResultCache.get(key)
-    if (!entry) {
-        return { hit: false, result: undefined }
-    }
-    if (entry.expiresAt <= Date.now()) {
-        toolResultCache.delete(key)
-        return { hit: false, result: undefined }
-    }
-    toolResultCache.delete(key)
-    toolResultCache.set(key, entry)
-    return { hit: true, result: entry.result }
-}
-
-function writeToolResultCache({ key, result }: { key: string, result: unknown }): void {
-    if (isResultUncacheable(result)) {
-        return
-    }
-    // Active eviction: TTL cleanup on read alone lets entries for finished conversations sit
-    // until displaced by the LRU cap. The map is small (<= TOOL_RESULT_CACHE_MAX_ENTRIES), so a
-    // full sweep per write is cheap and keeps idle retention bounded by the TTL, not the cap.
-    const now = Date.now()
-    for (const [entryKey, entry] of toolResultCache) {
-        if (entry.expiresAt <= now) {
-            toolResultCache.delete(entryKey)
-        }
-    }
-    toolResultCache.set(key, { result, expiresAt: now + TOOL_RESULT_CACHE_TTL_MS })
-    while (toolResultCache.size > TOOL_RESULT_CACHE_MAX_ENTRIES) {
-        const oldestKey = toolResultCache.keys().next().value
-        if (oldestKey === undefined) {
-            break
-        }
-        toolResultCache.delete(oldestKey)
-    }
-}
-
-function isResultUncacheable(result: unknown): boolean {
-    if (!isObject(result)) {
-        return false
-    }
-    if (result['isError'] === true) {
-        return true
-    }
-    if (!Array.isArray(result['content'])) {
-        return false
-    }
-    const combinedText = result['content']
-        .map((entry) => isObject(entry) && typeof entry['text'] === 'string' ? entry['text'] : '')
-        .join('\n')
-    return TRANSIENT_RESOLVE_MARKERS.some((marker) => combinedText.includes(marker))
-}
-
-function buildResolveFailFastResult({ args }: { args: unknown }): unknown {
-    const propertyName = isObject(args) && typeof args['propertyName'] === 'string' ? args['propertyName'] : null
-    const target = propertyName ? `for "${propertyName}" ` : ''
-    return {
-        content: [{
-            type: 'text',
-            text: `${RESOLVE_FAILED_PREFIX} ${target}(the resolver is slow right now). Do not keep retrying — proceed by setting a manual value the user provided, or retry this once at most. The flow-editor dropdown may appear unset; mention that to the user if relevant.`,
-        }],
-    }
-}
-
-function digestMcpResult({ toolName, result }: {
-    toolName: string
-    result: unknown
-}): unknown {
-    return toolName === PIECE_PROPS_TOOL_NAME ? condensePiecePropsResult(result) : result
-}
-
-function condensePiecePropsResult(result: unknown): unknown {
-    if (!isObject(result)) {
-        return result
-    }
-    const structuredContent = isObject(result['structuredContent'])
-        ? condenseSchemaObject(result['structuredContent'])
-        : result['structuredContent']
-    const content = Array.isArray(result['content'])
-        ? result['content'].map(condenseContentEntry)
-        : result['content']
-    return { ...result, content, structuredContent }
-}
-
-function condenseContentEntry(entry: unknown): unknown {
-    if (!isObject(entry) || entry['type'] !== 'text' || typeof entry['text'] !== 'string') {
-        return entry
-    }
-    return { ...entry, text: condenseEmbeddedSchemaJson(entry['text']) }
-}
-
-function condenseEmbeddedSchemaJson(text: string): string {
-    const start = text.indexOf('{')
-    const end = text.lastIndexOf('}')
-    if (start === -1 || end <= start) {
-        return text
-    }
-    const before = text.slice(0, start)
-    const jsonBlock = text.slice(start, end + 1)
-    const after = text.slice(end + 1)
-    const { data: parsed, error } = tryCatchSync(() => JSON.parse(jsonBlock))
-    if (error || !isObject(parsed)) {
-        return text
-    }
-    return `${before}${JSON.stringify(condenseSchemaObject(parsed), null, 2)}${after}`
-}
-
-function condenseSchemaObject(schema: Record<string, unknown>): Record<string, unknown> {
-    const condensed: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(schema)) {
-        if (SCHEMA_ROOT_VERBOSE_KEYS.has(key)) {
-            continue
-        }
-        if (key === 'props' && Array.isArray(value)) {
-            condensed[key] = value.map(condensePropSummary)
-        }
-        else if (key === 'outputSchema' && isObject(value)) {
-            condensed[key] = condenseOutputSchema(value)
-        }
-        else {
-            condensed[key] = value
-        }
-    }
-    return condensed
-}
-
-function condensePropSummary(prop: unknown): unknown {
-    if (!isObject(prop)) {
-        return prop
-    }
-    const kept: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(prop)) {
-        if (PROP_VERBOSE_KEYS.has(key)) {
-            continue
-        }
-        kept[key] = PROP_RECURSE_KEYS.has(key) && Array.isArray(value)
-            ? value.map(condensePropSummary)
-            : value
-    }
-    return kept
-}
-
-function condenseOutputSchema(outputSchema: Record<string, unknown>): Record<string, unknown> {
-    const condensed: Record<string, unknown> = { ...outputSchema }
-    if (Array.isArray(outputSchema['fields'])) {
-        condensed['fields'] = outputSchema['fields'].map(condensePropSummary)
-    }
-    return condensed
 }
 
 type McpConnection = {

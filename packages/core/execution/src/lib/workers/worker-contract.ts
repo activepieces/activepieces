@@ -110,7 +110,6 @@ export type GetChatConfigRequest = {
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: ChatPromptOverride
     dryRun?: boolean
-    resumeKind?: 'gate' | 'crash'
 }
 
 export type ResolvedAiToolConfig = {
@@ -191,9 +190,6 @@ export type ExecuteChatToolRequest = {
     platformId: string
     userId: string
     conversationId?: string
-    // The owning run of the caller. Threaded so control RPCs that fence on the resume run — e.g.
-    // __consume_pre_approval verifying a one-shot token belongs to THIS run (Fix R1) — can match it.
-    runId?: string
 }
 
 export type ExecuteChatToolResponse = {
