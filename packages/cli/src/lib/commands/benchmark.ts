@@ -11,8 +11,7 @@ export const benchmarkCommand = new Command('benchmark')
     .option('--url <url>', 'Activepieces base URL (dev env API port)', 'http://localhost:3000')
     .option('--requests <n>', 'Total requests to fire (default: 40 x concurrency)')
     .option('--concurrency <c>', 'Concurrent connections (default: auto = sum of worker execution slots)')
-    .option('--api-key <key>', 'Platform API key (Bearer). Or set AP_API_KEY. Requires --project-id.')
-    .option('--project-id <id>', 'Project to create the benchmark flow in (required)')
+    .option('--api-key <key>', 'Platform API key (Bearer). Or set AP_API_KEY.')
     .option('--body <json>', 'JSON request body sent to the webhook', '{"test":true}')
     .option('--json', 'Emit machine-readable JSON output')
     .action(async (opts) => {
@@ -34,45 +33,55 @@ export const benchmarkCommand = new Command('benchmark')
                 collectFlags(authed),
                 measureNetwork(authed),
             ]);
-            const flowId = await createBenchmarkFlow({ client: authed, projectId: auth.projectId });
-            log(config, `Flow ready: ${flowId}`);
 
-            const slots = setup.executionSlots;
-            const phases = benchmarkUtils.resolvePhases({ concurrency: config.concurrency, slots });
+            const project = await provisionProject({ client: authed });
+            log(config, `Provisioned throwaway project ${project.id}`);
+            const runsFailed = await (async () => {
+                const projectLimits = await collectProjectLimits({ client: authed, projectId: project.id, rateLimiterEnabled: flags['PROJECT_RATE_LIMITER_ENABLED'] === true });
+                const flowId = await createBenchmarkFlow({ client: authed, projectId: project.id });
+                log(config, `Flow ready: ${flowId}`);
 
-            const runs: PhaseReport[] = [];
-            for (const phase of phases) {
-                const requests = config.requests ?? Math.max(200, phase.connections * 40);
-                log(config, `Running ${phase.label}: ${requests} requests @ ${phase.connections} connections`);
-                // createdAfter is compared against the server clock, but this timestamp is the CLI's.
-                // The CLI runs cross-region, so its clock can lead the server's — widen the window by a
-                // skew buffer so runs aren't silently dropped. Safe because each benchmark builds a fresh
-                // flow, so the flowId filter still admits only this run's flow runs.
-                const startedAt = new Date(Date.now() - CLOCK_SKEW_BUFFER_MS).toISOString();
-                const queueSampler = startQueueSampler(authed);
-                const result = await autocannon({
-                    url: `${config.url}/api/v1/webhooks/${flowId}/sync`,
-                    connections: phase.connections,
-                    amount: requests,
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json' },
-                    body: config.body,
-                });
-                const queueDepth = queueSampler.stop();
-                const summary = benchmarkUtils.toSummary({ result, flowId, connections: phase.connections });
-                const runsInWindow = await collectRuns({ client: authed, projectId: auth.projectId, flowId, since: startedAt });
-                runs.push({ label: phase.label, connections: phase.connections, requests, startedAt, summary, timeline: runsInWindow.timeline, outcomes: runsInWindow.outcomes, queueDepth });
-            }
+                const slots = setup.executionSlots;
+                const phases = benchmarkUtils.resolvePhases({ concurrency: config.concurrency, slots });
 
-            const storage = await probeStorage({ client: authed, projectId: auth.projectId, flowId });
-            const report: BenchmarkReport = { meta: buildMeta({ url: config.url }), flowId, health, diagnostics, setup, flags, network, storage, runs };
+                const runs: PhaseReport[] = [];
+                for (const phase of phases) {
+                    const requests = config.requests ?? Math.max(200, phase.connections * 40);
+                    log(config, `Running ${phase.label}: ${requests} requests @ ${phase.connections} connections`);
+                    // createdAfter is compared against the server clock, but this timestamp is the CLI's.
+                    // The CLI runs cross-region, so its clock can lead the server's — widen the window by a
+                    // skew buffer so runs aren't silently dropped. Safe because each benchmark builds a fresh
+                    // flow, so the flowId filter still admits only this run's flow runs.
+                    const startedAt = new Date(Date.now() - CLOCK_SKEW_BUFFER_MS).toISOString();
+                    const queueSampler = startQueueSampler(authed);
+                    const result = await autocannon({
+                        url: `${config.url}/api/v1/webhooks/${flowId}/sync`,
+                        connections: phase.connections,
+                        amount: requests,
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: config.body,
+                    });
+                    const queueDepth = queueSampler.stop();
+                    const summary = benchmarkUtils.toSummary({ result, flowId, connections: phase.connections });
+                    const runsInWindow = await collectRuns({ client: authed, projectId: project.id, flowId, since: startedAt });
+                    runs.push({ label: phase.label, connections: phase.connections, requests, startedAt, summary, timeline: runsInWindow.timeline, outcomes: runsInWindow.outcomes, queueDepth });
+                }
 
-            if (config.json) {
-                process.stdout.write(JSON.stringify(report, null, 2) + '\n');
-            } else {
-                renderReport(report);
-            }
-            process.exit(runs.some((r) => r.summary.failed > 0) ? 1 : 0);
+                const storage = await probeStorage({ client: authed, projectId: project.id, flowId });
+                const report: BenchmarkReport = { meta: buildMeta({ url: config.url }), flowId, project: { id: project.id, limits: projectLimits }, health, diagnostics, setup, flags, network, storage, runs };
+
+                if (config.json) {
+                    process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+                } else {
+                    renderReport(report);
+                }
+                return runs.some((r) => r.summary.failed > 0);
+            })().finally(async () => {
+                log(config, `Deleting throwaway project ${project.id}`);
+                await deleteProject({ client: authed, id: project.id });
+            });
+            process.exit(runsFailed ? 1 : 0);
         } catch (e) {
             const message = e instanceof AxiosError ? `${e.message}${e.response ? ` (HTTP ${e.response.status}: ${JSON.stringify(e.response.data)})` : ''}` : e instanceof Error ? e.message : String(e);
             if (config.json) {
@@ -99,7 +108,6 @@ function normalizeOptions(opts: Record<string, string | boolean | undefined>): B
         requests,
         concurrency,
         apiKey: typeof opts.apiKey === 'string' ? opts.apiKey : undefined,
-        projectId: typeof opts.projectId === 'string' ? opts.projectId : undefined,
         body,
         json: opts.json === true,
     };
@@ -318,10 +326,37 @@ function authenticate({ config }: { config: BenchmarkConfig }): AuthResult {
     if (!apiKey) {
         throw new Error('Provide a platform API key via --api-key or the AP_API_KEY env var.');
     }
-    if (!config.projectId) {
-        throw new Error('Pass --project-id (the project to create the benchmark flow in).');
+    return { token: apiKey };
+}
+
+// The benchmark always runs in a throwaway project it provisions and deletes, never the caller's own.
+// A low maxConcurrentJobs on a real project would queue the load and inflate latency — a measurement
+// artifact, not a server problem — so the throwaway project is created with a cap well above any
+// realistic slot count, taking the project rate limiter out of the picture entirely.
+async function provisionProject({ client }: { client: AxiosInstance }): Promise<ResolvedProject> {
+    const res = await client.post('/api/v1/projects', {
+        displayName: `benchmark-${Date.now()}`,
+        maxConcurrentJobs: EPHEMERAL_PROJECT_MAX_CONCURRENCY,
+    });
+    if (res.status >= 400 || typeof res.data?.id !== 'string') {
+        throw new Error(`Could not create a benchmark project (HTTP ${res.status}: ${JSON.stringify(res.data)}). The API key must be a platform admin key, and the plan must allow team projects.`);
     }
-    return { token: apiKey, projectId: config.projectId };
+    return { id: res.data.id };
+}
+
+async function deleteProject({ client, id }: { client: AxiosInstance; id: string }): Promise<void> {
+    await client.delete(`/api/v1/projects/${id}`).catch(() => undefined);
+}
+
+// Reads the project's own concurrency cap so a queue-throttled benchmark can be told apart from a slow
+// server. PROJECT_RATE_LIMITER_ENABLED gates whether the cap is enforced at all.
+async function collectProjectLimits({ client, projectId, rateLimiterEnabled }: CollectProjectLimitsParams): Promise<ProjectLimits> {
+    const res = await client.get(`/api/v1/projects/${projectId}`);
+    if (res.status !== 200 || typeof res.data !== 'object') {
+        return { available: false, reason: `projects/${projectId} returned HTTP ${res.status}` };
+    }
+    const maxConcurrentJobs: number | null = res.data?.plan?.maxConcurrentJobs ?? null;
+    return { available: true, maxConcurrentJobs, rateLimiterEnabled };
 }
 
 async function createBenchmarkFlow({ client, projectId }: { client: AxiosInstance; projectId: string }): Promise<string> {
@@ -484,7 +519,7 @@ function renderReport(report: BenchmarkReport): void {
         if (d.workers) {
             console.log(`  workers  : ${d.workers.count} connected`);
             for (const w of d.workers.machines) {
-                console.log(`    - ${w.status} ${w.workerId.slice(0, 8)} | ${w.cpuCores} core | cpu ${w.cpuUsagePercentage.toFixed(1)}% | ram ${w.ramUsagePercentage.toFixed(1)}%`);
+                console.log(`    - ${w.status} ${w.workerId.slice(0, 8)} | ${w.cpuCores} core | cpu ${w.cpuUsagePercentage.toFixed(1)}% | ram ${w.ramUsagePercentage.toFixed(1)}% | worker→app ${w.serverPingMs == null ? 'n/a' : w.serverPingMs + 'ms'}`);
             }
         }
     } else {
@@ -513,6 +548,19 @@ function renderReport(report: BenchmarkReport): void {
     for (const c of report.setup.checks) {
         const badge = c.status === 'PASS' ? chalk.green('PASS') : chalk.yellow('WARN');
         console.log(`  [${badge}] ${c.dimension.padEnd(18)} ${c.detail}`);
+    }
+
+    console.log(chalk.bold('\nProject'));
+    console.log(`  throwaway project (auto-created, deleted after) : ${report.project.id}`);
+    if (report.project.limits.available) {
+        const cap = report.project.limits.maxConcurrentJobs;
+        const capLabel = cap === null ? 'unset (platform default)' : `${cap} concurrent jobs`;
+        // The benchmark project is uncapped on purpose, so these numbers can't throttle THIS run — they are
+        // reported so you can see whether the platform rate limiter would throttle your real projects.
+        console.log(`  benchmark project cap : ${capLabel} (not a bottleneck here)`);
+        console.log(`  platform rate limiter : ${report.project.limits.rateLimiterEnabled ? chalk.yellow('ON — your real projects are capped; a low per-project cap queues jobs and inflates their latency') : chalk.green('OFF')}`);
+    } else {
+        console.log(chalk.yellow(`  project limits skipped: ${report.project.limits.reason}`));
     }
 
     console.log(chalk.bold('\nNetwork (CLI -> server, cross-region)'));
@@ -617,6 +665,7 @@ function log(config: BenchmarkConfig, message: string): void {
 const WEBHOOK_PIECE = '@activepieces/piece-webhook';
 const DATA_MAPPER_PIECE = '@activepieces/piece-data-mapper';
 const DEFAULT_CONCURRENCY = 10;
+const EPHEMERAL_PROJECT_MAX_CONCURRENCY = 1000;
 const NETWORK_PROBES = 20;
 const RUN_PAGE_SIZE = 100;
 const MAX_RUN_PAGES = 30;
@@ -641,12 +690,17 @@ type BenchmarkConfig = {
     requests?: number;
     concurrency?: number;
     apiKey?: string;
-    projectId?: string;
     body: string;
     json: boolean;
 };
 
-type AuthResult = { token: string; projectId: string };
+type AuthResult = { token: string };
+
+type ResolvedProject = { id: string };
+type CollectProjectLimitsParams = { client: AxiosInstance; projectId: string; rateLimiterEnabled: boolean };
+type ProjectLimits =
+    | { available: false; reason: string }
+    | { available: true; maxConcurrentJobs: number | null; rateLimiterEnabled: boolean };
 
 type Phase = { label: string; connections: number };
 
@@ -751,7 +805,7 @@ type DiagnosticsInfo = {
     };
     workers?: {
         count: number;
-        machines: Array<{ workerId: string; cpuCores: number; cpuUsagePercentage: number; ramUsagePercentage: number; status: string }>;
+        machines: Array<{ workerId: string; cpuCores: number; cpuUsagePercentage: number; ramUsagePercentage: number; serverPingMs: number | null; status: string }>;
     };
 };
 
@@ -809,6 +863,7 @@ type PhaseReport = {
 type BenchmarkReport = {
     meta: RunMeta;
     flowId: string;
+    project: { id: string; limits: ProjectLimits };
     health: HealthInfo;
     diagnostics: DiagnosticsInfo;
     setup: SetupDiscovery;
