@@ -9,16 +9,17 @@ import {
 
 export const getPersonProfileAction = createAction({
   name: 'get_person_profile',
-  displayName: 'Get Person Profile',
+  displayName: 'Get LinkedIn Profile',
   description:
-    'Fetch a LinkedIn person profile by URL, slug, or URN. Costs 4 credits; the first 2 profile sections are included, each extra section adds 2 credits.',
+    'Fetch a LinkedIn person profile by URL, slug, or URN. Costs 4 credits; the first 2 profile sections are included, each extra section adds 2 credits. Works with or without an API key.',
   audience: 'both',
   aiMetadata: {
     description:
-      "Fetch one person's LinkedIn profile from Veezee by profile URL, slug (after /in/), or urn:li:fsd_profile URN. Use when you already know which person; to find people by name, title, or company use Search People instead. Costs 4 credits base; the first 2 requested sections are included, each extra section adds 2 credits. Read-only lookup, safe to repeat.",
+      "Fetch one person's LinkedIn profile by profile URL, slug (after /in/), or urn:li:fsd_profile URN. Use when you already know which person; to find people by name, title, or company use Search LinkedIn People instead. Costs 4 credits base; the first 2 requested sections are included, each extra section adds 2 credits. Works keyless under a free per-IP daily budget. Read-only lookup, safe to repeat.",
     idempotent: true,
   },
   auth: veezeeAuth,
+  requireAuth: false,
   props: {
     identifier: Property.ShortText({
       displayName: 'Person Identifier',
@@ -48,9 +49,9 @@ export const getPersonProfileAction = createAction({
       context.propsValue;
 
     return veezeeApiCall({
-      apiKey: context.auth.secret_text,
+      apiKey: context.auth?.secret_text || undefined,
       method: HttpMethod.GET,
-      resourceUri: '/profiles',
+      resourceUri: '/v1/linkedin/profiles',
       query: {
         identifier,
         sections:

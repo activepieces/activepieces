@@ -8,31 +8,28 @@ import {
 } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
-export const VEEZEE_BASE_URL = 'https://api.veezee.io/v1';
+export const VEEZEE_BASE_URL = 'https://api.veezee.io';
 
 const markdownDescription = `
-Paste your Veezee API key. It is sent as \`Authorization: Bearer <key>\`.
+Optional. Every action below also works with no key: calls run keyless under a free per-IP daily budget (20 credits/day, recent data only, no realtime fetches).
 
-If you do not have a key yet: the provision endpoint at https://veezee.io/docs issues a free trial key without account setup.
+Paste an API key to raise those limits and unlock realtime fetches; it is sent as \`Authorization: Bearer <key>\`. Get a paid key at https://veezee.io/upgrade.
 `;
 
 export const veezeeAuth = PieceAuth.SecretText({
   displayName: 'Veezee API Key',
   description: markdownDescription,
-  required: true,
+  required: false,
   validate: async ({ auth }) => {
     if (!auth) {
-      return {
-        valid: false,
-        error: 'API key is required.',
-      };
+      return { valid: true };
     }
     try {
-      // GET /usage is free (0 credits) — ideal for validating the key.
+      // GET /v1/usage is free (0 credits) and requires a key — good for validating one.
       await veezeeApiCall({
         apiKey: auth,
         method: HttpMethod.GET,
-        resourceUri: '/usage',
+        resourceUri: '/v1/usage',
       });
       return { valid: true };
     } catch (e) {
@@ -41,7 +38,7 @@ export const veezeeAuth = PieceAuth.SecretText({
         return {
           valid: false,
           error:
-            'Invalid API key. Provision a free one with: curl -X POST https://api.veezee.io/v1/provision',
+            'Invalid API key. Leave this field empty to call keyless, or get a paid key at https://veezee.io/upgrade.',
         };
       }
       return {
@@ -55,12 +52,12 @@ export const veezeeAuth = PieceAuth.SecretText({
 export const freshnessProp = Property.StaticDropdown({
   displayName: 'Freshness',
   description:
-    'Recent (default) serves cached data from the last few hours when available; Realtime forces a live fetch for +2 credits (refunded if the live fetch falls back to cached data).',
+    'Recent (default) serves cached data from the last few hours when available; Realtime forces a live fetch for +2 credits (refunded if the live fetch falls back to cached data). Keyless calls only support Recent.',
   required: false,
   options: {
     options: [
       { label: 'Recent (cached, default)', value: 'recent' },
-      { label: 'Realtime (+2 credits)', value: 'realtime' },
+      { label: 'Realtime (+2 credits, requires a paid key)', value: 'realtime' },
     ],
   },
 });
@@ -72,12 +69,10 @@ export const maxCreditsProp = Property.Number({
   required: false,
 });
 
-type QueryValue = string | number | boolean | undefined | null;
-
 export type VeezeeApiCallParams = {
-  apiKey: string;
+  apiKey?: string;
   method: HttpMethod;
-  resourceUri: string;
+  resourceUri: string; // full path including the /v1 prefix, e.g. '/v1/linkedin/profiles'
   query?: Record<string, QueryValue>;
 };
 
@@ -110,10 +105,6 @@ export async function veezeeApiCall<T>({
   const request: HttpRequest = {
     method,
     url: `${VEEZEE_BASE_URL}${resourceUri}`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: apiKey,
-    },
     headers: {
       Accept: 'application/json',
       // Metered Veezee routes require an Idempotency-Key, even on GET.
@@ -122,45 +113,74 @@ export async function veezeeApiCall<T>({
     queryParams,
   };
 
+  // Auth is optional on data routes: a keyless call runs under a free
+  // per-IP daily budget, so only attach the header when a key is set.
+  if (apiKey) {
+    request.authentication = {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: apiKey,
+    };
+  }
+
   try {
     const response = await httpClient.sendRequest<T>(request);
-
-    if (response.status >= 400) {
-      const bodyMessage =
-        typeof response.body === 'string'
-          ? response.body
-          : JSON.stringify(response.body);
-      throw new Error(`Veezee API error ${response.status}: ${bodyMessage}`);
-    }
-
     return response.body;
   } catch (error: unknown) {
-    const veezeeError = error as {
-      response?: { status?: number; body?: unknown };
-      statusCode?: number;
-      status?: number;
-      body?: unknown;
-      message?: string;
-    };
+    const { status, body, message } = extractStatusAndBody(error);
 
-    const statusCode =
-      veezeeError.response?.status ??
-      veezeeError.statusCode ??
-      veezeeError.status;
-    const errorBody = veezeeError.response?.body ?? veezeeError.body;
-
-    if (statusCode) {
-      const bodyMessage =
-        typeof errorBody === 'string' ? errorBody : JSON.stringify(errorBody);
+    if (status === 403 && stringField(body, 'code') === 'TRIAL_CAP_EXCEEDED') {
+      const retrySeconds = numberField(body, 'retry_after_seconds');
+      const upgradeUrl = stringField(body, 'upgrade_url');
+      const retryHint = retrySeconds ? ` Retry in ${retrySeconds}s` : '';
+      const upgradeHint = upgradeUrl ? ` or get a paid key at ${upgradeUrl}` : '';
       throw new Error(
-        `Veezee API error ${statusCode}: ${
-          bodyMessage || veezeeError.message || 'Unknown error'
-        }`
+        `Veezee free keyless daily budget is used up.${retryHint}${
+          retryHint && upgradeHint ? ',' : ''
+        }${upgradeHint}.`
       );
     }
 
-    throw new Error(
-      `Veezee request failed: ${veezeeError.message || 'Unknown error'}`
-    );
+    if (status) {
+      const bodyMessage =
+        stringField(body, 'message') ??
+        (typeof body === 'string' ? body : JSON.stringify(body));
+      throw new Error(`Veezee API error ${status}: ${bodyMessage || message || 'Unknown error'}`);
+    }
+
+    throw new Error(`Veezee request failed: ${message || 'Unknown error'}`);
   }
 }
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function stringField(body: unknown, field: string): string | undefined {
+  return isRecord(body) && typeof body[field] === 'string' ? body[field] : undefined;
+}
+
+function numberField(body: unknown, field: string): number | undefined {
+  return isRecord(body) && typeof body[field] === 'number' ? body[field] : undefined;
+}
+
+// httpClient throws an HttpError-shaped object (or a plain Error) on any
+// non-2xx response; pull the pieces our error handling needs without `as`.
+function extractStatusAndBody(error: unknown): {
+  status?: number;
+  body?: unknown;
+  message?: string;
+} {
+  const message = error instanceof Error ? error.message : undefined;
+  if (!isRecord(error)) {
+    return { message };
+  }
+  const response = isRecord(error['response']) ? error['response'] : undefined;
+  const status =
+    numberField(response, 'status') ??
+    numberField(error, 'statusCode') ??
+    numberField(error, 'status');
+  const body = response ? response['body'] : error['body'];
+  return { status, body, message };
+}
+
+type QueryValue = string | number | boolean | undefined | null;

@@ -9,7 +9,7 @@ import { veezeeAuth } from './lib/common';
 export const veezee = createPiece({
   displayName: 'Veezee',
   description:
-    'LinkedIn people and company data: profiles, people search, companies, and recent posts.',
+    'LinkedIn data: profiles, people search, companies, and recent posts. Works keyless under a free daily trial, or with a paid API key for higher limits and realtime fetches.',
   auth: veezeeAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/veezee.png',
