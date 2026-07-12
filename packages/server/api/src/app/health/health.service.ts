@@ -103,6 +103,8 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
                 s3SignedUrls: system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? null,
                 s3Endpoint: system.get(AppSystemProp.S3_ENDPOINT) ?? null,
                 s3Region: system.get(AppSystemProp.S3_REGION) ?? null,
+                projectRateLimiterEnabled: system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED) ?? null,
+                defaultConcurrentJobsLimit: system.getNumber(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) ?? null,
             },
         }
     },

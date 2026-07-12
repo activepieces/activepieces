@@ -37,6 +37,8 @@ export const DeploymentConfig = z.object({
     s3SignedUrls: z.boolean().nullable(),
     s3Endpoint: z.string().nullable(),
     s3Region: z.string().nullable(),
+    projectRateLimiterEnabled: z.boolean().nullable(),
+    defaultConcurrentJobsLimit: z.number().nullable(),
 })
 
 export const DiagnosticsWorker = z.object({

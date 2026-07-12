@@ -171,6 +171,10 @@ function aggregateTimeline(runs: FlowRunLike[]): TimelineAggregate {
     const provision = phase('PROVISION');
     const boot = phase('BOOT');
     const run = phase('RUN');
+    // A run the rate limiter rejected was re-queued with a >=20s delay (rate-limiter-interceptor.ts,
+    // 20s * 2^attempts), so it shows up as a QUEUE outlier of at least that size. Threshold at 15s to
+    // absorb app<->worker clock skew. Zero here = the rate limiter added no delay to these runs.
+    const rateLimitedRunsCount = queue.filter((q) => q >= RATE_LIMIT_DETECTION_MS).length;
     const waitPerRun = runs
         .map((r) => {
             const legs = r.timeline?.legs?.[0];
@@ -186,8 +190,11 @@ function aggregateTimeline(runs: FlowRunLike[]): TimelineAggregate {
         serviceP50: percentile(run, 50),
         serviceP90: percentile(run, 90),
         queueP50: percentile(queue, 50),
+        queueP90: percentile(queue, 90),
+        queueMax: queue.length > 0 ? Math.max(...queue) : 0,
         provisionP50: percentile(provision, 50),
         bootP50: percentile(boot, 50),
+        rateLimitedRunsCount,
     };
 }
 
@@ -508,7 +515,7 @@ function renderReport(report: BenchmarkReport): void {
         console.log(`  redis    : ${infra(d.redis)}`);
         console.log(`  storage  : ${infra(d.storage)}   ${chalk.gray('(S3/GCS write+read round-trip; same cost is inside every RUN as the end-of-run log backup)')}`);
         if (d.config) {
-            console.log(`  config   : execution=${d.config.executionMode} storage=${d.config.fileStorageLocation} signedUrls=${d.config.s3SignedUrls} sandboxMemKB=${d.config.sandboxMemoryLimitKb} s3=${d.config.s3Endpoint ?? 'n/a'}/${d.config.s3Region ?? 'n/a'}`);
+            console.log(`  config   : execution=${d.config.executionMode} storage=${d.config.fileStorageLocation} signedUrls=${d.config.s3SignedUrls} sandboxMemKB=${d.config.sandboxMemoryLimitKb} s3=${d.config.s3Endpoint ?? 'n/a'}/${d.config.s3Region ?? 'n/a'} rateLimiter=${d.config.projectRateLimiterEnabled ?? 'n/a'} concurrentJobsLimit=${d.config.defaultConcurrentJobsLimit ?? 'n/a'}`);
         }
         if (d.apps) {
             console.log(`  apps     : ${d.apps.count} connected`);
@@ -558,10 +565,11 @@ function renderReport(report: BenchmarkReport): void {
         // The benchmark project is uncapped on purpose, so these numbers can't throttle THIS run — they are
         // reported so you can see whether the platform rate limiter would throttle your real projects.
         console.log(`  benchmark project cap : ${capLabel} (not a bottleneck here)`);
-        console.log(`  platform rate limiter : ${report.project.limits.rateLimiterEnabled ? chalk.yellow('ON — your real projects are capped; a low per-project cap queues jobs and inflates their latency') : chalk.green('OFF')}`);
     } else {
         console.log(chalk.yellow(`  project limits skipped: ${report.project.limits.reason}`));
     }
+
+    renderRateLimiter(report);
 
     console.log(chalk.bold('\nNetwork (CLI -> server, cross-region)'));
     console.log(`  RTT min / p50 : ${report.network.minMs.toFixed(1)} / ${report.network.p50Ms.toFixed(1)} ms over ${report.network.probes} probes`);
@@ -579,7 +587,10 @@ function renderReport(report: BenchmarkReport): void {
             console.log(chalk.yellow('  latency: no worker timelines found (server predates the timeline feature #13991, or runs were pruned)'));
         } else {
             console.log(chalk.bold(`  worker-measured latency (authoritative — each phase timed inside the worker, region-independent, ${t.sampleCount} runs):`));
-            console.log(`    QUEUE      p50 ${fmt(t.queueP50)} ms   — wait for a free execution slot  ${chalk.gray('(±app↔worker clock skew; cross-check the queue-depth above)')}`);
+            const rateLimitNote = t.rateLimitedRunsCount > 0
+                ? chalk.yellow(`   !! ${t.rateLimitedRunsCount} runs rate-limited (QUEUE >= ${RATE_LIMIT_DETECTION_MS / 1000}s backoff signature)`)
+                : '';
+            console.log(`    QUEUE      p50/p90/max ${fmt(t.queueP50)} / ${fmt(t.queueP90)} / ${fmt(t.queueMax)} ms   — wait for a free execution slot  ${chalk.gray('(±app↔worker clock skew; cross-check the queue-depth above)')}${rateLimitNote}`);
             console.log(`    PROVISION  p50 ${fmt(t.provisionP50)} ms   — piece install / cache provision`);
             console.log(`    BOOT       p50 ${fmt(t.bootP50)} ms   — engine fork + Node boot + isolate + socket connect`);
             console.log(`    RUN        p50/p90 ${fmt(t.serviceP50)} / ${fmt(t.serviceP90)} ms   — engine executes the flow, incl. end-of-run S3 log backup`);
@@ -593,6 +604,40 @@ function renderReport(report: BenchmarkReport): void {
     console.log(`  ${report.storage.detail}`);
 
     console.log(chalk.gray('\nShare the full machine-readable bundle for support: re-run with --json > ap-benchmark.json'));
+}
+
+// Answers "is the project rate limiter the reason QUEUE is high?" directly: prints whether the
+// limiter is on, the cap real projects get, whether the driven load would exceed it, and — the
+// decisive signal — whether any benchmark run carries the >=20s re-queue delay the limiter imposes.
+function renderRateLimiter(report: BenchmarkReport): void {
+    console.log(chalk.bold('\nRate limiter (project concurrency throttle)'));
+    const enabled = report.flags['PROJECT_RATE_LIMITER_ENABLED'] === true;
+    const defaultLimit = report.flags['DEFAULT_CONCURRENT_JOBS_LIMIT'];
+    console.log(`  PROJECT_RATE_LIMITER_ENABLED  : ${enabled ? chalk.yellow('true') : chalk.green('false')}`);
+    console.log(`  DEFAULT_CONCURRENT_JOBS_LIMIT : ${JSON.stringify(defaultLimit ?? null)} ${chalk.gray('(cap per real project; the benchmark project is exempt via its own high cap)')}`);
+
+    if (!enabled) {
+        console.log(chalk.green('  => rate limiter is OFF — it cannot be the source of any queue time on this deployment.'));
+        return;
+    }
+
+    const rateLimited = report.runs.reduce((sum, r) => sum + r.timeline.rateLimitedRunsCount, 0);
+    const sampled = report.runs.reduce((sum, r) => sum + r.timeline.sampleCount, 0);
+    const maxQueueMs = Math.max(0, ...report.runs.map((r) => r.timeline.queueMax));
+    console.log(`  rate-limited runs detected    : ${rateLimited > 0 ? chalk.yellow(`${rateLimited}/${sampled}`) : chalk.green(`0/${sampled}`)} ${chalk.gray(`(a limited run is re-queued with a >=${RATE_LIMIT_MIN_BACKOFF_MS / 1000}s delay, so its QUEUE >= ${RATE_LIMIT_DETECTION_MS / 1000}s; max QUEUE seen ${(maxQueueMs / 1000).toFixed(1)}s)`)}`);
+
+    if (rateLimited > 0) {
+        console.log(chalk.yellow(`  => rate limiter FIRED during the benchmark — ${rateLimited} runs carry the backoff delay. Raise the project cap or lower concurrency.`));
+        return;
+    }
+    console.log(chalk.green(`  => no run shows the backoff signature: the QUEUE times measured here contain zero rate-limiter delay.`));
+
+    const driven = Math.max(0, ...report.runs.map((r) => r.connections));
+    if (typeof defaultLimit === 'number' && driven > defaultLimit) {
+        console.log(chalk.yellow(`  => caution for REAL projects: this load ran at concurrency ${driven}, above the ${defaultLimit}-job default cap — a real project under the same load would throttle (+${RATE_LIMIT_MIN_BACKOFF_MS / 1000}s per rejected run).`));
+    } else if (typeof defaultLimit === 'number') {
+        console.log(chalk.gray(`  => real projects capped at ${defaultLimit} concurrent jobs would sustain this load (driven concurrency ${driven}).`));
+    }
 }
 
 function hb(v: boolean | null | undefined): string {
@@ -674,6 +719,10 @@ const RECOMMENDED_MAX_CPU_CORES = 0.5;
 const RECOMMENDED_MAX_RAM_GB = 1;
 const QUEUE_SAMPLE_INTERVAL_MS = 500;
 const CLOCK_SKEW_BUFFER_MS = 5 * 60 * 1000;
+// The server's rate-limiter re-queues a rejected job with min(600s, 20s * 2^attempts) delay
+// (rate-limiter-interceptor.ts). 15s = one backoff minus clock-skew tolerance.
+const RATE_LIMIT_MIN_BACKOFF_MS = 20_000;
+const RATE_LIMIT_DETECTION_MS = 15_000;
 // Flags that matter for a perf triage — edition, version, execution mode, resource limits, and the
 // two throttles (project concurrency cap + rate limiter) that silently cap throughput and emit 429s.
 const DIAGNOSTIC_FLAGS = [
@@ -746,8 +795,11 @@ type TimelineAggregate = {
     serviceP50: number;
     serviceP90: number;
     queueP50: number;
+    queueP90: number;
+    queueMax: number;
     provisionP50: number;
     bootP50: number;
+    rateLimitedRunsCount: number;
 };
 
 type StorageProbe = {
@@ -798,6 +850,8 @@ type DiagnosticsInfo = {
         s3SignedUrls: boolean | null;
         s3Endpoint: string | null;
         s3Region: string | null;
+        projectRateLimiterEnabled?: boolean | null;
+        defaultConcurrentJobsLimit?: number | null;
     };
     apps?: {
         count: number;

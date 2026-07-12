@@ -121,4 +121,10 @@ describe('benchmarkUtils.aggregateTimeline', () => {
         expect(agg.sampleCount).toBe(1);
         expect(agg.serviceP50).toBe(20);
     });
+
+    it('flags runs carrying the rate-limiter backoff delay (QUEUE >= 15s)', () => {
+        const agg = benchmarkUtils.aggregateTimeline([run(100, 1, 1, 50), run(21_000, 1, 1, 50), run(14_999, 1, 1, 50)]);
+        expect(agg.rateLimitedRunsCount).toBe(1);
+        expect(agg.queueMax).toBe(21_000);
+    });
 });
