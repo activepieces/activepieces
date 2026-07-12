@@ -132,6 +132,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             s3Key: file.s3Key,
             contentType,
         })
+        await fileRepo().update({ id: file.id }, { metadata: { ...file.metadata, uploadId } })
         return {
             mode: 'S3' as const,
             uploadId,
@@ -154,6 +155,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
         const { s3Key } = await getStreamingFileOrThrow({
             fileId: request.params.fileId,
             projectId: request.principal.projectId,
+            uploadId: request.body.uploadId,
             log: request.log,
         })
         const url = await s3Helper(request.log).signPartUrl({
@@ -181,7 +183,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
     }, async (request) => {
         const { fileId } = request.params
         const { projectId, platform } = request.principal
-        const { file, s3Key } = await getStreamingFileOrThrow({ fileId, projectId, log: request.log })
+        const { file, s3Key } = await getStreamingFileOrThrow({ fileId, projectId, uploadId: request.body.uploadId, log: request.log })
         await s3Helper(request.log).completeMultipartUpload({
             s3Key,
             uploadId: request.body.uploadId,
@@ -218,7 +220,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
         const { fileId } = request.params
         const { projectId } = request.principal
         const file = await fileService(request.log).getFile({ fileId, projectId, type: FileType.FLOW_STEP_FILE })
-        if (!isNil(file) && !isNil(file.s3Key)) {
+        if (!isNil(file) && !isNil(file.s3Key) && file.metadata?.uploadId === request.body.uploadId) {
             const { s3Key } = file
             await tryCatch(() => s3Helper(request.log).abortMultipartUpload({ s3Key, uploadId: request.body.uploadId }))
             await fileRepo().delete({ id: file.id })
@@ -292,12 +294,18 @@ function getMaxStreamFileSizeBytes(): number {
     return system.getNumberOrThrow(AppSystemProp.MAX_STREAM_FILE_SIZE_MB) * 1024 * 1024
 }
 
-async function getStreamingFileOrThrow({ fileId, projectId, log }: GetStreamingFileParams): Promise<{ file: File, s3Key: string }> {
+async function getStreamingFileOrThrow({ fileId, projectId, uploadId, log }: GetStreamingFileParams): Promise<{ file: File, s3Key: string }> {
     const file = await fileService(log).getFileOrThrow({ fileId, projectId, type: FileType.FLOW_STEP_FILE })
     if (file.location !== FileLocation.S3 || isNil(file.s3Key)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: `File ${fileId} is not an S3 streaming upload` },
+        })
+    }
+    if (file.metadata?.uploadId !== uploadId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `uploadId does not match the multipart session for file ${fileId}` },
         })
     }
     return { file, s3Key: file.s3Key }
@@ -394,5 +402,6 @@ type AuthorizeReadParams = {
 type GetStreamingFileParams = {
     fileId: string
     projectId: string | undefined
+    uploadId: string
     log: FastifyBaseLogger
 }

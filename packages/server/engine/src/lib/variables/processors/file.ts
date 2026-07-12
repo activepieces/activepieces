@@ -8,9 +8,10 @@ export const fileProcessor: ProcessorFn = async (property, urlOrBase64) => {
     }
     try {
         if (isStreamFileProperty(property)) {
-            // Lazy by design: a File Reference carries the URL only — no bytes are
-            // fetched until the piece calls .stream() or .buffer().
-            return createFileRef(urlOrBase64)
+            // Lazy by design: a File Reference carries no bytes — only a headers-only
+            // request resolves filename/mimetype/size; the body is fetched later via
+            // .stream()/.buffer(). data: URIs skip the network entirely.
+            return await createFileRef(urlOrBase64)
         }
         const file = handleBase64File(urlOrBase64)
         if (!isNil(file)) {
@@ -28,15 +29,36 @@ function isStreamFileProperty(property: PieceProperty): boolean {
     return property.type === PropertyType.FILE && 'stream' in property && property.stream === true
 }
 
-function createFileRef(value: string): ApFileRef {
+async function createFileRef(value: string): Promise<ApFileRef> {
     if (value.startsWith('data:')) {
         const mimetype = value.slice('data:'.length, value.indexOf(';'))
         const extension = mimeExtension(mimetype) ?? 'bin'
         return new ApFileRef({ url: value, filename: `unknown.${extension}`, mimetype })
     }
-    const lastSegment = new URL(value).pathname.split('/').pop()
-    const filename = !isNil(lastSegment) && lastSegment.includes('.') ? lastSegment : 'unknown'
-    return new ApFileRef({ url: value, filename })
+    const metadata = await resolveUrlFileMetadata(value)
+    return new ApFileRef({ url: value, ...metadata })
+}
+
+async function resolveUrlFileMetadata(url: string): Promise<{ filename: string, mimetype?: string, size?: number }> {
+    const fallbackFilename = (): string => {
+        const lastSegment = new URL(url).pathname.split('/').pop()
+        return !isNil(lastSegment) && lastSegment.includes('.') ? lastSegment : 'unknown'
+    }
+    try {
+        const response = await fetch(url)
+        // Read headers only; never download the body (this ref exists to stay lazy).
+        await response.body?.cancel()
+        const contentType = response.headers.get('content-type') ?? undefined
+        const contentLength = Number(response.headers.get('content-length'))
+        return {
+            filename: getFileName(url, response.headers.get('content-disposition'), contentType) ?? fallbackFilename(),
+            mimetype: contentType?.split(';')[0].trim() || undefined,
+            size: Number.isFinite(contentLength) && contentLength > 0 ? contentLength : undefined,
+        }
+    }
+    catch {
+        return { filename: fallbackFilename() }
+    }
 }
 
 function handleBase64File(propertyValue: string): ApFile | null {

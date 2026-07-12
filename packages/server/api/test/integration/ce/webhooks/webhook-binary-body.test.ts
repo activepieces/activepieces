@@ -78,6 +78,29 @@ describe('Webhook binary body', () => {
 
         expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
+
+    it('rejects a binary upload to a disabled flow without storing a file', async () => {
+        const { mockProject } = await mockAndSaveBasicSetup()
+        const mockFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.DISABLED })
+        await db.save('flow', [mockFlow])
+        const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
+        await db.save('flow_version', [mockFlowVersion])
+        await db.update('flow', mockFlow.id, { publishedVersionId: mockFlowVersion.id })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/webhooks/${mockFlow.id}`,
+            headers: { 'content-type': 'application/octet-stream' },
+            payload: Buffer.from('should never be stored'),
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+        const savedFile = await db.findOneBy<SavedFile>(
+            'file',
+            { projectId: mockProject.id, type: FileType.FLOW_STEP_FILE },
+        )
+        expect(savedFile).toBeNull()
+    })
 })
 
 async function createEnabledFlow(): Promise<{ mockFlow: Flow, mockProject: Project }> {

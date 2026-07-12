@@ -64,12 +64,14 @@ The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` en
 
 ## Request Conversion
 
-`webhookRequestConverter.convertRequest()` normalizes incoming data:
-- **Multipart form-data**: Uploads files to File service, returns URLs in JSON
-- **Binary content** (image/*, video/*, audio/*, pdf, zip, gzip, octet-stream): Uploads to File service
-- **JSON/text**: Passes through as-is
-- Preserves `rawBody` for signature verification (non-binary only)
-- Extracts headers: `x-parent-run-id`, `x-fail-parent-on-failure` (for subflows)
+Binary and multipart file bodies are **streamed to storage while the request body is still being parsed** (in `webhook-module.ts`), not buffered and converted later:
+- **Multipart form-data**: each file part is streamed to the File service via the global `onFile` hook (`streamWebhookMultipartFile`); the field value becomes the file-reference read URL.
+- **Binary content** (image/*, video/*, audio/*, pdf, zip, gzip, octet-stream): streamed straight to storage by a content-type parser (`streamWebhookBinaryBody`), body becomes `{ fileUrl }`.
+- **JSON/text/XML**: parsed in memory and passed through as-is, keeping `rawBody` for HMAC signature verification (streamed binary/multipart bodies have no `rawBody`).
+
+Because streaming happens during parsing, `webhookRequestConverter.convertRequest()` only ever passes the **already-converted** `request.body` through — it no longer uploads anything. It also carries `rawBody` and extracts subflow headers `x-parent-run-id` / `x-fail-parent-on-failure`.
+
+Streaming requires a resolved `request.webhookContext` (projectId/platformId/flowId), set in the `onRequest` hook before parsing. That hook rejects streamed uploads early (404) for unknown or disabled flows that would never execute, so no orphaned file is persisted.
 
 ## Handshake Verification
 
@@ -81,7 +83,9 @@ External services verify webhook ownership before sending events:
 
 ## Payload Size Limit
 
-`AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` (default 5MB). Returns 413 if exceeded.
+`AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` (default 5MB) bounds in-memory (JSON/text/XML) bodies — returns 413 if exceeded.
+
+Streamed binary/multipart file bodies bypass that limit: they go to storage as they arrive and are bounded instead by `AP_MAX_STREAM_FILE_SIZE_MB` (default 1024MB). On S3 storage this is a multipart upload capped at the limit (`file.service.ts` `saveStream`); on DB storage the stream is buffered whole and capped by the same limit.
 
 ## Flow Resolution
 

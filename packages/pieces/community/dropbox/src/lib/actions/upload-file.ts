@@ -129,15 +129,22 @@ async function sendContentRequest<T extends HttpMessageBody>({ endpoint, apiArg,
 async function* chunkStream({ stream }: { stream: AsyncIterable<Uint8Array> }): AsyncGenerator<Buffer, void, undefined> {
   let pending: Uint8Array[] = [];
   let pendingBytes = 0;
+  let yielded = false;
   for await (const chunk of stream) {
     pending.push(chunk);
     pendingBytes += chunk.length;
     while (pendingBytes >= CHUNK_SIZE_BYTES) {
       const merged = Buffer.concat(pending);
       yield merged.subarray(0, CHUNK_SIZE_BYTES);
+      yielded = true;
       pending = [merged.subarray(CHUNK_SIZE_BYTES)];
       pendingBytes = pending[0].length;
     }
   }
-  yield Buffer.concat(pending);
+  // On an exact chunk-size multiple, pending is empty here — don't emit a stray
+  // empty chunk that finish would upload at the wrong cursor. Only emit the tail
+  // if it has bytes, or if nothing was ever yielded (empty input still needs one).
+  if (pendingBytes > 0 || !yielded) {
+    yield Buffer.concat(pending);
+  }
 }

@@ -1,10 +1,12 @@
 import { Readable } from 'stream'
 import { isNil } from '@activepieces/core-utils'
+import { Flow, FlowStatus } from '@activepieces/shared'
 import { XMLParser } from 'fast-xml-parser'
 import { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowService } from '../flows/flow/flow.service'
 import { projectService } from '../project/project-service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { webhookController } from './webhook-controller'
 import { isBinaryContentType, streamWebhookBinaryBody } from './webhook-request-converter'
 
@@ -28,14 +30,21 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
             return
         }
         const flow = await flowService(request.log).getOneById(flowId)
-        if (!isNil(flow)) {
-            const platformId = await projectService(request.log).getPlatformId(flow.projectId)
-            request.webhookContext = { projectId: flow.projectId, platformId, flowId }
+        if (isNil(flow)) {
+            if (isStreamedContentType(request)) {
+                await reply.status(StatusCodes.NOT_FOUND).send({})
+            }
             return
         }
-        if (isStreamedContentType(request)) {
+        // A streamed upload is persisted to storage during body parsing, before the
+        // controller's disabled-flow guard runs. Reject it here for any flow that guard
+        // would reject, so a webhook that never executes leaves no orphaned file behind.
+        if (isStreamedContentType(request) && !await willAcceptStreamedUpload(request, flow)) {
             await reply.status(StatusCodes.NOT_FOUND).send({})
+            return
         }
+        const platformId = await projectService(request.log).getPlatformId(flow.projectId)
+        request.webhookContext = { projectId: flow.projectId, platformId, flowId }
     })
 
     // rawBody is required for HMAC signature verification, but only ever over text bodies.
@@ -110,6 +119,21 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
     )
 
     await app.register(webhookController, { prefix: '/v1/webhooks' })
+}
+
+// Mirrors the saveSampleData computation in webhook-controller: an ENABLED flow always
+// accepts, and a DISABLED flow only accepts uploads for sample-data capture — the
+// draft/test routes (always simulate) or a production route with an active simulate
+// trigger source. Handshake requests are never binary/multipart, so they need no branch.
+async function willAcceptStreamedUpload(request: FastifyRequest, flow: Flow): Promise<boolean> {
+    if (flow.status === FlowStatus.ENABLED) {
+        return true
+    }
+    const url = request.routeOptions.url ?? ''
+    if (url.endsWith('/draft') || url.endsWith('/draft/sync') || url.endsWith('/test')) {
+        return true
+    }
+    return triggerSourceService(request.log).existsByFlowId({ flowId: flow.id, simulate: true })
 }
 
 function isStreamedContentType(request: FastifyRequest): boolean {

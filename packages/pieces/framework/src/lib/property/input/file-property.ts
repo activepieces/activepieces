@@ -58,10 +58,32 @@ export class ApFileRef {
     }
 
     async buffer(): Promise<Buffer> {
-        const response = await fetchOrThrow(this.url);
-        return Buffer.from(await response.arrayBuffer());
+        // Bound the read to the buffered file-size cap so a stream-enabled input
+        // can't load an arbitrarily large file into engine memory. Larger files
+        // must be consumed via stream(). Bytes are counted off the stream rather
+        // than trusting Content-Length, so an absent/lying header can't blow past it.
+        const maxBytes = bufferCeilingBytes();
+        const stream = await this.stream();
+        const chunks: Uint8Array[] = [];
+        let total = 0;
+        for await (const chunk of stream) {
+            total += chunk.length;
+            if (total > maxBytes) {
+                stream.destroy();
+                throw new Error(`File "${this.filename}" exceeds the ${maxBytes / 1024 / 1024}MB buffer limit — use stream() to process larger files`);
+            }
+            chunks.push(chunk);
+        }
+        return Buffer.concat(chunks);
     }
 }
+
+function bufferCeilingBytes(): number {
+    const mb = Number(process.env['AP_MAX_FILE_SIZE_MB']);
+    return (Number.isFinite(mb) && mb > 0 ? mb : DEFAULT_BUFFER_LIMIT_MB) * 1024 * 1024;
+}
+
+const DEFAULT_BUFFER_LIMIT_MB = 25;
 
 async function fetchOrThrow(url: string): Promise<Response> {
     const response = await fetch(url);
