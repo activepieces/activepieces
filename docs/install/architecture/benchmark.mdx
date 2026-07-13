@@ -110,33 +110,31 @@ This benchmark runs in `SANDBOX_CODE_ONLY` mode. It does **not** represent the p
 
 ## Benchmark your own installation
 
-To load-test and **diagnose** your own deployment — no cluster scripts required — use the CLI. It builds a synchronous flow (webhook trigger → data mapper → return response), publishes it, then fires load at its sync webhook endpoint with [autocannon](https://github.com/mcollina/autocannon). But it does far more than a load test: it **auto-discovers your deployment's shape and attributes latency to the phase that owns it**, producing a single self-contained diagnostic bundle you can hand to support with no back-and-forth.
-
-Because the CLI runs from a **different host and region** than your API and workers, every client-side number it sees (autocannon latency, round-trip time) is polluted by that network distance. So the authoritative numbers come from the **server and workers themselves**: the per-run QUEUE/PROVISION/BOOT/RUN split is timed *inside the worker*, and the DB/Redis/S3 round-trip latency is measured *in-region* by a platform-admin diagnostics endpoint. Client-side numbers are shown but clearly marked observational.
-
-Authenticate with your **platform API key** — the same credential the other CLI commands use (`AP_API_KEY`). It gets the **full** bundle: setup validation, the in-region infra round-trip, and the worker + app fleet.
+Load-test and **diagnose** your own deployment — no cluster scripts required — with the CLI. It publishes a synchronous flow (webhook trigger → data mapper → return response), fires load at its sync webhook endpoint with [autocannon](https://github.com/mcollina/autocannon), and returns one self-contained diagnostic bundle you can hand to support.
 
 ```bash
 AP_API_KEY=<key> npx @activepieces/cli@latest benchmark --url https://your-instance.example.com --project-id <id>
 ```
 
-By default the load runs at **concurrency = your deployment's execution slots** (the sum of `AP_WORKER_CONCURRENCY` across connected workers), so requests don't queue and the latency you read is real service time, not backlog. This is also the invariant to hold when **comparing two deployments** (e.g. yours vs. a reference): match concurrency to each deployment's own slots so neither queues, then compare the worker-measured RUN time and the infra round-trip — never a fixed concurrency, which would make the smaller deployment queue.
+**Why the numbers are trustworthy.** The CLI runs from a different region than your servers, so its client-side latency is polluted by network distance. The numbers that matter are measured server-side instead: the QUEUE/PROVISION/BOOT/RUN split is timed *inside the worker*, and DB/Redis/S3 round-trips are measured *in-region* by an admin diagnostics endpoint. Client numbers are shown but marked observational.
+
+**Concurrency defaults to your execution slots** (Σ `AP_WORKER_CONCURRENCY` across connected workers) so requests don't queue and you read real service time, not backlog. Comparing two deployments? Match concurrency to each one's own slots — never a fixed number, which makes the smaller one queue.
 
 | Option | Default | Description |
 |---|---|---|
-| `--url` | `http://localhost:3000` | Base URL of your Activepieces instance |
-| `--concurrency` | auto = execution slots | Concurrent connections; omit to match your fleet's slot count |
+| `--url` | `http://localhost:3000` | Base URL of your instance |
+| `--api-key` | `AP_API_KEY` env var | Platform API key (Bearer) — **required** |
+| `--project-id` | | Project to create the flow in — **required** |
+| `--concurrency` | auto = execution slots | Concurrent connections |
 | `--requests` | `40 × concurrency` | Total requests to fire |
-| `--api-key` | `AP_API_KEY` env var | Platform API key (Bearer) — gets the full bundle; required |
-| `--project-id` | | Project to create the benchmark flow in (required) |
 | `--body` | `{"test":true}` | JSON body sent to the webhook |
-| `--json` | | Emit the full machine-readable bundle (share this with support) |
+| `--json` | | Emit the full machine-readable bundle (share with support) |
 
-### Reference numbers — what the report measures
+### Reference numbers
 
-The bundle below is a **real run against the Activepieces GKE reference deployment** — the recommended shape from the [results table](#results): **4 workers at 0.5 vCPU / 1 GB, concurrency 1, `SANDBOX_CODE_ONLY`, `AP_REUSE_SANDBOX=true`**, with a same-region GCS object store and signed URLs, warm, load = `concurrency 4 (= slots) × 200 requests`. Every latency number that matters is measured **on the server or inside the worker**, so it is not distorted by the region the CLI runs from.
+A **real run against the recommended GKE deployment** from the [results table](#results): 4 workers @ 0.5 vCPU / 1 GB, concurrency 1, `SANDBOX_CODE_ONLY`, `AP_REUSE_SANDBOX=true`, same-region GCS with signed URLs, warm, load = `concurrency 4 (= slots) × 200 requests`.
 
-Run the CLI against **your own** deployment and compare **tier by tier** against these reference figures. Because the workers here are the recommended 0.5-vCPU size, a matching setup should land in the same ballpark — and a number that is several times larger localizes the problem to a specific tier: your `RUN` far above ~200 ms means the engine/flow is heavier (or the worker is CPU-starved); your `storage` round-trip far above ~240 ms means the object store is mis-regioned or throttled; a large `QUEUE` with `queue depth` climbing means you drove more concurrency than you have slots.
+Run the CLI against your own deployment and compare **tier by tier**. A number several times larger localizes the problem: `RUN` ≫ 200 ms means a heavier flow or a CPU-starved worker; `storage` ≫ 240 ms means a mis-regioned or throttled object store; a large `QUEUE` with climbing `queue depth` means you drove more concurrency than you have slots.
 
 ```text
 Version & health
@@ -181,7 +179,7 @@ Storage (log persistence)
   50/50 sampled runs have a persisted log — the worker->storage write path is healthy
 ```
 
-Each block answers a specific question:
+Each section answers one question:
 
 | Section | What it measures | Where it's measured |
 |---|---|---|
@@ -193,11 +191,12 @@ Each block answers a specific question:
 | **Load + latency split** | Throughput, run-status outcomes (server truth, not just HTTP codes), live **queue depth** during load, and the per-run latency split into **QUEUE / PROVISION / BOOT / RUN** — measured inside the worker, so it's the same on any deployment regardless of where the CLI runs. The verdict says whether latency is **queue-bound** (too much concurrency for the slot count) or **service-bound** (real engine time) | `FlowRun.timeline` + `GET /v1/worker-machines/queue-metrics` |
 | **Storage** | Fraction of runs whose logs were persisted — proves the worker→storage write path works end to end | `FlowRun.logsFileId` |
 
-In this example the read is unambiguous: workers pegged at ~100% of their 0.5-core limit and RUN ≈ 200 ms dominate, while QUEUE (~100 ms at concurrency = slots) and the infra round-trips are small — the deployment is **service-bound on worker CPU**, so the lever is more/bigger workers, not a code change.
+Here the read is unambiguous: workers pegged at ~100% of their 0.5-core limit and RUN ≈ 200 ms dominate, while QUEUE (~100 ms at concurrency = slots) and the infra round-trips are small — the deployment is **service-bound on worker CPU**, so the lever is more/bigger workers, not a code change.
 
-The command exits non-zero when any request fails, so it can gate CI. The flow it creates stays in the project afterwards — delete it when you're done.
+- Exits non-zero if any request fails — usable as a CI gate.
+- The benchmark flow stays in your project — delete it when done.
 
 <Note>
-The reference figures above come from the recommended-setup GKE deployment in [Test environment](#test-environment). If you run the **same recommended shape** (0.5 vCPU / 1 GB workers, `SANDBOX_CODE_ONLY`, one flow per worker, same-region object store), your per-tier numbers should be in the same ballpark and any large gap points to a specific tier. If your hardware or sandbox mode differs, the absolute numbers shift — but the **shape** still holds: match concurrency to your own slot count so nothing queues, then read whether you are queue-bound or service-bound and which tier dominates.
+If your hardware or sandbox mode differs from the recommended shape, the absolute numbers shift — but the **shape** holds: match concurrency to your own slot count so nothing queues, then read whether you are queue-bound or service-bound and which tier dominates.
 </Note>
 
