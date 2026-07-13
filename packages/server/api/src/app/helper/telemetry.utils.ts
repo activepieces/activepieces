@@ -1,6 +1,6 @@
 import { AIProviderName, ProjectId, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, FlowRunStatus, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, FlowRunStatus, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformService } from '../platform/platform.service'
@@ -28,9 +28,12 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         getPostHog().identify({
             distinctId: user?.id ?? identity.id,
             properties: {
-                email: identity.email,
-                firstName: identity.firstName,
-                lastName: identity.lastName,
+                ...pickTelemetryPii({
+                    edition: system.getEdition(),
+                    email: identity.email,
+                    firstName: identity.firstName,
+                    lastName: identity.lastName,
+                }),
                 projectId,
                 firstSeenAt: user?.created ?? identity.created,
                 ...(await getMetadata()),
@@ -87,6 +90,23 @@ export async function shutdownTelemetry(): Promise<void> {
         await posthogInstance.shutdown()
     }
 }
+
+const DEDUPE_MAX_ENTRIES = 50_000
+const dailyEventDedupe = new Map<string, string>()
+
+function onceToday(key: string): boolean {
+    const today = new Date().toISOString().slice(0, 10)
+    if (dailyEventDedupe.get(key) === today) {
+        return false
+    }
+    if (dailyEventDedupe.size >= DEDUPE_MAX_ENTRIES) {
+        dailyEventDedupe.clear()
+    }
+    dailyEventDedupe.set(key, today)
+    return true
+}
+
+export const telemetryDedupe = { onceToday }
 
 async function getMetadata() {
     const currentVersion = apVersionUtil.getCurrentRelease()
