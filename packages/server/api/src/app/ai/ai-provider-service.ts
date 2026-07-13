@@ -28,12 +28,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
+        const aiCreditsEnabled = flagService(log).aiCreditsEnabled()
         const activepiecesExists = await aiProviderRepo().existsBy({
             platformId,
             provider: AIProviderName.ACTIVEPIECES,
         })
 
-        if (flagService(log).aiCreditsEnabled() && !activepiecesExists) {
+        if (aiCreditsEnabled && !activepiecesExists) {
             // Managed AI is the default chat provider so the chat page skips the "set up a
             // provider" wall — but only when nothing else is already enabled for chat, so we never
             // create a second chat provider or override an existing BYO choice (see update()).
@@ -50,13 +51,15 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
-        return configuredProviders.map((p): AIProviderWithoutSensitiveData => ({
-            id: p.id,
-            name: p.displayName,
-            provider: p.provider,
-            config: p.config,
-            enabledForChat: p.enabledForChat ?? false,
-        }))
+        return configuredProviders
+            .filter((p) => isProviderAvailable({ provider: p.provider, aiCreditsEnabled }))
+            .map((p): AIProviderWithoutSensitiveData => ({
+                id: p.id,
+                name: p.displayName,
+                provider: p.provider,
+                config: p.config,
+                enabledForChat: p.enabledForChat ?? false,
+            }))
     },
 
     async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
@@ -140,12 +143,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async getChatProviderName({ platformId }: { platformId: PlatformId }): Promise<AIProviderName | null> {
-        const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+        const chatProvider = await findAvailableChatProviderRow({ platformId, log })
         return chatProvider?.provider ?? null
     },
 
     async getChatProvider({ platformId }: { platformId: PlatformId }): Promise<GetProviderConfigResponse | null> {
-        const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+        const chatProvider = await findAvailableChatProviderRow({ platformId, log })
         if (isNil(chatProvider)) {
             return null
         }
@@ -291,6 +294,21 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 type GetOrCreateActivepiecesConfigResponse = {
     platformId: PlatformId
     provider: AIProviderName
+}
+
+function isProviderAvailable({ provider, aiCreditsEnabled }: { provider: AIProviderName, aiCreditsEnabled: boolean }): boolean {
+    return provider !== AIProviderName.ACTIVEPIECES || aiCreditsEnabled
+}
+
+async function findAvailableChatProviderRow({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+    const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
+    if (isNil(chatProvider)) {
+        return null
+    }
+    if (!isProviderAvailable({ provider: chatProvider.provider, aiCreditsEnabled: flagService(log).aiCreditsEnabled() })) {
+        return null
+    }
+    return chatProvider
 }
 
 async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId, log: FastifyBaseLogger): Promise<GetProviderConfigResponse> {
