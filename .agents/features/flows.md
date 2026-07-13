@@ -112,6 +112,7 @@ When CHANGE_STATUS to DISABLED:
 - Captures test data per step (input + output)
 - Stored as File entities (SAMPLE_DATA / SAMPLE_DATA_INPUT types)
 - Per flow version — each version has its own test data
+- `GET /v1/sample-data/all` — returns a `{ [stepName]: data }` map for every step in a flow version in a single batched request; used by the builder to load all sample data in one request instead of one per step
 
 ## Frontend Builder Architecture
 

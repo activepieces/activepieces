@@ -44,11 +44,9 @@ export const sampleDataHooks = {
         );
         const stepsWithoutInput = flowStructureUtil
           .getAllSteps(flowVersion!.trigger)
-          .filter((step) => !step.settings.sampleData?.sampleDataInputFileId);
-        stepsWithoutInput.forEach((step) => {
-          sampleDataInput[step.name] = undefined;
-        });
-        return sampleDataInput;
+          .filter((step) => !step.settings.sampleData?.sampleDataInputFileId)
+          .map((step) => [step.name, undefined] as const);
+        return { ...sampleDataInput, ...Object.fromEntries(stepsWithoutInput) };
       },
     });
   },
@@ -65,15 +63,10 @@ async function getSampleDataForFlow(
   projectId: string,
   type: SampleDataFileType,
 ): Promise<Record<string, unknown>> {
-  return sampleDataApi
-    .getForFlow({
-      flowId: flowVersion.flowId,
-      flowVersionId: flowVersion.id,
-      projectId,
-      type,
-    })
-    .catch((error) => {
-      console.error(error);
-      return {};
-    });
+  return sampleDataApi.getForFlow({
+    flowId: flowVersion.flowId,
+    flowVersionId: flowVersion.id,
+    projectId,
+    type,
+  });
 }
