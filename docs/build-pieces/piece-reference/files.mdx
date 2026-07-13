@@ -10,7 +10,7 @@ The `ctx.files` object allow you to store files in local storage or in a remote 
 
 You can use the `write` method to write a file to the storage, It returns a string that can be used in other actions or triggers properties to reference the file.
 
-`data` accepts a `Buffer` **or** a stream (`Readable`/`ReadableStream`/any `AsyncIterable<Uint8Array>`). A stream is routed to [`writeStream`](#write-stream) and uploaded without buffering in memory; a `Buffer` is uploaded as-is.
+`data` accepts a `Buffer` **or** a stream (`Readable`/`ReadableStream`/any `AsyncIterable<Uint8Array>`). A `Buffer` is uploaded as-is; a stream is uploaded without buffering it in memory (see [Streaming large files](#streaming-large-files)).
 
 **Example:**
 ```ts
@@ -24,30 +24,30 @@ const fileReference = await files.write({
 This code will store the file in the database If the run environment is testing mode since it will be required to test other steps, other wise it will store it in the local temporary directory.
 </Tip>
 
-## Write Stream
+## Streaming large files
 
-For large files, use `writeStream` to pipe a file to storage **without buffering it in memory**. Pass a `Readable`/`ReadableStream` (or any `AsyncIterable<Uint8Array>`); it returns the same file-reference string as `write`.
+For large files, pass a stream as `data` to `write` to pipe it to storage **without buffering it in memory**. Any `Readable`/`ReadableStream`/`AsyncIterable<Uint8Array>` works; it returns the same file-reference string as a buffer upload.
 
 **Example — stream an S3 object straight to storage:**
 ```ts
 const object = await s3.getObject({ Bucket: bucket, Key: key });
-return await files.writeStream({
+return await files.write({
     fileName: key,
-    stream: object.Body.transformToWebStream(),
+    data: object.Body.transformToWebStream(),
 });
 ```
 
 **Example — stream an HTTP download:**
 ```ts
 const response = await httpClient.sendRequest({ url, method: HttpMethod.GET, responseType: 'stream' });
-return await files.writeStream({
+return await files.write({
     fileName: 'export.csv',
-    stream: response.body,
+    data: response.body,
 });
 ```
 
 <Note>
-Streaming requires S3-compatible object storage (S3 / R2 / MinIO) to be configured. On database-only installs `writeStream` falls back to buffering the whole stream, capped at `AP_MAX_FILE_SIZE_MB` — so avoid relying on it for very large files on those installs.
+Streaming requires S3-compatible object storage (S3 / R2 / MinIO) to be configured. On database-only installs a streamed upload falls back to buffering the whole stream, capped at `AP_MAX_FILE_SIZE_MB` — so avoid relying on it for very large files on those installs.
 </Note>
 
 ## Reading files

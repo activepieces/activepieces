@@ -6,7 +6,9 @@ import fetchRetry from 'fetch-retry'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
 
-const fetchWithRetry = fetchRetry(global.fetch)
+// Forward to global.fetch at call time (not capture-at-import) so test spies on
+// global.fetch are honored and any runtime fetch override still applies.
+const fetchWithRetry = fetchRetry((input, init) => global.fetch(input, init))
 
 const RETRY_CONFIG = {
     retries: 3,
