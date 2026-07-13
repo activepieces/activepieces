@@ -6,6 +6,7 @@ import {
     File,
     Flow,
     Folder,
+    PieceSet,
     Platform,
     Project,
     Record,
@@ -34,6 +35,7 @@ type ProjectSchema = Project & {
     cells: Cell[]
     tableWebhooks: TableWebhook[]
     pool?: ConcurrencyPool | null
+    pieceSet?: PieceSet | null
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -81,6 +83,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             ...ApIdSchema,
             nullable: true,
         },
+        pieceSetId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         workerGroupId: {
             type: String,
             nullable: true,
@@ -106,6 +112,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         {
             name: 'idx_project_pool_id',
             columns: ['poolId'],
+            unique: false,
+        },
+        {
+            name: 'idx_project_piece_set_id',
+            columns: ['pieceSetId'],
             unique: false,
         },
         {
@@ -192,6 +203,16 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             joinColumn: {
                 name: 'poolId',
                 foreignKeyConstraintName: 'fk_project_pool_id',
+            },
+        },
+        pieceSet: {
+            type: 'many-to-one',
+            target: 'piece_set',
+            onDelete: 'SET NULL',
+            nullable: true,
+            joinColumn: {
+                name: 'pieceSetId',
+                foreignKeyConstraintName: 'fk_project_piece_set_id',
             },
         },
     },

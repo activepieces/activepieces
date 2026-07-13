@@ -45,7 +45,6 @@ export type GetPieceRequestParams = z.infer<typeof GetPieceRequestParams>
 export const ListPiecesRequestQuery = z.object({
     projectId: z.string().optional(),
     release: ExactVersionType.optional(),
-    includeTags: OptionalBooleanFromQuery,
     includeHidden: OptionalBooleanFromQuery,
     edition: z.nativeEnum(ApEdition).optional(),
     searchQuery: z.string().optional(),
