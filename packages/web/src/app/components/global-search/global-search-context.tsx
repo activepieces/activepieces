@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { InviteUserDialog } from '@/features/members';
 import { getProjectName } from '@/features/projects';
 
@@ -68,8 +69,13 @@ function BrowsePanel({ onClose }: { onClose: () => void }) {
 
 export function GlobalSearchProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const { embedState } = useEmbedding();
+  const { hideGlobalSearch } = embedState;
 
   useEffect(() => {
+    if (hideGlobalSearch) {
+      return;
+    }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -78,7 +84,7 @@ export function GlobalSearchProvider({ children }: { children: ReactNode }) {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [hideGlobalSearch]);
 
   return (
     <GlobalSearchContext.Provider value={{ open, setOpen }}>

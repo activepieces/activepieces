@@ -6,7 +6,6 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
-import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
@@ -74,10 +73,10 @@ export function ProjectDashboardLayout({
       hasPermission: true,
     },
     {
-      to: '/leaderboard',
-      label: t('Leaderboard'),
+      to: '/chat',
+      label: t('Chat'),
       show: !isEmbedded,
-      icon: TrophyIcon,
+      icon: CompassIcon,
       hasPermission: true,
     },
   ];

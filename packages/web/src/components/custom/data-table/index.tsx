@@ -5,6 +5,7 @@ import {
   ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   RowData,
@@ -107,7 +108,9 @@ interface DataTableProps<
   selectColumn?: boolean;
   initialSorting?: SortingState;
   clientPagination?: boolean;
+  clientFiltering?: boolean;
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
+  isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
   virtualizeRows?: boolean;
 }
 
@@ -144,7 +147,9 @@ export function DataTable<
   selectColumn = false,
   initialSorting = [],
   clientPagination = false,
+  clientFiltering = false,
   getRowClassName,
+  isRowSelectionDisabled,
   virtualizeRows = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
@@ -166,6 +171,7 @@ export function DataTable<
       <div className="flex items-center h-full">
         <Checkbox
           checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
         />
       </div>
@@ -254,9 +260,14 @@ export function DataTable<
   const table = useReactTable({
     data: tableData,
     columns,
+    enableRowSelection: isRowSelectionDisabled
+      ? (row) => !isRowSelectionDisabled(row.original)
+      : undefined,
     manualPagination: virtualizeRows ? false : !clientPagination,
+    manualFiltering: !clientFiltering,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    ...(clientFiltering && { getFilteredRowModel: getFilteredRowModel() }),
     ...((clientPagination || virtualizeRows) && {
       getPaginationRowModel: getPaginationRowModel(),
     }),
@@ -275,9 +286,13 @@ export function DataTable<
   useEffect(() => {
     filters?.forEach((filter) => {
       const column = table.getColumn(filter.accessorKey);
-      const values = searchParams.getAll(filter.accessorKey);
-      if (column && values) {
-        column.setFilterValue(values);
+      if (!column) return;
+      if (filter.type === 'input') {
+        const value = searchParams.get(filter.accessorKey);
+        if (value) column.setFilterValue(value);
+      } else {
+        const values = searchParams.getAll(filter.accessorKey);
+        if (values.length) column.setFilterValue(values);
       }
     });
   }, []);

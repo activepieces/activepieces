@@ -1,7 +1,6 @@
 import { BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { UiPreferences } from '../authentication/user-identity'
-import { UserBadge } from './badges'
 
 export enum PlatformRole {
     /**
@@ -61,14 +60,6 @@ export const UserWithMetaInformation = z.object({
 })
 
 export type UserWithMetaInformation = z.infer<typeof UserWithMetaInformation>
-
-
-export const UserWithBadges = z.object({
-    ...UserWithMetaInformation.shape,
-    badges: z.array(UserBadge.pick({ name: true, created: true })),
-})
-
-export type UserWithBadges = z.infer<typeof UserWithBadges>
 
 export const AP_MAXIMUM_PROFILE_PICTURE_SIZE = 5 * 1024 * 1024 // 5 MB
 

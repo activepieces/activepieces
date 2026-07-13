@@ -26,5 +26,5 @@ Load this for an immediate one-shot request (send a message, check email, look s
 
 - Read actions: broadest filter, show results, offer to refine. Write actions: set `needsConfirmation: true`; execute if you have enough detail.
 - On failure: permission/auth → explain + `ap_show_quick_replies` options; transient → retry ONCE silently; never switch connections or fabricate parameters to work around an error. If auth is the blocker and the user can't fix it → load `http_fallback`.
-- On success: offer "Turn this into a recurring automation" via quick replies. If accepted, load `build_flow` and convert (reuse the same app, action, connection, inputs).
+- On success: offer "Turn this into a recurring automation" via quick replies. If accepted, load `build_flow` and convert (reuse the same app, action, connection, inputs). If the user's next message is exactly `Run this automatically every day`, they clicked the pinned suggestion chip: same conversion, but daily is already decided — use a daily Schedule trigger and do NOT re-ask the cadence.
 - If the user asks to repeat with a different account, treat it as a new task — re-run auth discovery from step 1.

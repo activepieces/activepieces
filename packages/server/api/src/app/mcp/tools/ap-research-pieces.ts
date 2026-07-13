@@ -10,7 +10,6 @@ const BULK_LOOKUP_CAP = 20
 const researchPiecesSchema = z.object({
     pieceNames: z.array(z.string()).optional().describe('Exact piece names to look up (e.g. ["gmail", "slack", "@activepieces/piece-google-sheets"]). Always returns actions and triggers for each piece.'),
     categories: z.array(z.enum(Object.values(PieceCategory) as [string, ...string[]])).optional(),
-    tags: z.array(z.string()).optional(),
     searchQuery: z.string().optional(),
     suggestionType: z.enum(Object.values(SuggestionType) as [string, ...string[]]).optional(),
     locale: z.enum(Object.values(LocalesEnum) as [string, ...string[]]).optional(),
@@ -26,7 +25,6 @@ export const apResearchPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBa
         inputSchema: {
             pieceNames: researchPiecesSchema.shape.pieceNames,
             categories: researchPiecesSchema.shape.categories,
-            tags: researchPiecesSchema.shape.tags,
             searchQuery: researchPiecesSchema.shape.searchQuery,
             suggestionType: researchPiecesSchema.shape.suggestionType,
             locale: researchPiecesSchema.shape.locale,
@@ -143,7 +141,6 @@ async function searchPieces({ params, projectId, platformId, log }: {
         platformId,
         includeHidden: false,
         categories: params.categories as PieceCategory[] | undefined,
-        tags: params.tags,
         searchQuery: params.searchQuery,
         suggestionType: params.suggestionType as SuggestionType | undefined,
         locale: params.locale as LocalesEnum | undefined,

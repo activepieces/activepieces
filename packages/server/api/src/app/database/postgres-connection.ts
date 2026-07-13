@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
-import 'pg'
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import 'pg'
 import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -393,12 +393,18 @@ import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/17990
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { AddUiPreferencesToUserIdentity1803000000000 } from './migration/postgres/1803000000000-AddUiPreferencesToUserIdentity'
+import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
 import { AddDeletedToRecord1804000000000 } from './migration/postgres/1804000000000-AddDeletedToRecord'
+import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
 import { AddColorToRecordAndCell1805000000000 } from './migration/postgres/1805000000000-AddColorToRecordAndCell'
+import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
 import { AddReferralTables1806000000000 } from './migration/postgres/1806000000000-AddReferralTables'
 import { AddChatModeToChatConversation1807000000000 } from './migration/postgres/1807000000000-AddChatModeToChatConversation'
+import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
 import { AddChatPersonalization1808000000000 } from './migration/postgres/1808000000000-AddChatPersonalization'
+import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/1808000000000-AddProjectPieceSetIdIndex'
 import { AddRoleToChatPersonalization1809000000000 } from './migration/postgres/1809000000000-AddRoleToChatPersonalization'
+import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
 import { AddCelebrationEmojisToReferralPhrase1810000000000 } from './migration/postgres/1810000000000-AddCelebrationEmojisToReferralPhrase'
 import { AddCelebrationSceneToReferralPhrase1811000000000 } from './migration/postgres/1811000000000-AddCelebrationSceneToReferralPhrase'
 import { AddCelebrationImageToReferralPhrase1812000000000 } from './migration/postgres/1812000000000-AddCelebrationImageToReferralPhrase'
@@ -819,6 +825,12 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddCelebrationEmojisToReferralPhrase1810000000000,
         AddCelebrationSceneToReferralPhrase1811000000000,
         AddCelebrationImageToReferralPhrase1812000000000,
+        DropDataManipulationEnabledFromPlatformPlan1803000000000,
+        DropBadges1804000000000,
+        AddConnectionIdsGinIndexToFlowVersion1806000000000,
+        CreatePieceSetTable1807000000000,
+        AddProjectPieceSetIdIndex1808000000000,
+        DropPlatformPieceFilters1809000000000,
     ]
     return migrations
 }

@@ -267,7 +267,6 @@ const BOOLEAN_PLAN_FLAGS = [
   'agentsEnabled',
   'tablesEnabled',
   'aiProvidersEnabled',
-  'dataManipulationEnabled',
   'embeddingEnabled',
   'analyticsEnabled',
   'auditLogEnabled',

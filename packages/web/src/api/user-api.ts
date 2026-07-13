@@ -1,17 +1,17 @@
 import {
   type UiPreferences,
   UpdateMeResponse,
-  UserWithBadges,
+  UserWithMetaInformation,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
 export const userApi = {
   getUserById(id: string) {
-    return api.get<UserWithBadges>(`/v1/users/${id}`);
+    return api.get<UserWithMetaInformation>(`/v1/users/${id}`);
   },
-  updateUiPreferences(uiPreferences: UiPreferences): Promise<UserWithBadges> {
-    return api.post<UserWithBadges>('/v1/users/me/ui-preferences', {
+  updateUiPreferences(uiPreferences: UiPreferences): Promise<UserWithMetaInformation> {
+    return api.post<UserWithMetaInformation>('/v1/users/me/ui-preferences', {
       uiPreferences,
     });
   },

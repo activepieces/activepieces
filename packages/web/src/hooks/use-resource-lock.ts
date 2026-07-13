@@ -11,10 +11,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
-function useResourceLock({ resourceId, onUnlocked }: UseResourceLockParams) {
+function useResourceLock({
+  resourceId,
+  onUnlocked,
+  onTakeOver,
+}: UseResourceLockParams) {
   const socket = useSocket();
   const currentUserId = authenticationSession.getCurrentUserId();
   const isOwner = useRef(false);
+  // bumped after a successful take-over so the acquire effect re-runs and
+  // registers ownership on this socket, replacing the previous full-page
+  // reload (which broke the embed SDK handshake inside an iframe)
+  const [lockSession, setLockSession] = useState(0);
   const [lockedBy, setLockedBy] = useState<LockedByState>(null);
   const lockedByRef = useRef<LockedByState>(null);
   lockedByRef.current = lockedBy;
@@ -95,7 +103,7 @@ function useResourceLock({ resourceId, onUnlocked }: UseResourceLockParams) {
         isOwner.current = false;
       }
     };
-  }, [resourceId, socket]);
+  }, [resourceId, socket, lockSession]);
 
   const takeOver = useCallback(() => {
     socket.emit(
@@ -104,11 +112,15 @@ function useResourceLock({ resourceId, onUnlocked }: UseResourceLockParams) {
       (response: LockResourceResponse) => {
         if (response.acquired) {
           isOwner.current = false;
-          window.location.reload();
+          setLockedBy(null);
+          // Re-run the acquire effect to register ownership on this socket,
+          // instead of a full-page reload (which broke the embed SDK iframe).
+          setLockSession((session) => session + 1);
+          void onTakeOver?.();
         }
       },
     );
-  }, [resourceId, socket]);
+  }, [resourceId, socket, onTakeOver]);
 
   return { lockedBy, takeOver };
 }
@@ -125,4 +137,5 @@ type LockedByState = {
 type UseResourceLockParams = {
   resourceId: string;
   onUnlocked?: (info: { lockerKind?: LockerKind }) => void;
+  onTakeOver?: () => void | Promise<void>;
 };

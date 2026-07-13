@@ -116,7 +116,11 @@ export const recordService = {
             if (!filters || filters.length === 0) {
                 return true
             }
-            return recordMatchesFilters({ record, filters })
+            return filters.every((filter) => {
+                const cell = record.cells.find(c => c.fieldId === filter.fieldId)
+                    ?? { fieldId: filter.fieldId, value: '' }
+                return doesCellValueMatchFilters(cell, [filter])
+            })
         })
 
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId, fields })
@@ -694,7 +698,7 @@ function recordMatchesFilters({ record, filters }: { record: { cells: Cell[] }, 
     })
 }
 
-function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
+function doesCellValueMatchFilters(cell: Pick<Cell, 'fieldId' | 'value'>, filters: Filter[]): boolean {
     if (filters.length === 0) {
         return true
     }

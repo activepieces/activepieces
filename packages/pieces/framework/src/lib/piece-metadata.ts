@@ -132,7 +132,6 @@ export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> &
 
 const PiecePackageMetadata = z.object({
   projectUsage: z.number(),
-  tags: z.optional(z.array(z.string())),
   pieceType: z.enum(PieceType),
   packageType: z.enum(PackageType),
   platformId: z.optional(z.string()),

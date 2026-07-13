@@ -3,6 +3,7 @@ import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgr
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '@activepieces/core-piece-types'
+import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { ActiveStageContext, ChatMention, ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
@@ -59,6 +60,12 @@ export type UploadFlowBundleRequest = {
     data: Buffer
 }
 
+export type RecordTriggerRunRequest = {
+    platformId: string
+    pieceName: string
+    status: TriggerRunStatus
+}
+
 export type WorkerToApiContract = {
     poll(input: WorkerMachineHealthcheckRequest): Promise<ConsumeJobRequest | null>
     completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void>
@@ -70,10 +77,12 @@ export type WorkerToApiContract = {
     savePayloads(input: SavePayloadRequest): Promise<void>
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
+    getPrewarmData(input: PrewarmDataRequest): Promise<PrewarmDataResponse>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
+    recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
     markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
@@ -431,4 +440,20 @@ export type SendPersonalizationProgressRequest = {
     scope: PersonalizationScope
     phase: string
     message: string
+}
+
+export type PrewarmDataRequest = {
+    workerGroupId: string | undefined
+    projectWorker: boolean | undefined
+    flow?: { id: string, versionId: string, projectId: string }
+}
+
+export type PrewarmDataResponse = {
+    flows: { id: string, versionId: string, projectId: string }[]
+    platformId: string
+    engineToken: string
+}
+
+export type ApiToWorkerContract = {
+    flowPublished(input: { flowId: string, flowVersionId: string, projectId: string }): void
 }

@@ -1,5 +1,5 @@
 import { apId, ProjectRole } from '@activepieces/core-utils'
-import { DefaultProjectRole, PiecesFilterType, PieceType } from '@activepieces/shared'
+import { DefaultProjectRole, PieceSelectionMode, PiecesFilterType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Redis } from 'ioredis'
@@ -9,11 +9,8 @@ import { distributedStore, redisConnections } from '../../../../src/app/database
 import { generateMockExternalToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
-    createMockPieceMetadata,
-    createMockPieceTag,
     createMockProject,
     createMockSigningKey,
-    createMockTag,
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
@@ -129,39 +126,80 @@ describe('Managed Authentication API', () => {
             )
         })
 
-        it('Sync Pieces when exchanging external token', async () => {
+        it('Assigns the named piece set matching the first tag when exchanging external token', async () => {
             // arrange
-            const { mockPlatform } = await mockAndSaveBasicSetup()
-
-            const mockPieceMetadata1 = createMockPieceMetadata({
-                name: '@ap/a',
-                version: '0.0.1',
-                pieceType: PieceType.OFFICIAL,
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
             })
-            await db.save('piece_metadata', mockPieceMetadata1)
-
-            const mockTag = createMockTag({
-                id: apId(),
-                platformId: mockPlatform.id,
-                name: 'free',
-            })
-
-            await db.save('tag', mockTag)
-
-
-            const mockPieceTag = createMockPieceTag({
-                platformId: mockPlatform.id,
-                tagId: mockTag.id,
-                pieceName: '@ap/a',
-            })
-
-            await db.save('piece_tag', mockPieceTag)
-
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
             await db.save('signing_key', mockSigningKey)
+
+            // A tag maps to a named piece set (key = tag name), created by the backfill migration.
+            const tagSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'free',
+                key: 'free',
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await db.save('piece_set', tagSet)
+
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+                pieces: {
+                    filterType: PiecesFilterType.ALLOWED,
+                    // Only the first tag is honored; the second is ignored.
+                    tags: ['free', 'ignored-second-tag'],
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: {
+                    externalAccessToken: mockExternalToken,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const project = await db.findOneBy<{ pieceSetId: string }>('project', { id: responseBody?.projectId })
+            expect(project?.pieceSetId).toBe(tagSet.id)
+        })
+
+        it('Assigns the named piece set even when managePiecesEnabled is false (flag gates management, not enforcement)', async () => {
+            // arrange — mocks default managePiecesEnabled to false
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await db.save('signing_key', mockSigningKey)
+
+            const tagSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'free',
+                key: 'free',
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await db.save('piece_set', tagSet)
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -186,10 +224,56 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const generatedProject = await db.findOneBy('project_plan', { projectId: responseBody?.projectId })
+            const project = await db.findOneBy<{ pieceSetId: string }>('project', { id: responseBody?.projectId })
+            expect(project?.pieceSetId).toBe(tagSet.id)
+        })
 
-            expect(generatedProject?.piecesFilterType).toBe('ALLOWED')
-            expect(generatedProject?.pieces).toStrictEqual(['@ap/a'])
+        it('Assigns the named piece set referenced by a v4 token pieceSet field', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+            })
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await db.save('signing_key', mockSigningKey)
+
+            const namedSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'premium',
+                key: 'premium',
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await db.save('piece_set', namedSet)
+
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+                pieceSetKey: 'premium',
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: {
+                    externalAccessToken: mockExternalToken,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const project = await db.findOneBy<{ pieceSetId: string }>('project', { id: responseBody?.projectId })
+            expect(project?.pieceSetId).toBe(namedSet.id)
         })
 
         it('Adds new user as a member in new project', async () => {

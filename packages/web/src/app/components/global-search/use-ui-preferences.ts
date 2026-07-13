@@ -1,4 +1,4 @@
-import { type UiPreferences, type UserWithBadges } from '@activepieces/shared';
+import { type UiPreferences, type UserWithMetaInformation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 
@@ -28,9 +28,9 @@ export function useUiPreferences(): {
     (partial: Partial<UiPreferences>, options?: { immediate?: boolean }) => {
       const key = ['currentUser', userId];
       const current =
-        queryClient.getQueryData<UserWithBadges | null>(key)?.uiPreferences ??
+        queryClient.getQueryData<UserWithMetaInformation | null>(key)?.uiPreferences ??
         {};
-      queryClient.setQueryData<UserWithBadges | null>(key, (old) =>
+      queryClient.setQueryData<UserWithMetaInformation | null>(key, (old) =>
         old ? { ...old, uiPreferences: { ...current, ...partial } } : old,
       );
       pendingRef.current = { ...pendingRef.current, ...partial };

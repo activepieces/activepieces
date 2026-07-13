@@ -3,7 +3,7 @@ import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/ser
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, PiecePackage, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
-import { distributedStore } from '../../database/redis-connections'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
 import { chatPersonalizationService } from '../../ee/chat/personalization/chat-personalization-service'
 import { fileService, getLocationForFile } from '../../file/file.service'
@@ -13,6 +13,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { preWarmWorkersService } from '../../flows/pre-warm-workers'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
@@ -21,6 +22,7 @@ import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-servi
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
+import { triggerRunStats } from '../../trigger/trigger-run/trigger-run-stats'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
@@ -178,6 +180,15 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 projectId: input.projectId,
                 platformId: input.platformId,
             })
+        },
+
+        async recordTriggerRun(input) {
+            const redisConnection = await redisConnections.useExisting()
+            await triggerRunStats(log, redisConnection).save(input)
+        },
+
+        async getPrewarmData(input) {
+            return preWarmWorkersService(log).getPrewarmData(input)
         },
 
         async extendLock(input) {

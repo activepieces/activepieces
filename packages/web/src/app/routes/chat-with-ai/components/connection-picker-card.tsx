@@ -1,4 +1,5 @@
 import {
+  AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
@@ -533,7 +534,9 @@ export function ConnectionPickerCard({
             }
           }}
           reconnectConnection={reconnectConnection}
-          isGlobalConnection={false}
+          isGlobalConnection={
+            reconnectConnection?.scope === AppConnectionScope.PLATFORM
+          }
         />
       )}
     </>

@@ -21,6 +21,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import EditableText from '@/components/custom/editable-text';
 import { PageHeader } from '@/components/custom/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   stageResourceKey,
   useReportStageResourceTitle,
@@ -56,7 +57,7 @@ import { recordsApi } from '../api/records-api';
 import { tablesApi } from '../api/tables-api';
 import { tablesUtils } from '../utils/utils';
 
-import { useTableState } from './ap-table-state-provider';
+import { useRefreshTableState, useTableState } from './ap-table-state-provider';
 import { ImportTableDialog } from './import-table-dialog';
 import { TableColorPicker } from './table-color-picker';
 
@@ -71,6 +72,7 @@ export function ApTableHeader({
   lockedBy,
   takeOver,
 }: ApTableHeaderProps) {
+  const { embedState } = useEmbedding();
   const [
     selectedRecords,
     setSelectedRecords,
@@ -91,6 +93,9 @@ export function ApTableHeader({
     state.setRecordColorsLocal,
   ]);
   const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
+  // refresh in place after an import; a full-page reload would break the
+  // embed SDK handshake inside an iframe
+  const refreshTableState = useRefreshTableState();
   const [isEditingTableName, setIsEditingTableName] = useState(false);
   const { project } = projectCollectionUtils.useCurrentProject();
   const lockedByOtherUser = useTableState((state) => state.lockedByOtherUser);
@@ -296,7 +301,9 @@ export function ApTableHeader({
           </button>
         </div>
       )}
-      <ActiveUsersWidget resourceId={table.id} />
+      {!embedState.hideActiveUsers && (
+        <ActiveUsersWidget resourceId={table.id} />
+      )}
       {selectedRecords.size > 0 && (
         <PermissionNeededTooltip hasPermission={canEdit}>
           <TableColorPicker onPick={colorSelectedRecords}>
@@ -363,7 +370,7 @@ export function ApTableHeader({
           setIsOpen={setIsImportTableDialogOpen}
           tableId={table.id}
           allowedFileTypes={['json', 'csv']}
-          onImportSuccess={() => window.location.reload()}
+          onImportSuccess={refreshTableState}
         />
       </div>
     </>

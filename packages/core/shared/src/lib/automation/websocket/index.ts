@@ -10,7 +10,6 @@ export enum WebsocketClientEvent {
     TEST_STEP_PROGRESS = 'TEST_STEP_PROGRESS',
     REFRESH_PIECE = 'REFRESH_PIECE',
     FLOW_RUN_PROGRESS = 'FLOW_RUN_PROGRESS',
-    BADGE_AWARDED = 'BADGE_AWARDED',
     UPDATE_RUN_PROGRESS = 'UPDATE_RUN_PROGRESS',
     RESOURCE_LOCKED = 'RESOURCE_LOCKED',
     RESOURCE_UNLOCKED = 'RESOURCE_UNLOCKED',
@@ -50,11 +49,6 @@ export enum WebsocketServerEvent {
     JOIN_PRESENCE = 'JOIN_PRESENCE',
     LEAVE_PRESENCE = 'LEAVE_PRESENCE',
 }
-
-export const BadgeAwarded = z.object({
-    badge: z.string(),
-    userId: z.string(),
-})
 
 export enum LockerKind {
     USER = 'USER',
@@ -166,7 +160,6 @@ export const FlowEntityUpdatedEvent = z.object({
     folderId: z.string().nullable(),
 })
 
-export type BadgeAwarded = z.infer<typeof BadgeAwarded>
 export type LockResourceRequest = z.infer<typeof LockResourceRequest>
 export type LockHolder = z.infer<typeof LockHolder>
 export type LockResourceResponse = z.infer<typeof LockResourceResponse>
