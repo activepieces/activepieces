@@ -26,6 +26,7 @@ All editions. The CE controller exposes a minimal set: get, list (returns only t
 - **ProjectIcon** — `{ color: ColorName }` stored as JSONB; color chosen from a 12-color palette
 - **externalId** — optional opaque string for embedding integrations to map projects to their own IDs
 - **releasesEnabled** — feature flag per-project for the project-releases module
+- **flowOwnerAlertsEnabled** — team-project flag: also email a failing flow's owner on failure alerts (see [alerts.md](./alerts.md))
 - **poolId** — optional FK to a `concurrency_pool` for worker concurrency limiting
 - **maxConcurrentJobs** — optional per-project override for concurrent execution limit
 
@@ -43,6 +44,7 @@ All editions. The CE controller exposes a minimal set: get, list (returns only t
 | externalId | string (nullable) | embedding integration ID |
 | maxConcurrentJobs | number (nullable) | concurrency cap |
 | releasesEnabled | boolean | default false |
+| flowOwnerAlertsEnabled | boolean | default false; team projects only, see alerts.md |
 | metadata | jsonb (nullable) | arbitrary key-value |
 | poolId | string (nullable) | FK to `concurrency_pool` |
 | deleted | timestamp (nullable) | soft-delete date |
