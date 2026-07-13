@@ -57,7 +57,7 @@ export type CreatePieceSetRequestBody = z.infer<typeof CreatePieceSetRequestBody
 
 export const UpdatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }).optional(),
-    key: z.string().nullable().optional(),
+    key: z.string().optional(),
     pieces: PieceSelection.optional(),
     actions: z.record(z.string(), ComponentIntent).optional(),
     triggers: z.record(z.string(), ComponentIntent).optional(),

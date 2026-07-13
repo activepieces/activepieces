@@ -68,7 +68,7 @@ const EditPieceSetForm = ({
         id,
         request: {
           name,
-          key: key || null,
+          key: key || undefined,
         },
       },
       { onSuccess: () => onOpenChange(false) },

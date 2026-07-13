@@ -2,9 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { ApEdition } from '@activepieces/shared'
 import { QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
 import { isNotOneOfTheseEditions } from '../../database-common'
-import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
 type PieceSetConfig = {
@@ -22,17 +20,15 @@ const DEFAULT_CONFIG: PieceSetConfig = {
 const PROJECT_BATCH = 500
 
 const log = system.globalLogger()
-const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
-// transaction=false is required by CREATE INDEX CONCURRENTLY, so the migration runs in
-// autocommit mode. Every step is guarded (IF NOT EXISTS DDL, NOT EXISTS backfill inserts,
-// pieceSetId IS NULL project updates), so a mid-run failure leaves a partial state that is
-// safe to resolve by simply re-running the migration.
+// Runs in a transaction. The project.pieceSetId index is built separately in
+// AddProjectPieceSetIdIndex1808000000000 because CREATE INDEX CONCURRENTLY cannot run inside
+// one. Every step is still guarded (IF NOT EXISTS DDL, NOT EXISTS backfill inserts, pieceSetId
+// IS NULL project updates) so a re-run after a rolled-back attempt is safe.
 export class CreatePieceSetTable1807000000000 implements Migration {
     name = 'CreatePieceSetTable1807000000000'
     breaking = false
     release = '0.103.0'
-    transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -86,30 +82,6 @@ export class CreatePieceSetTable1807000000000 implements Migration {
             `)
         }
 
-        if (isPGlite) {
-            await queryRunner.query(`
-                CREATE INDEX IF NOT EXISTS "idx_project_piece_set_id"
-                ON "project" ("pieceSetId")
-            `)
-        }
-        else {
-            // CONCURRENTLY avoids a ShareLock that would block all writes on the
-            // existing "project" table for the duration of the index build.
-            await queryRunner.query(`
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_project_piece_set_id"
-                ON "project" ("pieceSetId")
-            `)
-        }
-
-        // Piece sets replace the old platform-level piece filters. The columns are created on
-        // every edition (CreateDefaultPlatform / AddPlatformToPostgres), so they must be dropped
-        // on every edition too — this has to run before the EE/Cloud-only backfill early return.
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-                DROP COLUMN IF EXISTS "filteredPieceNames",
-                DROP COLUMN IF EXISTS "filteredPieceBehavior"
-        `)
-
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
@@ -161,12 +133,6 @@ export class CreatePieceSetTable1807000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-                ADD COLUMN IF NOT EXISTS "filteredPieceNames" character varying array NOT NULL DEFAULT '{}',
-                ADD COLUMN IF NOT EXISTS "filteredPieceBehavior" character varying NOT NULL DEFAULT 'BLOCKED'
-        `)
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_project_piece_set_id"')
         await queryRunner.query('ALTER TABLE "project" DROP CONSTRAINT IF EXISTS "fk_project_piece_set_id"')
         await queryRunner.query('ALTER TABLE "project" DROP COLUMN IF EXISTS "pieceSetId"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_key"')

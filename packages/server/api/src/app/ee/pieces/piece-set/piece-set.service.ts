@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, QueryFailedError } from 'typeorm'
@@ -113,18 +113,16 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
 
     async create({ platformId, name, key, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
         const id = apId()
-        try {
-            await pieceSetRepo().save({
-                id,
-                platformId,
-                name,
-                key: resolveKey({ key, name }),
-                isDefault,
-                generatedForProjectId,
-                config: config ?? pieceSetConfig.emptyConfig(),
-            })
-        }
-        catch (error) {
+        const { error } = await tryCatch(() => pieceSetRepo().save({
+            id,
+            platformId,
+            name,
+            key: resolveKey({ key, name }),
+            isDefault,
+            generatedForProjectId,
+            config: config ?? pieceSetConfig.emptyConfig(),
+        }))
+        if (error) {
             rethrowKeyConflict(error)
         }
         return pieceSetRepo().findOneByOrFail({ id })
@@ -135,14 +133,12 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
 
         const updatedConfig = pieceSetConfig.applyUpdate({ current: existing.config, request })
 
-        try {
-            await pieceSetRepo().update({ id, platformId }, {
-                ...spreadIfDefined('name', request.name),
-                ...(request.key !== undefined ? { key: resolveKey({ key: request.key, name: request.name ?? existing.name }) } : {}),
-                config: updatedConfig,
-            })
-        }
-        catch (error) {
+        const { error } = await tryCatch(() => pieceSetRepo().update({ id, platformId }, {
+            ...spreadIfDefined('name', request.name),
+            ...(request.key !== undefined ? { key: resolveKey({ key: request.key, name: request.name ?? existing.name }) } : {}),
+            config: updatedConfig,
+        }))
+        if (error) {
             rethrowKeyConflict(error)
         }
 
