@@ -10,6 +10,8 @@ The `ctx.files` object allow you to store files in local storage or in a remote 
 
 You can use the `write` method to write a file to the storage, It returns a string that can be used in other actions or triggers properties to reference the file.
 
+`data` accepts a `Buffer` **or** a stream (`Readable`/`ReadableStream`/any `AsyncIterable<Uint8Array>`). A stream is routed to [`writeStream`](#write-stream) and uploaded without buffering in memory; a `Buffer` is uploaded as-is.
+
 **Example:**
 ```ts
 const fileReference = await files.write({

@@ -38,7 +38,7 @@ async function bufferRemaining({ head, rest, maxSizeBytes, onOverflow }: BufferR
 }
 
 function toAsyncIterable(stream: AsyncIterable<Uint8Array> | ReadableStream<Uint8Array>): AsyncIterable<Uint8Array> {
-    if (Symbol.asyncIterator in stream) {
+    if (!('getReader' in stream)) {
         return stream
     }
     return (async function* () {

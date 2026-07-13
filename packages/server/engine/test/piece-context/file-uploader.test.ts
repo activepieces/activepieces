@@ -17,21 +17,21 @@ describe('file-uploader service', () => {
         const files = createFileUploader(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: {} as any }),
-        ).rejects.toThrow('Expected file data to be a Buffer, but received [object Object]')
+        ).rejects.toThrow('Expected file data to be a Buffer or stream, but received [object Object]')
     })
 
     it('throws when data is a string', async () => {
         const files = createFileUploader(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: 'hello' as any }),
-        ).rejects.toThrow('Expected file data to be a Buffer, but received string')
+        ).rejects.toThrow('Expected file data to be a Buffer or stream, but received string')
     })
 
     it('throws when data is undefined', async () => {
         const files = createFileUploader(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: undefined as any }),
-        ).rejects.toThrow('Expected file data to be a Buffer, but received undefined')
+        ).rejects.toThrow('Expected file data to be a Buffer or stream, but received undefined')
     })
 
     it('throws when file exceeds size limit', async () => {
@@ -115,7 +115,7 @@ describe('file-uploader service', () => {
     })
 })
 
-describe('file-uploader writeStream', () => {
+describe('file-uploader stream path', () => {
     const READ_URL = 'https://api.example.com/v1/files/abc123?token=xyz'
     const PART_SIZE = 8 * 1024 * 1024
 
@@ -175,7 +175,7 @@ describe('file-uploader writeStream', () => {
         const calls = mockStreamingFetch()
         const files = createFileUploader(SERVICE_PARAMS)
 
-        const result = await files.writeStream({ fileName: 'small.txt', stream: toStream(Buffer.from('hello')) })
+        const result = await files.write({ fileName: 'small.txt', data: toStream(Buffer.from('hello')) })
 
         expect(result).toBe(READ_URL)
         expect(calls.some(call => call.url.includes('multipart-uploads'))).toBe(false)
@@ -188,7 +188,7 @@ describe('file-uploader writeStream', () => {
         // 17MB → 3 parts (8 + 8 + 1)
         const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE), Buffer.alloc(1024 * 1024))
 
-        const result = await files.writeStream({ fileName: 'big.bin', stream })
+        const result = await files.write({ fileName: 'big.bin', data: stream })
 
         expect(result).toBe(READ_URL)
         const partPuts = calls.filter(call => call.url.startsWith('https://s3.example.com/part-'))
@@ -209,7 +209,7 @@ describe('file-uploader writeStream', () => {
         const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE))
 
         await expect(
-            files.writeStream({ fileName: 'big.bin', stream }),
+            files.write({ fileName: 'big.bin', data: stream }),
         ).rejects.toThrow(EngineGenericError)
         expect(calls.some(call => call.url.includes('/multipart-uploads/abort'))).toBe(true)
     })
@@ -220,7 +220,7 @@ describe('file-uploader writeStream', () => {
         const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE))
 
         await expect(
-            files.writeStream({ fileName: 'big.bin', stream }),
+            files.write({ fileName: 'big.bin', data: stream }),
         ).rejects.toThrow(FileSizeError)
         expect(calls.some(call => call.url.includes('/multipart-uploads/abort'))).toBe(true)
         expect(calls.some(call => call.url.includes('/multipart-uploads/complete'))).toBe(false)
@@ -232,7 +232,7 @@ describe('file-uploader writeStream', () => {
         const files = createFileUploader(SERVICE_PARAMS)
         const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE), Buffer.alloc(1024))
 
-        const result = await files.writeStream({ fileName: 'big.bin', stream })
+        const result = await files.write({ fileName: 'big.bin', data: stream })
 
         expect(result).toBe(READ_URL)
         expect(calls.some(call => call.url.startsWith('https://s3.example.com/'))).toBe(false)
@@ -246,7 +246,18 @@ describe('file-uploader writeStream', () => {
         const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE))
 
         await expect(
-            files.writeStream({ fileName: 'big.bin', stream }),
+            files.write({ fileName: 'big.bin', data: stream }),
         ).rejects.toThrow(FileSizeError)
+    })
+
+    it('write routes an async-iterable stream through the multipart path', async () => {
+        const calls = mockStreamingFetch()
+        const files = createFileUploader(SERVICE_PARAMS)
+        const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE), Buffer.alloc(1024 * 1024))
+
+        const result = await files.write({ fileName: 'big.bin', data: stream })
+
+        expect(result).toBe(READ_URL)
+        expect(calls.filter(call => call.url.startsWith('https://s3.example.com/part-'))).toHaveLength(3)
     })
 })
