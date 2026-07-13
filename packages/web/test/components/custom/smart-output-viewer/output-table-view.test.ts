@@ -73,8 +73,8 @@ describe('buildColumns', () => {
   it('builds columns for flat records', () => {
     const cols = buildColumns({ id: 1, name: 'a' });
     expect(cols).toEqual([
-      { key: 'id', label: 'Id', path: ['id'] },
-      { key: 'name', label: 'Name', path: ['name'] },
+      { key: 'id', label: 'id', path: ['id'] },
+      { key: 'name', label: 'name', path: ['name'] },
     ]);
   });
 
@@ -84,7 +84,7 @@ describe('buildColumns', () => {
       address: { city: 'London', zip: 'EC1' },
     });
     expect(cols).toEqual([
-      { key: 'id', label: 'Id', path: ['id'] },
+      { key: 'id', label: 'id', path: ['id'] },
       { key: 'address.city', label: 'city', path: ['address', 'city'] },
       { key: 'address.zip', label: 'zip', path: ['address', 'zip'] },
     ]);
@@ -94,10 +94,10 @@ describe('buildColumns', () => {
     expect(buildColumns({ id: 1, items: [1, 2, 3] })).toBeNull();
   });
 
-  it('humanises camelCase and snake_case keys', () => {
+  it('keeps camelCase and snake_case keys verbatim', () => {
     const cols = buildColumns({ firstName: 'a', last_name: 'b' });
-    expect(cols?.[0].label).toBe('First Name');
-    expect(cols?.[1].label).toBe('Last Name');
+    expect(cols?.[0].label).toBe('firstName');
+    expect(cols?.[1].label).toBe('last_name');
   });
 
   it('returns null for an empty object', () => {

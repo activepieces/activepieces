@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -331,7 +332,7 @@
     },
     "packages/cli": {
       "name": "@activepieces/cli",
-      "version": "1.0.2",
+      "version": "1.2.0",
       "bin": {
         "pieces-cli": "../../dist/packages/cli/src/index.js",
       },
@@ -404,7 +405,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.113.1",
+      "version": "0.117.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -442,7 +443,7 @@
     },
     "packages/ee/embed-sdk": {
       "name": "ee-embed-sdk",
-      "version": "0.11.0",
+      "version": "0.13.0",
       "dependencies": {
         "tslib": "2.6.2",
       },
@@ -491,7 +492,7 @@
     },
     "packages/pieces/community/actualbudget": {
       "name": "@activepieces/piece-actualbudget",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1130,6 +1131,25 @@
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/aws-bedrock": {
+      "name": "@activepieces/piece-aws-bedrock",
+      "version": "0.2.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@aws-crypto/sha256-js": "5.2.0",
+        "@aws-sdk/client-bedrock": "^3.987.0",
+        "@aws-sdk/client-bedrock-runtime": "^3.987.0",
+        "@aws-sdk/client-sts": "3.974.0",
+        "@smithy/protocol-http": "5.3.8",
+        "@smithy/signature-v4": "5.3.8",
       },
       "devDependencies": {
         "tslib": "^2.3.0",
@@ -2084,7 +2104,7 @@
     },
     "packages/pieces/community/clarifai": {
       "name": "@activepieces/piece-clarifai",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7222,7 +7242,7 @@
     },
     "packages/pieces/community/postgres": {
       "name": "@activepieces/piece-postgres",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10293,7 +10313,7 @@
     },
     "packages/pieces/community/zoom": {
       "name": "@activepieces/piece-zoom",
-      "version": "0.6.5",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -11270,6 +11290,8 @@
     "@activepieces/piece-avian": ["@activepieces/piece-avian@workspace:packages/pieces/community/avian"],
 
     "@activepieces/piece-avoma": ["@activepieces/piece-avoma@workspace:packages/pieces/community/avoma"],
+
+    "@activepieces/piece-aws-bedrock": ["@activepieces/piece-aws-bedrock@workspace:packages/pieces/community/aws-bedrock"],
 
     "@activepieces/piece-azure-ad": ["@activepieces/piece-azure-ad@workspace:packages/pieces/community/azure-ad"],
 
@@ -18302,6 +18324,8 @@
     "@activepieces/piece-assemblyai/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@activepieces/piece-avoma/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
+    "@activepieces/piece-aws-bedrock/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-azure-blob-storage/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
