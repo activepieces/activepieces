@@ -94,11 +94,10 @@ const VirtualizedScrollArea = <T,>({
             data-virtual-index={virtualItem.index}
             style={{
               position: 'absolute',
-              top: 0,
+              top: `${virtualItem.start}px`,
               left: 0,
               width: '100%',
               height: `${virtualItem.size}px`,
-              transform: `translateY(${virtualItem.start}px)`,
             }}
           >
             {renderItem(items[virtualItem.index], virtualItem.index)}
