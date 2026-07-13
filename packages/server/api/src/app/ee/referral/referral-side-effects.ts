@@ -71,9 +71,14 @@ export const referralSideEffects = (log: FastifyBaseLogger) => ({
                 const grant = await tryCatch(async () => {
                     const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
                     const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+                    // An unlimited key (limit === null) must stay unlimited — `null + amount`
+                    // coerces to `amount`, silently converting it into a capped key.
+                    if (isNil(key.limit)) {
+                        return
+                    }
                     await openRouterApi.updateKey({
                         hash: apiKeyHash,
-                        limit: key.limit! + amountInUsd,
+                        limit: key.limit + amountInUsd,
                     })
                 })
                 if (!isNil(grant.error)) {

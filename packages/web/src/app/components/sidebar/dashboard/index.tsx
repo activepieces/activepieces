@@ -1,6 +1,14 @@
 import { ApFlagId, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { t } from 'i18next';
-import { House, MessageCircle, Plus, Search, VenetianMask } from 'lucide-react';
+import {
+  Compass,
+  House,
+  LineChart,
+  MessageCircle,
+  Plus,
+  Search,
+  VenetianMask,
+} from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,6 +42,7 @@ import { InviteUserDialog } from '@/features/members';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
@@ -56,9 +65,12 @@ export function ProjectDashboardSidebar({
   className,
 }: { className?: string } = {}) {
   const { embedState } = useEmbedding();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const chatEnabled = platform.plan.chatEnabled;
 
+  // Home is "start a fresh chat" — only meaningful when chat is available.
   const homeLink: SidebarItemType = {
     type: 'link',
     to: `${CHAT_ROUTE}?new=1`,
@@ -69,6 +81,30 @@ export function ProjectDashboardSidebar({
     isSubItem: false,
     // Home just navigates back to a fresh chat — it's never a "selected" tab.
     isActive: () => false,
+  };
+
+  // Restored to the chat-first nav (main had these as sidebar links). Both are
+  // full-page standalone routes, shown for every edition and regardless of chat.
+  const exploreLink: SidebarItemType = {
+    type: 'link',
+    to: '/templates',
+    label: t('Explore'),
+    show: true,
+    icon: Compass,
+    hasPermission: true,
+    isSubItem: false,
+    onClick: () => recordStaticPageAccess('/templates'),
+  };
+
+  const impactLink: SidebarItemType = {
+    type: 'link',
+    to: '/impact',
+    label: t('Impact'),
+    show: true,
+    icon: LineChart,
+    hasPermission: true,
+    isSubItem: false,
+    onClick: () => recordStaticPageAccess('/impact'),
   };
 
   return (
@@ -89,15 +125,17 @@ export function ProjectDashboardSidebar({
           <SidebarSeparator className="mx-2 my-0" />
           <SidebarGroup className="py-1">
             <SidebarMenu className="gap-1.5">
-              <ApSidebarItem {...homeLink} />
+              {chatEnabled && <ApSidebarItem {...homeLink} />}
               <SidebarSearchItem />
+              <ApSidebarItem {...exploreLink} />
+              <ApSidebarItem {...impactLink} />
               {/* Collapsed rail: a Chats icon opens the history popover.
                   Expanded: the inline "My Chats" list below replaces it. */}
-              {isCollapsed && <SidebarChatsItem />}
+              {chatEnabled && isCollapsed && <SidebarChatsItem />}
             </SidebarMenu>
           </SidebarGroup>
           <PinnedProjectsGroup />
-          {!isCollapsed && <SidebarChatHistory />}
+          {chatEnabled && !isCollapsed && <SidebarChatHistory />}
         </SidebarContent>
 
         <SidebarFooter>
@@ -406,6 +444,7 @@ function SidebarSearchItem() {
 
 function SidebarReferEarn() {
   const { embedState } = useEmbedding();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { data: referralEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.REFERRAL_ENABLED,
   );
@@ -416,7 +455,9 @@ function SidebarReferEarn() {
 
   // Cloud-only growth loop (AI credits exist only on Cloud); AP_REFERRAL_DEV_ENABLED
   // force-enables it locally for testing. Both are folded into the REFERRAL_ENABLED flag.
-  if (embedState.isEmbedded || !referralEnabled) {
+  // The whole flow is a chat conversation, so it also requires chat — a chat-off cloud
+  // user (outside the rollout) has REFERRAL_ENABLED but no chat to run it in.
+  if (embedState.isEmbedded || !referralEnabled || !platform.plan.chatEnabled) {
     return null;
   }
 
@@ -521,6 +562,18 @@ function SidebarPlatformAdminLink() {
       />
     </SidebarMenu>
   );
+}
+
+function recordStaticPageAccess(href: string) {
+  const page = STATIC_PAGES.find((p) => p.href === href);
+  if (page) {
+    recordAccess({
+      id: page.id,
+      type: 'page',
+      label: page.label,
+      href: page.href,
+    });
+  }
 }
 
 export const SIDEBAR_ID = 'project-sidebar';

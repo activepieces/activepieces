@@ -18,6 +18,7 @@ import {
 import { PlatformSwitcher } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 
 // Collapsed: the logo is the expand affordance — it cross-fades to an expand icon while the
@@ -26,8 +27,16 @@ import { CHAT_ROUTE } from '@/lib/route-utils';
 function SidebarLogo() {
   const branding = flagsHooks.useWebsiteBranding();
   const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { state, setOpen } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  // Home is a fresh chat when chat is on; otherwise the classic project home.
+  const goHome = () =>
+    navigate(
+      platform.plan.chatEnabled
+        ? `${CHAT_ROUTE}?new=1`
+        : authenticationSession.appendProjectRoutePrefix('/automations'),
+    );
 
   if (isCollapsed) {
     return (
@@ -59,7 +68,7 @@ function SidebarLogo() {
       variant="ghost"
       size="icon"
       aria-label={t('home')}
-      onClick={() => navigate(`${CHAT_ROUTE}?new=1`)}
+      onClick={goHome}
       className="h-10! w-8! p-0! items-center justify-center"
     >
       <img

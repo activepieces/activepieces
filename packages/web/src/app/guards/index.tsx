@@ -26,7 +26,7 @@ import { WorkspaceShell } from '../components/workspace-shell';
 import { EmbedShell } from '../components/workspace-shell/embed-shell';
 
 import { ChatRouteRedirect } from './chat-route-redirect';
-import { DefaultRoute } from './default-route';
+import { ChatLandingGuard, DefaultRoute } from './default-route';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
 // Old /chat/:id deep links open that conversation in the persistent chat panel
@@ -59,7 +59,10 @@ const workspaceShellRoute = {
       <WorkspaceShell />
     </AllowOnlyLoggedInUserOnlyGuard>
   ),
-  children: [{ path: CHAT_ROUTE, element: <></> }, projectShellChildren],
+  children: [
+    { path: CHAT_ROUTE, element: <ChatLandingGuard /> },
+    projectShellChildren,
+  ],
 };
 
 // Embedded app (iframe): a separate, minimal shell with NONE of the operator chrome

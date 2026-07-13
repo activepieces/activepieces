@@ -27,9 +27,11 @@ const FULL_BLEED_TYPES = new Set(['flow', 'table', 'run']);
 function StageHeaderBar({
   chatCollapsed,
   onShowChat,
+  standalone,
 }: {
   chatCollapsed?: boolean;
   onShowChat?: () => void;
+  standalone?: boolean;
 }) {
   const { closeStage } = useStage();
 
@@ -57,21 +59,23 @@ function StageHeaderBar({
       <div className="flex-1" />
       <StageProjectActions />
       <StageHeaderActionsAnchor className="flex min-w-0 items-center gap-1.5" />
-      <TooltipProvider delayDuration={400}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={closeStage}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{t('Close')}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {!standalone && (
+        <TooltipProvider delayDuration={400}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={closeStage}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('Close')}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </div>
   );
 }
@@ -80,10 +84,12 @@ export function StageContainer({
   chatCollapsed,
   onShowChat,
   chromeless,
+  standalone,
 }: {
   chatCollapsed?: boolean;
   onShowChat?: () => void;
   chromeless?: boolean;
+  standalone?: boolean;
 }) {
   const {
     stageRef,
@@ -108,7 +114,11 @@ export function StageContainer({
             'rounded-xl border shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]',
         )}
       >
-        <StageHeaderBar chatCollapsed={chatCollapsed} onShowChat={onShowChat} />
+        <StageHeaderBar
+          chatCollapsed={chatCollapsed}
+          onShowChat={onShowChat}
+          standalone={standalone}
+        />
         <div
           ref={stageRef}
           id="dashboard-content-container"

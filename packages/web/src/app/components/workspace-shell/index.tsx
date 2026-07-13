@@ -19,6 +19,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
@@ -97,6 +98,8 @@ function ProjectChangedRedirector({
 
 function WorkspaceShellInner() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const chatEnabled = platform.plan.chatEnabled;
   const { isStageOpen, closeStage, stageKey } = useStage();
   const isMobile = useIsMobile();
   const chatPanelRef = useRef<PanelImperativeHandle>(null);
@@ -322,6 +325,23 @@ function WorkspaceShellInner() {
     () => ({ chatPopped, chatCollapsed, popOutChat, dockChat }),
     [chatPopped, chatCollapsed, popOutChat, dockChat],
   );
+
+  // Chat off (Community, EE without the flag, Cloud outside the rollout): the Stage
+  // is the whole workspace — no chat panel, no resizable split, no close-to-chat
+  // affordance. Everything else (sidebar, Stage content, project actions) stays.
+  if (!chatEnabled) {
+    return (
+      <SidebarProvider defaultOpen={false} hoverMode={false}>
+        <ProjectDashboardSidebar />
+        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
+          <div className="flex-1 flex overflow-hidden p-1.5">
+            <StageContainer standalone />
+          </div>
+          {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+        </SidebarInset>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <ChatDockProvider value={chatDockValue}>

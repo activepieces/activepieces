@@ -1,5 +1,5 @@
 import { ChatConversation } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronDown,
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -20,6 +21,7 @@ import {
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { ConversationStatusDot } from './conversation-status-dot';
@@ -49,13 +51,18 @@ export function RecentsList({
   onExpandSidebar?: () => void;
 }) {
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
   const [collapsed, setCollapsed] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ChatConversation | null>(
+    null,
+  );
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const { data: page, isLoading } = useQuery({
     queryKey: ['chat-conversations'],
     queryFn: () => chatApi.listConversations({ limit: 100 }),
+    enabled: platform.plan.chatEnabled,
   });
 
   const allConversations = page?.data ?? [];
@@ -67,16 +74,14 @@ export function RecentsList({
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
-  const { mutate: deleteConv } = useMutation({
-    mutationFn: (id: string) => chatApi.deleteConversation(id),
-    onSuccess: (_data, deletedId) => {
-      void queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
-      // If the open conversation was deleted, reset the panel to a fresh chat.
-      if (selectedIdRef.current === deletedId) {
-        window.dispatchEvent(new Event(chatUtils.newChatEvent));
-      }
-    },
-  });
+  const deleteConversation = async (id: string) => {
+    await chatApi.deleteConversation(id);
+    await queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
+    // If the open conversation was deleted, reset the panel to a fresh chat.
+    if (selectedIdRef.current === id) {
+      window.dispatchEvent(new Event(chatUtils.newChatEvent));
+    }
+  };
 
   const recents = allConversations.slice(0, RECENTS_LIMIT);
 
@@ -183,11 +188,9 @@ export function RecentsList({
                 ))}
               </div>
             ) : recents.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                <MessageCircle className="h-7 w-7 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">
-                  {t('Start your first chat')}
-                </p>
+              <div className="flex items-center gap-2 rounded-lg px-2 py-2 text-muted-foreground">
+                <MessageCircle className="size-4 shrink-0 text-muted-foreground/40" />
+                <span className="text-sm">{t('Start your first chat')}</span>
               </div>
             ) : (
               <div className="flex flex-col gap-0.5">
@@ -221,12 +224,12 @@ export function RecentsList({
                             tabIndex={0}
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteConv(conv.id);
+                              setDeleteTarget(conv);
                             }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.stopPropagation();
-                                deleteConv(conv.id);
+                                setDeleteTarget(conv);
                               }
                             }}
                             className="hidden shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive group-hover/chat:flex"
@@ -258,6 +261,26 @@ export function RecentsList({
           )}
         </div>
       )}
+
+      <ConfirmationDeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setDeleteTarget(null);
+          }
+        }}
+        title={t('Delete chat')}
+        message={t(
+          'Are you sure you want to delete this chat? This action cannot be undone.',
+        )}
+        entityName={t('Chat')}
+        buttonText={t('Delete')}
+        mutationFn={async () => {
+          if (deleteTarget) {
+            await deleteConversation(deleteTarget.id);
+          }
+        }}
+      />
     </div>
   );
 }

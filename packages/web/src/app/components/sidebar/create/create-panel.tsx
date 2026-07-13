@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { projectCollectionUtils } from '@/features/projects';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,8 @@ import { useCreateActions } from './use-create-actions';
 
 export function CreatePanel({ onClose }: { onClose: () => void }) {
   const { embedState } = useEmbedding();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const chatEnabled = platform.plan.chatEnabled;
   const { data: projects = [] } = projectCollectionUtils.useAll();
   const defaultProjectId = useMemo(() => {
     const personal = projects.find((p) => p.type === ProjectType.PERSONAL);
@@ -53,25 +56,26 @@ export function CreatePanel({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const baseTiles: CreateTileConfig[] = [
-    {
-      key: 'chat',
-      label: t('Chat'),
-      caption: t('Ask AI to get things done'),
-      icon: MessageCircle,
-      iconClassName: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-      onClick: () => run(createChat),
-    },
-    {
-      key: 'flow',
-      label: t('Flow'),
-      caption: t('Build an automation'),
-      icon: Workflow,
-      iconClassName: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-      loading: isCreatingFlow,
-      onClick: () => run(createFlow),
-    },
-  ];
+  const chatTile: CreateTileConfig = {
+    key: 'chat',
+    label: t('Chat'),
+    caption: t('Ask AI to get things done'),
+    icon: MessageCircle,
+    iconClassName: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+    onClick: () => run(createChat),
+  };
+  const flowTile: CreateTileConfig = {
+    key: 'flow',
+    label: t('Flow'),
+    caption: t('Build an automation'),
+    icon: Workflow,
+    iconClassName: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    loading: isCreatingFlow,
+    onClick: () => run(createFlow),
+  };
+  const baseTiles: CreateTileConfig[] = chatEnabled
+    ? [chatTile, flowTile]
+    : [flowTile];
   const tableTile: CreateTileConfig = {
     key: 'table',
     label: t('Table'),
@@ -99,7 +103,10 @@ export function CreatePanel({ onClose }: { onClose: () => void }) {
         <div
           className={cn(
             'grid gap-2',
-            tiles.length >= 3 ? 'grid-cols-3' : 'grid-cols-2',
+            // Cap the two-tile layout to the same column width tiles get in the
+            // three-up grid so a missing tile (e.g. chat off) doesn't blow the
+            // remaining tiles up to fill the fixed-width popover.
+            tiles.length >= 3 ? 'grid-cols-3' : 'grid-cols-2 max-w-[182px]',
           )}
         >
           {tiles.map((tile) => (

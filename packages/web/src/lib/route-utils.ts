@@ -34,5 +34,24 @@ export const determineDefaultRoute = ({
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
 
+// The landing surface for a logged-in, onboarded operator user. Chat is the landing
+// ONLY when the user actually has it: a project is selected, it is not an embed, and
+// the plan resolves chat on (Community, EE-without-flag, and Cloud-outside-rollout all
+// resolve chatEnabled=false and fall through to the classic default — never /chat).
+export const resolveAuthenticatedLanding = ({
+  projectId,
+  isEmbedded,
+  chatEnabled,
+  classicRoute,
+}: {
+  projectId: string | null;
+  isEmbedded: boolean;
+  chatEnabled: boolean;
+  classicRoute: string;
+}): string => {
+  const canUseChat = !!projectId && !isEmbedded && chatEnabled;
+  return canUseChat ? CHAT_ROUTE : classicRoute;
+};
+
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';

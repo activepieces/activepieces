@@ -85,61 +85,74 @@ async function createOrGetPhrase({ platformId, userId, proposedDisplayPhrase, re
     }
     // Guarantee a real gap: reject a candidate that sits within the matcher's combined tolerance of
     // any OTHER phrase (exclude the user's own row when reissuing), so no two phrases' acceptance
-    // balls ever overlap. Fresh read (not the 60s cache) so near-simultaneous claims can't both slip
-    // through. Claims are rare → O(N) is fine.
-    const activePhrases = await referralPhraseRepo().find({
-        select: { normalizedPhrase: true },
-        where: { status: ReferralPhraseStatus.ACTIVE, userId: Not(userId) },
+    // balls ever overlap. The scan spans all users, so the check+write runs under a single global
+    // lock — without it two near-duplicate phrases claimed at the same instant both pass the O(N)
+    // scan (only the exact normalizedPhrase is unique-constrained) and both persist. Claims are rare,
+    // so a global lock is fine; hero-image generation is kept OUTSIDE the lock so a slow (~10s)
+    // generation never holds it. Fresh read (not the 60s cache) closes the same-instant window.
+    const result = await distributedLock(log).runExclusive({
+        key: 'referral_phrase_issue',
+        timeoutInSeconds: 15,
+        fn: async (): Promise<GetOrCreatePhraseResult> => {
+            const activePhrases = await referralPhraseRepo().find({
+                select: { normalizedPhrase: true },
+                where: { status: ReferralPhraseStatus.ACTIVE, userId: Not(userId) },
+            })
+            const tooClose = activePhrases.some((row) => !referralMatcher.areSafelyDistinct(normalizedPhrase, row.normalizedPhrase))
+            if (tooClose) {
+                return { status: 'too_similar' }
+            }
+
+            // Reissue: keep the SAME row so redemptions (linked by referralPhraseId) and earnings stay
+            // intact — just swap the text. The old text stops matching; only FUTURE allies use the new one.
+            if (!isNil(existing)) {
+                const { error } = await tryCatch(async () => referralPhraseRepo().update(existing.id, {
+                    displayPhrase,
+                    normalizedPhrase,
+                    phraseHash: referralMatcher.hash(normalizedPhrase),
+                    // Always overwritten (even to null): the emoji cast belongs to the phrase text, so a
+                    // stale cast must never survive a reissue.
+                    celebrationEmojis,
+                    celebrationScene,
+                }))
+                if (!isNil(error)) {
+                    return { status: 'collision' }
+                }
+                candidateCache = null
+                // Fire-and-forget: don't block the phrase reveal on ~10s of image generation. The image
+                // lands in the background well before any friend redeems; the inviter's own instant preview
+                // uses the gradient fallback until then.
+                void storeHeroImage({ userId, platformId, projectId, phrase: displayPhrase, scenePrompt, log }).catch(() => { /* best-effort */ })
+                return { status: 'replaced', displayPhrase }
+            }
+
+            const { error } = await tryCatch(async () => referralPhraseRepo().insert({
+                id: apId(),
+                platformId,
+                userId,
+                displayPhrase,
+                normalizedPhrase,
+                phraseHash: referralMatcher.hash(normalizedPhrase),
+                status: ReferralPhraseStatus.ACTIVE,
+                celebrationEmojis,
+                celebrationScene,
+            }))
+            if (!isNil(error)) {
+                const existingAfter = await referralPhraseRepo().findOneBy({ userId })
+                if (!isNil(existingAfter)) {
+                    return { status: 'existing', displayPhrase: existingAfter.displayPhrase }
+                }
+                return { status: 'collision' }
+            }
+            candidateCache = null
+            return { status: 'created', displayPhrase }
+        },
     })
-    const tooClose = activePhrases.some((row) => !referralMatcher.areSafelyDistinct(normalizedPhrase, row.normalizedPhrase))
-    if (tooClose) {
-        return { status: 'too_similar' }
+    // Outside the lock: a slow hero-image generation must never block other claimants.
+    if (result.status === 'created') {
+        await storeHeroImage({ userId, platformId, projectId, phrase: displayPhrase, scenePrompt, log })
     }
-
-    // Reissue: keep the SAME row so redemptions (linked by referralPhraseId) and earnings stay
-    // intact — just swap the text. The old text stops matching; only FUTURE allies use the new one.
-    if (!isNil(existing)) {
-        const { error } = await tryCatch(async () => referralPhraseRepo().update(existing.id, {
-            displayPhrase,
-            normalizedPhrase,
-            phraseHash: referralMatcher.hash(normalizedPhrase),
-            // Always overwritten (even to null): the emoji cast belongs to the phrase text, so a
-            // stale cast must never survive a reissue.
-            celebrationEmojis,
-            celebrationScene,
-        }))
-        if (!isNil(error)) {
-            return { status: 'collision' }
-        }
-        candidateCache = null
-        // Fire-and-forget: don't block the phrase reveal on ~10s of image generation. The image
-        // lands in the background well before any friend redeems; the inviter's own instant preview
-        // uses the gradient fallback until then.
-        void storeHeroImage({ userId, platformId, projectId, phrase: displayPhrase, scenePrompt, log }).catch(() => { /* best-effort */ })
-        return { status: 'replaced', displayPhrase }
-    }
-
-    const { error } = await tryCatch(async () => referralPhraseRepo().insert({
-        id: apId(),
-        platformId,
-        userId,
-        displayPhrase,
-        normalizedPhrase,
-        phraseHash: referralMatcher.hash(normalizedPhrase),
-        status: ReferralPhraseStatus.ACTIVE,
-        celebrationEmojis,
-        celebrationScene,
-    }))
-    if (!isNil(error)) {
-        const existingAfter = await referralPhraseRepo().findOneBy({ userId })
-        if (!isNil(existingAfter)) {
-            return { status: 'existing', displayPhrase: existingAfter.displayPhrase }
-        }
-        return { status: 'collision' }
-    }
-    candidateCache = null
-    await storeHeroImage({ userId, platformId, projectId, phrase: displayPhrase, scenePrompt, log })
-    return { status: 'created', displayPhrase }
+    return result
 }
 
 // Paint + store the phrase's hero scene (best-effort; a failure leaves the phrase working with the

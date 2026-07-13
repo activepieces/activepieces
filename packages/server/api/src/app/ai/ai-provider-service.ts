@@ -160,9 +160,14 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return
         }
         if (flagService(log).aiCreditsEnabled()) {
-            const activepieces = await aiProviderRepo().findOneBy({ platformId, provider: AIProviderName.ACTIVEPIECES })
-            if (isNil(activepieces)) {
-                await aiProviderRepo().save({
+            // Insert-if-absent is race-prone: listProviders + getChatProvider fire
+            // concurrently on a fresh platform and would both insert, tripping the
+            // (platformId, provider) unique index and 500ing onboarding. ON CONFLICT
+            // DO NOTHING makes the insert idempotent; the follow-up update then
+            // guarantees the (possibly pre-existing) row is chat-enabled.
+            await aiProviderRepo().createQueryBuilder()
+                .insert()
+                .values({
                     id: apId(),
                     auth: await encryptUtils.encryptObject({}),
                     config: {},
@@ -171,10 +176,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     platformId,
                     enabledForChat: true,
                 })
-            }
-            else {
-                await aiProviderRepo().update(activepieces.id, { enabledForChat: true })
-            }
+                .orIgnore()
+                .execute()
+            await aiProviderRepo().update({ platformId, provider: AIProviderName.ACTIVEPIECES }, { enabledForChat: true })
             log.info({ platform: { id: platformId } }, '[aiProviderService] Auto-enabled Activepieces provider for chat')
             return
         }

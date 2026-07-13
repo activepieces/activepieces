@@ -1,5 +1,5 @@
 import { ChatConversation } from '@activepieces/shared';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowUpRight,
@@ -11,12 +11,14 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { ConversationStatusDot } from './components/conversation-status-dot';
@@ -40,11 +42,13 @@ export function ConversationList({
   floating?: boolean;
 }) {
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(CONVERSATIONS_PAGE_SIZE);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -52,22 +56,19 @@ export function ConversationList({
     useQuery({
       queryKey: ['chat-conversations'],
       queryFn: () => chatApi.listConversations({ limit: 100 }),
+      enabled: platform.plan.chatEnabled,
     });
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
-  const { mutate: deleteConv } = useMutation({
-    mutationFn: (id: string) => chatApi.deleteConversation(id),
-    onSuccess: (_data, deletedId) => {
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
-      if (selectedIdRef.current === deletedId) {
-        onNewChat?.();
-      }
-    },
-  });
+  const deleteConversation = async (id: string) => {
+    await chatApi.deleteConversation(id);
+    await queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
+    if (selectedIdRef.current === id) {
+      onNewChat?.();
+    }
+  };
 
   const allConversations = conversationsPage?.data ?? [];
 
@@ -148,7 +149,7 @@ export function ConversationList({
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    deleteConv(id);
+    setDeleteTargetId(id);
   };
 
   const toggleGroup = (label: string) => {
@@ -210,7 +211,7 @@ export function ConversationList({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.stopPropagation();
-                          deleteConv(conv.id);
+                          setDeleteTargetId(conv.id);
                         }
                       }}
                     >
@@ -333,6 +334,26 @@ export function ConversationList({
           </p>
         </div>
       )}
+
+      <ConfirmationDeleteDialog
+        open={deleteTargetId !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setDeleteTargetId(null);
+          }
+        }}
+        title={t('Delete chat')}
+        message={t(
+          'Are you sure you want to delete this chat? This action cannot be undone.',
+        )}
+        entityName={t('Chat')}
+        buttonText={t('Delete')}
+        mutationFn={async () => {
+          if (deleteTargetId) {
+            await deleteConversation(deleteTargetId);
+          }
+        }}
+      />
     </div>
   );
 }
