@@ -85,6 +85,14 @@ It is strongly recommended that you add your credit card information to your Ope
 2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`),
   },
   {
+    provider: AIProviderName.REQUESTY,
+    name: 'Requesty',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',
+    markdown: t(`Follow these instructions to get your Requesty API Key:
+1. Go to https://app.requesty.ai/api-keys.
+2. Once on the website, locate and click on the option to obtain your Requesty API Key.`),
+  },
+  {
     provider: AIProviderName.CUSTOM,
     name: 'Other (OpenAI Compatible)',
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',

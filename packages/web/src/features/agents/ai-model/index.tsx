@@ -29,6 +29,7 @@ export const PROVIDER_EMBEDDING_MODELS: Partial<
   [AIProviderName.AZURE]: 'text-embedding-3-small',
   [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
   [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+  [AIProviderName.REQUESTY]: 'openai/text-embedding-3-small',
 };
 
 type AIModelSelectorProps = {

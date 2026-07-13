@@ -202,6 +202,22 @@ export async function createAIModel({
             })
             return provider.chatModel(modelId)
         }
+        case AIProviderName.REQUESTY: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            if (isImage) {
+                throw new Error(`Provider ${AIProviderName.REQUESTY} does not support image models`)
+            }
+            const provider = createOpenAICompatible({
+                name: 'requesty',
+                baseURL: 'https://router.requesty.ai/v1',
+                apiKey,
+                headers: {
+                    'HTTP-Referer': 'https://www.activepieces.com',
+                    'X-Title': 'Activepieces',
+                },
+            })
+            return provider.chatModel(modelId)
+        }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -227,6 +243,7 @@ const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.AZURE]: 'text-embedding-3-small',
     [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
     [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+    [AIProviderName.REQUESTY]: 'openai/text-embedding-3-small',
 }
 
 const OPENAI_EMBEDDING_PROVIDER_OPTIONS = {
@@ -271,6 +288,14 @@ export async function createEmbeddingModel({
         case AIProviderName.OPENROUTER: {
             const openRouterProvider = createOpenRouter({ apiKey })
             return { model: openRouterProvider.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+        }
+        case AIProviderName.REQUESTY: {
+            const p = createOpenAICompatible({
+                name: 'requesty',
+                baseURL: 'https://router.requesty.ai/v1',
+                apiKey,
+            })
+            return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         }
         default:
             throw new Error(`Provider ${provider} does not support embedding models`)

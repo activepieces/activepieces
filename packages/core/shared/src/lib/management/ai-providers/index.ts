@@ -37,6 +37,9 @@ export type OpenAIProviderAuthConfig = z.infer<typeof OpenAIProviderAuthConfig>
 export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 export type OpenRouterProviderAuthConfig = z.infer<typeof OpenRouterProviderAuthConfig>
 
+export const RequestyProviderAuthConfig = BaseAIProviderAuthConfig
+export type RequestyProviderAuthConfig = z.infer<typeof RequestyProviderAuthConfig>
+
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().min(1),
     secretAccessKey: z.string().min(1),
@@ -97,6 +100,9 @@ export type OpenAIProviderConfig = z.infer<typeof OpenAIProviderConfig>
 export const OpenRouterProviderConfig = z.object({})
 export type OpenRouterProviderConfig = z.infer<typeof OpenRouterProviderConfig>
 
+export const RequestyProviderConfig = z.object({})
+export type RequestyProviderConfig = z.infer<typeof RequestyProviderConfig>
+
 export const BedrockProviderConfig = z.object({
     region: z.string().min(1),
 })
@@ -111,6 +117,7 @@ export const AIProviderAuthConfig = z.union([
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
     OpenRouterProviderAuthConfig,
+    RequestyProviderAuthConfig,
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
@@ -128,6 +135,7 @@ export const AIProviderConfig = z.union([
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
+    RequestyProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
 ])
@@ -145,6 +153,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.OPENROUTER),
         config: OpenRouterProviderConfig,
         auth: OpenRouterProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.REQUESTY),
+        config: RequestyProviderConfig,
+        auth: RequestyProviderAuthConfig,
     }),
     z.object({
         displayName: z.string().min(1),
@@ -371,6 +385,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.BEDROCK]: 200_000,
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
+    [AIProviderName.REQUESTY]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
     [AIProviderName.MISTRAL]: 128_000,
 }

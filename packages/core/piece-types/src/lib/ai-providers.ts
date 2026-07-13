@@ -22,6 +22,7 @@ const AzureProviderAuthConfig = BaseAIProviderAuthConfig
 const GoogleProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
+const RequestyProviderAuthConfig = BaseAIProviderAuthConfig
 const MistralProviderAuthConfig = BaseAIProviderAuthConfig
 
 export const BedrockProviderAuthConfig = z.object({
@@ -35,6 +36,7 @@ const ActivePiecesProviderConfig = z.object({})
 const GoogleProviderConfig = z.object({})
 const OpenAIProviderConfig = z.object({})
 const OpenRouterProviderConfig = z.object({})
+const RequestyProviderConfig = z.object({})
 const MistralProviderConfig = z.object({})
 
 export const ProviderModelConfig = z.object({
@@ -81,6 +83,7 @@ export const AIProviderAuthConfig = z.union([
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
     OpenRouterProviderAuthConfig,
+    RequestyProviderAuthConfig,
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
@@ -99,6 +102,7 @@ export const AIProviderConfig = z.union([
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
+    RequestyProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
 ])

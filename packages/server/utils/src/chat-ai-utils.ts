@@ -106,6 +106,18 @@ function createChatModel({ provider, auth, config, modelId, webSearchEnabled = f
                 },
             }).chatModel(modelId)
         }
+        case AIProviderName.REQUESTY: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAICompatible({
+                name: 'requesty',
+                baseURL: 'https://router.requesty.ai/v1',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'HTTP-Referer': 'https://www.activepieces.com',
+                    'X-Title': 'Activepieces',
+                },
+            }).chatModel(modelId)
+        }
         case AIProviderName.MISTRAL:
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
