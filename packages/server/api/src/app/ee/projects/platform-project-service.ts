@@ -212,9 +212,13 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             ownerId: userId,
             type: ProjectType.PERSONAL,
         })
-        if (!isNil(personalProject)) {
-            await this.markForDeletion({ id: personalProject.id, platformId })
+        if (isNil(personalProject)) {
+            return
         }
+        
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        await projectRepo().update({ id: personalProject.id, platformId }, { ownerId: platform.ownerId })
+        await this.markForDeletion({ id: personalProject.id, platformId })
     },
 
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
