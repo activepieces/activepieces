@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { BeginExecuteFlowOperation, EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
+import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -58,7 +58,12 @@ function isEngineExecutionError(error: unknown): boolean {
 }
 
 async function reportFailedTriggerRun({ operation, error }: ReportFailedTriggerRunParams): Promise<EngineResponse<undefined>> {
-    const input: ResolvedBeginExecuteFlowOperation = { ...operation, triggerPayload: undefined }
+    // Inputs were never resolved (that is why we are here), so build a minimal resolved shape purely to report
+    // a FAILED run. buildFailedTriggerContext only reads flowVersion + executionType, so the resume
+    // placeholders below are never actually consumed — they exist solely to satisfy ResolvedExecuteFlowOperation.
+    const input: ResolvedExecuteFlowOperation = operation.executionType === ExecutionType.BEGIN
+        ? { ...operation, triggerPayload: undefined }
+        : { ...operation, resumePayload: { body: undefined, headers: {}, queryParams: {} }, executionState: { steps: {}, tags: [] } }
     return reportFailedRun({ input, constants: EngineConstants.fromExecuteFlowInput(input), error })
 }
 
@@ -274,7 +279,7 @@ type BuildFailedTriggerContextParams = {
 }
 
 type ReportFailedTriggerRunParams = {
-    operation: BeginExecuteFlowOperation
+    operation: ExecuteFlowOperation
     error: Error
 }
 
