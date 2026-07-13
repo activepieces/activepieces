@@ -30,6 +30,14 @@ export const GetSampleDataRequest = z.object({
 })
 export type GetSampleDataRequest = z.infer<typeof GetSampleDataRequest>
 
+export const GetSampleDataForFlowRequest = z.object({
+    flowId: z.string(),
+    flowVersionId: z.string(),
+    projectId: z.string(),
+    type: z.enum(SampleDataFileType),
+})
+export type GetSampleDataForFlowRequest = z.infer<typeof GetSampleDataForFlowRequest>
+
 export const CreateStepRunRequestBody = z.object({
     projectId: z.string(),
     flowVersionId: z.string(),

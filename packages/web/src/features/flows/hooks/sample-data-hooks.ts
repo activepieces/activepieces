@@ -18,26 +18,12 @@ export const sampleDataHooks = {
       staleTime: 0,
       retry: 4,
       refetchOnWindowFocus: false,
-      queryFn: async () => {
-        const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);
-        const singleStepSampleData = await Promise.all(
-          steps.map(async (step) => {
-            return {
-              [step.name]: await getSampleData(
-                flowVersion!,
-                step.name,
-                projectId!,
-                SampleDataFileType.OUTPUT,
-              ),
-            };
-          }),
-        );
-        const sampleData: Record<string, unknown> = {};
-        singleStepSampleData.forEach((stepData) => {
-          Object.assign(sampleData, stepData);
-        });
-        return sampleData;
-      },
+      queryFn: () =>
+        getSampleDataForFlow(
+          flowVersion!,
+          projectId!,
+          SampleDataFileType.OUTPUT,
+        ),
     });
   },
   useSampleDataInputForFlow: (
@@ -51,24 +37,16 @@ export const sampleDataHooks = {
       retry: 4,
       refetchOnWindowFocus: false,
       queryFn: async () => {
-        const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);
-        const singleStepSampleDataInput = await Promise.all(
-          steps.map(async (step) => {
-            return {
-              [step.name]: step.settings.sampleData?.sampleDataInputFileId
-                ? await getSampleData(
-                    flowVersion!,
-                    step.name,
-                    projectId!,
-                    SampleDataFileType.INPUT,
-                  )
-                : undefined,
-            };
-          }),
+        const sampleDataInput = await getSampleDataForFlow(
+          flowVersion!,
+          projectId!,
+          SampleDataFileType.INPUT,
         );
-        const sampleDataInput: Record<string, unknown> = {};
-        singleStepSampleDataInput.forEach((stepData) => {
-          Object.assign(sampleDataInput, stepData);
+        const stepsWithoutInput = flowStructureUtil
+          .getAllSteps(flowVersion!.trigger)
+          .filter((step) => !step.settings.sampleData?.sampleDataInputFileId);
+        stepsWithoutInput.forEach((step) => {
+          sampleDataInput[step.name] = undefined;
         });
         return sampleDataInput;
       },
@@ -82,22 +60,20 @@ export const sampleDataHooks = {
   },
 };
 
-async function getSampleData(
+async function getSampleDataForFlow(
   flowVersion: FlowVersion,
-  stepName: string,
   projectId: string,
   type: SampleDataFileType,
-): Promise<unknown> {
+): Promise<Record<string, unknown>> {
   return sampleDataApi
-    .get({
+    .getForFlow({
       flowId: flowVersion.flowId,
       flowVersionId: flowVersion.id,
-      stepName,
       projectId,
       type,
     })
     .catch((error) => {
       console.error(error);
-      return undefined;
+      return {};
     });
 }
