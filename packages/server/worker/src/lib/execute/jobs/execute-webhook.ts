@@ -3,6 +3,7 @@ import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, Flow
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { recordTriggerRun } from '../utils/trigger-run-recorder'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
 
 function getAppWebhookDetails(flowVersion: FlowVersion, publicApiUrl: string, appWebhookSecretsJson: string): { appWebhookUrl?: string, webhookSecret?: string | Record<string, string> } {
@@ -45,6 +46,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
+        let realExecutionStarted = false
         const { data: execResult, error } = await tryCatch(async () => {
             if (data.saveSampleData) {
                 const sampleResult = await ctx.runtime.execute({
@@ -87,6 +89,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 return null
             }
 
+            realExecutionStarted = true
             const result = await ctx.runtime.execute({
                 workerIndex: ctx.workerIndex,
                 log: ctx.log,
@@ -114,6 +117,9 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         })
 
         if (error) {
+            if (realExecutionStarted) {
+                await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
+            }
             if (isSandboxTimeout(error)) {
                 ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
@@ -140,6 +146,8 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 })
             }
         }
+
+        await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: execResult.status })
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }
     },
