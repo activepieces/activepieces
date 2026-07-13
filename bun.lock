@@ -784,7 +784,7 @@
     },
     "packages/pieces/community/amazon-s3": {
       "name": "@activepieces/piece-amazon-s3",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8057,7 +8057,7 @@
     },
     "packages/pieces/community/scrapeless": {
       "name": "@activepieces/piece-scrapeless",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9073,6 +9073,19 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+      },
+    },
+    "packages/pieces/community/testmuai-browsercloud": {
+      "name": "@activepieces/piece-testmuai-browsercloud",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/textcortex-ai": {
@@ -10523,7 +10536,7 @@
     },
     "packages/pieces/core/image-helper": {
       "name": "@activepieces/piece-image-helper",
-      "version": "0.1.14",
+      "version": "0.1.15",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -12500,6 +12513,8 @@
     "@activepieces/piece-telnyx": ["@activepieces/piece-telnyx@workspace:packages/pieces/community/telnyx"],
 
     "@activepieces/piece-tenzo": ["@activepieces/piece-tenzo@workspace:packages/pieces/community/tenzo"],
+
+    "@activepieces/piece-testmuai-browsercloud": ["@activepieces/piece-testmuai-browsercloud@workspace:packages/pieces/community/testmuai-browsercloud"],
 
     "@activepieces/piece-text-helper": ["@activepieces/piece-text-helper@workspace:packages/pieces/core/text-helper"],
 
