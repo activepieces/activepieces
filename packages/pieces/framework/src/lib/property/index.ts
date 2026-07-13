@@ -5,7 +5,7 @@ import { PropertyType } from './input/property-type';
 import { DropdownState } from './input/dropdown/common';
 
 // EXPORTED
-export { ApFile } from './input/file-property';
+export { ApFile, ApFileRef } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
@@ -32,7 +32,7 @@ export { StaticDropdownProperty } from './input/dropdown/static-dropdown';
 export * from './authentication/custom-auth-prop';
 export * from './authentication/oidc-prop';
 export { OAuth2Property } from './authentication/oauth2-prop';
-export { FileProperty } from './input/file-property';
+export { FileProperty, FileRefProperty } from './input/file-property';
 export { BasicAuthProperty } from './authentication/basic-auth-prop';
 export { SecretTextProperty } from './authentication/secret-text-property'
 export { CustomAuthProperty } from './authentication/custom-auth-prop';

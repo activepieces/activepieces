@@ -32,10 +32,34 @@ Files split into two groups:
 | `AP_S3_USE_SIGNED_URLS` | Routes file traffic directly to S3 using pre-signed URLs, bypassing the API server. The bucket should remain private; signed URLs provide temporary authenticated access. | `true` |
 | `AP_S3_USE_IRSA` | Use IAM Role for Service Accounts (IRSA) to connect to S3. When `true`, `AP_S3_ACCESS_KEY_ID` and `AP_S3_SECRET_ACCESS_KEY` are not required. | `true` |
 | `AP_MAX_FILE_SIZE_MB` | The maximum allowed file size in megabytes for uploads including logs of flow runs. | `10` |
+| `AP_MAX_STREAM_FILE_SIZE_MB` | The maximum size in megabytes for a single **streamed** file (pieces using `files.writeStream`). Only applies when `AP_FILE_STORAGE_LOCATION` is `S3`. Defaults to `1024`. | `1024` |
 
 <Tip>
 **Friendly Tip #1**: If the S3 bucket supports signed URLs but needs to be accessible over a public network, you can set `AP_S3_USE_SIGNED_URLS` to `true` to route traffic directly to S3 and reduce heavy traffic on your API server.
 </Tip>
+
+## Large File Streaming
+
+When `AP_FILE_STORAGE_LOCATION` is `S3`, pieces that use the streaming SDK (`context.files.writeStream`) upload large files directly from the worker to the bucket using pre-signed multipart uploads — the bytes never pass through the API server, regardless of the `AP_S3_USE_SIGNED_URLS` setting. This requires the bucket endpoint to be **reachable from the worker containers**.
+
+On database-only installs streaming falls back to buffered uploads capped at `AP_MAX_FILE_SIZE_MB`.
+
+Failed streaming uploads are aborted automatically, but a worker that dies mid-upload can leave incomplete multipart parts behind, which S3 bills for. Add a lifecycle rule to your bucket that aborts incomplete multipart uploads after 7 days:
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "abort-incomplete-multipart-uploads",
+      "Status": "Enabled",
+      "Filter": {},
+      "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+    }
+  ]
+}
+```
+
+Code steps run in an isolated sandbox and cannot hold streams: a streamed file input reaches a code step as plain `{ url, filename }` data — fetch the URL inside your code if you need the bytes.
 
 ## Google Cloud Storage (S3 Interoperability)
 

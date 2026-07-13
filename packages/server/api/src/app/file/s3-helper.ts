@@ -1,7 +1,7 @@
 import { Readable } from 'stream'
 import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { FileType } from '@activepieces/shared'
-import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { AbortMultipartUploadCommand, CompleteMultipartUploadCommand, CreateMultipartUploadCommand, DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig, UploadPartCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import contentDisposition from 'content-disposition'
@@ -102,6 +102,69 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             expiresIn: dayjs.duration(7, 'days').asSeconds(),
         })
     },
+    async createMultipartUpload({ s3Key, contentType }: CreateMultipartUploadParams): Promise<string> {
+        const response = await getS3Client().send(new CreateMultipartUploadCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+            ContentType: contentType,
+        }))
+        if (isNil(response.UploadId)) {
+            throw new Error(`S3 did not return an UploadId for multipart upload of ${s3Key}`)
+        }
+        log.info({ s3Key }, 'multipart upload created')
+        return response.UploadId
+    },
+    async uploadPart({ s3Key, uploadId, partNumber, body }: UploadPartParams): Promise<string> {
+        const response = await getS3Client().send(new UploadPartCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+            UploadId: uploadId,
+            PartNumber: partNumber,
+            Body: body,
+            ContentLength: body.length,
+        }))
+        if (isNil(response.ETag)) {
+            throw new Error(`S3 did not return an ETag for part ${partNumber} of ${s3Key}`)
+        }
+        return response.ETag
+    },
+    async signPartUrl({ s3Key, uploadId, partNumber }: SignPartUrlParams): Promise<string> {
+        const command = new UploadPartCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+            UploadId: uploadId,
+            PartNumber: partNumber,
+        })
+        return getSignedUrl(getS3Client(), command, {
+            expiresIn: STREAMING_URL_EXPIRY_SECONDS,
+        })
+    },
+    async completeMultipartUpload({ s3Key, uploadId, parts }: CompleteMultipartUploadParams): Promise<void> {
+        await getS3Client().send(new CompleteMultipartUploadCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+            UploadId: uploadId,
+            MultipartUpload: {
+                Parts: parts.map(({ partNumber, etag }) => ({ PartNumber: partNumber, ETag: etag })),
+            },
+        }))
+        log.info({ s3Key }, 'multipart upload completed')
+    },
+    async abortMultipartUpload({ s3Key, uploadId }: AbortMultipartUploadParams): Promise<void> {
+        await getS3Client().send(new AbortMultipartUploadCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+            UploadId: uploadId,
+        }))
+        log.info({ s3Key }, 'multipart upload aborted')
+    },
+    async getObjectSize({ s3Key }: GetObjectSizeParams): Promise<number> {
+        const response = await getS3Client().send(new HeadObjectCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+        }))
+        return response.ContentLength ?? 0
+    },
     async deleteFiles(s3Keys: string[]): Promise<void> {
         if (s3Keys.length === 0) {
             return
@@ -155,6 +218,10 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
 })
 
 
+// Streaming part URLs are minted fresh per part, so a short expiry suffices.
+// The legacy GET/PUT 7-day expiries above are deliberately untouched.
+export const STREAMING_URL_EXPIRY_SECONDS = dayjs.duration(1, 'hour').asSeconds()
+
 const chunkArray = (array: string[], chunkSize: number) => Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => array.slice(i * chunkSize, (i + 1) * chunkSize))
 
 let cachedS3Client: S3 | null = null
@@ -200,4 +267,40 @@ type PutS3SignedUrlParams = {
     s3Key: string
     contentLength?: number
     contentEncoding?: string
+}
+
+type CreateMultipartUploadParams = {
+    s3Key: string
+    contentType?: string
+}
+
+type UploadPartParams = {
+    s3Key: string
+    uploadId: string
+    partNumber: number
+    body: Buffer
+}
+
+type SignPartUrlParams = {
+    s3Key: string
+    uploadId: string
+    partNumber: number
+}
+
+type CompleteMultipartUploadParams = {
+    s3Key: string
+    uploadId: string
+    parts: {
+        partNumber: number
+        etag: string
+    }[]
+}
+
+type AbortMultipartUploadParams = {
+    s3Key: string
+    uploadId: string
+}
+
+type GetObjectSizeParams = {
+    s3Key: string
 }

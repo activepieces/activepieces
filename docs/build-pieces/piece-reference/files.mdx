@@ -22,4 +22,52 @@ const fileReference = await files.write({
 This code will store the file in the database If the run environment is testing mode since it will be required to test other steps, other wise it will store it in the local temporary directory.
 </Tip>
 
-For Reading the file If you are using the file property in a trigger or action, It will be automatically parsed and you can use it directly, please refer to `Property.File` in the [properties](./properties#file) section.
+## Write Stream
+
+For large files, use `writeStream` to pipe a file to storage **without buffering it in memory**. Pass a `Readable`/`ReadableStream` (or any `AsyncIterable<Uint8Array>`); it returns the same file-reference string as `write`.
+
+**Example — stream an S3 object straight to storage:**
+```ts
+const object = await s3.getObject({ Bucket: bucket, Key: key });
+return await files.writeStream({
+    fileName: key,
+    stream: object.Body.transformToWebStream(),
+});
+```
+
+**Example — stream an HTTP download:**
+```ts
+const response = await httpClient.sendRequest({ url, method: HttpMethod.GET, responseType: 'stream' });
+return await files.writeStream({
+    fileName: 'export.csv',
+    stream: response.body,
+});
+```
+
+<Note>
+Streaming requires S3-compatible object storage (S3 / R2 / MinIO) to be configured. On database-only installs `writeStream` falls back to buffering the whole stream, capped at `AP_MAX_FILE_SIZE_MB` — so avoid relying on it for very large files on those installs.
+</Note>
+
+## Reading files
+
+If you use `Property.File` in a trigger or action, the input is parsed automatically into an `ApFile` (with `.data` buffer and `.base64`). See `Property.File` in the [properties](./properties#file) section.
+
+For large inputs, add `stream: true` to the property. The input then resolves to an **`ApFileRef`** — a pass-by-reference handle that carries the read URL and metadata but no bytes:
+
+```ts
+Property.File({ displayName: 'File', required: true, stream: true })
+```
+
+```ts
+const file = context.propsValue.file; // ApFileRef
+
+// Consume incrementally, nothing held in memory:
+for await (const chunk of await file.stream()) { /* ... */ }
+
+// Or pull the whole thing when the piece genuinely needs it (small files):
+const buffer = await file.buffer();
+```
+
+<Note>
+Code (`isolated-vm`) steps cannot stream — they must `fetch()` the file URL inside your code. This streaming API is only available in pieces.
+</Note>

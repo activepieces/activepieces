@@ -671,6 +671,24 @@ describe('Props resolver', () => {
         expect(errors).toEqual({})
     })
 
+    it('should resolve filename and mimetype from headers for a stream file ref', async () => {
+        const input = {
+            file: 'https://cdn.activepieces.com/brand/logo.svg?token=123',
+        }
+        const props = {
+            file: Property.File({
+                displayName: 'File',
+                required: true,
+                stream: true,
+            }),
+        }
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+        expect(processedInput.file.url).toBe(input.file)
+        expect(processedInput.file.filename).toBe('logo.svg')
+        expect(processedInput.file.mimetype).toBe('image/svg+xml')
+        expect(errors).toEqual({})
+    })
+
     // Test with invalid url
     it('should return error for invalid data', async () => {
         const input = {

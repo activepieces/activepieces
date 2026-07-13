@@ -1,4 +1,5 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isMultipartFile, isNil, ProjectId } from '@activepieces/core-utils'
+import { Readable } from 'stream'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isMultipartFile, isNil, multipartStream, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { File, FileCompression, FileId, FileLocation, FileType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -67,6 +68,83 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
+    },
+    async saveStream(params: SaveStreamParams): Promise<File> {
+        const { stream, fileName, type, projectId, platformId, metadata, contentType } = params
+        const fileId = apId()
+        const location = getLocationForFile(type)
+
+        const baseSaveParams = {
+            fileId,
+            projectId,
+            platformId,
+            type,
+            fileName,
+            compression: FileCompression.NONE,
+            metadata,
+        } as const
+
+        const parts = multipartStream.chunkIntoParts(multipartStream.toAsyncIterable(stream), multipartStream.PART_SIZE_BYTES)
+        const first = await parts.next()
+        const firstBuffer = first.done ? Buffer.alloc(0) : first.value
+        const second = await parts.next()
+
+        const bufferAndSaveToDb = async (): Promise<File> => {
+            const maxFileSizeBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+            const data = await multipartStream.bufferRemaining({
+                head: second.done ? [firstBuffer] : [firstBuffer, second.value],
+                rest: parts,
+                maxSizeBytes: maxFileSizeBytes,
+                onOverflow: () => new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: `File size exceeds the ${AppSystemProp.MAX_FILE_SIZE_MB} limit of ${maxFileSizeBytes / (1024 * 1024)}MB` },
+                }),
+            })
+            return this.save({ ...baseSaveParams, data, size: data.length })
+        }
+
+        if (location === FileLocation.DB) {
+            return bufferAndSaveToDb()
+        }
+
+        if (second.done) {
+            return this.save({ ...baseSaveParams, data: firstBuffer, size: firstBuffer.length })
+        }
+
+        const created = await this.save({ ...baseSaveParams, data: null, size: 0 })
+        if (created.location !== FileLocation.S3 || isNil(created.s3Key)) {
+            await fileRepo().delete({ id: created.id })
+            return bufferAndSaveToDb()
+        }
+
+        const { s3Key } = created
+        const maxSizeBytes = system.getNumberOrThrow(AppSystemProp.MAX_STREAM_FILE_SIZE_MB) * 1024 * 1024
+        const uploadId = await s3Helper(log).createMultipartUpload({ s3Key, contentType })
+        return multipartStream.runMultipartStream<File>({
+            head: [firstBuffer, second.value],
+            rest: parts,
+            ceilingBytes: maxSizeBytes,
+            onCeilingExceeded: ({ ceilingBytes }) => new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Streamed file size exceeds the ${AppSystemProp.MAX_STREAM_FILE_SIZE_MB} limit of ${ceilingBytes / (1024 * 1024)}MB` },
+            }),
+            sink: {
+                uploadPart: async ({ partNumber, data }) => {
+                    const etag = await s3Helper(log).uploadPart({ s3Key, uploadId, partNumber, body: data })
+                    return { etag }
+                },
+                complete: async ({ parts: uploadedParts }) => {
+                    await s3Helper(log).completeMultipartUpload({ s3Key, uploadId, parts: uploadedParts })
+                    const size = await s3Helper(log).getObjectSize({ s3Key })
+                    await fileRepo().update({ id: created.id }, { size })
+                    return { ...created, size }
+                },
+                abort: async () => {
+                    await tryCatch(() => s3Helper(log).abortMultipartUpload({ s3Key, uploadId }))
+                    await tryCatch(() => fileRepo().delete({ id: created.id }))
+                },
+            },
+        })
     },
     async exists(params: GetOneParams): Promise<boolean> {
         const file = await fileRepo().findOneBy({
@@ -341,6 +419,16 @@ type SaveParams = {
     fileName?: string
     compression: FileCompression
     metadata?: Record<string, string>
+}
+
+type SaveStreamParams = {
+    stream: Readable
+    fileName?: string
+    type: FileType
+    projectId?: ProjectId
+    platformId?: string
+    metadata?: Record<string, string>
+    contentType?: string
 }
 
 type GetOneParams = {

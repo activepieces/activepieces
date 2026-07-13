@@ -1,13 +1,16 @@
-import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ALL_PRINCIPAL_TYPES, EnginePrincipal, FileCompression, FileTransportQueryParams, FileType, Principal, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { ALL_PRINCIPAL_TYPES, EnginePrincipal, File, FileCompression, FileLocation, FileTransportQueryParams, FileType, Principal, PrincipalType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { fileService } from './file.service'
+import { fileRepo, fileService, getLocationForFile } from './file.service'
 import { ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
+import { s3Helper } from './s3-helper'
 import { signedFileTransport } from './signed-file-transport'
 
 export const filesController: FastifyPluginAsyncZod = async (app) => {
@@ -93,6 +96,138 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send({ fileId, readUrl })
     })
 
+    app.post('/:fileId/multipart-uploads', {
+        config: {
+            security: securityAccess.engine(),
+        },
+        schema: {
+            params: z.object({ fileId: ApId }),
+            body: CreateMultipartUploadRequest,
+        },
+    }, async (request) => {
+        const { fileId } = request.params
+        const { type, fileName, contentType } = request.body
+        const { projectId, platform } = request.principal
+        if (getLocationForFile(type) !== FileLocation.S3) {
+            return { mode: 'DB' as const }
+        }
+        const file = await fileService(request.log).save({
+            fileId,
+            projectId,
+            platformId: platform.id,
+            type,
+            fileName,
+            compression: FileCompression.NONE,
+            size: 0,
+            data: null,
+            metadata: isNil(contentType) ? undefined : { mimetype: contentType },
+        })
+        if (file.location !== FileLocation.S3 || isNil(file.s3Key)) {
+            // fileService.save silently falls back to DB on S3 errors — degrade honestly
+            // instead of leaving an orphaned row the engine can never stream to.
+            await fileRepo().delete({ id: file.id })
+            return { mode: 'DB' as const }
+        }
+        const uploadId = await s3Helper(request.log).createMultipartUpload({
+            s3Key: file.s3Key,
+            contentType,
+        })
+        await fileRepo().update({ id: file.id }, { metadata: { ...file.metadata, uploadId } })
+        return {
+            mode: 'S3' as const,
+            uploadId,
+            maxSizeBytes: getMaxStreamFileSizeBytes(),
+        }
+    })
+
+    app.post('/:fileId/multipart-uploads/part-url', {
+        config: {
+            security: securityAccess.engine(),
+        },
+        schema: {
+            params: z.object({ fileId: ApId }),
+            body: z.object({
+                uploadId: z.string().min(1),
+                partNumber: z.number().int().min(1).max(10000),
+            }),
+        },
+    }, async (request) => {
+        const { s3Key } = await getStreamingFileOrThrow({
+            fileId: request.params.fileId,
+            projectId: request.principal.projectId,
+            uploadId: request.body.uploadId,
+            log: request.log,
+        })
+        const url = await s3Helper(request.log).signPartUrl({
+            s3Key,
+            uploadId: request.body.uploadId,
+            partNumber: request.body.partNumber,
+        })
+        return { url }
+    })
+
+    app.post('/:fileId/multipart-uploads/complete', {
+        config: {
+            security: securityAccess.engine(),
+        },
+        schema: {
+            params: z.object({ fileId: ApId }),
+            body: z.object({
+                uploadId: z.string().min(1),
+                parts: z.array(z.object({
+                    partNumber: z.number().int().min(1),
+                    etag: z.string().min(1),
+                })).min(1),
+            }),
+        },
+    }, async (request) => {
+        const { fileId } = request.params
+        const { projectId, platform } = request.principal
+        const { file, s3Key } = await getStreamingFileOrThrow({ fileId, projectId, uploadId: request.body.uploadId, log: request.log })
+        await s3Helper(request.log).completeMultipartUpload({
+            s3Key,
+            uploadId: request.body.uploadId,
+            parts: request.body.parts,
+        })
+        const size = await s3Helper(request.log).getObjectSize({ s3Key })
+        const maxSizeBytes = getMaxStreamFileSizeBytes()
+        if (size > maxSizeBytes) {
+            // The engine-side running total is advisory only — this is the authoritative check.
+            await fileService(request.log).delete({ projectId, fileId })
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Streamed file size ${Math.ceil(size / (1024 * 1024))}MB exceeds the ${AppSystemProp.MAX_STREAM_FILE_SIZE_MB} limit of ${maxSizeBytes / (1024 * 1024)}MB` },
+            })
+        }
+        await fileRepo().update({ id: file.id }, { size })
+        const readUrl = await filesService.constructReadUrl({
+            fileId,
+            fileType: file.type,
+            platformId: platform.id,
+        })
+        return { readUrl, size }
+    })
+
+    app.post('/:fileId/multipart-uploads/abort', {
+        config: {
+            security: securityAccess.engine(),
+        },
+        schema: {
+            params: z.object({ fileId: ApId }),
+            body: z.object({ uploadId: z.string().min(1) }),
+        },
+    }, async (request, reply) => {
+        const { fileId } = request.params
+        const { projectId } = request.principal
+        const file = await fileService(request.log).getFile({ fileId, projectId, type: FileType.FLOW_STEP_FILE })
+        if (!isNil(file) && !isNil(file.s3Key) && file.metadata?.uploadId === request.body.uploadId) {
+            const { s3Key } = file
+            await tryCatch(() => s3Helper(request.log).abortMultipartUpload({ s3Key, uploadId: request.body.uploadId }))
+            await fileRepo().delete({ id: file.id })
+        }
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     app.get('/:fileId', {
         config: {
             security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
@@ -147,6 +282,33 @@ export const signedStepFileController: FastifyPluginAsyncZod = async (app) => {
         })
         return reply.redirect(readUrl)
     })
+}
+
+const CreateMultipartUploadRequest = z.object({
+    type: z.literal(FileType.FLOW_STEP_FILE),
+    fileName: z.string().optional(),
+    contentType: z.string().optional(),
+})
+
+function getMaxStreamFileSizeBytes(): number {
+    return system.getNumberOrThrow(AppSystemProp.MAX_STREAM_FILE_SIZE_MB) * 1024 * 1024
+}
+
+async function getStreamingFileOrThrow({ fileId, projectId, uploadId, log }: GetStreamingFileParams): Promise<{ file: File, s3Key: string }> {
+    const file = await fileService(log).getFileOrThrow({ fileId, projectId, type: FileType.FLOW_STEP_FILE })
+    if (file.location !== FileLocation.S3 || isNil(file.s3Key)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `File ${fileId} is not an S3 streaming upload` },
+        })
+    }
+    if (file.metadata?.uploadId !== uploadId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `uploadId does not match the multipart session for file ${fileId}` },
+        })
+    }
+    return { file, s3Key: file.s3Key }
 }
 
 const INLINE_SAFE_MIME_TYPES = new Set([
@@ -235,4 +397,11 @@ type AuthorizeReadParams = {
     token: string
     fileId: string
     log: import('fastify').FastifyBaseLogger
+}
+
+type GetStreamingFileParams = {
+    fileId: string
+    projectId: string | undefined
+    uploadId: string
+    log: FastifyBaseLogger
 }

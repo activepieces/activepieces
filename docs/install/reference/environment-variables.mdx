@@ -165,6 +165,7 @@ run data is kept. The **Cloud** values and how these interact are covered in
 | `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`. | `30` |
 | `AP_ISSUE_ARCHIVE_DAYS` | Issues not updated for this many days are automatically archived. | `7` |
 | `AP_MAX_FILE_SIZE_MB` | Maximum size (MB) for files uploaded in steps or triggers. Larger files are rejected. | `25` |
+| `AP_MAX_STREAM_FILE_SIZE_MB` | Maximum size (MB) for a single streamed file — via `files.writeStream` or a large binary/multipart webhook body streamed to storage. Only applies when `AP_FILE_STORAGE_LOCATION` is `S3`; on `DB` storage the `AP_MAX_FILE_SIZE_MB` cap applies instead. | `1024` |
 | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | Maximum combined size (MB) of all step inputs and outputs in a single run. Exceeding it ends the run with `LOG_SIZE_EXCEEDED`. | `50` |
 | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | Step outputs larger than this (KB) are offloaded to object storage instead of inlined in the run log. | `32` |
 | `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | Step inputs larger than this (KB) are replaced with a placeholder in the run log; the step still receives the full value at runtime. | `2` |
