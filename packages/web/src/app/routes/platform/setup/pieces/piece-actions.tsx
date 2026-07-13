@@ -64,10 +64,7 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
       title={t('Hide Piece')}
       message={t('This piece will be hidden from all projects.')}
       warning={
-        <div>
-          {t('Any active flows using this piece')}{' '}
-          <strong>{t('may be disabled unexpectedly')}</strong>.
-        </div>
+        <div>{t('Any active flows using this piece will be disabled.')}</div>
       }
       entityName={t('Piece')}
       buttonText={t('Hide')}

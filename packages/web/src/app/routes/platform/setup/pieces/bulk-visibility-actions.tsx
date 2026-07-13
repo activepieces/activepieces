@@ -70,8 +70,7 @@ const BulkVisibilityActions = ({
         message={t('These pieces will be hidden from all projects.')}
         warning={
           <div>
-            {t('Any active flows using these pieces')}{' '}
-            <strong>{t('may be disabled unexpectedly')}</strong>.
+            {t('Any active flows using these pieces will be disabled.')}
           </div>
         }
         entityName={t('Pieces')}
