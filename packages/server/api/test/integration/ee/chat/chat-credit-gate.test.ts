@@ -64,6 +64,24 @@ describe('Chat credit gate on self-hosted (managed AI unavailable)', () => {
         expect(providers.some((p) => p.provider === AIProviderName.ACTIVEPIECES)).toBe(false)
     })
 
+    it('resolves the BYOK chat provider when a stale activepieces row is also flagged for chat', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.ACTIVEPIECES,
+        })
+        const byokProvider = await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.OPENAI,
+        })
+        await db.update('ai_provider', byokProvider.id, { enabledForChat: true })
+
+        const response = await sendMessage(ctx)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().runId).toBeDefined()
+    })
+
     it('still sends messages through a BYOK chat provider', async () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
         const byokProvider = await mockAndSaveAIProvider({

@@ -301,14 +301,9 @@ function isProviderAvailable({ provider, aiCreditsEnabled }: { provider: AIProvi
 }
 
 async function findAvailableChatProviderRow({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
-    const chatProvider = await aiProviderRepo().findOneBy({ platformId, enabledForChat: true })
-    if (isNil(chatProvider)) {
-        return null
-    }
-    if (!isProviderAvailable({ provider: chatProvider.provider, aiCreditsEnabled: flagService(log).aiCreditsEnabled() })) {
-        return null
-    }
-    return chatProvider
+    const aiCreditsEnabled = flagService(log).aiCreditsEnabled()
+    const chatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
+    return chatProviders.find((p) => isProviderAvailable({ provider: p.provider, aiCreditsEnabled })) ?? null
 }
 
 async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId, log: FastifyBaseLogger): Promise<GetProviderConfigResponse> {
