@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 import { SelectedItemsMap, TreeItem } from '../lib/types';
-import { automationsColumnClasses, groupTreeItemsByFolder } from '../lib/utils';
+import { groupTreeItemsByFolder } from '../lib/utils';
 
 import { AutomationsTableRow } from './automations-table-row';
 import { CreateInFolderKind } from './create-new-menu';
@@ -64,34 +64,19 @@ function AutomationsSkeletonRow({
       <div className="w-10 shrink-0" />
       <div className="w-8 shrink-0" />
       <div
-        className="flex-1 min-w-[160px] pl-2 flex items-center"
+        className="flex-1 min-w-[200px] pl-2 flex items-center"
         style={indent ? { paddingLeft: indent } : undefined}
       >
         <Skeleton className="h-4 w-48" />
       </div>
-      <div
-        className={cn(
-          'w-[230px] shrink-0 px-2 flex items-center',
-          automationsColumnClasses.details,
-        )}
-      >
+      <div className="w-[230px] shrink-0 px-2 flex items-center">
         <Skeleton className="h-4 w-24" />
       </div>
-      <div
-        className={cn(
-          'w-[200px] shrink-0 px-2 flex items-center',
-          automationsColumnClasses.lastModified,
-        )}
-      >
+      <div className="w-[200px] shrink-0 px-2 flex items-center">
         <Skeleton className="h-4 w-28" />
       </div>
       {!isEmbedded && (
-        <div
-          className={cn(
-            'w-[250px] shrink-0 px-2 flex items-center',
-            automationsColumnClasses.owner,
-          )}
-        >
+        <div className="w-[250px] shrink-0 px-2 flex items-center">
           <Skeleton className="h-4 w-32" />
         </div>
       )}
@@ -137,7 +122,7 @@ export const AutomationsTable = ({
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-[360px]">
+      <div className="min-w-[1000px]">
         <div className="flex items-center h-8 text-xs border-b font-medium text-foreground bg-muted/50">
           <div className="w-10 shrink-0 pl-4 pr-1">
             <Checkbox
@@ -148,37 +133,22 @@ export const AutomationsTable = ({
             />
           </div>
           <div className="w-8 shrink-0"></div>
-          <div className="flex-1 min-w-[160px] pl-2 flex items-center gap-1.5">
+          <div className="flex-1 min-w-[200px] pl-2 flex items-center gap-1.5">
             <Type className="h-3.5 w-3.5" />
             {t('Name')}
           </div>
 
-          <div
-            className={cn(
-              'w-[230px] shrink-0 px-2 flex items-center gap-1.5',
-              automationsColumnClasses.details,
-            )}
-          >
+          <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
             <Info className="h-3.5 w-3.5" />
             {t('Details')}
           </div>
 
-          <div
-            className={cn(
-              'w-[200px] shrink-0 px-2 flex items-center gap-1.5',
-              automationsColumnClasses.lastModified,
-            )}
-          >
+          <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
             {t('Last modified')}
           </div>
           {!embedState.isEmbedded && (
-            <div
-              className={cn(
-                'w-[250px] shrink-0 px-2 flex items-center gap-1.5',
-                automationsColumnClasses.owner,
-              )}
-            >
+            <div className="w-[250px] shrink-0 px-2 flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
               {t('Owner')}
             </div>

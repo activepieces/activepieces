@@ -370,13 +370,3 @@ export function groupTreeItemsByFolder(items: TreeItem[]): TreeRow[] {
     return rows;
   }, []);
 }
-
-// Container-query visibility for the automations faux-table columns, shared by the
-// header and the row so both collapse identically as the Stage narrows. The page
-// wrapper is marked `@container`; columns drop least-important first (Owner →
-// Last modified → Details). Strings are static so Tailwind v4's JIT emits them.
-export const automationsColumnClasses = {
-  details: '@max-[44rem]:hidden',
-  lastModified: '@max-[56rem]:hidden',
-  owner: '@max-[68rem]:hidden',
-} as const;

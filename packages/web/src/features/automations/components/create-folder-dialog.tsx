@@ -24,9 +24,8 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 type CreateFolderDialogProps = {
-  updateSearchParams?: (_folderId?: string) => void;
-  refetchFolders?: () => void;
-  projectId?: string;
+  updateSearchParams: (_folderId?: string) => void;
+  refetchFolders: () => void;
   className?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,7 +42,6 @@ type CreateFolderFormSchema = z.infer<typeof CreateFolderFormSchema>;
 export const CreateFolderDialog = ({
   updateSearchParams,
   refetchFolders,
-  projectId,
   open,
   onOpenChange,
 }: CreateFolderDialogProps) => {
@@ -59,14 +57,14 @@ export const CreateFolderDialog = ({
     mutationFn: async (data) => {
       return await foldersApi.create({
         displayName: data.displayName.trim(),
-        projectId: projectId ?? authenticationSession.getProjectId()!,
+        projectId: authenticationSession.getProjectId()!,
       });
     },
     onSuccess: (folder) => {
       form.reset();
       onOpenChange(false);
-      updateSearchParams?.(folder.id);
-      refetchFolders?.();
+      updateSearchParams(folder.id);
+      refetchFolders();
       toast.success(t('Added folder successfully'));
     },
     onError: (error) => {

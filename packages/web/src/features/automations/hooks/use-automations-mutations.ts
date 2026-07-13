@@ -16,11 +16,11 @@ import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { foldersApi } from '@/features/folders/api/folders-api';
 import { tablesUtils } from '@/features/tables';
 import { tablesApi } from '@/features/tables/api/tables-api';
+import { tableHooks } from '@/features/tables/hooks/table-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM, NEW_TABLE_QUERY_PARAM } from '@/lib/route-utils';
 
-import { automationMutationUtils } from '../lib/mutation-bodies';
 import { SelectedItemsMap, TreeItem } from '../lib/types';
 
 import { getSelectedIdsByType } from './use-automations-selection';
@@ -42,12 +42,16 @@ export function useAutomationsMutations(deps: MutationDeps) {
 
   const { mutate: startFromScratch, isPending: isCreateFlowPending } =
     useMutation<PopulatedFlow, Error, string | undefined>({
-      mutationFn: (folderId) =>
-        automationMutationUtils.createFlow({
+      mutationFn: async (folderId) => {
+        return flowsApi.create({
           projectId,
           displayName: t('Untitled'),
-          folderId,
-        }),
+          folderId:
+            !folderId || folderId === UncategorizedFolderId
+              ? undefined
+              : folderId,
+        });
+      },
       onSuccess: (flow) => {
         navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
       },
@@ -55,8 +59,13 @@ export function useAutomationsMutations(deps: MutationDeps) {
 
   const { mutate: createTableMutation, isPending: isCreatingTable } =
     useMutation<Table, Error, { name: string; folderId?: string }>({
-      mutationFn: ({ name, folderId }) =>
-        automationMutationUtils.createTable({ projectId, name, folderId }),
+      mutationFn: async ({ name, folderId }) => {
+        return tableHooks.createTableWithDefaults({
+          name,
+          folderId,
+          projectId,
+        });
+      },
       onSuccess: (table) => {
         queryClient.invalidateQueries({ queryKey: ['tables'] });
         navigate(
@@ -69,8 +78,19 @@ export function useAutomationsMutations(deps: MutationDeps) {
     flowHooks.useExportFlows();
 
   const { mutateAsync: deleteItem } = useMutation({
-    mutationFn: (item: TreeItem) =>
-      automationMutationUtils.deleteItem({ id: item.id, type: item.type }),
+    mutationFn: async (item: TreeItem) => {
+      switch (item.type) {
+        case 'flow':
+          await flowsApi.delete(item.id);
+          break;
+        case 'table':
+          await tablesApi.delete(item.id);
+          break;
+        case 'folder':
+          await foldersApi.delete(item.id);
+          break;
+      }
+    },
     onSuccess: () => {
       deps.invalidateAll();
       toast.success(t('Item deleted successfully'));
@@ -133,12 +153,24 @@ export function useAutomationsMutations(deps: MutationDeps) {
   });
 
   const { mutateAsync: rename, isPending: isRenaming } = useMutation({
-    mutationFn: ({ item, newName }: { item: TreeItem; newName: string }) =>
-      automationMutationUtils.renameItem({
-        id: item.id,
-        type: item.type,
-        newName,
-      }),
+    mutationFn: async ({
+      item,
+      newName,
+    }: {
+      item: TreeItem;
+      newName: string;
+    }) => {
+      if (item.type === 'flow') {
+        await flowsApi.update(item.id, {
+          type: FlowOperationType.CHANGE_NAME,
+          request: { displayName: newName },
+        });
+      } else if (item.type === 'table') {
+        await tablesApi.update(item.id, { name: newName });
+      } else if (item.type === 'folder') {
+        await foldersApi.renameFolder(item.id, { displayName: newName });
+      }
+    },
     onSuccess: () => {
       deps.invalidateAll();
       toast.success(t('Renamed successfully'));
@@ -147,12 +179,24 @@ export function useAutomationsMutations(deps: MutationDeps) {
   });
 
   const { mutate: duplicateFlow, isPending: isDuplicating } = useMutation({
-    mutationFn: (flow: PopulatedFlow) =>
-      automationMutationUtils.duplicateFlow({
-        version: flow.version,
-        folderId: flow.folderId,
+    mutationFn: async (flow: PopulatedFlow) => {
+      const version = flow.version;
+      const displayName = `${version.displayName} - Copy`;
+      const createdFlow = await flowsApi.create({
+        displayName,
         projectId: flow.projectId,
-      }),
+        folderId: flow.folderId ?? undefined,
+      });
+      return flowsApi.update(createdFlow.id, {
+        type: FlowOperationType.IMPORT_FLOW,
+        request: {
+          displayName,
+          trigger: version.trigger,
+          schemaVersion: version.schemaVersion,
+          notes: version.notes,
+        },
+      });
+    },
     onSuccess: (data) => {
       openNewWindow(`/flows/${data.id}`);
       deps.invalidateAll();
@@ -162,18 +206,26 @@ export function useAutomationsMutations(deps: MutationDeps) {
   });
 
   const { mutate: moveItem, isPending: isMovingItem } = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       item,
       targetFolderId,
     }: {
       item: TreeItem;
       targetFolderId: string;
-    }) =>
-      automationMutationUtils.moveItem({
-        id: item.id,
-        type: item.type,
-        targetFolderId,
-      }),
+    }) => {
+      const folderId =
+        isNil(targetFolderId) || targetFolderId === UncategorizedFolderId
+          ? null
+          : targetFolderId;
+      if (item.type === 'flow') {
+        await flowsApi.update(item.id, {
+          type: FlowOperationType.CHANGE_FOLDER,
+          request: { folderId },
+        });
+      } else if (item.type === 'table') {
+        await tablesApi.update(item.id, { folderId });
+      }
+    },
     onSuccess: (_data, { item, targetFolderId }) => {
       if (targetFolderId && targetFolderId !== UncategorizedFolderId) {
         deps.unpinItem?.(item.id);
@@ -185,7 +237,10 @@ export function useAutomationsMutations(deps: MutationDeps) {
   });
 
   const { mutate: exportTable, isPending: isExportingTable } = useMutation({
-    mutationFn: (table: Table) => automationMutationUtils.exportTable(table),
+    mutationFn: async (table: Table) => {
+      const exported = await tablesApi.export(table.id);
+      tablesUtils.exportTables([exported]);
+    },
     onSuccess: () => toast.success(t('Table has been exported.')),
     onError: () => toast.error(t('Failed to export table')),
   });

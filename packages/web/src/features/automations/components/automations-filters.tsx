@@ -136,10 +136,12 @@ export const AutomationsFilters = ({
 
   return (
     <>
-      <div className={cn('mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}>
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <div className="flex flex-wrap items-center gap-2 min-w-0">
-            <div className="relative flex-1 min-w-[180px] max-w-xs">
+      <div
+        className={cn('overflow-x-auto mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}
+      >
+        <div className="flex items-center justify-between gap-4 min-w-max">
+          <div className="flex items-center gap-2">
+            <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={
@@ -152,7 +154,7 @@ export const AutomationsFilters = ({
                   onSearchChange(e.target.value);
                   onFilterChange?.();
                 }}
-                className="w-full pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="min-w-[300px] max-w-xs pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               {searchTerm && (
                 <button
@@ -245,7 +247,7 @@ export const AutomationsFilters = ({
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2">
             {!embedState.hideExportAndImportFlow && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
