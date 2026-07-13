@@ -4,6 +4,10 @@ import fetchRetry from 'fetch-retry'
 const TERMINAL_RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
+    // Without retryOn, fetch-retry never retries a 5xx response (only network-level rejections), so a
+    // transient 502/503 from the API/gateway fails the terminal callback and turns the run into an
+    // INTERNAL_ERROR. Retry 5xx (and 408/429) so a brief gateway blip is absorbed, not fatal.
+    retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 
 const PROGRESS_RETRY_CONFIG = {
@@ -57,5 +61,5 @@ type FlowResponseParams = BaseParams & { request: SendFlowResponseRequest }
 type PostParams = BaseParams & {
     path: string
     body: unknown
-    retry: { retries: number, retryDelay?: number }
+    retry: { retries: number, retryDelay?: number, retryOn?: number[] }
 }
