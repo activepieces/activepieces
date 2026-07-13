@@ -50,16 +50,18 @@ export const multipartUploadService = {
             await fileRepo().delete({ id: file.id })
             return { mode: 'DB' }
         }
-        const { data: uploadId, error } = await tryCatch(() => s3Helper(log).createMultipartUpload({
-            s3Key: file.s3Key,
+        const { s3Key } = file
+        const result = await tryCatch(() => s3Helper(log).createMultipartUpload({
+            s3Key,
             contentType,
         }))
-        if (!isNil(error)) {
+        if (isNil(result.data)) {
             // S3 create failed after the placeholder row + key were reserved — drop the
             // orphan so it can never linger as a zero-byte file the engine never completes.
             await fileRepo().delete({ id: file.id })
-            throw error
+            throw result.error ?? new Error('Multipart upload creation returned no uploadId')
         }
+        const uploadId = result.data
         await fileRepo().update({ id: file.id }, { metadata: { ...file.metadata, uploadId } })
         return {
             mode: 'S3',
