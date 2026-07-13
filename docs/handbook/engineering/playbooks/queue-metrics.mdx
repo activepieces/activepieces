@@ -5,21 +5,22 @@ icon: 'chart-line'
 
 The app exposes per-queue BullMQ job counts in Prometheus text format so a scraper can track queue depth by state (`waiting`, `active`, `completed`, `failed`, `delayed`, `paused`).
 
-## Endpoint
+## Endpoint (all editions)
 
 ```
-GET /v1/admin/queues/metrics/:queueName
+GET /v1/worker-machines/queue-metrics/prometheus/:queueName
 ```
 
-- `:queueName` is optional and defaults to `workerJobs` (the shared queue). Pass a worker-group queue name (e.g. `platformJobs:<groupId>`) to scrape a dedicated queue.
-- Auth: internal admin endpoint — send the `api-key` header set to `AP_API_KEY` (the same key used by the other `/v1/admin/*` routes), **not** a platform bearer token.
+- Available on Community, Enterprise, and Cloud.
+- `:queueName` is optional and defaults to `workerJobs` (the shared queue). Pass a worker-group queue name (e.g. `platform-<groupId>-jobs`) to scrape a dedicated queue.
+- Auth: `Authorization: Bearer <platform API key>` (an `sk-...` key created under platform admin). Platform admin user tokens work too.
 - Returns `text/plain`. Responds `404` if the queue has not been initialized on this app instance.
 
-## Example
+### Example
 
 ```bash
-curl -H "api-key: $AP_API_KEY" \
-  https://cloud.activepieces.com/api/v1/admin/queues/metrics/workerJobs
+curl -H "Authorization: Bearer $PLATFORM_API_KEY" \
+  https://your-instance.example.com/api/v1/worker-machines/queue-metrics/prometheus/workerJobs
 ```
 
 ```
@@ -33,7 +34,20 @@ bullmq_job_count{queue="workerJobs", state="delayed"} 0
 ```
 
 <Note>
-Prometheus does not send arbitrary request headers, and this endpoint expects the `api-key` header (not `Authorization`). Point Prometheus at a reverse proxy that injects `api-key: $AP_API_KEY`, or scrape it from a sidecar that adds the header.
+Bearer auth works with standard scraper config: Prometheus `authorization.credentials`, Azure managed Prometheus `bearer_token_file`, Grafana Alloy `bearer_token`. No header-injecting proxy is needed.
 </Note>
 
-Metrics come from BullMQ's built-in `Queue.exportPrometheusMetrics()`. Each queue only reports the states it holds on the app instance being scraped; in a multi-worker-group deployment, scrape each group's queue by name.
+Metrics come from BullMQ's built-in `Queue.exportPrometheusMetrics()`. Each queue only reports the states it holds on the app instance being scraped; in a multi-worker-group deployment, scrape each group's queue by name (`platform-<groupId>-jobs` / `project-<groupId>-jobs`). A JSON variant with `waiting`/`active` counts only lives at `GET /v1/worker-machines/queue-metrics` (used for KEDA autoscaling).
+
+## Endpoint (Cloud internal ops)
+
+```
+GET /v1/admin/queues/metrics/:queueName
+```
+
+Same semantics, registered only on Cloud as part of the `/v1/admin/*` module. Auth: the `api-key` header set to `AP_API_KEY`, **not** a platform bearer token. Prometheus cannot send the `api-key` header from standard scrape config, so existing scrapes of this route go through a header-injecting proxy; prefer the bearer endpoint above for new scrapes.
+
+```bash
+curl -H "api-key: $AP_API_KEY" \
+  https://cloud.activepieces.com/api/v1/admin/queues/metrics/workerJobs
+```
