@@ -452,6 +452,48 @@ describe('Project API', () => {
             expect(responseBody.displayName).toBe(request.displayName)
             expect(responseBody.metadata).toEqual(metadata)
         })
+
+        it('it should update flowOwnerAlertsEnabled', async () => {
+            const { mockOwner: mockUser, mockPlatform } = await mockAndSaveBasicSetup()
+
+            mockUser.platformId = mockPlatform.id
+            mockUser.platformRole = PlatformRole.ADMIN
+
+            await db.save('user', mockUser)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await db.save('project', mockProject)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            const request: UpdateProjectPlatformRequest = {
+                flowOwnerAlertsEnabled: true,
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.id).toBe(mockProject.id)
+            expect(responseBody.flowOwnerAlertsEnabled).toBe(true)
+        })
     })
 
     describe('Delete Project endpoint', () => {

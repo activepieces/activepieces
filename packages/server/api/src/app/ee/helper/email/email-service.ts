@@ -1,17 +1,15 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { AlertChannel, ApEdition, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { ApEdition, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { alertsService } from '../../alerts/alerts-service'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
-const MAX_ISSUES_EMAIL_LIMT = 50
 
 export const emailService = (log: FastifyBaseLogger) => ({
     async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
@@ -97,6 +95,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 
     async sendIssueCreatedNotification({
+        emails,
         projectId,
         projectName,
         flowName,
@@ -117,13 +116,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
             flowName,
             createdAt,
         })
-
-        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-
-        if (emails.length === 0) {
-            return
-        }
 
         await emailSender(log).send({
             emails,
@@ -274,6 +266,7 @@ type SendChatNotificationArgs = {
 }
 
 type IssueCreatedArgs = {
+    emails: string[]
     projectId: string
     projectName: string
     flowName: string

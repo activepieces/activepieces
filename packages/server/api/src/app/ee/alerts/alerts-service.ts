@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { Alert, AlertChannel, ApEdition, FailedStep, flowStructureUtil, ListAlertsParams, ProjectType } from '@activepieces/shared'
 
@@ -8,6 +8,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
+import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -22,6 +23,7 @@ dayjs.extend(timezone)
 
 const repo = repoFactory(AlertEntity)
 const DAY_IN_SECONDS = apDayjsDuration(1, 'day').asSeconds()
+const MAX_ALERT_EMAILS = 50
 const alertEventKey = (flowVersionId: string) => `flow_fail_count:${flowVersionId}`
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 
@@ -49,7 +51,16 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         }
 
         const project = await projectService(log).getOneOrThrow(issueToAlert.projectId)
-        const flowVersion = await flowVersionService(log).getOneOrThrow(issueToAlert.flowVersionId)
+        const ownerAlertsEnabled = project.type === ProjectType.TEAM && project.flowOwnerAlertsEnabled
+        const [flowVersion, flowOwnerEmail] = await Promise.all([
+            flowVersionService(log).getOneOrThrow(issueToAlert.flowVersionId),
+            ownerAlertsEnabled ? getFlowOwnerEmail({
+                log,
+                flowId: issueToAlert.flowId,
+                projectId: issueToAlert.projectId,
+                platformId: project.platformId,
+            }) : Promise.resolve(undefined),
+        ])
 
         const failedStepNumber = flowStructureUtil.getStepNumber(flowVersion.trigger, failedStep.name)
         const alertsInfo: IssueParams = {
@@ -66,6 +77,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             failedStepDisplayName: failedStep.displayName,
             failedStepNumber: failedStepNumber > 0 ? failedStepNumber : undefined,
             failedStepMessage: failedStep.message,
+            flowOwnerEmail,
         }
 
         await sendAlertOnFlowFailure(log, alertsInfo)
@@ -139,15 +151,53 @@ export const alertsService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function getFlowOwnerEmail({ log, flowId, projectId, platformId }: GetFlowOwnerEmailParams): Promise<string | undefined> {
+    const { data: ownerEmail, error } = await tryCatch(async () => {
+        const flow = await flowRepo().findOneBy({ id: flowId, projectId })
+        if (isNil(flow) || isNil(flow.ownerId)) {
+            return undefined
+        }
+        const owner = await userService(log).getMetaInformation({ id: flow.ownerId })
+        if (owner.platformId !== platformId) {
+            return undefined
+        }
+        return owner.email
+    })
+    if (error) {
+        log.warn({ error, flow: { id: flowId } }, 'Failed to resolve flow owner email for alert')
+        return undefined
+    }
+    return ownerEmail ?? undefined
+}
+
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
-    const { flowRunId, projectId } = params
+    const { flowRunId, projectId, flowOwnerEmail } = params
+
+    const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ALERT_EMAILS })
+    const receivers = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+    const ownerEmailLower = flowOwnerEmail?.toLowerCase()
+    const shouldAddOwner = !isNil(flowOwnerEmail) && !receivers.some((receiver) => receiver.toLowerCase() === ownerEmailLower)
+    const emails = shouldAddOwner ? [...receivers, flowOwnerEmail] : receivers
+
+    if (emails.length === 0) {
+        log.info({ project: { id: projectId }, flowRun: { id: flowRunId } }, 'No alert recipients configured, skipping issue-created email')
+        return
+    }
 
     const runUrl = await domainHelper.getInternalUrl({
         path: `projects/${projectId}/runs/${flowRunId}`,
     })
 
     await emailService(log).sendIssueCreatedNotification({
-        ...params,
+        emails,
+        projectId,
+        projectName: params.projectName,
+        flowName: params.flowName,
+        platformId: params.platformId,
+        createdAt: params.createdAt,
+        failedStepDisplayName: params.failedStepDisplayName,
+        failedStepNumber: params.failedStepNumber,
+        failedStepMessage: params.failedStepMessage,
         runUrl,
     })
 }
@@ -170,6 +220,14 @@ type IssueParams = {
     failedStepDisplayName: string
     failedStepNumber?: number
     failedStepMessage?: string
+    flowOwnerEmail?: string
+}
+
+type GetFlowOwnerEmailParams = {
+    log: FastifyBaseLogger
+    flowId: string
+    projectId: string
+    platformId: string
 }
 
 type IssueToAlert = {

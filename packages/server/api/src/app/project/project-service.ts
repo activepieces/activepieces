@@ -18,6 +18,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...rest,
             icon,
             releasesEnabled: false,
+            flowOwnerAlertsEnabled: false,
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
@@ -78,6 +79,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
         const teamUpdate = request.type === ProjectType.TEAM ? {
             ...spreadIfDefined('displayName', request.displayName),
             ...spreadIfDefined('icon', request.icon),
+            ...spreadIfDefined('flowOwnerAlertsEnabled', request.flowOwnerAlertsEnabled),
         } : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
@@ -265,6 +267,7 @@ type UpdateTeamProjectParams = {
     displayName?: string
     externalId?: string
     releasesEnabled?: boolean
+    flowOwnerAlertsEnabled?: boolean
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null

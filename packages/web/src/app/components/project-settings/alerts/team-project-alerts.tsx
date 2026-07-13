@@ -13,28 +13,48 @@ import {
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { alertMutations, alertQueries } from '@/features/alerts';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { AddAlertEmailForm } from './add-alert-email-form';
+import { AlertSwitchRow } from './alert-switch-row';
 
 export const TeamProjectAlerts = () => {
   const { checkAccess } = useAuthorization();
+  const { project: currentProject } =
+    projectCollectionUtils.useCurrentProject();
   const {
     data: alertsData,
     isLoading: alertsLoading,
     isError: alertsError,
   } = alertQueries.useAlertsEmailList();
   const { mutate: deleteAlert } = alertMutations.useDeleteAlert();
+  const { mutate: updateProject, isPending: isUpdatingProject } =
+    projectCollectionUtils.useUpdateProject(
+      () => {},
+      (error) => {
+        console.error(error);
+        internalErrorToast();
+      },
+    );
 
   const writeAlertPermission =
     checkAccess(Permission.WRITE_ALERT) &&
     checkAccess(Permission.WRITE_PROJECT);
+
+  const handleFlowOwnerAlertsToggle = (flowOwnerAlertsEnabled: boolean) => {
+    updateProject({
+      projectId: currentProject.id,
+      request: { flowOwnerAlertsEnabled },
+    });
+  };
 
   return (
     <>
@@ -49,6 +69,16 @@ export const TeamProjectAlerts = () => {
           </AlertDescription>
         </div>
       </Alert>
+      <AlertSwitchRow
+        id="flow-owner-alerts-switch"
+        label={t('Alert flow owners')}
+        description={t(
+          "Also email a flow's owner when their flow fails, even if they're not in the list below.",
+        )}
+        checked={currentProject.flowOwnerAlertsEnabled}
+        disabled={isUpdatingProject || writeAlertPermission === false}
+        onCheckedChange={handleFlowOwnerAlertsToggle}
+      />
       <div>
         {alertsLoading && (
           <div className="flex items-center justify-center py-8">

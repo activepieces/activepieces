@@ -56,6 +56,11 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
         if (modified.releasesEnabled !== original.releasesEnabled) {
           request.releasesEnabled = modified.releasesEnabled;
         }
+        if (
+          modified.flowOwnerAlertsEnabled !== original.flowOwnerAlertsEnabled
+        ) {
+          request.flowOwnerAlertsEnabled = modified.flowOwnerAlertsEnabled;
+        }
         if (modified.externalId !== original.externalId) {
           request.externalId =
             !isNil(modified.externalId) && modified.externalId.trim() !== ''

@@ -462,6 +462,8 @@
   "Frequency": "Frequency",
   "You’ll get an email if any flow fails. Only the first failure per flow each day sends an alert. Other failures are summarized in a daily email.": "You’ll get an email if any flow fails. Only the first failure per flow each day sends an alert. Other failures are summarized in a daily email.",
   "No emails added yet.": "No emails added yet.",
+  "Alert flow owners": "Alert flow owners",
+  "Also email a flow's owner when their flow fails, even if they're not in the list below.": "Also email a flow's owner when their flow fails, even if they're not in the list below.",
   "Git Connection Removed": "Git Connection Removed",
   "Enable Environments": "Enable Environments",
   "Deploy flows across development, staging and production environments with version control and team collaboration": "Deploy flows across development, staging and production environments with version control and team collaboration",
