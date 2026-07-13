@@ -21,13 +21,13 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import EditableText from '@/components/custom/editable-text';
 import { PageHeader } from '@/components/custom/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   stageResourceKey,
   useReportStageResourceTitle,
   useStageHeaderSlot,
   useStageHeaderTitle,
 } from '@/components/custom/stage-header-slot';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   Breadcrumb,
   BreadcrumbItem,

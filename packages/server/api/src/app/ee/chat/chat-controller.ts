@@ -11,7 +11,6 @@ import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatService } from './chat-service'
-import { chatPrompt } from './prompt/chat-prompt'
 import { resolvePickerConnections } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -208,14 +207,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send(resolution)
     })
 
-    // Authored prompt + guide text that shapes the agent, for the dev-only harness console.
-    // Session-authed (unlike /eval/prompt-sources which is API-key gated) so the web app can
-    // read it with its normal bearer token. The static tool/guide/pipeline metadata is bundled
-    // client-side from @activepieces/shared, so this only serves the markdown sources.
-    app.get('/harness', GetHarnessRoute, async (_request, reply) => {
-        return reply.status(StatusCodes.OK).send(chatPrompt.sources)
-    })
-
 }
 
 async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
@@ -353,15 +344,6 @@ const GetPendingGateRoute = {
     },
 }
 
-const GetHarnessRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['chat'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-    },
-}
 
 const GetPickerConnectionsRoute = {
     config: {

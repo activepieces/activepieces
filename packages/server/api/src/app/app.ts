@@ -39,7 +39,6 @@ import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-sam
 import { chatEvalModule } from './ee/chat/chat-eval-controller'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
-import { devToolsModule } from './ee/dev-tools/dev-tools.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { flowRunTrackingModule } from './ee/flow-run-tracking/flow-run-tracking-module'
@@ -368,11 +367,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
             break
-    }
-
-    const isDevEnvironment = system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
-    if (isDevEnvironment && edition !== ApEdition.COMMUNITY) {
-        await app.register(devToolsModule)
     }
 
     const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false

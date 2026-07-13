@@ -71,11 +71,6 @@ const PlatformTemplatesPage = React.lazy(() =>
     default: m.PlatformTemplatesPage,
   })),
 );
-const DevToolsPage = React.lazy(() =>
-  import('./platform/setup/dev-tools').then((m) => ({
-    default: m.DevToolsPage,
-  })),
-);
 const UsersPage = React.lazy(() => import('./platform/users'));
 const PlatformConnectionsPage = React.lazy(
   () => import('./platform/connections'),
@@ -185,18 +180,6 @@ export const platformRoutes = [
         <PageTitle title="Pieces">
           <SuspenseWrapper>
             <PlatformPiecesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/dev-tools',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Dev Tools">
-          <SuspenseWrapper>
-            <DevToolsPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

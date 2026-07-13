@@ -8,7 +8,6 @@ import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { devToolsApi, DevToolsPlanAction } from '@/api/dev-tools-api';
 import { platformApi } from '@/api/platforms-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -69,37 +68,6 @@ export const platformHooks = {
       },
       onError: () => {
         toast.error(t('Activation failed, invalid license key'));
-      },
-    });
-  },
-  useDevToolsUpdatePlan: (queryClient: QueryClient) => {
-    const currentPlatformId = authenticationSession.getPlatformId();
-
-    return useMutation({
-      mutationFn: async (action: DevToolsPlanAction) => {
-        switch (action.type) {
-          case 'patch':
-            return devToolsApi.setPlan(action.patch);
-          case 'preset':
-            return devToolsApi.applyPreset(action.preset);
-          case 'credits':
-            return devToolsApi.setCredits({
-              includedAiCredits: action.includedAiCredits,
-              drainToZero: action.drainToZero,
-            });
-        }
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ['platform', currentPlatformId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: flagsHooks.queryKey,
-        });
-        toast.success(t('Dev settings applied'));
-      },
-      onError: () => {
-        toast.error(t('Failed to apply dev settings'));
       },
     });
   },

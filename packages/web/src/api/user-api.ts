@@ -10,7 +10,9 @@ export const userApi = {
   getUserById(id: string) {
     return api.get<UserWithMetaInformation>(`/v1/users/${id}`);
   },
-  updateUiPreferences(uiPreferences: UiPreferences): Promise<UserWithMetaInformation> {
+  updateUiPreferences(
+    uiPreferences: UiPreferences,
+  ): Promise<UserWithMetaInformation> {
     return api.post<UserWithMetaInformation>('/v1/users/me/ui-preferences', {
       uiPreferences,
     });

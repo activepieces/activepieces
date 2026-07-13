@@ -87,14 +87,6 @@ const CrashTestPage = import.meta.env.DEV
     )
   : null;
 
-const AgentHarnessPage = import.meta.env.DEV
-  ? lazy(() =>
-      import('../routes/agent-harness').then((m) => ({
-        default: m.AgentHarnessPage,
-      })),
-    )
-  : null;
-
 const devRoutes = import.meta.env.DEV
   ? [
       ...(CrashTestPage
@@ -104,18 +96,6 @@ const devRoutes = import.meta.env.DEV
               element: (
                 <Suspense fallback={<RouteLoadingBar />}>
                   <CrashTestPage />
-                </Suspense>
-              ),
-            },
-          ]
-        : []),
-      ...(AgentHarnessPage
-        ? [
-            {
-              path: '/__agent-harness',
-              element: (
-                <Suspense fallback={<RouteLoadingBar />}>
-                  <AgentHarnessPage />
                 </Suspense>
               ),
             },
