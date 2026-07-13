@@ -23,6 +23,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -82,6 +83,7 @@ const BulkPieceSetActions = ({
 }) => {
   const {
     mutate: updateSet,
+    mutateAsync: updateSetAsync,
     isPending,
     variables,
   } = pieceSetMutations.useUpdatePieceSet();
@@ -123,30 +125,43 @@ const BulkPieceSetActions = ({
         <Eye className="mr-1 size-4" />
         {t('Include')}
       </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        loading={isPending && !!pendingRequest?.pieces}
-        disabled={allExcluded}
-        onClick={() =>
-          updateSet(
-            {
-              id: pieceSet.id,
-              request: {
-                pieces: setPiecesVisible(
-                  pieceSet.config.pieces,
-                  selectedNames,
-                  false,
-                ),
-              },
-            },
-            { onSuccess: resetSelection },
-          )
+      <ConfirmationDeleteDialog
+        title={t('Exclude Pieces')}
+        message={t(
+          'These pieces will be hidden from projects using this piece set.',
+        )}
+        warning={
+          <div>
+            {t('Any active flows using these pieces')}{' '}
+            <strong>{t('will be disabled')}</strong>.
+          </div>
         }
+        entityName={t('Pieces')}
+        buttonText={t('Exclude')}
+        mutationFn={async () => {
+          await updateSetAsync({
+            id: pieceSet.id,
+            request: {
+              pieces: setPiecesVisible(
+                pieceSet.config.pieces,
+                selectedNames,
+                false,
+              ),
+            },
+          });
+          resetSelection();
+        }}
       >
-        <EyeOff className="mr-1 size-4" />
-        {t('Exclude')}
-      </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          loading={isPending && !!pendingRequest?.pieces}
+          disabled={allExcluded}
+        >
+          <EyeOff className="mr-1 size-4" />
+          {t('Exclude')}
+        </Button>
+      </ConfirmationDeleteDialog>
     </>
   );
 };
@@ -157,10 +172,16 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const {
+    mutate: updateSet,
+    mutateAsync: updateSetAsync,
+    isPending,
+  } = pieceSetMutations.useUpdatePieceSet();
   const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
   const [managingComponentsPiece, setManagingComponentsPiece] = useState<
+    string | null
+  >(null);
+  const [confirmingExcludePiece, setConfirmingExcludePiece] = useState<
     string | null
   >(null);
 
@@ -318,7 +339,9 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                   checked={included}
                   disabled={isPending}
                   onCheckedChange={() =>
-                    togglePiece(row.original.name, included)
+                    included
+                      ? setConfirmingExcludePiece(row.original.name)
+                      : togglePiece(row.original.name, included)
                   }
                 />
               </div>
@@ -399,6 +422,38 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             if (!open) setManagingComponentsPiece(null);
           }}
           pieceSet={pieceSet}
+        />
+      )}
+      {confirmingExcludePiece && (
+        <ConfirmationDeleteDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setConfirmingExcludePiece(null);
+          }}
+          title={t('Exclude Piece')}
+          message={t(
+            'This piece will be hidden from projects using this piece set.',
+          )}
+          warning={
+            <div>
+              {t('Any active flows using this piece')}{' '}
+              <strong>{t('will be disabled')}</strong>.
+            </div>
+          }
+          entityName={t('Piece')}
+          buttonText={t('Exclude')}
+          mutationFn={async () => {
+            await updateSetAsync({
+              id: pieceSet.id,
+              request: {
+                pieces: setPieceVisible(
+                  pieceSet.config.pieces,
+                  confirmingExcludePiece,
+                  false,
+                ),
+              },
+            });
+          }}
         />
       )}
     </>

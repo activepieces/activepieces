@@ -13,6 +13,8 @@ A Platform is the top-level tenant namespace in Activepieces. Every installation
 - `packages/core/shared/src/lib/management/platform/platform.request.ts` — `UpdatePlatformRequestBody`
 - `packages/web/src/hooks/platform-hooks.ts` — `useCurrentPlatform()` React Query hook
 - `packages/web/src/features/platform-admin/hooks/branding-hooks.ts` — branding mutation hooks
+- `packages/web/src/features/platform-admin/hooks/platform-pieces-hooks.ts` — `platformPiecesMutations`: `useTogglePiecePin`, `useUpdatePieceSelectorConfig`, `useSyncPieces`
+- `packages/web/src/app/routes/platform/setup/pieces/piece-actions.tsx` — per-piece pin icon button
 
 ## Edition Availability
 All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, `ssoEnabled`, `agentsEnabled`) control which capabilities are active. Community edition uses `OPEN_SOURCE_PLAN` with all booleans set to their CE defaults. `usage` is only populated on non-Community editions.

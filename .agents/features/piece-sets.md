@@ -57,6 +57,14 @@ Indexes: `(platformId)`; unique partial `(platformId) WHERE isDefault`; unique p
 
 There is **no** install-time sync method. New pieces/actions are handled purely by read-time resolution (`isPieceVisible` / `isComponentVisible`); there is no `pieceHooks.onPieceCreated`.
 
+## Excluding a Piece Can Silently Disable Active Flows
+
+Excluding a piece (per-row `Switch` or bulk `Exclude` in `piece-set-pieces-tab.tsx`) is nominally a **catalog-visibility** action — it governs which pieces can be newly added to a flow in the builder for projects on that set. But it can also disable **already-active** flows referencing the piece, and only intermittently: a worker container that already resolved that piece keeps a no-expiry local disk cache entry (`piece-cache.ts`, sandbox) and keeps succeeding indefinitely even after exclusion. The disable only surfaces the next time a container hits a genuine cache miss for that exact `(pieceName, version, platformId)` — post-deploy, autoscale-up, OOM restart, node eviction — which happens routinely on Cloud but not deterministically or immediately after the exclude action. This makes the failure easy to miss when testing on a single long-lived box (see activepieces/activepieces#13768).
+
+The single-toggle `Switch` and bulk `Exclude` button both confirm before excluding, via `ConfirmationDeleteDialog` with a static warning — matching the existing precedent in `DeleteConnectionWarning` (`components/custom/global-connection-utils.tsx`) rather than computing a live affected-flow count. Including (re-enabling) never warns; it isn't destructive.
+
+**Known follow-up (not yet built):** the worker's `disableFlow` RPC (`worker-rpc-service.ts`) that actually flips a flow to `DISABLED` for this reason only logs a `log.warn` today — there is no user-facing signal when it fires, and since it can land long after (and disconnected from) the original exclude action, an admin has no way to discover it happened short of noticing the flow is off.
+
 ## Integration Notes
 - **Project creation** (`ee-project-hooks.ts`): new EE projects are assigned the Default set on `postCreate` when `managePiecesEnabled`.
 - **Managed auth** (`managed-authn-service.ts`): `applyProjectPieceAccess` runs unconditionally (not gated by `managePiecesEnabled` — that flag gates the management endpoints and the postCreate default-set assignment, not this enforcement path). A **v4** embed JWT carries a `pieceSet` key claim; legacy v2/v3 tokens carry `piecesTags` instead. Only the **first** tag is honored and resolved to the named set with `key = tag`; if no such set exists, the project falls back to Default. New integrations should use the v4 `pieceSet` claim. See [managed-auth.md](./managed-auth.md).
