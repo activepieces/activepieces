@@ -35,7 +35,12 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const socketState = vi.hoisted(() => {
   type LockResponse = {
     acquired: boolean;
-    lock: { userId: string; userDisplayName: string } | null;
+    lock: {
+      userId: string;
+      userDisplayName: string;
+      lockerKind?: string;
+      reason?: string;
+    } | null;
   };
   type EmitCall = {
     event: string;
@@ -86,7 +91,11 @@ vi.mock('@/lib/authentication-session', () => ({
 }));
 
 const RESOURCE_ID = 'flow-1';
-const OTHER_USER = { userId: 'other-user', userDisplayName: 'Other User' };
+const OTHER_USER = {
+  userId: 'other-user',
+  userDisplayName: 'Other User',
+  lockerKind: 'USER',
+};
 
 let latestHookResult: ReturnType<typeof useResourceLock> | null = null;
 
