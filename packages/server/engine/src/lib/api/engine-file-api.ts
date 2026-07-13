@@ -6,6 +6,8 @@ import fetchRetry from 'fetch-retry'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
 
+const fetchWithRetry = fetchRetry(global.fetch)
+
 const RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
@@ -17,7 +19,6 @@ const FILE_NAME_HEADER = 'x-ap-file-name'
 
 export const engineFileApi = {
     async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
-        const fetchWithRetry = fetchRetry(global.fetch)
         const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
         const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
 
@@ -87,7 +88,6 @@ export const engineFileApi = {
         return url
     },
     async uploadPart({ url, data }: UploadPartParams): Promise<string> {
-        const fetchWithRetry = fetchRetry(global.fetch)
         // Part PUTs are idempotent per partNumber, so retrying is safe.
         const response = await fetchWithRetry(url, {
             method: 'PUT',
@@ -119,7 +119,6 @@ export const engineFileApi = {
         })
     },
     async download({ engineToken, apiUrl, fileId }: DownloadFileParams): Promise<Uint8Array> {
-        const fetchWithRetry = fetchRetry(global.fetch)
         const response = await fetchWithRetry(`${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`, {
             method: 'GET',
             redirect: 'follow',
@@ -153,7 +152,6 @@ export const engineFileApi = {
 }
 
 async function postJson<T>({ engineToken, url, body }: PostJsonParams): Promise<T> {
-    const fetchWithRetry = fetchRetry(global.fetch)
     const response = await fetchWithRetry(url, {
         method: 'POST',
         headers: {

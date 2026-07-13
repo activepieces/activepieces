@@ -8,17 +8,7 @@ import { flowService } from '../flows/flow/flow.service'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { webhookController } from './webhook-controller'
-import { isBinaryContentType, streamWebhookBinaryBody } from './webhook-request-converter'
-
-const STREAMED_BINARY_PARSER_PATTERNS = [
-    /^image\/.*/,
-    /^video\/.*/,
-    /^audio\/.*/,
-    'application/pdf',
-    'application/zip',
-    'application/gzip',
-    'application/octet-stream',
-]
+import { isBinaryContentType, STREAMED_BINARY_CONTENT_TYPES, streamWebhookBinaryBody } from './webhook-request-converter'
 
 export const webhookModule: FastifyPluginAsync = async (app) => {
     // Resolve the flow before the body is parsed so large uploads to unknown flows are
@@ -96,7 +86,7 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
     // handler loses the socket data). octet-stream is buffered by a parent scope (app.ts) —
     // override it here so webhooks stream it instead.
     app.removeContentTypeParser('application/octet-stream')
-    for (const pattern of STREAMED_BINARY_PARSER_PATTERNS) {
+    for (const pattern of STREAMED_BINARY_CONTENT_TYPES) {
         app.addContentTypeParser(pattern, (request: FastifyRequest, payload: Readable) => streamWebhookBinaryBody(request, payload))
     }
 

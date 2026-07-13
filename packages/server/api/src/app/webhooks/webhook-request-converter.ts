@@ -7,20 +7,10 @@ import mime from 'mime-types'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
 
-const BINARY_CONTENT_TYPE_PATTERNS = [
-    /^image\//,
-    /^video\//,
-    /^audio\//,
-    /^application\/pdf$/,
-    /^application\/zip$/,
-    /^application\/gzip$/,
-    /^application\/octet-stream$/,
-]
-
 export function isBinaryContentType(contentType: string | undefined): boolean {
     if (!contentType) return false
     const baseContentType = contentType.split(';')[0].trim().toLowerCase()
-    return BINARY_CONTENT_TYPE_PATTERNS.some(pattern => pattern.test(baseContentType))
+    return STREAMED_BINARY_CONTENT_TYPES.some(pattern => pattern.test(baseContentType))
 }
 
 // Both streaming paths save the file while the request body is still being parsed (binary in the
@@ -87,6 +77,20 @@ function getWebhookContextOrThrow(request: FastifyRequest): NonNullable<FastifyR
     assertNotNullOrUndefined(request.webhookContext, 'webhookContext')
     return request.webhookContext
 }
+
+// Single source of truth for "this content-type streams straight to storage".
+// Each pattern matches a base type with or without params (`; charset=…`), so it is
+// correct both as a fastify content-type parser (tested against the raw header) and
+// via isBinaryContentType (tested against the param-stripped base type).
+export const STREAMED_BINARY_CONTENT_TYPES = [
+    /^image\//,
+    /^video\//,
+    /^audio\//,
+    /^application\/pdf(;|$)/,
+    /^application\/zip(;|$)/,
+    /^application\/gzip(;|$)/,
+    /^application\/octet-stream(;|$)/,
+]
 
 type StreamToStepFileUrlParams = {
     request: FastifyRequest
