@@ -68,8 +68,10 @@ export const benchmarkCommand = new Command('benchmark')
                     runs.push({ label: phase.label, connections: phase.connections, requests, startedAt, summary, timeline: runsInWindow.timeline, outcomes: runsInWindow.outcomes, queueDepth });
                 }
 
+                log(config, 'Scanning other projects for flows that ran during the benchmark...');
+                const outsideFlows = await collectOutsideFlows({ client: authed, benchmarkProjectId: project.id, since: runs[0].startedAt });
                 const storage = await probeStorage({ client: authed, projectId: project.id, flowId });
-                const report: BenchmarkReport = { meta: buildMeta({ url: config.url }), flowId, project: { id: project.id, limits: projectLimits }, health, diagnostics, setup, flags, network, storage, runs };
+                const report: BenchmarkReport = { meta: buildMeta({ url: config.url }), flowId, project: { id: project.id, limits: projectLimits }, health, diagnostics, setup, flags, network, storage, outsideFlows, runs };
 
                 if (config.json) {
                     process.stdout.write(JSON.stringify(report, null, 2) + '\n');
@@ -303,6 +305,78 @@ function buildMeta({ url }: { url: string }): RunMeta {
             note: 'The CLI runs from a different host/region than the API and workers; all client-side latency below includes CLI→server network. Authoritative per-run latency is server-measured (FlowRun.timeline).',
         },
     };
+}
+
+// Flows the benchmark does NOT own that ran inside its window. They share the same execution slots,
+// so they are the answer to "why is QUEUE high on a deployment that looks idle". Scans every platform
+// project except the benchmark's throwaway one.
+async function collectOutsideFlows({ client, benchmarkProjectId, since }: CollectOutsideFlowsParams): Promise<OutsideFlowsReport> {
+    const projectsRes = await client.get('/api/v1/projects', { params: { limit: PROJECT_PAGE_SIZE } });
+    if (projectsRes.status !== 200 || !Array.isArray(projectsRes.data?.data)) {
+        return { available: false, detail: `project listing failed (HTTP ${projectsRes.status}) — cannot scan for outside flows`, flows: [] };
+    }
+    const notes: string[] = [];
+    if (projectsRes.data.next) notes.push(`only the first ${PROJECT_PAGE_SIZE} projects scanned`);
+    const projects: Array<{ id: string }> = projectsRes.data.data;
+
+    const outsideRuns: OutsideRunLike[] = [];
+    for (const project of projects.filter((p) => p.id !== benchmarkProjectId)) {
+        let cursor: string | undefined;
+        for (let page = 0; page < MAX_OUTSIDE_RUN_PAGES; page++) {
+            const params: Record<string, string | number> = { projectId: project.id, createdAfter: since, limit: RUN_PAGE_SIZE };
+            if (cursor) params.cursor = cursor;
+            const res = await client.get('/api/v1/flow-runs', { params });
+            if (res.status !== 200 || !Array.isArray(res.data?.data)) break;
+            outsideRuns.push(...res.data.data.map((r: Record<string, unknown>) => ({ ...r, projectId: project.id }) as OutsideRunLike));
+            cursor = res.data.next ?? undefined;
+            if (!cursor) break;
+            if (page === MAX_OUTSIDE_RUN_PAGES - 1) notes.push(`run listing truncated at ${MAX_OUTSIDE_RUN_PAGES * RUN_PAGE_SIZE} runs for project ${project.id}`);
+        }
+    }
+
+    const aggregates = aggregateOutsideRuns(outsideRuns);
+    if (aggregates.length > MAX_OUTSIDE_FLOWS_DETAILED) notes.push(`pieces/name resolved for the top ${MAX_OUTSIDE_FLOWS_DETAILED} of ${aggregates.length} flows only`);
+    const flows: OutsideFlow[] = [];
+    for (const [index, aggregate] of aggregates.entries()) {
+        const description = index < MAX_OUTSIDE_FLOWS_DETAILED
+            ? await describeFlow({ client, flowId: aggregate.flowId, projectId: aggregate.projectId })
+            : { displayName: null, pieces: [] };
+        flows.push({ ...aggregate, ...description });
+    }
+    return { available: true, flows, ...(notes.length > 0 ? { detail: notes.join('; ') } : {}) };
+}
+
+function aggregateOutsideRuns(runs: OutsideRunLike[]): OutsideFlowAggregate[] {
+    const byFlow = new Map<string, { projectId: string; runs: number; totalRunMs: number; timedRuns: number }>();
+    for (const run of runs) {
+        if (typeof run.flowId !== 'string') continue;
+        const entry = byFlow.get(run.flowId) ?? { projectId: run.projectId, runs: 0, totalRunMs: 0, timedRuns: 0 };
+        entry.runs += 1;
+        const started = Date.parse(run.startTime ?? '');
+        const finished = Date.parse(run.finishTime ?? '');
+        if (Number.isFinite(started) && Number.isFinite(finished) && finished >= started) {
+            entry.totalRunMs += finished - started;
+            entry.timedRuns += 1;
+        }
+        byFlow.set(run.flowId, entry);
+    }
+    return [...byFlow.entries()]
+        .map(([flowId, agg]) => ({ flowId, projectId: agg.projectId, runs: agg.runs, avgRunMs: agg.timedRuns > 0 ? Math.round(agg.totalRunMs / agg.timedRuns) : null }))
+        .sort((a, b) => b.runs - a.runs);
+}
+
+async function describeFlow({ client, flowId, projectId }: DescribeFlowParams): Promise<FlowDescription> {
+    const res = await client.get(`/api/v1/flows/${flowId}`, { params: { projectId } }).catch(() => null);
+    if (!res || res.status !== 200 || isNilLike(res.data?.version)) {
+        return { displayName: null, pieces: [] };
+    }
+    const version = res.data.version;
+    const pieces = unique([...JSON.stringify(version).matchAll(/"pieceName"\s*:\s*"([^"]+)"/g)].map((m) => m[1]));
+    return { displayName: typeof version.displayName === 'string' ? version.displayName : null, pieces };
+}
+
+function isNilLike(value: unknown): value is null | undefined {
+    return value === null || value === undefined;
 }
 
 async function probeStorage({ client, projectId, flowId }: ProbeStorageParams): Promise<StorageProbe> {
@@ -570,6 +644,7 @@ function renderReport(report: BenchmarkReport): void {
     }
 
     renderRateLimiter(report);
+    renderOutsideFlows(report);
 
     console.log(chalk.bold('\nNetwork (CLI -> server, cross-region)'));
     console.log(`  RTT min / p50 : ${report.network.minMs.toFixed(1)} / ${report.network.p50Ms.toFixed(1)} ms over ${report.network.probes} probes`);
@@ -638,6 +713,29 @@ function renderRateLimiter(report: BenchmarkReport): void {
     } else if (typeof defaultLimit === 'number') {
         console.log(chalk.gray(`  => real projects capped at ${defaultLimit} concurrent jobs would sustain this load (driven concurrency ${driven}).`));
     }
+}
+
+// Answers "was anything else running while I benchmarked?" — outside flows share the execution
+// slots, so each entry here is workload that inflated QUEUE without any config flag explaining it.
+function renderOutsideFlows(report: BenchmarkReport): void {
+    console.log(chalk.bold('\nOutside flows (ran during the benchmark, NOT part of it)'));
+    const { available, flows, detail } = report.outsideFlows;
+    if (!available) {
+        console.log(chalk.gray(`  ${detail ?? 'unavailable'}`));
+        return;
+    }
+    if (flows.length === 0) {
+        console.log(chalk.green('  none — no other flow ran during the benchmark window. QUEUE times are contention-free.'));
+        return;
+    }
+    console.log(chalk.yellow(`  ${flows.length} flow(s) competed for the execution slots during the load — their runs inflate QUEUE:`));
+    for (const flow of flows) {
+        const avgRun = flow.avgRunMs === null ? 'n/a' : `${flow.avgRunMs} ms`;
+        console.log(`  - ${flow.displayName ?? flow.flowId}: ${flow.runs} runs, avg run ${avgRun}`);
+        console.log(chalk.gray(`      flow ${flow.flowId}  project ${flow.projectId}  pieces [${flow.pieces.join(', ') || 'unknown'}]`));
+    }
+    console.log(chalk.gray(`  window starts ${CLOCK_SKEW_BUFFER_MS / 60_000} min before the load (clock-skew tolerance), so slightly-earlier runs can appear.`));
+    if (detail) console.log(chalk.gray(`  note: ${detail}`));
 }
 
 function hb(v: boolean | null | undefined): string {
@@ -719,6 +817,9 @@ const RECOMMENDED_MAX_CPU_CORES = 0.5;
 const RECOMMENDED_MAX_RAM_GB = 1;
 const QUEUE_SAMPLE_INTERVAL_MS = 500;
 const CLOCK_SKEW_BUFFER_MS = 5 * 60 * 1000;
+const PROJECT_PAGE_SIZE = 100;
+const MAX_OUTSIDE_RUN_PAGES = 5;
+const MAX_OUTSIDE_FLOWS_DETAILED = 20;
 // The server's rate-limiter re-queues a rejected job with min(600s, 20s * 2^attempts) delay
 // (rate-limiter-interceptor.ts). 15s = one backoff minus clock-skew tolerance.
 const RATE_LIMIT_MIN_BACKOFF_MS = 20_000;
@@ -732,7 +833,7 @@ const DIAGNOSTIC_FLAGS = [
     'DEFAULT_CONCURRENT_JOBS_LIMIT', 'PROJECT_RATE_LIMITER_ENABLED', 'EXECUTION_DATA_RETENTION_DAYS',
 ];
 
-export const benchmarkUtils = { normalizeOptions, toSummary, resolvePhases, validateSetup, aggregateTimeline, percentile };
+export const benchmarkUtils = { normalizeOptions, toSummary, resolvePhases, validateSetup, aggregateTimeline, percentile, aggregateOutsideRuns };
 
 type BenchmarkConfig = {
     url: string;
@@ -814,6 +915,13 @@ type CollectedRuns = { timeline: TimelineAggregate; outcomes: RunOutcomes };
 type ProbeStorageParams = { client: AxiosInstance; projectId: string; flowId: string };
 
 type QueueSample = { waiting: number; active: number };
+type OutsideRunLike = { flowId?: string; projectId: string; startTime?: string; finishTime?: string };
+type OutsideFlowAggregate = { flowId: string; projectId: string; runs: number; avgRunMs: number | null };
+type FlowDescription = { displayName: string | null; pieces: string[] };
+type OutsideFlow = OutsideFlowAggregate & FlowDescription;
+type OutsideFlowsReport = { available: boolean; detail?: string; flows: OutsideFlow[] };
+type CollectOutsideFlowsParams = { client: AxiosInstance; benchmarkProjectId: string; since: string };
+type DescribeFlowParams = { client: AxiosInstance; flowId: string; projectId: string };
 type QueueDepth = { samples: number; available: boolean; maxWaiting?: number; maxActive?: number; avgWaiting?: number };
 type QueueSampler = { stop: () => QueueDepth };
 
@@ -924,5 +1032,6 @@ type BenchmarkReport = {
     flags: Record<string, unknown>;
     network: NetworkBaseline;
     storage: StorageProbe;
+    outsideFlows: OutsideFlowsReport;
     runs: PhaseReport[];
 };
