@@ -44,9 +44,7 @@ export const omnihrAuth = PieceAuth.CustomAuth({
     generate: async ({ auth }) => {
       const { access, access_exp } = await fetchOmniHrToken(auth);
 
-      if (!access) {
-        throw new Error('OmniHR token response did not include an access token');
-      }
+    
 
       if (!access_exp) {
         return {
