@@ -6,8 +6,8 @@ import { Migration } from '../../migration'
 
 const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
-export class AddDeletedToRecord1804000000000 implements Migration {
-    name = 'AddDeletedToRecord1804000000000'
+export class AddDeletedToRecord1811000000000 implements Migration {
+    name = 'AddDeletedToRecord1811000000000'
     breaking = false
     release = '0.85.5'
     transaction = false

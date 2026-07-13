@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddChatPersonalization1808000000000 implements Migration {
-    name = 'AddChatPersonalization1808000000000'
+export class AddChatPersonalization1815000000000 implements Migration {
+    name = 'AddChatPersonalization1815000000000'
     breaking = false
     release = '0.85.5'
 

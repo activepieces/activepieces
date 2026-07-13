@@ -392,22 +392,22 @@ import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/179
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
-import { AddUiPreferencesToUserIdentity1803000000000 } from './migration/postgres/1803000000000-AddUiPreferencesToUserIdentity'
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
-import { AddDeletedToRecord1804000000000 } from './migration/postgres/1804000000000-AddDeletedToRecord'
 import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
-import { AddColorToRecordAndCell1805000000000 } from './migration/postgres/1805000000000-AddColorToRecordAndCell'
 import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
-import { AddReferralTables1806000000000 } from './migration/postgres/1806000000000-AddReferralTables'
-import { AddChatModeToChatConversation1807000000000 } from './migration/postgres/1807000000000-AddChatModeToChatConversation'
 import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
-import { AddChatPersonalization1808000000000 } from './migration/postgres/1808000000000-AddChatPersonalization'
 import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/1808000000000-AddProjectPieceSetIdIndex'
-import { AddRoleToChatPersonalization1809000000000 } from './migration/postgres/1809000000000-AddRoleToChatPersonalization'
 import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
-import { AddCelebrationEmojisToReferralPhrase1810000000000 } from './migration/postgres/1810000000000-AddCelebrationEmojisToReferralPhrase'
-import { AddCelebrationSceneToReferralPhrase1811000000000 } from './migration/postgres/1811000000000-AddCelebrationSceneToReferralPhrase'
-import { AddCelebrationImageToReferralPhrase1812000000000 } from './migration/postgres/1812000000000-AddCelebrationImageToReferralPhrase'
+import { AddUiPreferencesToUserIdentity1810000000000 } from './migration/postgres/1810000000000-AddUiPreferencesToUserIdentity'
+import { AddDeletedToRecord1811000000000 } from './migration/postgres/1811000000000-AddDeletedToRecord'
+import { AddColorToRecordAndCell1812000000000 } from './migration/postgres/1812000000000-AddColorToRecordAndCell'
+import { AddReferralTables1813000000000 } from './migration/postgres/1813000000000-AddReferralTables'
+import { AddChatModeToChatConversation1814000000000 } from './migration/postgres/1814000000000-AddChatModeToChatConversation'
+import { AddChatPersonalization1815000000000 } from './migration/postgres/1815000000000-AddChatPersonalization'
+import { AddRoleToChatPersonalization1816000000000 } from './migration/postgres/1816000000000-AddRoleToChatPersonalization'
+import { AddCelebrationEmojisToReferralPhrase1817000000000 } from './migration/postgres/1817000000000-AddCelebrationEmojisToReferralPhrase'
+import { AddCelebrationSceneToReferralPhrase1818000000000 } from './migration/postgres/1818000000000-AddCelebrationSceneToReferralPhrase'
+import { AddCelebrationImageToReferralPhrase1819000000000 } from './migration/postgres/1819000000000-AddCelebrationImageToReferralPhrase'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -815,16 +815,16 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddTimelineToFlowRun1800000000000,
         AddToolSearchIndexTable1801000000000,
         AddChatRolloutFreeCreditGrant1802000000000,
-        AddUiPreferencesToUserIdentity1803000000000,
-        AddDeletedToRecord1804000000000,
-        AddColorToRecordAndCell1805000000000,
-        AddReferralTables1806000000000,
-        AddChatModeToChatConversation1807000000000,
-        AddChatPersonalization1808000000000,
-        AddRoleToChatPersonalization1809000000000,
-        AddCelebrationEmojisToReferralPhrase1810000000000,
-        AddCelebrationSceneToReferralPhrase1811000000000,
-        AddCelebrationImageToReferralPhrase1812000000000,
+        AddUiPreferencesToUserIdentity1810000000000,
+        AddDeletedToRecord1811000000000,
+        AddColorToRecordAndCell1812000000000,
+        AddReferralTables1813000000000,
+        AddChatModeToChatConversation1814000000000,
+        AddChatPersonalization1815000000000,
+        AddRoleToChatPersonalization1816000000000,
+        AddCelebrationEmojisToReferralPhrase1817000000000,
+        AddCelebrationSceneToReferralPhrase1818000000000,
+        AddCelebrationImageToReferralPhrase1819000000000,
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
         DropBadges1804000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,

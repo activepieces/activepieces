@@ -1,20 +1,20 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddRoleToChatPersonalization1809000000000 implements Migration {
-    name = 'AddRoleToChatPersonalization1809000000000'
+export class AddCelebrationEmojisToReferralPhrase1817000000000 implements Migration {
+    name = 'AddCelebrationEmojisToReferralPhrase1817000000000'
     breaking = false
     release = '0.85.5'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "chat_personalization" ADD COLUMN "role" character varying
+            ALTER TABLE "referral_phrase" ADD COLUMN "celebrationEmojis" jsonb
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "chat_personalization" DROP COLUMN IF EXISTS "role"
+            ALTER TABLE "referral_phrase" DROP COLUMN IF EXISTS "celebrationEmojis"
         `)
     }
 }

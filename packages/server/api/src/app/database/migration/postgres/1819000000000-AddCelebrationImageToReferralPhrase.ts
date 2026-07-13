@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddCelebrationImageToReferralPhrase1812000000000 implements Migration {
-    name = 'AddCelebrationImageToReferralPhrase1812000000000'
+export class AddCelebrationImageToReferralPhrase1819000000000 implements Migration {
+    name = 'AddCelebrationImageToReferralPhrase1819000000000'
     breaking = false
     release = '0.85.5'
 

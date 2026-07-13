@@ -1,21 +1,20 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddUiPreferencesToUserIdentity1803000000000 implements Migration {
-    name = 'AddUiPreferencesToUserIdentity1803000000000'
+export class AddRoleToChatPersonalization1816000000000 implements Migration {
+    name = 'AddRoleToChatPersonalization1816000000000'
     breaking = false
-    release = '0.85.4'
+    release = '0.85.5'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "user_identity"
-            ADD "uiPreferences" jsonb
+            ALTER TABLE "chat_personalization" ADD COLUMN "role" character varying
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "user_identity" DROP COLUMN "uiPreferences"
+            ALTER TABLE "chat_personalization" DROP COLUMN IF EXISTS "role"
         `)
     }
 }

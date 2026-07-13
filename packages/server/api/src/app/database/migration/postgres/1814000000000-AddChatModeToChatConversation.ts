@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddChatModeToChatConversation1807000000000 implements Migration {
-    name = 'AddChatModeToChatConversation1807000000000'
+export class AddChatModeToChatConversation1814000000000 implements Migration {
+    name = 'AddChatModeToChatConversation1814000000000'
     breaking = false
     release = '0.85.5'
 

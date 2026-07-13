@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddColorToRecordAndCell1805000000000 implements Migration {
-    name = 'AddColorToRecordAndCell1805000000000'
+export class AddColorToRecordAndCell1812000000000 implements Migration {
+    name = 'AddColorToRecordAndCell1812000000000'
     breaking = false
     release = '0.85.5'
 

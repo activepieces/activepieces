@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddReferralTables1806000000000 implements Migration {
-    name = 'AddReferralTables1806000000000'
+export class AddReferralTables1813000000000 implements Migration {
+    name = 'AddReferralTables1813000000000'
     breaking = false
     release = '0.85.5'
 
