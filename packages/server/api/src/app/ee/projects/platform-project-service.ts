@@ -217,8 +217,11 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         }
         
         const platform = await platformService(log).getOneOrThrow(platformId)
-        await projectRepo().update({ id: personalProject.id, platformId }, { ownerId: platform.ownerId })
-        await this.markForDeletion({ id: personalProject.id, platformId })
+        await transaction(async (entityManager) => {
+            await projectRepo(entityManager).update({ id: personalProject.id, platformId }, { ownerId: platform.ownerId })
+            await projectRepo(entityManager).softDelete({ id: personalProject.id, platformId })
+        })
+        await scheduleHardDeleteProjectJob({ id: personalProject.id, platformId, log })
     },
 
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
@@ -232,30 +235,34 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.HARD_DELETE_PROJECT,
-                data: {
-                    projectId: id,
-                    platformId,
-                    preDeletedFlowIds: [],
-                },
-                jobId: `hard-delete-project-${id}`,
-            },
-            schedule: {
-                type: 'one-time',
-                date: apDayjs(),
-            },
-            customConfig: {
-                attempts: 25,
-                backoff: {
-                    type: 'fixed',
-                    delay: 60000,
-                },
-            },
-        })
+        await scheduleHardDeleteProjectJob({ id, platformId, log })
     },
 })
+
+async function scheduleHardDeleteProjectJob({ id, platformId, log }: ScheduleHardDeleteProjectJobParams): Promise<void> {
+    await systemJobsSchedule(log).upsertJob({
+        job: {
+            name: SystemJobName.HARD_DELETE_PROJECT,
+            data: {
+                projectId: id,
+                platformId,
+                preDeletedFlowIds: [],
+            },
+            jobId: `hard-delete-project-${id}`,
+        },
+        schedule: {
+            type: 'one-time',
+            date: apDayjs(),
+        },
+        customConfig: {
+            attempts: 25,
+            backoff: {
+                type: 'fixed',
+                delay: 60000,
+            },
+        },
+    })
+}
 
 async function enrichProjects(
     projects: Project[],
@@ -377,4 +384,10 @@ type CreateProjectParams = {
 type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
+}
+
+type ScheduleHardDeleteProjectJobParams = {
+    id: ProjectId
+    platformId: PlatformId
+    log: FastifyBaseLogger
 }

@@ -109,6 +109,8 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - Operators: see all projects except others' personal
 - Regular users: see own personal + team projects where member
 
+`platformProjectService.deletePersonalProjectForUser()` — called when a user is removed. Reassigns the user's personal project to the platform owner and soft-deletes it in one transaction (then schedules the async `HARD_DELETE_PROJECT` job), so the `fk_project_owner_id` FK no longer blocks hard-deleting the user. `markForDeletion()` remains the generic soft-delete + schedule path used for ordinary project deletion.
+
 **Endpoints** (`platform-project-controller.ts`):
 - `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` accepts `workerGroupId` (validated against `^[a-z0-9_-]+$`, applied in `platformProjectService.update()` only when `platform_plan.workerGroupsEnabled` is on).
 - `GET /v1/projects/worker-groups` — platform-admin only; returns `{ groups: [{ label, slots }], sharedSlots }` from online project-scope workers (those started with `AP_PROJECT_WORKER=true`) via `machineService.listProjectWorkerGroups()` for the assignment UI; returns 402 `FEATURE_DISABLED` when `workerGroupsEnabled` is off.
