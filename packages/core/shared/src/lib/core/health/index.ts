@@ -46,6 +46,8 @@ export const DiagnosticsWorker = z.object({
     cpuCores: z.number(),
     cpuUsagePercentage: z.number(),
     ramUsagePercentage: z.number(),
+    // Worker→app round-trip (ms) — the callback path that inflates a run's RUN phase. null on older workers.
+    serverPingMs: z.number().nullable(),
     status: z.string(),
 })
 

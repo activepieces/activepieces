@@ -76,6 +76,7 @@ const DRAIN_TIMEOUT_MS = 25_000
 let cachedSandboxInfo: SandboxInformation[] = []
 let sandboxInfoInterval: NodeJS.Timeout | null = null
 const SANDBOX_INFO_REFRESH_MS = 15_000
+const SERVER_PING_TIMEOUT_MS = 5_000
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
@@ -435,6 +436,7 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const memInfo = await systemUsage.getContainerMemoryUsage()
     const diskInfo = await systemUsage.getDiskInfo()
     const cpuCores = await systemUsage.getCpuCores()
+    const serverPingMs = await probeServerPing()
     return {
         workerId,
         cpuUsagePercentage: systemUsage.getCpuUsage(),
@@ -444,8 +446,21 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
         ip: workerHostname,
+        serverPingMs,
         sandboxes: cachedSandboxInfo,
     }
+}
+
+// Worker→app round-trip via the public /flags endpoint — the path the engine's run callbacks travel.
+// Plain fetch, not safeHttp: the app URL is an internal/private address the SSRF filter would reject,
+// and this is a trusted internal call. Best-effort — undefined if it fails or times out.
+async function probeServerPing(): Promise<number | undefined> {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), SERVER_PING_TIMEOUT_MS)
+    const startedAt = Date.now()
+    const { error } = await tryCatch(() => fetch(`${getApiUrl()}v1/flags`, { signal: controller.signal }))
+    clearTimeout(timeout)
+    return error ? undefined : Date.now() - startedAt
 }
 
 function startSandboxInfoSampling(): void {
