@@ -92,6 +92,6 @@ type OmniHrAuthProps = {
 type OmniHrTokenResponse = {
   access: string;
   refresh: string;
-  access_exp?: string | number;
+  access_exp: string;
   refresh_exp?: string | number;
 };
