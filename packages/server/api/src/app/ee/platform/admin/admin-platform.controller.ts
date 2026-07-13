@@ -10,8 +10,6 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { QueueName } from '../../../workers/job'
-import { jobQueue } from '../../../workers/job-queue/job-queue'
 import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
 import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
 import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
@@ -79,15 +77,6 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         return res.status(StatusCodes.OK).send()
     })
 
-    app.get('/queues/metrics/:queueName?', PrometheusMetricsRequest, async (req, res) => {
-        const queueName = req.params.queueName ?? QueueName.WORKER_JOBS
-        const queue = jobQueue(req.log).getAllQueues().find((q) => q.name === queueName)
-        if (isNil(queue)) {
-            return res.status(StatusCodes.NOT_FOUND).send({ message: 'Queue not found' })
-        }
-        return res.type('text/plain').send(await queue.exportPrometheusMetrics())
-    })
-
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
         const PAGE_SIZE = 100
         const conversationRepo = repoFactory(ChatConversationEntity)
@@ -133,17 +122,6 @@ const UpdateCanaryRequest = {
         body: z.object({
             platformId: z.string(),
             canary: z.boolean(),
-        }),
-    },
-    config: {
-        security: securityAccess.public(),
-    },
-}
-
-const PrometheusMetricsRequest = {
-    schema: {
-        params: z.object({
-            queueName: z.string().optional(),
         }),
     },
     config: {
