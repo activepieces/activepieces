@@ -107,7 +107,16 @@ export const fileService = (log: FastifyBaseLogger) => ({
             return bufferAndSaveToDb()
         }
 
+        const maxSizeBytes = system.getNumberOrThrow(AppSystemProp.MAX_STREAM_FILE_SIZE_MB) * 1024 * 1024
+        const streamCeilingError = () => new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Streamed file size exceeds the ${AppSystemProp.MAX_STREAM_FILE_SIZE_MB} limit of ${maxSizeBytes / (1024 * 1024)}MB` },
+        })
+
         if (second.done) {
+            if (firstBuffer.length > maxSizeBytes) {
+                throw streamCeilingError()
+            }
             return this.save({ ...baseSaveParams, data: firstBuffer, size: firstBuffer.length })
         }
 
@@ -118,16 +127,12 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }
 
         const { s3Key } = created
-        const maxSizeBytes = system.getNumberOrThrow(AppSystemProp.MAX_STREAM_FILE_SIZE_MB) * 1024 * 1024
         const uploadId = await s3Helper(log).createMultipartUpload({ s3Key, contentType })
         return multipartStream.runMultipartStream<File>({
             head: [firstBuffer, second.value],
             rest: parts,
             ceilingBytes: maxSizeBytes,
-            onCeilingExceeded: ({ ceilingBytes }) => new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: `Streamed file size exceeds the ${AppSystemProp.MAX_STREAM_FILE_SIZE_MB} limit of ${ceilingBytes / (1024 * 1024)}MB` },
-            }),
+            onCeilingExceeded: streamCeilingError,
             sink: {
                 uploadPart: async ({ partNumber, data }) => {
                     const etag = await s3Helper(log).uploadPart({ s3Key, uploadId, partNumber, body: data })

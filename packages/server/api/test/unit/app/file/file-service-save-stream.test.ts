@@ -107,6 +107,13 @@ describe('fileService.saveStream (S3)', () => {
         expect(mockS3.createMultipartUpload).not.toHaveBeenCalled()
     })
 
+    it('rejects a single-part stream that exceeds MAX_STREAM_FILE_SIZE_MB', async () => {
+        process.env.AP_MAX_STREAM_FILE_SIZE_MB = '2'
+        await expect(saveStream(streamOf(6 * MB))).rejects.toThrow()
+        expect(mockS3.uploadFile).not.toHaveBeenCalled()
+        expect(mockS3.createMultipartUpload).not.toHaveBeenCalled()
+    })
+
     it('streams a multi-part upload and completes it', async () => {
         await saveStream(streamOf(16 * MB))
         expect(mockS3.createMultipartUpload).toHaveBeenCalledTimes(1)
