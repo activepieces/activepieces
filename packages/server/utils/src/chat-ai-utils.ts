@@ -206,7 +206,7 @@ function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelM
 function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
     const totalToolResults = messages.reduce((count, message) => {
         if (message.role !== 'tool' || !Array.isArray(message.content)) return count
-        return count + message.content.filter((part) => part.type === 'tool-result').length
+        return count + message.content.filter((part) => part.type === 'tool-result' && !SCHEMA_TOOL_NAMES.has(part.toolName)).length
     }, 0)
 
     const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS

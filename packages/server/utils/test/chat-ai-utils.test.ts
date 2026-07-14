@@ -310,6 +310,24 @@ describe('collapseStaleToolOutputs', () => {
         expect(outputAt(0)).not.toContain('omitted to save context')
         expect(outputAt(1)).toContain('omitted to save context') // ordinary stale result still collapses
     })
+
+    it('pinned schema results do not consume a keep-recent slot', () => {
+        const big = 'z'.repeat(2000)
+        const schemaMessage: ModelMessage = {
+            role: 'tool',
+            content: [{ type: 'tool-result', toolCallId: 'schema', toolName: 'ap_get_piece_props', output: { type: 'text', value: big } }],
+        }
+        // 1 pinned schema + exactly 6 ordinary results. The 6 ordinary results fit
+        // within KEEP_RECENT_TOOL_RESULTS (6), so none of them is stale. The pinned
+        // schema is exempt ("does not consume a stale slot"), so nothing should be collapsed.
+        const messages: ModelMessage[] = [schemaMessage, ...Array.from({ length: 6 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))]
+        const out = chatAiUtils.collapseStaleToolOutputs({ messages })
+        const outputAt = (idx: number): string => JSON.stringify(Array.isArray(out[idx].content) ? out[idx].content[0] : undefined)
+
+        for (let i = 0; i < messages.length; i++) {
+            expect(outputAt(i)).not.toContain('omitted to save context')
+        }
+    })
 })
 
 describe('estimateTokenCount', () => {
