@@ -30,8 +30,6 @@ const digitsOnly = (value: string): string => value.replace(/\D/g, '');
 const phone = (value: string): string => digitsOnly(value).replace(/^0+/, '');
 const stripSpacesAndPunctuation = (value: string): string =>
   value.toLowerCase().replace(/[^a-z0-9]/g, '');
-const postalCode = (value: string): string =>
-  value.toLowerCase().replace(/\s+/g, '');
 
 export const identityHashing = {
   email: hashWith(lower),
@@ -40,7 +38,7 @@ export const identityHashing = {
   lastName: hashWith(lower),
   city: hashWith(stripSpacesAndPunctuation),
   state: hashWith(lower),
-  zip: hashWith(postalCode),
+  zip: hashWith(digitsOnly),
   country: hashWith(lower),
   gender: hashWith(lower),
   dateOfBirth: hashWith(digitsOnly),
