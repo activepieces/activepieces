@@ -128,6 +128,12 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             columns: ['workerGroupId'],
             unique: false,
         },
+        {
+            name: 'idx_project_execution_data_retention_days',
+            columns: ['executionDataRetentionDays'],
+            where: '"executionDataRetentionDays" IS NOT NULL',
+            unique: false,
+        },
     ],
     relations: {
         owner: {

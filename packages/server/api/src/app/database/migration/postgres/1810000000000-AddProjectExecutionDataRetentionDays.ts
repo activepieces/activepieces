@@ -11,9 +11,16 @@ export class AddProjectExecutionDataRetentionDays1810000000000 implements Migrat
             ALTER TABLE "project"
             ADD "executionDataRetentionDays" integer
         `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_project_execution_data_retention_days" ON "project" ("executionDataRetentionDays")
+            WHERE "executionDataRetentionDays" IS NOT NULL
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            DROP INDEX "idx_project_execution_data_retention_days"
+        `)
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "executionDataRetentionDays"
         `)
