@@ -3,6 +3,9 @@
 # Claude Code worktrees
 .claude/worktrees/
 
+# ZAP DAST scan output (generated at runtime, see .zap/README.md)
+.zap/reports/
+
 pieces-cache-db-*.sqlite
 
 # local debug logs (evlog filesystem drain)

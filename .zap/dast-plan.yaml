@@ -1,0 +1,114 @@
+# OWASP ZAP Automation Framework plan for Activepieces DAST.
+# Run by .github/workflows/dast.yml against staging (https://stg.activepieces.com).
+# Auth is injected as a global `replacer` rule on the ZAP command line by the workflow
+# (Authorization: Bearer <jwt>), so it applies to every job below.
+#
+# Scope note: excludePaths below are a deliberate SAFETY denylist. Even though we run a
+# FULL ACTIVE scan, these endpoints have side effects that reach *other people or external
+# services* (emails, payment webhooks, an open proxy) and must never receive attack traffic.
+env:
+  contexts:
+    - name: activepieces-staging
+      urls:
+        - https://stg.activepieces.com
+      includePaths:
+        - https://stg.activepieces.com.*
+      excludePaths:
+        - https://stg.activepieces.com/api/v1/otp.*
+        - https://stg.activepieces.com/api/v1/authn/local.*
+        - https://stg.activepieces.com/api/v1/user-invitations.*
+        - https://stg.activepieces.com/api/v1/stripe-billing.*
+        - https://stg.activepieces.com/ingest.*
+        - https://stg.activepieces.com/api/v1/admin.*
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  # Import the public OpenAPI spec so the active scanner knows every tagged endpoint,
+  # its methods, and body schemas. Untagged internal routes are absent (hideUntagged:true)
+  # and are reached via the spider jobs below instead.
+  - type: openapi
+    parameters:
+      apiUrl: https://stg.activepieces.com/api/v1/docs
+      targetUrl: https://stg.activepieces.com
+      context: activepieces-staging
+
+  # Traditional spider for server-rendered links + the imported API tree.
+  - type: spider
+    parameters:
+      context: activepieces-staging
+      url: https://stg.activepieces.com
+      maxDuration: 5
+
+  # AJAX spider crawls the React SPA (needs the headless Firefox bundled in the stable image).
+  - type: spiderAjax
+    parameters:
+      context: activepieces-staging
+      url: https://stg.activepieces.com
+      maxDuration: 5
+      maxCrawlDepth: 10
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  # Full active injection (SQLi, XSS, path traversal, etc.) against everything discovered
+  # and in scope. The excludePaths in the context keep the safety denylist out of this.
+  # Time caps bound the run so it always emits a report: the smoke run discovered ~2,000 URLs,
+  # and an uncapped active scan over that many nodes can run for hours. Keep these below the
+  # workflow's timeout-minutes.
+  - type: activeScan
+    parameters:
+      context: activepieces-staging
+      maxScanDurationInMins: 120
+      maxRuleDurationInMins: 20
+
+  # False-positive tuning, triaged from the first full run. Rules that are noise everywhere
+  # are filtered globally; rules that are useful elsewhere are scoped by url so a real hit
+  # still surfaces. Re-verify before adding to this list — do not blanket-ignore.
+  - type: alertFilter
+    parameters:
+      deleteGlobalAlerts: false
+    alertFilters:
+      # Informational timestamp disclosure — noise for a JSON API.
+      - ruleId: 10096
+        newRisk: "False Positive"
+        context: activepieces-staging
+      # Format String Error: heuristic targets a C/Microsoft crash class that does not exist
+      # in Node/Fastify. Verified non-reproducible (malformed cursor -> clean 200).
+      - ruleId: 30002
+        newRisk: "False Positive"
+        context: activepieces-staging
+      # "Sensitive info in URL" fires on query-PARAMETER NAMES (e.g. externalUserId), not values.
+      - ruleId: 10024
+        newRisk: "False Positive"
+        context: activepieces-staging
+      # App-error / debug-message disclosure on the static i18n bundle: matches UI strings
+      # containing the word "error", not a real stack/path leak. Scoped to /locales only so
+      # a genuine error-disclosure on an API route still reports.
+      - ruleId: 90022
+        newRisk: "False Positive"
+        url: "https://stg\\.activepieces\\.com/locales/.*"
+        context: activepieces-staging
+      - ruleId: 10023
+        newRisk: "False Positive"
+        url: "https://stg\\.activepieces\\.com/locales/.*"
+        context: activepieces-staging
+
+  # SARIF report for the GitHub Security tab (Security -> Code scanning).
+  - type: report
+    parameters:
+      template: sarif-json
+      reportDir: /zap/wrk/reports
+      reportFile: zap-dast
+      reportTitle: Activepieces DAST (ZAP)
+
+  # Human-readable HTML report, kept as a workflow artifact.
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk/reports
+      reportFile: zap-dast
+      reportTitle: Activepieces DAST (ZAP)
