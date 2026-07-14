@@ -15,6 +15,9 @@ function hashWith(normalize: (raw: string) => string) {
     if (trimmed.length === 0) {
       return undefined;
     }
+    // Treat an input that already looks like a SHA-256 digest as pre-hashed and pass it
+    // through, so callers who hash upstream aren't double-hashed. Tradeoff: a raw value that
+    // happens to be exactly 64 hex chars is sent unhashed.
     if (SHA256_HEX.test(trimmed)) {
       return trimmed.toLowerCase();
     }

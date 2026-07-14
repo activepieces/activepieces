@@ -246,7 +246,7 @@ export const sendConversionEvent = createAction({
       ...(notBlank(props.event_source_url)
         ? { event_source_url: props.event_source_url.trim() }
         : {}),
-      ...(props.opt_out === undefined ? {} : { opt_out: props.opt_out }),
+      ...(props.opt_out == null ? {} : { opt_out: props.opt_out }),
       ...(notBlank(props.partner_name)
         ? { partner_name: props.partner_name.trim() }
         : {}),
@@ -254,12 +254,26 @@ export const sendConversionEvent = createAction({
       ...(Object.keys(customData).length > 0 ? { custom_data: customData } : {}),
     };
 
-    return pinterestConversionsClient.sendEvents({
+    const response = await pinterestConversionsClient.sendEvents({
       conversionToken: context.auth.props.conversion_token,
       adAccountId: context.auth.props.ad_account_id,
       events: [event],
       test: props.test_mode ?? false,
     });
+
+    if (response.num_events_processed < response.num_events_received) {
+      const reasons = response.events
+        .filter((e) => e.status === 'failed')
+        .map((e) => e.error_message)
+        .filter(notBlank);
+      throw new Error(
+        reasons.length > 0
+          ? `Pinterest did not process the event: ${reasons.join('; ')}`
+          : 'Pinterest did not process the event. Check the ad account, token, and event fields.'
+      );
+    }
+
+    return response;
   },
 });
 
@@ -302,7 +316,7 @@ function buildCustomData(props: ActionProps): Record<string, unknown> {
     .filter((id) => id.length > 0);
   const customData: Record<string, unknown> = {
     currency: passthrough(props.currency),
-    value: props.value === undefined ? undefined : String(props.value),
+    value: props.value == null ? undefined : String(props.value),
     content_ids: contentIds.length > 0 ? contentIds : undefined,
     content_name: passthrough(props.content_name),
     content_category: passthrough(props.content_category),
@@ -329,7 +343,9 @@ function wrap(value: string): string[] {
 
 function compact(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(record).filter(([, value]) => value !== undefined)
+    Object.entries(record).filter(
+      ([, value]) => value !== undefined && value !== null && value !== ''
+    )
   );
 }
 
