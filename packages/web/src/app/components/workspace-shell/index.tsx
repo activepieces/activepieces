@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { t } from 'i18next';
 import React, {
   useCallback,
   useEffect,
@@ -10,6 +11,7 @@ import React, {
 import { PanelImperativeHandle } from 'react-resizable-panels';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { useCursorTooltip } from '@/components/custom/cursor-tooltip';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -32,10 +34,15 @@ import { StageContainer } from './stage-container';
 import { StageProvider, useStage } from './stage-context';
 import { WorkspaceChatPanel } from './workspace-chat-panel';
 
-const CHAT_PANEL_OPEN_SIZE = '30%';
 const CHAT_PANEL_MIN_SIZE = '22%';
-const STAGE_PANEL_OPEN_SIZE = '70%';
 const STAGE_PANEL_MIN_SIZE = '22%';
+// The chat side-panel's share of the split while the Stage is open. User drags
+// persist it (clamped so a degenerate near-closed split is never restored).
+const DEFAULT_CHAT_PERCENTAGE = 30;
+const MIN_SAVED_CHAT_PERCENTAGE = 20;
+const MAX_SAVED_CHAT_PERCENTAGE = 80;
+const CHAT_SPLIT_RATIO_KEY = 'ap-chat-split-ratio';
+const CLICK_MOVEMENT_TOLERANCE_PX = 5;
 const DOCK_HINT_DURATION_MS = 9000;
 const DOCK_HINT_SEEN_KEY = 'apChatDockHintSeen_v2';
 // Opening/closing the stage moves the chat between full-width and its narrow
@@ -48,11 +55,6 @@ const PANEL_RESIZE_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
 // The 1px separator between the two panels; excluded when deriving each panel's
 // resting pixel width from the group so the content lock matches the final layout.
 const PANEL_HANDLE_PX = 1;
-// Resting width fractions, mirroring CHAT/STAGE_PANEL_OPEN_SIZE. Used to lock each
-// panel's content to its final layout during the resize (see animatePanelResize).
-const CHAT_OPEN_FRACTION = 0.3;
-const STAGE_OPEN_FRACTION = 0.7;
-
 function hasSeenDockHint(): boolean {
   return localStorage.getItem(DOCK_HINT_SEEN_KEY) === 'true';
 }
@@ -60,6 +62,27 @@ function hasSeenDockHint(): boolean {
 function markDockHintSeen(): void {
   localStorage.setItem(DOCK_HINT_SEEN_KEY, 'true');
 }
+
+const chatSplitRatio = {
+  load(): number {
+    const stored = Number(localStorage.getItem(CHAT_SPLIT_RATIO_KEY));
+    return stored > MIN_SAVED_CHAT_PERCENTAGE &&
+      stored < MAX_SAVED_CHAT_PERCENTAGE
+      ? stored
+      : DEFAULT_CHAT_PERCENTAGE;
+  },
+  save(percentage: number): void {
+    if (
+      percentage > MIN_SAVED_CHAT_PERCENTAGE &&
+      percentage < MAX_SAVED_CHAT_PERCENTAGE
+    ) {
+      localStorage.setItem(
+        CHAT_SPLIT_RATIO_KEY,
+        String(Math.round(percentage)),
+      );
+    }
+  },
+};
 
 export function WorkspaceShell() {
   const { pathname } = useLocation();
@@ -117,6 +140,10 @@ function WorkspaceShellInner() {
     () => localStorage.getItem(chatPoppedStorageKey) === 'true',
   );
   const didRestorePopRef = useRef(false);
+  const [initialChatRatio] = useState(() => chatSplitRatio.load());
+  const [isDraggingHandle, setIsDraggingHandle] = useState(false);
+  const isDraggingHandleRef = useRef(false);
+  const dragStartPointRef = useRef<{ x: number; y: number } | null>(null);
 
   // Persist the pop-out state per user so a page refresh restores it (the mount
   // effect below reapplies the collapsed-panel layout when it was popped).
@@ -215,7 +242,7 @@ function WorkspaceShellInner() {
     const stage = stagePanelRef.current;
     const chat = chatPanelRef.current;
     if (stage && chat && isStageOpen && !stage.isCollapsed()) {
-      chat.resize(CHAT_PANEL_OPEN_SIZE);
+      chat.resize(`${chatSplitRatio.load()}%`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -233,9 +260,10 @@ function WorkspaceShellInner() {
     }
     if (isStageOpen) {
       if (stage.isCollapsed()) {
-        animatePanelResize(() => stage.resize(STAGE_PANEL_OPEN_SIZE), {
-          chat: CHAT_OPEN_FRACTION,
-          stage: STAGE_OPEN_FRACTION,
+        const ratio = chatSplitRatio.load();
+        animatePanelResize(() => stage.resize(`${100 - ratio}%`), {
+          chat: ratio / 100,
+          stage: 1 - ratio / 100,
         });
       }
     } else if (!stage.isCollapsed()) {
@@ -278,10 +306,14 @@ function WorkspaceShellInner() {
   }, [animatePanelResize]);
 
   const showChat = useCallback(() => {
-    animatePanelResize(() => chatPanelRef.current?.expand(), {
-      chat: CHAT_OPEN_FRACTION,
-      stage: STAGE_OPEN_FRACTION,
-    });
+    const ratio = chatSplitRatio.load();
+    animatePanelResize(
+      () => {
+        chatPanelRef.current?.expand();
+        chatPanelRef.current?.resize(`${ratio}%`);
+      },
+      { chat: ratio / 100, stage: 1 - ratio / 100 },
+    );
   }, [animatePanelResize]);
 
   // First time we auto-pop the chat for the user, teach them how to get back by
@@ -320,10 +352,14 @@ function WorkspaceShellInner() {
 
   const dockChat = useCallback(() => {
     setChatPopped(false);
-    animatePanelResize(() => chatPanelRef.current?.expand(), {
-      chat: CHAT_OPEN_FRACTION,
-      stage: STAGE_OPEN_FRACTION,
-    });
+    const ratio = chatSplitRatio.load();
+    animatePanelResize(
+      () => {
+        chatPanelRef.current?.expand();
+        chatPanelRef.current?.resize(`${ratio}%`);
+      },
+      { chat: ratio / 100, stage: 1 - ratio / 100 },
+    );
     setDockHintVisible(false);
     markDockHintSeen();
   }, [animatePanelResize]);
@@ -346,9 +382,59 @@ function WorkspaceShellInner() {
     }
   }, [isStageOpen, closeStage]);
 
+  const startDraggingHandle = useCallback((event: React.PointerEvent) => {
+    dragStartPointRef.current = { x: event.clientX, y: event.clientY };
+    isDraggingHandleRef.current = true;
+    setIsDraggingHandle(true);
+  }, []);
+
+  // The resize handle keeps pointer capture, so drag end is observed globally.
+  // A click (barely any movement) closes the chat; a real drag persists the
+  // ratio so the split reopens where the user left it. The snap-to-close /
+  // snap-to-fullscreen cases are the panels' own collapse mechanics (min-size +
+  // collapsible) and are handled by onResize / handleStageLayoutChanged.
+  useEffect(() => {
+    const handleDragEnd = (event: PointerEvent) => {
+      if (!isDraggingHandleRef.current) return;
+      isDraggingHandleRef.current = false;
+      setIsDraggingHandle(false);
+      const start = dragStartPointRef.current;
+      dragStartPointRef.current = null;
+      const isClick =
+        start !== null &&
+        Math.hypot(event.clientX - start.x, event.clientY - start.y) <
+          CLICK_MOVEMENT_TOLERANCE_PX;
+      if (isClick) {
+        // Closing the chat is safe mid-run: the turn executes server-side and
+        // the client reattaches to the live stream when the chat is reopened.
+        closeChat();
+        return;
+      }
+      const chat = chatPanelRef.current;
+      const stage = stagePanelRef.current;
+      if (chat && stage && !chat.isCollapsed() && !stage.isCollapsed()) {
+        chatSplitRatio.save(chat.getSize().asPercentage);
+      }
+    };
+    window.addEventListener('pointerup', handleDragEnd);
+    window.addEventListener('pointercancel', handleDragEnd);
+    return () => {
+      window.removeEventListener('pointerup', handleDragEnd);
+      window.removeEventListener('pointercancel', handleDragEnd);
+    };
+  }, [closeChat]);
+
+  const handleTooltip = useCursorTooltip({
+    lines: [
+      { action: t('Click'), description: t('to close') },
+      { action: t('Drag'), description: t('to resize') },
+    ],
+    disabled: !isStageOpen || chatCollapsed || isDraggingHandle,
+  });
+
   const chatDockValue = useMemo(
-    () => ({ chatPopped, chatCollapsed, popOutChat, dockChat }),
-    [chatPopped, chatCollapsed, popOutChat, dockChat],
+    () => ({ chatPopped, chatCollapsed, popOutChat, dockChat, showChat }),
+    [chatPopped, chatCollapsed, popOutChat, dockChat, showChat],
   );
 
   // Chat off (Community, EE without the flag, Cloud outside the rollout): the Stage
@@ -356,8 +442,8 @@ function WorkspaceShellInner() {
   // affordance. Everything else (sidebar, Stage content, project actions) stays.
   if (!chatEnabled) {
     return (
-      <SidebarProvider defaultOpen={false} hoverMode={false}>
-        <ProjectDashboardSidebar />
+      <SidebarProvider defaultOpen={true} hoverMode={true}>
+        <ProjectDashboardSidebar collapsible="offcanvas" />
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
           <div className="flex-1 flex overflow-hidden p-1.5">
             <StageContainer standalone />
@@ -370,8 +456,8 @@ function WorkspaceShellInner() {
 
   return (
     <ChatDockProvider value={chatDockValue}>
-      <SidebarProvider defaultOpen={false} hoverMode={false}>
-        <ProjectDashboardSidebar />
+      <SidebarProvider defaultOpen={true} hoverMode={true}>
+        <ProjectDashboardSidebar collapsible="offcanvas" />
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
           <div className="flex-1 flex overflow-hidden p-1.5">
             <ResizablePanelGroup
@@ -386,7 +472,7 @@ function WorkspaceShellInner() {
                 elementRef={chatPanelEl}
                 collapsible
                 collapsedSize="0%"
-                defaultSize={isStageOpen ? CHAT_PANEL_OPEN_SIZE : '100%'}
+                defaultSize={isStageOpen ? `${initialChatRatio}%` : '100%'}
                 minSize={CHAT_PANEL_MIN_SIZE}
                 maxSize="100%"
                 onResize={syncChatCollapsed}
@@ -405,18 +491,25 @@ function WorkspaceShellInner() {
               </ResizablePanel>
               <ResizableHandle
                 disabled={!isStageOpen || chatCollapsed}
+                onPointerDown={startDraggingHandle}
+                // The library's own capture-phase dblclick listener resets the
+                // chat panel to its defaultSize; a fast double click must stay
+                // two "close" clicks instead.
+                onDoubleClickCapture={(e) => e.preventDefault()}
+                {...handleTooltip.handlers}
                 className={cn(
                   'w-px bg-border/70 transition-[background-color,opacity] duration-300 after:w-2.5 hover:bg-primary/50 active:bg-primary',
                   (!isStageOpen || chatCollapsed) && 'opacity-0',
                 )}
               />
+              {handleTooltip.tooltip}
               <ResizablePanel
                 id="stage-panel"
                 panelRef={stagePanelRef}
                 elementRef={stagePanelEl}
                 collapsible
                 collapsedSize="0%"
-                defaultSize={isStageOpen ? STAGE_PANEL_OPEN_SIZE : '0%'}
+                defaultSize={isStageOpen ? `${100 - initialChatRatio}%` : '0%'}
                 minSize={STAGE_PANEL_MIN_SIZE}
                 className="min-w-0"
               >

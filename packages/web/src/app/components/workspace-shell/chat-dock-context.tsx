@@ -33,4 +33,7 @@ export type ChatDockContextValue = {
   // so they learn how to return to the docked side-by-side view.
   popOutChat: (options?: { teachDock?: boolean }) => void;
   dockChat: () => void;
+  // Expands a collapsed chat panel in place (no pop-out state change) — used by
+  // sidebar actions that target the docked chat (New Chat, picking a conversation).
+  showChat: () => void;
 };
