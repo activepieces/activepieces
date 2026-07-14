@@ -129,6 +129,7 @@
   "Run Succeeded": "Run Succeeded",
   "Run Failed": "Run Failed",
   "Run Paused": "Run Paused",
+  "Run every {minutes, plural, =1 {minute} other {# minutes}}": "Run every {minutes, plural, =1 {minute} other {# minutes}}",
   "Quota Exceeded": "Quota Exceeded",
   "Run failed due to output of steps exceeding the log size limit of {logSizeLimit} MB": "Run failed due to output of steps exceeding the log size limit of {logSizeLimit} MB",
   "Run failed due to exceeding the memory limit of {memoryLimit} MB": "Run failed due to exceeding the memory limit of {memoryLimit} MB",
