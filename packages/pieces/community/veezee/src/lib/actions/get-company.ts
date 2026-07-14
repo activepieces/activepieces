@@ -11,15 +11,15 @@ export const getCompanyAction = createAction({
   name: 'get_company',
   displayName: 'Get LinkedIn Company',
   description:
-    "Fetch a LinkedIn company page by URL, slug, or website domain. Costs 4 credits; a website domain is quoted at +4 credits for resolution, refunded at settlement when the domain is already known. Works with or without an API key.",
+    "Fetch a LinkedIn company page by URL, slug, or website domain. Costs 4 credits; a website domain is quoted at +4 credits for resolution, refunded at settlement when the domain is already known. Needs a free Veezee API key (self-minted, no signup or card).",
   audience: 'both',
   aiMetadata: {
     description:
-      "Fetch one company's LinkedIn page: name, description, industry, employee count, headquarters, founding year, specialities, plus the URN and numeric id used as Search LinkedIn People company filters. Identifier accepts a company URL, the slug after /company/ (e.g. microsoft), or a website domain (e.g. microsoft.com); numeric ids and URNs are search-filter inputs, not fetch identifiers. This does not search by approximate name — use Search LinkedIn People's company filter or the exact slug. Costs 4 credits base; a domain identifier is quoted at +4 credits, refunded for already-known domains. Works keyless under a free per-IP daily budget. Read-only lookup, safe to repeat.",
+      "Fetch one company's LinkedIn page: name, description, industry, employee count, headquarters, founding year, specialities, plus the URN and numeric id used as Search LinkedIn People company filters. Identifier accepts a company URL, the slug after /company/ (e.g. microsoft), or a website domain (e.g. microsoft.com); numeric ids and URNs are search-filter inputs, not fetch identifiers. This does not search by approximate name — use Search LinkedIn People's company filter or the exact slug. Costs 4 credits base; a domain identifier is quoted at +4 credits, refunded for already-known domains. Needs a free self-minted Veezee API key (no signup or card); the free tier is 20 credits/day per network location. Read-only lookup, safe to repeat.",
     idempotent: true,
   },
   auth: veezeeAuth,
-  requireAuth: false,
+  requireAuth: true,
   props: {
     identifier: Property.ShortText({
       displayName: 'Company Identifier',

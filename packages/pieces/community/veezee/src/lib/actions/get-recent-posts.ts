@@ -11,15 +11,15 @@ export const getRecentPostsAction = createAction({
   name: 'get_recent_posts',
   displayName: 'Get LinkedIn Posts',
   description:
-    'Fetch the recent LinkedIn posts of a person or company, one page per call with a cursor for older posts. Costs 4 credits per page. Works with or without an API key.',
+    'Fetch the recent LinkedIn posts of a person or company, one page per call with a cursor for older posts. Costs 4 credits per page. Needs a free Veezee API key (self-minted, no signup or card).',
   audience: 'both',
   aiMetadata: {
     description:
-      "Fetch the recent LinkedIn posts of one person or one company, with text, timestamps, and engagement counts. Identifier accepts a profile or company URL, a slug, a person URN, or a company website domain; the entity type is detected automatically. Use for activity checks before outreach or voice-of-company research. Not for reading one specific post by URL and not for keyword search across LinkedIn. Costs 4 credits per page; each further page (via cursor) costs the same. Works keyless under a free per-IP daily budget. Read-only lookup, safe to repeat.",
+      "Fetch the recent LinkedIn posts of one person or one company, with text, timestamps, and engagement counts. Identifier accepts a profile or company URL, a slug, a person URN, or a company website domain; the entity type is detected automatically. Use for activity checks before outreach or voice-of-company research. Not for reading one specific post by URL and not for keyword search across LinkedIn. Costs 4 credits per page; each further page (via cursor) costs the same. Needs a free self-minted Veezee API key (no signup or card); the free tier is 20 credits/day per network location. Read-only lookup, safe to repeat.",
     idempotent: true,
   },
   auth: veezeeAuth,
-  requireAuth: false,
+  requireAuth: true,
   props: {
     identifier: Property.ShortText({
       displayName: 'Person or Company Identifier',

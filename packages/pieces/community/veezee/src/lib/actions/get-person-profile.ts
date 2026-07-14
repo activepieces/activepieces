@@ -11,15 +11,15 @@ export const getPersonProfileAction = createAction({
   name: 'get_person_profile',
   displayName: 'Get LinkedIn Profile',
   description:
-    'Fetch a LinkedIn person profile by URL, slug, or URN. Costs 4 credits; the first 2 profile sections are included, each extra section adds 2 credits. Works with or without an API key.',
+    'Fetch a LinkedIn person profile by URL, slug, or URN. Costs 4 credits; the first 2 profile sections are included, each extra section adds 2 credits. Needs a free Veezee API key (self-minted, no signup or card).',
   audience: 'both',
   aiMetadata: {
     description:
-      "Fetch one person's LinkedIn profile by profile URL, slug (after /in/), or urn:li:fsd_profile URN. Use when you already know which person; to find people by name, title, or company use Search LinkedIn People instead. Costs 4 credits base; the first 2 requested sections are included, each extra section adds 2 credits. Works keyless under a free per-IP daily budget. Read-only lookup, safe to repeat.",
+      "Fetch one person's LinkedIn profile by profile URL, slug (after /in/), or urn:li:fsd_profile URN. Use when you already know which person; to find people by name, title, or company use Search LinkedIn People instead. Costs 4 credits base; the first 2 requested sections are included, each extra section adds 2 credits. Needs a free self-minted Veezee API key (no signup or card); the free tier is 20 credits/day per network location. Read-only lookup, safe to repeat.",
     idempotent: true,
   },
   auth: veezeeAuth,
-  requireAuth: false,
+  requireAuth: true,
   props: {
     identifier: Property.ShortText({
       displayName: 'Person Identifier',

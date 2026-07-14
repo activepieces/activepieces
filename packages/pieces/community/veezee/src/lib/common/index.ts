@@ -11,9 +11,13 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 export const VEEZEE_BASE_URL = 'https://api.veezee.io';
 
 const markdownDescription = `
-Optional. Every action below also works with no key: calls run keyless under a free per-IP daily budget (20 credits/day, recent data only, no realtime fetches).
+Every call needs a Veezee API key. Mint a free one with one curl call, no signup, no card:
 
-Paste an API key to raise those limits and unlock realtime fetches; it is sent as \`Authorization: Bearer <key>\`. Get a paid key at https://veezee.io/upgrade.
+\`curl -X POST https://api.veezee.io/v1/keys/mint\`
+
+Paste the returned \`vz_trial_...\` key here; it is sent as \`Authorization: Bearer <key>\`. The free tier is 20 credits/day per network location.
+
+Paying at https://veezee.io/upgrade upgrades this same key, nothing to reconfigure.
 `;
 
 export const veezeeAuth = PieceAuth.SecretText({
@@ -38,7 +42,7 @@ export const veezeeAuth = PieceAuth.SecretText({
         return {
           valid: false,
           error:
-            'Invalid API key. Leave this field empty to call keyless, or get a paid key at https://veezee.io/upgrade.',
+            'Invalid API key. Mint a free one with POST https://api.veezee.io/v1/keys/mint (no signup, no card), or get a paid key at https://veezee.io/upgrade.',
         };
       }
       return {
@@ -52,7 +56,7 @@ export const veezeeAuth = PieceAuth.SecretText({
 export const freshnessProp = Property.StaticDropdown({
   displayName: 'Freshness',
   description:
-    'Recent (default) serves cached data from the last few hours when available; Realtime forces a live fetch for +2 credits (refunded if the live fetch falls back to cached data). Keyless calls only support Recent.',
+    'Recent (default) serves cached data from the last few hours when available; Realtime forces a live fetch for +2 credits (refunded if the live fetch falls back to cached data). Trial and unpaid keys only support Recent; Realtime needs a paid balance.',
   required: false,
   options: {
     options: [
@@ -113,8 +117,9 @@ export async function veezeeApiCall<T>({
     queryParams,
   };
 
-  // Auth is optional on data routes: a keyless call runs under a free
-  // per-IP daily budget, so only attach the header when a key is set.
+  // Every data route requires a key; still guard for an unset key so the
+  // request goes out and comes back with a clean KEY_REQUIRED error below
+  // instead of sending a malformed Authorization header.
   if (apiKey) {
     request.authentication = {
       type: AuthenticationType.BEARER_TOKEN,
@@ -128,13 +133,23 @@ export async function veezeeApiCall<T>({
   } catch (error: unknown) {
     const { status, body, message } = extractStatusAndBody(error);
 
+    if (status === 401 && stringField(body, 'code') === 'KEY_REQUIRED') {
+      const mintUrl = stringField(body, 'mint_url');
+      const mintHint = mintUrl
+        ? ` at ${mintUrl}`
+        : ' with POST https://api.veezee.io/v1/keys/mint';
+      throw new Error(
+        `Veezee API key required. Mint a free one${mintHint} (no signup, no card) and paste it into the connection.`
+      );
+    }
+
     if (status === 403 && stringField(body, 'code') === 'TRIAL_CAP_EXCEEDED') {
       const retrySeconds = numberField(body, 'retry_after_seconds');
       const upgradeUrl = stringField(body, 'upgrade_url');
       const retryHint = retrySeconds ? ` Retry in ${retrySeconds}s` : '';
       const upgradeHint = upgradeUrl ? ` or get a paid key at ${upgradeUrl}` : '';
       throw new Error(
-        `Veezee free keyless daily budget is used up.${retryHint}${
+        `Veezee free trial daily budget is used up.${retryHint}${
           retryHint && upgradeHint ? ',' : ''
         }${upgradeHint}.`
       );

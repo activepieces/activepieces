@@ -11,15 +11,15 @@ export const searchPeopleAction = createAction({
   name: 'search_people',
   displayName: 'Search LinkedIn People',
   description:
-    'Search people on LinkedIn by keywords and filters. Costs 10 credits including the first 10 results; each further 10 results add 1 credit (max 30 per call; keyless and trial callers are capped at 10). Works with or without an API key.',
+    'Search people on LinkedIn by keywords and filters. Costs 10 credits including the first 10 results; each further 10 results add 1 credit (max 30 per call; trial and unpaid keys are capped at 10). Needs a free Veezee API key (self-minted, no signup or card).',
   audience: 'both',
   aiMetadata: {
     description:
-      'Find people on LinkedIn by keywords, name, title, school, or company when you do not have a profile URL; for a known person use Get LinkedIn Profile instead. Provide keywords or a name/title filter — school or company filters alone are rejected. Do not combine a company NAME filter with limit 30; pass the company numeric id or URN (from Get LinkedIn Company) for the largest searches. Costs 10 credits for the first 10 results, +1 credit per further 10 (max 30; keyless and trial callers max 10). Results flagged is_anonymous are private profiles and cannot be fetched with Get LinkedIn Profile. Works keyless under a free per-IP daily budget. Read-only search, safe to repeat.',
+      'Find people on LinkedIn by keywords, name, title, school, or company when you do not have a profile URL; for a known person use Get LinkedIn Profile instead. Provide keywords or a name/title filter — school or company filters alone are rejected. Do not combine a company NAME filter with limit 30; pass the company numeric id or URN (from Get LinkedIn Company) for the largest searches. Costs 10 credits for the first 10 results, +1 credit per further 10 (max 30; trial and unpaid keys max 10). Results flagged is_anonymous are private profiles and cannot be fetched with Get LinkedIn Profile. Needs a free self-minted Veezee API key (no signup or card); the free tier is 20 credits/day per network location. Read-only search, safe to repeat.',
     idempotent: true,
   },
   auth: veezeeAuth,
-  requireAuth: false,
+  requireAuth: true,
   props: {
     keywords: Property.ShortText({
       displayName: 'Keywords',
@@ -57,7 +57,7 @@ export const searchPeopleAction = createAction({
     limit: Property.Number({
       displayName: 'Limit',
       description:
-        'How many results to return (1-30). The first 10 are included in the base price; each further 10 add 1 credit. Keyless and trial callers are capped at 10. With a company NAME filter keep this at 20 or less; use the company numeric id or URN for 30.',
+        'How many results to return (1-30). The first 10 are included in the base price; each further 10 add 1 credit. Trial and unpaid keys are capped at 10. With a company NAME filter keep this at 20 or less; use the company numeric id or URN for 30.',
       required: false,
     }),
     cursor: Property.ShortText({
