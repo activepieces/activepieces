@@ -96,9 +96,6 @@ export type WorkerToApiContract = {
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
     sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse>
-    getPersonalizationConfig(input: GetPersonalizationConfigRequest): Promise<PersonalizationConfigResponse>
-    savePersonalizationResult(input: SavePersonalizationResultRequest): Promise<void>
-    sendPersonalizationProgress(input: SendPersonalizationProgressRequest): Promise<void>
 }
 
 export type SendChatEventRequest = {
@@ -379,67 +376,6 @@ export type SendChatEmailResponse = {
 export type DisableFlowRequest = {
     flowId: string
     projectId: string
-}
-
-// Chat-personalization research RPCs. Profile/use-case payloads stay loosely
-// typed here because core-execution cannot import the shared ee/chat zod
-// models; the API validates them with PersonalizationProfile on save.
-export type PersonalizationScope = 'company' | 'user'
-
-export type GetPersonalizationConfigRequest = {
-    platformId: string
-    userId: string
-    scope: PersonalizationScope
-}
-
-export type PersonalizationConfigResponse = {
-    // false = another job owns the row (CAS claim lost); the worker exits silently.
-    claimed: boolean
-    provider: string
-    auth: Record<string, unknown>
-    providerConfig: Record<string, unknown>
-    modelId: string
-    fastModelId: string
-    user: { firstName: string, lastName: string, email: string }
-    platformName: string
-    website: string | null
-    // The role the user typed during onboarding — authoritative over enrichment.
-    role: string | null
-    companyProfile: Record<string, unknown> | null
-    // Apollo-style people/company enrichment credentials when the platform has
-    // the ENRICHMENT AI capability configured.
-    enrichment: { provider: string, apiKey: string } | null
-    // Direct web-search credentials (Tavily) when the platform has the
-    // WEB_SEARCH AI capability configured — powers the parallel research
-    // queries that keep personalization deep AND fast.
-    webSearch: { provider: string, apiKey: string } | null
-}
-
-export type PersonalizationUseCaseResult = {
-    id: string
-    title: string
-    prompt: string
-    imageId: string
-    app?: string
-    kind?: 'mission' | 'routine'
-}
-
-export type SavePersonalizationResultRequest = {
-    platformId: string
-    userId: string
-    scope: PersonalizationScope
-    status: 'READY' | 'FAILED'
-    profile: Record<string, unknown> | null
-    useCases: PersonalizationUseCaseResult[] | null
-    placeholderPlatformName: string | null
-}
-
-export type SendPersonalizationProgressRequest = {
-    platformId: string
-    userId: string
-    scope: PersonalizationScope
-    phase: string
-    message: string
 }
 
 export type PrewarmDataRequest = {

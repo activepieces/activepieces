@@ -4,15 +4,7 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Globe,
-  Image,
-  LucideIcon,
-  Pencil,
-  Search,
-  Trash,
-  UserSearch,
-} from 'lucide-react';
+import { Globe, Image, LucideIcon, Pencil, Search, Trash } from 'lucide-react';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -34,7 +26,6 @@ const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {
   [AiToolCapability.WEB_SEARCH]: Search,
   [AiToolCapability.WEB_SCRAPING]: Globe,
   [AiToolCapability.IMAGE_GENERATION]: Image,
-  [AiToolCapability.ENRICHMENT]: UserSearch,
 };
 
 export default function AiCapabilitiesPage() {

@@ -15,10 +15,6 @@ export enum WebsocketClientEvent {
     RESOURCE_UNLOCKED = 'RESOURCE_UNLOCKED',
     PRESENCE_UPDATED = 'PRESENCE_UPDATED',
     CHAT_MESSAGE_CHUNK = 'CHAT_MESSAGE_CHUNK',
-    // Onboarding company-research progress, emitted to the userId room. Payload
-    // schema lives in ee/chat/chat-personalization.ts to keep this file
-    // decoupled from ee modules.
-    CHAT_PERSONALIZATION_PROGRESS = 'CHAT_PERSONALIZATION_PROGRESS',
     // Resource-delta events: a mutation to a resource is broadcast to the project
     // room so any open view can patch its state live (see the *Event schemas
     // below). Applied idempotently on the client. Tables emit per-record/field

@@ -64,8 +64,6 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
             return 'critical'
         case WorkerJobType.EXECUTE_CHAT_AGENT:
             return 'high'
-        case WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH:
-            return 'medium'
     }
 }
 
@@ -82,7 +80,6 @@ export enum WorkerJobType {
     EVENT_DESTINATION = 'EVENT_DESTINATION',
     EXECUTE_CHAT_AGENT = 'EXECUTE_CHAT_AGENT',
     EXECUTE_TOKEN_REFRESH = 'EXECUTE_TOKEN_REFRESH',
-    EXECUTE_PERSONALIZATION_RESEARCH = 'EXECUTE_PERSONALIZATION_RESEARCH',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -94,7 +91,6 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_CHAT_AGENT,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
-    WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH,
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
@@ -322,26 +318,6 @@ export const ExecuteChatAgentJobData = z.object({
 })
 export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
 
-// Onboarding company/user research (chat personalization). scope is inlined as
-// a literal enum because core-execution cannot import the shared ee/chat types.
-export const ExecutePersonalizationResearchJobData = z.object({
-    schemaVersion: z.number(),
-    jobType: z.literal(WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH),
-    platformId: z.string(),
-    // Personalization is platform-level; never set. Present so `.projectId`
-    // stays accessible on the JobData union (job broker / migrations).
-    projectId: z.string().optional(),
-    userId: z.string(),
-    scope: z.enum(['company', 'user']),
-    website: z.string().nullable(),
-    // The user-provided role from onboarding; authoritative over enrichment.
-    role: z.string().nullable().optional(),
-    // platform.name snapshot at enqueue time; the API only auto-renames the
-    // platform to the researched display name while the name still equals this.
-    placeholderPlatformName: z.string().nullable(),
-})
-export type ExecutePersonalizationResearchJobData = z.infer<typeof ExecutePersonalizationResearchJobData>
-
 export const EventDestinationJobData = z.object({
     schemaVersion: z.number(),
     platformId: z.string(),
@@ -362,7 +338,6 @@ export const JobData = z.union([
     UserInteractionJobData,
     EventDestinationJobData,
     ExecuteChatAgentJobData,
-    ExecutePersonalizationResearchJobData,
 ])
 export type JobData = z.infer<typeof JobData>
 export type JobPayload = z.infer<typeof JobPayload>

@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
 import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderWithoutSensitiveData, ApEnvironment, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, UpdateAIProviderRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -15,7 +15,6 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
-import { aiToolConfigService } from './ai-tool-config-service'
 import { aiProviders } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
@@ -390,9 +389,6 @@ async function seedDevChatProvider(platformId: PlatformId, log: FastifyBaseLogge
         config: source.config,
         enabledForChat: true,
     })
-    // The AI tool capabilities (search/scrape/image/enrichment) ride along so
-    // the fresh dev platform gets the whole toolbelt, not just chat.
-    await tryCatch(() => aiToolConfigService(log).cloneDevConfigs({ platformId }))
     log.warn({ platform: { id: platformId }, sourcePlatform: { id: source.platformId }, provider: { name: source.provider } }, '[aiProviderService] Dev auto-setup: cloned chat provider onto new platform')
 }
 

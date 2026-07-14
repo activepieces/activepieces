@@ -28,7 +28,6 @@ import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatUserIdentity } from './chat-user-identity'
 import { chatMcp } from './mcp/chat-mcp'
 import { mentionContext } from './mention-context'
-import { chatPersonalizationService } from './personalization/chat-personalization-service'
 import { chatPrompt } from './prompt/chat-prompt'
 import { executeCrossProjectTool } from './tools/chat-tools'
 
@@ -367,7 +366,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         // name, @-mention resolution) are independent and best-effort, and this runs on every
         // message — fetch them concurrently rather than stacking their latencies.
         const accessibleProjectIds = userProjects.map((p) => p.id)
-        const [inventoryResult, overviewResult, platformNameResult, mentionsNoteResult, enrichmentResult] = await Promise.all([
+        const [inventoryResult, overviewResult, platformNameResult, mentionsNoteResult] = await Promise.all([
             (!dryRun && !isNil(selectedProjectId))
                 ? tryCatch(() => appConnectionService(log).list({
                     projectId: selectedProjectId,
@@ -397,11 +396,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             (!isNil(mentions) && mentions.length > 0 && !isNil(selectedProjectId))
                 ? tryCatch(() => mentionContext.resolveMentionsNote({ mentions, projectId: selectedProjectId, platformId, log }))
                 : null,
-            // Onboarding research (cloud): verified company description + likely role replace the
-            // email-domain guess when available. Best-effort — never blocks the turn.
-            !dryRun
-                ? tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId }))
-                : null,
         ])
         const inventoryNote = inventoryResult && !inventoryResult.error
             ? buildConnectionInventoryNote({
@@ -415,15 +409,13 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
 
         // Tell the agent who it's actually talking to — the real person's name + email (for
         // personalisation and as the "email me" destination), a company hint from the email
-        // domain, the platform's white-label brand name, and (on cloud) the onboarding
-        // enrichment. The name/email come from userMeta; brand + enrichment are best-effort
-        // lookups fetched concurrently above that must not block the turn.
+        // domain, and the platform's white-label brand name. The name/email come from userMeta;
+        // brand is a best-effort lookup fetched concurrently above that must not block the turn.
         const userIdentityNote = chatUserIdentity.buildNote({
             firstName: userMeta.firstName,
             lastName: userMeta.lastName,
             email: userMeta.email,
             platformName: platformNameResult && !platformNameResult.error ? platformNameResult.data.name : null,
-            personalization: enrichmentResult && !enrichmentResult.error ? enrichmentResult.data : null,
         })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedChatMessage[]
@@ -435,23 +427,9 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         // bare label (e.g. "Clone me"), so without this the agent reads it as a literal command and
         // deflates into a disambiguation menu. Tell it this is an aspirational north-star so it leads
         // with a plan and starts working (see <interpreting_intent>).
-        let suggestionNote = source === 'suggestion'
+        const suggestionNote = source === 'suggestion'
             ? '\n\n## This message came from a starter suggestion\nThe user tapped one of the "Dream big" starter cards rather than typing — so this is a deliberately-huge, aspirational north-star goal, NOT a literal command. Open with one warm line naming the bold play you\'re about to run, then start working immediately (let any questions surface along the way, never as an up-front gate). Never reply with a clarifying menu or ask which existing resource they meant. See `<interpreting_intent>`.'
             : ''
-        // Personalized cards send their clean TITLE as the visible message; the
-        // researched mission behind it is injected here as grounding so the
-        // agent runs the full play, not a cold reading of four words.
-        // Best-effort — a lookup failure must not block the turn.
-        if (source === 'suggestion' && suggestionNote.length > 0) {
-            const missionResult = await tryCatch(async () => {
-                const view = await chatPersonalizationService(log).getEffectiveView({ platformId, userId })
-                const tapped = userMessage.trim().toLowerCase()
-                return view.useCases.find((useCase) => useCase.title.trim().toLowerCase() === tapped) ?? null
-            })
-            if (!missionResult.error && !isNil(missionResult.data)) {
-                suggestionNote += `\n\nThis specific card was designed for this user's role and company during onboarding. The full mission behind it:\n"${missionResult.data.prompt}"\nTreat that as what they actually want — start executing it.`
-            }
-        }
 
         const isReferral = conversation.chatMode === ChatMode.REFERRAL
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)

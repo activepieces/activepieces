@@ -403,8 +403,6 @@ import { AddDeletedToRecord1811000000000 } from './migration/postgres/1811000000
 import { AddColorToRecordAndCell1812000000000 } from './migration/postgres/1812000000000-AddColorToRecordAndCell'
 import { AddReferralTables1813000000000 } from './migration/postgres/1813000000000-AddReferralTables'
 import { AddChatModeToChatConversation1814000000000 } from './migration/postgres/1814000000000-AddChatModeToChatConversation'
-import { AddChatPersonalization1815000000000 } from './migration/postgres/1815000000000-AddChatPersonalization'
-import { AddRoleToChatPersonalization1816000000000 } from './migration/postgres/1816000000000-AddRoleToChatPersonalization'
 import { AddCelebrationEmojisToReferralPhrase1817000000000 } from './migration/postgres/1817000000000-AddCelebrationEmojisToReferralPhrase'
 import { AddCelebrationSceneToReferralPhrase1818000000000 } from './migration/postgres/1818000000000-AddCelebrationSceneToReferralPhrase'
 import { AddCelebrationImageToReferralPhrase1819000000000 } from './migration/postgres/1819000000000-AddCelebrationImageToReferralPhrase'
@@ -820,8 +818,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddColorToRecordAndCell1812000000000,
         AddReferralTables1813000000000,
         AddChatModeToChatConversation1814000000000,
-        AddChatPersonalization1815000000000,
-        AddRoleToChatPersonalization1816000000000,
         AddCelebrationEmojisToReferralPhrase1817000000000,
         AddCelebrationSceneToReferralPhrase1818000000000,
         AddCelebrationImageToReferralPhrase1819000000000,

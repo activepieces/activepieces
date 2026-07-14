@@ -318,7 +318,6 @@ export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
 export { ChatMention, ChatMentionType } from '@activepieces/core-execution'
-export * from './chat-personalization'
 export { chatToolClassification } from './tool-classification'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
 export { chatPositionUtils } from './position-note'

@@ -1,8 +1,3 @@
-import {
-  ChatPersonalizationStatus,
-  PersonalizationProfile,
-  PersonalizationUseCase,
-} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowUpRight,
@@ -11,7 +6,7 @@ import {
   ChevronRight,
   Settings,
 } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
   ReactNode,
@@ -26,18 +21,10 @@ import { useNavigate } from 'react-router-dom';
 import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-
-import { PersonalizationJourney } from './personalization-journey';
-import { PersonalizationBar } from './personalized-for-chip';
-
-// After the final 'done' event the journey holds briefly so the last step
-// visibly crosses out before the personalized cards take the stage.
-const JOURNEY_EXIT_HOLD_MS = 900;
 
 export function EmptyState({
   onSuggestionClick,
@@ -53,25 +40,9 @@ export function EmptyState({
   const firstName = currentUser?.firstName ?? '';
   const branding = flagsHooks.useWebsiteBranding();
   const stage = useStageOptional();
-  const personalization = usePersonalization({ enabled: !incognito });
   const reducedMotion = useReducedMotion();
-  const journeyVisible = useTrailingEdgeHold(
-    personalization.isResearching,
-    reducedMotion ? 0 : JOURNEY_EXIT_HOLD_MS,
-  );
 
-  const personalizedCards = useMemo(
-    () => resolvePersonalizedCards({ useCases: personalization.useCases }),
-    [personalization.useCases],
-  );
-  // Defaults render immediately — the personalization query must never delay
-  // or skeleton the empty state; null (failed/skipped/non-cloud) keeps today's
-  // experience pixel-identical.
-  const cards = personalizedCards ?? EXAMPLE_CARDS.map(resolveDefaultCard);
-  // During the exit hold all steps show crossed out.
-  const journeyPhase = personalization.isResearching
-    ? personalization.phase
-    : 'done';
+  const cards = EXAMPLE_CARDS.map(resolveDefaultCard);
 
   if (incognito) {
     return (
@@ -112,84 +83,28 @@ export function EmptyState({
     );
   }
 
-  // While researching, the journey takes over the whole empty chat space —
-  // the user is entering the world of AI, not waiting on a spinner.
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      {journeyVisible ? (
-        <motion.div
-          key="journey"
-          className="flex min-h-full flex-col justify-center pt-12 sm:pt-16 pb-6"
-          exit={
-            reducedMotion
-              ? { opacity: 0 }
-              : { opacity: 0, y: -20, scale: 0.985 }
-          }
-          transition={{ duration: 0.35, ease: 'easeIn' }}
-        >
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
-            <div className="max-w-xl">
-              <PersonalizationJourney
-                phase={journeyPhase}
-                message={personalization.feedMessage}
-                firstName={firstName}
-              />
-            </div>
+    <motion.div
+      className="flex min-h-full flex-col pt-12 sm:pt-16 pb-6"
+      initial={reducedMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
+          <div className="min-w-0 sm:flex-1 sm:max-w-md">
+            <Greeting firstName={firstName} incognito={false} />
           </div>
-        </motion.div>
-      ) : (
-        <motion.div
-          key="content"
-          className="flex min-h-full flex-col pt-12 sm:pt-16 pb-6"
-          initial={reducedMotion ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-        >
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
-              <div className="min-w-0 sm:flex-1 sm:max-w-md">
-                <Greeting firstName={firstName} incognito={false} />
-              </div>
-              <div className="hidden sm:contents">
-                <AppMarquee />
-              </div>
-            </div>
-            <CollapseOnInput collapsed={hasInput}>
-              <ExampleCards
-                cards={cards}
-                personalized={personalizedCards !== null}
-                status={personalization.status}
-                profile={personalization.profile}
-                onRerun={personalization.rerun}
-                onReset={personalization.reset}
-                onPersonalizeAgain={personalization.personalizeAgain}
-                onSuggestionClick={onSuggestionClick}
-              />
-            </CollapseOnInput>
+          <div className="hidden sm:contents">
+            <AppMarquee />
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+        <CollapseOnInput collapsed={hasInput}>
+          <ExampleCards cards={cards} onSuggestionClick={onSuggestionClick} />
+        </CollapseOnInput>
+      </div>
+    </motion.div>
   );
-}
-
-// Rising edge passes through immediately; the falling edge is held for
-// `holdMs` (timer sync — a legitimate useEffect escape hatch).
-function useTrailingEdgeHold(value: boolean, holdMs: number): boolean {
-  const [held, setHeld] = useState(value);
-  useEffect(() => {
-    if (value) {
-      setHeld(true);
-      return;
-    }
-    if (holdMs === 0) {
-      setHeld(false);
-      return;
-    }
-    const timer = setTimeout(() => setHeld(false), holdMs);
-    return () => clearTimeout(timer);
-  }, [value, holdMs]);
-  return held;
 }
 
 function CollapseOnInput({
@@ -408,21 +323,9 @@ const MarqueeColumn = memo(function MarqueeColumn({
 
 function ExampleCards({
   cards,
-  personalized,
-  status,
-  profile,
-  onRerun,
-  onReset,
-  onPersonalizeAgain,
   onSuggestionClick,
 }: {
   cards: ResolvedCard[];
-  personalized: boolean;
-  status: ChatPersonalizationStatus | null;
-  profile: PersonalizationProfile | null;
-  onRerun: (input: { website: string; role: string }) => void;
-  onReset: () => void;
-  onPersonalizeAgain: () => void;
   onSuggestionClick: (text: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -430,22 +333,11 @@ function ExampleCards({
 
   const handleToggle = () => setExpanded((value) => !value);
 
-  // Headline row shows the strongest 4; the expanded grid holds the whole
-  // personalized set (no stock filler ever mixes into a personalized set).
-  const carouselCards = personalized ? cards.slice(0, 4) : cards;
-  const expandedCards = personalized
-    ? cards
-    : ALL_EXAMPLE_CARDS.map(resolveDefaultCard);
+  const carouselCards = cards;
+  const expandedCards = ALL_EXAMPLE_CARDS.map(resolveDefaultCard);
 
   return (
     <div className="mt-16">
-      <PersonalizationBar
-        status={status}
-        profile={profile}
-        onRerun={onRerun}
-        onReset={onReset}
-        onPersonalizeAgain={onPersonalizeAgain}
-      />
       {expanded ? (
         <motion.div
           className="grid grid-cols-1 gap-4 sm:grid-cols-6"
@@ -814,30 +706,6 @@ function resolveDefaultCard(card: ExampleCardData): ResolvedCard {
   };
 }
 
-// Personalized use cases reuse the stock card art (their imageId is validated
-// against the shared CHAT_SUGGESTION_CARD_IMAGE_IDS enum) and carry a subtle
-// mission/routine glyph instead of app logos — the cards are crowded enough.
-function resolvePersonalizedCards({
-  useCases,
-}: {
-  useCases: PersonalizationUseCase[] | null;
-}): ResolvedCard[] | null {
-  if (!useCases || useCases.length === 0) {
-    return null;
-  }
-  return useCases.map((useCase) => ({
-    key: `p-${useCase.id}`,
-    imageId: useCase.imageId,
-    title: useCase.title,
-    // Tapping sends the clean TITLE (same behavior as the stock cards); the
-    // crafted mission prompt is injected server-side as grounding when the
-    // suggestion matches a stored use case.
-    prompt: useCase.title,
-    imageSrc: `/chat-suggestions/cards/${useCase.imageId}.webp`,
-    kind: useCase.kind,
-  }));
-}
-
 type ResolvedApp = {
   name: string;
   displayName: string;
@@ -856,7 +724,6 @@ type ResolvedCard = {
   title: string;
   prompt: string;
   imageSrc: string;
-  kind?: 'mission' | 'routine';
 };
 
 type GreetingHeadline = {

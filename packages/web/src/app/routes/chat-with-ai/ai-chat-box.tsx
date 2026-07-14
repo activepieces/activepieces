@@ -19,7 +19,6 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
-import { TextShimmer } from '@/components/ui/text-shimmer';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -34,7 +33,6 @@ import {
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
-import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
 
 import { AssistantMessage } from './components/assistant-message';
@@ -105,7 +103,6 @@ function ChatBoxContent({
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
-  const personalization = usePersonalization({ enabled: !incognito });
 
   const activeContext = useStageContext();
   const activeContextRef = useRef(activeContext);
@@ -382,18 +379,6 @@ function ChatBoxContent({
 
       <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-3xl mx-auto relative">
-          {/* While the onboarding research runs, the composer is locked — the
-              cards it produces ARE the opening move, so let it land first. */}
-          {personalization.isResearching && isEmpty && (
-            <div
-              className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl border border-border/60 bg-background/80 backdrop-blur-sm"
-              aria-live="polite"
-            >
-              <TextShimmer className="text-sm">
-                {t('Personalizing your workspace — about 20 seconds…')}
-              </TextShimmer>
-            </div>
-          )}
           <ChatBottomBar
             isStreaming={isStreaming}
             onSend={handleSend}
