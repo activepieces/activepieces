@@ -15,6 +15,7 @@ export const UpdateProjectPlatformRequest = z.object({
     globalConnectionExternalIds: z.array(z.string()).optional(),
     maxConcurrentJobs: z.optional(Nullable(z.number().int().positive())),
     workerGroupId: z.optional(Nullable(z.string())),
+    executionDataRetentionDays: z.optional(Nullable(z.number().int().positive())),
 })
 
 export type UpdateProjectPlatformRequest = z.infer<typeof UpdateProjectPlatformRequest>

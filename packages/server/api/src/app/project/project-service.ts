@@ -1,7 +1,9 @@
-import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
 import { ColorName, Project, ProjectIcon, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { userService } from '../user/user-service'
 import { projectHooks, ProjectPostCreateContext } from './project-hooks'
 import { projectRepo } from './project-repo'
@@ -65,6 +67,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
     async update(projectId: ProjectId, request: UpdateParams, entityManager?: EntityManager): Promise<Project> {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
+        assertRetentionDaysWithinInstanceBounds(request.executionDataRetentionDays)
 
         const baseUpdate = {
             ...spreadIfDefined('externalId', externalId),
@@ -73,6 +76,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
             ...(request.workerGroupId !== undefined ? { workerGroupId: request.workerGroupId } : {}),
+            ...spreadIfNotUndefined('executionDataRetentionDays', request.executionDataRetentionDays),
         }
 
         const teamUpdate = request.type === ProjectType.TEAM ? {
@@ -243,6 +247,22 @@ async function assertExternalIdIsUnique(externalId: string | undefined | null, p
     }
 }
 
+function assertRetentionDaysWithinInstanceBounds(executionDataRetentionDays: number | null | undefined): void {
+    if (isNil(executionDataRetentionDays)) {
+        return
+    }
+    const instanceRetentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+    const pausedFlowTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+    if (executionDataRetentionDays < pausedFlowTimeoutDays || executionDataRetentionDays > instanceRetentionDays) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `executionDataRetentionDays must be between AP_PAUSED_FLOW_TIMEOUT_DAYS (${pausedFlowTimeoutDays}) and AP_EXECUTION_DATA_RETENTION_DAYS (${instanceRetentionDays})`,
+            },
+        })
+    }
+}
+
 type GetAllForUserParams = {
     platformId: string
     userId: string
@@ -269,6 +289,7 @@ type UpdateTeamProjectParams = {
     poolId?: string | null
     maxConcurrentJobs?: number | null
     workerGroupId?: string | null
+    executionDataRetentionDays?: number | null
     icon?: ProjectIcon
 }
 
@@ -280,6 +301,7 @@ type UpdatePersonalProjectParams = {
     poolId?: string | null
     maxConcurrentJobs?: number | null
     workerGroupId?: string | null
+    executionDataRetentionDays?: number | null
 }
 
 type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams

@@ -91,6 +91,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: String,
             nullable: true,
         },
+        executionDataRetentionDays: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {
