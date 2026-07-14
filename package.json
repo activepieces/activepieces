@@ -96,6 +96,7 @@
     "ts-loader": "9.5.1",
     "ts-node": "10.9.1",
     "tsconfig-paths": "4.2.0",
+    "tslib": "2.6.2",
     "tsx": "4.21.0",
     "turbo": "2.9.14",
     "typescript": "5.5.4",
