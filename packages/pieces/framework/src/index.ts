@@ -44,6 +44,7 @@ export {
   KnowledgeBaseSourceType,
   MarkdownContentBlock,
   McpProtocol,
+  McpAuthType,
   ToolCallContentBlock,
   ToolCallStatus,
   ToolCallType,
@@ -99,6 +100,7 @@ export {
   FAIL_PARENT_ON_FAILURE_HEADER,
 } from '@activepieces/core-piece-types';
 export type {
+  McpAuthConfig,
   BasicAuthConnectionValue,
   CustomAuthConnectionValue,
   PopulatedFlowSummary,
