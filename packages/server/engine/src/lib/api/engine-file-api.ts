@@ -86,6 +86,8 @@ export const engineFileApi = {
                     'content-length': String(size),
                 },
             })
+            // undici keeps the socket out of the pool until the body is consumed; dump discards it.
+            await s3Response.body.dump()
             if (s3Response.statusCode >= 300) {
                 throw new EngineGenericError('EngineFileUploadError', `Failed to stream file ${fileId} to signed S3 URL: ${s3Response.statusCode}`)
             }
@@ -102,6 +104,7 @@ export const engineFileApi = {
                 ...(fileName ? { [FILE_NAME_HEADER]: fileName } : {}),
             },
         })
+        await proxyResponse.body.dump()
         if (proxyResponse.statusCode >= 300) {
             throw new EngineGenericError('EngineFileUploadError', `Failed to stream file ${fileId}: ${proxyResponse.statusCode}`)
         }

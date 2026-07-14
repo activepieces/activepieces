@@ -126,6 +126,13 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
         })
 
         if (!signedFileTransport.shouldRedirectForType(fileType)) {
+            // The proxy path streams through PUT /v1/files/:fileId, bounded by the app's bodyLimit
+            // (MAX_FILE_SIZE_MB), which is far below the S3 stream cap. Reject here so the engine gets
+            // a 413→FileSizeError instead of a Fastify 413 on the PUT surfacing as INTERNAL_ERROR.
+            const maxProxyFileSizeMb = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
+            if (size > maxProxyFileSizeMb * 1024 * 1024) {
+                return reply.status(StatusCodes.REQUEST_TOO_LONG).send({ maxSizeMb: maxProxyFileSizeMb })
+            }
             return reply.status(StatusCodes.OK).send({ mode: 'proxy', readUrl })
         }
 

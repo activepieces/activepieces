@@ -130,7 +130,7 @@ describe('file-uploader service', () => {
     it('streams to the signed S3 url and returns the preflight read url', async () => {
         const readUrl = 'https://api.example.com/v1/files/abc123?token=xyz'
         mockPreflight({ mode: 's3', putUrl: 'https://s3.example.com/put?signed=true', readUrl })
-        vi.mocked(request).mockResolvedValue({ statusCode: 200 } as any)
+        vi.mocked(request).mockResolvedValue({ statusCode: 200, body: { dump: vi.fn() } } as any)
 
         const files = createFileUploader(SERVICE_PARAMS)
         const result = await files.write({ fileName: 'big.bin', data: Readable.from(['stream-bytes']), size: 12 })
@@ -142,7 +142,7 @@ describe('file-uploader service', () => {
     it('streams to the app proxy when the transport does not redirect', async () => {
         const readUrl = 'https://api.example.com/v1/files/abc123?token=xyz'
         mockPreflight({ mode: 'proxy', readUrl })
-        vi.mocked(request).mockResolvedValue({ statusCode: 200 } as any)
+        vi.mocked(request).mockResolvedValue({ statusCode: 200, body: { dump: vi.fn() } } as any)
 
         const files = createFileUploader(SERVICE_PARAMS)
         const result = await files.write({ fileName: 'big.bin', data: Readable.from(['stream-bytes']), size: 12 })
