@@ -49,6 +49,10 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 | CUSTOM | apiKey, baseUrl | OpenAI-compatible (LM Studio, Ollama) |
 | ACTIVEPIECES | apiKey, apiKeyHash (auto-provisioned) | Uses OpenRouter, managed by platform |
 
+### Azure model listing
+
+`azureProvider.listModels` calls the legacy data-plane `GET {resource}.openai.azure.com/openai/deployments`, pinned to api-version `2023-03-15-preview`. Microsoft retired that endpoint — only `2022-12-01` and `2023-03-15-preview` still serve it; newer versions (e.g. `2024-10-21`) return 404, which also breaks `validateConnection` (it just calls `listModels`). The response carries the deployment name in `id`; there is no `name` property. The configured `AzureProviderConfig.apiVersion` must therefore never be used for the deployments listing — it only affects inference calls made by AI pieces through `@ai-sdk/azure`, which target Azure's GA v1 endpoint (`/openai/v1/`). (GIT-1310)
+
 ## Activepieces Provider (OpenRouter)
 
 Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` env var set):
