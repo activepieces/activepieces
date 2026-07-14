@@ -20,10 +20,6 @@ async function createConversation(
   return api.post<ChatConversation>('/v1/chat/conversations', request);
 }
 
-async function getReferralConversation(): Promise<ChatConversation> {
-  return api.post<ChatConversation>('/v1/chat/referral-conversation', {});
-}
-
 async function listConversations({
   cursor,
   limit = 20,
@@ -132,7 +128,6 @@ async function recordLanding(): Promise<void> {
 
 export const chatApi = {
   createConversation,
-  getReferralConversation,
   listConversations,
   getConversation,
   getMessages,

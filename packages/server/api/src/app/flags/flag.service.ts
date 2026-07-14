@@ -109,14 +109,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                // Cloud-only in production; AP_REFERRAL_DEV_ENABLED=true force-enables it on any
-                // edition for local testing (see referralUtils.isReferralEnabled on the server).
-                id: ApFlagId.REFERRAL_ENABLED,
-                value: system.getEdition() === ApEdition.CLOUD || system.getBoolean(AppSystemProp.REFERRAL_DEV_ENABLED) === true,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR,
                 value: system.getEdition() === ApEdition.CLOUD,
                 created,

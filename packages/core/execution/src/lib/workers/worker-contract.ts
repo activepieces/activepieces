@@ -281,27 +281,12 @@ export type ChatConfigResponse = {
     aiTools: ChatAiToolsConfig
     emailEnabled: boolean
     userEmail: string
-    // 'NORMAL' | 'REFERRAL' (ChatMode). The worker uses this to scope the tool set: a REFERRAL
-    // conversation is a locked-down "Refer & earn" chat that gets only the referral tools.
+    // 'NORMAL' | 'REFERRAL' (ChatMode). The worker uses this to scope the conversation's quick replies.
     chatMode: string
     // toolName -> the arg holding the resource id ('tableId' | 'flowId'). The worker announces
     // the Stage AI lock (which gates realtime deltas) for exactly these tools. Derived on the API
     // from each tool's permission + id arg so the worker never hand-maintains a drifting name list.
     mutatingResourceTools: Record<string, string>
-    // Set when this turn's user message matched a referral phrase (verified redemption or the
-    // inviter saying their own phrase). The worker prepends an ap_show_referral_celebration
-    // tool-call part so the frontend plays the celebration show instantly, before the LLM text.
-    referralCelebration?: ReferralCelebrationConfig
-}
-
-export type ReferralCelebrationConfig = {
-    outcome: 'released' | 'self_referral'
-    phrase: string
-    amountUsd?: number
-    // A signed, cross-user-readable URL to the hero scene generated at mint (the phrase depicted as a
-    // real illustration). Absent for pre-feature phrases / gen failures → the frontend shows a
-    // tasteful gradient fallback.
-    heroImageUrl?: string
 }
 
 export type SaveChatMessagesRequest = {

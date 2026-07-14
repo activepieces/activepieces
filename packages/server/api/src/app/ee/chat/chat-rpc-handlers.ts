@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, isObject, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, isObject, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, ChatMode, chatPositionUtils, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, LockerKind, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, ReferralCelebrationConfig, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatPositionUtils, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, LockerKind, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -18,7 +18,6 @@ import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
-import { RedemptionResult, referralService } from '../referral/referral-service'
 import { chatAccountOverview } from './chat-account-overview'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatCompaction } from './chat-compaction'
@@ -149,65 +148,6 @@ function findLastCommittedContext({ uiMessages }: {
         }
     }
     return undefined
-}
-
-// The text of the first assistant message in a conversation — used to feed the referral chat's
-// seeded opening line back into the system prompt verbatim, so the model owns its own greeting.
-function firstAssistantText(uiMessages: PersistedChatMessage[]): string | null {
-    for (const message of uiMessages) {
-        if (message.role !== PersistedChatRole.ASSISTANT) {
-            continue
-        }
-        for (const part of message.parts) {
-            if (part.type === PersistedChatPartType.TEXT) {
-                return part.text
-            }
-        }
-    }
-    return null
-}
-
-// The one-turn note appended to the (normal) system prompt when the incoming message resolved as a
-// referral phrase. It steers the fun acknowledgement; the grant already happened server-side. For
-// 'no_match' it's empty, so a normal turn's prompt is untouched.
-async function buildReferralCelebration(result: RedemptionResult, platformId: string): Promise<ReferralCelebrationConfig | undefined> {
-    if ((result.outcome !== 'released' && result.outcome !== 'self_referral') || isNil(result.displayPhrase)) {
-        return undefined
-    }
-    // Mint a FRESH signed read URL from the stored file id at redemption, so the friend's browser can
-    // load the inviter's hero image and the link never expires.
-    let heroImageUrl: string | undefined
-    if (!isNil(result.celebrationImageFileId)) {
-        const { data } = await tryCatch(() => filesService.constructReadUrl({
-            fileId: result.celebrationImageFileId!,
-            fileType: FileType.FLOW_STEP_FILE,
-            platformId,
-        }))
-        heroImageUrl = data ?? undefined
-    }
-    return {
-        outcome: result.outcome,
-        phrase: result.displayPhrase,
-        amountUsd: result.outcome === 'released' ? result.redeemerGrantUsd ?? 10 : undefined,
-        ...spreadIfDefined('heroImageUrl', heroImageUrl),
-    }
-}
-
-function buildReferralRedemptionNote(result: RedemptionResult): string {
-    const phrase = result.displayPhrase ?? 'that phrase'
-    switch (result.outcome) {
-        case 'released':
-            return `\n\n## Referral redeemed 🎉 [system note — not from the user]\nThe user just said a friend's secret referral phrase: "${phrase}". This is a verified redemption — $${result.redeemerGrantUsd ?? 10} in AI credits was just added to THEIR account, and the friend who invited them earned $${result.inviterGrantUsd ?? 10} too${result.capReached ? ' (that friend has now maxed out their referral rewards — mention it warmly)' : ''}. A full-screen celebration animation is ALREADY playing on their screen right now, so your text should complement it, not describe or duplicate it. React with genuine delight, riff briefly and playfully on the phrase itself, and confirm the free AI credits just landed. Keep it short and fun. Do NOT call any tools, and do NOT mention this note.`
-        case 'self_referral':
-            return `\n\n## Referral note [system note — not from the user]\nThe user typed what looks like their OWN referral phrase ("${phrase}"). People can't refer themselves — but a fun celebration animation is ALREADY playing on their screen (a little preview of what their friends will see). Gently and playfully point out it's their own phrase, maybe that they just previewed the welcome show, and nudge them to share it with a friend. Keep it light. Do NOT call any tools, and do NOT mention this note.`
-        case 'already_redeemed':
-            return '\n\n## Referral note [system note — not from the user]\nThe user typed a valid referral phrase, but they\'ve already redeemed a referral before (one per account). Warmly let them know the welcome reward has already been used. Do NOT call any tools, and do NOT mention this note.'
-        case 'ineligible_account':
-            return '\n\n## Referral note [system note — not from the user]\nThe user typed a valid referral phrase, but referral rewards are only for new accounts, so theirs doesn\'t qualify. Let them know kindly and briefly. Do NOT call any tools, and do NOT mention this note.'
-        case 'no_match':
-        default:
-            return ''
-    }
 }
 
 function readGuidanceForType(type: string): { tool: string, note: string } {
@@ -431,57 +371,22 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             ? '\n\n## This message came from a starter suggestion\nThe user tapped one of the "Dream big" starter cards rather than typing — so this is a deliberately-huge, aspirational north-star goal, NOT a literal command. Open with one warm line naming the bold play you\'re about to run, then start working immediately (let any questions surface along the way, never as an up-front gate). Never reply with a clarifying menu or ask which existing resource they meant. See `<interpreting_intent>`.'
             : ''
 
-        const isReferral = conversation.chatMode === ChatMode.REFERRAL
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        let systemPromptText: string
-        let referralCelebration: ReferralCelebrationConfig | undefined
-        if (isReferral) {
-            // The locked-down "Refer & earn" desk: a scoped prompt (worker-side it also gets only
-            // the referral tools). None of the workspace context (capabilities, account overview,
-            // connection inventory, mentions) applies here. We also deliberately DROP userIdentityNote:
-            // it carries the platform's white-label brand name, which the model wove into the sharing
-            // instructions ("tell it to <brand>'s chat"). The referral always points to Activepieces
-            // (a Cloud growth feature), and the first name it needs is already injected via the template.
-            // Inject the VERBATIM opening line (the seeded greeting the user can see) so the model
-            // owns its own words and never denies/contradicts them when the user quotes them.
-            const openingLine = firstAssistantText(previousUiMessages)
-            const openingNote = isNil(openingLine)
-                ? ''
-                : `\n\n## Your exact opening line (already on screen)\nThis chat opened with you saying, word for word:\n\n"${openingLine}"\n\nThe user can see it and may quote or react to any part of it. Every word is YOURS, so own it, build on it, and never deny or contradict having said it.`
-            systemPromptText = chatPrompt.buildReferralSystemPrompt({ firstName: userMeta.firstName }) + openingNote
-        }
-        else {
-            systemPromptText = chatPrompt.buildSystemPrompt({
-                projects: userProjects,
-                currentProjectId: selectedProjectId,
-                frontendUrl,
-                templates: promptOverride,
-            }) + buildCapabilitiesNote({
-                currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
-                searchAvailable: webSearchAvailable,
-                fetchAvailable,
-                scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-                browserAvailable: fetchAvailable && aiTools.webScraping?.provider === 'firecrawl',
-                imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
-                emailAvailable: emailEnabled,
-            }) + userIdentityNote + accountOverviewNote + inventoryNote + mentionedResourcesNote + suggestionNote + buildActiveContextNote({ activeContext, previousContext: previousCommittedContext })
+        const systemPromptText = chatPrompt.buildSystemPrompt({
+            projects: userProjects,
+            currentProjectId: selectedProjectId,
+            frontendUrl,
+            templates: promptOverride,
+        }) + buildCapabilitiesNote({
+            currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
+            searchAvailable: webSearchAvailable,
+            fetchAvailable,
+            scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
+            browserAvailable: fetchAvailable && aiTools.webScraping?.provider === 'firecrawl',
+            imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
+            emailAvailable: emailEnabled,
+        }) + userIdentityNote + accountOverviewNote + inventoryNote + mentionedResourcesNote + suggestionNote + buildActiveContextNote({ activeContext, previousContext: previousCommittedContext })
 
-            // Server-side referral-phrase detection: a friend redeeming an inviter's secret phrase.
-            // Runs pre-LLM on the raw message (never in the prompt), so a normal turn pays only a
-            // cached lookup and nothing is injected unless a phrase actually matches. Best-effort:
-            // a detection/grant failure must never block the turn. Skipped in dryRun (no grants).
-            if (!dryRun) {
-                const redemptionResult = await tryCatch(() => referralService(log).detectAndResolve({
-                    redeemerPlatformId: platformId,
-                    redeemerUserId: userId,
-                    text: userMessage ?? '',
-                }))
-                if (!redemptionResult.error) {
-                    systemPromptText += buildReferralRedemptionNote(redemptionResult.data)
-                    referralCelebration = await buildReferralCelebration(redemptionResult.data, platformId)
-                }
-            }
-        }
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides
@@ -609,7 +514,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             userEmail: userMeta.email,
             chatMode: conversation.chatMode,
             mutatingResourceTools: getMutatingResourceTools({ userId, log }),
-            referralCelebration,
         }
     },
 

@@ -55,7 +55,6 @@ export * from './lib/automation/websocket'
 
 // ee
 export * from './lib/ee/billing'
-export * from './lib/ee/referral'
 export * from './lib/ee/audit-events'
 export * from './lib/ee/git-repo'
 export * from './lib/ee/api-key'

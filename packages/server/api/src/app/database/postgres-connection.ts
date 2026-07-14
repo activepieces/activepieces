@@ -401,11 +401,7 @@ import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809
 import { AddUiPreferencesToUserIdentity1810000000000 } from './migration/postgres/1810000000000-AddUiPreferencesToUserIdentity'
 import { AddDeletedToRecord1811000000000 } from './migration/postgres/1811000000000-AddDeletedToRecord'
 import { AddColorToRecordAndCell1812000000000 } from './migration/postgres/1812000000000-AddColorToRecordAndCell'
-import { AddReferralTables1813000000000 } from './migration/postgres/1813000000000-AddReferralTables'
 import { AddChatModeToChatConversation1814000000000 } from './migration/postgres/1814000000000-AddChatModeToChatConversation'
-import { AddCelebrationEmojisToReferralPhrase1817000000000 } from './migration/postgres/1817000000000-AddCelebrationEmojisToReferralPhrase'
-import { AddCelebrationSceneToReferralPhrase1818000000000 } from './migration/postgres/1818000000000-AddCelebrationSceneToReferralPhrase'
-import { AddCelebrationImageToReferralPhrase1819000000000 } from './migration/postgres/1819000000000-AddCelebrationImageToReferralPhrase'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -816,11 +812,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddUiPreferencesToUserIdentity1810000000000,
         AddDeletedToRecord1811000000000,
         AddColorToRecordAndCell1812000000000,
-        AddReferralTables1813000000000,
         AddChatModeToChatConversation1814000000000,
-        AddCelebrationEmojisToReferralPhrase1817000000000,
-        AddCelebrationSceneToReferralPhrase1818000000000,
-        AddCelebrationImageToReferralPhrase1819000000000,
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
         DropBadges1804000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,

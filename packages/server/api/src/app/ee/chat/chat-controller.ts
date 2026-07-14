@@ -26,14 +26,6 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.CREATED).send(conversation)
     })
 
-    app.post('/referral-conversation', ReferralConversationRoute, async (request, reply) => {
-        const conversation = await chatService(request.log).getOrCreateReferralConversation({
-            platformId: request.principal.platform.id,
-            userId: request.principal.id,
-        })
-        return reply.status(StatusCodes.OK).send(conversation)
-    })
-
     app.get('/conversations', ListConversationsRoute, async (request) => {
         return chatService(request.log).listConversations({
             platformId: request.principal.platform.id,
@@ -235,16 +227,6 @@ const CreateConversationRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: CreateChatConversationRequest,
-    },
-}
-
-const ReferralConversationRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['chat'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 

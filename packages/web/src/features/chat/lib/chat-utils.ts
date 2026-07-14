@@ -32,14 +32,6 @@ function humanizePieceName(raw: string): string {
 }
 
 const TOOL_LABELS: Record<string, { active: string; done: string }> = {
-  ap_generate_referral_phrase: {
-    active: 'Cooking up your secret phrase',
-    done: 'Your secret phrase is ready',
-  },
-  ap_show_referral_status: {
-    active: 'Opening your mission file',
-    done: 'Mission debrief',
-  },
   ap_execute_action: { active: 'Running action', done: 'Ran action' },
   ap_discover_action_auth: {
     active: 'Checking connections',
@@ -346,35 +338,6 @@ function extractQuickRepliesFromHistory(
   );
 }
 
-// A reissued code invalidates every card minted before it: only the NEWEST referral card in the
-// thread carries a phrase that still redeems, so older cards compare against this to mark
-// themselves as no longer valid.
-function findLatestReferralPhrase(
-  messages: ChatUIMessage[],
-): string | undefined {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (msg.role !== 'assistant') continue;
-    for (let j = msg.parts.length - 1; j >= 0; j--) {
-      const part = msg.parts[j];
-      if (!chatPartUtils.isAnyToolPart(part)) continue;
-      if (
-        chatPartUtils.getToolPartName(part) !== 'ap_show_referral_card' ||
-        !chatPartUtils.isReady(part)
-      ) {
-        continue;
-      }
-      const input = isObject(part.input) ? part.input : undefined;
-      const phrase =
-        typeof input?.phrase === 'string' ? input.phrase.trim() : '';
-      if (phrase.length > 0) {
-        return phrase;
-      }
-    }
-  }
-  return undefined;
-}
-
 function formatToolActiveTitle({ part }: { part: AnyToolPart }): string {
   const input = isObject(part.input) ? part.input : undefined;
   if (input && typeof input.activeTitle === 'string' && input.activeTitle) {
@@ -603,7 +566,6 @@ export const chatUtils = {
   formatToolDoneTitle,
   mapHistoryToUIMessages,
   extractQuickRepliesFromHistory,
-  findLatestReferralPhrase,
   extractReceiptsFromHistory,
   extractImagesFromHistory,
   extractFilesFromHistory,

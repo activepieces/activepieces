@@ -1,5 +1,5 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { ChatConversation, ChatConversationStatus, ChatHistoryMessage, ChatMode, CreateChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus, UpdateChatConversationRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ChatConversation, ChatConversationStatus, ChatHistoryMessage, ChatMode, CreateChatConversationRequest, PersistedChatMessage, UpdateChatConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -22,58 +22,6 @@ export const chatService = (log: FastifyBaseLogger) => ({
             messages: [],
         })
         log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[chatService] Conversation created')
-        return conversation
-    },
-
-    // One persistent "Refer & earn" conversation per user — the offer icon reopens the same chat
-    // every time. Scoped by chatMode so it never collides with normal conversations.
-    async getOrCreateReferralConversation({ platformId, userId }: { platformId: string, userId: string }): Promise<ChatConversation> {
-        // Seed a short, playful greeting so the agent "speaks first" the instant the chat opens
-        // (rendered from stored uiMessages — no LLM turn). The quick-reply is the primary CTA; the
-        // text stands on its own if the buttons don't render.
-        const greeting: PersistedChatMessage[] = [{
-            role: PersistedChatRole.ASSISTANT,
-            parts: [
-                {
-                    type: PersistedChatPartType.TEXT,
-                    text: 'Well, well. Look who found the back room. 🕵️\n\nThere\'s $10 in free AI credits in here for you, plus $10 for a partner in crime, if you pull off one quiet little mission. Most people walk right past it. You? You\'ve got the look.\n\nSo... you in?',
-                },
-                {
-                    type: PersistedChatPartType.TOOL_CALL,
-                    toolCallId: 'referral-intro-quick-replies',
-                    toolName: 'ap_show_quick_replies',
-                    input: { replies: ['I\'m in 🫡', 'How does it work?'] },
-                    status: PersistedToolCallStatus.COMPLETED,
-                },
-            ],
-        }]
-
-        const existing = await chatHelpers.conversationRepo().findOne({
-            where: { platformId, userId, chatMode: ChatMode.REFERRAL },
-            order: { created: 'DESC' },
-        })
-        if (!isNil(existing)) {
-            // Backfill the greeting for a conversation created before it existed (or one that never
-            // got a turn), so returning users still get greeted. Never overwrite real history.
-            const hasNoHistory = isNil(existing.uiMessages) || existing.uiMessages.length === 0
-            if (hasNoHistory) {
-                await chatHelpers.conversationRepo().update(existing.id, { uiMessages: JSON.parse(JSON.stringify(greeting)) })
-                return { ...existing, uiMessages: greeting }
-            }
-            return existing
-        }
-        const conversation = await chatHelpers.conversationRepo().save({
-            id: apId(),
-            platformId,
-            projectId: null,
-            userId,
-            title: 'The $10 mission',
-            modelName: null,
-            messages: [],
-            chatMode: ChatMode.REFERRAL,
-            uiMessages: greeting,
-        })
-        log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[chatService] Referral conversation created')
         return conversation
     },
 

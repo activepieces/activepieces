@@ -30,7 +30,6 @@ import {
   activeContextUtils,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
-import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { aiProviderQueries } from '@/features/platform-admin';
@@ -235,11 +234,6 @@ function ChatBoxContent({
     [messages],
   );
 
-  const latestReferralPhrase = useMemo(
-    () => chatUtils.findLatestReferralPhrase(messages),
-    [messages],
-  );
-
   const hasBlockingCard = useChatStoreContext((s) =>
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
@@ -323,7 +317,6 @@ function ChatBoxContent({
                       isLastMessage={isLastAssistant}
                       onSendPrompt={(text) => void handleSend(text)}
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
-                      latestReferralPhrase={latestReferralPhrase}
                     />
                   );
                 })}

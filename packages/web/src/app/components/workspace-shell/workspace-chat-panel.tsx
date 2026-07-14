@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation, ChatMode } from '@activepieces/shared';
+import { ChatConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -27,7 +27,6 @@ import { toast } from 'sonner';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationSidebarToggle } from '@/app/routes/chat-with-ai/components/conversation-sidebar-toggle';
 import { TypewriterText } from '@/app/routes/chat-with-ai/components/typewriter-text';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -145,13 +144,6 @@ export function WorkspaceChatPanel({
     null,
   );
   const [titleResolved, setTitleResolved] = useState(false);
-  // The referral ("$10 mission") chat carries chatMode=REFERRAL. It's never in the
-  // conversations list cache (the list is scoped to NORMAL), so mode is only known
-  // once we fetch the conversation — keyed by id so it never reads stale on switch.
-  const [resolvedConversation, setResolvedConversation] = useState<{
-    id: string;
-    chatMode: ChatMode;
-  } | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const renameCancelledRef = useRef(false);
@@ -354,7 +346,6 @@ export function WorkspaceChatPanel({
       .then((conv) => {
         if (cancelled) return;
         if (conv.title) setConversationTitle(conv.title);
-        setResolvedConversation({ id: conv.id, chatMode: conv.chatMode });
         setTitleResolved(true);
       })
       .catch(() => {
@@ -401,10 +392,6 @@ export function WorkspaceChatPanel({
   const displayTitle = cachedTitle
     ? chatUtils.sanitizeTitle(cachedTitle)
     : t('New Chat');
-  const isReferralChat =
-    !!selectedConversationId &&
-    resolvedConversation?.id === selectedConversationId &&
-    resolvedConversation.chatMode === ChatMode.REFERRAL;
   const renderHeader = (draggable?: boolean) => (
     <div
       className={cn(
@@ -482,14 +469,6 @@ export function WorkspaceChatPanel({
         </>
       )}
       <div className="flex-1" />
-      {isReferralChat && (
-        <Badge
-          variant="ghost"
-          className="shrink-0 bg-muted px-2 py-0.5 font-normal text-muted-foreground"
-        >
-          {t("This chat doesn't consume credits")}
-        </Badge>
-      )}
       <TooltipProvider delayDuration={400}>
         <Tooltip>
           <TooltipTrigger asChild>

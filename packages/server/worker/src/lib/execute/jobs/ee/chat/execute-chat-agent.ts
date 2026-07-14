@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatAgentEvent, ChatAgentEventType, ChatMode, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus, ReferralCelebrationConfig, WorkerJobType } from '@activepieces/shared'
+import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
@@ -61,25 +61,6 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         })
 
         log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeChatAgent] Chat config loaded')
-
-        // The user's message matched a referral phrase: play the celebration show NOW, before the
-        // LLM produces anything. Hand-crafted stream chunks materialize a completed tool part on
-        // the client instantly; the same part is prepended to every persisted uiMessages write
-        // below so the replayable mini-card survives reloads. Not a real LLM tool — the model
-        // never sees it.
-        const celebrationParts = buildCelebrationParts({ celebration: config.referralCelebration, runId: runId ?? conversationId })
-        if (celebrationParts.length > 0) {
-            void tryCatch(() => ctx.apiClient.sendChatEvent({
-                userId, conversationId, runId,
-                event: {
-                    type: ChatAgentEventType.CHUNK,
-                    data: celebrationParts.map((part) => [
-                        { type: 'tool-input-available', toolCallId: part.toolCallId, toolName: part.toolName, input: part.input },
-                        { type: 'tool-output-available', toolCallId: part.toolCallId, output: part.output },
-                    ]).flat(),
-                },
-            }))
-        }
 
         const eventEmitter = chatWorkerTools.createEventEmitter({
             sendEvent: (input) => ctx.apiClient.sendChatEvent({ ...input, runId }),
@@ -206,7 +187,6 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
-                chatMode: config.chatMode,
                 abortSignal: abortController.signal,
                 lockedResources,
                 // Degrade to no-lock (the pre-fix behavior) rather than crash if an older API
@@ -251,7 +231,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                                 runId,
                                 uiMessages: [
                                     ...(config.previousUiMessages as PersistedChatMessage[]),
-                                    { role: PersistedChatRole.ASSISTANT, parts: [...celebrationParts, ...uiParts], thinkingDurationMs: Date.now() - thinkingStartTime },
+                                    { role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime },
                                 ],
                                 messages: [...(config.allMessages as ModelMessage[]), ...responseMessages],
                             }),
@@ -276,7 +256,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                     messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                     uiMessages: [
                         ...(config.previousUiMessages as PersistedChatMessage[]),
-                        ...(celebrationParts.length + uiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: [...celebrationParts, ...uiParts], thinkingDurationMs }] : []),
+                        ...(uiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
                     ],
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveChatMessages(cancelSavePayload))
@@ -333,7 +313,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                 uiMessages: [
                     ...(config.previousUiMessages as PersistedChatMessage[]),
-                    ...(celebrationParts.length + finalUiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: [...celebrationParts, ...finalUiParts], thinkingDurationMs }] : []),
+                    ...(finalUiParts.length > 0 ? [{ role: PersistedChatRole.ASSISTANT, parts: finalUiParts, thinkingDurationMs }] : []),
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
@@ -424,7 +404,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, chatMode, abortSignal, lockedResources, mutatingResourceTools }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, lockedResources, mutatingResourceTools }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -442,7 +422,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     dryRun: boolean
     discoveryOnly: boolean
     emailEnabled: boolean
-    chatMode: string
     abortSignal: AbortSignal
     lockedResources: Set<string>
     mutatingResourceTools: Record<string, string>
@@ -595,16 +574,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         })
         : {}
 
-    // A REFERRAL conversation is the locked-down "Refer & earn" desk: it gets ONLY the two
-    // referral tools (routed through the same executeCrossProjectTool → API RPC path), never the
-    // flow/table/web/MCP tool surface. The referral system prompt keeps it on-topic; this makes it
-    // a hard sandbox regardless of what the model tries to call.
-    if (chatMode === ChatMode.REFERRAL) {
-        // The "$10 mission" card now renders self-contained vector designs client-side (a carousel
-        // of styles), so there's no per-mint AI-art generation to wire up here.
-        return chatWorkerTools.createReferralTools({ executeTool: executeCrossProjectTool })
-    }
-
     return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
@@ -702,22 +671,6 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
     }
     if (flushTimer) clearTimeout(flushTimer)
     await flushChunks()
-}
-
-type CelebrationToolCallPart = Extract<PersistedChatPart, { type: PersistedChatPartType.TOOL_CALL }>
-
-function buildCelebrationParts({ celebration, runId }: { celebration: ReferralCelebrationConfig | undefined, runId: string }): CelebrationToolCallPart[] {
-    if (isNil(celebration)) {
-        return []
-    }
-    return [{
-        type: PersistedChatPartType.TOOL_CALL,
-        toolCallId: `referral-celebration-${runId}`,
-        toolName: 'ap_show_referral_celebration',
-        input: { ...celebration },
-        output: { displayed: true },
-        status: PersistedToolCallStatus.COMPLETED,
-    }]
 }
 
 async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId, abortSignal }: {

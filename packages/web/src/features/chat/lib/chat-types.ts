@@ -56,8 +56,6 @@ const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_questions',
   'ap_show_quick_replies',
   'ap_show_showcase',
-  'ap_show_referral_card',
-  'ap_show_referral_celebration',
 ]);
 
 function isDisplayTool(name: string): boolean {

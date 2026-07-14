@@ -1876,116 +1876,11 @@ export type ChatEventEmitter = {
     emitBrowserViewAndWait(data: BrowserViewEvent): Promise<void>
 }
 
-function createReferralTools({ executeTool, imageGeneration, saveFile }: {
-    executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
-    imageGeneration?: ResolvedToolConfig
-    saveFile?: (params: { data: Buffer, mediaType: string, fileName?: string }) => Promise<SaveChatFileResponse>
-}): ToolSet {
-    const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
-        withToolTimeout({
-            fn: () => executeTool(toolName, toolInput),
-            timeoutMs: TOOL_EXECUTION_TIMEOUT_MS,
-            toolName,
-        })
-    return {
-        ap_generate_referral_phrase: tool({
-            description: 'Claim (or reissue) the user\'s unique, funny referral pass-phrase. Invent ONE short crazy rhyming line (4-7 words, NEVER more) that CONTAINS their first name, in the language the user is chatting in: one PERFECT rhyme sound echoed 2-3 times (exact same ending; rhyme the name itself when it rhymes — "Dean crowned a sardine queen of cuisine" — else rhyme two other words: "the bears declared Joseph\'s chairs theirs"), simple everyday words, one impossible claim. Never 4+ echoes (word soup), never a cozy story, never about money/cash/stash/credits/the deal. Craft privately and call ONCE with your single best line — no narrated drafting or rejected attempts; once it returns "created"/"replaced" the phrase is FINAL (only the user can ask to change it; re-call only on collision/too_similar/invalid/no_rhyme). Set replace:true when the user wants a DIFFERENT one than they already have (they don\'t like it / want to change it) — this swaps the text for future allies only; their past recruits and earnings stay intact. Returns { status }: "created" (first time — relay the phrase), "replaced" (reissued — relay the new phrase and note it\'s for future allies), "existing" (they already have one and didn\'t ask to change it — relay the returned displayPhrase), "collision" or "too_similar" (too close to someone else\'s — invent one with a different image AND a different sound move, then call again), "no_rhyme" (the server heard NO rhyme in your line — no two words shared an ending sound; rebuild around ONE clean exact rhyme pair, sardine/cuisine style, and call again), or "invalid" (usually too short — add a specific twist and retry).',
-            inputSchema: z.object({
-                phrase: z.string().min(1).describe('The fun-to-say phrase to claim for this user, e.g. "Dean keeps thirteen tangerines".'),
-                scenePrompt: z.string().min(1).describe('A vivid, LITERAL image description of the phrase for the friend\'s welcome show — a real illustrated scene of exactly what the sentence says, taken completely literally, so the joke lands. Describe the setting and the precise action, nailing spatial words: "inside" means genuinely inside (a cut/cross-section revealing it within), "on top" means on top, "under" means beneath. Name the real objects and creatures, their expressions and the moment. Describe the SCENE only — no art-style words (we add the style), no text/letters in the image. Examples — "Ash baked a snake inside a cake": "A cozy kitchen; a birthday cake with a wedge slice cut out, and coiled INSIDE the exposed sponge layers, revealed by the cut, is a surprised little green snake genuinely baked within the cake." "Ash lent the moon a pen and a spoon": "A dreamy night sky; a smiling crescent moon reaching down as a hand offers it a pen and a spoon, the moon delighted to receive them."'),
-                replace: z.boolean().optional().describe('Set true to REPLACE the user\'s existing phrase with this new text (reissue). Omit/false for the first-time claim.'),
-            }),
-            execute: async (input) => {
-                return executeWithTimeout('ap_generate_referral_phrase', input)
-            },
-        }),
-        ap_show_referral_status: tool({
-            description: 'Get the user\'s referral standing: their phrase, how many friends have redeemed, how much they have earned, and how much headroom is left toward the cap. Call this when they ask how they are doing, then relay it warmly in prose.',
-            inputSchema: z.object({}),
-            execute: async () => {
-                return executeWithTimeout('ap_show_referral_status', {})
-            },
-        }),
-        ap_show_referral_card: tool({
-            description: 'Render the beautiful, shareable "$10 mission" card in the chat — the code shown big over a piece of custom artwork, with Text and Image tabs the user can copy, download, and share. Call this RIGHT AFTER you mint or reissue their code (ap_generate_referral_phrase), passing the EXACT same phrase. ALSO pass `artPrompt`: a vivid, high-quality ARTISTIC SCENE that matches the vibe of their phrase — painterly / editorial, bold but tasteful. Put NO words, text, numbers, or logos in the artPrompt: the $10, the instruction, and the Activepieces logo are rendered crisply on top automatically (the art is only the backdrop). After it renders, keep your own reply to one short line — the card does the talking.',
-            inputSchema: z.object({
-                phrase: z.string().min(1).describe('The exact secret code/phrase to feature on the shareable card.'),
-                artPrompt: z.string().optional().describe('A vivid artistic SCENE for the card artwork, themed to the phrase — NO text/words/numbers/logos (those are overlaid automatically). E.g. for "Sam claims he invented Tuesdays": "a surreal glowing calendar page floating in a dreamy violet sky, golden-hour light, editorial illustration, painterly, whimsical".'),
-            }),
-            execute: async (toolInput, { toolCallId }: ToolExecutionOptions) => {
-                if (isNil(imageGeneration) || isNil(saveFile)) {
-                    return { displayed: true, phrase: toolInput.phrase }
-                }
-                const resolvedImageGeneration = imageGeneration
-                const resolvedSaveFile = saveFile
-                return withToolTimeout({
-                    toolName: 'ap_show_referral_card',
-                    timeoutMs: IMAGE_TIMEOUT_MS + 5_000,
-                    fn: async (signal) => {
-                        const prompt = buildReferralArtPrompt({ phrase: toolInput.phrase, artPrompt: toolInput.artPrompt })
-                        const { data: url, error } = await tryCatch(() => generateReferralArt({
-                            imageGeneration: resolvedImageGeneration, saveFile: resolvedSaveFile, prompt, toolCallId, signal,
-                        }))
-                        if (error || isNil(url)) {
-                            return { displayed: true, phrase: toolInput.phrase }
-                        }
-                        return { displayed: true, phrase: toolInput.phrase, backgroundImageUrl: url }
-                    },
-                })
-            },
-        }),
-        ap_show_quick_replies: tool({
-            description: 'Offer 2-3 short, friendly next-step suggestions as tappable chips above the chat input. In this chat, end EVERY turn with these so the user always knows what they can do next (e.g. "How do I share it?", "How much can I earn?", "Try a different one").',
-            inputSchema: z.object({
-                replies: z.array(z.string().max(80)).min(1).max(3).describe('Short suggestion texts'),
-            }),
-            execute: async () => {
-                return { displayed: true }
-            },
-        }),
-    }
-}
-
-function buildReferralArtPrompt({ phrase, artPrompt }: { phrase: string, artPrompt?: string }): string {
-    const scene = !isNil(artPrompt) && artPrompt.trim().length > 0
-        ? artPrompt.trim()
-        : `a whimsical, dreamlike scene inspired by the playful idea: "${phrase}"`
-    return [
-        scene,
-        'high-end editorial illustration, painterly and richly textured, cinematic soft lighting, tasteful and clean, bold but not exaggerated, sophisticated modern color palette with warm gold and soft violet accents',
-        'balanced composition with calm, uncluttered negative space toward the lower half so text can sit on top comfortably',
-        'no text, no words, no letters, no numbers, no captions, no logos, no watermarks, no signage, no user interface',
-    ].join('. ')
-}
-
-async function generateReferralArt({ imageGeneration, saveFile, prompt, toolCallId, signal }: {
-    imageGeneration: ResolvedToolConfig
-    saveFile: (params: { data: Buffer, mediaType: string, fileName?: string }) => Promise<SaveChatFileResponse>
-    prompt: string
-    toolCallId: string
-    signal: AbortSignal
-}): Promise<string> {
-    const generated = await generateImageWithFal({
-        modelId: FAL_MODEL_BY_STYLE.abstract,
-        imageSize: FAL_IMAGE_SIZE_BY_ASPECT.landscape,
-        prompt,
-        apiKey: imageGeneration.apiKey,
-        signal,
-    })
-    const saved = await saveFile({
-        data: generated.bytes,
-        mediaType: generated.mediaType,
-        fileName: `referral-card-${toolCallId}.${generated.extension}`,
-    })
-    return saved.url
-}
-
 export const chatWorkerTools = {
     createEventEmitter,
     createDisplayTools,
     createLocalTools,
     createCrossProjectTools,
-    createReferralTools,
     createWebTools,
     createSearchTools,
     createScrapeTools,

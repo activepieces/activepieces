@@ -15,7 +15,6 @@ const SUGGESTION_CARVE_OUT_TOOLS = new Set([
     'ap_show_connection_required',
     'ap_show_project_picker',
     'ap_show_mcp_reconnect',
-    'ap_show_referral_card',
 ])
 
 // Flow-construction tools — when the turn already built an automation, offering to automate it is moot.

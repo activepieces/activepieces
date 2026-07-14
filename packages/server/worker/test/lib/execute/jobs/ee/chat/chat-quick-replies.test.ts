@@ -37,7 +37,7 @@ describe('chatQuickReplies.shouldGenerateSuggestions', () => {
     })
 
     it('skips when a card already owns the next step', () => {
-        for (const card of ['ap_show_questions', 'ap_show_connection_picker', 'ap_show_showcase', 'ap_show_referral_card']) {
+        for (const card of ['ap_show_questions', 'ap_show_connection_picker', 'ap_show_showcase']) {
             expect(chatQuickReplies.shouldGenerateSuggestions({ ...base, toolCalls: [toolCall(card)] })).toBe(false)
         }
     })

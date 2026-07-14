@@ -1,4 +1,4 @@
-import { ApFlagId, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
+import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Compass,
@@ -7,7 +7,6 @@ import {
   MessageCircle,
   Plus,
   Search,
-  VenetianMask,
 } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -37,11 +36,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { chatApi } from '@/features/chat/lib/chat-api';
 import { InviteUserDialog } from '@/features/members';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
@@ -139,7 +136,6 @@ export function ProjectDashboardSidebar({
         </SidebarContent>
 
         <SidebarFooter>
-          <SidebarReferEarn />
           <SidebarInviteTeammates />
           <SidebarPlatformAdminLink />
           <SidebarUser />
@@ -439,58 +435,6 @@ function SidebarSearchItem() {
         </PopoverContent>
       </Popover>
     </SidebarMenuItem>
-  );
-}
-
-function SidebarReferEarn() {
-  const { embedState } = useEmbedding();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: referralEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.REFERRAL_ENABLED,
-  );
-  const { state } = useSidebar();
-  const { selectConversation } = useChatNavigation();
-  const [loading, setLoading] = useState(false);
-  const isCollapsed = state === 'collapsed';
-
-  // Cloud-only growth loop (AI credits exist only on Cloud); AP_REFERRAL_DEV_ENABLED
-  // force-enables it locally for testing. Both are folded into the REFERRAL_ENABLED flag.
-  // The whole flow is a chat conversation, so it also requires chat — a chat-off cloud
-  // user (outside the rollout) has REFERRAL_ENABLED but no chat to run it in.
-  if (embedState.isEmbedded || !referralEnabled || !platform.plan.chatEnabled) {
-    return null;
-  }
-
-  const openReferral = async () => {
-    if (loading) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const conversation = await chatApi.getReferralConversation();
-      selectConversation(conversation.id, { takeOver: true });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip={t('The $10 mission')}
-          aria-label={t('The $10 mission')}
-          onClick={openReferral}
-        >
-          <VenetianMask className="size-4 shrink-0 text-violet-500 dark:text-violet-400" />
-          {!isCollapsed && (
-            <span className="referral-gradient-text text-sm">
-              {t('The $10 mission')}
-            </span>
-          )}
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
   );
 }
 

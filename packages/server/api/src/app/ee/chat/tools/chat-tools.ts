@@ -12,7 +12,6 @@ import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } 
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
-import { referralService } from '../../referral/referral-service'
 import { chatApprovalGate } from '../chat-approval-gate'
 import { chatHelpers } from '../chat-helpers'
 import { chatPrompt } from '../prompt/chat-prompt'
@@ -428,16 +427,6 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                     : `**${label}** (${project.id}): None found.`
             })
             return { content: [{ type: 'text', text: sections.join('\n\n') }] }
-        }
-        case 'ap_generate_referral_phrase': {
-            const proposedDisplayPhrase = typeof toolInput.phrase === 'string' ? toolInput.phrase : ''
-            const emojis = Array.isArray(toolInput.emojis) ? toolInput.emojis.filter((emoji): emoji is string => typeof emoji === 'string') : undefined
-            const scene = Array.isArray(toolInput.scene) ? toolInput.scene : undefined
-            const scenePrompt = typeof toolInput.scenePrompt === 'string' ? toolInput.scenePrompt : undefined
-            return referralService(log).getOrCreatePhrase({ platformId, userId, proposedDisplayPhrase, replace: toolInput.replace === true, emojis, scene, scenePrompt, projectId: projects[0]?.id })
-        }
-        case 'ap_show_referral_status': {
-            return referralService(log).getInviterStatus({ userId, platformId })
         }
         default:
             return { error: `Unknown cross-project tool: ${toolName}` }

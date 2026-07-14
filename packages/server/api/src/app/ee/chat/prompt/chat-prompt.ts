@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { Project, ProjectType, REFERRAL_CAP_USD, REFERRAL_GRANT_USD } from '@activepieces/shared'
+import { Project, ProjectType } from '@activepieces/shared'
 
 function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
@@ -12,7 +12,6 @@ const PROMPT_TEMPLATES = {
     system: loadPromptTemplate('chat-system-prompt.md'),
     projectSelected: loadPromptTemplate('chat-project-context-selected.md'),
     noProject: loadPromptTemplate('chat-project-context-none.md'),
-    referralSystem: loadPromptTemplate('referral-system-prompt.md'),
 }
 
 const GUIDES: Record<string, string> = Object.fromEntries(
@@ -21,19 +20,6 @@ const GUIDES: Record<string, string> = Object.fromEntries(
 
 function sanitizeProjectName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
-}
-
-function sanitizeFirstName(firstName: string | null): string {
-    const cleaned = (firstName ?? '').replace(/[^a-zA-Z0-9 \-_.]/g, '').trim().slice(0, 40)
-    return cleaned.length > 0 ? cleaned : 'there'
-}
-
-function buildReferralSystemPrompt({ firstName }: { firstName: string | null }): string {
-    return PROMPT_TEMPLATES.referralSystem
-        .replaceAll('{{FIRST_NAME}}', sanitizeFirstName(firstName))
-        .replaceAll('{{GRANT_USD}}', String(REFERRAL_GRANT_USD))
-        .replaceAll('{{CAP_USD}}', String(REFERRAL_CAP_USD))
-        .replaceAll('{{MAX_REFERRALS}}', String(Math.floor(REFERRAL_CAP_USD / REFERRAL_GRANT_USD)))
 }
 
 function projectDisplayName(project: Project): string {
@@ -88,7 +74,6 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templ
 
 export const chatPrompt = {
     buildSystemPrompt: buildAgentSystemPrompt,
-    buildReferralSystemPrompt,
     guides: GUIDES,
     projectDisplayName,
     sources: {

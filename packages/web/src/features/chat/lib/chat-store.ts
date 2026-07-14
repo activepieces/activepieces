@@ -136,7 +136,6 @@ function selectActiveDisplayTool({
       chatPartUtils.isDisplayTool(name) &&
       name !== 'ap_show_quick_replies' &&
       name !== 'ap_show_showcase' &&
-      name !== 'ap_show_referral_card' &&
       p.state === 'input-available',
   });
   return isNotDismissed(part, state) ? part : null;
@@ -222,8 +221,7 @@ function selectHasBlockingCard({
       if (
         chatPartUtils.isDisplayTool(name) &&
         name !== 'ap_show_quick_replies' &&
-        name !== 'ap_show_showcase' &&
-        name !== 'ap_show_referral_card'
+        name !== 'ap_show_showcase'
       )
         return true;
       return !!state.toolCallMeta[id]?.actionPreview;
