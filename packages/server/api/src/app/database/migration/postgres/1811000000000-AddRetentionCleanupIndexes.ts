@@ -7,7 +7,7 @@ import { Migration } from '../../migration'
 export class AddRetentionCleanupIndexes1811000000000 implements Migration {
     name = 'AddRetentionCleanupIndexes1811000000000'
     breaking = false
-    release = '0.86.3'
+    release = '0.103.1'
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
