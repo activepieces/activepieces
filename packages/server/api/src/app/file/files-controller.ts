@@ -47,7 +47,10 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             fileType,
             platformId: principal.platform.id,
         })
-        return reply.status(StatusCodes.OK).send({ fileId, readUrl })
+        return reply
+            .header(fileTransportHeaders.READ_URL, readUrl)
+            .status(StatusCodes.OK)
+            .send({ fileId, readUrl })
     })
 
     app.post('/:fileId/create-upload', {

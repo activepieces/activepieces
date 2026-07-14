@@ -36,6 +36,7 @@ export const filesService = {
 export const fileTransportHeaders = {
     TYPE: 'x-ap-file-type',
     NAME: 'x-ap-file-name',
+    READ_URL: 'x-ap-file-read-url',
 } as const
 
 export const ENGINE_WRITABLE_FILE_TYPES: ReadonlySet<FileType> = new Set([
