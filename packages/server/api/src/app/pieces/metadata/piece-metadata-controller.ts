@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
+import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -40,14 +40,12 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        const includeTags = query.includeTags ?? false
         const platformId = getPlatformId(req.principal)
         const projectId = req.query.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
             includeHidden: query.includeHidden ?? false,
             projectId,
             platformId,
-            includeTags,
             categories: query.categories,
             searchQuery: query.searchQuery,
             sortBy: query.sortBy,
@@ -79,11 +77,8 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
-            return enterpriseFilteringUtils(req.log).filterPieceComponents({
-                piece,
-                platformId,
-                projectId: req.query.projectId,
-            })
+            const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
+            return isNil(policy) ? piece : policy.filterPieceComponents(piece)
         },
     )
 
@@ -101,11 +96,8 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
-            return enterpriseFilteringUtils(req.log).filterPieceComponents({
-                piece,
-                platformId,
-                projectId: req.query.projectId,
-            })
+            const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
+            return isNil(policy) ? piece : policy.filterPieceComponents(piece)
         },
     )
 

@@ -1,8 +1,8 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
-  FilteredPieceBehavior,
   isPieceVisible,
   PieceSelection,
+  PieceSelectionMode,
   PieceSet,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
@@ -33,7 +33,6 @@ import {
 } from '@/components/ui/tooltip';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
-import { platformPieceFilterQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
 import { PieceComponentVisibilitySheet } from '../piece-component-visibility-sheet';
@@ -44,7 +43,8 @@ function setPieceVisible(
   visible: boolean,
 ): PieceSelection {
   const isException = pieces.exceptions.includes(name);
-  const shouldBeException = pieces.mode === 'include_all' ? !visible : visible;
+  const shouldBeException =
+    pieces.mode === PieceSelectionMode.INCLUDE_ALL ? !visible : visible;
   if (isException === shouldBeException) {
     return pieces;
   }
@@ -75,12 +75,10 @@ const BulkPieceSetActions = ({
   pieceSet,
   selectedPieces,
   resetSelection,
-  isPlatformHidden,
 }: {
   pieceSet: PieceSet;
   selectedPieces: PieceMetadataModelSummary[];
   resetSelection: () => void;
-  isPlatformHidden: (pieceName: string) => boolean;
 }) => {
   const {
     mutate: updateSet,
@@ -88,14 +86,11 @@ const BulkPieceSetActions = ({
     variables,
   } = pieceSetMutations.useUpdatePieceSet();
 
-  const actionablePieces = selectedPieces.filter(
-    (p) => !isPlatformHidden(p.name),
-  );
-  const selectedNames = actionablePieces.map((p) => p.name);
-  const allIncluded = actionablePieces.every((p) =>
+  const selectedNames = selectedPieces.map((p) => p.name);
+  const allIncluded = selectedPieces.every((p) =>
     isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }),
   );
-  const allExcluded = actionablePieces.every(
+  const allExcluded = selectedPieces.every(
     (p) => !isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }),
   );
 
@@ -162,26 +157,12 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
   const { mutate: updateSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
   const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
   const [managingComponentsPiece, setManagingComponentsPiece] = useState<
     string | null
   >(null);
-
-  const hiddenPieceNames = useMemo(
-    () => new Set(pieceFilter.filteredPieceNames),
-    [pieceFilter.filteredPieceNames],
-  );
-
-  const isPlatformHidden = useCallback(
-    (pieceName: string) =>
-      pieceFilter.filteredPieceBehavior === FilteredPieceBehavior.ALLOWED
-        ? !hiddenPieceNames.has(pieceName)
-        : hiddenPieceNames.has(pieceName),
-    [pieceFilter.filteredPieceBehavior, hiddenPieceNames],
-  );
 
   const togglePiece = useCallback(
     (pieceName: string, currentlyIncluded: boolean) => {
@@ -203,16 +184,13 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     const allPieces = pieces ?? [];
     if (selectedStatuses.size === 0) return allPieces;
     return allPieces.filter((piece) => {
-      if (isPlatformHidden(piece.name)) {
-        return selectedStatuses.has('hidden');
-      }
       const included = isPieceVisible({
         pieces: pieceSet.config.pieces,
         name: piece.name,
       });
       return selectedStatuses.has(included ? 'enabled' : 'disabled');
     });
-  }, [pieces, pieceSet, selectedStatuses, isPlatformHidden]);
+  }, [pieces, pieceSet, selectedStatuses]);
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
@@ -228,11 +206,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             />
           ),
           cell: ({ row }) => (
-            <div
-              className={cn('flex items-center gap-2', {
-                'opacity-50': isPlatformHidden(row.original.name),
-              })}
-            >
+            <div className="flex items-center gap-2">
               <PieceIcon
                 size={'sm'}
                 border={true}
@@ -242,19 +216,6 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
               />
               <div className="flex flex-col gap-0.5">
                 <span>{row.original.displayName}</span>
-                {row.original.tags && row.original.tags.length > 0 && (
-                  <div className="flex gap-1">
-                    {row.original.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="outline"
-                        className="text-xs py-0 px-1.5"
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           ),
@@ -270,13 +231,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             />
           ),
           cell: ({ row }) => (
-            <div
-              className={cn('text-left', {
-                'opacity-50': isPlatformHidden(row.original.name),
-              })}
-            >
-              {row.original.name}
-            </div>
+            <div className="text-left">{row.original.name}</div>
           ),
         },
         {
@@ -290,13 +245,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             />
           ),
           cell: ({ row }) => (
-            <div
-              className={cn('text-left', {
-                'opacity-50': isPlatformHidden(row.original.name),
-              })}
-            >
-              {row.original.version}
-            </div>
+            <div className="text-left">{row.original.version}</div>
           ),
         },
         {
@@ -310,14 +259,6 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             />
           ),
           cell: ({ row }) => {
-            if (isPlatformHidden(row.original.name)) {
-              return (
-                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <EyeOff className="size-3.5" />
-                  {t('Hidden by platform')}
-                </span>
-              );
-            }
             const included = isPieceVisible({
               pieces: pieceSet.config.pieces,
               name: row.original.name,
@@ -367,9 +308,6 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           id: 'actions',
           size: 80,
           cell: ({ row }) => {
-            if (isPlatformHidden(row.original.name)) {
-              return null;
-            }
             const included = isPieceVisible({
               pieces: pieceSet.config.pieces,
               name: row.original.name,
@@ -388,7 +326,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           },
         },
       ],
-      [pieceSet, togglePiece, isPending, isPlatformHidden],
+      [pieceSet, togglePiece, isPending],
     );
 
   const managingPieceDisplayName = useMemo(
@@ -424,7 +362,6 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             options={[
               { label: t('Enabled'), value: 'enabled' },
               { label: t('Disabled'), value: 'disabled' },
-              { label: t('Hidden'), value: 'hidden' },
             ]}
             handleFilterChange={(values) =>
               setSelectedStatuses(new Set(values))
@@ -438,10 +375,6 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
         }}
         isLoading={isLoading}
         clientFiltering={true}
-        getRowClassName={(row) =>
-          isPlatformHidden(row.name) ? 'bg-muted/40' : ''
-        }
-        isRowSelectionDisabled={(row) => isPlatformHidden(row.name)}
         bulkActions={[
           {
             render: (selectedRows, resetSelection) => (
@@ -449,7 +382,6 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                 pieceSet={pieceSet}
                 selectedPieces={selectedRows}
                 resetSelection={resetSelection}
-                isPlatformHidden={isPlatformHidden}
               />
             ),
           },

@@ -1,12 +1,10 @@
-import { PlatformId } from '@activepieces/core-utils'
 import { PieceCategory, PieceOrderBy, PieceSortBy, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { enterpriseFilteringUtils, PieceFilterContext } from '../../../ee/pieces/filters/piece-filtering-utils'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { pieceSearching } from './piece-searching'
 import { pieceSorting } from './piece-sorting'
 
-export const pieceListUtils = (log: FastifyBaseLogger) => ({
+export const pieceListUtils = (_log: FastifyBaseLogger) => ({
     async filterPieces(params: FilterPiecesParams): Promise<PieceMetadataSchema[]> {
         const sortedPieces = pieceSorting.sortAndOrder(
             params.sortBy,
@@ -14,34 +12,22 @@ export const pieceListUtils = (log: FastifyBaseLogger) => ({
             params.pieces,
         )
 
-        const userBasedPieces = pieceSearching.search({
+        return pieceSearching.search({
             categories: params.categories,
             searchQuery: params.searchQuery,
             pieces: sortedPieces,
             suggestionType: params.suggestionType,
         })
-
-        return enterpriseFilteringUtils(log).filter({
-            pieces: userBasedPieces,
-            includeHidden: params.includeHidden,
-            platformId: params.platformId,
-            projectId: params.projectId,
-            filterContext: params.filterContext,
-        })
     },
 })
 
 export type FilterPiecesParams = {
-    includeHidden?: boolean
-    platformId?: PlatformId
     searchQuery?: string
     categories?: PieceCategory[]
-    projectId?: string
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     pieces: PieceMetadataSchema[]
     suggestionType?: SuggestionType
-    filterContext?: PieceFilterContext | null
 }
 
 export * from './piece-cache-utils'

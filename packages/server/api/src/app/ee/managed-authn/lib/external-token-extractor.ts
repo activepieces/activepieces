@@ -38,7 +38,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
 
                 const projectRole = await getProjectRole(payload, signingKey.platformId)
 
-                const { piecesFilterType, piecesTags, pieceSetExternalId } = extractPieces(payload)
+                const { piecesFilterType, piecesTags, pieceSetKey } = extractPieces(payload)
                 return {
                     platformId: signingKey.platformId,
                     externalUserId: payload.externalUserId,
@@ -50,7 +50,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                         filterType: piecesFilterType ?? PiecesFilterType.NONE,
                         tags: piecesTags ?? [],
                     },
-                    pieceSetExternalId,
+                    pieceSetKey,
                     concurrencyPoolKey: payload.concurrencyPoolKey,
                     concurrencyPoolLimit: payload.concurrencyPoolLimit,
                 }
@@ -90,24 +90,31 @@ const getSigningKey = async ({
 }
 
 function extractPieces(payload: ExternalTokenPayload) {
+    if ('version' in payload && payload.version === 'v4') {
+        return {
+            piecesFilterType: undefined,
+            piecesTags: undefined,
+            pieceSetKey: payload.pieceSet,
+        }
+    }
     if ('version' in payload && payload.version === 'v3') {
         return {
             piecesFilterType: payload.piecesFilterType,
             piecesTags: payload.piecesTags,
-            pieceSetExternalId: payload.pieceSet,
+            pieceSetKey: undefined,
         }
     }
     if ('pieces' in payload) {
         return {
             piecesFilterType: payload.pieces?.filterType,
             piecesTags: payload.pieces?.tags,
-            pieceSetExternalId: payload.pieceSet,
+            pieceSetKey: undefined,
         }
     }
     return {
         piecesFilterType: PiecesFilterType.NONE,
         piecesTags: [],
-        pieceSetExternalId: undefined,
+        pieceSetKey: undefined,
     }
 }
 
@@ -132,23 +139,29 @@ function externalTokenPayload() {
         lastName: z.string(),
     })
     const v2 = v1.extend({
-        role: z.nativeEnum(DefaultProjectRole).optional(),
+        role: z.enum(DefaultProjectRole).optional(),
         pieces: z.object({
-            filterType: z.nativeEnum(PiecesFilterType),
+            filterType: z.enum(PiecesFilterType),
             tags: z.array(z.string()).optional(),
         }).optional(),
-        pieceSet: z.string().optional(),
         concurrencyPoolKey: z.string().optional(),
         concurrencyPoolLimit: z.number().int().positive().optional(),
     })
 
     const v3 = v2.omit({ pieces: true }).extend({
         version: z.literal('v3'),
-        piecesFilterType: z.nativeEnum(PiecesFilterType).optional(),
+        piecesFilterType: z.enum(PiecesFilterType).optional(),
         piecesTags: z.array(z.string()).optional(),
     })
 
-    return z.union([v2, v3])
+    const v4 = v2.omit({ pieces: true }).extend({
+        version: z.literal('v4'),
+        pieceSet: z.string(),
+    })
+
+    // Most-specific first: v2 strips unknown keys, so it would match a v3/v4
+    // token and silently drop its version-specific fields. Order matters.
+    return z.union([v4, v3, v2])
 }
 
 export const ExternalTokenPayload = externalTokenPayload()
@@ -166,7 +179,7 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
-    pieceSetExternalId?: string
+    pieceSetKey?: string
     projectDisplayName?: string
     concurrencyPoolKey?: string
     concurrencyPoolLimit?: number

@@ -2,9 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { ApEdition } from '@activepieces/shared'
 import { QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
 import { isNotOneOfTheseEditions } from '../../database-common'
-import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
 type PieceSetConfig = {
@@ -19,32 +17,20 @@ const DEFAULT_CONFIG: PieceSetConfig = {
     selectedTriggers: {},
 }
 
-const PLATFORM_BATCH = 100
 const PROJECT_BATCH = 500
 
 const log = system.globalLogger()
-const isPGlite = system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 
-// transaction=false is required by CREATE INDEX CONCURRENTLY, so the migration runs in
-// autocommit mode. Every step is guarded (IF NOT EXISTS DDL, NOT EXISTS backfill inserts,
-// pieceSetId IS NULL project updates), so a mid-run failure leaves a partial state that is
-// safe to resolve by simply re-running the migration.
+// Runs in a transaction. The project.pieceSetId index is built separately in
+// AddProjectPieceSetIdIndex1808000000000 because CREATE INDEX CONCURRENTLY cannot run inside
+// one. Every step is still guarded (IF NOT EXISTS DDL, NOT EXISTS backfill inserts, pieceSetId
+// IS NULL project updates) so a re-run after a rolled-back attempt is safe.
 export class CreatePieceSetTable1807000000000 implements Migration {
     name = 'CreatePieceSetTable1807000000000'
     breaking = false
     release = '0.103.0'
-    transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD COLUMN IF NOT EXISTS "filteredActionNames" jsonb NOT NULL DEFAULT '{}'
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD COLUMN IF NOT EXISTS "filteredTriggerNames" jsonb NOT NULL DEFAULT '{}'
-        `)
-
         await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS "piece_set" (
                 "id" character varying(21) NOT NULL,
@@ -52,7 +38,7 @@ export class CreatePieceSetTable1807000000000 implements Migration {
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "platformId" character varying(21) NOT NULL,
                 "name" character varying NOT NULL,
-                "externalId" character varying,
+                "key" character varying,
                 "isDefault" boolean NOT NULL DEFAULT false,
                 "generatedForProjectId" character varying(21),
                 "config" jsonb NOT NULL DEFAULT '{"pieces":{"mode":"include_all","exceptions":[]},"selectedActions":{},"selectedTriggers":{}}',
@@ -63,8 +49,8 @@ export class CreatePieceSetTable1807000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE INDEX IF NOT EXISTS "idx_piece_set_platform_id"
-            ON "piece_set" ("platformId")
+            CREATE INDEX IF NOT EXISTS "idx_piece_set_platform_id_created_id"
+            ON "piece_set" ("platformId", "created", "id")
         `)
 
         await queryRunner.query(`
@@ -74,9 +60,9 @@ export class CreatePieceSetTable1807000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE UNIQUE INDEX IF NOT EXISTS "idx_piece_set_platform_id_external_id"
-            ON "piece_set" ("platformId", "externalId")
-            WHERE "externalId" IS NOT NULL
+            CREATE UNIQUE INDEX IF NOT EXISTS "idx_piece_set_platform_id_key"
+            ON "piece_set" ("platformId", "key")
+            WHERE "key" IS NOT NULL
         `)
 
         await queryRunner.query(`
@@ -96,60 +82,63 @@ export class CreatePieceSetTable1807000000000 implements Migration {
             `)
         }
 
-        if (isPGlite) {
-            await queryRunner.query(`
-                CREATE INDEX IF NOT EXISTS "idx_project_piece_set_id"
-                ON "project" ("pieceSetId")
-            `)
-        }
-        else {
-            // CONCURRENTLY avoids a ShareLock that would block all writes on the
-            // existing "project" table for the duration of the index build.
-            await queryRunner.query(`
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_project_piece_set_id"
-                ON "project" ("pieceSetId")
-            `)
-        }
-
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
 
         log.info('[CreatePieceSetTable1807000000000#up] Starting piece-set backfill')
 
-        let platformOffset = 0
-        let platformCount = 0
+        // Backfill-only index: without it, migrateAllowedProjects' per-project NOT EXISTS
+        // probe seq-scans a piece_set that grows with every insert (O(J²), hangs a large
+        // single-tenant install). The app never queries by this column, so it is dropped
+        // once the backfill finishes rather than kept as a permanent index.
+        await queryRunner.query(`
+            CREATE INDEX IF NOT EXISTS "idx_piece_set_generated_for_project_id"
+            ON "piece_set" ("generatedForProjectId")
+            WHERE "generatedForProjectId" IS NOT NULL
+        `)
 
-        while (true) {
-            const platforms: Array<{ id: string }> = await queryRunner.query(
-                'SELECT id FROM platform ORDER BY created ASC LIMIT $1 OFFSET $2',
-                [PLATFORM_BATCH, platformOffset],
+        // Only platforms with custom configuration to preserve are migrated. A project
+        // with a NULL "pieceSetId" self-heals at runtime (resolvePieceSetForProject falls
+        // back to getOrCreateDefaultPieceSet), so platforms whose projects all use the
+        // default (NONE) filter and that have no piece-bearing tags need no backfill. The
+        // set that actually needs migrating is therefore much smaller than the platform
+        // table, which is why we select it directly instead of paginating every platform.
+        const platforms: Array<{ id: string }> = await queryRunner.query(`
+            SELECT p.id
+            FROM platform p
+            WHERE EXISTS (
+                SELECT 1 FROM project pr
+                JOIN project_plan pp ON pp."projectId" = pr.id
+                WHERE pr."platformId" = p.id AND pp."piecesFilterType" = 'ALLOWED'
             )
-            if (platforms.length === 0) break
+            OR EXISTS (
+                SELECT 1 FROM tag t
+                JOIN piece_tag pt ON pt."tagId" = t.id
+                WHERE t."platformId" = p.id
+            )
+            ORDER BY p.created ASC
+        `)
 
-            for (const { id: platformId } of platforms) {
-                await migratePlatform(queryRunner, platformId)
-                platformCount++
-            }
-
-            platformOffset += platforms.length
-            if (platforms.length < PLATFORM_BATCH) break
+        for (const { id: platformId } of platforms) {
+            await migratePlatform(queryRunner, platformId)
         }
 
-        log.info({ platformCount }, '[CreatePieceSetTable1807000000000#up] Backfill complete')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_generated_for_project_id"')
+
+        log.info(
+            { platformCount: platforms.length },
+            '[CreatePieceSetTable1807000000000#up] Backfill complete',
+        )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_project_piece_set_id"')
         await queryRunner.query('ALTER TABLE "project" DROP CONSTRAINT IF EXISTS "fk_project_piece_set_id"')
         await queryRunner.query('ALTER TABLE "project" DROP COLUMN IF EXISTS "pieceSetId"')
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_external_id"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_key"')
         await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_is_default"')
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_piece_set_platform_id_created_id"')
         await queryRunner.query('DROP TABLE IF EXISTS "piece_set"')
-
-        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "filteredTriggerNames"')
-        await queryRunner.query('ALTER TABLE "platform" DROP COLUMN IF EXISTS "filteredActionNames"')
     }
 }
 
@@ -173,7 +162,7 @@ async function ensureDefaultSet(queryRunner: QueryRunner, platformId: string): P
 
     const id = apId()
     await queryRunner.query(
-        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "externalId", config)
+        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "key", config)
          VALUES ($1, NOW(), NOW(), $2, 'Default', true, NULL, 'default', $3)`,
         [id, platformId, JSON.stringify(DEFAULT_CONFIG)],
     )
@@ -191,7 +180,7 @@ async function migrateTagSets(queryRunner: QueryRunner, platformId: string): Pro
            )
            AND NOT EXISTS (
                SELECT 1 FROM piece_set ps
-               WHERE ps."platformId" = $1 AND ps."externalId" = t.name
+               WHERE ps."platformId" = $1 AND ps."key" = t.name
            )
          ORDER BY t.created ASC`,
         [platformId],
@@ -216,7 +205,7 @@ async function migrateTagSets(queryRunner: QueryRunner, platformId: string): Pro
     for (const { tagId, tagName } of tags) {
         const taggedPieces = [...(piecesByTagId.get(tagId) ?? new Set<string>())]
         await queryRunner.query(
-            `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "externalId", config)
+            `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "key", config)
              VALUES ($1, NOW(), NOW(), $2, $3, false, NULL, $4, $5)`,
             [apId(), platformId, tagName, tagName, JSON.stringify(allowListConfig(taggedPieces))],
         )
@@ -275,7 +264,7 @@ async function insertProjectSets(
     const params: unknown[] = rows.flatMap((r) => [r.id, platformId, r.name, r.projectId, JSON.stringify(r.config)])
 
     await queryRunner.query(
-        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "externalId", config)
+        `INSERT INTO piece_set (id, created, updated, "platformId", name, "isDefault", "generatedForProjectId", "key", config)
          VALUES ${valuePlaceholders}`,
         params,
     )

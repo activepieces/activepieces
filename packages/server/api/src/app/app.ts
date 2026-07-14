@@ -1,15 +1,14 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { wideEvent } from '@activepieces/server-utils'
+import { apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
-import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod'
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
-import { adhocRunModule } from './adhoc-run/adhoc-run.module'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
@@ -97,7 +96,6 @@ import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
-import { tagsModule } from './pieces/tags/tags-module'
 import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
@@ -230,7 +228,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(collaborativeModule)
     await app.register(flowModule)
     await app.register(flowRunModule)
-    await app.register(adhocRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
     await app.register(platformAppConnectionModule)
@@ -241,7 +238,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(triggerModule)
     await app.register(platformModule)
     await app.register(humanInputModule)
-    await app.register(tagsModule)
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
     await app.register(agentsModule)
@@ -422,6 +418,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const pieces = process.env.AP_DEV_PIECES
 
+    assertReleaseReadable(app.log)
     systemSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
@@ -434,6 +431,27 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         )
     }
     void startDevPieceWatcher(app)
+}
+
+// Front-loads the release-read failure signal to boot time. Without this the only alert is
+// emitted lazily on the first worker poll (worker-rpc-service.ts), so a mis-packaged app that
+// no worker has polled yet looks healthy. A '0.0.0' read fail-closes the dispatch gate and will
+// NOT self-heal on deploy completion, so page immediately and log at error (see the "Release
+// Version Detection" section in packages/server/AGENTS.md).
+function assertReleaseReadable(log: FastifyBaseLogger): void {
+    const version = apVersionUtil.getCurrentRelease()
+    if (version !== UNKNOWN_VERSION) {
+        log.info({ release: { version } }, '[appPostBoot] Release version detected from package.json')
+        return
+    }
+    log.error({ release: { version } }, '[appPostBoot] App could not read its release version from package.json (reported as 0.0.0); worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)')
+    onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
+        code: 'RELEASE_VERSION_UNREADABLE',
+        message: 'App could not read its release version from package.json (reported as 0.0.0) at startup; worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)',
+        params: { appVersion: version },
+    }).catch((pageError) => {
+        log.error({ pageError }, '[appPostBoot] Failed to send on-call page for unreadable release version')
+    })
 }
 
 function extractPlatformId(principal: { platform?: { id?: string } } | null | undefined): string | undefined {
