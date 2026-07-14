@@ -994,6 +994,9 @@
       "@activepieces/piece-pinterest": [
         "packages/pieces/community/pinterest/src/index.ts"
       ],
+      "@activepieces/piece-pinterest-conversions": [
+        "packages/pieces/community/pinterest-conversions/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],

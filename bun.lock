@@ -7119,6 +7119,15 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/pinterest-conversions": {
+      "name": "@activepieces/piece-pinterest-conversions",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/pipedrive": {
       "name": "@activepieces/piece-pipedrive",
       "version": "0.8.8",
@@ -12190,6 +12199,8 @@
     "@activepieces/piece-pinecone": ["@activepieces/piece-pinecone@workspace:packages/pieces/community/pinecone"],
 
     "@activepieces/piece-pinterest": ["@activepieces/piece-pinterest@workspace:packages/pieces/community/pinterest"],
+
+    "@activepieces/piece-pinterest-conversions": ["@activepieces/piece-pinterest-conversions@workspace:packages/pieces/community/pinterest-conversions"],
 
     "@activepieces/piece-pipedrive": ["@activepieces/piece-pipedrive@workspace:packages/pieces/community/pipedrive"],
 
