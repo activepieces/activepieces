@@ -10,7 +10,6 @@ EXECUTION_MODE=${1:-SANDBOX_CODE_AND_PROCESS}
 TOTAL_REQUESTS=${2:-500}
 APP_REPLICAS=${APP_REPLICAS:-1}
 WORKER_REPLICAS=${WORKER_REPLICAS:-2}
-AP_REUSE_SANDBOX=${AP_REUSE_SANDBOX:-true}
 
 # SANDBOXED mode needs more time for sandbox initialization
 if [ "$EXECUTION_MODE" = "SANDBOXED" ]; then
@@ -30,11 +29,10 @@ trap cleanup EXIT
 echo "=== Building image ==="
 docker build -t activepieces-benchmark:local .
 
-echo "=== Starting stack (mode=$EXECUTION_MODE, apps=$APP_REPLICAS, workers=$WORKER_REPLICAS, reuse_sandbox=$AP_REUSE_SANDBOX) ==="
+echo "=== Starting stack (mode=$EXECUTION_MODE, apps=$APP_REPLICAS, workers=$WORKER_REPLICAS) ==="
 AP_EXECUTION_MODE=$EXECUTION_MODE \
 APP_REPLICAS=$APP_REPLICAS \
 WORKER_REPLICAS=$WORKER_REPLICAS \
-AP_REUSE_SANDBOX=$AP_REUSE_SANDBOX \
   $COMPOSE up -d
 
 echo "Waiting for containers to settle..."
