@@ -70,7 +70,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }
     },
     async saveStream(params: SaveStreamParams): Promise<File> {
-        const { stream, fileName, type, projectId, platformId, metadata, contentType } = params
+        const { stream, fileName, type, projectId, platformId, metadata, contentType, size } = params
         const fileId = apId()
         const location = getLocationForFile(type)
 
@@ -84,16 +84,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
             metadata,
         } as const
 
-        const parts = multipartStream.chunkIntoParts(multipartStream.toAsyncIterable(stream), multipartStream.PART_SIZE_BYTES)
-        const first = await parts.next()
-        const firstBuffer = first.done ? Buffer.alloc(0) : first.value
-        const second = await parts.next()
-
-        const bufferAndSaveToDb = async (): Promise<File> => {
+        const bufferAndSave = async (): Promise<File> => {
             const maxFileSizeBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
             const data = await multipartStream.bufferRemaining({
-                head: second.done ? [firstBuffer] : [firstBuffer, second.value],
-                rest: parts,
+                head: [],
+                rest: stream,
                 maxSizeBytes: maxFileSizeBytes,
                 onOverflow: () => new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
@@ -103,58 +98,44 @@ export const fileService = (log: FastifyBaseLogger) => ({
             return this.save({ ...baseSaveParams, data, size: data.length })
         }
 
-        if (location === FileLocation.DB) {
-            return bufferAndSaveToDb()
+        // Streaming straight to S3 needs the length up front (single PutObject). Without a
+        // known size — or on DB storage — buffer the stream whole under the buffered cap.
+        if (location === FileLocation.DB || isNil(size)) {
+            return bufferAndSave()
         }
 
         const maxSizeBytes = system.getNumberOrThrow(AppSystemProp.MAX_STREAM_FILE_SIZE_MB) * 1024 * 1024
-        const streamCeilingError = () => new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: { message: `Streamed file size exceeds the ${AppSystemProp.MAX_STREAM_FILE_SIZE_MB} limit of ${maxSizeBytes / (1024 * 1024)}MB` },
-        })
-
-        if (second.done) {
-            if (firstBuffer.length > maxSizeBytes) {
-                throw streamCeilingError()
-            }
-            return this.save({ ...baseSaveParams, data: firstBuffer, size: firstBuffer.length })
+        if (size > maxSizeBytes) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Streamed file size ${Math.ceil(size / (1024 * 1024))}MB exceeds the ${AppSystemProp.MAX_STREAM_FILE_SIZE_MB} limit of ${maxSizeBytes / (1024 * 1024)}MB` },
+            })
         }
 
-        const created = await this.save({ ...baseSaveParams, data: null, size: 0 })
+        // save() with null data throws if S3 is misconfigured (its DB fallback needs bytes),
+        // so treat any failure — or an unexpected non-S3 row — as "buffer under the file cap".
+        const createResult = await tryCatch(() => this.save({ ...baseSaveParams, data: null, size }))
+        if (createResult.error !== null) {
+            return bufferAndSave()
+        }
+        const created = createResult.data
         if (created.location !== FileLocation.S3 || isNil(created.s3Key)) {
             await fileRepo().delete({ id: created.id })
-            return bufferAndSaveToDb()
+            return bufferAndSave()
         }
 
-        const { s3Key } = created
-        const createResult = await tryCatch(() => s3Helper(log).createMultipartUpload({ s3Key, contentType }))
-        if (createResult.error !== null) {
+        const s3Key = created.s3Key
+        const uploadResult = await tryCatch(() => s3Helper(log).uploadStream({
+            s3Key,
+            contentType,
+            body: stream,
+            contentLength: size,
+        }))
+        if (uploadResult.error !== null) {
             await tryCatch(() => fileRepo().delete({ id: created.id }))
-            throw createResult.error
+            throw uploadResult.error
         }
-        const uploadId = createResult.data
-        return multipartStream.runMultipartStream<File>({
-            head: [firstBuffer, second.value],
-            rest: parts,
-            ceilingBytes: maxSizeBytes,
-            onCeilingExceeded: streamCeilingError,
-            sink: {
-                uploadPart: async ({ partNumber, data }) => {
-                    const etag = await s3Helper(log).uploadPart({ s3Key, uploadId, partNumber, body: data })
-                    return { etag }
-                },
-                complete: async ({ parts: uploadedParts }) => {
-                    await s3Helper(log).completeMultipartUpload({ s3Key, uploadId, parts: uploadedParts })
-                    const size = await s3Helper(log).getObjectSize({ s3Key })
-                    await fileRepo().update({ id: created.id }, { size })
-                    return { ...created, size }
-                },
-                abort: async () => {
-                    await tryCatch(() => s3Helper(log).abortMultipartUpload({ s3Key, uploadId }))
-                    await tryCatch(() => fileRepo().delete({ id: created.id }))
-                },
-            },
-        })
+        return created
     },
     async exists(params: GetOneParams): Promise<boolean> {
         const file = await fileRepo().findOneBy({
@@ -439,6 +420,9 @@ type SaveStreamParams = {
     platformId?: string
     metadata?: Record<string, string>
     contentType?: string
+    // Byte length, when known up front (e.g. a request Content-Length). Required to
+    // stream straight to S3; absent, the stream is buffered under MAX_FILE_SIZE_MB.
+    size?: number
 }
 
 type GetOneParams = {

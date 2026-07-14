@@ -41,6 +41,9 @@ export async function streamWebhookBinaryBody(request: FastifyRequest, stream: R
         stream,
         fileName: `file.${extension}`,
         contentType: baseContentType,
+        // A raw binary body's Content-Length is exactly the file size, so it can stream
+        // straight to S3. Multipart parts (below) carry no per-part length and buffer instead.
+        size: parseContentLength(request.headers['content-length']),
     })
     return { fileUrl: url }
 }
@@ -55,7 +58,7 @@ export async function streamWebhookMultipartFile(request: FastifyRequest, part: 
 }
 
 async function streamToStepFileUrl(params: StreamToStepFileUrlParams): Promise<string> {
-    const { request, stream, fileName, contentType } = params
+    const { request, stream, fileName, contentType, size } = params
     const { projectId, platformId, flowId } = getWebhookContextOrThrow(request)
     const file = await fileService(request.log).saveStream({
         stream,
@@ -65,6 +68,7 @@ async function streamToStepFileUrl(params: StreamToStepFileUrlParams): Promise<s
         platformId,
         metadata: { stepName: 'trigger', flowId },
         contentType,
+        size,
     })
     return filesService.constructReadUrl({
         fileId: file.id,
@@ -76,6 +80,12 @@ async function streamToStepFileUrl(params: StreamToStepFileUrlParams): Promise<s
 function getWebhookContextOrThrow(request: FastifyRequest): NonNullable<FastifyRequest['webhookContext']> {
     assertNotNullOrUndefined(request.webhookContext, 'webhookContext')
     return request.webhookContext
+}
+
+function parseContentLength(header: string | string[] | undefined): number | undefined {
+    const raw = Array.isArray(header) ? header[0] : header
+    const value = Number(raw)
+    return Number.isInteger(value) && value > 0 ? value : undefined
 }
 
 // Single source of truth for "this content-type streams straight to storage".
@@ -97,4 +107,5 @@ type StreamToStepFileUrlParams = {
     stream: Readable
     fileName?: string
     contentType?: string
+    size?: number
 }

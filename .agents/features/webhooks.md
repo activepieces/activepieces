@@ -85,7 +85,7 @@ External services verify webhook ownership before sending events:
 
 `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` (default 5MB) bounds in-memory (JSON/text/XML) bodies — returns 413 if exceeded.
 
-Streamed binary/multipart file bodies bypass that limit: they go to storage as they arrive and are bounded instead by `AP_MAX_STREAM_FILE_SIZE_MB` (default 1024MB). On S3 storage this is a multipart upload capped at the limit (`file.service.ts` `saveStream`); on DB storage the stream is buffered whole and capped by the same limit.
+Streamed binary/multipart file bodies bypass that limit: they go to storage as they arrive and are bounded instead by `AP_MAX_STREAM_FILE_SIZE_MB` (default 1024MB). On S3 storage a raw binary body (which carries a `Content-Length`) streams straight to S3 in a single `PutObject` (`s3Helper.uploadStream`), capped by that limit. A body of unknown length — multipart form-data file parts, or any DB-storage install — is buffered whole and capped by the smaller `AP_MAX_FILE_SIZE_MB` instead.
 
 ## Flow Resolution
 

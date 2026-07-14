@@ -6,7 +6,7 @@ import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { fileService } from './file.service'
 import { filesController, signedStepFileController } from './files-controller'
-import { multipartUploadController } from './multipart-upload-controller'
+import { streamUploadController } from './stream-upload-controller'
 
 export const fileModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
@@ -23,6 +23,6 @@ export const fileModule: FastifyPluginAsyncZod = async (app) => {
         },
     })
     await app.register(filesController, { prefix: '/v1/files' })
-    await app.register(multipartUploadController, { prefix: '/v1/files' })
+    await app.register(streamUploadController, { prefix: '/v1/files' })
     await app.register(signedStepFileController, { prefix: '/v1/step-files' })
 }

@@ -1,4 +1,5 @@
-import { apId, multipartStream } from '@activepieces/core-utils'
+import { Readable } from 'node:stream'
+import { apId, isNil, multipartStream } from '@activepieces/core-utils'
 import { FilesService } from '@activepieces/pieces-framework'
 import { FileSizeError, FileType } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
@@ -19,59 +20,37 @@ export function createFileUploader({ engineToken, apiUrl }: CreateFileUploaderPa
         return readUrl
     }
 
-    const writeStream = async ({ fileName, stream }: WriteStreamParams): Promise<string> => {
-        const parts = multipartStream.chunkIntoParts(multipartStream.toAsyncIterable(stream), multipartStream.PART_SIZE_BYTES)
-        const first = await parts.next()
-        const firstBuffer = first.done ? Buffer.alloc(0) : first.value
-        const second = await parts.next()
-        if (second.done) {
-            // The whole stream fits in a single part — the buffered path (and its cap) covers it.
-            return uploadBuffered(fileName, firstBuffer)
-        }
-
+    const writeStream = async ({ fileName, stream, size }: WriteStreamParams): Promise<string> => {
         const fileId = apId()
-        const created = await engineFileApi.createMultipartUpload({ engineToken, apiUrl, fileId, fileName })
+        const created = await engineFileApi.createStreamUpload({ engineToken, apiUrl, fileId, fileName, size })
         if (created.mode === 'DB') {
             // Honest fallback on DB-only installs: buffer the whole stream under the existing cap.
             const buffered = await multipartStream.bufferRemaining({
-                head: [firstBuffer, second.value],
-                rest: parts,
+                head: [],
+                rest: multipartStream.toAsyncIterable(stream),
                 maxSizeBytes: maxFileSizeMb * 1024 * 1024,
                 onOverflow: (totalBytes) => new FileSizeError(totalBytes / 1024 / 1024, maxFileSizeMb),
             })
             return uploadBuffered(fileName, buffered)
         }
-
-        const { uploadId, maxSizeBytes } = created
-        return multipartStream.runMultipartStream<string>({
-            head: [firstBuffer, second.value],
-            rest: parts,
-            ceilingBytes: maxSizeBytes,
-            onCeilingExceeded: ({ totalBytes, ceilingBytes }) => new FileSizeError(totalBytes / 1024 / 1024, ceilingBytes / 1024 / 1024),
-            sink: {
-                uploadPart: async ({ partNumber, data }) => {
-                    const url = await engineFileApi.getPartUrl({ engineToken, apiUrl, fileId, uploadId, partNumber })
-                    const etag = await engineFileApi.uploadPart({ url, data })
-                    return { etag }
-                },
-                complete: async ({ parts: uploadedParts }) => {
-                    const { readUrl } = await engineFileApi.completeMultipartUpload({ engineToken, apiUrl, fileId, uploadId, parts: uploadedParts })
-                    return readUrl
-                },
-                abort: async () => {
-                    await engineFileApi.abortMultipartUpload({ engineToken, apiUrl, fileId, uploadId })
-                },
-            },
+        await engineFileApi.putStream({
+            url: created.url,
+            stream: Readable.from(multipartStream.toAsyncIterable(stream)),
+            size,
         })
+        return created.readUrl
     }
 
     return {
-        write: async ({ fileName, data }): Promise<string> => {
+        write: async ({ fileName, data, size }): Promise<string> => {
             if (Buffer.isBuffer(data)) {
                 return uploadBuffered(fileName, data)
             }
             if (isStream(data)) {
-                return writeStream({ fileName, stream: data })
+                if (isNil(size)) {
+                    throw new Error('Streaming file writes require a numeric `size` (in bytes). Pass `size`, or pass a Buffer to buffer the file in memory instead.')
+                }
+                return writeStream({ fileName, stream: data, size })
             }
             throw new Error(
                 `Expected file data to be a Buffer or stream, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
@@ -100,4 +79,5 @@ type CreateFileUploaderParams = {
 type WriteStreamParams = {
     fileName: string
     stream: AsyncIterable<Uint8Array> | ReadableStream<Uint8Array>
+    size: number
 }

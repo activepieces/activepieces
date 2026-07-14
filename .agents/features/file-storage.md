@@ -3,7 +3,11 @@
 ## Summary
 The File Storage Service is the central infrastructure for persisting binary files in Activepieces. It supports two storage backends: database (PostgreSQL `bytea`) and S3-compatible object storage (AWS S3, Cloudflare R2, or any S3-compatible endpoint). The backend used for a given file depends on its `FileType` — execution-related files that expire (run logs, step files, trigger payloads, webhook payloads) use the configured `FILE_STORAGE_LOCATION` system property; non-expiring files (platform assets, user profile pictures, knowledge base files, project releases, etc.) always use the database. The one non-expiring exception is `FLOW_BUNDLE` (the prebuilt per-locked-flow-version artifact), which uses the configurable `FILE_STORAGE_LOCATION` so it can be served from S3 even though it never expires. Files are optionally compressed with Zstd. A scheduled system job runs every hour to delete stale execution files beyond the configurable retention window. The `step-file` sub-feature exposes engine-accessible endpoints for pieces to upload and download files produced during a flow run, using short-lived JWT tokens for download authorization.
 
-Large `FLOW_STEP_FILE` outputs are handled pass-by-reference rather than being buffered whole: `saveStream` streams the piece's file into S3 via a multipart upload (falling back to buffering into the DB when the file is DB-backed or S3 is unavailable), so the file never has to fit in memory. Streamed files are capped by `MAX_STREAM_FILE_SIZE_MB` (default 1 GB), separate from the smaller `MAX_FILE_SIZE_MB` limit that applies to fully-buffered uploads.
+Large files are handled pass-by-reference rather than being buffered whole, and there are two byte-touching legs depending on who holds the S3 credentials (see [ADR 0007](../../docs/adr/0007-large-files-pass-by-reference.md)):
+- **Inbound webhook bodies** stream into S3 through `saveStream`, which delegates to `s3Helper.uploadStream` — a single SDK `PutObject` that streams the body when its `Content-Length` is known (raw binary bodies), buffering under `MAX_FILE_SIZE_MB` when the length is unknown (multipart form parts) or the file is DB-backed.
+- **Piece `ctx.files.write` of a stream** runs in the sandboxed engine, which has no S3 credentials, so it uploads via a single presigned PUT minted by the API (`stream-upload.service`). The caller must declare `size`.
+
+Streamed files are capped by `MAX_STREAM_FILE_SIZE_MB` (default 1 GB), separate from the smaller `MAX_FILE_SIZE_MB` limit that applies to fully-buffered uploads.
 
 ## Key Files
 - `packages/server/api/src/app/file/file.service.ts` — core service: save, getFile, getDataOrThrow, delete, deleteStaleBulk, uploadPublicAsset
@@ -81,13 +85,13 @@ Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`
 |---|---|---|---|
 | GET | `/signed` | public | Legacy signed download — validates the JWT token, then 302 redirects to `/v1/files/{fileId}?token=...` |
 
-Step file uploads are handled by the engine via the unified `PUT /v1/files/:fileId` endpoint. The legacy `/signed` route remains as a thin redirect so older execution outputs continue to resolve through the canonical `/v1/files/:fileId` path (which handles DB streaming or S3 pre-signed redirect).
+Buffered step file uploads are handled by the engine via the unified `PUT /v1/files/:fileId` endpoint. Streamed step-file writes (`Property.File({ stream: true })`) use `POST /v1/files/:fileId/stream-upload` (`stream-upload-controller`), which validates the declared `size`, reserves the file row, and returns a single presigned PUT URL plus the readUrl. The legacy `/signed` route remains as a thin redirect so older execution outputs continue to resolve through the canonical `/v1/files/:fileId` path (which handles DB streaming or S3 pre-signed redirect).
 
 ## Service Methods
 
 **fileService**
 - `save({ fileId?, projectId, platformId?, data, size, type, fileName?, compression, metadata? })` — determines location based on type, saves to DB or S3 (with DB fallback on S3 error). Returns the persisted `File` entity.
-- `saveStream({ stream, fileName?, type, projectId?, platformId?, metadata?, contentType? })` — streams a `Readable` to storage without buffering the whole file. Chunks the stream into parts (`multipartStream`); DB-backed types (or a single-part S3 stream) buffer and delegate to `save`, otherwise it runs an S3 multipart upload via `s3Helper`, backfilling the row's `size` on completion and aborting the upload + deleting the row on failure. Enforces `MAX_STREAM_FILE_SIZE_MB` for S3 streams and `MAX_FILE_SIZE_MB` for the DB buffering path. Returns the persisted `File` entity.
+- `saveStream({ stream, fileName?, type, projectId?, platformId?, metadata?, contentType? })` — streams a `Readable` to storage without buffering the whole file. DB-backed types buffer and delegate to `save`; otherwise it creates a placeholder row and streams to S3 via `s3Helper.uploadStream`, backfilling the row's `size` on completion and deleting the row on failure. Enforces `MAX_STREAM_FILE_SIZE_MB` for S3 streams and `MAX_FILE_SIZE_MB` for the DB buffering path. Returns the persisted `File` entity.
 - `getFile({ projectId, fileId, type? })` — returns `File | null` (metadata only, no data).
 - `getFileOrThrow(params)` — throws ENTITY_NOT_FOUND if not found.
 - `getDataOrThrow({ projectId, fileId, type? })` — fetches metadata + binary data. Decompresses transparently. Returns `{ data: Buffer, fileName?, metadata? }`.
@@ -102,12 +106,8 @@ Step file uploads are handled by the engine via the unified `PUT /v1/files/:file
 - `getFile(s3Key)` — GetObject from S3, returns Buffer.
 - `getS3SignedUrl(s3Key, fileName)` — generates a 7-day pre-signed GET URL.
 - `putS3SignedUrl({ s3Key, contentLength, contentEncoding })` — generates a 7-day pre-signed PUT URL.
-- `createMultipartUpload({ s3Key, contentType? })` — starts an S3 multipart upload, returns the `UploadId`.
-- `uploadPart({ s3Key, uploadId, partNumber, body })` — uploads one part, returns its `ETag`.
-- `signPartUrl({ s3Key, uploadId, partNumber })` — pre-signed PUT URL for one part, short-lived (`STREAMING_URL_EXPIRY_SECONDS`, 1 hour) since a fresh URL is minted per part.
-- `completeMultipartUpload({ s3Key, uploadId, parts })` — finalizes the upload from the collected `{ partNumber, etag }` list.
-- `abortMultipartUpload({ s3Key, uploadId })` — cancels an in-progress multipart upload.
-- `getObjectSize({ s3Key })` — HeadObject, returns `ContentLength` (0 if absent).
+- `uploadStream({ s3Key, contentType?, body, contentLength })` — streams a `Readable` to S3 in a single `PutObject`. The SDK streams rather than buffers because `ContentLength` is supplied, and S3 enforces the declared length (a body longer/shorter than `contentLength` fails the request), so the size doubles as the authoritative check. Callers validate `contentLength` against `MAX_STREAM_FILE_SIZE_MB` before calling.
+- `putS3SignedUrl({ s3Key, contentLength?, contentEncoding? })` — pre-signed PUT URL (7-day). Used by the buffered signed-redirect path and by `stream-upload.service` for the engine's single-PUT streaming upload. `Content-Length` is deliberately left unsigned so any S3-compatible provider accepts the client's value.
 - `deleteFiles(s3Keys)` — DeleteObjects in batches of 100 (Cloudflare R2 limit); sends the CRC32C checksum algorithm (OCI Object Storage rejects the SDK-default CRC32).
 - `validateS3Configuration()` — smoke test: puts, heads, and deletes a test object.
 
@@ -122,7 +122,7 @@ Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. 
 | `FILE_STORAGE_LOCATION` | `DB` or `S3` — controls where expiring execution files are stored |
 | `EXECUTION_DATA_RETENTION_DAYS` | Number of days to keep execution files before cleanup |
 | `MAX_FILE_SIZE_MB` | Max size for fully-buffered file uploads and the `saveStream` DB fallback path (default 25) |
-| `MAX_STREAM_FILE_SIZE_MB` | Max size for S3 multipart-streamed files via `saveStream` (default 1024) |
+| `MAX_STREAM_FILE_SIZE_MB` | Max size for S3-streamed files — inbound webhook bodies (`saveStream`) and engine stream uploads (`stream-upload.service`) (default 1024) |
 | `S3_ACCESS_KEY_ID` | S3 credentials (not needed if `S3_USE_IRSA=true`) |
 | `S3_SECRET_ACCESS_KEY` | S3 credentials (not needed if `S3_USE_IRSA=true`) |
 | `S3_BUCKET` | S3 bucket name |

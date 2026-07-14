@@ -1,6 +1,11 @@
 import { EngineGenericError, FileSizeError } from '@activepieces/shared'
 import { createFileUploader } from '../../src/lib/piece-context/file-uploader'
 
+const { mockUndiciRequest } = vi.hoisted(() => ({
+    mockUndiciRequest: vi.fn(async () => ({ statusCode: 200, body: { dump: async () => undefined } })),
+}))
+vi.mock('undici', () => ({ request: mockUndiciRequest }))
+
 const SERVICE_PARAMS = {
     engineToken: 'test-token',
     apiUrl: 'http://localhost:3000/',
@@ -117,46 +122,34 @@ describe('file-uploader service', () => {
 
 describe('file-uploader stream path', () => {
     const READ_URL = 'https://api.example.com/v1/files/abc123?token=xyz'
-    const PART_SIZE = 8 * 1024 * 1024
+    const S3_PUT_URL = 'https://s3.example.com/put?signed=true'
+    const MB = 1024 * 1024
 
     beforeEach(() => {
         process.env.AP_MAX_FILE_SIZE_MB = '10'
         vi.restoreAllMocks()
+        mockUndiciRequest.mockReset()
+        mockUndiciRequest.mockResolvedValue({ statusCode: 200, body: { dump: async () => undefined } })
     })
 
     type MockOptions = {
         mode?: 'S3' | 'DB'
-        maxSizeBytes?: number
-        failPartUpload?: boolean
+        createStatus?: number
     }
 
-    function mockStreamingFetch({ mode = 'S3', maxSizeBytes = 1024 * 1024 * 1024, failPartUpload = false }: MockOptions = {}) {
+    function mockStreamingFetch({ mode = 'S3', createStatus = 200 }: MockOptions = {}) {
         const calls: { url: string, method: string, body: unknown }[] = []
-        let partCounter = 0
         vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
             const url = String(input)
             calls.push({ url, method: init?.method ?? 'GET', body: init?.body })
-            if (url.includes('/multipart-uploads/part-url')) {
-                partCounter += 1
-                return new Response(JSON.stringify({ url: `https://s3.example.com/part-${partCounter}` }), { status: 200 })
-            }
-            if (url.includes('/multipart-uploads/complete')) {
-                return new Response(JSON.stringify({ readUrl: READ_URL, size: 0 }), { status: 200 })
-            }
-            if (url.includes('/multipart-uploads/abort')) {
-                return new Response(null, { status: 204 })
-            }
-            if (url.includes('/multipart-uploads')) {
-                const body = mode === 'DB' ? { mode: 'DB' } : { mode: 'S3', uploadId: 'upload-1', maxSizeBytes }
+            if (url.includes('/stream-upload')) {
+                if (createStatus !== 200) {
+                    return new Response('rejected', { status: createStatus })
+                }
+                const body = mode === 'DB' ? { mode: 'DB' } : { mode: 'S3', url: S3_PUT_URL, readUrl: READ_URL }
                 return new Response(JSON.stringify(body), { status: 200 })
             }
-            if (url.startsWith('https://s3.example.com/part-')) {
-                if (failPartUpload) {
-                    return new Response('part upload failed', { status: 403 })
-                }
-                return new Response(null, { status: 200, headers: { etag: `"etag-${url.split('-').pop()}"` } })
-            }
-            // Buffered PUT fallback path
+            // Buffered PUT fallback path (`PUT /v1/files/:id`)
             return new Response(JSON.stringify({ fileId: 'file-1', readUrl: READ_URL }), {
                 status: 200,
                 headers: { 'x-ap-file-read-url': READ_URL },
@@ -171,71 +164,58 @@ describe('file-uploader stream path', () => {
         }
     }
 
-    it('uses the buffered path for streams that fit in a single part', async () => {
+    it('throws when a stream is written without a size', async () => {
+        const files = createFileUploader(SERVICE_PARAMS)
+        await expect(
+            files.write({ fileName: 'big.bin', data: toStream(Buffer.alloc(MB)) }),
+        ).rejects.toThrow('Streaming file writes require a numeric `size`')
+    })
+
+    it('streams to S3 via a single presigned PUT (undici) and returns the read url', async () => {
         const calls = mockStreamingFetch()
         const files = createFileUploader(SERVICE_PARAMS)
 
-        const result = await files.write({ fileName: 'small.txt', data: toStream(Buffer.from('hello')) })
+        const result = await files.write({ fileName: 'big.bin', data: toStream(Buffer.alloc(20 * MB)), size: 20 * MB })
 
         expect(result).toBe(READ_URL)
-        expect(calls.some(call => call.url.includes('multipart-uploads'))).toBe(false)
-        expect(calls.filter(call => call.method === 'PUT')).toHaveLength(1)
+        expect(calls.filter(call => call.url.includes('/stream-upload'))).toHaveLength(1)
+        expect(mockUndiciRequest).toHaveBeenCalledTimes(1)
+        const [putUrl, putInit] = mockUndiciRequest.mock.calls[0] as unknown as [string, { method: string, headers: Record<string, string> }]
+        expect(putUrl).toBe(S3_PUT_URL)
+        expect(putInit.method).toBe('PUT')
+        expect(putInit.headers['content-length']).toBe(String(20 * MB))
     })
 
-    it('uploads a large stream as multipart parts and completes with collected etags', async () => {
-        const calls = mockStreamingFetch()
+    it('throws when the S3 stream PUT fails', async () => {
+        mockStreamingFetch()
+        mockUndiciRequest.mockResolvedValueOnce({ statusCode: 403, body: { dump: async () => undefined } })
         const files = createFileUploader(SERVICE_PARAMS)
-        // 17MB → 3 parts (8 + 8 + 1)
-        const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE), Buffer.alloc(1024 * 1024))
-
-        const result = await files.write({ fileName: 'big.bin', data: stream })
-
-        expect(result).toBe(READ_URL)
-        const partPuts = calls.filter(call => call.url.startsWith('https://s3.example.com/part-'))
-        expect(partPuts).toHaveLength(3)
-        const completeCall = calls.find(call => call.url.includes('/multipart-uploads/complete'))
-        expect(completeCall).toBeDefined()
-        const completeBody = JSON.parse(String(completeCall?.body))
-        expect(completeBody.parts).toEqual([
-            { partNumber: 1, etag: '"etag-1"' },
-            { partNumber: 2, etag: '"etag-2"' },
-            { partNumber: 3, etag: '"etag-3"' },
-        ])
-    })
-
-    it('aborts the multipart upload and rethrows when a part upload fails', async () => {
-        const calls = mockStreamingFetch({ failPartUpload: true })
-        const files = createFileUploader(SERVICE_PARAMS)
-        const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE))
 
         await expect(
-            files.write({ fileName: 'big.bin', data: stream }),
+            files.write({ fileName: 'big.bin', data: toStream(Buffer.alloc(20 * MB)), size: 20 * MB }),
         ).rejects.toThrow(EngineGenericError)
-        expect(calls.some(call => call.url.includes('/multipart-uploads/abort'))).toBe(true)
     })
 
-    it('aborts and throws FileSizeError when the stream exceeds the server ceiling', async () => {
-        const calls = mockStreamingFetch({ maxSizeBytes: 10 * 1024 * 1024 })
+    it('throws when the server rejects the declared size', async () => {
+        mockStreamingFetch({ createStatus: 400 })
         const files = createFileUploader(SERVICE_PARAMS)
-        const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE))
 
         await expect(
-            files.write({ fileName: 'big.bin', data: stream }),
-        ).rejects.toThrow(FileSizeError)
-        expect(calls.some(call => call.url.includes('/multipart-uploads/abort'))).toBe(true)
-        expect(calls.some(call => call.url.includes('/multipart-uploads/complete'))).toBe(false)
+            files.write({ fileName: 'big.bin', data: toStream(Buffer.alloc(20 * MB)), size: 20 * MB }),
+        ).rejects.toThrow(EngineGenericError)
+        expect(mockUndiciRequest).not.toHaveBeenCalled()
     })
 
     it('buffers the whole stream on DB installs and honors the buffered cap', async () => {
         process.env.AP_MAX_FILE_SIZE_MB = '20'
         const calls = mockStreamingFetch({ mode: 'DB' })
         const files = createFileUploader(SERVICE_PARAMS)
-        const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE), Buffer.alloc(1024))
+        const stream = toStream(Buffer.alloc(8 * MB), Buffer.alloc(8 * MB), Buffer.alloc(1024))
 
-        const result = await files.write({ fileName: 'big.bin', data: stream })
+        const result = await files.write({ fileName: 'big.bin', data: stream, size: 16 * MB + 1024 })
 
         expect(result).toBe(READ_URL)
-        expect(calls.some(call => call.url.startsWith('https://s3.example.com/'))).toBe(false)
+        expect(mockUndiciRequest).not.toHaveBeenCalled()
         expect(calls.filter(call => call.method === 'PUT')).toHaveLength(1)
     })
 
@@ -243,21 +223,10 @@ describe('file-uploader stream path', () => {
         process.env.AP_MAX_FILE_SIZE_MB = '10'
         mockStreamingFetch({ mode: 'DB' })
         const files = createFileUploader(SERVICE_PARAMS)
-        const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE))
+        const stream = toStream(Buffer.alloc(8 * MB), Buffer.alloc(8 * MB))
 
         await expect(
-            files.write({ fileName: 'big.bin', data: stream }),
+            files.write({ fileName: 'big.bin', data: stream, size: 16 * MB }),
         ).rejects.toThrow(FileSizeError)
-    })
-
-    it('write routes an async-iterable stream through the multipart path', async () => {
-        const calls = mockStreamingFetch()
-        const files = createFileUploader(SERVICE_PARAMS)
-        const stream = toStream(Buffer.alloc(PART_SIZE), Buffer.alloc(PART_SIZE), Buffer.alloc(1024 * 1024))
-
-        const result = await files.write({ fileName: 'big.bin', data: stream })
-
-        expect(result).toBe(READ_URL)
-        expect(calls.filter(call => call.url.startsWith('https://s3.example.com/part-'))).toHaveLength(3)
     })
 })

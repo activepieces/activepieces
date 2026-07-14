@@ -273,9 +273,16 @@ export interface FilesService {
   write({
     fileName,
     data,
+    size,
   }: {
     fileName: string;
     data: Buffer | AsyncIterable<Uint8Array> | ReadableStream<Uint8Array>;
+    /**
+     * Size of the file in bytes. REQUIRED when `data` is a stream — the file is
+     * streamed to storage in a single upload, which needs the length up front.
+     * Ignored for `Buffer` data (the length is taken from the buffer).
+     */
+    size?: number;
   }): Promise<string>;
 }
 

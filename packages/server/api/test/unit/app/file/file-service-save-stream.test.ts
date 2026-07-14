@@ -5,11 +5,8 @@ import { fileService } from '../../../../src/app/file/file.service'
 
 const { mockRepo, mockS3, state } = vi.hoisted(() => {
     const state = {
-        parts: [] as Buffer[],
-        aborted: false,
         deleted: false,
-        completed: false,
-        uploadedBuffered: false,
+        uploadedContentLength: 0,
     }
     const mockRepo = {
         save: vi.fn(async (row: Record<string, unknown>) => row),
@@ -22,22 +19,12 @@ const { mockRepo, mockS3, state } = vi.hoisted(() => {
     }
     const mockS3 = {
         constructS3Key: vi.fn(async () => 'project/p/flow_step_file/f'),
-        uploadFile: vi.fn(async (key: string) => {
-            state.uploadedBuffered = true
-            return key
+        uploadFile: vi.fn(async (key: string) => key),
+        uploadStream: vi.fn(async ({ body, contentLength }: { body: Readable, contentLength: number }) => {
+            // Drain the body so the stream settles, then record the declared length.
+            for await (const _chunk of body) { /* discard */ }
+            state.uploadedContentLength = contentLength
         }),
-        createMultipartUpload: vi.fn(async () => 'upload-1'),
-        uploadPart: vi.fn(async ({ partNumber, body }: { partNumber: number, body: Buffer }) => {
-            state.parts.push(body)
-            return `etag-${partNumber}`
-        }),
-        completeMultipartUpload: vi.fn(async () => {
-            state.completed = true
-        }),
-        abortMultipartUpload: vi.fn(async () => {
-            state.aborted = true
-        }),
-        getObjectSize: vi.fn(async () => state.parts.reduce((sum, b) => sum + b.length, 0)),
     }
     return { mockRepo, mockS3, state }
 })
@@ -47,7 +34,6 @@ vi.mock('../../../../src/app/core/db/repo-factory', () => ({
 }))
 vi.mock('../../../../src/app/file/s3-helper', () => ({
     s3Helper: () => mockS3,
-    STREAMING_URL_EXPIRY_SECONDS: 3600,
 }))
 
 const log = { info: () => undefined, error: () => undefined, warn: () => undefined } as never
@@ -78,74 +64,68 @@ function streamOf(totalBytes: number): Readable {
     return Readable.from([Buffer.alloc(totalBytes, 1)])
 }
 
-function saveStream(stream: Readable) {
+function saveStream(stream: Readable, size?: number) {
     return fileService(log).saveStream({
         stream,
         fileName: 'upload.bin',
         type: FileType.FLOW_STEP_FILE,
         projectId: 'proj',
         platformId: 'plat',
+        size,
     })
 }
 
 describe('fileService.saveStream (S3)', () => {
     beforeEach(() => {
-        state.parts = []
-        state.aborted = false
         state.deleted = false
-        state.completed = false
-        state.uploadedBuffered = false
+        state.uploadedContentLength = 0
         vi.clearAllMocks()
         process.env.AP_FILE_STORAGE_LOCATION = FileLocation.S3
         process.env.AP_MAX_STREAM_FILE_SIZE_MB = '16'
         process.env.AP_MAX_FILE_SIZE_MB = '25'
     })
 
-    it('uploads a sub-part stream in a single buffered PutObject (no multipart)', async () => {
-        await saveStream(streamOf(3 * MB))
+    it('streams to S3 with the declared size', async () => {
+        await saveStream(streamOf(10 * MB), 10 * MB)
+        expect(mockS3.uploadStream).toHaveBeenCalledTimes(1)
+        expect(state.uploadedContentLength).toBe(10 * MB)
+    })
+
+    it('rejects a declared size over MAX_STREAM_FILE_SIZE_MB before reserving a row', async () => {
+        await expect(saveStream(streamOf(1 * MB), 20 * MB)).rejects.toThrow()
+        expect(mockRepo.save).not.toHaveBeenCalled()
+        expect(mockS3.uploadStream).not.toHaveBeenCalled()
+    })
+
+    it('buffers under MAX_FILE_SIZE_MB when the size is unknown', async () => {
+        await saveStream(streamOf(4 * MB))
+        expect(mockS3.uploadStream).not.toHaveBeenCalled()
         expect(mockS3.uploadFile).toHaveBeenCalledTimes(1)
-        expect(mockS3.createMultipartUpload).not.toHaveBeenCalled()
     })
 
-    it('rejects a single-part stream that exceeds MAX_STREAM_FILE_SIZE_MB', async () => {
-        process.env.AP_MAX_STREAM_FILE_SIZE_MB = '2'
-        await expect(saveStream(streamOf(6 * MB))).rejects.toThrow()
-        expect(mockS3.uploadFile).not.toHaveBeenCalled()
-        expect(mockS3.createMultipartUpload).not.toHaveBeenCalled()
-    })
-
-    it('streams a multi-part upload and completes it', async () => {
-        await saveStream(streamOf(16 * MB))
-        expect(mockS3.createMultipartUpload).toHaveBeenCalledTimes(1)
-        expect(mockS3.uploadPart).toHaveBeenCalledTimes(2)
-        expect(state.completed).toBe(true)
-        expect(state.aborted).toBe(false)
-    })
-
-    it('aborts the multipart upload and deletes the row when the ceiling is exceeded', async () => {
-        await expect(saveStream(streamOf(24 * MB))).rejects.toThrow()
-        expect(state.aborted).toBe(true)
+    it('deletes the row when the S3 upload fails', async () => {
+        mockS3.uploadStream.mockRejectedValueOnce(new Error('s3 down'))
+        await expect(saveStream(streamOf(4 * MB), 4 * MB)).rejects.toThrow()
         expect(state.deleted).toBe(true)
-        expect(state.completed).toBe(false)
     })
 })
 
 describe('fileService.saveStream (DB fallback)', () => {
     beforeEach(() => {
-        state.parts = []
+        state.deleted = false
         vi.clearAllMocks()
         process.env.AP_FILE_STORAGE_LOCATION = FileLocation.DB
         process.env.AP_MAX_FILE_SIZE_MB = '16'
         process.env.AP_MAX_STREAM_FILE_SIZE_MB = '1024'
     })
 
-    it('buffers to the DB and never touches S3 multipart', async () => {
-        await saveStream(streamOf(4 * MB))
-        expect(mockS3.createMultipartUpload).not.toHaveBeenCalled()
+    it('buffers to the DB and never streams to S3', async () => {
+        await saveStream(streamOf(4 * MB), 4 * MB)
+        expect(mockS3.uploadStream).not.toHaveBeenCalled()
         expect(mockRepo.save).toHaveBeenCalled()
     })
 
     it('throws when the buffered stream exceeds MAX_FILE_SIZE_MB', async () => {
-        await expect(saveStream(streamOf(20 * MB))).rejects.toThrow()
+        await expect(saveStream(streamOf(20 * MB), 20 * MB)).rejects.toThrow()
     })
 })
