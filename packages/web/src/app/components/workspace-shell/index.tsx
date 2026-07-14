@@ -109,8 +109,20 @@ function WorkspaceShellInner() {
   const groupEl = useRef<HTMLDivElement | null>(null);
   const panelAnimTimeout = useRef<number | null>(null);
   const lockedContentEls = useRef<HTMLElement[]>([]);
+  const chatPoppedStorageKey = `${
+    authenticationSession.getCurrentUserId() ?? 'anon'
+  }-chatPopped`;
   const [chatCollapsed, setChatCollapsed] = useState(false);
-  const [chatPopped, setChatPopped] = useState(false);
+  const [chatPopped, setChatPopped] = useState(
+    () => localStorage.getItem(chatPoppedStorageKey) === 'true',
+  );
+  const didRestorePopRef = useRef(false);
+
+  // Persist the pop-out state per user so a page refresh restores it (the mount
+  // effect below reapplies the collapsed-panel layout when it was popped).
+  useEffect(() => {
+    localStorage.setItem(chatPoppedStorageKey, String(chatPopped));
+  }, [chatPopped, chatPoppedStorageKey]);
 
   // Undo everything animatePanelResize applied: the eased transition on the panel
   // roots and the resting-width lock on their content. Idempotent, so it's safe to
@@ -237,6 +249,19 @@ function WorkspaceShellInner() {
       setChatPopped(false);
     }
   }, [stageKey, isStageOpen, animatePanelResize]);
+
+  // Restore a persisted pop-out on mount: if the chat was popped out last session
+  // (and the stage is open, so pop-out applies), collapse the chat panel to match
+  // — mirroring popOutChat's layout side-effect, minus the teach hint. Runs once.
+  useEffect(() => {
+    if (didRestorePopRef.current) return;
+    const chat = chatPanelRef.current;
+    if (!chat) return;
+    didRestorePopRef.current = true;
+    if (chatPopped && isStageOpen) {
+      chat.collapse();
+    }
+  }, [chatPopped, isStageOpen]);
 
   const syncChatCollapsed = useCallback(() => {
     const panel = chatPanelRef.current;

@@ -1,13 +1,6 @@
 import { t } from 'i18next';
-import { Pin, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 import { BrowseFilterChips } from './browse-filter-chips';
 import {
@@ -51,29 +44,6 @@ export function StyleSpotlight({
             <X className="size-4" />
           </button>
         )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={t('Pin projects to sidebar')}
-              onClick={controller.togglePinProjectSidebar}
-              onMouseDown={(e) => e.preventDefault()}
-              className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-md transition-colors',
-                controller.pinProjectSidebar
-                  ? 'bg-foreground/[0.08] text-foreground'
-                  : 'text-muted-foreground/50 hover:bg-muted hover:text-foreground',
-              )}
-            >
-              <Pin className="size-[15px]" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {controller.pinProjectSidebar
-              ? t('Unpin projects from sidebar')
-              : t('Pin projects to sidebar')}
-          </TooltipContent>
-        </Tooltip>
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-foreground/[0.06] px-3 py-2">

@@ -51,7 +51,6 @@ import {
   useGlobalSearch,
 } from '../../global-search/global-search-context';
 import { STATIC_PAGES } from '../../global-search/static-pages';
-import { useUiPreferences } from '../../global-search/use-ui-preferences';
 import { useChatNavigation } from '../../workspace-shell/use-chat-navigation';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import { CreatePanel } from '../create/create-panel';
@@ -113,7 +112,7 @@ export function ProjectDashboardSidebar({
       >
         <AppSidebarHeader />
 
-        <SidebarContent className="gap-2 overflow-x-hidden pt-1">
+        <SidebarContent className="gap-2 overflow-hidden pt-1">
           <SidebarGroup className="py-1">
             <SidebarMenu>
               <SidebarCreateItem />
@@ -293,15 +292,8 @@ function SidebarChatHistory() {
 }
 
 function PinnedProjectsGroup() {
-  const { prefs } = useUiPreferences();
-
-  // Pinned by default; only an explicit opt-out (unpin) hides the projects.
-  if (prefs.pinProjectSidebar === false) {
-    return null;
-  }
-
-  // The projects live query suspends on cold load; a local boundary keeps that
-  // from stalling the rest of the sidebar and shows a placeholder in place.
+  // Projects always show in the sidebar. The projects live query suspends on cold
+  // load; a local boundary keeps that from stalling the rest of the sidebar.
   return (
     <>
       <SidebarSeparator className="mx-2 my-1" />
@@ -324,7 +316,7 @@ function PinnedProjectsList() {
   }
 
   return (
-    <SidebarGroup className="py-1">
+    <SidebarGroup className="shrink-0 py-1">
       <SidebarMenu className="max-h-[30vh] gap-1 overflow-y-auto scrollbar-thin">
         {projects.map((project) => {
           const palette = project.icon

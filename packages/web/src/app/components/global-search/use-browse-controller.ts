@@ -345,14 +345,6 @@ export function useBrowseController({
     else nav.action.onSelect();
   }, [navItems, clampedIndex, openItem]);
 
-  const pinProjectSidebar = uiPrefs.prefs.pinProjectSidebar ?? true;
-  const togglePinProjectSidebar = useCallback(() => {
-    uiPrefs.update(
-      { pinProjectSidebar: !pinProjectSidebar },
-      { immediate: true },
-    );
-  }, [uiPrefs, pinProjectSidebar]);
-
   return {
     search,
     setSearch,
@@ -398,8 +390,6 @@ export function useBrowseController({
     settingsOpen,
     setSettingsOpen,
     canInvite: !!canInvite,
-    pinProjectSidebar,
-    togglePinProjectSidebar,
   };
 }
 
@@ -463,6 +453,4 @@ export type BrowseController = {
   settingsOpen: boolean;
   setSettingsOpen: (open: boolean) => void;
   canInvite: boolean;
-  pinProjectSidebar: boolean;
-  togglePinProjectSidebar: () => void;
 };
