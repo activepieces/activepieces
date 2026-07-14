@@ -1,0 +1,38 @@
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, describe, expect, it } from 'vitest'
+import { bundlePieceUtils } from './bundle-piece-utils'
+
+describe('bundlePiece — external dependency capture', () => {
+    let root: string | undefined
+
+    afterEach(() => {
+        if (root) {
+            rmSync(root, { recursive: true, force: true })
+            root = undefined
+        }
+    })
+
+    it('captures a native dep reached transitively through an inlined package', async () => {
+        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+
+        const sdkDir = join(root, 'node_modules', 'fake-sdk')
+        mkdirSync(sdkDir, { recursive: true })
+        writeFileSync(join(sdkDir, 'package.json'), JSON.stringify({ name: 'fake-sdk', version: '1.0.0', main: 'index.js' }))
+        writeFileSync(join(sdkDir, 'index.js'), 'const db = require(\'better-sqlite3\');\nmodule.exports = { db };\n')
+
+        const piecePath = join(root, 'piece')
+        mkdirSync(join(piecePath, 'src'), { recursive: true })
+        writeFileSync(join(piecePath, 'package.json'), JSON.stringify({ name: 'piece-x', version: '0.0.1', dependencies: { 'fake-sdk': '1.0.0' } }))
+        writeFileSync(join(piecePath, 'src', 'index.ts'), 'import { db } from \'fake-sdk\'\nexport const piece = { db }\n')
+        const distPath = join(piecePath, 'dist')
+        mkdirSync(distPath, { recursive: true })
+
+        const result = await bundlePieceUtils.bundlePiece({ piecePath, distPath, repoRoot: root })
+
+        expect(result.external).toContain('better-sqlite3')
+        expect(result.inlined).toContain('fake-sdk')
+        expect(result.external).not.toContain('fake-sdk')
+    })
+})

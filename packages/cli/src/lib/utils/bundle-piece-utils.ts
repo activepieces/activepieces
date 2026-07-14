@@ -45,7 +45,7 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
 
     const bundleBytes = statSync(outfile).size
     const rawBytes = totalInputBytes(pass.result.metafile)
-    const external = directDepsOf(manifest).filter((dep) => !pass.inlined.has(dep) && !dep.startsWith('@activepieces/') && !BUNDLE_HELPER_DEPS.has(dep))
+    const external = [...pass.externalized].filter((dep) => !dep.startsWith('@activepieces/') && !BUNDLE_HELPER_DEPS.has(dep))
 
     enforceSizeGate({ piecePath, bundleBytes })
 
@@ -54,6 +54,7 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
 
 async function runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external }: RunEsbuildParams): Promise<EsbuildPass> {
     const inlined = new Set<string>()
+    const externalized = new Set<string>()
     const result = await esbuild.build({
         entryPoints: [entryFile],
         bundle: true,
@@ -70,10 +71,10 @@ async function runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList,
         metafile: true,
         logLevel: 'silent',
         alias: workspaceAliases(repoRoot),
-        plugins: [externalizeThirdParty({ inlineAll, inlineList, external, inlined })],
+        plugins: [externalizeThirdParty({ inlineAll, inlineList, external, inlined, externalized })],
         loader: { '.node': 'file' },
     })
-    return { result, inlined }
+    return { result, inlined, externalized }
 }
 
 function readPieceManifest(piecePath: string): PieceManifest {
@@ -82,10 +83,6 @@ function readPieceManifest(piecePath: string): PieceManifest {
         return {}
     }
     return JSON.parse(readFileSync(pkgPath, 'utf-8'))
-}
-
-function directDepsOf(manifest: PieceManifest): string[] {
-    return Object.keys(manifest.dependencies ?? {})
 }
 
 // Inline-by-default. Third-party deps are bundled in unless they cannot be safely inlined
@@ -109,7 +106,7 @@ function readInlineConfig(manifest: PieceManifest): InlineConfig {
 // Only @activepieces/* workspace code and relative/absolute imports are always bundled in.
 // Node builtins and packages in `external` (known-native + auto-externalized dynamic-require
 // deps) are kept external. Everything else is inlined when inlineAll / listed in inlineList.
-function externalizeThirdParty({ inlineAll, inlineList, external, inlined }: ExternalizeParams): esbuild.Plugin {
+function externalizeThirdParty({ inlineAll, inlineList, external, inlined, externalized }: ExternalizeParams): esbuild.Plugin {
     return {
         name: 'externalize-third-party',
         setup(build) {
@@ -129,12 +126,14 @@ function externalizeThirdParty({ inlineAll, inlineList, external, inlined }: Ext
                 }
                 const top = topLevelPkg(id)
                 if (external.has(top)) {
+                    externalized.add(top)
                     return { path: id, external: true }
                 }
                 if (inlineAll || inlineList.has(top)) {
                     inlined.add(top)
                     return null
                 }
+                externalized.add(top)
                 return { path: id, external: true }
             })
         },
@@ -313,6 +312,7 @@ type InlineConfig = {
 type EsbuildPass = {
     result: esbuild.BuildResult & { metafile: esbuild.Metafile }
     inlined: Set<string>
+    externalized: Set<string>
 }
 
 type RunEsbuildParams = {
@@ -334,6 +334,7 @@ type ExternalizeParams = {
     inlineList: Set<string>
     external: Set<string>
     inlined: Set<string>
+    externalized: Set<string>
 }
 
 type GateParams = {
