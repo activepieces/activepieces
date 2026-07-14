@@ -1,11 +1,14 @@
 import { Readable } from 'stream'
-import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApMultipartFile, ErrorCode, isMultipartFile, isNil, multipartStream } from '@activepieces/core-utils'
+import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileLocation, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
 import { MultipartFile } from '@fastify/multipart'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import mime from 'mime-types'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
+import { s3Helper } from '../file/s3-helper'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 
 export function isBinaryContentType(contentType: string | undefined): boolean {
     if (!contentType) return false
@@ -13,14 +16,16 @@ export function isBinaryContentType(contentType: string | undefined): boolean {
     return STREAMED_BINARY_CONTENT_TYPES.some(pattern => pattern.test(baseContentType))
 }
 
-// Both streaming paths save the file while the request body is still being parsed (binary in the
-// content-type parser, multipart in the global onFile hook), replacing the value with a readUrl.
-// So convertRequest only ever passes the already-converted body through.
-export async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
+// Streaming (S3) uploads the bytes to an identity-free key at parse time and hands back a
+// descriptor; buffering (non-S3) hands back the bytes. Either way the file's DB row is written
+// HERE, in the handler, where projectId/platformId arrive for free via the webhook service —
+// so no flow lookup is needed while the body is being parsed.
+export async function convertRequest(request: FastifyRequest, context: { projectId: string, platformId: string }): Promise<EventPayload> {
+    const flowId = (request.params as { flowId?: string }).flowId ?? ''
     return {
         method: request.method,
         headers: request.headers as Record<string, string>,
-        body: request.body,
+        body: await convertBody(request, { ...context, flowId }),
         queryParams: request.query as Record<string, string>,
         rawBody: request.rawBody,
     }
@@ -33,43 +38,73 @@ export function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun,
     }
 }
 
-export async function streamWebhookBinaryBody(request: FastifyRequest, stream: Readable): Promise<{ fileUrl: string }> {
+// Streaming is S3-only and process-constant (FILE_STORAGE_LOCATION is set at boot). On non-S3
+// deployments the file bytes are buffered and saved to the DB in the handler, unchanged.
+export function shouldStreamWebhookFile(request: FastifyRequest): boolean {
+    return request.url.includes('/v1/webhooks/') && system.get(AppSystemProp.FILE_STORAGE_LOCATION) === FileLocation.S3
+}
+
+export async function streamWebhookBinaryBody(request: FastifyRequest, stream: Readable): Promise<StreamedFile | ApMultipartFile> {
     const baseContentType = request.headers['content-type']?.split(';')[0]
     const extension = mime.extension(baseContentType || '') || 'bin'
-    const url = await streamToStepFileUrl({
-        request,
-        stream,
-        fileName: `file.${extension}`,
-        contentType: baseContentType,
-        // A raw binary body's Content-Length is exactly the file size, so it can stream
-        // straight to S3. Multipart parts (below) carry no per-part length and buffer instead.
-        size: parseContentLength(request.headers['content-length']),
-    })
-    return { fileUrl: url }
+    const fileName = `file.${extension}`
+    // A single S3 PutObject needs the length up front; a raw binary body's Content-Length is
+    // exactly the file size. Without it (or on non-S3), buffer under the file cap instead.
+    const size = parseContentLength(request.headers['content-length'])
+    if (!shouldStreamWebhookFile(request) || isNil(size)) {
+        const data = await bufferBinaryBody(stream)
+        return { type: 'file', filename: fileName, data, mimetype: baseContentType }
+    }
+    const fileId = apId()
+    const s3Key = `${FileType.FLOW_STEP_FILE}/${fileId}`
+    await s3Helper(request.log).uploadStream({ s3Key, body: stream, contentType: baseContentType, contentLength: size })
+    return { type: 'streamed-file', fileId, s3Key, size, fileName, contentType: baseContentType }
 }
 
-export async function streamWebhookMultipartFile(request: FastifyRequest, part: MultipartFile): Promise<string> {
-    return streamToStepFileUrl({
-        request,
-        stream: part.file,
-        fileName: part.filename,
-        contentType: part.mimetype,
-    })
+export async function streamWebhookMultipartFile(request: FastifyRequest, part: MultipartFile): Promise<StreamedFile> {
+    // Multipart parts carry no per-part Content-Length, so a single PutObject can't stream them;
+    // buffer the part then upload. Memory is bounded by @fastify/multipart's own part limits.
+    const data = await part.toBuffer()
+    const fileId = apId()
+    const s3Key = `${FileType.FLOW_STEP_FILE}/${fileId}`
+    await s3Helper(request.log).uploadFile(s3Key, data)
+    return { type: 'streamed-file', fileId, s3Key, size: data.length, fileName: part.filename, contentType: part.mimetype }
 }
 
-async function streamToStepFileUrl(params: StreamToStepFileUrlParams): Promise<string> {
-    const { request, stream, fileName, contentType, size } = params
-    const { projectId, platformId, flowId } = getWebhookContextOrThrow(request)
-    const file = await fileService(request.log).saveStream({
-        stream,
-        fileName,
+async function convertBody(request: FastifyRequest, context: WebhookFileContext): Promise<unknown> {
+    if (request.isMultipart()) {
+        const entries = Object.entries(request.body as Record<string, unknown>)
+        const converted = await Promise.all(entries.map(async ([key, value]) => {
+            if (isWebhookFile(value)) {
+                return [key, await saveWebhookFile(value, context, request.log)] as const
+            }
+            if (Array.isArray(value) && value.every(isWebhookFile)) {
+                return [key, await Promise.all(value.map((file) => saveWebhookFile(file, context, request.log)))] as const
+            }
+            return [key, value] as const
+        }))
+        return Object.fromEntries(converted)
+    }
+    if (isBinaryContentType(request.headers['content-type']) && isWebhookFile(request.body)) {
+        return { fileUrl: await saveWebhookFile(request.body, context, request.log) }
+    }
+    return request.body
+}
+
+async function saveWebhookFile(value: StreamedFile | ApMultipartFile, context: WebhookFileContext, log: FastifyBaseLogger): Promise<string> {
+    const { projectId, platformId, flowId } = context
+    const common = {
         type: FileType.FLOW_STEP_FILE,
         projectId,
         platformId,
         metadata: { stepName: 'trigger', flowId },
-        contentType,
-        size,
-    })
+        compression: FileCompression.NONE,
+    } as const
+    // Streamed files are already in S3 under s3Key, so save() just records the row (data: null).
+    // Buffered files carry their bytes and take the normal upload/DB path.
+    const file = isStreamedFile(value)
+        ? await fileService(log).save({ ...common, fileId: value.fileId, s3Key: value.s3Key, data: null, size: value.size, fileName: value.fileName })
+        : await fileService(log).save({ ...common, data: value.data, size: value.data.length, fileName: value.filename })
     return filesService.constructReadUrl({
         fileId: file.id,
         fileType: FileType.FLOW_STEP_FILE,
@@ -77,9 +112,25 @@ async function streamToStepFileUrl(params: StreamToStepFileUrlParams): Promise<s
     })
 }
 
-function getWebhookContextOrThrow(request: FastifyRequest): NonNullable<FastifyRequest['webhookContext']> {
-    assertNotNullOrUndefined(request.webhookContext, 'webhookContext')
-    return request.webhookContext
+async function bufferBinaryBody(stream: Readable): Promise<Buffer> {
+    const maxSizeBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+    return multipartStream.bufferRemaining({
+        head: [],
+        rest: stream,
+        maxSizeBytes,
+        onOverflow: () => new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `File size exceeds the ${AppSystemProp.MAX_FILE_SIZE_MB} limit of ${maxSizeBytes / (1024 * 1024)}MB` },
+        }),
+    })
+}
+
+function isWebhookFile(value: unknown): value is StreamedFile | ApMultipartFile {
+    return isStreamedFile(value) || isMultipartFile(value)
+}
+
+function isStreamedFile(value: unknown): value is StreamedFile {
+    return typeof value === 'object' && value !== null && 'type' in value && (value as { type?: unknown }).type === 'streamed-file'
 }
 
 function parseContentLength(header: string | string[] | undefined): number | undefined {
@@ -102,10 +153,17 @@ export const STREAMED_BINARY_CONTENT_TYPES = [
     /^application\/octet-stream(;|$)/,
 ]
 
-type StreamToStepFileUrlParams = {
-    request: FastifyRequest
-    stream: Readable
+type StreamedFile = {
+    type: 'streamed-file'
+    fileId: string
+    s3Key: string
+    size: number
     fileName?: string
     contentType?: string
-    size?: number
+}
+
+type WebhookFileContext = {
+    projectId: string
+    platformId: string
+    flowId: string
 }

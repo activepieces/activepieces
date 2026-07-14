@@ -51,8 +51,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
             }
             case FileLocation.S3: {
                 try {
-                    const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
-                    if (!isNil(params.data)) {
+                    // A caller-supplied s3Key points at an object already uploaded under an
+                    // identity-free key (webhook streaming), so we neither derive a key nor
+                    // re-upload — just record the row. Otherwise derive the tenant-scoped key.
+                    const s3Key = params.s3Key ?? await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                    if (isNil(params.s3Key) && !isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
                     const savedFile = await fileRepo().save({
@@ -410,6 +413,9 @@ type SaveParams = {
     fileName?: string
     compression: FileCompression
     metadata?: Record<string, string>
+    // Points at an object already uploaded under an identity-free key (webhook streaming).
+    // When set, save() records the row against this key and skips key derivation + upload.
+    s3Key?: string
 }
 
 type SaveStreamParams = {

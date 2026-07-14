@@ -34,7 +34,6 @@ export const filesService = {
 }
 
 export const fileTransportHeaders = {
-    READ_URL: 'x-ap-file-read-url',
     TYPE: 'x-ap-file-type',
     NAME: 'x-ap-file-name',
 } as const

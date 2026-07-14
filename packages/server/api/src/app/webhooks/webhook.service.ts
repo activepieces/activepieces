@@ -100,7 +100,7 @@ export const webhookService = {
         // re-verification). Checking before the DISABLED guard handles both cases.
         if (!isNil(flowExecutionResult.handshakeConfiguration)) {
             const response = await webhookHandshake.handleHandshakeRequest({
-                payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
+                payload: (payload ?? await data({ projectId: flow.projectId, platformId: flowExecutionResult.platformId })) as TriggerPayload,
                 handshakeConfiguration: flowExecutionResult.handshakeConfiguration,
                 flowId: flow.id,
                 flowVersionId: flowVersionIdToRun,
@@ -136,7 +136,7 @@ export const webhookService = {
 
         pinoLogger.info('Adding webhook job to queue')
 
-        const resolvedPayload = payload ?? await data(flow.projectId)
+        const resolvedPayload = payload ?? await data({ projectId: flow.projectId, platformId: flowExecutionResult.platformId })
 
         const payloadSize = payloadOffloader.getPayloadSizeInBytes(resolvedPayload)
         if (payloadSize > MAX_PAYLOAD_SIZE_BYTES) {
@@ -315,7 +315,7 @@ type HandleWebhookParams = {
     async: boolean
     saveSampleData: boolean
     flowVersionToRun: WebhookFlowVersionToRun
-    data: (projectId: string) => Promise<EventPayload>
+    data: (args: { projectId: string, platformId: string }) => Promise<EventPayload>
     logger: FastifyBaseLogger
     payload?: Record<string, unknown>
     execute: boolean

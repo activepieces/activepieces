@@ -22,7 +22,7 @@ export function createFileUploader({ engineToken, apiUrl }: CreateFileUploaderPa
 
     const writeStream = async ({ fileName, stream, size }: WriteStreamParams): Promise<string> => {
         const fileId = apId()
-        const created = await engineFileApi.createStreamUpload({ engineToken, apiUrl, fileId, fileName, size })
+        const created = await engineFileApi.createUpload({ engineToken, apiUrl, fileId, type: FileType.FLOW_STEP_FILE, fileName, size })
         if (created.mode === 'DB') {
             // Honest fallback on DB-only installs: buffer the whole stream under the existing cap.
             const buffered = await multipartStream.bufferRemaining({

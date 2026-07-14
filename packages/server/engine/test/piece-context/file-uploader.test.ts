@@ -48,54 +48,42 @@ describe('file-uploader service', () => {
         ).rejects.toThrow(FileSizeError)
     })
 
-    it('returns the read url from the response header on the proxy path', async () => {
-        const readUrl = 'https://api.example.com/v1/files/abc123?token=xyz'
+    const READ_URL = 'https://api.example.com/v1/files/abc123?token=xyz'
+    const S3_PUT_URL = 'https://s3.example.com/upload?signed=true'
 
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-            JSON.stringify({ fileId: 'file-1', readUrl }),
-            {
-                status: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-ap-file-read-url': readUrl,
-                },
-            },
-        ))
+    function mockBufferedFetch({ mode, uploadStatus = 200 }: { mode: 'S3' | 'DB', uploadStatus?: number }) {
+        vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+            const url = String(input)
+            if (url.includes('/create-upload')) {
+                const body = mode === 'DB' ? { mode: 'DB' } : { mode: 'S3', url: S3_PUT_URL, readUrl: READ_URL }
+                return new Response(JSON.stringify(body), { status: 200 })
+            }
+            // DB PUT returns readUrl in the body; S3 PUT returns no body.
+            const putBody = mode === 'DB' ? JSON.stringify({ fileId: 'file-1', readUrl: READ_URL }) : null
+            return new Response(uploadStatus === 200 ? putBody : 'failed', { status: uploadStatus })
+        })
+    }
 
+    it('negotiates then PUTs the buffer to the DB endpoint and returns its read url', async () => {
+        mockBufferedFetch({ mode: 'DB' })
         const files = createFileUploader(SERVICE_PARAMS)
         const result = await files.write({ fileName: 'test.txt', data: Buffer.from('hello') })
 
-        expect(result).toBe(readUrl)
-        expect(global.fetch).toHaveBeenCalledTimes(1)
-    })
-
-    it('follows the redirect to S3 and uses the header-supplied read url', async () => {
-        const readUrl = 'https://api.example.com/v1/files/abc123?token=xyz'
-        const s3Url = 'https://s3.example.com/upload?signed=true'
-
-        vi.spyOn(global, 'fetch')
-            .mockResolvedValueOnce(new Response(null, {
-                status: 307,
-                headers: {
-                    'x-ap-file-read-url': readUrl,
-                    location: s3Url,
-                },
-            }))
-            .mockResolvedValueOnce(new Response(null, { status: 200 }))
-
-        const files = createFileUploader(SERVICE_PARAMS)
-        const result = await files.write({ fileName: 'test.txt', data: Buffer.from('hello') })
-
-        expect(result).toBe(readUrl)
+        expect(result).toBe(READ_URL)
         expect(global.fetch).toHaveBeenCalledTimes(2)
     })
 
-    it('throws when the initial PUT fails', async () => {
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
-            'Internal Server Error',
-            { status: 500 },
-        ))
+    it('negotiates then uploads the buffer to S3 and returns the read url', async () => {
+        mockBufferedFetch({ mode: 'S3' })
+        const files = createFileUploader(SERVICE_PARAMS)
+        const result = await files.write({ fileName: 'test.txt', data: Buffer.from('hello') })
 
+        expect(result).toBe(READ_URL)
+        expect(global.fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it('throws when the DB PUT fails', async () => {
+        mockBufferedFetch({ mode: 'DB', uploadStatus: 500 })
         const files = createFileUploader(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: Buffer.from('hello') }),
@@ -103,16 +91,7 @@ describe('file-uploader service', () => {
     })
 
     it('throws when the S3 PUT fails', async () => {
-        vi.spyOn(global, 'fetch')
-            .mockResolvedValueOnce(new Response(null, {
-                status: 307,
-                headers: {
-                    'x-ap-file-read-url': 'https://api.example.com/v1/files/abc123?token=xyz',
-                    location: 'https://s3.example.com/upload?signed=true',
-                },
-            }))
-            .mockResolvedValueOnce(new Response('Upload failed', { status: 403 }))
-
+        mockBufferedFetch({ mode: 'S3', uploadStatus: 403 })
         const files = createFileUploader(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: Buffer.from('hello') }),
@@ -142,7 +121,7 @@ describe('file-uploader stream path', () => {
         vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
             const url = String(input)
             calls.push({ url, method: init?.method ?? 'GET', body: init?.body })
-            if (url.includes('/stream-upload')) {
+            if (url.includes('/create-upload')) {
                 if (createStatus !== 200) {
                     return new Response('rejected', { status: createStatus })
                 }
@@ -150,10 +129,7 @@ describe('file-uploader stream path', () => {
                 return new Response(JSON.stringify(body), { status: 200 })
             }
             // Buffered PUT fallback path (`PUT /v1/files/:id`)
-            return new Response(JSON.stringify({ fileId: 'file-1', readUrl: READ_URL }), {
-                status: 200,
-                headers: { 'x-ap-file-read-url': READ_URL },
-            })
+            return new Response(JSON.stringify({ fileId: 'file-1', readUrl: READ_URL }), { status: 200 })
         })
         return calls
     }
@@ -178,7 +154,7 @@ describe('file-uploader stream path', () => {
         const result = await files.write({ fileName: 'big.bin', data: toStream(Buffer.alloc(20 * MB)), size: 20 * MB })
 
         expect(result).toBe(READ_URL)
-        expect(calls.filter(call => call.url.includes('/stream-upload'))).toHaveLength(1)
+        expect(calls.filter(call => call.url.includes('/create-upload'))).toHaveLength(1)
         expect(mockUndiciRequest).toHaveBeenCalledTimes(1)
         const [putUrl, putInit] = mockUndiciRequest.mock.calls[0] as unknown as [string, { method: string, headers: Record<string, string> }]
         expect(putUrl).toBe(S3_PUT_URL)

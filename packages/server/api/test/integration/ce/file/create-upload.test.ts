@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FileType, PrincipalType } from '@activepieces/shared'
+import { FileCompression, FileType, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
@@ -32,12 +32,12 @@ beforeEach(async () => {
     })
 })
 
-describe('Stream Upload Endpoint', () => {
-    describe('POST /v1/files/:fileId/stream-upload', () => {
+describe('Create Upload Endpoint', () => {
+    describe('POST /v1/files/:fileId/create-upload', () => {
         it('returns mode DB when file storage location is the database', async () => {
             const response = await app!.inject({
                 method: 'POST',
-                url: `/api/v1/files/${apId()}/stream-upload`,
+                url: `/api/v1/files/${apId()}/create-upload`,
                 headers: { authorization: `Bearer ${engineToken}` },
                 body: { type: FileType.FLOW_STEP_FILE, fileName: 'big.bin', size: 1024 },
             })
@@ -49,7 +49,7 @@ describe('Stream Upload Endpoint', () => {
         it('rejects requests without an authorization header', async () => {
             const response = await app!.inject({
                 method: 'POST',
-                url: `/api/v1/files/${apId()}/stream-upload`,
+                url: `/api/v1/files/${apId()}/create-upload`,
                 body: { type: FileType.FLOW_STEP_FILE, size: 1024 },
             })
 
@@ -66,7 +66,7 @@ describe('Stream Upload Endpoint', () => {
 
             const response = await app!.inject({
                 method: 'POST',
-                url: `/api/v1/files/${apId()}/stream-upload`,
+                url: `/api/v1/files/${apId()}/create-upload`,
                 headers: { authorization: `Bearer ${userToken}` },
                 body: { type: FileType.FLOW_STEP_FILE, size: 1024 },
             })
@@ -74,12 +74,24 @@ describe('Stream Upload Endpoint', () => {
             expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED)
         })
 
-        it('rejects non-streamable file types', async () => {
+        it('returns mode DB for FLOW_RUN_LOG when storage is the database', async () => {
             const response = await app!.inject({
                 method: 'POST',
-                url: `/api/v1/files/${apId()}/stream-upload`,
+                url: `/api/v1/files/${apId()}/create-upload`,
                 headers: { authorization: `Bearer ${engineToken}` },
-                body: { type: FileType.FLOW_RUN_LOG, size: 1024 },
+                body: { type: FileType.FLOW_RUN_LOG, size: 1024, compression: FileCompression.ZSTD },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()).toEqual({ mode: 'DB' })
+        })
+
+        it('rejects file types outside the engine-writable set', async () => {
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/files/${apId()}/create-upload`,
+                headers: { authorization: `Bearer ${engineToken}` },
+                body: { type: FileType.SAMPLE_DATA, size: 1024 },
             })
 
             expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
@@ -88,7 +100,7 @@ describe('Stream Upload Endpoint', () => {
         it('rejects requests missing the size', async () => {
             const response = await app!.inject({
                 method: 'POST',
-                url: `/api/v1/files/${apId()}/stream-upload`,
+                url: `/api/v1/files/${apId()}/create-upload`,
                 headers: { authorization: `Bearer ${engineToken}` },
                 body: { type: FileType.FLOW_STEP_FILE },
             })

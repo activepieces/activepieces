@@ -1,5 +1,5 @@
 import path from 'path'
-import { apId, ApMultipartFile, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { apId, ApMultipartFile, spreadIfDefined } from '@activepieces/core-utils'
 import { apLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, maxSocketHttpBufferSizeBytes } from '@activepieces/shared'
 import cors from '@fastify/cors'
@@ -27,7 +27,7 @@ import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { mcpOAuthHttpController, mcpPlatformHttpController } from './mcp/oauth/mcp-oauth.controller'
 import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
-import { streamWebhookMultipartFile } from './webhooks/webhook-request-converter'
+import { shouldStreamWebhookFile, streamWebhookMultipartFile } from './webhooks/webhook-request-converter'
 
 
 export let app: FastifyInstance | undefined = undefined
@@ -181,9 +181,10 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',
         async onFile(this: FastifyRequest, part: MultipartFile) {
-            // On webhook routes the flow guard has resolved the project/platform, so stream
-            // the part straight to storage with bounded memory instead of buffering it.
-            if (!isNil(this.webhookContext)) {
+            // On S3 webhook routes, upload the part to an identity-free key at parse time and
+            // attach a descriptor; the DB row is written later in the handler. Everything else
+            // buffers the part as before.
+            if (shouldStreamWebhookFile(this)) {
                 (part as unknown as { value: unknown }).value = await streamWebhookMultipartFile(this, part)
                 return
             }

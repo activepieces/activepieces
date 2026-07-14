@@ -22,51 +22,6 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             querystring: FileTransportQueryParams,
             body: z.unknown(),
         },
-        onRequest: async (request, reply) => {
-            const fileId = (request.params as { fileId: string }).fileId
-            const token = (request.query as { token: string }).token
-            const principal = await verifyEnginePrincipal(token, request.log)
-            const fileType = parseFileTypeHeader(request.headers[fileTransportHeaders.TYPE])
-            const fileName = parseStringHeader(request.headers[fileTransportHeaders.NAME])
-            const contentEncoding = parseStringHeader(request.headers['content-encoding'])
-            const compression = contentEncoding === 'zstd' ? FileCompression.ZSTD : FileCompression.NONE
-            const contentLength = Number(request.headers['content-length'] ?? 0)
-
-            const readUrl = await filesService.constructReadUrl({
-                fileId,
-                fileType,
-                platformId: principal.platform.id,
-            })
-            void reply.header(fileTransportHeaders.READ_URL, readUrl)
-
-            if (!signedFileTransport.shouldRedirectForType(fileType)) {
-                return
-            }
-            const file = await fileService(request.log).save({
-                fileId,
-                projectId: principal.projectId,
-                platformId: principal.platform.id,
-                type: fileType,
-                fileName,
-                compression,
-                size: contentLength,
-                data: null,
-            })
-            const redirected = await signedFileTransport.maybeRedirectToS3Put({
-                reply,
-                log: request.log,
-                file,
-                contentEncoding: compression === FileCompression.ZSTD ? 'zstd' : undefined,
-            })
-            if (!redirected) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.SYSTEM_PROP_INVALID,
-                    params: {
-                        prop: AppSystemProp.S3_USE_SIGNED_URLS,
-                    },
-                }, 'S3 signed-URL redirect expected but the file row was not eligible (location or s3Key missing). Aborting to avoid a double save.')
-            }
-        },
     }, async (request, reply) => {
         const { fileId } = request.params
         const principal = await verifyEnginePrincipal(request.query.token, request.log)
@@ -95,30 +50,37 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send({ fileId, readUrl })
     })
 
-    app.post('/:fileId/stream-upload', {
+    app.post('/:fileId/create-upload', {
         config: {
             security: securityAccess.engine(),
         },
         schema: {
             params: z.object({ fileId: ApId }),
             body: z.object({
-                type: z.literal(FileType.FLOW_STEP_FILE),
+                type: z.union([
+                    z.literal(FileType.FLOW_RUN_LOG),
+                    z.literal(FileType.FLOW_RUN_LOG_SLICE),
+                    z.literal(FileType.FLOW_STEP_FILE),
+                ]),
                 fileName: z.string().optional(),
                 contentType: z.string().optional(),
                 size: z.number().int().min(0),
+                compression: z.union([z.literal(FileCompression.NONE), z.literal(FileCompression.ZSTD)]).optional(),
             }),
         },
     }, async (request) => {
         const { fileId } = request.params
         const { type, fileName, contentType, size } = request.body
+        const compression = request.body.compression ?? FileCompression.NONE
         const { projectId, platform } = request.principal
         const log = request.log
 
-        // The engine streams a file of caller-declared size straight to S3 via a single
-        // presigned PUT (the engine has no S3 credentials, so it cannot use the SDK directly).
+        // Negotiate an upload without carrying the bytes: on S3 storage the engine gets a
+        // presigned PUT and uploads straight to S3 (it has no S3 credentials, so it cannot use
+        // the SDK directly); otherwise it's told to PUT the bytes to `PUT /:fileId` (DB store).
         // Size is required, so no multipart is needed: S3 caps a single PUT at 5 GB, well above
         // MAX_STREAM_FILE_SIZE_MB. The row is created up front so the retention job can reap it
-        // if the engine's PUT never lands — the same orphan-tolerance as the buffered signed path.
+        // if the engine's PUT never lands.
         if (getLocationForFile(type) !== FileLocation.S3) {
             return { mode: 'DB' }
         }
@@ -137,7 +99,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             platformId: platform.id,
             type,
             fileName,
-            compression: FileCompression.NONE,
+            compression,
             size,
             data: null,
             metadata: isNil(contentType) ? undefined : { mimetype: contentType },
@@ -150,7 +112,10 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             await fileRepo().delete({ id: file.id })
             return { mode: 'DB' }
         }
-        const url = await s3Helper(log).putS3SignedUrl({ s3Key: file.s3Key })
+        const url = await s3Helper(log).putS3SignedUrl({
+            s3Key: file.s3Key,
+            contentEncoding: compression === FileCompression.ZSTD ? 'zstd' : undefined,
+        })
         const readUrl = await filesService.constructReadUrl({ fileId, fileType: file.type, platformId: platform.id })
         return { mode: 'S3', url, readUrl }
     })

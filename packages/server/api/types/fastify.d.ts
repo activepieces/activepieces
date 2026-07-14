@@ -39,7 +39,6 @@ declare module 'fastify' {
         projectId: ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } } ? string : undefined
         rawBody?: string | Buffer
         isMultipart(): boolean
-        webhookContext?: { projectId: string, platformId: string, flowId: string }
     }
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions

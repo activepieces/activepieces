@@ -16,34 +16,24 @@ const RETRY_CONFIG = {
     retryDelay: 3000,
 } as const
 
-const READ_URL_HEADER = 'x-ap-file-read-url'
 const FILE_TYPE_HEADER = 'x-ap-file-type'
 const FILE_NAME_HEADER = 'x-ap-file-name'
 
 export const engineFileApi = {
     async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
-        const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
-        const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
-
-        const initial = await fetchWithRetry(putUrl, {
-            method: 'PUT',
-            body: data,
-            headers,
-            redirect: 'manual',
-            ...RETRY_CONFIG,
-        })
-
-        const readUrlFromHeader = initial.headers.get(READ_URL_HEADER) ?? undefined
-
-        if (initial.status >= 300 && initial.status < 400) {
-            const location = initial.headers.get('location')
-            if (!location) {
-                throw new EngineGenericError('EngineFileUploadError', 'Server returned a redirect without a Location header')
+        // Negotiate first so the bytes never travel to the API when storage is S3: the
+        // negotiation carries no body, then the buffer goes straight to S3 (or to the DB
+        // endpoint when S3 is unavailable). Mirrors the stream path in file-uploader.ts.
+        const created = await this.createUpload({ engineToken, apiUrl, fileId, type, fileName, size: data.length, compression })
+        if (created.mode === 'S3') {
+            const headers: Record<string, string> = {}
+            if (compression === FileCompression.ZSTD) {
+                headers['content-encoding'] = 'zstd'
             }
-            const s3Response = await fetchWithRetry(location, {
+            const s3Response = await fetchWithRetry(created.url, {
                 method: 'PUT',
                 body: data,
-                headers: stripApHeaders(headers),
+                headers,
                 redirect: 'follow',
                 ...RETRY_CONFIG,
             })
@@ -53,33 +43,15 @@ export const engineFileApi = {
                     `Failed to upload to signed S3 URL for ${fileId}: ${s3Response.status} ${s3Response.statusText}`,
                 )
             }
-            if (!readUrlFromHeader) {
-                throw new EngineGenericError('EngineFileUploadError', `Server redirect response missing ${READ_URL_HEADER} header`)
-            }
-            return { fileId, readUrl: readUrlFromHeader }
+            return { fileId, readUrl: created.readUrl }
         }
-
-        if (!initial.ok) {
-            throw new EngineGenericError(
-                'EngineFileUploadError',
-                `Failed to upload engine file ${fileId}: ${initial.status} ${initial.statusText}`,
-            )
-        }
-
-        if (readUrlFromHeader) {
-            return { fileId, readUrl: readUrlFromHeader }
-        }
-        const body = await initial.json() as { readUrl?: unknown }
-        if (typeof body.readUrl !== 'string') {
-            throw new EngineGenericError('EngineFileUploadError', 'Upload response missing readUrl')
-        }
-        return { fileId, readUrl: body.readUrl }
+        return uploadToDb({ engineToken, apiUrl, fileId, type, fileName, compression, data })
     },
-    async createStreamUpload({ engineToken, apiUrl, fileId, fileName, contentType, size }: CreateStreamUploadParams): Promise<CreateStreamUploadResponse> {
-        return postJson<CreateStreamUploadResponse>({
+    async createUpload({ engineToken, apiUrl, fileId, type, fileName, contentType, size, compression }: CreateUploadParams): Promise<CreateUploadResponse> {
+        return postJson<CreateUploadResponse>({
             engineToken,
-            url: `${apiUrl}v1/files/${fileId}/stream-upload`,
-            body: { type: FileType.FLOW_STEP_FILE, fileName, contentType, size },
+            url: `${apiUrl}v1/files/${fileId}/create-upload`,
+            body: { type, fileName, contentType, size, compression },
         })
     },
     async putStream({ url, stream, size }: PutStreamParams): Promise<void> {
@@ -130,6 +102,28 @@ export const engineFileApi = {
     },
 }
 
+async function uploadToDb({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
+    const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
+    const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
+    const response = await fetchWithRetry(putUrl, {
+        method: 'PUT',
+        body: data,
+        headers,
+        ...RETRY_CONFIG,
+    })
+    if (!response.ok) {
+        throw new EngineGenericError(
+            'EngineFileUploadError',
+            `Failed to upload engine file ${fileId}: ${response.status} ${response.statusText}`,
+        )
+    }
+    const body = await response.json() as { readUrl?: unknown }
+    if (typeof body.readUrl !== 'string') {
+        throw new EngineGenericError('EngineFileUploadError', 'Upload response missing readUrl')
+    }
+    return { fileId, readUrl: body.readUrl }
+}
+
 async function postJson<T>({ engineToken, url, body }: PostJsonParams): Promise<T> {
     const response = await fetchWithRetry(url, {
         method: 'POST',
@@ -162,16 +156,6 @@ function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHe
     return headers
 }
 
-function stripApHeaders(headers: Record<string, string>): Record<string, string> {
-    const result: Record<string, string> = {}
-    for (const [key, value] of Object.entries(headers)) {
-        if (!key.toLowerCase().startsWith('x-ap-')) {
-            result[key] = value
-        }
-    }
-    return result
-}
-
 type UploadParams = {
     engineToken: string
     apiUrl: string
@@ -193,18 +177,20 @@ type DownloadFileParams = {
     fileId: string
 }
 
-type CreateStreamUploadParams = {
+type CreateUploadParams = {
     engineToken: string
     apiUrl: string
     fileId: string
+    type: FileType.FLOW_STEP_FILE | FileType.FLOW_RUN_LOG | FileType.FLOW_RUN_LOG_SLICE
     fileName?: string
     contentType?: string
     size: number
+    compression?: FileCompression
 }
 
-// Local wire type matching the /stream-upload route in files-controller.ts — this file deliberately duplicates
+// Local wire type matching the /create-upload route in files-controller.ts — this file deliberately duplicates
 // it instead of importing server types (matches the header-constant duplication above).
-export type CreateStreamUploadResponse =
+export type CreateUploadResponse =
     | { mode: 'DB' }
     | { mode: 'S3', url: string, readUrl: string }
 

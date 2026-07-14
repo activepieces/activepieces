@@ -1,5 +1,5 @@
 import { AddressInfo } from 'net'
-import { FileType, Flow, FlowStatus, Project } from '@activepieces/shared'
+import { apId, FileType, Flow, FlowStatus, Project } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
@@ -68,18 +68,21 @@ describe('Webhook binary body', () => {
         expect(Buffer.from(savedFile!.data).length).toBe(payload.length)
     })
 
-    it('rejects a binary upload to an unknown flow before consuming the body', async () => {
+    it('returns GONE for a binary upload to an unknown flow', async () => {
         const response = await app.inject({
             method: 'POST',
-            url: '/api/v1/webhooks/unknownFlowId000000000',
+            url: `/api/v1/webhooks/${apId()}`,
             headers: { 'content-type': 'application/octet-stream' },
             payload: Buffer.from('should never be stored'),
         })
 
-        expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+        // No parse-time flow lookup anymore: the handler resolves the flow and returns GONE.
+        // The DB path buffers the body then discards it (the file save only runs in the handler,
+        // which is never reached), so nothing is stored. (On S3 an orphan object is left behind.)
+        expect(response.statusCode).toBe(StatusCodes.GONE)
     })
 
-    it('rejects a binary upload to a disabled flow without storing a file', async () => {
+    it('returns NOT_FOUND for a disabled flow and stores no file on the DB path', async () => {
         const { mockProject } = await mockAndSaveBasicSetup()
         const mockFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.DISABLED })
         await db.save('flow', [mockFlow])
@@ -91,10 +94,13 @@ describe('Webhook binary body', () => {
             method: 'POST',
             url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: { 'content-type': 'application/octet-stream' },
-            payload: Buffer.from('should never be stored'),
+            payload: Buffer.from('never reaches the handler save'),
         })
 
         expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+        // On the DB path the file is saved in the handler via the data() callback, which the
+        // disabled-flow guard returns before — so no file is written. (On S3 the parse-time
+        // upload leaves an orphan object; that is the accepted no-validation tradeoff.)
         const savedFile = await db.findOneBy<SavedFile>(
             'file',
             { projectId: mockProject.id, type: FileType.FLOW_STEP_FILE },

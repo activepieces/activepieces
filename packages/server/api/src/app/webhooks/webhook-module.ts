@@ -1,43 +1,12 @@
 import { Readable } from 'stream'
 import { isNil } from '@activepieces/core-utils'
-import { Flow, FlowStatus } from '@activepieces/shared'
 import { XMLParser } from 'fast-xml-parser'
 import { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { flowService } from '../flows/flow/flow.service'
-import { projectService } from '../project/project-service'
-import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { webhookController } from './webhook-controller'
 import { isBinaryContentType, STREAMED_BINARY_CONTENT_TYPES, streamWebhookBinaryBody } from './webhook-request-converter'
 
 export const webhookModule: FastifyPluginAsync = async (app) => {
-    // Resolve the flow before the body is parsed so large uploads to unknown flows are
-    // rejected before we stream them anywhere (webhook endpoints are unauthenticated).
-    // The resolved project/platform is reused by the streaming file sink.
-    app.addHook('onRequest', async (request, reply) => {
-        const flowId = (request.params as { flowId?: string }).flowId
-        // webhookContext is only consumed by the streaming parsers, so non-streaming
-        // requests (plain JSON/XML/text) skip these lookups and let the webhook service
-        // resolve the flow itself.
-        if (isNil(flowId) || !isStreamedContentType(request)) {
-            return
-        }
-        const flow = await flowService(request.log).getOneById(flowId)
-        if (isNil(flow)) {
-            await reply.status(StatusCodes.NOT_FOUND).send({})
-            return
-        }
-        // A streamed upload is persisted to storage during body parsing, before the
-        // controller's disabled-flow guard runs. Reject it here for any flow that guard
-        // would reject, so a webhook that never executes leaves no orphaned file behind.
-        if (!await willAcceptStreamedUpload(request, flow)) {
-            await reply.status(StatusCodes.NOT_FOUND).send({})
-            return
-        }
-        const platformId = await projectService(request.log).getPlatformId(flow.projectId)
-        request.webhookContext = { projectId: flow.projectId, platformId, flowId }
-    })
-
     // rawBody is required for HMAC signature verification, but only ever over text bodies.
     // Capture it for every content-type EXCEPT the streamed ones (binary + multipart), which
     // would otherwise be buffered whole in memory and defeat streaming. A fresh stream is
@@ -82,10 +51,9 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
         },
     )
 
-    // Binary bodies are streamed straight to object storage while the request body is still
-    // being parsed (the stream is only live during this phase — deferring the read to the
-    // handler loses the socket data). octet-stream is buffered by a parent scope (app.ts) —
-    // override it here so webhooks stream it instead.
+    // The body stream is only live during parsing, so binary bodies are consumed here:
+    // streamed straight to S3 (identity-free key), or buffered on non-S3. octet-stream is
+    // buffered by a parent scope (app.ts) — override it here so webhooks handle it instead.
     app.removeContentTypeParser('application/octet-stream')
     for (const pattern of STREAMED_BINARY_CONTENT_TYPES) {
         app.addContentTypeParser(pattern, (request: FastifyRequest, payload: Readable) => streamWebhookBinaryBody(request, payload))
@@ -110,21 +78,6 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
     )
 
     await app.register(webhookController, { prefix: '/v1/webhooks' })
-}
-
-// Mirrors the saveSampleData computation in webhook-controller: an ENABLED flow always
-// accepts, and a DISABLED flow only accepts uploads for sample-data capture — the
-// draft/test routes (always simulate) or a production route with an active simulate
-// trigger source. Handshake requests are never binary/multipart, so they need no branch.
-async function willAcceptStreamedUpload(request: FastifyRequest, flow: Flow): Promise<boolean> {
-    if (flow.status === FlowStatus.ENABLED) {
-        return true
-    }
-    const url = request.routeOptions.url ?? ''
-    if (url.endsWith('/draft') || url.endsWith('/draft/sync') || url.endsWith('/test')) {
-        return true
-    }
-    return triggerSourceService(request.log).existsByFlowId({ flowId: flow.id, simulate: true })
 }
 
 function isStreamedContentType(request: FastifyRequest): boolean {
