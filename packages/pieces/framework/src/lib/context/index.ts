@@ -26,6 +26,7 @@ import {
 } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 import type { PopulatedFlowSummary } from '@activepieces/core-piece-types';
+import type { Readable } from 'node:stream';
 
 export type BaseContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
@@ -270,14 +271,12 @@ export interface AgentContext {
 }
 
 export interface FilesService {
-  write({
-    fileName,
-    data,
-  }: {
-    fileName: string;
-    data: Buffer;
-  }): Promise<string>;
+  write(request: WriteFileRequest): Promise<string>;
 }
+
+export type WriteFileRequest =
+  | { fileName: string; data: Buffer }
+  | { fileName: string; data: Readable; size: number };
 
 export interface ConnectionsManager {
   get(

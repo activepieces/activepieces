@@ -27,6 +27,10 @@ _Avoid_: table trigger
 A stored blob (S3 or DB) with type classification, optional compression, and expiry.
 _Avoid_: attachment, blob
 
+**Streamed write**:
+A `context.files.write` call that uploads a Node `Readable` plus its known byte `size`, instead of a fully-buffered `Buffer`. On the S3 signed-URL transport the bytes flow engine→S3 without materializing the whole file; on any other transport it falls back to buffering (bounded by `MAX_FILE_SIZE_MB`). Applies to `FLOW_STEP_FILE` only.
+_Avoid_: streamable data, streaming upload
+
 **Store Entry**:
 A key-value pair scoped to a project, used by pieces to persist state across flow runs.
 _Avoid_: kv store, project store

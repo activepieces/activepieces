@@ -11,6 +11,9 @@ The File Storage Service is the central infrastructure for persisting binary fil
 - `packages/server/api/src/app/file/file-compressor.ts` — Zstd compress/decompress utilities
 - `packages/server/api/src/app/file/files-controller.ts` — primary file upload/download (`/v1/files`) and legacy `signedStepFileController` redirect for `/v1/step-files/signed`
 - `packages/core/shared/src/lib/core/file/index.ts` — `File`, `FileType`, `FileCompression`, `FileLocation`, `FileId`
+- `packages/pieces/framework/src/lib/context/index.ts` — `FilesService.write` contract (`Buffer` | `{ Readable, size }`)
+- `packages/server/engine/src/lib/piece-context/file-uploader.ts` — engine-side `write` impl: size validation, buffer-vs-stream branching
+- `packages/server/engine/src/lib/api/engine-file-api.ts` — engine↔app upload transport (PUT, redirect-replay, stream preflight)
 
 ## Edition Availability
 - **Community (CE)**: Fully available — used internally by the execution engine.
@@ -81,6 +84,16 @@ Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`
 
 Step file uploads are handled by the engine via the unified `PUT /v1/files/:fileId` endpoint. The legacy `/signed` route remains as a thin redirect so older execution outputs continue to resolve through the canonical `/v1/files/:fileId` path (which handles DB streaming or S3 pre-signed redirect).
 
+### Streamed step-file writes
+
+`context.files.write` accepts either a fully-buffered `Buffer` (`write({ fileName, data })`) or a Node `Readable` with a **required** known byte `size` (`write({ fileName, data, size })`). See the **Streamed write** term in the [Data & Storage glossary](../contexts/data-storage/CONTEXT.md).
+
+- **Why size is required for streams:** a single pre-signed S3 PUT (not multipart) needs a `Content-Length`; chunked transfer-encoding is rejected by several S3-compatible providers (R2/MinIO/OCI). The engine cannot learn the transport from its env (S3/signed-URL flags are app-only), and the redirect-replay flow can't re-send a single-use stream — so for streams the engine does a **preflight** roundtrip that returns `{ mode, putUrl?, readUrl }` before consuming the stream.
+- **S3 signed-URL transport** (`S3_USE_SIGNED_URLS=true` + type maps to S3): the engine streams the `Readable` straight to the pre-signed S3 PUT URL with `Content-Length: size` — bytes never materialize in engine or app memory. This is the only path that avoids OOM on large files.
+- **Any other transport** (default self-hosted DB `bytea`, or proxy→S3): buffer-fallback. The engine streams to the app, which buffers within its Fastify `bodyLimit` (`≈ MAX_FILE_SIZE_MB`); `bytea` requires the whole buffer anyway. No memory benefit here — documented, not silently broken.
+- **Size cap:** declared `size` is validated against `MAX_STREAM_FILE_SIZE_MB` (default 512). On non-S3-signed installs the effective ceiling is still `bodyLimit`.
+- Buffer callers are unchanged: the existing single-PUT + redirect-replay flow handles them with no extra roundtrip. `FLOW_STEP_FILE` writes remain uncompressed (`FileCompression.NONE`).
+
 ## Service Methods
 
 **fileService**
@@ -112,6 +125,7 @@ Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. 
 | Property | Purpose |
 |---|---|
 | `FILE_STORAGE_LOCATION` | `DB` or `S3` — controls where expiring execution files are stored |
+| `MAX_STREAM_FILE_SIZE_MB` | Max declared size for a streamed `context.files.write` (default 512). Only takes full effect on the S3 signed-URL transport; other transports remain bounded by `MAX_FILE_SIZE_MB`/`bodyLimit` |
 | `EXECUTION_DATA_RETENTION_DAYS` | Number of days to keep execution files before cleanup |
 | `S3_ACCESS_KEY_ID` | S3 credentials (not needed if `S3_USE_IRSA=true`) |
 | `S3_SECRET_ACCESS_KEY` | S3 credentials (not needed if `S3_USE_IRSA=true`) |

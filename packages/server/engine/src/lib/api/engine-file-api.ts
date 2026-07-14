@@ -1,7 +1,9 @@
+import { Readable } from 'node:stream'
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
+import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileSizeError, FileType, isZstdCompressed } from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
+import { request } from 'undici'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
 
@@ -19,10 +21,13 @@ export const engineFileApi = {
         const fetchWithRetry = fetchRetry(global.fetch)
         const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
         const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
+        // DOM's fetch BodyInit requires an ArrayBuffer-backed view; Node's Buffer/Uint8Array is
+        // typed <ArrayBufferLike> (could be SharedArrayBuffer), so copy into a plain Uint8Array once.
+        const bytes = new Uint8Array(data)
 
         const initial = await fetchWithRetry(putUrl, {
             method: 'PUT',
-            body: data,
+            body: bytes,
             headers,
             redirect: 'manual',
             ...RETRY_CONFIG,
@@ -37,7 +42,7 @@ export const engineFileApi = {
             }
             const s3Response = await fetchWithRetry(location, {
                 method: 'PUT',
-                body: data,
+                body: bytes,
                 headers: stripApHeaders(headers),
                 redirect: 'follow',
                 ...RETRY_CONFIG,
@@ -69,6 +74,38 @@ export const engineFileApi = {
             throw new EngineGenericError('EngineFileUploadError', 'Upload response missing readUrl')
         }
         return { fileId, readUrl: body.readUrl }
+    },
+    async uploadStream({ engineToken, apiUrl, fileId, type, fileName, size, data }: UploadStreamParams): Promise<UploadResult> {
+        const target = await preflightUploadTarget({ engineToken, apiUrl, fileId, type, fileName, size })
+        if (target.mode === 's3') {
+            const s3Response = await request(target.putUrl, {
+                method: 'PUT',
+                body: data,
+                headers: {
+                    'content-type': 'application/octet-stream',
+                    'content-length': String(size),
+                },
+            })
+            if (s3Response.statusCode >= 300) {
+                throw new EngineGenericError('EngineFileUploadError', `Failed to stream file ${fileId} to signed S3 URL: ${s3Response.statusCode}`)
+            }
+            return { fileId, readUrl: target.readUrl }
+        }
+        const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
+        const proxyResponse = await request(putUrl, {
+            method: 'PUT',
+            body: data,
+            headers: {
+                'content-type': 'application/octet-stream',
+                'content-length': String(size),
+                [FILE_TYPE_HEADER]: type,
+                ...(fileName ? { [FILE_NAME_HEADER]: fileName } : {}),
+            },
+        })
+        if (proxyResponse.statusCode >= 300) {
+            throw new EngineGenericError('EngineFileUploadError', `Failed to stream file ${fileId}: ${proxyResponse.statusCode}`)
+        }
+        return { fileId, readUrl: target.readUrl }
     },
     async download({ engineToken, apiUrl, fileId }: DownloadFileParams): Promise<Uint8Array> {
         const fetchWithRetry = fetchRetry(global.fetch)
@@ -119,6 +156,25 @@ function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHe
     return headers
 }
 
+async function preflightUploadTarget({ engineToken, apiUrl, fileId, type, fileName, size }: PreflightParams): Promise<UploadTarget> {
+    const fetchWithRetry = fetchRetry(global.fetch)
+    const url = `${apiUrl}v1/files/${fileId}/upload-target?token=${encodeURIComponent(engineToken)}`
+    const response = await fetchWithRetry(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileType: type, fileName, size }),
+        ...RETRY_CONFIG,
+    })
+    if (response.status === 413) {
+        const body = await response.json() as { maxSizeMb?: number }
+        throw new FileSizeError(Math.ceil(size / 1024 / 1024), body.maxSizeMb ?? 0)
+    }
+    if (!response.ok) {
+        throw new EngineGenericError('EngineFileUploadError', `Failed to resolve upload target for ${fileId}: ${response.status} ${response.statusText}`)
+    }
+    return await response.json() as UploadTarget
+}
+
 function stripApHeaders(headers: Record<string, string>): Record<string, string> {
     const result: Record<string, string> = {}
     for (const [key, value] of Object.entries(headers)) {
@@ -143,6 +199,29 @@ type UploadResult = {
     fileId: string
     readUrl: string
 }
+
+type UploadStreamParams = {
+    engineToken: string
+    apiUrl: string
+    fileId: string
+    type: FileType.FLOW_STEP_FILE | FileType.FLOW_RUN_LOG | FileType.FLOW_RUN_LOG_SLICE
+    fileName?: string
+    size: number
+    data: Readable
+}
+
+type PreflightParams = {
+    engineToken: string
+    apiUrl: string
+    fileId: string
+    type: FileType.FLOW_STEP_FILE | FileType.FLOW_RUN_LOG | FileType.FLOW_RUN_LOG_SLICE
+    fileName?: string
+    size: number
+}
+
+type UploadTarget =
+    | { mode: 's3', putUrl: string, readUrl: string }
+    | { mode: 'proxy', readUrl: string }
 
 type DownloadFileParams = {
     engineToken: string

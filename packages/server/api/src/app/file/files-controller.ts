@@ -5,9 +5,11 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { fileService } from './file.service'
 import { ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
+import { s3Helper } from './s3-helper'
 import { signedFileTransport } from './signed-file-transport'
 
 export const filesController: FastifyPluginAsyncZod = async (app) => {
@@ -91,6 +93,58 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             platformId: principal.platform.id,
         })
         return reply.status(StatusCodes.OK).send({ fileId, readUrl })
+    })
+
+    app.post('/:fileId/upload-target', {
+        config: {
+            security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
+        },
+        schema: {
+            params: z.object({ fileId: ApId }),
+            querystring: FileTransportQueryParams,
+            body: z.object({
+                fileType: z.string(),
+                fileName: z.string().optional(),
+                size: z.number().int().positive(),
+            }),
+        },
+    }, async (request, reply) => {
+        const { fileId } = request.params
+        const principal = await verifyEnginePrincipal(request.query.token, request.log)
+        const fileType = parseFileTypeHeader(request.body.fileType)
+        const { fileName, size } = request.body
+
+        const maxStreamFileSizeMb = system.getNumberOrThrow(AppSystemProp.MAX_STREAM_FILE_SIZE_MB)
+        if (size > maxStreamFileSizeMb * 1024 * 1024) {
+            return reply.status(StatusCodes.REQUEST_TOO_LONG).send({ maxSizeMb: maxStreamFileSizeMb })
+        }
+
+        const readUrl = await filesService.constructReadUrl({
+            fileId,
+            fileType,
+            platformId: principal.platform.id,
+        })
+
+        if (!signedFileTransport.shouldRedirectForType(fileType)) {
+            return reply.status(StatusCodes.OK).send({ mode: 'proxy', readUrl })
+        }
+
+        const file = await fileService(request.log).save({
+            fileId,
+            projectId: principal.projectId,
+            platformId: principal.platform.id,
+            type: fileType,
+            fileName,
+            compression: FileCompression.NONE,
+            size,
+            data: null,
+        })
+        assertNotNullOrUndefined(file.s3Key, 's3Key')
+        const putUrl = await s3Helper(request.log).putS3SignedUrl({
+            s3Key: file.s3Key,
+            contentLength: size,
+        })
+        return reply.status(StatusCodes.OK).send({ mode: 's3', putUrl, readUrl })
     })
 
     app.get('/:fileId', {

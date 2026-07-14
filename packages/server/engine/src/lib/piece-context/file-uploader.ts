@@ -1,29 +1,47 @@
+import { Readable } from 'node:stream'
 import { apId } from '@activepieces/core-utils'
-import { FilesService } from '@activepieces/pieces-framework'
+import { FilesService, WriteFileRequest } from '@activepieces/pieces-framework'
 import { FileSizeError, FileType } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
 
 export function createFileUploader({ engineToken, apiUrl }: CreateFileUploaderParams): FilesService {
     const maxFileSizeMb = Number(process.env.AP_MAX_FILE_SIZE_MB)
     return {
-        write: async ({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> => {
-            if (!Buffer.isBuffer(data)) {
+        write: async (request): Promise<string> => {
+            if (isStreamWrite(request)) {
+                const { readUrl } = await engineFileApi.uploadStream({
+                    engineToken,
+                    apiUrl,
+                    fileId: apId(),
+                    type: FileType.FLOW_STEP_FILE,
+                    fileName: request.fileName,
+                    size: request.size,
+                    data: request.data,
+                })
+                return readUrl
+            }
+            if (!Buffer.isBuffer(request.data)) {
+                const data: unknown = request.data
                 throw new Error(
-                    `Expected file data to be a Buffer, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
+                    `Expected file data to be a Buffer or Readable stream, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
                 )
             }
-            validateFileSize(data, maxFileSizeMb)
+            validateFileSize(request.data, maxFileSizeMb)
             const { readUrl } = await engineFileApi.upload({
                 engineToken,
                 apiUrl,
                 fileId: apId(),
                 type: FileType.FLOW_STEP_FILE,
-                fileName,
-                data,
+                fileName: request.fileName,
+                data: request.data,
             })
             return readUrl
         },
     }
+}
+
+function isStreamWrite(request: WriteFileRequest): request is Extract<WriteFileRequest, { data: Readable }> {
+    return request.data instanceof Readable
 }
 
 function validateFileSize(data: Buffer, maxFileSizeMb: number): void {
