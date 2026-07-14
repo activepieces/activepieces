@@ -1,0 +1,46 @@
+---
+title: "Project Variables"
+icon: 'brackets-curly'
+description: "Store a reusable value once and reference it from any step in any flow"
+---
+
+Project Variables are named values, scoped to a single project, that you can reference from any step in any flow. Use them for things you'd otherwise paste into a dozen steps: an API key, a webhook URL, a Slack channel ID, a feature flag.
+
+Unlike step output, a variable's value isn't tied to a single flow run. It stays the same until you change it, and it stays out of your flow's steps, so rotating a key means editing it once instead of hunting through every flow that uses it.
+
+<Tip>
+If you're storing credentials for a specific piece (Slack, Stripe, Google Sheets, etc.), create a connection for that piece instead. Variables are for plain values you want to reuse, not for piece authentication.
+</Tip>
+
+## Creating a variable
+
+1. Go to **Variables** in the left sidebar, or open the **Variables** tab in a step's Data Selector while editing a flow.
+2. Click **New variable**.
+3. Enter a **Name**. Names can only contain letters, numbers, and underscores (e.g. `STRIPE_PROD`, `SLACK_CHANNEL_ID`).
+4. Enter the **Value** and click **Create**.
+
+![Creating a project variable](/resources/screenshots/project-variables/new-variable-dialog.png)
+
+## Referencing a variable in a flow
+
+Insert `{{variables['NAME']}}` into any step input. The easiest way is from the Data Selector: open the **Variables** tab and click the variable you want, it's inserted at your cursor automatically.
+
+![Inserting a variable from the Data Selector](/resources/screenshots/project-variables/data-selector-variables-tab.png)
+
+You can also copy a variable's reference from the Variables page: open the row's menu and click **Copy reference**.
+
+## Rotating a value
+
+A variable's value is write-only. Once saved, it's encrypted and never shown again, including to you. To change it, open the variable and click **Rotate value**, then enter the new value. There's no way to view or export a variable's current value from the UI or API.
+
+## Deleting a variable
+
+<Warning>
+Deleting a variable doesn't touch the flows that reference it. Any step still referencing `{{variables['NAME']}}` will fail at runtime the next time it runs.
+</Warning>
+
+Before deleting a variable, search your flows for its reference and remove or replace those steps first.
+
+## Permissions
+
+Reading and writing variables are separate permissions (`READ_VARIABLE`, `WRITE_VARIABLE`) tied to your project role, same as any other resource. A member with read-only access can use existing variables in flows but can't create, edit, or delete them.
