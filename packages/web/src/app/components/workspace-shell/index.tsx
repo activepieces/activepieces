@@ -446,7 +446,7 @@ function WorkspaceShellInner() {
         <ProjectDashboardSidebar collapsible="offcanvas" />
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
           <div className="flex-1 flex overflow-hidden">
-            <StageContainer standalone />
+            <StageContainer standalone showSidebarToggle />
           </div>
           {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
         </SidebarInset>
@@ -516,6 +516,7 @@ function WorkspaceShellInner() {
                 <StageContainer
                   chatCollapsed={chatCollapsed && !chatPopped}
                   onShowChat={showChat}
+                  showSidebarToggle={chatCollapsed}
                 />
               </ResizablePanel>
             </ResizablePanelGroup>

@@ -52,7 +52,7 @@ export const PageHeader = ({
   );
 };
 
-function CollapsedSidebarToggle() {
+export function CollapsedSidebarToggle() {
   const { open, isHoverExpanded, setOpen, setHovered } = useSidebar();
   const pinnedOpen = open && !isHoverExpanded;
   if (pinnedOpen) {

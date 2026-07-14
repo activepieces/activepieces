@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { MessageCircle, X } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 
+import { CollapsedSidebarToggle } from '@/components/custom/page-header';
 import {
   StageHeaderActionsAnchor,
   StageHeaderAnchor,
@@ -28,15 +29,18 @@ function StageHeaderBar({
   chatCollapsed,
   onShowChat,
   standalone,
+  showSidebarToggle,
 }: {
   chatCollapsed?: boolean;
   onShowChat?: () => void;
   standalone?: boolean;
+  showSidebarToggle?: boolean;
 }) {
   const { closeStage } = useStage();
 
   return (
     <div className="shrink-0 flex items-center gap-1.5 px-3 h-12 border-b">
+      {showSidebarToggle && <CollapsedSidebarToggle />}
       {chatCollapsed && onShowChat && (
         <TooltipProvider delayDuration={400}>
           <Tooltip>
@@ -84,10 +88,12 @@ export function StageContainer({
   chatCollapsed,
   onShowChat,
   standalone,
+  showSidebarToggle,
 }: {
   chatCollapsed?: boolean;
   onShowChat?: () => void;
   standalone?: boolean;
+  showSidebarToggle?: boolean;
 }) {
   const {
     stageRef,
@@ -112,6 +118,7 @@ export function StageContainer({
           chatCollapsed={chatCollapsed}
           onShowChat={onShowChat}
           standalone={standalone}
+          showSidebarToggle={showSidebarToggle}
         />
         <div
           ref={stageRef}

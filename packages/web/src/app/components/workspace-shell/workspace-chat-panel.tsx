@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationSidebarToggle } from '@/app/routes/chat-with-ai/components/conversation-sidebar-toggle';
 import { TypewriterText } from '@/app/routes/chat-with-ai/components/typewriter-text';
+import { CollapsedSidebarToggle } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -399,6 +400,7 @@ export function WorkspaceChatPanel({
         draggable && `${FLOAT_DRAG_HANDLE_CLASS} cursor-grab select-none`,
       )}
     >
+      {!floating && <CollapsedSidebarToggle />}
       {isMobile && (
         <ConversationSidebarToggle
           onNewChat={handleNewChat}
