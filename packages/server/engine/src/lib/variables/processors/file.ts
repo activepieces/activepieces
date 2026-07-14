@@ -31,9 +31,10 @@ function isStreamFileProperty(property: PieceProperty): boolean {
 
 async function createFileRef(value: string): Promise<ApFileRef> {
     if (value.startsWith('data:')) {
-        const mimetype = value.slice('data:'.length, value.indexOf(';'))
-        const extension = mimeExtension(mimetype) ?? 'bin'
-        return new ApFileRef({ url: value, filename: `unknown.${extension}`, mimetype })
+        const metaEnd = value.slice('data:'.length).search(/[;,]/)
+        const mimetype = metaEnd >= 0 ? value.slice('data:'.length, 'data:'.length + metaEnd) : ''
+        const extension = (mimetype && mimeExtension(mimetype)) ?? 'bin'
+        return new ApFileRef({ url: value, filename: `unknown.${extension}`, mimetype: mimetype || undefined })
     }
     const metadata = await resolveUrlFileMetadata(value)
     return new ApFileRef({ url: value, ...metadata })

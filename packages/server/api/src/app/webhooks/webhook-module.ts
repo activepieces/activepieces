@@ -16,20 +16,21 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
     // The resolved project/platform is reused by the streaming file sink.
     app.addHook('onRequest', async (request, reply) => {
         const flowId = (request.params as { flowId?: string }).flowId
-        if (isNil(flowId)) {
+        // webhookContext is only consumed by the streaming parsers, so non-streaming
+        // requests (plain JSON/XML/text) skip these lookups and let the webhook service
+        // resolve the flow itself.
+        if (isNil(flowId) || !isStreamedContentType(request)) {
             return
         }
         const flow = await flowService(request.log).getOneById(flowId)
         if (isNil(flow)) {
-            if (isStreamedContentType(request)) {
-                await reply.status(StatusCodes.NOT_FOUND).send({})
-            }
+            await reply.status(StatusCodes.NOT_FOUND).send({})
             return
         }
         // A streamed upload is persisted to storage during body parsing, before the
         // controller's disabled-flow guard runs. Reject it here for any flow that guard
         // would reject, so a webhook that never executes leaves no orphaned file behind.
-        if (isStreamedContentType(request) && !await willAcceptStreamedUpload(request, flow)) {
+        if (!await willAcceptStreamedUpload(request, flow)) {
             await reply.status(StatusCodes.NOT_FOUND).send({})
             return
         }
