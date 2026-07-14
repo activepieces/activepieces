@@ -127,7 +127,12 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }
 
         const { s3Key } = created
-        const uploadId = await s3Helper(log).createMultipartUpload({ s3Key, contentType })
+        const createResult = await tryCatch(() => s3Helper(log).createMultipartUpload({ s3Key, contentType }))
+        if (createResult.error !== null) {
+            await tryCatch(() => fileRepo().delete({ id: created.id }))
+            throw createResult.error
+        }
+        const uploadId = createResult.data
         return multipartStream.runMultipartStream<File>({
             head: [firstBuffer, second.value],
             rest: parts,
