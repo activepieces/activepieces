@@ -88,15 +88,19 @@ RUN node -e "\
   process.stdout.write(JSON.stringify(names));\
 " > packages/server/api/dist/src/migration-manifest.json
 
-# Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
-# Then regenerate bun.lock so it matches the trimmed workspace
-RUN rm -rf packages/pieces/core packages/pieces/custom && \
+# Remove workspaces not needed at runtime: pieces except the 4 the api imports,
+# plus web/cli/tests-e2e/embed-sdk whose deps (react & friends) would otherwise land
+# in the runtime node_modules. dist/packages/web is already built and kept.
+# Then drop the removed entries from the root workspaces list and regenerate bun.lock.
+RUN rm -rf packages/pieces/core packages/pieces/custom \
+      packages/web packages/cli packages/tests-e2e packages/ee && \
     find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
       ! -name slack \
       ! -name square \
       ! -name facebook-leads \
       ! -name intercom \
       -exec rm -rf {} + && \
+    node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.workspaces=p.workspaces.filter(w=>fs.existsSync(w.replace('/*','')));fs.writeFileSync('package.json',JSON.stringify(p,null,2))" && \
     rm -f bun.lock && bun install
 
 ### STAGE 2: Run ###
