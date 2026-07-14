@@ -11,7 +11,12 @@ const TERMINAL_RETRY_CONFIG = {
 } as const
 
 const PROGRESS_RETRY_CONFIG = {
-    retries: 0,
+    retries: 3,
+    retryDelay: 3000,
+    // sendUpdateProgress throws EngineGenericError on failure — progress reporting is NOT fire-and-forget —
+    // so a single transient 5xx on an intermediate progress POST turns the whole run into an INTERNAL_ERROR
+    // that pages oncall. Retry 5xx (and 408/429) so a brief gateway blip is absorbed; 2xx never retries.
+    retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 
 export const engineRunApi = {
