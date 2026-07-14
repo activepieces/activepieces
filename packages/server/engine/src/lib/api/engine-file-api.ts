@@ -8,9 +8,6 @@ const zstdDecompress = promisify(zstdDecompressCallback)
 const RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
-    // fetch-retry only retries rejected promises (network errors) by default; without an explicit
-    // retryOn a transient 5xx from the API/gateway (e.g. 502 during a rolling deploy) resolves on the
-    // first hit and becomes a fatal INTERNAL_ERROR that fails the run and pages oncall. Retry 5xx too.
     retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 

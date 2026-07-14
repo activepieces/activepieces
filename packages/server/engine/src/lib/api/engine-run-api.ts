@@ -4,18 +4,12 @@ import fetchRetry from 'fetch-retry'
 const TERMINAL_RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
-    // Without retryOn, fetch-retry never retries a 5xx response (only network-level rejections), so a
-    // transient 502/503 from the API/gateway fails the terminal callback and turns the run into an
-    // INTERNAL_ERROR. Retry 5xx (and 408/429) so a brief gateway blip is absorbed, not fatal.
     retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 
 const PROGRESS_RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
-    // sendUpdateProgress throws EngineGenericError on failure — progress reporting is NOT fire-and-forget —
-    // so a single transient 5xx on an intermediate progress POST turns the whole run into an INTERNAL_ERROR
-    // that pages oncall. Retry 5xx (and 408/429) so a brief gateway blip is absorbed; 2xx never retries.
     retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 
