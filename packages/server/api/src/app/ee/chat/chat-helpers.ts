@@ -7,7 +7,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 
-const STREAMING_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
+const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
 const FAST_TIER_ID = 'fast'
 
 // Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
@@ -85,6 +85,26 @@ function resolveFastModelId({ provider }: { provider: AIProviderName }): string 
     return resolveModelIdForProvider({ tier: resolveTier({ tierId: FAST_TIER_ID }), provider })
 }
 
+// Proactive counterpart to getConversationOrThrow's recover-on-read, for stuck conversations
+// no one reopens to trigger the lazy path.
+async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
+    // Compare against the DB clock (NOW()) rather than a bound JS Date, so the sweep is immune
+    // to app/DB clock skew and driver timezone handling.
+    const result = await conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: ChatConversationStatus.IDLE })
+        .where('status = :streaming', { streaming: ChatConversationStatus.STREAMING })
+        .andWhere('updated < NOW() - make_interval(secs => :staleSecs)', { staleSecs: STREAMING_STALENESS_TIMEOUT_MS / 1_000 })
+        .andWhere('id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
+        .execute()
+    const recovered = result.affected ?? 0
+    if (recovered > 0) {
+        log.warn({ recovered }, '[chatHelpers] Swept stale STREAMING conversations to IDLE')
+    }
+    return { recovered }
+}
+
 export const chatHelpers = {
     getConversationOrThrow,
     getUserProjects,
@@ -92,5 +112,6 @@ export const chatHelpers = {
     resolveTier,
     resolveModelIdForProvider,
     resolveFastModelId,
+    recoverAllStaleStreamingConversations,
     conversationRepo,
 }

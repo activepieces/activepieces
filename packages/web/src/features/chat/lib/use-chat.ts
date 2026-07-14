@@ -20,7 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { chatDebug } from '@/lib/chat-debug-logger';
 
-import { chatApi } from './chat-api';
+import { chatApi, type PendingGate } from './chat-api';
 import {
   chatBuildUtils,
   chatStoreSelectors,
@@ -89,12 +89,9 @@ function restoreReceiptsIntoStore({
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
 
-function buildToolCallMetaFromGate(gate: {
-  gateId: string;
-  toolName: string;
-  displayName: string;
-  toolInput: Record<string, unknown>;
-}): Record<string, ToolCallMeta> {
+function buildToolCallMetaFromGate(
+  gate: PendingGate,
+): Record<string, ToolCallMeta> {
   if (chatPartUtils.isDisplayTool(gate.toolName)) {
     return {};
   }
@@ -133,6 +130,38 @@ function buildToolCallMetaFromGate(gate: {
     };
   }
   return actionPreview ? { [gate.gateId]: { actionPreview } } : {};
+}
+
+// History only persists resolved tool calls, so a live pending gate loses its `input-available`
+// part on remount — without it the store selectors find no anchor and the card disappears.
+function buildGatePart(gate: PendingGate) {
+  return {
+    type: 'dynamic-tool' as const,
+    toolCallId: gate.gateId,
+    toolName: gate.toolName,
+    title: gate.displayName,
+    state: 'input-available' as const,
+    input: gate.toolInput,
+  };
+}
+
+function appendGatePart({
+  messages,
+  gate,
+}: {
+  messages: ChatUIMessage[];
+  gate: PendingGate;
+}): ChatUIMessage[] {
+  const idx = messages.findLastIndex((m) => m.role === 'assistant');
+  if (idx < 0) return messages;
+  const message = messages[idx];
+  const alreadyAnchored = message.parts.some(
+    (part) => 'toolCallId' in part && part.toolCallId === gate.gateId,
+  );
+  if (alreadyAnchored) return messages;
+  const next = [...messages];
+  next[idx] = { ...message, parts: [...message.parts, buildGatePart(gate)] };
+  return next;
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
@@ -756,21 +785,9 @@ export function useAgentChat({
         const baseParts = isCurrentStreamingResponse
           ? mapped[lastAssistantIdx].parts
           : undefined;
-        const displayGatePart =
-          gate && chatPartUtils.isDisplayTool(gate.toolName)
-            ? {
-                type: 'dynamic-tool' as const,
-                toolCallId: gate.gateId,
-                toolName: gate.toolName,
-                title: gate.displayName,
-                state: 'input-available' as const,
-                input: gate.toolInput,
-              }
-            : undefined;
+        const gatePart = gate ? buildGatePart(gate) : undefined;
         startStream(id, {
-          initialParts: displayGatePart
-            ? [...(baseParts ?? []), displayGatePart]
-            : baseParts,
+          initialParts: gatePart ? [...(baseParts ?? []), gatePart] : baseParts,
         });
         if (gate) {
           store.setState((prev) => ({
@@ -829,6 +846,9 @@ export function useAgentChat({
                 ...buildToolCallMetaFromGate(gate),
               },
             }));
+            setPersistedMessages((prev) =>
+              appendGatePart({ messages: prev, gate }),
+            );
           }
         }
       }
