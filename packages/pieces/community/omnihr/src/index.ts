@@ -13,6 +13,7 @@ import { getEmployeeSystemId } from './lib/actions/get-employee-system-id';
 import { getEmployeeInfo } from './lib/actions/get-employee-info';
 import { getEmployeeOrganizationalChart } from './lib/actions/get-employee-organizational-chart';
 import { getDirectReports } from './lib/actions/get-direct-reports';
+import { generateReport } from './lib/actions/generate-report';
 import { omnihrAuth } from './lib/auth';
 
 const OMNIHR_API_BASE_URL = 'https://api.omnihr.co/api/';
@@ -65,6 +66,7 @@ export const omnihr = createPiece({
     getEmployeeInfo,
     getEmployeeOrganizationalChart,
     getDirectReports,
+    generateReport,
     createCustomApiCallAction({
       baseUrl: () => OMNIHR_API_BASE_URL,
       auth: omnihrAuth,
