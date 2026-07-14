@@ -7746,6 +7746,15 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/reddit-conversions": {
+      "name": "@activepieces/piece-reddit-conversions",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/rendex": {
       "name": "@activepieces/piece-rendex",
       "version": "0.0.5",
@@ -12301,6 +12310,8 @@
     "@activepieces/piece-recurly": ["@activepieces/piece-recurly@workspace:packages/pieces/community/recurly"],
 
     "@activepieces/piece-reddit": ["@activepieces/piece-reddit@workspace:packages/pieces/community/reddit"],
+
+    "@activepieces/piece-reddit-conversions": ["@activepieces/piece-reddit-conversions@workspace:packages/pieces/community/reddit-conversions"],
 
     "@activepieces/piece-rendex": ["@activepieces/piece-rendex@workspace:packages/pieces/community/rendex"],
 
