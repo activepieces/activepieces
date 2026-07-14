@@ -172,7 +172,7 @@ describe('flowBundleStore', () => {
     it('tryFetch downloads from a signed URL and materializes compiled code', async () => {
         const basePath = uniqueBasePath()
         const flowVersion = buildFlowVersion()
-        const manifest = { flowVersion, pieces: [piece], codes: [{ stepName: 'step_1', compiledJs: 'exports.code = () => 1' }] }
+        const manifest = { flowVersion, pieces: [piece], codes: [{ stepName: 'step_1', compiledJs: 'exports.code = () => 1' }], bundleFormatVersion: 2 }
         vi.mocked(bundleHttp.getBuffer).mockResolvedValue(Buffer.from(JSON.stringify(manifest), 'utf8'))
         const apiClient = {
             getFlowBundle: vi.fn(async () => ({ kind: 'url', url: 'https://s3/get' })),
@@ -184,6 +184,22 @@ describe('flowBundleStore', () => {
         expect(bundleHttp.getBuffer).toHaveBeenCalledWith('https://s3/get')
         const fetchedCodes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
         expect(await fetchedCodes.readCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1' })).toBe('exports.code = () => 1')
+    })
+
+    it('tryFetch ignores a bundle with an outdated bundleFormatVersion (self-heals via rebuild)', async () => {
+        const basePath = uniqueBasePath()
+        const flowVersion = buildFlowVersion()
+        // Pre-#13798-era manifest: current schemaVersion but no bundleFormatVersion (its piece list may omit
+        // agent-tool pieces). Must be rejected so the run falls back to a fresh resolve.
+        const staleManifest = { flowVersion, pieces: [piece], codes: [{ stepName: 'step_1', compiledJs: 'exports.code = () => 1' }] }
+        vi.mocked(bundleHttp.getBuffer).mockResolvedValue(Buffer.from(JSON.stringify(staleManifest), 'utf8'))
+        const apiClient = {
+            getFlowBundle: vi.fn(async () => ({ kind: 'url', url: 'https://s3/get' })),
+        } as unknown as WorkerToApiContract
+
+        const fetched = await flowBundleStore(fakeLog, apiClient, basePath).tryFetch({ flowVersionId: flowVersion.id, projectId: 'p1' })
+
+        expect(fetched).toBeNull()
     })
 
     it('tryFetch returns null and does not cache when the signed-URL download fails (retries next run)', async () => {

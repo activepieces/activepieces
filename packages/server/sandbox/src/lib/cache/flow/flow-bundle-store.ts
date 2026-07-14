@@ -9,6 +9,10 @@ import { codeCache } from './code/code-cache'
 import { flowSteps } from './flow-steps'
 
 const MISS = ''
+// Bump when the SET of pieces we resolve into a bundle changes for a reason the flow's schemaVersion does
+// not capture (e.g. #13798 started including agent-tool pieces). Bundles built before the bump lack the
+// field, so parseManifest rejects them and they rebuild on next run — schemaVersion alone can't catch this.
+const FLOW_BUNDLE_FORMAT_VERSION = 2
 
 export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string) => ({
     async tryFetch({ flowVersionId, projectId }: TryFetchParams): Promise<MaterializedFlowBundle | null> {
@@ -55,7 +59,7 @@ export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, b
             stepName,
             compiledJs: await codes.readCompiledStep({ flowVersionId: flowVersion.id, stepName }),
         })))
-        const manifest: FlowBundleManifest = { flowVersion, pieces, codes: compiledSteps }
+        const manifest: FlowBundleManifest = { flowVersion, pieces, codes: compiledSteps, bundleFormatVersion: FLOW_BUNDLE_FORMAT_VERSION }
         const data = Buffer.from(JSON.stringify(manifest), 'utf8')
         const prepared = await apiClient.prepareFlowBundleUpload({
             flowVersionId: flowVersion.id,
@@ -98,7 +102,7 @@ function parseManifest(value: string | null): FlowBundleManifest | null {
         return null
     }
     const { data: manifest } = tryCatchSync(() => JSON.parse(value) as FlowBundleManifest)
-    if (isNil(manifest) || manifest.flowVersion?.schemaVersion !== LATEST_FLOW_SCHEMA_VERSION) {
+    if (isNil(manifest) || manifest.flowVersion?.schemaVersion !== LATEST_FLOW_SCHEMA_VERSION || manifest.bundleFormatVersion !== FLOW_BUNDLE_FORMAT_VERSION) {
         return null
     }
     return manifest
@@ -130,6 +134,7 @@ type FlowBundleManifest = {
     flowVersion: FlowVersion
     pieces: PiecePackage[]
     codes: CompiledCodeStep[]
+    bundleFormatVersion: number
 }
 
 type CompiledCodeStep = {
