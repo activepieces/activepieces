@@ -80,6 +80,7 @@ import { exceptionHandler } from './helper/exception-handler'
 import { clientLogsModule } from './helper/logs/client-logs.module'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { rejectedPromiseHandler } from './helper/promise-handler'
+import { reencryptSecretsJob } from './helper/reencrypt-secrets.job'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
@@ -221,6 +222,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     // built (existing deployment whose piece_metadata is already populated, so no sync delta fires).
     // Fire-and-forget — a no-op once the index has rows, and must never block or fail boot.
     rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfEmpty(), app.log)
+    // Migration sweep (CBC → GCM): re-encrypts any legacy blobs left over from before the GCM write
+    // flip. Fire-and-forget, paced, idempotent, and a cheap no-op once every blob is already GCM.
+    reencryptSecretsJob(app.log).register()
+    rejectedPromiseHandler(reencryptSecretsJob(app.log).enqueue(), app.log)
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)

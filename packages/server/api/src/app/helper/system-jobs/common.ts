@@ -17,6 +17,7 @@ export enum SystemJobName {
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
     TOOL_SEARCH_REINDEX = 'tool-search-reindex',
     BUNDLE_PIECE = 'bundle-piece',
+    REENCRYPT_SECRETS = 'reencrypt-secrets',
 }
 
 type BundlePieceSystemJobData = {
@@ -72,6 +73,7 @@ type SystemJobDataMap = {
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
     [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
     [SystemJobName.BUNDLE_PIECE]: BundlePieceSystemJobData
+    [SystemJobName.REENCRYPT_SECRETS]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
