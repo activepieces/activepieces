@@ -311,7 +311,7 @@ export const recordService = {
                 flowId: webhook.flowId,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 saveSampleData: false,
-                data: async (_projectId: string) => ({
+                data: async () => ({
                     method: 'POST',
                     headers: {
                         authorization,
