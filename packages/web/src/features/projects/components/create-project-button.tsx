@@ -83,7 +83,13 @@ function IconVariant({
   );
 }
 
-function FullVariant({ disabled }: { disabled: boolean }) {
+function FullVariant({
+  disabled,
+  onCreate,
+}: {
+  disabled: boolean;
+  onCreate?: (project: ProjectWithLimits) => void;
+}) {
   if (disabled) {
     return (
       <UpgradeTooltip>
@@ -96,12 +102,40 @@ function FullVariant({ disabled }: { disabled: boolean }) {
     );
   }
   return (
-    <NewProjectDialog>
+    <NewProjectDialog onCreate={onCreate}>
       <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
         {t('New Project')}
       </AnimatedIconButton>
     </NewProjectDialog>
   );
+}
+
+function GhostVariant({
+  disabled,
+  onCreate,
+}: {
+  disabled: boolean;
+  onCreate?: (project: ProjectWithLimits) => void;
+}) {
+  const button = (
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={disabled}
+      className="gap-2 text-primary hover:bg-primary/5 hover:text-primary"
+    >
+      <Plus className="size-4" />
+      {t('New Project')}
+    </Button>
+  );
+  if (disabled) {
+    return (
+      <UpgradeTooltip>
+        <div>{button}</div>
+      </UpgradeTooltip>
+    );
+  }
+  return <NewProjectDialog onCreate={onCreate}>{button}</NewProjectDialog>;
 }
 
 function SidebarMenuVariant({
@@ -168,7 +202,7 @@ export function CreateProjectButton({
   projects,
   onCreate,
 }: {
-  variant: 'icon' | 'full' | 'sidebar-menu' | 'menu-item';
+  variant: 'icon' | 'full' | 'ghost' | 'sidebar-menu' | 'menu-item';
   projects: Pick<ProjectWithLimits, 'type'>[];
   onCreate?: (project: ProjectWithLimits) => void;
 }) {
@@ -176,11 +210,14 @@ export function CreateProjectButton({
   if (variant === 'icon') {
     return <IconVariant disabled={disabled} onCreate={onCreate} />;
   }
+  if (variant === 'ghost') {
+    return <GhostVariant disabled={disabled} onCreate={onCreate} />;
+  }
   if (variant === 'sidebar-menu') {
     return <SidebarMenuVariant disabled={disabled} onCreate={onCreate} />;
   }
   if (variant === 'menu-item') {
     return <MenuItemVariant disabled={disabled} onCreate={onCreate} />;
   }
-  return <FullVariant disabled={disabled} />;
+  return <FullVariant disabled={disabled} onCreate={onCreate} />;
 }

@@ -1,6 +1,12 @@
-import { Permission } from '@activepieces/core-utils';
-import { ApFlagId, PlatformRole, ProjectType } from '@activepieces/shared';
+import { isNil, Permission } from '@activepieces/core-utils';
+import {
+  ApFlagId,
+  PlatformRole,
+  ProjectType,
+  UserStatus,
+} from '@activepieces/shared';
 import { t } from 'i18next';
+import { UsersRound } from 'lucide-react';
 import { useState } from 'react';
 
 import { Settings2Icon } from '@/components/icons/settings2';
@@ -12,7 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members';
+import { InviteUserDialog, projectMembersHooks } from '@/features/members';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -51,11 +57,22 @@ function StageProjectActionsInner() {
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<SettingsTab | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const { projectMembers } = projectMembersHooks.useProjectMembers();
 
   if (!project) {
     return null;
   }
+
+  const activeProjectMembers = projectMembers?.filter(
+    (member) => member.user.status === UserStatus.ACTIVE,
+  );
+  const showMembersCount =
+    showProjectMembersFlag &&
+    checkAccess(Permission.READ_PROJECT_MEMBER) &&
+    !isNil(activeProjectMembers) &&
+    project.type === ProjectType.TEAM;
 
   const canInvite =
     (checkAccess(Permission.WRITE_INVITATION) &&
@@ -79,6 +96,23 @@ function StageProjectActionsInner() {
   return (
     <>
       <TooltipProvider delayDuration={400}>
+        {showMembersCount && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2"
+            aria-label={t('View team members')}
+            onClick={() => {
+              setSettingsTab('members');
+              setSettingsOpen(true);
+            }}
+          >
+            <UsersRound className="size-4" />
+            <span className="text-sm font-medium">
+              {activeProjectMembers?.length}
+            </span>
+          </Button>
+        )}
         {canInvite && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -102,7 +136,10 @@ function StageProjectActionsInner() {
               size="icon"
               className="h-7 w-7"
               aria-label={t('Settings')}
-              onClick={() => setSettingsOpen(true)}
+              onClick={() => {
+                setSettingsTab(null);
+                setSettingsOpen(true);
+              }}
             >
               <Settings2Icon size={16} />
             </Button>
@@ -115,7 +152,7 @@ function StageProjectActionsInner() {
       <ProjectSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        initialTab={initialSettingsTab}
+        initialTab={settingsTab ?? initialSettingsTab}
         initialValues={{ projectName: project.displayName }}
       />
     </>
