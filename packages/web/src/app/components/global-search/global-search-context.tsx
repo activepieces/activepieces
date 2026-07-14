@@ -8,7 +8,6 @@ import {
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { InviteUserDialog } from '@/features/members';
-import { getProjectName } from '@/features/projects';
 
 import { ProjectSettingsDialog } from '../project-settings';
 
@@ -51,11 +50,6 @@ function BrowsePanel({ onClose }: { onClose: () => void }) {
         <InviteUserDialog
           open={controller.inviteOpen}
           setOpen={controller.setInviteOpen}
-          scope={{
-            kind: 'project',
-            projectId: controller.currentProject.id,
-            projectName: getProjectName(controller.currentProject),
-          }}
         />
       )}
 

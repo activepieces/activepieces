@@ -519,11 +519,7 @@ function SidebarInviteTeammates() {
           )}
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <InviteUserDialog
-        open={open}
-        setOpen={setOpen}
-        scope={{ kind: 'platform' }}
-      />
+      <InviteUserDialog open={open} setOpen={setOpen} />
     </SidebarMenu>
   );
 }
