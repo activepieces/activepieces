@@ -202,7 +202,7 @@ type CreateStreamUploadParams = {
     size: number
 }
 
-// Local wire type matching stream-upload.service.ts — this file deliberately duplicates
+// Local wire type matching the /stream-upload route in files-controller.ts — this file deliberately duplicates
 // it instead of importing server types (matches the header-constant duplication above).
 export type CreateStreamUploadResponse =
     | { mode: 'DB' }
