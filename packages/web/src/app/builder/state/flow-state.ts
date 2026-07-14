@@ -24,7 +24,6 @@ import {
 import { PromiseQueue } from '@/lib/promise-queue';
 
 import { BuilderState } from '../builder-hooks';
-import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
 export type FlowState = {
   flow: PopulatedFlow;
@@ -44,10 +43,7 @@ export type FlowState = {
     type: 'input' | 'output';
     value: unknown;
   }) => void;
-  setVersion: (
-    flowVersion: FlowVersion,
-    shouldReselectInitialStep?: boolean,
-  ) => void;
+  setVersion: (flowVersion: FlowVersion) => void;
   applyServerVersion: (params: {
     flowVersion: FlowVersion;
     changedStepNames: string[];
@@ -269,28 +265,17 @@ export const createFlowState = (
 
         return { flowVersion: newFlowVersion };
       }),
-    setVersion: (
-      flowVersion: FlowVersion,
-      shouldReselectInitialStep: boolean = true,
-    ) => {
-      const initiallySelectedStep =
-        flowCanvasUtils.determineInitiallySelectedStep(null);
-      const isEmptyTriggerInitiallySelected =
-        initiallySelectedStep === 'trigger' &&
-        flowVersion.trigger.type === FlowTriggerType.EMPTY;
+    setVersion: (flowVersion: FlowVersion) => {
+      // The selected step may not exist in the target version, and nothing
+      // should open automatically on a version switch anyway.
       set((state) => ({
         flowVersion,
         run: null,
-        selectedStep: shouldReselectInitialStep
-          ? initiallySelectedStep
-          : state.selectedStep,
+        selectedStep: null,
         readonly:
           state.flow.publishedVersionId !== flowVersion.id &&
           flowVersion.state === FlowVersionState.LOCKED,
-        rightSidebar:
-          initiallySelectedStep && !isEmptyTriggerInitiallySelected
-            ? RightSideBarType.PIECE_SETTINGS
-            : RightSideBarType.NONE,
+        rightSidebar: RightSideBarType.NONE,
         selectedBranchIndex: null,
       }));
     },

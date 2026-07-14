@@ -15,7 +15,7 @@ export type SearchInputProps = Omit<
 };
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ type, placeholder = t('Search'), ...props }, ref) => {
+  ({ type, placeholder = t('Search'), className, ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     React.useImperativeHandle(ref, () => inputRef.current!);
@@ -25,6 +25,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         className={cn(
           'grow flex items-center gap-2 w-full bg-background px-3 box-border',
           inputClass,
+          className,
         )}
       >
         <Search className="size-4 shrink-0 opacity-50"></Search>
@@ -32,7 +33,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           {...props}
           type={type}
           ref={inputRef}
-          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none p-0 bg-transparent dark:bg-transparent"
+          className="h-full border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none p-0 bg-transparent dark:bg-transparent"
           placeholder={placeholder}
           onChange={(e) => props.onChange(e.target.value)}
         />

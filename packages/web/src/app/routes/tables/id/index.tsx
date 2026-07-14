@@ -14,6 +14,7 @@ import { nanoid } from 'nanoid';
 import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { DetailPageBreadcrumb } from '@/app/components/project-layout/detail-page-breadcrumb';
 import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import { ResourceLockWidget } from '@/components/custom/resource-lock-widget';
 import { useTheme } from '@/components/providers/theme-provider';
@@ -285,6 +286,11 @@ const ApTableEditorPage = () => {
           onBack={handleBack}
           lockedBy={isAiActive ? null : lockedBy}
           takeOver={takeOver}
+          renderTitle={(title) => (
+            <DetailPageBreadcrumb section="automations">
+              {title}
+            </DetailPageBreadcrumb>
+          )}
         />
       </div>
 

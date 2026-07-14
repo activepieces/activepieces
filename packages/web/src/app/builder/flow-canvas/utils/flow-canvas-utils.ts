@@ -707,13 +707,6 @@ function buildNotesGraph(notes: Note[]): ApGraph {
   };
 }
 
-function determineInitiallySelectedStep(
-  failedStepNameInRun: string | null,
-): string | null {
-  // Opening a flow starts with nothing selected; only a run's failed step is
-  // auto-focused so the user lands on what broke.
-  return failedStepNameInRun ?? null;
-}
 const doesSelectionRectangleExist = () => {
   return (
     document.querySelector(
@@ -758,6 +751,5 @@ export const flowCanvasUtils = {
   createAddOperationFromAddButtonData,
   isSkipped,
   getStepStatus,
-  determineInitiallySelectedStep,
   doesSelectionRectangleExist,
 };

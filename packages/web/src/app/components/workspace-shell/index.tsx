@@ -445,7 +445,7 @@ function WorkspaceShellInner() {
       <SidebarProvider defaultOpen={true} hoverMode={true}>
         <ProjectDashboardSidebar collapsible="offcanvas" />
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-          <div className="flex-1 flex overflow-hidden p-1.5">
+          <div className="flex-1 flex overflow-hidden">
             <StageContainer standalone />
           </div>
           {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
@@ -459,12 +459,12 @@ function WorkspaceShellInner() {
       <SidebarProvider defaultOpen={true} hoverMode={true}>
         <ProjectDashboardSidebar collapsible="offcanvas" />
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-          <div className="flex-1 flex overflow-hidden p-1.5">
+          <div className="flex-1 flex overflow-hidden">
             <ResizablePanelGroup
               elementRef={groupEl}
               orientation="horizontal"
               onLayoutChanged={handleStageLayoutChanged}
-              className="rounded-xl border bg-background overflow-hidden shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]"
+              className="bg-background overflow-hidden"
             >
               <ResizablePanel
                 id="chat-panel"
@@ -514,7 +514,6 @@ function WorkspaceShellInner() {
                 className="min-w-0"
               >
                 <StageContainer
-                  chromeless
                   chatCollapsed={chatCollapsed && !chatPopped}
                   onShowChat={showChat}
                 />

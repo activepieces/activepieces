@@ -83,12 +83,10 @@ function StageHeaderBar({
 export function StageContainer({
   chatCollapsed,
   onShowChat,
-  chromeless,
   standalone,
 }: {
   chatCollapsed?: boolean;
   onShowChat?: () => void;
-  chromeless?: boolean;
   standalone?: boolean;
 }) {
   const {
@@ -108,11 +106,7 @@ export function StageContainer({
     <StageHeaderSlotProvider>
       <div
         id={STAGE_DOCK_TARGET_ID}
-        className={cn(
-          'relative flex flex-col h-full w-full bg-background overflow-hidden',
-          !chromeless &&
-            'rounded-xl border shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]',
-        )}
+        className="relative flex flex-col h-full w-full bg-background overflow-hidden"
       >
         <StageHeaderBar
           chatCollapsed={chatCollapsed}

@@ -6,10 +6,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 type EditableTextProps = {
   value: string | undefined;
   className?: string;
+  // Applied only while editing, e.g. to make the inline editor look like an
+  // input field without affecting the viewing state.
+  editingClassName?: string;
   readonly: boolean;
   onValueChange: (value: string) => void;
   tooltipContent?: string;
@@ -21,6 +25,7 @@ type EditableTextProps = {
 const EditableText = ({
   value: initialValue,
   className = '',
+  editingClassName = '',
   readonly = false,
   onValueChange,
   tooltipContent,
@@ -115,7 +120,11 @@ const EditableText = ({
       ref={editableTextRef}
       contentEditable
       suppressContentEditableWarning={true}
-      className={`${className}  focus:outline-hidden break-all`}
+      className={cn(
+        className,
+        editingClassName,
+        'focus:outline-hidden break-all',
+      )}
       onBlur={() => {
         emitChangedValue();
         setIsEditing(false);

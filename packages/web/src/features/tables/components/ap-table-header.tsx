@@ -13,7 +13,7 @@ import {
   Lock,
   Palette,
 } from 'lucide-react';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
@@ -28,14 +28,6 @@ import {
   useStageHeaderTitle,
 } from '@/components/custom/stage-header-slot';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -46,10 +38,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
-import {
-  getProjectName,
-  projectCollectionUtils,
-} from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { downloadFile } from '@/lib/dom-utils';
 
@@ -65,12 +53,16 @@ interface ApTableHeaderProps {
   onBack: () => void;
   lockedBy: { userId: string; userDisplayName: string } | null;
   takeOver: () => void;
+  // Lets the hosting page (app layer) wrap the table title with its own
+  // breadcrumb — features cannot import app components directly.
+  renderTitle?: (title: ReactNode) => ReactNode;
 }
 
 export function ApTableHeader({
   onBack,
   lockedBy,
   takeOver,
+  renderTitle,
 }: ApTableHeaderProps) {
   const { embedState } = useEmbedding();
   const [
@@ -97,7 +89,6 @@ export function ApTableHeader({
   // embed SDK handshake inside an iframe
   const refreshTableState = useRefreshTableState();
   const [isEditingTableName, setIsEditingTableName] = useState(false);
-  const { project } = projectCollectionUtils.useCurrentProject();
   const lockedByOtherUser = useTableState((state) => state.lockedByOtherUser);
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
@@ -128,9 +119,10 @@ export function ApTableHeader({
   };
 
   const nameControl = (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-px text-sm">
       <EditableText
-        className="hover:cursor-text"
+        className="rounded-md px-1.5 py-1 font-medium hover:cursor-text hover:bg-gray-300/30 hover:text-accent-foreground dark:hover:bg-gray-300/10"
+        editingClassName="bg-background ring-1 ring-input"
         value={table?.name || t('Table Editor')}
         readonly={!canEdit}
         onValueChange={(newName) => {
@@ -230,25 +222,13 @@ export function ApTableHeader({
   );
 
   const titleContent = (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink onClick={onBack} className="cursor-pointer">
-            {getProjectName(project)}
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>{nameControl}</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
+    <div className="min-w-0 pr-1.5">
+      {renderTitle ? renderTitle(nameControl) : nameControl}
+    </div>
   );
 
   const stageTitleContent = (
-    <div className="flex min-w-0 items-center gap-1 text-sm font-semibold">
-      {nameControl}
-    </div>
+    <div className="flex min-w-0 items-center">{nameControl}</div>
   );
   const stageTitle = useStageHeaderTitle(stageTitleContent);
   const stageSlot = useStageHeaderSlot()?.slot ?? null;

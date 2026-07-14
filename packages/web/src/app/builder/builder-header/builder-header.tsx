@@ -1,12 +1,14 @@
 import { Permission } from '@activepieces/core-utils';
 import {
+  ApFlagId,
   FlowOperationType,
   FlowVersionState,
+  supportUrl,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { EllipsisVertical, HistoryIcon } from 'lucide-react';
+import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -16,6 +18,7 @@ import {
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { RightSideBarType } from '@/app/builder/types';
+import { DetailPageBreadcrumb } from '@/app/components/project-layout/detail-page-breadcrumb';
 import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import EditableText from '@/components/custom/editable-text';
@@ -29,25 +32,18 @@ import {
   useStageHeaderTitle,
 } from '@/components/custom/stage-header-slot';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { flowHooks } from '@/features/flows';
+import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { foldersHooks } from '@/features/folders';
-import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
-import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
 import { BuilderFlowStatusSection } from './flow-status';
 
@@ -55,6 +51,10 @@ export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const openNewWindow = useNewWindow();
+  const { data: showSupport } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+  );
 
   const hasPermissionToReadRuns = useAuthorization().checkAccess(
     Permission.READ_FLOW,
@@ -62,21 +62,22 @@ export const BuilderHeader = () => {
   const [
     flow,
     flowVersion,
+    run,
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
+    state.run,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
   ]);
 
   const { embedState } = useEmbedding();
-  const { project } = projectCollectionUtils.useCurrentProject();
   // When rendered inside the Stage, lift the flow title up into the Stage
-  // header (matching the chat panel's title) instead of showing it here.
+  // header (next to its breadcrumb) instead of showing a header row here.
   const stageSlot = useStageHeaderSlot()?.slot ?? null;
   const stageCurrent = useStageOptional()?.current;
   useReportStageResourceTitle(
@@ -110,10 +111,15 @@ export const BuilderHeader = () => {
     });
   };
 
-  const flowNameControl = (
-    <>
+  const flowTitle = !embedState.hideFlowNameInBuilder && (
+    <div
+      className={cn('flex items-center gap-px text-sm', {
+        'max-w-[500px]': !isEditingFlowName,
+      })}
+    >
       <EditableText
-        className="hover:cursor-text"
+        className="rounded-md px-1.5 py-1 font-medium hover:cursor-text hover:bg-gray-300/30 hover:text-accent-foreground dark:hover:bg-gray-300/10"
+        editingClassName="bg-background ring-1 ring-input"
         value={flowVersion.displayName}
         readonly={!isLatestVersion}
         onValueChange={(value) => {
@@ -152,57 +158,34 @@ export const BuilderHeader = () => {
           variant="ghost"
           className="size-6 flex items-center justify-center"
         >
-          <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </Button>
       </FlowActionMenu>
-    </>
-  );
-
-  const titleContent = (
-    <div className="flex items-center gap-2 px-4">
-      <Breadcrumb>
-        <BreadcrumbList>
-          {!embedState.disableNavigationInBuilder && (
-            <>
-              <BreadcrumbItem>
-                <BreadcrumbLink
-                  onClick={goToFlowsPage}
-                  className="cursor-pointer text-sm"
-                >
-                  {getProjectName(project)}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-            </>
-          )}
-          {!embedState.hideFlowNameInBuilder && (
-            <BreadcrumbItem>
-              <BreadcrumbPage>
-                <div
-                  className={cn('flex items-center gap-1 text-sm', {
-                    'max-w-[500px]': !isEditingFlowName,
-                  })}
-                >
-                  {flowNameControl}
-                </div>
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
     </div>
   );
 
-  // Title rendered into the Stage header to mirror the chat panel's title.
-  const stageTitleContent = (
-    <div className="flex min-w-0 items-center gap-1 text-sm font-semibold">
-      {flowNameControl}
+  const titleContent = embedState.disableNavigationInBuilder ? (
+    <div className="flex items-center gap-2 px-1.5">{flowTitle}</div>
+  ) : (
+    <div className="min-w-0 pr-1.5">
+      <DetailPageBreadcrumb section={run ? 'runs' : 'automations'}>
+        {flowTitle}
+      </DetailPageBreadcrumb>
     </div>
   );
-  const stageTitle = useStageHeaderTitle(stageTitleContent);
 
   const controls = (
     <>
+      {showSupport && (
+        <Button
+          variant="ghost"
+          className="gap-2 px-2"
+          onClick={() => openNewWindow(supportUrl)}
+        >
+          <CircleHelp className="w-4 h-4"></CircleHelp>
+          {t('Support')}
+        </Button>
+      )}
       {!embedState.hideActiveUsers && (
         <ActiveUsersWidget resourceId={flow.id} />
       )}
@@ -218,6 +201,7 @@ export const BuilderHeader = () => {
       )}
 
       <BuilderFlowStatusSection></BuilderFlowStatusSection>
+      <FlowCreatedByBadge createdBy={flow.createdBy} />
     </>
   );
 
@@ -225,11 +209,15 @@ export const BuilderHeader = () => {
     <div className="flex items-center justify-center gap-4">{controls}</div>
   );
 
+  // Title rendered into the Stage header, right after its breadcrumb (which
+  // already shows project / Automations for the open flow).
+  const stageTitle = useStageHeaderTitle(flowTitle || null);
+
   // Inside the Stage, the right-side controls are lifted into the Stage header
   // (alongside the title) so the builder needs no header row of its own.
   const stageActions = useStageHeaderActions(
     stageSlot ? (
-      <div className="flex items-center gap-2">{controls}</div>
+      <div className="flex items-center gap-4">{controls}</div>
     ) : null,
   );
 
@@ -245,17 +233,12 @@ export const BuilderHeader = () => {
   }
 
   return (
-    <div
-      style={{
-        height: `$${flowCanvasConsts.BUILDER_HEADER_HEIGHT}px`,
-      }}
-    >
-      <PageHeader
-        title={titleContent}
-        rightContent={rightContent}
-        leftContent={leftContent}
-        className="select-none border-b"
-      />
-    </div>
+    <PageHeader
+      title={titleContent}
+      rightContent={rightContent}
+      leftContent={leftContent}
+      showSidebarToggle={!embedState.isEmbedded}
+      className="select-none h-12 border-b px-2 py-0"
+    />
   );
 };

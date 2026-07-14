@@ -148,6 +148,25 @@ function PromptInputTextarea({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, maxHeight, disableAutosize]);
 
+  // scrollHeight is only remeasured on value changes, so a height computed
+  // while the container was mid-animation (e.g. the chat dock sliding open
+  // from zero width, where the placeholder wraps into dozens of lines) would
+  // stick. Remeasure whenever the textarea's width actually changes.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el || disableAutosize) return;
+
+    let lastWidth = el.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (el.clientWidth === lastWidth) return;
+      lastWidth = el.clientWidth;
+      adjustHeight(el);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxHeight, disableAutosize]);
+
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     adjustHeight(e.target);
     setValue(e.target.value);
