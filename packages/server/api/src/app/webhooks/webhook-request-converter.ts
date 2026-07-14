@@ -55,6 +55,13 @@ export async function streamWebhookBinaryBody(request: FastifyRequest, stream: R
         const data = await bufferBinaryBody(stream)
         return { type: 'file', filename: fileName, data, mimetype: baseContentType }
     }
+    const maxSizeBytes = system.getNumberOrThrow(AppSystemProp.MAX_STREAM_FILE_SIZE_MB) * 1024 * 1024
+    if (size > maxSizeBytes) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Streamed file size ${Math.ceil(size / (1024 * 1024))}MB exceeds the ${AppSystemProp.MAX_STREAM_FILE_SIZE_MB} limit of ${maxSizeBytes / (1024 * 1024)}MB` },
+        })
+    }
     const fileId = apId()
     const s3Key = `${FileType.FLOW_STEP_FILE}/${fileId}`
     await s3Helper(request.log).uploadStream({ s3Key, body: stream, contentType: baseContentType, contentLength: size })
