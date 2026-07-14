@@ -41,7 +41,7 @@ function toFriendlyError(error: unknown): Error {
         );
       case 422:
         return new Error(
-          `Not all events were processed. Inspect the "events" array in the response for per-event errors.${detail}`
+          `Pinterest rejected the conversion event as unprocessable.${detail}`
         );
       case 429:
         return new Error(

@@ -38,6 +38,12 @@ export const sendConversionEvent = createAction({
         ],
       },
     }),
+    custom_event_name: Property.ShortText({
+      displayName: 'Custom Event Name',
+      description:
+        'Required when Event Name is "Custom". Use 1–100 letters, numbers, underscores, or hyphens.',
+      required: false,
+    }),
     action_source: Property.StaticDropdown({
       displayName: 'Action Source',
       description: 'Where the conversion happened.',
@@ -107,7 +113,9 @@ export const sendConversionEvent = createAction({
       required: false,
     }),
     zip: Property.ShortText({
-      displayName: 'Zip / Postal Code',
+      displayName: 'ZIP Code',
+      description:
+        'Numeric ZIP code. Pinterest accepts digits only; symbols and spaces are removed before hashing.',
       required: false,
     }),
     country: Property.ShortText({
@@ -228,6 +236,10 @@ export const sendConversionEvent = createAction({
   },
   async run(context) {
     const props = context.propsValue;
+    const eventName = resolveEventName({
+      eventName: props.event_name,
+      customEventName: props.custom_event_name,
+    });
 
     const userData = buildUserData(props);
     if (!hasRequiredMatchKey(userData)) {
@@ -239,7 +251,7 @@ export const sendConversionEvent = createAction({
     const customData = buildCustomData(props);
 
     const event: ConversionEvent = {
-      event_name: props.event_name,
+      event_name: eventName,
       action_source: props.action_source,
       event_time: props.event_time ?? Math.floor(Date.now() / 1000),
       event_id: notBlank(props.event_id) ? props.event_id.trim() : randomUUID(),
@@ -276,6 +288,28 @@ export const sendConversionEvent = createAction({
     return response;
   },
 });
+
+function resolveEventName(params: {
+  eventName: string;
+  customEventName?: string;
+}): string {
+  const { eventName, customEventName } = params;
+  if (eventName !== 'custom') {
+    return eventName;
+  }
+  if (!notBlank(customEventName)) {
+    throw new Error(
+      'Custom Event Name is required when Event Name is "Custom".'
+    );
+  }
+  const trimmedName = customEventName.trim();
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(trimmedName)) {
+    throw new Error(
+      'Custom Event Name must be 1–100 characters and contain only letters, numbers, underscores, or hyphens.'
+    );
+  }
+  return trimmedName;
+}
 
 function notBlank(value: string | undefined | null): value is string {
   return typeof value === 'string' && value.trim().length > 0;
