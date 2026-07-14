@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { MessageCircle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 
 import { CollapsedSidebarToggle } from '@/components/custom/page-header';
@@ -26,13 +26,9 @@ import { StageProjectActions } from './stage-project-actions';
 const FULL_BLEED_TYPES = new Set(['flow', 'table', 'run']);
 
 function StageHeaderBar({
-  chatCollapsed,
-  onShowChat,
   standalone,
   showSidebarToggle,
 }: {
-  chatCollapsed?: boolean;
-  onShowChat?: () => void;
   standalone?: boolean;
   showSidebarToggle?: boolean;
 }) {
@@ -41,23 +37,6 @@ function StageHeaderBar({
   return (
     <div className="shrink-0 flex items-center gap-1.5 px-3 h-12 border-b">
       {showSidebarToggle && <CollapsedSidebarToggle />}
-      {chatCollapsed && onShowChat && (
-        <TooltipProvider delayDuration={400}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={onShowChat}
-              >
-                <MessageCircle className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('Show chat')}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
       <StageBreadcrumb />
       <StageHeaderAnchor className="flex min-w-0 items-center" />
       <div className="flex-1" />
@@ -85,13 +64,9 @@ function StageHeaderBar({
 }
 
 export function StageContainer({
-  chatCollapsed,
-  onShowChat,
   standalone,
   showSidebarToggle,
 }: {
-  chatCollapsed?: boolean;
-  onShowChat?: () => void;
   standalone?: boolean;
   showSidebarToggle?: boolean;
 }) {
@@ -115,8 +90,6 @@ export function StageContainer({
         className="relative flex flex-col h-full w-full bg-background overflow-hidden"
       >
         <StageHeaderBar
-          chatCollapsed={chatCollapsed}
-          onShowChat={onShowChat}
           standalone={standalone}
           showSidebarToggle={showSidebarToggle}
         />

@@ -365,7 +365,8 @@ function WorkspaceShellInner() {
   }, [animatePanelResize]);
 
   // The chat panel is already collapsed while floating, so closing just drops the
-  // float and lands in the closed state (stage full-width, "Show chat" available).
+  // float and lands in the closed state (stage full-width; the sidebar's New
+  // Chat / conversations reopen the panel).
   const closeFloatingChat = useCallback(() => {
     setChatPopped(false);
   }, []);
@@ -513,11 +514,7 @@ function WorkspaceShellInner() {
                 minSize={STAGE_PANEL_MIN_SIZE}
                 className="min-w-0"
               >
-                <StageContainer
-                  chatCollapsed={chatCollapsed && !chatPopped}
-                  onShowChat={showChat}
-                  showSidebarToggle={chatCollapsed}
-                />
+                <StageContainer showSidebarToggle={chatCollapsed} />
               </ResizablePanel>
             </ResizablePanelGroup>
           </div>
