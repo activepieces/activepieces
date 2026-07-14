@@ -8,6 +8,12 @@ export const getRaindropAction = createAction({
   name: 'get_raindrop',
   displayName: 'Get Bookmark',
   description: 'Retrieves the details of a bookmark by its ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single Raindrop.io bookmark by its numeric ID. Use when you already have a bookmark ID and need its full details (title, link, tags, collection, etc.); to locate bookmarks by keyword or collection instead, use Find Bookmarks. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     raindrop_id: Property.ShortText({
       displayName: 'Bookmark ID',

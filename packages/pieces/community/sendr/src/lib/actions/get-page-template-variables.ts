@@ -8,6 +8,8 @@ export const getPageTemplateVariables = createAction({
   name: 'get_page_template_variables',
   displayName: 'Get Page Template Variables',
   description: 'Returns the custom variables (placeholders) defined in a selected page template � for example first_name, company, or email.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the variables (placeholders) defined in a page template, such as first_name or company, with each variable name, type, and default value. Use it to learn which variable keys to supply when calling Generate Sendr Page. Read-only; requires the template id.', idempotent: true },
   props: {
     template: pageTemplateDropdown,
   },

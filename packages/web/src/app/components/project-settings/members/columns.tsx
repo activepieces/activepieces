@@ -1,6 +1,6 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   ProjectMemberWithUser,
-  Permission,
   UserInvitation,
   UserWithMetaInformation,
 } from '@activepieces/shared';

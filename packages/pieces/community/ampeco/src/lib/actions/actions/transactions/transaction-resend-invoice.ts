@@ -13,6 +13,8 @@ export const transactionResendInvoiceAction = createAction({
   name: 'transactionResendInvoice',
   displayName: 'Actions - Transactions - Resend Invoice',
   description: 'Resend already issued invoice. If the transaction has an associated fiscalized receipt that was automatically canceled (Hungary compliance), both the invoice and the storno receipt will be sent together.',
+  audience: 'both',
+  aiMetadata: { description: 'Re-send the invoice already issued for a transaction to the customer. Use only when an invoice exists (use the issue-invoice action first if one does not). Not idempotent: each call dispatches the email/document again, so repeated calls send duplicate copies.', idempotent: false },
   props: {
         
   transaction: Property.Number({

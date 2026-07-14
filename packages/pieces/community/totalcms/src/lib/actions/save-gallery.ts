@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { saveGallery } from '../api';
 import { cmsAuth } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveGalleryAction = createAction({
@@ -12,6 +12,8 @@ export const saveGalleryAction = createAction({
   auth: cmsAuth,
   displayName: 'Save Gallery Image',
   description: 'Save image to Total CMS gallery',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads an image into a gallery-type CMS field in Total CMS, identified by the gallery CMS ID (slug), with alt text and thumbnail sizing/crop options. Use to add a photo to a standalone gallery. Not idempotent: each call appends another image to the gallery.', idempotent: false },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',
@@ -96,9 +98,9 @@ export const saveGalleryAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      quality: z.number().min(1).max(100),
-      scaleTh: z.number().min(1),
-      scaleSq: z.number().min(1),
+      quality: z.number().check(z.minimum(1), z.maximum(100)),
+      scaleTh: z.number().check(z.minimum(1)),
+      scaleSq: z.number().check(z.minimum(1)),
     });
 
     const slug = context.propsValue.slug;

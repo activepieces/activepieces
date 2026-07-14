@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createItemAction } from './lib/actions/items/create-item';
 import { deleteItemAction } from './lib/actions/items/delete-item';
 import { searchItemsAction } from './lib/actions/items/search-items';

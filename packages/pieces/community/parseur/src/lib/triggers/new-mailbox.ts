@@ -33,6 +33,10 @@ export const newMailbox = createTrigger({
   name: 'newMailbox',
   displayName: 'New Mailbox',
   description: 'Fires when a new mailbox is created in the Parseur account.',
+  aiMetadata: {
+    description:
+      'Fires when a new mailbox (parser) is created in the Parseur account, discovered by polling the list of mailboxes. Use to react to newly provisioned parsers/mailboxes.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

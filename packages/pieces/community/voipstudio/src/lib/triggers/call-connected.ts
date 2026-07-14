@@ -10,6 +10,10 @@ export const callConnected = createTrigger({
   name: 'callConnected',
   displayName: 'Call Connected',
   description: 'Triggered when a call is connected',
+  aiMetadata: {
+    description:
+      'Fires the moment a VoIPstudio call is answered and the two parties become connected, representing the start of an active conversation. Requires the Call Connected webhook event to be enabled in the VoIPstudio integrations panel.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `

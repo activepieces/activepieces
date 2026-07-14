@@ -86,6 +86,9 @@ export const newEvent = createTrigger({
   name: 'new_event',
   displayName: 'New Event',
   description: 'Fires when a new event is created',
+  aiMetadata: {
+    description: 'Fires when a new calendar event is created in Wealthbox, optionally narrowed by linked resource, event category, or start-date range. Each fired item represents one newly created event record.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     resource_type: Property.StaticDropdown({

@@ -8,6 +8,12 @@ export const createCertificationPartnerAudit = createAction({
   name: 'createCertificationPartnerAudit',
   displayName: "Créer un audit sur un partenariat de certification",
   description: "Permet de créer un audit sur un partenariat de certification",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Create an audit on a single certification partnership in Wedof, using an audit template chosen from those available for the certification. Pick this to audit one specific partner identified by SIRET; use create-general-audit to audit all active partners of a certification at once. Each call creates a new audit, so it is not idempotent. Requires the certification's certifInfo, the partner's SIRET, and a template id.",
+    idempotent: false,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',

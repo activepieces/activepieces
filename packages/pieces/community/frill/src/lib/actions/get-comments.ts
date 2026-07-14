@@ -7,6 +7,8 @@ export const getComments = createAction({
   name: 'get_comments',
   displayName: 'Get Comments',
   description: 'Fetch comments for a specific idea or all recent comments.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves comments from Frill: scoped to a single idea when an idea ID is supplied, or all recent comments across ideas when left empty, up to the result limit (defaults to 20). Use to read discussion on feedback. Idempotent: read-only.', idempotent: true },
   props: {
     idea: frillDropdowns.ideaDropdownOptional,
     limit: Property.Number({

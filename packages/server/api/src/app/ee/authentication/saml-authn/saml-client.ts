@@ -1,5 +1,6 @@
+import { ActivepiecesError, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, SAMLAttributeMapping, SAMLAuthnProviderConfig, tryCatch } from '@activepieces/shared'
+import { SAMLAttributeMapping, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import * as saml from 'samlify'
 import { resolveSamlAttributes, SamlAttributes } from './saml-attributes'
@@ -28,7 +29,10 @@ const samlClient = ({ idp, sp, attributeMapping }: SamlClientArgs) => ({
     },
     async parseAndValidateLoginResponse(idpLoginResponse: IdpLoginResponse): Promise<SamlAttributes> {
         const { data: loginResult, error: parseError } = await tryCatch(
-            () => sp.parseLoginResponse(idp, LOGIN_RESPONSE_BINDING, idpLoginResponse),
+            () => sp.parseLoginResponse(idp, LOGIN_RESPONSE_BINDING, {
+                body: toStringRecord(idpLoginResponse.body),
+                query: toStringRecord(idpLoginResponse.query),
+            }),
         )
         if (parseError !== null) {
             throw new ActivepiecesError({
@@ -105,6 +109,22 @@ const createSp = ({ privateKey, acsUrl }: CreateSpArgs): saml.ServiceProviderIns
 
 const toErrorMessage = (error: unknown): string => {
     return error instanceof Error ? error.message : String(error)
+}
+
+const firstString = (value: unknown): string | undefined => {
+    if (typeof value === 'string') {
+        return value
+    }
+    if (Array.isArray(value)) {
+        return value.find((item): item is string => typeof item === 'string')
+    }
+    return undefined
+}
+
+const toStringRecord = (input: Record<string, unknown>): Record<string, string | undefined> => {
+    return Object.fromEntries(
+        Object.entries(input).map(([key, value]) => [key, firstString(value)]),
+    )
 }
 
 const LOGIN_REQUEST_BINDING = 'redirect'

@@ -10,10 +10,11 @@ import {
   getCorrectedFormat,
   apDayjs,
 } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const nextDayofYear = createAction({
+  audience: 'human',
   name: 'next_day_of_year',
   displayName: 'Next Day of Year',
   description: 'Get the date and time of the next day of the year',
@@ -88,8 +89,8 @@ export const nextDayofYear = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      day: z.number().min(1).max(31),
-      time: z.string().regex(/^\d\d:\d\d$/),
+      day: z.number().check(z.minimum(1), z.maximum(31)),
+      time: z.string().check(z.regex(/^\d\d:\d\d$/)),
     });
 
     const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);

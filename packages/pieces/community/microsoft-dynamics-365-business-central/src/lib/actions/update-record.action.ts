@@ -9,6 +9,12 @@ export const updateRecordAction = createAction({
   name: 'update-record',
   displayName: 'Update Record',
   description: 'Updates an existing record.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates fields on an existing record of a chosen entity type in a Microsoft Dynamics 365 Business Central company, identified by company id, record type, and record id (line entities like salesInvoiceLines/salesOrderLines also need the parent record id in their fields). Use to modify existing business data. Effectively idempotent — re-sending the same field values leaves the record in the same state.',
+    idempotent: true,
+  },
   props: {
     company_id: commonProps.company_id,
     record_type: Property.StaticDropdown({

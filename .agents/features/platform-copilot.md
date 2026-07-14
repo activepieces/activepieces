@@ -20,6 +20,9 @@ Note: The source TypeScript files were compiled to `dist/` — the source is onl
 All editions (no plan flag guard on the controller). Both endpoints require `publicPlatform` scope (any authenticated USER). The feature depends on an embedding model being available (configured via `createCopilotEmbeddingModel`); if none is configured, vector search is skipped and only full-text search is used.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **copilot_code_chunks** — the vector index table holding parsed segments of the Activepieces codebase and docs
 - **chunkType** — classification of the segment: `function`, `class`, `module`, `block`, `section`, etc.
 - **searchVector** — PostgreSQL `tsvector` column (populated by a background UPDATE after indexing) for full-text search

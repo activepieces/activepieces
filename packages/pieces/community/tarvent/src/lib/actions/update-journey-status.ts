@@ -7,6 +7,8 @@ export const updateJourneyStatus = createAction({
   name: 'tarvent_update_journey_status',
   displayName: 'Start/Stop Journey',
   description: 'Starts or stops a journey.',
+  audience: 'both',
+  aiMetadata: { description: 'Starts or stops a Tarvent automation journey, with the direction chosen by the action input. Use to activate or pause an entire journey (not an individual contact). Idempotent: it sets the journey to a target run state, so repeating with the same value has no further effect.', idempotent: true },
   props: {
     journeyId: tarventCommon.journeyId(true, 'Select which journey to start or stop'),
     action: Property.StaticDropdown({

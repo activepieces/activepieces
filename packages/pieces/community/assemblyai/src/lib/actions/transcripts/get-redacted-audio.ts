@@ -9,6 +9,12 @@ export const getRedactedAudio = createAction({
   requireAuth: true,
   displayName: 'Get Transcript Redacted Audio',
   description: 'Get the result of the redacted audio model.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the PII-redacted audio result for an existing transcript by its ID; if redaction is ready it returns the redacted audio URL and can optionally download the file into Activepieces storage. Use this only for transcripts created with PII audio redaction enabled. Requires a valid transcript ID; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     id: transcriptIdProp,
     download_file: Property.Checkbox({

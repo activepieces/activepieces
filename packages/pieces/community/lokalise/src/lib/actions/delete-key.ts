@@ -10,6 +10,8 @@ export const deleteKey = createAction({
   displayName: 'Delete Key',
   description:
     'Delete a key from your Lokalise project (software and marketing projects only)',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a translation key (and its translations) from a Lokalise project, identified by project ID and key ID. Only works for software and marketing project types. Idempotent in effect: once deleted, re-running has no further effect, though the key must currently exist.', idempotent: true },
   props: {
     projectId: projectDropdown,
     keyId: keyIdProp,

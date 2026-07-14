@@ -4,7 +4,8 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import dayjs from 'dayjs';
-import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { hubspotAuth } from '../auth';
 import { Client } from '@hubspot/api-client';
@@ -75,6 +76,10 @@ export const newContactTrigger = createTrigger({
 	name: 'new-contact',
 	displayName: 'New Contact',
 	description: 'Trigger when new contact is available.',
+	aiMetadata: {
+		description:
+			'Fires when a new contact is created in HubSpot. Each event represents one contact record with its properties such as name, email, company, phone, lifecycle stage, and address. Polls for contacts by creation date; does not fire on updates to existing contacts.',
+	},
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

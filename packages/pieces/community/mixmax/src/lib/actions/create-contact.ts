@@ -9,6 +9,12 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description:
     'Create a new contact in Mixmax. [See the documentation](https://developer.mixmax.com/reference/contacts-1)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a new contact to the Mixmax contact list, keyed by email (the only required field; name is optional). Optionally enriches the contact with third-party data when enrichment sources are connected. Not idempotent — each call creates/registers the contact again.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

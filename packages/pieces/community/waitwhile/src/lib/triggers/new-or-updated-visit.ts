@@ -7,6 +7,10 @@ export const newOrUpdatedVisit = createTrigger({
   name: 'newOrUpdatedVisit',
   displayName: 'New Or Updated Visit',
   description: 'Triggers when a visit is created or updated',
+  aiMetadata: {
+    description:
+      'Fires when a Waitwhile visit is created or updated (subscribes to visit.created and visit.updated webhook events), representing a waitlist or appointment entry and its current state, customer, location, and timing.',
+  },
   props: {},
   sampleData: {
     id: '0T6HwEtZs8ASfL52phLj',

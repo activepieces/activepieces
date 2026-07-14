@@ -8,6 +8,8 @@ export const getCallDetails = createAction({
   auth: aiAnswerAuth,
   displayName: 'Get Call Details',
   description: 'Fetch Call details by Call ID',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the details and status of a single phone call by its call ID. Use to check the outcome or metadata of a call previously created or scheduled. Requires the call ID; read-only and idempotent.', idempotent: true },
   props: {
     callID: Property.ShortText({
       displayName: 'Call ID',

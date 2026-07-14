@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { edenAiAuth } from '../..';
 
 const IMAGE_GENERATION_PROVIDERS = [
@@ -71,6 +71,12 @@ export const imageGenerationAction = createAction({
   name: 'image_generation',
   displayName: 'Image Generation',
   description: 'Create images from text prompts using Eden AI. Supports multiple providers, models, and resolutions.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate one or more images from a text prompt via Eden AI, routed to a chosen provider (OpenAI/DALL-E, StabilityAI, Replicate, Amazon, Leonardo, and others) at a selected resolution. Use it for text-to-image creation when you want provider/model choice behind a single call. Requires a provider, prompt, and resolution; image count defaults to 1. Generative and non-deterministic, but stateless — repeating the call creates no extra side effect.',
+    idempotent: true,
+  },
   props: {
     provider: Property.Dropdown({
       auth: edenAiAuth,
@@ -125,13 +131,13 @@ export const imageGenerationAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      provider: z.string().min(1, 'Provider is required'),
-      text: z.string().min(1, 'Prompt text is required'),
-      resolution: z.string().min(1, 'Resolution is required'),
-      num_images: z.number().int().min(1).max(10).nullish(),
-      model: z.string().nullish(),
-      fallback_providers: z.array(z.string()).max(5).nullish(),
-      show_original_response: z.boolean().nullish(),
+      provider: z.string().check(z.minLength(1, 'Provider is required')),
+      text: z.string().check(z.minLength(1, 'Prompt text is required')),
+      resolution: z.string().check(z.minLength(1, 'Resolution is required')),
+      num_images: z.nullish(z.number().check(z.int(), z.minimum(1), z.maximum(10))),
+      model: z.nullish(z.string()),
+      fallback_providers: z.nullish(z.array(z.string()).check(z.maxLength(5))),
+      show_original_response: z.nullish(z.boolean()),
     });
 
     const { 

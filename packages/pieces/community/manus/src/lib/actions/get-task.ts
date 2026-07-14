@@ -33,6 +33,8 @@ export const getTask = createAction({
   auth: manusAuth,
   displayName: 'Get Task',
   description: 'Retrieve detailed information about a specific task by its ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details and current status of a single Manus task by its ID. Use to check progress or read back the result of a task you created or know the ID of. Read-only and idempotent.', idempotent: true },
   props: {
     taskId: Property.Dropdown({
       auth: manusAuth,

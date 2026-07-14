@@ -1,16 +1,17 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apId, FieldType } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { FieldType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
+import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
+    createMockCell,
     createMockField,
     createMockRecord,
-    createMockCell,
     createMockTable,
 } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
-import { describeWithAuth } from '../../../helpers/describe-with-auth'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -65,6 +66,31 @@ describe('Table API', () => {
             const fields = fieldsResponse?.json()
             expect(fields.length).toBe(2)
             expect(fields.map((f: { name: string }) => f.name).sort()).toEqual(['Age', 'Name'])
+        })
+
+        it('should preserve field order from the request', async () => {
+            const ctx = await setup()
+            const fieldNames = Array.from({ length: 10 }, (_, i) => `Field ${String.fromCharCode(65 + i)}`)
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Ordered Table',
+                fields: fieldNames.map((name) => ({
+                    name,
+                    type: FieldType.TEXT,
+                    data: null,
+                    externalId: apId(),
+                })),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+
+            const fieldsResponse = await ctx.get('/v1/fields', {
+                tableId: body.id,
+            })
+            const fields = fieldsResponse?.json()
+            expect(fields.map((f: { name: string }) => f.name)).toEqual(fieldNames)
         })
 
         it('should create a table with externalId', async () => {

@@ -1,15 +1,18 @@
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, isNil, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
+import { apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
-import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod'
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
+import { aiToolConfigModule } from './ai/ai-tool-config.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -17,6 +20,7 @@ import { platformAppConnectionModule } from './app-connection/platform-app-conne
 import { authenticationModule } from './authentication/authentication.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
+import { oidcModule } from './core/security/oidc/oidc.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
@@ -32,14 +36,18 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { chatEvalModule } from './ee/chat/chat-eval-controller'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
+import { flowRunTrackingModule } from './ee/flow-run-tracking/flow-run-tracking-module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
+import { appearanceHelper } from './ee/helper/appearance-helper'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
+import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
@@ -52,6 +60,7 @@ import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
 import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
+import { projectReplaceModule } from './ee/projects/project-replace/project-replace.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
@@ -63,17 +72,22 @@ import { flagHooks } from './flags/flags.hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
+import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
 import { exceptionHandler } from './helper/exception-handler'
+import { clientLogsModule } from './helper/logs/client-logs.module'
 import { openapiModule } from './helper/openapi/openapi.module'
+import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
+import { systemSnapshot } from './helper/system-snapshot'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
@@ -82,22 +96,22 @@ import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
-import { tagsModule } from './pieces/tags/tags-module'
 import { platformBackgroundJobs } from './platform/platform-jobs'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
+import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
-import { userBadgeModule } from './user/badges/badge-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
+import { workerCapacity } from './workers/machine/worker-capacity'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
@@ -147,7 +161,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     await app.register(rateLimitModule)
     app.addHook('onResponse', async (request, reply) => {
-        // eslint-disable-next-line
+        // eslint-disable-next-line                                                                                                                                                                                                                     
         reply.header('x-request-id', request.id)
     })
     app.addHook('onRequest', async (request, reply) => {
@@ -155,6 +169,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             method: request.method as HTTPMethods,
             url: request.routeOptions.url!,
         })
+        request.log = request.log.child({ route: request.routeOptions.url })
         if (!route) {
             return reply.code(404).send({
                 statusCode: 404,
@@ -165,6 +180,27 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     app.addHook('preHandler', authenticationMiddleware)
+
+    // Enrich the current wide-event with tenant identifiers resolved by the auth middleware.
+    // request.principal is set by authenticationMiddleware; for public routes it may be
+    // undefined (the middleware returns early), so we guard with a try/catch.
+    app.addHook('preHandler', (request, _reply, done) => {
+        try {
+            const principal = request.principal
+            const projectId = extractProjectId(principal)
+            const platformId = extractPlatformId(principal)
+            wideEvent.set({
+                ...spreadIfDefined('project', isNil(projectId) ? undefined : { id: projectId }),
+                ...spreadIfDefined('platform', isNil(platformId) ? undefined : { id: platformId }),
+                ...spreadIfDefined('principalType', principal?.type),
+            })
+        }
+        catch {
+            // principal getter may throw before auth completes — safe to ignore
+        }
+        done()
+    })
+
     app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
 
@@ -180,6 +216,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(storeEntryModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
+    toolSearchReindexJob(app.log).register()
+    // Cold-start backfill: build the tool-search index once if the flag is on but it has never been
+    // built (existing deployment whose piece_metadata is already populated, so no sync delta fires).
+    // Fire-and-forget — a no-op once the index has rows, and must never block or fail boot.
+    rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfEmpty(), app.log)
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
@@ -195,7 +236,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(triggerModule)
     await app.register(platformModule)
     await app.register(humanInputModule)
-    await app.register(tagsModule)
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
     await app.register(agentsModule)
@@ -203,15 +243,25 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
+    await workerCapacity.setup()
+    await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
+    await app.register(flowRunTrackingModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
     await app.register(userModule)
     await app.register(templateModule)
-    await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
+
+    // Dev-only: accept browser debug logs into the shared evlog fs drain so a
+    // chat run can be reconstructed end-to-end (web + api + worker). Never in cloud/prod.
+    const clientLogsEnabled = system.get(AppSystemProp.LOG_FILE) === 'true' && system.getEdition() !== ApEdition.CLOUD
+    if (clientLogsEnabled) {
+        await app.register(clientLogsModule)
+    }
+
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
@@ -255,6 +305,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
+            await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
@@ -264,14 +315,18 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
+            await app.register(chatEvalModule)
+            await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformBackgroundJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -285,6 +340,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
+            await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
@@ -294,14 +350,18 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
             await app.register(embedSubdomainModule)
             await app.register(chatModule)
+            await app.register(chatEvalModule)
+            await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)
@@ -323,6 +383,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         await redisConnections.destroy()
         await distributedLock(app.log).destroy()
         await engineResponseWatcher(app.log).shutdown()
+        await shutdownTelemetry()
     })
 
     return app
@@ -355,6 +416,8 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const pieces = process.env.AP_DEV_PIECES
 
+    assertReleaseReadable(app.log)
+    systemSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {
@@ -366,6 +429,35 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         )
     }
     void startDevPieceWatcher(app)
+}
+
+// Front-loads the release-read failure signal to boot time. Without this the only alert is
+// emitted lazily on the first worker poll (worker-rpc-service.ts), so a mis-packaged app that
+// no worker has polled yet looks healthy. A '0.0.0' read fail-closes the dispatch gate and will
+// NOT self-heal on deploy completion, so page immediately and log at error (see the "Release
+// Version Detection" section in packages/server/AGENTS.md).
+function assertReleaseReadable(log: FastifyBaseLogger): void {
+    const version = apVersionUtil.getCurrentRelease()
+    if (version !== UNKNOWN_VERSION) {
+        log.info({ release: { version } }, '[appPostBoot] Release version detected from package.json')
+        return
+    }
+    log.error({ release: { version } }, '[appPostBoot] App could not read its release version from package.json (reported as 0.0.0); worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)')
+    onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
+        code: 'RELEASE_VERSION_UNREADABLE',
+        message: 'App could not read its release version from package.json (reported as 0.0.0) at startup; worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)',
+        params: { appVersion: version },
+    }).catch((pageError) => {
+        log.error({ pageError }, '[appPostBoot] Failed to send on-call page for unreadable release version')
+    })
+}
+
+function extractPlatformId(principal: { platform?: { id?: string } } | null | undefined): string | undefined {
+    return principal?.platform?.id
+}
+
+function extractProjectId(principal: { projectId?: string } | null | undefined): string | undefined {
+    return principal?.projectId
 }
 
 function registerOpenApiSchemas() {

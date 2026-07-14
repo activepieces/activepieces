@@ -21,6 +21,12 @@ export const sendCustomVerificationEmail = createAction({
   displayName: 'Send Custom Verification Email',
   description:
     'Send verification email to add an email address to SES identities',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a custom verification email via Amazon SES to a target address using an existing custom verification template, starting the flow that adds that address as a verified SES identity once the recipient clicks the link. Use to begin verifying a new sender/recipient identity. Requires a pre-created verification template and (outside SES sandbox) production access to verify arbitrary addresses. Not idempotent: each call sends another verification email.',
+    idempotent: false,
+  },
   props: {
     emailAddress: Property.ShortText({
       displayName: 'Email Address',

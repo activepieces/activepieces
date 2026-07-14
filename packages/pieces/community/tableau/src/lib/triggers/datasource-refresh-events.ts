@@ -6,6 +6,9 @@ export const datasourceRefreshEventTrigger = createTrigger({
   name: 'datasource_refresh_event',
   displayName: 'Datasource Refresh Event',
   description: 'Triggers when a datasource refresh event occurs (started, succeeded, or failed)',
+  aiMetadata: {
+    description: 'Fires when a datasource extract refresh reaches a chosen stage on the Tableau site — refresh started, succeeded, or failed, selected via the Event Type. Use to react to the progress or outcome of a datasource refresh; the payload identifies the affected datasource.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {

@@ -1,75 +1,7 @@
+import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-utils'
-import {
-    AiCreditsAutoTopUpState,
-    AIProvider,
-    AIProviderName,
-    apId,
-    ApiKey,
-    AppConnection,
-    AppConnectionScope,
-    AppConnectionStatus,
-    AppConnectionType,
-    ApplicationEvent,
-    ApplicationEventName,
-    assertNotNullOrUndefined,
-    Cell,
-    ColorName,
-    EventDestinationScope,
-    Field,
-    FieldType,
-    File,
-    FileCompression,
-    FileLocation,
-    FileType,
-    FilteredPieceBehavior,
-    Flow,
-    FlowOperationStatus,
-    FlowRun,
-    FlowRunStatus,
-    FlowStatus,
-    FlowTriggerType,
-    FlowVersion,
-    FlowVersionState,
-    LATEST_FLOW_SCHEMA_VERSION,
-    Folder,
-    GitBranchType,
-    GitRepo,
-    InvitationStatus,
-    InvitationType,
-    KeyAlgorithm,
-    OAuthApp,
-    OtpModel,
-    OtpState,
-    OtpType,
-    PackageType,
-    PiecesFilterType,
-    PieceType,
-    Platform,
-    PlatformPlan,
-    PlatformRole,
-    Project,
-    ProjectIcon,
-    ProjectMember,
-    ProjectPlan,
-    ProjectRelease,
-    ProjectReleaseType,
-    ProjectRole,
-    ProjectType,
-    Record,
-    RoleType,
-    RunEnvironment,
-    SigningKey,
-    Table,
-    TeamProjectsLimit,
-    Template,
-    TemplateStatus,
-    TemplateType,
-    User,
-    UserIdentity,
-    UserIdentityProvider,
-    UserInvitation,
-    UserStatus } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, TeamProjectsLimit, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
@@ -82,8 +14,6 @@ import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/p
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
-import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
-import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
@@ -201,6 +131,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
         poolId: project?.poolId ?? null,
+        workerGroupId: project?.workerGroupId ?? null,
         icon,
     }
 }
@@ -248,7 +179,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
         chatEnabled: platformPlan?.chatEnabled ?? false,
-        dataManipulationEnabled: platformPlan?.dataManipulationEnabled ?? false,
+        workerGroupsEnabled: platformPlan?.workerGroupsEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
@@ -272,15 +203,12 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         allowedEmbedOrigins: platform?.allowedEmbedOrigins ?? [],
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
+        themeColors: platform?.themeColors ?? null,
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
         pinnedPieces: platform?.pinnedPieces ?? [],
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
-        filteredPieceNames: platform?.filteredPieceNames ?? [],
-        filteredPieceBehavior:
-            platform?.filteredPieceBehavior ??
-            faker.helpers.enumValue(FilteredPieceBehavior),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
         ssoDomain: platform?.ssoDomain ?? null,
@@ -379,28 +307,6 @@ export const createMockSigningKey = (
     }
 }
 
-
-export const createMockTag = (tag?: Partial<Omit<TagEntitySchema, 'platform'>>): Omit<TagEntitySchema, 'platform'> => {
-    return {
-        id: tag?.id ?? apId(),
-        created: tag?.created ?? faker.date.recent().toISOString(),
-        updated: tag?.updated ?? faker.date.recent().toISOString(),
-        platformId: tag?.platformId ?? apId(),
-        name: tag?.name ?? faker.lorem.word(),
-    }
-}
-
-
-export const createMockPieceTag = (request: Partial<Omit<PieceTagSchema, 'platform' | 'tag'>>): Omit<PieceTagSchema, 'platform' | 'tag'> => {
-    return {
-        id: request.id ?? apId(),
-        created: request.created ?? faker.date.recent().toISOString(),
-        updated: request.updated ?? faker.date.recent().toISOString(),
-        platformId: request.platformId ?? apId(),
-        pieceName: request.pieceName ?? faker.lorem.word(),
-        tagId: request.tagId ?? apId(),
-    }
-}
 
 export const createMockPieceMetadata = (
     pieceMetadata?: Partial<Omit<PieceMetadataSchema, 'project'>>,
@@ -677,7 +583,6 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
-        filteredPieceBehavior: params?.platform?.filteredPieceBehavior ?? FilteredPieceBehavior.BLOCKED,
     })
 
     await databaseConnection().getRepository('platform').save(mockPlatform)

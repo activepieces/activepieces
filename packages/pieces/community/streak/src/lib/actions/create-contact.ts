@@ -27,6 +27,12 @@ export const createContactAction = createAction({
   displayName: 'Create or Find Contact',
   description:
     'Create a contact in a team. If a contact with the same email already exists, return that contact instead of creating a duplicate.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a person contact in a team, or return the existing one if a contact with the same email already exists (get-if-existing upsert keyed on email). Use when an agent needs to ensure a contact exists for a given email before linking it elsewhere; requires the team and at least one email address. Idempotent: repeating with the same email returns the same contact rather than duplicating.',
+    idempotent: true,
+  },
   props: {
     teamKey: teamDropdown,
     emailAddresses: Property.Array({

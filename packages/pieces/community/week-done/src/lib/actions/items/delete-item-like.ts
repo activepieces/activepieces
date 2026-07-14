@@ -17,6 +17,8 @@ export const deleteItemLikeAction = createAction({
   name: 'delete_item_like',
   displayName: 'Delete Item Like',
   description: 'Remove your like from an item.',
+  audience: 'both',
+  aiMetadata: { description: 'Remove the authenticated user\'s like from a Weekdone item identified by its ID; the user/team/period filters only help locate the item. Mutates the item, so not idempotent.', idempotent: false },
   props: {
     user_id_filter: Property.Dropdown({
       auth: weekdoneAuth,

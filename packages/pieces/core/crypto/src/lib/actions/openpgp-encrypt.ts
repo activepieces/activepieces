@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import * as openpgp from 'openpgp';
 
 export const openpgpEncrypt = createAction({
+  audience: 'human',
   name: 'openpgpEncrypt',
   displayName: 'OpenPGP Encrypt',
   description: 'Encrypt a file using OpenPGP public key',

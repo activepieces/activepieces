@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { todoistCreateTaskAction } from './lib/actions/create-task-action';
 import { todoistTaskCompletedTrigger } from './lib/triggers/task-completed-trigger';
 import { todoistUpdateTaskAction } from './lib/actions/update-task.action';

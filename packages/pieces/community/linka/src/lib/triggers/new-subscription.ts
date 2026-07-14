@@ -7,6 +7,10 @@ export const newSubscription = createTrigger({
   name: 'newSubscription',
   displayName: 'New Subscription',
   description: 'triggers when a new subscription is created',
+  aiMetadata: {
+    description:
+      'Fires when a subscription is created or updated in the Linka/Sperse CRM (via the Subscription.CreatedOrUpdated webhook), delivering the contact, plan name, dates, amount, frequency, and status. Use to start a flow on subscription sign-ups or changes.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

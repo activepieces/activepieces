@@ -8,6 +8,8 @@ export const createLeadListAction = createAction({
   name: 'create_lead_list',
   displayName: 'Create Lead List',
   description: 'Creates a new lead list.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new lead list in Instantly, optionally enabling an enrichment task that runs on every lead added to the list. Use this to set up a container for organizing leads before importing or adding them. Not idempotent — each call creates a new list even with the same name.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'List Name',

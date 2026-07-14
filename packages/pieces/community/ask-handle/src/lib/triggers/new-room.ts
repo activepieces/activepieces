@@ -12,6 +12,9 @@ export const newRoomTrigger = createTrigger({
   name: 'new_room',
   displayName: 'New Room',
   description: 'Triggers when a new room is created',
+  aiMetadata: {
+    description: 'Fires when a new chat room (conversation) is created in AskHandle, including its label, name, and rating. Use to react when a fresh conversation thread begins.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {

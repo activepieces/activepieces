@@ -11,6 +11,8 @@ export const getWorkItemAction = createAction({
   name: 'get_work_item',
   displayName: 'Get Work Item',
   description: 'Retrieves a work item by ID from Azure DevOps',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single Azure DevOps work item by its numeric ID, returning its fields (title, state, assignee, etc.). Use to look up details of a known work item; requires the project and the numeric work item ID, not a title. Read-only and idempotent.', idempotent: true },
   props: {
     project: azureDevOpsCommon.projectDropdown,
     work_item_id: Property.Number({

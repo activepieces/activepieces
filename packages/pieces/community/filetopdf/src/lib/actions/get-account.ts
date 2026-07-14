@@ -9,6 +9,12 @@ export const getAccount = createAction({
   displayName: 'Get Account Status',
   description:
     'Read the workspace plan, remaining credits, and subscription status. Free — never consumes credits.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the FileToPDF workspace account status: plan, remaining credits, and subscription status. Use this to check available credits before queuing conversion calls or to report quota. Read-only and free — never consumes credits; idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const envelope = await filetopdfApiCall<AccountEnvelope>({

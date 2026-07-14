@@ -7,6 +7,8 @@ export const createCall = createAction({
   name: 'create_call',
   displayName: 'Create Call',
   description: 'Creates a new call in Avoma',
+  audience: 'both',
+  aiMetadata: { description: 'Imports an external dialer call (Zoom, Twilio, Aircall, HubSpot, etc.) into Avoma for AI recording, transcription, and analysis. Use when ingesting call data captured outside Avoma; requires a publicly accessible recording URL, an Avoma user email, and a unique external_id. Not idempotent — each call creates a new record, and reposting the same external_id and source will fail as a duplicate.', idempotent: false },
   props: {
     external_id: Property.ShortText({
       displayName: 'External ID',

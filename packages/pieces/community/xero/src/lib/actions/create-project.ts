@@ -13,6 +13,12 @@ export const xeroCreateProject = createAction({
   name: 'xero_create_project',
   displayName: 'Create Project',
   description: 'Creates a new project for a contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new Xero Projects project for a contact, with a name and optional deadline (UTC ISO-8601) and estimate amount. Pick this for time/cost tracking on the Xero Projects product, distinct from accounting invoices. Not idempotent: each call creates another project.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(true),

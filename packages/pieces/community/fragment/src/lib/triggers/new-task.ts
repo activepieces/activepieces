@@ -41,6 +41,9 @@ export const newTaskTrigger = createTrigger({
 	name: 'new_task',
 	displayName: 'New Task',
 	description: 'Triggers when a new task is created.',
+	aiMetadata: {
+		description: 'Fires when a new task is created in Fragment, emitting the newly created task. Polls for tasks ordered by creation time, so each run yields tasks added since the last check.',
+	},
 	props: {},
 	type: TriggerStrategy.POLLING,
 

@@ -8,6 +8,8 @@ export const deleteTask = createAction({
   name: 'delete_task',
   displayName: 'Delete Task',
   description: 'Deletes an existing task.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a Fragment task identified by its unique task UID. Use to remove a task; this is destructive and cannot be undone. Effectively idempotent: re-deleting an already-removed task has no further effect, though the API may return a not-found error.', idempotent: true },
   props: {
     task_uid: Property.ShortText({
       displayName: 'Task UID',

@@ -147,6 +147,10 @@ export const mollieNewPayment = createTrigger({
   name: 'new_payment',
   displayName: 'New Payment',
   description: 'Fires when a new payment is created/received',
+  aiMetadata: {
+    description:
+      'Fires when a new payment appears in the connected Mollie profile. Polls the payment list and emits each newly created payment regardless of status (open, paid, failed, etc.), so it signals payment creation rather than confirmed settlement.',
+  },
 
   type: TriggerStrategy.POLLING,
 

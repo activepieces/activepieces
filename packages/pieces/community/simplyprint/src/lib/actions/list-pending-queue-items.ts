@@ -10,6 +10,12 @@ export const listPendingQueueItemsAction = createAction({
   name: 'list_pending_queue_items',
   displayName: 'List Pending Queue Items',
   description: 'List queue items awaiting approval, denied, or sent back for revision.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only, paginated listing of queue items in the approval workflow — pending, denied, or sent back for revision. Pick this to review submissions needing a moderation decision; filter to a single approval status or list all three. Use the general queue listing instead for items already in the active print queue.',
+    idempotent: true,
+  },
   props: {
     status: Property.StaticDropdown<'all' | 'pending' | 'denied' | 'revision'>({
       displayName: 'Status filter',

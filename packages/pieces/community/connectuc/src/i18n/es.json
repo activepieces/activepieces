@@ -66,14 +66,19 @@
   "Triggers when a new incoming call is received": "Dispara cuando se recibe una nueva llamada entrante",
   "Triggers when a new outgoing call is initiated": "Dispara cuando se inicia una nueva llamada saliente",
   "Triggers when a new voicemail is received": "Dispara cuando se recibe un nuevo buzón de voz",
-  "Triggers when a new SMS message is received": "Dispara cuando se recibe un nuevo mensaje SMS",
+  "Triggers when a new SMS message is received or sent": "Triggers when a new SMS message is received or sent",
   "Users": "Usuarios",
   "Status": "Estado",
-  "Select Recipients": "Seleccionar destinatarios",
+  "SMS Numbers": "SMS Numbers",
+  "Direction": "Direction",
   "Select users to which this trigger applies": "Seleccionar usuarios a los que se aplica este disparador",
   "Filter by call status": "Filtrar por estado de llamada",
+  "Select the user to which this trigger applies": "Select the user to which this trigger applies",
   "Select the SMS recipient numbers to which this trigger applies": "Seleccione los números de destinatario SMS a los que se aplica este disparador",
+  "Filter by message direction": "Filter by message direction",
   "Ringing": "Sonando",
   "Answered": "Respondido",
-  "Both": "Ambos"
+  "Both": "Ambos",
+  "Incoming": "Incoming",
+  "Outgoing": "Outgoing"
 }

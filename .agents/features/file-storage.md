@@ -1,7 +1,7 @@
 # File Storage Service
 
 ## Summary
-The File Storage Service is the central infrastructure for persisting binary files in Activepieces. It supports two storage backends: database (PostgreSQL `bytea`) and S3-compatible object storage (AWS S3, Cloudflare R2, or any S3-compatible endpoint). The backend used for a given file depends on its `FileType` — execution-related files that expire (run logs, step files, trigger payloads, webhook payloads) use the configured `FILE_STORAGE_LOCATION` system property; non-expiring files (platform assets, user profile pictures, knowledge base files, project releases, etc.) always use the database. Files are optionally compressed with Zstd. A scheduled system job runs every hour to delete stale execution files beyond the configurable retention window. The `step-file` sub-feature exposes engine-accessible endpoints for pieces to upload and download files produced during a flow run, using short-lived JWT tokens for download authorization.
+The File Storage Service is the central infrastructure for persisting binary files in Activepieces. It supports two storage backends: database (PostgreSQL `bytea`) and S3-compatible object storage (AWS S3, Cloudflare R2, or any S3-compatible endpoint). The backend used for a given file depends on its `FileType` — execution-related files that expire (run logs, step files, trigger payloads, webhook payloads) use the configured `FILE_STORAGE_LOCATION` system property; non-expiring files (platform assets, user profile pictures, knowledge base files, project releases, etc.) always use the database. The one non-expiring exception is `FLOW_BUNDLE` (the prebuilt per-locked-flow-version artifact), which uses the configurable `FILE_STORAGE_LOCATION` so it can be served from S3 even though it never expires. Files are optionally compressed with Zstd. A scheduled system job runs every hour to delete stale execution files beyond the configurable retention window. The `step-file` sub-feature exposes engine-accessible endpoints for pieces to upload and download files produced during a flow run, using short-lived JWT tokens for download authorization.
 
 ## Key Files
 - `packages/server/api/src/app/file/file.service.ts` — core service: save, getFile, getDataOrThrow, delete, deleteStaleBulk, uploadPublicAsset
@@ -10,7 +10,7 @@ The File Storage Service is the central infrastructure for persisting binary fil
 - `packages/server/api/src/app/file/s3-helper.ts` — S3 client wrapper (upload, download, delete, signed URLs)
 - `packages/server/api/src/app/file/file-compressor.ts` — Zstd compress/decompress utilities
 - `packages/server/api/src/app/file/files-controller.ts` — primary file upload/download (`/v1/files`) and legacy `signedStepFileController` redirect for `/v1/step-files/signed`
-- `packages/shared/src/lib/core/file/index.ts` — `File`, `FileType`, `FileCompression`, `FileLocation`, `FileId`
+- `packages/core/shared/src/lib/core/file/index.ts` — `File`, `FileType`, `FileCompression`, `FileLocation`, `FileId`
 
 ## Edition Availability
 - **Community (CE)**: Fully available — used internally by the execution engine.
@@ -18,6 +18,9 @@ The File Storage Service is the central infrastructure for persisting binary fil
 - **Cloud**: Fully available. Cloud typically configures S3 as the storage location for execution files.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **FileType**: Categorizes the purpose of a file. Controls storage location (DB vs S3) and retention policy.
 - **FileLocation**: `DB` (stored as `bytea` in Postgres) or `S3` (stored in an S3-compatible bucket with the S3 key recorded in the `s3Key` column).
 - **FileCompression**: `NONE` or `ZSTD`. Applied to execution data files to reduce storage size. Decompression is transparent on read, including legacy auto-detection via magic bytes.
@@ -66,6 +69,7 @@ Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`
 | `PROJECT_RELEASE` | Always DB | No | Project release snapshot |
 | `FLOW_VERSION_BACKUP` | Always DB | No | Flow version backup |
 | `KNOWLEDGE_BASE` | Always DB | No | File uploaded for AI knowledge base |
+| `FLOW_BUNDLE` | Configurable | No | Prebuilt per-locked-flow-version artifact (flow definition + piece manifest + compiled code steps), addressed by flowVersionId. When S3-backed with `S3_USE_SIGNED_URLS`, workers fetch/upload it directly via signed URLs (see Workers feature) rather than streaming through the app over the socket RPC |
 
 ## Endpoints
 
@@ -95,7 +99,7 @@ Step file uploads are handled by the engine via the unified `PUT /v1/files/:file
 - `getFile(s3Key)` — GetObject from S3, returns Buffer.
 - `getS3SignedUrl(s3Key, fileName)` — generates a 7-day pre-signed GET URL.
 - `putS3SignedUrl({ s3Key, contentLength, contentEncoding })` — generates a 7-day pre-signed PUT URL.
-- `deleteFiles(s3Keys)` — DeleteObjects in batches of 100 (Cloudflare R2 limit).
+- `deleteFiles(s3Keys)` — DeleteObjects in batches of 100 (Cloudflare R2 limit); sends the CRC32C checksum algorithm (OCI Object Storage rejects the SDK-default CRC32).
 - `validateS3Configuration()` — smoke test: puts, heads, and deletes a test object.
 
 ## Cleanup Job
@@ -112,6 +116,6 @@ Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. 
 | `S3_SECRET_ACCESS_KEY` | S3 credentials (not needed if `S3_USE_IRSA=true`) |
 | `S3_BUCKET` | S3 bucket name |
 | `S3_REGION` | S3 region |
-| `S3_ENDPOINT` | Custom S3 endpoint URL (for Cloudflare R2, MinIO, etc.) |
+| `S3_ENDPOINT` | Custom S3 endpoint URL (for Cloudflare R2, MinIO, OCI Object Storage, etc.). When set, the SDK checksum defaults and aws-chunked upload encoding are disabled (`WHEN_REQUIRED`) for S3-compatible providers; plain AWS keeps SDK defaults |
 | `S3_USE_IRSA` | Use IAM Roles for Service Accounts instead of static credentials |
 | `S3_USE_SIGNED_URLS` | When true, redirect step file downloads to pre-signed S3 URLs |

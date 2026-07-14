@@ -7,6 +7,11 @@ export const generateGamma = createAction({
   name: 'generateGamma',
   displayName: 'Generate Gamma',
   description: 'Create a new Gamma generation job.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Starts an asynchronous Gamma generation job from input text, producing a presentation, document, social post, or webpage (set via the format prop). Use to kick off AI content creation; the job runs in the background, so follow up with "Get Generation" using the returned generation ID to poll for completion and outputs. Requires input text (1-400,000 chars); not idempotent — each call queues a new generation and consumes credits.',
+    idempotent: false,
+  },
   props: {
     folderId: Property.Dropdown({
       displayName: 'Folder',

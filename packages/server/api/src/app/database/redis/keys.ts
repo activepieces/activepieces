@@ -1,4 +1,4 @@
-import { PlatformId, ProjectId } from '@activepieces/shared'
+import { PlatformId, ProjectId } from '@activepieces/core-utils'
 
 export const getPlatformPlanNameKey = (platformId: PlatformId): string => `platform_plan:plan:${platformId}`
 export const getProjectConcurrencyPoolKey = (projectId: ProjectId): string => `project:concurrency-pool:${projectId}` // gets pool id for the project

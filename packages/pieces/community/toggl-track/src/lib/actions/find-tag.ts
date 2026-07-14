@@ -12,6 +12,8 @@ export const findTag = createAction({
   name: 'find_tag',
   displayName: 'Find Tag',
   description: 'Find a tag by name in a workspace.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists tags in a Toggl Track workspace, optionally filtered by a name search with pagination; omitting the search returns all tags. Use to resolve a tag before attaching it to a time entry, or to check whether a tag already exists. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: togglCommon.workspace_id,
     search: Property.ShortText({

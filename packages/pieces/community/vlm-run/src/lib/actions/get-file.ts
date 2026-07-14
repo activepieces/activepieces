@@ -9,6 +9,8 @@ export const getFile = createAction({
   name: 'getFile',
   displayName: 'Get File',
   description: "Gets file's metadata by ID.",
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the metadata for a previously uploaded VLM Run file by its file ID. Choose this to look up details of a file already stored in the account. Read-only lookup, so it is idempotent.', idempotent: true },
   props: getFileProperties,
   async run({ auth: apiKey, propsValue }) {
     await propsValidation.validateZod(propsValue, getFileSchema);

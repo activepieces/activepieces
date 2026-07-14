@@ -11,7 +11,7 @@ import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 type Props = {
 	chatId: string;

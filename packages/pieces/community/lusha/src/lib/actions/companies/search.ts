@@ -6,6 +6,8 @@ export const searchCompanies = createAction({
   auth: lushaAuth,
   displayName: 'Search Companies',
   description: 'Search for companies with filters and pagination',
+  audience: 'both',
+  aiMetadata: { description: 'Search the Lusha prospecting database for companies matching a JSON filter (industry, size, location, contact countries, etc.), auto-paginating up to a result cap (max 10000). Use to discover company candidates before enriching them; the returned requestId and company IDs feed the Enrich Companies action. Read-only and idempotent for the same filter.', idempotent: true },
   props: {
     resultLimit: Property.Number({
       displayName: 'Maximum Results',

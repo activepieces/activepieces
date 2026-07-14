@@ -8,6 +8,12 @@ export default createAction({
   name: 'create_entry',
   displayName: 'Create Entry',
   description: 'Creates an entry in clockodo',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Logs a new time-record entry in clockodo for a customer and service over a start/end time window, optionally tagged to a project, user, hourly rate, and description. Use to record tracked work after the fact; requires customer_id, service_id, and both start and end times. Not idempotent: each call creates a separate entry, so guard against duplicates.',
+    idempotent: false,
+  },
   props: {
     customer_id: clockodoCommon.customer_id(),
     project_id: clockodoCommon.project_id(false),

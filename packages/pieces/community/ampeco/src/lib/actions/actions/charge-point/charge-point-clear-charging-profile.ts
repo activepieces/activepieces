@@ -14,6 +14,8 @@ export const chargePointClearChargingProfileAction = createAction({
   name: 'chargePointClearChargingProfile',
   displayName: 'Actions - Charge Point - Clear Charging Profile',
   description: 'If you are not using networkId and not passing other criteria in the body it will clear the charging profile for the charge point (ChargePointMaxProfile).',
+  audience: 'both',
+  aiMetadata: { description: 'Send an OCPP ClearChargingProfile command to a charge point to remove charging profiles matching the supplied filters (profile id, connector/EVSE network id, purpose, stack level); omit filters to clear the overall ChargePointMaxProfile. This is a remote control command, not a local config change, and clears whatever currently matches, so repeating it with the same filters is effectively a no-op once profiles are gone. Use to lift charging limits or schedules previously set on a station.', idempotent: false },
   props: {
         
   chargePoint: Property.Number({

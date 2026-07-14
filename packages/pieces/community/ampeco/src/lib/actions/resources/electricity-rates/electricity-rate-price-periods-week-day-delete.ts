@@ -14,6 +14,8 @@ export const electricityRatePricePeriodsWeekDayDeleteAction = createAction({
   name: 'electricityRatePricePeriodsWeekDayDelete',
   displayName: 'Resources - Electricity Rates - Price Periods Week Day Delete',
   description: 'Delete the price periods for a specific week day.',
+  audience: 'both',
+  aiMetadata: { description: 'Remove all configured price periods for one recurring week day (mon-sun or any) of an electricity rate in AMPECO, reverting that day to the rate default pricing. Destructive write; confirm the rate id and day first. Use the date delete action to clear a specific calendar date instead.', idempotent: false },
   props: {
         
   electricityRate: Property.Number({

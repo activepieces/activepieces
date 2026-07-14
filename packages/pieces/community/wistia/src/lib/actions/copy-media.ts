@@ -8,6 +8,12 @@ export const copyMediaAction = createAction({
   name: 'copy_media',
   displayName: 'Copy Media',
   description: 'Create a copy of a video or media file, optionally into a different project.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Duplicates an existing Wistia media item (referenced by its hashed media id), optionally placing the copy in a target project and assigning a new owner by email. Use to clone a video or asset rather than re-uploading. Not idempotent: each call produces a new, distinct copy.',
+    idempotent: false,
+  },
   props: {
     mediaId: wistiaCommon.mediaDropdown(true),
     projectId: wistiaCommon.projectDropdown(false),

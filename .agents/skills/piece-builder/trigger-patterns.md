@@ -274,6 +274,6 @@ export const myTrigger = createTrigger({
 
 ---
 
-## AI-Ready Metadata (optional)
+## AI-Ready Metadata (required on new triggers)
 
-Triggers accept an optional `aiMetadata` field (`{ description?, idempotent? }`) to describe the event for AI agents. They do **not** take `audience` — that field is actions-only, since a trigger is an event rather than an agent-callable operation. The field is additive and changes nothing for human users. See `ai-metadata.md`.
+Every new trigger ships with `aiMetadata: { description }` — one or two sentences on when the event fires and what one payload represents. Triggers do **not** take `audience` (actions-only — a trigger is an event, not an agent-callable operation) and don't need `idempotent`. The field is additive and changes nothing for human users. See `ai-metadata.md`.

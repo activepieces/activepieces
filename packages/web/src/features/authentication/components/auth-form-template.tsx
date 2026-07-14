@@ -17,6 +17,7 @@ import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 
 import { AuthAnimation } from './auth-animation';
+import { SamlLoginForm } from './saml-login-form';
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
@@ -176,6 +177,7 @@ const AuthFormTemplate = React.memo(
     const token = authenticationSession.getToken();
     const redirectAfterLogin = useRedirectAfterLogin();
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
+    const [showSamlLogin, setShowSamlLogin] = useState(false);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
       ApFlagId.EMAIL_AUTH_ENABLED,
     );
@@ -200,6 +202,19 @@ const AuthFormTemplate = React.memo(
       return null;
     }
 
+    if (showSamlLogin) {
+      return (
+        <AuthLayout isSignUp={isSignUp}>
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-bold tracking-tight font-sentient">
+              {t('Sign in with SAML')}
+            </h1>
+          </div>
+          <SamlLoginForm onBack={() => setShowSamlLogin(false)} />
+        </AuthLayout>
+      );
+    }
+
     return (
       <AuthLayout isSignUp={isSignUp}>
         {!showCheckYourEmailNote && (
@@ -210,7 +225,12 @@ const AuthFormTemplate = React.memo(
           </div>
         )}
 
-        {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
+        {!showCheckYourEmailNote && (
+          <ThirdPartyLogin
+            isSignUp={isSignUp}
+            onSamlClick={() => setShowSamlLogin(true)}
+          />
+        )}
         <AuthSeparator
           isEmailAuthEnabled={
             (isEmailAuthEnabled ?? true) && !showCheckYourEmailNote

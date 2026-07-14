@@ -19,6 +19,9 @@ export const newPollResponseTrigger = createTrigger({
   name: 'new_poll_response',
   displayName: 'New Poll Response',
   description: 'Triggers when a poll response is created or updated in SavvyCal.',
+  aiMetadata: {
+    description: 'Fires via webhook when a respondent submits or updates a response to a SavvyCal scheduling poll. Can be scoped to created-only, updated-only, or both response types. Each firing represents one poll response event.',
+  },
   props: {
     event_types: Property.StaticMultiSelectDropdown({
       displayName: 'Poll Response Types',

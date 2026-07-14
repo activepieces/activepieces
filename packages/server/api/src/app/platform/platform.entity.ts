@@ -1,4 +1,4 @@
-import { FilteredPieceBehavior, Platform, User } from '@activepieces/shared'
+import { Platform, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -25,6 +25,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: false,
         },
+        themeColors: {
+            type: 'jsonb',
+            nullable: true,
+        },
         logoIconUrl: {
             type: String,
             nullable: false,
@@ -46,16 +50,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
             default: true,
-        },
-        filteredPieceNames: {
-            type: String,
-            array: true,
-            nullable: false,
-        },
-        filteredPieceBehavior: {
-            type: String,
-            enum: FilteredPieceBehavior,
-            nullable: false,
         },
         allowedAuthDomains: {
             type: String,
@@ -91,6 +85,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             array: true,
             nullable: false,
+        },
+        pieceSelectorConfig: {
+            type: 'jsonb',
+            nullable: true,
         },
     },
     indices: [

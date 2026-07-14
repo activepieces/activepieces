@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCard } from './lib/actions/card/create-card';
 import { getCard } from './lib/actions/card/get-card';
 import { updateCard } from './lib/actions/card/update-card';
@@ -75,7 +75,7 @@ export const trelloAuth = PieceAuth.BasicAuth({
 export const trello = createPiece({
   displayName: 'Trello',
   description: 'Project management tool for teams',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.85.5',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
   authors: ["Salem-Alaa", "kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", "AshotZaqoyan"],
   categories: [PieceCategory.PRODUCTIVITY],

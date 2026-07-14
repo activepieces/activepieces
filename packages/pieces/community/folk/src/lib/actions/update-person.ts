@@ -9,6 +9,11 @@ export const updatePerson = createAction({
   displayName: 'Update Person',
   description:
     'Update an existing person in your Folk workspace with new information.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates fields on an existing Folk person identified by their person ID; only the fields you supply are changed, and supplied company names that do not yet exist are created. Use when you already know the target person ID (look it up first with List People or Get Person). Not idempotent in general: re-running mutates the record each call and supplied arrays replace prior values, so resubmitting the same input is not guaranteed to be a no-op.',
+    idempotent: false,
+  },
   props: {
     personId: folkProps.person_id(true),
     firstName: Property.ShortText({

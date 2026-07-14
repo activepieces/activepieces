@@ -1,6 +1,7 @@
 import { Readable } from 'stream'
-import { apId, FileType, isNil, ProjectId } from '@activepieces/shared'
-import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
+import { FileType } from '@activepieces/shared'
+import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import contentDisposition from 'content-disposition'
@@ -56,6 +57,20 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         return s3Key
     },
 
+    async objectExists(s3Key: string): Promise<boolean> {
+        const { error } = await tryCatch(() => getS3Client().send(new HeadObjectCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+        })))
+        // A genuine miss (404) is the common case; anything else (403, expired creds, network)
+        // means S3 is misconfigured — surface it so operators get a signal instead of a silent
+        // npm fallback that never caches.
+        const isMissing = error instanceof Error && (error.name === 'NotFound' || error.name === 'NoSuchKey')
+        if (!isNil(error) && !isMissing) {
+            log.warn({ s3Key, error: String(error) }, 'objectExists check failed unexpectedly, treating object as missing')
+        }
+        return isNil(error)
+    },
     async getFile(s3Key: string): Promise<Buffer> {
         const response = await getS3Client().getObject({
             Bucket: getS3BucketName(),
@@ -104,6 +119,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                         Objects: deleteObjects,
                         Quiet: true,
                     },
+                    ChecksumAlgorithm: 'CRC32C',
                 }))
                 log.info({ count: chunk.length }, 'files deleted from s3')
             }
@@ -159,6 +175,10 @@ const getS3Client = (): S3 => {
             requestTimeout: 120_000,
         }),
         maxAttempts: 3,
+    }
+    if (!isNil(endpoint)) {
+        options.requestChecksumCalculation = 'WHEN_REQUIRED'
+        options.responseChecksumValidation = 'WHEN_REQUIRED'
     }
     if (!useIRSA) {
         const accessKeyId = system.getOrThrow<string>(AppSystemProp.S3_ACCESS_KEY_ID)

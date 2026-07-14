@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { frillAuth } from './lib/auth';
 import { createIdea } from './lib/actions/create-idea';

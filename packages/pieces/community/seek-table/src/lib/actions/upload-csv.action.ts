@@ -16,6 +16,8 @@ export const uploadCsvAction = createAction({
   name: 'upload_csv',
   displayName: 'Upload CSV File',
   description: 'Uploads a CSV file and creates new or refreshes existing CSV cube.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a CSV file (plain or gzip/zip-compressed) to SeekTable to back a cube. Operates in two modes: pass an existing cube id to refresh that CSV cube with the new data, or omit it to create a brand-new cube. Use when an agent needs to load tabular data into SeekTable before reporting on it. Not idempotent — each call ingests the file, creating a new cube or re-importing data into the targeted one.', idempotent: false },
   props: {
     cubeId: seekTableProps.cubeId,
     filename: seekTableProps.filename,

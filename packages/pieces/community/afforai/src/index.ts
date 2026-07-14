@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { askChatbotAction } from './lib/actions/ask-chatbot';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { afforaiAuth } from './lib/auth';
 
 export const afforai = createPiece({

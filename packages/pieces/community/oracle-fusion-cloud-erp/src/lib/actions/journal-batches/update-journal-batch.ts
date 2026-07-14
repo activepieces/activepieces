@@ -7,6 +7,8 @@ export const updateJournalBatch = createAction({
     name: 'update_journal_batch',
     displayName: 'Update Journal Batch',
     description: 'Updates batch completion status and reversal attributes. Note: Only status and reversal attributes can be updated.',
+    audience: 'both',
+    aiMetadata: { description: 'Modify a general-ledger journal batch identified by JeBatchId; only its status and reversal attributes (reverse flag, reversal date/period/method) are editable. At least one field must be supplied or the call fails. Effectively idempotent since it sets the given fields. The batch must already exist; use Find Journal Batches to locate it.', idempotent: true },
     props: {
         jeBatchId: Property.ShortText({
             displayName: 'Journal Batch ID',

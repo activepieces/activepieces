@@ -8,6 +8,12 @@ export const listActivitiesAndTasks = createAction({
   name: 'listActivitiesAndTasks',
   displayName: "Liste de toutes les activités et tâches d'un dossier",
   description: "Liste de toutes les activités et tâches d'un dossier (Dossier de formation / Dossier de certification)",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all activities and tasks recorded on a single folder, which can be either a training (registration) folder or a certification folder selected via the folder-type input. Read-only and safe to repeat. Use to inspect the activity/task history of one specific folder by its number.',
+    idempotent: true,
+  },
   props: {
     entityClass: Property.StaticDropdown({
       displayName: "Choisir le type de dossier",

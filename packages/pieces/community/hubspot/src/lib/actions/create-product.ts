@@ -6,7 +6,7 @@ import {
     standardObjectPropertiesDropdown,
 } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 
 export const createProductAction = createAction({
@@ -14,6 +14,12 @@ export const createProductAction = createAction({
     name: 'create-product',
     displayName: 'Create Product',
     description: 'Creates a product in Hubspot.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Create a new product record in the HubSpot product library from the supplied properties (such as name, price, and description). Use when adding a catalog item; each call always creates a separate product, so repeated calls produce duplicates rather than updating an existing one.',
+        idempotent: false,
+    },
     props: {
         objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.PRODUCT,[]),
         markdown: Property.MarkDown({

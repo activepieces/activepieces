@@ -1,9 +1,10 @@
 import { googleSheetsAuth } from '../common/common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
-import { isNil } from '@activepieces/shared';
+import { sheets as googleSheets } from '@googleapis/sheets';
+import { isNil } from '@activepieces/pieces-framework';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 import { createGoogleClient } from '../common/common';
+import { newWorksheetTriggerOutputSchema } from '../output-schemas';
 
 export const newWorksheetTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -19,10 +20,11 @@ export const newWorksheetTrigger = createTrigger({
 		includeTeamDrives: includeTeamDrivesProp(),
 		spreadsheetId: spreadsheetIdProp('Spreadsheet', '',true),
 	},
+	outputSchema: newWorksheetTriggerOutputSchema,
 	async onEnable(context) {
 		const ids: number[] = [];
 		const authClient = await createGoogleClient(context.auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId as string,
 		});
@@ -42,7 +44,7 @@ export const newWorksheetTrigger = createTrigger({
 	async test(context) {
 		const worksheets = [];
 		const authClient = await createGoogleClient(context.auth);
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId as string,
 		});
@@ -60,7 +62,7 @@ export const newWorksheetTrigger = createTrigger({
 
 		const authClient = await createGoogleClient(context.auth);
 
-		const sheets = google.sheets({ version: 'v4', auth: authClient });
+		const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId as string,

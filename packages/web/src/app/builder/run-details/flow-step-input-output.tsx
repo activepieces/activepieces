@@ -1,3 +1,4 @@
+import { isNil, tryParseFriendlyPieceError } from '@activepieces/core-utils';
 import {
   StepOutputStatus,
   flowStructureUtil,
@@ -7,12 +8,10 @@ import {
   isFlowRunStateTerminal,
   FlowRun,
   FlowRunStatus,
-  isNil,
   ApFlagId,
   LogSliceRef,
   StepOutputType,
   RunInternalError,
-  tryParseFriendlyPieceError,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info, ShieldAlert } from 'lucide-react';
@@ -35,9 +34,12 @@ import { stepPropertiesSnapshotUtils } from '../data-display/build-step-properti
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { ClosePanelButton } from '../step-data/close-panel-button';
 import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
+
+import { truncatedInputUtils } from './truncated-input-utils';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
 
@@ -118,7 +120,8 @@ export const FlowStepInputOutput = () => {
 
   if (
     run.status === FlowRunStatus.INTERNAL_ERROR &&
-    !isNil(run.internalError)
+    !isNil(run.internalError) &&
+    isNil(selectedStepOutput)
   ) {
     return <InternalErrorPanel internalError={run.internalError} />;
   }
@@ -126,17 +129,23 @@ export const FlowStepInputOutput = () => {
   if (
     !isRunDone &&
     run.status !== FlowRunStatus.PAUSED &&
+    run.status !== FlowRunStatus.INTERNAL_ERROR &&
     isNil(selectedStepOutput)
   ) {
     return <StepOutputSkeleton className="p-4" />;
   }
 
-  const message = handleRunFailureOrEmptyLog(run, rententionDays);
+  const message =
+    run.status === FlowRunStatus.INTERNAL_ERROR && isNil(selectedStepOutput)
+      ? t(
+          'There are no logs captured for this run, because of an internal error, please contact support.',
+        )
+      : handleRunFailureOrEmptyLog(run, rententionDays);
   if (message) {
     return (
-      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8  px-5">
+      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8 px-5">
         <Info size={36} className="text-muted-foreground" />
-        <h4 className="px-6 text-sm text-center text-muted-foreground ">
+        <h4 className="px-6 text-sm text-center text-muted-foreground">
           {message}
         </h4>
       </div>
@@ -146,8 +155,9 @@ export const FlowStepInputOutput = () => {
   if (!selectedStepOutput || !selectedStep) {
     return (
       <div className="flex flex-col h-full w-full">
-        <div className="flex justify-end px-3 py-2 shrink-0">
+        <div className="flex items-center justify-end gap-1 px-3 py-2 shrink-0">
           <StepDataPanelViewToggle />
+          <ClosePanelButton />
         </div>
         <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
           <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
@@ -235,16 +245,20 @@ export const FlowStepInputOutput = () => {
               )}
               <TabsTrigger value="output">{t('Output')}</TabsTrigger>
             </TabsList>
-            <StepDataPanelViewToggle />
+            <div className="flex items-center gap-1 shrink-0">
+              <StepDataPanelViewToggle />
+              <ClosePanelButton />
+            </div>
           </div>
 
           {!isTrigger && (
-            <TabsContent value="input">
-              <DataDisplayTabs
-                data={selectedStepOutput.input}
+            <TabsContent value="input" className="flex flex-col gap-3">
+              {truncatedInputUtils.hasTruncatedValues(
+                selectedStepOutput.input,
+              ) && <TruncatedInputNotice />}
+              <SmartOutputViewer
+                json={selectedStepOutput.input}
                 title={t('Input')}
-                copyableData={selectedStepOutput.input}
-                downloadFileName={`${selectedStep.name}-input`}
               />
             </TabsContent>
           )}
@@ -324,6 +338,25 @@ const InternalErrorPanel = ({
   </ScrollArea>
 );
 
+const TruncatedInputNotice = () => (
+  <div className="flex items-start gap-2 p-3 bg-muted rounded-md text-sm">
+    <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+    <span>
+      {t(
+        'Some input values were too large to keep in the run logs and are shown as truncated. The step ran with the full values.',
+      )}{' '}
+      <a
+        href="https://www.activepieces.com/docs/install/troubleshooting/truncated-logs"
+        target="_blank"
+        rel="noreferrer"
+        className="text-primary underline"
+      >
+        {t('Learn more')}
+      </a>
+    </span>
+  </div>
+);
+
 const SlicedOutputDownload = ({
   slicedOutputRef,
 }: {
@@ -362,12 +395,6 @@ function handleRunFailureOrEmptyLog(
     !isFlowRunStateTerminal({ status: run.status, ignoreInternalError: true })
   ) {
     return null;
-  }
-
-  if ([FlowRunStatus.INTERNAL_ERROR].includes(run.status)) {
-    return t(
-      'There are no logs captured for this run, because of an internal error, please contact support.',
-    );
   }
 
   if (isNil(run.logsFileId)) {

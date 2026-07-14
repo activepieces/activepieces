@@ -8,6 +8,8 @@ export const addShift = createAction({
   name: 'add_shift',
   displayName: 'Add Shift on Assembled',
   description: 'Add a new shift to a user\'s schedule in Assembled',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a scheduled shift (activity) to an agent\'s schedule in Assembled over a given start/end time. Requires the agent ID (the agent_id field from the people endpoint, not the person ID) and an activity type ID UUID. Each call creates a new activity, so repeating it produces duplicate shifts.', idempotent: false },
   props: {
     agent_id: Property.ShortText({
       displayName: 'Agent ID',

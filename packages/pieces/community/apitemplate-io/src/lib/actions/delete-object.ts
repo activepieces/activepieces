@@ -9,6 +9,8 @@ export const deleteObject = createAction({
   name: 'deleteObject',
   displayName: 'Delete Object',
   description: 'Deletes a generated PDF or image by its transaction reference or object ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a previously generated PDF or image, identified by its transaction reference (pick from the dropdown of recent objects). Use to clean up stored output. Idempotent in effect: once the object is gone, repeating the call leaves the same deleted state.', idempotent: true },
   props: {
     transactionRef: transactionRefDropdown,
   },

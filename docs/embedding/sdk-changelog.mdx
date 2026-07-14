@@ -18,6 +18,19 @@ Change log format: MM/DD/YYYY (version)
 
 
 
+### 07/09/2026 (0.13.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.13.0.js
+- Added `embedding.hideGlobalSearch` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. When `true`, hides the global search button in the dashboard sidebar and disables the `CMD+K` / `Ctrl+K` command palette, so embedded users can't navigate to pages, flows, or tables through search. This version requires an Activepieces release that includes [#14135](https://github.com/activepieces/activepieces/pull/14135).
+
+### 07/09/2026 (0.12.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.12.0.js
+- Added `embedding.hideActiveUsers` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. When `true`, hides the active users (presence) avatars in the builder's header and the table editor's header. The embedded user will also not appear in other collaborators' active-users list. This version requires an Activepieces release that includes [#13630](https://github.com/activepieces/activepieces/pull/13630).
+
+### 06/18/2026 (0.10.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.10.0.js
+- Added `authorizeMcp({ authRequestId })` — opens an in-embed MCP OAuth consent dialog so embedded (managed-auth) users can approve connecting an AI client to their project **without a standalone Activepieces login**. Resolves with `{ redirectUrl }` on approval or `{ denied: true }`. See [Embeddable MCP](./embeddable-mcp).
+- Added `mcpSettings()` — opens the MCP settings dialog (connection URL, tools, exposed flows) for the embedded user's project, inside the host app.
+
 ### 04/21/2026 (0.9.0)
 - SDK URL: https://cdn.activepieces.com/sdk/embed/0.9.0.js
 - This version requires you to **upgrade Activepieces to [0.82.0](https://github.com/activepieces/activepieces/releases/tag/0.82.0)**.

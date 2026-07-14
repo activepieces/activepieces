@@ -1,0 +1,27 @@
+{
+    "id": "discovery-no-jargon",
+    "description": "Seed regression: on a vague business request the assistant scopes in plain language (no engineering jargon), shows at most two question cards, and does not reach for build tools while still in discovery. Calibrated against live runs. Note: subjective 'how well it moves the goal forward / conciseness' is intentionally NOT gated here — that belongs in the human-labeled capability evals, since it is too judgment-heavy for a deterministic regression gate.",
+    "kind": "regression",
+    "initialMessages": [],
+    "userTurns": [
+        "I want to get notified when someone fills out my contact form"
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "maxQuestionCards", "n": 2 },
+        { "type": "noBuildToolBeforePhaseSet" }
+    ],
+    "judge": [
+        {
+            "dimension": "plain_language",
+            "rubric": "The assistant responds in everyday business language with no engineering jargon — it never mentions fields, columns, triggers, steps, connections, webhooks, APIs, polling, or code. Asking which app or service the user uses, or how they would like to be notified (e.g. email or Slack), is a business question and is perfectly fine — it is NOT a technical detail.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

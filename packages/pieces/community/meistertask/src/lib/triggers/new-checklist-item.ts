@@ -55,6 +55,9 @@ export const newChecklistItem = createTrigger({
   name: 'new_checklist_item',
   displayName: 'New Checklist Item',
   description: 'Triggers when a new checklist item is added to a task.',
+  aiMetadata: {
+    description: 'Fires when a new checklist item is added to the selected MeisterTask task. Represents a sub-item appended to that task\'s checklist.',
+  },
   props: {
     task_id: meisterTaskCommon.task_id,
   },

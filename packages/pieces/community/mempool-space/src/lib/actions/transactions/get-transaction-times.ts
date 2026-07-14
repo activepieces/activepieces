@@ -7,6 +7,8 @@ export const getTransactionTimes = createAction({
   name: 'get_transaction_times',
   displayName: 'Get Transaction Times',
   description: 'Get timing information for a transaction including first seen and block entry times',
+  audience: 'both',
+  aiMetadata: { description: 'Get timing information for a transaction by its ID, such as when it was first seen in the mempool. Pick this for propagation/first-seen timing rather than confirmation state (use Get Transaction Status) or full detail (use Get Transaction). Read-only.', idempotent: true },
   // category: 'Transactions',
   props: {
     txid: Property.ShortText({

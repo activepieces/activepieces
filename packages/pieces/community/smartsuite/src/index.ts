@@ -2,7 +2,7 @@ import {
   createPiece,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { smartsuiteAuth } from './lib/auth';
 
 // Actions

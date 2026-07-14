@@ -13,6 +13,8 @@ export const webflowFindCollectionItem = createAction({
 	name: 'find_collection_item',
 	description: 'Find collection item in a collection by field',
 	displayName: 'Find a Collection Item by Field',
+	audience: 'both',
+	aiMetadata: { description: 'Searches a Webflow CMS collection for items whose given field name exactly matches the supplied value, optionally capped by a max-results limit. Use to look up an item by a known field value (e.g. slug or name) before reading or updating it. Read-only and idempotent. Note: matching is an exact equality filter applied client-side over the fetched items, not a fuzzy or paginated server search.', idempotent: true },
 	props: {
 		site_id: webflowProps.site_id,
 		collection_id: webflowProps.collection_id,

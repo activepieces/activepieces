@@ -7,6 +7,8 @@ export const createTimeEntryOnTask = createAction({
 	name: 'create_time_entry_on_task',
 	displayName: 'Create Time Entry on Task',
 	description: 'Log time spent on a task with duration, description.',
+	audience: 'both',
+	aiMetadata: { description: 'Logs a time entry against an existing Teamwork task, recording hours and minutes for a given date (optionally a start time, description, and billable flag). Use to track work time on a task. Requires the task ID, date, hours, and minutes. Not idempotent — each call appends a new time log.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		taskId: Property.Dropdown({

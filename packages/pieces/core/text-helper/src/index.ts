@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { concat } from './lib/actions/concat';
 import { find } from './lib/actions/find';
 import { findAll } from './lib/actions/find-all';

@@ -18,7 +18,8 @@ import {
 	standardObjectPropertiesDropdown,
 } from '../common/props';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
-import { isNil, MarkdownVariant } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 
@@ -98,6 +99,10 @@ export const dealStageUpdatedTrigger = createTrigger({
 	name: 'deal-stage-updated',
 	displayName: 'Updated Deal Stage',
 	description: 'Triggers when a deal enters a specified stage.',
+	aiMetadata: {
+		description:
+			'Fires when a deal moves into the configured pipeline stage in HubSpot. Each event represents one deal that entered the selected stage since the last poll, returning the deal record with properties such as name, amount, close date, and stage entry date. Tracked by the date the deal entered the current stage.',
+	},
 	props: {
 		pipelineId: pipelineDropdown({
 			objectType: OBJECT_TYPE.DEAL,

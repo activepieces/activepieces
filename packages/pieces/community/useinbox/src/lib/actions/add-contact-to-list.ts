@@ -25,6 +25,12 @@ export const addContactToListAction = createAction({
   displayName: 'Add Contact to List',
   description:
     'Adds a single contact to an INBOX contact list. Creates the contact if the email is new, otherwise updates the existing contact and ensures it is part of the list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a contact (by email) to a specific INBOX contact list, creating the contact if the email is new or updating it if it already exists, and ensuring list membership. Use to subscribe or enroll someone into a list. Requires a target list id and an email address; the upsert is keyed on the email so repeating with the same email and list yields the same membership without creating duplicates.',
+    idempotent: true,
+  },
   props: {
     listId: useinboxProps.contactListDropdown(),
     email: Property.ShortText({

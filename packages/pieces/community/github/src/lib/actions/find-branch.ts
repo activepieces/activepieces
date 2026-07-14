@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
-import { HttpStatusCode } from 'axios';
 
 export const githubFindBranchAction = createAction({
   auth: githubAuth,
@@ -39,7 +38,7 @@ export const githubFindBranchAction = createAction({
       };
     } catch (e) {
       const status = (e as HttpError).response.status;
-      if (status === HttpStatusCode.NotFound) {
+      if (status === 404) {
         return {
           found: false,
           result: {},

@@ -9,6 +9,10 @@ export const emailBounced = createTrigger({
   name: 'emailBounced',
   displayName: 'Email Bounced',
   description: 'Triggered when an email bounces',
+  aiMetadata: {
+    description:
+      'Fires when an email sent through Vero bounces (the recipient mail server rejects delivery), representing a hard or soft delivery failure for a specific user and campaign.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

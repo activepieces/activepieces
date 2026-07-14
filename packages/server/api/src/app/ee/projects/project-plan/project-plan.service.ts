@@ -1,33 +1,13 @@
-import { apId,
-    isNil,
-    PiecesFilterType,
-    ProjectPlan,
-    ProjectPlanLimits,
-    spreadIfDefined,
-} from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { PiecesFilterType, ProjectPlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In } from 'typeorm'
+import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { ProjectPlanEntity } from './project-plan.entity'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 
 export const projectLimitsService = (_log: FastifyBaseLogger) => ({
-    async upsert(
-        planLimits: ProjectPlanLimits,
-        projectId: string,
-        entityManager?: EntityManager,
-    ): Promise<ProjectPlan> {
-        const projectPlan = await this.getOrCreateDefaultPlan(projectId)
-        await projectPlanRepo(entityManager).update(projectPlan.id, {
-            ...spreadIfDefined('name', planLimits.nickname),
-            ...spreadIfDefined('locked', planLimits.locked),
-            ...spreadIfDefined('pieces', planLimits.pieces),
-            ...spreadIfDefined('piecesFilterType', planLimits.piecesFilterType),
-        })
-        return projectPlanRepo().findOneByOrFail({ projectId })
-    },
-
     async getOrCreateDefaultPlan(projectId: string): Promise<ProjectPlan> {
         const existingPlan = await projectPlanRepo().findOneBy({ projectId })
 

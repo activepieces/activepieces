@@ -9,6 +9,8 @@ export const descriptImportMediaAction = createAction({
     displayName: 'Import Media',
     description:
         'Imports a media file from a URL into a new or existing Descript project and optionally creates a composition.',
+    audience: 'both',
+    aiMetadata: { description: 'Starts an asynchronous Descript job that imports a media file from a public URL into either a newly created project or an existing one (selected via the project mode), optionally building a composition/timeline from it. Use to bring audio/video into Descript before editing or publishing; the URL must be reachable by Descript servers and support HTTP Range requests. Not idempotent: each call queues a new import job and returns a job_id to poll for completion.', idempotent: false },
     props: {
         mode: Property.StaticDropdown({
             displayName: 'Project',

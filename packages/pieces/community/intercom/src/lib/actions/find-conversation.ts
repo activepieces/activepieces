@@ -8,6 +8,8 @@ export const findConversationAction = createAction({
     name: 'find-conversation',
     displayName: 'Find Conversation',
     description: 'Searches for conversations using various criteria',
+    audience: 'both',
+    aiMetadata: { description: 'Search conversations by a chosen field (ID, subject, message body, author email, assigned admin, team, or tag IDs) with a contains/equals/starts-with match, optionally filtered by open/closed status and an update-time window. Read-only and repeatable; returns the first match plus a found flag. Use when you do not already have the conversation ID — otherwise use Retrieve a Conversation.', idempotent: true },
     props: {
         searchField: Property.StaticDropdown({
             displayName: 'Search Field',

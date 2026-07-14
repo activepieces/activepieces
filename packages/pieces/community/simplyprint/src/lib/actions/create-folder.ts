@@ -10,6 +10,12 @@ export const createFolderAction = createAction({
   displayName: 'Create or Update Folder',
   description:
     'Create a new folder in the user file system, or update an existing one (pass the folder ID to edit). Optionally an "organization" / shared folder with per-rank view/upload/modify permissions.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a folder in the user file system, or edits an existing one when a folder ID is supplied (the mode is chosen by whether that ID is present). Can mark it a shared "organization" folder with per-rank view/upload/modify permissions (requires the Shared Folders feature). Requires a name and parent folder ID (0 for root). Not idempotent in create mode: each call without a folder ID makes a new folder; edit mode keyed on a folder ID is idempotent.',
+    idempotent: false,
+  },
   props: {
     folderId: Property.Number({
       displayName: 'Folder ID (edit existing)',

@@ -8,6 +8,8 @@ export const campaignControl = createAction({
   name: 'campaignControl',
   displayName: 'Start/Stop Campaign',
   description: "Start or stop an outbound campaign from our platform.",
+  audience: 'both',
+  aiMetadata: { description: 'Sets the run status of an Autocalls outbound campaign, choosing one of two modes via the action input: start (begin dialing leads) or stop (halt dialing). Use to control whether a campaign is actively calling. Requires a campaign id; idempotent since repeating the same start/stop request leaves the campaign in the same state.', idempotent: true },
   props: {
     campaign: Property.Dropdown({
       auth: autocallsAuth,

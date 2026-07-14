@@ -7,6 +7,8 @@ export const createStage = createAction({
 	name: 'create_stage',
 	displayName: 'Create Stage',
 	description: 'Add a new stage in a workflow or board.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new stage (column) in a Teamwork board/workflow identified by workflow ID, with a name and optional color. Use when building out or extending a board pipeline; requires the target workflow ID and a stage name. Not idempotent: each call adds another stage.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		workflowId: Property.Dropdown({

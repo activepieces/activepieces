@@ -7,6 +7,8 @@ export const addSubscriptionAction = createAction({
   name: 'add_subscription',
   displayName: 'Add Subscription',
   description: 'Create a subscription between a payer and a plan',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a recurring subscription linking an existing Pinch Payments payer to an existing plan. Use when an agent needs to enroll a customer in ongoing/recurring billing. Requires a plan id and payer id; total amount is required only for percentage-based plans, and leaving the start date blank begins it immediately. Not idempotent: each call creates a new subscription.', idempotent: false },
   props: {
     planId: Property.Dropdown({
       displayName: 'Plan',

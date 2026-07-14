@@ -11,6 +11,10 @@ export const subscriptionInvoicePaid = createTrigger({
   name: 'subscriptionInvoicePaid',
   displayName: MODULE_NAME,
   description: 'Triggers when a subscription invoice is paid.',
+  aiMetadata: {
+    description:
+      'Fires when a subscription invoice is paid in the selected ClickFunnels workspace, representing a successful recurring-billing payment. Delivers the invoice payload.',
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

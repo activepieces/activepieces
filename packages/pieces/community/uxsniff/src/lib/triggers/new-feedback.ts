@@ -49,6 +49,10 @@ export const newFeedbackTrigger = createTrigger({
   name: 'new_feedback',
   displayName: 'New Feedback',
   description: 'Triggers when a visitor submits new feedback on your website.',
+  aiMetadata: {
+    description:
+      'Fires when a website visitor submits new feedback via the UXsniff feedback widget. Each event represents one feedback submission and includes the question shown, the visitor\'s comment and numeric rating, the page URL, an optional screenshot, and visitor context such as email, device, browser, operating system, and country.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {

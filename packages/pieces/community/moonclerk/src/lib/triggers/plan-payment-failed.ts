@@ -9,6 +9,9 @@ export const planPaymentFailed = createTrigger({
   name: 'planPaymentFailed',
   displayName: 'Plan Payment Failed',
   description: 'Triggers when a payment related to a plan has failed.',
+  aiMetadata: {
+    description: 'Fires when a recurring payment tied to a MoonClerk plan (subscription) fails to collect. Use to handle dunning, failed-renewal alerts, or retry workflows for active subscriptions. Requires a MoonClerk webhook configured for the Plan Payment Failed event.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `## MoonClerk Webhook Setup

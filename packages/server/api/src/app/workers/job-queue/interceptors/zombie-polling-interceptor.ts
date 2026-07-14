@@ -1,4 +1,5 @@
-import { isNil, JobData, PollingJobData, RenewWebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { JobData, PollingJobData, RenewWebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { triggerSourceRepo } from '../../../trigger/trigger-source/trigger-source-service'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
@@ -18,7 +19,7 @@ export const zombiePollingInterceptor: JobInterceptor = {
         if (!isNil(activeTriggerSource)) {
             return { verdict: InterceptorVerdict.ALLOW }
         }
-        log.warn({ flowVersionId }, '[zombiePollingInterceptor] No active trigger source — discarding repeat job (flow disabled, re-published, or deleted)')
+        log.warn({ flowVersion: { id: flowVersionId } }, '[zombiePollingInterceptor] No active trigger source — discarding repeat job (flow disabled, re-published, or deleted)')
         await jobQueue(log).removeRepeatingJob({ flowVersionId })
         return { verdict: InterceptorVerdict.DISCARD }
     },

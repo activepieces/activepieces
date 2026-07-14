@@ -9,6 +9,12 @@ export const acknowledgeIncident = createAction({
   name: 'acknowledge_incident',
   displayName: 'Acknowledge Incident',
   description: 'Acknowledge an existing PagerDuty incident.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets an existing PagerDuty incident to the acknowledged status, requiring the incident ID and the acting user email (From). Use to mark that someone is working on an incident. Idempotent — re-acknowledging an already-acknowledged incident leaves it in the same state.',
+    idempotent: true,
+  },
   props: {
     incidentId: incidentIdProp,
     fromEmail: fromEmailProp,

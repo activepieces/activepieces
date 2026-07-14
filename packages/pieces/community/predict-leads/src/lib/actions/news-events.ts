@@ -44,6 +44,8 @@ export const findNewsEventsByDomainAction = createAction({
   name: 'predict-leads_find_news_by_domain',
   displayName: 'List Company News Events',
   description: 'Retrieves news events by company domain',
+  audience: 'both',
+  aiMetadata: { description: 'Lists news events (buying/intent signals such as funding, acquisitions, leadership changes, office expansions, product launches) for a specific company, keyed by its domain in PredictLeads. Optional found-at date range and event categories narrow the results. Use to surface recent triggers for a known company; requires the company domain. Read-only and idempotent; supports pagination.', idempotent: true },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
@@ -103,6 +105,8 @@ export const findNewsEventByIdAction = createAction({
   name: 'predict-leads_find_news_event_by_id',
   displayName: 'Get News Event',
   description: 'Retrieves a single news event by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full details of one news event in PredictLeads by its event ID. Use when you already have a news event ID (e.g. from a list call) and want its complete record. Read-only and idempotent.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'ID',

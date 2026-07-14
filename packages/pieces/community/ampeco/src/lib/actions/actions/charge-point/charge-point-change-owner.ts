@@ -13,6 +13,8 @@ export const chargePointChangeOwnerAction = createAction({
   name: 'chargePointChangeOwner',
   displayName: 'Actions - Charge Point - Change Owner',
   description: 'Change the owner of the Charge Point.',
+  audience: 'both',
+  aiMetadata: { description: 'Reassign ownership of a personal charge point to the given user, or remove the owner when no user id is supplied. Use for transferring a home/personal charger between accounts. Setting the same owner twice yields the same end state, so it is effectively idempotent for a fixed user id.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

@@ -8,6 +8,8 @@ export const getBots = createAction({
   name: 'getBots',
   displayName: 'Get Bots',
   description: 'Retrieve all bots with optional filtering and pagination',
+  audience: 'both',
+  aiMetadata: { description: 'Lists OpenMic AI bots, with optional filters by name (partial match) and created-after/created-before date range plus limit/offset pagination. With no filters it returns all bots; supply filters to narrow the set. Use to discover bots and their UIDs. Read-only and idempotent.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Bot Name',

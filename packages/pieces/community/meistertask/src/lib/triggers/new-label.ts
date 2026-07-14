@@ -44,6 +44,9 @@ export const newLabel = createTrigger({
   name: 'new_label',
   displayName: 'New Label',
   description: 'Triggers when a label is created.',
+  aiMetadata: {
+    description: 'Fires when a new label is created in the selected MeisterTask project. Represents a newly defined tag available to apply to that project\'s tasks.',
+  },
   props: {
     project: meisterTaskCommon.project,
   },

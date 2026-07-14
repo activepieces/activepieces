@@ -10,6 +10,8 @@ export const analyzeVideo = createAction({
   displayName: 'Analyze Video',
   description:
     'Analyze a video file or URL, e.g. extract frames, detect content, etc.',
+  audience: 'both',
+  aiMetadata: { description: 'Analyze a video with VLM Run; uploads the file then runs a prediction in a chosen domain that switches the task between full transcription, various summaries (transcription, product-demo, conferencing, podcast, or general), and dashcam analytics. Choose this for transcription or content understanding of video. The domain input is required and determines the analysis performed; each call launches a new prediction job and polls until complete, so it is not idempotent.', idempotent: false },
   props: analyzeVideoProperties,
   async run({ auth: apiKey, propsValue }) {
     await propsValidation.validateZod(propsValue, analyzeVideoSchema);

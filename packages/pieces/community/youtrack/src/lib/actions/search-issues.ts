@@ -8,6 +8,8 @@ export const searchIssuesAction = createAction({
   name: 'search_issues',
   displayName: 'Search Issues',
   description: 'Searches for issues using YouTrack query syntax. Returns flat rows for spreadsheets.',
+  audience: 'both',
+  aiMetadata: { description: 'Search issues using YouTrack query syntax (e.g. #unresolved, assignee: me, Priority: Critical), optionally scoped to one project. Leave both the project and query empty to list all accessible issues, or supply filters to narrow results. Use to find issues matching criteria before acting on them. Read-only and idempotent.', idempotent: true },
   props: {
     project: Property.Dropdown({
       auth:youtrackAuth,

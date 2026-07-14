@@ -1,4 +1,5 @@
-import { apId, FileType, PrincipalType } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { FileType, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'

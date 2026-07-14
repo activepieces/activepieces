@@ -8,6 +8,10 @@ export const registrationFolderTerminated = createTrigger({
   displayName: 'Dossier de formation sort de formation',
   description:
     "Se déclenche lorsqu'un dossier de formation passe à l'état sorti de formation",
+  aiMetadata: {
+    description:
+      "Fires when a Wedof training registration folder (dossier de formation) transitions to the 'terminated' (sorti de formation) state, meaning the learner has exited the training. Emits the full folder record.",
+  },
   props: {},
   sampleData: {
     withPoleEmploi: false,

@@ -9,6 +9,11 @@ export const reconcileCredentialsBulk = createAction({
   displayName: 'Reconcile Credentials in Bulk',
   description:
     'Marks multiple accounts for automatic reconciliation by the CPM',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Flags a list of CyberArk accounts (by account ID) for automatic reconciliation by the CPM, which resets the credential on both the Vault and the target device using the reconciliation account. Use to recover accounts whose stored and device credentials have diverged. Effectively idempotent: it only marks the accounts for reconciliation rather than mutating a credential per call.',
+    idempotent: true,
+  },
   props: {
     accountIds: Property.Array({
       displayName: 'Account IDs',

@@ -1,4 +1,5 @@
-import { Permission, UncategorizedFolderId } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import { UncategorizedFolderId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -84,7 +85,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     rootTables,
     isLoading,
     expandedFolders,
-    loadingFolders,
     toggleFolder,
     loadMoreInFolder,
     rootPage,
@@ -323,7 +323,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             isLoading={isLoading}
             selectedItems={selectedItems}
             expandedFolders={expandedFolders}
-            loadingFolders={loadingFolders}
             projectMembers={projectMembers}
             folders={folders}
             selectableCount={selectableItems.length}

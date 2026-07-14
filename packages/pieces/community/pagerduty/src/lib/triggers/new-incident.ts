@@ -6,6 +6,10 @@ export const newIncident = createTrigger({
   name: 'newIncident',
   displayName: 'New Incident',
   description: 'Triggers when a new incident is created',
+  aiMetadata: {
+    description:
+      'Fires when a new incident is triggered (opened) in PagerDuty, on the incident.triggered webhook event. Represents a freshly raised incident, carrying its details, service, assignees, and urgency.',
+  },
   props: {
     instruction: instructionProp,
   },

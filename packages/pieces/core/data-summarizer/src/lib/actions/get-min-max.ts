@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
 
 export const getMinMax = createAction({
+  audience: 'human',
   name: 'getMinMax',
   displayName: 'Find Min and Max',
   description: 'Get the smallest and greatest values from a list of numeric values.',

@@ -7,6 +7,11 @@ export const createEmailMarketingCampaignAction = createAction({
   name: 'vbout_add_email_marketing_campaign',
   displayName: 'Create Email Marketing Campaign',
   description: 'Creates a new email campaign for specific list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new VBOUT email marketing campaign targeting one or more email lists, either standard or automated type. Use to set up an email send to existing recipients. Requires recipient list(s), name, subject, sender details, and message body; not idempotent, as each call creates a separate campaign.',
+    idempotent: false,
+  },
   props: {
     lists: Property.MultiSelectDropdown({
       auth: vboutAuth,

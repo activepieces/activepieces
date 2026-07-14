@@ -9,6 +9,12 @@ export const runBusinessVerificationAction = createAction({
   displayName: 'Start Business Verification',
   description:
     'Kicks off a company background check. AiPrise will run the checks defined in your template — which can include company registry lookup, ownership structure (UBO), sanctions screening, and adverse media.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a business (KYB) verification on an existing business profile by running the checks bundled in a given template (registry lookup, UBO/ownership, sanctions screening, adverse media). Use when you want to begin verifying a company you have already created or looked up a profile for. Requires a template ID and the business_profile_id. Not idempotent — each call launches a new verification session.',
+    idempotent: false,
+  },
   props: {
     template_id: Property.ShortText({
       displayName: 'Verification Template',

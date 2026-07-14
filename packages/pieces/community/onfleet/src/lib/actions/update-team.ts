@@ -9,6 +9,8 @@ export const updateTeam = createAction({
   name: 'update_team',
   displayName: 'Update Team',
   description: 'Update an existing team',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Onfleet team by team ID, changing name, worker membership, hub, or self-assignment setting. Not idempotent: it patches the live team and reassigning workers replaces the prior set. Requires a known team ID; use create-team to add a new team.', idempotent: false },
   props: {
     team: common.team,
     name: Property.ShortText({

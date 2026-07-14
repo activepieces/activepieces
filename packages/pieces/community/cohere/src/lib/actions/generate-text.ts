@@ -60,6 +60,7 @@ async function generateWithRetry(
 }
 
 export const generateText = createAction({
+  audience: 'human',
   auth: cohereAuth,
   name: 'generate_text',
   displayName: 'Generate Text',

@@ -1,4 +1,5 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowOperationStatus, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { isNil, ProjectId } from '@activepieces/core-utils'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowOperationStatus, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, PopulatedFlow, PopulatedTable, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
@@ -69,9 +70,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         },
                     })
 
-                    await Promise.all(operation.tableState.fields.map(async (field) => {
+                    for (const field of operation.tableState.fields) {
                         await fieldService.createFromState({ projectId, field, tableId: table.id })
-                    }))
+                    }
                     break
                 }
                 case TableOperationType.UPDATE_TABLE: {
@@ -88,7 +89,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         tableId: table.id,
                     })
 
-                    await Promise.all(operation.newTableState.fields.map(async (field) => {
+                    for (const field of operation.newTableState.fields) {
                         const existingField = fields.find((f) => f.externalId === field.externalId)
                         if (!isNil(existingField)) {
                             await fieldService.update({
@@ -100,7 +101,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         else {
                             await fieldService.createFromState({ projectId, field, tableId: table.id })
                         }
-                    }))
+                    }
 
                     const fieldsToDelete = fields.filter((f) => !operation.newTableState.fields.some((nf) => nf.externalId === f.externalId))
 

@@ -58,6 +58,10 @@ export const newComment = createTrigger({
   name: 'newComment',
   displayName: 'New Comment',
   description: 'Fires when a new comment is posted on a conversation in Front.',
+  aiMetadata: {
+    description:
+      'Fires when a teammate posts an internal comment on the selected Front conversation. Represents private team-only notes (not customer-facing replies) and emits the comment event with its body, author, and parent conversation, enabling an agent to react to internal discussion on a thread.',
+  },
   props,
   sampleData: {
     _links: {

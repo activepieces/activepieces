@@ -8,6 +8,12 @@ export const getPersonPaths = createAction({
   displayName: 'Get Person Paths',
   description:
     'Find introduction paths to reach a specific person through your professional network. Provide a LinkedIn URL and get back direct connections, mutual contacts, and connection strength scores (0-100).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only lookup of warm-introduction paths to one person via your network, identified by their LinkedIn URL (or a generic url to auto-detect; supply exactly one). Use for a single target; for many targets at once use Get Person Paths (Bulk). Pure query, safe to retry.',
+    idempotent: true,
+  },
   props: {
     linkedin_url: Property.ShortText({
       displayName: 'LinkedIn URL',

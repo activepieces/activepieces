@@ -8,6 +8,12 @@ export const createRecipient = createAction({
   name: 'create_recipient',
   displayName: 'Create Recipient',
   description: 'Creates a recipient',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new Onfleet recipient with a name and a unique valid phone number, plus optional notes and SMS/phone-validation settings. Not idempotent: each call creates a recipient, and Onfleet rejects a phone number already in use. Use Update Recipient to change an existing one.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

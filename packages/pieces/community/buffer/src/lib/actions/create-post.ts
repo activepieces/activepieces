@@ -45,6 +45,12 @@ export const createPost = createAction({
   displayName: 'Create Post',
   description:
     'Create a post in Buffer and add it to the queue, share it next, share it now, or schedule it for a custom time.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a social media post in Buffer for one or more channels, where the share mode controls timing: add to the channel queue, share next (skip the queue), share now, or schedule for a custom time. Choose it to draft or publish content to connected social accounts. A custom-scheduled post requires the scheduled time; posting to multiple channels creates a separate post per channel. Not idempotent — each call creates new posts.',
+    idempotent: false,
+  },
   props: {
     organizationId: bufferProps.organizationId(),
     channelIds: bufferProps.channelIds(true),

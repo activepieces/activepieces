@@ -3,7 +3,7 @@ import {
   PieceAuth,
   Property
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createUser } from './lib/actions/create-user';
 import { updateUser } from './lib/actions/update-user';
 import { deleteUser } from './lib/actions/delete-user';

@@ -7,6 +7,8 @@ export const deleteRecord = createAction({
   name: 'deleteRecord',
   displayName: 'Delete Record',
   description: 'Deletes a single record from a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes one record from a PocketBase collection by its record ID. Use when you need to remove a specific record you can identify by ID. Idempotent on the end state — the record ends up absent — though a repeat call against an already-deleted ID will error since the record no longer exists.', idempotent: true },
   auth: pocketbaseAuth,
   props: {
     collection: Property.ShortText({

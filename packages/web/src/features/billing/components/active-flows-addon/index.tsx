@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   PRICE_PER_EXTRA_ACTIVE_FLOWS,
   ApEdition,
   ApFlagId,
-  isNil,
   PlanName,
   PlatformBillingInformation,
 } from '@activepieces/shared';

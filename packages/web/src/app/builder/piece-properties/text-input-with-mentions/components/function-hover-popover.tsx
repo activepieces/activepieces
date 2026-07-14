@@ -1,4 +1,4 @@
-import { AP_FUNCTIONS } from '@activepieces/shared';
+import { AP_FUNCTIONS } from '@activepieces/core-formula';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';

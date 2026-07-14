@@ -8,6 +8,12 @@ export const leaveGroup = createAction({
   displayName: 'Leave Group',
   description:
     'Leave a group you are a member of. If you are the last member, the group is deleted. Admins must remove all other members before leaving.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Remove yourself from a group by group_id, a state-changing write that revokes your access to its shared network; if you are the last member the group is deleted entirely. Admins must remove all other members before they can leave. Find the group_id via List Groups.',
+    idempotent: false,
+  },
   props: {
     group_id: Property.ShortText({
       displayName: 'Group ID',

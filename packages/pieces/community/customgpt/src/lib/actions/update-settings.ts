@@ -9,6 +9,12 @@ export const updateSettings = createAction({
   name: 'update_settings',
   displayName: 'Update Agent Settings',
   description: 'Update agent configuration and behavior settings',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates the chatbot UI and behavior settings of an existing CustomGPT agent identified by its project id, covering the default prompt, response source, colors, avatar and background images, persona, citation and feedback options, default model, branding, reCAPTCHA, and selling toggles. Use to customize an agent\'s appearance and conversational behavior; only the fields you provide are changed. Treat as not idempotent: it can re-upload avatar/background image files on each call.',
+    idempotent: false,
+  },
   props: {
     project_id: projectId,
     default_prompt: Property.ShortText({

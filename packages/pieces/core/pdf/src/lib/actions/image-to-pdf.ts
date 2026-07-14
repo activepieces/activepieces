@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument, PDFImage, RotationTypes, PageSizes } from 'pdf-lib';
 
 export const imageToPdf = createAction({
+  audience: 'human',
 	name: 'imageToPdf',
 	displayName: 'Image to PDF',
 	description: 'Convert image to PDF',

@@ -7,6 +7,9 @@ export const campaignCompleted = createTrigger({
   name: 'campaign_completed',
   displayName: 'Campaign Completed',
   description: 'Triggers when a campaign is completed',
+  aiMetadata: {
+    description: 'Fires when a campaign finishes (all steps have been delivered to its prospects). Represents a campaign-level completion event and includes the campaign id and name.',
+  },
   props: {},
   sampleData: {
     method: 'campaign_completed',

@@ -12,6 +12,8 @@ export const searchEmails = createAction({
   name: 'search_emails',
   displayName: 'Search Emails',
   description: 'Search emails across inboxes using full-text search and optional filters. Rate limited to 30 requests/minute.',
+  audience: 'both',
+  aiMetadata: { description: 'Full-text searches emails across all inboxes (or a single inbox if one is given), matching against subjects, senders, and body previews. Use to find messages by content when the email id is unknown; optionally filter by direction, sender, or attachment presence and cap results (1-50). Requires a non-empty query string and is rate limited to 30 requests/minute. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

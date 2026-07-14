@@ -104,6 +104,9 @@ export const newRow = createTrigger({
   name: 'new-row',
   displayName: 'New Row',
   description: 'Triggers when a new row is added to the defined table.',
+  aiMetadata: {
+    description: 'Fires when a new row appears in the selected SurrealDB table. New rows are detected by polling and ordering on a chosen column (typically a created-at timestamp), so the table must have a reliable monotonic order-by field for detection to work correctly.',
+  },
   props: {
     description: Property.MarkDown({
       value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached. It's suggested to add a created_at timestamp. \`DEFINE FIELD OVERWRITE createdAt ON schedule VALUE time::now() READONLY;\``,

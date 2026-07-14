@@ -10,6 +10,8 @@ export const createClient = createAction({
   name: 'create_client',
   displayName: 'Create Client',
   description: 'Creates a new client in InvoiceNinja.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new client record in Invoice Ninja with a primary contact, requiring business name, contact email, address line 1, and city; other contact and address fields are optional. Not idempotent — each call creates a new client even if one with the same details already exists.', idempotent: false },
 
   props: {
     client_first_name: Property.LongText({

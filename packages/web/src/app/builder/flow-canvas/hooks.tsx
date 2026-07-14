@@ -1,7 +1,6 @@
+import { Permission, isNil } from '@activepieces/core-utils';
 import {
   FlowRunStatus,
-  Permission,
-  isNil,
   WebsocketClientEvent,
   RunEnvironment,
   isFlowRunStateTerminal,
@@ -15,6 +14,7 @@ import { useDebouncedCallback } from 'use-debounce';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -121,6 +121,10 @@ export const useSwitchToDraft = () => {
         clearRun(userHasPermissionToEditFlow);
         socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
       },
+      // surface the failure instead of silently keeping a stale draft, which
+      // matters most on the lock take-over path where the refresh replaces a
+      // full-page reload
+      onError: () => internalErrorToast(),
     });
   return {
     switchToDraft,

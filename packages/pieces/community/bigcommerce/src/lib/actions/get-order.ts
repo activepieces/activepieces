@@ -7,6 +7,12 @@ export const getOrder = createAction({
   name: 'getOrder',
   displayName: 'Get Order',
   description: 'Gets details of an order',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the full details of a single BigCommerce order by its orderId. Use when you already have an order id (e.g. from an order trigger or List Orders) and need its data. Idempotent read-only lookup with no side effects.',
+    idempotent: true,
+  },
   props: {
     orderId: Property.ShortText({
       displayName: 'Order ID',

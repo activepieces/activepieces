@@ -21,6 +21,9 @@ export const newGroupTrigger = createTrigger({
   name: 'new_group',
   displayName: 'New Group',
   description: 'Triggers when a new group is created in Microsoft Entra ID.',
+  aiMetadata: {
+    description: 'Fires when a new group (security or Microsoft 365) is created in the Microsoft Entra ID (Azure AD) directory, detected by polling the Microsoft Graph groups delta endpoint. Each event represents one newly created group with its display name, mail settings, visibility, and creation timestamp; updates to existing groups do not re-fire it.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

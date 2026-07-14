@@ -8,6 +8,8 @@ export const fetch = createAction({
   name: 'fetch',
   displayName: 'Fetch Webpage',
   description: 'Fetch a webpage and convert it to markdown format. Optionally render JavaScript, include raw HTML, or extract images.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single webpage by URL through Linkup and returns its content as markdown. Use it to read the contents of a specific known page (not to search for pages). Optionally render JavaScript before fetching, include the raw HTML, or extract images. Read-only and idempotent.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'URL',

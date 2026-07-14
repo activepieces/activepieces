@@ -6,6 +6,12 @@ export const createProduct = createAction({
   name: 'createProduct',
   displayName: 'Create Product',
   description: 'Creates a new product in the CRM',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Imports a product into the Sperse/Upgrade.chat CRM catalog (General, Event, Subscription, or Digital type) with pricing, currency, unit, payment cycle, and subscription-fee options. Choose this to set up a sellable product before invoicing or subscribing contacts to it. Requires Product Type, Product Name, and SKU (the unique product code); price, unit, and cycle fields are required only for certain product types. The import is keyed on the SKU, so re-running with the same SKU updates that product rather than creating a duplicate.',
+    idempotent: true,
+  },
   auth: upgradechatAuth,
   props: {
     productType: Property.StaticDropdown({

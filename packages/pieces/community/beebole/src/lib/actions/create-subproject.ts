@@ -18,6 +18,11 @@ export const createSubprojectAction = createAction({
   name: 'create_subproject',
   displayName: 'Create Subproject',
   description: 'Creates a new subproject under an existing project in Beebole.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a subproject inside an existing project (under its company) in Beebole. Use to break a project into work streams that time can be logged against. Not idempotent: each call creates a new subproject even with the same name.',
+    idempotent: false,
+  },
   props: {
     company: beeboleProps.companyDropdown({
       required: true,

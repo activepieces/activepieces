@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
@@ -52,7 +52,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
         const flowExists = await flowRepo().existsBy({ id: flow.id })
         if (!flowExists) {
-            log.info({ flowId: flow.id }, '[deleteFlowHandler] Flow already deleted, skipping')
+            log.info({ flow: { id: flow.id } }, '[deleteFlowHandler] Flow already deleted, skipping')
             return
         }
 

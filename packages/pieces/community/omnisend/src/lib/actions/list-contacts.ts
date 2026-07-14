@@ -8,6 +8,12 @@ export const listContactsAction = createAction({
   name: 'list_contacts',
   displayName: 'List Contacts',
   description: 'Retrieve a paginated list of contacts from Omnisend.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List contacts from Omnisend with limit/offset pagination. Leave the email filter empty to browse all contacts, or set it to look up a specific contact by email address (use this rather than Get Contact when you only have an email, not a contact ID). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

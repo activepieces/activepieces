@@ -1,4 +1,5 @@
-import { apId, DefaultProjectRole, Principal, SigningKeyId } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { DefaultProjectRole, Principal, SigningKeyId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
 import {
@@ -89,16 +90,19 @@ CEri0OurQ6fh4y87TK4JFbSTPEDkrPh4STPH7TtroBM/rn7Zj4+1Ur1RlgI=
 export const generateMockExternalToken = (
     params?: Partial<GenerateMockExternalTokenParams>,
 ): GenerateMockExternalTokenReturn => {
-    const mockExternalTokenPayload: ExternalTokenPayload = {
+    const commonPayload = {
         externalUserId: params?.externalUserId ?? apId(),
         role: params?.projectRole as DefaultProjectRole ?? DefaultProjectRole.ADMIN,
         externalProjectId: params?.externalProjectId ?? apId(),
         firstName: params?.externalFirstName ?? faker.person.firstName(),
-        pieces: params?.pieces ?? undefined,
         lastName: params?.externalLastName ?? faker.person.lastName(),
         concurrencyPoolKey: params?.concurrencyPoolKey,
         concurrencyPoolLimit: params?.concurrencyPoolLimit,
     }
+
+    const mockExternalTokenPayload: ExternalTokenPayload = isNil(params?.pieceSetKey)
+        ? { ...commonPayload, pieces: params?.pieces ?? undefined }
+        : { ...commonPayload, version: 'v4', pieceSet: params.pieceSetKey }
 
     const algorithm = 'RS256'
     const key = params?.privateKey ?? MOCK_SIGNING_KEY_PRIVATE_KEY

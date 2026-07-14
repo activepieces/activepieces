@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
-import { HttpStatusCode } from 'axios';
 
 export const githubFindUserAction = createAction({
   auth: githubAuth,
@@ -38,7 +37,7 @@ export const githubFindUserAction = createAction({
       };
     } catch (e) {
       const status = (e as HttpError).response.status;
-      if (status === HttpStatusCode.NotFound) {
+      if (status === 404) {
         return {
           found: false,
           result: {},

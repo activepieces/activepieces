@@ -8,6 +8,10 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: '',
+  aiMetadata: {
+    description:
+      'Fires when a new lead is captured in Luxury Presence, representing a prospective client (buyer or seller) who submitted an inquiry or contact form on the agent or brokerage website. The payload contains the newly created lead record from the Luxury Presence CRM.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

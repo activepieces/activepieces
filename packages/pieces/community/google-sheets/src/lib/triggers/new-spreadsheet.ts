@@ -7,9 +7,10 @@ import { googleSheetsAuth } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import { google, drive_v3 } from 'googleapis';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { includeTeamDrivesProp } from '../common/props';
 import { createGoogleClient, GoogleSheetsAuthValue } from '../common/common';
+import { newSpreadsheetTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
 	includeTeamDrives?: boolean;
@@ -24,7 +25,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleSheetsAuth
 			q.push(`createdTime > '${dayjs(lastFetchEpochMS).toISOString()}'`);
 		}
 		const authClient = await createGoogleClient(authValue);
-		const drive = google.drive({ version: 'v3', auth: authClient });
+		const drive = googleDrive({ version: 'v3', auth: authClient });
 		let nextPageToken;
 		const items = [];
 		do {
@@ -63,6 +64,7 @@ export const newSpreadsheetTrigger = createTrigger({
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
 	},
+	outputSchema: newSpreadsheetTriggerOutputSchema,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {
 			auth: context.auth,

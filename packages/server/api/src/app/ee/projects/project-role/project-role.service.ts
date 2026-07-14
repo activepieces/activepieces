@@ -1,4 +1,5 @@
-import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { CreateProjectRoleRequestBody } from '@activepieces/shared'
 import { Brackets, Equal } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'

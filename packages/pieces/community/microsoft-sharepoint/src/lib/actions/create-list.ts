@@ -10,6 +10,11 @@ export const createListAction = createAction({
   name: 'microsoft_sharepoint_create_list',
   displayName: 'Create List',
   description: 'Creates a new list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new SharePoint list (with a display name and description) on a given site. Use when an agent needs a fresh list to hold structured items. Not idempotent: each call creates another list even if one with the same name already exists.',
+    idempotent: false,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     displayName: Property.ShortText({

@@ -1,4 +1,5 @@
-import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ApiToWorkerContract, createNotifyClient, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -11,6 +12,8 @@ export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.W
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<Record<WebsocketServerEvent, WebsocketListener<any, PR>>>
 
+const WORKERS_ROOM = 'WORKERS'
+
 const listener = {
     [PrincipalType.USER]: {} as ListenerMap<PrincipalType.USER>,
     [PrincipalType.WORKER]: {} as ListenerMap<PrincipalType.WORKER>,
@@ -18,6 +21,7 @@ const listener = {
 
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
+    notifyWorkers: () => createNotifyClient<ApiToWorkerContract>(app!.io.to(WORKERS_ROOM)),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
         const principal = await websocketService.verifyPrincipal(socket)
         const type = principal.type
@@ -32,8 +36,8 @@ export const websocketService = {
                 await validateProjectId({ userId: principal.id, projectId, log })
                 log.info({
                     message: 'User connected',
-                    userId: principal.id,
-                    projectId,
+                    user: { id: principal.id },
+                    project: { id: projectId },
                 })
                 await socket.join(projectId)
                 await socket.join(principal.id)
@@ -43,9 +47,10 @@ export const websocketService = {
                 const workerId = socket.handshake.auth.workerId
                 log.info({
                     message: 'Worker connected',
-                    workerId,
+                    worker: { id: workerId },
                 })
                 await socket.join(workerId)
+                await socket.join(WORKERS_ROOM)
                 break
             }
             default: {
@@ -58,17 +63,10 @@ export const websocketService = {
             }
         }
         for (const [event, handler] of Object.entries(listener[castedType])) {
-            socket.on(event, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log))
-        }
-        for (const handler of Object.values(listener[castedType][WebsocketServerEvent.CONNECT] ?? {})) {
-            handler(socket)
-        }
-    },
-    async onDisconnect(socket: Socket): Promise<void> {
-        const principal = await websocketService.verifyPrincipal(socket)
-        const castedType = principal.type as keyof typeof listener
-        for (const handler of Object.values(listener[castedType][WebsocketServerEvent.DISCONNECT] ?? {})) {
-            handler(socket)
+            // Socket.IO emits the reserved lowercase 'disconnect' per-socket; map our DISCONNECT enum
+            // onto it or the handler never fires (it never did — worker cleanup relied on the 60s sweep).
+            const socketEvent = event === WebsocketServerEvent.DISCONNECT ? 'disconnect' : event
+            socket.on(socketEvent, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log))
         }
     },
     async verifyPrincipal(socket: Socket): Promise<Principal> {

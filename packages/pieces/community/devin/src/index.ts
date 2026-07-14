@@ -1,6 +1,6 @@
 
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createSession } from './lib/actions/create-session';
 import { getSessionDetails } from './lib/actions/get-session-details';
 import { sendMessage } from './lib/actions/send-message';

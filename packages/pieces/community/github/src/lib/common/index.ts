@@ -7,7 +7,7 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubAuthHelpers, GithubAuthValue, isAppAuth } from './auth-helpers';
 

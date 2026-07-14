@@ -21,6 +21,8 @@ export const updateObjectiveAction = createAction({
   name: 'update_objective',
   displayName: 'Update Objective',
   description: 'Updates the description of an existing OKR objective in Weekdone.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates the description text of an existing Weekdone OKR objective identified by its objective ID. Use to rename or reword a known objective; the objective ID and new description are required (level/quarter filters only help locate the objective and are not changed). Idempotent — re-sending the same description leaves the objective in the same state.', idempotent: true },
   props: {
     search_type: Property.StaticDropdown({
       displayName: 'Filter by Level',

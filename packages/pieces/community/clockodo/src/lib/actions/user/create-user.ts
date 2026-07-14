@@ -7,6 +7,8 @@ export default createAction({
   name: 'create_user',
   displayName: 'Create User',
   description: 'Creates a user in clockodo',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new clockodo user with required name, email, and role, plus optional team, language, wage type, and permissions. Not idempotent: each call adds another user even with the same email, so guard against duplicates. To change an existing user use Update User.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

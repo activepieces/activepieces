@@ -8,6 +8,12 @@ export const searchContacts = createAction({
   name: 'searchContacts',
   displayName: 'Search Contacts',
   description: 'Look up contacts by ID or email',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up contacts within a ClickFunnels workspace by a single search term, which is auto-detected as an email address (filters on email) when it contains "@", or otherwise as a contact ID. Use to resolve a contact record or its ID before another action. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

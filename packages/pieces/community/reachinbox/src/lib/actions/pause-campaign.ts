@@ -14,6 +14,12 @@ export const pauseCampaign = createAction({
   name: 'pauseCampaign',
   displayName: 'Pause Campaign',
   description: 'Pause a selected campaign.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Pauses a running ReachInbox campaign, identified by its campaign id, halting further sends. Use to temporarily stop outreach for a campaign. Idempotent: pausing an already-paused campaign leaves it paused.',
+    idempotent: true,
+  },
   props: {
     campaignId: Property.Dropdown({
   auth: ReachinboxAuth,

@@ -13,6 +13,12 @@ export const removeSubscribeAction = createAction({
   displayName: 'Remove Subscriber',
   description:
     'Removes a subscriber from a list',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes a contact\'s membership from a specific Acumbamail subscriber list by email, fully removing them from that list (unlike Unsubscribe Subscriber, which only marks them opted-out while keeping the record). Use to purge a contact from a list; requires the list id and the email. Idempotent: once removed, repeating the call leaves the contact absent from the list.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

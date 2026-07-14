@@ -6,13 +6,15 @@ import {
 } from '@activepieces/pieces-common';
 import { callHarvestApi, filterDynamicFields } from '../common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const getEstimates = createAction({
   name: 'get_estimates', // Must be a unique across the piece, this shouldn't be changed.
   auth: harvestAuth,
   displayName: 'Get Estimates',
   description: 'Fetches Estimates',
+  audience: 'both',
+  aiMetadata: { description: 'Lists estimates (quotes) from a Harvest account; with all filters empty it returns every estimate, or narrow by issue-date range, state (draft/open/accepted/declined), client ID, or updated-since timestamp. Use to review or look up quote records. Read-only and idempotent.', idempotent: true },
   props: {
     from: Property.ShortText({
       description: 'Only return estimates with an issue_date on or after the given date. (YYYY-MM-DD)',
@@ -54,14 +56,7 @@ export const getEstimates = createAction({
   async run(context) {
     // Validate the input properties using Zod
     await propsValidation.validateZod(context.propsValue, {
-      per_page: z
-      .string()
-      .optional()
-      .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
-      .refine(
-        (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
-        'Per Page must be a number between 1 and 2000.'
-      ),
+      per_page: z.pipe(z.optional(z.string()), z.transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))).check(z.refine((val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000), 'Per Page must be a number between 1 and 2000.')),
     });
 
     const params = filterDynamicFields(context.propsValue);

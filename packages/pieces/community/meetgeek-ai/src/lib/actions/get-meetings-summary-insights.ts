@@ -9,6 +9,11 @@ export const getMeetingsSummaryInsights = createAction({
   name: 'getMeetingsSummaryInsights',
   displayName: 'Get Meeting Summary & AI Insights',
   description: 'Retrieves the meeting summary and AI-generated insights',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch the AI-generated summary and insights for a single MeetGeek meeting by its meeting ID. Use to get a condensed overview rather than the full transcript. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     meetingId: meetingIdDropdwon,
   },

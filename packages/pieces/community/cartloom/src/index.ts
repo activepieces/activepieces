@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createDiscountAction } from './lib/actions/create-discount';
 import { getDiscountAction } from './lib/actions/get-discount';
 import { getAllDiscountsAction } from './lib/actions/get-discounts';

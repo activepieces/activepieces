@@ -7,6 +7,9 @@ export const orderRefundedTrigger = createTrigger({
   name: 'order_refunded',
   displayName: 'Order Refunded',
   description: 'Triggers when a full or partial refund is made on an order',
+  aiMetadata: {
+    description: 'Fires when an order in Lemon Squeezy is refunded, either fully or partially. Represents the updated order with its refunded amount and refunded status.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

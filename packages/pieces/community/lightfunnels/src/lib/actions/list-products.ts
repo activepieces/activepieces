@@ -7,6 +7,8 @@ export const listProducts = createAction({
   name: 'list_products',
   displayName: 'List Products',
   description: 'Retrieve a list of all products',
+  audience: 'both',
+  aiMetadata: { description: 'Lists products in a Lightfunnels store, with optional pagination (limit/cursor) and a Lightfunnels query string to filter, sort, and scope results (e.g. "order_by:id order_dir:desc"); an empty query returns all products in default order. Use to browse the catalog or find products by criteria. Read-only and idempotent.', idempotent: true },
   props: {
     first: Property.Number({
       displayName: 'Limit',

@@ -16,9 +16,10 @@ import {
   XaiResponse,
   AskGrokResult
 } from '../common/utils';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const askGrok = createAction({
+  audience: 'human',
   auth: grokAuth,
   name: 'ask_grok',
   displayName: 'Ask Grok',
@@ -205,10 +206,10 @@ export const askGrok = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      maxCompletionTokens: z.number().min(1).optional(),
-      maxSearchResults: z.number().min(1).max(30).optional(),
-      memoryKey: z.string().max(128).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      maxCompletionTokens: z.optional(z.number().check(z.minimum(1))),
+      maxSearchResults: z.optional(z.number().check(z.minimum(1), z.maximum(30))),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
 
     const {

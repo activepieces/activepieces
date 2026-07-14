@@ -7,6 +7,9 @@ export const subscriptionExpiredTrigger = createTrigger({
   name: 'subscription_expired',
   displayName: 'Subscription Expired',
   description: 'Triggers when a subscription has ended after being previously cancelled',
+  aiMetadata: {
+    description: 'Fires when a subscription in Lemon Squeezy reaches the end of its term and expires (typically after being cancelled). Represents the subscription in its expired state, marking the end of access.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

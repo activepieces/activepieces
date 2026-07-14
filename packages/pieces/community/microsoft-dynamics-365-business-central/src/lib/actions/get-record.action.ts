@@ -9,6 +9,12 @@ export const getRecordAction = createAction({
   name: 'get-record',
   displayName: 'Get Record',
   description: `Retrieves the details of a record by it's ID.`,
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single record of a chosen entity type from a Microsoft Dynamics 365 Business Central company by its exact record id. Use when you already know the id and want one record; to find records by criteria use Search Records instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     company_id: commonProps.company_id,
     record_type: Property.StaticDropdown({

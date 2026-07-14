@@ -4,13 +4,18 @@ import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const pageQueryAction = createAction({
 	name: 'page-query',
 	auth: airtopAuth,
 	displayName: 'Page Query',
 	description: 'Query a page to extract data or ask a question given the data on the page.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Uses AI to answer a natural-language prompt about the content of a session window\'s current page, optionally constrained to a JSON output schema and able to follow pagination/scroll to load more content. Use this to extract structured data or ask a question about what is on the page; requires session id, window id, and a prompt. Read-only and idempotent: it analyzes page content without changing it.',
+		idempotent: true,
+	},
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,
@@ -87,9 +92,9 @@ export const pageQueryAction = createAction({
 		} = propsValue;
 
 		await propsValidation.validateZod(propsValue, {
-			costThresholdCredits: z.number().min(0).optional(),
-			timeThresholdSeconds: z.number().min(0).optional(),
-			outputSchema: z.string().refine((val) => {
+			costThresholdCredits: z.optional(z.number().check(z.minimum(0))),
+			timeThresholdSeconds: z.optional(z.number().check(z.minimum(0))),
+			outputSchema: z.optional(z.string().check(z.refine((val) => {
 				if (!val) return true;
 				try {
 					JSON.parse(val);
@@ -97,7 +102,7 @@ export const pageQueryAction = createAction({
 				} catch {
 					return false;
 				}
-			}, { message: 'Must be valid JSON format' }).optional(),
+			}, { message: 'Must be valid JSON format' }))),
 		});
 
 		const configuration: Record<string, any> = {};

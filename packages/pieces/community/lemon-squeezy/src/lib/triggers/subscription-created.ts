@@ -7,6 +7,9 @@ export const subscriptionCreatedTrigger = createTrigger({
   name: 'subscription_created',
   displayName: 'Subscription Created',
   description: 'Triggers when a new subscription is successfully created',
+  aiMetadata: {
+    description: 'Fires when a new subscription is created in Lemon Squeezy (a customer subscribes to a recurring plan). Represents the new subscription record, including customer, product/variant, status, and renewal dates.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

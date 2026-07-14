@@ -20,6 +20,11 @@ export const retrievePrivateSSHKey = createAction({
   displayName: 'Retrieve Private SSH Key',
   description:
     'Retrieves a private SSH key file from an existing account identified by its Account ID',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the private SSH key secret of a stored CyberArk account by its account ID, optionally for a specific version and with an audit reason/ticket reference. Use to fetch an SSH private key for downstream use; the retrieval does not alter the stored key, so repeating it returns the same value (logged for audit each time).',
+    idempotent: true,
+  },
   props: {
     accountId: accountIdDropdown,
     reason: Property.ShortText({

@@ -5,7 +5,7 @@ import { modelDropdown } from '../common/props';
 import { BASE_URL } from '../common/client';
 import FormData from 'form-data';
 import { randomBytes } from 'node:crypto';
-import { kebabCase } from '@activepieces/shared';
+import { kebabCase } from '@activepieces/pieces-framework';
 
 interface ImageItem {
   image: ApFile;
@@ -16,6 +16,7 @@ interface MaskItem {
 }
 
 export const imageToImage = createAction({
+  audience: 'human',
   auth: imageRouterAuth,
   name: 'imageToImage',
   displayName: 'Image to Image',

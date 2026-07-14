@@ -11,6 +11,12 @@ export const updateEnvelope = createAction({
   displayName: 'Update Signing Request',
   description:
     'Send a draft, cancel, resend reminders, or edit the subject line on a signing request.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Modifies an existing DocuSign envelope by its ID, performing one of several operations selected via the operation input: send a draft (status to sent), void/cancel an in-progress envelope (requires a void reason), resend the signing email to recipients, or update the email subject and message. Use to advance, cancel, or amend an envelope you already created; requires the account ID and envelope ID. Not idempotent — operations like resend and void mutate state or send new emails on each call.',
+    idempotent: false,
+  },
   props: {
     accountId: Property.ShortText({
       displayName: 'Account ID',

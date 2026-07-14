@@ -10,6 +10,7 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   CommandDialog,
   CommandGroup,
@@ -225,8 +226,13 @@ export function GlobalSearchProvider({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const { embedState } = useEmbedding();
+  const { hideGlobalSearch } = embedState;
 
   useEffect(() => {
+    if (hideGlobalSearch) {
+      return;
+    }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -235,12 +241,14 @@ export function GlobalSearchProvider({
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [hideGlobalSearch]);
 
   return (
     <GlobalSearchContext.Provider value={{ open, setOpen }}>
       {children}
-      <GlobalSearchDialogContent open={open} onOpenChange={setOpen} />
+      {!hideGlobalSearch && (
+        <GlobalSearchDialogContent open={open} onOpenChange={setOpen} />
+      )}
     </GlobalSearchContext.Provider>
   );
 }

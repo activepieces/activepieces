@@ -10,6 +10,12 @@ export const getPrintJobAction = createAction({
   displayName: 'Get Print Job',
   description:
     'Fetch a single print job\'s full record by its UID — timeline, pictures, spools used, gcode analysis, filament data, cost, AI inference, custom fields, etc.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches one completed print job\'s full detail record by its print-job UID. Use to drill into a specific job after finding it via "List Print History" or a webhook; an optional flag also returns the custom-field schema alongside values. Requires the UID string (not a numeric ID). Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     jobUid: Property.ShortText({
       displayName: 'Job UID',

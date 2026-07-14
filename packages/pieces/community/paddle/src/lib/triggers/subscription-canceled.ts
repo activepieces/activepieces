@@ -8,6 +8,10 @@ export const subscriptionCanceled = createTrigger({
   name: 'subscriptionCanceled',
   displayName: 'Subscription Canceled',
   description: 'Triggers when a subscription is canceled — revoke access or notify support.',
+  aiMetadata: {
+    description:
+      'Fires on the Paddle subscription.canceled event, when a subscription is canceled and its cancellation takes effect. Represents the end of a recurring subscription, useful for revoking access or notifying support.',
+  },
   props: {},
   sampleData: {
     event_id: 'evt_01abc124',

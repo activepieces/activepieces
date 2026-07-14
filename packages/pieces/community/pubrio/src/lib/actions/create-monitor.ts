@@ -8,6 +8,12 @@ export const createMonitor = createAction({
   name: 'create_monitor',
   displayName: 'Create Monitor',
   description: 'Create a new signal monitor for jobs, news, or advertisements',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new signal monitor that watches selected companies for jobs, news, and/or advertisement signals and delivers matches to a webhook, email, or sequence. Not idempotent: each call creates a separate monitor, so calling twice yields duplicates. Use to set up ongoing monitoring; to change an existing monitor use Update Monitor.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

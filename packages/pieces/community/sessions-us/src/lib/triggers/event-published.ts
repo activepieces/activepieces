@@ -7,6 +7,9 @@ export const eventPublished = createSessionsUsWebhookTrigger({
   name: 'event_published',
   displayName: 'Event Published',
   description: 'Triggered when an event is published.',
+  aiMetadata: {
+    description: 'Fires when an event goes from draft to published, meaning it is now live and open for registration. The payload includes the underlying session, the event id and slug, and the owning participant.',
+  },
   trigger: SessionsUsWebhookTrigger.EVENT_PUBLISHED,
   storeKey: 'sessions_event_published_trigger',
   sampleData: {

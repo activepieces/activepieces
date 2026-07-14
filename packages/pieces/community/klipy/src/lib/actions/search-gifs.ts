@@ -7,6 +7,8 @@ export const searchGifsAction = createAction({
   name: 'search_gifs',
   displayName: 'Search GIFs',
   description: 'Search and retrieve GIFs from KLIPY\'s database by keyword or phrase.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches KLIPY\'s GIF library and returns a paginated set of matching GIFs. Use when an agent needs to find GIFs for a topic; leave the search keyword empty to browse trending GIFs instead of filtering to a query. Read-only and idempotent (same input returns the same page). Tune results with paging, locale, content-safety filter, and format filter.', idempotent: true },
   props: {
     q: Property.ShortText({
       displayName: 'Search Keyword',

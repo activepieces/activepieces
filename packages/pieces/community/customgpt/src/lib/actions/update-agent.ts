@@ -9,6 +9,12 @@ export const updateAgent = createAction({
   name: 'update_agent',
   displayName: 'Update Agent',
   description: 'Update an existing agent with specific details',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing CustomGPT agent identified by its project id, changing fields such as the agent name, sharing/public visibility, sitemap source, OCR, anonymization, license, and data-retention options, or attaching a file. Use to reconfigure an already-created agent; only the fields you provide are changed. Treat as not idempotent: it can re-upload an attached file and re-trigger sitemap crawling on each call.',
+    idempotent: false,
+  },
   props: {
     project_id: projectId,
     project_name: Property.ShortText({

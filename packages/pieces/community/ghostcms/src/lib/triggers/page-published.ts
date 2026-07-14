@@ -8,6 +8,9 @@ export const pagePublished = createTrigger({
   name: 'page_published',
   displayName: 'Page Published',
   description: 'Triggers when a page is published',
+  aiMetadata: {
+    description: 'Fires when a page is published in the Ghost publication (page.published), i.e. a page transitions to published status. Payload carries the published page record.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

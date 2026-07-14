@@ -14,6 +14,8 @@ export const chargePointResetSecurityProfileAction = createAction({
   name: 'chargePointResetSecurityProfile',
   displayName: 'Actions - Charge Point - Reset Security Profile',
   description: 'Reset the current security profile of the charge point in the backend. The next time the charge point connects, the backend will accept the connection and update the current security profile with the one that the charge point actually used to establish the connection.',
+  audience: 'both',
+  aiMetadata: { description: 'Clear the backend-stored OCPP security profile for a charge point so the next connection is accepted and the profile is re-learned from the actual connection used. Use to recover when a station can no longer connect because its security profile drifted from what the backend expects. Resetting an already-reset profile is effectively a no-op, so it is safe to retry.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

@@ -9,6 +9,12 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Create a new invoice in MoonInvoice',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new invoice for a contact under a MoonInvoice company, optionally as a recurring invoice on a chosen interval. Use when billing a customer. Requires the company, contact, an invoice number, an entry date, and a due date; payment methods and line items (products and tasks) are supplied as JSON arrays. Not idempotent — each call creates a new invoice regardless of the invoice number.',
+    idempotent: false,
+  },
   props: {
     companyId: companyIdProp,
     contactId: contactIdProp  ,

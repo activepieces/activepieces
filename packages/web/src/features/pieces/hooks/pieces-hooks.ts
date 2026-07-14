@@ -1,3 +1,4 @@
+import { LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -9,7 +10,6 @@ import {
   ApEdition,
   FlowActionType,
   flowPieceUtil,
-  LocalesEnum,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
   FlowTriggerType,
@@ -17,7 +17,12 @@ import {
   ApEnvironment,
   TelemetryEventName,
 } from '@activepieces/shared';
-import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQueries,
+  useQuery,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +44,7 @@ import {
   usePieceSelectorTabs,
 } from '../stores/piece-selector-tabs-provider';
 import { pieceSearchUtils } from '../utils/piece-search-utils';
+import { pieceSelectorCustomization } from '../utils/piece-selector-customization';
 
 import { stepsHooks } from './steps-hooks';
 
@@ -71,8 +77,8 @@ type UseMultiplePiecesProps = {
 type UsePiecesProps = {
   searchQuery?: string;
   includeHidden?: boolean;
-  includeTags?: boolean;
   isTableQuery?: boolean;
+  skipProjectFilter?: boolean;
 };
 type UsePiecesSearchProps = {
   searchQuery: string;
@@ -85,7 +91,7 @@ export const piecesHooks = {
   usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version],
+      queryKey: ['piece', name, version, i18n.language],
       queryFn: () =>
         piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
       staleTime: Infinity,
@@ -95,6 +101,7 @@ export const piecesHooks = {
       pieceModel: query.data,
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
+      isError: query.isError,
       refetch: query.refetch,
     };
   },
@@ -122,7 +129,7 @@ export const piecesHooks = {
     const { i18n } = useTranslation();
     return useQueries({
       queries: names.map((name) => ({
-        queryKey: ['piece', name, undefined],
+        queryKey: ['piece', name, undefined, i18n.language],
         queryFn: () =>
           piecesApi.get({
             name,
@@ -155,22 +162,27 @@ export const piecesHooks = {
   usePieces: ({
     searchQuery,
     includeHidden = false,
-    includeTags = false,
     isTableQuery = false,
+    skipProjectFilter = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
+    const projectId = skipProjectFilter
+      ? undefined
+      : authenticationSession.getProjectId()!;
     const query = useQuery<PieceMetadataModelSummary[], Error>({
       queryKey: [
         isTableQuery ? 'pieces-table' : 'pieces',
         searchQuery,
         includeHidden,
+        skipProjectFilter,
+        projectId,
+        i18n.language,
       ],
       queryFn: () =>
         piecesApi.list({
-          projectId: authenticationSession.getProjectId()!,
+          projectId,
           searchQuery,
           includeHidden,
-          includeTags,
           locale: i18n.language as LocalesEnum,
         }),
       staleTime: searchQuery ? 0 : Infinity,
@@ -190,7 +202,7 @@ export const piecesHooks = {
     isLoading: boolean;
     data: CategorizedStepMetadataWithSuggestions[];
   } => {
-    const { selectedTab } = usePieceSelectorTabs();
+    const { selectedTab, selectedCustomTabId } = usePieceSelectorTabs();
     const { capture } = useTelemetry();
     const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
       ApFlagId.ENVIRONMENT,
@@ -278,6 +290,39 @@ export const piecesHooks = {
           isLoading: false,
           data: [],
         };
+      case PieceSelectorTabType.CUSTOM: {
+        const customTab = pieceSelectorCustomization.getCustomTab({
+          config: platform.pieceSelectorConfig,
+          customTabId: selectedCustomTabId,
+        });
+        const categories: CategorizedStepMetadataWithSuggestions[] = [];
+        const flatPieces = getPinnedPieces(
+          piecesMetadataWithoutEmptySuggestions,
+          customTab?.pieceNames ?? [],
+        );
+        if (flatPieces.length > 0) {
+          categories.push({
+            title: customTab?.title ?? t('All'),
+            metadata: flatPieces,
+          });
+        }
+        for (const section of customTab?.sections ?? []) {
+          const sectionPieces = getPinnedPieces(
+            piecesMetadataWithoutEmptySuggestions,
+            section.pieceNames,
+          );
+          if (sectionPieces.length > 0) {
+            categories.push({
+              title: section.title,
+              metadata: sectionPieces,
+            });
+          }
+        }
+        return {
+          isLoading: false,
+          data: categories,
+        };
+      }
       case PieceSelectorTabType.APPS: {
         const popularAppsCategory = {
           ...popularCategory,
@@ -499,3 +544,19 @@ const getExploreTabContent = (
 
   return [popularCategory, hightlightedPiecesCategory];
 };
+
+function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
+  const pieceDerivedQueryKeys = [
+    ['pieces'],
+    ['pieces-table'],
+    ['pieces-metadata'],
+    ['piece'],
+  ];
+  return Promise.all(
+    pieceDerivedQueryKeys.map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey }),
+    ),
+  );
+}
+
+export const pieceCacheUtils = { invalidatePieceCaches };

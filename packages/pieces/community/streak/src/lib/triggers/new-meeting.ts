@@ -5,6 +5,10 @@ export const newMeetingTrigger = createPipelineWebhookTrigger({
   displayName: 'New Meeting or Call Log',
   description:
     'Triggers when a meeting note or call log is created on a box in the selected pipeline.',
+  aiMetadata: {
+    description:
+      'Fires when a new meeting note or call log is created on a box in the selected pipeline, representing a logged interaction (such as a discovery call) on a CRM record.',
+  },
   event: 'MEETING_CREATE',
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSB01lZXRpbmcYgICAwI_oogow',

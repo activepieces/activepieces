@@ -11,6 +11,12 @@ export const datastoreSearch = createAction({
   name: 'search',
   displayName: 'Datastore search',
   description: 'Search in datastore',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a semantic search query against an LLMRails datastore (vector store) and returns matching passages. Use to retrieve relevant context from a knowledge base for RAG or question answering. Requires the target datastore ID and a query text; optionally combines dense and sparse embeddings (hybrid) and can return a summarized answer over the results. Read-only and idempotent — repeating the same query returns the same results without side effects.',
+    idempotent: true,
+  },
   props: {
     datastoreId: Property.ShortText({
       displayName: 'Datastore ID',

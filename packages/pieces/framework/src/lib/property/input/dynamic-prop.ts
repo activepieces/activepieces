@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
 import { ShortTextProperty } from "./text-property";
 import { BasePropertySchema, TPropertyValue } from "./common";

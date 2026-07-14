@@ -1,14 +1,12 @@
+import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   getAuthPropertyForValue,
   PieceAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  ApErrorParams,
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
-  ErrorCode,
-  isNil,
   ListAppConnectionsRequestQuery,
   PLACEHOLDER_CONNECTION_TYPE,
   ReplaceAppConnectionsRequestBody,
@@ -267,7 +265,21 @@ export const appConnectionsMutations = {
         setDialogOpen(false);
         refetch();
       },
-      onError: () => {
+      onError: (error) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (
+            apError?.code === ErrorCode.VALIDATION ||
+            apError?.code === ErrorCode.AUTHORIZATION
+          ) {
+            toast.error(t('Error'), {
+              description: t(
+                apError.params.message ?? 'Failed to replace connections',
+              ),
+            });
+            return;
+          }
+        }
         toast.error(t('Error'), {
           description: t('Failed to replace connections'),
         });

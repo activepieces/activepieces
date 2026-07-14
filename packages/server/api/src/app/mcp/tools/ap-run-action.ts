@@ -1,4 +1,5 @@
-import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { executeAdhocAction } from './flow-run-utils'
@@ -31,7 +32,7 @@ export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                 })
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_run_action failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_run_action failed')
                 return mcpUtils.mcpToolError('Failed to run action', err)
             }
         },

@@ -13,6 +13,12 @@ export const removeTagFromContact = createAction({
   name: 'removeTagFromContact',
   displayName: 'Remove Tag From Contact',
   description: 'Remove a specific tag from a contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes a previously applied tag from a ClickFunnels contact, identified by the applied-tag record on that contact. Use to unlabel or reverse a tag-based segmentation. Idempotent — once the tag is gone, repeating leaves the contact in the same state.',
+    idempotent: true,
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

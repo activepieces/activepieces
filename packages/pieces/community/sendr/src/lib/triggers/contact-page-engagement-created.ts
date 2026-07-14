@@ -8,6 +8,9 @@ export const contactPageEngagementCreated = createTrigger({
   name: 'contact_page_engagement_created',
   displayName: 'New Contact Page Engagement',
   description: 'Triggers when a contact visits a Sendr Page for the first time.',
+  aiMetadata: {
+    description: 'Fires the first time a contact engages with (visits) a Sendr Page, delivering the page id/slug/URL and the contact attributes. Use it to act on a contact first visiting a page.',
+  },
   props: {},
   sampleData: {
     event_type: 'contact_page_engagement:created',

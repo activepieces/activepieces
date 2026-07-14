@@ -14,6 +14,8 @@ export const chargePointUpdateFirmwareAction = createAction({
   name: 'chargePointUpdateFirmware',
   displayName: 'Actions - Charge Point - Update Firmware',
   description: 'Charge Point / Update Firmware.',
+  audience: 'both',
+  aiMetadata: { description: 'Send an OCPP UpdateFirmware command instructing a charge point to download and install firmware, from either a direct URL or a stored firmware version id (provide exactly one), with optional retrieve-after time, retry count/interval, and signed-update fields. This triggers a real firmware flash on the device, so it is not idempotent and should be sequenced carefully. Use to roll out firmware to a station.', idempotent: false },
   props: {
         
   chargePoint: Property.Number({

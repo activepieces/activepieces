@@ -8,6 +8,8 @@ export const listProjects = createAction({
   name: 'list_projects',
   displayName: 'List Projects',
   description: 'Retrieves a list of projects.',
+  audience: 'both',
+  aiMetadata: { description: 'List projects with optional search text and status/owner filters. Read-only; supports single-page paging or "Return All" to follow pagination across every page. Use to discover project IDs before fetching or operating on a project.', idempotent: true },
   props: {
     limit: ninjapipeCommon.limitProperty,
     search: ninjapipeCommon.searchProperty,

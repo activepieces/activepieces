@@ -8,6 +8,8 @@ export const createProduct = createAction({
   name: 'create_product',
   displayName: 'Create Product',
   description: 'Adds a new product to your Quizell product catalog.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a new product to the Quizell catalog so it can appear in quiz recommendations. Use when introducing a product not yet in Quizell; requires title, price, and active/inactive status. Not idempotent — each call creates another product, so guard against duplicates if syncing from an external store.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Product Title',

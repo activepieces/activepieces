@@ -11,6 +11,12 @@ export const getBoxAction = createAction({
   name: 'get_box',
   displayName: 'Get Box',
   description: 'Fetch a single box with its current stage, fields, and counts.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieve a single box by its box key, including its current stage, custom field values, and counts. Use when an agent already has a specific box key (e.g. from a trigger or a Find Boxes result) and needs its full current details. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     pipelineKey: pipelineDropdown,
     boxKey: boxDropdown,

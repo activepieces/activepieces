@@ -8,6 +8,8 @@ export const createTableAction = createAction({
   auth: excelAuth,
   name: 'create_table',
   description: 'Create a table in a worksheet',
+  audience: 'both',
+  aiMetadata: { description: 'Create a structured Excel table from a cell range in a worksheet. Pick this to formalize raw cells into a named table so row/column actions can target it. Choose the range automatically from the worksheet used range or supply it manually in A1 notation, and indicate whether the first row holds column headers. Not idempotent: each run adds a new table.', idempotent: false },
   displayName: 'Create Table',
   props: {
     storageSource: commonProps.storageSource,

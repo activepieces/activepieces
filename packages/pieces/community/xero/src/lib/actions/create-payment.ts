@@ -13,6 +13,12 @@ export const xeroCreatePayment = createAction({
   name: 'xero_create_payment',
   displayName: 'Create Payment',
   description: 'Applies a payment to an invoice.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Record a payment against an existing Xero invoice (or bill), paid from a specific bank account. Pick this once an invoice exists and you need to settle it for an amount up to the amount due. Not idempotent: each call records another payment, so re-running double-pays; resolve the target invoice and bank account IDs first (separate find/lookup actions).',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     invoice_id: props.payable_invoice_id(true),

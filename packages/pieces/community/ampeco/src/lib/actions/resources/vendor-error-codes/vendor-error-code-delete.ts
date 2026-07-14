@@ -13,6 +13,8 @@ export const vendorErrorCodeDeleteAction = createAction({
   name: 'vendorErrorCodeDelete',
   displayName: 'Resources - Vendor Error Codes - Vendor Error Code Delete',
   description: 'Delete a Vendor Error Code.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a vendor error code from AMPECO by its numeric identifier. This destructive write cannot be undone; repeating it after success will fail because the record no longer exists. Confirm the correct code before calling.', idempotent: false },
   props: {
         
   vendorErrorCode: Property.Number({

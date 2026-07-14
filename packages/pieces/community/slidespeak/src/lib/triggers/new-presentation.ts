@@ -1,7 +1,7 @@
 import { slidespeakAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { BASE_URL } from '../common/constants';
 
 export const newPresentationTrigger = createTrigger({
@@ -9,6 +9,9 @@ export const newPresentationTrigger = createTrigger({
   name: 'new-presentation',
   displayName: 'New Presentation',
   description: 'Triggers when a new presentation is created.',
+  aiMetadata: {
+    description: 'Fires via webhook when SlideSpeak finishes generating a new presentation, delivering the completed deck (e.g. its download URL). Use to react to presentation completion without polling.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

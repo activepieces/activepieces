@@ -9,6 +9,12 @@ export const generatePresentation = createAction({
   name: 'generatePresentation',
   displayName: 'Generate Presentation',
   description: 'Create a new AI-generated presentation from text.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate a brand-new presentation from input text via the Alai AI API, with optional controls for tone, slide count, text density, theme, and AI images. Use this to turn raw text into slides. By default it returns immediately with a generation_id (poll Get Generation for status); set Wait for Completion to block until the deck finishes (up to Max Wait Time). Not idempotent: each call starts a new generation.',
+    idempotent: false,
+  },
   props: {
     inputText: Property.LongText({
       displayName: 'Input Text',

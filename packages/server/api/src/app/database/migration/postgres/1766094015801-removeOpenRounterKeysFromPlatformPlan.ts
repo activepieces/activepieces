@@ -1,4 +1,4 @@
-import { AIProviderName, apId } from '@activepieces/shared'
+import { AIProviderName, apId } from '@activepieces/core-utils'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { encryptUtils } from '../../../helper/encryption'
 

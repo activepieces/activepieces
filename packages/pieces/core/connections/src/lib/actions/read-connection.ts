@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const markdown = `
 **Advanced Piece**
@@ -13,6 +13,7 @@ Use this piece if you are unsure which connection to use beforehand, such as whe
 `;
 
 export const readConnection = createAction({
+  audience: 'human',
   name: 'read_connection',
   displayName: 'Read Connection',
   description: 'Fetch connection by name',

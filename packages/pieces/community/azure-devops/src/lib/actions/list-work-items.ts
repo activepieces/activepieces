@@ -13,6 +13,8 @@ export const listWorkItemsAction = createAction({
   name: 'list_work_items',
   displayName: 'List Work Items',
   description: 'Lists work items from Azure DevOps using a WIQL query',
+  audience: 'both',
+  aiMetadata: { description: 'Queries work items in an Azure DevOps project and returns their fields. Leave the WIQL query empty to list all work items ordered by most recently changed, or supply a custom WIQL query to filter (by type, state, assignee, etc.). Use to search or enumerate work items; requires a project, and results are capped by the limit (default 50, max 200). Read-only and idempotent.', idempotent: true },
   props: {
     project: azureDevOpsCommon.projectDropdown,
     wiql_query: Property.LongText({

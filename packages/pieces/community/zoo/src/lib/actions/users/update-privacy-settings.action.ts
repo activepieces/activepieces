@@ -6,6 +6,8 @@ export const updatePrivacySettingsAction = createAction({
   name: 'update_privacy_settings',
   displayName: 'Update Privacy Settings',
   description: 'Update your user privacy settings',
+  audience: 'both',
+  aiMetadata: { description: 'Replace the privacy settings for the authenticated Zoo user with a supplied settings object (e.g. data-retention or training-use preferences). Applying the same settings repeatedly yields the same state (idempotent). Read current values first with the get privacy settings action.', idempotent: true },
   auth: zooAuth,
   // category: 'Users',
   props: {

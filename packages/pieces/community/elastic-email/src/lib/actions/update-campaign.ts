@@ -15,6 +15,12 @@ export const updateCampaignAction = createAction({
   name: 'update_campaign',
   displayName: 'Update Campaign',
   description: 'Update an existing campaign in Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing campaign in Elastic Email, identified by its name, merging any provided fields (name, sender, recipients, subject, template, status) with the campaign\'s current values so omitted fields are preserved. Use to revise a campaign before it sends. Idempotent: applying the same values yields the same campaign state.',
+    idempotent: true,
+  },
   auth: elasticEmailAuth,
   props: {
     campaign: campaignNameProp,
