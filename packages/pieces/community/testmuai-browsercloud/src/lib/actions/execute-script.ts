@@ -11,7 +11,7 @@ export const executeScript = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Runs a JavaScript snippet inside the current page and returns its result. The script MUST use `return` to produce output (e.g. `return document.title;`). Access provided Arguments as arguments[0], arguments[1], etc. Use only when the dedicated actions are not enough. Requires a sessionId.',
+      'Runs a JavaScript snippet inside the current page and returns its result. The script MUST use `return` to produce output (e.g. `return document.title;`). Access provided Arguments as arguments[0], arguments[1], etc. — note all arguments arrive as strings, so parse them inside the script if you need numbers or booleans. Use only when the dedicated actions are not enough. Requires a sessionId.',
     idempotent: false,
   },
   props: {
@@ -28,7 +28,8 @@ export const executeScript = createAction({
     }),
     args: Property.Array({
       displayName: 'Arguments',
-      description: 'Optional values passed to the script as arguments[0], arguments[1], ...',
+      description:
+        'Optional values passed to the script as arguments[0], arguments[1], ... All arguments are passed as strings; parse them inside the script if you need numbers or booleans.',
       required: false,
     }),
   },

@@ -26,6 +26,11 @@ export const takeScreenshot = createAction({
     const { sessionId } = context.propsValue;
 
     const base64 = await testmuaiCommon.screenshot({ auth, sessionId });
+    if (!base64) {
+      throw new Error(
+        'TestMu AI returned an empty screenshot. Check that the session is still active.'
+      );
+    }
     const file = await context.files.write({
       fileName: `screenshot-${sessionId}.png`,
       data: Buffer.from(base64, 'base64'),

@@ -18,3 +18,8 @@ export const DEFAULT_CAPABILITIES: Record<string, unknown> = {
 // The W3C WebDriver spec identifies a located element by this exact key in the
 // response body of POST /session/{id}/element. It is a fixed magic string.
 export const ELEMENT_KEY = 'element-6066-11e4-a52e-4f735466cecf';
+
+// Per-request timeout for WebDriver calls. Set generously (2 min) because
+// session creation spins up a cloud VM and some navigations are slow, but
+// bounded so a hung session fails the step instead of blocking the runner.
+export const REQUEST_TIMEOUT_MS = 120000;

@@ -52,7 +52,7 @@
   "The numeric ref of a specific element (from the latest snapshot). Leave empty to read the whole page body.": "The numeric ref of a specific element (from the latest snapshot). Leave empty to read the whole page body.",
   "Maximum number of characters of text to return.": "Maximum number of characters of text to return.",
   "JavaScript to execute in the page. Use `return` to return a value; access Arguments as arguments[0], arguments[1], ...": "JavaScript to execute in the page. Use `return` to return a value; access Arguments as arguments[0], arguments[1], ...",
-  "Optional values passed to the script as arguments[0], arguments[1], ...": "Optional values passed to the script as arguments[0], arguments[1], ...",
+  "Optional values passed to the script as arguments[0], arguments[1], ... All arguments are passed as strings; parse them inside the script if you need numbers or booleans.": "Optional values passed to the script as arguments[0], arguments[1], ... All arguments are passed as strings; parse them inside the script if you need numbers or booleans.",
   "Chrome": "Chrome",
   "Microsoft Edge": "Microsoft Edge",
   "Firefox": "Firefox",

@@ -3,6 +3,7 @@ import {
   HUB_URL_BY_REGION,
   DEFAULT_CAPABILITIES,
   ELEMENT_KEY,
+  REQUEST_TIMEOUT_MS,
 } from './constants';
 import { SnapshotElement, SNAPSHOT_SCRIPT } from './snapshot';
 
@@ -168,6 +169,7 @@ async function request<TRes>(params: {
     url: `${baseUrl(params.auth)}${params.path}`,
     headers: authHeaders(params.auth),
     body: params.body,
+    timeout: REQUEST_TIMEOUT_MS,
   });
   return response.body;
 }
