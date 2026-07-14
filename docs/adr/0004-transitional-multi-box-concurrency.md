@@ -30,8 +30,6 @@ when the default was 1.)
   the shared-cap ratchet ADR 0003 removed. We **document only**: the 0.5 CPU / 1 GB cap is sized for
   concurrency 1; operators running N must size the container ~N× themselves (the same expectation
   they had before ADR 0003). No per-box memory partitioning is built for a mode being deleted.
-  (ADR 0006 refines the **concurrency-1** case: a graceful `MEMORY_LIMIT_EXCEEDED` below the
-  container OOM ceiling. It does not apply at `N>1`, where the per-child limit stays server-provided.)
 - **Provision concurrency is already safe.** The on-disk cache layer (`piece-installer`,
   `engine-installer`, flow-bundle-store, code-cache) is the same code `main` ran with N boxes
   provisioning concurrently (`threadSafeMkdir`, `cache-state`), so no new per-key dedup is needed.
