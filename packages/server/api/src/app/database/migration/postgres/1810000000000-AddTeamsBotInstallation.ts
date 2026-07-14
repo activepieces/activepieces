@@ -4,7 +4,7 @@ import { Migration } from '../../migration'
 export class AddTeamsBotInstallation1810000000000 implements Migration {
     name = 'AddTeamsBotInstallation1810000000000'
     breaking = false
-    release = '0.86.2'
+    release = '0.86.3'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
