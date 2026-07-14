@@ -31,7 +31,9 @@ You can also copy a variable's reference from the Variables page: open the row's
 
 ## Rotating a value
 
-A variable's value is write-only. Once saved, it's encrypted and never shown again, including to you. To change it, open the variable and click **Rotate value**, then enter the new value. There's no way to view or export a variable's current value from the UI or API.
+A variable's value is encrypted at rest and never displayed in the variables list or the edit dialog. To change it, open the variable and click **Rotate value**, then enter the new value.
+
+Members with write access (Editor or Admin) can retrieve the plaintext through the API's reveal endpoint (`POST /v1/variables/:id/reveal`). On platforms with audit logs enabled, each reveal is recorded as a `VARIABLE_VALUE_REVEALED` event.
 
 ## Deleting a variable
 
