@@ -254,7 +254,7 @@ function SidebarSearchButton({ variant }: { variant: 'compact' | 'full' }) {
         side="right"
         align="start"
         sideOffset={8}
-        className="flex h-[min(480px,70vh)] w-[min(560px,calc(100vw-6rem))] flex-col overflow-hidden rounded-2xl border-foreground/[0.08] bg-popover/80 p-0 shadow-2xl backdrop-blur-2xl"
+        className="flex h-[min(420px,65vh)] w-[min(480px,calc(100vw-6rem))] flex-col overflow-hidden rounded-2xl border-foreground/[0.08] bg-popover/80 p-0 shadow-2xl backdrop-blur-2xl"
         onInteractOutside={(e) => {
           // Keep the popover open when interacting with nested overlays it
           // spawns (create/rename/move/delete dialogs, dropdown menus, toasts).

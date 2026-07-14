@@ -1,27 +1,15 @@
 import { Permission } from '@activepieces/core-utils';
-import { ProjectType, type ProjectWithLimits } from '@activepieces/shared';
+import { type ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { BoxIcon } from '@/components/icons/box';
-import { ConnectIcon } from '@/components/icons/connect';
-import { HistoryIcon } from '@/components/icons/history';
-import { Settings2Icon } from '@/components/icons/settings2';
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
-import { VariableIcon } from '@/components/icons/variable';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
-import {
-  useAuthorization,
-  useIsPlatformAdmin,
-} from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM, NEW_TABLE_QUERY_PARAM } from '@/lib/route-utils';
-
-import { type StageResource } from '../workspace-shell/stage-context';
 
 import { recordAccess } from './access-history';
 import { useBrowseMutations } from './use-browse-mutations';
@@ -37,8 +25,6 @@ import {
 } from './use-global-search-results';
 import { useUiPreferences } from './use-ui-preferences';
 
-type ActionIcon = React.ComponentType<{ className?: string; size?: number }>;
-
 export function useBrowseController({
   onClose,
 }: {
@@ -48,7 +34,6 @@ export function useBrowseController({
   const activeProjectId = authenticationSession.getProjectId() ?? '';
   const uiPrefs = useUiPreferences();
   const { data: allProjects = [] } = projectCollectionUtils.useAll();
-  const { project: activeProject } = projectCollectionUtils.useCurrentProject();
   const initialProjectId =
     uiPrefs.prefs.browseProjectId &&
     allProjects.some((p) => p.id === uiPrefs.prefs.browseProjectId)
@@ -61,14 +46,10 @@ export function useBrowseController({
   });
   const { checkAccess } = useAuthorization();
   const { embedState } = useEmbedding();
-  const isPlatformAdmin = useIsPlatformAdmin();
-  const { platform } = platformHooks.useCurrentPlatform();
   const mutations = useBrowseMutations(browse.projectId);
 
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 200);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [projectMenuIndex, setProjectMenuIndex] = useState(0);
@@ -93,12 +74,6 @@ export function useBrowseController({
 
   const flatItems = groups.flatMap((group) => group.items);
   const rowCount = flatItems.length;
-
-  const ensureCurrentProject = useCallback(() => {
-    if (browse.projectId !== activeProjectId) {
-      projectCollectionUtils.setCurrentProject(browse.projectId);
-    }
-  }, [browse.projectId, activeProjectId]);
 
   const openItem = useCallback(
     (item: SearchResultItem) => {
@@ -133,22 +108,6 @@ export function useBrowseController({
     },
     [navigate, onClose, activeProjectId],
   );
-
-  const openDestination = useCallback(
-    (dest: { stageType: StageResource['type']; path: string }) => {
-      ensureCurrentProject();
-      const chat = new URLSearchParams(window.location.search).get('chat');
-      const base = `/projects/${browse.projectId}${dest.path}`;
-      navigate(chat ? `${base}?chat=${chat}` : base);
-      onClose();
-    },
-    [navigate, onClose, browse.projectId, ensureCurrentProject],
-  );
-
-  const openSettings = useCallback(() => {
-    ensureCurrentProject();
-    setSettingsOpen(true);
-  }, [ensureCurrentProject]);
 
   const openProject = useCallback(
     (projectId: string) => {
@@ -256,72 +215,8 @@ export function useBrowseController({
     });
   }, [mutations, openItem, browse.projectId]);
 
-  const canInvite =
-    isPlatformAdmin &&
-    !embedState.isEmbedded &&
-    platform.plan.projectRolesEnabled &&
-    currentProject?.type === ProjectType.TEAM;
-
-  const releasesEnabled = isActiveContext
-    ? activeProject?.releasesEnabled
-    : currentProject?.releasesEnabled;
-
-  const projectActions: BrowseAction[] = [
-    {
-      key: 'runs',
-      label: t('Runs'),
-      Icon: HistoryIcon,
-      hidden: isActiveContext && !checkAccess(Permission.READ_RUN),
-      onSelect: () => openDestination({ stageType: 'runs', path: '/runs' }),
-    },
-    {
-      key: 'connections',
-      label: t('Connections'),
-      Icon: ConnectIcon,
-      hidden: isActiveContext && !checkAccess(Permission.READ_APP_CONNECTION),
-      onSelect: () =>
-        openDestination({ stageType: 'connections', path: '/connections' }),
-    },
-    {
-      key: 'variables',
-      label: t('Variables'),
-      Icon: VariableIcon,
-      hidden: isActiveContext && !checkAccess(Permission.READ_VARIABLE),
-      onSelect: () =>
-        openDestination({ stageType: 'variables', path: '/variables' }),
-    },
-    {
-      key: 'releases',
-      label: t('Releases'),
-      Icon: BoxIcon,
-      hidden: embedState.isEmbedded || !releasesEnabled,
-      onSelect: () =>
-        openDestination({ stageType: 'releases', path: '/releases' }),
-    },
-    {
-      key: 'settings',
-      label: t('Settings'),
-      Icon: Settings2Icon,
-      hidden: false,
-      onSelect: openSettings,
-    },
-    {
-      key: 'invite',
-      label: t('Invite'),
-      Icon: UserRoundPlusIcon,
-      hidden: !canInvite,
-      onSelect: () => setInviteOpen(true),
-    },
-  ].filter((action) => !action.hidden);
-
-  const navItems: NavItem[] = [
-    ...flatItems.map((item) => ({ kind: 'item' as const, item })),
-    ...(browse.category === 'project'
-      ? projectActions.map((action) => ({ kind: 'action' as const, action }))
-      : []),
-  ];
   const clampedIndex =
-    navItems.length === 0 ? -1 : Math.min(selectedIndex, navItems.length - 1);
+    flatItems.length === 0 ? -1 : Math.min(selectedIndex, flatItems.length - 1);
 
   const setSelected = useCallback((index: number) => {
     setSelectedIndex(index);
@@ -330,20 +225,18 @@ export function useBrowseController({
   const moveSelection = useCallback(
     (delta: number) => {
       setSelectedIndex((i) => {
-        const len = navItems.length;
+        const len = flatItems.length;
         if (len === 0) return 0;
         return (Math.max(0, Math.min(i, len - 1)) + delta + len) % len;
       });
     },
-    [navItems.length],
+    [flatItems.length],
   );
 
   const openSelected = useCallback(() => {
-    const nav = navItems[clampedIndex];
-    if (!nav) return;
-    if (nav.kind === 'item') openItem(nav.item);
-    else nav.action.onSelect();
-  }, [navItems, clampedIndex, openItem]);
+    const item = flatItems[clampedIndex];
+    if (item) openItem(item);
+  }, [flatItems, clampedIndex, openItem]);
 
   return {
     search,
@@ -371,9 +264,7 @@ export function useBrowseController({
     moveSelection,
     openSelected,
     openItem,
-    openDestination,
     openProject,
-    projectActions,
     hideTables: embedState.hideTables,
     canWriteFlow,
     canWriteTable,
@@ -385,25 +276,8 @@ export function useBrowseController({
     createFolderOpen,
     setCreateFolderOpen,
     invalidate: mutations.invalidate,
-    inviteOpen,
-    setInviteOpen,
-    settingsOpen,
-    setSettingsOpen,
-    canInvite: !!canInvite,
   };
 }
-
-export type BrowseAction = {
-  key: string;
-  label: string;
-  Icon: ActionIcon;
-  hidden: boolean;
-  onSelect: () => void;
-};
-
-type NavItem =
-  | { kind: 'item'; item: SearchResultItem }
-  | { kind: 'action'; action: BrowseAction };
 
 export type BrowseController = {
   search: string;
@@ -431,12 +305,7 @@ export type BrowseController = {
   moveSelection: (delta: number) => void;
   openSelected: () => void;
   openItem: (item: SearchResultItem) => void;
-  openDestination: (dest: {
-    stageType: StageResource['type'];
-    path: string;
-  }) => void;
   openProject: (projectId: string) => void;
-  projectActions: BrowseAction[];
   hideTables: boolean;
   canWriteFlow: boolean;
   canWriteTable: boolean;
@@ -448,9 +317,4 @@ export type BrowseController = {
   createFolderOpen: boolean;
   setCreateFolderOpen: (open: boolean) => void;
   invalidate: () => void;
-  inviteOpen: boolean;
-  setInviteOpen: (open: boolean) => void;
-  settingsOpen: boolean;
-  setSettingsOpen: (open: boolean) => void;
-  canInvite: boolean;
 };

@@ -23,8 +23,8 @@ export function StyleSpotlight({
   }, []);
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-4 px-5 pb-3.5 pt-4">
-        <Search className="size-[22px] shrink-0 text-muted-foreground/40" />
+      <div className="flex items-center gap-3 px-4 pb-3 pt-3.5">
+        <Search className="size-[18px] shrink-0 text-muted-foreground/40" />
         <input
           ref={inputRef}
           autoFocus
@@ -32,7 +32,7 @@ export function StyleSpotlight({
           onChange={(e) => controller.setSearch(e.target.value)}
           onKeyDown={makeSearchKeyDown(controller)}
           placeholder={t('Search')}
-          className="w-full bg-transparent text-2xl font-light tracking-[-0.02em] outline-none placeholder:text-muted-foreground/30"
+          className="w-full bg-transparent text-lg font-light tracking-[-0.02em] outline-none placeholder:text-muted-foreground/30"
         />
         {controller.search && (
           <button

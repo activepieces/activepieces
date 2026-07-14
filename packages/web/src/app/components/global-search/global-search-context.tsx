@@ -7,11 +7,7 @@ import {
 } from 'react';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { InviteUserDialog } from '@/features/members';
 
-import { ProjectSettingsDialog } from '../project-settings';
-
-import { ProjectActions } from './browse-style-shared';
 import { StyleSpotlight } from './style-spotlight';
 import { useBrowseController } from './use-browse-controller';
 
@@ -38,25 +34,6 @@ function BrowsePanel({ onClose }: { onClose: () => void }) {
       <div className="min-h-0 flex-1">
         <StyleSpotlight controller={controller} />
       </div>
-
-      {controller.category === 'project' &&
-        controller.projectActions.length > 0 && (
-          <div className="flex items-center gap-0.5 border-t border-foreground/[0.06] px-2 py-1.5">
-            <ProjectActions controller={controller} />
-          </div>
-        )}
-
-      {controller.canInvite && controller.currentProject && (
-        <InviteUserDialog
-          open={controller.inviteOpen}
-          setOpen={controller.setInviteOpen}
-        />
-      )}
-
-      <ProjectSettingsDialog
-        open={controller.settingsOpen}
-        onClose={() => controller.setSettingsOpen(false)}
-      />
     </div>
   );
 }

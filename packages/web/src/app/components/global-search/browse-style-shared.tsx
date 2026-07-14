@@ -395,43 +395,6 @@ export function ScopeToggle({
   );
 }
 
-export function ProjectActions({
-  controller,
-  className,
-}: {
-  controller: BrowseController;
-  className?: string;
-}) {
-  return (
-    <div className={cn('flex flex-wrap items-center gap-0.5', className)}>
-      {controller.projectActions.map((action, i) => {
-        const selected = controller.selectedIndex === controller.rowCount + i;
-        return (
-          <button
-            key={action.key}
-            type="button"
-            onClick={action.onSelect}
-            onMouseMove={() => controller.setSelected(controller.rowCount + i)}
-            onMouseDown={(e) => e.preventDefault()}
-            data-selected={selected ? 'true' : undefined}
-            className={cn(
-              'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] transition-colors',
-              selected
-                ? 'bg-foreground/[0.07] text-foreground'
-                : 'text-muted-foreground',
-            )}
-          >
-            <span className="flex size-4 shrink-0 items-center justify-center opacity-60">
-              <action.Icon size={16} />
-            </span>
-            {action.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function ProjectMenu({
   controller,
   align = 'left',
