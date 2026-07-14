@@ -10,11 +10,11 @@ function parseOtlpHeaders(raw: string | undefined): Record<string, string> {
         return {}
     }
     const headers: Record<string, string> = {}
-    for (const pair of decodeURIComponent(raw).split(',')) {
+    for (const pair of raw.split(',')) {
         const eqIndex = pair.indexOf('=')
         if (eqIndex > 0) {
-            const key = pair.slice(0, eqIndex).trim()
-            const value = pair.slice(eqIndex + 1).trim()
+            const key = decodeURIComponent(pair.slice(0, eqIndex).trim())
+            const value = decodeURIComponent(pair.slice(eqIndex + 1).trim())
             if (key && value) {
                 headers[key] = value
             }

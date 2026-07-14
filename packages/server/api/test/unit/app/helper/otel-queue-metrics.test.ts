@@ -79,6 +79,13 @@ describe('otelQueueMetrics.parseOtlpHeaders', () => {
         })
     })
 
+    it('keeps percent-encoded commas inside a value intact', () => {
+        expect(otelQueueMetrics.parseOtlpHeaders('X-Custom-Header=val1%2Cval2,X-Other=1')).toEqual({
+            'X-Custom-Header': 'val1,val2',
+            'X-Other': '1',
+        })
+    })
+
     it('returns empty object when unset', () => {
         expect(otelQueueMetrics.parseOtlpHeaders(undefined)).toEqual({})
     })
