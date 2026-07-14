@@ -1,19 +1,18 @@
-import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
+import { isNil, Permission } from '@activepieces/core-utils';
+import { TemplateTelemetryEventType } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Compass,
-  House,
-  LineChart,
-  MessageCircle,
-  Plus,
-  Search,
-} from 'lucide-react';
-import { Suspense, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Play, Plus, Search } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 
+import { BoxIcon } from '@/components/icons/box';
+import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
+import { FileJson2Icon } from '@/components/icons/file-json2';
 import { ShieldIcon } from '@/components/icons/shield';
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
+import { UnplugIcon } from '@/components/icons/unplug';
+import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
@@ -25,26 +24,18 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import { Skeleton } from '@/components/ui/skeleton';
+import { projectCollectionUtils } from '@/features/projects';
+import { templatesTelemetryApi } from '@/features/templates';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members';
-import { getProjectName, projectCollectionUtils } from '@/features/projects';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { CHAT_ROUTE } from '@/lib/route-utils';
-import { cn } from '@/lib/utils';
 
-import { RecentsList } from '../../../routes/chat-with-ai/components/recents-list';
 import { recordAccess } from '../../global-search/access-history';
 import {
   BrowsePanel,
@@ -53,89 +44,175 @@ import {
 import { STATIC_PAGES } from '../../global-search/static-pages';
 import { useChatNavigation } from '../../workspace-shell/use-chat-navigation';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
-import { CreatePanel } from '../create/create-panel';
 import { AppSidebarHeader } from '../sidebar-header';
+import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
+
+import { SidebarConversations } from './sidebar-conversations';
 
 export function ProjectDashboardSidebar({
   className,
-}: { className?: string } = {}) {
+  collapsible = 'icon',
+}: { className?: string; collapsible?: 'icon' | 'offcanvas' } = {}) {
   const { embedState } = useEmbedding();
-  const { platform } = platformHooks.useCurrentPlatform();
   const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
-  const chatEnabled = platform.plan.chatEnabled;
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { checkAccess } = useAuthorization();
+  const { project } = projectCollectionUtils.useCurrentProject();
+  const { newChat } = useChatNavigation();
 
-  // Home is "start a fresh chat" — only meaningful when chat is available.
-  const homeLink: SidebarItemType = {
-    type: 'link',
-    to: `${CHAT_ROUTE}?new=1`,
-    label: t('Home'),
-    show: true,
-    icon: House,
-    hasPermission: true,
-    isSubItem: false,
-    // Home just navigates back to a fresh chat — it's never a "selected" tab.
-    isActive: () => false,
-  };
+  const handleExploreClick = useCallback(() => {
+    templatesTelemetryApi.sendEvent({
+      eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
+      userId: currentUser?.id,
+    });
+  }, [currentUser?.id]);
 
-  // Restored to the chat-first nav (main had these as sidebar links). Both are
-  // full-page standalone routes, shown for every edition and regardless of chat.
   const exploreLink: SidebarItemType = {
     type: 'link',
     to: '/templates',
     label: t('Explore'),
     show: true,
-    icon: Compass,
+    icon: CompassIcon,
     hasPermission: true,
     isSubItem: false,
-    onClick: () => recordStaticPageAccess('/templates'),
+    onClick: () => {
+      handleExploreClick();
+      recordStaticPageAccess('/templates');
+    },
   };
 
   const impactLink: SidebarItemType = {
     type: 'link',
     to: '/impact',
     label: t('Impact'),
+    icon: ChartLineIcon,
     show: true,
-    icon: LineChart,
     hasPermission: true,
     isSubItem: false,
     onClick: () => recordStaticPageAccess('/impact'),
   };
 
+  const automationsLink: SidebarItemType = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/automations'),
+    label: t('Automations'),
+    icon: WorkflowIcon,
+    show: true,
+    hasPermission: checkAccess(Permission.READ_FLOW),
+    isSubItem: false,
+    isActive: (pathname) =>
+      ['/automations', '/flows', '/tables'].some((section) =>
+        pathname.includes(section),
+      ),
+  };
+
+  const runsLink: SidebarItemType = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/runs'),
+    label: t('Runs'),
+    icon: Play,
+    show: true,
+    hasPermission: checkAccess(Permission.READ_RUN),
+    isSubItem: false,
+  };
+
+  const connectionsLink: SidebarItemType = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/connections'),
+    label: t('Connections'),
+    icon: UnplugIcon,
+    show: true,
+    hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+    isSubItem: false,
+  };
+
+  const variablesLink: SidebarItemType = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/variables'),
+    label: t('Variables'),
+    icon: FileJson2Icon,
+    show: true,
+    hasPermission: checkAccess(Permission.READ_VARIABLE),
+    isSubItem: false,
+  };
+
+  const releasesLink: SidebarItemType = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/releases'),
+    label: t('Releases'),
+    icon: BoxIcon,
+    show: project.releasesEnabled,
+    hasPermission:
+      project.releasesEnabled &&
+      checkAccess(Permission.READ_PROJECT_RELEASE) &&
+      !embedState.isEmbedded,
+    isSubItem: false,
+  };
+
+  const generalItems = [exploreLink, impactLink]
+    .filter((item) => item.show !== false)
+    .filter((item) => isNil(item.hasPermission) || item.hasPermission);
+
+  const projectItems = [
+    automationsLink,
+    runsLink,
+    connectionsLink,
+    variablesLink,
+    releasesLink,
+  ]
+    .filter((item) => item.show !== false)
+    .filter((item) => isNil(item.hasPermission) || item.hasPermission);
+
+  const chatEnabled = platform.plan.chatEnabled;
+
   return (
     !embedState.hideSideNav && (
       <Sidebar
-        collapsible="icon"
+        collapsible={collapsible}
         id={SIDEBAR_ID}
-        className={cn('max-h-[100vh] border-r-0!', className)}
+        className={className}
+        resizable
       >
         <AppSidebarHeader />
 
-        <SidebarContent className="gap-2 overflow-hidden pt-1">
-          <SidebarGroup className="py-1">
-            <SidebarMenu>
-              <SidebarCreateItem />
-            </SidebarMenu>
-          </SidebarGroup>
-          <SidebarSeparator className="mx-2 my-0" />
-          <SidebarGroup className="py-1">
-            <SidebarMenu className="gap-1.5">
-              {chatEnabled && <ApSidebarItem {...homeLink} />}
-              <SidebarSearchItem />
-              <ApSidebarItem {...exploreLink} />
-              <ApSidebarItem {...impactLink} />
-              {/* Collapsed rail: a Chats icon opens the history popover.
-                  Expanded: the inline "My Chats" list below replaces it. */}
-              {chatEnabled && isCollapsed && <SidebarChatsItem />}
-            </SidebarMenu>
-          </SidebarGroup>
-          <PinnedProjectsGroup />
-          {chatEnabled && !isCollapsed && <SidebarChatHistory />}
-        </SidebarContent>
+        <div className="relative z-10 shrink-0 bg-sidebar px-2 pt-2 pb-1 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-1.5 after:bg-gradient-to-b after:from-sidebar after:to-transparent">
+          <div className="flex items-center gap-1.5 group-data-[collapsible=icon]:justify-center">
+            {chatEnabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 min-w-0 flex-1 justify-start gap-2 px-2 font-medium group-data-[collapsible=icon]:hidden"
+                onClick={newChat}
+              >
+                <Plus className="size-4 shrink-0" />
+                <span className="truncate text-xs">{t('New Chat')}</span>
+              </Button>
+            )}
+            <SidebarSearchButton variant={chatEnabled ? 'compact' : 'full'} />
+          </div>
+        </div>
 
-        <SidebarFooter>
-          <SidebarInviteTeammates />
+        <SidebarContent className="overflow-y-auto overflow-x-hidden">
+          <SidebarGroup className="shrink-0 pt-1">
+            <SidebarMenu>
+              {generalItems.map((item) => (
+                <ApSidebarItem key={item.label} {...item} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarGroup className="mt-4 shrink-0 pt-0">
+            <SidebarMenu>
+              {projectItems.map((item) => (
+                <ApSidebarItem key={item.label} {...item} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarConversations />
+        </SidebarContent>
+        <SidebarFooter className="border-t">
+          {state === 'expanded' && <DelayedSidebarUsageLimits />}
           <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>
@@ -144,320 +221,73 @@ export function ProjectDashboardSidebar({
   );
 }
 
-function SidebarCreateItem() {
-  const [open, setOpen] = useState(false);
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
-
-  return (
-    <SidebarMenuItem>
-      <Popover open={open} onOpenChange={setOpen} modal={false}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <SidebarMenuButton
-                isActive={open}
-                aria-label={t('Create')}
-                className={cn(
-                  'group/create',
-                  isCollapsed
-                    ? 'hover:bg-transparent active:bg-transparent data-active:bg-transparent'
-                    : 'justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground active:text-primary-foreground data-active:bg-primary data-active:font-semibold data-active:text-primary-foreground data-open:hover:bg-primary/90',
-                )}
-              >
-                {isCollapsed ? (
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm transition-transform group-hover/create:scale-105">
-                    <Plus className="size-3.5" strokeWidth={2.5} />
-                  </span>
-                ) : (
-                  <>
-                    <Plus className="size-4 shrink-0" strokeWidth={2.5} />
-                    <span className="text-sm font-semibold">{t('Create')}</span>
-                  </>
-                )}
-              </SidebarMenuButton>
-            </PopoverTrigger>
-          </TooltipTrigger>
-          {!open && isCollapsed && (
-            <TooltipContent side="right">{t('Create')}</TooltipContent>
-          )}
-        </Tooltip>
-        <PopoverContent
-          side="right"
-          align="start"
-          sideOffset={8}
-          // Match SidebarChatsItem: don't auto-focus a tile on open (the zero-delay
-          // TooltipProvider would instantly pop a tooltip + focus ring on it).
-          onOpenAutoFocus={(event) => event.preventDefault()}
-          onInteractOutside={(e) => {
-            // Keep the create popover open when interacting with the nested project
-            // selector popover / command list it spawns.
-            const node = e.detail.originalEvent.target;
-            if (
-              node instanceof Element &&
-              node.closest(
-                '[data-radix-popper-content-wrapper],[role="dialog"],[role="alertdialog"],[data-sonner-toaster]',
-              )
-            ) {
-              e.preventDefault();
-            }
-          }}
-          className="w-[300px] rounded-2xl border-foreground/[0.08] bg-popover/95 p-3 shadow-2xl backdrop-blur-2xl"
-        >
-          <Suspense fallback={<CreatePanelSkeleton />}>
-            <CreatePanel onClose={() => setOpen(false)} />
-          </Suspense>
-        </PopoverContent>
-      </Popover>
-    </SidebarMenuItem>
-  );
-}
-
-function CreatePanelSkeleton() {
-  return (
-    <div className="flex flex-col gap-3">
-      <Skeleton className="h-5 w-20" />
-      <div className="grid grid-cols-3 gap-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-square rounded-xl" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SidebarChatsItem() {
-  const [open, setOpen] = useState(false);
-  const { setOpen: setSidebarOpen } = useSidebar();
-  const { selectedConversationId, selectConversation, newChat } =
-    useChatNavigation();
-
-  return (
-    <SidebarMenuItem>
-      <Popover open={open} onOpenChange={setOpen} modal={false}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <SidebarMenuButton isActive={open} aria-label={t('Chats')}>
-                <MessageCircle className="size-4" />
-              </SidebarMenuButton>
-            </PopoverTrigger>
-          </TooltipTrigger>
-          {!open && <TooltipContent side="right">{t('Chats')}</TooltipContent>}
-        </Tooltip>
-        <PopoverContent
-          side="right"
-          align="start"
-          sideOffset={8}
-          // Don't auto-focus the first action button on open — with the sidebar's
-          // zero-delay TooltipProvider that instantly pops its tooltip + focus ring,
-          // making it look hovered.
-          onOpenAutoFocus={(event) => event.preventDefault()}
-          className="flex max-h-[min(440px,66vh)] w-[248px] flex-col overflow-hidden rounded-2xl border-foreground/[0.08] bg-popover/95 p-0 shadow-2xl backdrop-blur-2xl"
-        >
-          <RecentsList
-            surface="popover"
-            className="flex-1"
-            onNewChat={() => {
-              setOpen(false);
-              newChat();
-            }}
-            onExpandSidebar={() => {
-              setOpen(false);
-              setSidebarOpen(true);
-            }}
-            onSelect={(id) => {
-              setOpen(false);
-              selectConversation(id);
-            }}
-            selectedId={selectedConversationId}
-          />
-        </PopoverContent>
-      </Popover>
-    </SidebarMenuItem>
-  );
-}
-
-function SidebarChatHistory() {
-  const { selectedConversationId, selectConversation } = useChatNavigation();
-
-  return (
-    <RecentsList
-      collapsible
-      className="flex-1"
-      onSelect={selectConversation}
-      selectedId={selectedConversationId}
-    />
-  );
-}
-
-function PinnedProjectsGroup() {
-  // Projects always show in the sidebar. The projects live query suspends on cold
-  // load; a local boundary keeps that from stalling the rest of the sidebar.
-  return (
-    <>
-      <SidebarSeparator className="mx-2 my-1" />
-      <Suspense fallback={<PinnedProjectsSkeleton />}>
-        <PinnedProjectsList />
-      </Suspense>
-    </>
-  );
-}
-
-function PinnedProjectsList() {
-  const navigate = useNavigate();
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
-  const { data: projects = [] } = projectCollectionUtils.useAll();
-  const activeProjectId = authenticationSession.getProjectId();
-
-  if (projects.length === 0) {
-    return null;
-  }
-
-  return (
-    <SidebarGroup className="shrink-0 py-1">
-      <SidebarMenu className="max-h-[30vh] gap-1 overflow-y-auto scrollbar-thin">
-        {projects.map((project) => {
-          const palette = project.icon
-            ? PROJECT_COLOR_PALETTE[project.icon.color]
-            : null;
-          const name = getProjectName(project);
-          return (
-            <SidebarMenuItem key={project.id}>
-              <SidebarMenuButton
-                tooltip={name}
-                isActive={project.id === activeProjectId}
-                onClick={() => {
-                  projectCollectionUtils.setCurrentProject(project.id);
-                  navigate(`/projects/${project.id}/automations`);
-                }}
-              >
-                <span
-                  className="flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
-                  style={{
-                    backgroundColor: palette?.color,
-                    color: palette?.textColor,
-                  }}
-                >
-                  {name.charAt(0).toUpperCase()}
-                </span>
-                {!isCollapsed && (
-                  <span className="truncate text-sm">{name}</span>
-                )}
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          );
-        })}
-      </SidebarMenu>
-    </SidebarGroup>
-  );
-}
-
-function PinnedProjectsSkeleton() {
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
-  return (
-    <SidebarGroup className="py-1">
-      <div className="flex flex-col gap-1">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-2 px-2 py-1">
-            <Skeleton className="size-5 shrink-0 rounded-md" />
-            {!isCollapsed && <Skeleton className="h-4 flex-1" />}
-          </div>
-        ))}
-      </div>
-    </SidebarGroup>
-  );
-}
-
-function SidebarSearchItem() {
+// Search trigger in the sticky action row: compact (icon-only, next to New Chat)
+// or full width when chat is off. Opens the spotlight-style BrowsePanel.
+function SidebarSearchButton({ variant }: { variant: 'compact' | 'full' }) {
   const { open: searchOpen, setOpen: setSearchOpen } = useGlobalSearch();
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
 
   return (
-    <SidebarMenuItem>
-      <Popover open={searchOpen} onOpenChange={setSearchOpen} modal={false}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <SidebarMenuButton isActive={searchOpen} aria-label={t('Search')}>
-                <Search className="size-4" />
-                {!isCollapsed && (
-                  <>
-                    <span className="text-sm">{t('Search')}</span>
-                    <kbd className="ml-auto rounded border border-border/60 bg-background/40 px-1 font-mono text-[10px] leading-none text-muted-foreground">
-                      ⌘K
-                    </kbd>
-                  </>
-                )}
-              </SidebarMenuButton>
-            </PopoverTrigger>
-          </TooltipTrigger>
-          {!searchOpen && (
-            <TooltipContent side="right" className="flex items-center gap-2">
-              {t('Search')}
-              <kbd className="rounded border border-border/60 bg-background/20 px-1 font-mono text-[10px] leading-none">
+    <Popover open={searchOpen} onOpenChange={setSearchOpen} modal={false}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label={t('Search')}
+          className={
+            variant === 'compact'
+              ? 'h-8 w-8 shrink-0 px-0'
+              : 'h-8 min-w-0 flex-1 justify-start gap-2 px-2 font-medium'
+          }
+        >
+          <Search className="size-4 shrink-0" />
+          {variant === 'full' && (
+            <>
+              <span className="truncate text-xs">{t('Search')}</span>
+              <kbd className="ml-auto rounded border border-border/60 bg-background/40 px-1 font-mono text-[10px] leading-none text-muted-foreground">
                 ⌘K
               </kbd>
-            </TooltipContent>
+            </>
           )}
-        </Tooltip>
-        <PopoverContent
-          side="right"
-          align="start"
-          sideOffset={8}
-          className="flex h-[min(480px,70vh)] w-[min(560px,calc(100vw-6rem))] flex-col overflow-hidden rounded-2xl border-foreground/[0.08] bg-popover/80 p-0 shadow-2xl backdrop-blur-2xl"
-          onInteractOutside={(e) => {
-            // Keep the popover open when interacting with nested overlays it
-            // spawns (create/rename/move/delete dialogs, dropdown menus, toasts).
-            const node = e.detail.originalEvent.target;
-            if (
-              node instanceof Element &&
-              node.closest(
-                '[data-radix-popper-content-wrapper],[role="dialog"],[role="alertdialog"],[data-sonner-toaster]',
-              )
-            ) {
-              e.preventDefault();
-            }
-          }}
-        >
-          <BrowsePanel onClose={() => setSearchOpen(false)} />
-        </PopoverContent>
-      </Popover>
-    </SidebarMenuItem>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="right"
+        align="start"
+        sideOffset={8}
+        className="flex h-[min(480px,70vh)] w-[min(560px,calc(100vw-6rem))] flex-col overflow-hidden rounded-2xl border-foreground/[0.08] bg-popover/80 p-0 shadow-2xl backdrop-blur-2xl"
+        onInteractOutside={(e) => {
+          // Keep the popover open when interacting with nested overlays it
+          // spawns (create/rename/move/delete dialogs, dropdown menus, toasts).
+          const node = e.detail.originalEvent.target;
+          if (
+            node instanceof Element &&
+            node.closest(
+              '[data-radix-popper-content-wrapper],[role="dialog"],[role="alertdialog"],[data-sonner-toaster]',
+            )
+          ) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <BrowsePanel onClose={() => setSearchOpen(false)} />
+      </PopoverContent>
+    </Popover>
   );
 }
 
-function SidebarInviteTeammates() {
-  const { embedState } = useEmbedding();
-  const isPlatformAdmin = useIsPlatformAdmin();
-  const { state } = useSidebar();
-  const [open, setOpen] = useState(false);
-  const isCollapsed = state === 'collapsed';
+function DelayedSidebarUsageLimits() {
+  const [show, setShow] = useState(false);
 
-  if (embedState.isEmbedded || !isPlatformAdmin) {
-    return null;
-  }
+  useEffect(() => {
+    const timer = setTimeout(() => setShow(true), 250);
+    return () => clearTimeout(timer);
+  }, []);
 
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip={t('Invite teammates')}
-          aria-label={t('Invite teammates')}
-          onClick={() => setOpen(true)}
-        >
-          <UserRoundPlusIcon size={16} className="shrink-0" />
-          {!isCollapsed && (
-            <span className="text-sm">{t('Invite teammates')}</span>
-          )}
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <InviteUserDialog open={open} setOpen={setOpen} />
-    </SidebarMenu>
-  );
+  return show ? (
+    <div>
+      <SidebarUsageLimits />
+    </div>
+  ) : null;
 }
 
 function SidebarPlatformAdminLink() {

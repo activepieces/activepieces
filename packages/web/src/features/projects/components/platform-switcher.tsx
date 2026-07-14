@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { projectHooks } from '@/features/projects/stores/project-collection';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { useExclusiveMenu } from '@/hooks/use-exclusive-menu';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +27,13 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = React.useCallback(() => setMenuOpen(false), []);
+  useExclusiveMenu({
+    id: 'platform-switcher',
+    open: menuOpen,
+    onClose: closeMenu,
+  });
   const isCloud = edition === ApEdition.CLOUD;
 
   const platforms = React.useMemo(() => {
@@ -86,7 +94,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild className="w-full">
           {children}
         </DropdownMenuTrigger>
