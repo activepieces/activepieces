@@ -152,16 +152,32 @@ function appendGatePart({
   messages: ChatUIMessage[];
   gate: PendingGate;
 }): ChatUIMessage[] {
-  const idx = messages.findLastIndex((m) => m.role === 'assistant');
-  if (idx < 0) return messages;
-  const message = messages[idx];
-  const alreadyAnchored = message.parts.some(
-    (part) => 'toolCallId' in part && part.toolCallId === gate.gateId,
+  const alreadyAnchored = messages.some((m) =>
+    m.parts.some(
+      (part) => 'toolCallId' in part && part.toolCallId === gate.gateId,
+    ),
   );
   if (alreadyAnchored) return messages;
-  const next = [...messages];
-  next[idx] = { ...message, parts: [...message.parts, buildGatePart(gate)] };
-  return next;
+  // Anchor on the current turn, always at the tail. When the tail is the user's just-sent
+  // message (the worker is blocked on the gate before persisting its assistant turn), open a
+  // fresh trailing assistant message rather than attaching to an earlier, already-finished turn.
+  const last = messages[messages.length - 1];
+  if (last?.role === 'assistant') {
+    const next = [...messages];
+    next[next.length - 1] = {
+      ...last,
+      parts: [...last.parts, buildGatePart(gate)],
+    };
+    return next;
+  }
+  return [
+    ...messages,
+    {
+      id: `gate-${gate.gateId}`,
+      role: 'assistant',
+      parts: [buildGatePart(gate)],
+    },
+  ];
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
