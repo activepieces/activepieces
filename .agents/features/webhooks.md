@@ -65,7 +65,7 @@ The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` en
 ## Request Conversion
 
 `webhookRequestConverter.convertRequest()` normalizes incoming data:
-- **Multipart form-data**: Uploads files to File service, returns URLs in JSON
+- **Multipart form-data**: Uploads files to File service, returns URLs in JSON. When `FILE_STORAGE_LOCATION=S3`, the multipart `onFile` handler (`webhook-file-streamer.ts`) streams each file directly to S3 via `s3Helper.uploadStream` at parse time instead of buffering (`part.toBuffer()`), enforcing `AP_MAX_WEBHOOK_FILE_SIZE_MB` (default 25) with a 413 on overflow; the converter records the pre-uploaded object. Non-S3 deployments keep the buffered path. Raise the env var to accept large uploads.
 - **Binary content** (image/*, video/*, audio/*, pdf, zip, gzip, octet-stream): Uploads to File service
 - **JSON/text**: Passes through as-is
 - Preserves `rawBody` for signature verification (non-binary only)

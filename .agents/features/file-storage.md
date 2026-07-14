@@ -95,7 +95,8 @@ Step file uploads are handled by the engine via the unified `PUT /v1/files/:file
 
 **s3Helper**
 - `constructS3Key(platformId, projectId, type, fileId)` — builds deterministic S3 key.
-- `uploadFile(s3Key, data)` — PutObject to S3.
+- `uploadFile(s3Key, data)` — PutObject to S3 from an in-memory Buffer.
+- `uploadStream({ s3Key, stream, maxBytes })` — streams a `Readable` to S3 via `@aws-sdk/lib-storage` multipart `Upload` (never buffers the whole file); counts bytes through a `PassThrough`/`Transform` and aborts with a 413 if `maxBytes` is exceeded. Returns `{ s3Key, size }`. Used by webhook multipart ingestion. `fileService.save` accepts a pre-uploaded `s3Key` (with `data: null`) to record such objects without re-uploading (no DB fallback on this path).
 - `getFile(s3Key)` — GetObject from S3, returns Buffer.
 - `getS3SignedUrl(s3Key, fileName)` — generates a 7-day pre-signed GET URL.
 - `putS3SignedUrl({ s3Key, contentLength, contentEncoding })` — generates a 7-day pre-signed PUT URL.

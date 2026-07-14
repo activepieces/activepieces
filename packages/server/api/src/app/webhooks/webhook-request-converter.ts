@@ -5,6 +5,7 @@ import mime from 'mime-types'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
 import { projectService } from '../project/project-service'
+import { StreamedMultipartFile, webhookFileStreamer } from './webhook-file-streamer'
 
 const BINARY_CONTENT_TYPE_PATTERNS = [
     /^image\//,
@@ -68,8 +69,26 @@ async function convertBody(
                     platformId,
                 })
             }
+            else if (webhookFileStreamer.isStreamedFile(value)) {
+                jsonResult[key] = await saveStreamedFileAsUrl({
+                    file: value,
+                    request,
+                    flowId,
+                    projectId,
+                    platformId,
+                })
+            }
             else if (Array.isArray(value) && value.every(isMultipartFile)) {
                 jsonResult[key] = await Promise.all(value.map((file) => saveMultipartFileAsUrl({
+                    file,
+                    request,
+                    flowId,
+                    projectId,
+                    platformId,
+                })))
+            }
+            else if (Array.isArray(value) && value.every(webhookFileStreamer.isStreamedFile)) {
+                jsonResult[key] = await Promise.all(value.map((file) => saveStreamedFileAsUrl({
                     file,
                     request,
                     flowId,
@@ -119,6 +138,27 @@ async function saveMultipartFileAsUrl(params: SaveMultipartFileAsUrlParams): Pro
     })
 }
 
+async function saveStreamedFileAsUrl(params: SaveStreamedFileAsUrlParams): Promise<string> {
+    const { file, request, flowId, projectId, platformId } = params
+    const savedFile = await fileService(request.log).save({
+        fileId: file.fileId,
+        s3Key: file.s3Key,
+        data: null,
+        size: file.size,
+        fileName: file.filename,
+        type: FileType.FLOW_STEP_FILE,
+        compression: FileCompression.NONE,
+        projectId,
+        platformId,
+        metadata: { stepName: 'trigger', flowId },
+    })
+    return filesService.constructReadUrl({
+        fileId: savedFile.id,
+        fileType: FileType.FLOW_STEP_FILE,
+        platformId,
+    })
+}
+
 async function saveStepFileAndConstructUrl(params: SaveStepFileParams): Promise<string> {
     const { log, data, fileName, flowId, contentLength, platformId, projectId } = params
     const file = await fileService(log).save({
@@ -140,6 +180,14 @@ async function saveStepFileAndConstructUrl(params: SaveStepFileParams): Promise<
 
 type SaveMultipartFileAsUrlParams = {
     file: ApMultipartFile
+    request: FastifyRequest
+    flowId: string
+    projectId: string
+    platformId: string
+}
+
+type SaveStreamedFileAsUrlParams = {
+    file: StreamedMultipartFile
     request: FastifyRequest
     flowId: string
     projectId: string

@@ -1,7 +1,8 @@
-import { Readable } from 'stream'
+import { Readable, Transform } from 'stream'
 import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { FileType } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { Upload } from '@aws-sdk/lib-storage'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import contentDisposition from 'content-disposition'
@@ -55,6 +56,44 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             throw error
         }
         return s3Key
+    },
+    async uploadStream(params: UploadStreamParams): Promise<{ s3Key: string, size: number }> {
+        const { s3Key, stream, maxBytes } = params
+        let size = 0
+        const counting = new Transform({
+            transform(chunk: Buffer, _encoding, callback) {
+                size += chunk.length
+                if (size > maxBytes) {
+                    const error: Error & { statusCode?: number } = new Error('Uploaded file exceeds the maximum allowed size')
+                    error.statusCode = 413
+                    callback(error)
+                    return
+                }
+                callback(null, chunk)
+            },
+        })
+        stream.on('error', (error) => counting.destroy(error))
+        stream.pipe(counting)
+
+        log.info({ s3Key }, 'streaming file to s3')
+        const upload = new Upload({
+            client: getS3Client(),
+            params: {
+                Bucket: getS3BucketName(),
+                Key: s3Key,
+                Body: counting,
+            },
+        })
+        try {
+            await upload.done()
+            log.info({ s3Key, sizeBytes: size }, 'file streamed to s3')
+        }
+        catch (error) {
+            await upload.abort().catch(() => undefined)
+            log.error({ s3Key, error }, 'failed to stream file to s3')
+            throw error
+        }
+        return { s3Key, size }
     },
 
     async objectExists(s3Key: string): Promise<boolean> {
@@ -200,4 +239,10 @@ type PutS3SignedUrlParams = {
     s3Key: string
     contentLength?: number
     contentEncoding?: string
+}
+
+type UploadStreamParams = {
+    s3Key: string
+    stream: Readable
+    maxBytes: number
 }

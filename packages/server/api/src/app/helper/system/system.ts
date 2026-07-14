@@ -37,6 +37,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '50',
     [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: '25',
+    [AppSystemProp.MAX_WEBHOOK_FILE_SIZE_MB]: '25',
     [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: '512',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',

@@ -50,7 +50,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             }
             case FileLocation.S3: {
                 try {
-                    const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                    const s3Key = params.s3Key ?? await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
                     if (!isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
@@ -63,6 +63,9 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 }
                 catch (error) {
                     exceptionHandler.handle(error, log)
+                    if (isNil(params.data)) {
+                        throw error
+                    }
                     return saveFileToDb(baseFile, params.data)
                 }
             }
@@ -341,6 +344,7 @@ type SaveParams = {
     fileName?: string
     compression: FileCompression
     metadata?: Record<string, string>
+    s3Key?: string
 }
 
 type GetOneParams = {

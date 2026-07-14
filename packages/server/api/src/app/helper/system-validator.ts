@@ -189,6 +189,7 @@ const systemPropValidators: {
 
     // Webhook payload limits
     [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: numberValidator,
+    [AppSystemProp.MAX_WEBHOOK_FILE_SIZE_MB]: numberValidator,
     [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: numberValidator,
 
     // Canary

@@ -8,7 +8,7 @@ import fastifyHttpProxy from '@fastify/http-proxy'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import { evlog as evlogFastify, useLogger as useWideEventLogger } from 'evlog/fastify'
-import fastify, { FastifyInstance } from 'fastify'
+import fastify, { FastifyInstance, FastifyRequest } from 'fastify'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket'
 import { validatorCompiler } from 'fastify-type-provider-zod'
@@ -27,6 +27,7 @@ import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { mcpOAuthHttpController, mcpPlatformHttpController } from './mcp/oauth/mcp-oauth.controller'
 import { mcpOAuthRootModule } from './mcp/oauth/mcp-oauth.module'
+import { webhookFileStreamer } from './webhooks/webhook-file-streamer'
 
 
 export let app: FastifyInstance | undefined = undefined
@@ -179,7 +180,13 @@ async function setupBaseApp(): Promise<FastifyInstance> {
 
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',
-        async onFile(part: MultipartFile) {
+        async onFile(this: FastifyRequest, part: MultipartFile) {
+            if (webhookFileStreamer.shouldStream(this)) {
+                const streamedFile = await webhookFileStreamer.streamToS3({ part, log: this.log });
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (part as any).value = streamedFile
+                return
+            }
             const apFile: ApMultipartFile = {
                 filename: part.filename,
                 data: await part.toBuffer(),
