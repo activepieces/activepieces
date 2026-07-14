@@ -1,0 +1,21 @@
+{
+  "Call tools on an external MCP server deterministically, without an LLM.": "Call tools on an external MCP server deterministically, without an LLM.",
+  "Connect to an external MCP server. Fill only the fields relevant to the chosen authentication method.": "Connect to an external MCP server. Fill only the fields relevant to the chosen authentication method.",
+  "Call Tool": "Call Tool",
+  "Invoke a specific tool on an external MCP server and return its result.": "Invoke a specific tool on an external MCP server and return its result.",
+  "Server URL": "Server URL",
+  "The MCP server endpoint, e.g. https://example.com/mcp": "The MCP server endpoint, e.g. https://example.com/mcp",
+  "Transport": "Transport",
+  "Authentication": "Authentication",
+  "Bearer Token": "Bearer Token",
+  "Used when Authentication is \"Bearer Token\".": "Used when Authentication is \"Bearer Token\".",
+  "API Key": "API Key",
+  "Used when Authentication is \"API Key\".": "Used when Authentication is \"API Key\".",
+  "API Key Header Name": "API Key Header Name",
+  "Header carrying the API key, e.g. \"x-api-key\". Used when Authentication is \"API Key\".": "Header carrying the API key, e.g. \"x-api-key\". Used when Authentication is \"API Key\".",
+  "Custom Headers": "Custom Headers",
+  "A JSON object of header name/value pairs, e.g. {\"x-tenant\": \"acme\"}. Used when Authentication is \"Custom Headers\".": "A JSON object of header name/value pairs, e.g. {\"x-tenant\": \"acme\"}. Used when Authentication is \"Custom Headers\".",
+  "Tool": "Tool",
+  "The tool to call. The list is loaded from the MCP server.": "The tool to call. The list is loaded from the MCP server.",
+  "Tool Inputs": "Tool Inputs"
+}
