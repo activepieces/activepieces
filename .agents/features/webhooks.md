@@ -71,15 +71,20 @@ The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` en
 - Preserves `rawBody` for signature verification (non-binary only)
 - Extracts headers: `x-parent-run-id`, `x-fail-parent-on-failure` (for subflows)
 
-### Streaming ingestion (designed — being built)
+### Streaming ingestion (implemented)
 
-An inbound webhook POST can't be redirected to S3 (a third party already sent the body), so its bytes must transit the app; today they are fully buffered (`@fastify/multipart`'s global `attachFieldsToBody`/`onFile` buffers each part; raw-binary content-type parsers buffer the whole body; `fastify-raw-body` buffers the raw payload). The design streams webhook files straight to S3, reusing the write-path primitives (`fileService.save({ data: Readable })`, `s3Helper.uploadStream`, `enforceByteLimit`). Decisions:
+An inbound webhook POST can't be redirected to S3 (a third party already sent the body), so its bytes must transit the app — the only lever is to stop *accumulating* them. Webhook files stream straight to S3, reusing the write-path primitives (`fileService.save({ data: Readable })`, `s3Helper.uploadStream`, `enforceByteLimit`). See [ADR-0008](../../docs/adr/0008-webhook-files-stream-via-explicit-multipart-consumption.md).
 
-- **Drop `attachFieldsToBody` globally** (it's plugin-wide and has no per-route opt-out) and migrate **all** multipart consumers to explicit `request.parts()` / `request.file()`: webhook streams file parts to S3, `users` (profile picture) and `knowledge-base` buffer via `request.file().toBuffer()`. This *removes* the global buffering `onFile` — no new abstraction.
+- **`attachFieldsToBody` is not registered globally** — it is plugin-wide with no per-route opt-out, and its `preValidation` hook buffered every part of every multipart request. Each consumer now opts in instead:
+  - **webhook** streams file parts to S3 via `request.parts()`;
+  - **users** (profile picture) buffers via `request.file()`;
+  - **piece install** (CE + EE), **platform logos**, and **knowledge-base upload** keep an `ApMultipartFile` body via the per-route `attachMultipartFieldsToBody` hook (`helper/multipart-body.ts`).
+
+  A new multipart route must pick one of these — there is no global `request.body.<field>` magic, and a route whose schema expects `ApMultipartFile` without the hook fails validation with `400 body/ Invalid input`.
 - **Stream both** `multipart/form-data` parts **and** raw-binary bodies (`image/*`, `pdf`, `zip`, …) to S3; the flow payload keeps receiving a read-URL string.
 - **DB fallback:** stream to S3 only when `FILE_STORAGE_LOCATION=S3`; DB storage buffers to `bytea` as today.
-- **Size guard:** streamed parts pass through the shared `enforceByteLimit` transform (`MAX_FILE_SIZE_MB`).
-- **rawBody / signature verification:** drop `config.rawBody` (which, via `fastify-raw-body` `runFirst`, buffered the *entire* body before parsing and defeated streaming). Capture `rawBody` for the small signed types (JSON / XML / text) directly in their `parseAs: 'string'` content-type parsers. **Streamed types (multipart, binary) forgo `rawBody`** — binary already discarded it; multipart signature verification is dropped (accepted trade). See File Storage Service feature doc.
+- **Size guard:** raw-binary bodies pipe through `enforceByteLimit` (`MAX_FILE_SIZE_MB`); multipart parts rely on busboy's `limits.fileSize`, which ends an oversized part *cleanly* and flags `truncated` rather than erroring it — so the converter fails the stream at end-of-stream, otherwise the truncated bytes are persisted before `@fastify/multipart` surfaces its 413.
+- **rawBody / signature verification:** `config.rawBody` is gone (via `fastify-raw-body` `runFirst` it buffered the *entire* body before parsing and defeated streaming). `rawBody` for the small signed types (JSON / XML / text) is captured in a scoped `preParsing` hook, where the raw string already exists. **Streamed types (multipart, binary) forgo `rawBody`** — binary already discarded it; multipart signature verification is dropped (accepted trade). See File Storage Service feature doc.
 
 ## Handshake Verification
 

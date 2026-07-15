@@ -124,8 +124,8 @@ Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. 
 - **Property.file streaming (read side)** — a piece supplies its own `Readable`; a dedicated streaming file-input mode was judged YAGNI.
 - **Presigned multipart** (bytes off the app on `S3_USE_SIGNED_URLS`) — rejected as over-engineering; see ADR-0007.
 
-### Webhook streaming ingestion (designed — being built on a follow-up branch)
-Reuses `s3Helper.uploadStream` + `fileService.save({ data: Readable })` to stream inbound webhook files (multipart + raw-binary) to S3 without buffering. Requires dropping `@fastify/multipart`'s global `attachFieldsToBody` and migrating all multipart consumers (webhook, users, knowledge-base) to explicit `request.parts()`/`request.file()`, plus moving `rawBody` capture into the string content-type parsers (streamed types forgo `rawBody`). See the Webhooks feature doc for the full decision list.
+### Webhook streaming ingestion (implemented)
+Reuses `s3Helper.uploadStream` + `fileService.save({ data: Readable })` to stream inbound webhook files (multipart + raw-binary) to S3 without buffering. `@fastify/multipart`'s global `attachFieldsToBody` is gone, so every multipart consumer opts in explicitly — the webhook streams via `request.parts()`, `users` buffers via `request.file()`, and the routes whose schemas expect `ApMultipartFile` (piece install CE + EE, platform logos, knowledge-base upload) attach the per-route `attachMultipartFieldsToBody` hook. `rawBody` capture moved into a scoped `preParsing` hook (streamed types forgo `rawBody`). See the Webhooks feature doc for the full decision list and [ADR-0008](../../docs/adr/0008-webhook-files-stream-via-explicit-multipart-consumption.md).
 
 ## System Properties
 
