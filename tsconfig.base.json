@@ -389,6 +389,9 @@
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
       ],
+      "@activepieces/piece-daoxe": [
+        "packages/pieces/community/daoxe/src/index.ts"
+      ],
       "@activepieces/piece-deepseek": [
         "packages/pieces/community/deepseek/src/index.ts"
       ],
