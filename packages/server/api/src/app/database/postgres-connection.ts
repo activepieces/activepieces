@@ -398,7 +398,8 @@ import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/
 import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
 import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/1808000000000-AddProjectPieceSetIdIndex'
 import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
-import { AddTeamsBotInstallation1810000000000 } from './migration/postgres/1810000000000-AddTeamsBotInstallation'
+import { AddChatConversationStreamingUpdatedIndex1810000000000 } from './migration/postgres/1810000000000-AddChatConversationStreamingUpdatedIndex'
+import { AddTeamsBotInstallation1811000000000 } from './migration/postgres/1811000000000-AddTeamsBotInstallation'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -812,7 +813,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         CreatePieceSetTable1807000000000,
         AddProjectPieceSetIdIndex1808000000000,
         DropPlatformPieceFilters1809000000000,
-        AddTeamsBotInstallation1810000000000,
+        AddChatConversationStreamingUpdatedIndex1810000000000,
+        AddTeamsBotInstallation1811000000000,
     ]
     return migrations
 }
