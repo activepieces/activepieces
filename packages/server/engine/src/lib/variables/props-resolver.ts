@@ -7,7 +7,7 @@ import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
 import { createVariableResolver } from '../piece-context/variable-resolver'
-import { utils } from '../utils'
+import { REDACTED_VALUE, utils } from '../utils'
 
 const CONNECTIONS = 'connections'
 const VARIABLES = 'variables'
@@ -181,7 +181,7 @@ async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown
         return ''
     }
     if (censoredInput) {
-        return '**REDACTED**'
+        return REDACTED_VALUE
     }
     return createVariableResolver({ engineToken, projectId, apiUrl }).obtain(name)
 }
@@ -204,7 +204,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
         return ''
     }
     if (censoredInput) {
-        return '**REDACTED**'
+        return REDACTED_VALUE
     }
     const connection = await createConnectionResolver({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)

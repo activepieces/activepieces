@@ -30,6 +30,17 @@ export const getSecretValue = createAction({
       required: false,
     }),
   },
+  outputSchema: {
+    fields: [
+      { key: 'ARN', label: 'ARN' },
+      { key: 'Name', label: 'Name' },
+      { key: 'VersionId', label: 'Version ID' },
+      { key: 'VersionStages', label: 'Version Stages' },
+      { key: 'CreatedDate', label: 'Created Date', format: 'datetime' },
+      { key: 'SecretString', label: 'Secret String', sensitive: true },
+      { key: 'SecretBinary', label: 'Secret Binary', sensitive: true },
+    ],
+  },
   async run({ auth, propsValue, server }) {
     const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 

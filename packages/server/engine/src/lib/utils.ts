@@ -1,10 +1,12 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
-import { formatPieceError, Result, tryCatch } from '@activepieces/core-utils'
-import { ConnectionsManager, ContextVersion, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import { formatPieceError, isNil, isObject, Result, tryCatch } from '@activepieces/core-utils'
+import { ConnectionsManager, ContextVersion, OutputSchema, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { ExecutionError, ExecutionErrorType, RespondResponse } from '@activepieces/shared'
 import { createConnectionResolver } from './piece-context/connection-resolver'
+
+export const REDACTED_VALUE = '**REDACTED**'
 
 export type FileEntry = {
     name: string
@@ -71,6 +73,19 @@ export const utils = {
     },
     sizeof(object: unknown): number {
         return Buffer.byteLength(JSON.stringify(object) ?? '', 'utf8')
+    },
+    redactSensitiveOutputFields(output: unknown, outputSchema: OutputSchema | undefined): unknown {
+        if (isNil(outputSchema) || !isObject(output)) {
+            return output
+        }
+        const result = { ...output }
+        for (const field of outputSchema.fields) {
+            const fieldPath = field.value ?? field.key
+            if (field.sensitive && fieldPath in result) {
+                result[fieldPath] = REDACTED_VALUE
+            }
+        }
+        return result
     },
 }
 

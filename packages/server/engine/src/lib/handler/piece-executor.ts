@@ -176,19 +176,19 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             if (isNil(params.hookResponse.response)) {
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
-            const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
+            const succeeded = stepOutput.setOutput(utils.redactSensitiveOutputFields(output, pieceAction.outputSchema)).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
             return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             })
         }
         if (params.hookResponse.type === 'paused') {
-            const paused = stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)
+            const paused = stepOutput.setOutput(utils.redactSensitiveOutputFields(output, pieceAction.outputSchema)).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)
             return (await newExecutionContext.upsertStep(action.name, paused))
                 .incrementStepsExecuted()
                 .setVerdict({ status: FlowRunStatus.PAUSED })
         }
-        const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
+        const succeeded = stepOutput.setOutput(utils.redactSensitiveOutputFields(output, pieceAction.outputSchema)).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
         return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))

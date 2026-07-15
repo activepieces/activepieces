@@ -1,3 +1,4 @@
+import { OutputSchema } from '@activepieces/pieces-framework'
 import { utils } from '../src/lib/utils'
 
 describe('utils.sizeof', () => {
@@ -44,5 +45,38 @@ describe('utils.sizeof', () => {
         // {"a":{"b":[1,2,3]},"c":"x"} = 27 bytes
         const data = { a: { b: [1, 2, 3] }, c: 'x' }
         expect(utils.sizeof(data)).toBe(27)
+    })
+})
+
+describe('utils.redactSensitiveOutputFields', () => {
+    const outputSchema: OutputSchema = {
+        fields: [
+            { key: 'ARN', label: 'ARN' },
+            { key: 'SecretString', label: 'Secret String', sensitive: true },
+            { key: 'messageId', label: 'Message ID', value: 'data.id', sensitive: true },
+        ],
+    }
+
+    it('should redact only fields marked sensitive', () => {
+        const output = { ARN: 'arn:aws:secret:1', SecretString: 'super-secret' }
+        expect(utils.redactSensitiveOutputFields(output, outputSchema)).toEqual({
+            ARN: 'arn:aws:secret:1',
+            SecretString: '**REDACTED**',
+        })
+    })
+
+    it('should be a no-op when outputSchema is undefined', () => {
+        const output = { SecretString: 'super-secret' }
+        expect(utils.redactSensitiveOutputFields(output, undefined)).toEqual(output)
+    })
+
+    it('should be a no-op when output is not an object', () => {
+        expect(utils.redactSensitiveOutputFields('super-secret', outputSchema)).toBe('super-secret')
+        expect(utils.redactSensitiveOutputFields(null, outputSchema)).toBe(null)
+    })
+
+    it('should not redact a nested `value` path since only top-level fields are supported', () => {
+        const output = { data: { id: 'super-secret' } }
+        expect(utils.redactSensitiveOutputFields(output, outputSchema)).toEqual(output)
     })
 })
