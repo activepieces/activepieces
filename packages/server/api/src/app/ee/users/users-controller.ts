@@ -1,5 +1,5 @@
 import { ApId, ApMultipartFile, isNil } from '@activepieces/core-utils'
-import { AP_MAXIMUM_PROFILE_PICTURE_SIZE, FileType, PrincipalType, PROFILE_PICTURE_ALLOWED_TYPES, SERVICE_KEY_SECURITY_OPENAPI, UpdateMeResponse, UpdateUiPreferencesRequestBody, UserWithMetaInformation } from '@activepieces/shared'
+import { AP_MAXIMUM_PROFILE_PICTURE_SIZE, FileType, PrincipalType, PROFILE_PICTURE_ALLOWED_TYPES, SERVICE_KEY_SECURITY_OPENAPI, UpdateMeResponse, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -36,29 +36,6 @@ export const usersController: FastifyPluginAsyncZod = async (app) => {
 
         return userIdentityService(app.log).getBasicInformation(identityId)
     })
-
-    app.post(
-        '/me/ui-preferences',
-        UpdateUiPreferencesRequest,
-        async (req): Promise<UserWithMetaInformation> => {
-            const userId = req.principal.id
-            const platformId = req.principal.platform.id
-            const user = await userService(req.log).getOrThrow({ id: userId })
-            const identity = await userIdentityService(app.log).getOneOrFail({
-                id: user.identityId,
-            })
-            await userIdentityService(app.log).update(user.identityId, {
-                uiPreferences: {
-                    ...(identity.uiPreferences ?? {}),
-                    ...req.body.uiPreferences,
-                },
-            })
-            return userService(req.log).getOneByIdAndPlatformIdOrThrow({
-                id: userId,
-                platformId,
-            })
-        },
-    )
 
     app.delete('/me/profile-picture', DeleteProfilePictureRequest, async (req) => {
         const userId = req.principal.id
@@ -100,18 +77,6 @@ const UpdateMeRequest = {
         }),
         response: {
             [StatusCodes.OK]: UpdateMeResponse,
-        },
-    },
-}
-
-const UpdateUiPreferencesRequest = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
-    },
-    schema: {
-        body: UpdateUiPreferencesRequestBody,
-        response: {
-            [StatusCodes.OK]: UserWithMetaInformation,
         },
     },
 }

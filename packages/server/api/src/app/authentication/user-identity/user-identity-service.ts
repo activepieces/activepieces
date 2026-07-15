@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { UiPreferences, UserIdentity } from '@activepieces/shared'
+import { UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -78,7 +78,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         const userIdentity = await userIdentityRepository().findOneByOrFail({ id: params.id })
         return userIdentity
     },
-    async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'imageUrl' | 'uiPreferences'>> {
+    async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'imageUrl'>> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         return {
             email: user.email,
@@ -87,7 +87,6 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             trackEvents: user.trackEvents,
             newsLetter: user.newsLetter,
             imageUrl: user.imageUrl,
-            uiPreferences: user.uiPreferences,
         }
     },
     async updatePassword(params: UpdatePasswordParams): Promise<void> {
@@ -143,7 +142,6 @@ type UpdateParams = {
     lastName?: string
     password?: string
     imageUrl?: string | null
-    uiPreferences?: UiPreferences | null
 }
 
 type UpdateLastLoggedInPlatformIdParams = {

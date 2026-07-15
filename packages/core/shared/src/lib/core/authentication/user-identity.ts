@@ -8,15 +8,6 @@ export enum UserIdentityProvider {
     SAML = 'SAML',
     JWT = 'JWT',
 }
-export const UiPreferences = z.object({
-    browseScope: z.enum(['recent', 'project']).optional(),
-    browseFilter: z.enum(['all', 'flows', 'tables']).optional(),
-    browseProjectId: z.string().optional(),
-    pinProjectSidebar: z.boolean().optional(),
-})
-
-export type UiPreferences = z.infer<typeof UiPreferences>
-
 export const UserIdentity = z.object({
     ...BaseModelSchema,
     firstName: z.string(),
@@ -30,7 +21,6 @@ export const UserIdentity = z.object({
     provider: z.nativeEnum(UserIdentityProvider),
     imageUrl: Nullable(z.string()),
     lastLoggedInPlatformId: Nullable(z.string()),
-    uiPreferences: Nullable(UiPreferences),
 })
 
 export type UserIdentity = z.infer<typeof UserIdentity>

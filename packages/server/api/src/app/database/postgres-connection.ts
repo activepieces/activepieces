@@ -398,7 +398,6 @@ import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/
 import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
 import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/1808000000000-AddProjectPieceSetIdIndex'
 import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
-import { AddUiPreferencesToUserIdentity1810000000000 } from './migration/postgres/1810000000000-AddUiPreferencesToUserIdentity'
 import { AddDeletedToRecord1811000000000 } from './migration/postgres/1811000000000-AddDeletedToRecord'
 import { AddColorToRecordAndCell1812000000000 } from './migration/postgres/1812000000000-AddColorToRecordAndCell'
 import { AddChatModeToChatConversation1814000000000 } from './migration/postgres/1814000000000-AddChatModeToChatConversation'
@@ -809,7 +808,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddTimelineToFlowRun1800000000000,
         AddToolSearchIndexTable1801000000000,
         AddChatRolloutFreeCreditGrant1802000000000,
-        AddUiPreferencesToUserIdentity1810000000000,
         AddDeletedToRecord1811000000000,
         AddColorToRecordAndCell1812000000000,
         AddChatModeToChatConversation1814000000000,

@@ -51,10 +51,6 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
             ...ApIdSchema,
             nullable: true,
         },
-        uiPreferences: {
-            type: 'jsonb',
-            nullable: true,
-        },
     },
     indices: [
         {

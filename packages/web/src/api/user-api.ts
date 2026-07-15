@@ -1,5 +1,4 @@
 import {
-  type UiPreferences,
   UpdateMeResponse,
   UserWithMetaInformation,
 } from '@activepieces/shared';
@@ -9,13 +8,6 @@ import { api } from '@/lib/api';
 export const userApi = {
   getUserById(id: string) {
     return api.get<UserWithMetaInformation>(`/v1/users/${id}`);
-  },
-  updateUiPreferences(
-    uiPreferences: UiPreferences,
-  ): Promise<UserWithMetaInformation> {
-    return api.post<UserWithMetaInformation>('/v1/users/me/ui-preferences', {
-      uiPreferences,
-    });
   },
   updateMe(profilePicture?: File): Promise<UpdateMeResponse> {
     const formData = new FormData();
