@@ -71,6 +71,8 @@ The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` en
 - Preserves `rawBody` for signature verification (non-binary only)
 - Extracts headers: `x-parent-run-id`, `x-fail-parent-on-failure` (for subflows)
 
+> **Streaming ingestion — deferred (not built):** An inbound webhook POST cannot be redirected to S3 (a third party already sent the body), so its bytes must transit the app; today Fastify's global buffering `onFile` + `s3Helper` fully buffer the file. Streaming it would require replacing the webhook plugin's encapsulated `multipart/form-data` + raw-binary parsers with streaming ones piping each part to S3 via `@aws-sdk/lib-storage`. This was deferred out of the streaming *write-path* work ([ADR-0007](../../docs/adr/0007-streaming-files-use-presigned-multipart-not-app-relay.md)) as not surgical. The `s3Helper.uploadStream()` helper it would reuse now exists.
+
 ## Handshake Verification
 
 External services verify webhook ownership before sending events:

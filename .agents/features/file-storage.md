@@ -95,7 +95,8 @@ Step file uploads are handled by the engine via the unified `PUT /v1/files/:file
 
 **s3Helper**
 - `constructS3Key(platformId, projectId, type, fileId)` — builds deterministic S3 key.
-- `uploadFile(s3Key, data)` — PutObject to S3.
+- `uploadFile(s3Key, data)` — PutObject to S3 (known-length Buffer).
+- `uploadStream(s3Key, body)` — streams a `Readable` to S3 via `@aws-sdk/lib-storage` `Upload` (unknown length, ~5MB parts); returns the byte count from `httpUploadProgress`.
 - `getFile(s3Key)` — GetObject from S3, returns Buffer.
 - `getS3SignedUrl(s3Key, fileName)` — generates a 7-day pre-signed GET URL.
 - `putS3SignedUrl({ s3Key, contentLength, contentEncoding })` — generates a 7-day pre-signed PUT URL.
@@ -105,6 +106,24 @@ Step file uploads are handled by the engine via the unified `PUT /v1/files/:file
 ## Cleanup Job
 
 Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. Calls `fileService.deleteStaleBulk` for types: `FLOW_RUN_LOG`, `FLOW_STEP_FILE`, `TRIGGER_EVENT_FILE`, `TRIGGER_PAYLOAD`, `WEBHOOK_PAYLOAD`. Retention period controlled by `EXECUTION_DATA_RETENTION_DAYS` system property.
+
+## Streaming — write path (implemented)
+
+`ctx.files.write()` accepts a `Readable` as well as a `Buffer`, so a piece can write a file it never fully holds in RAM. See [ADR-0007](../../docs/adr/0007-streaming-files-use-presigned-multipart-not-app-relay.md).
+
+- **Piece API:** `FilesService.write({ fileName, data: Buffer | Readable })` (`@activepieces/pieces-framework` ≥ 0.34.0). A `Buffer` keeps the exact existing behaviour; a `Readable` streams.
+- **Transport — one path.** For a stream the engine (`engineFileApi.upload`) PUTs to `POST-less` `PUT /v1/files/:fileId` with **no `Content-Length`** (chunked, `duplex:'half'`, no retry — a stream can't replay). The app detects the stream by the **absence of `Content-Length`**, skips the presigned-redirect branch, and streams the body to storage:
+  - S3 → `s3Helper.uploadStream()` (`@aws-sdk/lib-storage` `Upload`, ~5 MB parts, bounded memory; size read from `httpUploadProgress`).
+  - DB → buffered into `bytea` (a stream can't stream into a column).
+- **Known-length `Buffer` writes are unchanged** — same `uploadFile` / `S3_USE_SIGNED_URLS` presigned-redirect paths.
+- **Size guard:** `filesController` streams the request through an `enforceByteLimit` transform (→ `MAX_FILE_SIZE_MB`), since a stream's length is unknown upfront.
+- **Content-type parser:** `filesController` replaces the global buffering `application/octet-stream` parser with an encapsulated passthrough (raw stream) so the PUT body isn't buffered — scoped to this plugin; other octet-stream consumers are untouched.
+- **New dependency:** `@aws-sdk/lib-storage`.
+
+### Deferred (not built)
+- **Property.file streaming (read side)** — a piece supplies its own `Readable`; a dedicated streaming file-input mode was judged YAGNI.
+- **Webhook streaming ingestion** — needs replacing the global buffering multipart handler with a streaming parser; not surgical, deferred.
+- **Presigned multipart** (bytes off the app on `S3_USE_SIGNED_URLS`) — rejected as over-engineering; see ADR-0007.
 
 ## System Properties
 
