@@ -1,6 +1,6 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { DEFAULT_BASE_URL, unauthorizedMessage } from './common/common';
+import { DEFAULT_BASE_URL, getUnauthorizedMessage } from './common/common';
 
 export const daoxeAuth = PieceAuth.CustomAuth({
   description: `DaoXE is a multi-model API gateway with an OpenAI-compatible Chat Completions API.
@@ -26,22 +26,24 @@ DaoXE is not available in mainland China.`,
     }),
   },
   validate: async ({ auth }) => {
+    const baseURL = (auth.props.baseUrl || DEFAULT_BASE_URL).replace(
+      /\/$/,
+      '',
+    );
     try {
-      const baseURL = (auth.props.baseUrl || DEFAULT_BASE_URL).replace(
-        /\/$/,
-        '',
-      );
       const openai = new OpenAI({
         baseURL,
         apiKey: auth.props.apiKey,
       });
-      const models = await openai.models.list();
-      if (models.data.length > 0) {
-        return { valid: true };
-      }
-      return { valid: false, error: unauthorizedMessage };
+      // Successfully listing models proves the key/base URL pair is accepted.
+      // An empty model list is still a valid authenticated response (e.g. new account).
+      await openai.models.list();
+      return { valid: true };
     } catch (e) {
-      return { valid: false, error: unauthorizedMessage };
+      return {
+        valid: false,
+        error: getUnauthorizedMessage(baseURL),
+      };
     }
   },
 });

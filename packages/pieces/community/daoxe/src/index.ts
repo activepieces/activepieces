@@ -9,7 +9,7 @@ export const daoxe = createPiece({
   auth: daoxeAuth,
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+  logoUrl: 'https://daoxe.com/logo.png',
   authors: ['seven7763'],
   actions: [askDaoxe],
   triggers: [],
