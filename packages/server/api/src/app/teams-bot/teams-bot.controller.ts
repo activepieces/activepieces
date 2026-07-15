@@ -1,3 +1,4 @@
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import JwksRsa from 'jwks-rsa'
@@ -9,15 +10,23 @@ import { teamsBotService } from './teams-bot.service'
 const BOT_FRAMEWORK_JWKS_URI = 'https://login.botframework.com/v1/.well-known/keys'
 const BOT_FRAMEWORK_ISSUER = 'https://api.botframework.com'
 
+
 const jwksClient = JwksRsa({
     jwksUri: BOT_FRAMEWORK_JWKS_URI,
+    cache: true,
     cacheMaxEntries: 10,
+    rateLimit: true,
+    jwksRequestsPerMinute: 10,
 })
 
-async function verifyBotFrameworkJwt(token: string, expectedAppId: string | undefined): Promise<boolean> {
+async function verifyBotFrameworkJwt(token: string, expectedAppId: string | undefined, log: FastifyBaseLogger): Promise<boolean> {
+    const decoded = token ? jwtUtils.decode({ jwt: token }) : null
+    const kid = decoded?.header.kid
+    if (!kid) {
+        return false
+    }
     try {
-        const { header } = jwtUtils.decode({ jwt: token })
-        const signingKey = await jwksClient.getSigningKey(header.kid)
+        const signingKey = await jwksClient.getSigningKey(kid)
         const publicKey = signingKey.getPublicKey()
         await jwtUtils.decodeAndVerify({
             jwt: token,
@@ -28,7 +37,8 @@ async function verifyBotFrameworkJwt(token: string, expectedAppId: string | unde
         })
         return true
     }
-    catch {
+    catch (error) {
+        log.warn({ error }, 'Failed to verify Bot Framework JWT on teams-bot webhook')
         return false
     }
 }
@@ -42,7 +52,7 @@ export const teamsBotController: FastifyPluginAsyncZod = async (fastify) => {
         const recipientId = activity.recipient?.id ?? ''
         const appId = recipientId.startsWith('28:') ? recipientId.slice(3) : undefined
 
-        const isValid = await verifyBotFrameworkJwt(token, appId)
+        const isValid = await verifyBotFrameworkJwt(token, appId, request.log)
         if (!isValid) {
             return reply.status(StatusCodes.UNAUTHORIZED).send()
         }
