@@ -193,7 +193,8 @@ function isNodeFormData(body: unknown): body is NodeFormData {
     typeof body === 'object' &&
     body !== null &&
     typeof (body as NodeFormData).getHeaders === 'function' &&
-    typeof (body as NodeFormData).pipe === 'function'
+    typeof (body as NodeFormData).pipe === 'function' &&
+    typeof (body as NodeFormData).on === 'function'
   );
 }
 
