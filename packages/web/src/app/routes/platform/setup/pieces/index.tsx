@@ -26,6 +26,7 @@ import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/cust
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
+import { UpgradePieceVersionInFlowsDialog } from '@/app/routes/platform/setup/pieces/upgrade-piece-version-in-flows-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -148,6 +149,12 @@ const PlatformPiecesPage = () => {
                     isEnabled={isEnabled}
                   />
                 )}
+                <UpgradePieceVersionInFlowsDialog
+                  pieceName={row.original.name}
+                  pieceDisplayName={row.original.displayName}
+                  installedVersion={row.original.version}
+                  isEnabled={isEnabled}
+                />
                 <PieceActions
                   pieceName={row.original.name}
                   isEnabled={isEnabled}
