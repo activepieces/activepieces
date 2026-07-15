@@ -52,6 +52,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: '5',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
+    [AppSystemProp.CHAT_CONCURRENCY_LIMIT]: '0',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '10000',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '100',
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',

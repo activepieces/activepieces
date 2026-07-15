@@ -4,14 +4,14 @@ import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, Ex
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
-import { chatWorkerTools, TaintState } from './chat-worker-tools'
+import { chatWorkerTools, GateDecision, TaintState } from './chat-worker-tools'
 import { delayWithJitter, runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 const APPROVAL_BLOCK_MS = 50_000
-const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
+const DISPLAY_TOOL_TIMEOUT_MS = 5 * 60 * 1_000
 const HEARTBEAT_INTERVAL_MS = 15_000
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
@@ -22,7 +22,7 @@ const RETRY_BASE_DELAY_MS = 1_000
 const STREAM_IDLE_TIMEOUT_MS = 90_000
 // Absolute ceiling on a single turn. Backstop for pathological cases the idle watchdog
 // can't see (runaway continuations, watchdog mis-detection). Must exceed the longest
-// legitimate single wait — the approval/display-tool timeout is 15m — so set well above it.
+// legitimate single wait — the approval/display-tool timeout is 5m — so set well above it.
 const MAX_TURN_WALL_CLOCK_MS = 20 * 60 * 1_000
 // Discovery-only eval must not touch the environment: neutralize every side-effecting execute
 // tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
@@ -354,7 +354,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         // Auto-resolve in dry-run (playground) and discovery-only (eval): there's no UI to click
         // approve, so a real wait would stall the entire turn for APPROVAL_TIMEOUT_MS.
         if (dryRun || discoveryOnly) {
-            return { approved: true }
+            return { outcome: 'approved' }
         }
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         while (Date.now() < deadline) {
@@ -362,7 +362,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             // holding the gate for up to APPROVAL_TIMEOUT_MS — frees the MCP client
             // and lets the turn tear down promptly.
             if (abortSignal.aborted) {
-                return { approved: false }
+                return { outcome: 'aborted' }
             }
             const remainingMs = deadline - Date.now()
             if (remainingMs <= 0) break
@@ -374,7 +374,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
                 waitForAbort(abortSignal).then(() => ({ result: 'aborted' as const })),
             ]))
             if (abortSignal.aborted || response?.result === 'aborted') {
-                return { approved: false }
+                return { outcome: 'aborted' }
             }
             if (error) {
                 log.warn({ error, gateId }, 'Approval wait RPC failed, retrying')
@@ -382,11 +382,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
                 continue
             }
             if (response.result !== 'pending') {
-                const decision = response.result as GateDecision
-                return { approved: decision.approved, payload: decision.payload }
+                const decision = response.result as { approved: boolean, payload?: Record<string, unknown> }
+                return { outcome: decision.approved ? 'approved' : 'declined', payload: decision.payload }
             }
         }
-        return { approved: false }
+        return { outcome: 'timeout' }
     }
 
     // Restore the conversation's already-chosen project so a continued turn doesn't
@@ -638,7 +638,3 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
     }
 }
 
-type GateDecision = {
-    approved: boolean
-    payload?: Record<string, unknown>
-}
