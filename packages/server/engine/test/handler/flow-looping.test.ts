@@ -58,6 +58,90 @@ describe('flow with looping', () => {
         expect(loopOut.output?.item).toBe(4)
     })
 
+    it('should group items into batches when batchSize > 1', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [1,2,3,4,5] }}',
+                batchSize: 2,
+                firstLoopAction: buildCodeAction({
+                    name: 'echo_step',
+                    input: { 'item': '{{loop.output.item}}' },
+                }),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
+        // 5 items, batch of 2 -> 3 iterations, last batch is partial
+        expect(loopOut.output?.iterations.length).toBe(3)
+        expect(loopOut.output?.index).toBe(3)
+        expect(loopOut.output?.item).toEqual([5])
+    })
+
+    it('should iterate item-by-item when batchSize is 1 (unchanged behavior)', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [1,2,3] }}', batchSize: 1 }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(loopOut.output?.iterations.length).toBe(3)
+        expect(loopOut.output?.item).toBe(3)
+    })
+
+    it.each([0, -3, Number.NaN])('should fall back to item-by-item when batchSize is %s', async (batchSize) => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [1,2,3] }}', batchSize }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(loopOut.output?.iterations.length).toBe(3)
+        expect(loopOut.output?.item).toBe(3)
+    })
+
+    it('should truncate a fractional batchSize', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [1,2,3,4,5] }}', batchSize: 2.9 }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(loopOut.output?.iterations.length).toBe(3)
+        expect(loopOut.output?.item).toEqual([5])
+    })
+
+    it('should produce a single batch when batchSize exceeds the item count', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [1,2,3] }}', batchSize: 100 }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(loopOut.output?.iterations.length).toBe(1)
+        expect(loopOut.output?.index).toBe(1)
+        expect(loopOut.output?.item).toEqual([1, 2, 3])
+    })
+
+    it('should run zero iterations for an empty list with a batchSize', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [] }}', batchSize: 10 }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
+        expect(loopOut.output?.iterations.length).toBe(0)
+    })
+
     it('should skip loop', async () => {
         const result = await flowExecutor.execute({
             action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [4,5,6] }}', skip: true }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),

@@ -36,11 +36,13 @@ export function buildSimpleLoopAction({
     loopItems,
     firstLoopAction,
     skip,
+    batchSize,
 }: {
     name: string
     loopItems: string
     firstLoopAction?: FlowAction
     skip?: boolean
+    batchSize?: number
 }): LoopOnItemsAction {
     return {
         name,
@@ -49,6 +51,7 @@ export function buildSimpleLoopAction({
         skip: skip ?? false,
         settings: {
             items: loopItems,
+            ...(batchSize !== undefined ? { batchSize } : {}),
         },
         firstLoopAction,
         valid: true,

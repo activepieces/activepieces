@@ -286,6 +286,8 @@
   "Edit Step Name": "Edit Step Name",
   "Select the items to iterate over from the previous step by clicking on the **Items** input, which should be a **list** of items.\n\nThe loop will iterate over each item in the list and execute the next step for every item.": "Select the items to iterate over from the previous step by clicking on the **Items** input, which should be a **list** of items.\n\nThe loop will iterate over each item in the list and execute the next step for every item.",
   "Items": "Items",
+  "Batch Size": "Batch Size",
+  "Optional. When set to more than 1, each iteration receives a list of that many items instead of a single item.": "Optional. When set to more than 1, each iteration receives a list of that many items instead of a single item.",
   "Select an array of items": "Select an array of items",
   "Select a connection": "Select a connection",
   "Permission needed": "Permission needed",

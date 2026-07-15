@@ -99,6 +99,7 @@ export const PieceActionSchema = z.object({
 export const LoopOnItemsActionSettings = z.object({
     ...commonActionSettings,
     items: z.string(),
+    batchSize: z.number().optional(),
 })
 export type LoopOnItemsActionSettings = z.infer<
   typeof LoopOnItemsActionSettings

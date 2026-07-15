@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { chunk, isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { FlowRunStatus, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { utils } from '../utils'
@@ -7,6 +7,14 @@ import { flowExecutor } from './flow-executor'
 
 type LoopOnActionResolvedSettings = {
     items: readonly unknown[]
+    batchSize?: number
+}
+
+function resolveBatchSize(batchSize: number | undefined): number {
+    if (isNil(batchSize) || !Number.isFinite(batchSize) || batchSize < 1) {
+        return 1
+    }
+    return Math.floor(batchSize)
 }
 
 export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
@@ -20,6 +28,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<LoopOnActionResolvedSettings>({
                 unresolvedInput: {
                     items: action.settings.items,
+                    batchSize: action.settings.batchSize,
                 },
                 executionState,
             }),
@@ -63,12 +72,16 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
 
         const firstLoopAction = action.firstLoopAction
 
+        const batchSize = resolveBatchSize(resolvedInput.batchSize)
+        const units: readonly unknown[] = batchSize <= 1
+            ? resolvedInput.items
+            : chunk([...resolvedInput.items], batchSize)
 
-        for (let i = 0; i < resolvedInput.items.length; ++i) {
+        for (let i = 0; i < units.length; ++i) {
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })
 
             const testSingleStepMode = !isNil(constants.stepNameToTest)
-            stepOutput = stepOutput.setItemAndIndex({ item: resolvedInput.items[i], index: i + 1 })
+            stepOutput = stepOutput.setItemAndIndex({ item: units[i], index: i + 1 })
             const addEmptyIteration = !stepOutput.hasIteration(i)
             if (addEmptyIteration) {
                 stepOutput = stepOutput.addIteration()
