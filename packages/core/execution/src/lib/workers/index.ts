@@ -60,6 +60,11 @@ export const MachineInformation = z.object({
     // this path, so it's the latency that inflates a run's RUN phase when workers are network-distant
     // from the app. Optional: absent on older workers / when the probe fails.
     serverPingMs: z.number().optional(),
+    // CPU pressure invisible to usage%: hypervisor steal (noisy neighbors on shared-CPU nodes —
+    // /proc/stat is node-wide) and CFS throttling against the container's own CPU limit.
+    // Optional: absent on older workers / non-Linux hosts.
+    cpuStealPercentage: z.number().optional(),
+    cpuThrottledPercentage: z.number().optional(),
     sandboxes: z.array(SandboxInformation).default([]),
 })
 

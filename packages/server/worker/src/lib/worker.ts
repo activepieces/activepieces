@@ -437,6 +437,7 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const diskInfo = await systemUsage.getDiskInfo()
     const cpuCores = await systemUsage.getCpuCores()
     const serverPingMs = await probeServerPing()
+    const cpuPressure = await systemUsage.getCpuPressure()
     return {
         workerId,
         cpuUsagePercentage: systemUsage.getCpuUsage(),
@@ -447,6 +448,7 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalCpuCores: cpuCores,
         ip: workerHostname,
         serverPingMs,
+        ...cpuPressure,
         sandboxes: cachedSandboxInfo,
     }
 }

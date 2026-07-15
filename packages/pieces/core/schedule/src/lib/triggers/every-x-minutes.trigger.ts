@@ -13,12 +13,12 @@ export const everyXMinutesTrigger = createTrigger({
   props: {
     minutes: Property.StaticDropdown({
       displayName: 'Minutes',
-      description: 'Valid value between 1 to 59.',
+      description: 'Valid value between 1 to 30. Values above 30 produce non-uniform schedules because the step does not divide evenly into 60 minutes.',
       required: true,
       defaultValue: 1,
       options: {
         disabled: false,
-        options: Array.from({ length: 59 }, (_, index) => ({
+        options: Array.from({ length: 30 }, (_, index) => ({
           label: `${index + 1} minute${index !== 0 ? 's' : ''}`,
           value: index + 1,
         })),

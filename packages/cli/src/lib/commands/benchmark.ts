@@ -594,15 +594,16 @@ function renderReport(report: BenchmarkReport): void {
         if (d.apps) {
             console.log(`  apps     : ${d.apps.count} connected`);
             for (const a of d.apps.instances) {
-                console.log(`    - ${a.hostname} v${a.version} | ${a.cpuCores} core | cpu ${a.cpuUsagePercentage.toFixed(1)}% | ram ${(a.ramTotalBytes / BYTES_PER_GB).toFixed(1)}GB ${a.ramUsagePercentage.toFixed(1)}% | disk ${a.diskPercentage.toFixed(0)}% | evloop ${a.eventLoopDelayMs}ms`);
+                console.log(`    - ${a.hostname} v${a.version} | ${a.cpuCores} core | cpu ${a.cpuUsagePercentage.toFixed(1)}% | ram ${(a.ramTotalBytes / BYTES_PER_GB).toFixed(1)}GB ${a.ramUsagePercentage.toFixed(1)}% | disk ${a.diskPercentage.toFixed(0)}% | evloop ${a.eventLoopDelayMs}ms${cpuPressureLabel(a)}`);
             }
         }
         if (d.workers) {
             console.log(`  workers  : ${d.workers.count} connected`);
             for (const w of d.workers.machines) {
-                console.log(`    - ${w.status} ${w.workerId.slice(0, 8)} | ${w.cpuCores} core | cpu ${w.cpuUsagePercentage.toFixed(1)}% | ram ${w.ramUsagePercentage.toFixed(1)}% | worker→app ${w.serverPingMs == null ? 'n/a' : w.serverPingMs + 'ms'}`);
+                console.log(`    - ${w.status} ${w.workerId.slice(0, 8)} | ${w.cpuCores} core | cpu ${w.cpuUsagePercentage.toFixed(1)}% | ram ${w.ramUsagePercentage.toFixed(1)}% | worker→app ${w.serverPingMs == null ? 'n/a' : w.serverPingMs + 'ms'}${cpuPressureLabel(w)}`);
             }
         }
+        renderCpuPressureVerdict(d);
     } else {
         console.log(chalk.yellow(`  skipped: ${report.diagnostics.reason}`));
     }
@@ -738,6 +739,37 @@ function renderOutsideFlows(report: BenchmarkReport): void {
     if (detail) console.log(chalk.gray(`  note: ${detail}`));
 }
 
+function cpuPressureLabel(instance: CpuPressureInfo): string {
+    if (instance.cpuStealPercentage === undefined && instance.cpuThrottledPercentage === undefined) return '';
+    const steal = instance.cpuStealPercentage;
+    const throttled = instance.cpuThrottledPercentage;
+    const stealText = steal === undefined ? '' : ` | steal ${steal >= CPU_STEAL_WARN_PCT ? chalk.yellow(`${steal.toFixed(1)}%`) : `${steal.toFixed(1)}%`}`;
+    const throttledText = throttled === undefined ? '' : ` | throttled ${throttled >= CPU_THROTTLE_WARN_PCT ? chalk.yellow(`${throttled.toFixed(1)}%`) : `${throttled.toFixed(1)}%`}`;
+    return stealText + throttledText;
+}
+
+// Both signals are latency the CPU-usage numbers cannot show: steal is the hypervisor running a
+// NEIGHBOR tenant while our vCPU was runnable (shared-CPU node types, e.g. GCE E2); throttled is
+// our own k8s CPU limit stalling the container in ~100ms CFS quanta. Either one inflates every
+// app/worker touch inside QUEUE and RUN while cpu% still looks idle.
+function renderCpuPressureVerdict(d: DiagnosticsInfo): void {
+    const instances: CpuPressureInfo[] = [...(d.apps?.instances ?? []), ...(d.workers?.machines ?? [])];
+    const steals = instances.map((i) => i.cpuStealPercentage).filter((v): v is number => v !== undefined);
+    const throttles = instances.map((i) => i.cpuThrottledPercentage).filter((v): v is number => v !== undefined);
+    if (steals.length === 0 && throttles.length === 0) return;
+    const maxSteal = Math.max(0, ...steals);
+    const maxThrottled = Math.max(0, ...throttles);
+    if (maxSteal >= CPU_STEAL_WARN_PCT) {
+        console.log(chalk.yellow(`  !! CPU steal up to ${maxSteal.toFixed(1)}% — the hypervisor is running OTHER tenants on this node's physical cores (shared-CPU machine types, e.g. GCE E2). This adds latency that cpu%% cannot show; move app/worker/redis to dedicated-CPU nodes.`));
+    }
+    if (maxThrottled >= CPU_THROTTLE_WARN_PCT) {
+        console.log(chalk.yellow(`  !! CFS throttling up to ${maxThrottled.toFixed(1)}% of periods — a container keeps hitting its k8s CPU limit and stalls in ~100ms quanta. Raise (or remove) the CPU limit on the affected pods.`));
+    }
+    if (maxSteal < CPU_STEAL_WARN_PCT && maxThrottled < CPU_THROTTLE_WARN_PCT) {
+        console.log(chalk.green(`  cpu pressure ok: steal max ${maxSteal.toFixed(1)}%, throttled max ${maxThrottled.toFixed(1)}% — no neighbor contention or limit throttling detected`));
+    }
+}
+
 function hb(v: boolean | null | undefined): string {
     if (v === null || v === undefined) return chalk.gray('n/a');
     return v ? chalk.green('ok') : chalk.yellow('warn');
@@ -824,6 +856,10 @@ const MAX_OUTSIDE_FLOWS_DETAILED = 20;
 // (rate-limiter-interceptor.ts). 15s = one backoff minus clock-skew tolerance.
 const RATE_LIMIT_MIN_BACKOFF_MS = 20_000;
 const RATE_LIMIT_DETECTION_MS = 15_000;
+// Steal above a few percent means real neighbor contention; healthy dedicated nodes sit at ~0.
+// Throttling on a well-sized limit should be rare — a fifth of periods stalled is a sizing problem.
+const CPU_STEAL_WARN_PCT = 5;
+const CPU_THROTTLE_WARN_PCT = 20;
 // Flags that matter for a perf triage — edition, version, execution mode, resource limits, and the
 // two throttles (project concurrency cap + rate limiter) that silently cap throughput and emit 429s.
 const DIAGNOSTIC_FLAGS = [
@@ -963,13 +999,15 @@ type DiagnosticsInfo = {
     };
     apps?: {
         count: number;
-        instances: Array<{ hostname: string; version: string; cpuCores: number; cpuUsagePercentage: number; ramTotalBytes: number; ramUsagePercentage: number; diskPercentage: number; eventLoopDelayMs: number }>;
+        instances: Array<{ hostname: string; version: string; cpuCores: number; cpuUsagePercentage: number; ramTotalBytes: number; ramUsagePercentage: number; diskPercentage: number; eventLoopDelayMs: number } & CpuPressureInfo>;
     };
     workers?: {
         count: number;
-        machines: Array<{ workerId: string; cpuCores: number; cpuUsagePercentage: number; ramUsagePercentage: number; serverPingMs: number | null; status: string }>;
+        machines: Array<{ workerId: string; cpuCores: number; cpuUsagePercentage: number; ramUsagePercentage: number; serverPingMs: number | null; status: string } & CpuPressureInfo>;
     };
 };
+
+type CpuPressureInfo = { cpuStealPercentage?: number; cpuThrottledPercentage?: number };
 
 type LoadResult = {
     requests: { sent: number; average: number };
