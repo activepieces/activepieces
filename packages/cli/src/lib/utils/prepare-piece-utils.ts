@@ -100,21 +100,28 @@ function findInstalledVersion({ nodeModulesDir, dep }: { nodeModulesDir: string,
         if (existsSync(candidate)) {
             return JSON.parse(readFileSync(candidate, 'utf-8')).version
         }
-        let entries: string[] = []
-        try {
-            entries = readdirSync(dir)
-        }
-        catch {
-            continue
-        }
-        for (const name of entries) {
-            const nested = join(dir, name, 'node_modules')
-            if (existsSync(nested)) {
-                stack.push(nested)
-            }
-        }
+        stack.push(...nestedNodeModules(dir))
     }
     return undefined
+}
+
+function nestedNodeModules(nodeModulesDir: string): string[] {
+    return safeReaddir(nodeModulesDir).flatMap((name) => {
+        const packageDir = join(nodeModulesDir, name)
+        const packageDirs = name.startsWith('@')
+            ? safeReaddir(packageDir).map((child) => join(packageDir, child))
+            : [packageDir]
+        return packageDirs.map((d) => join(d, 'node_modules')).filter((nested) => existsSync(nested))
+    })
+}
+
+function safeReaddir(dir: string): string[] {
+    try {
+        return readdirSync(dir)
+    }
+    catch {
+        return []
+    }
 }
 
 // After bundling, dist/ still holds the full tsc output (compiled lib/*, .d.ts, .map). Prune it
