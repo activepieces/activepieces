@@ -44,6 +44,7 @@ export const benchmarkCommand = new Command('benchmark')
                 const slots = setup.executionSlots;
                 const phases = benchmarkUtils.resolvePhases({ concurrency: config.concurrency, slots });
 
+                const diagnosticsSampler = startDiagnosticsSampler(authed);
                 const runs: PhaseReport[] = [];
                 for (const phase of phases) {
                     const requests = config.requests ?? Math.max(200, phase.connections * 40);
@@ -68,10 +69,11 @@ export const benchmarkCommand = new Command('benchmark')
                     runs.push({ label: phase.label, connections: phase.connections, requests, startedAt, summary, timeline: runsInWindow.timeline, outcomes: runsInWindow.outcomes, queueDepth });
                 }
 
+                const diagnosticsTimeline = { intervalMs: DIAGNOSTICS_SAMPLE_INTERVAL_MS, samples: diagnosticsSampler.stop() };
                 log(config, 'Scanning other projects for flows that ran during the benchmark...');
                 const outsideFlows = await collectOutsideFlows({ client: authed, benchmarkProjectId: project.id, since: runs[0].startedAt });
                 const storage = await probeStorage({ client: authed, projectId: project.id, flowId });
-                const report: BenchmarkReport = { meta: buildMeta({ url: config.url }), flowId, project: { id: project.id, limits: projectLimits }, health, diagnostics, setup, flags, network, storage, outsideFlows, runs };
+                const report: BenchmarkReport = { meta: buildMeta({ url: config.url }), flowId, project: { id: project.id, limits: projectLimits }, health, diagnostics, diagnosticsTimeline, setup, flags, network, storage, outsideFlows, runs };
 
                 if (config.json) {
                     process.stdout.write(JSON.stringify(report, null, 2) + '\n');
@@ -265,6 +267,43 @@ async function collectFlags(client: AxiosInstance): Promise<Record<string, unkno
         if (id in all) picked[id] = all[id];
     }
     return picked;
+}
+
+// The one-shot diagnostics block is a single die-roll: a storage probe that reads 231ms at start
+// can read 455ms mid-load. This sampler re-probes every few seconds across the whole benchmark and
+// keys each sample by time, so variance and load-correlation become visible. App CPU/evloop and
+// worker pings only refresh on their ~60s ticks, so consecutive samples may repeat those values.
+function startDiagnosticsSampler(client: AxiosInstance): DiagnosticsSampler {
+    const samples: Record<string, DiagnosticsSample> = {};
+    let stopped = false;
+    void (async () => {
+        while (!stopped) {
+            const sampledAt = new Date().toISOString();
+            const res = await client.get('/api/v1/health/diagnostics').catch(() => null);
+            if (!stopped && res && res.status === 200 && res.data) {
+                const d = res.data;
+                const pings = ((d.workers?.machines ?? []) as Array<{ serverPingMs?: number | null }>)
+                    .map((w) => w.serverPingMs)
+                    .filter((v): v is number => typeof v === 'number');
+                samples[sampledAt] = {
+                    databaseMs: d.database?.latencyMs ?? null,
+                    redisMs: d.redis?.latencyMs ?? null,
+                    storageMs: d.storage?.latencyMs ?? null,
+                    apps: ((d.apps?.instances ?? []) as Array<{ hostname: string; cpuUsagePercentage: number; eventLoopDelayMs: number }>)
+                        .map((a) => ({ hostname: a.hostname, cpuUsagePercentage: a.cpuUsagePercentage, eventLoopDelayMs: a.eventLoopDelayMs })),
+                    workerPingP50Ms: pings.length > 0 ? percentile(pings, 50) : null,
+                    workerPingMaxMs: pings.length > 0 ? Math.max(...pings) : null,
+                };
+            }
+            await sleep(DIAGNOSTICS_SAMPLE_INTERVAL_MS);
+        }
+    })();
+    return {
+        stop() {
+            stopped = true;
+            return samples;
+        },
+    };
 }
 
 function startQueueSampler(client: AxiosInstance): QueueSampler {
@@ -646,6 +685,7 @@ function renderReport(report: BenchmarkReport): void {
 
     renderRateLimiter(report);
     renderOutsideFlows(report);
+    renderDiagnosticsTimeline(report);
 
     console.log(chalk.bold('\nNetwork (CLI -> server, cross-region)'));
     console.log(`  RTT min / p50 : ${report.network.minMs.toFixed(1)} / ${report.network.p50Ms.toFixed(1)} ms over ${report.network.probes} probes`);
@@ -714,6 +754,24 @@ function renderRateLimiter(report: BenchmarkReport): void {
     } else if (typeof defaultLimit === 'number') {
         console.log(chalk.gray(`  => real projects capped at ${defaultLimit} concurrent jobs would sustain this load (driven concurrency ${driven}).`));
     }
+}
+
+// One diagnostics reading is a die-roll; the timeline shows whether a bad number (say a 455ms
+// storage probe) is the norm or a blip, and whether infra latency degrades under the load phases.
+function renderDiagnosticsTimeline(report: BenchmarkReport): void {
+    const { intervalMs, samples } = report.diagnosticsTimeline;
+    const entries = Object.entries(samples);
+    if (entries.length === 0) return;
+    console.log(chalk.bold(`\nDiagnostics over time (server-probed every ${intervalMs / 1000}s across the benchmark)`));
+    console.log(chalk.gray('  time      db     redis  storage  app cpu%          evloop ms      worker ping p50/max'));
+    for (const [at, s] of entries) {
+        const time = at.slice(11, 19);
+        const appsCpu = s.apps.map((a) => a.cpuUsagePercentage.toFixed(0)).join('/') || 'n/a';
+        const appsLoop = s.apps.map((a) => a.eventLoopDelayMs).join('/') || 'n/a';
+        const ping = s.workerPingP50Ms === null ? 'n/a' : `${s.workerPingP50Ms}/${s.workerPingMaxMs}ms`;
+        console.log(`  ${time}  ${String(s.databaseMs ?? 'n/a').padEnd(5)}  ${String(s.redisMs ?? 'n/a').padEnd(5)}  ${String(s.storageMs ?? 'n/a').padEnd(7)}  ${appsCpu.padEnd(16)}  ${appsLoop.padEnd(13)}  ${ping}`);
+    }
+    console.log(chalk.gray('  app cpu/evloop and worker pings refresh on their ~60s ticks, so consecutive rows can repeat them; db/redis/storage are probed fresh each sample.'));
 }
 
 // Answers "was anything else running while I benchmarked?" — outside flows share the execution
@@ -848,6 +906,7 @@ const BYTES_PER_GB = 1024 * 1024 * 1024;
 const RECOMMENDED_MAX_CPU_CORES = 0.5;
 const RECOMMENDED_MAX_RAM_GB = 1;
 const QUEUE_SAMPLE_INTERVAL_MS = 500;
+const DIAGNOSTICS_SAMPLE_INTERVAL_MS = 5_000;
 const CLOCK_SKEW_BUFFER_MS = 5 * 60 * 1000;
 const PROJECT_PAGE_SIZE = 100;
 const MAX_OUTSIDE_RUN_PAGES = 5;
@@ -960,6 +1019,16 @@ type CollectOutsideFlowsParams = { client: AxiosInstance; benchmarkProjectId: st
 type DescribeFlowParams = { client: AxiosInstance; flowId: string; projectId: string };
 type QueueDepth = { samples: number; available: boolean; maxWaiting?: number; maxActive?: number; avgWaiting?: number };
 type QueueSampler = { stop: () => QueueDepth };
+type DiagnosticsSample = {
+    databaseMs: number | null;
+    redisMs: number | null;
+    storageMs: number | null;
+    apps: Array<{ hostname: string; cpuUsagePercentage: number; eventLoopDelayMs: number }>;
+    workerPingP50Ms: number | null;
+    workerPingMaxMs: number | null;
+};
+type DiagnosticsTimeline = { intervalMs: number; samples: Record<string, DiagnosticsSample> };
+type DiagnosticsSampler = { stop: () => Record<string, DiagnosticsSample> };
 
 type HealthInfo = {
     available: boolean;
@@ -1066,6 +1135,7 @@ type BenchmarkReport = {
     project: { id: string; limits: ProjectLimits };
     health: HealthInfo;
     diagnostics: DiagnosticsInfo;
+    diagnosticsTimeline: DiagnosticsTimeline;
     setup: SetupDiscovery;
     flags: Record<string, unknown>;
     network: NetworkBaseline;
