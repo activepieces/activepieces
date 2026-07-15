@@ -33,7 +33,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const lockedByOtherUser = useTableState((state) => state.lockedByOtherUser);
   const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE
+    Permission.WRITE_TABLE,
   );
   const canEdit = userHasTableWritePermission && !lockedByOtherUser;
   const actions = canEdit
@@ -56,7 +56,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
           className={cn(
             'group relative h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-muted/50  font-normal',
             hasActions && 'hover:bg-muted cursor-pointer',
-            isMenuOpen && 'bg-muted'
+            isMenuOpen && 'bg-muted',
           )}
         >
           <div className="flex items-center gap-2">
