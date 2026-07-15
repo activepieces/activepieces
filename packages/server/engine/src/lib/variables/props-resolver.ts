@@ -40,17 +40,19 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
-            const currentState = await executionState.currentState(Array.from(referencedStepNames))
+            const stepNamesArray = Array.from(referencedStepNames)
+            const currentState = await executionState.currentState(stepNamesArray)
+            const censoredState = await executionState.currentState(stepNamesArray, { redactSensitive: true })
             const resolveOptions = {
                 engineToken,
                 projectId,
                 apiUrl,
-                currentState,
             }
             const resolvedInput = await applyFunctionToValues<T>(
                 unresolvedInput,
                 (token) => resolveInputAsync({
                     ...resolveOptions,
+                    currentState,
                     input: token,
                     censoredInput: false,
                     contextVersion,
@@ -59,6 +61,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 unresolvedInput,
                 (token) => resolveInputAsync({
                     ...resolveOptions,
+                    currentState: censoredState,
                     input: token,
                     censoredInput: true,
                     contextVersion,

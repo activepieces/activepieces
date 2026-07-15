@@ -980,4 +980,24 @@ describe('Array Flatter Processor', () => {
         ])
         expect(errors).toEqual({})
     })
+
+    test('keeps sensitive output real for resolution but redacts it in the censored input', async () => {
+        const state = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                SecretString: 'super-secret',
+                ARN: 'arn:aws:secret:1',
+            },
+        }).setSensitiveOutputFields(['SecretString']))
+
+        const { resolvedInput, censoredInput } = await propsResolverService.resolve<{ token: string, arn: string }>({
+            unresolvedInput: { token: '{{step_1.output.SecretString}}', arn: '{{step_1.output.ARN}}' },
+            executionState: state,
+        })
+
+        expect(resolvedInput).toEqual({ token: 'super-secret', arn: 'arn:aws:secret:1' })
+        expect(censoredInput).toEqual({ token: '**REDACTED**', arn: 'arn:aws:secret:1' })
+    })
 })

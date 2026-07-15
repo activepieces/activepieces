@@ -1,6 +1,8 @@
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, GenericStepOutput, LoopStepOutput, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { pieceLoader } from '../../helper/piece-loader'
+import { utils } from '../../utils'
 import { createPropsResolver } from '../../variables/props-resolver'
 import { EngineConstants } from './engine-constants'
 import { FlowExecutorContext } from './flow-execution-context'
@@ -70,14 +72,36 @@ export const testExecutionContext = {
                 case FlowActionType.PIECE:
                 case FlowActionType.CODE:
                 case FlowTriggerType.EMPTY:
-                case FlowTriggerType.PIECE:
-                    flowExecutionContext = await flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
+                case FlowTriggerType.PIECE: {
+                    const stepSampleData = sampleData?.[step.name]
+                    let seeded = GenericStepOutput.create({
                         input: {},
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,
-                        ...spreadIfDefined('output', sampleData?.[step.name]),
-                    }))
+                        ...spreadIfDefined('output', stepSampleData),
+                    })
+                    // Seed the piece's sensitive output fields so a downstream step's
+                    // censored input redacts them here too — a full run gets these from
+                    // the executed step, but single-step tests seed prior steps from
+                    // sample data, which carries no such marker.
+                    if (step.type === FlowActionType.PIECE && !isNil(stepSampleData)) {
+                        const { pieceName, pieceVersion, actionName } = step.settings
+                        if (!isNil(actionName)) {
+                            const { data } = await tryCatch(() => pieceLoader.getPieceAndActionOrThrow({
+                                pieceName,
+                                pieceVersion,
+                                actionName,
+                                devPieces: engineConstants.devPieces,
+                            }))
+                            const sensitiveFields = utils.sensitiveOutputFields(data?.pieceAction.outputSchema)
+                            if (sensitiveFields.length > 0) {
+                                seeded = seeded.setSensitiveOutputFields(sensitiveFields)
+                            }
+                        }
+                    }
+                    flowExecutionContext = await flowExecutionContext.upsertStep(step.name, seeded)
                     break
+                }
             }
         }
         return flowExecutionContext

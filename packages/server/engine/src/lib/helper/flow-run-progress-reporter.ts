@@ -3,7 +3,7 @@ import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FlowActionType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
@@ -105,7 +105,7 @@ export const flowRunProgressReporter = {
 
             const serialized = await logSerializer.serialize({
                 executionState: {
-                    steps: flowExecutorContext.steps,
+                    steps: redactSteps(flowExecutorContext.steps),
                     tags: Array.from(flowExecutorContext.tags),
                 },
             })
@@ -224,6 +224,24 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
         standardError: isSuccess ? '' : (stepOutput.errorMessage ?? ''),
         standardOutput: '',
     }
+}
+
+function redactSteps(steps: Record<string, StepOutput>): Record<string, StepOutput> {
+    return Object.fromEntries(
+        Object.entries(steps).map(([name, step]) => [name, redactStepForLog(step)]),
+    )
+}
+
+function redactStepForLog(step: StepOutput): StepOutput {
+    if (step.type === FlowActionType.LOOP_ON_ITEMS && !isNil(step.output)) {
+        const output = { ...step.output, iterations: step.output.iterations.map(redactSteps) }
+        return Object.assign(Object.create(Object.getPrototypeOf(step)), step, { output })
+    }
+    if (!step.sensitiveOutputFields?.length) {
+        return step
+    }
+    const output = utils.redactFields(step.output, step.sensitiveOutputFields)
+    return Object.assign(Object.create(Object.getPrototypeOf(step)), step, { output })
 }
 
 type SendUpdateProgressParams = {

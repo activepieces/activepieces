@@ -52,9 +52,10 @@ A field supports an optional `label`, a `value` path override, a `format` (`emai
 ## Redacting Sensitive Output
 
 If an action can return a secret (e.g. a vault piece's "get secret" action), mark that field
-`sensitive: true`. The engine redacts it to `**REDACTED**` in the step's persisted run-log output
-before it's stored — the real value is still used at runtime by the flow itself, only the log is
-affected:
+`sensitive: true`. The real value is kept in-process, so downstream steps that reference the field
+still receive it at runtime — the engine redacts it to `**REDACTED**` only at the log boundary:
+the persisted run log, the test websocket, and any downstream step's **logged input** that maps
+the field in. Only the logs are affected, never the flow's actual data:
 
 ```typescript
 outputSchema: {

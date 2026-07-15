@@ -31,10 +31,12 @@ export type OutputSchemaField = {
   listItems?: OutputSchemaField[];
   /**
    * Marks this field's value as sensitive (e.g. a secret returned by a vault
-   * piece). The engine redacts it to `**REDACTED**` in the step's persisted
-   * run-log output before it's stored. Only supported for top-level fields
-   * (resolved via `value` if set, otherwise `key`) — a nested/dot-path
-   * `value` is not redacted.
+   * piece). The real value is kept in-process so downstream steps referencing
+   * it still receive it; the engine redacts it to `**REDACTED**` only at the
+   * log boundary — the persisted run log, the test websocket, and any
+   * downstream step's *logged input* that maps this field in. Only supported
+   * for top-level fields (resolved via `value` if set, otherwise `key`) — a
+   * nested/dot-path `value` is not redacted.
    */
   sensitive?: boolean;
 };

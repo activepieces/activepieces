@@ -48,7 +48,7 @@ describe('utils.sizeof', () => {
     })
 })
 
-describe('utils.redactSensitiveOutputFields', () => {
+describe('utils.sensitiveOutputFields', () => {
     const outputSchema: OutputSchema = {
         fields: [
             { key: 'ARN', label: 'ARN' },
@@ -57,26 +57,43 @@ describe('utils.redactSensitiveOutputFields', () => {
         ],
     }
 
-    it('should redact only fields marked sensitive', () => {
+    it('should collect only fields marked sensitive, preferring value over key', () => {
+        expect(utils.sensitiveOutputFields(outputSchema)).toEqual(['SecretString', 'data.id'])
+    })
+
+    it('should return an empty list when outputSchema is undefined', () => {
+        expect(utils.sensitiveOutputFields(undefined)).toEqual([])
+    })
+})
+
+describe('utils.redactFields', () => {
+    it('should redact only the listed top-level fields', () => {
         const output = { ARN: 'arn:aws:secret:1', SecretString: 'super-secret' }
-        expect(utils.redactSensitiveOutputFields(output, outputSchema)).toEqual({
+        expect(utils.redactFields(output, ['SecretString'])).toEqual({
             ARN: 'arn:aws:secret:1',
             SecretString: '**REDACTED**',
         })
     })
 
-    it('should be a no-op when outputSchema is undefined', () => {
+    it('should not mutate the input', () => {
         const output = { SecretString: 'super-secret' }
-        expect(utils.redactSensitiveOutputFields(output, undefined)).toEqual(output)
+        utils.redactFields(output, ['SecretString'])
+        expect(output.SecretString).toBe('super-secret')
+    })
+
+    it('should be a no-op when the field list is empty or undefined', () => {
+        const output = { SecretString: 'super-secret' }
+        expect(utils.redactFields(output, [])).toEqual(output)
+        expect(utils.redactFields(output, undefined)).toEqual(output)
     })
 
     it('should be a no-op when output is not an object', () => {
-        expect(utils.redactSensitiveOutputFields('super-secret', outputSchema)).toBe('super-secret')
-        expect(utils.redactSensitiveOutputFields(null, outputSchema)).toBe(null)
+        expect(utils.redactFields('super-secret', ['SecretString'])).toBe('super-secret')
+        expect(utils.redactFields(null, ['SecretString'])).toBe(null)
     })
 
-    it('should not redact a nested `value` path since only top-level fields are supported', () => {
+    it('should not redact a nested dot-path since only top-level keys are supported', () => {
         const output = { data: { id: 'super-secret' } }
-        expect(utils.redactSensitiveOutputFields(output, outputSchema)).toEqual(output)
+        expect(utils.redactFields(output, ['data.id'])).toEqual(output)
     })
 })

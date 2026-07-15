@@ -74,15 +74,22 @@ export const utils = {
     sizeof(object: unknown): number {
         return Buffer.byteLength(JSON.stringify(object) ?? '', 'utf8')
     },
-    redactSensitiveOutputFields(output: unknown, outputSchema: OutputSchema | undefined): unknown {
-        if (isNil(outputSchema) || !isObject(output)) {
+    sensitiveOutputFields(outputSchema: OutputSchema | undefined): string[] {
+        if (isNil(outputSchema)) {
+            return []
+        }
+        return outputSchema.fields
+            .filter((field) => field.sensitive)
+            .map((field) => field.value ?? field.key)
+    },
+    redactFields(output: unknown, fields: string[] | undefined): unknown {
+        if (isNil(fields) || fields.length === 0 || !isObject(output)) {
             return output
         }
         const result = { ...output }
-        for (const field of outputSchema.fields) {
-            const fieldPath = field.value ?? field.key
-            if (field.sensitive && fieldPath in result) {
-                result[fieldPath] = REDACTED_VALUE
+        for (const field of fields) {
+            if (field in result) {
+                result[field] = REDACTED_VALUE
             }
         }
         return result

@@ -19,6 +19,7 @@ import { OutputFieldList } from './output-field-list';
 import { OutputGenericFieldList } from './output-generic-field-list';
 import { OutputSchemaArrayList } from './output-schema-array-list';
 import { OutputTableView, selectArrayFriendlyView } from './output-table-view';
+import { sensitiveOutputUtils } from './redact-sensitive';
 import { OutputSchema } from './types';
 
 function OutputTextDisplay({ text }: { text: string }) {
@@ -110,11 +111,17 @@ function OutputViewerShell({
 }
 
 function SmartOutputViewer({
-  json,
+  json: rawJson,
   title,
   pieceSchema,
 }: SmartOutputViewerProps) {
   const pieceDefinedSchema = pieceSchema ?? null;
+  // Mask sensitive fields for display only; the real value lives in the store.
+  const json = useMemo(
+    () =>
+      sensitiveOutputUtils.redactSensitiveOutput(rawJson, pieceDefinedSchema),
+    [rawJson, pieceDefinedSchema],
+  );
   const isJsonObject = isObject(json);
 
   if (typeof json === 'string') {

@@ -113,7 +113,11 @@ export class FlowExecutorContext {
             finalized = truncated
         }
         else {
-            const sliced = this.slicingEnabled
+            // A step with sensitive fields is never sliced: keeping its output inline
+            // lets the log boundary redact those fields. Otherwise the real value would
+            // sit in a separate slice file that boundary redaction can't reach.
+            const hasSensitiveFields = (truncated.sensitiveOutputFields?.length ?? 0) > 0
+            const sliced = this.slicingEnabled && !hasSensitiveFields
                 ? await maybeSliceOutput(truncated.output, this.engineApi)
                 : undefined
             finalized = new GenericStepOutput({
@@ -124,6 +128,7 @@ export class FlowExecutorContext {
                 outputType: sliced ? StepOutputType.SLICE : undefined,
                 duration: truncated.duration,
                 errorMessage: truncated.errorMessage,
+                sensitiveOutputFields: truncated.sensitiveOutputFields,
             })
         }
         const steps = executionJournal.upsertStep({ stepName, stepOutput: finalized, path: this.currentPath.path, steps: this.steps })
@@ -164,7 +169,8 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-    public async currentState(referencedStepNames?: string[]): Promise<Record<string, unknown>> {
+    public async currentState(referencedStepNames?: string[], opts?: { redactSensitive?: boolean }): Promise<Record<string, unknown>> {
+        const redactSensitive = opts?.redactSensitive ?? false
         const referencedSteps = referencedStepNames
             ? referencedStepNames.reduce((acc, stepName) => {
                 if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
@@ -172,7 +178,7 @@ export class FlowExecutorContext {
             }, {} as Record<string, StepOutput>)
             : this.steps
 
-        let flattened: Record<string, unknown> = await extractStepView(referencedSteps, this.engineApi, this.resolvedStepOutputCache )
+        let flattened: Record<string, unknown> = await extractStepView(referencedSteps, this.engineApi, this.resolvedStepOutputCache, redactSensitive)
         let targetMap = this.steps
 
         for (const [stepName, iteration] of this.currentPath.path) {
@@ -183,17 +189,18 @@ export class FlowExecutorContext {
             targetMap = stepOutput.output.iterations[iteration]
             flattened = {
                 ...flattened,
-                ...await extractStepView(targetMap, this.engineApi, this.resolvedStepOutputCache ),
+                ...await extractStepView(targetMap, this.engineApi, this.resolvedStepOutputCache, redactSensitive),
             }
         }
         return flattened
     }
 }
 
-async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<Record<string, unknown>> {
+async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>, redactSensitive: boolean): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {}
     for (const [stepName, step] of Object.entries(steps)) {
-        const output = await resolveStepOutput(step, engineApi, cache)
+        const resolved = await resolveStepOutput(step, engineApi, cache)
+        const output = redactSensitive ? utils.redactFields(resolved, step.sensitiveOutputFields) : resolved
         const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
             ? { message: step.errorMessage }
             : undefined
