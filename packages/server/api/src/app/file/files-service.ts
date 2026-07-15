@@ -35,16 +35,20 @@ export const filesService = {
     },
 }
 
+export function fileTooLargeError(maxBytes: number): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `File exceeds the maximum allowed size of ${maxBytes} bytes` },
+    })
+}
+
 export function enforceByteLimit(maxBytes: number): Transform {
     let total = 0
     return new Transform({
         transform(chunk: Buffer, _encoding, callback) {
             total += chunk.length
             if (total > maxBytes) {
-                callback(new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: { message: `File exceeds the maximum allowed size of ${maxBytes} bytes` },
-                }))
+                callback(fileTooLargeError(maxBytes))
                 return
             }
             callback(null, chunk)

@@ -1,9 +1,10 @@
-import { Readable } from 'node:stream'
+import { Readable, Transform } from 'node:stream'
 import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
+import { MultipartFile } from '@fastify/multipart'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import mime from 'mime-types'
 import { fileService } from '../file/file.service'
-import { enforceByteLimit, filesService } from '../file/files-service'
+import { enforceByteLimit, filesService, fileTooLargeError } from '../file/files-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
@@ -60,12 +61,13 @@ async function convertBody(
 ): Promise<unknown> {
     if (request.isMultipart()) {
         const platformId = await projectService(request.log).getPlatformId(projectId)
+        const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
         const jsonResult: Record<string, unknown> = {}
         for await (const part of request.parts()) {
             if (part.type === 'file') {
                 const url = await saveStepFileAndConstructUrl({
                     log: request.log,
-                    data: part.file,
+                    data: failIfTruncated(part.file, maxFileSizeInBytes),
                     fileName: part.filename,
                     flowId,
                     platformId,
@@ -115,6 +117,20 @@ async function saveStepFileAndConstructUrl(params: SaveStepFileParams): Promise<
         fileType: FileType.FLOW_STEP_FILE,
         platformId,
     })
+}
+
+// When a part exceeds busboy's fileSize limit it ends the stream cleanly and flags `truncated`
+// rather than emitting an error, so a truncated file would otherwise be persisted before
+// @fastify/multipart surfaces the limit. Erroring at end-of-stream fails the upload instead.
+function failIfTruncated(file: MultipartFile['file'], maxBytes: number): Readable {
+    return file.pipe(new Transform({
+        transform(chunk, _encoding, callback) {
+            callback(null, chunk)
+        },
+        flush(callback) {
+            callback(file.truncated ? fileTooLargeError(maxBytes) : null)
+        },
+    }))
 }
 
 // A repeated multipart field name collects into an array, matching the previous body shape.
