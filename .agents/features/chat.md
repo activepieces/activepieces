@@ -133,10 +133,11 @@ A platform-level AI chat assistant that lets users interact with an LLM to manag
 ## Local Tools
 - `ap_set_session_title` — auto-names the conversation after the first exchange
 - `ap_select_project` — switches project context (scopes MCP tools to that project)
-- `ap_execute_action` — executes a single piece action ad-hoc (e.g. "check my inbox"); connections are managed server-side (the LLM never sees externalIds); write/destructive actions trigger an action preview gate before execution; emits `ACTION_RECEIPT` events after completion
+- `ap_execute_action` — executes a single piece action ad-hoc (e.g. "check my inbox"); connections are managed server-side (the LLM never sees externalIds); write/destructive actions trigger an action preview gate before execution; emits `ACTION_RECEIPT` events after completion. Requires the caller's project role to have `Permission.WRITE_RUN` (enforced via `checkWriteRunPermission` → `resolvePermissionChecker`; no-op in Community, denies on missing role)
+- `ap_run_code` — runs ad-hoc TypeScript in the flow-engine sandbox (`executeAdhocCode`); used to post-process large offloaded tool results or produce files. Same `Permission.WRITE_RUN` requirement as `ap_execute_action`
 - `ap_list_across_projects` — lists flows, tables, runs, or connections across all user-accessible projects
 - `ap_deselect_project` — clears the selected project context
-- `ap_explore_data` — read-only exploration of the user's data (sheets, channels, columns) to build understanding during discovery; never configures the automation
+- `ap_explore_data` — read-only exploration of the user's data (sheets, channels, columns) to build understanding during discovery; never configures the automation. Read-only, so no `WRITE_RUN` gate (Viewers may use it)
 - `ap_load_guide` — loads an on-demand prompt guide (`build_flow`, `one_time_task`, `error_handling`, `http_fallback`, `control_flow`, `state`, `tables`, `ai`) so guidance is only in context when needed
 - `ap_fetch_url` — SSRF-safe read-only GET of any public http(s) URL (`safeHttp.axios`); HTML is stripped to text via `string-strip-html` and large results are truncated. Available in both phases on every provider (disabled in dry runs); built in `createWebTools` (`chat-worker-tools.ts`)
 - `ap_set_phase` — flips the agent between the `discovery` and `build` tool phases
