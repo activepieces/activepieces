@@ -106,10 +106,16 @@ async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBase
 
 async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {
     const redis = await redisConnections.useExisting()
-    const count = await redis.incr(key)
-    if (count === 1) {
-        await redis.expire(key, ttlSeconds)
-    }
+    // INCR + EXPIRE in one atomic script: a crash between the two would otherwise leave a key with
+    // no TTL, permanently blocking the user. EXPIRE only on first increment keeps a fixed window.
+    const count = await redis.eval(
+        `local count = redis.call('INCR', KEYS[1])
+if count == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+return count`,
+        1,
+        key,
+        ttlSeconds.toString(),
+    ) as number
     return { allowed: count <= limit, count }
 }
 
