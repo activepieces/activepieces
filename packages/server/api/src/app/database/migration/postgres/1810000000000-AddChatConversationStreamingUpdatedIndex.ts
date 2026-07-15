@@ -8,7 +8,7 @@ import { Migration } from '../../migration'
 export class AddChatConversationStreamingUpdatedIndex1810000000000 implements Migration {
     name = 'AddChatConversationStreamingUpdatedIndex1810000000000'
     breaking = false
-    release = '0.103.0'
+    release = '0.86.2'
     // CONCURRENTLY (non-PGlite) is illegal inside a transaction.
     transaction = false
 
