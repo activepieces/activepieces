@@ -112,7 +112,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('sent'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -164,7 +164,7 @@ describe('chatWorkerTools', () => {
                 .mockResolvedValueOnce(mcpFailure('Invalid channel'))
                 .mockResolvedValueOnce(mcpSuccess('sent'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -197,7 +197,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             await tools.ap_execute_action.execute({
                 pieceName: 'http',
                 actionName: 'send_request',
@@ -212,7 +212,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -227,7 +227,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -246,7 +246,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             await tools.ap_execute_action.execute({
                 pieceName: 'gmail',
                 actionName: 'send_email',
@@ -266,7 +266,7 @@ describe('chatWorkerTools', () => {
             const executeTool = vi.fn()
                 .mockResolvedValueOnce({ success: false, error: 'No projects available' })
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -285,7 +285,7 @@ describe('chatWorkerTools', () => {
             const { eventEmitter, progressEvents } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpFailure('Bad auth'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -318,7 +318,7 @@ describe('chatWorkerTools', () => {
                 .mockResolvedValueOnce(mcpFailure('err'))
                 .mockResolvedValueOnce(mcpSuccess('ok'))
 
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
             await tools.ap_execute_action.execute({
                 pieceName: 'slack',
                 actionName: 'send_message',
@@ -326,6 +326,34 @@ describe('chatWorkerTools', () => {
             }, { toolCallId: 'tc9', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
             expect(executeTool).toHaveBeenCalledTimes(6)
+        })
+    })
+
+    describe('ap_execute_action taint gate', () => {
+        it('forces the approval gate for a non-read-only action once the turn is tainted', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue(mcpSuccess('ok'))
+            const waitForApproval = vi.fn().mockResolvedValue({ approved: true })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, guides: {}, taintState: { tainted: true } })
+
+            await tools.ap_execute_action.execute({
+                pieceName: 'slack', actionName: 'do_thing', needsConfirmation: false, input: {},
+            }, { toolCallId: 'tc-taint', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(waitForApproval).toHaveBeenCalledWith({ gateId: 'tc-taint' })
+        })
+
+        it('does not gate the same action when the turn is untainted', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue(mcpSuccess('ok'))
+            const waitForApproval = vi.fn().mockResolvedValue({ approved: true })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, guides: {}, taintState: { tainted: false } })
+
+            await tools.ap_execute_action.execute({
+                pieceName: 'slack', actionName: 'do_thing', needsConfirmation: false, input: {},
+            }, { toolCallId: 'tc-clean', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(waitForApproval).not.toHaveBeenCalled()
         })
     })
 
@@ -395,7 +423,7 @@ describe('chatWorkerTools', () => {
         it('stops retrying an identical call after it fails MAX_IDENTICAL_ACTION_FAILURES times', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpFailure('The request body contains invalid JSON. (400)'))
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
 
             const input = { pieceName: '@activepieces/piece-http', actionName: 'send_request', input: { url: 'https://x', body: { type: 'json_raw' } } }
             await tools.ap_execute_action.execute(input, { ...callOptions, toolCallId: 'g1' })
@@ -411,7 +439,7 @@ describe('chatWorkerTools', () => {
         it('blocks re-running a write action that already succeeded (duplicate-send guard)', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('Sent (204)'))
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
 
             const input = { pieceName: '@activepieces/piece-http', actionName: 'send_request', input: { url: 'https://x', body_type: 'json', body: { data: { content: 'hi' } } } }
             await tools.ap_execute_action.execute(input, { ...callOptions, toolCallId: 's1' })
@@ -424,7 +452,7 @@ describe('chatWorkerTools', () => {
         it('allows a different input through after a failure (key is input-specific)', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('Sent'))
-            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }) })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: vi.fn().mockResolvedValue({ approved: true }), guides: {}, taintState: { tainted: false } })
 
             await tools.ap_execute_action.execute({ pieceName: 'p', actionName: 'send_request', input: { a: 1 } }, { ...callOptions, toolCallId: 'a1' })
             await tools.ap_execute_action.execute({ pieceName: 'p', actionName: 'send_request', input: { a: 2 } }, { ...callOptions, toolCallId: 'a2' })

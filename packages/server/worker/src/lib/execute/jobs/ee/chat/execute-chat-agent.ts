@@ -4,7 +4,7 @@ import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, Ex
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
-import { chatWorkerTools } from './chat-worker-tools'
+import { chatWorkerTools, TaintState } from './chat-worker-tools'
 import { delayWithJitter, runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
@@ -114,12 +114,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         try {
             const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
+            const taintState: TaintState = { tainted: false }
 
             const webTools: ToolSet = dryRun ? {} : {
-                ...chatWorkerTools.createWebTools(),
-                ...(aiTools.webSearch ? chatWorkerTools.createSearchTools({ webSearch: aiTools.webSearch }) : {}),
+                ...chatWorkerTools.createWebTools({ taintState }),
+                ...(aiTools.webSearch ? chatWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(webSearchActive ? chatAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
-                ...(aiTools.webScraping ? chatWorkerTools.createScrapeTools({ scraping: aiTools.webScraping }) : {}),
+                ...(aiTools.webScraping ? chatWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? chatWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveChatFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
@@ -128,7 +129,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             }
 
             const allTools = buildToolSet({
-                ctx, eventEmitter, log, phaseState, mcpToolSet, webTools,
+                ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
@@ -313,11 +314,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: ChatPhase }
+    taintState: TaintState
     mcpToolSet: Record<string, unknown>
     webTools: ToolSet
     projects: Array<{ id: string, displayName: string, type: string }>
@@ -430,7 +432,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
