@@ -1,6 +1,18 @@
 import assert from 'assert'
 import { readFileSync } from 'fs'
 
+// A single ALTER TABLE literal can add several columns, each with its own NOT NULL /
+// DEFAULT. Check each `ADD ...` clause on its own — a DEFAULT on one column must not
+// mask a NOT-NULL-without-DEFAULT on another (`ADD "a" bool NOT NULL DEFAULT false,
+// ADD "b" text NOT NULL` is unsafe because of "b").
+function hasUnsafeNotNullAdd(sql: string): boolean {
+    return sql
+        .split(/\bADD\b/i)
+        .slice(1)
+        .map((clause) => clause.split(';')[0])
+        .some((clause) => /\bNOT\s+NULL\b/i.test(clause) && !/\bDEFAULT\b/i.test(clause))
+}
+
 // Rules run against the up() SQL only. down() commonly contains the inverse of a
 // safe change (a DROP INDEX undoing a CREATE INDEX, a CREATE TABLE undoing a DROP)
 // which is not itself a breaking change — scanning it would produce false positives.
@@ -11,7 +23,7 @@ const DESTRUCTIVE_RULES: { label: string, test: (sql: string) => boolean }[] = [
     { label: 'DROP COLUMN', test: (sql) => /\bDROP\s+COLUMN\b/i.test(sql) },
     { label: 'DROP CONSTRAINT', test: (sql) => /\bDROP\s+CONSTRAINT\b/i.test(sql) },
     { label: 'ALTER COLUMN ... TYPE', test: (sql) => /\bALTER\s+COLUMN\b[\s\S]*?\bTYPE\b/i.test(sql) },
-    { label: 'ADD ... NOT NULL without DEFAULT', test: (sql) => /\bADD\b[\s\S]*?\bNOT\s+NULL\b/i.test(sql) && !/\bDEFAULT\b/i.test(sql) },
+    { label: 'ADD ... NOT NULL without DEFAULT', test: hasUnsafeNotNullAdd },
 ]
 
 function extractSqlLiterals(source: string): string[] {
@@ -48,6 +60,11 @@ function runSelfCheck(): void {
     assert(destructive.breaking === true, 'expected DropBadges to declare breaking = true')
     assert(additive.destructive === false, `expected additive index migration to be non-destructive, got ${JSON.stringify(additive.ddl)}`)
     assert(additive.breaking === false, 'expected additive index migration to declare breaking = false')
+
+    assert(hasUnsafeNotNullAdd('ADD COLUMN "a" text NOT NULL') === true, 'single NOT NULL without DEFAULT is unsafe')
+    assert(hasUnsafeNotNullAdd('ADD COLUMN "a" boolean NOT NULL DEFAULT false') === false, 'NOT NULL with DEFAULT is safe')
+    assert(hasUnsafeNotNullAdd('ADD COLUMN "a" boolean NOT NULL DEFAULT false, ADD COLUMN "b" text NOT NULL') === true, 'multi-column: a DEFAULT on one column must not mask NOT-NULL-without-DEFAULT on another')
+    assert(hasUnsafeNotNullAdd('ADD COLUMN "a" text') === false, 'nullable ADD is safe')
 
     console.log('migration-ddl self-check passed')
 }

@@ -28,16 +28,19 @@ function sectionChoice({ body, heading }: { body: string, heading: RegExp }): Te
     return checked[0] === 'yes' ? 'yes' : 'no'
 }
 
-function addedLinesFor({ baseRef, file }: { baseRef: string, file: string }): number {
-    const output = execSync(
-        `git diff --numstat origin/${baseRef}...HEAD -- ${file}`,
+// Counts added lines with real content — a blank line or an HTML comment must not
+// satisfy the "documented the breaking change" requirement.
+function addedContentLines({ baseRef, file }: { baseRef: string, file: string }): number {
+    const diff = execSync(
+        `git diff origin/${baseRef}...HEAD -- ${file}`,
         { encoding: 'utf-8' },
-    ).trim()
-    if (!output) {
-        return 0
-    }
-    const added = parseInt(output.split('\n')[0].split('\t')[0], 10)
-    return Number.isNaN(added) ? 0 : added
+    )
+    return diff
+        .split('\n')
+        .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+        .map((line) => line.slice(1).trim())
+        .filter((line) => line.length > 0 && !line.startsWith('<!--'))
+        .length
 }
 
 function main(): void {
@@ -48,7 +51,7 @@ function main(): void {
     const hasBreakingLabel = labels.includes(BREAKING_LABEL)
     const templateChoice = sectionChoice({ body, heading: /^#{2,3}\s*Breaking change\?/im })
     const securityChoice = sectionChoice({ body, heading: /^#{2,3}\s*Security impact\?/im })
-    const docAdded = addedLinesFor({ baseRef, file: BREAKING_CHANGES_DOC }) > 0
+    const docAdded = addedContentLines({ baseRef, file: BREAKING_CHANGES_DOC }) > 0
 
     const errors: string[] = []
 
