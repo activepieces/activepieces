@@ -229,18 +229,10 @@ async function validateAuthOwnership({ auth, pieceName, projectId, platformId, l
     log: FastifyBaseLogger
 }): Promise<{ content: [{ type: 'text', text: string }] } | null> {
     try {
-        // Resolve the connection by externalId alone — exactly how the engine resolves
-        // {{connections['<externalId>']}} when ap_run_action runs the action — instead of
-        // an extra `pieceName = Equal(...)` SQL filter. That filter conflated "no such
-        // connection in this project" with "connection exists but its stored pieceName
-        // string differs", so a valid ACTIVE connection for the piece got rejected. We
-        // still reject a connection that genuinely belongs to a different piece, comparing
-        // both sides through normalizePieceName so a superficial format difference (e.g.
-        // "hubspot" vs "@activepieces/piece-hubspot") never causes a false rejection.
         const connections = await appConnectionService(log).list({
             projectId,
             platformId,
-            pieceName: undefined,
+            pieceName,
             cursorRequest: null,
             scope: undefined,
             displayName: undefined,
@@ -253,17 +245,7 @@ async function validateAuthOwnership({ auth, pieceName, projectId, platformId, l
             return {
                 content: [{
                     type: 'text',
-                    text: `⚠️ Connection "${auth}" was not found in this project. Use ap_list_connections to find the correct connection for this piece.`,
-                }],
-            }
-        }
-        const connectionPiece = mcpUtils.normalizePieceName(match.pieceName)
-        const requestedPiece = mcpUtils.normalizePieceName(pieceName)
-        if (connectionPiece !== requestedPiece) {
-            return {
-                content: [{
-                    type: 'text',
-                    text: `⚠️ Connection "${auth}" belongs to piece "${match.pieceName}", not "${pieceName}". Use ap_list_connections to find the correct connection for this piece.`,
+                    text: `⚠️ Connection "${auth}" does not belong to piece "${pieceName}". Use ap_list_connections to find the correct connection for this piece.`,
                 }],
             }
         }

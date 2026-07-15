@@ -118,10 +118,6 @@ OAuth 2.0 PKCE flow is supported for AI clients that require OAuth. The MCP OAut
 3. Registers controllable + locked static tools
 4. Registers empty resources/prompts (MCP spec compliance)
 
-## Tool Input Parsing
-
-The structured flow-building tools (`ap_add_step`, `ap_build_flow`, `ap_create_table`, `ap_update_step`, `ap_update_trigger`) wrap their object/array inputs (`input`, `trigger`, `steps`, `fields`) in `z.preprocess(mcpUtils.parseJsonStringArg, …)`: some models emit object/array tool args as JSON **strings**, so the preprocess parses a string back to JSON before Zod validation. `.describe()` stays on the OUTER `preprocess` schema so the field description still reaches the generated JSON schema (and the drift/description tests). Chat Code Mode bridged calls tag their args with an internal raw-result marker; each MCP tool handler strips that marker (`chatCodeModeUtils.stripRawArgs`) before execution so it never reaches the piece input.
-
 ## Agent Integration
 
 AI pieces use MCP tools via 3 transport protocols:
