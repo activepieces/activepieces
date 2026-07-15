@@ -2,6 +2,7 @@ import { DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { redisConnections } from '../../../../src/app/database/redis-connections'
 import { executeCrossProjectTool } from '../../../../src/app/ee/chat/tools/chat-tools'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -251,6 +252,20 @@ describe('Chat Conversations API', () => {
 
             const deleteResponse = await ctx.delete(`${CONVERSATIONS_URL}/non-existent-id`)
             expect(deleteResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Message rate limit', () => {
+        it('returns 429 once the per-user chat message rate limit is exceeded', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Rate limit test' })
+            const conversationId = createResponse.json().id
+
+            const redis = await redisConnections.useExisting()
+            await redis.set(`chat-message-rate:${ctx.platform.id}:${ctx.user.id}`, 40)
+
+            const response = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages`, { content: 'hello' })
+            expect(response.statusCode).toBe(StatusCodes.TOO_MANY_REQUESTS)
         })
     })
 
