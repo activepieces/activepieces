@@ -7,15 +7,20 @@ import {
   HttpMethod,
   HttpRequest,
   HttpResponse,
-  QueryParams,
+  QueryParams
 } from '@activepieces/pieces-common';
 import { httpOauth2Auth } from '../..';
+<<<<<<< Updated upstream
 import {
   createAction,
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+=======
+import { ApFile, createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { assertNotNullOrUndefined, isEmpty } from '@activepieces/shared';
+>>>>>>> Stashed changes
 import FormData from 'form-data';
 import { ProxyAgent } from 'undici';
 
@@ -106,9 +111,34 @@ export const httpOauth2RequestAction = createAction({
             });
             break;
           case 'form_data':
-            fields['data'] = Property.Object({
+            fields['data'] = Property.Array({
               displayName: 'Form Data',
               required: true,
+              properties: {
+                fieldName: Property.ShortText({
+                  displayName: 'Field Name',
+                  required: true,
+                }),
+                fieldType: Property.StaticDropdown({
+                  displayName: 'Field Type',
+                  required: true,
+                  options: {
+                    disabled: false,
+                    options: [
+                      { label: 'Text', value: 'text' },
+                      { label: 'File', value: 'file' },
+                    ],
+                  },
+                }),
+                textFieldValue: Property.LongText({
+                  displayName: 'Text Field Value',
+                  required: false,
+                }),
+                fileFieldValue: Property.File({
+                  displayName: 'File Field Value',
+                  required: false,
+                }),
+              },
             });
             break;
         }
@@ -199,10 +229,28 @@ export const httpOauth2RequestAction = createAction({
     if (body) {
       const bodyInput = body['data'];
       if (body_type === 'form_data') {
+        const formBodyInput = bodyInput as Array<{
+          fieldName: string;
+          fieldType: 'text' | 'file';
+          textFieldValue?: string;
+          fileFieldValue?: ApFile;
+        }>;
+
         const formData = new FormData();
-        for (const key in bodyInput) {
-          formData.append(key, bodyInput[key]);
+
+        for (const {
+          fieldName,
+          fieldType,
+          textFieldValue,
+          fileFieldValue,
+        } of formBodyInput) {
+          if (fieldType === 'text' && !isEmpty(textFieldValue)) {
+            formData.append(fieldName, textFieldValue);
+          } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
+            formData.append(fieldName, fileFieldValue!.data);
+          }
         }
+
         request.body = formData;
         request.headers = { ...request.headers, ...formData.getHeaders() };
       } else {
