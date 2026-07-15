@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, Permission, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ApMultipartFile, ErrorCode, isMultipartFile, Permission, tryCatch } from '@activepieces/core-utils'
 import { FileCompression, FileType, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { fileService } from '../file/file.service'
+import { attachMultipartFieldsToBody } from '../helper/multipart-body'
 import { knowledgeBaseService } from './knowledge-base.service'
 
 const KB_PRINCIPALS = [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE] as const
@@ -24,8 +25,8 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
     })
 
     fastify.post('/upload', UploadKnowledgeBaseFileRequest, async (request, reply) => {
-        const part = await request.file()
-        if (isNil(part)) {
+        const { file, displayName } = request.body
+        if (!isMultipartFile(file)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -33,7 +34,7 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
                 },
             })
         }
-        if (!KB_ALLOWED_MIME_TYPES.includes(part.mimetype ?? '')) {
+        if (!KB_ALLOWED_MIME_TYPES.includes(file.mimetype ?? '')) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -42,25 +43,13 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             })
         }
 
-        const displayName = (part.fields.displayName as MultipartTextField | undefined)?.value
-        if (isNil(displayName)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'displayName is required',
-                },
-            })
-        }
-
-        const buffer = await part.toBuffer()
-
         const savedFile = await fileService(request.log).save({
             projectId: request.projectId,
-            data: buffer,
-            size: buffer.length,
+            data: file.data,
+            size: file.data.length,
             type: FileType.KNOWLEDGE_BASE,
             compression: FileCompression.NONE,
-            fileName: part.filename,
+            fileName: file.filename,
         })
 
         const kbFile = await knowledgeBaseService(request.log).createFile({
@@ -176,11 +165,19 @@ const UploadKnowledgeBaseFileRequest = {
             type: ProjectResourceType.QUERY,
         }),
     },
+    // The whole body is consumed up front so `displayName` is found regardless of whether the
+    // client appends it before or after the file part — reading it off the file part's `fields`
+    // only sees fields that happened to arrive first.
+    preValidation: attachMultipartFieldsToBody,
     schema: {
         tags: ['knowledge-base'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         consumes: ['multipart/form-data'],
         description: 'Upload a file and create a knowledge base file record',
+        body: z.object({
+            file: ApMultipartFile,
+            displayName: z.string(),
+        }),
         querystring: z.object({
             projectId: z.string(),
         }),
@@ -315,8 +312,4 @@ const SearchKnowledgeBaseRequest = {
             similarityThreshold: z.number().min(0).max(1).optional(),
         }),
     },
-}
-
-type MultipartTextField = {
-    value: string
 }
