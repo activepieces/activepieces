@@ -248,8 +248,14 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
+// On a gate TIMEOUT (user away, not a decline) resume with guidance instead of a "cancelled" message,
+// so the model skips an optional step or stops for a required one — never mistaking silence for consent.
+function gateNoResponseMessage(step: string): string {
+    return `⏳ The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`
+}
+
 function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened }: {
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onConnectorReconnected?: (connectorUuid: string) => void
@@ -273,7 +279,10 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 }))
             }
             const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
-            if (!decision.approved) {
+            if (decision.outcome === 'timeout') {
+                return { timedOut: true, message: gateNoResponseMessage(getDisplayName?.(input) ?? toolName) }
+            }
+            if (decision.outcome !== 'approved') {
                 return { dismissed: true, message: typeof dismissMessage === 'function' ? dismissMessage(input) : dismissMessage }
             }
             if (onApproved) {
@@ -530,7 +539,7 @@ function createProgressGuard() {
 function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     guides: Record<string, string>
     taintState: TaintState
@@ -612,8 +621,9 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                         }))
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
-                    if (!decision.approved) {
-                        return { content: [{ type: 'text', text: 'Action cancelled by user.' }] }
+                    if (decision.outcome !== 'approved') {
+                        const text = decision.outcome === 'timeout' ? gateNoResponseMessage('action approval') : 'Action cancelled by user.'
+                        return { content: [{ type: 'text', text }] }
                     }
                 }
 
@@ -950,7 +960,7 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
     sendEmail: (params: { to: string[], subject: string, body: string, gateId?: string }) => Promise<SendChatEmailResponse>
     eventEmitter: ChatEventEmitter
     userEmail: string
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
 }): ToolSet {
     const normalizedSelf = userEmail.toLowerCase().trim()
@@ -988,8 +998,9 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
                         }))
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
-                    if (!decision.approved) {
-                        return { content: [{ type: 'text', text: 'Email cancelled by user.' }] }
+                    if (decision.outcome !== 'approved') {
+                        const text = decision.outcome === 'timeout' ? gateNoResponseMessage('email approval') : 'Email cancelled by user.'
+                        return { content: [{ type: 'text', text }] }
                     }
                 }
 
@@ -1263,7 +1274,7 @@ function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, u
 function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, eventEmitter, log }: {
     mcpTools: Record<string, unknown>
     checkFlowWrites: (flowId: string) => Promise<unknown>
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     eventEmitter: ChatEventEmitter
     log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
@@ -1306,8 +1317,11 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
                     }))
                     log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, flow: { id: flowId }, writeStepCount: writeSteps.length }, 'Test-flow write gate opened, awaiting approval')
                     const decision = await waitForApproval({ gateId })
-                    log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, decision: decision.approved ? 'approved' : 'denied' }, 'Test-flow write gate resolved')
-                    if (!decision.approved) {
+                    log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, decision: decision.outcome }, 'Test-flow write gate resolved')
+                    if (decision.outcome !== 'approved') {
+                        if (decision.outcome === 'timeout') {
+                            return { content: [{ type: 'text', text: gateNoResponseMessage('live-test approval') }] }
+                        }
                         const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
                         return { content: [{ type: 'text', text: `Live test cancelled by the user.${stepList} The user declined a real run that would perform these actions. Do not run it; offer to test with mock trigger data instead, or ask whether to proceed.` }] }
                     }
@@ -1405,6 +1419,9 @@ export type ChatEventEmitter = {
 
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
+
+export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
+export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
 
 export const chatWorkerTools = {
     createEventEmitter,
