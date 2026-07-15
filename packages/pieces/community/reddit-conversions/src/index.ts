@@ -1,6 +1,6 @@
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { redditConversionsAuth } from './lib/common/auth';
+import { redditConversionsAuth } from './lib/auth';
 import { sendConversionEvent } from './lib/actions/send-conversion-event';
 
 export const redditConversions = createPiece({

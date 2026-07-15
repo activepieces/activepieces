@@ -25,27 +25,35 @@ function hashWith(normalize: (raw: string) => string) {
   };
 }
 
+// Reddit canonicalizes email before hashing for all domains (not Gmail-specific): lowercase,
+// strip the "+alias", then remove every non-alphanumeric character from the local part.
+// https://business.reddithelp.com/s/article/advanced-matching-for-developers
 const canonicalizeEmail = (value: string): string => {
-  const [localPart, domain] = value.trim().split('@');
+  const [localPart, domain] = value.trim().toLowerCase().split('@');
   if (!domain) {
     return value.trim().toLowerCase();
   }
-  const cleanedLocalPart = localPart.replace(/\./g, '').split('+')[0];
-  return `${cleanedLocalPart.toLowerCase()}@${domain.toLowerCase()}`;
+  const cleanedLocalPart = localPart.split('+')[0].replace(/[^a-z0-9]/g, '');
+  return `${cleanedLocalPart}@${domain}`;
 };
 
 const toE164 = (value: string): string => {
-  const digitsOnly = value.replace(/\D/g, '');
+  const withoutExtension = value.replace(
+    /\s*(?:ext(?:ension)?\.?|x)\s*:?\s*\d+\s*$/i,
+    ''
+  );
+  const digitsOnly = withoutExtension.replace(/\D/g, '');
   return `+${digitsOnly}`;
 };
 
 const lowerTrim = (value: string): string => value.toLowerCase().trim();
+const upperTrim = (value: string): string => value.toUpperCase().trim();
 const trim = (value: string): string => value.trim();
 
 export const identityHashing = {
   email: hashWith(canonicalizeEmail),
   phone: hashWith(toE164),
   externalId: hashWith(trim),
-  ipAddress: hashWith(trim),
-  mobileId: hashWith(lowerTrim),
+  idfa: hashWith(upperTrim),
+  aaid: hashWith(lowerTrim),
 };

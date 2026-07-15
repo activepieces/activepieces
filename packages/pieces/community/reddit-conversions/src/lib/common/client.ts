@@ -28,8 +28,7 @@ async function sendEvents(params: SendEventsParams): Promise<ConversionApiRespon
 function toFriendlyError(error: unknown): Error {
   if (error instanceof HttpError) {
     const status = error.response.status;
-    const body = error.response.body as { message?: string; error?: string } | undefined;
-    const detail = body?.message ?? body?.error;
+    const detail = getErrorDetail(error.response.body);
     const suffix = detail ? ` ${detail}` : '';
     switch (status) {
       case 400:
@@ -66,6 +65,69 @@ function toFriendlyError(error: unknown): Error {
     }
   }
   return error instanceof Error ? error : new Error('Unexpected error sending conversion event.');
+}
+
+function getErrorDetail(body: unknown): string | undefined {
+  if (typeof body === 'string') {
+    return body.trim().length > 0 ? body.trim() : undefined;
+  }
+  if (!isRecord(body)) {
+    return undefined;
+  }
+  const message = body['message'];
+  if (typeof message === 'string') {
+    return message;
+  }
+  const error = body['error'];
+  if (typeof error === 'string') {
+    return error;
+  }
+  // Reddit's documented error shape is { error: { code, message, fields?: [{ field, message }] } }.
+  if (isRecord(error)) {
+    const nested = typeof error['message'] === 'string' ? error['message'] : undefined;
+    const fields = describeErrorFields(error['fields']);
+    const combined = [nested, fields].filter(notEmpty).join(' ');
+    if (combined.length > 0) {
+      return combined;
+    }
+  }
+  // Fall back to the raw body so an unrecognized shape isn't silently swallowed.
+  const serialized = safeStringify(body);
+  return serialized ? serialized.slice(0, 500) : undefined;
+}
+
+function describeErrorFields(fields: unknown): string | undefined {
+  if (!Array.isArray(fields) || fields.length === 0) {
+    return undefined;
+  }
+  const parts = fields
+    .filter(isRecord)
+    .map((entry) => {
+      const field = typeof entry['field'] === 'string' ? entry['field'] : undefined;
+      const message = typeof entry['message'] === 'string' ? entry['message'] : undefined;
+      if (field && message) {
+        return `${field}: ${message}`;
+      }
+      return field ?? message;
+    })
+    .filter(notEmpty);
+  return parts.length > 0 ? `(${parts.join('; ')})` : undefined;
+}
+
+function notEmpty(value: string | undefined): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function safeStringify(value: unknown): string | undefined {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 export const redditConversionsClient = {

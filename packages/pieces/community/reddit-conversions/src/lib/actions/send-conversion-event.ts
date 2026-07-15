@@ -1,12 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { randomUUID } from 'crypto';
-import { redditConversionsAuth } from '../common/auth';
+import { redditConversionsAuth } from '../auth';
 import {
   ConversionApiResponse,
   ConversionEvent,
   redditConversionsClient,
 } from '../common/client';
-import { identityHashing } from '../common/hashing';
+import { redditConversionEventUtils } from '../common/event-utils';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
@@ -105,7 +105,7 @@ export const sendConversionEvent = createAction({
     }),
     customer_info: Property.MarkDown({
       value:
-        '### Customer Information\nProvide at least **one** attribution signal: Click ID, Email, Phone, External ID, IP Address, Mobile Advertising ID, or Reddit UUID. Personal identifiers are automatically normalized and SHA-256 hashed before sending — enter the raw values.',
+        '### Customer Information\nProvide at least **one** attribution signal: Click ID, Email, Phone, External ID, IP Address, Mobile Advertising ID, or Reddit UUID. Email, phone, external ID, and mobile advertising IDs are automatically normalized and SHA-256 hashed before sending — enter the raw values. IP address, user agent, and Reddit UUID are sent unhashed, as Reddit requires.',
     }),
     email: Property.ShortText({
       displayName: 'Email',
@@ -126,7 +126,7 @@ export const sendConversionEvent = createAction({
     }),
     ip_address: Property.ShortText({
       displayName: 'IP Address',
-      description: "The user's IP address (IPv4 or IPv6). Hashed automatically.",
+      description: "The user's IP address (IPv4 or IPv6). Sent unhashed.",
       required: false,
     }),
     user_agent: Property.ShortText({
@@ -250,8 +250,8 @@ export const sendConversionEvent = createAction({
       throw new Error('Custom Event Name must be at most 64 characters.');
     }
 
-    const user = buildUserData(props);
-    if (!hasAttributionSignal({ props, user })) {
+    const user = redditConversionEventUtils.buildUserData(props);
+    if (!redditConversionEventUtils.hasAttributionSignal({ props, user })) {
       throw new Error(
         'At least one attribution signal is required: provide a Click ID, Email, Phone, External ID, IP Address, Mobile Advertising ID, or Reddit UUID.'
       );
@@ -334,42 +334,6 @@ function resolveEventAt(input: string | undefined): number {
   return parsed;
 }
 
-function buildUserData(props: ActionProps): Record<string, unknown> {
-  const dataProcessingOptions = buildDataProcessingOptions(props);
-  const screenDimensions = buildScreenDimensions(props);
-  const user: Record<string, unknown> = {
-    email: identityHashing.email(props.email),
-    phone_number: identityHashing.phone(props.phone),
-    external_id: identityHashing.externalId(props.external_id),
-    ip_address: identityHashing.ipAddress(props.ip_address),
-    idfa: identityHashing.mobileId(props.idfa),
-    aaid: identityHashing.mobileId(props.aaid),
-    user_agent: passthrough(props.user_agent),
-    uuid: passthrough(props.uuid),
-    data_processing_options: dataProcessingOptions,
-    screen_dimensions: screenDimensions,
-  };
-  return compact(user);
-}
-
-function buildDataProcessingOptions(props: ActionProps): Record<string, unknown> | undefined {
-  const options: Record<string, unknown> = {
-    ...(props.limited_data_use ? { modes: ['LDU'] } : {}),
-    country: passthrough(props.dpo_country),
-    region: passthrough(props.dpo_region),
-  };
-  const compacted = compact(options);
-  return Object.keys(compacted).length > 0 ? compacted : undefined;
-}
-
-function buildScreenDimensions(props: ActionProps): Record<string, unknown> | undefined {
-  const dimensions = compact({
-    width: props.screen_width,
-    height: props.screen_height,
-  });
-  return Object.keys(dimensions).length > 0 ? dimensions : undefined;
-}
-
 function buildMetadata(props: ActionProps): Record<string, unknown> {
   const products = buildProducts(props.products);
   const metadata: Record<string, unknown> = {
@@ -428,23 +392,6 @@ function removeUnsupportedFields(params: {
       }
       return true;
     })
-  );
-}
-
-function hasAttributionSignal(params: {
-  props: ActionProps;
-  user: Record<string, unknown>;
-}): boolean {
-  const { props, user } = params;
-  return (
-    notBlank(props.click_id) ||
-    user['email'] !== undefined ||
-    user['phone_number'] !== undefined ||
-    user['external_id'] !== undefined ||
-    user['ip_address'] !== undefined ||
-    user['idfa'] !== undefined ||
-    user['aaid'] !== undefined ||
-    user['uuid'] !== undefined
   );
 }
 
