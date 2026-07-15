@@ -77,7 +77,7 @@ async function getBotFrameworkToken({ appId, appSecret, tenantId }: {
     })
 
     const response = await safeHttp.axios.post<{ access_token: string }>(
-        `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
+        `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`,
         params.toString(),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
     )

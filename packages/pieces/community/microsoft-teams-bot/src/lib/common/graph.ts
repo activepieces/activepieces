@@ -14,7 +14,7 @@ export const getAppOnlyToken = async (params: {
 	const { tenantId, appId, appSecret, scope } = params;
 	const response = await httpClient.sendRequest<{ access_token: string }>({
 		method: HttpMethod.POST,
-		url: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
+		url: `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: {
 			grant_type: 'client_credentials',

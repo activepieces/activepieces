@@ -19,7 +19,7 @@ const jwksClient = JwksRsa({
     jwksRequestsPerMinute: 10,
 })
 
-async function verifyBotFrameworkJwt(token: string, expectedAppId: string | undefined, log: FastifyBaseLogger): Promise<boolean> {
+async function verifyBotFrameworkJwt(token: string, expectedAppId: string, log: FastifyBaseLogger): Promise<boolean> {
     const decoded = token ? jwtUtils.decode({ jwt: token }) : null
     const kid = decoded?.header.kid
     if (!kid) {
@@ -52,12 +52,18 @@ export const teamsBotController: FastifyPluginAsyncZod = async (fastify) => {
         const recipientId = activity.recipient?.id ?? ''
         const appId = recipientId.startsWith('28:') ? recipientId.slice(3) : undefined
 
+        // Without a derivable appId the JWT audience check is skipped (jwt verifies
+        // aud only when an expected value is passed), so reject before verifying.
+        if (!appId) {
+            return reply.status(StatusCodes.UNAUTHORIZED).send()
+        }
+
         const isValid = await verifyBotFrameworkJwt(token, appId, request.log)
         if (!isValid) {
             return reply.status(StatusCodes.UNAUTHORIZED).send()
         }
 
-        if (activity.type === 'installationUpdate' && appId) {
+        if (activity.type === 'installationUpdate') {
             const tenantId = activity.channelData?.tenant?.id
             const teamsTeamId = activity.channelData?.team?.aadGroupId
             if (tenantId && teamsTeamId) {

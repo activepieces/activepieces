@@ -1,9 +1,15 @@
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
+import { BaseColumnSchemaPart } from '../database/database-common'
 
+// ponytail: intentionally global — NOT scoped by projectId/platformId.
+// A row is created by Microsoft's installationUpdate webhook, where no AP session
+// exists; it is keyed by Azure identity (appId/tenantId/teamsTeamId) and holds only
+// the Microsoft serviceUrl (routing state, not a secret). The capability to send is
+// the appSecret, re-verified by Microsoft on every token mint — not any row here.
+// The same Azure bot shared across projects SHOULD map to one installation row.
 type TeamsBotInstallationSchema = {
     id: string
-    appId: string | null
+    appId: string
     tenantId: string
     teamsTeamId: string
     serviceUrl: string
@@ -18,12 +24,12 @@ export const TeamsBotInstallationEntity = new EntitySchema<TeamsBotInstallationS
         appId: {
             type: String,
             length: 255,
-            nullable: true,
+            nullable: false,
         },
         tenantId: {
-            ...ApIdSchema,
             type: String,
             length: 255,
+            nullable: false,
         },
         teamsTeamId: {
             type: String,

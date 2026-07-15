@@ -12,7 +12,7 @@ export class AddTeamsBotInstallation1811000000000 implements Migration {
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-                "appId" character varying(255),
+                "appId" character varying(255) NOT NULL,
                 "tenantId" character varying(255) NOT NULL,
                 "teamsTeamId" character varying(255) NOT NULL,
                 "serviceUrl" character varying(512) NOT NULL,
