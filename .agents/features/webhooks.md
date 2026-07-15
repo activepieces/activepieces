@@ -71,7 +71,15 @@ The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` en
 - Preserves `rawBody` for signature verification (non-binary only)
 - Extracts headers: `x-parent-run-id`, `x-fail-parent-on-failure` (for subflows)
 
-> **Streaming ingestion — deferred (not built):** An inbound webhook POST cannot be redirected to S3 (a third party already sent the body), so its bytes must transit the app; today Fastify's global buffering `onFile` + `s3Helper` fully buffer the file. Streaming it would require replacing the webhook plugin's encapsulated `multipart/form-data` + raw-binary parsers with streaming ones piping each part to S3 via `@aws-sdk/lib-storage`. This was deferred out of the streaming *write-path* work ([ADR-0007](../../docs/adr/0007-streaming-files-use-presigned-multipart-not-app-relay.md)) as not surgical. The `s3Helper.uploadStream()` helper it would reuse now exists.
+### Streaming ingestion (designed — being built)
+
+An inbound webhook POST can't be redirected to S3 (a third party already sent the body), so its bytes must transit the app; today they are fully buffered (`@fastify/multipart`'s global `attachFieldsToBody`/`onFile` buffers each part; raw-binary content-type parsers buffer the whole body; `fastify-raw-body` buffers the raw payload). The design streams webhook files straight to S3, reusing the write-path primitives (`fileService.save({ data: Readable })`, `s3Helper.uploadStream`, `enforceByteLimit`). Decisions:
+
+- **Drop `attachFieldsToBody` globally** (it's plugin-wide and has no per-route opt-out) and migrate **all** multipart consumers to explicit `request.parts()` / `request.file()`: webhook streams file parts to S3, `users` (profile picture) and `knowledge-base` buffer via `request.file().toBuffer()`. This *removes* the global buffering `onFile` — no new abstraction.
+- **Stream both** `multipart/form-data` parts **and** raw-binary bodies (`image/*`, `pdf`, `zip`, …) to S3; the flow payload keeps receiving a read-URL string.
+- **DB fallback:** stream to S3 only when `FILE_STORAGE_LOCATION=S3`; DB storage buffers to `bytea` as today.
+- **Size guard:** streamed parts pass through the shared `enforceByteLimit` transform (`MAX_FILE_SIZE_MB`).
+- **rawBody / signature verification:** drop `config.rawBody` (which, via `fastify-raw-body` `runFirst`, buffered the *entire* body before parsing and defeated streaming). Capture `rawBody` for the small signed types (JSON / XML / text) directly in their `parseAs: 'string'` content-type parsers. **Streamed types (multipart, binary) forgo `rawBody`** — binary already discarded it; multipart signature verification is dropped (accepted trade). See File Storage Service feature doc.
 
 ## Handshake Verification
 

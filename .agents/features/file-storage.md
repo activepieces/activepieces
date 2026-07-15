@@ -122,8 +122,10 @@ Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. 
 
 ### Deferred (not built)
 - **Property.file streaming (read side)** — a piece supplies its own `Readable`; a dedicated streaming file-input mode was judged YAGNI.
-- **Webhook streaming ingestion** — needs replacing the global buffering multipart handler with a streaming parser; not surgical, deferred.
 - **Presigned multipart** (bytes off the app on `S3_USE_SIGNED_URLS`) — rejected as over-engineering; see ADR-0007.
+
+### Webhook streaming ingestion (designed — being built on a follow-up branch)
+Reuses `s3Helper.uploadStream` + `fileService.save({ data: Readable })` to stream inbound webhook files (multipart + raw-binary) to S3 without buffering. Requires dropping `@fastify/multipart`'s global `attachFieldsToBody` and migrating all multipart consumers (webhook, users, knowledge-base) to explicit `request.parts()`/`request.file()`, plus moving `rawBody` capture into the string content-type parsers (streamed types forgo `rawBody`). See the Webhooks feature doc for the full decision list.
 
 ## System Properties
 

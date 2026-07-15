@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApMultipartFile, ErrorCode, Permission, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, Permission, tryCatch } from '@activepieces/core-utils'
 import { FileCompression, FileType, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -24,8 +24,16 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
     })
 
     fastify.post('/upload', UploadKnowledgeBaseFileRequest, async (request, reply) => {
-        const file = request.body.file as ApMultipartFile
-        if (!KB_ALLOWED_MIME_TYPES.includes(file.mimetype ?? '')) {
+        const part = await request.file()
+        if (isNil(part)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'File is required',
+                },
+            })
+        }
+        if (!KB_ALLOWED_MIME_TYPES.includes(part.mimetype ?? '')) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -34,19 +42,31 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             })
         }
 
+        const displayName = (part.fields.displayName as MultipartTextField | undefined)?.value
+        if (isNil(displayName)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'displayName is required',
+                },
+            })
+        }
+
+        const buffer = await part.toBuffer()
+
         const savedFile = await fileService(request.log).save({
             projectId: request.projectId,
-            data: file.data,
-            size: file.data.length,
+            data: buffer,
+            size: buffer.length,
             type: FileType.KNOWLEDGE_BASE,
             compression: FileCompression.NONE,
-            fileName: file.filename,
+            fileName: part.filename,
         })
 
         const kbFile = await knowledgeBaseService(request.log).createFile({
             projectId: request.projectId,
             fileId: savedFile.id,
-            displayName: request.body.displayName,
+            displayName,
         })
 
         const { data: chunks, error } = await tryCatch(
@@ -163,10 +183,6 @@ const UploadKnowledgeBaseFileRequest = {
         description: 'Upload a file and create a knowledge base file record',
         querystring: z.object({
             projectId: z.string(),
-        }),
-        body: z.object({
-            file: ApMultipartFile,
-            displayName: z.string(),
         }),
     },
 }
@@ -299,4 +315,8 @@ const SearchKnowledgeBaseRequest = {
             similarityThreshold: z.number().min(0).max(1).optional(),
         }),
     },
+}
+
+type MultipartTextField = {
+    value: string
 }

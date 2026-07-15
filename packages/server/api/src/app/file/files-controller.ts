@@ -1,4 +1,4 @@
-import { Readable, Transform } from 'node:stream'
+import { Readable } from 'node:stream'
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, EnginePrincipal, FileCompression, FileTransportQueryParams, FileType, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -9,7 +9,7 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { fileService } from './file.service'
-import { ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
+import { enforceByteLimit, ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
 import { signedFileTransport } from './signed-file-transport'
 
 export const filesController: FastifyPluginAsyncZod = async (app) => {
@@ -217,23 +217,6 @@ async function tryVerifyReadToken(token: string, expectedFileId: string) {
     catch {
         return null
     }
-}
-
-function enforceByteLimit(maxBytes: number): Transform {
-    let total = 0
-    return new Transform({
-        transform(chunk: Buffer, _encoding, callback) {
-            total += chunk.length
-            if (total > maxBytes) {
-                callback(new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: { message: `File exceeds the maximum allowed size of ${maxBytes} bytes` },
-                }))
-                return
-            }
-            callback(null, chunk)
-        },
-    })
 }
 
 function parseFileTypeHeader(value: unknown): FileType {
