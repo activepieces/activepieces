@@ -6,9 +6,11 @@ action's `outputSchema`, so secrets returned by vault-style pieces (e.g. Amazon
 Secrets Manager's Get Secret / Get Random Password) never appear in plain text in
 run logs. The real value is kept in-process — downstream steps that reference the
 field still receive it at runtime — and the engine redacts it to `**REDACTED**`
-only at the log boundary: the persisted run-log file, the test-mode websocket
-updates, and any downstream step's **logged (censored) input** that maps the field
-in. This is the framework-level rule from issue #13706; the per-step manual
+only at the log boundary: the persisted run-log file and any downstream step's
+**logged (censored) input** that maps the field in. The builder additionally masks
+the value at display time (output panel, data selector) while keeping the real
+sample data intact for step-chaining. This is the framework-level rule from issue
+#13706; the per-step manual
 "secure input/output" toggle (Power Automate style) from that issue is out of scope.
 
 ## How it works
