@@ -219,17 +219,20 @@ describe('Field API', () => {
             expect(body.id).toBe(field.id)
         })
 
-        it('should move a field to a new position and resequence the others', async () => {
+    })
+
+    describeWithAuth('POST /v1/fields/reorder (Reorder)', () => app!, (setup) => {
+        it('should reorder fields to the given order and resequence positions', async () => {
             const ctx = await setup()
             const table = await createAndSaveTable(ctx)
             const fields = await createFieldsInOrder(ctx, table.id, ['A', 'B', 'C', 'D'])
 
-            const response = await ctx.post(`/v1/fields/${fields[3].id}`, {
-                position: 1,
+            const response = await ctx.post('/v1/fields/reorder', {
+                tableId: table.id,
+                fieldIds: [fields[0].id, fields[3].id, fields[1].id, fields[2].id],
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.json().position).toBe(1)
 
             const listResponse = await ctx.get('/v1/fields', { tableId: table.id })
             const listed = listResponse?.json()
@@ -237,21 +240,27 @@ describe('Field API', () => {
             expect(listed.map((f: { position: number }) => f.position)).toEqual([0, 1, 2, 3])
         })
 
-        it('should clamp a position beyond the last index to the end', async () => {
+        it('should not touch fields of another table when a foreign id is passed', async () => {
             const ctx = await setup()
-            const table = await createAndSaveTable(ctx)
-            const fields = await createFieldsInOrder(ctx, table.id, ['A', 'B', 'C'])
+            const tableA = await createAndSaveTable(ctx)
+            const fieldsA = await createFieldsInOrder(ctx, tableA.id, ['A', 'B'])
+            const tableB = await createAndSaveTable(ctx)
+            await createFieldsInOrder(ctx, tableB.id, ['X', 'Y'])
+            const fieldsB = (await ctx.get('/v1/fields', { tableId: tableB.id }))?.json()
 
-            const response = await ctx.post(`/v1/fields/${fields[0].id}`, {
-                position: 99,
+            const response = await ctx.post('/v1/fields/reorder', {
+                tableId: tableA.id,
+                fieldIds: [fieldsA[1].id, fieldsB[0].id, fieldsA[0].id],
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const listResponse = await ctx.get('/v1/fields', { tableId: table.id })
-            const listed = listResponse?.json()
-            expect(listed.map((f: { name: string }) => f.name)).toEqual(['B', 'C', 'A'])
-            expect(listed.map((f: { position: number }) => f.position)).toEqual([0, 1, 2])
+            const listedA = (await ctx.get('/v1/fields', { tableId: tableA.id }))?.json()
+            expect(listedA.map((f: { name: string }) => f.name)).toEqual(['B', 'A'])
+
+            const listedB = (await ctx.get('/v1/fields', { tableId: tableB.id }))?.json()
+            expect(listedB.map((f: { name: string }) => f.name)).toEqual(['X', 'Y'])
+            expect(listedB.map((f: { position: number }) => f.position)).toEqual([0, 1])
         })
     })
 

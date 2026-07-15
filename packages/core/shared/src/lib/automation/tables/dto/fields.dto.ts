@@ -25,7 +25,11 @@ export const CreateFieldRequest = z.union([z.object({
 
 export const UpdateFieldRequest = z.object({
     name: z.string().optional(),
-    position: z.number().int().nonnegative().optional(),
+})
+
+export const ReorderFieldsRequest = z.object({
+    tableId: z.string(),
+    fieldIds: z.array(z.string()),
 })
 
 export const ListFieldsRequestQuery = z.object({
@@ -34,4 +38,5 @@ export const ListFieldsRequestQuery = z.object({
 
 export type CreateFieldRequest = z.infer<typeof CreateFieldRequest>
 export type UpdateFieldRequest = z.infer<typeof UpdateFieldRequest>
+export type ReorderFieldsRequest = z.infer<typeof ReorderFieldsRequest>
 export type ListFieldsRequestQuery = z.infer<typeof ListFieldsRequestQuery>

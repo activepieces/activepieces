@@ -11,19 +11,10 @@ export class AddFieldPosition1810000000000 implements Migration {
             ALTER TABLE "field"
             ADD "position" integer NOT NULL DEFAULT '0'
         `)
-        await queryRunner.query(`
-            UPDATE "field"
-            SET "position" = ranked.rn
-            FROM (
-                SELECT "id",
-                    ROW_NUMBER() OVER (
-                        PARTITION BY "tableId"
-                        ORDER BY "created" ASC
-                    ) - 1 AS rn
-                FROM "field"
-            ) AS ranked
-            WHERE "field"."id" = ranked."id"
-        `)
+        // No backfill: reads order by (position ASC, created ASC), so existing rows
+        // left at position 0 already sort by created — identical to a 0..n-1 backfill.
+        // A full-table UPDATE here would rewrite every row under the ADD COLUMN's
+        // ACCESS EXCLUSIVE lock, blocking the field table on large cloud deploys.
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

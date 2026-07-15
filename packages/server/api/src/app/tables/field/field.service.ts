@@ -2,7 +2,6 @@ import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil } f
 import { CreateFieldRequest, Field, FieldState, FieldType, UpdateFieldRequest } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { FieldEntity } from './field.entity'
@@ -126,10 +125,23 @@ export const fieldService = {
                 name: request.name,
             })
         }
-        if (!isNil(request.position)) {
-            await moveFieldToPosition({ id, projectId, targetPosition: request.position })
-        }
         return this.getById({ id, projectId })
+    },
+
+    async reorder({ projectId, tableId, fieldIds }: ReorderParams): Promise<Field[]> {
+        await fieldRepo().query(
+            `
+            UPDATE "field" AS f
+            SET "position" = ordering.ord - 1
+            FROM unnest($1::text[]) WITH ORDINALITY AS ordering(id, ord)
+            WHERE f."id" = ordering.id
+              AND f."projectId" = $2
+              AND f."tableId" = $3
+              AND f."position" IS DISTINCT FROM ordering.ord - 1
+            `,
+            [fieldIds, projectId, tableId],
+        )
+        return this.getAll({ projectId, tableId })
     },
 
     async count({ projectId, tableId }: CountParams): Promise<number> {
@@ -147,46 +159,6 @@ export const fieldService = {
             })
         }
     },
-}
-
-async function moveFieldToPosition({ id, projectId, targetPosition }: MoveFieldToPositionParams): Promise<void> {
-    await transaction(async (entityManager) => {
-        const repo = entityManager.getRepository<Field>(FieldEntity)
-        const field = await repo.findOneBy({ id, projectId })
-        if (isNil(field)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'Field',
-                    entityId: id,
-                },
-            })
-        }
-        const fields = await repo.find({
-            where: { projectId, tableId: field.tableId },
-            order: {
-                position: 'ASC',
-                created: 'ASC',
-            },
-        })
-        const currentIndex = fields.findIndex((f) => f.id === id)
-        const targetIndex = Math.min(targetPosition, fields.length - 1)
-        const reordered = [...fields]
-        reordered.splice(currentIndex, 1)
-        reordered.splice(targetIndex, 0, fields[currentIndex])
-        const changed = reordered
-            .map((f, index) => ({ id: f.id, position: index }))
-            .filter(({ id: fieldId, position }) => fields.find((f) => f.id === fieldId)?.position !== position)
-        for (const { id: fieldId, position } of changed) {
-            await repo.update({ id: fieldId, projectId }, { position })
-        }
-    })
-}
-
-type MoveFieldToPositionParams = {
-    id: string
-    projectId: string
-    targetPosition: number
 }
 
 type CreateParams = {
@@ -225,6 +197,12 @@ type UpdateParams = {
     id: string
     projectId: string
     request: UpdateFieldRequest
+}
+
+type ReorderParams = {
+    projectId: string
+    tableId: string
+    fieldIds: string[]
 }
 
 type CountParams = {

@@ -64,7 +64,7 @@ A built-in relational database feature that lets users store structured data dir
 **Field**: id, tableId, projectId, name, type, externalId, position, data (JSONB — e.g., `{ options: [{ value }] }` for STATIC_DROPDOWN).
 - **FieldType**: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`
 - System limit: `AP_MAX_FIELDS_PER_TABLE` (default 100)
-- **position** (canonical term; avoid: order, displayOrder, index) — 0-based column order within a table. Fields are listed `position ASC, created ASC` (created breaks ties for pre-migration rows and creation races). Creates default to `MAX(position)+1` (append); imports pass the source array index explicitly so order never depends on insert timing. Updating `position` via `POST /v1/fields/:id` moves the field to that index and resequences the table's fields to contiguous `0..n-1` inside a transaction (self-healing for gaps left by deletes). Concurrent reorders are last-write-wins, same as rename — no distributed lock. Reordering existing fields through project-release apply is NOT supported (`FieldState` carries no position; array order only applies to newly created fields). UI reorder is react-data-grid native column dragging (`draggable` columns + `onColumnsReorder`); the client store must remap each record's positional `cell.fieldIndex` references when fields move.
+- **position** (canonical term; avoid: order, displayOrder, index) — 0-based column order within a table. Fields are listed `position ASC, created ASC` (created breaks ties for pre-migration rows and creation races). Creates default to `MAX(position)+1` (append); imports pass the source array index explicitly so order never depends on insert timing. Reordering goes through `POST /v1/fields/reorder` with `{ tableId, fieldIds }` (the full ordered id list the client already holds); it resequences positions to `0..n-1` in a **single** `UPDATE … unnest(fieldIds) WITH ORDINALITY` statement scoped by `projectId + tableId` (foreign/stale ids simply don't match and are no-ops). Concurrent reorders are last-write-wins, same as rename — no distributed lock. Reordering existing fields through project-release apply is NOT supported (`FieldState` carries no position; array order only applies to newly created fields). UI reorder is react-data-grid native column dragging (`draggable` columns + `onColumnsReorder`); the client store must remap each record's positional `cell.fieldIndex` references when fields move.
 
 **Record**: id, tableId, projectId. Relations: table, cells[].
 
@@ -80,7 +80,8 @@ A built-in relational database feature that lets users store structured data dir
 - `table.update()` — rename, move to folder, change trigger/status
 - `table.delete()` — cascades to fields, records, cells, webhooks
 - `table.exportTable()` — returns fields + rows as JSON (fields in position order)
-- `field.update()` — rename and/or move to a position (column reorder)
+- `field.update()` — rename a field
+- `field.reorder()` — set the full column order for a table (`POST /v1/fields/reorder`)
 - `table.createWebhook()` / `table.deleteWebhook()` — link table events to flows
 - `record.create()` — bulk insert (max 50 per batch, transactional), validates field count
 - `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS); filtering is in-memory and a missing cell is treated as an empty value (`''`), so NEQ/NOT_EXISTS match unset columns
@@ -92,7 +93,7 @@ A built-in relational database feature that lets users store structured data dir
 All table / field / record routes use `securityAccess.project([...], <permission>, <resource>)`. The required permission per resource:
 
 - **Read** (`GET /v1/tables`, `GET /v1/tables/:id`, `GET /v1/fields`, `GET /v1/fields/:id`, `GET /v1/records`, `GET /v1/records/:id`): `READ_TABLE`
-- **Write** (`POST /v1/tables`, `POST /v1/tables/:id`, `DELETE /v1/tables/:id`, `POST /v1/fields`, `POST /v1/fields/:id`, `DELETE /v1/fields/:id`, `POST /v1/records`, `POST /v1/records/:id`, `DELETE /v1/records`): `WRITE_TABLE`
+- **Write** (`POST /v1/tables`, `POST /v1/tables/:id`, `DELETE /v1/tables/:id`, `POST /v1/fields`, `POST /v1/fields/:id`, `POST /v1/fields/reorder`, `DELETE /v1/fields/:id`, `POST /v1/records`, `POST /v1/records/:id`, `DELETE /v1/records`): `WRITE_TABLE`
 
 Default project roles: `ADMIN` and `EDITOR` have both; `VIEWER` has only `READ_TABLE`. Custom roles inherit whatever permissions are configured.
 

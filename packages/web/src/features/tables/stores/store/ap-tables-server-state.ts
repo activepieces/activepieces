@@ -124,8 +124,9 @@ export const createServerState = (
       addPromiseToQueue(async () => {
         const [movedField] = clonedFields.splice(fieldIndex, 1);
         clonedFields.splice(targetIndex, 0, movedField);
-        await fieldsApi.update(movedField.id, {
-          position: targetIndex,
+        await fieldsApi.reorder({
+          tableId: clonedTable.id,
+          fieldIds: clonedFields.map((field) => field.id),
         });
       });
     },
