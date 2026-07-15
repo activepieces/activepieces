@@ -4,7 +4,6 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-// Partial index over STREAMING rows only — backs the CHAT_STALE_SWEEP recovery query.
 export class AddChatConversationStreamingUpdatedIndex1810000000000 implements Migration {
     name = 'AddChatConversationStreamingUpdatedIndex1810000000000'
     breaking = false

@@ -85,8 +85,6 @@ function resolveFastModelId({ provider }: { provider: AIProviderName }): string 
     return resolveModelIdForProvider({ tier: resolveTier({ tierId: FAST_TIER_ID }), provider })
 }
 
-// Proactive counterpart to getConversationOrThrow's recover-on-read, for stuck conversations
-// no one reopens to trigger the lazy path.
 async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
     // Compare against the DB clock (NOW()) rather than a bound JS Date, so the sweep is immune
     // to app/DB clock skew and driver timezone handling.
