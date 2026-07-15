@@ -104,8 +104,5 @@ async function createEnabledFlow(): Promise<{ mockFlow: Flow, mockProject: Proje
 }
 
 type SavedFile = {
-    id: string
     fileName: string
-    type: FileType
-    projectId: string
 }

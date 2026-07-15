@@ -1,4 +1,4 @@
-import { Readable, Transform } from 'node:stream'
+import { PassThrough, Readable } from 'node:stream'
 import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
 import { MultipartFile } from '@fastify/multipart'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
@@ -123,10 +123,7 @@ async function saveStepFileAndConstructUrl(params: SaveStepFileParams): Promise<
 // rather than emitting an error, so a truncated file would otherwise be persisted before
 // @fastify/multipart surfaces the limit. Erroring at end-of-stream fails the upload instead.
 function failIfTruncated(file: MultipartFile['file'], maxBytes: number): Readable {
-    return file.pipe(new Transform({
-        transform(chunk, _encoding, callback) {
-            callback(null, chunk)
-        },
+    return file.pipe(new PassThrough({
         flush(callback) {
             callback(file.truncated ? fileTooLargeError(maxBytes) : null)
         },

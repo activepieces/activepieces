@@ -177,8 +177,10 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         }
     })
 
-    // No attachFieldsToBody: consumers read files/fields explicitly via request.file()/parts()
+    // No attachFieldsToBody: consumers read files/fields explicitly via request.file()/parts(),
     // so large uploads (webhook files) can stream to storage instead of being buffered whole.
+    // A route whose schema expects ApMultipartFile on the body must attach
+    // attachMultipartFieldsToBody (helper/multipart-body.ts) itself, or its validation will fail.
     await app.register(fastifyMultipart, {
         limits: {
             fileSize: fileSizeLimit * 1024 * 1024,
