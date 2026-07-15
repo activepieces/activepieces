@@ -527,12 +527,13 @@ function createProgressGuard() {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     guides: Record<string, string>
+    taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
@@ -579,7 +580,9 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 }
                 const needsPreview = chatToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
+                    input: toolInput.input,
                     needsConfirmation: toolInput.needsConfirmation,
+                    tainted: taintState.tainted,
                 })
 
                 if (needsPreview) {
@@ -684,6 +687,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 if (!chatToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
                     return chatToolClassification.readOnlyRejection(toolInput.actionName)
                 }
+                taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
             },
@@ -744,7 +748,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
     }
 }
 
-function createWebTools(): ToolSet {
+function createWebTools({ taintState }: { taintState: TaintState }): ToolSet {
     return {
         ap_fetch_url: tool({
             description: 'Fetch the readable text of a public web page or API URL over HTTPS (read-only GET). Use it to read a specific page in full — e.g. the API docs you found via web search before building an http_fallback step, or a link the user shared. HTML is stripped to text; JSON/plain text is returned as-is.',
@@ -756,6 +760,7 @@ function createWebTools(): ToolSet {
                 if (!/^https?:\/\//i.test(toolInput.url)) {
                     return { content: [{ type: 'text', text: `"${toolInput.url}" is not a valid http(s) URL.` }] }
                 }
+                taintState.tainted = true
                 return withToolTimeout({
                     fn: async (signal) => {
                         const { data: response, error } = await tryCatch(() => safeHttp.axios.get<string>(toolInput.url, {
@@ -808,7 +813,7 @@ const FAL_IMAGE_SIZE_BY_ASPECT: Record<ImageAspect, string> = {
     portrait: 'portrait_16_9',
 }
 
-function createSearchTools({ webSearch }: { webSearch: ResolvedToolConfig }): ToolSet {
+function createSearchTools({ webSearch, taintState }: { webSearch: ResolvedToolConfig, taintState: TaintState }): ToolSet {
     return {
         ap_web_search: tool({
             description: 'Search the live web for current information using a dedicated search engine. Use it to find up-to-date facts, docs, news, or pages relevant to the user\'s request. Returns ranked results with titles, URLs, and content snippets; follow up with ap_fetch_url or ap_scrape_url to read a result in full.',
@@ -816,45 +821,48 @@ function createSearchTools({ webSearch }: { webSearch: ResolvedToolConfig }): To
                 ...cardTitleFields,
                 query: z.string().describe('The search query'),
             }),
-            execute: async (toolInput) => withToolTimeout({
-                toolName: 'ap_web_search',
-                timeoutMs: SEARCH_TIMEOUT_MS + 5_000,
-                fn: async (signal) => {
-                    const { data: response, error } = await tryCatch(() => safeHttp.axios.post('https://api.tavily.com/search', {
-                        query: toolInput.query,
-                        max_results: MAX_SEARCH_RESULTS,
-                        include_answer: true,
-                        search_depth: 'basic',
-                    }, {
-                        signal,
-                        timeout: SEARCH_TIMEOUT_MS,
-                        headers: { Authorization: `Bearer ${webSearch.apiKey}`, 'Content-Type': 'application/json' },
-                    }))
-                    if (error) {
-                        return { content: [{ type: 'text', text: `Web search failed: ${error instanceof Error ? error.message : String(error)}` }] }
-                    }
-                    const body = isObject(response.data) ? response.data : {}
-                    const rawResults = Array.isArray(body['results']) ? body['results'] : []
-                    const results = rawResults.map((r) => {
-                        const item = isObject(r) ? r : {}
-                        return {
-                            title: typeof item['title'] === 'string' ? item['title'] : '',
-                            url: typeof item['url'] === 'string' ? item['url'] : '',
-                            content: typeof item['content'] === 'string' ? item['content'] : '',
+            execute: async (toolInput) => {
+                taintState.tainted = true
+                return withToolTimeout({
+                    toolName: 'ap_web_search',
+                    timeoutMs: SEARCH_TIMEOUT_MS + 5_000,
+                    fn: async (signal) => {
+                        const { data: response, error } = await tryCatch(() => safeHttp.axios.post('https://api.tavily.com/search', {
+                            query: toolInput.query,
+                            max_results: MAX_SEARCH_RESULTS,
+                            include_answer: true,
+                            search_depth: 'basic',
+                        }, {
+                            signal,
+                            timeout: SEARCH_TIMEOUT_MS,
+                            headers: { Authorization: `Bearer ${webSearch.apiKey}`, 'Content-Type': 'application/json' },
+                        }))
+                        if (error) {
+                            return { content: [{ type: 'text', text: `Web search failed: ${error instanceof Error ? error.message : String(error)}` }] }
                         }
-                    })
-                    return truncateLargeResult({
-                        query: toolInput.query,
-                        answer: typeof body['answer'] === 'string' ? body['answer'] : undefined,
-                        results,
-                    })
-                },
-            }),
+                        const body = isObject(response.data) ? response.data : {}
+                        const rawResults = Array.isArray(body['results']) ? body['results'] : []
+                        const results = rawResults.map((r) => {
+                            const item = isObject(r) ? r : {}
+                            return {
+                                title: typeof item['title'] === 'string' ? item['title'] : '',
+                                url: typeof item['url'] === 'string' ? item['url'] : '',
+                                content: typeof item['content'] === 'string' ? item['content'] : '',
+                            }
+                        })
+                        return truncateLargeResult({
+                            query: toolInput.query,
+                            answer: typeof body['answer'] === 'string' ? body['answer'] : undefined,
+                            results,
+                        })
+                    },
+                })
+            },
         }),
     }
 }
 
-function createScrapeTools({ scraping }: { scraping: ResolvedToolConfig }): ToolSet {
+function createScrapeTools({ scraping, taintState }: { scraping: ResolvedToolConfig, taintState: TaintState }): ToolSet {
     return {
         ap_scrape_url: tool({
             description: 'Scrape a web page and return its clean main content as markdown, including JavaScript-rendered pages. Prefer this over ap_fetch_url when you need the full, readable content of an article, docs page, or product page.',
@@ -866,6 +874,7 @@ function createScrapeTools({ scraping }: { scraping: ResolvedToolConfig }): Tool
                 if (!/^https?:\/\//i.test(toolInput.url)) {
                     return { content: [{ type: 'text', text: `"${toolInput.url}" is not a valid http(s) URL.` }] }
                 }
+                taintState.tainted = true
                 return withToolTimeout({
                     toolName: 'ap_scrape_url',
                     timeoutMs: SCRAPE_TIMEOUT_MS + 5_000,
@@ -1393,6 +1402,9 @@ export type ChatEventEmitter = {
     emitFileProduced(data: FileProducedEvent): void
     emitBuildPlan(data: BuildPlanEvent): void
 }
+
+// Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
+export type TaintState = { tainted: boolean }
 
 export const chatWorkerTools = {
     createEventEmitter,

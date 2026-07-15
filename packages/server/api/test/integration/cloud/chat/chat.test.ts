@@ -2,6 +2,7 @@ import { DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { executeCrossProjectTool } from '../../../../src/app/ee/chat/tools/chat-tools'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -250,6 +251,26 @@ describe('Chat Conversations API', () => {
 
             const deleteResponse = await ctx.delete(`${CONVERSATIONS_URL}/non-existent-id`)
             expect(deleteResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Tool permission parity', () => {
+        it.each([
+            { toolName: 'ap_execute_action', toolInput: { pieceName: '@activepieces/piece-slack', actionName: 'send_channel_message', input: {} } },
+            { toolName: 'ap_run_code', toolInput: { code: 'export const code = async () => 1' } },
+        ])('blocks a VIEWER from $toolName (needs WRITE_RUN)', async ({ toolName, toolInput }) => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const viewerCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
+
+            const result = await executeCrossProjectTool({
+                toolName,
+                toolInput,
+                platformId: viewerCtx.platform.id,
+                userId: viewerCtx.user.id,
+                log: app.log,
+            })
+
+            expect(JSON.stringify(result)).toMatch(/permission denied/i)
         })
     })
 
