@@ -50,11 +50,11 @@ All routes accept GET, POST, PUT, DELETE, PATCH methods.
 ## Sync vs Async Execution
 
 **Async path**:
-1. Offload payload to S3/DB if > `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` (default 512KB). The job carries a `JobPayload` discriminated union — `inline` (value embedded) or `ref` (`fileId` of a `WEBHOOK_PAYLOAD` file).
+1. Offload the payload to a `WEBHOOK_PAYLOAD` file (S3 or DB per `FILE_STORAGE_LOCATION`); the job carries a `ref` (`{ type: 'ref', fileId }`). The webhook path **always** offloads — `handleAsync` calls `payloadOffloader.offloadPayload`, not the threshold-gated `maybeOffloadPayload`, so `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` does not apply here (that threshold governs other callers, e.g. the flow-run resume path). `JobPayload` is still an `inline | ref` union, but webhooks only ever emit `ref`.
 2. Queue BullMQ job (`WorkerJobType.EXECUTE_WEBHOOK`)
 3. Return 200 with `x-webhook-id` header immediately
 
-The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` engine operation; the **engine** resolves it at execution time (inline value, or a `ref` downloaded via the file-download path — direct bytes or an S3 signed-link redirect). Workers no longer fetch payloads themselves.
+The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` engine operation; the **engine** resolves the `ref` at execution time by downloading it via the file-download path (direct bytes, or an S3 signed-link redirect). Workers no longer fetch payloads themselves.
 
 **Sync path**:
 1. Create FlowRun with `ProgressUpdateType.WEBHOOK_RESPONSE`
@@ -64,14 +64,14 @@ The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` en
 
 ## Request Conversion
 
-Binary and multipart file bodies are **streamed to storage while the request body is still being parsed** (in `webhook-module.ts`), not buffered and converted later:
-- **Multipart form-data**: each file part is streamed to the File service via the global `onFile` hook (`streamWebhookMultipartFile`); the field value becomes the file-reference read URL.
-- **Binary content** (image/*, video/*, audio/*, pdf, zip, gzip, octet-stream): streamed straight to storage by a content-type parser (`streamWebhookBinaryBody`), body becomes `{ fileUrl }`.
-- **JSON/text/XML**: parsed in memory and passed through as-is, keeping `rawBody` for HMAC signature verification (streamed binary/multipart bodies have no `rawBody`).
+Binary and multipart file bodies are written to object storage **while the request body is still being parsed** — before the handler resolves the flow, so no tenant ids exist yet and the bytes go to an **identity-free key** (`FLOW_STEP_FILE/<fileId>`):
+- **Multipart form-data**: the global `onFile` hook (`server.ts` → `streamWebhookMultipartFile`). Parts carry no per-part `Content-Length`, so each is buffered (`part.toBuffer()`, bounded by `@fastify/multipart` limits) then `PutObject`'d — not streamed.
+- **Binary content** (image/*, video/*, audio/*, pdf, zip, gzip, octet-stream): the webhook-scoped `streamWebhookBinaryBody` parser streams to S3 in one `PutObject` when `Content-Length` is known and storage is S3, else buffers under `AP_MAX_FILE_SIZE_MB`. Body becomes `{ fileUrl }`.
+- **JSON/text/XML/form**: parsed in memory, passed through as-is, keeping `rawBody` for HMAC signature verification (streamed binary/multipart bodies have no `rawBody`).
 
-Because streaming happens during parsing, `webhookRequestConverter.convertRequest()` only ever passes the **already-converted** `request.body` through — it no longer uploads anything. It also carries `rawBody` and extracts subflow headers `x-parent-run-id` / `x-fail-parent-on-failure`.
+Parsing leaves `request.body` holding **descriptors** (`StreamedFile`, or a buffered `ApMultipartFile`), not the final value. In the handler, `convertRequest` runs as the `data: ({ projectId, platformId }) => …` callback (ids come from `flowExecutionCache`), so `convertBody` → `saveWebhookFile` finally **writes the `file` DB row** (streamed → `data: null` reusing the existing `s3Key`; buffered → uploads the bytes) and swaps each descriptor for its readUrl. It also carries `rawBody` and extracts the subflow headers `x-parent-run-id` / `x-fail-parent-on-failure`.
 
-Streaming requires a resolved `request.webhookContext` (projectId/platformId/flowId), set in the `onRequest` hook before parsing. That hook rejects streamed uploads early (404) for unknown or disabled flows that would never execute, so no orphaned file is persisted.
+Because the bytes land at parse time but the tracking row is written only after the flow resolves, a streamed upload addressed to a **GONE or disabled** flow (the handler returns before `convertBody` runs) uploads the object but records no row — and the retention job reaps by `file` row, so it orphans in the bucket. The `onRequest`/`webhookContext` guard that once rejected these pre-parse no longer exists.
 
 ## Handshake Verification
 
