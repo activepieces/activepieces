@@ -42,6 +42,9 @@ const SSOPage = React.lazy(() =>
   import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
 );
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
+const AiCapabilitiesPage = React.lazy(
+  () => import('./platform/setup/ai-capabilities'),
+);
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const BrandingPage = React.lazy(() =>
   import('./platform/setup/branding').then((m) => ({
@@ -57,6 +60,11 @@ const PlatformPiecesPage = React.lazy(() =>
   import('./platform/setup/pieces').then((m) => ({
     default: m.PlatformPiecesPage,
   })),
+);
+const PieceSetDetailsPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-sets/piece-set-details-page').then(
+    (m) => ({ default: m.PieceSetDetailsPage }),
+  ),
 );
 const PlatformTemplatesPage = React.lazy(() =>
   import('./platform/setup/templates').then((m) => ({
@@ -142,6 +150,18 @@ export const platformRoutes = [
     ),
   },
   {
+    path: '/platform/setup/ai-capabilities',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Capabilities">
+          <SuspenseWrapper>
+            <AiCapabilitiesPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
     path: '/platform/setup/mcp',
     element: (
       <PlatformLayout>
@@ -160,6 +180,18 @@ export const platformRoutes = [
         <PageTitle title="Pieces">
           <SuspenseWrapper>
             <PlatformPiecesPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/setup/pieces/piece-sets/:id',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Piece Set">
+          <SuspenseWrapper>
+            <PieceSetDetailsPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

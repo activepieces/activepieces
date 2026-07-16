@@ -22,6 +22,9 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 - **Cloud**: Available; ACTIVEPIECES provider auto-provisioned when `OPENROUTER_PROVISION_KEY` env var is set and `aiCreditsEnabled` is true.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **AIProvider**: A platform-scoped entity linking an LLM vendor's credentials to the platform.
 - **AIProviderName**: Enum of supported vendors (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `cloudflare-gateway`, `custom`, `activepieces`).
 - **EncryptedObject**: The `auth` field is AES-256-encrypted at rest; decrypted only for engine access.
@@ -68,12 +71,14 @@ Models listed per provider are cached in memory. Cache cleared daily at midnight
 
 ## Endpoints
 
+Reads are open to any platform member (`GET /` / `/:provider/models` allow USER + ENGINE; `/:provider/config` is engine-only). Mutations are **platform-admin only**.
+
 - `GET /` — list providers (auto-creates ACTIVEPIECES if credits enabled)
 - `GET /:provider/config` — get provider config + decrypted auth (engine-only access)
 - `GET /:provider/models` — list available models (cached)
-- `POST /` — create provider (validates credentials first)
-- `POST /:id` — update provider (re-validates if auth changed, cannot update ACTIVEPIECES)
-- `DELETE /:id` — delete provider (cannot delete ACTIVEPIECES)
+- `POST /` — create provider (platform-admin only; validates credentials first)
+- `POST /:id` — update provider (platform-admin only; re-validates if auth changed, cannot update ACTIVEPIECES)
+- `DELETE /:id` — delete provider (platform-admin only; cannot delete ACTIVEPIECES)
 
 ## Engine Integration
 
@@ -84,3 +89,33 @@ During flow execution, AI pieces call `GET /v1/ai-providers/{provider}/config` t
 The platform admin AI setup page lives at `/platform/setup/ai`. It renders an `ai-provider-card` for each configured provider and an "Add Provider" button that opens `upsert-provider-dialog`. The `upsert-provider-config-form` adapts its fields to the selected `AIProviderName`. The `model-form-popover` lets admins configure which models are exposed per provider.
 
 Inside the builder, the agent step settings use `features/agents/ai-model/index.tsx` (with `hooks.ts`) to render a model selector that queries `GET /v1/ai-providers/:provider/models` via `aiProviderApi.listModelsForProvider()`.
+
+## AI Tool Configs (Capabilities)
+
+A sibling feature under `packages/server/api/src/app/ai/`, distinct from AI Providers (LLM vendors). It lets platform admins give the chat assistant external **capabilities** — web search, web scraping, image generation — by storing per-provider API keys. Consumed by the chat feature (#13906) via `getEnabledTools()`.
+
+### Key Files
+- `packages/server/api/src/app/ai/ai-tool-config-controller.ts` — CRUD controller (`/v1/ai-tools`), all routes `platformAdminOnly`
+- `packages/server/api/src/app/ai/ai-tool-config-service.ts` — list/upsert/update/delete/getEnabledTools (auth encrypted at rest, ownership checked before update/delete)
+- `packages/server/api/src/app/ai/ai-tool-config.module.ts` — module registration (EE/Cloud only)
+- `packages/core/shared/src/lib/management/ai-tools/index.ts` — shared Zod schemas/enums
+- `packages/web/src/features/platform-admin/api/ai-tool-config-api.ts` + `hooks/ai-tool-config-hooks.ts` — frontend client + TanStack Query hooks
+- `packages/web/src/app/routes/platform/setup/ai-capabilities/` — admin page, capability dialog, provider catalog
+
+### Endpoints (platform-admin only, EE/Cloud)
+- `GET /v1/ai-tools` — list configs (returns `AiToolConfigWithoutSensitiveData`, `auth` stripped)
+- `POST /v1/ai-tools` — upsert a capability config (one per capability)
+- `POST /v1/ai-tools/:id` — update (e.g. toggle `enabled`)
+- `DELETE /v1/ai-tools/:id` — delete
+
+### Edition Availability
+`aiToolConfigModule` is registered only in EE and Cloud editions in `app.ts` (not Community). The frontend page is gated to platform admins.
+
+### Entity
+**AiToolConfig**: id, platformId, capability (`AiToolCapability`), provider (`AiToolProvider`), auth (EncryptedObject), config (JSON, nullable), enabled (boolean). Unique on (platformId, capability). Relation: platform (CASCADE).
+
+### Domain Terms
+- **AiToolConfig**: platform-scoped row binding a capability to a provider's encrypted credentials.
+- **AiToolCapability**: `WEB_SEARCH`, `WEB_SCRAPING`, `IMAGE_GENERATION`.
+- **AiToolProvider**: `TAVILY`, `FIRECRAWL`, `APIFY`, `FAL`.
+- **AiToolConfigWithoutSensitiveData**: list/read DTO with `auth` removed and a `hasApiKey` boolean.

@@ -84,6 +84,50 @@ export const webhookService = {
             }
         }
         const { flow } = flowExecutionResult
+
+        // data() consumes the request body stream (streaming any file straight to storage), which
+        // can only be read once. The handshake check and the payload resolution below both need it,
+        // so memoize — a second call would stream an empty body and hand the run a 0-byte file URL.
+        let resolvedDataPromise: Promise<EventPayload> | undefined
+        const resolveData = (): Promise<EventPayload> => (resolvedDataPromise ??= data(flow.projectId))
+
+        wideEvent.set({
+            webhook: {
+                flowFound: true,
+            },
+            project: { id: flow.projectId },
+            platform: { id: flowExecutionResult.platformId },
+        })
+        const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
+        wideEvent.set({ flowVersion: { id: flowVersionIdToRun } })
+
+        // Handshake pings can arrive both during the publish window (when flow.status is still
+        // DISABLED before the transaction completes) and after the flow is ENABLED (third-party
+        // re-verification). Checking before the DISABLED guard handles both cases.
+        if (!isNil(flowExecutionResult.handshakeConfiguration)) {
+            const response = await webhookHandshake.handleHandshakeRequest({
+                payload: (payload ?? await resolveData()) as TriggerPayload,
+                handshakeConfiguration: flowExecutionResult.handshakeConfiguration,
+                flowId: flow.id,
+                flowVersionId: flowVersionIdToRun,
+                projectId: flow.projectId,
+                logger: pinoLogger,
+            })
+            if (!isNil(response)) {
+                logger.info({
+                    flow: { id: flow.id },
+                    flowVersion: { id: flowVersionIdToRun },
+                    webhookRequestId,
+                }, 'Handshake request completed')
+                wideEvent.set({ webhook: { handshake: true } })
+                return {
+                    status: response.status,
+                    body: response.body,
+                    headers: response.headers ?? {},
+                }
+            }
+        }
+
         if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
             pinoLogger.warn({ flow: { id: flowId } }, 'Webhook received for disabled flow')
             wideEvent.set({ webhook: { flowFound: false } })
@@ -96,41 +140,9 @@ export const webhookService = {
             }
         }
 
-        wideEvent.set({
-            webhook: {
-                flowFound: true,
-            },
-            project: { id: flow.projectId },
-            platform: { id: flowExecutionResult.platformId },
-        })
-        const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(flowVersionToRun, flow)
-        wideEvent.set({ flowVersion: { id: flowVersionIdToRun } })
-
-        const response = await webhookHandshake.handleHandshakeRequest({
-            payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-            handshakeConfiguration: flowExecutionResult.handshakeConfiguration ?? null,
-            flowId: flow.id,
-            flowVersionId: flowVersionIdToRun,
-            projectId: flow.projectId,
-            logger: pinoLogger,
-        })
-        if (!isNil(response)) {
-            logger.info({
-                flow: { id: flow.id },
-                flowVersion: { id: flowVersionIdToRun },
-                webhookRequestId,
-            }, 'Handshake request completed')
-            wideEvent.set({ webhook: { handshake: true } })
-            return {
-                status: response.status,
-                body: response.body,
-                headers: response.headers ?? {},
-            }
-        }
-
         pinoLogger.info('Adding webhook job to queue')
 
-        const resolvedPayload = payload ?? await data(flow.projectId)
+        const resolvedPayload = payload ?? await resolveData()
 
         const payloadSize = payloadOffloader.getPayloadSizeInBytes(resolvedPayload)
         if (payloadSize > MAX_PAYLOAD_SIZE_BYTES) {
@@ -278,7 +290,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
     params.onRunCreated?.(createdRun)
 
     const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {
-        status: StatusCodes.NO_CONTENT,
+        status: StatusCodes.REQUEST_TIMEOUT,
         body: {},
         headers: {},
     })

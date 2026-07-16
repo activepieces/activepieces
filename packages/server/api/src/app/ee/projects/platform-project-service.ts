@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, TeamProjectsLimit, UpdateProjectPlatformRequest } from '@activepieces/shared'
+import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
@@ -127,7 +127,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-        const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
+        const { globalConnectionExternalIds, maxConcurrentJobs, workerGroupId, ...rest } = request
         let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
             resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
@@ -136,6 +136,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 ...rest,
                 ...(resolvedPoolId !== undefined ? { poolId: resolvedPoolId } : {}),
                 ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
+                ...(platformPlan.workerGroupsEnabled && workerGroupId !== undefined ? { workerGroupId } : {}),
             }, entityManager)
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
@@ -178,19 +179,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                         .execute()
                 }
             }
-            if (!isNil(request.plan)) {
-                const platform = await platformService(log).getOneWithPlanOrThrow(project.platformId)
-                if (platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE) {
-                    await projectLimitsService(log).upsert(
-                        {
-                            ...spreadIfDefined('pieces', request.plan.pieces),
-                            ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        },
-                        projectId,
-                        entityManager,
-                    )
-                }
-            }
         })
         if (resolvedPoolId !== undefined) {
             await concurrencyPoolService(log).assignProject({ projectId, poolId: resolvedPoolId })
@@ -211,9 +199,16 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             ownerId: userId,
             type: ProjectType.PERSONAL,
         })
-        if (!isNil(personalProject)) {
-            await this.markForDeletion({ id: personalProject.id, platformId })
+        if (isNil(personalProject)) {
+            return
         }
+        
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        await transaction(async (entityManager) => {
+            await projectRepo(entityManager).update({ id: personalProject.id, platformId }, { ownerId: platform.ownerId })
+            await projectRepo(entityManager).softDelete({ id: personalProject.id, platformId })
+        })
+        await scheduleHardDeleteProjectJob({ id: personalProject.id, platformId, log })
     },
 
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
@@ -227,30 +222,34 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.HARD_DELETE_PROJECT,
-                data: {
-                    projectId: id,
-                    platformId,
-                    preDeletedFlowIds: [],
-                },
-                jobId: `hard-delete-project-${id}`,
-            },
-            schedule: {
-                type: 'one-time',
-                date: apDayjs(),
-            },
-            customConfig: {
-                attempts: 25,
-                backoff: {
-                    type: 'fixed',
-                    delay: 60000,
-                },
-            },
-        })
+        await scheduleHardDeleteProjectJob({ id, platformId, log })
     },
 })
+
+async function scheduleHardDeleteProjectJob({ id, platformId, log }: ScheduleHardDeleteProjectJobParams): Promise<void> {
+    await systemJobsSchedule(log).upsertJob({
+        job: {
+            name: SystemJobName.HARD_DELETE_PROJECT,
+            data: {
+                projectId: id,
+                platformId,
+                preDeletedFlowIds: [],
+            },
+            jobId: `hard-delete-project-${id}`,
+        },
+        schedule: {
+            type: 'one-time',
+            date: apDayjs(),
+        },
+        customConfig: {
+            attempts: 25,
+            backoff: {
+                type: 'fixed',
+                delay: 60000,
+            },
+        },
+    })
+}
 
 async function enrichProjects(
     projects: Project[],
@@ -372,4 +371,10 @@ type CreateProjectParams = {
 type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
+}
+
+type ScheduleHardDeleteProjectJobParams = {
+    id: ProjectId
+    platformId: PlatformId
+    log: FastifyBaseLogger
 }

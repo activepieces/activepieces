@@ -20,7 +20,7 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 - `packages/server/api/src/app/trigger/trigger-run/trigger-run.controller.ts` — trigger run stats endpoints
 - `packages/server/api/src/app/trigger/trigger.module.ts` — module registration
 - `packages/core/shared/src/lib/automation/trigger/index.ts` — TriggerSource schema, TriggerStrategy enum, WebhookHandshakeConfiguration, ScheduleOptions
-- `packages/web/src/app/builder/test-step/test-trigger-section/index.tsx` — test panel in the builder sidebar
+- `packages/web/src/app/builder/test-step/test-trigger-section/index.tsx` — test panel in the builder sidebar; shows a `JsonTreeSkeleton` loader while a polling test or webhook-test dialog is active (`isPollingTesting || isTestingDialogOpen`), otherwise the first-time empty state
 - `packages/web/src/app/builder/test-step/test-trigger-section/first-time-testing-section.tsx` — initial test prompt before any event is captured
 - `packages/web/src/app/builder/test-step/test-trigger-section/simulation-section.tsx` — simulation status UI
 - `packages/web/src/app/builder/test-step/test-trigger-section/trigger-event-select.tsx` — event selector from previously captured events
@@ -35,6 +35,9 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 - Cloud: same as CE; trigger health stats shown in Platform Admin
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **TriggerStrategy** — execution model: `POLLING`, `WEBHOOK`, `APP_WEBHOOK`, `MANUAL`
 - **TriggerSource** — the persisted record linking a flow version to its registered trigger; soft-deleted on disable; unique per (projectId, flowId, simulate)
 - **TriggerEvent** — a captured payload from a trigger execution, stored as a File reference; used for test data selection in the builder

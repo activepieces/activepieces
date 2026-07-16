@@ -47,11 +47,14 @@ const systemPropValidators: {
     [key in SystemProp]: (value: string) => true | string
 } = {
     // AppSystemProp
+    [AppSystemProp.ALLOW_OPEN_SIGN_UP]: booleanValidator,
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
     [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
     [AppSystemProp.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
+    [AppSystemProp.LOG_FILE]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
+    [AppSystemProp.CLOUD_CHAT_ROLLOUT_CAP]: numberValidator,
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
@@ -124,6 +127,7 @@ const systemPropValidators: {
     [AppSystemProp.REDIS_SENTINEL_ROLE]: stringValidator,
     [AppSystemProp.REDIS_SENTINEL_HOSTS]: stringValidator,
     [AppSystemProp.REDIS_SENTINEL_NAME]: stringValidator,
+    [AppSystemProp.USE_CDN_FOR_BUNDLES]: booleanValidator,
     [AppSystemProp.S3_ACCESS_KEY_ID]: stringValidator,
     [AppSystemProp.S3_BUCKET]: stringValidator,
     [AppSystemProp.S3_ENDPOINT]: stringValidator,
@@ -136,8 +140,10 @@ const systemPropValidators: {
     [AppSystemProp.SMTP_PORT]: numberValidator,
     [AppSystemProp.SMTP_SENDER_EMAIL]: (value: string) => value.includes('@') ? true : 'Value must be a valid email address',
     [AppSystemProp.SMTP_SENDER_NAME]: stringValidator,
+    [AppSystemProp.SMTP_TLS_REJECT_UNAUTHORIZED]: booleanValidator,
     [AppSystemProp.SMTP_USERNAME]: stringValidator,
     [AppSystemProp.TELEMETRY_ENABLED]: booleanValidator,
+    [AppSystemProp.TOOL_SEARCH_ENABLED]: booleanValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: booleanValidator,
@@ -152,6 +158,7 @@ const systemPropValidators: {
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
+    [AppSystemProp.OPENAI_API_KEY]: stringValidator,
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: enumValidator(Object.values(DefaultProjectRole)),
 
     // AppSystemProp
@@ -204,9 +211,6 @@ const systemPropValidators: {
         return !isNaN(n) && n >= 0 && n <= 100 ? true : 'Value must be a number between 0 and 100'
     },
     [AppSystemProp.LOG_KEEP_SLOW_MS]: numberValidator,
-
-    // OIDC
-    [AppSystemProp.OIDC_RSA_PRIVATE_KEY]: stringValidator,
 }
 
 

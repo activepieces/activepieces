@@ -137,7 +137,7 @@ const ActionCTAButton = ({
             className={SOFT_PRIMARY_CTA_CLASSES}
             size="sm"
           >
-            {t('Show Output')}
+            {t('Show Data')}
           </Button>
         </TestButtonTooltip>
       </CTAShell>
@@ -155,7 +155,7 @@ const ActionCTAButton = ({
           className="w-full justify-center"
           size="sm"
         >
-          {t('Show Sample Data')}
+          {t('Show Data')}
         </Button>
         <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
           <Button
@@ -242,7 +242,7 @@ const TriggerCTAButton = ({
           className={SOFT_PRIMARY_CTA_CLASSES}
           size="sm"
         >
-          {t('Show Output')}
+          {t('Show Data')}
         </Button>
       </CTAShell>
     );
@@ -258,7 +258,7 @@ const TriggerCTAButton = ({
           className="w-full justify-center"
           size="sm"
         >
-          {t('Show Sample Data')}
+          {t('Show Data')}
         </Button>
         <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
           <Button

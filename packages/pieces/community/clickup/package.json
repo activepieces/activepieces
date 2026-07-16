@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-clickup",
-  "version": "0.7.5",
+  "version": "0.7.8",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -12,7 +12,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "dayjs": "1.11.9",
-    "qs": "6.14.2",
+    "qs": "6.15.2",
     "zod": "4.3.6",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"

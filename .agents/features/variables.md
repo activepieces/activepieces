@@ -32,6 +32,9 @@ No plan flag — the feature ships in every edition.
 - The reveal endpoint additionally restricts the principal to `USER` (no SERVICE keys) and emits `VARIABLE_VALUE_REVEALED` on every hit so admins can audit who pulled which secret and when.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **Variable**: an encrypted project-scoped secret keyed by a project-unique `name`.
 - **name**: stable identifier (alphanumeric + underscore, regex `^[a-zA-Z0-9_]+$`); used both as the display label and the mention key. Immutable after create.
 - **value**: opaque secret. Stored as `EncryptedObject` (`{ iv, data }`) wrapping `{ secret_text }`.
@@ -74,6 +77,8 @@ The engine's `resolveSingleToken` checks for the `variables` prefix first, then 
 `encryptUtils.encryptObject` (AES-256-CBC) on write. `encryptUtils.decryptObject<{ secret_text: string }>` on reveal and worker fetch.
 
 ## Frontend
+
+The create/rotate dialog's Value field is deliberately NOT a `type="password"` input — Chrome runs its leaked-password breach check on every password field at form submission and pops a native "password found in a data breach" warning, and also offers to save the value to the password manager (GIT-1619). Instead it is a `type="text"` input masked visually with CSS `-webkit-text-security: disc` while the eye toggle is off, with `autoComplete="off"` and `spellCheck={false}` (Chrome Enhanced Spellcheck transmits text-field contents). The masking is CSS-only: unsupported engines (Firefox < 118) render the typed value unmasked, which is acceptable because the field only ever holds a value the user is currently typing — stored secrets are never rendered back into the dialog.
 
 The `/variables` page mirrors the connections page visually: an info Alert above a TanStack Data Table with search, owner column, bulk delete, and a per-row dropdown (`Edit` / `Copy reference` / `Copy value` / `Delete`). `Copy reference` writes `{{variables['NAME']}}` to the clipboard and is always enabled — copy and edit operations that need the plaintext (`Copy value`, `Edit`) require `WRITE_VARIABLE`. The builder data-selector exposes a "Variables" tab next to "Data"; inserting a row emits a mention chip that renders `Variable · <name>` with a key SVG icon.
 

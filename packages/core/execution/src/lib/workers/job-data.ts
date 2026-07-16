@@ -6,7 +6,7 @@ import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
-import { PiecePackage } from '@activepieces/core-piece-types'
+import { AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
 
@@ -60,6 +60,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+        case WorkerJobType.EXECUTE_TOKEN_REFRESH:
             return 'critical'
         case WorkerJobType.EXECUTE_CHAT_AGENT:
             return 'high'
@@ -78,6 +79,7 @@ export enum WorkerJobType {
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EVENT_DESTINATION = 'EVENT_DESTINATION',
     EXECUTE_CHAT_AGENT = 'EXECUTE_CHAT_AGENT',
+    EXECUTE_TOKEN_REFRESH = 'EXECUTE_TOKEN_REFRESH',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -88,6 +90,7 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_PROPERTY,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_CHAT_AGENT,
+    WorkerJobType.EXECUTE_TOKEN_REFRESH,
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
@@ -175,6 +178,17 @@ export const ExecuteValidateAuthJobData = z.object({
 })
 export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobData>
 
+export const ExecuteTokenRefreshJobData = z.object({
+    jobType: z.literal(WorkerJobType.EXECUTE_TOKEN_REFRESH),
+    projectId: z.string().optional(),
+    platformId: z.string(),
+    piece: PiecePackage,
+    schemaVersion: z.number(),
+    connectionValue: z.custom<AppConnectionValue>(),
+    requestId: z.string(),
+    webserverId: z.string(),
+})
+export type ExecuteTokenRefreshJobData = z.infer<typeof ExecuteTokenRefreshJobData>
 
 export const ExecuteTriggerHookJobData = z.object({
     jobType: z.literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
@@ -221,6 +235,7 @@ export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPi
 
 export const UserInteractionJobData = z.union([
     ExecuteValidateAuthJobData,
+    ExecuteTokenRefreshJobData,
     ExecuteTriggerHookJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
@@ -229,6 +244,7 @@ export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = z.union([
     ExecuteValidateAuthJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteTokenRefreshJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteTriggerHookJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
@@ -260,6 +276,10 @@ export const ExecuteChatAgentJobData = z.object({
     })).optional(),
     promptOverride: ChatPromptOverride.optional(),
     dryRun: z.boolean().optional(),
+    // Measurement mode: run real discovery (research/get-props/resolve/reads) but neutralize
+    // ap_execute_action and auto-resolve approval gates, so the eval harness can measure how the
+    // agent navigates to a runnable call with zero side effects and no approval stalls.
+    discoveryOnly: z.boolean().optional(),
 })
 export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
 

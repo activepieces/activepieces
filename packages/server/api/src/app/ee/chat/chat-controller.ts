@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -8,9 +8,12 @@ import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
+import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
+import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -69,12 +72,25 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
+        // Cloud rollout: record that this user opened the chat page, then refresh the console
+        // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
+        await chatRolloutService.recordLanding({
+            userId: request.principal.id,
+            platformId: request.principal.platform.id,
+        })
+        chatAnalyticsTelemetry(request.log).sendRolloutFunnelUpdate()
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
         const { content, runId: clientRunId, files } = request.body
-        const log = request.log
         const conversationId = request.params.id
         const userId = request.principal.id
         const platformId = request.principal.platform.id
+        const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
+
+        log.info({ filesCount: files?.length ?? 0, contentLength: content.length }, '[chatController] Chat message received')
 
         const conversation = await chatService(log).getConversationOrThrow({
             id: conversationId,
@@ -82,25 +98,49 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
+        await assertChatMessageRateLimitNotExceeded({ platformId, userId, log })
+
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
+        // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
+        // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
+        // Awaited before the credit check below so the managed key is created (and topped up) once.
+        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
+        if (needsCreditDecision) {
+            await maybeGrantFreeChatCredits({ platformId, userId, log })
+        }
+        // Refresh the console rollout funnel snapshot (chatted count just changed).
+        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
+
+        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
+        const runLog = log.child({ run: { id: runId } })
+
+        // Claim ownership atomically in the DB — the single source of truth that
+        // saveChatMessages/updateChatProgress/heartbeat fence against. A late write from the
+        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
+        // with no Redis/DB split to race through. The prior owner is read from the same row.
+        const preemptedRunId = conversation.status === ChatConversationStatus.STREAMING
+            ? conversation.activeRunId
+            : null
+        await chatHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
+
         if (conversation.status === ChatConversationStatus.STREAMING) {
-            const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[chatController] Cancelling in-flight run before new message')
             const cancelPromises = [
                 chatApprovalGate.requestCancel({ conversationId }),
             ]
-            if (activeRunId) {
-                cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: activeRunId }))
+            if (preemptedRunId) {
+                cancelPromises.push(chatApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
             }
             await Promise.all(cancelPromises)
             await chatHelpers.conversationRepo().update(conversationId, {
                 status: ChatConversationStatus.IDLE,
             })
+            await chatApprovalGate.clearPendingGate({ conversationId })
         }
 
         await assertAiCreditsNotExhausted({ platformId, log })
 
-        const runId = typeof clientRunId === 'string' ? clientRunId : apId()
-        await chatApprovalGate.storeActiveRunId({ conversationId, runId })
-        await jobQueue(log).add({
+        await jobQueue(runLog).add({
             id: apId(),
             type: JobType.ONE_TIME,
             data: {
@@ -116,15 +156,18 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 files,
             },
         })
+        runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')
 
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
+        request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[chatController] Tool approval received')
         await chatApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
             payload: request.body.payload,
+            log: request.log,
         })
         return reply.status(StatusCodes.OK).send({ success: true })
     })
@@ -133,8 +176,10 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const conversationId = request.params.id
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        const activeRunId = await chatApprovalGate.getActiveRunId({ conversationId })
+        const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
+        const conversation = await chatService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const activeRunId = conversation.activeRunId
+        log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[chatController] Cancel requested')
         const cancelPromises = [
             chatApprovalGate.requestCancel({ conversationId }),
         ]
@@ -145,6 +190,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         await chatHelpers.conversationRepo().update(conversationId, {
             status: ChatConversationStatus.IDLE,
         })
+        await chatApprovalGate.clearPendingGate({ conversationId })
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
@@ -152,9 +198,13 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         const conversationId = request.params.id
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const conversation = await chatService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const gate = await chatApprovalGate.getPendingGate({ conversationId })
-        return reply.status(StatusCodes.OK).send(gate)
+        // A preempted run can leave (or race in) a pending gate keyed by conversation; only surface
+        // the gate when it belongs to the run that currently owns the conversation.
+        const gateRunId = gate?.runId
+        const staleGate = !isNil(gateRunId) && !isNil(conversation.activeRunId) && gateRunId !== conversation.activeRunId
+        return reply.status(StatusCodes.OK).send(staleGate ? null : gate)
     })
 
     app.get('/conversations/:id/connections', GetPickerConnectionsRoute, async (request, reply) => {
@@ -178,6 +228,52 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
 }
 
+const FREE_CHAT_CREDIT_USD = 10
+
+async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
+    // Claim first so the decision is settled exactly once across concurrent messages and paid users
+    // stop re-checking after this point (needsCreditDecision becomes false). A losing/duplicate
+    // caller exits immediately.
+    const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
+    if (!claimed) {
+        return
+    }
+    // Everything after the claim is best-effort and must never fail the user's message. Any error —
+    // the plan lookup or the top-up — rolls the claim back so a later message retries
+    // (needsCreditDecision goes true again). Paid platforms (license key) keep the claim with no
+    // grant owed, so they stop re-checking.
+    const { error } = await tryCatch(async () => {
+        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (isNil(plan.licenseKey)) {
+            await platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD })
+        }
+    })
+    if (!isNil(error)) {
+        await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
+        log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
+    }
+}
+
+const CHAT_MESSAGES_PER_WINDOW = 40
+const CHAT_MESSAGE_RATE_WINDOW_SECONDS = 10 * 60
+
+// Per-user flood guard: nothing else bounds how fast a user fires messages, and each one enqueues a
+// worker job and spends credits. Complements the credit balance, which bounds spend, not rate.
+async function assertChatMessageRateLimitNotExceeded({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { allowed, count } = await chatHelpers.incrementAndCheckLimit({
+        key: `chat-message-rate:${platformId}:${userId}`,
+        limit: CHAT_MESSAGES_PER_WINDOW,
+        ttlSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS,
+    })
+    if (!allowed) {
+        log.warn({ user: { id: userId }, count }, '[chatController] Chat message rate limit exceeded')
+        throw new ActivepiecesError({
+            code: ErrorCode.CHAT_MESSAGE_LIMIT_EXCEEDED,
+            params: { limit: CHAT_MESSAGES_PER_WINDOW, windowSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS },
+        })
+    }
+}
+
 async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
     const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
     if (!chatProvider || chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
@@ -185,6 +281,7 @@ async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: st
     }
     const usage = await platformAiCreditsService(log).getUsage(platformId)
     if (usage.usageRemaining <= 0) {
+        log.warn({ usage: usage.usage, limit: usage.limit }, '[chatController] AI credits exhausted, rejecting message')
         throw new ActivepiecesError({
             code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
             params: {
@@ -276,6 +373,16 @@ const SendMessageRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
         body: SendChatMessageRequest,
+    },
+}
+
+const FunnelLandingRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 

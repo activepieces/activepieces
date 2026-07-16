@@ -8,6 +8,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/server/api/src/app/mcp/mcp-server-controller.ts` — HTTP endpoints (get, update, rotate, issue embed token, protocol handler, agent validator)
 - `packages/server/api/src/app/mcp/mcp-entity.ts` — McpServer entity
 - `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports
+- `packages/server/api/src/app/mcp/tools/piece-expertise.ts` — curated, piece-specific guidance (expert notes, example inputs) surfaced through MCP property discovery
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
 - `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
 - `packages/core/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
@@ -31,6 +32,9 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - Cloud: available
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **McpServer** — the per-project MCP server record (token, disabledTools)
 - **Locked tools** — tools that are always active when the MCP server is enabled; cannot be disabled
 - **Controllable tools** — tools that platform or project owners can enable/disable individually
@@ -52,8 +56,8 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
 - `ap_validate_flow`, `ap_validate_step_config` — validation helpers
-- `ap_research_pieces` — piece discovery
-- `ap_get_piece_props` — action/trigger input schema, AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
+- `ap_research_pieces` — piece discovery with intent-based recommended-action ranking
+- `ap_get_piece_props` — action/trigger input schema with required-input summaries and example input, action cardinality, curated expert notes (via `piece-expertise.ts`), AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
 - `ap_resolve_property_options`, `ap_resolve_property_chain` — dropdown/property resolution
 - `ap_list_connections` — list app connections
 - `ap_list_ai_models` — list AI providers and models
@@ -98,9 +102,13 @@ Bearer token (`Authorization: Bearer {token}`) or query param (`?token={token}`)
 
 OAuth 2.0 PKCE flow is supported for AI clients that require OAuth. The MCP OAuth module (`mcp-oauth.module.ts`) registers metadata, authorization, token, and revocation endpoints.
 
+**Telemetry** — `resolveMcpAndUser` (the OAuth token-resolution path in `mcp-oauth.controller.ts`) runs on every authenticated MCP request, so `MCP_SERVER_CONNECTED` is deduped via `telemetryDedupe.onceToday` to at most one event per user+server per day (per API process) — a daily-active signal, not request volume. Per-invocation usage is tracked separately by `MCP_TOOL_CALLED`.
+
 **Discovery & base-path awareness** — The OAuth issuer, `authorize`/`token`/`register`/`revoke` endpoints, the `resource`, and the `/mcp-authorize` redirect are built via `domainHelper.getPublicUrlFromRequest({ req, path })`. It keeps the request-derived host (so cloud custom domains still work) but appends the path prefix from `AP_FRONTEND_URL`, so subpath-hosted instances (`host/<prefix>/mcp` behind a reverse proxy) advertise URLs under the prefix. On root deployments the prefix is empty and behavior is unchanged.
 
 **RFC 9728 §5.1** — MCP `401` responses include a `WWW-Authenticate: Bearer resource_metadata="…"` header pointing at the prefixed protected-resource metadata URL (`/.well-known/oauth-protected-resource/mcp` for project, `/mcp/platform` for platform), so clients can locate discovery without guessing host-root well-known paths. Clients that ignore the header and probe host-root well-known paths still require the operator to forward `host/.well-known/oauth-*` to AP (that namespace is host-root-anchored by RFC 8414/9728).
+
+**Conversation-project scoping** — The optional `x-ap-conversation-id` request header (sent by the EE chat path) switches the built server to the project a prior conversation is bound to. The override is scoped to the token so it can never widen the grant: a project-scoped token resolves the header only when the conversation's project equals the token's own project, otherwise the header is ignored; a platform-scoped token requires the conversation's `platformId` to match the token's and re-validates the user's current project membership (`chatHelpers.getUserProjects`) before honoring it. A conversation with no `projectId` is ignored.
 
 ## Server Building
 

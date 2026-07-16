@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { ApEdition, FileCompression, FileLocation, FileType, FilteredPieceBehavior, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformRequestBody, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, FileCompression, FileLocation, FileType, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformRequestBody, UserIdentityProvider } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -69,8 +69,6 @@ describe('Platform API', () => {
             const requestBody: UpdatePlatformRequestBody = {
                 name: 'updated name',
                 primaryColor: 'updated primary color',
-                filteredPieceNames: ['updated filtered piece names'],
-                filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
                 enforceAllowedAuthDomains: true,
                 allowedAuthDomains: ['yahoo.com'],
                 cloudAuthEnabled: false,
@@ -103,10 +101,6 @@ describe('Platform API', () => {
             expect(responseBody.emailAuthEnabled).toBe(requestBody.emailAuthEnabled)
             expect(responseBody.name).toBe('updated name')
             expect(responseBody.primaryColor).toBe('updated primary color')
-            expect(responseBody.filteredPieceNames).toStrictEqual([
-                'updated filtered piece names',
-            ])
-            expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({
                 saml: null,
@@ -178,11 +172,9 @@ describe('Platform API', () => {
             formData.append('cloudAuthEnabled', 'false')
             formData.append('emailAuthEnabled', 'false')
             formData.append('enforceAllowedAuthDomains', 'true')
-            formData.append('filteredPieceNames', 'piece-1')
             formData.append('allowedAuthDomains', 'example.com')
             formData.append('pinnedPieces', 'pinned-1')
             formData.append('name', 'updated name')
-            formData.append('filteredPieceBehavior', 'ALLOWED')
 
             // act
             const response = await app?.inject({
@@ -201,11 +193,9 @@ describe('Platform API', () => {
             expect(responseBody.cloudAuthEnabled).toBe(false)
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.enforceAllowedAuthDomains).toBe(true)
-            expect(responseBody.filteredPieceNames).toStrictEqual(['piece-1'])
             expect(responseBody.allowedAuthDomains).toStrictEqual(['example.com'])
             expect(responseBody.pinnedPieces).toStrictEqual(['pinned-1'])
             expect(responseBody.name).toBe('updated name')
-            expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
 
             const baseUrl = 'http://localhost:4200/api/v1/platforms/assets'
             expect(responseBody.logoIconUrl.startsWith(baseUrl)).toBeTruthy()
@@ -588,7 +578,7 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(25)
+            expect(Object.keys(responseBody).length).toBe(23)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)

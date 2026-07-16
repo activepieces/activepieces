@@ -32,7 +32,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 })
             }
         },
-        async send({ emails, platformId, templateData }) {
+        async send({ emails, platformId, templateData, replyTo }) {
             try {
                 const platform = await getPlatform(platformId, log)
                 const emailSubject = getEmailSubject(templateData.name, templateData.vars)
@@ -60,6 +60,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                     to: emails.join(','),
                     subject: emailSubject,
                     html: emailBody,
+                    ...(replyTo ? { replyTo } : {}),
                 })
             }
             catch (e) {
@@ -112,6 +113,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
 
 const initSmtpClient = (): Transporter => {
     const smtpPort = Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT))
+    const rejectUnauthorized = system.getBoolean(AppSystemProp.SMTP_TLS_REJECT_UNAUTHORIZED) ?? true
     return nodemailer.createTransport({
         host: system.getOrThrow(AppSystemProp.SMTP_HOST),
         port: smtpPort,
@@ -120,6 +122,9 @@ const initSmtpClient = (): Transporter => {
             user: system.getOrThrow(AppSystemProp.SMTP_USERNAME),
             pass: system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
         },
+        tls: {
+            rejectUnauthorized,
+        },
     })
 }
 
@@ -127,11 +132,11 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': `You have been invited to "${vars.projectName}" project ✉️`,
         'project-member-added': `Welcome to ${vars.projectName} 🎉`,
-        'badge-awarded': 'Congratulations, you earned a new badge! 🎉',
         'verify-email': 'Verify your email address ✅',
         'reset-password': 'Reset your password 🔑',
         'issue-created': `[${vars.projectName}] Flow has an issue "${vars.flowName}" ⚠️`,
         'scim-user-welcome': 'Welcome! Your account has been created 🎉',
+        'chat-notification': vars.subject,
     }
 
     return templateToSubject[templateName]

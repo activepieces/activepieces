@@ -43,7 +43,6 @@ export const drupalCallServiceAction = createAction({
               'Accept': 'application/vnd.api+json',
             },
           });
-          console.debug('Service response', response);
           if (response.status === 200) {
             return {
               disabled: false,
@@ -72,7 +71,6 @@ export const drupalCallServiceAction = createAction({
       required: true,
       auth: drupalAuth,
       props: async ({ service }) => {
-        console.debug('Service config input', service);
         const fields: Record<string, any> = {};
         const items = (service as { config: DrupalServiceConfig[] }).config;
         items.forEach((config: any) => {
@@ -120,7 +118,6 @@ export const drupalCallServiceAction = createAction({
             });
           }
         });
-        console.debug('Field for this service', fields);
         return fields;
       },
     }),
@@ -141,7 +138,6 @@ export const drupalCallServiceAction = createAction({
     };
 
     const result = await httpClient.sendRequest<DrupalService>(request);
-    console.debug('Service call completed', result);
 
     if (result.status === 200 || result.status === 202) {
       return result.body;

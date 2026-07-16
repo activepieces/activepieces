@@ -9,11 +9,15 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
     async execute(ctx: JobContext, data: ExecutePropertyJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        const execution = ctx.runtime.createExecution({ workerIndex: ctx.workerIndex, log: ctx.log, apiClient: ctx.apiClient })
-        await execution.provision({ platformId: data.platformId, pieces: [data.piece] })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, pieces: [data.piece] })
+        if (resolved.kind !== 'ready') {
+            throw new Error(`Unexpected resolve outcome "${resolved.kind}" for piece-only job`)
+        }
 
         const { data: result, error } = await tryCatch(async () => {
-            return execution.run({
+            return ctx.runtime.execute({
+                workerIndex: ctx.workerIndex,
+                log: ctx.log,
                 operationType: EngineOperationType.EXECUTE_PROPERTY,
                 operation: {
                     piece: data.piece,
@@ -31,12 +35,11 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
                     timeoutInSeconds,
                 },
                 timeoutInSeconds,
+                provision: resolved.provision,
             })
         })
-        await execution.dispose({ invalidate: false })
 
         if (error) {
-            await execution.dispose({ invalidate: true })
             if (isSandboxTimeout(error)) {
                 return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.TIMEOUT, response: {} }
             }

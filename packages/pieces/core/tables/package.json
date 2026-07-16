@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-tables",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -11,7 +11,7 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "qs": "6.14.2",
+    "qs": "6.15.2",
     "zod": "4.3.6",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"

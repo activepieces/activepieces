@@ -5,6 +5,7 @@ import qs from 'qs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { ClickupTask } from '../../common/models';
+import { filterTimeEntriesOutputSchema } from '../../output-schemas';
 
 export const filterClickupWorkspaceTimeEntries = createAction({
   auth: clickupAuth,
@@ -52,6 +53,7 @@ export const filterClickupWorkspaceTimeEntries = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: filterTimeEntriesOutputSchema,
   async run(context) {
     const { task_id, list_id, folder_id, space_id, workspace_id, ...params } =
       context.propsValue;

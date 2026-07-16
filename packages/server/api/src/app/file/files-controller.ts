@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream'
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, EnginePrincipal, FileCompression, FileTransportQueryParams, FileType, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -5,12 +6,18 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { fileService } from './file.service'
-import { ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
+import { enforceByteLimit, ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
 import { signedFileTransport } from './signed-file-transport'
 
 export const filesController: FastifyPluginAsyncZod = async (app) => {
+    // Keep the octet-stream body as a raw stream (scoped to this plugin) so uploads
+    // pipe straight to storage instead of buffering the whole file in memory.
+    app.removeContentTypeParser('application/octet-stream')
+    app.addContentTypeParser('application/octet-stream', (_request, payload, done) => done(null, payload))
+
     app.put('/:fileId', {
         config: {
             security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
@@ -37,7 +44,9 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             })
             void reply.header(fileTransportHeaders.READ_URL, readUrl)
 
-            if (!signedFileTransport.shouldRedirectForType(fileType)) {
+            // A presigned single PUT needs Content-Length; a streamed upload (chunked, no
+            // length header) can't redirect, so it falls through and streams in the handler.
+            if (!signedFileTransport.shouldRedirectForType(fileType) || isNil(request.headers['content-length'])) {
                 return
             }
             const file = await fileService(request.log).save({
@@ -73,8 +82,9 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
         const contentEncoding = parseStringHeader(request.headers['content-encoding'])
         const compression = contentEncoding === 'zstd' ? FileCompression.ZSTD : FileCompression.NONE
 
-        const data = request.body as Buffer
-        assertNotNullOrUndefined(data, 'body')
+        const body = request.body as Readable
+        assertNotNullOrUndefined(body, 'body')
+        const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
         await fileService(request.log).save({
             fileId,
             projectId: principal.projectId,
@@ -82,8 +92,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             type: fileType,
             fileName,
             compression,
-            size: data.length,
-            data,
+            data: body.pipe(enforceByteLimit(maxFileSizeInBytes)),
         })
         const readUrl = await filesService.constructReadUrl({
             fileId,
@@ -119,9 +128,12 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             projectId: file.projectId ?? undefined,
             type: file.type,
         })
+        const mimeType = file.metadata?.mimetype ?? 'application/octet-stream'
+        const disposition = isInlineSafeMimeType(mimeType) ? 'inline' : 'attachment'
         return reply
-            .type('application/octet-stream')
-            .header('Content-Disposition', `attachment; filename="${encodeURI(file.fileName ?? `${file.id}.bin`)}"`)
+            .type(mimeType)
+            .header('X-Content-Type-Options', 'nosniff')
+            .header('Content-Disposition', `${disposition}; filename="${encodeURI(file.fileName ?? `${file.id}.bin`)}"`)
             .status(StatusCodes.OK)
             .send(data)
     })
@@ -144,6 +156,15 @@ export const signedStepFileController: FastifyPluginAsyncZod = async (app) => {
         })
         return reply.redirect(readUrl)
     })
+}
+
+const INLINE_SAFE_MIME_TYPES = new Set([
+    'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'image/bmp',
+    'application/pdf', 'text/plain',
+])
+
+function isInlineSafeMimeType(mimeType: string): boolean {
+    return INLINE_SAFE_MIME_TYPES.has(mimeType.split(';')[0].trim().toLowerCase())
 }
 
 async function authorizeRead({ token, fileId, log }: AuthorizeReadParams): Promise<string | undefined> {

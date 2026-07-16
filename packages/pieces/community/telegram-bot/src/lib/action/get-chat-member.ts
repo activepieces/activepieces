@@ -2,6 +2,7 @@ import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { telegramBotAuth } from '../..';
 import { telegramCommons } from '../common';
+import { getChatMemberActionOutputSchema } from '../output-schemas';
 
 export const telegramGetChatMemberAction = createAction({
   auth: telegramBotAuth,
@@ -19,6 +20,7 @@ export const telegramGetChatMemberAction = createAction({
       required: true,
     }),
   },
+  outputSchema: getChatMemberActionOutputSchema,
   async run(ctx) {
     try {
       const response = await httpClient.sendRequest<never>({

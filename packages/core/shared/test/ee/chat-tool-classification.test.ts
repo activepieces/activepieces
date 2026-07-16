@@ -69,3 +69,34 @@ describe('chatToolClassification.hasFailureTextPrefix', () => {
         expect(chatToolClassification.hasFailureTextPrefix('')).toBe(false)
     })
 })
+
+describe('chatToolClassification.requiresActionPreview — custom_api_call', () => {
+    it.each(['GET', 'HEAD', 'OPTIONS', 'get', 'head'])('skips the gate for read-only method "%s"', (method) => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method } })).toBe(false)
+    })
+
+    it.each(['POST', 'PUT', 'PATCH', 'DELETE', 'delete'])('requires the gate for mutating method "%s"', (method) => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method } })).toBe(true)
+    })
+
+    it('requires the gate when the method is unknown or missing', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call' })).toBe(true)
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: {} })).toBe(true)
+    })
+})
+
+describe('chatToolClassification.requiresActionPreview — taint (untrusted content in turn)', () => {
+    it('forces the gate for an action the model marked needsConfirmation:false once tainted', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing', needsConfirmation: false })).toBe(false)
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing', needsConfirmation: false, tainted: true })).toBe(true)
+    })
+
+    it('still skips the gate for a provably read-only action when tainted', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'get_rows', tainted: true })).toBe(false)
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method: 'GET' }, tainted: true })).toBe(false)
+    })
+
+    it('keeps writes gated when tainted', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'send_channel_message', tainted: true })).toBe(true)
+    })
+})

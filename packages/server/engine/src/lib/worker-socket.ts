@@ -1,12 +1,10 @@
 import { inspect } from 'node:util'
 import {
     createNotifyClient,
-    createRpcClient,
     createRpcServer,
     EngineContract,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
-    WorkerContract,
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
@@ -16,7 +14,6 @@ import { execute } from './operations'
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
 
 let socket: Socket | undefined
-let workerClient: WorkerContract | undefined
 let notifyClient: WorkerNotifyContract | undefined
 let initialConnectWatchdog: NodeJS.Timeout | undefined
 
@@ -43,7 +40,6 @@ export const workerSocket = {
             process.exit(5)
         }, INITIAL_CONNECT_TIMEOUT_MS)
 
-        workerClient = createRpcClient<WorkerContract>(socket, 60_000)
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
 
         socket.on('connect', () => {
@@ -110,11 +106,6 @@ export const workerSocket = {
         socket.connect()
     },
 
-    getWorkerClient: (): WorkerContract => {
-        if (!workerClient) throw new Error('Worker client not initialized')
-        return workerClient
-    },
-
     sendError: (error: unknown): void => {
         notifyClient?.stderr({ message: inspect(error) })
     },
@@ -123,7 +114,6 @@ export const workerSocket = {
         clearInitialConnectWatchdog()
         socket?.disconnect()
         socket = undefined
-        workerClient = undefined
         notifyClient = undefined
     },
 }
@@ -131,6 +121,10 @@ export const workerSocket = {
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {
     const base: Partial<ManagerOptions & SocketOptions> = {
         path: '/worker/ws',
+        // Connect straight over websocket to the localhost worker. The socket.io default starts with
+        // HTTP long-polling then upgrades, adding ~75ms to a cold-fork handshake — pure waste for a
+        // same-host control channel.
+        transports: ['websocket'],
         auth: {
             sandboxId,
             connectionToken: process.env.AP_SANDBOX_WS_TOKEN,

@@ -19,9 +19,12 @@ The authentication feature handles user identity creation, sign-in, and JWT sess
 - `packages/web/src/app/routes/auth-routes.tsx` — route declarations: /sign-in, /sign-up, /forget-password, /reset-password, /verify-email, /invitation
 
 ## Edition Availability
-All editions (Community, Enterprise, Cloud). Email auth checks and domain-allow-listing guards are skipped on Community edition. OTP email verification is sent on Cloud; on Community and Enterprise the identity is automatically marked verified.
+All editions (Community, Enterprise, Cloud). Email auth checks and domain-allow-listing guards are skipped on Community edition. OTP email verification is sent on Cloud (production); on Community, Enterprise, and Cloud in development (`AP_ENVIRONMENT=development`) the identity is automatically marked verified.
 
 ## Domain Terms
+
+> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
+
 - **UserIdentity** — the email + hashed password + provider record; one per email address, shared across platforms
 - **User** — the platform-specific record linking an identity to a platform and project role
 - **Platform** — the tenant namespace; auto-created on first sign-up
@@ -74,10 +77,10 @@ All endpoints are rate-limited via `API_RATE_LIMIT_AUTHN_MAX` / `API_RATE_LIMIT_
 2. `User` created with `PlatformRole.ADMIN`
 3. `Platform` created (named `"<firstName>'s Platform"`)
 4. Default `Project` created with `ProjectType.PERSONAL`
-5. On Cloud: OTP email sent via `otpService`
-6. On CE/EE: identity auto-verified
+5. On Cloud (production): OTP email sent via `otpService`
+6. On CE/EE, or Cloud in development (`AP_ENVIRONMENT=development`): identity auto-verified
 7. `ApFlagId.USER_CREATED` flag saved
-8. Telemetry `SIGNED_UP` event fired
+8. Telemetry `SIGNED_UP` event fired (email/name included only on Cloud; CE/EE send non-PII fields only — `pickTelemetryPii`)
 9. Newsletter subscription attempted (production + non-embedding platforms only)
 
 ## Side Effects on Sign-In

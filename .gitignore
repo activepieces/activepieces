@@ -3,7 +3,20 @@
 # Claude Code worktrees
 .claude/worktrees/
 
+# ZAP DAST scan output (generated at runtime, see .zap/README.md)
+.zap/reports/
+
 pieces-cache-db-*.sqlite
+
+# local debug logs (evlog filesystem drain)
+.evlog/
+
+# local dev/session artifacts (research dumps, IDE config, captured eval output)
+.firecrawl/
+.claude/launch.json
+CONTEXT.md
+!.agents/contexts/**/CONTEXT.md
+packages/server/worker/test/lib/chat-eval/live/results/
 
 # compiled output
 dist
@@ -70,6 +83,9 @@ scratch.md
 
 # chat-eval CLI cache + decision log
 .chat-eval/
+
+# security advisory triage artifacts (PRIVATE/embargoed advisory content — never commit)
+.security-triage/
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md

@@ -1,8 +1,13 @@
-import { createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApEdition, createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { websocketService } from '../../core/websockets.service'
+import { system } from '../../helper/system/system'
+import { parseWorkerGroupValue, QueueName } from '../job'
+import { jobBroker } from '../job-queue/job-broker'
 import { jobQueue } from '../job-queue/job-queue'
 import { createHandlers } from '../rpc/worker-rpc-service'
 import { machineService } from './machine-service'
@@ -11,19 +16,24 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
-            const rawWorkerGroupId = socket.handshake.auth?.workerGroupId
-            const workerGroupId = typeof rawWorkerGroupId === 'string' ? rawWorkerGroupId : undefined
-            const response = await machineService(app.log).onConnection(request, workerGroupId)
+            const rawWorkerGroupValue = socket.handshake.auth?.workerGroupId
+            const projectWorker = socket.handshake.auth?.projectWorker === true
+            const assignment = parseWorkerGroupValue({ value: typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined, projectWorker })
+            const response = await machineService(app.log).onConnection(request, assignment)
             callback?.(response)
-            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, workerGroupId))
+            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, assignment, socket.id))
         }
     })
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.DISCONNECT, (socket) => {
         return async (_request: unknown, _principal) => {
-            await machineService(app.log).onDisconnect({
-                workerId: socket.handshake.auth.workerId,
-            })
+            // Return jobs dispatched to THIS connection that it never reported done — they sit
+            // orphaned in BullMQ `active` otherwise (graceful drain can't reach a job the worker never
+            // received), which inflated active past concurrency during deploys. Scoped to socket.id,
+            // not the stable workerId: a late disconnect for an old socket must not reclaim the jobs a
+            // reconnected socket (same workerId) has already polled.
+            await jobBroker(app.log).releaseConnectionJobs(socket.id)
+            await machineService(app.log).onDisconnect({ workerId: socket.handshake.auth.workerId })
         }
     })
 
@@ -41,12 +51,22 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
         )
         return { queues: counts }
     })
+
+    if (system.getEdition() !== ApEdition.CLOUD) {
+        app.get('/queue-metrics/prometheus/:queueName?', PrometheusQueueMetricsParams, async (request, reply) => {
+            const queue = jobQueue(app.log).getAllQueues().find((q) => q.name === request.params.queueName)
+            if (isNil(queue)) {
+                return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Queue not found' })
+            }
+            return reply.type('text/plain').send(await queue.exportPrometheusMetrics())
+        })
+    }
 }
 
 
 const ListWorkersParams = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
@@ -65,5 +85,16 @@ const QueueMetricsParams = {
                 })),
             }),
         },
+    },
+}
+
+const PrometheusQueueMetricsParams = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        params: z.object({
+            queueName: z.string().default(QueueName.WORKER_JOBS),
+        }),
     },
 }

@@ -392,7 +392,11 @@ const StepSettingsLayout = ({
 
   return (
     <div className="relative flex-1 min-h-0 flex flex-col w-full">
-      <div className="flex-1 min-h-0">{settingsForm}</div>
+      <div
+        className={cn('min-h-0', isStepDataPanelOpen ? 'h-[40%]' : 'flex-1')}
+      >
+        {settingsForm}
+      </div>
       {showTestPanel && !isStepDataPanelOpen && (
         <div className="shrink-0">
           <TestStepCTAButton />

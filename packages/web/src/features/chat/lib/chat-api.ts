@@ -100,13 +100,14 @@ async function getPickerConnections({
   });
 }
 
-async function getPendingGate(conversationId: string): Promise<{
-  gateId: string;
-  toolName: string;
-  displayName: string;
-  toolInput: Record<string, unknown>;
-} | null> {
+async function getPendingGate(
+  conversationId: string,
+): Promise<PendingGate | null> {
   return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
+}
+
+async function recordLanding(): Promise<void> {
+  return api.post<void>('/v1/chat/funnel/landing');
 }
 
 export const chatApi = {
@@ -121,4 +122,12 @@ export const chatApi = {
   cancelConversation,
   getPickerConnections,
   getPendingGate,
+  recordLanding,
+};
+
+export type PendingGate = {
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
 };

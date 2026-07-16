@@ -6,10 +6,11 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { repoFactory } from '../../core/db/repo-factory'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { ChatConversationEntity } from '../../ee/chat/chat-conversation-entity'
+import { chatHelpers } from '../../ee/chat/chat-helpers'
 import { CONVERSATION_ID_HEADER } from '../../ee/chat/mcp/chat-mcp'
 import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { telemetry } from '../../helper/telemetry.utils'
+import { telemetry, telemetryDedupe } from '../../helper/telemetry.utils'
 import { mcpServerService } from '../mcp-service'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
@@ -66,8 +67,8 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         }
 
         const conversationId = req.headers[CONVERSATION_ID_HEADER] as string | undefined
-        const conversationProjectId = conversationId && userId
-            ? await resolveConversationProjectId({ conversationId, userId, log: req.log })
+        const conversationProjectId = !isNil(conversationId)
+            ? await resolveConversationProjectId({ conversationId, identity, log: req.log })
             : null
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
@@ -129,23 +130,27 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
 async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string }> {
     try {
         if (identity.type === McpServerType.PLATFORM) {
-            rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
-                name: TelemetryEventName.MCP_SERVER_CONNECTED,
-                payload: {
-                    platformId: identity.platformId,
-                    userId: identity.userId,
-                },
-            }), log)
+            if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
+                rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
+                    name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                    payload: {
+                        platformId: identity.platformId,
+                        userId: identity.userId,
+                    },
+                }), log)
+            }
             const mcp = await mcpServerService(log).getPopulatedByPlatformId(identity.platformId)
             return { mcp, userId: identity.userId }
         }
-        rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
-            name: TelemetryEventName.MCP_SERVER_CONNECTED,
-            payload: {
-                projectId: identity.projectId,
-                userId: identity.userId,
-            },
-        }), log)
+        if (telemetryDedupe.onceToday(`mcp-server-connected:project:${identity.projectId}:${identity.userId}`)) {
+            rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
+                name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                payload: {
+                    projectId: identity.projectId,
+                    userId: identity.userId,
+                },
+            }), log)
+        }
         const mcp = await mcpServerService(log).getPopulatedByProjectId(identity.projectId)
         return { mcp, userId: identity.userId }
     }
@@ -161,23 +166,38 @@ type ResolvedIdentity =
 
 const chatConversationRepo = repoFactory(ChatConversationEntity)
 
-async function resolveConversationProjectId({ conversationId, userId, log }: {
+async function resolveConversationProjectId({ conversationId, identity, log }: {
     conversationId: string
-    userId: string
+    identity: ResolvedIdentity
     log: FastifyBaseLogger
 }): Promise<string | null> {
     const { data: conversation, error } = await tryCatch(async () =>
-        chatConversationRepo().findOne({ where: { id: conversationId, userId }, select: ['projectId'] }),
+        chatConversationRepo().findOne({ where: { id: conversationId, userId: identity.userId }, select: ['projectId', 'platformId'] }),
     )
     if (error) {
         log.warn({ error, conversation: { id: conversationId } }, 'DB error resolving conversation project')
         return null
     }
-    if (!conversation) {
+    if (isNil(conversation) || isNil(conversation.projectId)) {
         log.debug({ conversation: { id: conversationId } }, 'Conversation not found for project resolution')
         return null
     }
-    return conversation.projectId ?? null
+    const conversationProjectId = conversation.projectId
+
+    if (identity.type === McpServerType.PROJECT) {
+        return conversationProjectId === identity.projectId ? conversationProjectId : null
+    }
+
+    if (conversation.platformId !== identity.platformId) {
+        log.warn({ conversation: { id: conversationId } }, 'Conversation platform does not match token platform')
+        return null
+    }
+    const userProjects = await chatHelpers.getUserProjects({ platformId: identity.platformId, userId: identity.userId, log })
+    if (!userProjects.some((project) => project.id === conversationProjectId)) {
+        log.warn({ conversation: { id: conversationId }, project: { id: conversationProjectId } }, 'User no longer has access to conversation project')
+        return null
+    }
+    return conversationProjectId
 }
 
 const McpEndpointConfig = {

@@ -17,7 +17,6 @@ import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { SendIcon } from '@/components/icons/send';
 import { ShieldIcon } from '@/components/icons/shield';
-import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +36,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
   projectCollectionUtils,
@@ -155,6 +155,9 @@ export function ProjectDashboardSidebar({
     hasPermission: true,
     isSubItem: false,
     badge: t('Beta'),
+    onClick: () => {
+      window.dispatchEvent(new Event(chatUtils.newChatEvent));
+    },
   };
 
   const exploreLink: SidebarItemType = {
@@ -198,27 +201,7 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const leaderboardLink: SidebarItemType = {
-    type: 'link',
-    to: '/leaderboard',
-    label: t('Leaderboard'),
-    icon: TrophyIcon,
-    show: true,
-    hasPermission: true,
-    isSubItem: false,
-    onClick: () => {
-      const page = STATIC_PAGES.find((p) => p.href === '/leaderboard');
-      if (page)
-        recordAccess({
-          id: page.id,
-          type: 'page',
-          label: page.label,
-          href: page.href,
-        });
-    },
-  };
-
-  const items = [chatLink, exploreLink, impactLink, leaderboardLink]
+  const items = [chatLink, exploreLink, impactLink]
     .filter((item) => item.show !== false)
     .filter(permissionFilter);
 
