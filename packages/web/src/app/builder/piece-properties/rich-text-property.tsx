@@ -20,6 +20,9 @@ function resolveMode(value: unknown): RichTextMode {
     return 'html';
   }
   if (normalized === 'markdown' || normalized === 'md') {
+    // Markdown currently shares the plain-text editor (raw markdown is typed as
+    // text) — there is no dedicated markdown WYSIWYG yet. Kept as its own mode so
+    // format dropdowns can label it and a real editor can be wired in later.
     return 'markdown';
   }
   return 'plain';

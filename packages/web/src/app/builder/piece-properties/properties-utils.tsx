@@ -305,12 +305,24 @@ export const selectGenericFormComponentForProperty = ({
       );
     case PropertyType.DATE_RANGE:
       return (
-        <DateRangeProperty
-          value={field.value}
-          onChange={field.onChange}
+        <AutoFormFieldWrapper
+          property={property}
+          inputName={inputName}
+          field={field}
+          hideLabel={hideLabel}
+          hideDescription={hideDescription}
+          propertyName={propertyName}
           disabled={disabled}
-          display={property.display}
-        ></DateRangeProperty>
+          allowDynamicValues={false}
+          dynamicInputModeToggled={dynamicInputModeToggled}
+        >
+          <DateRangeProperty
+            value={field.value}
+            onChange={field.onChange}
+            disabled={disabled}
+            display={property.display}
+          ></DateRangeProperty>
+        </AutoFormFieldWrapper>
       );
     case PropertyType.DATE_TIME:
     case PropertyType.SHORT_TEXT:

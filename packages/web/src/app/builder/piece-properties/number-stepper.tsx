@@ -46,7 +46,9 @@ function NumberStepper({
         step={stepBy}
         disabled={disabled}
         onChange={(event) =>
-          onChange(event.target.value === '' ? '' : Number(event.target.value))
+          onChange(
+            event.target.value === '' ? undefined : Number(event.target.value),
+          )
         }
         className="h-8 w-14 border-x border-input bg-transparent text-center text-sm font-medium tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
@@ -69,7 +71,7 @@ export { NumberStepper };
 
 type NumberStepperProps = {
   value: unknown;
-  onChange: (value: number | string) => void;
+  onChange: (value: number | undefined) => void;
   min?: number;
   max?: number;
   step?: number;
