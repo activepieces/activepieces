@@ -21,7 +21,10 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
     // to trace it. If pass 1 surfaced any such unsafe package, externalize it and rebuild ONCE —
     // auto-externalize the offending dep instead of failing the whole piece. Only the handful of
     // pieces with dynamic-require deps (couchbase, metabase, text-helper, scrapeless) hit pass 2.
-    const unsafe = unsafePackages({ metafile: pass.result.metafile, warnings: pass.result.warnings })
+    const unsafe = new Set([
+        ...unsafePackages({ metafile: pass.result.metafile, warnings: pass.result.warnings }),
+        ...importMetaPackages(pass.result.metafile),
+    ])
     if (unsafe.size > 0) {
         pass = await runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external: new Set([...excludeList, ...unsafe]) })
     }
@@ -164,6 +167,32 @@ function unsafePackages({ metafile, warnings }: GateParams): Set<string> {
         }
     }
     return pkgs
+}
+
+// esbuild rewrites `import.meta` to `{}` in CJS output (silently), so an inlined package relying on
+// it (e.g. openpgp's `createRequire(import.meta.url)`) crashes at load. Externalize such packages so
+// they install and run in their own module context instead.
+function importMetaPackages(metafile: esbuild.Metafile): Set<string> {
+    const pkgs = new Set<string>()
+    for (const input of Object.keys(metafile.inputs)) {
+        const pkg = pkgOfInput(input)
+        if (pkg === null || pkgs.has(pkg)) {
+            continue
+        }
+        if (usesImportMeta(resolve(process.cwd(), input))) {
+            pkgs.add(pkg)
+        }
+    }
+    return pkgs
+}
+
+function usesImportMeta(file: string): boolean {
+    try {
+        return /\bimport\.meta\b/.test(readFileSync(file, 'utf-8'))
+    }
+    catch {
+        return false
+    }
 }
 
 // Build-time safety gate, evaluated on the FINAL pass. By now native/dynamic-require deps have

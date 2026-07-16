@@ -35,4 +35,25 @@ describe('bundlePiece — external dependency capture', () => {
         expect(result.inlined).toContain('fake-sdk')
         expect(result.external).not.toContain('fake-sdk')
     })
+
+    it('externalizes an inlined package that relies on import.meta', async () => {
+        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+
+        const esmDir = join(root, 'node_modules', 'esm-dep')
+        mkdirSync(esmDir, { recursive: true })
+        writeFileSync(join(esmDir, 'package.json'), JSON.stringify({ name: 'esm-dep', version: '1.0.0', main: 'index.js' }))
+        writeFileSync(join(esmDir, 'index.js'), 'const { createRequire } = require(\'module\');\nconst req = createRequire(import.meta.url);\nmodule.exports = { req };\n')
+
+        const piecePath = join(root, 'piece')
+        mkdirSync(join(piecePath, 'src'), { recursive: true })
+        writeFileSync(join(piecePath, 'package.json'), JSON.stringify({ name: 'piece-y', version: '0.0.1', dependencies: { 'esm-dep': '1.0.0' } }))
+        writeFileSync(join(piecePath, 'src', 'index.ts'), 'import { req } from \'esm-dep\'\nexport const piece = { req }\n')
+        const distPath = join(piecePath, 'dist')
+        mkdirSync(distPath, { recursive: true })
+
+        const result = await bundlePieceUtils.bundlePiece({ piecePath, distPath, repoRoot: root })
+
+        expect(result.external).toContain('esm-dep')
+        expect(result.inlined).not.toContain('esm-dep')
+    })
 })
