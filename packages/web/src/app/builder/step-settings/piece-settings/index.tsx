@@ -196,7 +196,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
                 prefixValue={'settings.input'}
                 props={triggerSplit.essential}
                 propertyGroups={selectedTrigger.propertyGroups}
-                useMentionTextInput={false}
+                useMentionTextInput={true}
                 propertySettings={selectedStep.settings.propertySettings}
                 disabled={props.readonly}
                 markdownVariables={markdownVariables}
@@ -217,7 +217,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
                   key={`${selectedTrigger.name}-advanced`}
                   prefixValue={'settings.input'}
                   props={triggerSplit.advanced}
-                  useMentionTextInput={false}
+                  useMentionTextInput={true}
                   propertySettings={selectedStep.settings.propertySettings}
                   disabled={props.readonly}
                   markdownVariables={markdownVariables}
