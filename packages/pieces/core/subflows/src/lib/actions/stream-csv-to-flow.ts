@@ -36,9 +36,9 @@ export const streamCsvToSubflows = createAction({
         'A direct URL to the CSV file. It is streamed, not downloaded into memory.',
       required: true,
     }),
-    flow: Property.Dropdown<FlowValue>({
+    subflow: Property.Dropdown<FlowValue>({
       auth: PieceAuth.None(),
-      displayName: 'Flow',
+      displayName: 'Subflow',
       description:
         'The subflow to call for each batch. Published flows with a "Callable Flow" trigger appear here; disabled flows are marked "(inactive)".',
       required: true,
@@ -92,14 +92,14 @@ export const streamCsvToSubflows = createAction({
 
     const flow = await findFlowByExternalIdOrThrow({
       flowsContext: context.flows,
-      externalId: context.propsValue.flow?.externalId,
+      externalId: context.propsValue.subflow?.externalId,
     });
     if (flow.status !== FlowStatus.ENABLED) {
       throw new Error(
         JSON.stringify({
           message:
             'The selected subflow is disabled. Enable it before streaming to it.',
-          externalId: context.propsValue.flow?.externalId,
+          externalId: context.propsValue.subflow?.externalId,
           flowName: flow.version.displayName,
         })
       );
@@ -111,6 +111,7 @@ export const streamCsvToSubflows = createAction({
     });
 
     let headers: string[] = [];
+    let firstRow: CsvRow | undefined;
     const parser = parse({
       delimiter,
       columns: (header: string[]) => {
@@ -130,6 +131,9 @@ export const streamCsvToSubflows = createAction({
       batchIndex: number;
       rows: CsvRow[];
     }): Promise<void> => {
+      if (batchIndex === 0) {
+        firstRow = rows[0];
+      }
       let lastError: unknown;
       for (let attempt = 0; attempt < MAX_DISPATCH_ATTEMPTS; attempt++) {
         try {
@@ -155,12 +159,13 @@ export const streamCsvToSubflows = createAction({
     };
 
     try {
-      return await fanOutBatches<CsvRow>({
+      const result = await fanOutBatches<CsvRow>({
         records: parser,
         batchSize,
         maxInFlight: MAX_IN_FLIGHT,
         dispatch,
       });
+      return { headers, firstRow, ...result };
     } finally {
       parser.destroy();
       source.data.destroy();
