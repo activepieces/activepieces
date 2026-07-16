@@ -1,0 +1,8 @@
+{
+    "ok": true,
+    "id": 42,
+    "orgnr": "923609016",
+    "url": "https://cloud.activepieces.com/api/v1/webhooks/flow-abc",
+    "created_at": "2026-07-16T08:00:00Z",
+    "last_triggered_at": null
+}

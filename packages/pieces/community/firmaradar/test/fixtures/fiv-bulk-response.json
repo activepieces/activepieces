@@ -1,0 +1,7 @@
+{
+    "results": [
+        { "orgnr": "923609016", "status": "not_distressed", "score": 12.5, "confidence": 0.9 },
+        { "orgnr": "999999999", "error": "invalid_orgnr" }
+    ],
+    "_meta": { "total_requested": 2, "successful": 1, "failed": 1 }
+}

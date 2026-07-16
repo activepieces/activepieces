@@ -1,0 +1,16 @@
+{
+    "query_name": "Ola Nordmann",
+    "query_birth_year": 1970,
+    "hits": [
+        {
+            "primart_navn": "Ola Nordmann",
+            "kategori": "pep",
+            "entitet_type": "person",
+            "kilder": ["pep_norge"],
+            "match_ratio": 0.93,
+            "match_type": "fuzzy",
+            "ekstern_id": "pep-12345"
+        }
+    ],
+    "hit_count": 1
+}

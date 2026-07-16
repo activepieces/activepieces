@@ -3441,6 +3441,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/firmaradar": {
+      "name": "@activepieces/piece-firmaradar",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/flipando": {
       "name": "@activepieces/piece-flipando",
       "version": "0.0.7",
@@ -11661,6 +11675,8 @@
     "@activepieces/piece-firecrawl": ["@activepieces/piece-firecrawl@workspace:packages/pieces/community/firecrawl"],
 
     "@activepieces/piece-fireflies-ai": ["@activepieces/piece-fireflies-ai@workspace:packages/pieces/community/fireflies-ai"],
+
+    "@activepieces/piece-firmaradar": ["@activepieces/piece-firmaradar@workspace:packages/pieces/community/firmaradar"],
 
     "@activepieces/piece-flipando": ["@activepieces/piece-flipando@workspace:packages/pieces/community/flipando"],
 

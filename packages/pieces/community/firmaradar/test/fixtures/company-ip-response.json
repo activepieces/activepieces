@@ -1,0 +1,19 @@
+{
+    "orgnr": "923609016",
+    "ip_rettigheter": {
+        "patenter_totalt": 3,
+        "patenter_aktive": 2,
+        "varemerker_totalt": 5,
+        "varemerker_aktive": 5,
+        "design_totalt": 0,
+        "design_aktive": 0,
+        "rights": [
+            {
+                "type": "patent",
+                "tittel": "Eksempel-patent",
+                "status": "aktiv",
+                "lenke": "https://search.patentstyret.no/example"
+            }
+        ]
+    }
+}

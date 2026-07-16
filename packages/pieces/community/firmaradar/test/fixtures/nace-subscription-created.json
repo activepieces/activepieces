@@ -1,0 +1,9 @@
+{
+    "subscription": {
+        "id": 7,
+        "nace_code": "47.110",
+        "url": "https://cloud.activepieces.com/api/v1/webhooks/flow-def",
+        "aggregation_mode": "real_time",
+        "aktivert": true
+    }
+}
