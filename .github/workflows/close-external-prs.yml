@@ -3,17 +3,33 @@ name: Close external PRs
 on:
   pull_request_target:
     types: [opened, reopened]
+  schedule:
+    - cron: '0 3 * * *'
 
 permissions:
   pull-requests: write
+  issues: write
 
 jobs:
+  stale:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Close PRs with no activity for 60 days. Reopening/commenting resets the clock.
+          days-before-pr-stale: 60
+          days-before-pr-close: 0
+          days-before-issue-stale: -1
+          close-pr-message: 'Closing after 60 days of inactivity. Comment or reopen if this is still relevant — that resets the clock.'
+
   close:
     runs-on: ubuntu-latest
     # OWNER / MEMBER / COLLABORATOR are trusted; everyone else gets auto-closed.
     # Bots (dependabot, AP automation) and the "keep-open" label are exempt.
     # Add the "keep-open" label to a PR to reopen it for review (selective reopen, tldraw-style).
     if: >
+      github.event_name == 'pull_request_target' &&
       github.event.pull_request.author_association != 'OWNER' &&
       github.event.pull_request.author_association != 'MEMBER' &&
       github.event.pull_request.author_association != 'COLLABORATOR' &&
@@ -26,9 +42,9 @@ jobs:
         run: |
           gh pr comment "$PR" --body "Hey — thanks so much for taking the time to open this! 🙏
 
-We've **temporarily paused unsolicited pull requests** from outside the core team. This isn't about you or the quality of your change — an open PR is a promise from us to review it carefully, and right now the volume (a lot of it AI-generated) means we can't keep that promise for every PR without it becoming unfair to contributors who wait weeks for a reply. So instead of leaving PRs hanging, we close them and point you to a faster path.
+          We've **temporarily paused unsolicited pull requests** from outside the core team. This isn't about you or the quality of your change — an open PR is a promise from us to review it carefully, and right now the volume (a lot of it AI-generated) means we can't keep that promise for every PR without it becoming unfair to contributors who wait weeks for a reply. So instead of leaving PRs hanging, we close them and point you to a faster path.
 
-**Already working with us?** If you're an existing customer and we've already discussed this change over Slack, ping us there and we'll add the \`keep-open\` label and reopen this PR for review.
+          **Already working with us?** If you're an existing customer and we've already discussed this change over Slack, ping us there and we'll add the \`keep-open\` label and reopen this PR for review.
 
-You can still build and publish your own [piece](https://www.activepieces.com/docs/build-pieces/building-pieces/start-building) — just outside this repo, as your own package rather than a PR here. See [CONTRIBUTING.md](https://github.com/activepieces/activepieces/blob/main/CONTRIBUTING.md#pull-requests) for the full policy. Thanks again for caring about the project. 💜"
+          You can still build and publish your own [piece](https://www.activepieces.com/docs/build-pieces/building-pieces/start-building) — just outside this repo, as your own package rather than a PR here. See [CONTRIBUTING.md](https://github.com/activepieces/activepieces/blob/main/CONTRIBUTING.md#pull-requests) for the full policy. Thanks again for caring about the project. 💜"
           gh pr close "$PR"
