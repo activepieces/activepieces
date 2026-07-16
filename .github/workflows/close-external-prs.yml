@@ -3,17 +3,33 @@ name: Close external PRs
 on:
   pull_request_target:
     types: [opened, reopened]
+  schedule:
+    - cron: '0 3 * * *'
 
 permissions:
   pull-requests: write
+  issues: write
 
 jobs:
+  stale:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Close PRs with no activity for 60 days. Reopening/commenting resets the clock.
+          days-before-pr-stale: 60
+          days-before-pr-close: 0
+          days-before-issue-stale: -1
+          close-pr-message: 'Closing after 60 days of inactivity. Comment or reopen if this is still relevant — that resets the clock.'
+
   close:
     runs-on: ubuntu-latest
     # OWNER / MEMBER / COLLABORATOR are trusted; everyone else gets auto-closed.
     # Bots (dependabot, AP automation) and the "keep-open" label are exempt.
     # Add the "keep-open" label to a PR to reopen it for review (selective reopen, tldraw-style).
     if: >
+      github.event_name == 'pull_request_target' &&
       github.event.pull_request.author_association != 'OWNER' &&
       github.event.pull_request.author_association != 'MEMBER' &&
       github.event.pull_request.author_association != 'COLLABORATOR' &&
