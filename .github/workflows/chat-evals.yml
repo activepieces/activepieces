@@ -1,0 +1,77 @@
+name: Chat Evals
+
+# Regression gate for the AI Copilot chat system prompt + agent loop.
+#
+# Two tiers, by design:
+#   pr-gate  — runs on PRs that touch chat/prompt/eval files. Deterministic only
+#              (replay executor + transcript assertions); no provider key, so the
+#              live LLM-judge suite self-skips (describe.skipIf in chat-eval.test.ts).
+#   nightly  — runs the full live gate against the real model + judge calibration,
+#              using OPENROUTER_API_KEY / AP_OPENROUTER_PROVISION_KEY from secrets.
+#              Kept off the per-PR path because it costs money, takes minutes, and
+#              can drift with the model.
+
+on:
+  pull_request:
+    paths:
+      - packages/server/worker/src/lib/execute/jobs/ee/chat/**
+      - packages/server/worker/test/lib/chat-eval/**
+      - packages/server/api/src/app/ee/chat/**
+      - packages/server/api/src/assets/prompts/**
+      - packages/core/shared/src/lib/ee/chat/**
+      - .github/workflows/chat-evals.yml
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  pr-gate:
+    name: Deterministic gate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      # No provider key: the live LLM-judge describe self-skips, leaving the
+      # deterministic replay + assertion tests as the hard gate.
+      - name: Run deterministic chat evals
+        run: npm run chat-evals:ci
+
+  nightly:
+    name: Live judge gate
+    if: github.event_name != 'pull_request' && github.repository == 'activepieces/activepieces'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      AP_OPENROUTER_PROVISION_KEY: ${{ secrets.AP_OPENROUTER_PROVISION_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Run live chat evals + judge calibration
+        run: npm run chat-evals:ci
