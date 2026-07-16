@@ -124,6 +124,7 @@ const PILL_PRESETS: { value: string; label: string }[] = [
 ];
 
 const DROPDOWN_PRESETS: { value: string; label: string }[] = [
+  { value: 'any_time', label: 'Any time' },
   { value: 'last_24_hours', label: 'Last 24 hours' },
   { value: 'last_7_days', label: 'Last 7 days' },
   { value: 'last_30_days', label: 'Last 30 days' },
