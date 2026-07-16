@@ -1,5 +1,8 @@
-# Platform team owns the critical execution path — engine, worker, execution core.
-# Round-robin review assignment picks one member per PR (Settings > Teams > platform).
+# Last matching pattern wins. Core reviewers own everything by default;
+# platform team owns the critical execution path (engine, worker, execution core).
+# Both teams use round-robin review assignment (one reviewer per PR).
+*                            @activepieces/core
+
 /packages/server/engine/     @activepieces/platform
 /packages/server/worker/     @activepieces/platform
 /packages/core/execution/    @activepieces/platform
