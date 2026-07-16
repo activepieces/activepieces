@@ -278,7 +278,7 @@ describe('Piece Metadata API', () => {
             expect(bodyB?.[0].pieceType).toBe(PieceType.OFFICIAL)
         })
 
-        it('Should mark renamed piece packages as deprecated in listing while keeping them resolvable by name', async () => {
+        it('Should hide renamed piece packages from listing while keeping them resolvable by name', async () => {
             // arrange
             const renamedPiece = createMockPieceMetadata({
                 name: '@activepieces/piece-aws-bedrock',
@@ -310,11 +310,8 @@ describe('Piece Metadata API', () => {
             // assert
             const listBody = listResponse?.json()
             expect(listResponse?.statusCode).toBe(StatusCodes.OK)
-            expect(listBody).toHaveLength(2)
-            const deprecatedEntry = listBody?.find((piece: { name: string }) => piece.name === '@activepieces/piece-aws-bedrock')
-            const currentEntry = listBody?.find((piece: { name: string }) => piece.name === '@activepieces/piece-amazon-bedrock')
-            expect(deprecatedEntry?.displayName).toBe('AWS Bedrock (Deprecated)')
-            expect(currentEntry?.displayName).toBe('AWS Bedrock')
+            const listedNames = listBody?.map((piece: { name: string }) => piece.name)
+            expect(listedNames).toEqual(['@activepieces/piece-amazon-bedrock'])
 
             const getBody = getResponse?.json()
             expect(getResponse?.statusCode).toBe(StatusCodes.OK)

@@ -17,6 +17,10 @@ import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersion
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
+const HIDDEN_PIECE_NAMES = new Set([
+    '@activepieces/piece-aws-bedrock',
+])
+
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
@@ -460,7 +464,7 @@ export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string):
     const compatibleKeys = allKeys.filter((piece) => isSupportedRelease(currentRelease, piece))
     const latestIds = pickLatestVersionIds(compatibleKeys)
     const latestPieces = latestIds.length > 0 ? await pieceRepos().find({ where: { id: In(latestIds) } }) : []
-    return markDeprecatedRenamedPieces(latestPieces)
+    return filterHiddenPieces(latestPieces)
 }
 
 function pickLatestVersionIds(pieces: PieceKey[]): string[] {
@@ -476,30 +480,18 @@ function pickLatestVersionIds(pieces: PieceKey[]): string[] {
 }
 
 function translatePieces(pieces: PieceMetadataSchema[], locale: LocalesEnum): PieceMetadataSchema[] {
-    const translated = pieces.map((piece) => {
-        const translatedPiece = locale === LocalesEnum.ENGLISH
+    return pieces.map((piece) => {
+        const translated = locale === LocalesEnum.ENGLISH
             ? { ...piece }
             : pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
-        translatedPiece.i18n = undefined
-        return translatedPiece
-    })
-    return markDeprecatedRenamedPieces(translated)
-}
-
-function markDeprecatedRenamedPieces(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
-    return pieces.map((piece) => {
-        if (!DEPRECATED_RENAMED_PIECES.has(piece.name) || piece.displayName.endsWith(DEPRECATED_DISPLAY_NAME_SUFFIX)) {
-            return piece
-        }
-        return { ...piece, displayName: `${piece.displayName}${DEPRECATED_DISPLAY_NAME_SUFFIX}` }
+        translated.i18n = undefined
+        return translated
     })
 }
 
-const DEPRECATED_RENAMED_PIECES = new Set([
-    '@activepieces/piece-aws-bedrock',
-])
-
-const DEPRECATED_DISPLAY_NAME_SUFFIX = ' (Deprecated)'
+function filterHiddenPieces(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
+    return pieces.filter((piece) => !HIDDEN_PIECE_NAMES.has(piece.name))
+}
 
 const inflightFetches = new Map<string, Promise<unknown>>()
 
