@@ -282,17 +282,20 @@ function startDiagnosticsSampler(client: AxiosInstance): DiagnosticsSampler {
             const res = await client.get('/api/v1/health/diagnostics').catch(() => null);
             if (!stopped && res && res.status === 200 && res.data) {
                 const d = res.data;
-                const pings = ((d.workers?.machines ?? []) as Array<{ serverPingMs?: number | null }>)
-                    .map((w) => w.serverPingMs)
-                    .filter((v): v is number => typeof v === 'number');
+                const machines = (d.workers?.machines ?? []) as Array<{ serverPingMs?: number | null } & CpuPressureInfo>;
+                const pings = machines.map((w) => w.serverPingMs).filter((v): v is number => typeof v === 'number');
+                const steals = machines.map((w) => w.cpuStealPercentage).filter((v): v is number => typeof v === 'number');
+                const throttles = machines.map((w) => w.cpuThrottledPercentage).filter((v): v is number => typeof v === 'number');
                 samples[sampledAt] = {
                     databaseMs: d.database?.latencyMs ?? null,
                     redisMs: d.redis?.latencyMs ?? null,
                     storageMs: d.storage?.latencyMs ?? null,
-                    apps: ((d.apps?.instances ?? []) as Array<{ hostname: string; cpuUsagePercentage: number; eventLoopDelayMs: number }>)
-                        .map((a) => ({ hostname: a.hostname, cpuUsagePercentage: a.cpuUsagePercentage, eventLoopDelayMs: a.eventLoopDelayMs })),
+                    apps: ((d.apps?.instances ?? []) as Array<{ hostname: string; cpuUsagePercentage: number; eventLoopDelayMs: number } & CpuPressureInfo>)
+                        .map((a) => ({ hostname: a.hostname, cpuUsagePercentage: a.cpuUsagePercentage, eventLoopDelayMs: a.eventLoopDelayMs, cpuStealPercentage: a.cpuStealPercentage, cpuThrottledPercentage: a.cpuThrottledPercentage })),
                     workerPingP50Ms: pings.length > 0 ? percentile(pings, 50) : null,
                     workerPingMaxMs: pings.length > 0 ? Math.max(...pings) : null,
+                    workerCpuStealMaxPct: steals.length > 0 ? Math.max(...steals) : null,
+                    workerCpuThrottledMaxPct: throttles.length > 0 ? Math.max(...throttles) : null,
                 };
             }
             await sleep(DIAGNOSTICS_SAMPLE_INTERVAL_MS);
@@ -763,13 +766,16 @@ function renderDiagnosticsTimeline(report: BenchmarkReport): void {
     const entries = Object.entries(samples);
     if (entries.length === 0) return;
     console.log(chalk.bold(`\nDiagnostics over time (server-probed every ${intervalMs / 1000}s across the benchmark)`));
-    console.log(chalk.gray('  time      db     redis  storage  app cpu%          evloop ms      worker ping p50/max'));
+    console.log(chalk.gray('  time      db     redis  storage  app cpu%          evloop ms      worker ping p50/max  app steal/thr%  wkr steal/thr max%'));
     for (const [at, s] of entries) {
         const time = at.slice(11, 19);
         const appsCpu = s.apps.map((a) => a.cpuUsagePercentage.toFixed(0)).join('/') || 'n/a';
         const appsLoop = s.apps.map((a) => a.eventLoopDelayMs).join('/') || 'n/a';
         const ping = s.workerPingP50Ms === null ? 'n/a' : `${s.workerPingP50Ms}/${s.workerPingMaxMs}ms`;
-        console.log(`  ${time}  ${String(s.databaseMs ?? 'n/a').padEnd(5)}  ${String(s.redisMs ?? 'n/a').padEnd(5)}  ${String(s.storageMs ?? 'n/a').padEnd(7)}  ${appsCpu.padEnd(16)}  ${appsLoop.padEnd(13)}  ${ping}`);
+        const pct = (v: number | undefined | null) => (typeof v === 'number' ? v.toFixed(1) : '-');
+        const appsPressure = s.apps.map((a) => `${pct(a.cpuStealPercentage)}/${pct(a.cpuThrottledPercentage)}`).join(' ') || 'n/a';
+        const workerPressure = `${pct(s.workerCpuStealMaxPct)}/${pct(s.workerCpuThrottledMaxPct)}`;
+        console.log(`  ${time}  ${String(s.databaseMs ?? 'n/a').padEnd(5)}  ${String(s.redisMs ?? 'n/a').padEnd(5)}  ${String(s.storageMs ?? 'n/a').padEnd(7)}  ${appsCpu.padEnd(16)}  ${appsLoop.padEnd(13)}  ${ping.padEnd(19)}  ${appsPressure.padEnd(14)}  ${workerPressure}`);
     }
     console.log(chalk.gray('  app cpu/evloop and worker pings refresh on their ~60s ticks, so consecutive rows can repeat them; db/redis/storage are probed fresh each sample.'));
 }
@@ -1023,9 +1029,11 @@ type DiagnosticsSample = {
     databaseMs: number | null;
     redisMs: number | null;
     storageMs: number | null;
-    apps: Array<{ hostname: string; cpuUsagePercentage: number; eventLoopDelayMs: number }>;
+    apps: Array<{ hostname: string; cpuUsagePercentage: number; eventLoopDelayMs: number } & CpuPressureInfo>;
     workerPingP50Ms: number | null;
     workerPingMaxMs: number | null;
+    workerCpuStealMaxPct: number | null;
+    workerCpuThrottledMaxPct: number | null;
 };
 type DiagnosticsTimeline = { intervalMs: number; samples: Record<string, DiagnosticsSample> };
 type DiagnosticsSampler = { stop: () => Record<string, DiagnosticsSample> };
