@@ -5,13 +5,12 @@ import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, 
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
-import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { pieceSetRepo, pieceSetService } from '../pieces/piece-set/piece-set.service'
 import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
-import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
@@ -44,9 +43,10 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             await concurrencyPoolService(log).assignProject({ projectId: project.id, poolId })
         }
 
-        await updateProjectLimits({
+        await applyProjectPieceAccess({
             platformId: project.platformId,
             projectId: project.id,
+            pieceSetKey: externalPrincipal.pieceSetKey,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
             log,
@@ -90,27 +90,36 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
     },
 })
 
-type UpdateProjectLimitsParams =
-    {
-        platformId: string
-        projectId: string
-        piecesTags: string[]
-        piecesFilterType: PiecesFilterType
-        log: FastifyBaseLogger
+type ApplyProjectPieceAccessParams = {
+    platformId: string
+    projectId: string
+    pieceSetKey: string | undefined
+    piecesTags: string[]
+    piecesFilterType: PiecesFilterType
+    log: FastifyBaseLogger
+}
+
+const applyProjectPieceAccess = async ({ platformId, projectId, pieceSetKey, piecesTags, piecesFilterType, log }: ApplyProjectPieceAccessParams): Promise<void> => {
+    // Resolve which named set to assign: the explicit SDK piece-set key, or (legacy) the first
+    // pieces tag. Multi-tag is unused, so only the first tag is honored; each tag maps to a
+    // named set (key = tagName) created by the backfill migration.
+    const targetKey = pieceSetKey
+        ?? (piecesFilterType === PiecesFilterType.ALLOWED ? piecesTags[0] : undefined)
+
+    const set = isNil(targetKey)
+        ? null
+        : await pieceSetRepo().findOneBy({ platformId, key: targetKey })
+
+    if (!isNil(set)) {
+        await pieceSetService(log).assignProject({ pieceSet: set, projectId })
+        return
     }
 
-const updateProjectLimits = async ({ platformId, projectId, piecesTags, piecesFilterType, log }: UpdateProjectLimitsParams): Promise<void> => {
-    const pieces = await getPiecesList({
-        platformId,
-        projectId,
-        piecesTags,
-        piecesFilterType,
-    })
-    await projectLimitsService(log).upsert({
-        nickname: 'default-embeddings-limit',
-        pieces,
-        piecesFilterType,
-    }, projectId)
+    if (!isNil(targetKey)) {
+        log.warn({ platform: { id: platformId }, project: { id: projectId } }, `[managedAuthn] pieceSet key "${targetKey}" not found — falling back to default`)
+    }
+    const defaultSet = await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
+    await pieceSetService(log).assignProject({ pieceSet: defaultSet, projectId })
 }
 
 const getOrCreateUser = async (
@@ -182,24 +191,6 @@ const getOrCreateProject = async ({
     return { project, isNewProject: true }
 }
 
-const getPiecesList = async ({
-    piecesFilterType,
-    piecesTags,
-    platformId,
-}: UpdateProjectLimits): Promise<string[]> => {
-    switch (piecesFilterType) {
-        case PiecesFilterType.ALLOWED: {
-            return pieceTagService.findByPlatformAndTags(
-                platformId,
-                piecesTags,
-            )
-        }
-        case PiecesFilterType.NONE: {
-            return []
-        }
-    }
-}
-
 function generateEmailHash(params: { platformId: string, externalUserId: string }): string {
     const inputString = `managed_${params.platformId}_${params.externalUserId}`
     return cleanEmailOtherwiseCompareFails(createHash('sha256').update(inputString).digest('hex'))
@@ -224,11 +215,4 @@ type GetOrCreateUserParams = {
 type GetOrCreateProjectParams = {
     platformId: string
     externalProjectId: string
-}
-
-type UpdateProjectLimits = {
-    platformId: string
-    projectId: string
-    piecesTags: string[]
-    piecesFilterType: PiecesFilterType
 }

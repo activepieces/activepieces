@@ -1,4 +1,4 @@
-import { GetSystemHealthChecksResponse, PlatformMetricsHealthHistory, PlatformMetricsLive, PlatformMetricsReport, PlatformMetricsReportRequest, PrincipalType } from '@activepieces/shared'
+import { GetDiagnosticsResponse, GetSystemHealthChecksResponse, PlatformMetricsHealthHistory, PlatformMetricsLive, PlatformMetricsReport, PlatformMetricsReportRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -46,11 +46,15 @@ const healthController: FastifyPluginAsyncZod = async (app) => {
         const { platform } = request.principal
         return healthMetricsService(request.log).getHealthHistory(platform.id)
     })
+
+    app.get('/diagnostics', GetDiagnosticsRequest, async (request) => {
+        return healthStatusService(app.log).getDiagnostics(request.principal.platform.id)
+    })
 }
 
 const GetSystemHealthChecks = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     response: {
         200: {
@@ -94,6 +98,19 @@ const GetHealthHistoryRequest = {
         tags: ['health'],
         response: {
             200: PlatformMetricsHealthHistory,
+        },
+    },
+}
+
+const GetDiagnosticsRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['health'],
+        description: 'Server-measured infra round-trip latency (db/redis/storage) + effective config',
+        response: {
+            200: GetDiagnosticsResponse,
         },
     },
 }

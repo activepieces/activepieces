@@ -2,6 +2,7 @@ import { Readable } from 'stream'
 import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { FileType } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { Upload } from '@aws-sdk/lib-storage'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import contentDisposition from 'content-disposition'
@@ -27,6 +28,31 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         else {
             throw new Error('Either platformId or projectId must be provided')
         }
+    },
+    async uploadStream(s3Key: string, body: Readable): Promise<number> {
+        log.info({ s3Key }, 'streaming file to s3')
+        let size = 0
+        const upload = new Upload({
+            client: getS3Client(),
+            params: {
+                Bucket: getS3BucketName(),
+                Key: s3Key,
+                Body: body,
+            },
+        })
+        upload.on('httpUploadProgress', (progress) => {
+            size = progress.loaded ?? size
+        })
+        try {
+            await upload.done()
+            log.info({ s3Key, size }, 'file streamed to s3')
+        }
+        catch (error) {
+            log.error({ s3Key, error }, 'failed to stream file to s3')
+            exceptionHandler.handle(error, log)
+            throw error
+        }
+        return size
     },
     async uploadFile(s3Key: string, data: Buffer): Promise<string> {
         if (!Buffer.isBuffer(data)) {
@@ -119,6 +145,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                         Objects: deleteObjects,
                         Quiet: true,
                     },
+                    ChecksumAlgorithm: 'CRC32C',
                 }))
                 log.info({ count: chunk.length }, 'files deleted from s3')
             }
@@ -174,6 +201,10 @@ const getS3Client = (): S3 => {
             requestTimeout: 120_000,
         }),
         maxAttempts: 3,
+    }
+    if (!isNil(endpoint)) {
+        options.requestChecksumCalculation = 'WHEN_REQUIRED'
+        options.responseChecksumValidation = 'WHEN_REQUIRED'
     }
     if (!useIRSA) {
         const accessKeyId = system.getOrThrow<string>(AppSystemProp.S3_ACCESS_KEY_ID)

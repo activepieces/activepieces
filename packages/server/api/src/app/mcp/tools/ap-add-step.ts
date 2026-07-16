@@ -2,7 +2,6 @@ import { isNil, Permission } from '@activepieces/core-utils'
 import { BranchExecutionType, FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolDefinition, ProjectScopedMcpServer, RouterExecutionType, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
@@ -39,7 +38,7 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
             displayName: z.string().describe('Display name for the step'),
             pieceName: z.string().optional().describe('For PIECE steps: the piece name (e.g. "@activepieces/piece-gmail"). Use ap_research_pieces to get valid values.'),
             actionName: z.string().optional().describe('For PIECE steps: the action name within the piece. Use ap_research_pieces with includeActions=true to get valid values.'),
-            input: z.preprocess(mcpUtils.parseJsonStringArg, z.record(z.string(), z.unknown()).optional()).describe(`For PIECE/CODE steps: input config (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
+            input: z.record(z.string(), z.unknown()).optional().describe(`For PIECE/CODE steps: input config (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
             auth: z.string().optional().describe('Connection externalId from ap_list_connections. Auto-wrapped as {{connections[\'externalId\']}}.'),
             sourceCode: z.string().optional().describe('For CODE steps: JavaScript/TypeScript source. Must export a `code` function.'),
             packageJson: z.string().optional().describe('For CODE steps: package.json as JSON string. Defaults to "{}".'),

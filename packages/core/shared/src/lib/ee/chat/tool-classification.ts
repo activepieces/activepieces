@@ -14,10 +14,11 @@ function actionNameMatchesPatterns({ actionName, patterns }: { actionName: strin
     return patterns.some((pattern) => words.includes(pattern))
 }
 
-function requiresActionPreview({ actionName, input, needsConfirmation }: {
+function requiresActionPreview({ actionName, input, needsConfirmation, tainted }: {
     actionName: string
     input?: Record<string, unknown>
     needsConfirmation?: boolean
+    tainted?: boolean
 }): boolean {
     // Raw HTTP: skip the gate only for a provably read-only method (GET/HEAD/OPTIONS). A mutating
     // method (POST/PUT/PATCH/DELETE) — or an unknown/unspecified one — must be confirmed, so chat
@@ -31,6 +32,9 @@ function requiresActionPreview({ actionName, input, needsConfirmation }: {
     const isWrite = actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
 
     if (isWrite) return true
+    // Untrusted content in the turn: gate anything not provably read-only, ignoring needsConfirmation
+    // (an injection could have set it false).
+    if (tainted) return !isReadOnlyActionCall({ actionName, input })
     if (isRead) return false
     return needsConfirmation ?? true
 }
@@ -64,22 +68,11 @@ function readOnlyRejection(actionName: string): { success: false, error: string 
     }
 }
 
-// Approval-gates: the worker executes a real side effect AFTER the user approves (that code dies with
-// a parked worker). A late approval must therefore RE-RUN the action, not fabricate its result. Every
-// other gate is an answer-gate: the user's payload IS the result (questions, connection/project
-// pickers, quick replies, mcp reconnect), so a late answer is complete on its own.
-const APPROVAL_GATE_TOOL_NAMES = new Set(['ap_execute_action', 'ap_send_email', 'ap_test_flow'])
-
-function isApprovalGate(toolName: string): boolean {
-    return APPROVAL_GATE_TOOL_NAMES.has(toolName)
-}
-
 export const chatToolClassification = {
     requiresActionPreview,
     isReadActionName,
     isReadOnlyActionCall,
     isWriteActionName,
-    isApprovalGate,
     readOnlyRejection,
     hasFailureTextPrefix,
 }

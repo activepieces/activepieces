@@ -1,7 +1,7 @@
 import { ApId, ApMultipartFile, Nullable, OptionalArrayFromQuery, OptionalBooleanFromQuery, SAFE_STRING_PATTERN, tryCatchSync } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
-import { FilteredPieceBehavior, PieceSelectorConfig, PlatformThemeColors } from './platform.model'
+import { PieceSelectorConfig, PlatformThemeColors } from './platform.model'
 
 export const MAX_EMBED_ORIGIN_LENGTH = 300
 
@@ -55,8 +55,6 @@ export const UpdatePlatformRequestBody = z.object({
     logoIcon: z.optional(ApMultipartFile),
     fullLogo: z.optional(ApMultipartFile),
     favIcon: z.optional(ApMultipartFile),
-    filteredPieceNames: OptionalArrayFromQuery(z.string()),
-    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
     federatedAuthProviders: FederatedAuthnProviderConfig.optional(),
     cloudAuthEnabled: OptionalBooleanFromQuery,
     googleAuthEnabled: OptionalBooleanFromQuery,
