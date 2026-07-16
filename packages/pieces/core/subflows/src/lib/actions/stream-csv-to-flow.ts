@@ -115,6 +115,7 @@ export const streamCsvToSubflows = createAction({
       trim: true,
     });
     source.data.pipe(parser);
+    source.data.on('error', (err) => parser.destroy(err));
 
     const dispatch = async ({
       batchIndex,
