@@ -1,4 +1,4 @@
-import { FlowAction, FlowRunStatus, LoopStepOutput } from '@activepieces/shared'
+import { FlowAction, FlowRunStatus, LoopBatchMode, LoopStepOutput } from '@activepieces/shared'
 import {  FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
@@ -56,6 +56,42 @@ describe('flow with looping', () => {
         expect(loopOut.output?.iterations.length).toBe(1)
         expect(loopOut.output?.index).toBe(1)
         expect(loopOut.output?.item).toBe(4)
+    })
+
+    it('should iterate over batches with items-per-batch and expose each batch as item', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [1,2,3,4,5] }}',
+                batching: { mode: LoopBatchMode.ITEMS_PER_BATCH, size: 2 },
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
+        expect(loopOut.output?.iterations.length).toBe(3)
+        expect(loopOut.output?.index).toBe(3)
+        expect(loopOut.output?.item).toEqual([5])
+    })
+
+    it('should iterate over exactly N balanced batches with number-of-batches', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [1,2,3,4,5,6,7,8,9,10] }}',
+                batching: { mode: LoopBatchMode.NUMBER_OF_BATCHES, size: 3 },
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
+        expect(loopOut.output?.iterations.length).toBe(3)
+        expect(loopOut.output?.index).toBe(3)
+        expect(loopOut.output?.item).toEqual([7, 8, 9, 10])
     })
 
     it('should skip loop', async () => {

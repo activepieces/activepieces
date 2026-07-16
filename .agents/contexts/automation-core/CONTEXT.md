@@ -67,6 +67,10 @@ _Avoid_: AI step, bot
 **AgentTool**:
 A discriminated union of the four tool types attachable to an agent step: Piece, Flow, MCP, or Knowledge Base.
 
+**Batch**:
+A sub-array produced when a Loop on Items step has **Batching** enabled: the resolved items list is split into batches and the loop iterates over the batches instead of individual elements, so each iteration's `item` is the batch (an array). Two modes: "Items per batch" (N items each) or "Number of batches" (split into exactly `min(N, itemCount)` even groups).
+_Avoid_: chunk
+
 **Folder**:
 A grouping container for organizing flows and tables within a project.
 _Avoid_: directory, category
