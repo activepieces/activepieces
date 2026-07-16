@@ -98,6 +98,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
+        await assertChatMessageRateLimitNotExceeded({ platformId, userId, log })
+
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
         // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
         // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
@@ -249,6 +251,26 @@ async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platform
     if (!isNil(error)) {
         await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
         log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
+    }
+}
+
+const CHAT_MESSAGES_PER_WINDOW = 40
+const CHAT_MESSAGE_RATE_WINDOW_SECONDS = 10 * 60
+
+// Per-user flood guard: nothing else bounds how fast a user fires messages, and each one enqueues a
+// worker job and spends credits. Complements the credit balance, which bounds spend, not rate.
+async function assertChatMessageRateLimitNotExceeded({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { allowed, count } = await chatHelpers.incrementAndCheckLimit({
+        key: `chat-message-rate:${platformId}:${userId}`,
+        limit: CHAT_MESSAGES_PER_WINDOW,
+        ttlSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS,
+    })
+    if (!allowed) {
+        log.warn({ user: { id: userId }, count }, '[chatController] Chat message rate limit exceeded')
+        throw new ActivepiecesError({
+            code: ErrorCode.CHAT_MESSAGE_LIMIT_EXCEEDED,
+            params: { limit: CHAT_MESSAGES_PER_WINDOW, windowSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS },
+        })
     }
 }
 
