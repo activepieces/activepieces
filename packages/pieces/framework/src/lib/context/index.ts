@@ -14,6 +14,7 @@ import {
 import type { SeekPage } from '@activepieces/core-utils';
 import type { FlowRunId, ProjectId } from '@activepieces/core-utils';
 import { LanguageModel, Tool } from 'ai'
+import type { Readable } from 'node:stream'
 
 import {
   BasicAuthProperty,
@@ -275,7 +276,7 @@ export interface FilesService {
     data,
   }: {
     fileName: string;
-    data: Buffer;
+    data: Buffer | Readable;
   }): Promise<string>;
 }
 

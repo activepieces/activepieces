@@ -1,3 +1,6 @@
+// Must be set before the server reads it to size @fastify/multipart's fileSize limit.
+process.env.AP_MAX_FILE_SIZE_MB = '1'
+
 import { FileType, Flow, FlowStatus, Project } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import FormData from 'form-data'
@@ -9,21 +12,22 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 let app: FastifyInstance
 
 beforeAll(async () => {
-    app = await setupTestEnvironment()
+    app = await setupTestEnvironment({ fresh: true })
 })
 
 afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-describe('Webhook multipart file', () => {
-    it('should serialize a single multipart file as a URL and persist it', async () => {
+const OVERSIZED_PAYLOAD = Buffer.alloc(2 * 1024 * 1024, 'a')
+
+describe('Webhook oversized file', () => {
+    it('should reject an oversized multipart file without persisting a truncated one', async () => {
         const { mockFlow, mockProject } = await createEnabledFlow()
 
         const form = new FormData()
-        form.append('userName', 'John')
-        form.append('upload', Buffer.from('hello pdf'), {
-            filename: 'doc.pdf',
+        form.append('upload', OVERSIZED_PAYLOAD, {
+            filename: 'big.pdf',
             contentType: 'application/pdf',
         })
 
@@ -34,69 +38,48 @@ describe('Webhook multipart file', () => {
             payload: form.getBuffer(),
         })
 
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.headers['x-webhook-id']).toBeDefined()
-        expect(response.json()).toEqual({})
+        expect(response.statusCode).not.toBe(StatusCodes.OK)
 
         const savedFile = await db.findOneBy<SavedFile>(
             'file',
             { projectId: mockProject.id, type: FileType.FLOW_STEP_FILE },
         )
-        expect(savedFile).not.toBeNull()
-        expect(savedFile!.id).toBeTruthy()
-        expect(savedFile!.fileName).toBe('doc.pdf')
-        expect(savedFile!.type).toBe(FileType.FLOW_STEP_FILE)
-        expect(savedFile!.projectId).toBe(mockProject.id)
+        expect(savedFile).toBeNull()
     })
 
-    it('should serialize multiple multipart files sharing a field name as an array of URLs', async () => {
-        const { mockFlow, mockProject } = await createEnabledFlow()
-
-        const form = new FormData()
-        form.append('uploads', Buffer.from('first pdf'), {
-            filename: 'first.pdf',
-            contentType: 'application/pdf',
-        })
-        form.append('uploads', Buffer.from('second pdf'), {
-            filename: 'second.pdf',
-            contentType: 'application/pdf',
-        })
-
-        const response = await app.inject({
-            method: 'POST',
-            url: `/api/v1/webhooks/${mockFlow.id}`,
-            headers: form.getHeaders(),
-            payload: form.getBuffer(),
-        })
-
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.headers['x-webhook-id']).toBeDefined()
-        expect(response.json()).toEqual({})
-
-        const firstFile = await db.findOneBy<SavedFile>(
-            'file',
-            { projectId: mockProject.id, fileName: 'first.pdf' },
-        )
-        const secondFile = await db.findOneBy<SavedFile>(
-            'file',
-            { projectId: mockProject.id, fileName: 'second.pdf' },
-        )
-        expect(firstFile).not.toBeNull()
-        expect(firstFile!.id).toBeTruthy()
-        expect(firstFile!.type).toBe(FileType.FLOW_STEP_FILE)
-        expect(secondFile).not.toBeNull()
-        expect(secondFile!.id).toBeTruthy()
-        expect(secondFile!.type).toBe(FileType.FLOW_STEP_FILE)
-    })
-
-    it('should stream a raw binary body to a step file', async () => {
+    it('should reject an oversized raw binary body without persisting a truncated one', async () => {
         const { mockFlow, mockProject } = await createEnabledFlow()
 
         const response = await app.inject({
             method: 'POST',
             url: `/api/v1/webhooks/${mockFlow.id}`,
             headers: { 'content-type': 'application/pdf' },
-            payload: Buffer.from('a raw pdf body streamed straight to storage'),
+            payload: OVERSIZED_PAYLOAD,
+        })
+
+        expect(response.statusCode).not.toBe(StatusCodes.OK)
+
+        const savedFile = await db.findOneBy<SavedFile>(
+            'file',
+            { projectId: mockProject.id, type: FileType.FLOW_STEP_FILE },
+        )
+        expect(savedFile).toBeNull()
+    })
+
+    it('should still accept a multipart file within the limit', async () => {
+        const { mockFlow, mockProject } = await createEnabledFlow()
+
+        const form = new FormData()
+        form.append('upload', Buffer.alloc(512 * 1024, 'a'), {
+            filename: 'small.pdf',
+            contentType: 'application/pdf',
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/webhooks/${mockFlow.id}`,
+            headers: form.getHeaders(),
+            payload: form.getBuffer(),
         })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
@@ -106,8 +89,7 @@ describe('Webhook multipart file', () => {
             { projectId: mockProject.id, type: FileType.FLOW_STEP_FILE },
         )
         expect(savedFile).not.toBeNull()
-        expect(savedFile!.fileName).toBe('file.pdf')
-        expect(savedFile!.type).toBe(FileType.FLOW_STEP_FILE)
+        expect(savedFile!.fileName).toBe('small.pdf')
     })
 })
 
@@ -122,8 +104,5 @@ async function createEnabledFlow(): Promise<{ mockFlow: Flow, mockProject: Proje
 }
 
 type SavedFile = {
-    id: string
     fileName: string
-    type: FileType
-    projectId: string
 }
