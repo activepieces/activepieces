@@ -113,10 +113,8 @@ export const chatService = (log: FastifyBaseLogger) => ({
                 params: { entityType: 'ChatMessage', entityId: `${id}#${messageIndex}` },
             })
         }
-        // Patch ONLY this message's feedback with an atomic jsonb_set, never a full-array
-        // read-modify-write: a worker appending messages to a STREAMING conversation must not be
-        // clobbered by a stale snapshot from another tab. The index stays valid because uiMessages
-        // is append-only (never pruned/reordered), so uiMessages[messageIndex] is the same message.
+        // Patch only this message's feedback via atomic jsonb_set, never a full-array rewrite — a
+        // concurrent worker append during a STREAMING turn must not be clobbered by a stale snapshot.
         const repo = chatHelpers.conversationRepo()
         const table = repo.metadata.tableName
         const path = `{${messageIndex},feedback}`
