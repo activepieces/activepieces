@@ -106,26 +106,30 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async setMessageFeedback({ id, platformId, userId, messageIndex, request }: SetMessageFeedbackParams): Promise<void> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
-        const uiMessages = conversation.uiMessages
-        const target = uiMessages?.[messageIndex]
-        if (isNil(uiMessages) || isNil(target) || target.role !== PersistedChatRole.ASSISTANT) {
+        const target = conversation.uiMessages?.[messageIndex]
+        if (isNil(target) || target.role !== PersistedChatRole.ASSISTANT) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'ChatMessage', entityId: `${id}#${messageIndex}` },
             })
         }
-        const reasons = request.reasons?.length ? request.reasons : undefined
-        const comment = request.comment?.trim() || undefined
-        // Keyed by index — safe only because uiMessages is append-only (never pruned/reordered).
-        const updated = uiMessages.map((msg, idx) => {
-            if (idx !== messageIndex) {
-                return msg
-            }
-            return isNil(request.rating)
-                ? { ...msg, feedback: undefined }
-                : { ...msg, feedback: { rating: request.rating, ...spreadIfDefined('reasons', reasons), ...spreadIfDefined('comment', comment) } }
-        })
-        await chatHelpers.conversationRepo().update(conversation.id, { uiMessages: JSON.parse(JSON.stringify(sanitizeObjectForPostgresql(updated))) })
+        // Patch ONLY this message's feedback with an atomic jsonb_set, never a full-array
+        // read-modify-write: a worker appending messages to a STREAMING conversation must not be
+        // clobbered by a stale snapshot from another tab. The index stays valid because uiMessages
+        // is append-only (never pruned/reordered), so uiMessages[messageIndex] is the same message.
+        const repo = chatHelpers.conversationRepo()
+        const table = repo.metadata.tableName
+        const path = `{${messageIndex},feedback}`
+        if (isNil(request.rating)) {
+            await repo.query(`UPDATE "${table}" SET "uiMessages" = "uiMessages" #- $1::text[] WHERE id = $2`, [path, conversation.id])
+        }
+        else {
+            const reasons = request.reasons?.length ? request.reasons : undefined
+            const comment = request.comment?.trim() || undefined
+            const feedback = { rating: request.rating, ...spreadIfDefined('reasons', reasons), ...spreadIfDefined('comment', comment) }
+            const value = JSON.stringify(sanitizeObjectForPostgresql(feedback))
+            await repo.query(`UPDATE "${table}" SET "uiMessages" = jsonb_set("uiMessages", $1::text[], $2::jsonb, true) WHERE id = $3`, [path, value, conversation.id])
+        }
         log.info({ conversation: { id }, messageIndex, rating: request.rating }, '[chatService] Message feedback recorded')
     },
 

@@ -93,7 +93,14 @@ export function FeedbackDialog({
           maxLength={2000}
           className="min-h-[96px] resize-y"
         />
-        <DialogFooter>
+        <DialogFooter className="items-center gap-2 sm:justify-between">
+          {mutation.isError ? (
+            <span className="text-sm text-destructive">
+              {t("Couldn't submit feedback. Please try again.")}
+            </span>
+          ) : (
+            <span />
+          )}
           <Button
             type="button"
             onClick={() => mutation.mutate()}
