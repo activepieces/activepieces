@@ -624,7 +624,6 @@
                      "handbook/engineering/playbooks/testing-strategy",
                      "handbook/engineering/playbooks/connect-claude-to-chrome",
                      "handbook/engineering/playbooks/ai-engineering-guide",
-                     "handbook/engineering/playbooks/ai-code-review",
                      {
                         "group": "Postmortems",
                         "icon": "triangle-exclamation",
