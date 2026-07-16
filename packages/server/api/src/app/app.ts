@@ -217,10 +217,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
-    // Cold-start backfill: build the tool-search index once if the flag is on but it has never been
-    // built (existing deployment whose piece_metadata is already populated, so no sync delta fires).
-    // Fire-and-forget — a no-op once the index has rows, and must never block or fail boot.
-    rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfEmpty(), app.log)
+    // Boot backfill: build the tool-search index if the flag is on but it is empty or only partially
+    // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
+    // unembedded). Fire-and-forget — a no-op once fully built, and must never block or fail boot.
+    rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfNeeded(), app.log)
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
