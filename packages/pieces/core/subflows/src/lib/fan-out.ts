@@ -54,7 +54,7 @@ export async function fanOutBatches<T>({
         message:
           'A batch failed to dispatch; fan-out aborted. Batches before this index were already dispatched and may still be running.',
         failedBatchIndex: firstErrorBatchIndex,
-        rowsProcessed,
+        rowsProcessed: rowsProcessed - batch.length,
         batchesDispatched,
       })
     );

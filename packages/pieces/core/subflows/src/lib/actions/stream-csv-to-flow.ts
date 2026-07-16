@@ -98,7 +98,7 @@ export const streamCsvToSubflows = createAction({
         })
       );
     }
-    const webhookUrl = `${context.server.apiUrl}v1/webhooks/${flow.id}`;
+    const webhookUrl = `${context.server.apiUrl.replace(/\/$/, '')}/v1/webhooks/${flow.id}`;
 
     const source = await axios.get<Readable>(fileUrl, {
       responseType: 'stream',
