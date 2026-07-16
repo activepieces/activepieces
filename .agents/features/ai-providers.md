@@ -71,12 +71,14 @@ Models listed per provider are cached in memory. Cache cleared daily at midnight
 
 ## Endpoints
 
+Reads are open to any platform member (`GET /` / `/:provider/models` allow USER + ENGINE; `/:provider/config` is engine-only). Mutations are **platform-admin only**.
+
 - `GET /` — list providers (auto-creates ACTIVEPIECES if credits enabled)
 - `GET /:provider/config` — get provider config + decrypted auth (engine-only access)
 - `GET /:provider/models` — list available models (cached)
-- `POST /` — create provider (validates credentials first)
-- `POST /:id` — update provider (re-validates if auth changed, cannot update ACTIVEPIECES)
-- `DELETE /:id` — delete provider (cannot delete ACTIVEPIECES)
+- `POST /` — create provider (platform-admin only; validates credentials first)
+- `POST /:id` — update provider (platform-admin only; re-validates if auth changed, cannot update ACTIVEPIECES)
+- `DELETE /:id` — delete provider (platform-admin only; cannot delete ACTIVEPIECES)
 
 ## Engine Integration
 
