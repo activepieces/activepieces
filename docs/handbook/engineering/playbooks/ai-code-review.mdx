@@ -1,0 +1,45 @@
+---
+title: "Code Review in the Age of Agents"
+icon: "robot"
+---
+
+AI raises how much code we produce; review is where that flood gets absorbed. Industry telemetry (Faros, 22k devs) shows AI teams merge ~98% more PRs, ~154% larger, and review time rises ~91% — the throughput gain gets swallowed in review. So we optimize the **review pipeline**, not the coding tools. The goal: cut time-to-merge without letting slop through.
+
+## The division of labor
+
+| Layer | Owner | Scope |
+| --- | --- | --- |
+| Deterministic gates | CI (no human) | type-check, lint, tests, migration checks, build. Non-bypassable. |
+| First pass | AI reviewer | style, common bug patterns, security anti-patterns, hallucinated APIs, test gaps, cross-file impact. |
+| Judgment | Human | design, product intent, business logic, requirement fidelity, risk. **Merge authority.** |
+
+*AI handles what humans are bad at remembering; humans handle what AI is bad at understanding.* Never delegated to AI: final approval on red-lane changes, deciding whether requirements are met, approving new dependencies, waiving any gate.
+
+## What's already in the repo
+
+- **AI first-pass reviewer** — `.github/workflows/claude-code-review.yml` runs `claude-code-action@v1` on every team PR and posts an advisory review against our `CLAUDE.md` standards. Fork PRs skip it (no secret access); a maintainer triggers it with `@claude review`.
+- **Risk-lane routing** — `.github/CODEOWNERS` lists only high-risk paths (database, migrations, EE, authentication, `packages/core/shared`, `.github`). Everything else flows through normal assignment.
+- **Deterministic gates** — `ci.yml` already runs lint-core, lint-pieces, build, test-ce/ee/cloud, and check-migrations. PR titles are semantic-lint enforced.
+- **Contributor guidance** — small PRs, stacked diffs, green-CI-first in `CONTRIBUTING.md`.
+
+## Admin toggles to finish the rollout
+
+These are GitHub/Linear settings, not code — a repo/org admin flips them.
+
+1. **Add the `ANTHROPIC_API_KEY` secret** (Settings → Secrets → Actions) and install the [Claude GitHub App](https://github.com/apps/claude). Until then the review workflow no-ops.
+2. **Require the CI checks + code-owner review** in branch protection on `main`: mark lint/build/test/migration checks required, enable "Require review from Code Owners." This is what makes the gates and red lanes actually block.
+3. **Single-reviewer, load-balanced auto-assignment** (org → team → code review settings). Load-balanced, not round-robin. Add a reviewer-of-the-day rota; route notifications to Slack, not email.
+4. **Instrument before/after** — turn on Linear Insights + GitHub PR analytics and baseline pickup time, cycle time, PR size, and rework/churn so you can tell whether any of this helped.
+5. **Linear** — enable "code access" for Diffs (review PRs next to their issue, synced to GitHub), the Review Inbox, and issue↔PR auto-transitions (fire Done only on production-branch merge). Optionally delegate fixes to a background agent in the diff view.
+
+## Deliberately deferred: green-lane auto-merge
+
+Auto-merging low-risk PRs (docs, tests, internal UI) is the one lever that can actively hurt — it removes the human. **Don't flip it on day one.** Earn it: watch the AI reviewer's false-positive rate and the green lane's revert rate for a couple of weeks first, then enable auto-merge only for paths with a clean record.
+
+## Metrics
+
+Pair every speed metric with a quality metric; measure at team level, never individuals.
+
+- **Speed:** pickup time (time-to-first-review — the biggest, purely-queued chunk of cycle time), cycle time, review cycles/PR, PR-size distribution.
+- **Quality:** rework/churn rate (code rewritten within ~2 weeks — DORA's 5th metric), incidents-per-PR, CI-failure-after-review, and **review-time-per-AI-PR** (if it equals review-time-per-human-PR, you're rubber-stamping).
+- **Caveat:** change-failure-rate does *not* catch AI churn — code that "worked" at deploy but got silently rewritten days later. Watch rework + incidents-per-PR to see it.

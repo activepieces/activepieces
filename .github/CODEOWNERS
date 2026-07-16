@@ -1,0 +1,29 @@
+# CODEOWNERS — "red-lane" routing.
+#
+# Only high-risk paths are listed here on purpose. Everything NOT listed has no
+# code owner and flows through normal reviewer assignment. Listing a path here
+# means: a code owner must review before merge (once branch protection has
+# "Require review from Code Owners" enabled — see the AI code-review playbook).
+#
+# Owners below are a safe default (@abuaboud). Replace/extend with a security
+# team and per-area co-owners as the team grows — GitHub auto-requests every
+# listed owner, so keep entries tight to avoid review spam.
+
+# Database: entity registration, connections, and migrations (silent runtime
+# failures if wrong — see .claude/rules/entity-registration.md).
+/packages/server/api/src/app/database/            @abuaboud
+/packages/server/api/src/app/ee/database/migrations/  @abuaboud
+/packages/server/api/src/app/flows/flow-version/migrations/  @abuaboud
+
+# Edition boundary: EE must not leak into CE (.claude/rules/edition-safety.md).
+/packages/server/api/src/app/ee/                  @abuaboud
+
+# Authentication / authorization.
+/packages/server/api/src/app/authentication/      @abuaboud
+/packages/server/api/src/app/ee/authentication/   @abuaboud
+
+# Public contract of the shared package (version-bump discipline).
+/packages/core/shared/                            @abuaboud
+
+# CI/CD, workflows, and this file itself.
+/.github/                                          @abuaboud
