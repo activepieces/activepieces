@@ -7,6 +7,20 @@ class TestHttpError extends Error {
     }
 }
 
+class TestSdkError extends Error {
+    constructor(public readonly status: number, public readonly error: unknown, public readonly headers?: Record<string, unknown>) {
+        super(`${status} ${JSON.stringify(error)}`)
+        this.name = 'BadRequestError'
+    }
+}
+
+class TestSdkBodyError extends Error {
+    constructor(public readonly status: number, public readonly body: unknown, public readonly headers?: Record<string, unknown>) {
+        super(`${status} ${JSON.stringify(body)}`)
+        this.name = 'NotFoundError'
+    }
+}
+
 describe('formatPieceError', () => {
     it('extracts status, request, response, and apiMessage from a Jira-style 403 HttpError', () => {
         const error = new TestHttpError(
@@ -69,6 +83,85 @@ describe('formatPieceError', () => {
 
         expect(result.status).toBe(400)
         expect(result.apiMessage).toBe('The provided authorization grant is invalid')
+    })
+
+    it('extracts status and apiMessage from an Anthropic SDK-style error (top-level status/error)', () => {
+        const error = new TestSdkError(
+            400,
+            {
+                type: 'error',
+                error: { type: 'invalid_request_error', message: '`temperature` is deprecated for this model.' },
+                request_id: 'req_011CbeGhWkQBXpy99GUmspz1',
+            },
+            { 'request-id': 'req_011CbeGhWkQBXpy99GUmspz1' },
+        )
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(400)
+        expect(result.apiMessage).toBe('`temperature` is deprecated for this model.')
+        expect(result.message).toBe('`temperature` is deprecated for this model.')
+        expect(result.responseHeaders).toEqual({ 'request-id': 'req_011CbeGhWkQBXpy99GUmspz1' })
+    })
+
+    it('extracts status and apiMessage from an OpenAI SDK-style error (top-level status/error)', () => {
+        const error = new TestSdkError(429, { message: 'Rate limit reached for requests', type: 'requests', code: 'rate_limit_exceeded' })
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(429)
+        expect(result.apiMessage).toBe('Rate limit reached for requests')
+    })
+
+    it('extracts status and apiMessage from a client error that surfaces a top-level body (no error property)', () => {
+        const error = new TestSdkBodyError(
+            404,
+            { message: 'The requested resource was not found' },
+            { 'x-request-id': 'req_abc123' },
+        )
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(404)
+        expect(result.apiMessage).toBe('The requested resource was not found')
+        expect(result.message).toBe('The requested resource was not found')
+        expect(result.responseBody).toEqual({ message: 'The requested resource was not found' })
+        expect(result.responseHeaders).toEqual({ 'x-request-id': 'req_abc123' })
+    })
+
+    it('does not treat a top-level status outside the HTTP range as an SDK error', () => {
+        const error = new TestSdkError(700, { message: 'not a real HTTP status' })
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBeUndefined()
+        expect(result.apiMessage).toBeUndefined()
+        expect(result.message).toBe('700 {"message":"not a real HTTP status"}')
+    })
+
+    it('prefers the nested response shape over a top-level client shape when both are present', () => {
+        const error = {
+            response: { status: 401, body: { message: 'from response' } },
+            status: 500,
+            error: { message: 'from client' },
+        }
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(401)
+        expect(result.apiMessage).toBe('from response')
+    })
+
+    it('preserves a non-standard response status (e.g. LinkedIn 999)', () => {
+        const error = new TestHttpError(
+            { status: 999, body: { message: 'Request blocked' } },
+            { body: {} },
+        )
+
+        const result = formatPieceError(error)
+
+        expect(result.status).toBe(999)
+        expect(result.apiMessage).toBe('Request blocked')
     })
 
     it('handles a 5xx with a string body', () => {

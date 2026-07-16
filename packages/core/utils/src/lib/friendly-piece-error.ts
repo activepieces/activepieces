@@ -5,6 +5,8 @@ const FRIENDLY_PIECE_ERROR_VERSION = 1
 const STACK_LINE_REGEX = /\n\s*at\s+.+$/gm
 const HTTP_ERROR_MESSAGE_MAX_LENGTH = 2000
 const RAW_ERROR_MAX_LENGTH = 16000
+const HTTP_STATUS_MIN = 100
+const HTTP_STATUS_MAX = 599
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
     return !isNil(value) && typeof value === 'object' && !Array.isArray(value)
@@ -146,11 +148,19 @@ const extractApiMessage = (responseBody: unknown): string | undefined => {
     return undefined
 }
 
-const extractHttpDetails = (error: Record<string, unknown>): HttpDetails | null => {
+const toHttpStatus = (value: unknown): number | undefined => {
+    return typeof value === 'number' && value >= HTTP_STATUS_MIN && value <= HTTP_STATUS_MAX ? value : undefined
+}
+
+const extractResponseHttpDetails = (error: Record<string, unknown>): HttpDetails | null => {
     const response = error['response']
     if (!isObjectRecord(response)) {
         return null
     }
+    // A nested `response` object already establishes HTTP context, so any numeric status is
+    // trusted here — including non-standard codes some services emit (e.g. LinkedIn's 999).
+    // The 100–599 range guard is only needed by the broad top-level fallback below, where a
+    // numeric `status` is the sole HTTP signal.
     const statusValue = response['status']
     const status = typeof statusValue === 'number' ? statusValue : undefined
     const responseBody = response['body']
@@ -176,6 +186,32 @@ const extractHttpDetails = (error: Record<string, unknown>): HttpDetails | null 
         requestMethod,
         apiMessage: extractApiMessage(responseBody),
     }
+}
+
+// SDK clients (Anthropic, OpenAI, etc.) expose status/error/headers at the top level
+// instead of nesting them under `response`. This is deliberately a broad match: any error
+// carrying a numeric HTTP-range `status` is treated as an HTTP error. To keep false
+// positives contained (e.g. a non-HTTP library that reuses a `status` field), it runs only
+// as a fallback after the stricter response-shape extractor — see `extractHttpDetails`.
+const extractClientHttpDetails = (error: Record<string, unknown>): HttpDetails | null => {
+    const status = toHttpStatus(error['status'])
+    if (isNil(status)) {
+        return null
+    }
+    const responseBody = error['error'] ?? error['body']
+    const headersValue = error['headers']
+    const headers = isObjectRecord(headersValue) ? headersValue : undefined
+
+    return {
+        status,
+        responseBody,
+        responseHeaders: headers,
+        apiMessage: extractApiMessage(responseBody),
+    }
+}
+
+const extractHttpDetails = (error: Record<string, unknown>): HttpDetails | null => {
+    return extractResponseHttpDetails(error) ?? extractClientHttpDetails(error)
 }
 
 const readErrorName = (error: Record<string, unknown>): string | undefined => {
