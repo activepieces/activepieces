@@ -5,6 +5,7 @@ import {
     buildMonitoringWebhookBody,
     buildNaceSubscriptionBody,
     extractSubscriptionId,
+    isAuthenticDelivery,
     parseOrgnrs,
     stringList,
 } from '../src/lib/common/parse';
@@ -47,6 +48,25 @@ describe('extractSubscriptionId', () => {
     it('returns undefined when no id is present', () => {
         expect(extractSubscriptionId({ ok: true })).toBeUndefined();
         expect(extractSubscriptionId(null)).toBeUndefined();
+    });
+});
+
+describe('isAuthenticDelivery', () => {
+    it('accepts everything when no secret is configured', () => {
+        expect(isAuthenticDelivery(undefined, {})).toBe(true);
+        expect(isAuthenticDelivery('', { authorization: 'Bearer x' })).toBe(true);
+    });
+
+    it('accepts a matching Bearer header regardless of header-name casing', () => {
+        expect(isAuthenticDelivery('s3cret', { Authorization: 'Bearer s3cret' })).toBe(true);
+        expect(isAuthenticDelivery('s3cret', { authorization: 'Bearer s3cret' })).toBe(true);
+    });
+
+    it('rejects missing, malformed or mismatching headers', () => {
+        expect(isAuthenticDelivery('s3cret', {})).toBe(false);
+        expect(isAuthenticDelivery('s3cret', undefined)).toBe(false);
+        expect(isAuthenticDelivery('s3cret', { authorization: 'Bearer wrong' })).toBe(false);
+        expect(isAuthenticDelivery('s3cret', { authorization: 's3cret' })).toBe(false);
     });
 });
 

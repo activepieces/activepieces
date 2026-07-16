@@ -2,7 +2,11 @@ import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-f
 import { HttpMethod } from '@activepieces/pieces-common';
 import { firmaradarAuth } from '../common/auth';
 import { firmaradarRequest, isNotFoundError } from '../common/client';
-import { buildNaceSubscriptionBody, extractSubscriptionId } from '../common/parse';
+import {
+    buildNaceSubscriptionBody,
+    extractSubscriptionId,
+    isAuthenticDelivery,
+} from '../common/parse';
 
 const STORE_KEY = 'firmaradar_nace_event_subscription';
 
@@ -136,6 +140,11 @@ export const naceEvent = createTrigger({
         await context.store.delete(STORE_KEY);
     },
     async run(context) {
+        // With a delivery secret configured, only accept deliveries carrying
+        // the matching Authorization: Bearer header.
+        if (!isAuthenticDelivery(context.propsValue.deliverySecret, context.payload.headers)) {
+            return [];
+        }
         return [context.payload.body];
     },
 });

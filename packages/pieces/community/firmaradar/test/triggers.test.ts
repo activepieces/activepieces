@@ -106,6 +106,20 @@ describe('company_changed trigger', () => {
         const { context } = triggerContext({ orgnr: '923609016' }, delivery);
         await expect(companyChanged.run(context as never)).resolves.toEqual([delivery]);
     });
+
+    it('run verifies the delivery secret when one is configured', async () => {
+        const delivery = { event: 'monitoring.changes_detected', changes: [] };
+        const { context } = triggerContext(
+            { orgnr: '923609016', deliverySecret: 's3cret' },
+            delivery,
+        );
+        context.payload.headers = { authorization: 'Bearer s3cret' } as never;
+        await expect(companyChanged.run(context as never)).resolves.toEqual([delivery]);
+        context.payload.headers = { authorization: 'Bearer feil' } as never;
+        await expect(companyChanged.run(context as never)).resolves.toEqual([]);
+        context.payload.headers = {} as never;
+        await expect(companyChanged.run(context as never)).resolves.toEqual([]);
+    });
 });
 
 describe('nace_event trigger', () => {
@@ -151,6 +165,18 @@ describe('nace_event trigger', () => {
         const delivery = { event_type: 'created', orgnr: '923609016' };
         const { context } = triggerContext({ naceCode: '47.110' }, delivery);
         await expect(naceEvent.run(context as never)).resolves.toEqual([delivery]);
+    });
+
+    it('run drops deliveries that fail secret verification', async () => {
+        const delivery = { event_type: 'created', orgnr: '923609016' };
+        const { context } = triggerContext(
+            { naceCode: '47.110', deliverySecret: 'token-1' },
+            delivery,
+        );
+        context.payload.headers = { Authorization: 'Bearer token-1' } as never;
+        await expect(naceEvent.run(context as never)).resolves.toEqual([delivery]);
+        context.payload.headers = { Authorization: 'Bearer noe-annet' } as never;
+        await expect(naceEvent.run(context as never)).resolves.toEqual([]);
     });
 });
 

@@ -57,6 +57,31 @@ export function extractSubscriptionId(response: unknown): number | string | unde
     return undefined;
 }
 
+/**
+ * Verify a delivery's `Authorization: Bearer` header against the configured
+ * delivery secret. Firmaradar echoes the secret as `Authorization: Bearer
+ * <secret>` on every webhook delivery (see WEBHOOK_TRIGGERS.md), so a
+ * mismatch means the request did not come from Firmaradar. No secret
+ * configured → accept (verification is opt-in).
+ */
+export function isAuthenticDelivery(
+    deliverySecret: string | undefined,
+    headers: Record<string, unknown> | undefined,
+): boolean {
+    if (!deliverySecret) {
+        return true;
+    }
+    let auth: unknown;
+    for (const [key, value] of Object.entries(headers ?? {})) {
+        if (key.toLowerCase() === 'authorization') {
+            auth = value;
+            break;
+        }
+    }
+    const value = Array.isArray(auth) ? auth[0] : auth;
+    return typeof value === 'string' && value.trim() === `Bearer ${deliverySecret}`;
+}
+
 export interface MonitoringWebhookInput {
     orgnr: string;
     url: string;

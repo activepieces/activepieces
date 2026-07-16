@@ -43,7 +43,9 @@ export const firmaradar = createPiece({
         'flows on announcements, ownership changes and industry events.',
     auth: firmaradarAuth,
     minimumSupportedRelease: '0.82.0',
-    logoUrl: 'https://firmaradar.no/logo/logo.png',
+    // Community-CDN-konvensjonen; maintainer laster opp asset-et
+    // (kilde: https://firmaradar.no/logo/logo.png) ved PR-review.
+    logoUrl: 'https://cdn.activepieces.com/pieces/firmaradar.png',
     authors: ['Tiwas'],
     categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.SALES_AND_CRM],
     actions: [

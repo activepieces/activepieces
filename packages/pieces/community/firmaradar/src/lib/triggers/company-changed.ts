@@ -2,7 +2,11 @@ import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-f
 import { HttpMethod } from '@activepieces/pieces-common';
 import { firmaradarAuth } from '../common/auth';
 import { firmaradarRequest, isNotFoundError } from '../common/client';
-import { buildMonitoringWebhookBody, extractSubscriptionId } from '../common/parse';
+import {
+    buildMonitoringWebhookBody,
+    extractSubscriptionId,
+    isAuthenticDelivery,
+} from '../common/parse';
 import { orgnrProp } from '../common/props';
 
 const STORE_KEY = 'firmaradar_company_changed_subscription';
@@ -85,6 +89,11 @@ export const companyChanged = createTrigger({
         await context.store.delete(STORE_KEY);
     },
     async run(context) {
+        // With a delivery secret configured, only accept deliveries carrying
+        // the matching Authorization: Bearer header.
+        if (!isAuthenticDelivery(context.propsValue.deliverySecret, context.payload.headers)) {
+            return [];
+        }
         return [context.payload.body];
     },
 });
