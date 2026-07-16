@@ -10,7 +10,7 @@ import {
   StaticDropdownPreview, CardsPreview, StaticMultiSelectPreview, JsonPreview, DictionaryPreview,
   FilePreview, ColorPreview, ArrayStringsPreview, ArrayFieldsPreview, DropdownPreview,
   MultiSelectDropdownPreview, DynamicPropertiesPreview, CustomPreview, HalfWidthPreview,
-  SegmentedTabsPreview, FilterBuilderPreview,
+  SegmentedTabsPreview, FilterBuilderPreview, SectionCardsPreview,
 } from '/snippets/prop-previews.jsx';
 
 Properties are used in actions and triggers to collect information from the user. They are also displayed to the user for input. Each property renders as a labelled field in the step settings form — the previews below show exactly what the user sees.
@@ -608,6 +608,29 @@ createAction({
 <Tip>
   A filter row is shown when its value is set, so there's nothing extra to persist. Give filters short `placeholder` hints and an `icon` so each row reads clearly.
 </Tip>
+
+### Sectioned cards
+
+`display: 'section'` groups related props into titled cards — for example a *Send to* card and a *Message* card. Unlike tabs and the filter builder, sectioned layouts **keep the collapsible _Advanced_ section**: any prop you don't place in a section still follows the normal essential/advanced rule, so secondary options stay tucked away. Give each group a `label` and `icon`, and use `width: 'half'` on members to pack two fields per row.
+
+<SectionCardsPreview />
+
+```typescript
+createAction({
+  // ...
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Send to', icon: 'send', props: ['chat_id'] },
+    { key: 'message',     display: 'section', label: 'Message',  icon: 'text', props: ['format', 'message'] },
+  ],
+  props: {
+    chat_id: Property.ShortText({ displayName: 'Chat Id', required: true, placeholder: '@channelusername or 123456789' }),
+    format: Property.StaticDropdown({ displayName: 'Format', required: false, display: 'cards', options: { options: [/* Markdown / HTML / Plain */] } }),
+    message: Property.RichText({ displayName: 'Message', required: true, formatProperty: 'format' }),
+    // props left out of every group collapse into Advanced as usual
+    disable_notification: Property.Checkbox({ displayName: 'Disable notification', required: false }),
+  },
+});
+```
 
 ### Custom Property (BETA)
 

@@ -370,3 +370,43 @@ export const FilterBuilderPreview = () => (
     </div>
   </div>
 );
+
+export const SectionCardsPreview = () => {
+  const [fmt, setFmt] = useState('md');
+  const cardBox = { border: '1px solid var(--pp-border)', borderRadius: '10px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' };
+  const head = { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--pp-fg)' };
+  const fmts = [{ v: 'md', ic: '#', t: 'Markdown' }, { v: 'html', ic: '</>', t: 'HTML' }, { v: 'plain', ic: '≡', t: 'Plain text' }];
+  return (
+    <div className="pp" style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={cardBox}>
+        <div style={head}><span className="pp-ic"><span className="pp-i pp-i-user" /></span>Send to</div>
+        <div className="pp-field">
+          <span className="pp-label">Chat Id <span className="pp-req">*</span></span>
+          <div className="pp-input pp-ph">@channelusername or 123456789</div>
+        </div>
+      </div>
+      <div style={cardBox}>
+        <div style={head}><span className="pp-ic"><span className="pp-i pp-i-sliders" /></span>Message</div>
+        <div className="pp-field">
+          <span className="pp-label">Format</span>
+          <div className="pp-cards">
+            {fmts.map((c) => (
+              <div key={c.v} className={fmt === c.v ? 'pp-rcard pp-sel' : 'pp-rcard'} style={{ cursor: 'pointer' }} onClick={() => setFmt(c.v)}>
+                <span className="pp-ic">{c.ic}</span>
+                <div><div className="pp-t">{c.t}</div></div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="pp-field">
+          <span className="pp-label">Message <span className="pp-req">*</span></span>
+          <div className="pp-input pp-textarea pp-ph">The message to be sent</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--pp-muted)', borderTop: '1px solid var(--pp-border)', paddingTop: '12px' }}>
+        <span className="pp-i pp-i-sliders" /> Advanced
+        <span style={{ marginLeft: 'auto', fontWeight: 400, fontSize: '12px' }}>5 options ›</span>
+      </div>
+    </div>
+  );
+};
