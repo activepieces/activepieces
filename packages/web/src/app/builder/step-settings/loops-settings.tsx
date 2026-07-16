@@ -74,7 +74,7 @@ const LoopsSettings = React.memo(({ readonly }: LoopsSettingsProps) => {
                 form.setValue(
                   'settings.batching',
                   checked
-                    ? { mode: LoopBatchMode.ITEMS_PER_BATCH, size: 1 }
+                    ? { mode: LoopBatchMode.ITEMS_PER_BATCH, size: 10 }
                     : undefined,
                   { shouldValidate: true, shouldDirty: true },
                 )
