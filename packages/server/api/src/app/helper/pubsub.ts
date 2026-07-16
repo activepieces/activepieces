@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { Mutex } from 'async-mutex'
 import Redis from 'ioredis'
 import { redisConnections } from '../database/redis-connections'
@@ -22,7 +22,11 @@ export const pubsub = {
             return
         }
         channelListeners.set(channel, new Set([listener]))
-        await subscriber.subscribe(channel)
+        const { error } = await tryCatch(() => subscriber.subscribe(channel))
+        if (!isNil(error)) {
+            channelListeners.delete(channel)
+            throw error
+        }
     },
     async publish(channel: string, message: string): Promise<void> {
         const publisher = await getRedisClientPublisher()
@@ -56,8 +60,6 @@ export const pubsub = {
     },
 }
 
-// Register the message dispatcher once here, not per subscribe call — that is what stops listeners
-// from leaking. It fans each channel's message out to the listener set that subscribe/unsubscribe own.
 async function getRedisClientSubscriber(): Promise<Redis> {
     if (!isNil(redisClientSubscriber)) {
         return redisClientSubscriber
