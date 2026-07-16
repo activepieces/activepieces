@@ -3,6 +3,8 @@
 # Both teams use round-robin review assignment (one reviewer per PR).
 *                            @activepieces/core
 
+/packages/pieces/            @activepieces/pieces
+
 /packages/server/engine/     @activepieces/platform
 /packages/server/worker/     @activepieces/platform
 /packages/core/execution/    @activepieces/platform
