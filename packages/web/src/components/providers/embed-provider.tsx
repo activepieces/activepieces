@@ -22,6 +22,7 @@ type EmbeddingState = {
   hideDuplicateFlow: boolean;
   hidePageHeader: boolean;
   hideActiveUsers: boolean;
+  hideGlobalSearch: boolean;
 };
 
 const defaultState: EmbeddingState = {
@@ -40,6 +41,7 @@ const defaultState: EmbeddingState = {
   hideDuplicateFlow: false,
   hidePageHeader: false,
   hideActiveUsers: false,
+  hideGlobalSearch: false,
 };
 
 const EmbeddingContext = createContext<{

@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.86.2",
+  "version": "0.86.3",
   "packageManager": "bun@1.3.3",
   "trustedDependencies": [
     "sqlite3",
@@ -48,7 +48,8 @@
     "push-i18n": "crowdin upload sources",
     "i18n:extract": "i18next --config packages/web/i18next-parser.config.js",
     "bump-translated-pieces": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-translated-pieces.ts",
-    "bump-all-pieces-patch-version": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-all-pieces-patch-version.ts"
+    "bump-all-pieces-patch-version": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-all-pieces-patch-version.ts",
+    "security:sla": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/security/sla-report.ts"
   },
   "private": true,
   "dependencies": {
