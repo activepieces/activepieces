@@ -42,9 +42,9 @@ jobs:
         run: |
           gh pr comment "$PR" --body "Hey — thanks so much for taking the time to open this! 🙏
 
-We've **temporarily paused unsolicited pull requests** from outside the core team. This isn't about you or the quality of your change — an open PR is a promise from us to review it carefully, and right now the volume (a lot of it AI-generated) means we can't keep that promise for every PR without it becoming unfair to contributors who wait weeks for a reply. So instead of leaving PRs hanging, we close them and point you to a faster path.
+          We've **temporarily paused unsolicited pull requests** from outside the core team. This isn't about you or the quality of your change — an open PR is a promise from us to review it carefully, and right now the volume (a lot of it AI-generated) means we can't keep that promise for every PR without it becoming unfair to contributors who wait weeks for a reply. So instead of leaving PRs hanging, we close them and point you to a faster path.
 
-**Already working with us?** If you're an existing customer and we've already discussed this change over Slack, ping us there and we'll add the \`keep-open\` label and reopen this PR for review.
+          **Already working with us?** If you're an existing customer and we've already discussed this change over Slack, ping us there and we'll add the \`keep-open\` label and reopen this PR for review.
 
-You can still build and publish your own [piece](https://www.activepieces.com/docs/build-pieces/building-pieces/start-building) — just outside this repo, as your own package rather than a PR here. See [CONTRIBUTING.md](https://github.com/activepieces/activepieces/blob/main/CONTRIBUTING.md#pull-requests) for the full policy. Thanks again for caring about the project. 💜"
+          You can still build and publish your own [piece](https://www.activepieces.com/docs/build-pieces/building-pieces/start-building) — just outside this repo, as your own package rather than a PR here. See [CONTRIBUTING.md](https://github.com/activepieces/activepieces/blob/main/CONTRIBUTING.md#pull-requests) for the full policy. Thanks again for caring about the project. 💜"
           gh pr close "$PR"
