@@ -17,7 +17,7 @@ AI raises how much code we produce; review is where that flood gets absorbed. In
 
 ## What's already in the repo
 
-- **AI first-pass reviewer** — `.github/workflows/claude-code-review.yml` runs `claude-code-action@v1` on every team PR and posts an advisory review against our `CLAUDE.md` standards. Fork PRs skip it (no secret access); a maintainer triggers it with `@claude review`.
+- **AI first-pass reviewer** — [Greptile](https://greptile.com) runs as a GitHub App and posts an advisory first-pass review on PRs. No workflow file — it's an app install (see admin toggles).
 - **Risk-lane routing** — `.github/CODEOWNERS` lists only high-risk paths (database, migrations, EE, authentication, `packages/core/shared`, `.github`). Everything else flows through normal assignment.
 - **Deterministic gates** — `ci.yml` already runs lint-core, lint-pieces, build, test-ce/ee/cloud, and check-migrations. PR titles are semantic-lint enforced.
 - **Contributor guidance** — small PRs, stacked diffs, green-CI-first in `CONTRIBUTING.md`.
@@ -26,7 +26,7 @@ AI raises how much code we produce; review is where that flood gets absorbed. In
 
 These are GitHub/Linear settings, not code — a repo/org admin flips them.
 
-1. **Add the `ANTHROPIC_API_KEY` secret** (Settings → Secrets → Actions) and install the [Claude GitHub App](https://github.com/apps/claude). Until then the review workflow no-ops.
+1. **Install [Greptile](https://greptile.com)** on the repo (GitHub App) and point it at our `CLAUDE.md` standards. This is the AI first-pass reviewer.
 2. **Require the CI checks + code-owner review** in branch protection on `main`: mark lint/build/test/migration checks required, enable "Require review from Code Owners." This is what makes the gates and red lanes actually block.
 3. **Single-reviewer, load-balanced auto-assignment** (org → team → code review settings). Load-balanced, not round-robin. Add a reviewer-of-the-day rota; route notifications to Slack, not email.
 4. **Instrument before/after** — turn on Linear Insights + GitHub PR analytics and baseline pickup time, cycle time, PR size, and rework/churn so you can tell whether any of this helped.
