@@ -1,11 +1,11 @@
 FROM node:24.14.0-bullseye-slim AS base
 
-# Set environment variables early for better layer caching
-ENV LANG=en_US.UTF-8 \
-    LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
+# C.UTF-8 ships with Debian, so no locale generation is needed
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
-# Install all system dependencies in a single layer with cache mounts
+# Install all system dependencies in a single layer with cache mounts.
+# libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
@@ -18,29 +18,24 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         poppler-utils \
         poppler-data \
         procps \
-        locales \
         unzip \
         curl \
         ca-certificates \
         iptables \
-        libcap-dev && \
-    yarn config set python /usr/bin/python3 && \
-    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
-    locale-gen en_US.UTF-8
+        libcap2
 
+# Download, extract, and clean up bun in a single layer so the zip never ships
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
       curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
     elif [ "$ARCH" = "aarch64" ]; then \
       curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
-    fi
-
-RUN unzip bun.zip \
-    && mv bun-*/bun /usr/local/bin/bun \
-    && chmod +x /usr/local/bin/bun \
-    && rm -rf bun.zip bun-*
-
-RUN bun --version
+    fi && \
+    unzip bun.zip && \
+    mv bun-*/bun /usr/local/bin/bun && \
+    chmod +x /usr/local/bin/bun && \
+    rm -rf bun.zip bun-* && \
+    bun --version
 
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
@@ -48,7 +43,6 @@ RUN --mount=type=cache,target=/root/.npm \
     node-gyp \
     npm@11.11.0 \
     pm2@6.0.10 \
-    typescript@4.9.4 \
     esbuild@0.25.0
 
 # Install isolated-vm globally (needed for sandboxes)
@@ -110,12 +104,7 @@ WORKDIR /usr/src/app
 
 # Copy static configuration files first (better layer caching)
 COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
-COPY docker-entrypoint.sh .
-
-# Create all necessary directories in one layer
-RUN mkdir -p \
-    /usr/src/app/dist/packages/engine && \
-    chmod +x docker-entrypoint.sh
+COPY --chmod=755 docker-entrypoint.sh .
 
 # Copy root config files needed for dependency resolution
 COPY --from=build /usr/src/app/package.json ./
