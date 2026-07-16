@@ -4,14 +4,14 @@ import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, Ex
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
-import { chatWorkerTools } from './chat-worker-tools'
+import { chatWorkerTools, GateDecision, TaintState } from './chat-worker-tools'
 import { delayWithJitter, runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 const APPROVAL_BLOCK_MS = 50_000
-const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
+const DISPLAY_TOOL_TIMEOUT_MS = 5 * 60 * 1_000
 const HEARTBEAT_INTERVAL_MS = 15_000
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
@@ -22,7 +22,7 @@ const RETRY_BASE_DELAY_MS = 1_000
 const STREAM_IDLE_TIMEOUT_MS = 90_000
 // Absolute ceiling on a single turn. Backstop for pathological cases the idle watchdog
 // can't see (runaway continuations, watchdog mis-detection). Must exceed the longest
-// legitimate single wait — the approval/display-tool timeout is 15m — so set well above it.
+// legitimate single wait — the approval/display-tool timeout is 5m — so set well above it.
 const MAX_TURN_WALL_CLOCK_MS = 20 * 60 * 1_000
 // Discovery-only eval must not touch the environment: neutralize every side-effecting execute
 // tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
@@ -114,12 +114,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         try {
             const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
+            const taintState: TaintState = { tainted: false }
 
             const webTools: ToolSet = dryRun ? {} : {
-                ...chatWorkerTools.createWebTools(),
-                ...(aiTools.webSearch ? chatWorkerTools.createSearchTools({ webSearch: aiTools.webSearch }) : {}),
+                ...chatWorkerTools.createWebTools({ taintState }),
+                ...(aiTools.webSearch ? chatWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(webSearchActive ? chatAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
-                ...(aiTools.webScraping ? chatWorkerTools.createScrapeTools({ scraping: aiTools.webScraping }) : {}),
+                ...(aiTools.webScraping ? chatWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? chatWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveChatFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
@@ -128,7 +129,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             }
 
             const allTools = buildToolSet({
-                ctx, eventEmitter, log, phaseState, mcpToolSet, webTools,
+                ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
@@ -313,11 +314,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: ChatPhase }
+    taintState: TaintState
     mcpToolSet: Record<string, unknown>
     webTools: ToolSet
     projects: Array<{ id: string, displayName: string, type: string }>
@@ -352,7 +354,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         // Auto-resolve in dry-run (playground) and discovery-only (eval): there's no UI to click
         // approve, so a real wait would stall the entire turn for APPROVAL_TIMEOUT_MS.
         if (dryRun || discoveryOnly) {
-            return { approved: true }
+            return { outcome: 'approved' }
         }
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         while (Date.now() < deadline) {
@@ -360,7 +362,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
             // holding the gate for up to APPROVAL_TIMEOUT_MS — frees the MCP client
             // and lets the turn tear down promptly.
             if (abortSignal.aborted) {
-                return { approved: false }
+                return { outcome: 'aborted' }
             }
             const remainingMs = deadline - Date.now()
             if (remainingMs <= 0) break
@@ -372,7 +374,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
                 waitForAbort(abortSignal).then(() => ({ result: 'aborted' as const })),
             ]))
             if (abortSignal.aborted || response?.result === 'aborted') {
-                return { approved: false }
+                return { outcome: 'aborted' }
             }
             if (error) {
                 log.warn({ error, gateId }, 'Approval wait RPC failed, retrying')
@@ -380,11 +382,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
                 continue
             }
             if (response.result !== 'pending') {
-                const decision = response.result as GateDecision
-                return { approved: decision.approved, payload: decision.payload }
+                const decision = response.result as { approved: boolean, payload?: Record<string, unknown> }
+                return { outcome: decision.approved ? 'approved' : 'declined', payload: decision.payload }
             }
         }
-        return { approved: false }
+        return { outcome: 'timeout' }
     }
 
     // Restore the conversation's already-chosen project so a continued turn doesn't
@@ -430,7 +432,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -636,7 +638,3 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
     }
 }
 
-type GateDecision = {
-    approved: boolean
-    payload?: Record<string, unknown>
-}

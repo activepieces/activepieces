@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
-import 'pg'
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import 'pg'
 import { DataSource } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -394,8 +394,11 @@ import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/18010
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
 import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
-import { AddAdhocRunTable1805000000000 } from './migration/postgres/1805000000000-AddAdhocRunTable'
 import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
+import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
+import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/1808000000000-AddProjectPieceSetIdIndex'
+import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
+import { AddChatConversationStreamingUpdatedIndex1810000000000 } from './migration/postgres/1810000000000-AddChatConversationStreamingUpdatedIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -805,8 +808,11 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatRolloutFreeCreditGrant1802000000000,
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
         DropBadges1804000000000,
-        AddAdhocRunTable1805000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,
+        CreatePieceSetTable1807000000000,
+        AddProjectPieceSetIdIndex1808000000000,
+        DropPlatformPieceFilters1809000000000,
+        AddChatConversationStreamingUpdatedIndex1810000000000,
     ]
     return migrations
 }
