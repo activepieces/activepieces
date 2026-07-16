@@ -60,11 +60,13 @@ async function classifyAndMaybeApply({ flow, pieceName, targetVersion, dryRun, p
     if (matchingSteps.length === 0) {
         return null
     }
+    const currentVersions = [...new Set(matchingSteps.map((step) => flowPieceUtil.getExactVersion(step.settings.pieceVersion)))]
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
     const summary: BulkUpgradePieceVersionFlowResult = {
         flowId: flow.id,
         flowName: flow.version.displayName,
         projectId: flow.projectId,
-        currentVersion: flowPieceUtil.getExactVersion(matchingSteps[0].settings.pieceVersion),
+        currentVersions,
         matchingStepCount: matchingSteps.length,
     }
 

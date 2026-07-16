@@ -122,7 +122,7 @@ export const BulkUpgradePieceVersionFlowResult = z.object({
     flowId: z.string(),
     flowName: z.string(),
     projectId: z.string(),
-    currentVersion: z.string(),
+    currentVersions: z.array(z.string()),
     matchingStepCount: z.number(),
 })
 

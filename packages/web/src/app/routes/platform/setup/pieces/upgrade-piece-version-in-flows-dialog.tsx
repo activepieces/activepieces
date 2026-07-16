@@ -156,7 +156,8 @@ const UpgradeDialogContent = ({
                     <ul className="list-disc pl-4">
                       {preview?.needsManual.map((flow) => (
                         <li key={flow.flowId}>
-                          {flow.flowName} (v{flow.currentVersion})
+                          {flow.flowName} (
+                          {flow.currentVersions.map((v) => `v${v}`).join(', ')})
                         </li>
                       ))}
                     </ul>

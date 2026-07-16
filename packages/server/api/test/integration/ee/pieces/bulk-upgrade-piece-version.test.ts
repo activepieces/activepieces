@@ -94,6 +94,7 @@ describe('Bulk Upgrade Piece Version (EE)', () => {
         const body = response.json()
         expect(body.autoUpgradeable).toHaveLength(1)
         expect(body.autoUpgradeable[0].flowId).toBe(flow.id)
+        expect(body.autoUpgradeable[0].currentVersions).toEqual(['1.0.0'])
         expect(body.needsManual).toHaveLength(0)
 
         const untouched = await db.findOneByOrFail<{ trigger: { settings: { pieceVersion: string } } }>('flow_version', { id: version.id })
