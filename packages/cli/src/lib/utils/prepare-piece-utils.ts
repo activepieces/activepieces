@@ -174,7 +174,7 @@ function pruneDistToPublishedFiles({ distPath }: { distPath: string }): void {
     removeUnpublished(distPath)
 }
 
-export { preparePieceDistForPublish }
+export { preparePieceDistForPublish, resolveInstalledVersion, findInstalledVersion }
 
 type PieceDistPaths = {
     piecePath: string
