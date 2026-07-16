@@ -22,42 +22,50 @@ export const createRecords = createAction({
         if ((tableExternalId ?? '').toString().length === 0) {
           return {};
         }
-        const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
-        
-        const fields = await tablesCommon.createFieldProperties({ tableId, context });
-        if ('markdown' in fields) {
-          return fields;
-        }
+        try {
+          const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
 
-        return {
-          values: Property.Array({
-            displayName: 'Records',
-            description: 'Add one or more records to insert',
-            required: true,
-            properties: fields,
-          }),
-        };
+          const fields = await tablesCommon.createFieldProperties({ tableId, context });
+          if ('markdown' in fields) {
+            return fields;
+          }
+
+          return {
+            values: Property.Array({
+              displayName: 'Records',
+              description: 'Add one or more records to insert',
+              required: true,
+              properties: fields,
+            }),
+          };
+        } catch {
+          return {};
+        }
       },
+    }),
+    records: Property.Json({
+      displayName: 'Records (Raw)',
+      description:
+        'Advanced: provide records as a JSON array of objects keyed by field name, e.g. [{"Name":"John","Age":30}]. Use this when the table is selected dynamically (its columns are unknown at build time). When set, this overrides the Records form above.',
+      required: false,
     }),
   },
   async run(context) {
-    const { table_id: tableExternalId, values } = context.propsValue;
+    const { table_id: tableExternalId, values, records: rawRecords } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
     const tableFields = await tablesCommon.getTableFields({ tableId, context });
 
-    const records: CreateRecordsRequest['records'] = values['values'].map((record: Record<string, unknown>) =>
-      Object.entries(record)
-        .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-        .map(([fieldExternalId, value]) => ({
-          fieldId: tableFields.find((field) => field.externalId === fieldExternalId)?.id,
-          value,
-        })).filter((record) => record.fieldId !== undefined)
-    )
-    const fieldValidations = tablesCommon.createFieldValidations(tableFields);
-
-    for (const record of values['values']) {
-      const cleanedRecord = Object.fromEntries(Object.entries(record).filter(([_, value]) => value !== null && value !== undefined && value !== ''));
-      await propsValidation.validateZod(cleanedRecord, fieldValidations);
+    let records: CreateRecordsRequest['records'];
+    if (rawRecords != null) {
+      const rawArray = Array.isArray(rawRecords) ? rawRecords : [rawRecords];
+      records = toCells({ rows: rawArray, fieldIdByKey: (name) => tableFields.find((field) => field.name === name)?.id });
+    } else {
+      records = toCells({ rows: values['values'], fieldIdByKey: (externalId) => tableFields.find((field) => field.externalId === externalId)?.id });
+      const fieldValidations = tablesCommon.createFieldValidations(tableFields);
+      for (const record of values['values']) {
+        const cleanedRecord = Object.fromEntries(Object.entries(record).filter(([_, value]) => value != null && value !== ''));
+        await propsValidation.validateZod(cleanedRecord, fieldValidations);
+      }
     }
 
     const response = await httpClient.sendRequest({
@@ -77,3 +85,15 @@ export const createRecords = createAction({
     return response.body.map(tablesCommon.formatRecord);
   },
 });
+
+function toCells({ rows, fieldIdByKey }: {
+  rows: Record<string, unknown>[];
+  fieldIdByKey: (key: string) => string | undefined;
+}): CreateRecordsRequest['records'] {
+  return rows.map((row) =>
+    Object.entries(row)
+      .filter(([_, value]) => value != null && value !== '')
+      .map(([key, value]) => ({ fieldId: fieldIdByKey(key), value: String(value) }))
+      .filter((cell): cell is { fieldId: string; value: string } => cell.fieldId !== undefined)
+  );
+}
