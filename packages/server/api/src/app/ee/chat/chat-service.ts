@@ -1,5 +1,5 @@
-import { ActivepiecesError, apId, ErrorCode, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { ChatConversation, ChatConversationStatus, ChatHistoryMessage, CreateChatConversationRequest, PersistedChatMessage, UpdateChatConversationRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ChatConversation, ChatConversationStatus, ChatHistoryMessage, CreateChatConversationRequest, PersistedChatMessage, PersistedChatRole, SetChatMessageFeedbackRequest, UpdateChatConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -104,6 +104,31 @@ export const chatService = (log: FastifyBaseLogger) => ({
         return { data: messages }
     },
 
+    async setMessageFeedback({ id, platformId, userId, messageIndex, request }: SetMessageFeedbackParams): Promise<void> {
+        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        const uiMessages = conversation.uiMessages
+        const target = uiMessages?.[messageIndex]
+        if (isNil(uiMessages) || isNil(target) || target.role !== PersistedChatRole.ASSISTANT) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'ChatMessage', entityId: `${id}#${messageIndex}` },
+            })
+        }
+        const reasons = request.reasons?.length ? request.reasons : undefined
+        const comment = request.comment?.trim() || undefined
+        // Keyed by index — safe only because uiMessages is append-only (never pruned/reordered).
+        const updated = uiMessages.map((msg, idx) => {
+            if (idx !== messageIndex) {
+                return msg
+            }
+            return isNil(request.rating)
+                ? { ...msg, feedback: undefined }
+                : { ...msg, feedback: { rating: request.rating, ...spreadIfDefined('reasons', reasons), ...spreadIfDefined('comment', comment) } }
+        })
+        await chatHelpers.conversationRepo().update(conversation.id, { uiMessages: JSON.parse(JSON.stringify(sanitizeObjectForPostgresql(updated))) })
+        log.info({ conversation: { id }, messageIndex, rating: request.rating }, '[chatService] Message feedback recorded')
+    },
+
 })
 
 type CreateConversationParams = {
@@ -128,4 +153,9 @@ type ConversationIdentifier = {
 
 type UpdateConversationParams = ConversationIdentifier & {
     request: UpdateChatConversationRequest
+}
+
+type SetMessageFeedbackParams = ConversationIdentifier & {
+    messageIndex: number
+    request: SetChatMessageFeedbackRequest
 }
