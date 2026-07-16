@@ -66,7 +66,7 @@ The worker forwards the `JobPayload` straight into the `EXECUTE_TRIGGER_HOOK` en
 
 `webhookRequestConverter.convertRequest()` normalizes incoming data:
 - **Multipart form-data**: Uploads files to File service, returns URLs in JSON
-- **Binary content** (image/*, video/*, audio/*, pdf, zip, gzip, octet-stream): Uploads to File service
+- **Binary content** (image/*, video/*, audio/*, pdf, zip, gzip, octet-stream, text/csv): Uploads to File service
 - **JSON/text**: Passes through as-is
 - Preserves `rawBody` for signature verification (non-binary only)
 - Extracts headers: `x-parent-run-id`, `x-fail-parent-on-failure` (for subflows)
