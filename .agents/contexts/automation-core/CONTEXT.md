@@ -83,3 +83,23 @@ _Avoid_: interstitial
 **Approval Action**:
 The `action=approve|disapprove` query-param convention on approval resume links, produced by the
 approval pieces and recognized by the Resume Confirmation Page to render Approve/Disapprove buttons.
+
+### Subflows
+
+**Subflow**:
+A Flow invoked by another flow rather than by its own external trigger; it exposes a Callable Flow trigger and is reached via a webhook POST to `/v1/webhooks/:flowId`.
+_Avoid_: child flow, nested flow, sub-workflow
+
+**Callable Flow**:
+The trigger (`@activepieces/piece-subflows`) that lets a flow be invoked as a Subflow; carries the parent's `data` payload and an optional `callbackUrl`.
+
+**Call Flow**:
+The action that invokes a single Subflow once and optionally waits for its response. Distinct from a fan-out, which invokes a Subflow many times.
+
+**Subflow Fan-out**:
+Dispatching many Subflow calls from one parent step (e.g. one per CSV batch), fire-and-forget, without waiting for each to finish.
+_Avoid_: scatter, broadcast
+
+**Batch**:
+The unit of rows sent as the `data` payload of one Subflow call in a fan-out — `{ batchIndex, headers, rows }`.
+_Avoid_: chunk, csv table, sub-table, shard
