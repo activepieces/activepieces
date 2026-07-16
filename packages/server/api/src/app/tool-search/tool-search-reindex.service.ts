@@ -141,14 +141,17 @@ export async function toolSearchTableExists(): Promise<boolean> {
 }
 
 /**
- * Coverage of `tool_search_index`: total rows vs. how many carry an embedding. The cold-start backfill
- * reads this at boot to decide whether the index still needs work: an index with unembedded rows (a
- * partial build a failed/rate-limited embed run left behind) is NOT "built" — search under-serves until
- * those rows get vectors. Counts across all model versions so the check needs no resolved embedder.
+ * Coverage of `tool_search_index` at one model version: total rows vs. how many carry an embedding. The
+ * boot backfill reads this to decide whether the index still needs work — an index with unembedded rows (a
+ * partial build a failed/rate-limited embed run left behind) is NOT "built", and search under-serves until
+ * those rows get vectors. Scoped to `modelVersion` (the one the current embedder fills) so NULL rows left
+ * at an OLD version by a past model transition — which the current embedder never touches — do not count
+ * as a permanent phantom `pending` that would re-enqueue a reconcile on every boot.
  */
-export async function toolSearchIndexCoverage(): Promise<ToolSearchIndexCoverage> {
+export async function toolSearchIndexCoverage(modelVersion: string): Promise<ToolSearchIndexCoverage> {
     const result = await databaseConnection().query(
-        'SELECT count(*)::int AS total, count("embedding")::int AS embedded FROM "tool_search_index"',
+        'SELECT count(*)::int AS total, count("embedding")::int AS embedded FROM "tool_search_index" WHERE "modelVersion" = $1',
+        [modelVersion],
     )
     const total = Number(result?.[0]?.total ?? 0)
     const embedded = Number(result?.[0]?.embedded ?? 0)

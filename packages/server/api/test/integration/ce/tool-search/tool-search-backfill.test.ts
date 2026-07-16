@@ -2,6 +2,7 @@ import { apId } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { OPENAI_3_SMALL_MODEL_VERSION } from '../../../../src/app/tool-search/embedder'
 import { toolSearchReindexJob } from '../../../../src/app/tool-search/tool-search-reindex.job'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -19,7 +20,7 @@ async function seedRow({ embedding }: { embedding: string | null }): Promise<voi
             "id", "objectKind", "pieceName", "pieceVersion", "objectName", "displayName",
             "retrievalDoc", "requiresConnection", "modelVersion", "embeddingInputHash", "embedding"
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::vector)`,
-        [apId(), 'action', 'seed-piece', '0.0.1', 'seed_action', 'Seed Action', 'seed doc', false, 'test-model', 'seed-hash', embedding],
+        [apId(), 'action', 'seed-piece', '0.0.1', 'seed_action', 'Seed Action', 'seed doc', false, OPENAI_3_SMALL_MODEL_VERSION, 'seed-hash', embedding],
     )
 }
 

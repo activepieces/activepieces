@@ -8,6 +8,7 @@ import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { platformService } from '../platform/platform.service'
+import { OPENAI_3_SMALL_MODEL_VERSION } from './embedder'
 import { isToolSearchEnabled } from './tool-search-flag'
 import { ReindexScope, toolSearchIndexCoverage, toolSearchReindexService, toolSearchTableExists } from './tool-search-reindex.service'
 
@@ -120,7 +121,7 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
             log.info('[toolSearchReindexJob#backfillIfNeeded] tool_search_index is absent (pgvector not installed) — skipping backfill; keyword floor serves.')
             return
         }
-        const coverage = await toolSearchIndexCoverage()
+        const coverage = await toolSearchIndexCoverage(OPENAI_3_SMALL_MODEL_VERSION)
         if (coverage.total > 0 && coverage.pending === 0) {
             log.info(coverage, '[toolSearchReindexJob#backfillIfNeeded] Tool-search index fully built — nothing to reconcile.')
             return
