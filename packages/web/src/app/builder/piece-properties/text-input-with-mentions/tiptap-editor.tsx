@@ -18,7 +18,15 @@ import { TextSelection } from '@tiptap/pm/state';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { t } from 'i18next';
-import { ChevronRight, XCircle } from 'lucide-react';
+import {
+  Bold,
+  ChevronRight,
+  Italic,
+  Link as LinkIcon,
+  List,
+  Underline,
+  XCircle,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
@@ -62,6 +70,12 @@ type TiptapEditorProps = {
   disabled?: boolean;
   enableMarkdown?: boolean;
   autoFocus?: boolean;
+  /**
+   * 'html' turns the editor into a rich-text WYSIWYG (StarterKit core set) whose
+   * value is serialized to/from HTML with mentions kept as {{...}} tokens.
+   * Defaults to 'text' (plain value via the mention text converter).
+   */
+  outputFormat?: 'text' | 'html';
 };
 
 const INITIAL_SLASH_STATE: SlashCommandState = {
@@ -73,11 +87,13 @@ const INITIAL_SLASH_STATE: SlashCommandState = {
 
 function getExtensions({
   enableMarkdown,
+  isHtml,
   placeholder,
   formulaEnabled,
 }: {
   placeholder?: string;
   enableMarkdown?: boolean;
+  isHtml?: boolean;
   formulaEnabled: boolean;
 }): Extensions {
   const baseExtensions = [
@@ -101,6 +117,20 @@ function getExtensions({
     ...(formulaEnabled ? [FunctionSlashExtension] : []),
   ];
 
+  if (isHtml) {
+    return [
+      ...baseExtensions,
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+        blockquote: false,
+        codeBlock: false,
+        code: false,
+        horizontalRule: false,
+        link: { openOnClick: false },
+      }),
+    ] as Extensions;
+  }
+
   if (enableMarkdown) {
     return [
       ...baseExtensions,
@@ -118,6 +148,82 @@ function getExtensions({
   ] as Extensions;
 }
 
+function applyLink(editor: import('@tiptap/react').Editor): void {
+  const previousUrl = (editor.getAttributes('link')?.['href'] as string) ?? '';
+  const url = window.prompt(t('Link URL'), previousUrl || 'https://');
+  if (url === null) {
+    return;
+  }
+  if (url.trim().length === 0) {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    return;
+  }
+  editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+}
+
+function RichTextToolbar({
+  editor,
+}: {
+  editor: import('@tiptap/react').Editor;
+}) {
+  const buttons = [
+    {
+      key: 'bold',
+      label: t('Bold'),
+      icon: Bold,
+      run: () => editor.chain().focus().toggleBold().run(),
+    },
+    {
+      key: 'italic',
+      label: t('Italic'),
+      icon: Italic,
+      run: () => editor.chain().focus().toggleItalic().run(),
+    },
+    {
+      key: 'underline',
+      label: t('Underline'),
+      icon: Underline,
+      run: () => editor.chain().focus().toggleUnderline().run(),
+    },
+    {
+      key: 'bulletList',
+      label: t('Bullet list'),
+      icon: List,
+      run: () => editor.chain().focus().toggleBulletList().run(),
+    },
+    {
+      key: 'link',
+      label: t('Link'),
+      icon: LinkIcon,
+      run: () => applyLink(editor),
+    },
+  ];
+  return (
+    <div className="flex items-center gap-0.5 border-b border-input px-1.5 py-1">
+      {buttons.map(({ key, label, icon: Icon, run }) => {
+        const active = editor.isActive(key);
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-label={label}
+            title={label}
+            aria-pressed={active}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={run}
+            className={cn(
+              'flex size-7 items-center justify-center rounded text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50',
+              active && 'bg-muted text-foreground',
+            )}
+          >
+            <Icon className="size-4" />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export const TiptapEditor = ({
   className,
   wrapperClassName,
@@ -127,7 +233,9 @@ export const TiptapEditor = ({
   placeholder,
   enableMarkdown,
   autoFocus,
+  outputFormat,
 }: TiptapEditorProps) => {
+  const isHtml = outputFormat === 'html';
   const { platform } = platformHooks.useCurrentPlatform();
   const { embedState } = useEmbedding();
   const formulaEnabled = platform.plan.dataManipulationEnabled;
@@ -210,16 +318,23 @@ export const TiptapEditor = ({
   const editor = useEditor({
     editable: !disabled,
     autofocus: autoFocus ? 'end' : false,
-    extensions: getExtensions({ placeholder, enableMarkdown, formulaEnabled }),
-    content: {
-      type: 'doc',
-      content: textMentionUtils.convertTextToTipTapJsonContent(
-        convertToText(initialValue),
-        steps,
-        stepsMetadata,
-        variableByName,
-      ),
-    },
+    extensions: getExtensions({
+      placeholder,
+      enableMarkdown,
+      isHtml,
+      formulaEnabled,
+    }),
+    content: isHtml
+      ? convertToText(initialValue)
+      : {
+          type: 'doc',
+          content: textMentionUtils.convertTextToTipTapJsonContent(
+            convertToText(initialValue),
+            steps,
+            stepsMetadata,
+            variableByName,
+          ),
+        },
     editorProps: {
       handleKeyDown: (view, event) => {
         if (event.key === 'Backspace') {
@@ -363,13 +478,18 @@ export const TiptapEditor = ({
       },
       attributes: {
         class: cn(
-          className ?? cn(inputClass, 'py-2 h-[unset] block   min-h-9  '),
+          isHtml
+            ? 'block min-h-20 max-h-72 overflow-y-auto px-2.5 py-2 outline-none'
+            : className ?? cn(inputClass, 'py-2 h-[unset] block   min-h-9  '),
           textMentionUtils.inputWithMentionsCssClass,
           { 'cursor-not-allowed opacity-50': disabled },
         ),
       },
     },
     onCreate: ({ editor: e }) => {
+      if (isHtml) {
+        convertMentionTokensToNodes(e, steps, stepsMetadata, variableByName);
+      }
       const editorContent = e.getJSON();
       setHasFunctions(docHasFunctions(e));
       setTypeErrors(collectTypeErrors(editorContent));
@@ -380,8 +500,9 @@ export const TiptapEditor = ({
     },
     onUpdate: ({ editor: e }) => {
       const editorContent = e.getJSON();
-      const textResult =
-        textMentionUtils.convertTiptapJsonToText(editorContent);
+      const textResult = isHtml
+        ? serializeHtmlWithMentions(e)
+        : textMentionUtils.convertTiptapJsonToText(editorContent);
       if (onChange) onChange(textResult);
       const nowHasFunctions = docHasFunctions(e);
       setHasFunctions(nowHasFunctions);
@@ -462,9 +583,15 @@ export const TiptapEditor = ({
 
   return (
     <div
-      className={cn('relative w-full', wrapperClassName)}
+      className={cn(
+        'relative w-full',
+        isHtml &&
+          'overflow-hidden rounded-md border border-input bg-transparent transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[1px] focus-within:ring-ring/50',
+        wrapperClassName,
+      )}
       ref={editorWrapperRef}
     >
+      {isHtml && !disabled && <RichTextToolbar editor={editor} />}
       <EditorContent editor={editor} />
 
       {showPreview && (
@@ -585,6 +712,88 @@ function convertToText(value: unknown): string {
   if (typeof value === 'string') return value;
   if (typeof value === 'number') return value.toString();
   return JSON.stringify(value);
+}
+
+type CreateMentionArgs = Parameters<
+  typeof textMentionUtils.createMentionNodeFromText
+>;
+
+// HTML output: serialize the doc, then collapse mention badges back to their
+// {{...}} server token so the engine resolves them (the editor shows badges,
+// the stored value stays a portable HTML string with tokens).
+function serializeHtmlWithMentions(
+  editor: import('@tiptap/react').Editor,
+): string {
+  if (editor.isEmpty) return '';
+  const html = editor.getHTML();
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  parsed.querySelectorAll('[data-type="mention"]').forEach((element) => {
+    let serverValue = element.getAttribute('serverValue') ?? '';
+    if (serverValue.length === 0) {
+      const labelAttr = element.getAttribute('data-label');
+      if (labelAttr) {
+        try {
+          serverValue = JSON.parse(labelAttr).serverValue ?? '';
+        } catch {
+          serverValue = '';
+        }
+      }
+    }
+    element.replaceWith(parsed.createTextNode(serverValue));
+  });
+  return parsed.body.innerHTML;
+}
+
+// HTML input: TipTap parses the saved HTML to a doc with {{...}} as plain text;
+// convert each token back into a mention badge so it renders like everywhere else.
+function convertMentionTokensToNodes(
+  editor: import('@tiptap/react').Editor,
+  steps: CreateMentionArgs[1],
+  stepsMetadata: CreateMentionArgs[2],
+  variableByName: CreateMentionArgs[3],
+): void {
+  const matches: { from: number; to: number; token: string }[] = [];
+  editor.state.doc.descendants((node, pos) => {
+    if (!node.isText || !node.text) {
+      return;
+    }
+    const tokenRegex = /\{\{[^}]+\}\}/g;
+    let match: RegExpExecArray | null;
+    while ((match = tokenRegex.exec(node.text)) !== null) {
+      matches.push({
+        from: pos + match.index,
+        to: pos + match.index + match[0].length,
+        token: match[0],
+      });
+    }
+  });
+  if (matches.length === 0) {
+    return;
+  }
+  let tr = editor.state.tr;
+  // Replace largest position first so earlier positions stay valid.
+  for (let index = matches.length - 1; index >= 0; index--) {
+    const { from, to, token } = matches[index];
+    const mentionNode = textMentionUtils.createMentionNodeFromText(
+      token,
+      steps,
+      stepsMetadata,
+      variableByName,
+    );
+    if (isNil(mentionNode)) {
+      continue;
+    }
+    try {
+      tr = tr.replaceWith(
+        from,
+        to,
+        editor.state.schema.nodeFromJSON(mentionNode),
+      );
+    } catch {
+      // Leave the raw token in place if it can't be turned into a node.
+    }
+  }
+  editor.view.dispatch(tr);
 }
 
 function applyTypeErrors(

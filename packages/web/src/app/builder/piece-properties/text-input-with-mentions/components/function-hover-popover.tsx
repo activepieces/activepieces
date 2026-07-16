@@ -228,13 +228,6 @@ export function FunctionTooltipCard({
   const { t } = useTranslation();
   const argNames = parseSyntaxArgs(fnDef.syntax);
 
-  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
-  useEffect(() => {
-    const onResize = () => setViewportWidth(window.innerWidth);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
   const showAbove = !centered && anchorTop > TOOLTIP_MIN_HEIGHT + SCREEN_MARGIN;
   const top = centered
     ? (anchorTop + anchorBottom) / 2
@@ -249,7 +242,7 @@ export function FunctionTooltipCard({
   const idealLeft = centered ? anchorLeft : badgeCenterX - TOOLTIP_WIDTH / 2;
   const left = Math.min(
     Math.max(idealLeft, SCREEN_MARGIN),
-    viewportWidth - TOOLTIP_WIDTH - SCREEN_MARGIN,
+    window.innerWidth - TOOLTIP_WIDTH - SCREEN_MARGIN,
   );
 
   return createPortal(

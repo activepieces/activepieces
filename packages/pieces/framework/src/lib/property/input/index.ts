@@ -2,6 +2,7 @@ import * as z from "zod/mini";
 import { ArrayProperty } from './array-property';
 import { CheckboxProperty } from './checkbox-property';
 import { DateTimeProperty } from './date-time-property';
+import { DateRangeProperty } from './date-range-property';
 import {
   DropdownProperty,
   MultiSelectDropdownProperty,
@@ -19,6 +20,7 @@ import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';
 import { LongTextProperty, ShortTextProperty } from './text-property';
+import { RichTextProperty } from './rich-text-property';
 import { CustomProperty, CustomPropertyCodeFunctionParams } from './custom-property';
 import { ColorProperty } from './color-property';
 import { PieceAuthProperty } from '../authentication';
@@ -26,6 +28,7 @@ import { PieceAuthProperty } from '../authentication';
 export const InputProperty = z.union([
   ShortTextProperty,
   LongTextProperty,
+  RichTextProperty,
   MarkDownProperty,
   CheckboxProperty,
   StaticDropdownProperty,
@@ -38,6 +41,7 @@ export const InputProperty = z.union([
   ObjectProperty,
   JsonProperty,
   DateTimeProperty,
+  DateRangeProperty,
   FileProperty,
   ColorProperty,
 ]);
@@ -46,6 +50,7 @@ export const InputProperty = z.union([
 export type InputProperty =
   | ShortTextProperty<boolean>
   | LongTextProperty<boolean>
+  | RichTextProperty<boolean>
   | MarkDownProperty
   | CheckboxProperty<boolean>
   | DropdownProperty<any, boolean, PieceAuthProperty | undefined | PieceAuthProperty[]>
@@ -58,6 +63,7 @@ export type InputProperty =
   | StaticMultiSelectDropdownProperty<any, boolean>
   | DynamicProperties<boolean, PieceAuthProperty | PieceAuthProperty[] | undefined>
   | DateTimeProperty<boolean>
+  | DateRangeProperty<boolean>
   | FileProperty<boolean>
   | CustomProperty<boolean>
   | ColorProperty<boolean>;
@@ -101,6 +107,17 @@ export const Property = {
     } as unknown as R extends true
       ? LongTextProperty<true>
       : LongTextProperty<false>;
+  },
+  RichText<R extends boolean>(
+    request: Properties<RichTextProperty<R>>
+  ): R extends true ? RichTextProperty<true> : RichTextProperty<false> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.RICH_TEXT,
+    } as unknown as R extends true
+      ? RichTextProperty<true>
+      : RichTextProperty<false>;
   },
   MarkDown(request: {
     value: string;
@@ -227,6 +244,17 @@ export const Property = {
     } as unknown as R extends true
       ? DateTimeProperty<true>
       : DateTimeProperty<false>;
+  },
+  DateRange<R extends boolean>(
+    request: Properties<DateRangeProperty<R>>
+  ): R extends true ? DateRangeProperty<true> : DateRangeProperty<false> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.DATE_RANGE,
+    } as unknown as R extends true
+      ? DateRangeProperty<true>
+      : DateRangeProperty<false>;
   },
   File<R extends boolean>(
     request: Properties<FileProperty<R>>

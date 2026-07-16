@@ -19,7 +19,6 @@ import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { RequiredFieldAsterisk } from '@/components/ui/label';
-import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,
   TooltipContent,
@@ -29,11 +28,13 @@ import { formUtils } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
+import { DynamicValueToggleButton } from './dynamic-value-toggle-button';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 function AutoFormFieldWrapper({
   placeBeforeLabelText = false,
   hideLabel,
+  hideDescription,
   children,
   allowDynamicValues,
   propertyName,
@@ -58,7 +59,7 @@ function AutoFormFieldWrapper({
         {(!hideLabel || placeBeforeLabelText) && (
           <FormLabel className="flex items-center gap-1 h-7.5 max-h-7.5">
             {placeBeforeLabelText && !dynamicInputModeToggled && children}
-            <div className="pt-1">
+            <div className={cn(!placeBeforeLabelText && 'pt-1')}>
               <span>
                 {isAuthProperty ? t('Connection') : property.displayName}
               </span>{' '}
@@ -104,6 +105,7 @@ function AutoFormFieldWrapper({
           <div>{children}</div>
         )}
         {!isForConnectionSelect &&
+          !hideDescription &&
           !Array.isArray(property) &&
           property.description && (
             <ReadMoreDescription text={property.description} />
@@ -227,41 +229,17 @@ function DynamicValueToggle({
     }
   }
   return (
-    <div className="flex gap-2 items-center">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Toggle
-            pressed={isToggled}
-            onPressedChange={(newIsToggled) =>
-              handleDynamicValueToggleChange(
-                newIsToggled
-                  ? PropertyExecutionType.DYNAMIC
-                  : PropertyExecutionType.MANUAL,
-              )
-            }
-            disabled={disabled}
-            aria-label={t('Use dynamic value')}
-            className={cn(
-              'h-[22px] w-[26px] min-w-0 px-0 rounded-[5px] border border-border bg-background',
-              'hover:bg-background hover:border-input hover:text-foreground',
-              'data-[state=on]:bg-primary/10 data-[state=on]:border-primary/40',
-              'data-[state=on]:text-primary',
-            )}
-          >
-            <span
-              className={cn(
-                'inline-flex items-baseline font-mono text-[11px] font-semibold tracking-[-0.02em]',
-                isToggled ? 'text-primary' : 'text-muted-foreground',
-              )}
-            >
-              <i className="italic">f</i>
-              <span className="text-[9px] align-super leading-none">x</span>
-            </span>
-          </Toggle>
-        </TooltipTrigger>
-        <TooltipContent side="top">{t('Use dynamic value')}</TooltipContent>
-      </Tooltip>
-    </div>
+    <DynamicValueToggleButton
+      pressed={isToggled}
+      onPressedChange={(newIsToggled) =>
+        handleDynamicValueToggleChange(
+          newIsToggled
+            ? PropertyExecutionType.DYNAMIC
+            : PropertyExecutionType.MANUAL,
+        )
+      }
+      disabled={disabled}
+    />
   );
 }
 function PropertyTypeTooltip({ property }: { property: PieceProperty }) {
@@ -275,24 +253,13 @@ function PropertyTypeTooltip({ property }: { property: PieceProperty }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={
-            property.type === PropertyType.FILE
-              ? t('File Input i.e a url or file passed from a previous step')
-              : t('Date Input must comply with ISO 8601 format')
-          }
-          className="inline-flex items-center bg-transparent border-0 p-0 cursor-help"
-        >
-          {property.type === PropertyType.FILE ? (
-            <File aria-hidden="true" className="w-4 h-4 stroke-foreground/55" />
-          ) : (
-            <Calendar
-              aria-hidden="true"
-              className="w-4 h-4 stroke-foreground/55"
-            />
-          )}
-        </button>
+        {property.type === PropertyType.FILE ? (
+          <File className="w-4 h-4 stroke-foreground/55"></File>
+        ) : (
+          property.type === PropertyType.DATE_TIME && (
+            <Calendar className="w-4 h-4 stroke-foreground/55"></Calendar>
+          )
+        )}
       </TooltipTrigger>
       <TooltipContent side="bottom">
         <>
@@ -331,6 +298,7 @@ type DynamicValueToggleProps = {
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
   hideLabel?: boolean;
+  hideDescription?: boolean;
   allowDynamicValues: boolean;
   propertyName: string;
   placeBeforeLabelText?: boolean;

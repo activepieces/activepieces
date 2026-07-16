@@ -56,7 +56,10 @@ export const AiMetadata = z.object({
 })
 export type AiMetadata = z.infer<typeof AiMetadata>
 
-export const PropertyGroupDisplay = z.enum(['tabs'])
+export const ActionClassification = z.enum(['READ', 'WRITE'])
+export type ActionClassification = z.infer<typeof ActionClassification>
+
+export const PropertyGroupDisplay = z.enum(['tabs', 'section', 'summary', 'builder', 'footer'])
 export type PropertyGroupDisplay = z.infer<typeof PropertyGroupDisplay>
 
 export const PropertyGroup = z.object({
@@ -64,6 +67,7 @@ export const PropertyGroup = z.object({
   display: PropertyGroupDisplay,
   label: z.optional(z.string()),
   description: z.optional(z.string()),
+  icon: z.optional(z.string()),
   props: z.array(z.string()),
 })
 export type PropertyGroup = z.infer<typeof PropertyGroup>
@@ -79,6 +83,7 @@ export const ActionBase = z.object({
   outputSchema: z.optional(z.custom<OutputSchema>()),
   audience: z.optional(Audience),
   aiMetadata: z.optional(AiMetadata),
+  classification: z.optional(ActionClassification),
 })
 
 export type ActionBase = {
@@ -92,6 +97,7 @@ export type ActionBase = {
   outputSchema?: OutputSchema;
   audience?: Audience;
   aiMetadata?: AiMetadata;
+  classification?: ActionClassification;
 }
 
 export const TriggerBase = z.object({
@@ -108,6 +114,7 @@ export const TriggerBase = z.object({
   testStrategy: z.enum(TriggerTestStrategy),
   outputSchema: z.optional(z.custom<OutputSchema>()),
   aiMetadata: z.optional(AiMetadata),
+  classification: z.optional(ActionClassification),
 })
 export type TriggerBase = Omit<ActionBase, 'audience'> & {
   type: TriggerStrategy;

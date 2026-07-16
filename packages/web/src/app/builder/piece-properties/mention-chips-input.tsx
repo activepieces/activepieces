@@ -165,7 +165,7 @@ function MentionChipsInput({
               }
             }}
             className={cn(
-              'inline-flex max-w-full items-center gap-1 rounded-full bg-muted py-0.5 pl-2.5 pr-1 text-sm outline-none transition-colors',
+              'inline-flex max-w-full items-start gap-1 rounded-md bg-muted py-0.5 pl-2.5 pr-1 text-sm outline-none transition-colors',
               disabled
                 ? 'cursor-default'
                 : 'cursor-pointer hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring/50',
@@ -190,7 +190,7 @@ function MentionChipsInput({
                 type="button"
                 aria-label={t('Remove')}
                 className={cn(
-                  'shrink-0 rounded-full p-1 text-muted-foreground/70 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50',
+                  'shrink-0 rounded-full px-1 py-0.5 text-muted-foreground/70 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50',
                   { 'text-destructive/70 hover:text-destructive': invalid },
                 )}
                 onClick={(event) => {

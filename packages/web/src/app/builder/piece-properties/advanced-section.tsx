@@ -60,29 +60,25 @@ function AdvancedSection({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="border-t border-border pt-4 mt-2"
+      className="border-t border-border pt-4"
     >
       <CollapsibleTrigger
         className={cn(
-          'group flex items-center gap-2.5 w-full text-left',
+          'group flex items-center gap-2 w-full text-left',
           'rounded-md focus-visible:outline-none focus-visible:ring-2',
           'focus-visible:ring-primary/35 focus-visible:ring-offset-2',
         )}
       >
-        <SlidersHorizontal
-          className="h-3.5 w-3.5 text-muted-foreground"
-          aria-hidden="true"
-        />
-        <span className="text-[13px] font-semibold tracking-[-0.005em] text-foreground">
+        <SlidersHorizontal className="size-4 text-muted-foreground" />
+        <span className="text-[13px] font-semibold tracking-[-0.005em] text-muted-foreground">
           {t('Advanced')}
         </span>
-        <span className="ml-auto text-[11.5px] text-muted-foreground tabular-nums">
+        <span className="ml-auto text-xs text-muted-foreground tabular-nums">
           {open
             ? t('Hide')
             : t('{count, plural, =1 {1 option} other {# options}}', { count })}
         </span>
         <ChevronDown
-          aria-hidden="true"
           className={cn(
             'h-4 w-4 text-muted-foreground transition-transform duration-200',
             !open && '-rotate-90',
@@ -92,12 +88,11 @@ function AdvancedSection({
       <CollapsibleContent
         className={cn(
           'overflow-hidden',
-          'data-[state=open]:animate-in data-[state=closed]:animate-out',
-          'data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0',
-          'data-[state=open]:slide-in-from-top-1 data-[state=closed]:slide-out-to-top-1',
+          'data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up',
+          'motion-reduce:animate-none',
         )}
       >
-        <div className={cn('pt-3.5 flex flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
+        <div className={cn('pt-3 flex flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
           {children}
         </div>
       </CollapsibleContent>

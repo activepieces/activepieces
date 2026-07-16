@@ -9,6 +9,7 @@ type TextInputWithMentionsProps = {
   disabled?: boolean;
   enableMarkdown?: boolean;
   autoFocus?: boolean;
+  outputFormat?: 'text' | 'html';
 };
 
 export const TextInputWithMentions = (props: TextInputWithMentionsProps) => {

@@ -2,13 +2,12 @@ import { PieceProperty, PropertyGroup } from '@activepieces/pieces-framework';
 import { PropertyExecutionType, PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Info, SquareFunction } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { RequiredFieldAsterisk } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,
   TooltipContent,
@@ -17,6 +16,7 @@ import {
 import { formUtils } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
+import { DynamicValueToggleButton } from './dynamic-value-toggle-button';
 import { MentionChipsInput } from './mention-chips-input';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
@@ -30,6 +30,36 @@ function PropertyGroupTabs({
   const form = useFormContext();
   const tabKeys = group.props.filter((key) => !!properties[key]);
   const [activeKey, setActiveKey] = useState(tabKeys[0]);
+  const safeActiveKey = tabKeys.includes(activeKey) ? activeKey : tabKeys[0];
+
+  const tabsWrapperRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState<IndicatorRect | null>(null);
+  const tabsSignature = tabKeys.join('|');
+
+  useLayoutEffect(() => {
+    const wrapper = tabsWrapperRef.current;
+    if (!wrapper) return;
+    const list = wrapper.querySelector<HTMLElement>('[data-slot="tabs-list"]');
+    const measure = () => {
+      const active = wrapper.querySelector<HTMLElement>(
+        '[data-slot="tabs-trigger"][data-state="active"]',
+      );
+      if (!active) return;
+      setIndicator({
+        left: active.offsetLeft,
+        top: active.offsetTop,
+        width: active.offsetWidth,
+        height: active.offsetHeight,
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (list) observer.observe(list);
+    wrapper
+      .querySelectorAll<HTMLElement>('[data-slot="tabs-trigger"]')
+      .forEach((trigger) => observer.observe(trigger));
+    return () => observer.disconnect();
+  }, [safeActiveKey, tabsSignature]);
 
   const inputNameFor = (key: string) =>
     prefixValue.length > 0 ? `${prefixValue}.${key}` : key;
@@ -69,7 +99,6 @@ function PropertyGroupTabs({
   }
 
   const anyRequired = tabKeys.some((key) => properties[key].required);
-  const safeActiveKey = tabKeys.includes(activeKey) ? activeKey : tabKeys[0];
   const activeDynamic = isDynamicValue(valueByKey[safeActiveKey]);
   const activeFieldState = form.getFieldState(
     inputNameFor(safeActiveKey),
@@ -108,32 +137,32 @@ function PropertyGroupTabs({
         <span className="grow" />
 
         {allowDynamicValues && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Toggle
-                size="sm"
-                pressed={activeDynamic}
-                onPressedChange={() => toggleDynamic(safeActiveKey)}
-                disabled={disabled}
-                aria-label={t('Dynamic value')}
-                className="shrink-0"
-              >
-                <SquareFunction
-                  className={cn(
-                    'size-5',
-                    activeDynamic ? 'text-foreground' : 'text-muted-foreground',
-                  )}
-                />
-              </Toggle>
-            </TooltipTrigger>
-            <TooltipContent side="top">{t('Dynamic value')}</TooltipContent>
-          </Tooltip>
+          <DynamicValueToggleButton
+            pressed={activeDynamic}
+            onPressedChange={() => toggleDynamic(safeActiveKey)}
+            disabled={disabled}
+          />
         )}
       </FormLabel>
 
       <Tabs value={safeActiveKey} onValueChange={setActiveKey}>
-        <div className="overflow-hidden rounded-md border border-input bg-background">
-          <TabsList className="h-auto w-full gap-1 rounded-none bg-muted/50 p-1">
+        <div
+          ref={tabsWrapperRef}
+          className="overflow-hidden rounded-md border border-input bg-background"
+        >
+          <TabsList className="relative h-auto w-full gap-1 rounded-none bg-muted/50 p-1">
+            {indicator && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute z-0 rounded-sm bg-background shadow-sm transition-[left,width] duration-200 ease-[cubic-bezier(0.35,0,0.25,1)] motion-reduce:transition-none"
+                style={{
+                  left: indicator.left,
+                  top: indicator.top,
+                  width: indicator.width,
+                  height: indicator.height,
+                }}
+              />
+            )}
             {tabKeys.map((key) => {
               const property = properties[key];
               const fieldState = form.getFieldState(
@@ -151,7 +180,7 @@ function PropertyGroupTabs({
                   disabled={disabled}
                   aria-invalid={hasError}
                   className={cn(
-                    'flex-1 gap-1.5 rounded-sm px-2 py-1.5 text-sm font-medium transition-[color,background-color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring/50 data-[state=active]:bg-background data-[state=active]:shadow-sm',
+                    'relative z-10 flex-1 gap-1.5 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring/50 data-[state=active]:bg-transparent data-[state=active]:shadow-none',
                     hasError
                       ? 'text-destructive data-[state=active]:text-destructive'
                       : 'text-muted-foreground hover:text-foreground data-[state=active]:text-foreground',
@@ -174,7 +203,7 @@ function PropertyGroupTabs({
                       className={cn(
                         'inline-flex min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-xs font-semibold leading-none tabular-nums',
                         active
-                          ? 'bg-primary/10 text-primary'
+                          ? 'bg-muted text-foreground'
                           : 'bg-muted-foreground/15 text-muted-foreground',
                       )}
                     >
@@ -262,4 +291,11 @@ type PropertyGroupTabsProps = {
   prefixValue: string;
   propertySettings: Record<string, PropertySettings> | null;
   disabled: boolean;
+};
+
+type IndicatorRect = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 };

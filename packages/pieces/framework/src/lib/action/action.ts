@@ -1,7 +1,7 @@
 import * as z from "zod/mini";
 import { ActionContext } from '../context';
 import type { OutputSchema } from '../output-schema';
-import { ActionBase, Audience, AiMetadata, PropertyGroup } from '../piece-metadata';
+import { ActionBase, Audience, AiMetadata, ActionClassification, PropertyGroup } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 
@@ -40,6 +40,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   outputSchema?: OutputSchema
   audience?: Audience
   aiMetadata?: AiMetadata
+  classification?: ActionClassification
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,6 +58,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
     public readonly outputSchema?: OutputSchema,
     public readonly audience?: Audience,
     public readonly aiMetadata?: AiMetadata,
+    public readonly classification?: ActionClassification,
   ) { }
 }
 
@@ -93,5 +95,6 @@ export const createAction = <
     params.outputSchema,
     params.audience,
     params.aiMetadata,
+    params.classification,
   )
 }

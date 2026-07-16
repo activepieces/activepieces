@@ -4,7 +4,16 @@ description: 'Learn about different types of properties used in triggers / actio
 icon: 'input-pipe'
 ---
 
-Properties are used in actions and triggers to collect information from the user. They are also displayed to the user for input. Here are some commonly used properties:
+import {
+  ShortTextPreview, LongTextPreview, RichTextPreview, CheckboxPreview, CheckboxRevealsPreview,
+  MarkdownPreview, DateTimePreview, DateRangePreview, NumberPreview, NumberStepperPreview,
+  StaticDropdownPreview, CardsPreview, StaticMultiSelectPreview, JsonPreview, DictionaryPreview,
+  FilePreview, ColorPreview, ArrayStringsPreview, ArrayFieldsPreview, DropdownPreview,
+  MultiSelectDropdownPreview, DynamicPropertiesPreview, CustomPreview, HalfWidthPreview,
+  SegmentedTabsPreview, FilterBuilderPreview,
+} from '/snippets/prop-previews.jsx';
+
+Properties are used in actions and triggers to collect information from the user. They are also displayed to the user for input. Each property renders as a labelled field in the step settings form — the previews below show exactly what the user sees.
 
 ## Basic Properties
 
@@ -14,7 +23,7 @@ These properties collect basic information from the user.
 
 This property collects a short text input from the user.
 
-**Example:**
+<ShortTextPreview />
 
 ```typescript
 Property.ShortText({
@@ -22,6 +31,7 @@ Property.ShortText({
   description: 'Enter your name',
   required: true,
   defaultValue: 'John Doe',
+  placeholder: 'Enter your name',
 });
 ```
 
@@ -29,7 +39,7 @@ Property.ShortText({
 
 This property collects a long text input from the user.
 
-**Example:**
+<LongTextPreview />
 
 ```typescript
 Property.LongText({
@@ -39,11 +49,45 @@ Property.LongText({
 });
 ```
 
+### Rich Text
+
+This property gives the user a formatting toolbar (bold, italic, underline, links, lists) and preserves `{{ variables }}` inserted from previous steps. Pair it with a sibling dropdown via `formatProperty` to let the user switch between **plain text** and **HTML** — the returned value is a plain string in the chosen format.
+
+<RichTextPreview />
+
+```typescript
+props: {
+  body_type: Property.StaticDropdown({
+    displayName: 'Body Type',
+    required: true,
+    defaultValue: 'plain_text',
+    display: 'cards',
+    options: {
+      options: [
+        { label: 'Plain text', value: 'plain_text', description: 'Simple', icon: 'text' },
+        { label: 'HTML', value: 'html', description: 'Rich + styled', icon: 'code' },
+      ],
+    },
+  }),
+  body: Property.RichText({
+    displayName: 'Body',
+    description: 'Body of the email',
+    required: true,
+    // Name of the sibling dropdown whose value selects the editing mode.
+    formatProperty: 'body_type',
+  }),
+}
+```
+
+<Tip>
+  `formatProperty` maps the sibling value by convention: `plain_text` / `plain` / `text` → plain, `html` → rich HTML, `markdown` / `md` → markdown. Anything else falls back to plain.
+</Tip>
+
 ### Checkbox
 
-This property presents a checkbox for the user to select or deselect.
+This property presents a toggle for the user to switch on or off.
 
-**Example:**
+<CheckboxPreview />
 
 ```typescript
 Property.Checkbox({
@@ -52,6 +96,27 @@ Property.Checkbox({
   required: true,
   defaultValue: false,
 });
+```
+
+You can also **reveal nested fields** only when the checkbox is on by listing their names in `reveals`. The revealed fields appear indented beneath the toggle.
+
+<CheckboxRevealsPreview />
+
+```typescript
+props: {
+  has_attachment: Property.Checkbox({
+    displayName: 'Has attachment',
+    description: 'Only match emails with a file',
+    required: false,
+    defaultValue: false,
+    reveals: ['attachment_name'],
+  }),
+  attachment_name: Property.ShortText({
+    displayName: 'Attachment name',
+    required: false,
+    placeholder: 'e.g. invoice.pdf',
+  }),
+}
 ```
 
 ### Markdown
@@ -65,7 +130,7 @@ This property displays a markdown snippet to the user, useful for documentation 
 
 The default value for `variant` is **INFO**.
 
-**Example:**
+<MarkdownPreview />
 
 ```typescript
 Property.MarkDown({
@@ -83,7 +148,7 @@ Property.MarkDown({
 
 This property collects a date and time from the user.
 
-**Example:**
+<DateTimePreview />
 
 ```typescript
 Property.DateTime({
@@ -94,11 +159,35 @@ Property.DateTime({
 });
 ```
 
+### Date Range
+
+This property collects a relative or absolute time window. The user picks a preset (last 24 hours, 7 / 30 / 90 days, this month) or a **custom range** with explicit *after* / *before* dates. Set `display: 'dropdown'` to render the presets as a compact select (used inside the filter builder); omit it for pill buttons.
+
+<DateRangePreview />
+
+```typescript
+Property.DateRange({
+  displayName: 'Date',
+  description: 'Limit results to a time window',
+  required: false,
+  display: 'dropdown',
+});
+```
+
+The value is `{ preset, after?, before? }`. Resolve it to concrete ISO bounds inside `run()` with `dateRangeUtils.resolve` — relative presets resolve against "now", so recurring flows roll the window forward:
+
+```typescript
+import { dateRangeUtils } from '@activepieces/pieces-framework';
+
+const { after, before } = dateRangeUtils.resolve(context.propsValue.date_range);
+// after / before are ISO strings (or undefined for an open bound)
+```
+
 ### Number
 
 This property collects a numeric input from the user.
 
-**Example:**
+<NumberPreview />
 
 ```typescript
 Property.Number({
@@ -108,11 +197,27 @@ Property.Number({
 });
 ```
 
+Set `display: 'stepper'` with `min` / `max` / `step` to render a compact −/value/+ control for bounded numbers.
+
+<NumberStepperPreview />
+
+```typescript
+Property.Number({
+  displayName: 'Max results',
+  required: false,
+  defaultValue: 10,
+  display: 'stepper',
+  min: 1,
+  max: 500,
+  step: 1,
+});
+```
+
 ### Static Dropdown
 
 This property presents a dropdown menu with predefined options.
 
-**Example:**
+<StaticDropdownPreview />
 
 ```typescript
 Property.StaticDropdown({
@@ -135,11 +240,30 @@ Property.StaticDropdown({
 });
 ```
 
+For a small set of choices, set `display: 'cards'` to render the options as selectable cards. Each option may carry an `icon` and a short `description`.
+
+<CardsPreview />
+
+```typescript
+Property.StaticDropdown({
+  displayName: 'Body Type',
+  required: true,
+  defaultValue: 'plain_text',
+  display: 'cards',
+  options: {
+    options: [
+      { label: 'Plain text', value: 'plain_text', description: 'Simple', icon: 'text' },
+      { label: 'HTML', value: 'html', description: 'Rich + styled', icon: 'code' },
+    ],
+  },
+});
+```
+
 ### Static Multiple Dropdown
 
 This property presents a dropdown menu with multiple selection options.
 
-**Example:**
+<StaticMultiSelectPreview />
 
 ```typescript
 Property.StaticMultiSelectDropdown({
@@ -169,7 +293,7 @@ Property.StaticMultiSelectDropdown({
 
 This property collects JSON data from the user.
 
-**Example:**
+<JsonPreview />
 
 ```typescript
 Property.Json({
@@ -184,7 +308,7 @@ Property.Json({
 
 This property collects key-value pairs from the user.
 
-**Example:**
+<DictionaryPreview />
 
 ```typescript
 Property.Object({
@@ -202,7 +326,7 @@ Property.Object({
 
 This property collects a file from the user, either by providing a URL or uploading a file.
 
-**Example:**
+<FilePreview />
 
 ```typescript
 Property.File({
@@ -212,11 +336,25 @@ Property.File({
 });
 ```
 
+### Color
+
+This property collects a color from the user via a swatch and hex input.
+
+<ColorPreview />
+
+```typescript
+Property.Color({
+  displayName: 'Brand color',
+  description: 'Pick a color',
+  required: false,
+});
+```
+
 ### Array of Strings
 
 This property collects an array of strings from the user.
 
-**Example:**
+<ArrayStringsPreview />
 
 ```typescript
 Property.Array({
@@ -231,7 +369,7 @@ Property.Array({
 
 This property collects an array of objects from the user.
 
-**Example:**
+<ArrayFieldsPreview />
 
 ```typescript
 Property.Array({
@@ -266,7 +404,7 @@ These properties provide more advanced options for collecting user input.
 
 This property allows for dynamically loaded options based on the user's input.
 
-**Example:**
+<DropdownPreview />
 
 ```typescript
 Property.Dropdown({
@@ -308,7 +446,7 @@ Property.Dropdown({
 
 This property allows for multiple selections from dynamically loaded options.
 
-**Example:**
+<MultiSelectDropdownPreview />
 
 ```typescript
 Property.MultiSelectDropdown({
@@ -348,7 +486,7 @@ Property.MultiSelectDropdown({
 
 This property is used to construct forms dynamically based on API responses or user input.
 
-**Example:**
+<DynamicPropertiesPreview />
 
 ```typescript
 
@@ -390,13 +528,95 @@ Property.DynamicProperties({
 });
 ```
 
+## Layout & display options
 
+Every property accepts a few optional hints that fine-tune how it renders. They are ignored where they don't apply, so they're always safe to add.
+
+| Hint | Applies to | Effect |
+| --- | --- | --- |
+| `placeholder` | text inputs | Grey hint text shown inside an empty field (e.g. `you@example.com`). |
+| `width: 'half'` | any prop inside a group | Renders two fields side-by-side instead of full-width. |
+| `icon` | any prop | A named icon shown beside the field in the filter builder. |
+| `advanced: false` | non-required props | Forces a normally-optional field to stay **outside** the collapsible *Advanced* section. |
+
+Non-required properties are collapsed into an **Advanced** section by default. Set `advanced: false` to promote an important optional field (like a message body) back into the main form, or `advanced: true` to push a field into Advanced.
+
+**Half-width fields**
+
+<HalfWidthPreview />
+
+```typescript
+props: {
+  first_name: Property.ShortText({ displayName: 'First name', required: false, width: 'half' }),
+  last_name: Property.ShortText({ displayName: 'Last name', required: false, width: 'half' }),
+}
+```
+
+## Grouping properties
+
+Actions and triggers can declare `propertyGroups` to organize related fields. Each group references its members by name and chooses how they render with `display`.
+
+### Segmented tabs
+
+`display: 'tabs'` groups a set of props into a segmented tab control — for example To / Cc / Bcc recipients.
+
+<SegmentedTabsPreview />
+
+```typescript
+createAction({
+  // ...
+  propertyGroups: [
+    {
+      key: 'recipients',
+      display: 'tabs',
+      label: 'Recipients',
+      description: 'Who receives this email. Use Cc and Bcc for additional recipients.',
+      props: ['to', 'cc', 'bcc'],
+    },
+  ],
+  props: {
+    to: Property.Array({ displayName: 'To', required: true }),
+    cc: Property.Array({ displayName: 'Cc', required: false }),
+    bcc: Property.Array({ displayName: 'Bcc', required: false }),
+  },
+});
+```
+
+### Filter builder
+
+For search / list actions, `display: 'builder'` renders a progressive **"Add filter"** builder: the user starts with an empty step and adds only the filters they need from a searchable, categorized picker. Each `builder` group becomes a picker category; a `footer` group pins a control (such as a result limit) below the list.
+
+<FilterBuilderPreview />
+
+```typescript
+createAction({
+  // ...
+  propertyGroups: [
+    { key: 'people',  display: 'builder', label: 'People',  icon: 'users',    props: ['from', 'to'] },
+    { key: 'time',    display: 'builder', label: 'Time',    icon: 'calendar', props: ['date_range'] },
+    { key: 'footer',  display: 'footer',  props: ['max_results'] },
+  ],
+  props: {
+    from: Property.ShortText({ displayName: 'From', required: false, icon: 'user', placeholder: 'sender@example.com' }),
+    to: Property.ShortText({ displayName: 'To', required: false, icon: 'send', placeholder: 'recipient@example.com' }),
+    date_range: Property.DateRange({ displayName: 'Date', required: false, display: 'dropdown', icon: 'calendar' }),
+    max_results: Property.Number({ displayName: 'Max results', required: false, defaultValue: 10, display: 'stepper', min: 1, max: 500 }),
+  },
+});
+```
+
+<Tip>
+  A filter row is shown when its value is set, so there's nothing extra to persist. Give filters short `placeholder` hints and an `icon` so each row reads clearly.
+</Tip>
 
 ### Custom Property (BETA)
 
 <Warning>
  This feature is still in BETA and not fully released yet, please let us know if you use it and face any issues and consider it a possibility could have breaking changes in the future
 </Warning>
+
+<CustomPreview />
+
 This is a property that lets you inject JS code into the frontend and manipulate the DOM of this content however you like, it is extremely useful in case you are [embedding](/embedding/overview) Activepieces and want to have a way to communicate with the SaaS embedding it.
 It has a `code` property which is a function that takes in an object parameter which will have the following schema:
 

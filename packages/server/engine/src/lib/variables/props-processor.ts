@@ -131,6 +131,7 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
+        case PropertyType.RICH_TEXT:
             return typeof value === 'string' ? [] : [`Expected string, received: ${originalValue}`]
         case PropertyType.NUMBER:
             return typeof value === 'number' && !Number.isNaN(value) ? [] : [`Expected number, received: ${originalValue}`]

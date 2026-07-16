@@ -3,6 +3,7 @@ import {
   PieceProperty,
   PiecePropertyMap,
   PropertyGroup,
+  PropertyType,
 } from '@activepieces/pieces-framework';
 import {
   ApFlagId,
@@ -18,6 +19,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { ActionErrorHandlingForm } from '../../piece-properties/action-error-handling';
 import { AdvancedSection } from '../../piece-properties/advanced-section';
+import { filterPropertyUtils } from '../../piece-properties/filter-property-utils';
 import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
 import { useStepSettingsContext } from '../step-settings-context';
 
@@ -73,20 +75,24 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const showAuthForTrigger =
     !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
 
-  const actionGroupedPropNames = collectGroupedPropNames(
+  const actionForcedEssentialNames = collectForcedEssentialNames(
     selectedAction?.propertyGroups,
+    actionPropsWithoutAuth,
   );
-  const triggerGroupedPropNames = collectGroupedPropNames(
+  const triggerForcedEssentialNames = collectForcedEssentialNames(
     selectedTrigger?.propertyGroups,
+    triggerPropsWithoutAuth,
   );
 
   const actionSplit = splitProps({
     props: actionPropsWithoutAuth,
-    groupedPropNames: actionGroupedPropNames,
+    forcedEssentialNames: actionForcedEssentialNames,
+    isFilterBuilder: hasFilterBuilderLayout(selectedAction?.propertyGroups),
   });
   const triggerSplit = splitProps({
     props: triggerPropsWithoutAuth,
-    groupedPropNames: triggerGroupedPropNames,
+    forcedEssentialNames: triggerForcedEssentialNames,
+    isFilterBuilder: hasFilterBuilderLayout(selectedTrigger?.propertyGroups),
   });
 
   const hideContinueOnFailure =
@@ -248,33 +254,69 @@ function isAdvancedProp(property: PieceProperty): boolean {
   if ('advanced' in property && property.advanced !== undefined) {
     return property.advanced;
   }
+  // Markdown blocks are informational (always required:false); never bury them in Advanced.
+  if (property.type === PropertyType.MARKDOWN) {
+    return false;
+  }
   return !property.required;
 }
 
-function collectGroupedPropNames(
+function hasSectionLayout(
   propertyGroups: PropertyGroup[] | undefined,
+): boolean {
+  return (propertyGroups ?? []).some(
+    (group) => group.display === 'section' || group.display === 'summary',
+  );
+}
+
+function hasFilterBuilderLayout(
+  propertyGroups: PropertyGroup[] | undefined,
+): boolean {
+  return (propertyGroups ?? []).some(
+    (group) => group.display === 'builder' || group.display === 'footer',
+  );
+}
+
+/**
+ * Props that must stay in the essential form regardless of their required flag:
+ * members of tabbed/sectioned groups, plus checkbox reveal targets in a section
+ * layout (they render inline within their toggle card, never in Advanced).
+ */
+function collectForcedEssentialNames(
+  propertyGroups: PropertyGroup[] | undefined,
+  props: PiecePropertyMap,
 ): Set<string> {
   const names = new Set<string>();
   (propertyGroups ?? [])
-    .filter((group) => group.display === 'tabs')
+    .filter((group) => group.display === 'tabs' || group.display === 'section')
     .forEach((group) => group.props.forEach((name) => names.add(name)));
+  if (hasSectionLayout(propertyGroups)) {
+    filterPropertyUtils
+      .collectRevealedNames(props)
+      .forEach((name) => names.add(name));
+  }
   return names;
 }
 
 function splitProps({
   props,
-  groupedPropNames,
+  forcedEssentialNames,
+  isFilterBuilder,
 }: {
   props: PiecePropertyMap;
-  groupedPropNames: Set<string>;
+  forcedEssentialNames: Set<string>;
+  isFilterBuilder: boolean;
 }): {
   essential: PiecePropertyMap;
   advanced: PiecePropertyMap;
 } {
+  if (isFilterBuilder) {
+    return { essential: props, advanced: {} as PiecePropertyMap };
+  }
   const essential: Record<string, PieceProperty> = {};
   const advanced: Record<string, PieceProperty> = {};
   for (const [name, property] of Object.entries(props)) {
-    if (!groupedPropNames.has(name) && isAdvancedProp(property)) {
+    if (!forcedEssentialNames.has(name) && isAdvancedProp(property)) {
       advanced[name] = property;
     } else {
       essential[name] = property;
