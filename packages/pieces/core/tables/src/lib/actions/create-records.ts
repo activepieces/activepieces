@@ -1,4 +1,4 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { CreateRecordsRequest } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
@@ -39,7 +39,13 @@ export const createRecords = createAction({
             }),
           };
         } catch {
-          return {};
+          return {
+            markdown: Property.MarkDown({
+              value:
+                "Couldn't load the fields for this table. If it's selected dynamically (e.g. from a previous step), use the \"Records (Raw)\" field below to provide records as JSON.",
+              variant: MarkdownVariant.INFO,
+            }),
+          };
         }
       },
     }),
@@ -60,9 +66,15 @@ export const createRecords = createAction({
       const rawArray = Array.isArray(rawRecords) ? rawRecords : [rawRecords];
       records = toCells({ rows: rawArray, fieldIdByKey: (name) => tableFields.find((field) => field.name === name)?.id });
     } else {
-      records = toCells({ rows: values['values'], fieldIdByKey: (externalId) => tableFields.find((field) => field.externalId === externalId)?.id });
+      const formRecords = values['values'];
+      if (!Array.isArray(formRecords) || formRecords.length === 0) {
+        throw new Error(
+          'No records provided. Select a table and fill in the records form, or use the "Records (Raw)" field to provide records as JSON.'
+        );
+      }
+      records = toCells({ rows: formRecords, fieldIdByKey: (externalId) => tableFields.find((field) => field.externalId === externalId)?.id });
       const fieldValidations = tablesCommon.createFieldValidations(tableFields);
-      for (const record of values['values']) {
+      for (const record of formRecords) {
         const cleanedRecord = Object.fromEntries(Object.entries(record).filter(([_, value]) => value != null && value !== ''));
         await propsValidation.validateZod(cleanedRecord, fieldValidations);
       }
