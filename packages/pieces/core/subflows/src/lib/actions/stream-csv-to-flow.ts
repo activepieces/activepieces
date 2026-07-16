@@ -75,9 +75,15 @@ export const streamCsvToSubflows = createAction({
         ],
       },
     }),
+    extraData: Property.Json({
+      displayName: 'Extra Data',
+      description:
+        'Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.',
+      required: false,
+    }),
   },
   async run(context) {
-    const { fileUrl, batchSize, delimiter } = context.propsValue;
+    const { fileUrl, batchSize, delimiter, extraData } = context.propsValue;
     if (!Number.isInteger(batchSize) || batchSize < 1) {
       throw new Error(
         JSON.stringify({ message: 'Rows per batch must be a positive integer.' })
@@ -135,7 +141,7 @@ export const streamCsvToSubflows = createAction({
               [PARENT_RUN_ID_HEADER]: context.run.id,
               [FAIL_PARENT_ON_FAILURE_HEADER]: 'false',
             },
-            body: { data: { batchIndex, headers, rows } },
+            body: { data: { batchIndex, headers, rows, extraData } },
           });
           return;
         } catch (error) {

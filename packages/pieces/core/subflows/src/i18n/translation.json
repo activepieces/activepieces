@@ -25,5 +25,7 @@
   "How many CSV rows to send in each subflow call.": "How many CSV rows to send in each subflow call.",
   "Delimiter": "Delimiter",
   "Comma": "Comma",
-  "Tab": "Tab"
+  "Tab": "Tab",
+  "Extra Data": "Extra Data",
+  "Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.": "Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step."
 }
