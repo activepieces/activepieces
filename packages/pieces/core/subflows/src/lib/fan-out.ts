@@ -45,6 +45,7 @@ export async function fanOutBatches<T>({
   }
   if (firstErrorBatchIndex === undefined && batch.length > 0) {
     start(batchIndex++, batch);
+    batch = [];
   }
   await Promise.allSettled(inFlight);
 

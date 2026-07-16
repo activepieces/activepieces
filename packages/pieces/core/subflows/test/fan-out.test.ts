@@ -70,4 +70,49 @@ describe('fanOutBatches', () => {
     expect(payload.failedBatchIndex).toBe(1);
     expect(payload.batchesDispatched).toBeLessThan(5);
   });
+
+  test('rowsProcessed excludes the undispatched partial batch when the failure aborts the stream mid-way', async () => {
+    let error: Error | undefined;
+    try {
+      await fanOutBatches<number>({
+        records: gen([0, 1, 2, 3, 4]),
+        batchSize: 3,
+        maxInFlight: 1,
+        dispatch: async ({ batchIndex }) => {
+          if (batchIndex === 0) {
+            throw new Error('boom');
+          }
+        },
+      });
+    } catch (e) {
+      error = e as Error;
+    }
+
+    const payload = JSON.parse(error!.message);
+    expect(payload.failedBatchIndex).toBe(0);
+    expect(payload.rowsProcessed).toBe(3);
+  });
+
+  test('rowsProcessed counts every dispatched row when the failure is only detected at drain', async () => {
+    let error: Error | undefined;
+    try {
+      await fanOutBatches<number>({
+        records: gen([0, 1, 2, 3, 4]),
+        batchSize: 3,
+        maxInFlight: 5,
+        dispatch: async ({ batchIndex }) => {
+          if (batchIndex === 0) {
+            await sleep(20);
+            throw new Error('boom');
+          }
+        },
+      });
+    } catch (e) {
+      error = e as Error;
+    }
+
+    const payload = JSON.parse(error!.message);
+    expect(payload.failedBatchIndex).toBe(0);
+    expect(payload.rowsProcessed).toBe(5);
+  });
 });
