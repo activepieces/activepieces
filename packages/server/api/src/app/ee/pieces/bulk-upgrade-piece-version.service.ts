@@ -1,4 +1,4 @@
-import { isNil, PlatformId, tryCatch, UserId } from '@activepieces/core-utils'
+import { Cursor, isNil, PlatformId, tryCatch, UserId } from '@activepieces/core-utils'
 import {
     BulkUpgradePieceVersionFlowResult,
     BulkUpgradePieceVersionRequestBody,
@@ -19,10 +19,10 @@ import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionValidationUtil } from '../../flows/flow-version/flow-version-validator-util'
-import Paginator from '../../helper/pagination/paginator'
 import { projectService } from '../../project/project-service'
 
 const CONCURRENCY = 10
+const PAGE_SIZE = 100
 
 async function willFlowBeValidAfterBump({ flowVersion, bumpOperations, platformId, log }: WillFlowBeValidParams): Promise<boolean> {
     let version = flowVersion
@@ -98,19 +98,24 @@ export const bulkUpgradePieceVersionService = (log: FastifyBaseLogger) => ({
             return { autoUpgradeable: [], needsManual: [], failed: [] }
         }
 
-        const { data: flows } = await flowService(log).list({ projectIds, limit: Paginator.NO_LIMIT, includeTriggerSource: false })
-        const candidates = flows.filter((flow) =>
-            !isNil(flow.publishedVersionId) && (isNil(flowIds) || flowIds.includes(flow.id)),
-        )
-
         const limit = pLimit(CONCURRENCY)
-        const outcomes = await Promise.all(candidates.map((flow) => limit(async (): Promise<FlowOutcome | null> => {
-            const { data, error } = await tryCatch(() => classifyAndMaybeApply({ flow, pieceName, targetVersion, dryRun, platformId, userId, log }))
-            if (error) {
-                return { kind: 'failed', failure: { flowId: flow.id, flowName: flow.version.displayName, message: error.message } }
-            }
-            return data
-        })))
+        const outcomes: (FlowOutcome | null)[] = []
+        let cursor: Cursor = null
+        do {
+            const page = await flowService(log).list({ projectIds, cursorRequest: cursor, limit: PAGE_SIZE, includeTriggerSource: false })
+            const candidates = page.data.filter((flow) =>
+                !isNil(flow.publishedVersionId) && (isNil(flowIds) || flowIds.includes(flow.id)),
+            )
+            const pageOutcomes = await Promise.all(candidates.map((flow) => limit(async (): Promise<FlowOutcome | null> => {
+                const { data, error } = await tryCatch(() => classifyAndMaybeApply({ flow, pieceName, targetVersion, dryRun, platformId, userId, log }))
+                if (error) {
+                    return { kind: 'failed', failure: { flowId: flow.id, flowName: flow.version.displayName, message: error.message } }
+                }
+                return data
+            })))
+            outcomes.push(...pageOutcomes)
+            cursor = page.next
+        } while (!isNil(cursor))
 
         return {
             autoUpgradeable: outcomes.flatMap((outcome) => outcome?.kind === 'autoUpgradeable' ? [outcome.summary] : []),
