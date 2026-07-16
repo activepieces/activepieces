@@ -69,7 +69,7 @@
     "chalk": "4.1.2",
     "concurrently": "8.2.1",
     "dotenv": "17.2.3",
-    "esbuild": "0.25.0",
+    "esbuild": "0.28.1",
     "eslint": "8.57.0",
     "eslint-config-prettier": "10.1.5",
     "eslint-import-resolver-alias": "1.1.2",
