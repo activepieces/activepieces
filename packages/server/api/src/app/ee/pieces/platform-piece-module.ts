@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-pr
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
 import { pieceInstallService } from '../../pieces/piece-install-service'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { bulkUpgradePieceVersionService } from './bulk-upgrade-piece-version.service'
@@ -61,6 +62,7 @@ const installPieceParams = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
+    preValidation: attachMultipartFieldsToBody,
     schema: {
         tags: ['pieces'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
