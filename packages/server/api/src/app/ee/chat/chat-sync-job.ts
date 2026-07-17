@@ -338,13 +338,6 @@ function extractToolCallsSummary(messages: PersistedChatMessage[]): Array<{ name
         for (const part of msg.parts) {
             if (part.type !== PersistedChatPartType.TOOL_CALL) continue
 
-            // A still-open gate card (PENDING) is neither a success nor a failure — it's an
-            // unanswered/parked gate. Counting it as a failure would inflate the failure rate in
-            // analytics, so skip it; only resolved calls are tallied.
-            if (part.status === PersistedToolCallStatus.PENDING) {
-                continue
-            }
-
             const name = part.toolName
             if (!usage[name]) {
                 usage[name] = { successCount: 0, failureCount: 0 }

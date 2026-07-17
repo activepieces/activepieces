@@ -11,7 +11,6 @@ import {
   PersistedChatPartType,
   PersistedToolCallStatus,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
 
@@ -229,18 +228,6 @@ function persistedPartToUIPart(
       };
     case PersistedChatPartType.TOOL_CALL: {
       const toolTitle = part.title ?? part.toolName;
-      if (part.status === PersistedToolCallStatus.PENDING) {
-        // A gate card persisted the moment it opened (Fix 2). Rehydrate it in the interactive
-        // input-available state so it renders and can be answered from history alone after a reload.
-        return {
-          type: 'dynamic-tool',
-          toolCallId: part.toolCallId,
-          toolName: part.toolName,
-          title: toolTitle,
-          state: 'input-available',
-          input: part.input,
-        };
-      }
       if (part.status === PersistedToolCallStatus.COMPLETED) {
         return {
           type: 'dynamic-tool',
@@ -253,20 +240,6 @@ function persistedPartToUIPart(
             typeof part.output === 'string'
               ? part.output
               : JSON.stringify(part.output),
-        };
-      }
-      if (part.status === PersistedToolCallStatus.SUPERSEDED) {
-        // A gate the user abandoned by sending a new message (Fix R3a). Render it resolved and
-        // non-interactive (output-available, never input-available) so the buttons are gone and it
-        // reads as dismissed — never re-openable.
-        return {
-          type: 'dynamic-tool',
-          toolCallId: part.toolCallId,
-          toolName: part.toolName,
-          title: toolTitle,
-          state: 'output-available',
-          input: part.input,
-          output: JSON.stringify({ superseded: true, dismissed: true }),
         };
       }
       return {
@@ -331,6 +304,7 @@ function mapPersistedToUIMessages(
     ...(msg.thinkingDurationMs !== undefined && {
       thinkingDurationMs: msg.thinkingDurationMs,
     }),
+    ...(msg.feedback !== undefined && { feedback: msg.feedback }),
   }));
 }
 
@@ -355,20 +329,6 @@ function mapHistoryToUIMessages(
     }
   }
   return result;
-}
-
-// A gate card still awaiting the user's answer (Fix R6b): a tool part rehydrated to input-available
-// on the LATEST assistant message. Lets onStaleCheck tell a parked-gate turn (settle quietly, chip
-// stays) from a genuinely-empty finish (surface the "no response" affordance).
-function hasPendingGateCard(messages: ChatUIMessage[]): boolean {
-  const lastMessage = messages[messages.length - 1];
-  if (!lastMessage || lastMessage.role !== 'assistant') {
-    return false;
-  }
-  return lastMessage.parts.some(
-    (part) =>
-      chatPartUtils.isAnyToolPart(part) && part.state === 'input-available',
-  );
 }
 
 function extractQuickRepliesFromHistory(
@@ -610,13 +570,6 @@ function sanitizeTitle(title: string): string {
   return title.replace(/[*_`~#]/g, '').trim();
 }
 
-function formatKbBytes(bytes: number): string {
-  if (bytes <= 0) return t('0 KB');
-  const kb = bytes / 1024;
-  if (kb < 1) return t('<1 KB');
-  return t('{kb} KB', { kb: Math.round(kb) });
-}
-
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
   sanitizeTitle,
@@ -625,11 +578,9 @@ export const chatUtils = {
   formatToolActionName: formatToolActiveTitle,
   formatToolDoneTitle,
   mapHistoryToUIMessages,
-  hasPendingGateCard,
   extractQuickRepliesFromHistory,
   extractReceiptsFromHistory,
   extractImagesFromHistory,
   extractFilesFromHistory,
   extractBuildsFromHistory,
-  formatKbBytes,
 };

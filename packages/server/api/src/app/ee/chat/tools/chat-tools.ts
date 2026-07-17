@@ -1,12 +1,13 @@
-import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { AppConnectionStatus, AppConnectionType, chatCodeModeUtils, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
 import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
@@ -113,47 +114,6 @@ async function findConnectionsForPiece({ pieceName, projects, platformId, log }:
     return { pickConnection: true, piece: shortName, displayName, connections: flat, requiredScopes }
 }
 
-// Auto-bind a connection for a connection-gated piece when none was picked and none was passed
-// inline — the case Code Mode always hits (its tool calls can't pop an interactive picker). Scans
-// the working project for ACTIVE connections of this piece: exactly one → use it; several → report
-// ambiguity so the caller can ask the user; none → fall through (let the normal missing-auth path
-// surface, e.g. the model shows the picker / offers to connect).
-async function autoResolveActiveConnection({ pieceName, projectId, platformId, log }: {
-    pieceName: string
-    projectId: string
-    platformId?: string
-    log: FastifyBaseLogger
-}): Promise<AutoResolveConnectionResult> {
-    if (isNil(platformId)) {
-        return { kind: 'none' }
-    }
-    const { data: connections, error } = await tryCatch(() => appConnectionService(log).list({
-        projectId,
-        platformId,
-        pieceName,
-        status: [AppConnectionStatus.ACTIVE],
-        cursorRequest: null,
-        displayName: undefined,
-        scope: undefined,
-        externalIds: undefined,
-        limit: CROSS_PROJECT_CONNECTION_LIMIT,
-    }))
-    if (error || isNil(connections) || connections.data.length === 0) {
-        return { kind: 'none' }
-    }
-    if (connections.data.length === 1) {
-        const only = connections.data[0]
-        return { kind: 'single', externalId: only.externalId, label: only.displayName }
-    }
-    const shortName = pieceShortName(pieceName)
-    return {
-        kind: 'ambiguous',
-        piece: shortName,
-        displayName: pieceDisplayLabel(shortName),
-        labels: connections.data.map((c) => c.displayName),
-    }
-}
-
 async function listFlowsAcrossProjects({ projects, status, log }: {
     projects: Project[]
     status?: string
@@ -250,6 +210,17 @@ async function listResourceForProject({ resource, projectId, status, log }: {
     }
 }
 
+async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
+    userId: string
+    projectId: string
+    toolName: string
+    log: FastifyBaseLogger
+}): Promise<string | null> {
+    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    const denial = checker.check(Permission.WRITE_RUN, toolName)
+    return isNil(denial) ? null : denial.content.map((part) => part.text).join(' ')
+}
+
 async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, log }: {
     toolName: string
     toolInput: Record<string, unknown>
@@ -297,7 +268,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_execute_action': {
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log })
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }
         case 'ap_run_code': {
             return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
@@ -308,7 +279,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log })
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -377,12 +348,14 @@ function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }
     }
 }
 
-async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log }: {
+async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
     conversationId?: string
     platformId?: string
+    userId: string
+    requireWritePermission?: boolean
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const pieceName = toolInput.pieceName as string
@@ -408,6 +381,12 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
     if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
         return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
     }
+    if (requireWritePermission) {
+        const denial = await checkWriteRunPermission({ userId, projectId: resolvedProjectId, toolName: 'ap_execute_action', log })
+        if (denial) {
+            return { success: false, error: denial }
+        }
+    }
 
     let parsedInput = toolInput.input
     if (typeof parsedInput === 'string') {
@@ -416,78 +395,15 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
             parsedInput = parsed as Record<string, unknown>
         }
     }
-
-    // Resolve + validate the action before running it, so the agent self-corrects a
-    // wrong action name (with a "did you mean" hint), a bad input shape, or a missing
-    // connection — instead of guessing and crashing at runtime.
-    const lookup = await mcpUtils.lookupPieceComponent({ pieceName, componentName: actionName, componentType: 'action', projectId: resolvedProjectId, log })
-    if (lookup.error) {
-        return { success: false, error: lookup.error.content[0]?.text ?? `Action "${actionName}" not found on "${normalizedPiece}".` }
-    }
-    const baseInput = isObject(parsedInput) ? parsedInput : {}
-
-    // No connection picked yet and none passed inline. The interactive picker can't fire from
-    // inside Code Mode (model-written JS calling tools.ap_execute_action can't show a UI card and
-    // wait), so a connection-gated call would otherwise run auth-less and come back empty. Auto-bind
-    // the project's single ACTIVE connection for this piece (and make it sticky so the rest of the
-    // turn — and any picker the model later shows — agrees). Multiple actives are genuinely
-    // ambiguous: return a corrective the model can act on instead of guessing an account.
-    const pieceRequiresAuth = lookup.component.requireAuth && !isNil(lookup.piece.auth)
-    const inlineAuth = typeof baseInput.auth === 'string' ? baseInput.auth : undefined
-    if (isNil(connectionExternalId) && isNil(inlineAuth) && pieceRequiresAuth) {
-        const auto = await autoResolveActiveConnection({ pieceName: normalizedPiece, projectId: resolvedProjectId, platformId, log })
-        if (auto.kind === 'ambiguous') {
-            return { success: false, error: `Multiple connected ${auto.displayName} accounts exist (${auto.labels.join(', ')}). I can't pick one for you from inside code — call ap_show_connection_picker for "${auto.piece}" first so the user chooses, then re-run.` }
-        }
-        if (auto.kind === 'single') {
-            connectionExternalId = auto.externalId
-            connectionLabel = auto.label
-            if (conversationId) {
-                await chatApprovalGate.storeSelectedConnection({
-                    conversationId,
-                    pieceName: normalizedPiece,
-                    externalId: auto.externalId,
-                    label: auto.label,
-                    projectId: resolvedProjectId,
-                })
-            }
-        }
-    }
-
-    const diagnosis = mcpUtils.diagnosePieceProps({
-        props: lookup.component.props,
-        input: connectionExternalId ? { ...baseInput, auth: connectionExternalId } : baseInput,
-        pieceAuth: lookup.piece.auth,
-        requireAuth: lookup.component.requireAuth,
-        componentType: 'action',
-    })
-    if (diagnosis.missing.length > 0 || diagnosis.unknownKeys.length > 0) {
-        return { success: false, error: `Fix the input for "${normalizedPiece}/${actionName}" before running:\n${diagnosis.parts.join('\n')}` }
-    }
-
-    // Code Mode bridged call: return the action's FULL raw output payload and DO NOT offload it to a
-    // file. The offload (preview + fileId) exists to keep the MODEL's context lean; here the result
-    // is consumed by the in-VM code, which returns only a small value. Offloading it would collapse
-    // Code Mode back into fetch→file→ap_run_code with zero in-VM advantage.
-    const wantsRawResult = chatCodeModeUtils.isRawArgs(toolInput)
-
     const result = await executeAdhocAction({
         projectId: resolvedProjectId,
         pieceName,
         actionName,
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
-        returnRawOutput: wantsRawResult,
-        ...(wantsRawResult ? {} : spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log }))),
+        ...spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
-
-    // Hand the bare payload to the bridge so the in-VM code gets the data directly (the bridge's
-    // unwrapToolResult passes a non-envelope value through untouched). On a failed/empty run
-    // executeAdhocAction returns its normal formatted result instead, so the code still sees status.
-    if (wantsRawResult && isObject(result) && 'rawOutput' in result) {
-        return result.rawOutput
-    }
 
     if (typeof result === 'object' && result !== null) {
         const resultObj = result as Record<string, unknown>
@@ -524,15 +440,17 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
 
     let projectId = projects[0]?.id
     if (conversationId) {
-        // skipStaleRecovery: called by the live worker mid-turn (Code Mode) only to resolve the
-        // conversation's project. A lagged heartbeat must not let this read crash-resume the running turn.
-        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log, skipStaleRecovery: true })
+        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
         if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
             projectId = conversation.projectId
         }
     }
     if (isNil(projectId)) {
         return { text: '❌ No projects available. Create a project first.', producedFiles: [] }
+    }
+    const denial = await checkWriteRunPermission({ userId, projectId, toolName: 'ap_run_code', log })
+    if (denial) {
+        return { text: `❌ ${denial}`, producedFiles: [] }
     }
 
     const baseInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : {}
@@ -673,11 +591,6 @@ type FindConnectionsResult =
     | { noAuthRequired: true, piece: string }
     | { needsConnection: true, piece: string, displayName: string, requiredScopes: string[] }
     | { pickConnection: true, piece: string, displayName: string, connections: ConnectionWithScopes[], requiredScopes: string[] }
-
-type AutoResolveConnectionResult =
-    | { kind: 'none' }
-    | { kind: 'single', externalId: string, label: string }
-    | { kind: 'ambiguous', piece: string, displayName: string, labels: string[] }
 
 type RawProducedFile = {
     name: string

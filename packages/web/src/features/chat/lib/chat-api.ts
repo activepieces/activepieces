@@ -1,5 +1,6 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
+  type ChatFeedbackReason,
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
@@ -73,25 +74,38 @@ async function approveToolCall({
   gateId,
   approved,
   payload,
-  conversationId,
 }: {
   gateId: string;
   approved: boolean;
   payload?: Record<string, unknown>;
-  conversationId: string;
-}): Promise<{ success: boolean }> {
-  // conversationId lets the server route a PARKED answer without the Redis gate mapping (which has a
-  // 15-min TTL and is wiped on a Redis restart) — the server validates it against the persisted
-  // pending gate card. `success: false` means the answer routed nowhere; the caller keeps the card.
-  return api.post<{ success: boolean }>(`/v1/chat/tool-approvals/${gateId}`, {
+}): Promise<void> {
+  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, {
     approved,
     payload,
-    conversationId,
   });
 }
 
 async function cancelConversation(conversationId: string): Promise<void> {
   return api.post<void>(`/v1/chat/conversations/${conversationId}/cancel`);
+}
+
+async function submitMessageFeedback({
+  conversationId,
+  messageIndex,
+  rating,
+  reasons,
+  comment,
+}: {
+  conversationId: string;
+  messageIndex: number;
+  rating: 'up' | 'down' | null;
+  reasons?: ChatFeedbackReason[];
+  comment?: string;
+}): Promise<void> {
+  return api.post<void>(
+    `/v1/chat/conversations/${conversationId}/messages/${messageIndex}/feedback`,
+    { rating, reasons, comment },
+  );
 }
 
 async function getPickerConnections({
@@ -106,12 +120,9 @@ async function getPickerConnections({
   });
 }
 
-async function getPendingGate(conversationId: string): Promise<{
-  gateId: string;
-  toolName: string;
-  displayName: string;
-  toolInput: Record<string, unknown>;
-} | null> {
+async function getPendingGate(
+  conversationId: string,
+): Promise<PendingGate | null> {
   return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
 }
 
@@ -129,7 +140,15 @@ export const chatApi = {
   sendMessage,
   approveToolCall,
   cancelConversation,
+  submitMessageFeedback,
   getPickerConnections,
   getPendingGate,
   recordLanding,
+};
+
+export type PendingGate = {
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
 };

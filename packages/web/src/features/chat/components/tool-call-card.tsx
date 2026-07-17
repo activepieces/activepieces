@@ -1,6 +1,6 @@
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -29,10 +29,12 @@ export function ToolCallCard({ toolPart }: { toolPart: AnyToolPart }) {
         {displayName}
       </TextShimmer>
     ) : (
-      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-        {status === 'failed' && (
-          <X className="size-3 shrink-0" strokeWidth={2.5} />
+      <span
+        className={cn(
+          'text-sm',
+          status === 'failed' ? 'text-destructive' : 'text-muted-foreground',
         )}
+      >
         {displayName}
       </span>
     );

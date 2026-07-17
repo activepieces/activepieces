@@ -3,11 +3,6 @@ import { z } from 'zod'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
 import { SsoDomainVerification } from './sso-domain-verification'
 
-export enum FilteredPieceBehavior {
-    ALLOWED = 'ALLOWED',
-    BLOCKED = 'BLOCKED',
-}
-
 export const PlatformUsage = z.object({
     totalAiCreditsUsed: z.number(),
     totalAiCreditsUsedThisMonth: z.number(),
@@ -167,14 +162,6 @@ export const Platform = z.object({
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
-    /**
-    * @deprecated Use projects filter instead.
-    */
-    filteredPieceNames: z.array(z.string()),
-    /**
-    * @deprecated Use projects filter instead.
-    */
-    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
     googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),
@@ -204,8 +191,6 @@ export const PlatformWithoutSensitiveData = z.object({
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),
-    filteredPieceNames: z.array(z.string()),
-    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior),
     cloudAuthEnabled: z.boolean(),
     googleAuthEnabled: z.boolean(),
     enforceAllowedAuthDomains: z.boolean(),

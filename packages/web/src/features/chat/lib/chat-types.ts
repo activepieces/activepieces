@@ -1,10 +1,9 @@
 import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
 import {
   BatchProgressData,
-  ChatContextCompression,
+  ChatMessageFeedback,
   ChatToolName,
   ChatToolOutputs,
-  chatPersistenceUtils,
   chatToolClassification,
 } from '@activepieces/shared';
 import {
@@ -15,7 +14,7 @@ import {
   UIMessage,
 } from 'ai';
 
-export type ChatUIMessage = UIMessage;
+export type ChatUIMessage = UIMessage & { feedback?: ChatMessageFeedback };
 
 export type AnyToolPart = ToolUIPart | DynamicToolUIPart;
 
@@ -121,20 +120,6 @@ function parseTypedToolOutput<T extends ChatToolName>(
   _toolName: T,
 ): TypedToolOutput<ChatToolOutputs[T]> {
   return parseToolOutput(part) as TypedToolOutput<ChatToolOutputs[T]>;
-}
-
-// The "Context compression" metadata the worker rides on a reduced tool result's
-// structuredContent. Code Mode (ap_run_tools) already shows its own savings line on
-// its card, so it never double-badges here.
-function extractContextCompression(
-  part: AnyToolPart,
-): ChatContextCompression | null {
-  if (getToolPartName(part) === 'ap_run_tools') return null;
-  const parsed = parseToolOutput(part);
-  if (parsed.state !== 'success' || !isObject(parsed.data)) return null;
-  const structured = (parsed.data as { structuredContent?: unknown })
-    .structuredContent;
-  return chatPersistenceUtils.readContextCompression(structured);
 }
 
 function isThinkingStatusTool(name: string): boolean {
@@ -293,7 +278,6 @@ export const chatPartUtils = {
   extractToolOutputText,
   extractToolTitles,
   extractPieceNames,
-  extractContextCompression,
   parseToolOutput,
   parseTypedToolOutput,
   findLastToolPart,

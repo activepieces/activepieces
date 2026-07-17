@@ -7,9 +7,13 @@ import { chatHelpers } from './chat-helpers'
 import { chatVisibilityGuard } from './chat-visibility-helper'
 
 export const chatModule: FastifyPluginAsyncZod = async (app) => {
+    app.addHook('preHandler', chatVisibilityGuard)
+    await app.register(chatController, { prefix: '/v1/chat' })
+
     systemJobHandlers.registerJobHandler(SystemJobName.CHAT_STALE_SWEEP, async () => {
         await chatHelpers.recoverAllStaleStreamingConversations({ log: app.log })
     })
+
     await systemJobsSchedule(app.log).upsertJob({
         job: {
             name: SystemJobName.CHAT_STALE_SWEEP,
@@ -21,6 +25,4 @@ export const chatModule: FastifyPluginAsyncZod = async (app) => {
             cron: '* * * * *',
         },
     })
-    app.addHook('preHandler', chatVisibilityGuard)
-    await app.register(chatController, { prefix: '/v1/chat' })
 }

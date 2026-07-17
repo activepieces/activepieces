@@ -1,4 +1,4 @@
-import { isNil, isObject, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
@@ -751,16 +751,9 @@ function rankActionsByIntent({ actions, forIntent }: { actions: RankableAction[]
     return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, 5).map((s) => s.name)
 }
 
-// Some models emit object/array tool args as JSON strings; parse them back before Zod validation
-// (used via z.preprocess on structured MCP tool inputs).
-function parseJsonStringArg(value: unknown): unknown {
-    return typeof value === 'string' ? parseToJsonIfPossible(value) : value
-}
-
 const INTENT_STOP_WORDS = new Set(['the', 'all', 'any', 'and', 'for', 'with', 'get', 'from', 'into', 'out', 'list', 'show', 'find', 'see', 'view', 'fetch', 'pull'])
 
 export const mcpUtils = {
-    parseJsonStringArg,
     classifyActionCardinality,
     rankActionsByIntent,
     resolveTransitively,
