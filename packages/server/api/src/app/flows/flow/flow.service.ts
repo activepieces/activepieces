@@ -43,16 +43,17 @@ export const flowService = (log: FastifyBaseLogger) => ({
             templateId,
             createdBy,
         }
-        const savedFlow = await flowRepo().save(newFlow)
-
-        const savedFlowVersion = await flowVersionService(log).createEmptyVersion(
-            savedFlow.id,
-            {
+        const { savedFlow, savedFlowVersion } = await transaction(async (entityManager) => {
+            const flow = await flowRepo(entityManager).save(newFlow)
+            const flowVersion = await flowVersionService(log).createEmptyVersion({
+                flowId: flow.id,
                 displayName: request.displayName,
                 notes: [],
                 schemaVersion: null,
-            },
-        )
+                entityManager,
+            })
+            return { savedFlow: flow, savedFlowVersion: flowVersion }
+        })
 
         rejectedPromiseHandler(
             telemetry(log).trackProject(savedFlow.projectId, {
@@ -569,14 +570,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async updateLastModified(flowId: FlowId, projectId: ProjectId): Promise<void> {
-        const flow = await this.getOneOrThrow({
+    async updateLastModified({ flowId, projectId, entityManager }: UpdateLastModifiedParams): Promise<void> {
+        await flowRepo(entityManager).update({
             id: flowId,
             projectId,
+        }, {
+            updated: dayjs().toISOString(),
         })
-
-        flow.updated = dayjs().toISOString()
-        await flowRepo().save(flow)
     },
 
     addDeleteFlowJob: async (flow: Flow): Promise<void> => {
@@ -825,6 +825,12 @@ type UpdateMetadataParams = {
     metadata: Metadata | null | undefined
 }
 
+type UpdateLastModifiedParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    entityManager?: EntityManager
+}
+
 /** When the latest version is locked (published snapshot), creates a new draft and imports it. */
 async function createNewDraftIfVersionIsPublished({
     flowId,
@@ -845,11 +851,6 @@ async function createNewDraftIfVersionIsPublished({
     })
     if (lastVersion.state === FlowVersionState.LOCKED) {
         const lockedVersion = lastVersion
-        lastVersion = await flowVersionService(log).createEmptyVersion(flowId, {
-            displayName: lockedVersion.displayName,
-            notes: lockedVersion.notes,
-            schemaVersion: lockedVersion.schemaVersion,
-        })
         const operations: FlowOperationRequest[] = [{
             type: FlowOperationType.IMPORT_FLOW,
             request: lockedVersion,
@@ -866,15 +867,26 @@ async function createNewDraftIfVersionIsPublished({
                 },
             })
         }
-        for (const operation of operations) {
-            lastVersion = await flowVersionService(log).applyOperation({
-                userId,
-                projectId,
-                platformId,
-                flowVersion: lastVersion,
-                userOperation: operation,
+        lastVersion = await transaction(async (entityManager) => {
+            let draftVersion = await flowVersionService(log).createEmptyVersion({
+                flowId,
+                displayName: lockedVersion.displayName,
+                notes: lockedVersion.notes,
+                schemaVersion: lockedVersion.schemaVersion,
+                entityManager,
             })
-        }
+            for (const operation of operations) {
+                draftVersion = await flowVersionService(log).applyOperation({
+                    userId,
+                    projectId,
+                    platformId,
+                    flowVersion: draftVersion,
+                    userOperation: operation,
+                    entityManager,
+                })
+            }
+            return draftVersion
+        })
     }
     return lastVersion
 }

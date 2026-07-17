@@ -80,14 +80,15 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             }
         }
         for (const operation of operations) {
-            mutatedFlowVersion = await applySingleOperation(
+            mutatedFlowVersion = await applySingleOperation({
                 projectId,
-                mutatedFlowVersion,
+                flowVersion: mutatedFlowVersion,
                 operation,
                 platformId,
                 log,
                 userId,
-            )
+                entityManager,
+            })
             if (operation.type === FlowOperationType.ADD_NOTE) {
                 const noteIndex = mutatedFlowVersion.notes.findIndex((note) => note.id === operation.request.id)
                 if (noteIndex !== -1) {
@@ -253,17 +254,16 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             removeSampleData,
         )
     },
-    async createEmptyVersion(
-        flowId: FlowId,
-        request: {
-            displayName: string
-            notes: Note[]
-            schemaVersion: string | undefined | null
-        },
-    ): Promise<FlowVersion> {
+    async createEmptyVersion({
+        flowId,
+        displayName,
+        notes,
+        schemaVersion,
+        entityManager,
+    }: CreateEmptyVersionParams): Promise<FlowVersion> {
         const flowVersion: NewFlowVersion = {
             id: apId(),
-            displayName: request.displayName,
+            displayName,
             flowId,
             trigger: {
                 type: FlowTriggerType.EMPTY,
@@ -273,14 +273,14 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 displayName: 'Select Trigger',
                 lastUpdatedDate: dayjs().toISOString(),
             },
-            schemaVersion: request.schemaVersion ?? LATEST_FLOW_SCHEMA_VERSION,
+            schemaVersion: schemaVersion ?? LATEST_FLOW_SCHEMA_VERSION,
             connectionIds: [],
             agentIds: [],
             valid: false,
             state: FlowVersionState.DRAFT,
-            notes: request.notes,
+            notes,
         }
-        return flowVersionRepo().save(flowVersion)
+        return flowVersionRepo(entityManager).save(flowVersion)
     },
     removeConnectionsAndSampleDataFromFlowVersion(
         flowVersion: FlowVersion,
@@ -313,18 +313,20 @@ async function findOne(log: FastifyBaseLogger, options: FindOneOptions, entityMa
 }
 
 
-async function applySingleOperation(
-    projectId: ProjectId,
-    flowVersion: FlowVersion,
-    operation: FlowOperationRequest,
-    platformId: PlatformId,
-    log: FastifyBaseLogger,
-    userId: UserId | null,
-): Promise<FlowVersion> {
+async function applySingleOperation({
+    projectId,
+    flowVersion,
+    operation,
+    platformId,
+    log,
+    userId,
+    entityManager,
+}: ApplySingleOperationParams): Promise<FlowVersion> {
     await flowVersionSideEffects(log).preApplyOperation({
         projectId,
         flowVersion,
         operation,
+        entityManager,
     })
     const preparedOperation = await flowVersionValidationUtil(log).prepareRequest({ platformId, request: operation, userId })
     const updatedFlowVersion = flowOperations.apply(flowVersion, preparedOperation)
@@ -367,6 +369,24 @@ type GetFlowVersionOrThrowParams = {
 }
 
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
+
+type CreateEmptyVersionParams = {
+    flowId: FlowId
+    displayName: string
+    notes: Note[]
+    schemaVersion: string | undefined | null
+    entityManager?: EntityManager
+}
+
+type ApplySingleOperationParams = {
+    projectId: ProjectId
+    flowVersion: FlowVersion
+    operation: FlowOperationRequest
+    platformId: PlatformId
+    log: FastifyBaseLogger
+    userId: UserId | null
+    entityManager?: EntityManager
+}
 
 type ListFlowVersionParams = {
     flowId: FlowId
