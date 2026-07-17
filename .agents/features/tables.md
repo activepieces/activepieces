@@ -81,7 +81,7 @@ A built-in relational database feature that lets users store structured data dir
 - `table.exportTable()` — returns fields + rows as JSON
 - `table.createWebhook()` / `table.deleteWebhook()` — link table events to flows
 - `record.create()` — bulk insert (max 50 per batch, transactional), validates field count
-- `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS)
+- `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS); filtering is in-memory and a missing cell is treated as an empty value (`''`), so NEQ/NOT_EXISTS match unset columns
 - `record.update()` — update cells (empty fields unchanged)
 - `record.delete()` / `record.deleteAll()` — bulk delete
 

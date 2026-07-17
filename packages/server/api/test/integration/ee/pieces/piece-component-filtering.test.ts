@@ -1,8 +1,9 @@
 import { apId } from '@activepieces/core-utils'
-import { PackageType, PieceType, PrincipalType, SuggestionType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
+import { PackageType, PieceSelectionMode, PieceType, PrincipalType, SuggestionType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
+import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata, mockAndSaveBasicSetup } from '../../../helpers/mocks'
@@ -43,144 +44,12 @@ const makeTrigger = (name: string) => ({
 })
 
 describe('Piece Component Filtering (EE)', () => {
-    describe('GET /v1/pieces (with filteredActionNames)', () => {
-        it('returns all suggestedActions when filteredActionNames is empty', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: { filteredActionNames: {}, filteredTriggerNames: {} },
-            })
-
-            const piece = createMockPieceMetadata({
-                name: 'test-piece',
-                pieceType: PieceType.OFFICIAL,
-                packageType: PackageType.REGISTRY,
-                actions: {
-                    send_email: makeAction('send_email'),
-                    create_contact: makeAction('create_contact'),
-                },
-                triggers: {},
-            })
-            await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
-
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app!.inject({
-                method: 'GET',
-                url: `/api/v1/pieces?suggestionType=${SuggestionType.ACTION}`,
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            expect(response.statusCode).toBe(200)
-            const pieces = response.json()
-            const found = pieces.find((p: { name: string }) => p.name === 'test-piece')
-            expect(found).toBeDefined()
-            const actionNames = found.suggestedActions.map((a: { name: string }) => a.name)
-            expect(actionNames).toContain('send_email')
-            expect(actionNames).toContain('create_contact')
-        })
-
-        it('filters out suggestedActions listed in filteredActionNames for the matching piece', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    filteredActionNames: { 'test-piece': ['send_email'] },
-                    filteredTriggerNames: {},
-                },
-            })
-
-            const piece = createMockPieceMetadata({
-                name: 'test-piece',
-                pieceType: PieceType.OFFICIAL,
-                packageType: PackageType.REGISTRY,
-                actions: {
-                    send_email: makeAction('send_email'),
-                    create_contact: makeAction('create_contact'),
-                },
-                triggers: {},
-            })
-            await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
-
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app!.inject({
-                method: 'GET',
-                url: `/api/v1/pieces?suggestionType=${SuggestionType.ACTION}`,
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            expect(response.statusCode).toBe(200)
-            const pieces = response.json()
-            const found = pieces.find((p: { name: string }) => p.name === 'test-piece')
-            expect(found).toBeDefined()
-            const actionNames = found.suggestedActions.map((a: { name: string }) => a.name)
-            expect(actionNames).not.toContain('send_email')
-            expect(actionNames).toContain('create_contact')
-        })
-
-        it('does not filter actions on other pieces when filteredActionNames targets a specific piece', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    filteredActionNames: { 'piece-a': ['action_one'] },
-                    filteredTriggerNames: {},
-                },
-            })
-
-            const pieceA = createMockPieceMetadata({
-                name: 'piece-a',
-                pieceType: PieceType.OFFICIAL,
-                packageType: PackageType.REGISTRY,
-                actions: {
-                    action_one: makeAction('action_one'),
-                    action_two: makeAction('action_two'),
-                },
-                triggers: {},
-            })
-            const pieceB = createMockPieceMetadata({
-                name: 'piece-b',
-                pieceType: PieceType.OFFICIAL,
-                packageType: PackageType.REGISTRY,
-                actions: {
-                    action_one: makeAction('action_one'),
-                },
-                triggers: {},
-            })
-            await db.save('piece_metadata', [pieceA, pieceB])
-            await pieceCache(mockLog).setup()
-
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app!.inject({
-                method: 'GET',
-                url: `/api/v1/pieces?suggestionType=${SuggestionType.ACTION}`,
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            expect(response.statusCode).toBe(200)
-            const pieces = response.json()
-
-            const foundA = pieces.find((p: { name: string }) => p.name === 'piece-a')
-            const foundB = pieces.find((p: { name: string }) => p.name === 'piece-b')
-            expect(foundA.suggestedActions.map((a: { name: string }) => a.name)).not.toContain('action_one')
-            expect(foundB.suggestedActions.map((a: { name: string }) => a.name)).toContain('action_one')
-        })
-    })
-
     describe('GET /v1/pieces (with piece sets)', () => {
-        const emptyConfig = { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+        const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
 
         async function setupPieceSetScenario(hiddenPieces: string[]) {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
-                platform: { filteredPieceNames: [], filteredActionNames: {}, filteredTriggerNames: {} },
             })
 
             const pieceSet = {
@@ -192,7 +61,7 @@ describe('Piece Component Filtering (EE)', () => {
                 externalId: null,
                 isDefault: false,
                 generatedForProjectId: null,
-                config: { pieces: { mode: 'include_all', exceptions: hiddenPieces }, selectedActions: {}, selectedTriggers: {} },
+                config: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: hiddenPieces }, selectedActions: {}, selectedTriggers: {} },
             }
             await databaseConnection().getRepository('piece_set').save(pieceSet)
             await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
@@ -206,10 +75,9 @@ describe('Piece Component Filtering (EE)', () => {
             return { mockPlatform, mockProject, token }
         }
 
-        it('empty set (no disabled pieces) shows all platform-visible pieces', async () => {
+        it('empty set (no disabled pieces) shows all pieces', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
-                platform: { filteredPieceNames: [], filteredActionNames: {}, filteredTriggerNames: {} },
             })
 
             const defaultSet = {
@@ -284,42 +152,9 @@ describe('Piece Component Filtering (EE)', () => {
             expect(pieces.find((p: { name: string }) => p.name === 'visible-piece-2')).toBeDefined()
         })
 
-        it('platform-blocked piece stays hidden even when the piece set is permissive', async () => {
-            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
-                plan: { managePiecesEnabled: true },
-                platform: { filteredPieceNames: ['platform-blocked'], filteredActionNames: {}, filteredTriggerNames: {}, filteredPieceBehavior: 'BLOCKED' },
-            })
-
-            const pieceSet = {
-                id: apId(),
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                platformId: mockPlatform.id,
-                name: 'Permissive Set',
-                externalId: null,
-                isDefault: false,
-                generatedForProjectId: null,
-                config: emptyConfig,
-            }
-            await databaseConnection().getRepository('piece_set').save(pieceSet)
-            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
-
-            const piece = createMockPieceMetadata({ name: 'platform-blocked', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
-            await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
-
-            const token = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
-            const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces?projectId=${mockProject.id}`, headers: { authorization: `Bearer ${token}` } })
-
-            expect(response.statusCode).toBe(200)
-            const pieces = response.json()
-            expect(pieces.find((p: { name: string }) => p.name === 'platform-blocked')).toBeUndefined()
-        })
-
         it('null pieceSetId falls back to default set (empty disabled list = all pieces visible)', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
-                platform: { filteredPieceNames: [], filteredActionNames: {}, filteredTriggerNames: {} },
             })
 
             const defaultSet = {
@@ -349,15 +184,12 @@ describe('Piece Component Filtering (EE)', () => {
     })
 
     describe('GET /v1/pieces (component filters via piece sets)', () => {
-        const emptyConfig = { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
-
         async function setupComponentPieceSetScenario(opts: {
             selectedActions?: Record<string, string[]>
             selectedTriggers?: Record<string, string[]>
         }) {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
-                platform: { filteredPieceNames: [], filteredActionNames: {}, filteredTriggerNames: {} },
             })
 
             const pieceSet = {
@@ -370,7 +202,7 @@ describe('Piece Component Filtering (EE)', () => {
                 isDefault: false,
                 generatedForProjectId: null,
                 config: {
-                    pieces: { mode: 'include_all', exceptions: [] },
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
                     selectedActions: opts.selectedActions ?? {},
                     selectedTriggers: opts.selectedTriggers ?? {},
                 },
@@ -470,54 +302,6 @@ describe('Piece Component Filtering (EE)', () => {
             expect(actionNames).not.toContain('blocked_action')
         })
 
-        it('platform-blocked action stays hidden even when the piece set is permissive', async () => {
-            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
-                plan: { managePiecesEnabled: true },
-                platform: {
-                    filteredPieceNames: [],
-                    filteredActionNames: { 'my-piece': ['platform_blocked_action'] },
-                    filteredTriggerNames: {},
-                },
-            })
-
-            const pieceSet = {
-                id: apId(),
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                platformId: mockPlatform.id,
-                name: 'Permissive Set',
-                externalId: null,
-                isDefault: false,
-                generatedForProjectId: null,
-                config: emptyConfig,
-            }
-            await databaseConnection().getRepository('piece_set').save(pieceSet)
-            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
-
-            const piece = createMockPieceMetadata({
-                name: 'my-piece',
-                pieceType: PieceType.OFFICIAL,
-                packageType: PackageType.REGISTRY,
-                actions: { platform_blocked_action: makeAction('platform_blocked_action'), allowed_action: makeAction('allowed_action') },
-                triggers: {},
-            })
-            await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
-
-            const token = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
-            const response = await app!.inject({
-                method: 'GET',
-                url: `/api/v1/pieces?projectId=${mockProject.id}&suggestionType=${SuggestionType.ACTION}`,
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            expect(response.statusCode).toBe(200)
-            const found = response.json().find((p: { name: string }) => p.name === 'my-piece')
-            const actionNames = found.suggestedActions.map((a: { name: string }) => a.name)
-            expect(actionNames).not.toContain('platform_blocked_action')
-            expect(actionNames).toContain('allowed_action')
-        })
-
         it('trigger not in the selected list is hidden; others remain visible', async () => {
             const { mockProject, token } = await setupComponentPieceSetScenario({
                 selectedTriggers: { 'my-piece': ['allowed_trigger'] },
@@ -552,51 +336,9 @@ describe('Piece Component Filtering (EE)', () => {
     })
 
     describe('GET /v1/pieces/:name (component filters on the detail endpoint)', () => {
-        it('hides platform-filtered actions and triggers in the detail response', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    filteredActionNames: { 'test-piece': ['send_email'] },
-                    filteredTriggerNames: { 'test-piece': ['new_record'] },
-                },
-            })
-
-            const piece = createMockPieceMetadata({
-                name: 'test-piece',
-                pieceType: PieceType.OFFICIAL,
-                packageType: PackageType.REGISTRY,
-                actions: {
-                    send_email: makeAction('send_email'),
-                    create_contact: makeAction('create_contact'),
-                },
-                triggers: {
-                    new_record: makeTrigger('new_record'),
-                    updated_record: makeTrigger('updated_record'),
-                },
-            })
-            await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
-
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app!.inject({
-                method: 'GET',
-                url: '/api/v1/pieces/test-piece',
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            expect(response.statusCode).toBe(200)
-            const found = response.json()
-            expect(Object.keys(found.actions)).toEqual(['create_contact'])
-            expect(Object.keys(found.triggers)).toEqual(['updated_record'])
-        })
-
         it('applies the project piece-set component selection when projectId is passed', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 plan: { managePiecesEnabled: true },
-                platform: { filteredPieceNames: [], filteredActionNames: {}, filteredTriggerNames: {} },
             })
 
             const pieceSet = {
@@ -609,7 +351,7 @@ describe('Piece Component Filtering (EE)', () => {
                 isDefault: false,
                 generatedForProjectId: null,
                 config: {
-                    pieces: { mode: 'include_all', exceptions: [] },
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
                     selectedActions: { 'test-piece': ['visible_action'] },
                     selectedTriggers: {},
                 },
@@ -647,9 +389,7 @@ describe('Piece Component Filtering (EE)', () => {
         })
 
         it('returns all components when nothing is filtered', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: { filteredActionNames: {}, filteredTriggerNames: {} },
-            })
+            const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const piece = createMockPieceMetadata({
                 name: 'test-piece',
@@ -680,46 +420,71 @@ describe('Piece Component Filtering (EE)', () => {
         })
     })
 
-    describe('GET /v1/pieces (with filteredTriggerNames)', () => {
-        it('filters out suggestedTriggers listed in filteredTriggerNames for the matching piece', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    filteredActionNames: {},
-                    filteredTriggerNames: { 'test-piece': ['new_record'] },
-                },
-            })
+    // Regression guard for F2: component visibility must be enforced inside
+    // pieceMetadataService.get (the path MCP flow-building tools call directly),
+    // not only in the HTTP controller.
+    describe('pieceMetadataService.get (MCP path enforces piece-set visibility)', () => {
+        async function saveProjectPieceSet(config: object, projectId: string, platformId: string) {
+            const pieceSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId,
+                name: 'MCP Set',
+                externalId: null,
+                isDefault: false,
+                generatedForProjectId: null,
+                config,
+            }
+            await databaseConnection().getRepository('piece_set').save(pieceSet)
+            await databaseConnection().getRepository('project').update({ id: projectId }, { pieceSetId: pieceSet.id })
+        }
+
+        it('drops hidden actions when the project piece set curates the piece', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { managePiecesEnabled: true } })
+            await saveProjectPieceSet({
+                pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
+                selectedActions: { 'mcp-piece': ['visible_action'] },
+                selectedTriggers: {},
+            }, mockProject.id, mockPlatform.id)
 
             const piece = createMockPieceMetadata({
-                name: 'test-piece',
+                name: 'mcp-piece',
                 pieceType: PieceType.OFFICIAL,
                 packageType: PackageType.REGISTRY,
-                actions: {},
-                triggers: {
-                    new_record: makeTrigger('new_record'),
-                    updated_record: makeTrigger('updated_record'),
-                },
+                actions: { visible_action: makeAction('visible_action'), hidden_action: makeAction('hidden_action') },
+                triggers: {},
             })
             await db.save('piece_metadata', piece)
             await pieceCache(mockLog).setup()
 
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: { id: mockPlatform.id },
-            })
+            const result = await pieceMetadataService(mockLog).get({ name: 'mcp-piece', projectId: mockProject.id, platformId: mockPlatform.id })
 
-            const response = await app!.inject({
-                method: 'GET',
-                url: `/api/v1/pieces?suggestionType=${SuggestionType.TRIGGER}`,
-                headers: { authorization: `Bearer ${token}` },
-            })
+            expect(result).toBeDefined()
+            expect(Object.keys(result!.actions)).toEqual(['visible_action'])
+        })
 
-            expect(response.statusCode).toBe(200)
-            const pieces = response.json()
-            const found = pieces.find((p: { name: string }) => p.name === 'test-piece')
-            expect(found).toBeDefined()
-            const triggerNames = found.suggestedTriggers.map((t: { name: string }) => t.name)
-            expect(triggerNames).not.toContain('new_record')
-            expect(triggerNames).toContain('updated_record')
+        it('returns undefined for a piece hidden at the piece level', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { managePiecesEnabled: true } })
+            await saveProjectPieceSet({
+                pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['mcp-hidden-piece'] },
+                selectedActions: {},
+                selectedTriggers: {},
+            }, mockProject.id, mockPlatform.id)
+
+            const piece = createMockPieceMetadata({
+                name: 'mcp-hidden-piece',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                actions: {},
+                triggers: {},
+            })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const result = await pieceMetadataService(mockLog).get({ name: 'mcp-hidden-piece', projectId: mockProject.id, platformId: mockPlatform.id })
+
+            expect(result).toBeUndefined()
         })
     })
 })

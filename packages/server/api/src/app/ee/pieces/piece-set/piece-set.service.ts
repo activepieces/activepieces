@@ -1,7 +1,7 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In } from 'typeorm'
+import { EntityManager, In, QueryFailedError } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { distributedLock } from '../../../database/redis-connections'
@@ -9,6 +9,8 @@ import { pieceSetConfig } from './piece-set-config'
 import { PieceSetEntity } from './piece-set.entity'
 
 export const pieceSetRepo = repoFactory<PieceSet>(PieceSetEntity)
+
+const MAX_PIECE_SET_PAGE_SIZE = 100
 
 type ListParams = {
     platformId: string
@@ -25,7 +27,7 @@ type CreateParams = CreatePieceSetRequestBody & {
     platformId: string
     isDefault?: boolean
     generatedForProjectId?: string | null
-    externalId?: string | null
+    key?: string | null
     config?: PieceSetConfig
 }
 
@@ -72,23 +74,24 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
     },
 
     async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {
+        const boundedLimit = Math.min(limit, MAX_PIECE_SET_PAGE_SIZE)
         const qb = pieceSetRepo()
             .createQueryBuilder('ps')
             .where('ps.platformId = :platformId', { platformId })
             .orderBy('ps.created', 'ASC')
             .addOrderBy('ps.id', 'ASC')
-            .take(limit + 1)
+            .take(boundedLimit + 1)
 
         if (cursor) {
             qb.andWhere(
-                '(ps.created, ps.id) > (SELECT created, id FROM piece_set WHERE id = :cursorId)',
-                { cursorId: cursor },
+                '(ps.created, ps.id) > (SELECT created, id FROM piece_set WHERE id = :cursorId AND "platformId" = :platformId)',
+                { cursorId: cursor, platformId },
             )
         }
 
         const rows = await qb.getMany()
-        const hasMore = rows.length > limit
-        const data = hasMore ? rows.slice(0, limit) : rows
+        const hasMore = rows.length > boundedLimit
+        const data = hasMore ? rows.slice(0, boundedLimit) : rows
 
         return {
             data,
@@ -108,17 +111,20 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         return set
     },
 
-    async create({ platformId, name, externalId, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
+    async create({ platformId, name, key, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
         const id = apId()
-        await pieceSetRepo().save({
+        const { error } = await tryCatch(() => pieceSetRepo().save({
             id,
             platformId,
             name,
-            externalId: externalId ?? null,
+            key: resolveKey({ key, name }),
             isDefault,
             generatedForProjectId,
             config: config ?? pieceSetConfig.emptyConfig(),
-        })
+        }))
+        if (error) {
+            rethrowKeyConflict(error)
+        }
         return pieceSetRepo().findOneByOrFail({ id })
     },
 
@@ -127,11 +133,14 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
 
         const updatedConfig = pieceSetConfig.applyUpdate({ current: existing.config, request })
 
-        await pieceSetRepo().update({ id, platformId }, {
+        const { error } = await tryCatch(() => pieceSetRepo().update({ id, platformId }, {
             ...spreadIfDefined('name', request.name),
-            ...(request.externalId !== undefined ? { externalId: request.externalId } : {}),
+            ...(request.key !== undefined ? { key: resolveKey({ key: request.key, name: request.name ?? existing.name }) } : {}),
             config: updatedConfig,
-        })
+        }))
+        if (error) {
+            rethrowKeyConflict(error)
+        }
 
         return this.getOne({ id, platformId })
     },
@@ -166,7 +175,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         return this.create({
             platformId,
             name,
-            externalId: undefined,
+            key: undefined,
             isDefault: false,
             generatedForProjectId: null,
             config: original.config,
@@ -209,3 +218,21 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         )
     },
 })
+
+function resolveKey({ key, name }: { key?: string | null, name: string }): string {
+    if (!isNil(key) && key.trim().length > 0) {
+        return key
+    }
+    return `${kebabCase(name)}-${apId().slice(0, 8)}`
+}
+
+function rethrowKeyConflict(error: unknown): never {
+    const driverError: unknown = error instanceof QueryFailedError ? error.driverError : undefined
+    if (typeof driverError === 'object' && driverError !== null && 'code' in driverError && driverError.code === '23505') {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'Piece set key already used' },
+        })
+    }
+    throw error
+}

@@ -40,6 +40,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Coding Conventions
 
+- **npm dependencies go in the workspace that imports them, never the root `package.json`** — every workspace (api, worker, web, each piece, …) must declare what its own code imports, in its own `package.json` (`dependencies` for runtime imports, `devDependencies` for test/tooling-only). Bun's isolated linker resolves each workspace from its own manifest, and the Docker image installs only workspace manifests — an undeclared import that "works locally" will crash the production container. Root `dependencies` is only `jsonwebtoken` (required by `docker-entrypoint.sh`); root `devDependencies` is only for repo-level tooling under `scripts/` and `tools/`. Pin exact versions like the surrounding entries, and run `bun install` afterwards so `bun.lock` stays in sync.
 - **No `any` type** — Use proper type definitions or `unknown` with type guards
 - **No type casting** — Do not use `as SomeType` to force types. If you encounter an unnecessary cast, remove it.
 - **No deprecated APIs** — Before using any library method or export, check its JSDoc. If it carries a `@deprecated` tag, use the recommended replacement instead. Examples: prefer `z.enum` over `z.nativeEnum`.
@@ -86,19 +87,15 @@ npx turbo run serve --filter=web -- --mode=cloud # Run local frontend against th
 
 When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth provider will redirect back to `cloud.activepieces.com` after sign-in instead of your local frontend, breaking the flow. Use API-key / basic-auth connections, or test OAuth2 against a fully local backend.
 
-## Git Push
-
-- Always prefix `git push` with `CLAUDE_PUSH=yes` to auto-approve the pre-push lint/test gate, e.g. `CLAUDE_PUSH=yes git push -u origin HEAD`.
-
 ## Pull Requests
 
 - When creating a PR with `gh pr create`, always apply exactly one of these labels based on the nature of the change:
-  - **`feature`** — new functionality
-  - **`bug`** — bug fix
+  - **`🌟 feature`** — new functionality
+  - **`🐛 bug`** — bug fix
   - **`skip-changelog`** — changes that should not appear in the changelog (docs, CI tweaks, internal refactors, etc.)
 - If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the appropriate pieces label (in addition to the primary label above):
-  - **`area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
-  - **`area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
+  - **`🧩 area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
+  - **`🧩 area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
 
 ## Database Migrations
 
