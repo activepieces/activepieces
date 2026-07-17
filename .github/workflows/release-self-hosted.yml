@@ -88,6 +88,7 @@ jobs:
           git push origin ${{ inputs.tag }} --force
 
       - name: Create or update changelog via release-drafter
+        if: ${{ !contains(inputs.tag, '-rc') }}
         uses: release-drafter/release-drafter@v7
         with:
           commitish: ${{ github.ref_name }}
@@ -95,7 +96,7 @@ jobs:
           tag: ${{ inputs.tag }}
           name: ${{ inputs.tag }}
           version: ${{ inputs.tag }}
-          latest: ${{ !contains(inputs.tag, '-rc') }}
+          latest: true
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
