@@ -203,6 +203,11 @@ async function embedPendingRows(embedder: ToolSearchEmbedder, scope: ReindexScop
 }
 
 function explodePiece(piece: PieceMetadataSchema, modelVersion: string): DesiredRecord[] {
+    // `requireAuth` became a required boolean only recently (the framework defaults it `?? true` at
+    // construction); piece_metadata rows written by older versions omit the key, so it reads back as
+    // undefined. Coalesce to true — matching that framework default — so it never binds NULL into the
+    // NOT NULL requiresConnection column, which would otherwise abort the whole upsert and leave the
+    // index unbuilt (so embedPendingRows never runs and search silently serves nothing).
     const actionRecords = Object.entries(piece.actions).map(([objectName, action]) => buildRecord({
         piece,
         modelVersion,
@@ -211,7 +216,7 @@ function explodePiece(piece: PieceMetadataSchema, modelVersion: string): Desired
         displayName: action.displayName,
         description: action.description,
         aiDescription: action.aiMetadata?.description,
-        requiresConnection: action.requireAuth,
+        requiresConnection: action.requireAuth ?? true,
         audience: action.audience ?? null,
     }))
     const triggerRecords = Object.entries(piece.triggers).map(([objectName, trigger]) => buildRecord({
@@ -222,7 +227,7 @@ function explodePiece(piece: PieceMetadataSchema, modelVersion: string): Desired
         displayName: trigger.displayName,
         description: trigger.description,
         aiDescription: trigger.aiMetadata?.description,
-        requiresConnection: trigger.requireAuth,
+        requiresConnection: trigger.requireAuth ?? true,
         audience: null,
     }))
     return [...actionRecords, ...triggerRecords]
