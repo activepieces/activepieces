@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
 import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -399,20 +399,26 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 break
             }
             default: {
-                const lastVersion = await createNewDraftIfVersionIsPublished({
+                const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
                     flowId: id,
                     projectId,
                     platformId,
                     userId,
                     log,
                 })
-                await flowVersionService(log).applyOperation({
+                const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
                     userId,
                     projectId,
                     platformId,
                     flowVersion: lastVersion,
                     userOperation: operation,
-                })
+                }))
+                if (!isNil(error)) {
+                    if (createdNewDraft) {
+                        await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
+                    }
+                    throw error
+                }
             }
         }
 
@@ -844,11 +850,12 @@ async function createNewDraftIfVersionIsPublished({
     platformId: PlatformId
     userId: UserId | null
     log: FastifyBaseLogger
-}): Promise<FlowVersion> {
+}): Promise<{ version: FlowVersion, createdNewDraft: boolean }> {
     let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
         flowId,
         versionId: undefined,
     })
+    const createdNewDraft = lastVersion.state === FlowVersionState.LOCKED
     if (lastVersion.state === FlowVersionState.LOCKED) {
         const lockedVersion = lastVersion
         const operations: FlowOperationRequest[] = [{
@@ -888,5 +895,5 @@ async function createNewDraftIfVersionIsPublished({
             return draftVersion
         })
     }
-    return lastVersion
+    return { version: lastVersion, createdNewDraft }
 }

@@ -706,6 +706,55 @@ describe('Flow Operations API', () => {
                 applySpy.mockRestore()
             }
         })
+
+        it('should delete the newly created draft when the user operation fails after a successful import', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+            })
+            await db.save('flow', mockFlow)
+
+            const lockedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.LOCKED,
+                valid: true,
+            })
+            await db.save('flow_version', lockedVersion)
+
+            const originalApply = flowOperations.apply
+            const applySpy = vi.spyOn(flowOperations, 'apply').mockImplementation((flowVersion, operation) => {
+                if (operation.type === FlowOperationType.CHANGE_NAME && operation.request.displayName === 'Renamed by user') {
+                    throw new Error('user operation failed')
+                }
+                return originalApply(flowVersion, operation)
+            })
+
+            try {
+                const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: { displayName: 'Renamed by user' },
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+
+                const leftoverDraft = await db.findOneBy('flow_version', {
+                    flowId: mockFlow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(leftoverDraft).toBeNull()
+
+                const remainingVersion = await db.findOneByOrFail<FlowVersion>('flow_version', {
+                    flowId: mockFlow.id,
+                })
+                expect(remainingVersion.id).toBe(lockedVersion.id)
+                expect(remainingVersion.state).toBe(FlowVersionState.LOCKED)
+            }
+            finally {
+                applySpy.mockRestore()
+            }
+        })
     })
 
     describe('GET /v1/flows/:flowId/versions', () => {
