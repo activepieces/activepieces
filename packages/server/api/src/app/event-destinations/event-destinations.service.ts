@@ -29,6 +29,8 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
     ApplicationEventName.FLOW_RUN_RETRIED,
 ])
 
+const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
+
 export const eventDestinationService = (log: FastifyBaseLogger) => ({
     setup(): void {
         applicationEvents(log).registerListeners(log, {
@@ -260,28 +262,43 @@ const skipInternalDestinationsOnFlowCycle = ({
     event,
     log,
 }: SkipDestinationsParams): ClassifiedDestination[] => {
-    if (classifiedDestinations.length === 0 || !isFlowRunEvent(event)) {
+    if (!isFlowRunEvent(event)) {
         return classifiedDestinations
     }
-    const targetedFlowIds = new Set(
-        classifiedDestinations
-            .map(({ internalFlowId }) => internalFlowId)
-            .filter((flowId): flowId is string => !isNil(flowId)),
-    )
     const eventFlowId = event.data.flowRun.flowId
-    if (!targetedFlowIds.has(eventFlowId)) {
+    const targetsEventFlow = classifiedDestinations.some(({ destination }) =>
+        extractWebhookFlowIdCandidate({ destinationUrl: destination.url }) === eventFlowId)
+    if (!targetsEventFlow) {
         return classifiedDestinations
     }
     log.warn({
         flow: { id: eventFlowId },
         action: event.action,
-    }, '[eventDestinationService#trigger] Source flow is wired as an internal webhook target; dropping internal destinations to break the cycle, external destinations will still fire')
-    return classifiedDestinations.filter(({ internalFlowId }) => isNil(internalFlowId))
+    }, '[eventDestinationService#trigger] Source flow is wired as a webhook-flow destination; dropping all webhook-flow destinations to break the cycle, non-webhook destinations will still fire')
+    return classifiedDestinations.filter(({ destination }) =>
+        isNil(extractWebhookFlowIdCandidate({ destinationUrl: destination.url })))
 }
 
 const isFlowRunEvent = (
     event: Pick<ApplicationEvent, 'action' | 'data'>,
 ): event is Pick<FlowRunEvent, 'action' | 'data'> => FLOW_RUN_EVENT_ACTIONS.has(event.action)
+
+const extractWebhookFlowIdCandidate = ({ destinationUrl }: ExtractWebhookFlowIdCandidateParams): string | null => {
+    const { data: url } = tryCatchSync(() => new URL(destinationUrl))
+    if (isNil(url)) {
+        return null
+    }
+    const markerIndex = url.pathname.lastIndexOf(WEBHOOK_PATH_MARKER)
+    if (markerIndex === -1) {
+        return null
+    }
+    const rawFlowId = url.pathname.slice(markerIndex + WEBHOOK_PATH_MARKER.length).split('/')[0]
+    if (!rawFlowId) {
+        return null
+    }
+    const { data: decodedFlowId } = tryCatchSync(() => decodeURIComponent(rawFlowId))
+    return decodedFlowId ?? rawFlowId
+}
 
 const matchInternalWebhookFlowId = ({
     destinationUrl,
@@ -377,6 +394,10 @@ type DispatchToInternalFlowParams = {
 type BuildInternalWebhookPayloadParams = {
     destinationUrl: string
     event: ApplicationEvent
+}
+
+type ExtractWebhookFlowIdCandidateParams = {
+    destinationUrl: string
 }
 
 type MatchInternalWebhookFlowIdParams = {

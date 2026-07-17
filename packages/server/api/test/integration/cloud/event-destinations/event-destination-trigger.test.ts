@@ -235,6 +235,106 @@ describe('Event Destination Trigger', () => {
         expect(addSpy).not.toHaveBeenCalled()
     })
 
+    it('should NOT dispatch FLOW_RUN_FINISHED to a destination targeting the same flow webhook on a different origin (recursion guard, embed domain)', async () => {
+        const ctx = await createTestContext(app)
+        const flowId = apId()
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://tenant.embed.example.com/api/v1/webhooks/${flowId}`,
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId }),
+        })
+
+        expect(addSpy).not.toHaveBeenCalled()
+        expect(handleWebhookSpy).not.toHaveBeenCalled()
+    })
+
+    it('should NOT dispatch FLOW_RUN_FINISHED when the self-targeting destination percent-encodes the flow id in its URL', async () => {
+        const ctx = await createTestContext(app)
+        const flowId = apId()
+        const encodedFlowId = `%${flowId.charCodeAt(0).toString(16).padStart(2, '0')}${flowId.slice(1)}`
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://tenant.embed.example.com/api/v1/webhooks/${encodedFlowId}`,
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId }),
+        })
+
+        expect(addSpy).not.toHaveBeenCalled()
+        expect(handleWebhookSpy).not.toHaveBeenCalled()
+    })
+
+    it('should still dispatch FLOW_RUN_FINISHED to a different-origin destination that targets a different flow (as an outbound job)', async () => {
+        const ctx = await createTestContext(app)
+        const finishedFlowId = apId()
+        const otherFlowId = apId()
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://tenant.embed.example.com/api/v1/webhooks/${otherFlowId}`,
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId: finishedFlowId }),
+        })
+
+        expect(addSpy).toHaveBeenCalledTimes(1)
+        expect(addSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ webhookUrl: destination.url }),
+            }),
+        )
+        expect(handleWebhookSpy).not.toHaveBeenCalled()
+    })
+
+    it('should skip a different-origin self-targeting destination but keep dispatching to external destinations on the same FLOW_RUN_FINISHED event', async () => {
+        const ctx = await createTestContext(app)
+        const flowId = apId()
+        const selfTargetingDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://tenant.embed.example.com/api/v1/webhooks/${flowId}`,
+        })
+        const webhookShapedDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://other-instance.example.com/api/v1/webhooks/${apId()}`,
+        })
+        const externalDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_RUN_FINISHED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://hooks.slack.example.com/services/abc',
+        })
+        await db.save('event_destination', [selfTargetingDestination, webhookShapedDestination, externalDestination])
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowRunEvent({ platformId: ctx.platform.id, flowId, status: 'FAILED' }),
+        })
+
+        expect(addSpy).toHaveBeenCalledTimes(1)
+        expect(addSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ webhookUrl: externalDestination.url }),
+            }),
+        )
+        expect(handleWebhookSpy).not.toHaveBeenCalled()
+    })
+
     it('should still dispatch FLOW_RUN_FINISHED to a same-host destination that targets a different flow (internally, without an outbound job)', async () => {
         const ctx = await createTestContext(app)
         const finishedFlowId = apId()
