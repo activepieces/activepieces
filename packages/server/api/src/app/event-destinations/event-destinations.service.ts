@@ -1,4 +1,4 @@
-import { apId, Cursor, isNil, PlatformId, ProjectId, SeekPage, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { apId, Cursor, isNil, partition, PlatformId, ProjectId, SeekPage, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -271,12 +271,14 @@ const skipInternalDestinationsOnFlowCycle = ({
     if (!targetsEventFlow) {
         return classifiedDestinations
     }
+    const [keptDestinations, droppedDestinations] = partition(classifiedDestinations, ({ destination }) =>
+        isNil(extractWebhookFlowIdCandidate({ destinationUrl: destination.url })))
     log.warn({
         flow: { id: eventFlowId },
         action: event.action,
+        droppedDestinations: droppedDestinations.map(({ destination }) => ({ id: destination.id, url: destination.url })),
     }, '[eventDestinationService#trigger] Source flow is wired as a webhook-flow destination; dropping all webhook-flow destinations to break the cycle, non-webhook destinations will still fire')
-    return classifiedDestinations.filter(({ destination }) =>
-        isNil(extractWebhookFlowIdCandidate({ destinationUrl: destination.url })))
+    return keptDestinations
 }
 
 const isFlowRunEvent = (
