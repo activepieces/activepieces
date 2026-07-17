@@ -1,0 +1,504 @@
+import { apId } from '@activepieces/core-utils'
+import { PieceSelectionMode, PieceSet, PrincipalType } from '@activepieces/shared'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
+import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+let app: FastifyInstance | null = null
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+async function setupPlatformWithPieceSets() {
+    const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+        plan: { managePiecesEnabled: true },
+    })
+    const token = await generateMockToken({
+        type: PrincipalType.USER,
+        id: mockOwner.id,
+        platform: { id: mockPlatform.id },
+    })
+    return { mockOwner, mockPlatform, mockProject, token }
+}
+
+async function setupPlatformWithoutPieceSets() {
+    const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+        plan: { managePiecesEnabled: false },
+    })
+    const token = await generateMockToken({
+        type: PrincipalType.USER,
+        id: mockOwner.id,
+        platform: { id: mockPlatform.id },
+    })
+    return { mockOwner, mockPlatform, token }
+}
+
+const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+
+describe('Piece Sets API', () => {
+    describe('Feature Gate', () => {
+        it('returns 402 when managePiecesEnabled is false', async () => {
+            const { token } = await setupPlatformWithoutPieceSets()
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        })
+    })
+
+    describe('List', () => {
+        it('returns empty list when no sets exist', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(Array.isArray(body.data)).toBe(true)
+            expect(body.data.length).toBe(0)
+        })
+
+        it('returns created sets', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'My Set' },
+            })
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(body.data.length).toBe(1)
+            expect(body.data[0].name).toBe('My Set')
+        })
+    })
+
+    describe('Create', () => {
+        it('creates a piece set with defaults', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Engineering' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            const body = response.json<PieceSet>()
+            expect(body.name).toBe('Engineering')
+            expect(body.isDefault).toBe(false)
+            expect(body.config).toEqual(emptyConfig)
+        })
+
+        it('creates a piece set with an explicit key', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Sales', key: 'sales-set' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            expect(response.json<PieceSet>().key).toBe('sales-set')
+        })
+
+        it('auto-generates a key from the name when none is provided', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Sales Team' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            expect(response.json<PieceSet>().key).toMatch(/^sales-team-[a-zA-Z0-9]+$/)
+        })
+    })
+
+    describe('Get', () => {
+        it('returns 404 for unknown id', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets/${apId()}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('returns the piece set by id', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const created = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Finance' },
+            })
+            const id = created.json<PieceSet>().id
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json<PieceSet>().id).toBe(id)
+        })
+    })
+
+    describe('Update', () => {
+        it('replaces the piece-level selection wholesale', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const created = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Ops' },
+            })
+            const id = created.json<PieceSet>().id
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: {
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['@activepieces/piece-gmail'] },
+                },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json<PieceSet>()
+            expect(body.config.pieces.mode).toBe(PieceSelectionMode.INCLUDE_ALL)
+            expect(body.config.pieces.exceptions).toContain('@activepieces/piece-gmail')
+            expect(body.config.pieces.exceptions).not.toContain('@activepieces/piece-slack')
+
+            const reenabledResponse = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: {
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
+                },
+            })
+            expect(reenabledResponse.statusCode).toBe(StatusCodes.OK)
+            expect(reenabledResponse.json<PieceSet>().config.pieces.exceptions).not.toContain('@activepieces/piece-gmail')
+        })
+
+        it('switching to exclude_all preserves the exceptions list', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const created = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Toggle Test' },
+            })
+            const id = created.json<PieceSet>().id
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] } },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json<PieceSet>()
+            expect(body.config.pieces).toEqual({ mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] })
+        })
+
+        it('selecting actions on a piece stores the allow-list; other component maps stay empty', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const created = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Action Toggle' },
+            })
+            const id = created.json<PieceSet>().id
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: {
+                    actions: { '@activepieces/piece-slack': { mode: 'selected', selected: ['send-message'] } },
+                },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json<PieceSet>()
+            expect(body.config.selectedActions['@activepieces/piece-slack']).toEqual(['send-message'])
+            expect(body.config.selectedTriggers).toEqual({})
+        })
+
+        it('normalizes an empty-string key to a generated slug instead of storing it verbatim', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const makeSet = async (name: string) => (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name },
+            })).json<PieceSet>()
+
+            const updateKey = (id: string) => app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { key: '' },
+            })
+
+            const first = await makeSet('First')
+            const second = await makeSet('Second')
+
+            const firstResponse = await updateKey(first.id)
+            const secondResponse = await updateKey(second.id)
+
+            expect(firstResponse.statusCode).toBe(StatusCodes.OK)
+            expect(secondResponse.statusCode).toBe(StatusCodes.OK)
+            const firstKey = firstResponse.json<PieceSet>().key
+            const secondKey = secondResponse.json<PieceSet>().key
+            expect(firstKey).not.toBe('')
+            expect(secondKey).not.toBe('')
+            expect(firstKey).not.toBe(secondKey)
+        })
+
+        it('returns 409 (not 500) when updating to a key already used on the platform', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const makeSet = async (name: string, key: string) => (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name, key },
+            })).json<PieceSet>()
+
+            await makeSet('Taken', 'shared-key')
+            const other = await makeSet('Other', 'other-key')
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${other.id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { key: 'shared-key' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('resetting a piece to "all" removes its selection key', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const created = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Reopen' },
+            })
+            const id = created.json<PieceSet>().id
+
+            await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: {
+                    actions: { '@activepieces/piece-slack': { mode: 'selected', selected: ['send-message'] } },
+                },
+            })
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { actions: { '@activepieces/piece-slack': { mode: 'all' } } },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json<PieceSet>()
+            expect(body.config.selectedActions).toEqual({})
+            expect(body.config.selectedTriggers).toEqual({})
+        })
+    })
+
+    describe('Delete', () => {
+        it('rejects deletion of a default piece set', async () => {
+            const { token, mockPlatform } = await setupPlatformWithPieceSets()
+            const defaultSet = await databaseConnection().getRepository('piece_set').save({
+                id: apId(),
+                platformId: mockPlatform.id,
+                name: 'Default',
+                key: null,
+                isDefault: true,
+                generatedForProjectId: null,
+                config: emptyConfig,
+            })
+            const response = await app!.inject({
+                method: 'DELETE',
+                url: `/api/v1/piece-sets/${defaultSet.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('deletes a non-default piece set and reassigns projects to default', async () => {
+            const { token, mockPlatform, mockProject } = await setupPlatformWithPieceSets()
+
+            const defaultSet = await databaseConnection().getRepository('piece_set').save({
+                id: apId(),
+                platformId: mockPlatform.id,
+                name: 'Default',
+                key: null,
+                isDefault: true,
+                generatedForProjectId: null,
+                config: emptyConfig,
+            })
+
+            const otherSet = (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Other' },
+            })).json<PieceSet>()
+
+            await databaseConnection().getRepository('project').update(
+                { id: mockProject.id },
+                { pieceSetId: otherSet.id },
+            )
+
+            const deleteResponse = await app!.inject({
+                method: 'DELETE',
+                url: `/api/v1/piece-sets/${otherSet.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(deleteResponse.statusCode).toBe(StatusCodes.NO_CONTENT)
+
+            const project = await databaseConnection().getRepository('project').findOneByOrFail({ id: mockProject.id })
+            expect((project as { pieceSetId: string }).pieceSetId).toBe(defaultSet.id)
+        })
+    })
+
+    describe('Duplicate', () => {
+        it('creates a copy without project assignments', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const original = (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: {
+                    name: 'Original',
+                },
+            })).json<PieceSet>()
+
+            await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${original.id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] } },
+            })
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${original.id}/duplicate`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Original (Copy)' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            const clone = response.json<PieceSet>()
+            expect(clone.name).toBe('Original (Copy)')
+            expect(clone.isDefault).toBe(false)
+            // A clone gets its own auto-generated key rather than inheriting the original's.
+            expect(clone.key).not.toBe(original.key)
+            expect(clone.key).not.toBeNull()
+            expect(clone.generatedForProjectId).toBeNull()
+            expect(clone.id).not.toBe(original.id)
+            expect(clone.config.pieces.mode).toBe(PieceSelectionMode.EXCLUDE_ALL)
+            expect(clone.config.pieces.exceptions).toContain('@activepieces/piece-slack')
+        })
+    })
+
+    describe('Project Post-Create Hook', () => {
+        it('assigns default piece set to newly created project when managePiecesEnabled', async () => {
+            const { token, mockPlatform } = await setupPlatformWithPieceSets()
+
+            const createResponse = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/projects',
+                headers: { authorization: `Bearer ${token}` },
+                body: { displayName: 'Hook Test Project', externalId: null, metadata: null, maxConcurrentJobs: null },
+            })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const project = createResponse.json<{ id: string }>()
+
+            const defaultSet = await databaseConnection().getRepository('piece_set').findOneBy({ platformId: mockPlatform.id, isDefault: true })
+            expect(defaultSet).not.toBeNull()
+
+            const savedProject = await databaseConnection().getRepository('project').findOneByOrFail({ id: project.id })
+            expect((savedProject as { pieceSetId: string }).pieceSetId).toBe(defaultSet!.id)
+        })
+
+        it('does not assign piece set when managePiecesEnabled is false', async () => {
+            const { token } = await setupPlatformWithoutPieceSets()
+
+            const createResponse = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/projects',
+                headers: { authorization: `Bearer ${token}` },
+                body: { displayName: 'No PieceSet Project', externalId: null, metadata: null, maxConcurrentJobs: null },
+            })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const project = createResponse.json<{ id: string }>()
+
+            const savedProject = await databaseConnection().getRepository('project').findOneByOrFail({ id: project.id })
+            expect((savedProject as { pieceSetId: string | null }).pieceSetId).toBeNull()
+        })
+    })
+
+    describe('Assign / Remove Projects', () => {
+        it('assigns a project to a piece set', async () => {
+            const { token, mockPlatform, mockProject } = await setupPlatformWithPieceSets()
+            const set = (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Assign Test' },
+            })).json<PieceSet>()
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${set.id}/projects`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { projectIds: [mockProject.id] },
+            })
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+
+            const project = await databaseConnection().getRepository('project').findOneByOrFail({ id: mockProject.id })
+            expect((project as { pieceSetId: string }).pieceSetId).toBe(set.id)
+        })
+
+        it('rejects removing project from the default piece set', async () => {
+            const { token, mockPlatform, mockProject } = await setupPlatformWithPieceSets()
+            const defaultSet = await databaseConnection().getRepository('piece_set').save({
+                id: apId(),
+                platformId: mockPlatform.id,
+                name: 'Default',
+                key: null,
+                isDefault: true,
+                generatedForProjectId: null,
+                config: emptyConfig,
+            })
+            const response = await app!.inject({
+                method: 'DELETE',
+                url: `/api/v1/piece-sets/${defaultSet.id}/projects/${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+    })
+})

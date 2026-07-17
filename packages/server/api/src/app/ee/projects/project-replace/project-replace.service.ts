@@ -436,9 +436,9 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                         projectId,
                     },
                 })
-                await Promise.all(op.tableState.fields.map((field) =>
-                    fieldService.createFromState({ projectId, field, tableId: table.id }),
-                ))
+                for (const field of op.tableState.fields) {
+                    await fieldService.createFromState({ projectId, field, tableId: table.id })
+                }
                 applied.tablesCreated++
                 break
             }
@@ -449,17 +449,19 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                     request: { name: op.newTableState.name },
                 })
                 const fields = await fieldService.getAll({ projectId, tableId: updated.id })
-                await Promise.all(op.newTableState.fields.map((field) => {
+                for (const field of op.newTableState.fields) {
                     const existingField = fields.find((f) => f.externalId === field.externalId)
                     if (!isNil(existingField)) {
-                        return fieldService.update({
+                        await fieldService.update({
                             projectId,
                             id: existingField.id,
                             request: field,
                         })
                     }
-                    return fieldService.createFromState({ projectId, field, tableId: updated.id })
-                }))
+                    else {
+                        await fieldService.createFromState({ projectId, field, tableId: updated.id })
+                    }
+                }
                 const fieldsToDelete = fields.filter((f) =>
                     !op.newTableState.fields.some((nf) => nf.externalId === f.externalId),
                 )
