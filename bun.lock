@@ -7181,6 +7181,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/publish-gate": {
+      "name": "@activepieces/piece-publish-gate",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/pubrio": {
       "name": "@activepieces/piece-pubrio",
       "version": "0.0.4",
@@ -12014,6 +12024,8 @@
     "@activepieces/piece-provenexpert": ["@activepieces/piece-provenexpert@workspace:packages/pieces/community/provenexpert"],
 
     "@activepieces/piece-proxycurl": ["@activepieces/piece-proxycurl@workspace:packages/pieces/community/proxycurl"],
+
+    "@activepieces/piece-publish-gate": ["@activepieces/piece-publish-gate@workspace:packages/pieces/community/publish-gate"],
 
     "@activepieces/piece-pubrio": ["@activepieces/piece-pubrio@workspace:packages/pieces/community/pubrio"],
 

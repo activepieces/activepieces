@@ -1,0 +1,10 @@
+{
+  "Publish Gate": "Publish Gate",
+  "Stops an automation before its next steps unless it has been published, so test runs never trigger your real actions.": "Stops an automation before its next steps unless it has been published, so test runs never trigger your real actions.",
+  "Continue Only If Published": "Continue Only If Published",
+  "Only lets the steps below run when this automation is published. Otherwise it stops the run so nothing below executes.": "Only lets the steps below run when this automation is published. Otherwise it stops the run so nothing below executes.",
+  "Place every step you only want to run on the **published** automation **below** this one.\n\nWhile you are building or testing, those steps are skipped automatically.": "Place every step you only want to run on the **published** automation **below** this one.\n\nWhile you are building or testing, those steps are skipped automatically.",
+  "When should the steps below run?": "When should the steps below run?",
+  "Only when the published automation runs for real": "Only when the published automation runs for real",
+  "Whenever the automation has been published": "Whenever the automation has been published"
+}

@@ -1040,6 +1040,9 @@
       "@activepieces/piece-provenexpert": [
         "packages/pieces/community/provenexpert/src/index.ts"
       ],
+      "@activepieces/piece-publish-gate": [
+        "packages/pieces/community/publish-gate/src/index.ts"
+      ],
       "@activepieces/piece-pubrio": [
         "packages/pieces/community/pubrio/src/index.ts"
       ],
