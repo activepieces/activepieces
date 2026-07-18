@@ -1,9 +1,12 @@
 import {
+  embedConstraintsUtil,
   FlowAction,
   FlowActionType,
   FlowOperationType,
   flowStructureUtil,
+  FlowTriggerType,
   StepLocationRelativeToParent,
+  TriggerLockMode,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -64,6 +67,7 @@ export const CanvasContextMenuContent = ({
     applyOperation,
     selectedStep,
     flowVersion,
+    flow,
     exitStepSettings,
     readonly,
     setOpenedPieceSelectorStepNameOrAddButtonId,
@@ -72,10 +76,17 @@ export const CanvasContextMenuContent = ({
     state.applyOperation,
     state.selectedStep,
     state.flowVersion,
+    state.flow,
     state.exitStepSettings,
     state.readonly,
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
   ]);
+  const triggerLock =
+    embedConstraintsUtil.getEmbedConstraints(flow)?.triggerLock;
+  const triggerPieceLocked =
+    flowVersion.trigger.type === FlowTriggerType.PIECE &&
+    (triggerLock === TriggerLockMode.enum.locked ||
+      triggerLock === TriggerLockMode.enum.frozen);
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
@@ -117,7 +128,8 @@ export const CanvasContextMenuContent = ({
   const showReplace =
     selectedNodes.length === 1 &&
     !readonly &&
-    contextMenuType === ContextMenuType.STEP;
+    contextMenuType === ContextMenuType.STEP &&
+    !(doSelectedNodesIncludeTrigger && triggerPieceLocked);
 
   const showCopy =
     !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;

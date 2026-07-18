@@ -2,3 +2,7 @@
 title: 'Apply Flow Operation'
 openapi: POST /v1/flows/{id}
 ---
+
+<Info>
+When a flow carries embed [Publish Constraints](/embedding/publish-constraints), some operations are guarded: an `UPDATE_METADATA` operation from an embed builder (user) session cannot drop the reserved `embedConstraints` key — though a request authenticated with an API key can still update it — and `UPDATE_TRIGGER` / `IMPORT_FLOW` operations from an embed builder (user) session that swap a `locked` or `frozen` trigger are rejected with `409 CONFLICT` — a request authenticated with your API key bypasses these guards so you can seed and update the trigger.
+</Info>

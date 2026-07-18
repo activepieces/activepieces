@@ -307,7 +307,8 @@
                      "embedding/overview",
                      "embedding/configure-embedding",
                      "embedding/provision-users",
-                     "embedding/embed-builder"
+                     "embedding/embed-builder",
+                     "embedding/publish-constraints"
                   ]
                },
                {
