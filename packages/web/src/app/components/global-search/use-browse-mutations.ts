@@ -74,6 +74,7 @@ export function useBrowseMutations(projectId: string) {
     mutationFn: (item) =>
       automationMutationUtils.deleteItem({ id: item.id, type: item.type }),
     onSuccess: invalidate,
+    onError: () => toast.error(t('Failed to delete item')),
   });
 
   const moveItem = useMutation<
