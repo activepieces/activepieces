@@ -1,10 +1,12 @@
 {
     "id": "multi-turn-honors-correction",
-    "description": "Multi-turn: after the assistant scopes the first goal, the user corrects the destination ('actually, log it to a Google Sheet instead of notifying me'). The assistant must adapt to the corrected goal in the second turn — not keep pushing the original notification framing, and not restart discovery from scratch. Pins that mid-conversation corrections are honored.",
+    "description": "Multi-turn: the prior exchange (user asked to be notified; assistant started scoping a notification) lives in initialMessages, then the user corrects the destination — 'don't notify me, log it to a Google Sheet instead'. The assistant must adapt to the corrected goal, not keep pushing the notification framing and not restart discovery from scratch. Pins that a mid-conversation correction is honored across turns.",
     "kind": "capability",
-    "initialMessages": [],
+    "initialMessages": [
+        { "role": "user", "content": "I want to get notified when someone fills out my contact form" },
+        { "role": "assistant", "content": "Love it — I'll make sure you hear about every new contact-form submission the moment it lands. Quick thing so I set it up the way you want: where should the heads-up go — email, Slack, or somewhere else you check often?" }
+    ],
     "userTurns": [
-        "I want to get notified when someone fills out my contact form",
         "actually — don't notify me. Just log every submission into a Google Sheet instead."
     ],
     "recordedToolCalls": [],
@@ -20,7 +22,7 @@
     "judge": [
         {
             "dimension": "honors_mid_conversation_correction",
-            "rubric": "In the second turn the user corrected the goal: not a notification, but logging each contact-form submission into a Google Sheet. PASS when the assistant's final reply adapts to that correction — it commits to (or scopes) logging submissions into a Google Sheet and drops the notification as the outcome. Briefly acknowledging the change is fine. FAIL when the assistant ignores the correction and keeps steering toward notifying the user, treats the two goals as unrelated, or throws away all prior context and restarts discovery as if the first turn never happened.",
+            "rubric": "The prior turn had the assistant heading toward notifying the user; the user then corrected the goal to logging each contact-form submission into a Google Sheet instead. PASS when the assistant's reply adapts to that correction — it commits to (or scopes) logging submissions into a Google Sheet and drops notifying the user as the outcome. Briefly acknowledging the change is fine. FAIL when the assistant ignores the correction and keeps steering toward notifications, treats the two goals as unrelated, or throws away the prior context and restarts discovery as if the first turn never happened.",
             "expectedLabel": "pass"
         }
     ]
