@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream'
 import { apId } from '@activepieces/core-utils'
 import { FilesService } from '@activepieces/pieces-framework'
 import { FileSizeError, FileType } from '@activepieces/shared'
@@ -6,13 +7,16 @@ import { engineFileApi } from '../api/engine-file-api'
 export function createFileUploader({ engineToken, apiUrl }: CreateFileUploaderParams): FilesService {
     const maxFileSizeMb = Number(process.env.AP_MAX_FILE_SIZE_MB)
     return {
-        write: async ({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> => {
-            if (!Buffer.isBuffer(data)) {
+        write: async ({ fileName, data }: { fileName: string, data: Buffer | Readable }): Promise<string> => {
+            if (!Buffer.isBuffer(data) && !(data instanceof Readable)) {
                 throw new Error(
-                    `Expected file data to be a Buffer, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
+                    `Expected file data to be a Buffer or Readable stream, but received ${typeof data === 'object' ? Object.prototype.toString.call(data) : typeof data}`,
                 )
             }
-            validateFileSize(data, maxFileSizeMb)
+            // Stream size is unknown upfront; the API server enforces the cap while streaming.
+            if (Buffer.isBuffer(data)) {
+                validateFileSize(data, maxFileSizeMb)
+            }
             const { readUrl } = await engineFileApi.upload({
                 engineToken,
                 apiUrl,
