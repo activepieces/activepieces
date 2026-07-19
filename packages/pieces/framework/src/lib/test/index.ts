@@ -1,5 +1,9 @@
-import { ExecutionType } from '@activepieces/core-piece-types';
-import { ActionContext } from '../context';
+import { ExecutionType, TriggerStrategy } from '@activepieces/core-piece-types';
+import {
+  ActionContext,
+  SetScheduleRequest,
+  TriggerHookContext,
+} from '../context';
 import { InputPropertyMap, StaticPropsValue } from '../property';
 
 export function createMockActionContext<
@@ -72,4 +76,18 @@ export function createMockActionContext<
     },
     generateResumeUrl: () => 'http://localhost:3000/resume',
   } as unknown as ActionContext<undefined, Props>;
+}
+
+export function createMockPollingTriggerContext<
+  Props extends InputPropertyMap
+>(params: {
+  propsValue: StaticPropsValue<Props>;
+  onSetSchedule?: (schedule: SetScheduleRequest) => void;
+}): TriggerHookContext<undefined, Props, TriggerStrategy.POLLING> {
+  return {
+    ...createMockActionContext({ propsValue: params.propsValue }),
+    setSchedule: (schedule: SetScheduleRequest) => {
+      params.onSetSchedule?.(schedule);
+    },
+  } as unknown as TriggerHookContext<undefined, Props, TriggerStrategy.POLLING>;
 }

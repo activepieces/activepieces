@@ -18,6 +18,7 @@ export enum WebhookHandshakeStrategy {
 
 export enum TriggerSourceScheduleType {
     CRON_EXPRESSION = 'CRON_EXPRESSION',
+    INTERVAL = 'INTERVAL',
 }
 
 export const WebhookHandshakeConfiguration = z.object({
@@ -26,11 +27,17 @@ export const WebhookHandshakeConfiguration = z.object({
 })
 export type WebhookHandshakeConfiguration = z.infer<typeof WebhookHandshakeConfiguration>
 
-export const ScheduleOptions = z.object({
-    type: z.nativeEnum(TriggerSourceScheduleType),
-    cronExpression: z.string(),
-    timezone: z.string(),
-})
+export const ScheduleOptions = z.discriminatedUnion('type', [
+    z.object({
+        type: z.literal(TriggerSourceScheduleType.CRON_EXPRESSION),
+        cronExpression: z.string(),
+        timezone: z.string(),
+    }),
+    z.object({
+        type: z.literal(TriggerSourceScheduleType.INTERVAL),
+        intervalMs: z.int().min(60000),
+    }),
+])
 export type ScheduleOptions = z.infer<typeof ScheduleOptions>
 
 export const TriggerSource = z.object({
