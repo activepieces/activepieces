@@ -158,23 +158,15 @@ function ProjectUnit({
             aria-label={t('Switch project')}
             className="flex size-7 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {/* The colored monogram square is always present; only its content
-                cross-fades (letter → caret) on hover, so the caret sits inside the
-                same colored space rather than replacing it. */}
             <span
-              className="relative flex size-5 shrink-0 items-center justify-center rounded-[6px]"
+              className="flex size-5 shrink-0 items-center justify-center rounded-[6px] text-[10px] font-bold"
               style={{
                 backgroundColor: palette.color,
                 color: palette.textColor,
               }}
               aria-hidden
             >
-              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold transition-opacity group-hover:opacity-0">
-                {projectName.charAt(0).toUpperCase()}
-              </span>
-              <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                <ChevronDown className="size-3.5" />
-              </span>
+              {projectName.charAt(0).toUpperCase()}
             </span>
           </button>
         </DropdownMenuTrigger>
