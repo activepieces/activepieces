@@ -1994,6 +1994,8 @@
   "package.json not found in archive": "package.json not found in archive",
   "Error processing archive file": "Error processing archive file",
   "Please upload a .tgz file": "Please upload a .tgz file",
+  "Piece not available": "Piece not available",
+  "pieceNotAvailableOnInstanceNote": "The piece {pieceName} (version {pieceVersion}) is not installed on this instance or has been hidden by an admin. Install it or switch this step to an installed version.",
   "Piece name is required for NPM Registry": "Piece name is required for NPM Registry",
   "Piece version is required for NPM Registry": "Piece version is required for NPM Registry",
   "Piece installed": "Piece installed",
