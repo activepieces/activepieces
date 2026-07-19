@@ -2,7 +2,7 @@ import { ConsumeJobRequest } from '@activepieces/shared'
 import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createQueueDispatcher, ERROR_RETRY_DELAY_MS, QueueDispatcher, WAITER_TIMEOUT_MS } from '../../../../../src/app/workers/job-queue/queue-dispatcher'
+import { createQueueDispatcher, EMPTY_POLL_BACKOFF_MS, ERROR_RETRY_DELAY_MS, QueueDispatcher, WAITER_TIMEOUT_MS } from '../../../../../src/app/workers/job-queue/queue-dispatcher'
 
 const mockLog: FastifyBaseLogger = {
     debug: vi.fn(),
@@ -113,6 +113,22 @@ describe('QueueDispatcher', () => {
 
         expect(await pollPromise).toBeNull()
         expect(dequeueCallCount).toBeGreaterThan(1)
+    })
+
+    it('should back off between dequeues instead of hot-looping when getNextJob resolves empty immediately', async () => {
+        // Manual-dispatch mode: getNextJob does not block on an empty queue, it resolves null right away.
+        dequeueMock.mockImplementation(() => {
+            dequeueCallCount++
+            return Promise.resolve(null)
+        })
+
+        const pollPromise = dispatcher.poll()
+
+        await vi.advanceTimersByTimeAsync(WAITER_TIMEOUT_MS)
+
+        expect(await pollPromise).toBeNull()
+        // Without the empty-queue backoff this would run once per microtask tick (tens of thousands of calls).
+        expect(dequeueCallCount).toBeLessThanOrEqual(WAITER_TIMEOUT_MS / EMPTY_POLL_BACKOFF_MS + 1)
     })
 
     it('should retry after a delay when dequeue errors, then return the job', async () => {

@@ -4,9 +4,11 @@ import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 
 
-// worker's RPC timeout is 60s, and drainDelay is 15s, so we can safely set WAITER_TIMEOUT_MS to 40s. 
+// worker's RPC timeout is 60s, and drainDelay is 15s, so we can safely set WAITER_TIMEOUT_MS to 40s.
 const WAITER_TIMEOUT_MS = 40_000
 const ERROR_RETRY_DELAY_MS = 5_000
+// getNextJob does not block on an empty queue in manual-dispatch mode, so an empty result must be backed off explicitly to avoid hot-looping Redis.
+const EMPTY_POLL_BACKOFF_MS = 250
 
 function createQueueDispatcher(params: {
     queueName: string
@@ -36,6 +38,8 @@ function createQueueDispatcher(params: {
                     log.info({ queueName, job: { id: job.jobId, type: job.jobData.jobType } }, '[QueueDispatcher] dequeued job')
                     return job
                 }
+                if (closed) return null
+                await sleep(EMPTY_POLL_BACKOFF_MS)
             }
             log.info({ queueName, closed }, '[QueueDispatcher] poll returned no job (timed out or closed)')
             return null
@@ -66,4 +70,4 @@ export type QueueDispatcher = {
     waiterCount(): number
 }
 
-export { createQueueDispatcher, WAITER_TIMEOUT_MS, ERROR_RETRY_DELAY_MS }
+export { createQueueDispatcher, WAITER_TIMEOUT_MS, ERROR_RETRY_DELAY_MS, EMPTY_POLL_BACKOFF_MS }
