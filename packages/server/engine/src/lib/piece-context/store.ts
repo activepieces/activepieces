@@ -5,7 +5,7 @@ import { DeleteStoreEntryRequest, ExecutionError, FetchError, PutStoreEntryReque
 import fetchRetry from 'fetch-retry'
 import { utils } from '../utils'
 
-const fetchWithRetry = fetchRetry(global.fetch)
+const fetchWithRetry = fetchRetry((...args: Parameters<typeof fetch>) => global.fetch(...args))
 const RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
