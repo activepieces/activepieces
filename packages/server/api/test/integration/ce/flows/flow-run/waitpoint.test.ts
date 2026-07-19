@@ -1,6 +1,7 @@
 import { apId } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { countTerminalChildren } from '../../../../../src/app/flows/flow-run/flow-runs-queue'
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { db } from '../../../../helpers/db'
@@ -686,6 +687,89 @@ describe('Waitpoint service', () => {
 
             const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
             expect(result).toBeNull()
+        })
+    })
+
+    describe('Join Waitpoint (Subflow Fan-in)', () => {
+        it('createForPause persists expectedCount', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const { waitpoint } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'fanout',
+                type: PauseType.WEBHOOK,
+                version: 'V1',
+                expectedCount: 3,
+            })
+
+            expect(waitpoint.expectedCount).toBe(3)
+        })
+
+        it('createForPause leaves expectedCount null for a regular waitpoint', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const { waitpoint } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+                version: 'V1',
+            })
+
+            expect(waitpoint.expectedCount).toBeNull()
+        })
+
+        it('countTerminalChildren tallies SUCCEEDED vs failed and ignores non-terminal children', async () => {
+            const { flow, flowVersion, flowRun: parentRun } = await createFlowRun({ status: FlowRunStatus.PAUSED })
+
+            const childStatuses = [
+                FlowRunStatus.SUCCEEDED,
+                FlowRunStatus.SUCCEEDED,
+                FlowRunStatus.FAILED,
+                FlowRunStatus.TIMEOUT,
+                FlowRunStatus.RUNNING,
+            ]
+            for (const status of childStatuses) {
+                await db.save('flow_run', createMockFlowRun({
+                    projectId: ctx.project.id,
+                    flowId: flow.id,
+                    flowVersionId: flowVersion.id,
+                    parentRunId: parentRun.id,
+                    status,
+                    environment: RunEnvironment.PRODUCTION,
+                }))
+            }
+
+            const tally = await countTerminalChildren({ parentRunId: parentRun.id, projectId: ctx.project.id })
+
+            expect(tally).toEqual({ completed: 2, failed: 2 })
+        })
+
+        it('countTerminalChildren is scoped to the parent run', async () => {
+            const { flow, flowVersion, flowRun: parentRun } = await createFlowRun({ status: FlowRunStatus.PAUSED })
+            const { flowRun: otherParent } = await createFlowRun({ status: FlowRunStatus.PAUSED })
+
+            await db.save('flow_run', createMockFlowRun({
+                projectId: ctx.project.id,
+                flowId: flow.id,
+                flowVersionId: flowVersion.id,
+                parentRunId: parentRun.id,
+                status: FlowRunStatus.SUCCEEDED,
+                environment: RunEnvironment.PRODUCTION,
+            }))
+            await db.save('flow_run', createMockFlowRun({
+                projectId: ctx.project.id,
+                flowId: flow.id,
+                flowVersionId: flowVersion.id,
+                parentRunId: otherParent.id,
+                status: FlowRunStatus.SUCCEEDED,
+                environment: RunEnvironment.PRODUCTION,
+            }))
+
+            const tally = await countTerminalChildren({ parentRunId: parentRun.id, projectId: ctx.project.id })
+
+            expect(tally).toEqual({ completed: 1, failed: 0 })
         })
     })
 })

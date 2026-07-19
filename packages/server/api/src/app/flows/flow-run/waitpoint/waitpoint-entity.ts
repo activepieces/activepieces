@@ -60,6 +60,10 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        expectedCount: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {

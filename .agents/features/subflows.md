@@ -27,10 +27,11 @@ Streams a CSV from a URL (no full-file buffering) and dispatches one fire-and-fo
 - **Dispatch**: fire-and-forget (no `callbackUrl`, `FAIL_PARENT_ON_FAILURE=false`), bounded in-flight concurrency (~5) with stream backpressure (parsing pauses when the window is full).
 - **Failure**: a failed batch POST retries with backoff, then aborts the stream and throws with the failed `batchIndex`. At-least-once — already-dispatched subflows keep running.
 - **Ceiling**: bounded by `FLOW_TIMEOUT_SECONDS` (default 600s, fixed on Cloud). Streaming bounds *memory*, not *time*; a file whose fan-out can't finish within the flow timeout is out of scope for v1 (documented, not resumable). See ADR-0009.
-- **Returns**: `{ rowsProcessed, batchesDispatched }`.
+- **Returns**: `{ headers, firstRow, rowsProcessed, batchesDispatched }`.
+- **Subflow Fan-in** (opt-in `waitForSubflows`, default off): after dispatching all batches, the parent creates a **Join Waitpoint** (`WEBHOOK` waitpoint with `expectedCount = batchesDispatched`) and pauses. It resumes once every dispatched child run reaches a terminal state, merging `{ completed, failed }` into the return. Zero batches → no waitpoint, returns immediately. The resume signal is each child's terminal `flow_run` row (indexed by `parentRunId`) — no callback, no `Respond`. Off = today's exact fire-and-forget path. See ADR-0010.
 
 ### Respond
 Sends a `{ status, data }` response from a subflow back to the parent's waitpoint callback URL.
 
 ## Domain Terms
-See [Automation Core → Subflows](../contexts/automation-core/CONTEXT.md): Subflow, Callable Flow, Call Flow, Subflow Fan-out, Batch.
+See [Automation Core → Subflows](../contexts/automation-core/CONTEXT.md): Subflow, Callable Flow, Call Flow, Subflow Fan-out, Subflow Fan-in, Join Waitpoint, Batch.

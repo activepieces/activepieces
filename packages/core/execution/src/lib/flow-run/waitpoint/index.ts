@@ -14,6 +14,7 @@ export const CreateWaitpointRequest = z.object({
     responseToSend: RespondResponse.optional(),
     workerHandlerId: z.string().optional(),
     httpRequestId: z.string().optional(),
+    expectedCount: z.number().int().positive().optional(),
 })
 export type CreateWaitpointRequest = z.infer<typeof CreateWaitpointRequest>
 

@@ -1,8 +1,14 @@
 ---
 status: accepted
+amended-by: 0010
 ---
 
 # Streaming CSV fan-out is a bounded, fire-and-forget piece action
+
+> **Amended by [ADR-0010](./0010-subflow-fan-in-resumes-on-a-terminal-run-tally.md):** the action
+> is now fire-and-forget *by default* but gains an opt-in `waitForSubflows` (Subflow Fan-in) mode.
+> The "wait-for-response fan-in" rejection below applied to waiting *inline*; ADR-0010 does the wait
+> via a waitpoint pause instead, so the 600s dispatch ceiling and everything else here still hold.
 
 The `Stream CSV to Subflows` action (`@activepieces/piece-subflows`) streams a CSV **from a URL** — doing its own `responseType: 'stream'` GET into a streaming CSV parser — and dispatches one **fire-and-forget** Subflow call per batch (`data = { batchIndex, headers, rows }`), with bounded in-flight concurrency and stream backpressure. It is a **pure piece with zero engine/framework changes**: reading a source stream inside a piece is the read-side escape hatch [ADR-0007](./0007-streaming-files-use-presigned-multipart-not-app-relay.md) already sanctioned. Streaming bounds **memory, not time**, so the action is capped by `FLOW_TIMEOUT_SECONDS` (default 600s, fixed on Cloud) like any step; a file whose fan-out can't finish inside that window is explicitly out of scope for v1.
 

@@ -15,7 +15,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { buildRunTimeline } from './run-timeline'
 import { resumeService } from './waitpoint/resume-service'
 import { waitpointService } from './waitpoint/waitpoint-service'
-import { WaitpointStatus } from './waitpoint/waitpoint-types'
+import { Waitpoint, WaitpointStatus } from './waitpoint/waitpoint-types'
 
 let runsMetadataWorker: Worker<RunsMetadataJobData> | undefined = undefined
 
@@ -109,6 +109,17 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     log,
                                 })
                             }
+                            else if (!isNil(parentRunId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
+                                const joinWaitpoint = await waitpointService(log).getPendingByFlowRunId(parentRunId)
+                                if (!isNil(joinWaitpoint) && !isNil(joinWaitpoint.expectedCount)) {
+                                    await completeFanInIfDone({
+                                        waitpoint: joinWaitpoint,
+                                        projectId: savedFlowRun.projectId,
+                                        useLock: true,
+                                        log,
+                                    })
+                                }
+                            }
 
                             if (!isNil(runMetadata.requestId)) {
                                 await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
@@ -127,6 +138,14 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                         flowRunId: savedFlowRun.id,
                                         waitpointId: latestWaitpoint.id,
                                         resumePayload: latestWaitpoint.resumePayload,
+                                    })
+                                }
+                                else if (!isNil(latestWaitpoint) && !isNil(latestWaitpoint.expectedCount)) {
+                                    await completeFanInIfDone({
+                                        waitpoint: latestWaitpoint,
+                                        projectId: savedFlowRun.projectId,
+                                        useLock: false,
+                                        log,
                                     })
                                 }
                             }
@@ -230,6 +249,86 @@ async function markParentRunAsFailed({
             resumePayload: result.waitpoint.resumePayload,
         })
     }
+}
+
+// COUNT over the indexed parentRunId is the sole source of truth: idempotent under BullMQ
+// retries and concurrent completions, and complete() (pessimistic-locked, WHERE status=PENDING)
+// makes the resume exactly-once. Called from the child's terminal upload (useLock=true, it holds
+// the child's lock, not the parent's) and from the parent's own PAUSED upload (useLock=false, it
+// already holds the parent's lock) — the latter also seals the finish-before-pause race.
+// ponytail: COUNT runs on every join completion, O(n) per child; fine at ADR-0009's bounded
+// fan-out over idx_run_parent_run_id. Add a counter/Redis fast-path only if a large fan-out
+// measurably regresses.
+async function completeFanInIfDone({ waitpoint, projectId, useLock, log }: CompleteFanInParams): Promise<void> {
+    if (isNil(waitpoint.expectedCount)) {
+        return
+    }
+    const tally = await countTerminalChildren({ parentRunId: waitpoint.flowRunId, projectId })
+    if (tally.completed + tally.failed < waitpoint.expectedCount) {
+        return
+    }
+    const result = await waitpointService(log).complete({
+        flowRunId: waitpoint.flowRunId,
+        projectId,
+        waitpointId: waitpoint.id,
+        resumePayload: fanInResumePayload(tally),
+    })
+    if (result.completedExisting && !isNil(result.waitpoint)) {
+        const resumeParams = {
+            flowRunId: waitpoint.flowRunId,
+            waitpointId: result.waitpoint.id,
+            resumePayload: result.waitpoint.resumePayload,
+        }
+        if (useLock) {
+            await resumeService(log).resumeFromWaitpoint(resumeParams)
+        }
+        else {
+            await resumeService(log).resumeFromWaitpointWithoutLock(resumeParams)
+        }
+    }
+}
+
+export async function countTerminalChildren({ parentRunId, projectId }: CountTerminalChildrenParams): Promise<FanInTally> {
+    const rows = await flowRunRepo()
+        .createQueryBuilder('flow_run')
+        .select('flow_run.status', 'status')
+        .addSelect('COUNT(*)', 'count')
+        .where('flow_run.parentRunId = :parentRunId', { parentRunId })
+        .andWhere('flow_run.projectId = :projectId', { projectId })
+        .andWhere('flow_run.status IN (:...statuses)', { statuses: TERMINAL_CHILD_STATUSES })
+        .groupBy('flow_run.status')
+        .getRawMany<{ status: FlowRunStatus, count: string }>()
+
+    return rows.reduce<FanInTally>((tally, row) => {
+        const count = Number(row.count)
+        return row.status === FlowRunStatus.SUCCEEDED
+            ? { ...tally, completed: tally.completed + count }
+            : { ...tally, failed: tally.failed + count }
+    }, { completed: 0, failed: 0 })
+}
+
+function fanInResumePayload({ completed, failed }: FanInTally): { body: { status: string, data: FanInTally }, headers: Record<string, string>, queryParams: Record<string, string> } {
+    return { body: { status: 'success', data: { completed, failed } }, headers: {}, queryParams: {} }
+}
+
+const TERMINAL_CHILD_STATUSES = Object.values(FlowRunStatus).filter((status) =>
+    isFlowRunStateTerminal({ status, ignoreInternalError: false }))
+
+type CompleteFanInParams = {
+    waitpoint: Waitpoint
+    projectId: string
+    useLock: boolean
+    log: FastifyBaseLogger
+}
+
+type CountTerminalChildrenParams = {
+    parentRunId: string
+    projectId: string
+}
+
+type FanInTally = {
+    completed: number
+    failed: number
 }
 
 type BuildTimelineParams = {

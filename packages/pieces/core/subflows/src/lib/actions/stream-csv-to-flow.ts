@@ -1,10 +1,12 @@
 import {
   createAction,
+  ExecutionType,
   FAIL_PARENT_ON_FAILURE_HEADER,
   FlowStatus,
   PARENT_RUN_ID_HEADER,
   PieceAuth,
   Property,
+  StoreScope,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Readable } from 'node:stream';
@@ -81,9 +83,31 @@ export const streamCsvToSubflows = createAction({
         'Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.',
       required: false,
     }),
+    waitForSubflows: Property.Checkbox({
+      displayName: 'Wait for Subflows',
+      description:
+        'Pause this flow until every dispatched subflow run finishes, then resume with a { completed, failed } summary.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
-    const { fileUrl, batchSize, delimiter, extraData } = context.propsValue;
+    if (context.executionType === ExecutionType.RESUME) {
+      const summary = await context.store.get<DispatchSummary>(
+        FAN_IN_SUMMARY_KEY,
+        StoreScope.FLOW
+      );
+      await context.store.delete(FAN_IN_SUMMARY_KEY, StoreScope.FLOW);
+      const data = (context.resumePayload.body as { data?: FanInTally })?.data;
+      return {
+        ...summary,
+        completed: data?.completed ?? 0,
+        failed: data?.failed ?? 0,
+      };
+    }
+
+    const { fileUrl, batchSize, delimiter, extraData, waitForSubflows } =
+      context.propsValue;
     if (!Number.isInteger(batchSize) || batchSize < 1) {
       throw new Error(
         JSON.stringify({ message: 'Rows per batch must be a positive integer.' })
@@ -165,10 +189,33 @@ export const streamCsvToSubflows = createAction({
         maxInFlight: MAX_IN_FLIGHT,
         dispatch,
       });
-      return { headers, firstRow, ...result };
+      const summary: DispatchSummary = { headers, firstRow, ...result };
+      if (waitForSubflows && result.batchesDispatched > 0) {
+        await context.store.put(FAN_IN_SUMMARY_KEY, summary, StoreScope.FLOW);
+        const waitpoint = await context.run.createWaitpoint({
+          type: 'WEBHOOK',
+          expectedCount: result.batchesDispatched,
+        });
+        context.run.waitForWaitpoint(waitpoint.id);
+      }
+      return summary;
     } finally {
       parser.destroy();
       source.data.destroy();
     }
   },
 });
+
+const FAN_IN_SUMMARY_KEY = 'streamCsvToSubflows:fanInSummary';
+
+type FanInTally = {
+  completed: number;
+  failed: number;
+};
+
+type DispatchSummary = {
+  headers: string[];
+  firstRow: CsvRow | undefined;
+  rowsProcessed: number;
+  batchesDispatched: number;
+};

@@ -32,6 +32,7 @@ type Waitpoint = {
     workerHandlerId: string | null
     httpRequestId: string | null
     resumePayload: WaitpointResumePayload | null
+    expectedCount: number | null
 }
 
 type CreateForPauseParams = {
@@ -44,6 +45,7 @@ type CreateForPauseParams = {
     responseToSend?: RespondResponse
     workerHandlerId?: string
     httpRequestId?: string
+    expectedCount?: number
 }
 
 type CreateForPauseResult = {

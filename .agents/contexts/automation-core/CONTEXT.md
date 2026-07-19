@@ -97,8 +97,16 @@ The trigger (`@activepieces/piece-subflows`) that lets a flow be invoked as a Su
 The action that invokes a single Subflow once and optionally waits for its response. Distinct from a fan-out, which invokes a Subflow many times.
 
 **Subflow Fan-out**:
-Dispatching many Subflow calls from one parent step (e.g. one per CSV batch), fire-and-forget, without waiting for each to finish.
+Dispatching many Subflow calls from one parent step (e.g. one per CSV batch). Fire-and-forget by default; the opt-in Subflow Fan-in variant waits for the children.
 _Avoid_: scatter, broadcast
+
+**Subflow Fan-in**:
+A Subflow Fan-out variant where the parent pauses on a Join Waitpoint and resumes once all N dispatched children reach a terminal state, returning a `{ completed, failed }` summary. Opt-in via the `waitForSubflows` prop.
+_Avoid_: barrier, gather, join
+
+**Join Waitpoint**:
+A Waitpoint carrying a non-null `expectedCount`; resumes its run when `COUNT(terminal children) == expectedCount` rather than on a single resume signal. The `expectedCount` field is the sole discriminator from a 1:1 waitpoint.
+_Avoid_: counting waitpoint, multi-waitpoint, tally waitpoint
 
 **Batch**:
 The unit of rows sent as the `data` payload of one Subflow call in a fan-out — `{ batchIndex, headers, rows }`.

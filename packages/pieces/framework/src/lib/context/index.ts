@@ -182,6 +182,7 @@ export type CreateWaitpointParams = {
   version?: 'V0' | 'V1';
   resumeDateTime?: string;
   responseToSend?: RespondResponse;
+  expectedCount?: number;
 };
 
 export type CreateWaitpointResult = {
