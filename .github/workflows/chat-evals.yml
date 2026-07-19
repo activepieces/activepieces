@@ -1,8 +1,11 @@
 name: Chat Evals
 
-# Regression gate for the AI Copilot chat prompt + agent loop. Runs on PRs that touch
-# chat/prompt/eval files: deterministic replay + transcript-assertion tests. No provider
-# key, so the live LLM-judge suite self-skips (describe.skipIf in chat-eval.test.ts).
+# Regression gate for the AI Copilot chat prompt + agent loop.
+#   gate — every PR touching chat/prompt/eval files: deterministic replay + assertion
+#          tests, no key, hermetic. Blocks the PR.
+#   live — nightly + manual: runs the fixtures against the real model + LLM-judge and
+#          checks judge calibration. Uses OPENROUTER_API_KEY from secrets. Not a PR
+#          blocker (generation isn't pinned, so it's a monitoring signal, not a gate).
 
 on:
   pull_request:
@@ -13,6 +16,9 @@ on:
       - packages/server/api/src/assets/prompts/**
       - packages/core/shared/src/lib/ee/chat/**
       - .github/workflows/chat-evals.yml
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 permissions:
   actions: read
@@ -21,6 +27,7 @@ permissions:
 jobs:
   gate:
     name: Deterministic gate
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -42,4 +49,30 @@ jobs:
         run: npx turbo run build --filter=worker
 
       - name: Run deterministic chat evals
+        run: npm run chat-evals:ci
+
+  live:
+    name: Live judge gate
+    if: github.event_name != 'pull_request' && github.repository == 'activepieces/activepieces'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Build worker dependency graph
+        run: npx turbo run build --filter=worker
+
+      - name: Run live chat evals + judge calibration
         run: npm run chat-evals:ci
