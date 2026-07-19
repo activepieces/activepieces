@@ -3,6 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { distributedLock, redisConnections } from '../../database/redis-connections'
 import { deleteLegacyRedisKeys } from './delete-legacy-redis-keys'
 import { deleteStaleRunMetadata } from './delete-stale-run-metadata'
+import { migrateEveryXMinutesToInterval } from './migrate-every-x-minutes-to-interval'
 import { refillPausedRuns } from './refill-paused-jobs'
 import { refillPollingJobs } from './refill-polling-jobs'
 import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
@@ -28,6 +29,7 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
                 await refillPausedRuns(log).run()
                 await deleteStaleRunMetadata(log).run()
                 await deleteLegacyRedisKeys(log).run()
+                await migrateEveryXMinutesToInterval(log).run()
             },
         })
       
