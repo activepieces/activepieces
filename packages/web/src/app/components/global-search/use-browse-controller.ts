@@ -1,4 +1,3 @@
-import { Permission } from '@activepieces/core-utils';
 import { type ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useCallback, useState } from 'react';
@@ -7,7 +6,6 @@ import { useDebounce } from 'use-debounce';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM, NEW_TABLE_QUERY_PARAM } from '@/lib/route-utils';
 
@@ -44,7 +42,6 @@ export function useBrowseController({
     filter: uiPrefs.prefs.browseFilter,
     projectId: initialProjectId,
   });
-  const { checkAccess } = useAuthorization();
   const { embedState } = useEmbedding();
   const mutations = useBrowseMutations(browse.projectId);
 
@@ -66,11 +63,6 @@ export function useBrowseController({
   const { groups, isLoading } = hasQuery ? searchResults : browseResults;
 
   const currentProject = allProjects.find((p) => p.id === browse.projectId);
-  const isActiveContext = browse.projectId === activeProjectId;
-  const canWriteFlow = !isActiveContext || checkAccess(Permission.WRITE_FLOW);
-  const canWriteTable = !isActiveContext || checkAccess(Permission.WRITE_TABLE);
-  const canWriteFolder =
-    !isActiveContext || checkAccess(Permission.WRITE_FOLDER);
 
   const flatItems = groups.flatMap((group) => group.items);
   const rowCount = flatItems.length;
@@ -266,9 +258,6 @@ export function useBrowseController({
     openItem,
     openProject,
     hideTables: embedState.hideTables,
-    canWriteFlow,
-    canWriteTable,
-    canWriteFolder,
     isCreatingFlow: mutations.isCreatingFlow,
     isCreatingTable: mutations.isCreatingTable,
     createFlow,
@@ -307,9 +296,6 @@ export type BrowseController = {
   openItem: (item: SearchResultItem) => void;
   openProject: (projectId: string) => void;
   hideTables: boolean;
-  canWriteFlow: boolean;
-  canWriteTable: boolean;
-  canWriteFolder: boolean;
   isCreatingFlow: boolean;
   isCreatingTable: boolean;
   createFlow: () => Promise<void>;
