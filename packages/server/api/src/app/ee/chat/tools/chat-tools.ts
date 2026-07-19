@@ -1,4 +1,4 @@
-import { isNil, isObject, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,6 +7,7 @@ import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
 import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
@@ -209,6 +210,17 @@ async function listResourceForProject({ resource, projectId, status, log }: {
     }
 }
 
+async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
+    userId: string
+    projectId: string
+    toolName: string
+    log: FastifyBaseLogger
+}): Promise<string | null> {
+    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    const denial = checker.check(Permission.WRITE_RUN, toolName)
+    return isNil(denial) ? null : denial.content.map((part) => part.text).join(' ')
+}
+
 async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, log }: {
     toolName: string
     toolInput: Record<string, unknown>
@@ -256,7 +268,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_execute_action': {
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log })
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }
         case 'ap_run_code': {
             return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
@@ -267,7 +279,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log })
+            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -336,12 +348,14 @@ function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }
     }
 }
 
-async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, log }: {
+async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
     conversationId?: string
     platformId?: string
+    userId: string
+    requireWritePermission?: boolean
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const pieceName = toolInput.pieceName as string
@@ -366,6 +380,12 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
     }
     if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
         return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
+    }
+    if (requireWritePermission) {
+        const denial = await checkWriteRunPermission({ userId, projectId: resolvedProjectId, toolName: 'ap_execute_action', log })
+        if (denial) {
+            return { success: false, error: denial }
+        }
     }
 
     let parsedInput = toolInput.input
@@ -427,6 +447,10 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
     }
     if (isNil(projectId)) {
         return { text: '❌ No projects available. Create a project first.', producedFiles: [] }
+    }
+    const denial = await checkWriteRunPermission({ userId, projectId, toolName: 'ap_run_code', log })
+    if (denial) {
+        return { text: `❌ ${denial}`, producedFiles: [] }
     }
 
     const baseInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : {}
