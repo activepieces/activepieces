@@ -211,8 +211,13 @@ const ApStepCanvasNode = React.memo(
             </PieceSelector>
           )}
           {isHorizontal && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-[180px] flex justify-center pointer-events-none">
-              <div className="flex flex-col items-center min-w-0">
+            <div
+              style={{
+                width: `${flowCanvasConsts.HORIZONTAL_STEP_LABEL_WIDTH}px`,
+              }}
+              className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 flex justify-center pointer-events-none"
+            >
+              <div className="flex flex-col items-center min-w-0 pointer-events-auto">
                 <StepNodeDisplayName
                   stepDisplayName={step.displayName}
                   stepIndex={stepIndex}
