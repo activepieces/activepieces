@@ -17,12 +17,12 @@ export const wauldAuth = PieceAuth.CustomAuth({
   props: {
     accessToken: PieceAuth.SecretText({
       displayName: 'Access Token',
-      description: 'Paste the access token generated in your Wauld account.',
+      description: 'You can find your Activepieces Token in Wauld under Integrations >> Activepieces Integration. Click Generate Token, then copy and paste the token here.',
       required: true,
     }),
     accountId: Property.ShortText({
       displayName: 'Account ID',
-      description: 'Enter the ID of the Wauld account connected to this token.',
+      description: 'You can find your Wauld Account ID in the URL after wauld.app/. It starts with acc_. Copy and paste it here.',
       required: true,
     }),
   },

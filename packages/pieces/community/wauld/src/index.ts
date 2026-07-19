@@ -13,7 +13,7 @@ import { credentialIssued } from './lib/triggers/credential-issued';
 export const wauld = createPiece({
   displayName: 'Wauld',
   description:
-    'Create, issue, and automate verifiable digital credentials.',
+    'Wauld is an all-in-one credentialing platform to design, issue, and manage digital credentials that are secure, shareable, and globally verifiable.',
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/wauld.png',
   authors: ['vikranthreddy86'],
