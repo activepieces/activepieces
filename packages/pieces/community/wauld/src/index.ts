@@ -5,6 +5,7 @@ import {
 import { wauldAuth } from './lib/auth';
 import { listWorkspaces } from './lib/actions/list-workspaces';
 import { listEngagements } from './lib/actions/list-engagements';
+import { listDocuments } from './lib/actions/list-documents';
 
 export const wauld = createPiece({
   displayName: 'Wauld',
@@ -15,6 +16,6 @@ export const wauld = createPiece({
   authors: ['vikranthreddy86'],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: wauldAuth,
-  actions: [listWorkspaces, listEngagements],
+  actions: [listWorkspaces, listEngagements, listDocuments],
   triggers: [],
 });
