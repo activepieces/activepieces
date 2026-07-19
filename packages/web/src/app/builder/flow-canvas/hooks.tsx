@@ -198,26 +198,30 @@ export const useResizeCanvas = (
   containerRef: React.RefObject<HTMLDivElement | null>,
   setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
 ) => {
-  const containerSizeRef = useRef({
-    width: 0,
-    height: 0,
-  });
+  // Anchor the flow to its on-screen position instead of re-centering on resize.
+  // When a layout change shifts the canvas's left edge (e.g. the chat panel
+  // collapses and the stage expands), compensate the viewport by the same amount
+  // so the flow stays put rather than jumping. `left: null` means "not measured
+  // yet" — the first observation must not shift (it would move by the absolute
+  // screen offset).
+  const containerLeftRef = useRef<number | null>(null);
   const { getViewport, setViewport } = useReactFlow();
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const resizeObserver = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
+    const resizeObserver = new ResizeObserver(() => {
+      const el = containerRef.current;
+      if (!el) return;
       setHasCanvasBeenInitialised(true);
-      const { x, y, zoom } = getViewport();
-      if (containerRef.current && width !== containerSizeRef.current.width) {
-        const newX = x + (width - containerSizeRef.current.width) / 2;
-        setViewport({ x: newX, y, zoom });
+      const left = el.getBoundingClientRect().left;
+      const prevLeft = containerLeftRef.current;
+      containerLeftRef.current = left;
+      if (prevLeft === null) return;
+      const deltaLeft = left - prevLeft;
+      if (deltaLeft !== 0) {
+        const { x, y, zoom } = getViewport();
+        setViewport({ x: x - deltaLeft, y, zoom });
       }
-      containerSizeRef.current = {
-        width,
-        height,
-      };
     });
     resizeObserver.observe(containerRef.current);
     return () => {
