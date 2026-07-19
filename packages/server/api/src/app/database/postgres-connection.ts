@@ -395,7 +395,11 @@ import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
 import { DropBadges1804000000000 } from './migration/postgres/1804000000000-DropBadges'
 import { AddConnectionIdsGinIndexToFlowVersion1806000000000 } from './migration/postgres/1806000000000-AddConnectionIdsGinIndexToFlowVersion'
-import { AddPieceRunTable1807000000000 } from './migration/postgres/1807000000000-AddPieceRunTable'
+import { CreatePieceSetTable1807000000000 } from './migration/postgres/1807000000000-CreatePieceSetTable'
+import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/1808000000000-AddProjectPieceSetIdIndex'
+import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
+import { AddChatConversationStreamingUpdatedIndex1810000000000 } from './migration/postgres/1810000000000-AddChatConversationStreamingUpdatedIndex'
+import { AddPieceRunTable1811000000000 } from './migration/postgres/1811000000000-AddPieceRunTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -806,7 +810,11 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropDataManipulationEnabledFromPlatformPlan1803000000000,
         DropBadges1804000000000,
         AddConnectionIdsGinIndexToFlowVersion1806000000000,
-        AddPieceRunTable1807000000000,
+        CreatePieceSetTable1807000000000,
+        AddProjectPieceSetIdIndex1808000000000,
+        DropPlatformPieceFilters1809000000000,
+        AddChatConversationStreamingUpdatedIndex1810000000000,
+        AddPieceRunTable1811000000000,
     ]
     return migrations
 }

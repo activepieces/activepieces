@@ -248,8 +248,14 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
+// On a gate TIMEOUT (user away, not a decline) resume with guidance instead of a "cancelled" message,
+// so the model skips an optional step or stops for a required one — never mistaking silence for consent.
+function gateNoResponseMessage(step: string): string {
+    return `⏳ The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`
+}
+
 function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened }: {
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean, payload?: Record<string, unknown> }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onConnectorReconnected?: (connectorUuid: string) => void
@@ -273,7 +279,10 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
                 }))
             }
             const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
-            if (!decision.approved) {
+            if (decision.outcome === 'timeout') {
+                return { timedOut: true, message: gateNoResponseMessage(getDisplayName?.(input) ?? toolName) }
+            }
+            if (decision.outcome !== 'approved') {
                 return { dismissed: true, message: typeof dismissMessage === 'function' ? dismissMessage(input) : dismissMessage }
             }
             if (onApproved) {
@@ -527,12 +536,13 @@ function createProgressGuard() {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     guides: Record<string, string>
+    taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
@@ -579,7 +589,9 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 }
                 const needsPreview = chatToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
+                    input: toolInput.input,
                     needsConfirmation: toolInput.needsConfirmation,
+                    tainted: taintState.tainted,
                 })
 
                 if (needsPreview) {
@@ -609,8 +621,9 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                         }))
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
-                    if (!decision.approved) {
-                        return { content: [{ type: 'text', text: 'Action cancelled by user.' }] }
+                    if (decision.outcome !== 'approved') {
+                        const text = decision.outcome === 'timeout' ? gateNoResponseMessage('action approval') : 'Action cancelled by user.'
+                        return { content: [{ type: 'text', text }] }
                     }
                 }
 
@@ -684,6 +697,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 if (!chatToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
                     return chatToolClassification.readOnlyRejection(toolInput.actionName)
                 }
+                taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
             },
@@ -744,7 +758,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
     }
 }
 
-function createWebTools(): ToolSet {
+function createWebTools({ taintState }: { taintState: TaintState }): ToolSet {
     return {
         ap_fetch_url: tool({
             description: 'Fetch the readable text of a public web page or API URL over HTTPS (read-only GET). Use it to read a specific page in full — e.g. the API docs you found via web search before building an http_fallback step, or a link the user shared. HTML is stripped to text; JSON/plain text is returned as-is.',
@@ -756,6 +770,7 @@ function createWebTools(): ToolSet {
                 if (!/^https?:\/\//i.test(toolInput.url)) {
                     return { content: [{ type: 'text', text: `"${toolInput.url}" is not a valid http(s) URL.` }] }
                 }
+                taintState.tainted = true
                 return withToolTimeout({
                     fn: async (signal) => {
                         const { data: response, error } = await tryCatch(() => safeHttp.axios.get<string>(toolInput.url, {
@@ -808,7 +823,7 @@ const FAL_IMAGE_SIZE_BY_ASPECT: Record<ImageAspect, string> = {
     portrait: 'portrait_16_9',
 }
 
-function createSearchTools({ webSearch }: { webSearch: ResolvedToolConfig }): ToolSet {
+function createSearchTools({ webSearch, taintState }: { webSearch: ResolvedToolConfig, taintState: TaintState }): ToolSet {
     return {
         ap_web_search: tool({
             description: 'Search the live web for current information using a dedicated search engine. Use it to find up-to-date facts, docs, news, or pages relevant to the user\'s request. Returns ranked results with titles, URLs, and content snippets; follow up with ap_fetch_url or ap_scrape_url to read a result in full.',
@@ -816,45 +831,48 @@ function createSearchTools({ webSearch }: { webSearch: ResolvedToolConfig }): To
                 ...cardTitleFields,
                 query: z.string().describe('The search query'),
             }),
-            execute: async (toolInput) => withToolTimeout({
-                toolName: 'ap_web_search',
-                timeoutMs: SEARCH_TIMEOUT_MS + 5_000,
-                fn: async (signal) => {
-                    const { data: response, error } = await tryCatch(() => safeHttp.axios.post('https://api.tavily.com/search', {
-                        query: toolInput.query,
-                        max_results: MAX_SEARCH_RESULTS,
-                        include_answer: true,
-                        search_depth: 'basic',
-                    }, {
-                        signal,
-                        timeout: SEARCH_TIMEOUT_MS,
-                        headers: { Authorization: `Bearer ${webSearch.apiKey}`, 'Content-Type': 'application/json' },
-                    }))
-                    if (error) {
-                        return { content: [{ type: 'text', text: `Web search failed: ${error instanceof Error ? error.message : String(error)}` }] }
-                    }
-                    const body = isObject(response.data) ? response.data : {}
-                    const rawResults = Array.isArray(body['results']) ? body['results'] : []
-                    const results = rawResults.map((r) => {
-                        const item = isObject(r) ? r : {}
-                        return {
-                            title: typeof item['title'] === 'string' ? item['title'] : '',
-                            url: typeof item['url'] === 'string' ? item['url'] : '',
-                            content: typeof item['content'] === 'string' ? item['content'] : '',
+            execute: async (toolInput) => {
+                taintState.tainted = true
+                return withToolTimeout({
+                    toolName: 'ap_web_search',
+                    timeoutMs: SEARCH_TIMEOUT_MS + 5_000,
+                    fn: async (signal) => {
+                        const { data: response, error } = await tryCatch(() => safeHttp.axios.post('https://api.tavily.com/search', {
+                            query: toolInput.query,
+                            max_results: MAX_SEARCH_RESULTS,
+                            include_answer: true,
+                            search_depth: 'basic',
+                        }, {
+                            signal,
+                            timeout: SEARCH_TIMEOUT_MS,
+                            headers: { Authorization: `Bearer ${webSearch.apiKey}`, 'Content-Type': 'application/json' },
+                        }))
+                        if (error) {
+                            return { content: [{ type: 'text', text: `Web search failed: ${error instanceof Error ? error.message : String(error)}` }] }
                         }
-                    })
-                    return truncateLargeResult({
-                        query: toolInput.query,
-                        answer: typeof body['answer'] === 'string' ? body['answer'] : undefined,
-                        results,
-                    })
-                },
-            }),
+                        const body = isObject(response.data) ? response.data : {}
+                        const rawResults = Array.isArray(body['results']) ? body['results'] : []
+                        const results = rawResults.map((r) => {
+                            const item = isObject(r) ? r : {}
+                            return {
+                                title: typeof item['title'] === 'string' ? item['title'] : '',
+                                url: typeof item['url'] === 'string' ? item['url'] : '',
+                                content: typeof item['content'] === 'string' ? item['content'] : '',
+                            }
+                        })
+                        return truncateLargeResult({
+                            query: toolInput.query,
+                            answer: typeof body['answer'] === 'string' ? body['answer'] : undefined,
+                            results,
+                        })
+                    },
+                })
+            },
         }),
     }
 }
 
-function createScrapeTools({ scraping }: { scraping: ResolvedToolConfig }): ToolSet {
+function createScrapeTools({ scraping, taintState }: { scraping: ResolvedToolConfig, taintState: TaintState }): ToolSet {
     return {
         ap_scrape_url: tool({
             description: 'Scrape a web page and return its clean main content as markdown, including JavaScript-rendered pages. Prefer this over ap_fetch_url when you need the full, readable content of an article, docs page, or product page.',
@@ -866,6 +884,7 @@ function createScrapeTools({ scraping }: { scraping: ResolvedToolConfig }): Tool
                 if (!/^https?:\/\//i.test(toolInput.url)) {
                     return { content: [{ type: 'text', text: `"${toolInput.url}" is not a valid http(s) URL.` }] }
                 }
+                taintState.tainted = true
                 return withToolTimeout({
                     toolName: 'ap_scrape_url',
                     timeoutMs: SCRAPE_TIMEOUT_MS + 5_000,
@@ -941,7 +960,7 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
     sendEmail: (params: { to: string[], subject: string, body: string, gateId?: string }) => Promise<SendChatEmailResponse>
     eventEmitter: ChatEventEmitter
     userEmail: string
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
 }): ToolSet {
     const normalizedSelf = userEmail.toLowerCase().trim()
@@ -979,8 +998,9 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
                         }))
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
-                    if (!decision.approved) {
-                        return { content: [{ type: 'text', text: 'Email cancelled by user.' }] }
+                    if (decision.outcome !== 'approved') {
+                        const text = decision.outcome === 'timeout' ? gateNoResponseMessage('email approval') : 'Email cancelled by user.'
+                        return { content: [{ type: 'text', text }] }
                     }
                 }
 
@@ -1254,7 +1274,7 @@ function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, u
 function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, eventEmitter, log }: {
     mcpTools: Record<string, unknown>
     checkFlowWrites: (flowId: string) => Promise<unknown>
-    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<{ approved: boolean }>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     eventEmitter: ChatEventEmitter
     log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
@@ -1297,8 +1317,11 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
                     }))
                     log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, flow: { id: flowId }, writeStepCount: writeSteps.length }, 'Test-flow write gate opened, awaiting approval')
                     const decision = await waitForApproval({ gateId })
-                    log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, decision: decision.approved ? 'approved' : 'denied' }, 'Test-flow write gate resolved')
-                    if (!decision.approved) {
+                    log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, decision: decision.outcome }, 'Test-flow write gate resolved')
+                    if (decision.outcome !== 'approved') {
+                        if (decision.outcome === 'timeout') {
+                            return { content: [{ type: 'text', text: gateNoResponseMessage('live-test approval') }] }
+                        }
                         const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
                         return { content: [{ type: 'text', text: `Live test cancelled by the user.${stepList} The user declined a real run that would perform these actions. Do not run it; offer to test with mock trigger data instead, or ask whether to proceed.` }] }
                     }
@@ -1393,6 +1416,12 @@ export type ChatEventEmitter = {
     emitFileProduced(data: FileProducedEvent): void
     emitBuildPlan(data: BuildPlanEvent): void
 }
+
+// Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
+export type TaintState = { tainted: boolean }
+
+export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
+export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
 
 export const chatWorkerTools = {
     createEventEmitter,

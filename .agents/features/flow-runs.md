@@ -87,6 +87,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - Compressed with zstd before upload
 - Worker uploads via JWT-signed URLs (7-day expiry)
 - State backed up every 15s during execution for crash recovery
+- Step **inputs** over `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` (default 2 KB) are stored as the literal placeholder `(truncated, original size X KB|MB)` — display-only; execution always resolves fresh values from prior step outputs, which are never truncated (large ones become FLOW_RUN_LOG_SLICE files). The placeholder format is a string contract between `packages/server/engine/src/lib/helper/logging-utils.ts` (`maybeTruncateInput`/`formatSize`, producer) and `packages/web/src/app/builder/run-details/truncated-input-utils.ts` (regex detector behind the run-details Input-tab notice) — change one, change both
 
 ## Pause & Resume
 

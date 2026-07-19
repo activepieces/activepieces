@@ -44,6 +44,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **RBAC**: Role-Based Access Control — enforced per-request via `rbacService.assertPrincipalAccessToProject()`.
 - **Release Type**: GIT_BRANCH (from git), MANUAL (from another project), ROLLBACK (revert to a previous release).
 - **workerGroupId**: Optional pool label on a project (bare, e.g. `1cpu_machine`). When set (and `workerGroupsEnabled` is on for the platform), the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs are routed to `project-<label>-jobs`; other job types are unaffected. The matching worker advertises `AP_WORKER_GROUP_ID=<label>` with `AP_PROJECT_WORKER=true` (scope comes from the flag, not a prefix). Set via `POST /v1/projects/:id`. See the Workers feature doc for the unified worker-group mechanics.
+- **Piece Set assignment**: a project references a piece set via the nullable `project.pieceSetId` column (FK `SET NULL`). When `managePiecesEnabled`, new EE projects are assigned the platform Default set on creation (`ee-project-hooks.ts`), and an unassigned project resolves to Default at filter time. This supersedes the legacy project-plan piece allow/block list. See [piece-sets.md](./piece-sets.md).
 
 ## Project Members
 
@@ -100,7 +101,6 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 
 - `NONE`: All pieces available
 - `ALLOWED`: Only pieces in `pieces[]` array visible
-- Platform-level filtering (`FilteredPieceBehavior.ALLOWED/BLOCKED`) applied first, then project-level
 
 ## Platform Project Service
 
@@ -108,6 +108,8 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - Platform admins: see all projects
 - Operators: see all projects except others' personal
 - Regular users: see own personal + team projects where member
+
+`platformProjectService.deletePersonalProjectForUser()` — called when a user is removed. Reassigns the user's personal project to the platform owner and soft-deletes it in one transaction (then schedules the async `HARD_DELETE_PROJECT` job), so the `fk_project_owner_id` FK no longer blocks hard-deleting the user. `markForDeletion()` remains the generic soft-delete + schedule path used for ordinary project deletion.
 
 **Endpoints** (`platform-project-controller.ts`):
 - `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` accepts `workerGroupId` (validated against `^[a-z0-9_-]+$`, applied in `platformProjectService.update()` only when `platform_plan.workerGroupsEnabled` is on).
