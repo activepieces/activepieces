@@ -409,6 +409,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
             .groupBy('flow_run.status')
 
+        if (params.parentRunId) {
+            query = query.andWhere('flow_run.parentRunId = :parentRunId', { parentRunId: params.parentRunId })
+        }
         if (params.createdAfter) {
             query = query.andWhere('flow_run.created >= :createdAfter', { createdAfter: params.createdAfter })
         }
@@ -418,6 +421,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         const results = await query.getRawMany()
         return results.map((r: { status: FlowRunStatus, count: string }) => ({ status: r.status, count: parseInt(r.count, 10) }))
+    },
+    async countRunsRollupByParent(params: CountRunsRollupByParentParams): Promise<FlowRunParentRollup> {
+        const rows = await this.countByStatus({ projectId: params.projectId, parentRunId: params.parentRunId })
+        return rollupByStatus(rows)
     },
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
@@ -457,6 +464,18 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
         flowRun: { id: flowRun.id },
         flow: { id: flowRun.flowId },
     }, 'Flow run cancelled')
+}
+
+function rollupByStatus(rows: FlowRunCountByStatus[]): FlowRunParentRollup {
+    return rows.reduce<FlowRunParentRollup>((acc, { status, count }) => {
+        if (status === FlowRunStatus.SUCCEEDED) {
+            return { ...acc, succeeded: acc.succeeded + count }
+        }
+        if (isFlowRunStateTerminal({ status, ignoreInternalError: false })) {
+            return { ...acc, failed: acc.failed + count }
+        }
+        return { ...acc, nonTerminal: acc.nonTerminal + count }
+    }, { succeeded: 0, failed: 0, nonTerminal: 0 })
 }
 
 async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
@@ -825,8 +844,14 @@ type BulkArchiveActionParams = {
 
 type CountByStatusParams = {
     projectId: ProjectId
+    parentRunId?: FlowRunId
     createdAfter?: string
     createdBefore?: string
+}
+
+type CountRunsRollupByParentParams = {
+    projectId: ProjectId
+    parentRunId: FlowRunId
 }
 
 type FilterFlowRunsAndApplyFiltersParams = {
@@ -840,4 +865,10 @@ type FilterFlowRunsAndApplyFiltersParams = {
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
     failedStepMessage?: string
+}
+
+export type FlowRunParentRollup = {
+    succeeded: number
+    failed: number
+    nonTerminal: number
 }

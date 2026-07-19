@@ -1,18 +1,25 @@
 import {
   createAction,
+  ExecutionType,
   FAIL_PARENT_ON_FAILURE_HEADER,
   FlowStatus,
   PARENT_RUN_ID_HEADER,
   PieceAuth,
   Property,
+  StoreScope,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  AuthenticationType,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { Readable } from 'node:stream';
 import { setTimeout as sleep } from 'node:timers/promises';
 import axios from 'axios';
 import { parse } from 'csv-parse';
 import { findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
 import { fanOutBatches } from '../fan-out';
+import { evaluateFanIn, FanInRollup, FanInState } from '../fan-in';
 
 type FlowValue = {
   externalId: string;
@@ -20,8 +27,14 @@ type FlowValue = {
 
 type CsvRow = Record<string, string>;
 
+type StoredFanIn = FanInState & {
+  headers: string[];
+  firstRow?: CsvRow;
+};
+
 const MAX_IN_FLIGHT = 5;
 const MAX_DISPATCH_ATTEMPTS = 3;
+const POLL_INTERVAL_SECONDS = 30;
 
 export const streamCsvToSubflows = createAction({
   audience: 'human',
@@ -81,12 +94,83 @@ export const streamCsvToSubflows = createAction({
         'Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.',
       required: false,
     }),
+    waitForAllSubflows: Property.Checkbox({
+      displayName: 'Wait for all subflows to finish',
+      description:
+        'Pause this step until every dispatched subflow run is finished, then continue with a summary. A failed subflow is reported, not thrown.',
+      required: false,
+      defaultValue: false,
+    }),
+    maxWaitMinutes: Property.Number({
+      displayName: 'Max wait (minutes)',
+      description:
+        'Stop waiting after this many minutes and continue with a timed-out summary. Only used when waiting is enabled.',
+      required: false,
+      defaultValue: 60,
+    }),
   },
   async run(context) {
-    const { fileUrl, batchSize, delimiter, extraData } = context.propsValue;
+    const { fileUrl, batchSize, delimiter, extraData, waitForAllSubflows } =
+      context.propsValue;
+    const maxWaitMinutes = context.propsValue.maxWaitMinutes ?? 60;
+
+    const storeKey = `fanin:${context.run.id}:${context.step.name}`;
+    const rollupUrl = `${context.server.apiUrl.replace(/\/$/, '')}/v1/engine/flow-runs/count-by-parent`;
+
+    const fetchRollup = async (): Promise<FanInRollup> => {
+      const response = await httpClient.sendRequest<FanInRollup>({
+        method: HttpMethod.GET,
+        url: rollupUrl,
+        queryParams: { parentRunId: context.run.id },
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: context.server.token,
+        },
+      });
+      return response.body;
+    };
+
+    const check = async () => {
+      const state = await context.store.get<StoredFanIn>(storeKey, StoreScope.FLOW);
+      if (state === null) {
+        return { timedOut: false, waited: false };
+      }
+      const cur = await fetchRollup();
+      const verdict = evaluateFanIn({ cur, state, nowMs: Date.now() });
+      if (verdict.done || verdict.timedOut) {
+        await context.store.delete(storeKey, StoreScope.FLOW);
+        return {
+          batchesDispatched: state.batchesDispatched,
+          succeeded: verdict.succeeded,
+          failed: verdict.failed,
+          stillRunning: verdict.stillRunning,
+          timedOut: verdict.timedOut,
+          headers: state.headers,
+          firstRow: state.firstRow,
+        };
+      }
+      const waitpoint = await context.run.createWaitpoint({
+        type: 'DELAY',
+        resumeDateTime: new Date(
+          Date.now() + POLL_INTERVAL_SECONDS * 1000
+        ).toUTCString(),
+      });
+      context.run.waitForWaitpoint(waitpoint.id);
+      return {};
+    };
+
+    if (context.executionType === ExecutionType.RESUME) {
+      return check();
+    }
+
     if (!Number.isInteger(batchSize) || batchSize < 1) {
       throw new Error(
         JSON.stringify({ message: 'Rows per batch must be a positive integer.' })
+      );
+    }
+    if (waitForAllSubflows && (!Number.isInteger(maxWaitMinutes) || maxWaitMinutes < 1)) {
+      throw new Error(
+        JSON.stringify({ message: 'Max wait minutes must be a positive integer.' })
       );
     }
 
@@ -105,6 +189,19 @@ export const streamCsvToSubflows = createAction({
       );
     }
     const webhookUrl = `${context.server.apiUrl.replace(/\/$/, '')}/v1/webhooks/${flow.id}`;
+
+    // ponytail: v1 forbids mixing fire-and-forget and wait-for-all subflow steps in one run —
+    // pre-existing in-flight children would be conflated into our count. Fix B (per-step child
+    // marker column) removes this limitation.
+    const baseline = waitForAllSubflows ? await fetchRollup() : null;
+    if (baseline !== null && baseline.nonTerminal > 0) {
+      throw new Error(
+        JSON.stringify({
+          message:
+            'This flow run already has subflows in progress. Do not combine "Wait for all subflows to finish" with fire-and-forget subflow steps in the same run.',
+        })
+      );
+    }
 
     const source = await axios.get<Readable>(fileUrl, {
       responseType: 'stream',
@@ -143,6 +240,8 @@ export const streamCsvToSubflows = createAction({
             headers: {
               'Content-Type': 'application/json',
               [PARENT_RUN_ID_HEADER]: context.run.id,
+              // Keep 'false': flipping it lets markParentRunAsFailed complete our pending
+              // DELAY waitpoint out from under the wait loop on the first child failure.
               [FAIL_PARENT_ON_FAILURE_HEADER]: 'false',
             },
             body: { data: { batchIndex, headers, rows, extraData } },
@@ -165,7 +264,22 @@ export const streamCsvToSubflows = createAction({
         maxInFlight: MAX_IN_FLIGHT,
         dispatch,
       });
-      return { headers, firstRow, ...result };
+      if (!waitForAllSubflows || baseline === null) {
+        return { headers, firstRow, ...result };
+      }
+      await context.store.put<StoredFanIn>(
+        storeKey,
+        {
+          batchesDispatched: result.batchesDispatched,
+          baselineSucceeded: baseline.succeeded,
+          baselineFailed: baseline.failed,
+          deadline: Date.now() + maxWaitMinutes * 60_000,
+          headers,
+          firstRow,
+        },
+        StoreScope.FLOW
+      );
+      return check();
     } finally {
       parser.destroy();
       source.data.destroy();
