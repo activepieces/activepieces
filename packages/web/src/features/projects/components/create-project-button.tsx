@@ -173,12 +173,17 @@ function MenuItemVariant({
   onCreate?: (project: ProjectWithLimits) => void;
 }) {
   const rowClass =
-    'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-muted-foreground';
+    'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium transition-colors';
+  const iconChip = (
+    <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+      <Plus className="size-3.5" strokeWidth={2.5} />
+    </span>
+  );
   if (disabled) {
     return (
       <UpgradeTooltip>
         <button type="button" disabled className={cn(rowClass, 'opacity-50')}>
-          <Plus className="size-4 shrink-0" />
+          {iconChip}
           <span>{t('New project')}</span>
         </button>
       </UpgradeTooltip>
@@ -186,11 +191,8 @@ function MenuItemVariant({
   }
   return (
     <NewProjectDialog onCreate={onCreate}>
-      <button
-        type="button"
-        className={cn(rowClass, 'hover:bg-muted hover:text-foreground')}
-      >
-        <Plus className="size-4 shrink-0" />
+      <button type="button" className={cn(rowClass, 'hover:bg-accent')}>
+        {iconChip}
         <span>{t('New project')}</span>
       </button>
     </NewProjectDialog>
