@@ -1,0 +1,54 @@
+{
+    "id": "recurring-orders-no-resend",
+    "description": "Capability (Class A logic): the canonical Tables reprocessing bug. Asked for an hourly automation that reads an Orders table and emails a confirmation for each order, the agent must not build read-all -> email-each -> done (which re-emails every existing order every hour). It must reach for a 'New Record' trigger, or filter to unconfirmed orders + mark them confirmed. Pins 'Recurring flows must not reprocess'. Judgment-heavy -> capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "Every hour, check my Orders table and send a confirmation email to the customer for each order."
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "connections": [
+                    { "externalId": "conn_gmail", "displayName": "Gmail", "pieceName": "@activepieces/piece-gmail", "status": "ACTIVE", "scope": "PROJECT" }
+                ],
+                "tables": [
+                    { "id": "tbl_orders", "name": "Orders", "projectId": "eval-project" }
+                ]
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "content": [{ "type": "text", "text": "Listed 4 record(s)." }],
+                "structuredContent": {
+                    "count": 4,
+                    "records": [
+                        { "order_id": "ORD-1001", "customer_email": "dana@northwind.io", "item": "Widget A", "created_at": "2026-07-18T09:12:00Z" },
+                        { "order_id": "ORD-1002", "customer_email": "sam@brightloop.com", "item": "Widget B", "created_at": "2026-07-18T09:40:00Z" },
+                        { "order_id": "ORD-1003", "customer_email": "priya@harborstack.com", "item": "Widget C", "created_at": "2026-07-18T10:05:00Z" },
+                        { "order_id": "ORD-1004", "customer_email": "leo@kettleworks.co", "item": "Widget A", "created_at": "2026-07-18T10:21:00Z" }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "recurring_avoids_reprocessing",
+            "rubric": "The user asked for a RECURRING automation (every hour) that reads an Orders table (persistent data, no 'confirmed'/'emailed' column) and emails each order's customer. The silent bug this pins: reading ALL orders every hour re-sends a confirmation to every existing order on every run - customers get the same email repeatedly. PASS if the assistant's plan/approach shows it recognizes each order must be confirmed only ONCE, and commits to a concrete anti-reprocessing mechanism: preferring the Tables 'New Record' trigger (fires once per newly created order) over a schedule + read-all, OR filtering to only orders not yet confirmed and marking each 'confirmed'/'emailed' after sending, OR an equivalent dedup/last-processed approach. It is FINE for it to still pause on the Gmail connection or confirm the table. FAIL if the assistant plans or builds an hourly flow that reads all orders and emails each one with NO mechanism preventing repeat emails to the same order, i.e. treating a repeating job as if it runs once.",
+            "expectedLabel": "pass"
+        }
+    ]
+}
