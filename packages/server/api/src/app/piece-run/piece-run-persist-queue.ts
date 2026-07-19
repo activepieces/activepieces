@@ -1,12 +1,10 @@
 import { isNil } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { FileCompression, FileType, PieceRun } from '@activepieces/shared'
+import { PieceRun } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { redisConnections } from '../database/redis-connections'
-import { fileCompressor } from '../file/file-compressor'
-import { fileService } from '../file/file.service'
 import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -23,27 +21,10 @@ const PERSIST_CONCURRENCY = 10
 let worker: Worker<PersistJobData> | undefined = undefined
 let queue: Queue<PersistJobData> | undefined = undefined
 
-async function persist(data: PersistJobData, log: FastifyBaseLogger): Promise<void> {
-    const { run, platformId } = data
-    if (!isNil(run.logsFileId)) {
-        const blob = Buffer.from(JSON.stringify({ input: run.input, output: run.output, logs: run.logs }))
-        const compressed = await fileCompressor.compress({ data: blob, compression: FileCompression.ZSTD })
-        await fileService(log).save({
-            fileId: run.logsFileId,
-            projectId: run.projectId,
-            platformId,
-            type: FileType.PIECE_RUN_LOG,
-            data: compressed,
-            size: compressed.length,
-            compression: FileCompression.ZSTD,
-        })
-    }
-    await pieceRunRepo().save({
-        ...run,
-        input: null,
-        output: null,
-        logs: null,
-    })
+// The run arrives already thinned (input/output/logs offloaded to the file table by the caller),
+// so the queue never carries the raw payload. This is a single terminal insert.
+async function persist(data: PersistJobData): Promise<void> {
+    await pieceRunRepo().save(data.run)
 }
 
 export const pieceRunPersistQueue = (log: FastifyBaseLogger) => ({
@@ -65,7 +46,7 @@ export const pieceRunPersistQueue = (log: FastifyBaseLogger) => ({
             QueueName.PIECE_RUN_PERSIST,
             async (job) => {
                 try {
-                    await persist(job.data, log)
+                    await persist(job.data)
                 }
                 catch (error) {
                     log.error({ error, pieceRun: { id: job.data.run.id } }, '[pieceRunPersistQueue#worker] failed to persist piece run')
@@ -91,5 +72,4 @@ export const pieceRunPersistQueue = (log: FastifyBaseLogger) => ({
 
 type PersistJobData = {
     run: PieceRun
-    platformId: string
 }

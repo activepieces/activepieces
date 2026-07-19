@@ -4,6 +4,7 @@ import {
     CodeAction,
     Cursor,
     ErrorCode,
+    FileCompression,
     FileType,
     FlowActionType,
     FlowRunStatus,
@@ -21,6 +22,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, In, IsNull, LessThan, Not, SelectQueryBuilder } from 'typeorm'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { repoFactory } from '../core/db/repo-factory'
+import { fileCompressor } from '../file/file-compressor'
 import { fileService } from '../file/file.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -30,7 +32,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { getPiecePackageWithoutArchive } from '../pieces/metadata/piece-metadata-service'
 import { UserEntity } from '../user/user-entity'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import { EngineActionResponse, EngineResult, pieceRunOutcome } from './piece-run-outcome'
+import { derivePieceRunOutcome, EngineActionResponse } from './piece-run-outcome'
 import { pieceRunPersistQueue } from './piece-run-persist-queue'
 import { PieceRunEntity } from './piece-run.entity'
 
@@ -107,10 +109,6 @@ async function populateRuns(params: { runs: PieceRun[], projectId: string }): Pr
     })
 }
 
-function parsePieceRunPayload(raw: string): PieceRunPayload {
-    return JSON.parse(raw)
-}
-
 async function hydratePayload(params: { run: PieceRun, log: FastifyBaseLogger }): Promise<PieceRun> {
     const { run, log } = params
     if (isNil(run.logsFileId)) {
@@ -124,13 +122,31 @@ async function hydratePayload(params: { run: PieceRun, log: FastifyBaseLogger })
     if (isNil(file)) {
         return run
     }
-    const payload = parsePieceRunPayload(file.data.toString('utf-8'))
+    const payload: PieceRunPayload = JSON.parse(file.data.toString('utf-8'))
     return {
         ...run,
         input: payload.input ?? null,
         output: payload.output ?? null,
         logs: payload.logs ?? null,
     }
+}
+
+async function writePayloadFile(params: { run: PieceRun, platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { run, platformId, log } = params
+    if (isNil(run.logsFileId)) {
+        return
+    }
+    const blob = Buffer.from(JSON.stringify({ input: run.input, output: run.output, logs: run.logs }))
+    const compressed = await fileCompressor.compress({ data: blob, compression: FileCompression.ZSTD })
+    await fileService(log).save({
+        fileId: run.logsFileId,
+        projectId: run.projectId,
+        platformId,
+        type: FileType.PIECE_RUN_LOG,
+        data: compressed,
+        size: compressed.length,
+        compression: FileCompression.ZSTD,
+    })
 }
 
 export const pieceRunService = (log: FastifyBaseLogger) => ({
@@ -155,10 +171,7 @@ export const pieceRunService = (log: FastifyBaseLogger) => ({
         }, log))
         const finishTime = dayjs().toISOString()
 
-        const engineResult: EngineResult = result.error
-            ? { kind: 'error', error: result.error }
-            : { kind: 'response', value: result.data }
-        const outcome = pieceRunOutcome.derive({ engineResult, input: step.settings.input })
+        const outcome = derivePieceRunOutcome({ result, input: step.settings.input })
 
         const run: PieceRun = {
             id: apId(),
@@ -185,9 +198,14 @@ export const pieceRunService = (log: FastifyBaseLogger) => ({
             archivedAt: null,
         }
 
-        // Single write, off the request path: the persist job offloads {input,output,logs} to
-        // the file table and inserts the thinned row. The caller already holds the result in `run`.
-        await pieceRunPersistQueue(log).add({ run, platformId })
+        // Offload {input,output,logs} to the file table before enqueuing so the persist job (hence
+        // Redis) carries only the thinned row, never the raw payload. Best-effort: a failed file
+        // write must not drop the run record — the row persists, payload hydration degrades to empty.
+        const { error: fileError } = await tryCatch(() => writePayloadFile({ run, platformId, log }))
+        if (fileError) {
+            log.error({ error: fileError, pieceRun: { id: run.id } }, '[pieceRunService#run] failed to write piece run payload file')
+        }
+        await pieceRunPersistQueue(log).add({ run: { ...run, input: null, output: null, logs: null } })
 
         if (result.error) {
             throw result.error

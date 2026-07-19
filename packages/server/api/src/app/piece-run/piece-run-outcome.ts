@@ -1,4 +1,4 @@
-import { isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
+import { isNil, Result, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { EngineResponseStatus, ExecuteActionResponse, FlowRunStatus } from '@activepieces/shared'
 
 function deriveStatus(engineResponse: EngineActionResponse): FlowRunStatus {
@@ -25,41 +25,32 @@ function deriveErrorMessage(engineResponse: EngineActionResponse, status: FlowRu
     return null
 }
 
-function sanitizeValue(value: unknown): unknown {
-    if (isNil(value) || typeof value !== 'object') {
-        return value
-    }
-    return sanitizeObjectForPostgresql(value as Record<string, unknown>)
-}
-
 function withPayloadGate(outcome: Omit<PieceRunOutcome, 'hasPayload'>): PieceRunOutcome {
     const hasPayload = !isNil(outcome.input) || !isNil(outcome.output) || !isNil(outcome.logs)
     return { ...outcome, hasPayload }
 }
 
-function derive({ engineResult, input }: { engineResult: EngineResult, input: unknown }): PieceRunOutcome {
-    const sanitizedInput = sanitizeValue(input)
-    if (engineResult.kind === 'error') {
+export function derivePieceRunOutcome({ result, input }: { result: Result<EngineActionResponse, unknown>, input: unknown }): PieceRunOutcome {
+    const sanitizedInput = sanitizeObjectForPostgresql(input)
+    if (!isNil(result.error) || isNil(result.data)) {
         return withPayloadGate({
             status: FlowRunStatus.INTERNAL_ERROR,
             input: sanitizedInput,
             output: null,
             logs: null,
-            errorMessage: engineResult.error instanceof Error ? engineResult.error.message : String(engineResult.error),
+            errorMessage: result.error instanceof Error ? result.error.message : String(result.error),
         })
     }
-    const engineResponse = engineResult.value
+    const engineResponse = result.data
     const status = deriveStatus(engineResponse)
     return withPayloadGate({
         status,
         input: sanitizedInput,
-        output: status === FlowRunStatus.SUCCEEDED ? sanitizeValue(engineResponse.response.output) : null,
+        output: status === FlowRunStatus.SUCCEEDED ? sanitizeObjectForPostgresql(engineResponse.response.output) : null,
         logs: isNil(engineResponse.logs) ? null : engineResponse.logs,
         errorMessage: deriveErrorMessage(engineResponse, status),
     })
 }
-
-export const pieceRunOutcome = { derive }
 
 export type EngineActionResponse = {
     status: EngineResponseStatus
@@ -67,10 +58,6 @@ export type EngineActionResponse = {
     error?: string
     logs?: string
 }
-
-export type EngineResult =
-    | { kind: 'response', value: EngineActionResponse }
-    | { kind: 'error', error: unknown }
 
 export type PieceRunOutcome = {
     status: FlowRunStatus

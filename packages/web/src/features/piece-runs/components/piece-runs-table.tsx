@@ -31,11 +31,11 @@ import { formatUtils } from '@/lib/format-utils';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { PieceRunDetailSheet } from './piece-run-detail-sheet';
-import { pieceRunsColumns, formatSource } from './piece-runs-columns';
-
-type SelectedRow = {
-  id: string;
-};
+import {
+  pieceRunsColumns,
+  formatSource,
+  SelectedRow,
+} from './piece-runs-columns';
 
 const PIECE_RUN_STATUSES = [
   FlowRunStatus.RUNNING,

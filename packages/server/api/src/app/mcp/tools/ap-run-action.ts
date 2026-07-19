@@ -22,9 +22,7 @@ export const apRunActionTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
         execute: async (args) => {
             try {
                 const { pieceName, actionName, input, connectionExternalId } = runActionInput.parse(args)
-                // returnRawOutput is left off, so this always resolves to an McpToolResult; the guard
-                // narrows the union (the raw branch is unreachable here) without a type cast.
-                const result = await executePieceRunAction({
+                return await executePieceRunAction({
                     projectId: mcp.projectId,
                     userId,
                     pieceName,
@@ -33,9 +31,6 @@ export const apRunActionTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     connectionExternalId,
                     log,
                 })
-                return 'rawOutput' in result
-                    ? { content: [{ type: 'text', text: JSON.stringify(result.rawOutput) }] }
-                    : result
             }
             catch (err) {
                 log.error({ error: err, project: { id: mcp.projectId } }, 'ap_run_action failed')

@@ -14,8 +14,6 @@ const PIECE_RUN_ACTION_TIMEOUT_SECONDS = 120
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_ACTION,
     async execute(ctx: JobContext, data: ExecuteActionJobData): Promise<SynchronousJobResult> {
-        const timeoutInSeconds = PIECE_RUN_ACTION_TIMEOUT_SECONDS
-
         const codes = toCodeArtifacts(data.step)
         const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, pieces: data.piece ? [data.piece] : [], codes })
         if (resolved.kind !== 'ready') {
@@ -34,9 +32,9 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                     engineToken: ctx.engineToken,
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
-                    timeoutInSeconds,
+                    timeoutInSeconds: PIECE_RUN_ACTION_TIMEOUT_SECONDS,
                 },
-                timeoutInSeconds,
+                timeoutInSeconds: PIECE_RUN_ACTION_TIMEOUT_SECONDS,
                 provision: resolved.provision,
             })
         })

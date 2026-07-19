@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
+import * as util from 'util'
 
 const SLA_DAYS: Record<Severity, number | null> = {
     critical: 7,
@@ -69,44 +70,25 @@ function main(): void {
 }
 
 function parseArgs(argv: string[]): CliArgs {
-    const out: CliArgs = {
-        advisories: '.security-triage/advisories.json',
-        dependabot: '.security-triage/dependabot.json',
-        out: '.security-triage',
-        now: undefined,
-        source: 'all',
-        state: undefined,
+    const { values } = util.parseArgs({
+        args: argv,
+        options: {
+            advisories: { type: 'string' },
+            dependabot: { type: 'string' },
+            out: { type: 'string' },
+            now: { type: 'string' },
+            source: { type: 'string' },
+            state: { type: 'string' },
+        },
+    })
+    return {
+        advisories: values.advisories ?? '.security-triage/advisories.json',
+        dependabot: values.dependabot ?? '.security-triage/dependabot.json',
+        out: values.out ?? '.security-triage',
+        now: values.now,
+        source: values.source !== undefined ? toSourceFilter(values.source) : 'all',
+        state: values.state,
     }
-    for (let i = 0; i < argv.length; i += 2) {
-        const flag = argv[i]
-        const value = argv[i + 1]
-        if (value === undefined) {
-            fail(`Missing value for ${flag}`)
-        }
-        switch (flag) {
-            case '--advisories':
-                out.advisories = value
-                break
-            case '--dependabot':
-                out.dependabot = value
-                break
-            case '--out':
-                out.out = value
-                break
-            case '--now':
-                out.now = value
-                break
-            case '--source':
-                out.source = toSourceFilter(value)
-                break
-            case '--state':
-                out.state = value
-                break
-            default:
-                fail(`Unknown flag: ${flag}`)
-        }
-    }
-    return out
 }
 
 function readSourceFile({ file, label }: { file: string, label: string }): Record<string, unknown>[] {
@@ -184,7 +166,7 @@ function normalizeDependabot(raw: Record<string, unknown>): TriageItem {
     const summary = advisory ? asStringOrNull(advisory.summary) : null
     return {
         source: 'dependabot',
-        id: number !== null ? `dependabot-${number}` : (advisory ? asStringOrNull(advisory.ghsa_id) ?? 'unknown' : 'unknown'),
+        id: number !== null ? `dependabot-${number}` : asStringOrNull(advisory?.ghsa_id) ?? 'unknown',
         ghsaId: advisory ? asStringOrNull(advisory.ghsa_id) : null,
         cveId: advisory ? asStringOrNull(advisory.cve_id) : null,
         severity: toSeverity(vuln?.severity ?? advisory?.severity),

@@ -9,10 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export function StepFileDownloadButton({
-  fileUrl,
-  fileName,
-}: StepFileDownloadButtonProps) {
+export function StepFileDownloadButton({ fileUrl }: { fileUrl: string }) {
   // `file://` URLs point at a sandbox path that no longer exists once the run
   // has finished, so the file can never be fetched — surface that as a disabled
   // button with an explanation instead of a broken download.
@@ -28,7 +25,7 @@ export function StepFileDownloadButton({
         variant="ghost"
         size="sm"
         disabled={isExpired}
-        onClick={() => downloadStepFile({ fileUrl, fileName })}
+        onClick={() => downloadStepFile({ fileUrl })}
         className="flex items-center gap-2 p-2 max-h-[20px] text-xs"
       >
         {isExpired ? (
@@ -57,25 +54,12 @@ export function StepFileDownloadButton({
   );
 }
 
-function downloadStepFile({ fileUrl, fileName }: DownloadStepFileParams) {
+function downloadStepFile({ fileUrl }: { fileUrl: string }) {
   const link = document.createElement('a');
   link.href = fileUrl;
-  // When no name is forced, the browser falls back to the server's
-  // `Content-Disposition` filename (real name + extension) for the file route.
-  if (fileName) {
-    link.download = fileName;
-  }
+  // The browser uses the server's `Content-Disposition` filename (real name +
+  // extension) from the file route — no forced download name needed.
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
-
-type StepFileDownloadButtonProps = {
-  fileUrl: string;
-  fileName?: string;
-};
-
-type DownloadStepFileParams = {
-  fileUrl: string;
-  fileName?: string;
-};

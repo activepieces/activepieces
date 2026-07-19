@@ -349,8 +349,7 @@ export const pieceRunsColumns = ({
           : undefined;
       return (
         <div className="text-left flex items-center gap-2">
-          {finishTime && <span>{formatUtils.formatDuration(duration)}</span>}
-          {!finishTime && <span>—</span>}
+          <span>{finishTime ? formatUtils.formatDuration(duration) : '—'}</span>
         </div>
       );
     },
@@ -399,7 +398,7 @@ export function formatSource(source: string): string {
   return formatUtils.convertEnumToReadable(source);
 }
 
-type SelectedRow = {
+export type SelectedRow = {
   id: string;
 };
 
