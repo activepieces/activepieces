@@ -165,8 +165,14 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                     drainStream: (result) => streamChunksToClient({
                         result, ctx, userId, conversationId, runId, log,
                         abortSignal: abortController.signal,
-                        onStreamIdle: () => {
-                            log.warn({ conversation: { id: conversationId }, idleMs: STREAM_IDLE_REPORT_MS }, 'Chat stream idle with no tool or reasoning in flight — turn continues (monitoring signal)')
+                        onStreamIdle: (reason) => {
+                            const fields = { conversation: { id: conversationId }, idleMs: STREAM_IDLE_REPORT_MS, reason }
+                            if (reason === 'idle') {
+                                log.warn(fields, 'Chat stream idle with nothing in flight — turn continues (monitoring signal)')
+                            }
+                            else {
+                                log.info(fields, 'Chat stream quiet while work is in flight — turn continues (monitoring signal)')
+                            }
                         },
                     }),
                     onProgress: ({ uiParts, responseMessages }) => {
@@ -487,7 +493,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
     runId?: string
     log: JobContext['log']
     abortSignal: AbortSignal
-    onStreamIdle: () => void
+    onStreamIdle: (reason: 'idle' | 'tool' | 'reasoning') => void
 }): Promise<void> {
     let chunkBuffer: unknown[] = []
     let flushTimer: ReturnType<typeof setTimeout> | null = null
@@ -513,21 +519,21 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
         },
     })
 
-    // Idle reporter (monitoring signal, NOT a kill): a pending tool call or an in-flight reasoning
-    // block legitimately holds the stream silent for minutes, so both suspend it. On genuine
-    // unexplained silence it fires onStreamIdle ONCE (re-armed by the next chunk) and the turn keeps
-    // running — the only hard stop is the wall-clock backstop at the top of this file.
+    // Idle reporter (monitoring signal, NOT a kill): on every STREAM_IDLE_REPORT_MS of stream
+    // silence it reports once and keeps watching, so a turn that has gone quiet ALWAYS produces a
+    // signal — whether the silence is expected (a tool call or reasoning block in flight) or
+    // unexplained. Reporting on the in-flight paths too is what surfaces a stream that wedges
+    // mid-tool or mid-reasoning; otherwise that turn is invisible until the wall-clock backstop.
+    // It never aborts — the turn's only hard stop is the wall-clock backstop at the top of this
+    // file — and the reason lets the caller log unexplained silence louder than expected quiet.
     let pendingToolCalls = 0
     let reasoningInFlight = false
     let idleTimer: ReturnType<typeof setTimeout> | null = null
     const armIdleReporter = () => {
         if (idleTimer) clearTimeout(idleTimer)
         idleTimer = setTimeout(() => {
-            if (pendingToolCalls > 0 || reasoningInFlight) {
-                armIdleReporter()
-                return
-            }
-            onStreamIdle()
+            onStreamIdle(pendingToolCalls > 0 ? 'tool' : reasoningInFlight ? 'reasoning' : 'idle')
+            armIdleReporter()
         }, STREAM_IDLE_REPORT_MS)
     }
 
