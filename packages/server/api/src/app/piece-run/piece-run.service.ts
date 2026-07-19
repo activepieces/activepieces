@@ -298,7 +298,7 @@ export const pieceRunService = (log: FastifyBaseLogger) => ({
                 break
             }
             const result = await pieceRunRepo().delete({ id: In(staleRuns.map((run) => run.id)) })
-            affected = result.affected ?? 0
+            affected = result.affected ?? staleRuns.length
             totalAffected += affected
             log.info({ count: affected }, '[pieceRunService#deleteStale] iteration completed')
         }

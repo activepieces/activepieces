@@ -57,6 +57,8 @@ Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`
 | Value | Storage | Expires | Description |
 |---|---|---|---|
 | `FLOW_RUN_LOG` | Configurable | Yes | Execution log for a flow run |
+| `FLOW_RUN_LOG_SLICE` | Configurable | Yes | One step output (or loop-iteration bundle) sliced out of a flow-run-log manifest when it exceeds `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` |
+| `PIECE_RUN_LOG` | Configurable | Yes | Compressed `{ input, output, logs }` blob for a single piece run, offloaded out of the `piece_run` row |
 | `FLOW_STEP_FILE` | Configurable | Yes | File output from a piece action step |
 | `TRIGGER_PAYLOAD` | Configurable | Yes | (Deprecated) Stored trigger payload |
 | `TRIGGER_EVENT_FILE` | Configurable | Yes | File output from a trigger event |
@@ -105,7 +107,7 @@ Step file uploads are handled by the engine via the unified `PUT /v1/files/:file
 
 ## Cleanup Job
 
-Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. Calls `fileService.deleteStaleBulk` for types: `FLOW_RUN_LOG`, `FLOW_STEP_FILE`, `TRIGGER_EVENT_FILE`, `TRIGGER_PAYLOAD`, `WEBHOOK_PAYLOAD`. Retention period controlled by `EXECUTION_DATA_RETENTION_DAYS` system property.
+Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. Calls `fileService.deleteStaleBulk` for types: `FLOW_RUN_LOG`, `FLOW_RUN_LOG_SLICE`, `PIECE_RUN_LOG`, `FLOW_STEP_FILE`, `TRIGGER_EVENT_FILE`, `TRIGGER_PAYLOAD`, `WEBHOOK_PAYLOAD`, then `pieceRunService.deleteStale()` to delete the stale `piece_run` rows themselves (the offloaded `PIECE_RUN_LOG` file is removed by the bulk pass above; the row is removed here). Retention period controlled by `EXECUTION_DATA_RETENTION_DAYS` system property.
 
 ## Streaming — write path (implemented)
 
