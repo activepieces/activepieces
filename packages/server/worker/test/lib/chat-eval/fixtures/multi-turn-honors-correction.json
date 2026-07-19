@@ -1,0 +1,29 @@
+{
+    "id": "multi-turn-honors-correction",
+    "description": "Multi-turn: the prior exchange (user asked to be notified; assistant started scoping a notification) lives in initialMessages, then the user corrects the destination — 'don't notify me, log it to a Google Sheet instead'. The assistant must adapt to the corrected goal, not keep pushing the notification framing and not restart discovery from scratch. Pins that a mid-conversation correction is honored across turns.",
+    "kind": "capability",
+    "initialMessages": [
+        { "role": "user", "content": "I want to get notified when someone fills out my contact form" },
+        { "role": "assistant", "content": "Love it — I'll make sure you hear about every new contact-form submission the moment it lands. Quick thing so I set it up the way you want: where should the heads-up go — email, Slack, or somewhere else you check often?" }
+    ],
+    "userTurns": [
+        "actually — don't notify me. Just log every submission into a Google Sheet instead."
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "maxQuestionCards", "n": 2 }
+    ],
+    "judge": [
+        {
+            "dimension": "honors_mid_conversation_correction",
+            "rubric": "The prior turn had the assistant heading toward notifying the user; the user then corrected the goal to logging each contact-form submission into a Google Sheet instead. PASS when the assistant's reply adapts to that correction — it commits to (or scopes) logging submissions into a Google Sheet and drops notifying the user as the outcome. Briefly acknowledging the change is fine. FAIL when the assistant ignores the correction and keeps steering toward notifications, treats the two goals as unrelated, or throws away the prior context and restarts discovery as if the first turn never happened.",
+            "expectedLabel": "pass"
+        }
+    ]
+}
