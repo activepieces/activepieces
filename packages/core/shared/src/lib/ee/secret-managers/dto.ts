@@ -40,6 +40,14 @@ export const CyberarkConjurProviderConfigSchema = z.object({
     loginId: z.string().min(1, formErrors.required),
     url: z.string().min(1, formErrors.required),
     apiKey: z.string().min(1, formErrors.required),
+    // TLS certificate verification for the Conjur connection. Both fields are
+    // optional and secure-by-default (verification ON when omitted). For an
+    // internal / self-signed Conjur host, pin its CA via `caCert` (preferred —
+    // keeps verification ON). `allowUnauthorizedCertificates` is an explicit,
+    // last-resort opt-out that disables verification, mirroring the
+    // allow_unauthorized_certificates option the SFTP/IMAP/Postgres pieces expose.
+    caCert: z.string().optional(),
+    allowUnauthorizedCertificates: z.boolean().optional(),
 })
 export type CyberarkConjurProviderConfig = z.infer<typeof CyberarkConjurProviderConfigSchema>
 

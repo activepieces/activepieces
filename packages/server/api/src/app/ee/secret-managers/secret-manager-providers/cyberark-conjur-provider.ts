@@ -1,16 +1,29 @@
 import { safeHttp } from '@activepieces/server-utils'
-import { SecretManagerProviderId } from '@activepieces/shared'
+import { CyberarkConjurProviderConfig, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 
-const conjurAxios = safeHttp.createRetryingAxios(undefined, {
-    httpsAgentOptions: { rejectUnauthorized: false },
-})
+// Build the Conjur HTTP client per connection so TLS certificate verification
+// honours that connection's config. Verification is now ON by default; it was
+// previously hardcoded OFF (`rejectUnauthorized: false`), so the certificate was
+// never validated on either the authentication call (which carries the Conjur
+// API key) or secret retrieval. Internal / self-signed deployments should pin
+// their CA via `caCert` (keeps verification ON); `allowUnauthorizedCertificates`
+// is an explicit, last-resort opt-out.
+const createConjurAxios = (config: CyberarkConjurProviderConfig) =>
+    safeHttp.createRetryingAxios(undefined, {
+        httpsAgentOptions: {
+            rejectUnauthorized: !(config.allowUnauthorizedCertificates ?? false),
+            ...(config.caCert ? { ca: config.caCert } : {}),
+        },
+    })
 
 export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.CYBERARK> => ({
     checkConnection: async (config) => {
+        const conjurAxios = createConjurAxios(config)
         const url = removeEndingSlash(config.url)
         const response = await conjurApi({
+            conjurAxios,
             url: `${url}/authn/${config.organizationAccountName}/${encodeURIComponent(config.loginId)}/authenticate`,
             method: 'POST',
             body: config.apiKey,
@@ -32,8 +45,10 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
     getSecret: async (request, config) => {
 
         const token = await cyberarkConjurProvider(log).checkConnection(config) as string
+        const conjurAxios = createConjurAxios(config)
         const url = removeEndingSlash(config.url)
         const response = await conjurApi({
+            conjurAxios,
             url: `${url}/secrets/${config.organizationAccountName}/variable/${encodeURIComponent(request.path)}`,
             token,
             method: 'GET',
@@ -54,11 +69,13 @@ const removeEndingSlash = (path: string) => {
 }
 
 const conjurApi = async ({
+    conjurAxios,
     url,
     token,
     method,
     body,
 }: {
+    conjurAxios: ReturnType<typeof safeHttp.createRetryingAxios>
     url: string
     token?: string
     namespace?: string
