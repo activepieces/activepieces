@@ -4,9 +4,6 @@ import {
 } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { wauldAuth } from './lib/auth';
-import { listWorkspaces } from './lib/actions/list-workspaces';
-import { listEngagements } from './lib/actions/list-engagements';
-import { listDocuments } from './lib/actions/list-documents';
 import { issueCredential } from './lib/actions/issue-credential';
 import { credentialIssued } from './lib/triggers/credential-issued';
 
@@ -20,9 +17,6 @@ export const wauld = createPiece({
   categories: [PieceCategory.PRODUCTIVITY],
   auth: wauldAuth,
   actions: [
-    listWorkspaces,
-    listEngagements,
-    listDocuments,
     issueCredential,
     createCustomApiCallAction({
       auth: wauldAuth,
