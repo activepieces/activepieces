@@ -29,14 +29,18 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 log,
             }))
             const policy = await resolveVisibility({ platformId: params.platformId, projectId: params.projectId, log })
+            const audience = params.audience ?? PieceAudienceFilter.ALL
+            const audiencePieces = audience === PieceAudienceFilter.ALL
+                ? translatedPieces
+                : translatedPieces.map((piece) => ({ ...piece, actions: filterActionsByAudience(piece.actions, audience) }))
             const sortedPieces = await pieceListUtils(log).sortAndSearchPieces({
                 ...params,
-                pieces: translatedPieces,
+                pieces: audiencePieces,
                 suggestionType: params.suggestionType,
             })
             const filteredPieces = params.includeHidden || isNil(policy) ? sortedPieces : policy.filterPieces(sortedPieces)
 
-            const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType, params.audience)
+            const summaries = toPieceMetadataModelSummary(filteredPieces, audiencePieces, params.suggestionType)
             return params.includeHidden || isNil(policy) ? summaries : policy.filterComponents(summaries)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
@@ -280,19 +284,16 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
     pieceMetadataEntityList: T[],
     originalMetadataList: T[],
     suggestionType?: SuggestionType,
-    audience: PieceAudienceFilter = PieceAudienceFilter.ALL,
 ): PieceMetadataModelSummary[] {
     return pieceMetadataEntityList.map((pieceMetadataEntity) => {
         const originalMetadata = originalMetadataList.find((p) => p.name === pieceMetadataEntity.name)
         assertNotNullOrUndefined(originalMetadata, `Original metadata not found for ${pieceMetadataEntity.name}`)
-        const visibleActions = Object.values(filterActionsByAudience(originalMetadata.actions, audience))
-        const visibleSuggestedActions = Object.values(filterActionsByAudience(pieceMetadataEntity.actions, audience))
         return {
             ...pieceMetadataEntity,
-            actions: visibleActions.length,
+            actions: Object.keys(originalMetadata.actions).length,
             triggers: Object.keys(originalMetadata.triggers).length,
             suggestedActions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
-                visibleSuggestedActions : undefined,
+                Object.values(pieceMetadataEntity.actions) : undefined,
             suggestedTriggers: suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
                 Object.values(pieceMetadataEntity.triggers) : undefined,
         }
