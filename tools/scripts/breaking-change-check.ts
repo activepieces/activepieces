@@ -1,3 +1,4 @@
+import assert from 'assert'
 import { execSync } from 'child_process'
 
 const BREAKING_LABEL = '⛓️‍💥 breaking-change'
@@ -28,9 +29,9 @@ function sectionChoice({ body, heading }: { body: string, heading: RegExp }): Te
     return checked[0] === 'yes' ? 'yes' : 'no'
 }
 
-// Counts added lines with real content — a blank line or an HTML comment must not
-// satisfy the "documented the breaking change" requirement.
-function addedContentLines({ baseRef, file }: { baseRef: string, file: string }): number {
+// The PR's added lines in `file`, stripped and cleared of blanks and HTML comments —
+// neither may satisfy the "documented the breaking change" requirement.
+function addedDocLines({ baseRef, file }: { baseRef: string, file: string }): string[] {
     const diff = execSync(
         `git diff origin/${baseRef}...HEAD -- ${file}`,
         { encoding: 'utf-8' },
@@ -40,7 +41,16 @@ function addedContentLines({ baseRef, file }: { baseRef: string, file: string })
         .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
         .map((line) => line.slice(1).trim())
         .filter((line) => line.length > 0 && !line.startsWith('<!--'))
-        .length
+}
+
+// A real entry has the shape the doc uses: a `####` heading naming what changed, plus
+// at least one line of description/action beneath it. A bare heading, a `---` separator,
+// a version bump, or a stray sentence on its own is not an entry — so a labelled PR
+// cannot pass the docs gate by adding generic content.
+function hasBreakingEntry(added: string[]): boolean {
+    const hasTitle = added.some((line) => /^#{4}\s+\S/.test(line))
+    const hasBody = added.some((line) => !/^#{1,6}\s/.test(line) && !/^[-*_]{3,}$/.test(line))
+    return hasTitle && hasBody
 }
 
 function main(): void {
@@ -51,7 +61,7 @@ function main(): void {
     const hasBreakingLabel = labels.includes(BREAKING_LABEL)
     const templateChoice = sectionChoice({ body, heading: /^#{2,3}\s*Breaking change\?/im })
     const securityChoice = sectionChoice({ body, heading: /^#{2,3}\s*Security impact\?/im })
-    const docAdded = addedContentLines({ baseRef, file: BREAKING_CHANGES_DOC }) > 0
+    const docAdded = hasBreakingEntry(addedDocLines({ baseRef, file: BREAKING_CHANGES_DOC }))
 
     const errors: string[] = []
 
@@ -97,4 +107,18 @@ function main(): void {
     console.log('✅ Breaking-change check passed.')
 }
 
-main()
+function runSelfCheck(): void {
+    assert(hasBreakingEntry(['#### AP_FOO removed', 'It is gone — remove it from your env.']) === true, 'titled entry with a body is a real entry')
+    assert(hasBreakingEntry(['#### AP_FOO removed']) === false, 'a bare heading with no body is not an entry')
+    assert(hasBreakingEntry(['---']) === false, 'a separator is not an entry')
+    assert(hasBreakingEntry(['## 0.87.0', 'Set AP_FOO is gone.']) === false, 'a version bump without a #### title is not an entry')
+    assert(hasBreakingEntry(['Just a stray sentence.']) === false, 'placeholder prose without a title is not an entry')
+    console.log('breaking-change-check self-check passed')
+}
+
+if (process.argv.includes('--self-check')) {
+    runSelfCheck()
+}
+else {
+    main()
+}
