@@ -2,6 +2,7 @@ import {
   createPiece,
   PieceCategory,
 } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { wauldAuth } from './lib/auth';
 import { listWorkspaces } from './lib/actions/list-workspaces';
 import { listEngagements } from './lib/actions/list-engagements';
@@ -23,8 +24,15 @@ export const wauld = createPiece({
     listEngagements,
     listDocuments,
     issueCredential,
+    createCustomApiCallAction({
+      auth: wauldAuth,
+      baseUrl: () => 'https://wauld.app',
+      authMapping: async (auth) => ({
+        Authorization:
+          `Bearer ${auth.props.accessToken}`,
+        'Connect-Protocol-Version': '1',
+      }),
+    }),
   ],
-  triggers: [
-    credentialIssued,
-  ],
+  triggers: [credentialIssued],
 });

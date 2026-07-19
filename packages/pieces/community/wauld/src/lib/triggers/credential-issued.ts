@@ -229,9 +229,13 @@ async function fetchDocuments(
 export const credentialIssued = createTrigger({
   name: 'credential_issued',
   auth: wauldAuth,
-  displayName: 'Credential Issued',
+  displayName: 'New Credential Issued',
   description:
     'Triggers when a credential is issued using the selected Wauld document.',
+    aiMetadata: {
+        description:
+        'Triggers when a credential is issued from the selected Wauld document.',
+    },
 
   props: {
     workspaceId: Property.Dropdown<
@@ -241,7 +245,7 @@ export const credentialIssued = createTrigger({
     >({
       auth: wauldAuth,
       displayName: 'Workspace',
-      description: 'Select the Wauld workspace.',
+      description: 'Choose the Wauld workspace where the relevant document is located.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -281,7 +285,7 @@ export const credentialIssued = createTrigger({
     engagementId: Property.Dropdown({
       auth: wauldAuth,
       displayName: 'Engagement',
-      description: 'Select the Wauld engagement.',
+      description: 'Choose the engagement that contains the document you want this Zap to monitor.',
       required: true,
       refreshers: ['workspaceId'],
       options: async ({ auth, workspaceId }) => {
@@ -324,7 +328,7 @@ export const credentialIssued = createTrigger({
       auth: wauldAuth,
       displayName: 'Document',
       description:
-        'Select the document whose issued credentials should trigger this flow.',
+        'Choose the document for this trigger. The Zap will run whenever a credential is issued for this document.',
       required: true,
       refreshers: ['engagementId'],
       options: async ({
