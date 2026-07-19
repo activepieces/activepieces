@@ -33,6 +33,7 @@ type WauldCredential = {
   parent?: string;
   published?: boolean;
   document?: {
+    id?: string;
     name?: string;
     engagementName?: string;
     type?: string;
@@ -55,6 +56,35 @@ type WauldCredential = {
   accessRevoked?: boolean;
   verifyCount?: number | string;
   downloadCount?: number | string;
+};
+
+type CredentialIssuedWebhookPayload = {
+  id: string;
+  document?: {
+    id?: string;
+    name?: string;
+    type?: string;
+    skills?: string[];
+    earningCriteria?: Array<{
+      type?: string;
+      description?: string;
+      supportingLink?: string;
+    }>;
+  };
+  issuer?: {
+    id?: string;
+    name?: string;
+    website?: string;
+  };
+  attributes?: Array<{
+    name?: string;
+    value?: string;
+  }>;
+  issueTime?: string;
+  recipient?: {
+    name?: string;
+    email?: string;
+  };
 };
 
 type ListWorkspacesResponse = {
@@ -335,7 +365,42 @@ export const credentialIssued = createTrigger({
     }),
   },
 
-  sampleData: {},
+  sampleData: {
+    id: 'crd_sample123',
+    document: {
+      id: 'doc_sample123',
+      name: 'Sample Certificate',
+      type: 'CERTIFICATE',
+      skills: [
+        'Sample Skill',
+      ],
+      earningCriteria: [
+        {
+          type: 'Course Completion',
+          description:
+            'Successfully completed the required course.',
+          supportingLink:
+            'https://example.com/earning-criteria',
+        },
+      ],
+    },
+    issuer: {
+      id: 'acc_sample123',
+      name: 'Sample Organization',
+      website: 'https://example.com',
+    },
+    attributes: [
+      {
+        name: 'course',
+        value: 'Sample Course',
+      },
+    ],
+    issueTime: '2026-07-19T18:23:08.499Z',
+    recipient: {
+      name: 'Sample Recipient',
+      email: 'recipient@example.com',
+    },
+  },
 
   type: TriggerStrategy.WEBHOOK,
 
@@ -451,14 +516,31 @@ export const credentialIssued = createTrigger({
   },
 
   async run(context) {
-    /*
-     * The webhook payload is temporarily returned
-     * without document filtering.
-     *
-     * After confirming the exact Wauld webhook
-     * payload structure, filter it using the
-     * selected documentId.
-     */
-    return [context.payload.body ?? {}];
+    const payload =
+      context.payload.body as
+        | CredentialIssuedWebhookPayload
+        | undefined;
+
+    const selectedDocumentId =
+      context.propsValue.documentId;
+
+    if (
+      !payload ||
+      typeof payload !== 'object'
+    ) {
+      return [];
+    }
+
+    const issuedDocumentId =
+      payload.document?.id;
+
+    if (
+      !issuedDocumentId ||
+      issuedDocumentId !== selectedDocumentId
+    ) {
+      return [];
+    }
+
+    return [payload];
   },
 });
