@@ -30,10 +30,12 @@ export function createResolver({ apiClient, basePath, getSettings, log }: Create
                 pieces = [...pieces, ...resolved.pieces]
                 if (resolved.code.kind === 'source') {
                     codes = [...codes, ...resolved.code.steps]
-                    // Cold path: compile here so the bundle can be published, then publish best-effort.
-                    // A failed compile/publish must never fail the run — the pool recompiles from source.
-                    await compileCodeSteps({ codes, basePath, getSettings, log })
-                    if (!isNil(resolved.publishBundle)) {
+                    // Cold path: compile here so the bundle can be published. Publish only when every
+                    // code step built cleanly — a transient bun install failure must never be baked into
+                    // the shared flow bundle (GIT-1608). A failed compile/publish never fails the run;
+                    // the pool recompiles from source.
+                    const allStepsBuilt = await compileCodeSteps({ codes, basePath, getSettings, log })
+                    if (allStepsBuilt && !isNil(resolved.publishBundle)) {
                         void resolved.publishBundle()
                     }
                 }
@@ -54,17 +56,22 @@ export function createResolver({ apiClient, basePath, getSettings, log }: Create
     }
 }
 
-async function compileCodeSteps({ codes, basePath, getSettings, log }: CompileCodeStepsParams): Promise<void> {
+async function compileCodeSteps({ codes, basePath, getSettings, log }: CompileCodeStepsParams): Promise<boolean> {
     const codeCachePath = cacheUtils(basePath).getGlobalCodeCachePath()
-    const { error } = await tryCatch(async () => {
+    const { data, error } = await tryCatch(async () => {
         await fileSystemUtils.threadSafeMkdir(codeCachePath)
+        let allSucceeded = true
         for (const artifact of codes) {
-            await codeBuilder(log, getSettings).processCodeStep({ artifact, codesFolderPath: codeCachePath })
+            const status = await codeBuilder(log, getSettings).processCodeStep({ artifact, codesFolderPath: codeCachePath })
+            allSucceeded = allSucceeded && status === 'success'
         }
+        return allSucceeded
     })
     if (error) {
         log.warn({ error: String(error) }, 'Failed to pre-compile code steps for bundle publish, pool will recompile')
+        return false
     }
+    return data
 }
 
 type CreateResolverParams = {

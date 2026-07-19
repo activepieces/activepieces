@@ -3,11 +3,12 @@ import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, 
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
+import { redisConnections } from '../../database/redis-connections'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
 
-const STREAMING_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
+const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
 const FAST_TIER_ID = 'fast'
 
 // Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
@@ -85,6 +86,39 @@ function resolveFastModelId({ provider }: { provider: AIProviderName }): string 
     return resolveModelIdForProvider({ tier: resolveTier({ tierId: FAST_TIER_ID }), provider })
 }
 
+async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
+    // Compare against the DB clock (NOW()) rather than a bound JS Date, so the sweep is immune
+    // to app/DB clock skew and driver timezone handling.
+    const result = await conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: ChatConversationStatus.IDLE })
+        .where('status = :streaming', { streaming: ChatConversationStatus.STREAMING })
+        .andWhere('updated < NOW() - make_interval(secs => :staleSecs)', { staleSecs: STREAMING_STALENESS_TIMEOUT_MS / 1_000 })
+        .andWhere('id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
+        .execute()
+    const recovered = result.affected ?? 0
+    if (recovered > 0) {
+        log.warn({ recovered }, '[chatHelpers] Swept stale STREAMING conversations to IDLE')
+    }
+    return { recovered }
+}
+
+async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {
+    const redis = await redisConnections.useExisting()
+    // INCR + EXPIRE in one atomic script: a crash between the two would otherwise leave a key with
+    // no TTL, permanently blocking the user. EXPIRE only on first increment keeps a fixed window.
+    const count = await redis.eval(
+        `local count = redis.call('INCR', KEYS[1])
+if count == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+return count`,
+        1,
+        key,
+        ttlSeconds.toString(),
+    ) as number
+    return { allowed: count <= limit, count }
+}
+
 export const chatHelpers = {
     getConversationOrThrow,
     getUserProjects,
@@ -92,5 +126,7 @@ export const chatHelpers = {
     resolveTier,
     resolveModelIdForProvider,
     resolveFastModelId,
+    recoverAllStaleStreamingConversations,
+    incrementAndCheckLimit,
     conversationRepo,
 }

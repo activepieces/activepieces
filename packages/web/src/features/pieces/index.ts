@@ -6,7 +6,11 @@ export { PieceIconWithPieceName } from './components/piece-icon-from-name';
 export { PieceIconList } from './components/piece-icon-list';
 export { PiecesSearchInput } from './components/piece-selector-search';
 export { PieceSelectorTabs } from './components/piece-selector-tabs';
-export { piecesHooks, piecesMutations } from './hooks/pieces-hooks';
+export {
+  piecesHooks,
+  piecesMutations,
+  pieceCacheUtils,
+} from './hooks/pieces-hooks';
 export { stepsHooks } from './hooks/steps-hooks';
 export { usePieceOutputSchema } from './hooks/use-piece-output-schema';
 export {
