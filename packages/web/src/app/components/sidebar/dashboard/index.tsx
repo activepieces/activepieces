@@ -5,12 +5,18 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronsUpDown, Home, Plus, Search } from 'lucide-react';
+import {
+  ChevronsUpDown,
+  Folders,
+  Home,
+  Plus,
+  Search,
+  SearchX,
+} from 'lucide-react';
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { SearchInput } from '@/components/custom/search-input';
 import { BoxIcon } from '@/components/icons/box';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
@@ -418,21 +424,25 @@ function SidebarProjectsGroup() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                side="right"
+                side="bottom"
                 align="start"
                 sideOffset={8}
-                className="flex w-[280px] flex-col overflow-hidden p-0"
+                className="flex w-[280px] flex-col overflow-hidden rounded-lg p-0"
               >
-                <SearchInput
-                  placeholder={t('Search projects...')}
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  className="h-9 rounded-none border-0 border-b border-input px-3 shadow-none focus-visible:ring-0 dark:bg-transparent"
-                  autoFocus
-                />
+                {/* Flush search header — icon + bare input, hairline below. */}
+                <div className="flex h-10 shrink-0 items-center gap-2 border-b px-3">
+                  <Search className="size-4 shrink-0 text-muted-foreground" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('Search projects...')}
+                    autoFocus
+                    className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
                 {displayProjects.length > 0 ? (
                   <VirtualizedScrollArea
-                    className="max-h-[300px] px-1 pb-1"
+                    className="max-h-[300px] p-1"
                     items={displayProjects}
                     estimateSize={() => 32}
                     getItemKey={(index) => displayProjects[index]?.id ?? index}
@@ -443,7 +453,7 @@ function SidebarProjectsGroup() {
                         <button
                           type="button"
                           onClick={() => closeAndGo(project.id)}
-                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent"
                         >
                           <ProjectLetterAvatar
                             project={project}
@@ -457,14 +467,26 @@ function SidebarProjectsGroup() {
                     }}
                   />
                 ) : (
-                  <p className="px-3 py-4 text-center text-sm text-muted-foreground">
-                    {t('No projects found.')}
-                  </p>
+                  <div className="flex flex-col items-center gap-0.5 px-4 py-8 text-center">
+                    {query ? (
+                      <SearchX className="mb-1.5 size-5 text-muted-foreground/50" />
+                    ) : (
+                      <Folders className="mb-1.5 size-5 text-muted-foreground/50" />
+                    )}
+                    <p className="text-sm font-medium">
+                      {query ? t('No projects found.') : t('No projects yet')}
+                    </p>
+                    {query && (
+                      <p className="text-xs text-muted-foreground">
+                        {t('Try a different search term')}
+                      </p>
+                    )}
+                  </div>
                 )}
                 {showNewProjectButton && (
-                  <div className="border-t p-1.5">
+                  <div className="shrink-0 border-t p-1">
                     <CreateProjectButton
-                      variant="ghost"
+                      variant="menu-item"
                       projects={projects}
                       onCreate={(project) => closeAndGo(project.id)}
                     />
