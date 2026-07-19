@@ -9,7 +9,7 @@ The replacement is a purpose-built engine operation, `EngineOperationType.EXECUT
 - `packages/core/execution/src/lib/engine/engine-operation.ts` — `EngineOperationType.EXECUTE_ACTION`, `ExecuteActionOperation = BaseEngineOperation & { step: PieceAction | CodeAction }`
 - `packages/core/execution/src/lib/workers/job-data.ts` — `WorkerJobType.EXECUTE_ACTION`, `ExecuteActionJobData`; priority `high` (not `critical`, so it never starves the truly-interactive builder jobs a human is waiting on); registered as a non-scheduled user-interaction job
 - `packages/server/engine/src/lib/operations/action.operation.ts` — `actionOperation.execute`: runs the step, maps `StepOutputStatus.SUCCEEDED` → `success`, returns `{ success, input, output, message }`
-- `packages/server/engine/src/lib/handler/pieceRun-step-runner.ts` — `pieceRunStepRunner.run({ step, operation })`: `flowExecutor.getExecutorForAction(step.type).handle()` on `FlowExecutorContext.empty()`, returns `steps[step.name]`. Shared primitive — the chat tool executor (`tools/index.ts`) was refactored to call it too
+- `packages/server/engine/src/lib/handler/piece-run-step-runner.ts` — `pieceRunStepRunner.run({ step, operation })`: `flowExecutor.getExecutorForAction(step.type).handle()` on `FlowExecutorContext.empty()`, returns `steps[step.name]`. Shared primitive — the chat tool executor (`tools/index.ts`) was refactored to call it too
 - `packages/server/engine/src/lib/handler/context/engine-constants.ts` — `EngineConstants.pieceRunMode` flag; `fromExecuteActionInput` sets it true and fills flow identity from `DEFAULT_MCP_DATA` sentinels
 - `packages/server/engine/src/lib/handler/piece-executor.ts` — honors `pieceRunMode`: no-op progress reporter, and `assertPieceRunCannotSuspend` (waitpoints rejected as USER errors → FAILED, not INTERNAL_ERROR)
 - `packages/server/worker/src/lib/execute/jobs/execute-action.ts` — worker handler: resolves the piece, runs the engine op, maps sandbox timeout → `TIMEOUT`
@@ -43,7 +43,7 @@ A one-shot action has no flow context, so `pieceRunMode`:
 - Rejects waitpoints/pauses via `assertPieceRunCannotSuspend`, thrown as a **plain `Error` (USER-level)** so the step ends FAILED rather than INTERNAL_ERROR — "this action only works inside a flow" is a usage error, not an engine bug, and must not page oncall.
 
 ## Edition Availability
-- Community / Enterprise / Cloud: all editions. Entity registered in `database-connection.ts`; the single migration `1804000000000-AddPieceRunTable` creates the `piece_run` table with all columns (including `userId`, `conversationId`, and the `archivedAt` soft-delete column) and its indexes.
+- Community / Enterprise / Cloud: all editions. Entity registered in `database-connection.ts`; the single migration `1811000000000-AddPieceRunTable` creates the `piece_run` table with all columns (including `userId`, `conversationId`, and the `archivedAt` soft-delete column) and its indexes.
 
 ## Domain Terms
 - **piece run** — a single action/code execution outside any flow; persisted as a `piece_run` row.
