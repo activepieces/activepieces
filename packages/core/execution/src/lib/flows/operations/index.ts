@@ -144,6 +144,7 @@ export type ChangeNameRequest = z.infer<typeof ChangeNameRequest>
 
 export const DeleteActionRequest = z.object({
     names: z.array(z.string()),
+    preserveNoteAnchors: z.boolean().optional(),
 })
 
 export type DeleteActionRequest = z.infer<typeof DeleteActionRequest>

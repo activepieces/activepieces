@@ -6,11 +6,11 @@ import {
 import { Editor } from '@tiptap/core';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { Pin, PinOff, TrashIcon } from 'lucide-react';
+import { TrashIcon, Unlink } from 'lucide-react';
 import { forwardRef, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { ApNodeType } from '@/app/builder/flow-canvas/utils/types';
+import { flowCanvasConsts } from '@/app/builder/flow-canvas/utils/consts';
 import {
   MarkdownTools,
   ToolWrapper,
@@ -41,35 +41,12 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
     ? flowStructureUtil.getStep(anchor.stepName, flowVersion.trigger)
         ?.displayName ?? anchor.stepName
     : null;
-  const togglePin = () => {
+  const unlink = () => {
     if (isNil(note)) {
       return;
     }
     const notePosition = reactFlow.getNode(id)?.position ?? note.position;
-    if (anchor) {
-      moveNote({ id, position: notePosition, anchor: null });
-      return;
-    }
-    const nearestStepNode = findNearestStepNode({
-      stepNodes: reactFlow
-        .getNodes()
-        .filter((node) => node.type === ApNodeType.STEP),
-      origin: notePosition,
-    });
-    if (isNil(nearestStepNode)) {
-      return;
-    }
-    moveNote({
-      id,
-      position: notePosition,
-      anchor: {
-        stepName: nearestStepNode.id,
-        offset: {
-          x: notePosition.x - nearestStepNode.position.x,
-          y: notePosition.y - nearestStepNode.position.y,
-        },
-      },
-    });
+    moveNote({ id, position: notePosition, anchor: null });
   };
   return (
     <div
@@ -87,23 +64,17 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
           />
           <MarkdownTools editor={editor} />
           <Separator orientation="vertical" className="h-[30px]"></Separator>
-          <ToolWrapper
-            tooltip={
-              anchor
-                ? t('Pinned to {stepName}', {
-                    stepName: anchoredStepDisplayName,
-                  })
-                : t('Pin to nearest step')
-            }
-          >
-            <Button variant="ghost" size="icon" onClick={togglePin}>
-              {anchor ? (
-                <PinOff className="size-4" />
-              ) : (
-                <Pin className="size-4" />
-              )}
-            </Button>
-          </ToolWrapper>
+          {anchor && (
+            <ToolWrapper
+              tooltip={t('Unlink from {stepName}', {
+                stepName: anchoredStepDisplayName,
+              })}
+            >
+              <Button variant="ghost" size="icon" onClick={unlink}>
+                <Unlink className="size-4" />
+              </Button>
+            </ToolWrapper>
+          )}
           <ToolWrapper tooltip={t('Delete')}>
             <Button
               variant="ghost"
@@ -119,46 +90,6 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
       </div>
     </div>
   );
-};
-
-function findNearestStepNode({
-  stepNodes,
-  origin,
-}: {
-  stepNodes: { id: string; position: { x: number; y: number } }[];
-  origin: { x: number; y: number };
-}): { id: string; position: { x: number; y: number } } | null {
-  return stepNodes.reduce<{
-    id: string;
-    position: { x: number; y: number };
-  } | null>((nearest, node) => {
-    if (isNil(nearest)) {
-      return node;
-    }
-    return squaredDistance({ from: origin, to: node.position }) <
-      squaredDistance({ from: origin, to: nearest.position })
-      ? node
-      : nearest;
-  }, null);
-}
-
-function squaredDistance({
-  from,
-  to,
-}: {
-  from: { x: number; y: number };
-  to: { x: number; y: number };
-}): number {
-  return (from.x - to.x) ** 2 + (from.y - to.y) ** 2;
-}
-
-const NoteColorPickerClassName = {
-  [NoteColorVariant.YELLOW]: 'bg-amber-400',
-  [NoteColorVariant.ORANGE]: 'bg-orange-400',
-  [NoteColorVariant.RED]: 'bg-red-400',
-  [NoteColorVariant.GREEN]: 'bg-green-400',
-  [NoteColorVariant.BLUE]: 'bg-blue-400',
-  [NoteColorVariant.PURPLE]: 'bg-purple-400',
 };
 
 const NoteColorPicker = ({
@@ -239,9 +170,8 @@ const ColorButton = forwardRef<HTMLButtonElement, ColorButtonProps>(
       >
         <div
           className={cn(
-            NoteColorPickerClassName[color] ??
-              NoteColorPickerClassName[NoteColorVariant.YELLOW],
-            'size-4 shrink-0 rounded-full',
+            flowCanvasConsts.NOTE_COLOR_CLASS_NAME[color],
+            'size-4 shrink-0 rounded-full bg-current',
             {
               'size-5': big,
             },

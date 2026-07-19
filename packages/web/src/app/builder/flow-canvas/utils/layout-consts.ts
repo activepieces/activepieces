@@ -58,6 +58,11 @@ const ORIENTATION_LAYOUT: Record<CanvasOrientation, OrientationLayout> = {
 
 const NODE_SELECTION_RECT_CLASS_NAME = 'react-flow__nodesselection-rect';
 
+const NOTE_HANDLE_IDS = {
+  LEFT: 'note-handle-left',
+  RIGHT: 'note-handle-right',
+};
+
 const doesNodeAffectBoundingBoxWidth: (
   type: ApNodeType,
 ) => type is
@@ -74,6 +79,7 @@ export const flowCanvasLayoutConsts = {
   STEP_NODE_SIZE,
   HORIZONTAL_STEP_LABEL_WIDTH,
   NODE_SELECTION_RECT_CLASS_NAME,
+  NOTE_HANDLE_IDS,
   doesNodeAffectBoundingBox: doesNodeAffectBoundingBoxWidth,
 };
 

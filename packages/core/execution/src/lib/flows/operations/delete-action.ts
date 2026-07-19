@@ -52,6 +52,9 @@ function _deleteAction(
             return parentStep
         })
     }
+    if (request.preserveNoteAnchors) {
+        return clonedVersion
+    }
     return notesOperations.clearDanglingNoteAnchors(clonedVersion)
 }
 

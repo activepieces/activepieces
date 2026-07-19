@@ -7,7 +7,24 @@ import {
     FlowVersionState,
     Note,
     NoteColorVariant,
+    StepLocationRelativeToParent,
 } from '../../src'
+
+const codeAction = (name: string, nextAction?: FlowVersion['trigger']['nextAction']) => ({
+    name,
+    valid: true,
+    displayName: 'Code',
+    type: FlowActionType.CODE as const,
+    settings: {
+        sourceCode: {
+            code: 'export const code = async () => true;',
+            packageJson: '{}',
+        },
+        input: {},
+        errorHandlingOptions: {},
+    },
+    ...(nextAction ? { nextAction } : {}),
+})
 
 const createNote = (anchor: Note['anchor'] = null): Note => ({
     id: 'note-1',
@@ -95,6 +112,22 @@ describe('note operations', () => {
             request: {
                 ...requestWithoutAnchor,
                 position: { x: 300, y: 400 },
+            },
+        })
+        expect(result.notes[0].anchor).toEqual(anchor)
+    })
+
+    it('keeps the anchor when its step is moved', () => {
+        const anchor = { stepName: 'step_1', offset: { x: 50, y: -20 } }
+        const flowVersion = createFlowVersion([createNote(anchor)])
+        flowVersion.trigger.nextAction = codeAction('step_1', codeAction('step_2'))
+        const result = flowOperations.apply(flowVersion, {
+            type: FlowOperationType.MOVE_ACTION,
+            request: {
+                name: 'step_1',
+                newParentStep: 'step_2',
+                stepLocationRelativeToNewParent:
+                    StepLocationRelativeToParent.AFTER,
             },
         })
         expect(result.notes[0].anchor).toEqual(anchor)

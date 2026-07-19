@@ -3,6 +3,7 @@ import {
   StepLocationRelativeToParent,
   FlowTrigger,
   Note,
+  NoteColorVariant,
 } from '@activepieces/shared';
 import { Edge } from '@xyflow/react';
 
@@ -116,6 +117,7 @@ export enum ApEdgeType {
   LOOP_RETURN_EDGE = 'ApLoopReturnEdge',
   ROUTER_START_EDGE = 'ApRouterStartEdge',
   ROUTER_END_EDGE = 'ApRouterEndEdge',
+  NOTE_ANCHOR_EDGE = 'ApNoteAnchorEdge',
 }
 
 export type ApStraightLineEdge = Edge & {
@@ -185,12 +187,20 @@ export type ApRouterEndEdge = Edge & {
   );
 };
 
+export type ApNoteAnchorEdge = Edge & {
+  type: ApEdgeType.NOTE_ANCHOR_EDGE;
+  data: {
+    color: NoteColorVariant;
+  };
+};
+
 export type ApEdge =
   | ApLoopStartEdge
   | ApLoopReturnEdge
   | ApStraightLineEdge
   | ApRouterStartEdge
-  | ApRouterEndEdge;
+  | ApRouterEndEdge
+  | ApNoteAnchorEdge;
 export type ApGraph = {
   nodes: ApNode[];
   edges: ApEdge[];

@@ -1,9 +1,15 @@
 import { Note, NoteColorVariant } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { Editor } from '@tiptap/core';
-import { NodeProps, NodeResizeControl } from '@xyflow/react';
+import {
+  Handle,
+  NodeProps,
+  NodeResizeControl,
+  Position,
+  useHandleConnections,
+} from '@xyflow/react';
 import { t } from 'i18next';
-import { useRef, useState } from 'react';
+import { CSSProperties, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { MarkdownInput } from '@/components/custom/markdown-input';
@@ -22,14 +28,24 @@ import { NoteFooter } from './note-footer';
 import { NoteTools } from './note-tools';
 
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
-  const [draggedNote, resizeNote, note, readonly] = useBuilderStateContext(
-    (state) => [
+  const [draggedNote, resizeNote, note, readonly, canvasOrientation] =
+    useBuilderStateContext((state) => [
       state.draggedNote,
       state.resizeNote,
       state.getNoteById(props.id),
       state.readonly,
-    ],
-  );
+      state.canvasOrientation,
+    ]);
+  const isHorizontal = canvasOrientation === 'horizontal';
+  const leftNoteHandleId = flowCanvasConsts.NOTE_HANDLE_IDS.LEFT;
+  const rightNoteHandleId = flowCanvasConsts.NOTE_HANDLE_IDS.RIGHT;
+  const noteHandleOffsetStyle = isHorizontal
+    ? flowCanvasConsts.NOTE_HANDLE_HORIZONTAL_OFFSET_STYLE
+    : undefined;
+  const isLeftNoteHandleConnected =
+    useHandleConnections({ type: 'source', id: leftNoteHandleId }).length > 0;
+  const isRightNoteHandleConnected =
+    useHandleConnections({ type: 'source', id: rightNoteHandleId }).length > 0;
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: props.id,
     data: {
@@ -111,10 +127,47 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
           isDragging={false}
         />
       </div>
+      <NoteConnectHandle
+        id={leftNoteHandleId}
+        position={Position.Left}
+        isConnected={isLeftNoteHandleConnected}
+        style={noteHandleOffsetStyle}
+      />
+      <NoteConnectHandle
+        id={rightNoteHandleId}
+        position={Position.Right}
+        isConnected={isRightNoteHandleConnected}
+        style={noteHandleOffsetStyle}
+      />
     </div>
   );
 };
 ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';
+
+function NoteConnectHandle({
+  id,
+  position,
+  isConnected,
+  style,
+}: NoteConnectHandleProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Handle
+          type="source"
+          id={id}
+          isConnectableEnd={false}
+          className={flowCanvasConsts.noteHandleClassName(isConnected)}
+          style={style}
+          position={position}
+        />
+      </TooltipTrigger>
+      <TooltipContent side={position === Position.Left ? 'left' : 'right'}>
+        {t('Link to step')}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 const NoteContent = ({ note, isDragging }: NoteContentProps) => {
   const { id, ownerId: creatorId, color, size } = note;
@@ -219,6 +272,13 @@ export { ApNoteCanvasNode, NoteContent };
 type NoteContentProps = {
   note: Note;
   isDragging: boolean;
+};
+
+type NoteConnectHandleProps = {
+  id: string;
+  position: Position;
+  isConnected: boolean;
+  style?: CSSProperties;
 };
 
 const NoteColorVariantClassName = {
