@@ -46,7 +46,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
-import { useChatConversations } from '@/features/chat/lib/chat-conversations';
+import {
+  chatConversationsCache,
+  useChatConversations,
+} from '@/features/chat/lib/chat-conversations';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { mathUtils } from '@/lib/math-utils';
@@ -282,9 +285,7 @@ export function WorkspaceChatPanel({
     (conversationId: string) => {
       setActiveConversationId(conversationId);
       setChatParam(conversationId);
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
+      chatConversationsCache.invalidate({ queryClient });
     },
     [setChatParam, queryClient],
   );
@@ -292,9 +293,7 @@ export function WorkspaceChatPanel({
   const handleTitleUpdate = useCallback(
     (title: string) => {
       setConversationTitle(title);
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
+      chatConversationsCache.invalidate({ queryClient });
     },
     [queryClient],
   );
@@ -317,9 +316,7 @@ export function WorkspaceChatPanel({
       if (selectedConversationId === convId) {
         setConversationTitle(renameValue.trim());
       }
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
+      chatConversationsCache.invalidate({ queryClient });
     } catch {
       toast.error(t('Failed to rename conversation'));
     } finally {
@@ -334,9 +331,7 @@ export function WorkspaceChatPanel({
     handleNewChat();
     chatApi.deleteConversation(convId).then(
       () => {
-        void queryClient.invalidateQueries({
-          queryKey: ['chat-conversations'],
-        });
+        chatConversationsCache.invalidate({ queryClient });
       },
       () => {
         toast.error(t('Failed to delete conversation'));
