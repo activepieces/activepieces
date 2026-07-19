@@ -1,4 +1,3 @@
-import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -14,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
+import { ProjectLetterAvatar } from '@/features/projects/components/project-letter-avatar';
 import { cn } from '@/lib/utils';
 
 import { StageResource, useStage } from './stage-context';
@@ -147,7 +147,6 @@ function ProjectUnit({
   onSwitchProject: (targetProjectId: string) => void;
 }) {
   const projectName = getProjectName(project);
-  const palette = PROJECT_COLOR_PALETTE[project.icon.color];
 
   return (
     <div className="group flex shrink-0 items-center rounded-md transition-colors hover:bg-accent">
@@ -158,37 +157,24 @@ function ProjectUnit({
             aria-label={t('Switch project')}
             className="flex size-7 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span
-              className="flex size-5 shrink-0 items-center justify-center rounded-[6px] text-[10px] font-bold"
-              style={{
-                backgroundColor: palette.color,
-                color: palette.textColor,
-              }}
-              aria-hidden
-            >
-              {projectName.charAt(0).toUpperCase()}
-            </span>
+            <ProjectLetterAvatar
+              project={project}
+              className="size-5 rounded-[6px]"
+            />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="min-w-[210px]">
           {allProjects.map((p) => {
-            const pal = p.icon ? PROJECT_COLOR_PALETTE[p.icon.color] : null;
             const name = getProjectName(p);
             return (
               <DropdownMenuItem
                 key={p.id}
                 onSelect={() => onSwitchProject(p.id)}
               >
-                <span
-                  className="flex size-5 shrink-0 items-center justify-center rounded-[6px] text-[10px] font-bold"
-                  style={{
-                    backgroundColor: pal?.color,
-                    color: pal?.textColor,
-                  }}
-                  aria-hidden
-                >
-                  {name.charAt(0).toUpperCase()}
-                </span>
+                <ProjectLetterAvatar
+                  project={p}
+                  className="size-5 rounded-[6px]"
+                />
                 <span className="min-w-0 flex-1 truncate">{name}</span>
                 {p.id === project.id && (
                   <Check className="size-4 shrink-0 text-primary" />
