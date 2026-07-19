@@ -12,6 +12,7 @@ The Analytics module provides platform-level reporting on automation usage: dail
 - `packages/web/src/app/routes/impact/summary/index.tsx` — summary metrics (active flows, users, runs, time saved)
 - `packages/web/src/app/routes/impact/trends/index.tsx` — time-series area charts
 - `packages/web/src/app/routes/impact/details/index.tsx` — per-flow drill-down with editable time-saved
+- `packages/web/src/app/routes/impact/lib/impact-runs-utils.ts` — `sumRunsByFlow` sums every daily bucket per flow into a `Map<flowId, totalRuns>`; the single aggregation all run-count consumers (summary tile, time-saved, details table, CSV export) route through
 
 ## Edition Availability
 - **Community (CE)**: Not available — gated behind `analyticsEnabled` plan flag.

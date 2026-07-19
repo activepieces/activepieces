@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddDeprecatedToPieceMetadata1810000000000 implements Migration {
-    name = 'AddDeprecatedToPieceMetadata1810000000000'
+export class AddDeprecatedToPieceMetadata1811000000000 implements Migration {
+    name = 'AddDeprecatedToPieceMetadata1811000000000'
     breaking = false
     release = '0.86.3'
 
