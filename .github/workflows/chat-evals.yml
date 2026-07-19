@@ -3,9 +3,9 @@ name: Chat Evals
 # Regression gate for the AI Copilot chat prompt + agent loop.
 #   gate — every PR touching chat/prompt/eval files: deterministic replay + assertion
 #          tests, no key, hermetic. Blocks the PR.
-#   live — nightly + manual: runs the fixtures against the real model + LLM-judge and
-#          checks judge calibration. Uses OPENROUTER_API_KEY from secrets. Not a PR
-#          blocker (generation isn't pinned, so it's a monitoring signal, not a gate).
+#   live — nightly + manual: fixtures against the real model + LLM-judge, key from secrets.
+#          Nightly runs the regression fixtures only (cheap + stable); run the full suite
+#          on demand via the workflow_dispatch "scope" input. Not a PR blocker.
 
 on:
   pull_request:
@@ -19,6 +19,12 @@ on:
   schedule:
     - cron: '0 6 * * *'
   workflow_dispatch:
+    inputs:
+      scope:
+        description: 'Live gate fixture scope'
+        type: choice
+        options: [regression, all]
+        default: regression
 
 permissions:
   actions: read
@@ -43,6 +49,18 @@ jobs:
 
       - run: bun install
 
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.4.2
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 3w
+          max-size: 20gb
+
       # The eval tests import @activepieces/* packages by their built dist/, which
       # bun install alone does not produce.
       - name: Build worker dependency graph
@@ -58,6 +76,7 @@ jobs:
     timeout-minutes: 30
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      CHAT_EVAL_SCOPE: ${{ github.event.inputs.scope || 'regression' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -71,8 +90,20 @@ jobs:
 
       - run: bun install
 
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.4.2
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 3w
+          max-size: 20gb
+
       - name: Build worker dependency graph
         run: npx turbo run build --filter=worker
 
-      - name: Run live chat evals + judge calibration
+      - name: Run live chat evals (scope=${{ env.CHAT_EVAL_SCOPE }})
         run: npm run chat-evals:ci

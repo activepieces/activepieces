@@ -8,8 +8,12 @@ const HAS_PROVIDER_KEY = chatEvalRunner.hasProviderKey()
 describe.skipIf(!HAS_PROVIDER_KEY)('chat-eval regression gate (live — requires a provider API key)', () => {
     let evaluations: EvalReportEntry[] = []
 
+    // CHAT_EVAL_SCOPE=regression (the CI nightly default) runs only the gating fixtures — cheap and
+    // stable. 'all' (local default + on-demand dispatch) runs the full suite incl. capability targets.
     beforeAll(async () => {
-        evaluations = await Promise.all(evalFixtures.load().map((fixture) => chatEvalRunner.evaluateFixture({ fixture })))
+        const scope = process.env.CHAT_EVAL_SCOPE ?? 'all'
+        const fixtures = evalFixtures.load().filter((fixture) => scope === 'all' || fixture.kind === 'regression')
+        evaluations = await Promise.all(fixtures.map((fixture) => chatEvalRunner.evaluateFixture({ fixture })))
     }, 180_000)
 
     afterAll(async () => {
