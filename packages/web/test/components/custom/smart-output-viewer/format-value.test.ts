@@ -1,3 +1,6 @@
+// @vitest-environment jsdom
+// The subject transitively imports `@/lib/dom-utils`, which reads `window` at
+// module load, so this suite needs a DOM.
 import { describe, it, expect } from 'vitest';
 
 import {
