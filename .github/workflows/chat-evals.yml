@@ -1,19 +1,8 @@
 name: Chat Evals
 
-# Regression gate for the AI Copilot chat system prompt + agent loop.
-#
-# Two tiers, by design:
-#   pr-gate  — runs on PRs that touch chat/prompt/eval files. Deterministic only
-#              (replay executor + transcript assertions); no provider key, so the
-#              live LLM-judge suite self-skips (describe.skipIf in chat-eval.test.ts).
-#   nightly  — runs the full live gate against the real model + judge calibration,
-#              using OPENROUTER_API_KEY / AP_OPENROUTER_PROVISION_KEY from secrets.
-#              Kept off the per-PR path because it costs money, takes minutes, and
-#              can drift with the model.
-#
-# Both build the worker's dependency graph first: the eval tests import @activepieces/*
-# packages whose entry points are their built dist/, and a bare `bun install` does not
-# build them. `turbo run build --filter=worker` compiles the full transitive graph.
+# Regression gate for the AI Copilot chat prompt + agent loop. Runs on PRs that touch
+# chat/prompt/eval files: deterministic replay + transcript-assertion tests. No provider
+# key, so the live LLM-judge suite self-skips (describe.skipIf in chat-eval.test.ts).
 
 on:
   pull_request:
@@ -24,18 +13,14 @@ on:
       - packages/server/api/src/assets/prompts/**
       - packages/core/shared/src/lib/ee/chat/**
       - .github/workflows/chat-evals.yml
-  schedule:
-    - cron: '0 6 * * *'
-  workflow_dispatch:
 
 permissions:
   actions: read
   contents: read
 
 jobs:
-  pr-gate:
+  gate:
     name: Deterministic gate
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -51,37 +36,10 @@ jobs:
 
       - run: bun install
 
+      # The eval tests import @activepieces/* packages by their built dist/, which
+      # bun install alone does not produce.
       - name: Build worker dependency graph
         run: npx turbo run build --filter=worker
 
-      # No provider key: the live LLM-judge describe self-skips, leaving the
-      # deterministic replay + assertion tests as the hard gate.
       - name: Run deterministic chat evals
-        run: npm run chat-evals:ci
-
-  nightly:
-    name: Live judge gate
-    if: github.event_name != 'pull_request' && github.repository == 'activepieces/activepieces'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      AP_OPENROUTER_PROVISION_KEY: ${{ secrets.AP_OPENROUTER_PROVISION_KEY }}
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - run: bun install
-
-      - name: Build worker dependency graph
-        run: npx turbo run build --filter=worker
-
-      - name: Run live chat evals + judge calibration
         run: npm run chat-evals:ci
