@@ -153,6 +153,13 @@ export function WorkspaceChatPanel({
   const [floatPos, setFloatPos] = useState(() => readFloatPos(floatSize));
   const innerRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    // Record the chat landing for the cloud rollout funnel (server is
+    // cloud-gated; no-op otherwise). Lived on the old chat page's mount; the
+    // persistent panel is now the surface a user "lands" on.
+    chatApi.recordLanding().catch(() => undefined);
+  }, []);
+
   // react-rnd owns the live drag/resize gesture (smooth, rAF-batched, clamped to
   // the inset bounds box); we only fold the result into React state + localStorage
   // on release so the heavy chat subtree never re-renders mid-gesture.
