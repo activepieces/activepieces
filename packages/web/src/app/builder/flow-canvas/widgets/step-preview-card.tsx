@@ -29,13 +29,9 @@ import { flowCanvasConsts } from '../utils/consts';
 
 import { StepPreviewSummary } from './step-preview-summary';
 
-// While the chat is docked, clicking a step shows here: a floating card anchored to
-// the selected step holding a compact, read-only printout of its values, so the
-// canvas and chat stay in view. Positioned in screen space (constant, readable size
-// at any zoom), it re-anchors as the canvas pans/zooms, shrinks to fit a narrow
-// Stage, and flips to the step's left edge when there's no room on the right.
-// Clicking outside or pressing Escape dismisses it; "Edit settings" pops the chat
-// out and hands over to the full sidebar.
+// Floating read-only preview of the selected step, shown while the chat is docked.
+// Positioned in screen space so it stays a constant size at any zoom, re-anchors on
+// pan/zoom, and flips to the step's left edge when there's no room on the right.
 export const StepPreviewCard = ({
   isExiting,
   containerRef,
@@ -52,9 +48,7 @@ export const StepPreviewCard = ({
     ]);
   const { getNode, flowToScreenPosition } = useReactFlow();
   const zoom = useStore((s) => s.transform[2]);
-  // These subscriptions exist only to re-anchor the card when the canvas pans or
-  // resizes; the values themselves are unused (position comes from the measured
-  // rect + flowToScreenPosition below).
+  // Subscribed only to re-anchor on pan/resize; the values themselves are unused.
   const _panX = useStore((s) => s.transform[0]);
   const _panY = useStore((s) => s.transform[1]);
   const _viewportW = useStore((s) => s.width);
@@ -70,8 +64,7 @@ export const StepPreviewCard = ({
       if (cardRef.current?.contains(target)) {
         return;
       }
-      // Only dismiss for clicks within the canvas the card belongs to. Clicking
-      // another panel — e.g. the chat beside the Stage — must NOT close it.
+      // Dismiss only on clicks inside this canvas, not other panels (e.g. the chat).
       const canvas = containerRef.current;
       if (isNil(canvas) || !canvas.contains(target)) {
         return;
@@ -110,10 +103,8 @@ export const StepPreviewCard = ({
     return null;
   }
 
-  // Anchor + clamp entirely in client (viewport) coordinates so the card lives in a
-  // fixed-position portal that physically cannot leave the screen. Bounds are the
-  // canvas's real on-screen rectangle intersected with the viewport — never the
-  // XYFlow store dims, which can drift from the visible area.
+  // Anchor + clamp in viewport coordinates (fixed-position portal). Bounds are the
+  // canvas's real on-screen rect ∩ viewport, not XYFlow store dims (which drift).
   const rect = container.getBoundingClientRect();
   const nodeWidth = node.width ?? flowCanvasConsts.AP_NODE_SIZE.STEP.width;
   const nodeTopLeft = flowToScreenPosition({

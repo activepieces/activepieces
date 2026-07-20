@@ -15,9 +15,7 @@ import { ApNode, CanvasOrientation } from '../utils/types';
 const verticalPaddingOnFitView = 100;
 const horizontalPaddingOnFitView = 40;
 
-// How far fit-to-view may zoom out so a wide/tall flow stays on-screen in a
-// narrow Stage. Lower floors for the narrower tiers; the ReactFlow minZoom
-// (0.4) sits just below the lowest so the floor is always reachable.
+// Zoom-out floor per Stage tier (ReactFlow minZoom 0.4 sits just below the lowest).
 function fitZoomFloorForTier(tier: StageTier): number {
   switch (tier) {
     case 'mini':
@@ -29,10 +27,8 @@ function fitZoomFloorForTier(tier: StageTier): number {
   }
 }
 
-// Pure fit math: where the viewport must land so the whole flow is centred in a
-// canvas of the given size. Shared by handleFitToView (button / initial /
-// orientation) and the editor-toggle settle in BuilderPage, so both compute the
-// identical target.
+// Pure fit math: where the viewport lands to centre the whole flow in the canvas.
+// Shared by handleFitToView and the editor-toggle settle so both agree.
 function computeFitViewport({
   nodes,
   canvasWidth,
@@ -80,10 +76,8 @@ function computeFitViewport({
     orientation,
   });
   const graphHeight = boundingBox.height;
-  // left/right are the horizontal extents measured from the trunk's centre,
-  // so fitting against the wider side keeps the outermost branch on-screen
-  // while the trunk stays centred (matching the x placement below). Without
-  // this, wide router flows overflow horizontally in a narrow Stage.
+  // Fit against the wider side (extents from the trunk centre) so the outermost
+  // branch stays on-screen with the trunk centred; else wide router flows overflow.
   const halfSpan = Math.max(
     boundingBox.left,
     boundingBox.right,
@@ -108,11 +102,9 @@ function computeFitViewport({
   };
 }
 
-// Glide the viewport to `target` over `durationMs` on easeStageTransition, the
-// same curve the chat FLIP / sidebar slide / card exit use — so the flow re-centre
-// reads as part of the one morph instead of React Flow's own (uncontrollable,
-// easeCubicInOut) tween. Reads the *current* viewport on its first frame so it
-// always starts from wherever the canvas anchor left it. Returns a cancel fn.
+// Glide the viewport to `target` on easeStageTransition (the shared morph curve),
+// reading the current viewport on frame one so it starts wherever the anchor left
+// it. Returns a cancel fn.
 function tweenViewport({
   getViewport,
   setViewport,

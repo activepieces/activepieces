@@ -75,8 +75,7 @@ export const BuilderHeader = () => {
 
   const { embedState } = useEmbedding();
   const { project } = projectCollectionUtils.useCurrentProject();
-  // When rendered inside the Stage, lift the flow title up into the Stage
-  // header (matching the chat panel's title) instead of showing it here.
+  // Inside the Stage, the title is lifted into the Stage header, not shown here.
   const stageSlot = useStageHeaderSlot()?.slot ?? null;
   const stageCurrent = useStageOptional()?.current;
   useReportStageResourceTitle(
@@ -225,8 +224,7 @@ export const BuilderHeader = () => {
     <div className="flex items-center justify-center gap-4">{controls}</div>
   );
 
-  // Inside the Stage, the right-side controls are lifted into the Stage header
-  // (alongside the title) so the builder needs no header row of its own.
+  // Inside the Stage, the right-side controls are lifted into the Stage header too.
   const stageActions = useStageHeaderActions(
     stageSlot ? (
       <div className="flex items-center gap-2">{controls}</div>

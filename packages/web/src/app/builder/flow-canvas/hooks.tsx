@@ -121,9 +121,8 @@ export const useSwitchToDraft = () => {
         clearRun(userHasPermissionToEditFlow);
         socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
       },
-      // surface the failure instead of silently keeping a stale draft, which
-      // matters most on the lock take-over path where the refresh replaces a
-      // full-page reload
+      // surface the failure instead of silently keeping a stale draft (matters on
+      // the lock take-over path, where the refresh replaces a full-page reload)
       onError: () => internalErrorToast(),
     });
   return {
@@ -198,12 +197,9 @@ export const useResizeCanvas = (
   containerRef: React.RefObject<HTMLDivElement | null>,
   setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
 ) => {
-  // Anchor the flow to its on-screen position instead of re-centering on resize.
-  // When a layout change shifts the canvas's left edge (e.g. the chat panel
-  // collapses and the stage expands), compensate the viewport by the same amount
-  // so the flow stays put rather than jumping. `left: null` means "not measured
-  // yet" — the first observation must not shift (it would move by the absolute
-  // screen offset).
+  // Keep the flow put when the canvas's left edge shifts (e.g. chat collapses):
+  // compensate the viewport by the delta instead of re-centering. `left: null` =
+  // not measured yet, so the first observation must not shift.
   const containerLeftRef = useRef<number | null>(null);
   const { getViewport, setViewport } = useReactFlow();
 

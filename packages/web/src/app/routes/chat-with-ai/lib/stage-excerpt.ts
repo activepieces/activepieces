@@ -17,9 +17,8 @@ function pieceShortName(pieceName: string): string {
   return pieceName.replace('@activepieces/piece-', '');
 }
 
-// A compact, one-line preview of a single input value. Long strings are
-// truncated and containers are summarized (not expanded) so a "big" step —
-// many inputs, long text/content — stays small in the prompt.
+// One-line preview of an input value; long strings truncate and containers are
+// summarized so a big step stays small in the prompt.
 function inputValuePreview(value: unknown): string {
   if (isNil(value) || value === '') {
     return '(empty)';
@@ -61,9 +60,8 @@ function inputLines(input: Record<string, unknown> | undefined): string[] {
   return lines;
 }
 
-// A short, clean snapshot of the selected step's configuration so the agent
-// knows what's inside it (and what to change) without first calling
-// ap_flow_structure. Mirrors the shape of the backend formatStepSettings.
+// Snapshot of the selected step's config so the agent knows its contents without
+// calling ap_flow_structure. Mirrors the backend formatStepSettings shape.
 function selectedStepDetail(step: Step): string {
   const statusHint = step.valid ? '' : ' — needs setup';
   const header = `Selected step "${step.displayName}"${statusHint}:`;
@@ -194,8 +192,6 @@ function connectionsOutline({
     : outline;
 }
 
-// The tables PR adds tableOutline here (it reads the reworked table store's
-// record ids), alongside its use-report-table-excerpt consumer.
 export const stageExcerptUtils = {
   flowOutline,
   connectionsOutline,

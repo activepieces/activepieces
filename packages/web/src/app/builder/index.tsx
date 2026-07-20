@@ -47,13 +47,10 @@ import { useReportFlowFocus } from './use-report-flow-focus';
 const SIDEBAR_OPEN_FRACTION = 0.25;
 const SIDEBAR_MAX_FRACTION = 0.6;
 const SIDEBAR_MIN_PX = 400;
-// The resting open width, animated by the browser's own width transition (smooth,
-// sub-pixel) — clamp keeps it readable on a narrow stage and bounded on a wide one.
 const SIDEBAR_OPEN_WIDTH = `clamp(${SIDEBAR_MIN_PX}px, ${
   SIDEBAR_OPEN_FRACTION * 100
 }%, ${SIDEBAR_MAX_FRACTION * 100}%)`;
-// Minimum canvas-width change (px) that counts as a real resize and earns a
-// re-centre. Above sub-pixel/reflow jitter, below any genuine stage open/resize.
+// Ignore sub-pixel/reflow jitter; only a real resize earns a re-centre.
 const STAGE_RESIZE_REFIT_EPSILON_PX = 8;
 
 const BuilderPage = () => {
@@ -90,12 +87,8 @@ const BuilderPage = () => {
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
 
-  // The step-editing surface follows the chat panel's dock state: while the chat
-  // is docked in the split, a step opens as a floating card on the canvas; once
-  // the chat pops out (double-click a step or "Edit settings"), the stage gets
-  // full width and the classic right-side settings sidebar opens. Re-docking the
-  // chat flips it back to the card — derived, no explicit close. Outside the
-  // workspace shell (embedded builder) there's no chat, so the sidebar is used.
+  // Step editor is a floating card while the chat is docked, and the classic
+  // right sidebar once the chat pops out (or when there's no chat at all).
   const chatDock = useChatDockOptional();
   const chatDockedVisible =
     !!chatDock && !chatDock.chatPopped && !chatDock.chatCollapsed;
@@ -108,10 +101,8 @@ const BuilderPage = () => {
     rightSidebar === RightSideBarType.VERSIONS;
   const isRightPanelOpen = showSidebarEditor || isAuxSidebar;
 
-  // Aux sidebars (runs, versions) have no docked-card form — they're always the
-  // full sidebar, so they can't coexist with the docked chat. We resolve the
-  // conflict by direction (which event just happened), tracking whether WE popped
-  // the chat so a manual pop-out is never re-docked behind the user's back.
+  // Aux sidebars (runs, versions) can't coexist with the docked chat; resolve by
+  // direction. autoPoppedRef tracks OUR pop-out so a manual one is never re-docked.
   const autoPoppedRef = useRef(false);
   const wasAuxSidebar = usePrevious(isAuxSidebar);
   const wasChatDockedVisible = usePrevious(chatDockedVisible);
@@ -119,22 +110,19 @@ const BuilderPage = () => {
     if (!chatDock) {
       return;
     }
-    // Aux sidebar just opened while the chat was docked → pop the chat out
-    // (sidebar wins) and remember we did it so we can re-dock on close.
+    // Aux sidebar opened while docked → pop the chat out, remember it.
     if (isAuxSidebar && !wasAuxSidebar && chatDockedVisible) {
       chatDock.popOutChat({ teachDock: true });
       autoPoppedRef.current = true;
       return;
     }
-    // User docked the chat while an aux sidebar is open → don't resist; close the
-    // sidebar so the dock isn't immediately re-popped by the branch above.
+    // Chat docked while an aux sidebar is open → close the sidebar.
     if (chatDockedVisible && !wasChatDockedVisible && isAuxSidebar) {
       setRightSidebar(RightSideBarType.NONE);
       autoPoppedRef.current = false;
       return;
     }
-    // Aux sidebar closed and we had auto-popped the chat for it → re-dock. Manual
-    // pop-outs never set autoPoppedRef, so they stay floating.
+    // Aux sidebar closed after we auto-popped → re-dock.
     if (!isAuxSidebar && wasAuxSidebar && autoPoppedRef.current) {
       autoPoppedRef.current = false;
       chatDock.dockChat();
@@ -148,12 +136,8 @@ const BuilderPage = () => {
     setRightSidebar,
   ]);
 
-  // Card presence is staged so it never appears mid-motion. On a fresh
-  // step-click while docked there's no layout morph, so the card shows at once.
-  // But docking the chat back (sidebar → card) runs the full morph — chat flies
-  // home, sidebar collapses, flow re-centers — and the card must wait for that
-  // to finish, otherwise it pops in out of sync. We detect the dock-back by the
-  // right panel having just been open.
+  // Delay the card only on a dock-back (sidebar → card), where the full layout
+  // morph runs; a plain step-click while docked shows it at once.
   const wasRightPanelOpen = usePrevious(isRightPanelOpen);
   const [cardEntered, setCardEntered] = useState(showCardEditor);
   useEffect(() => {
@@ -174,10 +158,7 @@ const BuilderPage = () => {
   const builderSplitRef = useRef<HTMLDivElement>(null);
   const sidebarDrawerRef = useRef<HTMLDivElement>(null);
 
-  // User-chosen sidebar width (px). null = "never dragged; use the default clamp
-  // width". Stored in localStorage so the choice survives reloads. The drawer's
-  // open/close is still animated by CSS width (below); a user width just overrides
-  // the resting open width.
+  // User-chosen sidebar width (px), persisted; null = use the default clamp width.
   const [userSidebarWidth, setUserSidebarWidth] = useState<number | null>(
     readStoredSidebarWidth,
   );
@@ -241,10 +222,8 @@ const BuilderPage = () => {
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
 
-  // The settle reads orientation/tier fresh at fire time (via this ref) so it
-  // stays scoped to the editor toggle — it must NOT re-fire when the tier or
-  // orientation changes on their own (that's a window/divider resize, where the
-  // anchor already holds the flow put and the user prefers no auto-recenter).
+  // Read orientation/tier fresh at fire time via this ref, so the settle stays
+  // scoped to the editor toggle and never re-fires on a bare tier/orientation change.
   const settleParamsRef = useRef({
     canvasOrientation,
     stageTier,
@@ -252,8 +231,7 @@ const BuilderPage = () => {
   });
   settleParamsRef.current = { canvasOrientation, stageTier, userSidebarWidth };
 
-  // Keep the sidebar content mounted through its closing width transition so it
-  // slides out instead of vanishing; open shows it at once.
+  // Keep content mounted through the closing transition so it slides out.
   const [panelRendered, setPanelRendered] = useState(isRightPanelOpen);
   useEffect(() => {
     if (isRightPanelOpen) {
@@ -267,16 +245,10 @@ const BuilderPage = () => {
     return () => window.clearTimeout(id);
   }, [isRightPanelOpen]);
 
-  // The sidebar's WIDTH is animated by the browser (a native CSS width transition
-  // — smooth and sub-pixel), and the flow flex-shrinks to match. In lockstep we
-  // glide the flow viewport to its new fitted centre on the same curve/duration,
-  // so the whole thing reads as one motion. The start viewport is read on the
-  // SECOND frame, not the first: when the chat docks/undocks the canvas's left
-  // edge shifts and the anchor (useResizeCanvas) compensates via a ResizeObserver,
-  // which the spec runs AFTER rAF callbacks — reading on frame two lets that hold
-  // land so the glide starts from the held position instead of teleporting. Keyed
-  // on the stage's usable width changing: the sidebar opening/closing, or the chat
-  // leaving/entering the dock (which also covers aux sidebars popping it out).
+  // Glide the flow viewport to its new fitted centre on the same curve as the CSS
+  // width transition. Read the start viewport on the SECOND frame: the anchor's
+  // ResizeObserver hold runs after rAF, so frame two starts from the held position
+  // instead of teleporting. Keyed on the stage's usable width changing.
   useLayoutEffect(() => {
     if (!hasCanvasBeenInitialised) return;
     const container = builderSplitRef.current;
@@ -339,13 +311,10 @@ const BuilderPage = () => {
     setViewport,
   ]);
 
-  // The Stage (chat side panel) itself is resized outside the builder — when a
-  // flow opens (0→70%) or the user drags the workspace divider. That changes the
-  // canvas width but none of the deps above, so the flow would keep a fit computed
-  // for the wrong width. `middlePanelSize` is a debounced ResizeObserver, so it
-  // lands once the width has SETTLED (never mid-animation, never mid-drag); on a
-  // meaningful change we glide the viewport to a fresh centred fit. The first
-  // measurement is skipped so the initial-mount fit (useFitToView) stays in charge.
+  // The Stage can be resized outside the builder (flow opens, or divider drag),
+  // changing canvas width without touching the deps above. `middlePanelSize` is a
+  // debounced ResizeObserver (fires once width settles); re-fit on a real change,
+  // skipping the first measurement so the initial-mount fit stays in charge.
   const prevMiddleWidthRef = useRef(0);
   useEffect(() => {
     if (!hasCanvasBeenInitialised) return;
@@ -513,7 +482,7 @@ function constructContainerKey({
     step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
       ? step?.settings.pieceVersion
       : undefined;
-  //we need to re-render the step settings form when the step is skipped, so when the user edits the settings after setting it to skipped the changes are reflected in the update request
+  // Re-render the settings form on skip so later edits reach the update request.
   const isSkipped =
     step?.type != FlowTriggerType.EMPTY &&
     step?.type != FlowTriggerType.PIECE &&

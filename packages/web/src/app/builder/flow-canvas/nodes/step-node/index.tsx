@@ -55,11 +55,8 @@ const ApStepCanvasNode = React.memo(
     ]);
     const chatDock = useChatDockOptional();
     const isHorizontal = canvasOrientation === 'horizontal';
-    // Level-of-detail: when the canvas is zoomed out (fit-to-view shrinks wide
-    // flows in a narrow Stage) the step index and chevron become unreadable
-    // clutter, so drop the index and reveal the chevron on hover/select only.
-    // Returning a discrete bucket keeps nodes from re-rendering on every zoom
-    // delta — only when the threshold is crossed.
+    // Level-of-detail: hide the index/chevron clutter when zoomed out. Return a
+    // discrete bucket so nodes re-render only when the threshold is crossed.
     const isLowDetail = useStore((s) => s.transform[2] < 0.7);
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
@@ -93,9 +90,7 @@ const ApStepCanvasNode = React.memo(
         e.preventDefault();
       }
     };
-    // Double-click forces the full sidebar: select the step and pop the chat out
-    // of the dock (which hands the stage full width). With no chat (embed) the
-    // selection alone opens the sidebar.
+    // Double-click forces the full sidebar by popping the chat out of the dock.
     const handleStepDoubleClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {

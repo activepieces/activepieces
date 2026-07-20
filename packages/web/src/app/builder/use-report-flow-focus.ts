@@ -14,18 +14,14 @@ import {
   StageFocus,
 } from '@/app/components/workspace-shell/stage-context';
 
-// Publishes the builder's selected step up to the Stage so the chat knows
-// exactly where the user is inside the open flow ("this step", "why is it
-// failing"). Cleared on unmount; the Stage also clears focus when it closes.
+// Publishes the builder's selected step to the Stage so the chat knows where the
+// user is in the open flow. Cleared on unmount.
 export function useReportFlowFocus() {
   const stage = useStageOptional();
   const reportStageFocus = stage?.reportStageFocus;
 
-  // Select only value-stable values: a string KEY for the multi-selection (box-drag
-  // / shift-click populate selectedNodes) and the trigger ref. Resolving the names
-  // to steps inside the selector would return a fresh array every call, which —
-  // destructured as a `focus` dependency — recomputes `focus` on every render and
-  // turns the reportStageFocus effect into an infinite update loop.
+  // Select only value-stable values (a string key + the trigger ref). Resolving
+  // names to steps here returns a fresh array each call → infinite update loop.
   const [
     flowId,
     selectedStepName,

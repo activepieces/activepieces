@@ -7,10 +7,8 @@ import {
 } from '@/app/components/workspace-shell/stage-context';
 import { stageExcerptUtils } from '@/app/routes/chat-with-ai/lib/stage-excerpt';
 
-// Publishes a compact snapshot of the visible connection rows (name, app,
-// status, flow count) up to the Stage, so the chat can interpret terse on-screen
-// references — e.g. the user asking about the "17 0 0" in the Flows column —
-// without guessing or having to re-fetch blindly. Cleared on unmount.
+// Publishes a snapshot of the visible connection rows to the Stage so the chat
+// can interpret terse on-screen references without re-fetching. Cleared on unmount.
 export function useReportConnectionsExcerpt({
   connections,
   total,

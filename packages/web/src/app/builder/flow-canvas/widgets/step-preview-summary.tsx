@@ -14,10 +14,8 @@ import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PieceIcon, stepsHooks } from '@/features/pieces';
 
-// Read-only, printed summary of a step's configured values shown inside the docked
-// Stage preview card. It never mounts an editable form — every value is rendered as
-// plain text so the card opens instantly and stays compact. Editing happens in the
-// full sidebar via the card's "Edit settings" button.
+// Read-only plain-text summary of a step's values for the docked preview card — no
+// editable form, so it opens instantly. Editing happens in the full sidebar.
 export const StepPreviewSummary = ({
   step,
   pieceModel,

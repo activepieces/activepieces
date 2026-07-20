@@ -82,9 +82,8 @@ export const FlowCanvas = React.memo(
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
-    // Keep the preview card mounted briefly after it should close so it can play
-    // its exit (fade out to the right) as the settings sidebar slides in — the
-    // two read as a swap.
+    // Keep the card mounted briefly after close so its exit plays as the sidebar
+    // slides in — the two read as a swap.
     const [cardVisible, setCardVisible] = useState(showStepCard);
     const [cardExiting, setCardExiting] = useState(false);
     useEffect(() => {

@@ -55,11 +55,9 @@ const ORIENTATION_LAYOUT: Record<CanvasOrientation, OrientationLayout> = {
   },
 };
 
-// Density tightens how far apart router/loop branches sit (cross-axis gap) so
-// more branches fit a narrow Stage at a readable zoom — fit-to-view can't
-// recover this, since zooming shrinks branches and labels equally. Only the
-// vertical canvas narrows; the horizontal canvas keeps its own gaps. The mini
-// floor stays near 2*ARC + handle clearance so curved edges don't kink.
+// Density tightens the cross-axis branch gap so more branches fit a narrow Stage
+// (only the vertical canvas narrows). The mini floor stays near 2*ARC + handle
+// clearance so curved edges don't kink.
 const VERTICAL_BRANCH_GAP_BY_DENSITY: Record<CanvasDensity, number> = {
   comfortable: FLOW_CANVAS_HSPACE,
   narrow: 56,
