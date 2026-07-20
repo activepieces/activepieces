@@ -1,4 +1,5 @@
-import { isAudienceVisible, PieceAudienceFilter, PieceCategory, PieceOrderBy, PieceSortBy, SuggestionType } from '@activepieces/shared'
+import { ActionBase } from '@activepieces/pieces-framework'
+import { PieceAudienceFilter, PieceCategory, PieceOrderBy, PieceSortBy, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { pieceSearching } from './piece-searching'
@@ -21,12 +22,20 @@ export const pieceListUtils = (_log: FastifyBaseLogger) => ({
     },
 })
 
-export function filterActionsByAudience<T extends { audience?: string }>(
-    actions: Record<string, T>,
+export function filterActionsByAudience(
+    actions: Record<string, ActionBase>,
     audience: PieceAudienceFilter,
-): Record<string, T> {
+): Record<string, ActionBase> {
     return Object.fromEntries(
-        Object.entries(actions).filter(([, action]) => isAudienceVisible(action.audience, audience)),
+        Object.entries(actions).filter(([, action]) => {
+            if (audience === PieceAudienceFilter.ALL) {
+                return true
+            }
+            if (audience === PieceAudienceFilter.AI) {
+                return action.audience !== 'human'
+            }
+            return action.audience !== 'ai'
+        }),
     )
 }
 

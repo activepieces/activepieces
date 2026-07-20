@@ -34,16 +34,6 @@ export enum PieceAudienceFilter {
     ALL = 'all',
 }
 
-export function isAudienceVisible(actionAudience: string | undefined, filter: PieceAudienceFilter): boolean {
-    if (filter === PieceAudienceFilter.ALL) {
-        return true
-    }
-    if (filter === PieceAudienceFilter.AI) {
-        return actionAudience !== 'human'
-    }
-    return actionAudience !== 'ai'
-}
-
 export const GetPieceRequestWithScopeParams = z.object({
     name: z.string(),
     scope: z.string(),
