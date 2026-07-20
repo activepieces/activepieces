@@ -215,7 +215,7 @@ export const UpdateOwnerRequest = z.object({
 })
 export type UpdateOwnerRequest = z.infer<typeof UpdateOwnerRequest>
 
-export const FlowOperationRequest = z.union([
+export const FlowOperationRequest = z.discriminatedUnion('type', [
     z.object({
         type: z.literal(FlowOperationType.MOVE_ACTION),
         request: MoveActionRequest,
