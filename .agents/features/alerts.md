@@ -45,6 +45,7 @@ No specific plan flag gates this feature — the edition check is in the service
 - **Alert deduplication (per-failure)**: Redis key `flow_fail_count:<flowVersionId>` tracks failure count per 24-hour window; only the first failure triggers an email.
 - **Bulk subscription**: Platform admins can subscribe or unsubscribe their own email across many projects at once from the Projects table; concurrency capped at 5 parallel requests via `p-limit`.
 - **Alert receiver email (project creation)**: Optional email passed at team-project creation time; auto-subscribed via the EE post-create hook.
+- **Notify flow owners (`project.notifyFlowOwnerOnFailure`)**: Project-level toggle (default off). When on, the failure email is also sent to the failed flow's owner (`flow.ownerId` → user identity email), deduplicated case-insensitively against the alert receiver list. Owner resolution failures are logged and swallowed so the alert still goes out. Toggled from the team-project Alert Emails settings via the project update endpoint (`WRITE_PROJECT`).
 
 ## Entity
 
