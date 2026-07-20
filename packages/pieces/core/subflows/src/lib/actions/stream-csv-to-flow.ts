@@ -164,10 +164,7 @@ export const streamCsvToSubflows = createAction({
     };
 
     if (context.executionType === ExecutionType.RESUME) {
-      const resumeState = await context.store.get<StoredFanIn>(storeKey, StoreScope.FLOW);
-      if (resumeState !== null) {
-        return check();
-      }
+      return check();
     }
 
     if (!Number.isInteger(batchSize) || batchSize < 1) {
