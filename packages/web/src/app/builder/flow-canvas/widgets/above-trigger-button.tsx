@@ -33,15 +33,17 @@ const AboveTriggerButton = ({
 
   useEffect(() => {
     const keydownHandler = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) {
+        return;
+      }
       const isEscapePressed = event.key === 'Escape' && shortCutIsEscape;
       const ctrlAndDPressed =
-        !isEditableTarget(event.target) &&
-        ((isMacSystem &&
+        (isMacSystem &&
           event.metaKey &&
           event.key.toLocaleLowerCase() === 'd') ||
-          (!isMacSystem &&
-            event.ctrlKey &&
-            event.key.toLocaleLowerCase() === 'd'));
+        (!isMacSystem &&
+          event.ctrlKey &&
+          event.key.toLocaleLowerCase() === 'd');
       if (isEscapePressed || ctrlAndDPressed) {
         event.preventDefault();
         event.stopPropagation();
