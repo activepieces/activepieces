@@ -28,5 +28,9 @@
   "Comma": "Comma",
   "Tab": "Tab",
   "Extra Data": "Extra Data",
-  "Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.": "Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step."
+  "Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.": "Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.",
+  "Wait for all subflows to finish": "Wait for all subflows to finish",
+  "Pause this step until every dispatched subflow run is finished, then continue with a summary. A failed subflow is reported, not thrown.": "Pause this step until every dispatched subflow run is finished, then continue with a summary. A failed subflow is reported, not thrown.",
+  "Max wait (minutes)": "Max wait (minutes)",
+  "Stop waiting after this many minutes and continue with a timed-out summary. Only used when waiting is enabled.": "Stop waiting after this many minutes and continue with a timed-out summary. Only used when waiting is enabled."
 }

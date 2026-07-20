@@ -1,4 +1,5 @@
 
+import { ApId } from '@activepieces/core-utils'
 import { FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -8,6 +9,7 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { engineRunCallbackService } from '../flows/flow-run/engine-run-callback-service'
+import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { pieceBundle } from '../pieces/piece-bundle'
 
@@ -100,6 +102,13 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send()
     })
 
+    app.get('/flow-runs/count-by-parent', CountRunsByParentRequest, async (request) => {
+        return flowRunService(request.log).countRunsRollupByParent({
+            projectId: request.principal.projectId,
+            parentRunId: request.query.parentRunId,
+        })
+    })
+
 }
 
 
@@ -170,5 +179,23 @@ const FlowResponseRequest = {
     },
     schema: {
         body: SendFlowResponseRequest,
+    },
+}
+
+const CountRunsByParentRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        querystring: z.object({
+            parentRunId: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: z.object({
+                succeeded: z.number(),
+                failed: z.number(),
+                nonTerminal: z.number(),
+            }),
+        },
     },
 }
