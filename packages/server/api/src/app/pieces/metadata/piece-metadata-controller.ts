@@ -53,7 +53,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             orderBy: query.orderBy,
             suggestionType: query.suggestionType,
             locale: query.locale as LocalesEnum | undefined,
-            audience: query.audience
+            audience: query.audience,
         })
         return pieceMetadataSummary.map((piece) => ({
             ...piece,
@@ -155,7 +155,7 @@ function getPlatformId(principal: Principal): string | undefined {
     return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
 }
 
-function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter|undefined): PieceMetadataModel {
+function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter | undefined): PieceMetadataModel {
     return {
         ...piece,
         actions: filterActionsByAudience(piece.actions, audience),
