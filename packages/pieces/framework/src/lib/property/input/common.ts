@@ -8,11 +8,8 @@ export const BasePropertySchema = z.object({
     displayName: z.string(),
     description: z.optional(z.string()),
     advanced: z.optional(z.boolean()),
-    /** Layout hint used inside a 'section' property group: 'half' pairs two-up, 'full' spans the row. */
     width: z.optional(z.enum(['half', 'full'])),
-    /** Named icon (mapped to a Lucide icon on the frontend) shown for this property in the filter builder. */
     icon: z.optional(z.string()),
-    /** Placeholder text shown in an empty text input (e.g. "sender@example.com"). */
     placeholder: z.optional(z.string()),
 })
 

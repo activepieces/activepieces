@@ -32,7 +32,6 @@ export const DateRangeProperty = z.object({
 })
 
 export type DateRangeProperty<R extends boolean> = BasePropertySchema & {
-    /** 'dropdown' renders the presets as a compact select (used by the filter builder) instead of pill buttons. */
     display?: 'dropdown';
 } & TPropertyValue<DateRangeValue, PropertyType.DATE_RANGE, R>;
 
@@ -46,7 +45,6 @@ function startOfThisMonth(): string {
     return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 }
 
-// Resolve a (possibly relative) date-range value into concrete ISO bounds.
 // Relative presets are resolved against "now" so recurring flows roll forward.
 function resolve(
     value: DateRangeValue | null | undefined,

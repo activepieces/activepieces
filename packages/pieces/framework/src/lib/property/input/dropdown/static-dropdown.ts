@@ -18,7 +18,6 @@ export type StaticDropdownProperty<
     R extends boolean
 > = BasePropertySchema & {
     options: DropdownState<T>;
-    /** Render hint. 'cards' shows the options as selectable cards (icon + label + description). */
     display?: StaticDropdownDisplay;
 } & TPropertyValue<T, PropertyType.STATIC_DROPDOWN, R>;
 

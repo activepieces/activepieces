@@ -261,8 +261,6 @@ function removeAuthFromProps(
 }
 
 function isAdvancedProp(property: PieceProperty): boolean {
-  // Fields are essential by default; a prop only lands in Advanced when the
-  // piece author explicitly opts in with `advanced: true`.
   if ('advanced' in property && property.advanced !== undefined) {
     return property.advanced;
   }

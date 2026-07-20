@@ -11,9 +11,7 @@ export const DropdownOption = z.object({
 export type DropdownOption<T> = {
     label: string;
     value: T;
-    /** Secondary line shown under the label when the dropdown is rendered as cards. */
     description?: string;
-    /** Named icon (mapped to a Lucide icon on the frontend) shown when rendered as cards. */
     icon?: string;
 }
 

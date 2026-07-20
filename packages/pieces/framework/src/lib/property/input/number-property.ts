@@ -12,7 +12,6 @@ export const NumberProperty = z.object({
 })
 
 export type NumberProperty<R extends boolean> = BasePropertySchema & {
-  /** 'stepper' renders a −/value/+ control bounded by min/max. */
   display?: 'stepper';
   min?: number;
   max?: number;
