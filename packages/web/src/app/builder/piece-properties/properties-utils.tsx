@@ -14,6 +14,7 @@ import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { FormControl } from '@/components/ui/form';
 import { RequiredFieldAsterisk } from '@/components/ui/label';
@@ -260,19 +261,24 @@ export const selectGenericFormComponentForProperty = ({
       );
     case PropertyType.NUMBER:
       return property.display === 'stepper' ? (
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-1 text-sm leading-none font-medium">
-            {property.displayName}
-            {property.required && <RequiredFieldAsterisk />}
-          </span>
-          <NumberStepper
-            value={field.value}
-            onChange={field.onChange}
-            min={property.min}
-            max={property.max}
-            step={property.step}
-            disabled={disabled}
-          />
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1 text-sm leading-none font-medium">
+              {property.displayName}
+              {property.required && <RequiredFieldAsterisk />}
+            </span>
+            <NumberStepper
+              value={field.value}
+              onChange={field.onChange}
+              min={property.min}
+              max={property.max}
+              step={property.step}
+              disabled={disabled}
+            />
+          </div>
+          {property.description && (
+            <ReadMoreDescription text={property.description} />
+          )}
         </div>
       ) : (
         <AutoFormFieldWrapper
