@@ -250,7 +250,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
             if (typeof value !== 'string' && typeof value !== 'number') {
                 continue
             }
-            if (this.isTimestampColumn(key) && (typeof value !== 'string' || Number.isNaN(Date.parse(value)))) {
+            if (this.isTimestampColumn(key) && (typeof value !== 'string' || !isParseableTimestamp(value))) {
                 continue
             }
             cursors[key] = value
@@ -293,6 +293,10 @@ export default class Paginator<Entity extends ObjectLiteral> {
     }
 }
 
+function isParseableTimestamp(value: string): boolean {
+    return TIMESTAMP_TEXT_PATTERN.test(value) || !Number.isNaN(Date.parse(value))
+}
+
 function withIdTiebreaker(orderByConfig: OrderByConfig[]): OrderByConfig[] {
     if (orderByConfig.some((config) => config.field === 'id')) {
         return orderByConfig
@@ -305,6 +309,8 @@ function withIdTiebreaker(orderByConfig: OrderByConfig[]): OrderByConfig[] {
 }
 
 const CURSOR_SELECT_PREFIX = 'ap_cursor_'
+
+const TIMESTAMP_TEXT_PATTERN = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}(:?\d{2})?|Z)?$/
 
 const TIMESTAMP_COLUMN_TYPES = [
     'timestamp with time zone',
