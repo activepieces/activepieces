@@ -4,7 +4,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
@@ -149,7 +148,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             await chatApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertAiCreditsNotExhausted({ platformId, log })
+        await assertChatProviderUsable({ platformId, log })
 
         await jobQueue(runLog).add({
             id: apId(),
@@ -285,9 +284,9 @@ async function assertChatMessageRateLimitNotExceeded({ platformId, userId, log }
     }
 }
 
-async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
-    if (!chatProvider || chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
+async function assertChatProviderUsable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const chatProvider = await chatHelpers.resolveChatProvider({ platformId, log })
+    if (chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
         return
     }
     const usage = await platformAiCreditsService(log).getUsage(platformId)
