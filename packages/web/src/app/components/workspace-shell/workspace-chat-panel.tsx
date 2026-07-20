@@ -1,5 +1,3 @@
-import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -17,7 +15,6 @@ import {
   useLayoutEffect,
   useCallback,
   useRef,
-  useMemo,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
@@ -49,6 +46,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import {
+  chatConversationsCache,
+  useChatConversations,
+} from '@/features/chat/lib/chat-conversations';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { mathUtils } from '@/lib/math-utils';
@@ -284,9 +285,7 @@ export function WorkspaceChatPanel({
     (conversationId: string) => {
       setActiveConversationId(conversationId);
       setChatParam(conversationId);
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
+      chatConversationsCache.invalidate({ queryClient });
     },
     [setChatParam, queryClient],
   );
@@ -294,9 +293,7 @@ export function WorkspaceChatPanel({
   const handleTitleUpdate = useCallback(
     (title: string) => {
       setConversationTitle(title);
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
+      chatConversationsCache.invalidate({ queryClient });
     },
     [queryClient],
   );
@@ -319,9 +316,7 @@ export function WorkspaceChatPanel({
       if (selectedConversationId === convId) {
         setConversationTitle(renameValue.trim());
       }
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
-      });
+      chatConversationsCache.invalidate({ queryClient });
     } catch {
       toast.error(t('Failed to rename conversation'));
     } finally {
@@ -336,9 +331,7 @@ export function WorkspaceChatPanel({
     handleNewChat();
     chatApi.deleteConversation(convId).then(
       () => {
-        void queryClient.invalidateQueries({
-          queryKey: ['chat-conversations'],
-        });
+        chatConversationsCache.invalidate({ queryClient });
       },
       () => {
         toast.error(t('Failed to delete conversation'));
@@ -385,16 +378,15 @@ export function WorkspaceChatPanel({
     return () => window.removeEventListener(chatUtils.newChatEvent, handler);
   }, [handleNewChat]);
 
-  const cachedTitle = useMemo(() => {
-    if (conversationTitle) return conversationTitle;
-    if (!selectedConversationId) return null;
-    const cached = queryClient.getQueryData<SeekPage<ChatConversation>>([
-      'chat-conversations',
-    ]);
-    return (
-      cached?.data?.find((c) => c.id === selectedConversationId)?.title ?? null
-    );
-  }, [conversationTitle, selectedConversationId, queryClient]);
+  // Subscribe to the conversations query (shared with the sidebar) instead of a
+  // point-in-time cache read, so sidebar renames re-render this title.
+  const { data: conversationsPage } = useChatConversations();
+  const cachedTitle =
+    conversationTitle ??
+    (selectedConversationId
+      ? conversationsPage?.data.find((c) => c.id === selectedConversationId)
+          ?.title ?? null
+      : null);
   const isTitleLoading =
     !!selectedConversationId && !cachedTitle && !titleResolved;
   const displayTitle = cachedTitle

@@ -224,14 +224,17 @@ const BuilderPage = () => {
     localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(width));
   };
 
-  const { pieceModel, refetch: refetchPiece } =
-    piecesHooks.usePieceModelForStepSettings({
-      name: selectedStep?.settings.pieceName,
-      version: selectedStep?.settings.pieceVersion,
-      enabled:
-        selectedStep?.type === FlowActionType.PIECE ||
-        selectedStep?.type === FlowTriggerType.PIECE,
-    });
+  const {
+    pieceModel,
+    isNotFound: pieceModelNotFound,
+    refetch: refetchPiece,
+  } = piecesHooks.usePieceModelForStepSettings({
+    name: selectedStep?.settings.pieceName,
+    version: selectedStep?.settings.pieceVersion,
+    enabled:
+      selectedStep?.type === FlowActionType.PIECE ||
+      selectedStep?.type === FlowTriggerType.PIECE,
+  });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
   flowCanvasHooks.useListenToExistingRun();
 
@@ -380,6 +383,7 @@ const BuilderPage = () => {
     isStepEditorOpen && selectedStep ? (
       <StepSettingsProvider
         pieceModel={pieceModel}
+        pieceModelNotFound={pieceModelNotFound}
         selectedStep={selectedStep}
         key={constructContainerKey({
           flowVersionId: flowVersion.id,
