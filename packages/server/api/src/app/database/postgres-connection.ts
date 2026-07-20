@@ -400,6 +400,9 @@ import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/180
 import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
 import { AddProjectExecutionDataRetentionDays1810000000000 } from './migration/postgres/1810000000000-AddProjectExecutionDataRetentionDays'
 import { AddRetentionCleanupIndexes1811000000000 } from './migration/postgres/1811000000000-AddRetentionCleanupIndexes'
+import { AddChatConversationStreamingUpdatedIndex1810000000000 } from './migration/postgres/1810000000000-AddChatConversationStreamingUpdatedIndex'
+import { AddDeprecatedToPieceMetadata1811000000000 } from './migration/postgres/1811000000000-AddDeprecatedToPieceMetadata'
+import { AddNotifyFlowOwnerOnFailureToProject1811000000000 } from './migration/postgres/1811000000000-AddNotifyFlowOwnerOnFailureToProject'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -815,6 +818,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropPlatformPieceFilters1809000000000,
         AddProjectExecutionDataRetentionDays1810000000000,
         AddRetentionCleanupIndexes1811000000000,
+        AddChatConversationStreamingUpdatedIndex1810000000000,
+        AddNotifyFlowOwnerOnFailureToProject1811000000000,
+        AddDeprecatedToPieceMetadata1811000000000,
     ]
     return migrations
 }

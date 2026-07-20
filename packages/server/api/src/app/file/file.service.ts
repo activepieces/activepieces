@@ -1,3 +1,5 @@
+import { Readable } from 'node:stream'
+import { buffer as streamToBuffer } from 'node:stream/consumers'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isMultipartFile, isNil, ProjectId } from '@activepieces/core-utils'
 import { File, FileCompression, FileId, FileLocation, FileType, Project } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -22,7 +24,7 @@ const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXEC
 
 type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
 
-const saveFileToDb = async (baseFile: BaseFile, data: SaveParams['data']) => {
+const saveFileToDb = async (baseFile: BaseFile, data: Buffer | null) => {
     assertNotNullOrUndefined(data, 'data is required')
     return fileRepo().save({
         ...baseFile,
@@ -47,20 +49,24 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const location = getLocationForFile(params.type)
         switch (location) {
             case FileLocation.DB: {
+                if (params.data instanceof Readable) {
+                    const data = await streamToBuffer(params.data)
+                    return saveFileToDb({ ...baseFile, size: data.length }, data)
+                }
                 return saveFileToDb(baseFile, params.data)
             }
             case FileLocation.S3: {
+                const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                // A stream can be consumed once, so it has no S3-error DB fallback.
+                if (params.data instanceof Readable) {
+                    const size = await s3Helper(log).uploadStream(s3Key, params.data)
+                    return fileRepo().save({ ...baseFile, size, location: FileLocation.S3, s3Key })
+                }
                 try {
-                    const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
                     if (!isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
-                    const savedFile = await fileRepo().save({
-                        ...baseFile,
-                        location: FileLocation.S3,
-                        s3Key,
-                    })
-                    return savedFile
+                    return await fileRepo().save({ ...baseFile, location: FileLocation.S3, s3Key })
                 }
                 catch (error) {
                     exceptionHandler.handle(error, log)
@@ -375,8 +381,8 @@ function isExecutionDataFileThatExpires(type: FileType) {
 type SaveParams = {
     fileId?: FileId | undefined
     projectId?: ProjectId
-    data: Buffer | null
-    size: number
+    data: Buffer | Readable | null
+    size?: number
     type: FileType
     platformId?: string
     fileName?: string

@@ -3,7 +3,9 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { isStepFileUrl } from '@/lib/dom-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
 
@@ -102,7 +104,9 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
         {label}
       </span>
       <span className="text-sm text-foreground/70 flex-1 min-w-0 break-words whitespace-pre-wrap">
-        {isNil(value) || value === '' ? (
+        {isStepFileUrl(value) ? (
+          <StepFileDownloadButton fileUrl={value} />
+        ) : isNil(value) || value === '' ? (
           <span className="text-muted-foreground/40 italic">{t('empty')}</span>
         ) : Array.isArray(value) ? (
           t('itemCount', { count: value.length })
