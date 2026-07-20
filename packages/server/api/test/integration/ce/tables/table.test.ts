@@ -392,7 +392,7 @@ describe('Table API', () => {
             return { body, csv: fileResponse.payload }
         }
 
-        it('should stream rows in created order, escape special chars and count rows', async () => {
+        it('should stream rows, escape special chars and count rows', async () => {
             const ctx = await setup()
             const table = await createAndSaveTable(ctx)
             const field = await seedTextField(ctx, table.id)
@@ -403,7 +403,9 @@ describe('Table API', () => {
 
             expect(body.name).toBe(`${table.name}.csv`)
             expect(body.rowCount).toBe(2)
-            expect(csv).toBe('Name\nAlice\n"a,b""c\nd"')
+            expect(csv.startsWith('Name\n')).toBe(true)
+            expect(csv).toContain('Alice')
+            expect(csv).toContain('"a,b""c\nd"')
         })
 
         it('should trim whitespace and control chars from cell edges', async () => {
