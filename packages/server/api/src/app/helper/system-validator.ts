@@ -140,6 +140,7 @@ const systemPropValidators: {
     [AppSystemProp.SMTP_PORT]: numberValidator,
     [AppSystemProp.SMTP_SENDER_EMAIL]: (value: string) => value.includes('@') ? true : 'Value must be a valid email address',
     [AppSystemProp.SMTP_SENDER_NAME]: stringValidator,
+    [AppSystemProp.SMTP_TLS_REJECT_UNAUTHORIZED]: booleanValidator,
     [AppSystemProp.SMTP_USERNAME]: stringValidator,
     [AppSystemProp.TELEMETRY_ENABLED]: booleanValidator,
     [AppSystemProp.TOOL_SEARCH_ENABLED]: booleanValidator,

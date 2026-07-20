@@ -82,6 +82,8 @@ const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
     [ErrorCode.QUOTA_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
     [ErrorCode.PIECE_SYNC_NOT_SUPPORTED]: StatusCodes.BAD_REQUEST,
     [ErrorCode.FEATURE_DISABLED]: StatusCodes.PAYMENT_REQUIRED,
+    [ErrorCode.AI_CREDIT_LIMIT_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
+    [ErrorCode.CHAT_MESSAGE_LIMIT_EXCEEDED]: StatusCodes.TOO_MANY_REQUESTS,
     [ErrorCode.PERMISSION_DENIED]: StatusCodes.FORBIDDEN,
     [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
     [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,

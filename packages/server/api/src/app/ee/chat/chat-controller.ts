@@ -1,5 +1,6 @@
-import { apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetChatMessageFeedbackRequest, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -69,6 +70,17 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+    app.post('/conversations/:id/messages/:messageIndex/feedback', SetMessageFeedbackRoute, async (request, reply) => {
+        await chatService(request.log).setMessageFeedback({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+            messageIndex: request.params.messageIndex,
+            request: request.body,
+        })
+        return reply.status(StatusCodes.OK).send({ success: true })
+    })
+
     app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
         // Cloud rollout: record that this user opened the chat page, then refresh the console
         // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
@@ -94,6 +106,8 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             platformId,
             userId,
         })
+
+        await assertChatMessageRateLimitNotExceeded({ platformId, userId, log })
 
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
         await chatRolloutService.recordChatted({ userId, platformId })
@@ -217,6 +231,26 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
 }
 
+const CHAT_MESSAGES_PER_WINDOW = 40
+const CHAT_MESSAGE_RATE_WINDOW_SECONDS = 10 * 60
+
+// Per-user flood guard: nothing else bounds how fast a user fires messages, and each one enqueues a
+// worker job and spends credits. Complements the credit balance, which bounds spend, not rate.
+async function assertChatMessageRateLimitNotExceeded({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { allowed, count } = await chatHelpers.incrementAndCheckLimit({
+        key: `chat-message-rate:${platformId}:${userId}`,
+        limit: CHAT_MESSAGES_PER_WINDOW,
+        ttlSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS,
+    })
+    if (!allowed) {
+        log.warn({ user: { id: userId }, count }, '[chatController] Chat message rate limit exceeded')
+        throw new ActivepiecesError({
+            code: ErrorCode.CHAT_MESSAGE_LIMIT_EXCEEDED,
+            params: { limit: CHAT_MESSAGES_PER_WINDOW, windowSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS },
+        })
+    }
+}
+
 const CreateConversationRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
@@ -286,6 +320,18 @@ const GetMessagesRoute = {
         tags: ['chat'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
+    },
+}
+
+const SetMessageFeedbackRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: z.object({ id: z.string(), messageIndex: z.coerce.number().int().min(0) }),
+        body: SetChatMessageFeedbackRequest,
     },
 }
 

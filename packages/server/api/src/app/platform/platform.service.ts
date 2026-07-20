@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, FilteredPieceBehavior, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'
@@ -53,10 +53,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
-            filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
-            filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             federatedAuthProviders: { saml: null },
             cloudAuthEnabled: true,
             pinnedPieces: [],
@@ -157,8 +155,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
             ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
-            ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
-            ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),

@@ -72,7 +72,7 @@ const ListModels = {
 
 const CreateAIProvider = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: CreateAIProviderRequest,
@@ -81,7 +81,7 @@ const CreateAIProvider = {
 
 const UpdateAIProvider = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: z.object({
@@ -93,7 +93,7 @@ const UpdateAIProvider = {
 
 const DeleteAIProvider = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: z.object({

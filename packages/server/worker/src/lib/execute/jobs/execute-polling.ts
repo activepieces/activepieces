@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
+import { recordTriggerRun } from '../utils/trigger-run-recorder'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResult> = {
@@ -60,10 +61,13 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                 }
             }
 
+            await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: result.status })
+
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
+            await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
     },
