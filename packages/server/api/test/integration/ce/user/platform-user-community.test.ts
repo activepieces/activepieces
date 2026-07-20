@@ -1,9 +1,11 @@
 import { apId } from '@activepieces/core-utils'
-import { PlatformRole, PrincipalType, UserStatus } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
+    createMockProject,
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
@@ -228,6 +230,43 @@ describe('User API', () => {
             const response = await app?.inject({
                 method: 'DELETE',
                 url: `/api/v1/users/${mockEditor.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('Removes a user who owns a personal project on the first attempt', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockMember } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+            const personalProject = createMockProject({
+                ownerId: mockMember.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+            })
+            await databaseConnection().getRepository('project').save(personalProject)
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockMember.id}`,
                 headers: {
                     authorization: `Bearer ${mockOwnerToken}`,
                 },

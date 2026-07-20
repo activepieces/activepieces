@@ -85,7 +85,7 @@ async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContr
 }
 
 export class PieceNotFoundError extends Error {
-    constructor(pieceName: string, pieceVersion: string) {
+    constructor(readonly pieceName: string, readonly pieceVersion: string) {
         super(`Piece metadata not found for ${pieceName}@${pieceVersion}`)
         this.name = 'PieceNotFoundError'
     }
