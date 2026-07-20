@@ -2,6 +2,7 @@ import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 
 import { ghostAuth } from '../..';
 import { common } from '../common';
+import { memberEditedUtils } from './member-edited-utils';
 
 export const memberEdited = createTrigger({
   auth: ghostAuth,
@@ -34,6 +35,9 @@ export const memberEdited = createTrigger({
     }
   },
   async run(context) {
+    if (!memberEditedUtils.hasMemberFieldChanges(context.payload.body)) {
+      return [];
+    }
     return [context.payload.body];
   },
 
