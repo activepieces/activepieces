@@ -10,7 +10,7 @@ Folders provide a lightweight organizational layer for flows within a project. E
 - `packages/core/shared/src/lib/automation/flows/folders/folder.ts` — `Folder`, `FolderDto`, `FolderId`, `UncategorizedFolderId`
 - `packages/core/shared/src/lib/automation/flows/folders/folder-requests.ts` — `CreateFolderRequest`, `UpdateFolderRequest`, `DeleteFolderRequest`, `ListFolderRequest`
 - `packages/web/src/features/folders/components/rename-folder-dialog.tsx` — rename dialog
-- `packages/web/src/features/folders/api/` — frontend API client
+- `packages/web/src/features/folders/api/` — frontend API client; `list()` takes an optional `projectId` to read another project's folders (defaults to the session project) — used by Browse's cross-project scope
 - `packages/web/src/features/folders/hooks/` — TanStack Query hooks
 
 ## Edition Availability
