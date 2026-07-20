@@ -14,7 +14,6 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { Readable } from 'node:stream';
-import { setTimeout as sleep } from 'node:timers/promises';
 import axios from 'axios';
 import { parse } from 'csv-parse';
 import { findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
@@ -33,7 +32,6 @@ type StoredFanIn = FanInState & {
 };
 
 const MAX_IN_FLIGHT = 5;
-const MAX_DISPATCH_ATTEMPTS = 3;
 const POLL_INTERVAL_SECONDS = 30;
 
 export const streamCsvToSubflows = createAction({
@@ -115,7 +113,8 @@ export const streamCsvToSubflows = createAction({
     const maxWaitMinutes = context.propsValue.maxWaitMinutes ?? 60;
 
     const storeKey = `fanin:${context.run.id}:${context.step.name}`;
-    const rollupUrl = `${context.server.apiUrl.replace(/\/$/, '')}/v1/engine/flow-runs/count-by-parent`;
+    const apiBase = context.server.apiUrl.replace(/\/$/, '');
+    const rollupUrl = `${apiBase}/v1/engine/flow-runs/count-by-parent`;
 
     const fetchRollup = async (): Promise<FanInRollup> => {
       const response = await httpClient.sendRequest<FanInRollup>({
@@ -165,7 +164,10 @@ export const streamCsvToSubflows = createAction({
     };
 
     if (context.executionType === ExecutionType.RESUME) {
-      return check();
+      const resumeState = await context.store.get<StoredFanIn>(storeKey, StoreScope.FLOW);
+      if (resumeState !== null) {
+        return check();
+      }
     }
 
     if (!Number.isInteger(batchSize) || batchSize < 1) {
@@ -193,7 +195,7 @@ export const streamCsvToSubflows = createAction({
         })
       );
     }
-    const webhookUrl = `${context.server.apiUrl.replace(/\/$/, '')}/v1/webhooks/${flow.id}`;
+    const webhookUrl = `${apiBase}/v1/webhooks/${flow.id}`;
 
     // ponytail: v1 forbids mixing fire-and-forget and wait-for-all subflow steps in one run —
     // pre-existing in-flight children would be conflated into our count. Fix B (per-step child
@@ -236,30 +238,18 @@ export const streamCsvToSubflows = createAction({
       if (batchIndex === 0) {
         firstRow = rows[0];
       }
-      let lastError: unknown;
-      for (let attempt = 0; attempt < MAX_DISPATCH_ATTEMPTS; attempt++) {
-        try {
-          await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: webhookUrl,
-            headers: {
-              'Content-Type': 'application/json',
-              [PARENT_RUN_ID_HEADER]: context.run.id,
-              // Keep 'false': flipping it lets markParentRunAsFailed complete our pending
-              // DELAY waitpoint out from under the wait loop on the first child failure.
-              [FAIL_PARENT_ON_FAILURE_HEADER]: 'false',
-            },
-            body: { data: { batchIndex, headers, rows, extraData } },
-          });
-          return;
-        } catch (error) {
-          lastError = error;
-          if (attempt < MAX_DISPATCH_ATTEMPTS - 1) {
-            await sleep(Math.min(1000 * 2 ** attempt, 8000));
-          }
-        }
-      }
-      throw lastError;
+      await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: webhookUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          [PARENT_RUN_ID_HEADER]: context.run.id,
+          // Keep 'false': flipping it lets markParentRunAsFailed complete our pending
+          // DELAY waitpoint out from under the wait loop on the first child failure.
+          [FAIL_PARENT_ON_FAILURE_HEADER]: 'false',
+        },
+        body: { data: { batchIndex, headers, rows, extraData } },
+      });
     };
 
     try {
