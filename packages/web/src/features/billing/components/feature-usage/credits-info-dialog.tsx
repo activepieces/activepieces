@@ -31,7 +31,7 @@ export const CreditsInfoDialog = () => {
       <DialogContent
         showCloseButton
         aria-describedby={undefined}
-        className="max-w-[425px] gap-0 overflow-hidden p-0"
+        className="max-w-[625px] gap-0 overflow-hidden p-0"
       >
         <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-violet-50 px-6 py-12 dark:bg-violet-950/30">
           <DialogTitle className="relative flex items-center gap-2 text-2xl font-bold text-purple-900 dark:text-purple-200">
@@ -67,13 +67,17 @@ export const CreditsInfoDialog = () => {
   );
 };
 
-function CreditsCostTable({ includeAi }: { includeAi: boolean }) {
-  const items = buildCostItems(includeAi);
+function CreditsCostTable({
+  includeActivepiecesModels,
+}: {
+  includeActivepiecesModels: boolean;
+}) {
+  const items = buildCostItems(includeActivepiecesModels);
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-[10px] border">
       <div className="flex items-center gap-2 border-b px-3 py-2.5 text-sm font-medium text-muted-foreground">
         <span className="flex-1">{t('Action')}</span>
-        <span className="w-24 text-right">{t('Credits')}</span>
+        <span className="w-40 text-right">{t('Credits')}</span>
       </div>
       {items.map((item, index) => {
         const border = index < items.length - 1 ? 'border-b' : '';
@@ -106,7 +110,7 @@ function CreditsCostTable({ includeAi }: { includeAi: boolean }) {
                 </span>
               )}
             </div>
-            <span className="w-24 shrink-0 text-right">{item.credits}</span>
+            <span className="w-40 shrink-0 text-right">{item.credits}</span>
           </div>
         );
       })}
@@ -114,40 +118,66 @@ function CreditsCostTable({ includeAi }: { includeAi: boolean }) {
   );
 }
 
-function buildCostItems(includeAi: boolean): CostItem[] {
-  const referToAi = t('Refer to AI');
+function buildCostItems(includeActivepiecesModels: boolean): CostItem[] {
   const modelByActivepieces = t('Model by Activepieces');
   const execution: CostItem[] = [
     { kind: 'section', label: t('Execution') },
     { kind: 'row', action: t('Flow run'), credits: '1' },
-    { kind: 'row', action: t('All steps'), credits: '0' },
-    { kind: 'row', action: t('Tool call'), credits: '1' },
-    { kind: 'row', action: t('AI step'), credits: referToAi },
-    { kind: 'row', action: t('Agents'), credits: referToAi },
+    {
+      kind: 'row',
+      action: t('Standard step'),
+      sub: t('Any built-in or 3rd-party app step — Slack, GSheets, ..etc'),
+      credits: '0',
+    },
+    {
+      kind: 'row',
+      action: t('Tool use'),
+      sub: t(
+        'An action triggered by an Agent or Chat, not run directly in the flow',
+      ),
+      credits: '1',
+    },
+    {
+      kind: 'row',
+      action: t('AI step'),
+      sub: t('Activepieces AI — non 3rd-party ai i.e OpenAI'),
+      credits: t('see below'),
+    },
+    {
+      kind: 'row',
+      action: t('Agent/Chat'),
+      sub: t('sum of tools use + model cost per message'),
+      credits: t('see below'),
+    },
   ];
+  const activepiecesModels: CostItem[] = includeActivepiecesModels
+    ? [
+        { kind: 'row', action: t('Fast'), sub: modelByActivepieces, credits: '2' },
+        {
+          kind: 'row',
+          action: t('Smart'),
+          sub: modelByActivepieces,
+          credits: '10',
+        },
+        {
+          kind: 'row',
+          action: t('Premium'),
+          sub: modelByActivepieces,
+          credits: '20',
+        },
+      ]
+    : [];
   const ai: CostItem[] = [
-    { kind: 'section', label: t('AI') },
-    { kind: 'row', action: t('Fast'), sub: modelByActivepieces, credits: '2' },
-    {
-      kind: 'row',
-      action: t('Smart'),
-      sub: modelByActivepieces,
-      credits: '10',
-    },
-    {
-      kind: 'row',
-      action: t('Premium'),
-      sub: modelByActivepieces,
-      credits: '20',
-    },
+    { kind: 'section', label: t('AI Steps (per call)') },
+    ...activepiecesModels,
     {
       kind: 'row',
       action: t('BYOK'),
-      sub: t('Bring Your Own Key'),
+      sub: t('Bring Your Own Key — flat execution cost, no model markup'),
       credits: '1',
     },
   ];
-  return includeAi ? [...execution, ...ai] : execution;
+  return [...execution, ...ai];
 }
 
 function buildFaqs(isCloud: boolean): Faq[] {
@@ -167,7 +197,7 @@ function buildFaqs(isCloud: boolean): Faq[] {
               "Each action in Activepieces has a fixed credit cost. Here's a breakdown:",
             )}
           </span>
-          <CreditsCostTable includeAi={isCloud} />
+          <CreditsCostTable includeActivepiecesModels={isCloud} />
         </div>
       ),
     },

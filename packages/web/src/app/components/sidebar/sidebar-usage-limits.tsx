@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpCircle, Coins } from 'lucide-react';
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import {
   billingQueries,
   useManagePlanDialogStore,
 } from '@/features/billing';
+import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -67,12 +69,8 @@ const SidebarUsageLimits = React.memo(() => {
   );
   const autoRechargeEnabled =
     (creditsAutoTopUp?.enabled ?? false) && !isNil(creditsAutoTopUp);
-  // Trial customers have no card, so they can't auto-recharge — steer them to upgrade (subscribe) like a free
-  // user instead.
   const isTrial = !isNil(info?.trialEndsAt);
 
-  // Billing/usage applies to both Cloud and EE self-hosting (plan management is gated EE+Cloud); only
-  // Community has no billing.
   if (edition === ApEdition.COMMUNITY) {
     return null;
   }
@@ -108,7 +106,10 @@ const SidebarUsageLimits = React.memo(() => {
         0,
         dayjs(resetAt).startOf('day').diff(dayjs().startOf('day'), 'day'),
       );
-
+  const showUpgradeButton = canManage && (!isPaid || isTrial);
+  const showAutoRechargeButton =
+    canManage && isPaid && !isTrial && !isNil(creditsFeature);
+  const showBillingButton = !showUpgradeButton && !showAutoRechargeButton;
   return (
     <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
       <div className="flex items-center justify-between gap-2">
@@ -120,14 +121,23 @@ const SidebarUsageLimits = React.memo(() => {
           {t('{percent}% used', { percent: percentUsed })}
         </Badge>
       </div>
+      <div className="flex items-center gap-2">
+        {!isNil(resetDays) && (
+          <span className="text-xs text-muted-foreground">
+            {t('creditsResetRelative', { count: resetDays })}
+          </span>
+        )}
+        <span className="grow"></span>
+        {showBillingButton && (
+          <Link to="/platform/setup/billing">
+            <Button variant="outline" size="xs">
+              {t('Billing')}
+            </Button>
+          </Link>
+        )}
+      </div>
 
-      {!isNil(resetDays) && (
-        <span className="text-xs text-muted-foreground">
-          {t('creditsResetRelative', { count: resetDays })}
-        </span>
-      )}
-
-      {canManage && (!isPaid || isTrial) && (
+      {showUpgradeButton && (
         <Button
           variant="basic"
           size="sm"
@@ -139,7 +149,7 @@ const SidebarUsageLimits = React.memo(() => {
         </Button>
       )}
 
-      {canManage && isPaid && !isTrial && !isNil(creditsFeature) && (
+      {showAutoRechargeButton && (
         <>
           <Button
             variant="basic"
@@ -178,12 +188,12 @@ const SidebarUsageLimits = React.memo(() => {
 
 function creditsBadgeClass(percentUsed: number): string {
   if (percentUsed >= RED_THRESHOLD) {
-    return 'border-destructive-600 bg-destructive-50 text-destructive-700 dark:border-destructive-400 dark:bg-destructive-950 dark:text-destructive-300';
+    return flowRunUtils.getStatusContainerClassName('error');
   }
   if (percentUsed >= AMBER_THRESHOLD) {
-    return 'border-amber-600 bg-amber-50 text-amber-700 dark:border-amber-400 dark:bg-amber-950 dark:text-amber-300';
+    return flowRunUtils.getStatusContainerClassName('warning');
   }
-  return 'border-primary/20 bg-primary/10 text-primary';
+  return flowRunUtils.getStatusContainerClassName('default');
 }
 
 SidebarUsageLimits.displayName = 'UsageLimitsButton';

@@ -20,7 +20,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
         const isManagedProvider = provider === AIProviderName.ACTIVEPIECES
         const tier = chatHelpers.resolveTier({ tierId: conversation.modelName ?? null })
         const creditWeight = isManagedProvider ? tier.creditWeight : 1
-        const creditValue = (billableToolCalls + 1) * creditWeight
+        const creditValue = creditWeight + billableToolCalls
 
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
         const isAppSumoPlan = platformPlan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false
