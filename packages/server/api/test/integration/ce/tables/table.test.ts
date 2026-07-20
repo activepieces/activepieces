@@ -364,6 +364,83 @@ describe('Table API', () => {
         })
     })
 
+    describeWithAuth('GET /v1/tables/:id/export/csv (Export CSV)', () => app!, (setup) => {
+        const seedTextField = async (ctx: TestContext, tableId: string) => {
+            const field = createMockField({ tableId, projectId: ctx.project.id })
+            field.type = FieldType.TEXT
+            field.name = 'Name'
+            await db.save('field', field)
+            return field
+        }
+
+        const seedRecord = async (ctx: TestContext, tableId: string, fieldId: string, value: string, created: string) => {
+            const record = createMockRecord({ tableId, projectId: ctx.project.id })
+            record.created = created
+            await db.save('record', record)
+            const cell = createMockCell({ recordId: record.id, fieldId, projectId: ctx.project.id })
+            cell.value = value
+            await db.save('cell', cell)
+            return record
+        }
+
+        const downloadCsv = async (ctx: TestContext, tableId: string, query?: Record<string, string>) => {
+            const response = await ctx.get(`/v1/tables/${tableId}/export/csv`, query)
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            const fileUrl = new URL(body.url)
+            const fileResponse = await app!.inject({ method: 'GET', url: fileUrl.pathname + fileUrl.search })
+            return { body, csv: fileResponse.payload }
+        }
+
+        it('should stream rows in created order, escape special chars and count rows', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, 'Alice', '2024-01-01T00:00:00.000Z')
+            await seedRecord(ctx, table.id, field.id, 'a,b"c\nd', '2024-01-02T00:00:00.000Z')
+
+            const { body, csv } = await downloadCsv(ctx, table.id)
+
+            expect(body.name).toBe(`${table.name}.csv`)
+            expect(body.rowCount).toBe(2)
+            expect(csv).toBe('Name\nAlice\n"a,b""c\nd"')
+        })
+
+        it('should trim whitespace and control chars from cell edges', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, '  padded \t', '2024-01-01T00:00:00.000Z')
+
+            const { csv } = await downloadCsv(ctx, table.id)
+
+            expect(csv).toBe('Name\npadded')
+        })
+
+        it('should omit the header row when includeHeaders is false', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, 'Alice', '2024-01-01T00:00:00.000Z')
+
+            const { body, csv } = await downloadCsv(ctx, table.id, { includeHeaders: 'false' })
+
+            expect(body.rowCount).toBe(1)
+            expect(csv).toBe('Alice')
+        })
+
+        it('should export an empty table as header only', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            await seedTextField(ctx, table.id)
+
+            const { body, csv } = await downloadCsv(ctx, table.id)
+
+            expect(body.rowCount).toBe(0)
+            expect(csv).toBe('Name')
+        })
+    })
+
     describeWithAuth('POST /v1/tables/:id/clear (Clear)', () => app!, (setup) => {
         it('should clear all records', async () => {
             const ctx = await setup()

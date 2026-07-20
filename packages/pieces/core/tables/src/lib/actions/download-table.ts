@@ -1,15 +1,14 @@
 import {
-  createAction,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { tablesCommon, csvUtils } from '../common';
-import {
   AuthenticationType,
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { ExportTableResponse } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
+import { tablesCommon } from '../common';
 
 export const downloadTable = createAction({
   audience: 'human',
@@ -35,28 +34,29 @@ export const downloadTable = createAction({
       context
     );
 
-    const response = await httpClient.sendRequest<ExportTableResponse>({
+    const response = await httpClient.sendRequest<DownloadTableResponse>({
       method: HttpMethod.GET,
-      url: `${context.server.apiUrl}v1/tables/${tableId}/export`,
+      url: `${context.server.apiUrl}v1/tables/${tableId}/export/csv`,
+      queryParams: {
+        includeHeaders: String(includeHeaders ?? true),
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
-      retries: 5,
+      timeout: 120000,
     });
 
-    const { fields, rows, name } = response.body;
-    const csvContent = csvUtils.buildCsv({
-      fields,
-      rows,
-      includeHeaders: includeHeaders ?? true,
-    });
-
-    const file = await context.files.write({
-      fileName: `${name}.csv`,
-      data: Buffer.from(csvContent, 'utf-8'),
-    });
-
-    return { file, name: `${name}.csv` };
+    return {
+      file: response.body.url,
+      name: response.body.name,
+      rowCount: response.body.rowCount,
+    };
   },
 });
+
+type DownloadTableResponse = {
+  url: string;
+  name: string;
+  rowCount: number;
+};

@@ -1,20 +1,27 @@
+import { Readable } from 'node:stream'
 import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, PopulatedTable, SharedTemplate, Table, TableDataState, TableImportDataType, TableTemplate, TableWebhook, TableWebhookEventType, TemplateStatus, TemplateType, UncategorizedFolderId, UpdateTableRequest, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Field, FileCompression, FileType, PopulatedTable, SharedTemplate, Table, TableDataState, TableImportDataType, TableTemplate, TableWebhook, TableWebhookEventType, TemplateStatus, TemplateType, UncategorizedFolderId, UpdateTableRequest, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ILike, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectStateService } from '../../ee/projects/project-release/project-state/project-state.service'
+import { fileService } from '../../file/file.service'
+import { enforceByteLimit, filesService } from '../../file/files-service'
 import { getFolderIdFromRequest } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { fieldService } from '../field/field.service'
-import { RecordEntity } from '../record/record.entity'
+import { CellEntity } from '../record/cell.entity'
+import { RecordEntity, RecordSchema } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
 
 export const tableRepo = repoFactory(TableEntity)
 export const recordRepo = repoFactory(RecordEntity)
+const cellRepo = repoFactory(CellEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 const tablePieceName = '@activepieces/piece-tables'
 
@@ -223,6 +230,66 @@ export const tableService = {
         }
     },
 
+    async exportTableCsvToFile({
+        projectId,
+        platformId,
+        id,
+        includeHeaders,
+        log,
+    }: ExportTableCsvToFileParams): Promise<ExportTableCsvToFileResult> {
+        const table = await this.getOneOrThrow({ projectId, id })
+        const fields = await fieldService.getAll({ projectId, tableId: id })
+        const fieldIds = fields.map((field) => field.id)
+
+        let rowCount = 0
+        async function* generateRows(): AsyncGenerator<string> {
+            let isFirstLine = true
+            if (includeHeaders) {
+                yield fields.map((field) => escapeCsvCell(field.name)).join(',')
+                isFirstLine = false
+            }
+            let afterCursor: string | undefined
+            for (;;) {
+                const { records, nextCursor } = await fetchRecordPage({ tableId: id, projectId, afterCursor })
+                if (records.length === 0) {
+                    break
+                }
+                const cellsByRecord = await fetchCellsByRecord({
+                    projectId,
+                    fieldIds,
+                    recordIds: records.map((record) => record.id),
+                })
+                for (const record of records) {
+                    const line = buildCsvRow(fields, cellsByRecord.get(record.id))
+                    yield isFirstLine ? line : `\n${line}`
+                    isFirstLine = false
+                    rowCount++
+                }
+                if (isNil(nextCursor)) {
+                    break
+                }
+                afterCursor = nextCursor
+            }
+        }
+
+        const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+        const file = await fileService(log).save({
+            projectId,
+            platformId,
+            type: FileType.FLOW_STEP_FILE,
+            fileName: `${table.name}.csv`,
+            data: Readable.from(generateRows(), { objectMode: false }).pipe(enforceByteLimit(maxFileSizeInBytes)),
+            compression: FileCompression.NONE,
+            metadata: { mimetype: 'text/csv' },
+        })
+        const url = await filesService.constructReadUrl({
+            fileId: file.id,
+            fileType: FileType.FLOW_STEP_FILE,
+            platformId,
+        })
+        return { url, name: `${table.name}.csv`, rowCount }
+    },
+
     async createWebhook({
         projectId,
         id,
@@ -285,6 +352,59 @@ export const tableService = {
 
 }
 
+// ponytail: fixed page size; up to ~2000 records + their cells held per batch. Lower it if wide (100-field) tables pressure memory.
+const EXPORT_BATCH_SIZE = 2000
+
+const CELL_EDGE_CHARS = /^[\s\u0000-\u001F\u007F-\u009F]+|[\s\u0000-\u001F\u007F-\u009F]+$/g
+
+async function fetchRecordPage({ tableId, projectId, afterCursor }: FetchRecordPageParams): Promise<FetchRecordPageResult> {
+    const paginator = buildPaginator({
+        entity: RecordEntity,
+        alias: 'record',
+        query: {
+            limit: EXPORT_BATCH_SIZE,
+            orderBy: [
+                { field: 'created', order: Order.ASC },
+                { field: 'id', order: Order.ASC },
+            ],
+            afterCursor,
+        },
+    })
+    const queryBuilder = recordRepo().createQueryBuilder('record').where({ tableId, projectId })
+    const { data, cursor } = await paginator.paginate<RecordSchema>(queryBuilder)
+    return { records: data, nextCursor: cursor.afterCursor }
+}
+
+async function fetchCellsByRecord({ projectId, fieldIds, recordIds }: FetchCellsByRecordParams): Promise<Map<string, Map<string, string>>> {
+    const cells = await cellRepo().find({
+        where: { projectId, fieldId: In(fieldIds), recordId: In(recordIds) },
+    })
+    const cellsByRecord = new Map<string, Map<string, string>>()
+    for (const cell of cells) {
+        const row = cellsByRecord.get(cell.recordId) ?? new Map<string, string>()
+        row.set(cell.fieldId, cell.value?.toString() ?? '')
+        cellsByRecord.set(cell.recordId, row)
+    }
+    return cellsByRecord
+}
+
+function buildCsvRow(fields: Field[], valueByFieldId: Map<string, string> | undefined): string {
+    return fields
+        .map((field) => escapeCsvCell(trimCellEdges(valueByFieldId?.get(field.id) ?? '')))
+        .join(',')
+}
+
+function escapeCsvCell(value: string): string {
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`
+    }
+    return value
+}
+
+function trimCellEdges(value: string): string {
+    return value.replace(CELL_EDGE_CHARS, '')
+}
+
 type CreateParams = {
     projectId: string
     request: CreateTableRequest
@@ -319,6 +439,37 @@ type DeleteParams = {
 type ExportTableParams = {
     projectId: string
     id: string
+}
+
+type ExportTableCsvToFileParams = {
+    projectId: string
+    platformId: string
+    id: string
+    includeHeaders: boolean
+    log: FastifyBaseLogger
+}
+
+type ExportTableCsvToFileResult = {
+    url: string
+    name: string
+    rowCount: number
+}
+
+type FetchRecordPageParams = {
+    tableId: string
+    projectId: string
+    afterCursor: string | undefined
+}
+
+type FetchRecordPageResult = {
+    records: RecordSchema[]
+    nextCursor: string | null
+}
+
+type FetchCellsByRecordParams = {
+    projectId: string
+    fieldIds: string[]
+    recordIds: string[]
 }
 
 type CreateWebhookParams = {
