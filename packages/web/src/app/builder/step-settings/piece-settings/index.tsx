@@ -20,6 +20,7 @@ import { ActionErrorHandlingForm } from '../../piece-properties/action-error-han
 import { AdvancedSection } from '../../piece-properties/advanced-section';
 import { filterPropertyUtils } from '../../piece-properties/filter-property-utils';
 import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
+import { PieceNotAvailableAlert } from '../piece-not-available-alert';
 import { useStepSettingsContext } from '../step-settings-context';
 
 import { ConnectionSelect } from './connection-select';
@@ -27,6 +28,7 @@ import { ConnectionSelect } from './connection-select';
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const {
     pieceModel,
+    pieceModelNotFound,
     selectedStep,
     updateFormSchema,
     updatePropertySettingsSchema,
@@ -73,6 +75,15 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
   const showAuthForTrigger =
     !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
+
+  if (!pieceModel && pieceModelNotFound) {
+    return (
+      <PieceNotAvailableAlert
+        pieceName={props.step.settings.pieceName}
+        pieceVersion={props.step.settings.pieceVersion}
+      />
+    );
+  }
 
   const actionForcedEssentialNames = collectForcedEssentialNames(
     selectedAction?.propertyGroups,

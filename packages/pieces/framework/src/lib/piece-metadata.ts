@@ -24,6 +24,7 @@ export const PieceBase = z.object({
   categories: z.optional(z.array(z.enum(PieceCategory))),
   minimumSupportedRelease: z.optional(z.string()),
   maximumSupportedRelease: z.optional(z.string()),
+  deprecated: z.optional(z.boolean()),
   i18n: I18nForPiece,
 })
 
@@ -41,6 +42,7 @@ export type PieceBase = {
   categories?: PieceCategory[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
+  deprecated?: boolean;
   i18n?: Partial<Record<LocalesEnum, Record<string, string>>>
   // this method didn't exist in older version
   getContextInfo: (() => { version: ContextVersion }) | undefined;

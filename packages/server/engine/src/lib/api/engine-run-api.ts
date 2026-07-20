@@ -4,10 +4,13 @@ import fetchRetry from 'fetch-retry'
 const TERMINAL_RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
+    retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 
 const PROGRESS_RETRY_CONFIG = {
-    retries: 0,
+    retries: 3,
+    retryDelay: 3000,
+    retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 
 export const engineRunApi = {
@@ -57,5 +60,5 @@ type FlowResponseParams = BaseParams & { request: SendFlowResponseRequest }
 type PostParams = BaseParams & {
     path: string
     body: unknown
-    retry: { retries: number, retryDelay?: number }
+    retry: { retries: number, retryDelay?: number, retryOn?: number[] }
 }
