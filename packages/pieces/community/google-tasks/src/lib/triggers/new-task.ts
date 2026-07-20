@@ -59,13 +59,13 @@ export const newTaskTrigger = createTrigger({
     const store = context.store;
     const auth = context.auth;
     const propsValue = context.propsValue;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
     const store = context.store;
     const auth = context.auth;
     const propsValue = context.propsValue;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
   async run(context) {
     const store = context.store;

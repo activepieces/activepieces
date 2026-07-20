@@ -84,22 +84,14 @@ export const dealEntersStage = createTrigger({
     },
 
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onEnable(polling, context);
         // Initialize custom state for stage tracking
         await context.store.put<PreviousDealStagesMap>(PREVIOUS_DEAL_STAGES_STORE_KEY, {});
         console.log(`Initialized store for dealEntersStage`);
     },
 
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onDisable(polling, context);
         await context.store.delete(PREVIOUS_DEAL_STAGES_STORE_KEY);
         console.log(`Cleaned up store for dealEntersStage`);
     },

@@ -63,6 +63,7 @@ export const onEventChanged = createTrigger({
       propsValue: {
         calendarId: propsValue.calendarId,
       },
+      isRepublish: context.isRepublish,
     });
   },
 

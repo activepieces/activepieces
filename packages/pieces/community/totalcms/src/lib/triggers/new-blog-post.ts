@@ -50,6 +50,7 @@ export const newBlogPost = createTrigger({
       auth: context.auth as TotalCMSAuthType,
       store: context.store,
       propsValue: context.propsValue,
+      isRepublish: context.isRepublish,
     });
   },
   onDisable: async (context) => {

@@ -66,17 +66,18 @@ export const newMessage = createTrigger({
   },
   sampleData: {},
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
+     await pollingHelper.onEnable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: {
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
       },
+      isRepublish:context.isRepublish
     });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
+     await pollingHelper.onDisable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: {

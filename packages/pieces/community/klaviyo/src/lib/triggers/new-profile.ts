@@ -165,6 +165,7 @@ export const newProfileTrigger = createTrigger({
       store: context.store,
       auth: context.auth as KlaviyoAuthValue,
       propsValue: context.propsValue,
+      isRepublish: context.isRepublish,
     });
   },
   async onDisable(context) {

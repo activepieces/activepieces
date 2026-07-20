@@ -30,6 +30,7 @@ export const newChatTrigger = createTrigger({
 			auth: context.auth,
 			store: context.store,
 			propsValue: context.propsValue as Props,
+			isRepublish: context.isRepublish,
 		});
 	},
 	async onDisable(context) {

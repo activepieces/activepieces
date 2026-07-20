@@ -32,7 +32,7 @@ export const businessProcessCompleted = createTrigger({
 	sampleData: { id: 'bp-001', descriptor: 'Hire: John Smith', completedDate: '2026-04-01T14:30:00Z' },
 	type: TriggerStrategy.POLLING,
 	async test(ctx) { return await pollingHelper.test(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue, files: ctx.files }); },
-	async onEnable(ctx) { await pollingHelper.onEnable(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue }); },
-	async onDisable(ctx) { await pollingHelper.onDisable(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue }); },
+	async onEnable(ctx) { await pollingHelper.onEnable(polling, ctx); },
+	async onDisable(ctx) { await pollingHelper.onDisable(polling, ctx); },
 	async run(ctx) { return await pollingHelper.poll(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue, files: ctx.files }); },
 });

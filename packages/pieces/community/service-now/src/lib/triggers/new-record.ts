@@ -70,6 +70,7 @@ export const newRecordTrigger = createTrigger({
       auth: context.auth as any,
       store: context.store,
       propsValue: context.propsValue,
+      isRepublish: context.isRepublish,
     });
   },
   async onDisable(context) {

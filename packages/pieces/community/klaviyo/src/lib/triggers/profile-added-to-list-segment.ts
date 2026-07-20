@@ -258,6 +258,7 @@ export const profileAddedToListOrSegmentTrigger = createTrigger({
       store: context.store,
       auth: context.auth as KlaviyoAuthValue,
       propsValue: context.propsValue as StaticPropsValue<typeof props>,
+      isRepublish: context.isRepublish,
     });
   },
   async onDisable(context) {

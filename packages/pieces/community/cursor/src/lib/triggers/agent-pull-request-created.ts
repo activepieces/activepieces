@@ -115,12 +115,12 @@ export const agentPullRequestCreatedTrigger = createTrigger({
   async onEnable(context) {
     const { store, auth, propsValue } = context;
     await store.put('agents_with_prs', JSON.stringify([]));
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
     const { store, auth, propsValue } = context;
     await store.delete('agents_with_prs');
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
     const { store, auth, propsValue, files } = context;
