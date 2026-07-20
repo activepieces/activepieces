@@ -6,6 +6,7 @@ import { RightSideBarType } from '@/app/builder/types';
 import { flowRunUtils } from '@/features/flow-runs';
 
 import { BuilderState } from '../builder-hooks';
+import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 import { CanvasOrientation } from '../flow-canvas/utils/types';
 
 export type StepDataPanelView = 'drawer' | 'split';
@@ -58,14 +59,19 @@ export const createCanvasState = (
   initialState: CanvasStateInitialState,
   set: StoreApi<BuilderState>['setState'],
 ): CanvasState => {
-  // Opening a run jumps straight to the step that needs attention; opening a
-  // flow for editing selects nothing — the user opens step settings themselves.
   const failedStepNameInRun = initialState.run?.steps
     ? flowRunUtils.findLastStepWithStatus(
         initialState.run.status,
         initialState.run.steps,
       )
     : null;
+  const initiallySelectedStep = flowCanvasUtils.determineInitiallySelectedStep(
+    failedStepNameInRun,
+    initialState.flowVersion,
+  );
+  const isEmptyTriggerInitiallySelected =
+    initiallySelectedStep === 'trigger' &&
+    initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
   return {
     canvasOrientation: getCanvasOrientationFromLocalStorage(),
     setCanvasOrientation: (orientation: CanvasOrientation) => {
@@ -81,11 +87,12 @@ export const createCanvasState = (
     setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
     readonly: initialState.readonly,
     hideTestWidget: initialState.hideTestWidget ?? false,
-    selectedStep: failedStepNameInRun,
+    selectedStep: initiallySelectedStep,
     activeDraggingStep: null,
-    rightSidebar: failedStepNameInRun
-      ? RightSideBarType.PIECE_SETTINGS
-      : RightSideBarType.NONE,
+    rightSidebar:
+      initiallySelectedStep && !isEmptyTriggerInitiallySelected
+        ? RightSideBarType.PIECE_SETTINGS
+        : RightSideBarType.NONE,
     removeStepSelection: () =>
       set({
         selectedStep: null,
