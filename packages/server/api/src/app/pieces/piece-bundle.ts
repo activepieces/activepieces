@@ -2,6 +2,7 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, safeHttp } from '@activepieces/server-utils'
 import { FileType, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { IsNull } from 'typeorm'
 import { fileRepo } from '../file/file.service'
 import { s3Helper } from '../file/s3-helper'
 import { system } from '../helper/system/system'
@@ -9,7 +10,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { pieceMetadataService } from './metadata/piece-metadata-service'
+import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
 // Resolves a piece to a single downloadable link (see ADR 0002 — "Pieces are distributed as links").
 // Official/registry pieces resolve to a signed-S3 object when cached, else to the npm tarball (and a
@@ -29,7 +30,16 @@ export const pieceBundle = (log: FastifyBaseLogger) => ({
         }
         const metadata = await pieceMetadataService(log).get({ name, version, platformId, projectId })
         if (isNil(metadata)) {
-            return { type: 'not-found' }
+            const knownToPlatform = await pieceRepos().exists({
+                where: [
+                    { name, version, platformId },
+                    { name, version, platformId: IsNull() },
+                ],
+            })
+            if (knownToPlatform) {
+                return { type: 'not-found' }
+            }
+            return { type: 'redirect', url: npmTarballUrl({ name, version }) }
         }
         if (metadata.packageType === PackageType.ARCHIVE && !isNil(metadata.archiveId)) {
             return { type: 'stream', archiveId: metadata.archiveId }
