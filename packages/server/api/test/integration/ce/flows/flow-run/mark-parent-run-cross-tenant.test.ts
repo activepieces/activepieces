@@ -84,6 +84,6 @@ describe('markParentRunAsFailed tenant isolation', () => {
         })
 
         const waitpoint = await db.findOneBy<{ status: string }>('waitpoint', { id: waitpointId })
-        expect(waitpoint?.status).not.toBe('PENDING')
+        expect(waitpoint).toBeNull()
     })
 })
