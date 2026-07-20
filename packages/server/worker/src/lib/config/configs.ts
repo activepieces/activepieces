@@ -1,8 +1,9 @@
 import { environmentMigrations } from '@activepieces/server-utils'
 import { from } from 'env-var'
 
+const environmnetVariables = environmentMigrations.migrate()
 function env() {
-    return from(environmentMigrations.migrate())
+    return from(environmnetVariables)
 }
 
 function getApiUrl(): string {

@@ -143,6 +143,8 @@ export enum ContainerType {
     WORKER_AND_APP = 'WORKER_AND_APP',
 }
 
+const environmnetVariables = environmentMigrations.migrate()
+
 export const environmentVariables = {
     hasAppModules(): boolean {
         const environment = this.getEnvironment(AppSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
@@ -157,7 +159,6 @@ export const environmentVariables = {
         return value ? value === 'true' : undefined
     },
     getEnvironment: (prop: AppSystemProp): string | undefined => {
-        const environmnetVariables = environmentMigrations.migrate()
         return environmnetVariables['AP_' + prop]
     },
     getEnvironmentOrThrow: (prop: AppSystemProp): string => {
