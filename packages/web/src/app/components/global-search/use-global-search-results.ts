@@ -10,22 +10,9 @@ import { tablesApi } from '@/features/tables';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { STATIC_PAGES, type StaticPage } from './static-pages';
+import { type StageResource } from '../workspace-shell/stage-context';
 
-// Mirrors StageResource['type'] from the workspace shell (not merged yet);
-// the shell PR replaces this with the real import.
-type StageResourceType =
-  | 'flow'
-  | 'table'
-  | 'run'
-  | 'release'
-  | 'automations'
-  | 'runs'
-  | 'connections'
-  | 'variables'
-  | 'releases'
-  | 'settings'
-  | 'none';
+import { STATIC_PAGES, type StaticPage } from './static-pages';
 
 const SEARCH_LIMIT = 6;
 
@@ -226,7 +213,7 @@ export type SearchResultItem = {
   // project other than the active one (peek-then-switch-on-open).
   action?: 'drill' | 'open';
   projectId?: string;
-  stageType?: StageResourceType;
+  stageType?: StageResource['type'];
   folderId?: string;
   badge?: string;
   destinationKind?: DestinationKind;
