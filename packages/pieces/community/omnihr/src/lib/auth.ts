@@ -1,33 +1,8 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-async function getAccessToken(auth: {
-  username: string;
-  password: string;
-  origin: string;
-}): Promise<string> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Origin: auth.origin,
-  };
-
-  const tokenResponse = await httpClient.sendRequest<{
-    access: string;
-    refresh: string;
-    access_exp: string;
-    refresh_exp: string;
-  }>({
-    method: HttpMethod.POST,
-    url: 'https://api.omnihr.co/api/v1/auth/token/',
-    headers,
-    body: {
-      username: auth.username,
-      password: auth.password,
-    },
-  });
-
-  return tokenResponse.body.access;
-}
+const ACCESS_TOKEN_EXPIRY_BUFFER_SECONDS = 5 * 60;
+const OMNIHR_TOKEN_URL = 'https://api.omnihr.co/api/v1/auth/token/';
 
 export const omnihrAuth = PieceAuth.CustomAuth({
   description: 'Enter your OmniHR credentials to authenticate:',
@@ -51,7 +26,18 @@ export const omnihrAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      await getAccessToken(auth);
+      await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: OMNIHR_TOKEN_URL,
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: auth.origin,
+        },
+        body: {
+          username: auth.username,
+          password: auth.password,
+        },
+      });
       return {
         valid: true,
       };
@@ -66,12 +52,31 @@ export const omnihrAuth = PieceAuth.CustomAuth({
   },
   refresh: {
     generate: async ({ auth }) => {
-      const accessToken = await getAccessToken(auth);
-      return { access_token: accessToken };
+      const tokenResponse = await httpClient.sendRequest<{
+        access: string;
+        refresh: string;
+        access_exp: string;
+        refresh_exp: string;
+      }>({
+        method: HttpMethod.POST,
+        url: OMNIHR_TOKEN_URL,
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: auth.origin,
+        },
+        body: {
+          username: auth.username,
+          password: auth.password,
+        },
+      });
+
+      const expiresIn =
+        Number(tokenResponse.body.access_exp) -
+        Math.floor(Date.now() / 1000) -
+        ACCESS_TOKEN_EXPIRY_BUFFER_SECONDS;
+
+      return { access_token: tokenResponse.body.access, expires_in: expiresIn };
     },
-    // ponytail: expires_in not derived from the token response's access_exp/refresh_exp
-    // yet, falls back to the framework's default (55min). Compute it from access_exp
-    // if that window proves too aggressive or too lax.
   },
 });
 
