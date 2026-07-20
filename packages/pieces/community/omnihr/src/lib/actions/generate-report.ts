@@ -23,7 +23,7 @@ export const generateReport = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Generates the data for an existing OmniHR custom report template and returns the rows as an array of objects. The fields present on each row depend on the columns configured in the selected template. For Snapshot report templates, an optional as-of date (DD/MM/YYYY, must not be in the future) can be provided to generate the report using data as of that date; if omitted, the latest data is used. Read-only and idempotent.',
+      'Generates the data for an existing OmniHR custom report template and returns the rows as an array of objects. The fields present on each row depend on the columns configured in the selected template. For Snapshot report templates, an optional as-of date (DD/MM/YYYY, must not be in the future) can be provided to generate the report using data as of that date; if omitted, the latest data is used. Optionally, row keys can be mapped from field IDs to their human-readable names as defined in the report template; any field that cannot be mapped keeps its ID, and if two fields share the same name only one will appear in the output. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
@@ -54,7 +54,7 @@ export const generateReport = createAction({
           headers,
         });
 
-        const templates: Array<{ id: number; name: string }> = response.body;
+        const templates: ReportTemplate[] = response.body;
 
         return {
           disabled: false,
@@ -87,7 +87,7 @@ export const generateReport = createAction({
           headers,
         });
 
-        const template: { report_type: number } = response.body;
+        const template: ReportTemplate = response.body;
 
         if (template.report_type !== REPORT_TYPE_SNAPSHOT) {
           return {};
@@ -103,9 +103,17 @@ export const generateReport = createAction({
         };
       },
     }),
+    mapFieldNames: Property.Checkbox({
+      displayName: 'Map Field Names',
+      description:
+        'If enabled, row keys are mapped from field IDs to their human-readable names as defined in the report template. Any field that cannot be mapped keeps its ID. Caveat: if two fields share the same name, only one will appear in the output as the other is overwritten.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
-    const { reportTemplateId, snapshotOptions } = context.propsValue;
+    const { reportTemplateId, snapshotOptions, mapFieldNames } =
+      context.propsValue;
     const asOfDate: string | undefined = snapshotOptions?.['asOfDate'];
 
     const headers = {
@@ -157,13 +165,49 @@ export const generateReport = createAction({
       queryParams['as_of_date'] = asOfDate;
     }
 
-    const response = await httpClient.sendRequest({
+    const reportResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://api.omnihr.co/api/v1/reports/custom/templates/${reportTemplateId}/generate-json`,
       headers,
       queryParams,
     });
 
-    return response.body;
+    const reportData: Array<Record<string, unknown>> = reportResponse.body;
+
+    if (!mapFieldNames) {
+      return reportData;
+    }
+
+    const templateResponse = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `https://api.omnihr.co/api/v1/reports/custom/templates/${reportTemplateId}/`,
+      headers,
+    });
+
+    const reportTemplate: ReportTemplate = templateResponse.body;
+
+    const fieldMapping = Object.fromEntries(
+      reportTemplate.selected_fields
+        .flatMap((selectedField) => selectedField.fields)
+        .map((field) => [field.id, field.name])
+    );
+
+    return reportData.map((reportDataRow) =>
+      Object.fromEntries(
+        Object.entries(reportDataRow).map(([k, v]) => [
+          fieldMapping[k] ?? k,
+          v,
+        ])
+      )
+    );
   },
 });
+
+type ReportTemplate = {
+  id: number;
+  name: string;
+  report_type: number;
+  selected_fields: Array<{
+    fields: Array<{ id: string; name: string }>;
+  }>;
+};
