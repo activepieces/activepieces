@@ -109,6 +109,10 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - Each emitter takes `{ flowRun, platformId }` and passes `platformId` straight to `applicationEvents.sendWorkerEvent` — the caller already holds it, so the synchronous webhook dispatch path (`handleSync → start → onStart`) stays free of any `getPlatformId` DB lookup. The async runs-metadata worker that fires `onFinish` resolves `platformId` itself, off the hot path.
 - On run start, project telemetry (`telemetry().trackProject(...)`) is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block the run
 
+### RUN_TELEMETRY Background Job
+
+`flow-run-module.ts` registers the `RUN_TELEMETRY` BullMQ system job (cron `50 23 * * *`, fires once daily at 23:50 UTC). It aggregates the current day's flow-run counts grouped by (projectId, flowId, environment) in a single transaction (5-minute statement timeout) and fires a `FLOW_RUN_CREATED` telemetry event per group. No-op when telemetry is disabled. The cron was `0/50 23 * * *` until GIT-1632, which double-fired at 23:00 with partial counts.
+
 ### AI Usage Billing
 
 On every terminal run, `flow-run-hooks.ts#onFinish` calls `aiUsageTracker(log).track({ flowRun, flowVersion })` wrapped in `tryCatch`, so any failure only logs a warning and can never break run completion. The tracker short-circuits in cost order:
