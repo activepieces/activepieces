@@ -38,7 +38,6 @@ function AdvancedSection({
   const { errors } = useFormState({ name: watchPaths });
 
   useEffect(() => {
-    if (autoOpenedRef.current) return;
     const errorPaths = getNestedErrorPaths(
       errors as Record<string, unknown>,
       '',
@@ -46,10 +45,15 @@ function AdvancedSection({
     const hasNestedError = watchPaths.some((watchPath) =>
       errorPaths.some((errorPath) => errorPath.startsWith(watchPath)),
     );
-    if (hasNestedError) {
-      autoOpenedRef.current = true;
-      setOpen(true);
+    // Re-arm auto-open once the advanced errors clear, so a later error opens
+    // the section again — but never fight a manual close while an error persists.
+    if (!hasNestedError) {
+      autoOpenedRef.current = false;
+      return;
     }
+    if (autoOpenedRef.current) return;
+    autoOpenedRef.current = true;
+    setOpen(true);
   }, [errors, watchPaths]);
 
   if (count === 0) {
