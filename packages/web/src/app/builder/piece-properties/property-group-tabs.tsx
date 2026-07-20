@@ -71,9 +71,12 @@ function PropertyGroupTabs({
 
   const allowDynamicValues = propertySettings !== null;
 
+  const isDynamicKey = (key: string): boolean =>
+    propertySettings?.[key]?.type === PropertyExecutionType.DYNAMIC;
+
   const toggleDynamic = (key: string) => {
     const inputName = inputNameFor(key);
-    const nextDynamic = !isDynamicValue(form.getValues(inputName));
+    const nextDynamic = !isDynamicKey(key);
     form.setValue(
       `settings.propertySettings.${key}`,
       {
@@ -99,7 +102,7 @@ function PropertyGroupTabs({
   }
 
   const anyRequired = tabKeys.some((key) => properties[key].required);
-  const activeDynamic = isDynamicValue(valueByKey[safeActiveKey]);
+  const activeDynamic = isDynamicKey(safeActiveKey);
   const activeFieldState = form.getFieldState(
     inputNameFor(safeActiveKey),
     form.formState,
@@ -170,7 +173,7 @@ function PropertyGroupTabs({
                 form.formState,
               );
               const hasError = !!fieldState.error && fieldState.isTouched;
-              const dynamic = isDynamicValue(valueByKey[key]);
+              const dynamic = isDynamicKey(key);
               const count = countItems(valueByKey[key]);
               const active = key === safeActiveKey;
               return (
@@ -223,7 +226,7 @@ function PropertyGroupTabs({
 
           {tabKeys.map((key) => {
             const inputName = inputNameFor(key);
-            const dynamic = isDynamicValue(valueByKey[key]);
+            const dynamic = isDynamicKey(key);
             return (
               <TabsContent
                 key={key}
@@ -271,10 +274,6 @@ function PropertyGroupTabs({
 }
 
 PropertyGroupTabs.displayName = 'PropertyGroupTabs';
-
-function isDynamicValue(value: unknown): boolean {
-  return typeof value === 'string';
-}
 
 function countItems(value: unknown): number {
   return Array.isArray(value)
