@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, LocalesEnum, PlatformId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
+import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceAudienceFilter, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
@@ -12,7 +12,7 @@ import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
+import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
@@ -29,14 +29,17 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 log,
             }))
             const policy = await resolveVisibility({ platformId: params.platformId, projectId: params.projectId, log })
-            const sortedPieces = await pieceListUtils(log).filterPieces({
+            const audience = params.audience ?? PieceAudienceFilter.HUMAN
+            const audiencePieces = translatedPieces.map((piece) => ({ ...piece, actions: filterActionsByAudience(piece.actions, audience) }))
+            const sortedPieces = await pieceListUtils(log).sortAndSearchPieces({
                 ...params,
-                pieces: translatedPieces,
+                pieces: audiencePieces,
                 suggestionType: params.suggestionType,
             })
-            const filteredPieces = params.includeHidden || isNil(policy) ? sortedPieces : policy.filterPieces(sortedPieces)
+            const visiblePieces = params.includeHidden ? sortedPieces : sortedPieces.filter((piece) => !piece.deprecated)
+            const filteredPieces = params.includeHidden || isNil(policy) ? visiblePieces : policy.filterPieces(visiblePieces)
 
-            const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
+            const summaries = toPieceMetadataModelSummary(filteredPieces, audiencePieces, params.suggestionType)
             return params.includeHidden || isNil(policy) ? summaries : policy.filterComponents(summaries)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
@@ -501,7 +504,6 @@ function filterRegistry(registry: PieceRegistryEntry[], params: { release: strin
 }
 
 
-// Types
 
 type ListParams = {
     projectId?: string
@@ -513,6 +515,7 @@ type ListParams = {
     searchQuery?: string
     suggestionType?: SuggestionType
     locale?: LocalesEnum
+    audience?: PieceAudienceFilter
 }
 
 type GetOrThrowParams = {

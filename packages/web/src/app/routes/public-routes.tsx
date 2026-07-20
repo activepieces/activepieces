@@ -4,8 +4,8 @@ import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
+import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { ProjectDashboardLayout } from '../components/project-layout';
-import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
 
 import NotFoundPage from './404-page';
 import AuthenticatePage from './authenticate';
@@ -15,6 +15,7 @@ import { EmbeddedMcpAuthorizeDialog } from './embed/embedded-mcp-authorize-dialo
 import { EmbeddedMcpSettingsDialog } from './embed/embedded-mcp-settings-dialog';
 import { McpAuthorizePage } from './mcp-authorize';
 import { RedirectPage } from './redirect';
+import { SharedTemplateGate } from './templates/shared-template-gate';
 
 const ChatPage = lazyWithRetry(
   () => import('./chat').then((m) => ({ default: m.ChatPage })),
@@ -56,19 +57,39 @@ export const publicRoutes = [
   },
   {
     path: '/templates',
+    // The guard is behavior-preserving here (the layout already redirects
+    // logged-out users); it exists so this route's element chain matches the
+    // other dashboard routes and the layout (with its docked chat) survives
+    // navigating to /templates.
     element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Templates">
-          <SuspenseWrapper>
-            <TemplatesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <ProjectDashboardLayout>
+          <PageTitle title="Templates">
+            <SuspenseWrapper>
+              <TemplatesPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </ProjectDashboardLayout>
+      </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
   {
     path: '/templates/:templateId',
-    element: <TemplateDetailsWrapper />,
+    // Type-identical chain to /templates so the gallery (and layout/docked
+    // chat) survives opening/closing the details dialog, which TemplatesPage
+    // renders off the :templateId param. Logged-out visitors fall back to the
+    // public shared-template experience instead of the sign-in redirect.
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard publicFallback={<SharedTemplateGate />}>
+        <ProjectDashboardLayout>
+          <PageTitle title="Templates">
+            <SuspenseWrapper>
+              <TemplatesPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </ProjectDashboardLayout>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
   },
   {
     path: '/forms/:flowId',

@@ -55,6 +55,31 @@ const ORIENTATION_LAYOUT: Record<CanvasOrientation, OrientationLayout> = {
   },
 };
 
+// Density tightens the cross-axis branch gap so more branches fit a narrow Stage
+// (only the vertical canvas narrows). The mini floor stays near 2*ARC + handle
+// clearance so curved edges don't kink.
+const VERTICAL_BRANCH_GAP_BY_DENSITY: Record<CanvasDensity, number> = {
+  comfortable: FLOW_CANVAS_HSPACE,
+  narrow: 56,
+  mini: 44,
+};
+
+const getOrientationLayout = (
+  orientation: CanvasOrientation,
+  density: CanvasDensity = 'comfortable',
+): OrientationLayout => {
+  const base = ORIENTATION_LAYOUT[orientation];
+  if (orientation !== 'vertical' || density === 'comfortable') {
+    return base;
+  }
+  const gap = VERTICAL_BRANCH_GAP_BY_DENSITY[density];
+  return {
+    ...base,
+    crossGapBetweenBranches: gap,
+    routerBranchGap: gap,
+  };
+};
+
 const NODE_SELECTION_RECT_CLASS_NAME = 'react-flow__nodesselection-rect';
 
 const doesNodeAffectBoundingBoxWidth: (
@@ -73,7 +98,10 @@ export const flowCanvasLayoutConsts = {
   STEP_NODE_SIZE,
   NODE_SELECTION_RECT_CLASS_NAME,
   doesNodeAffectBoundingBox: doesNodeAffectBoundingBoxWidth,
+  getOrientationLayout,
 };
+
+export type CanvasDensity = 'comfortable' | 'narrow' | 'mini';
 
 type OrientationLayout = {
   stepAlongSize: number;

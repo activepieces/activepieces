@@ -10,12 +10,14 @@ const StepNodeDisplayName = ({
   isSkipped,
   pieceDisplayName,
   stepName,
+  hideIndex = false,
 }: {
   stepDisplayName: string;
   stepIndex: number;
   isSkipped: boolean;
   pieceDisplayName: string;
   stepName: string;
+  hideIndex?: boolean;
 }) => {
   const canvasOrientation = useBuilderStateContext(
     (state) => state.canvasOrientation,
@@ -41,7 +43,7 @@ const StepNodeDisplayName = ({
               'text-center': isHorizontal,
             })}
           >
-            {stepIndex}. {stepDisplayName}
+            {hideIndex ? stepDisplayName : `${stepIndex}. ${stepDisplayName}`}
           </div>
         </TextWithTooltip>
       </div>

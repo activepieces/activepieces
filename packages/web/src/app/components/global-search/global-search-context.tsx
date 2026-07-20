@@ -1,37 +1,17 @@
 import { t } from 'i18next';
-import { CornerDownLeft, X } from 'lucide-react';
-import React, {
+import {
   createContext,
-  useCallback,
+  type ReactNode,
   useContext,
   useEffect,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDebounce } from 'use-debounce';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
-import {
-  CommandDialog,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command';
-import { projectCollectionUtils } from '@/features/projects';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
-import { recordAccess, type AccessedItemType } from './access-history';
-import { SearchResultRow } from './search-result-item';
-import {
-  type SearchResultItem,
-  useGlobalSearchResults,
-} from './use-global-search-results';
-
-type GlobalSearchContextType = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-};
+import { StyleSpotlight } from './style-spotlight';
+import { useBrowseController } from './use-browse-controller';
 
 const GlobalSearchContext = createContext<GlobalSearchContextType | null>(null);
 
@@ -43,188 +23,55 @@ export function useGlobalSearch() {
   return ctx;
 }
 
-function SkeletonRows() {
+function BrowsePanel({ onClose }: { onClose: () => void }) {
+  const controller = useBrowseController({ onClose });
+
   return (
-    <>
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-2 px-2 py-2">
-          <div className="size-4 shrink-0 animate-pulse rounded bg-muted" />
-          <div className="h-3.5 flex-1 animate-pulse rounded bg-muted" />
-          <div className="h-3.5 w-24 animate-pulse rounded bg-muted" />
-        </div>
-      ))}
-    </>
+    <div className="flex h-full w-full flex-col">
+      <div className="min-h-0 flex-1">
+        <StyleSpotlight controller={controller} />
+      </div>
+    </div>
   );
 }
 
-function GlobalSearchDialogContent({
+// The Browse popup: a centered spotlight dialog over a blurred backdrop,
+// opened from the sidebar search button or Ctrl/Cmd+K.
+function BrowseDialog({
   open,
-  onOpenChange,
+  setOpen,
 }: {
   open: boolean;
-  onOpenChange: (v: boolean) => void;
+  setOpen: (open: boolean) => void;
 }) {
-  const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [commandValue, setCommandValue] = useState('');
-  const [debouncedSearch] = useDebounce(search, 250);
-
-  const { groups, isLoading } = useGlobalSearchResults(debouncedSearch, open);
-
-  const handleOpenChange = useCallback(
-    (value: boolean) => {
-      onOpenChange(value);
-      if (!value) setSearch('');
-    },
-    [onOpenChange],
-  );
-
-  const navigateToItem = useCallback(
-    (type: string, href: string) => {
-      if (type === 'project') {
-        const projectId = href.split('/projects/')[1]?.split('/')[0];
-        if (projectId) projectCollectionUtils.setCurrentProject(projectId);
-      }
-      navigate(href);
-      handleOpenChange(false);
-    },
-    [navigate, handleOpenChange],
-  );
-
-  const handleSelectResult = useCallback(
-    (item: SearchResultItem) => {
-      if (item.type !== 'folder') {
-        recordAccess({
-          id: item.id,
-          type: item.type as AccessedItemType,
-          label: item.label,
-          href: item.href,
-          status: item.status,
-          folderName: item.folderName,
-          projectName: item.projectName,
-          iconBgColor: item.iconBgColor,
-          iconTextColor: item.iconTextColor,
-          iconLetter: item.iconLetter,
-        });
-      }
-      navigateToItem(item.type, item.href);
-    },
-    [navigateToItem],
-  );
-
-  const hasQuery = debouncedSearch.length > 0;
-  const noResults = hasQuery && !isLoading && groups.length === 0;
-
-  const firstItemId =
-    groups.find((g) => !g.isLoading && g.items.length > 0)?.items[0]?.id ?? '';
-
-  useEffect(() => {
-    setCommandValue(firstItemId);
-  }, [firstItemId]);
-
   return (
-    <CommandDialog
-      open={open}
-      onOpenChange={handleOpenChange}
-      showCloseButton={false}
-      shouldFilter={false}
-      commandValue={commandValue}
-      onCommandValueChange={setCommandValue}
-      className="sm:max-w-[620px] h-[70vh] flex flex-col"
-    >
-      <div className="relative">
-        <CommandInput
-          placeholder={t('Search pages, flows, tables...')}
-          value={search}
-          onValueChange={setSearch}
-          containerClassName="border-b-0"
-        />
-        {search && (
-          <button
-            type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setSearch('')}
-          >
-            <X className="size-3.5" />
-          </button>
-        )}
-      </div>
-
-      <CommandList className="flex-1 min-h-0 max-h-none overflow-y-auto! scrollbar-hover">
-        {noResults && (
-          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t('No results found.')}
-            </p>
-            <button
-              type="button"
-              className="text-xs text-primary underline hover:no-underline"
-              onClick={() => setSearch('')}
-            >
-              {t('Clear search')}
-            </button>
-          </div>
-        )}
-
-        {groups.map((group, idx) => (
-          <React.Fragment key={group.type}>
-            {idx > 0 && hasQuery && <CommandSeparator />}
-            <CommandGroup heading={group.heading || undefined}>
-              {group.isLoading ? (
-                <SkeletonRows />
-              ) : (
-                group.items.map((item) => (
-                  <CommandItem
-                    key={item.id}
-                    value={item.id}
-                    onSelect={() => handleSelectResult(item)}
-                    className="group flex items-center data-[selected=true]:bg-foreground/10"
-                  >
-                    <SearchResultRow
-                      item={item}
-                      query={hasQuery ? debouncedSearch : undefined}
-                    />
-                    <CornerDownLeft className="ml-auto size-2 shrink-0 text-muted-foreground/70 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
-                  </CommandItem>
-                ))
-              )}
-            </CommandGroup>
-          </React.Fragment>
-        ))}
-      </CommandList>
-
-      <div className="flex items-center gap-4 border-t bg-muted/50 px-4 py-2.5 text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
-            ↑
-          </kbd>
-          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
-            ↓
-          </kbd>
-          {t('to navigate')}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
-            ↵
-          </kbd>
-          {t('to select')}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1.5 font-mono text-[10px]">
-            esc
-          </kbd>
-          {t('to close')}
-        </span>
-      </div>
-    </CommandDialog>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent
+        showCloseButton={false}
+        overlayClassName="bg-background/50 backdrop-blur-sm"
+        className="top-[18%] flex h-[min(480px,70vh)] w-[min(560px,calc(100vw-2rem))] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-2xl border-foreground/[0.08] bg-popover/85 p-0 shadow-2xl backdrop-blur-2xl data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2"
+        onInteractOutside={(e) => {
+          // Keep the dialog open when interacting with nested overlays it
+          // spawns (create/rename/move/delete dialogs, dropdown menus, toasts).
+          const node = e.detail.originalEvent.target;
+          if (
+            node instanceof Element &&
+            node.closest(
+              '[data-radix-popper-content-wrapper],[role="dialog"],[role="alertdialog"],[data-sonner-toaster]',
+            )
+          ) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <DialogTitle className="sr-only">{t('Search')}</DialogTitle>
+        <BrowsePanel onClose={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
   );
 }
 
-export function GlobalSearchProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function GlobalSearchProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { hideGlobalSearch } = embedState;
@@ -246,9 +93,12 @@ export function GlobalSearchProvider({
   return (
     <GlobalSearchContext.Provider value={{ open, setOpen }}>
       {children}
-      {!hideGlobalSearch && (
-        <GlobalSearchDialogContent open={open} onOpenChange={setOpen} />
-      )}
+      {!hideGlobalSearch && <BrowseDialog open={open} setOpen={setOpen} />}
     </GlobalSearchContext.Provider>
   );
 }
+
+type GlobalSearchContextType = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+};
