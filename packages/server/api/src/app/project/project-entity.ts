@@ -75,6 +75,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             nullable: false,
             default: false,
         },
+        notifyFlowOwnerOnFailure: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
         metadata: {
             type: 'jsonb',
             nullable: true,
