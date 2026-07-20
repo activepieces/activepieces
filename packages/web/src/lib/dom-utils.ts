@@ -1,10 +1,23 @@
 import JSZip from 'jszip';
 
 export const isStepFileUrl = (json: unknown): json is string => {
+  if (!json || typeof json !== 'string') {
+    return false;
+  }
+  // `/api/v1/step-files/` is an Activepieces-unique path, so the bare match is
+  // safe. `/api/v1/files/` (the unified storage route, GIT-1618) is a generic
+  // REST shape a third-party output URL can also share — Pipedrive's own API is
+  // literally `<domain>/api/v1/files/...`. So additionally require the signed
+  // `token=` query param every real file read URL carries. Match it as a discrete
+  // query param (`?token=` / `&token=`), NOT a bare `token=` substring, so a
+  // differently-named param (Pipedrive `?api_token=`, OAuth `?access_token=`)
+  // is not mistaken for a downloadable file.
+  const hasSignedTokenParam =
+    json.includes('?token=') || json.includes('&token=');
   return (
-    Boolean(json) &&
-    typeof json === 'string' &&
-    (json.includes('/api/v1/step-files/') || json.includes('file://'))
+    json.includes('/api/v1/step-files/') ||
+    (json.includes('/api/v1/files/') && hasSignedTokenParam) ||
+    json.includes('file://')
   );
 };
 

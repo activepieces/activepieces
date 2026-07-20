@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddActiveFlowsLimitToProjectPlan1811000000000 implements Migration {
-    name = 'AddActiveFlowsLimitToProjectPlan1811000000000'
+export class AddActiveFlowsLimitToProjectPlan1814000000000 implements Migration {
+    name = 'AddActiveFlowsLimitToProjectPlan1814000000000'
     breaking = false
     release = '0.86.3'
 
