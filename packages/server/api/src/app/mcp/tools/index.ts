@@ -70,7 +70,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_setup_guide',
 ] as const
  
-export const PLATFORM_LEVEL_TOOL_NAMES= [
+export const PLATFORM_LEVEL_TOOL_NAMES = [
     'ap_research_pieces',
     'ap_search_actions',
     'ap_search_triggers',
@@ -81,7 +81,7 @@ export const PLATFORM_LEVEL_TOOL_NAMES= [
 // NOTE: Keep this list in sync with TOOL_CATEGORIES in
 // packages/web/src/app/components/project-settings/mcp-server/utils/mcp-tools-metadata.ts
 // Any tool added here must also be added there so it appears in the UI settings panel.
-export const ALL_CONTROLLABLE_TOOL_NAMES= [
+export const ALL_CONTROLLABLE_TOOL_NAMES = [
     'ap_build_flow',
     'ap_create_flow',
     'ap_duplicate_flow',

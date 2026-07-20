@@ -152,7 +152,12 @@ function buildCostItems(includeActivepiecesModels: boolean): CostItem[] {
   ];
   const activepiecesModels: CostItem[] = includeActivepiecesModels
     ? [
-        { kind: 'row', action: t('Fast'), sub: modelByActivepieces, credits: '2' },
+        {
+          kind: 'row',
+          action: t('Fast'),
+          sub: modelByActivepieces,
+          credits: '2',
+        },
         {
           kind: 'row',
           action: t('Smart'),

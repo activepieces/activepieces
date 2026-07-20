@@ -52,7 +52,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                 idempotencyKey: `${conversation.id}:appSumoAi:${turnIndex}`,
                 properties: {
                     platformId: conversation.platformId,
-                    projectId: conversation.projectId?? 'chat',
+                    projectId: conversation.projectId ?? 'chat',
                     conversationId: conversation.id,
                     turnIndex,
                     tier: tier.id,
