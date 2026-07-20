@@ -67,7 +67,7 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 ## Enable/Disable Side Effects
 
 **On enable** (`flowTriggerSideEffect.enable()`):
-- POLLING: Creates BullMQ repeating job from the piece's `setSchedule` call — a cron expression (BullMQ `pattern`) or a rolling interval (`intervalMs` → BullMQ `every`; used by Schedule piece "Every X Minutes" because cron `*/X` cannot express intervals that don't divide 60 — it double-fires at :00 and :X for X>30). Default when the piece sets nothing: cron from `AP_TRIGGER_DEFAULT_POLL_INTERVAL`. Engine floor for intervals: 60000 ms (`trigger-helper.ts`)
+- POLLING: Creates BullMQ repeating job from the piece's `setSchedule` call — a cron expression (BullMQ `pattern`) or a rolling interval (`intervalMs` → BullMQ `every`; used by Schedule piece "Every X Minutes" because cron `*/X` cannot express intervals that don't divide 60 — it double-fires at :00 and :X for X>30). Default when the piece sets nothing: rolling interval of `AP_TRIGGER_DEFAULT_POLL_INTERVAL` minutes (default 5) as `intervalMs` — was a `*/X` cron until GIT-1632, which double-fired for overrides > 30 and gapped unevenly for non-divisors of 60. Engine floor for intervals: 60000 ms (`trigger-helper.ts`)
 - WEBHOOK: Submits ON_ENABLE hook to worker (registers webhook with external service). If piece has renewConfiguration with CRON strategy, creates renewal job.
 - APP_WEBHOOK: Creates AppEventRouting records for each event type
 - MANUAL: No side effects
