@@ -173,15 +173,31 @@ function useMentionSearch(query: string): MentionSearchResult {
   return { groups, isLoading, totalCount };
 }
 
+async function fetchAllProjects(): Promise<
+  { id: string; displayName: string }[]
+> {
+  const projects: { id: string; displayName: string }[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const page: SeekPage<{ id: string; displayName: string }> = await api.get(
+      '/v1/projects',
+      { limit: 100, cursor },
+    );
+    projects.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (cursor);
+  return projects;
+}
+
 async function fetchConnectionsAcrossProjects(
   pieceName: string,
 ): Promise<MentionConnection[]> {
-  const projects = await api.get<SeekPage<{ id: string; displayName: string }>>(
-    '/v1/projects',
-    { limit: 100 },
-  );
+  // ponytail: aggregates connections via one list call per project (N+1). Fine
+  // for the app-mention preview (best-effort, cached 60s); if a user with very
+  // many projects makes this slow, add a cross-project connections endpoint.
+  const projects = await fetchAllProjects();
   const perProject = await Promise.all(
-    projects.data.map(async (project) => {
+    projects.map(async (project) => {
       const page = await appConnectionsApi
         .list({
           projectId: project.id,
