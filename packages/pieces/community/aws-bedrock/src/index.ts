@@ -14,6 +14,7 @@ export const awsBedrock = createPiece({
   auth: awsBedrockCombinedAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-bedrock.png',
+  deprecated: true,
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["onyedikachi-david"],
   actions: [sendPrompt, generateContentFromImage, generateImage, generateEmbeddings],

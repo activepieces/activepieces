@@ -43,7 +43,7 @@ A one-shot action has no flow context, so `pieceRunMode`:
 - Rejects waitpoints/pauses via `assertPieceRunCannotSuspend`, thrown as a **plain `Error` (USER-level)** so the step ends FAILED rather than INTERNAL_ERROR — "this action only works inside a flow" is a usage error, not an engine bug, and must not page oncall.
 
 ## Edition Availability
-- Community / Enterprise / Cloud: all editions. Entity registered in `database-connection.ts`; the single migration `1811000000000-AddPieceRunTable` creates the `piece_run` table with all columns (including `userId`, `conversationId`, and the `archivedAt` soft-delete column) and its indexes.
+- Community / Enterprise / Cloud: all editions. Entity registered in `database-connection.ts`; the single migration `1812000000000-AddPieceRunTable` creates the `piece_run` table with all columns (including `userId`, `conversationId`, and the `archivedAt` soft-delete column) and its indexes.
 
 ## Domain Terms
 - **piece run** — a single action/code execution outside any flow; persisted as a `piece_run` row.

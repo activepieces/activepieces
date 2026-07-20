@@ -1,10 +1,10 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddPieceRunTable1811000000000 implements Migration {
-    name = 'AddPieceRunTable1811000000000'
+export class AddPieceRunTable1812000000000 implements Migration {
+    name = 'AddPieceRunTable1812000000000'
     breaking = false
-    release = '0.85.4'
+    release = '0.86.5'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
