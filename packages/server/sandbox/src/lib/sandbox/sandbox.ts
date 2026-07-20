@@ -395,7 +395,7 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
         killedByTimeout: String(killedByTimeout),
         killedByShutdown: String(killedByShutdown),
     }, '[Sandbox] Process exit event fired')
-    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || (signal === 'SIGKILL' && !killedByShutdown))
+    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || stdError.includes('Caught fatal signal 9') || (code === 134 || signal === 'SIGABRT' || (signal === 'SIGKILL' && !killedByShutdown))
     const isLogSizeExceeded = stdError.includes('Flow run data size exceeded the maximum allowed size')
 
     if (killedByTimeout) {
