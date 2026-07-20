@@ -24,6 +24,19 @@ export const DefaultRoute = () => {
   return <AuthenticatedDefaultRoute />;
 };
 
+// The /chat landing renders nothing itself — the persistent WorkspaceShell paints the
+// chat panel. When chat is off the shell omits that panel, so a chat-off user who lands
+// here (a stale link, a typed URL) would see an empty Stage; send them to the classic
+// default surface instead.
+export const ChatLandingGuard = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { checkAccess } = useAuthorization();
+  if (!platform.plan.chatEnabled) {
+    return <Navigate to={determineDefaultRoute({ checkAccess })} replace />;
+  }
+  return null;
+};
+
 const AuthenticatedDefaultRoute = () => {
   const { checkAccess } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();

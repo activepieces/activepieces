@@ -18,9 +18,17 @@ Change log format: MM/DD/YYYY (version)
 
 
 
-### 07/08/2026 (0.12.0)
-- SDK URL: https://cdn.activepieces.com/sdk/embed/0.12.0.js
+### 07/20/2026 (0.14.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.14.0.js
 - Added `embedding.categoryPriority` parameter to the [configure](./embed-builder#configure-parameters) method **(value: string[])**. Takes a list of piece category names (matched case-insensitively, e.g. `['ARTIFICIAL_INTELLIGENCE', 'my-category']`). Each listed category is rendered as a named group at the top of the step picker's Explore and Apps tabs, in the configured order, and pieces in those categories are ranked first in step-picker search results. Custom pieces can declare their own category strings via `createPiece({ categories: [...] })`.
+
+### 07/09/2026 (0.13.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.13.0.js
+- Added `embedding.hideGlobalSearch` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. When `true`, hides the global search button in the dashboard sidebar and disables the `CMD+K` / `Ctrl+K` command palette, so embedded users can't navigate to pages, flows, or tables through search. This version requires an Activepieces release that includes [#14135](https://github.com/activepieces/activepieces/pull/14135).
+
+### 07/09/2026 (0.12.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.12.0.js
+- Added `embedding.hideActiveUsers` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. When `true`, hides the active users (presence) avatars in the builder's header and the table editor's header. The embedded user will also not appear in other collaborators' active-users list. This version requires an Activepieces release that includes [#13630](https://github.com/activepieces/activepieces/pull/13630).
 
 ### 06/18/2026 (0.10.0)
 - SDK URL: https://cdn.activepieces.com/sdk/embed/0.10.0.js

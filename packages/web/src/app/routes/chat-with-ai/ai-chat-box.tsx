@@ -73,8 +73,9 @@ function ChatBoxContent({
   const credits = useCreditsState();
 
   const {
-    messages,
+    conversationId,
     modelName,
+    messages,
     isStreaming,
     isResumedStream,
     isAwaitingResponse,
@@ -96,11 +97,17 @@ function ChatBoxContent({
     (s) => s.offerRecurringAutomation,
   );
 
+  // Load history only when pointed at a *different* conversation (deep link,
+  // switching conversations). When this hook just created the conversation
+  // itself, the new id round-trips back through the parent as
+  // `initialConversationId` — reloading then would call setConversationId(),
+  // tearing down the in-flight first turn (stops the stream, clears the
+  // optimistic user message) so nothing paints until the next send reconciles.
   useEffect(() => {
-    if (initialConversationId) {
+    if (initialConversationId && initialConversationId !== conversationId) {
       void setConversationId(initialConversationId);
     }
-  }, [initialConversationId, setConversationId]);
+  }, [initialConversationId, conversationId, setConversationId]);
 
   useEffect(() => {
     if (!isStreaming) return;
@@ -230,6 +237,8 @@ function ChatBoxContent({
                       isLastMessage={isLastAssistant}
                       onSendPrompt={(text) => void handleSend(text)}
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
+                      conversationId={conversationId}
+                      messageIndex={idx}
                     />
                   );
                 })}
