@@ -70,10 +70,10 @@ export const createOrUpdateContact = createAction({
         ...(list_ids && list_ids.length > 0 && { list_ids }),
         contacts: [
           {
+            ...custom_fields,
             email,
             ...(first_name && { first_name }),
             ...(last_name && { last_name }),
-            ...custom_fields,
           },
         ],
       },
