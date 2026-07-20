@@ -197,9 +197,6 @@ export const streamCsvToSubflows = createAction({
     }
     const webhookUrl = `${apiBase}/v1/webhooks/${flow.id}`;
 
-    // ponytail: v1 forbids mixing fire-and-forget and wait-for-all subflow steps in one run —
-    // pre-existing in-flight children would be conflated into our count. Fix B (per-step child
-    // marker column) removes this limitation.
     const baseline = waitForAllSubflows ? await fetchRollup() : null;
     if (baseline !== null && baseline.nonTerminal > 0) {
       throw new Error(
@@ -244,8 +241,6 @@ export const streamCsvToSubflows = createAction({
         headers: {
           'Content-Type': 'application/json',
           [PARENT_RUN_ID_HEADER]: context.run.id,
-          // Keep 'false': flipping it lets markParentRunAsFailed complete our pending
-          // DELAY waitpoint out from under the wait loop on the first child failure.
           [FAIL_PARENT_ON_FAILURE_HEADER]: 'false',
         },
         body: { data: { batchIndex, headers, rows, extraData } },
