@@ -34,7 +34,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 pieces: translatedPieces,
                 suggestionType: params.suggestionType,
             })
-            const filteredPieces = params.includeHidden || isNil(policy) ? sortedPieces : policy.filterPieces(sortedPieces)
+            const visiblePieces = params.includeHidden ? sortedPieces : sortedPieces.filter((piece) => !piece.deprecated)
+            const filteredPieces = params.includeHidden || isNil(policy) ? visiblePieces : policy.filterPieces(visiblePieces)
 
             const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
             return params.includeHidden || isNil(policy) ? summaries : policy.filterComponents(summaries)
