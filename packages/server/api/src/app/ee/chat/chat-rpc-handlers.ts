@@ -19,6 +19,7 @@ import { buildAttachmentNote, buildUserContentWithFiles, persistChatAttachments 
 import { chatHelpers } from './chat-helpers'
 import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatMcp } from './mcp/chat-mcp'
+import { mentionContext } from './mention-context'
 import { chatPrompt } from './prompt/chat-prompt'
 import { executeCrossProjectTool } from './tools/chat-tools'
 
@@ -122,7 +123,7 @@ function buildConnectionInventoryNote({ connections, truncated }: {
 
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, mentions, promptOverride, dryRun } = input
 
         const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
@@ -203,6 +204,13 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             })
             : ''
 
+        // Resolve @-mentioned resources (flows/tables/apps) to compact, project-scoped
+        // context so the agent can act on terse references without re-fetching. Best-effort.
+        const mentionsNoteResult = (!isNil(mentions) && mentions.length > 0 && !isNil(selectedProjectId))
+            ? await tryCatch(() => mentionContext.resolveMentionsNote({ mentions, projectId: selectedProjectId, platformId, log }))
+            : null
+        const mentionedResourcesNote = mentionsNoteResult && !mentionsNoteResult.error ? mentionsNoteResult.data : ''
+
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         const systemPromptText = chatPrompt.buildSystemPrompt({
             projects: userProjects,
@@ -217,7 +225,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
             userEmail: userMeta.email,
-        }) + inventoryNote
+        }) + inventoryNote + mentionedResourcesNote
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides

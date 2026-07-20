@@ -2142,5 +2142,16 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Mention a flow, table, or app": "Mention a flow, table, or app",
+  "No flows, tables, or apps match": "No flows, tables, or apps match",
+  "Search flows, tables, apps": "Search flows, tables, apps",
+  "Insert emoji": "Insert emoji",
+  "Search emoji": "Search emoji",
+  "No emoji found": "No emoji found",
+  "Emoji": "Emoji",
+  "Hover an item to preview it": "Hover an item to preview it",
+  "Loading connections…": "Loading connections…",
+  "No records yet": "No records yet",
+  "Tell me what you need... (@ to mention, : for emoji)": "Tell me what you need... (@ to mention, : for emoji)"
 }

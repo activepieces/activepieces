@@ -4,7 +4,7 @@ import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { ChatAgentEvent } from './chat-agent-events'
-import { ChatPromptOverride } from './job-data'
+import { ChatMention, ChatPromptOverride } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -108,6 +108,7 @@ export type GetChatConfigRequest = {
     userMessage: string
     modelName: string | null
     files?: Array<{ name: string, mimeType: string, data: string }>
+    mentions?: ChatMention[]
     promptOverride?: ChatPromptOverride
     dryRun?: boolean
 }
