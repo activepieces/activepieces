@@ -708,6 +708,31 @@ describe('createSandbox', () => {
             }
         })
 
+        it('classifies an OOM-killer SIGKILL (Caught fatal signal 9, exit code 1 / null) as SANDBOX_MEMORY_ISSUE', async () => {
+            const { sandbox } = await startSandbox()
+            const client = testPM.getClient()
+            const child = testPM.getChild()
+
+            client.on('rpc', () => {
+                ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from('Caught fatal signal 9\n'))
+                setTimeout(() => child.emit('close', 1, null), 20)
+            })
+
+            const executePromise = sandbox.execute(
+                'EXECUTE_FLOW' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+
+            await expect(executePromise).rejects.toThrow()
+            try {
+                await executePromise
+            }
+            catch (err) {
+                expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_MEMORY_ISSUE)
+            }
+        })
+
         it('cleans up listener, timeout, and event handlers in finally block', async () => {
             const { sandbox } = await startSandbox()
             const client = testPM.getClient()

@@ -4,10 +4,12 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../helper/application-events'
 import { domainHelper } from '../helper/domain-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
@@ -118,6 +120,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         if (destinations.length === 0) {
             return
         }
+        const enrichedEvent = await enrichFlowRunEvent({ event, log })
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
         })
@@ -125,7 +128,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             classifyDestination({ destination, webhookUrlPrefix }))
         const destinationsToDispatch = skipInternalDestinationsOnFlowCycle({
             classifiedDestinations,
-            event,
+            event: enrichedEvent,
             log,
         })
         await Promise.all(destinationsToDispatch.map(({ destination, internalFlowId }) =>
@@ -136,7 +139,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 destinationId: destination.id,
                 destinationUrl: destination.url,
                 internalFlowId,
-                event,
+                event: enrichedEvent,
             }),
         ))
     },
@@ -302,6 +305,28 @@ const extractWebhookFlowIdCandidate = ({ destinationUrl }: ExtractWebhookFlowIdC
     return decodedFlowId ?? rawFlowId
 }
 
+const enrichFlowRunEvent = async ({ event, log }: EnrichFlowRunEventParams): Promise<ApplicationEvent> => {
+    const projectId = event.projectId
+    if (!isFlowRunEvent(event)) {
+        return event
+    }
+    const [flowVersion, project] = await Promise.all([
+        flowVersionService(log).getOne(event.data.flowRun.flowVersionId),
+        isNil(projectId) ? Promise.resolve(null) : projectService(log).getOne(projectId),
+    ])
+    return {
+        ...event,
+        data: {
+            ...event.data,
+            flowRun: {
+                ...event.data.flowRun,
+                flowDisplayName: flowVersion?.displayName ?? event.data.flowRun.flowDisplayName,
+            },
+            ...(isNil(project) ? {} : { project: { displayName: project.displayName } }),
+        },
+    }
+}
+
 const matchInternalWebhookFlowId = ({
     destinationUrl,
     webhookUrlPrefix,
@@ -357,6 +382,11 @@ type TestParams = {
     projectId?: ProjectId
     url: string
     event?: ApplicationEventName
+}
+
+type EnrichFlowRunEventParams = {
+    event: ApplicationEvent
+    log: FastifyBaseLogger
 }
 
 type ClassifiedDestination = {

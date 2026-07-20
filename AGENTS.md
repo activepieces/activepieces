@@ -96,6 +96,10 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 - If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the appropriate pieces label (in addition to the primary label above):
   - **`🧩 area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
   - **`🧩 area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
+- **Always fill the "Breaking change?" section of the PR template** — tick exactly one box (the `breaking-change-check` CI job fails if it is left unedited). A change is breaking if a self-hoster or API consumer must take action: removed/renamed API fields or endpoints, dropped columns, new required fields, removed/required env vars, or default/limit/behaviour changes. If it is breaking:
+  - also apply the **`⛓️‍💥 breaking-change`** label (in addition to the primary label above), and
+  - add an entry to `docs/install/reference/breaking-changes.mdx` describing what changed and the action required. CI enforces that the label and the docs entry travel together.
+- **Non-rollbackable migrations are a separate axis** from customer-facing breaking changes: a migration that runs destructive DDL (`DROP TABLE`/`DROP COLUMN`, `ADD ... NOT NULL` without `DEFAULT`, etc.) must set `breaking = true` on the migration class — this is the rollback-safety flag (used by `rollback-migrations.ts` and the release rollback note), enforced by `check-migration-rollback.ts`. It does **not** by itself require the `⛓️‍💥 breaking-change` label; decide that from the upgrade-impact question above.
 
 ## Database Migrations
 
