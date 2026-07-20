@@ -21,7 +21,16 @@ import {
   CoordinateExtent,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
+import { STAGE_TRANSITION_MS } from '@/lib/ui-transitions';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { useHandleKeyPressOnCanvas } from '../shortcuts';
@@ -35,15 +44,19 @@ import { FlowDragLayer } from './flow-drag-layer';
 import { flowCanvasHooks } from './hooks';
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
+import { CanvasDensity } from './utils/layout-consts';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
+import { StepPreviewCard } from './widgets/step-preview-card';
 
 export const FlowCanvas = React.memo(
   ({
     setHasCanvasBeenInitialised,
+    showStepCard = false,
   }: {
     setHasCanvasBeenInitialised: (value: boolean) => void;
+    showStepCard?: boolean;
   }) => {
     const [
       flowVersion,
@@ -69,6 +82,25 @@ export const FlowCanvas = React.memo(
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
+    // Keep the card mounted briefly after close so its exit plays as the sidebar
+    // slides in — the two read as a swap.
+    const [cardVisible, setCardVisible] = useState(showStepCard);
+    const [cardExiting, setCardExiting] = useState(false);
+    useEffect(() => {
+      if (showStepCard) {
+        setCardVisible(true);
+        setCardExiting(false);
+        return;
+      }
+      if (cardVisible) {
+        setCardExiting(true);
+        const id = window.setTimeout(() => {
+          setCardVisible(false);
+          setCardExiting(false);
+        }, STAGE_TRANSITION_MS);
+        return () => window.clearTimeout(id);
+      }
+    }, [showStepCard, cardVisible]);
     useShowChevronNextToSelection();
     flowCanvasHooks.useFocusOnStep();
     useHandleKeyPressOnCanvas();
@@ -86,16 +118,26 @@ export const FlowCanvas = React.memo(
       },
       [setSelectedNodes, selectedStep],
     );
+    const stageTier = useStageOptional()?.stageTier ?? 'comfortable';
+    const density: CanvasDensity =
+      canvasOrientation === 'horizontal'
+        ? 'comfortable'
+        : stageTier === 'narrow'
+        ? 'narrow'
+        : stageTier === 'mini'
+        ? 'mini'
+        : 'comfortable';
     const graphKey = `${createGraphKey(
       flowVersion,
       notes,
       selectedStep ?? '',
-    )}-${canvasOrientation}`;
+    )}-${canvasOrientation}-${density}`;
     const graph = useMemo(() => {
       return flowCanvasUtils.createFlowGraph({
         version: flowVersion,
         notes,
         orientation: canvasOrientation,
+        density,
       });
     }, [graphKey]);
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
@@ -229,7 +271,7 @@ export const FlowCanvas = React.memo(
               edgesFocusable={false}
               elevateEdgesOnSelect={false}
               maxZoom={1.5}
-              minZoom={0.5}
+              minZoom={0.4}
               panOnDrag={inGrabPanningMode ? [0, 1] : [1]}
               zoomOnDoubleClick={false}
               panOnScroll={true}
@@ -259,6 +301,12 @@ export const FlowCanvas = React.memo(
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>
+        {cardVisible && (
+          <StepPreviewCard
+            isExiting={cardExiting}
+            containerRef={containerRef}
+          />
+        )}
       </div>
     );
   },

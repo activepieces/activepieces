@@ -1,14 +1,12 @@
 import { Permission } from '@activepieces/core-utils';
 import {
-  ApFlagId,
   FlowOperationType,
   FlowVersionState,
-  supportUrl,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
+import { EllipsisVertical, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -18,10 +16,18 @@ import {
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { RightSideBarType } from '@/app/builder/types';
+import { useStageOptional } from '@/app/components/workspace-shell/stage-context';
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import EditableText from '@/components/custom/editable-text';
 import { HomeButton } from '@/components/custom/home-button';
 import { PageHeader } from '@/components/custom/page-header';
+import {
+  stageResourceKey,
+  useReportStageResourceTitle,
+  useStageHeaderActions,
+  useStageHeaderSlot,
+  useStageHeaderTitle,
+} from '@/components/custom/stage-header-slot';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   Breadcrumb,
@@ -33,13 +39,10 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { flowHooks } from '@/features/flows';
-import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { foldersHooks } from '@/features/folders';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
@@ -52,10 +55,6 @@ export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const openNewWindow = useNewWindow();
-  const { data: showSupport } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
 
   const hasPermissionToReadRuns = useAuthorization().checkAccess(
     Permission.READ_FLOW,
@@ -76,6 +75,18 @@ export const BuilderHeader = () => {
 
   const { embedState } = useEmbedding();
   const { project } = projectCollectionUtils.useCurrentProject();
+  // Inside the Stage, the title is lifted into the Stage header, not shown here.
+  const stageSlot = useStageHeaderSlot()?.slot ?? null;
+  const stageCurrent = useStageOptional()?.current;
+  useReportStageResourceTitle(
+    stageCurrent
+      ? stageResourceKey(
+          stageCurrent.type,
+          'id' in stageCurrent ? stageCurrent.id : undefined,
+        )
+      : null,
+    flowVersion.displayName,
+  );
 
   const { data: folderData } = foldersHooks.useFolder(
     flow.folderId ?? UncategorizedFolderId,
@@ -97,6 +108,54 @@ export const BuilderHeader = () => {
       }).toString(),
     });
   };
+
+  const flowNameControl = (
+    <>
+      <EditableText
+        className="hover:cursor-text"
+        value={flowVersion.displayName}
+        readonly={!isLatestVersion}
+        onValueChange={(value) => {
+          applyOperation(
+            {
+              type: FlowOperationType.CHANGE_NAME,
+              request: {
+                displayName: value,
+              },
+            },
+            () => {
+              flowHooks.invalidateFlowsQuery(queryClient);
+            },
+          );
+        }}
+        isEditing={isEditingFlowName}
+        setIsEditing={setIsEditingFlowName}
+        tooltipContent=""
+      />
+      <FlowActionMenu
+        onVersionsListClick={() => {
+          setRightSidebar(RightSideBarType.VERSIONS);
+        }}
+        insideBuilder={true}
+        flow={flow}
+        flowVersion={flowVersion}
+        readonly={!isLatestVersion}
+        onDelete={goToFlowsPage}
+        onRename={() => {
+          setIsEditingFlowName(true);
+        }}
+        onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
+        onDuplicate={() => {}}
+      >
+        <Button
+          variant="ghost"
+          className="size-6 flex items-center justify-center"
+        >
+          <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
+        </Button>
+      </FlowActionMenu>
+    </>
+  );
 
   const titleContent = (
     <div className="flex items-center gap-2 px-4">
@@ -123,49 +182,7 @@ export const BuilderHeader = () => {
                     'max-w-[500px]': !isEditingFlowName,
                   })}
                 >
-                  <EditableText
-                    className="hover:cursor-text"
-                    value={flowVersion.displayName}
-                    readonly={!isLatestVersion}
-                    onValueChange={(value) => {
-                      applyOperation(
-                        {
-                          type: FlowOperationType.CHANGE_NAME,
-                          request: {
-                            displayName: value,
-                          },
-                        },
-                        () => {
-                          flowHooks.invalidateFlowsQuery(queryClient);
-                        },
-                      );
-                    }}
-                    isEditing={isEditingFlowName}
-                    setIsEditing={setIsEditingFlowName}
-                    tooltipContent=""
-                  />
-                  <FlowActionMenu
-                    onVersionsListClick={() => {
-                      setRightSidebar(RightSideBarType.VERSIONS);
-                    }}
-                    insideBuilder={true}
-                    flow={flow}
-                    flowVersion={flowVersion}
-                    readonly={!isLatestVersion}
-                    onDelete={goToFlowsPage}
-                    onRename={() => {
-                      setIsEditingFlowName(true);
-                    }}
-                    onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-                    onDuplicate={() => {}}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="size-6 flex items-center justify-center"
-                    >
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </FlowActionMenu>
+                  {flowNameControl}
                 </div>
               </BreadcrumbPage>
             </BreadcrumbItem>
@@ -175,18 +192,16 @@ export const BuilderHeader = () => {
     </div>
   );
 
-  const rightContent = (
-    <div className="flex items-center justify-center gap-4">
-      {showSupport && (
-        <Button
-          variant="ghost"
-          className="gap-2 px-2"
-          onClick={() => openNewWindow(supportUrl)}
-        >
-          <CircleHelp className="w-4 h-4"></CircleHelp>
-          {t('Support')}
-        </Button>
-      )}
+  // Title rendered into the Stage header to mirror the chat panel's title.
+  const stageTitleContent = (
+    <div className="flex min-w-0 items-center gap-1 text-sm font-semibold">
+      {flowNameControl}
+    </div>
+  );
+  const stageTitle = useStageHeaderTitle(stageTitleContent);
+
+  const controls = (
+    <>
       {!embedState.hideActiveUsers && (
         <ActiveUsersWidget resourceId={flow.id} />
       )}
@@ -202,16 +217,35 @@ export const BuilderHeader = () => {
       )}
 
       <BuilderFlowStatusSection></BuilderFlowStatusSection>
-      <FlowCreatedByBadge createdBy={flow.createdBy} />
-    </div>
+    </>
+  );
+
+  const rightContent = (
+    <div className="flex items-center justify-center gap-4">{controls}</div>
+  );
+
+  // Inside the Stage, the right-side controls are lifted into the Stage header too.
+  const stageActions = useStageHeaderActions(
+    stageSlot ? (
+      <div className="flex items-center gap-2">{controls}</div>
+    ) : null,
   );
 
   const leftContent = embedState.isEmbedded ? <HomeButton /> : null;
 
+  if (stageSlot) {
+    return (
+      <>
+        {stageTitle}
+        {stageActions}
+      </>
+    );
+  }
+
   return (
     <div
       style={{
-        height: `$${flowCanvasConsts.BUILDER_HEADER_HEIGHT}px`,
+        height: `${flowCanvasConsts.BUILDER_HEADER_HEIGHT}px`,
       }}
     >
       <PageHeader

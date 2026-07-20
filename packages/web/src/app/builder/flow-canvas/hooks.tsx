@@ -121,9 +121,8 @@ export const useSwitchToDraft = () => {
         clearRun(userHasPermissionToEditFlow);
         socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
       },
-      // surface the failure instead of silently keeping a stale draft, which
-      // matters most on the lock take-over path where the refresh replaces a
-      // full-page reload
+      // surface the failure instead of silently keeping a stale draft (matters on
+      // the lock take-over path, where the refresh replaces a full-page reload)
       onError: () => internalErrorToast(),
     });
   return {
@@ -198,26 +197,27 @@ export const useResizeCanvas = (
   containerRef: React.RefObject<HTMLDivElement | null>,
   setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
 ) => {
-  const containerSizeRef = useRef({
-    width: 0,
-    height: 0,
-  });
+  // Keep the flow put when the canvas's left edge shifts (e.g. chat collapses):
+  // compensate the viewport by the delta instead of re-centering. `left: null` =
+  // not measured yet, so the first observation must not shift.
+  const containerLeftRef = useRef<number | null>(null);
   const { getViewport, setViewport } = useReactFlow();
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const resizeObserver = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
+    const resizeObserver = new ResizeObserver(() => {
+      const el = containerRef.current;
+      if (!el) return;
       setHasCanvasBeenInitialised(true);
-      const { x, y, zoom } = getViewport();
-      if (containerRef.current && width !== containerSizeRef.current.width) {
-        const newX = x + (width - containerSizeRef.current.width) / 2;
-        setViewport({ x: newX, y, zoom });
+      const left = el.getBoundingClientRect().left;
+      const prevLeft = containerLeftRef.current;
+      containerLeftRef.current = left;
+      if (prevLeft === null) return;
+      const deltaLeft = left - prevLeft;
+      if (deltaLeft !== 0) {
+        const { x, y, zoom } = getViewport();
+        setViewport({ x: x - deltaLeft, y, zoom });
       }
-      containerSizeRef.current = {
-        width,
-        height,
-      };
     });
     resizeObserver.observe(containerRef.current);
     return () => {
