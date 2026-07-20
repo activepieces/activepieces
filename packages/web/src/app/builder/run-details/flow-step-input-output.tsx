@@ -39,6 +39,8 @@ import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
 
+import { truncatedInputUtils } from './truncated-input-utils';
+
 type RunActiveTab = 'input' | 'output' | 'timeline';
 
 export const FlowStepInputOutput = () => {
@@ -250,7 +252,10 @@ export const FlowStepInputOutput = () => {
           </div>
 
           {!isTrigger && (
-            <TabsContent value="input">
+            <TabsContent value="input" className="flex flex-col gap-3">
+              {truncatedInputUtils.hasTruncatedValues(
+                selectedStepOutput.input,
+              ) && <TruncatedInputNotice />}
               <SmartOutputViewer
                 json={selectedStepOutput.input}
                 title={t('Input')}
@@ -331,6 +336,25 @@ const InternalErrorPanel = ({
       </pre>
     </div>
   </ScrollArea>
+);
+
+const TruncatedInputNotice = () => (
+  <div className="flex items-start gap-2 p-3 bg-muted rounded-md text-sm">
+    <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+    <span>
+      {t(
+        'Some input values were too large to keep in the run logs and are shown as truncated. The step ran with the full values.',
+      )}{' '}
+      <a
+        href="https://www.activepieces.com/docs/install/troubleshooting/truncated-logs"
+        target="_blank"
+        rel="noreferrer"
+        className="text-primary underline"
+      >
+        {t('Learn more')}
+      </a>
+    </span>
+  </div>
 );
 
 const SlicedOutputDownload = ({
