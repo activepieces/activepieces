@@ -1,14 +1,13 @@
 import { ChevronDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
-const StepNodeChevron = ({ className }: { className?: string }) => {
+const StepNodeChevron = () => {
   return (
     <Button
       variant="ghost"
       size="sm"
-      className={cn('p-1 size-7', className)}
+      className="p-1 size-7 "
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();

@@ -9,7 +9,7 @@ import {
   CarouselPrevious,
   useCarousel,
 } from '@/components/ui/carousel';
-import { cn } from '@/lib/utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 type CategoryFilterCarouselProps = {
   categories: string[];
@@ -28,23 +28,23 @@ const CarouselContentWithButtons = ({
 
   return (
     <div
-      className="relative flex h-12 items-center transition-[padding] duration-200 border-b"
+      className={`relative my-4 transition-[padding] duration-200 py-3 border-b border-t `}
       style={{
-        paddingLeft: canScrollPrev ? '3rem' : '0.5rem',
-        paddingRight: canScrollNext ? '3rem' : '0.5rem',
+        paddingLeft: canScrollPrev ? '3rem' : '0',
+        paddingRight: canScrollNext ? '3rem' : '0',
       }}
     >
-      <CarouselContent className={cn('ml-0 gap-1', className)}>
+      <CarouselContent className={cn('-ml-2 gap-1', className)}>
         {categories.map((category) => {
           const isSelected = selectedCategory === category;
           return (
-            <CarouselItem key={category} className="basis-auto pl-0">
+            <CarouselItem key={category} className="basis-auto pl-2">
               <Button
                 variant="outline"
                 onClick={() => onCategorySelect(category)}
-                className={`px-2.5 py-1 h-auto whitespace-nowrap transition-colors ${
+                className={`px-4 py-1.5 h-auto whitespace-nowrap transition-colors ${
                   isSelected
-                    ? 'bg-black text-white border-none hover:!bg-black hover:!text-white'
+                    ? 'bg-black text-white border-black hover:!bg-black hover:!text-white'
                     : 'bg-transparent hover:!bg-sidebar-accent hover:!text-sidebar-accent-foreground border-none'
                 }`}
               >
@@ -55,12 +55,12 @@ const CarouselContentWithButtons = ({
         })}
       </CarouselContent>
       {canScrollPrev && (
-        <CarouselPrevious variant="ghost" className="left-2 z-10">
+        <CarouselPrevious variant="ghost" className="left-0 z-10">
           <ChevronLeft className="h-4 w-4" />
         </CarouselPrevious>
       )}
       {canScrollNext && (
-        <CarouselNext variant="ghost" className="right-2 z-10">
+        <CarouselNext variant="ghost" className="right-0 z-10">
           <ChevronRight className="h-4 w-4" />
         </CarouselNext>
       )}
@@ -82,6 +82,7 @@ export const CategoryFilterCarousel = ({
       className="w-full"
     >
       <CarouselContentWithButtons
+        className={DASHBOARD_CONTENT_PADDING_X}
         categories={categories}
         selectedCategory={selectedCategory}
         onCategorySelect={onCategorySelect}

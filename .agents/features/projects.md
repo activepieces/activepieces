@@ -13,7 +13,7 @@ A Project is the workspace within a platform where flows, connections, tables, a
 - `packages/core/shared/src/lib/management/project/project.ts` — `Project`, `ProjectPlan`, `ProjectIcon`, `UpdateProjectRequestInCommunity` schemas
 - `packages/web/src/features/projects/components/projects-selector.tsx` — project-switcher dropdown in the sidebar
 - `packages/web/src/features/projects/components/platform-switcher.tsx` — platform-level switcher component
-- `packages/web/src/features/projects/stores/project-collection.ts` — Zustand store for current project; also exposes reactive `useProjectById(projectId)` and `usePersonalProject()` lookups over the live collection (used by the Stage breadcrumb / shell)
+- `packages/web/src/features/projects/stores/project-collection.ts` — Zustand store for current project
 
 ## Edition Availability
 All editions. The CE controller exposes a minimal set: get, list (returns only the personal project), and update display name/metadata. EE adds `ee-projects` module with `platformProjectService` for full admin CRUD, project limits, and per-project piece filters.
