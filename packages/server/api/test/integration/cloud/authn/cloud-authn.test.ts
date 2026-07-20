@@ -7,6 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
+import { jwtUtils } from '../../../../src/app/helper/jwt-utils'
 import { system } from '../../../../src/app/helper/system/system'
 import { decodeToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -25,7 +26,6 @@ import {
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { jwtUtils } from 'packages/server/api/src/app/helper/jwt-utils'
 
 let app: FastifyInstance | null = null
 
@@ -49,7 +49,6 @@ beforeEach(async () => {
         sendTrialReminder: vi.fn(),
         sendReminderJobHandler: vi.fn(),
         sendExceedFailureThresholdAlert: vi.fn(),
-        sendBadgeAwardedEmail: vi.fn(),
         sendProjectMemberAdded: vi.fn(),
     }))
 

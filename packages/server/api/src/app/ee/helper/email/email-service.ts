@@ -1,12 +1,10 @@
-import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
-import { AlertChannel, ApEdition, BADGES, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, unique } from '@activepieces/core-utils'
+import { AlertChannel, ApEdition, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
@@ -108,6 +106,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         failedStepDisplayName,
         failedStepNumber,
         failedStepMessage,
+        flowOwnerEmail,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
@@ -121,7 +120,11 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const alertEmails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = unique([
+            ...alertEmails,
+            ...(isNil(flowOwnerEmail) ? [] : [flowOwnerEmail]),
+        ].map((email) => email.toLowerCase()))
 
         if (emails.length === 0) {
             return
@@ -214,29 +217,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-
-    async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
-        const user = await userService(log).getMetaInformation({ id: userId })
-
-        if (isNil(user) || !isValidEmail(user.email)) {
-            log.info({ user: { id: userId }, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
-            return
-        }
-        const badge = BADGES[badgeName as keyof typeof BADGES]
-        await emailSender(log).send({
-            emails: [user.email],
-            platformId: user.platformId!,
-            templateData: {
-                name: 'badge-awarded',
-                vars: {
-                    firstName: user.firstName,
-                    badgeTitle: badge.title,
-                    badgeDescription: badge.description,
-                    badgeImageUrl: badge.imageUrl,
-                },
-            },
-        })
-    },
 })
 
 async function getEntityNameForInvitation(userInvitation: UserInvitation, log: FastifyBaseLogger): Promise<{ name: string, role: string }> {
@@ -266,10 +246,6 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation, log: F
 
 function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
-}
-
-function isValidEmail(email: string): boolean {
-    return z.email().safeParse(email).success
 }
 
 type SendInvitationArgs = {
@@ -312,4 +288,5 @@ type IssueCreatedArgs = {
     failedStepDisplayName: string
     failedStepNumber?: number
     failedStepMessage?: string
+    flowOwnerEmail?: string
 }

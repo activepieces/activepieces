@@ -1,5 +1,5 @@
 import { type ApLogger } from '@activepieces/server-utils'
-import { EngineOperation, EngineOperationType, EngineResponse, FlowVersion, FlowVersionState, NetworkMode, PiecePackage, SourceCode } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, EngineResponse, FailedStep, FlowVersion, FlowVersionState, NetworkMode, PiecePackage, SourceCode, WorkerToApiContract } from '@activepieces/shared'
 
 // Two roles:
 //   - Resolver (worker-side, owns the only apiClient): turns a job into a fully-materialized
@@ -23,7 +23,7 @@ export type ResolveInput = {
 export type ResolveResult =
     | { kind: 'ready', provision: ProvisionInput, flowVersion?: FlowVersion }
     | { kind: 'flow-not-found' }
-    | { kind: 'disabled' }
+    | { kind: 'disabled', failedStep?: FailedStep }
 
 export type Runtime = {
     // Materialize provision, run one engine operation, return its result. Owns the box lifecycle
@@ -31,6 +31,7 @@ export type Runtime = {
     // ActivepiecesError codes (timeout / memory / log-size) that handlers already catch.
     execute(params: ExecuteParams): Promise<RuntimeExecutionResult>
     getActiveExecutors(): RuntimeExecutorInfo[]
+    prewarm(params: PreWarmSandboxParams): Promise<void>
     shutdown(log: ApLogger): Promise<void>
 }
 
@@ -41,6 +42,14 @@ export type ExecuteParams = {
     operation: EngineOperation
     timeoutInSeconds: number
     provision: ProvisionInput
+}
+
+export type PreWarmSandboxParams = {
+    log: ApLogger
+    apiClient?: WorkerToApiContract
+    publicApiUrl?: string
+    // Warm just this flow (e.g. on publish) instead of the platform's whole active set.
+    flow?: { id: string, versionId: string, projectId: string }
 }
 
 // The Resolver's output and the pool's input. The pool installs each piece straight from a link: it
@@ -101,6 +110,8 @@ export type SandboxSettings = {
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]
     SSRF_ALLOW_LIST: string[]
+    WORKER_GROUP_ID?: string | undefined
+    PROJECT_WORKER?: boolean | undefined
 }
 
 export type SandboxDeps = {

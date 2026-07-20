@@ -1,18 +1,18 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetChatMessageFeedbackRequest, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
+import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { findConnectionsForPiece } from './tools/chat-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -71,6 +71,28 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+    app.post('/conversations/:id/messages/:messageIndex/feedback', SetMessageFeedbackRoute, async (request, reply) => {
+        await chatService(request.log).setMessageFeedback({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+            messageIndex: request.params.messageIndex,
+            request: request.body,
+        })
+        return reply.status(StatusCodes.OK).send({ success: true })
+    })
+
+    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
+        // Cloud rollout: record that this user opened the chat page, then refresh the console
+        // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
+        await chatRolloutService.recordLanding({
+            userId: request.principal.id,
+            platformId: request.principal.platform.id,
+        })
+        chatAnalyticsTelemetry(request.log).sendRolloutFunnelUpdate()
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
         const { content, runId: clientRunId, files } = request.body
         const conversationId = request.params.id
@@ -86,8 +108,18 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             userId,
         })
 
-        // Cloud rollout/funnel: count this user as a distinct chatter (no-op off cloud, deduped).
-        rejectedPromiseHandler(chatRolloutService.recordChatted({ userId, platformId }), log)
+        await assertChatMessageRateLimitNotExceeded({ platformId, userId, log })
+
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
+        // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
+        // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
+        // Awaited before the credit check below so the managed key is created (and topped up) once.
+        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
+        if (needsCreditDecision) {
+            await maybeGrantFreeChatCredits({ platformId, userId, log })
+        }
+        // Refresh the console rollout funnel snapshot (chatted count just changed).
+        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -116,7 +148,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             await chatApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertAiCreditsNotExhausted({ platformId, log })
+        await assertChatProviderUsable({ platformId, log })
 
         await jobQueue(runLog).add({
             id: apId(),
@@ -206,9 +238,55 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
 }
 
-async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
-    if (!chatProvider || chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
+const FREE_CHAT_CREDIT_USD = 10
+
+async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
+    // Claim first so the decision is settled exactly once across concurrent messages and paid users
+    // stop re-checking after this point (needsCreditDecision becomes false). A losing/duplicate
+    // caller exits immediately.
+    const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
+    if (!claimed) {
+        return
+    }
+    // Everything after the claim is best-effort and must never fail the user's message. Any error —
+    // the plan lookup or the top-up — rolls the claim back so a later message retries
+    // (needsCreditDecision goes true again). Paid platforms (license key) keep the claim with no
+    // grant owed, so they stop re-checking.
+    const { error } = await tryCatch(async () => {
+        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (isNil(plan.licenseKey)) {
+            await platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD })
+        }
+    })
+    if (!isNil(error)) {
+        await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
+        log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
+    }
+}
+
+const CHAT_MESSAGES_PER_WINDOW = 40
+const CHAT_MESSAGE_RATE_WINDOW_SECONDS = 10 * 60
+
+// Per-user flood guard: nothing else bounds how fast a user fires messages, and each one enqueues a
+// worker job and spends credits. Complements the credit balance, which bounds spend, not rate.
+async function assertChatMessageRateLimitNotExceeded({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { allowed, count } = await chatHelpers.incrementAndCheckLimit({
+        key: `chat-message-rate:${platformId}:${userId}`,
+        limit: CHAT_MESSAGES_PER_WINDOW,
+        ttlSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS,
+    })
+    if (!allowed) {
+        log.warn({ user: { id: userId }, count }, '[chatController] Chat message rate limit exceeded')
+        throw new ActivepiecesError({
+            code: ErrorCode.CHAT_MESSAGE_LIMIT_EXCEEDED,
+            params: { limit: CHAT_MESSAGES_PER_WINDOW, windowSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS },
+        })
+    }
+}
+
+async function assertChatProviderUsable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const chatProvider = await chatHelpers.resolveChatProvider({ platformId, log })
+    if (chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
         return
     }
     const usage = await platformAiCreditsService(log).getUsage(platformId)
@@ -296,6 +374,18 @@ const GetMessagesRoute = {
     },
 }
 
+const SetMessageFeedbackRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: z.object({ id: z.string(), messageIndex: z.coerce.number().int().min(0) }),
+        body: SetChatMessageFeedbackRequest,
+    },
+}
+
 const SendMessageRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
@@ -305,6 +395,16 @@ const SendMessageRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
         body: SendChatMessageRequest,
+    },
+}
+
+const FunnelLandingRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 

@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { useState } from 'react';
 
+import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
 import {
   Tooltip,
   TooltipContent,
@@ -10,11 +11,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { isStepFileUrl } from '@/lib/dom-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
 import { FormatValue, getValueByDotPath } from './format-value';
 import { schemaUtils } from './resolve-schema';
-import { formatKey, truncateValue, ValueRow } from './shared-value-rendering';
+import { truncateValue, ValueRow } from './shared-value-rendering';
 import { OutputSchemaField } from './types';
 
 const NESTED_BASE_PADDING = 40;
@@ -95,7 +97,9 @@ function SchemaListItemRow({
           {itemLabel}
         </span>
         <span className="flex-1 text-sm min-w-0 break-words whitespace-pre-wrap">
-          {isNil(item) ? (
+          {isStepFileUrl(item) ? (
+            <StepFileDownloadButton fileUrl={item} />
+          ) : isNil(item) ? (
             <span className="text-muted-foreground italic">{t('empty')}</span>
           ) : typeof item === 'object' ? (
             JSON.stringify(item)
@@ -434,7 +438,7 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
           {genericObjectEntries.map(([entryKey, entryValue]) => (
             <ValueRow
               key={entryKey}
-              label={formatKey(entryKey)}
+              label={entryKey}
               value={entryValue}
               depth={depth + 1}
             />

@@ -1,7 +1,8 @@
 import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
-import { stringUtils } from '@/lib/string-utils';
+import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
+import { isStepFileUrl } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 import { schemaUtils } from './resolve-schema';
@@ -25,7 +26,7 @@ function buildColumns(first: Record<string, unknown>): Column[] | null {
     if (isFlat(value)) {
       columns.push({
         key,
-        label: stringUtils.titleCase(key),
+        label: key,
         path: [key],
       });
     } else if (isObject(value) && isFlatObject(value)) {
@@ -76,6 +77,10 @@ function getCellValue(row: Record<string, unknown>, path: string[]): unknown {
 }
 
 function CellValue({ value }: { value: unknown }) {
+  if (isStepFileUrl(value)) {
+    return <StepFileDownloadButton fileUrl={value} />;
+  }
+
   if (value === null || value === undefined || value === '') {
     return (
       <span className="text-muted-foreground/40 italic">{t('empty')}</span>

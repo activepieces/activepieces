@@ -14,6 +14,7 @@ import {
   eq,
   like,
   or,
+  useLiveQuery,
   useLiveSuspenseQuery,
 } from '@tanstack/react-db';
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
@@ -44,18 +45,45 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        const request: UpdateProjectPlatformRequest = {
-          displayName: modified.displayName,
-          metadata: modified.metadata ?? undefined,
-          releasesEnabled: modified.releasesEnabled,
-          externalId:
+        // Only send fields that actually changed, so e.g. a name/icon edit never
+        // re-writes maxConcurrentJobs/workerGroupId (which are edited elsewhere).
+        const request: UpdateProjectPlatformRequest = {};
+        if (modified.displayName !== original.displayName) {
+          request.displayName = modified.displayName;
+        }
+        if (modified.metadata !== original.metadata) {
+          request.metadata = modified.metadata ?? undefined;
+        }
+        if (modified.releasesEnabled !== original.releasesEnabled) {
+          request.releasesEnabled = modified.releasesEnabled;
+        }
+        if (
+          modified.notifyFlowOwnerOnFailure !==
+          original.notifyFlowOwnerOnFailure
+        ) {
+          request.notifyFlowOwnerOnFailure = modified.notifyFlowOwnerOnFailure;
+        }
+        if (modified.externalId !== original.externalId) {
+          request.externalId =
             !isNil(modified.externalId) && modified.externalId.trim() !== ''
               ? modified.externalId
-              : undefined,
-          icon: modified.icon,
-          plan: modified.plan,
-          maxConcurrentJobs: modified.maxConcurrentJobs,
-        };
+              : undefined;
+        }
+        if (modified.icon !== original.icon) {
+          request.icon = modified.icon;
+        }
+        if (modified.plan !== original.plan) {
+          request.plan = modified.plan;
+        }
+        if (modified.maxConcurrentJobs !== original.maxConcurrentJobs) {
+          request.maxConcurrentJobs = modified.maxConcurrentJobs;
+        }
+        if (modified.workerGroupId !== original.workerGroupId) {
+          request.workerGroupId = modified.workerGroupId;
+        }
+        if (Object.keys(request).length === 0) {
+          continue;
+        }
         await api.post<ProjectWithLimits>(
           `/v1/projects/${original.id}`,
           request,
@@ -124,6 +152,7 @@ export const projectCollectionUtils = {
   delete: (projectIds: string[]) => {
     projectCollection.delete(projectIds);
   },
+  refetchProjects: () => projectCollection.utils.refetch(),
   setCurrentProject: (projectId: string, pathName?: string) => {
     authenticationSession.switchToProject(projectId);
     if (pathName) {
@@ -148,6 +177,36 @@ export const projectCollectionUtils = {
     return {
       project: data!,
     };
+  },
+  useProjectById: (projectId: string | null) => {
+    const { data } = useLiveQuery(
+      (q) =>
+        q
+          .from({ project: projectCollection })
+          .where(({ project }) => eq(project.id, projectId ?? ''))
+          .select(({ project }) => ({ ...project }))
+          .findOne(),
+      [projectId],
+    );
+    return data ?? null;
+  },
+  usePersonalProject: () => {
+    const currentUserId = authenticationSession.getCurrentUserId();
+    const { data } = useLiveQuery(
+      (q) =>
+        q
+          .from({ project: projectCollection })
+          .where(({ project }) =>
+            and(
+              eq(project.type, ProjectType.PERSONAL),
+              eq(project.ownerId, currentUserId ?? ''),
+            ),
+          )
+          .select(({ project }) => ({ ...project }))
+          .findOne(),
+      [currentUserId],
+    );
+    return data ?? null;
   },
   useAll: () => {
     const currentUserId = authenticationSession.getCurrentUserId();

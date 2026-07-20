@@ -19,6 +19,7 @@ import { ChatRolloutUserEntity } from '../ee/chat/chat-rollout-user-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
+import { PieceSetEntity } from '../ee/pieces/piece-set/piece-set.entity'
 import { ConcurrencyPoolEntity } from '../ee/platform/concurrency-pool/concurrency-pool.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
 import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
@@ -45,8 +46,6 @@ import { McpOAuthClientEntity } from '../mcp/oauth/client/mcp-oauth-client.entit
 import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/code/mcp-oauth-code.entity'
 import { McpOAuthTokenEntity } from '../mcp/oauth/token/mcp-oauth-token.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
-import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
-import { TagEntity } from '../pieces/tags/tag-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
@@ -56,10 +55,10 @@ import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
 import { TemplateEntity } from '../template/template.entity'
+import { ToolSearchIndexEntity } from '../tool-search/tool-search-index.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
 import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
-import { UserBadgeEntity } from '../user/badges/badge-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { VariableEntity } from '../variable/variable.entity'
@@ -87,8 +86,6 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceMetadataEntity,
         PlatformEntity,
         SecretManagerEntity,
-        TagEntity,
-        PieceTagEntity,
         AlertEntity,
         UserInvitationEntity,
         AIProviderEntity,
@@ -106,12 +103,13 @@ function getEntities(): EntitySchema<unknown>[] {
         McpOAuthTokenEntity,
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
+        ToolSearchIndexEntity,
         ChatConversationEntity,
         ChatRolloutUserEntity,
         TriggerSourceEntity,
-        UserBadgeEntity,
         WaitpointEntity,
         // Enterprise
+        PieceSetEntity,
         ConcurrencyPoolEntity,
         ProjectMemberEntity,
         ProjectPlanEntity,

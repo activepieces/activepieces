@@ -4,26 +4,30 @@ import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, Ex
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
-import { chatWorkerTools } from './chat-worker-tools'
+import { chatWorkerTools, GateDecision, TaintState } from './chat-worker-tools'
 import { delayWithJitter, runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
 const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 const APPROVAL_BLOCK_MS = 50_000
-const DISPLAY_TOOL_TIMEOUT_MS = 15 * 60 * 1_000
+const DISPLAY_TOOL_TIMEOUT_MS = 5 * 60 * 1_000
 const HEARTBEAT_INTERVAL_MS = 15_000
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
-// A turn is wedged if the model stream goes quiet for this long with NO tool call in
-// flight. Tool execution and approval waits legitimately block the stream for minutes,
-// so the watchdog is suspended while a tool is pending (see streamChunksToClient) — this
-// timeout only bites a true stall (e.g. a stalled upstream LLM stream that never closes).
-const STREAM_IDLE_TIMEOUT_MS = 90_000
-// Absolute ceiling on a single turn. Backstop for pathological cases the idle watchdog
-// can't see (runaway continuations, watchdog mis-detection). Must exceed the longest
-// legitimate single wait — the approval/display-tool timeout is 15m — so set well above it.
-const MAX_TURN_WALL_CLOCK_MS = 20 * 60 * 1_000
+// A turn quiet this long with NO tool call and NO reasoning block in flight is REPORTED as idle —
+// a monitoring signal for the console. It never aborts the turn (see streamChunksToClient): tool/
+// approval waits and extended thinking legitimately hold the stream silent, so those suspend it,
+// and genuine unexplained silence is logged once while the turn keeps running.
+const STREAM_IDLE_REPORT_MS = 90_000
+// Absolute ceiling on a single turn — the only hard stop besides user-cancel, and the backstop
+// that reclaims a worker slot if a turn truly wedges (an upstream stream that stays open but silent
+// forever). The idle watchdog only REPORTS, never aborts, so a live turn is never killed for being
+// quiet — extended thinking and tool waits run as long as they need. Liveness is kept by the 15s
+// heartbeat (client + DB `updated`) and the worker's 30s BullMQ lock extension; set generously,
+// well beyond any real chat turn, since its sole job is rescuing a stuck turn that lock-renewal
+// would otherwise pin to a slot forever.
+const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 // Discovery-only eval must not touch the environment: neutralize every side-effecting execute
 // tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
 // `chat-evals` run could still execute ap_run_code against the developer's project.
@@ -114,12 +118,13 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         try {
             const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
+            const taintState: TaintState = { tainted: false }
 
             const webTools: ToolSet = dryRun ? {} : {
-                ...chatWorkerTools.createWebTools(),
-                ...(aiTools.webSearch ? chatWorkerTools.createSearchTools({ webSearch: aiTools.webSearch }) : {}),
+                ...chatWorkerTools.createWebTools({ taintState }),
+                ...(aiTools.webSearch ? chatWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(webSearchActive ? chatAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
-                ...(aiTools.webScraping ? chatWorkerTools.createScrapeTools({ scraping: aiTools.webScraping }) : {}),
+                ...(aiTools.webScraping ? chatWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? chatWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveChatFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
@@ -128,7 +133,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             }
 
             const allTools = buildToolSet({
-                ctx, eventEmitter, log, phaseState, mcpToolSet, webTools,
+                ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
@@ -160,9 +165,14 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                     drainStream: (result) => streamChunksToClient({
                         result, ctx, userId, conversationId, runId, log,
                         abortSignal: abortController.signal,
-                        onStreamStalled: () => {
-                            log.error({ conversation: { id: conversationId }, streamIdleMs: STREAM_IDLE_TIMEOUT_MS }, 'Chat stream stalled with no tool in flight — aborting wedged turn')
-                            abortController.abort()
+                        onStreamIdle: (reason) => {
+                            const fields = { conversation: { id: conversationId }, idleMs: STREAM_IDLE_REPORT_MS, reason }
+                            if (reason === 'idle') {
+                                log.warn(fields, 'Chat stream idle with nothing in flight — turn continues (monitoring signal)')
+                            }
+                            else {
+                                log.info(fields, 'Chat stream quiet while work is in flight — turn continues (monitoring signal)')
+                            }
                         },
                     }),
                     onProgress: ({ uiParts, responseMessages }) => {
@@ -275,7 +285,8 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
         catch (err) {
             log.error({ error: err, conversation: { id: conversationId } }, '[executeChatAgent] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-            const errorCode = isCreditExhaustedError(errorMessage) ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
+            const isCreditError = isCreditExhaustedError(errorMessage)
+            const errorCode = isCreditError ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveChatMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateChatProgress) and only flips status, so an errored turn keeps
@@ -289,6 +300,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             await sendEventWithRetry({
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
             })
+            // Running out of AI credits is a user/billing condition, not an engine failure — the error has
+            // already been delivered to the user. Complete the job (OK); re-throwing would mark it
+            // INTERNAL_ERROR and fail+retry it (pointlessly — the user is still out of credits) and page.
+            if (isCreditError) {
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
             throw err
         }
         finally {
@@ -306,11 +323,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: ChatPhase }
+    taintState: TaintState
     mcpToolSet: Record<string, unknown>
     webTools: ToolSet
     projects: Array<{ id: string, displayName: string, type: string }>
@@ -345,7 +363,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         // Auto-resolve in dry-run (playground) and discovery-only (eval): there's no UI to click
         // approve, so a real wait would stall the entire turn for APPROVAL_TIMEOUT_MS.
         if (dryRun || discoveryOnly) {
-            return { approved: true }
+            return { outcome: 'approved' }
         }
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         while (Date.now() < deadline) {
@@ -353,7 +371,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
             // holding the gate for up to APPROVAL_TIMEOUT_MS — frees the MCP client
             // and lets the turn tear down promptly.
             if (abortSignal.aborted) {
-                return { approved: false }
+                return { outcome: 'aborted' }
             }
             const remainingMs = deadline - Date.now()
             if (remainingMs <= 0) break
@@ -365,7 +383,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
                 waitForAbort(abortSignal).then(() => ({ result: 'aborted' as const })),
             ]))
             if (abortSignal.aborted || response?.result === 'aborted') {
-                return { approved: false }
+                return { outcome: 'aborted' }
             }
             if (error) {
                 log.warn({ error, gateId }, 'Approval wait RPC failed, retrying')
@@ -373,11 +391,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
                 continue
             }
             if (response.result !== 'pending') {
-                const decision = response.result as GateDecision
-                return { approved: decision.approved, payload: decision.payload }
+                const decision = response.result as { approved: boolean, payload?: Record<string, unknown> }
+                return { outcome: decision.approved ? 'approved' : 'declined', payload: decision.payload }
             }
         }
-        return { approved: false }
+        return { outcome: 'timeout' }
     }
 
     // Restore the conversation's already-chosen project so a continued turn doesn't
@@ -423,7 +441,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -467,7 +485,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, mcpToolSet, webTools
     return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
 }
 
-async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamStalled }: {
+async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
     result: ReturnType<typeof streamText>
     ctx: JobContext
     userId: string
@@ -475,7 +493,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
     runId?: string
     log: JobContext['log']
     abortSignal: AbortSignal
-    onStreamStalled: () => void
+    onStreamIdle: (reason: 'idle' | 'tool' | 'reasoning') => void
 }): Promise<void> {
     let chunkBuffer: unknown[] = []
     let flushTimer: ReturnType<typeof setTimeout> | null = null
@@ -501,38 +519,46 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
         },
     })
 
-    // Idle watchdog: a tool call (between its tool-input-available and tool-output-* chunks)
-    // legitimately holds the stream silent for minutes, so the watchdog is suspended while
-    // any tool is pending and only fires on a genuine wedge — quiet stream, nothing running.
+    // Idle reporter (monitoring signal, NOT a kill): on every STREAM_IDLE_REPORT_MS of stream
+    // silence it reports once and keeps watching, so a turn that has gone quiet ALWAYS produces a
+    // signal — whether the silence is expected (a tool call or reasoning block in flight) or
+    // unexplained. Reporting on the in-flight paths too is what surfaces a stream that wedges
+    // mid-tool or mid-reasoning; otherwise that turn is invisible until the wall-clock backstop.
+    // It never aborts — the turn's only hard stop is the wall-clock backstop at the top of this
+    // file — and the reason lets the caller log unexplained silence louder than expected quiet.
     let pendingToolCalls = 0
+    let reasoningInFlight = false
     let idleTimer: ReturnType<typeof setTimeout> | null = null
-    const armIdleWatchdog = () => {
+    const armIdleReporter = () => {
         if (idleTimer) clearTimeout(idleTimer)
         idleTimer = setTimeout(() => {
-            if (pendingToolCalls > 0) {
-                armIdleWatchdog()
-                return
-            }
-            onStreamStalled()
-        }, STREAM_IDLE_TIMEOUT_MS)
+            onStreamIdle(pendingToolCalls > 0 ? 'tool' : reasoningInFlight ? 'reasoning' : 'idle')
+            armIdleReporter()
+        }, STREAM_IDLE_REPORT_MS)
     }
 
     const reader = uiStream.getReader()
     const abortRace = waitForAbort(abortSignal).then(() => 'aborted' as const)
-    armIdleWatchdog()
+    armIdleReporter()
     try {
         while (true) {
             const next = await Promise.race([reader.read(), abortRace])
             if (next === 'aborted') break
             const { done, value: chunk } = next
             if (done) break
-            armIdleWatchdog()
+            armIdleReporter()
             const chunkType = isObject(chunk) && typeof chunk['type'] === 'string' ? chunk['type'] : undefined
             if (chunkType === 'tool-input-available') {
                 pendingToolCalls++
             }
             else if (chunkType === 'tool-output-available' || chunkType === 'tool-output-error' || chunkType === 'tool-output-denied') {
                 pendingToolCalls = Math.max(0, pendingToolCalls - 1)
+            }
+            else if (chunkType === 'reasoning-start') {
+                reasoningInFlight = true
+            }
+            else if (chunkType === 'reasoning-end') {
+                reasoningInFlight = false
             }
             chunkBuffer.push(chunk)
             if (chunkBuffer.length >= BATCH_SIZE) {
@@ -629,7 +655,3 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
     }
 }
 
-type GateDecision = {
-    approved: boolean
-    payload?: Record<string, unknown>
-}

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils';
-import { ExecutionType, FlowActionType, FlowRunStatus, FlowTriggerType, FlowVersionState, StreamStepProgress, RunEnvironment, WorkerJobType } from '@activepieces/shared';
+import { EngineResponseStatus, ExecutionType, FlowActionType, FlowRunStatus, FlowTriggerType, FlowVersionState, StreamStepProgress, RunEnvironment, WorkerJobType } from '@activepieces/shared';
 import type { ExecuteFlowJobData, FlowVersion } from '@activepieces/shared'
 
 vi.mock('../../../../src/lib/config/worker-settings', () => ({
@@ -179,12 +179,29 @@ describe('executeFlowJob', () => {
             const result = await executeFlowJob.execute(ctx, data)
 
             expect(result.kind).toBe(JobResultKind.FIRE_AND_FORGET)
+            // Run is FAILED, but the job COMPLETES (OK) — a missing flow must not fail+retry+page the job.
+            expect(result.status).toBe(EngineResponseStatus.OK)
 
             expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
                 expect.objectContaining({ status: FlowRunStatus.FAILED }),
             )
 
             // No sandbox work happens for a missing flow: provision returns early, run is never called.
+            expect(ctx.runtime.execute).not.toHaveBeenCalled()
+        })
+
+        it('marks run as FAILED and completes the job (OK) when the flow is disabled', async () => {
+            const failedStep = { name: 'step_1', displayName: 'HTTP', message: 'The piece @activepieces/piece-http@1.0.0 is not installed' }
+            const ctx = makeMockContext({ resolveResult: { kind: 'disabled', failedStep } })
+            const data = makeResumeJobData({ executionType: ExecutionType.BEGIN })
+
+            const result = await executeFlowJob.execute(ctx, data)
+
+            expect(result.kind).toBe(JobResultKind.FIRE_AND_FORGET)
+            expect(result.status).toBe(EngineResponseStatus.OK)
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({ status: FlowRunStatus.FAILED, failedStep }),
+            )
             expect(ctx.runtime.execute).not.toHaveBeenCalled()
         })
     })

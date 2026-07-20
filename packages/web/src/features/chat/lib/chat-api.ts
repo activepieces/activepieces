@@ -1,5 +1,6 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
+  type ChatFeedbackReason,
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
@@ -88,6 +89,25 @@ async function cancelConversation(conversationId: string): Promise<void> {
   return api.post<void>(`/v1/chat/conversations/${conversationId}/cancel`);
 }
 
+async function submitMessageFeedback({
+  conversationId,
+  messageIndex,
+  rating,
+  reasons,
+  comment,
+}: {
+  conversationId: string;
+  messageIndex: number;
+  rating: 'up' | 'down' | null;
+  reasons?: ChatFeedbackReason[];
+  comment?: string;
+}): Promise<void> {
+  return api.post<void>(
+    `/v1/chat/conversations/${conversationId}/messages/${messageIndex}/feedback`,
+    { rating, reasons, comment },
+  );
+}
+
 async function getPickerConnections({
   conversationId,
   pieceName,
@@ -100,13 +120,14 @@ async function getPickerConnections({
   });
 }
 
-async function getPendingGate(conversationId: string): Promise<{
-  gateId: string;
-  toolName: string;
-  displayName: string;
-  toolInput: Record<string, unknown>;
-} | null> {
+async function getPendingGate(
+  conversationId: string,
+): Promise<PendingGate | null> {
   return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
+}
+
+async function recordLanding(): Promise<void> {
+  return api.post<void>('/v1/chat/funnel/landing');
 }
 
 export const chatApi = {
@@ -119,6 +140,15 @@ export const chatApi = {
   sendMessage,
   approveToolCall,
   cancelConversation,
+  submitMessageFeedback,
   getPickerConnections,
   getPendingGate,
+  recordLanding,
+};
+
+export type PendingGate = {
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
 };

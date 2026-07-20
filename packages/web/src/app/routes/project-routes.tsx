@@ -9,9 +9,9 @@ import { ApTableStateProvider } from '@/features/tables';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
-import { BuilderLayout } from '../components/builder-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
+import { DefaultRoute } from '../guards/default-route';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
@@ -21,10 +21,6 @@ const FlowBuilderPage = lazyWithRetry(
   'flow-builder',
 );
 const AnalyticsPage = lazyWithRetry(() => import('./impact'), 'analytics');
-const LeaderboardPage = lazyWithRetry(
-  () => import('./leaderboard'),
-  'leaderboard',
-);
 const ProjectReleasesPage = lazyWithRetry(
   () =>
     import('./project-release').then((m) => ({
@@ -86,155 +82,135 @@ const automationsPagePermissions = [
   Permission.READ_FOLDER,
 ];
 
-export const projectRoutes = [
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.automations,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={automationsPagePermissions}>
-          <PageTitle title="Flows">
+// Project-scoped child of the `/projects/:projectId` shell route. Paths are
+// RELATIVE (the parent owns the prefix), and the parent already ran the auth
+// guard + project switch (TokenCheckerWrapper) before the shell rendered, so
+// children carry only permissions and the page itself.
+const shellChild = (path: string, element: React.ReactNode) => ({
+  path: path.startsWith('/') ? path.slice(1) : path,
+  element,
+});
+
+// The bare `/automations` → `/projects/:id/automations` redirect half only.
+const bareRedirect = (path: string) =>
+  ProjectRouterWrapper({ path, element: <></> }).slice(1);
+
+export const projectShellRoutes = [
+  // Bare /projects/:projectId has no Stage resource. DefaultRoute folds the operator
+  // app into the canonical chat landing (/chat, Stage closed, no project selected),
+  // and folds an embed into its default surface (/automations) — an embed never lands
+  // on /chat. The parent already ran TokenCheckerWrapper, so the session project is set.
+  { index: true, element: <DefaultRoute /> },
+  shellChild(
+    routesThatRequireProjectId.automations,
+    <RoutePermissionGuard requiredPermissions={automationsPagePermissions}>
+      <PageTitle title="Flows">
+        <SuspenseWrapper>
+          <AutomationsPage />
+        </SuspenseWrapper>
+      </PageTitle>
+    </RoutePermissionGuard>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.flows,
+    <Navigate to={routesThatRequireProjectId.automations} replace />,
+  ),
+  shellChild(
+    routesThatRequireProjectId.singleFlow,
+    <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
+      <PageTitle title="Builder">
+        <SuspenseWrapper>
+          <FlowBuilderPage />
+        </SuspenseWrapper>
+      </PageTitle>
+    </RoutePermissionGuard>,
+  ),
+  shellChild(
+    '/flow-import-redirect/:flowId',
+    <AfterImportFlowRedirect></AfterImportFlowRedirect>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.singleRun,
+    <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
+      <PageTitle title="Flow Run">
+        <SuspenseWrapper>
+          <FlowRunPage />
+        </SuspenseWrapper>
+      </PageTitle>
+    </RoutePermissionGuard>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.runs,
+    <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
+      <PageTitle title="Runs">
+        <SuspenseWrapper>
+          <RunsPage />
+        </SuspenseWrapper>
+      </PageTitle>
+    </RoutePermissionGuard>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.singleRelease,
+    <PageTitle title="Releases">
+      <SuspenseWrapper>
+        <ViewRelease />
+      </SuspenseWrapper>
+    </PageTitle>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.tables,
+    <Navigate to={routesThatRequireProjectId.automations} replace />,
+  ),
+  shellChild(
+    routesThatRequireProjectId.singleTable,
+    <HideTablesGuard>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
+        <PageTitle title="Table">
+          <ApTableStateProvider>
             <SuspenseWrapper>
-              <AutomationsPage />
+              <ApTableEditorPage />
             </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.flows,
-    element: <Navigate to={routesThatRequireProjectId.automations} replace />,
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.singleFlow,
-    element: (
-      <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
-        <PageTitle title="Builder">
-          <BuilderLayout>
-            <SuspenseWrapper>
-              <FlowBuilderPage />
-            </SuspenseWrapper>
-          </BuilderLayout>
+          </ApTableStateProvider>
         </PageTitle>
       </RoutePermissionGuard>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/flow-import-redirect/:flowId',
-    element: <AfterImportFlowRedirect></AfterImportFlowRedirect>,
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.singleRun,
-    element: (
-      <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
-        <PageTitle title="Flow Run">
-          <BuilderLayout>
-            <SuspenseWrapper>
-              <FlowRunPage />
-            </SuspenseWrapper>
-          </BuilderLayout>
-        </PageTitle>
-      </RoutePermissionGuard>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.runs,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
-          <PageTitle title="Runs">
-            <SuspenseWrapper>
-              <RunsPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.singleRelease,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Releases">
-          <SuspenseWrapper>
-            <ViewRelease />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.tables,
-    element: <Navigate to={routesThatRequireProjectId.automations} replace />,
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.singleTable,
-    element: (
-      <HideTablesGuard>
-        <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
-          <PageTitle title="Table">
-            <BuilderLayout>
-              <ApTableStateProvider>
-                <SuspenseWrapper>
-                  <ApTableEditorPage />
-                </SuspenseWrapper>
-              </ApTableStateProvider>
-            </BuilderLayout>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </HideTablesGuard>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.connections,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard
-          requiredPermissions={Permission.READ_APP_CONNECTION}
-        >
-          <PageTitle title="Connections">
-            <SuspenseWrapper>
-              <AppConnectionsPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.variables,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={Permission.READ_VARIABLE}>
-          <PageTitle title="Variables">
-            <SuspenseWrapper>
-              <VariablesPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.releases,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Releases">
-          <SuspenseWrapper>
-            <ProjectReleasesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.settings,
-    element: (
-      <ProjectDashboardLayout>
-        <SettingsRerouter></SettingsRerouter>
-      </ProjectDashboardLayout>
-    ),
-  }),
+    </HideTablesGuard>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.connections,
+    <RoutePermissionGuard requiredPermissions={Permission.READ_APP_CONNECTION}>
+      <PageTitle title="Connections">
+        <SuspenseWrapper>
+          <AppConnectionsPage />
+        </SuspenseWrapper>
+      </PageTitle>
+    </RoutePermissionGuard>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.variables,
+    <RoutePermissionGuard requiredPermissions={Permission.READ_VARIABLE}>
+      <PageTitle title="Variables">
+        <SuspenseWrapper>
+          <VariablesPage />
+        </SuspenseWrapper>
+      </PageTitle>
+    </RoutePermissionGuard>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.releases,
+    <PageTitle title="Releases">
+      <SuspenseWrapper>
+        <ProjectReleasesPage />
+      </SuspenseWrapper>
+    </PageTitle>,
+  ),
+  shellChild(
+    routesThatRequireProjectId.settings,
+    <SettingsRerouter></SettingsRerouter>,
+  ),
+];
+
+// Analytics surfaces are not project-scoped paths; keep them full-page for now.
+export const projectStandaloneRoutes = [
   {
     path: '/impact',
     element: (
@@ -247,16 +223,20 @@ export const projectRoutes = [
       </ProjectDashboardLayout>
     ),
   },
-  {
-    path: '/leaderboard',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Leaderboard">
-          <SuspenseWrapper>
-            <LeaderboardPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
+];
+
+export const projectBareRedirects = [
+  ...bareRedirect(routesThatRequireProjectId.automations),
+  ...bareRedirect(routesThatRequireProjectId.flows),
+  ...bareRedirect(routesThatRequireProjectId.singleFlow),
+  ...bareRedirect('/flow-import-redirect/:flowId'),
+  ...bareRedirect(routesThatRequireProjectId.singleRun),
+  ...bareRedirect(routesThatRequireProjectId.runs),
+  ...bareRedirect(routesThatRequireProjectId.singleRelease),
+  ...bareRedirect(routesThatRequireProjectId.tables),
+  ...bareRedirect(routesThatRequireProjectId.singleTable),
+  ...bareRedirect(routesThatRequireProjectId.connections),
+  ...bareRedirect(routesThatRequireProjectId.variables),
+  ...bareRedirect(routesThatRequireProjectId.releases),
+  ...bareRedirect(routesThatRequireProjectId.settings),
 ];

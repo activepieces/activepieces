@@ -1,8 +1,11 @@
 import os from 'os'
 import { monitorEventLoopDelay } from 'perf_hooks'
+import { ApEdition } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { FastifyBaseLogger } from 'fastify'
 import { jobQueue } from '../workers/job-queue/job-queue'
+import { appMachineCache } from './app-machine-cache'
+import { system } from './system/system'
 
 const SNAPSHOT_INTERVAL_MS = 60_000
 const NANOS_PER_MS = 1e6
@@ -53,6 +56,13 @@ export const systemSnapshot = {
                 // operational metrics and must always reach the drain regardless of
                 // the configured sample rate for the info level.
                 logger.emit({ _forceKeep: true })
+
+                // Self-register this app replica so the diagnostics endpoint can list the app tier
+                // (apps have no inbound healthcheck to register over). Self-hosted only — on Cloud
+                // the diagnostics read is disabled, so the write would have no consumer.
+                if (system.getEdition() !== ApEdition.CLOUD) {
+                    await appMachineCache.register(eventLoopDelayP99Ms)
+                }
             }
             catch {
                 // Never crash the process from a monitoring tick

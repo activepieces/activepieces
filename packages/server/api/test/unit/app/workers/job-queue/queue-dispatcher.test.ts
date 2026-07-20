@@ -22,9 +22,10 @@ function createFakeJob(id: string): ConsumeJobRequest {
     return {
         jobId: id,
         jobData: {} as ConsumeJobRequest['jobData'],
-        timeoutInSeconds: 600,
         attempsStarted: 0,
         engineToken: 'token',
+        token: 'job-token',
+        queueName: 'test-queue',
     }
 }
 
@@ -249,7 +250,7 @@ describe('QueueDispatcher', () => {
         pendingDequeues[0].resolve(orphanedJob)
         await vi.advanceTimersByTimeAsync(0)
 
-        expect(onOrphanedJobMock).toHaveBeenCalledWith('orphaned-job', mockLog)
+        expect(onOrphanedJobMock).toHaveBeenCalledWith('orphaned-job', 'job-token', 'test-queue', mockLog)
     })
 
     it('should not spawn a second concurrent loop after close() while dequeue is in-flight', async () => {

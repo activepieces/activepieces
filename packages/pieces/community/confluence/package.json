@@ -1,15 +1,16 @@
 {
   "name": "@activepieces/piece-confluence",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "xml2js": "0.6.2",
-    "form-data": "4.0.4",
+    "form-data": "4.0.6",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@activepieces/core-utils": "workspace:*",
+    "zod": "4.3.6"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

@@ -1,4 +1,4 @@
-import { FilteredPieceBehavior, Platform, User } from '@activepieces/shared'
+import { Platform, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -50,16 +50,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
             default: true,
-        },
-        filteredPieceNames: {
-            type: String,
-            array: true,
-            nullable: false,
-        },
-        filteredPieceBehavior: {
-            type: String,
-            enum: FilteredPieceBehavior,
-            nullable: false,
         },
         allowedAuthDomains: {
             type: String,

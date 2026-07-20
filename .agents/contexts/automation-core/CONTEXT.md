@@ -38,6 +38,10 @@ _Avoid_: event source, starter
 The mechanism a trigger uses: POLLING, WEBHOOK, APP_WEBHOOK, or MANUAL.
 _Avoid_: trigger type
 
+**Schedule (ScheduleOptions)**:
+When a polling trigger fires: either a cron expression (CRON_EXPRESSION — wall-clock minutes within the hour) or a rolling interval (INTERVAL — every `intervalMs`, crossing hour boundaries).
+_Avoid_: fixed rate, every (outside the BullMQ boundary)
+
 **TriggerSource**:
 The external registration (webhook URL, polling job, app-event subscription) that fires a flow.
 
@@ -70,3 +74,16 @@ A discriminated union of the four tool types attachable to an agent step: Piece,
 **Folder**:
 A grouping container for organizing flows and tables within a project.
 _Avoid_: directory, category
+
+**Resume Confirmation Page**:
+The white-labeled HTML page served on `GET`/`HEAD` of the dedicated `.../waitpoints/:id/confirm`
+route; a human must click Approve/Disapprove to `POST` back and resume the paused run. Exists so an
+email security scanner's link prefetch (a bare `GET`) cannot consume the single-use waitpoint. On
+open it reads the waitpoint from the DB and shows an "already responded" state when the run has moved
+on. The older `.../waitpoints/:id` route still resumes on a bare `GET` (deprecated, kept for
+already-sent emails).
+_Avoid_: interstitial
+
+**Approval Action**:
+The `action=approve|disapprove` query-param convention on approval resume links, produced by the
+approval pieces and recognized by the Resume Confirmation Page to render Approve/Disapprove buttons.

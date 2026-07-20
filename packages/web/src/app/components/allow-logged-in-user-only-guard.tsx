@@ -8,17 +8,25 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
-import { BadgeCelebrate } from './badge-celebrate';
-
 type AllowOnlyLoggedInUserOnlyGuardProps = {
   children: React.ReactNode;
+  // Rendered instead of the sign-in redirect when the visitor is logged out —
+  // for routes that have a public variant (e.g. shared template links) but
+  // must keep this guard as their element root so their component chain stays
+  // type-identical with the other guarded routes (React then preserves the
+  // layout instance across navigation).
+  publicFallback?: React.ReactNode;
 };
 export const AllowOnlyLoggedInUserOnlyGuard = ({
   children,
+  publicFallback,
 }: AllowOnlyLoggedInUserOnlyGuardProps) => {
   const { reset } = useTelemetry();
   const location = useLocation();
   if (!authenticationSession.isLoggedIn()) {
+    if (publicFallback) {
+      return <>{publicFallback}</>;
+    }
     authenticationSession.logOut();
     reset();
     const searchParams = new URLSearchParams();
@@ -31,10 +39,5 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();
   projectCollectionUtils.useCurrentProject();
-  return (
-    <SocketProvider>
-      <BadgeCelebrate />
-      {children}
-    </SocketProvider>
-  );
+  return <SocketProvider>{children}</SocketProvider>;
 };

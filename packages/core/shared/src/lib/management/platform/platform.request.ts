@@ -2,7 +2,7 @@ import { ApId, ApMultipartFile, Nullable, OptionalArrayFromQuery, OptionalBoolea
 import { z } from 'zod'
 import { mcpEndpointAllowlistUtil } from '../../automation/mcp/mcp-endpoint-allowlist'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
-import { FilteredPieceBehavior, PieceSelectorConfig, PlatformThemeColors } from './platform.model'
+import { PieceSelectorConfig, PlatformThemeColors } from './platform.model'
 
 const mcpServerEndpointSchema = z.string()
     .refine((value) => mcpEndpointAllowlistUtil.isValidEntry(value), 'invalidMcpServerEndpoint')
@@ -59,8 +59,6 @@ export const UpdatePlatformRequestBody = z.object({
     logoIcon: z.optional(ApMultipartFile),
     fullLogo: z.optional(ApMultipartFile),
     favIcon: z.optional(ApMultipartFile),
-    filteredPieceNames: OptionalArrayFromQuery(z.string()),
-    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
     federatedAuthProviders: FederatedAuthnProviderConfig.optional(),
     cloudAuthEnabled: OptionalBooleanFromQuery,
     googleAuthEnabled: OptionalBooleanFromQuery,

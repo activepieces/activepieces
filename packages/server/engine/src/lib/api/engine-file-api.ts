@@ -1,6 +1,7 @@
+import { Readable } from 'node:stream'
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
+import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
@@ -8,6 +9,7 @@ const zstdDecompress = promisify(zstdDecompressCallback)
 const RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
+    retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 
 const READ_URL_HEADER = 'x-ap-file-read-url'
@@ -16,9 +18,23 @@ const FILE_NAME_HEADER = 'x-ap-file-name'
 
 export const engineFileApi = {
     async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
+        const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
+
+        if (data instanceof Readable) {
+            // No Content-Length → the server streams straight to storage instead of a
+            // presigned redirect (which needs a length). A stream can't be replayed, so no retry.
+            const response = await global.fetch(putUrl, {
+                method: 'PUT',
+                // @ts-expect-error -- undici streams a Node web ReadableStream body; the DOM fetch types omit it
+                body: Readable.toWeb(data),
+                headers: buildPutHeaders({ type, fileName, compression }),
+                duplex: 'half',
+            })
+            return resolveUploadReadUrl(fileId, response)
+        }
+
         const fetchWithRetry = fetchRetry(global.fetch)
         const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
-        const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
 
         const initial = await fetchWithRetry(putUrl, {
             method: 'PUT',
@@ -27,8 +43,6 @@ export const engineFileApi = {
             redirect: 'manual',
             ...RETRY_CONFIG,
         })
-
-        const readUrlFromHeader = initial.headers.get(READ_URL_HEADER) ?? undefined
 
         if (initial.status >= 300 && initial.status < 400) {
             const location = initial.headers.get('location')
@@ -48,27 +62,14 @@ export const engineFileApi = {
                     `Failed to upload to signed S3 URL for ${fileId}: ${s3Response.status} ${s3Response.statusText}`,
                 )
             }
+            const readUrlFromHeader = initial.headers.get(READ_URL_HEADER)
             if (!readUrlFromHeader) {
                 throw new EngineGenericError('EngineFileUploadError', `Server redirect response missing ${READ_URL_HEADER} header`)
             }
             return { fileId, readUrl: readUrlFromHeader }
         }
 
-        if (!initial.ok) {
-            throw new EngineGenericError(
-                'EngineFileUploadError',
-                `Failed to upload engine file ${fileId}: ${initial.status} ${initial.statusText}`,
-            )
-        }
-
-        if (readUrlFromHeader) {
-            return { fileId, readUrl: readUrlFromHeader }
-        }
-        const body = await initial.json() as { readUrl?: unknown }
-        if (typeof body.readUrl !== 'string') {
-            throw new EngineGenericError('EngineFileUploadError', 'Upload response missing readUrl')
-        }
-        return { fileId, readUrl: body.readUrl }
+        return resolveUploadReadUrl(fileId, initial)
     },
     async download({ engineToken, apiUrl, fileId }: DownloadFileParams): Promise<Uint8Array> {
         const fetchWithRetry = fetchRetry(global.fetch)
@@ -78,6 +79,12 @@ export const engineFileApi = {
             ...RETRY_CONFIG,
         })
         if (!response.ok) {
+            // A gone file (deleted/expired trigger payload or run log) never recovers on retry and is a
+            // data-lifecycle issue, not an engine bug — surface it as a USER error so callers can fail the
+            // run cleanly. Other non-ok statuses (5xx, throttling) may be transient, so keep them ENGINE.
+            if (response.status === 404 || response.status === 410) {
+                throw new EngineFileNotFoundError(fileId)
+            }
             throw new EngineGenericError(
                 'EngineFileDownloadError',
                 `Failed to download file ${fileId}: ${response.status} ${response.statusText}`,
@@ -98,11 +105,31 @@ export const engineFileApi = {
     },
 }
 
+async function resolveUploadReadUrl(fileId: string, response: Response): Promise<UploadResult> {
+    if (!response.ok) {
+        throw new EngineGenericError(
+            'EngineFileUploadError',
+            `Failed to upload engine file ${fileId}: ${response.status} ${response.statusText}`,
+        )
+    }
+    const readUrlFromHeader = response.headers.get(READ_URL_HEADER)
+    if (readUrlFromHeader) {
+        return { fileId, readUrl: readUrlFromHeader }
+    }
+    const body = await response.json() as { readUrl?: unknown }
+    if (typeof body.readUrl !== 'string') {
+        throw new EngineGenericError('EngineFileUploadError', 'Upload response missing readUrl')
+    }
+    return { fileId, readUrl: body.readUrl }
+}
+
 function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHeadersParams): Record<string, string> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/octet-stream',
-        'Content-Length': String(contentLength),
         [FILE_TYPE_HEADER]: type,
+    }
+    if (contentLength !== undefined) {
+        headers['Content-Length'] = String(contentLength)
     }
     if (fileName) {
         headers[FILE_NAME_HEADER] = fileName
@@ -130,7 +157,7 @@ type UploadParams = {
     type: FileType.FLOW_STEP_FILE | FileType.FLOW_RUN_LOG | FileType.FLOW_RUN_LOG_SLICE
     fileName?: string
     compression?: FileCompression
-    data: Uint8Array | Buffer
+    data: Uint8Array | Buffer | Readable
 }
 
 type UploadResult = {
@@ -148,5 +175,5 @@ type BuildHeadersParams = {
     type: FileType
     fileName?: string
     compression?: FileCompression
-    contentLength: number
+    contentLength?: number
 }

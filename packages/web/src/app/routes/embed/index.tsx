@@ -124,10 +124,8 @@ const EmbedPage = React.memo(() => {
               authenticationSession.saveResponse(data, true);
               const configuredRoute = event.data.data.initialRoute ?? '/';
 
-              // Embeds keep their host-configured landing; chat shouldn't override it.
               const defaultRoute = determineDefaultRoute({
                 checkAccess,
-                chatEnabled: false,
               });
               const initialRoute =
                 configuredRoute === '/' ? defaultRoute : configuredRoute;
@@ -161,6 +159,8 @@ const EmbedPage = React.memo(() => {
                   hideFlowsPageNavbar:
                     event.data.data.hideFlowsPageNavbar ?? false,
                   hidePageHeader: event.data.data.hidePageHeader ?? false,
+                  hideActiveUsers: event.data.data.hideActiveUsers ?? false,
+                  hideGlobalSearch: event.data.data.hideGlobalSearch ?? false,
                 });
               });
               memoryRouter.navigate(initialRoute);

@@ -7,6 +7,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "jimp": "^0.22.12",
+    "mime-types": "2.1.35",
     "nanoid": "3.3.8",
     "pdf-lib": "1.17.1",
     "unpdf": "1.4.0",
@@ -14,7 +15,7 @@
     "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "3.0.8",
+    "vitest": "3.2.6",
     "@types/mime-types": "2.1.1",
     "tslib": "2.6.2"
   },

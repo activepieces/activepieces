@@ -5,7 +5,7 @@ import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activep
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
-import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
+import { cacheState } from '../../cache-state'
 import { codeCache } from './code-cache'
 
 const TS_CONFIG_CONTENT = `
@@ -32,26 +32,27 @@ const TS_CONFIG_CONTENT = `
 }
 `
 
+const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '__AP_ERROR_MESSAGE__'
+
 const INVALID_ARTIFACT_TEMPLATE = `
     exports.code = async (params) => {
-      throw new Error(\`\${ERROR_MESSAGE}\`);
+      throw new Error(${INVALID_ARTIFACT_ERROR_PLACEHOLDER});
     };
     `
-
-const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) => ({
     async processCodeStep({
         artifact,
         codesFolderPath,
-    }: ProcessCodeStepParams): Promise<void> {
+    }: ProcessCodeStepParams): Promise<CodeBuildStatus> {
         const { sourceCode, flowVersionId, name } = artifact
         const codePath = codeCache(codesFolderPath).stepDir({ flowVersionId, stepName: name })
         log.debug({ sourceCode, name, codePath }, 'Processing code step')
 
         const currentHash = await cryptoUtils.hashObject(sourceCode)
         const cache = cacheState(codePath)
-        await cache.getOrSetCache({
+        let buildStatus: CodeBuildStatus = 'success'
+        const { cacheHit } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
                 return value !== currentHash
@@ -66,18 +67,31 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
 
                 await fileSystemUtils.threadSafeMkdir(codePath)
 
-                await wideEvent.timed({
+                const installError = await wideEvent.timed({
                     name: 'codeDeps',
                     fn: async () => {
-                        await installDependencies({
+                        const { error } = await tryCatch(() => installDependencies({
                             path: codePath,
                             packageJson: getPackageJson(packageJson, getSettings),
-                        }, log)
-                        log.info({ path: codePath }, 'Installed dependencies')
+                        }, log))
+                        if (error) {
+                            log.info({ codePath, error }, 'Dependency installation error')
+                        }
+                        else {
+                            log.info({ path: codePath }, 'Installed dependencies')
+                        }
+                        return error
                     },
                 })
 
-                await wideEvent.timed({
+                if (installError) {
+                    await handleInstallError({ codePath, error: installError })
+                    await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
+                    buildStatus = 'install-failed'
+                    return currentHash
+                }
+
+                const compileError = await wideEvent.timed({
                     name: 'codeCompile',
                     fn: async () => {
                         const { error } = await tryCatch(() => compileCode({
@@ -91,15 +105,22 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                         else {
                             log.info({ codePath }, 'Compilation success')
                         }
+                        return error
                     },
                 })
+                if (compileError) {
+                    buildStatus = 'compile-failed'
+                }
 
                 // node_modules is no longer needed after esbuild bundles everything into index.js
                 await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },
-            skipSave: NO_SAVE_GUARD,
+            // A transient bun install failure must self-heal: never cache the throwing stub, so the
+            // next build re-runs install. Deterministic compile errors stay cached. See GIT-1608.
+            skipSave: () => buildStatus === 'install-failed',
         })
+        return cacheHit ? 'success' : buildStatus
     },
 })
 
@@ -155,17 +176,20 @@ async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Pr
 }
 
 async function handleCompilationError({ codePath, error }: HandleCompilationErrorParams): Promise<void> {
-    const errorHasStdout =
-        typeof error === 'object' && error && 'stdout' in error
-    const stdoutError = errorHasStdout ? error.stdout : undefined
-    const genericError = `${error ?? 'error compiling'}`
-    const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
+    const errorMessage = `Compilation Error ${error ?? 'error compiling'}`
+    await writeInvalidArtifact({ codePath, errorMessage })
+}
 
+async function handleInstallError({ codePath, error }: HandleInstallErrorParams): Promise<void> {
+    const errorMessage = `Failed to install dependencies. ${error ?? 'error installing dependencies'}`
+    await writeInvalidArtifact({ codePath, errorMessage })
+}
+
+async function writeInvalidArtifact({ codePath, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
     const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
-        errorMessage,
+        () => JSON.stringify(errorMessage),
     )
-
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
 }
 
@@ -188,3 +212,15 @@ type HandleCompilationErrorParams = {
     codePath: string
     error: unknown
 }
+
+type HandleInstallErrorParams = {
+    codePath: string
+    error: unknown
+}
+
+type WriteInvalidArtifactParams = {
+    codePath: string
+    errorMessage: string
+}
+
+export type CodeBuildStatus = 'success' | 'install-failed' | 'compile-failed'

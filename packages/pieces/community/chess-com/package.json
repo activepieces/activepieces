@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-chess-com",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -12,7 +12,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@activepieces/core-utils": "workspace:*",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "tslib": "2.6.2"

@@ -6,7 +6,6 @@ import { apLogger } from './ap-logger'
 const logger = apLogger.create()
 
 let cachedCurrentRelease: string | undefined
-let cachedLatestRelease: string | undefined
 
 function readCurrentRelease(): string {
     if (cachedCurrentRelease !== undefined) {
@@ -36,9 +35,6 @@ export const apVersionUtil = {
     },
     async getLatestRelease(): Promise<string> {
         try {
-            if (cachedLatestRelease) {
-                return cachedLatestRelease
-            }
             const response = await fetch(
                 'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
                 {
@@ -46,7 +42,6 @@ export const apVersionUtil = {
                 },
             )
             const data = await response.json() as PackageJson
-            cachedLatestRelease = data.version
             return data.version
         }
         catch (ex) {
