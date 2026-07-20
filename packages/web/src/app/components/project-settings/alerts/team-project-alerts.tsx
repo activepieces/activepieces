@@ -1,11 +1,12 @@
 import { Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Bell, Trash } from 'lucide-react';
+import { Bell, Trash, UserRound } from 'lucide-react';
 
 import {
   Item,
   ItemActions,
   ItemContent,
+  ItemDescription,
   ItemGroup,
   ItemMedia,
   ItemTitle,
@@ -13,18 +14,21 @@ import {
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { alertMutations, alertQueries } from '@/features/alerts';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { AddAlertEmailForm } from './add-alert-email-form';
 
 export const TeamProjectAlerts = () => {
   const { checkAccess } = useAuthorization();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const {
     data: alertsData,
     isLoading: alertsLoading,
@@ -49,6 +53,41 @@ export const TeamProjectAlerts = () => {
           </AlertDescription>
         </div>
       </Alert>
+      <Item variant="outline" size="sm">
+        <ItemMedia variant="icon">
+          <UserRound />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>{t('Notify flow owners')}</ItemTitle>
+          <ItemDescription>
+            {t(
+              'Also email the flow owner when their flow fails, even if they are not in the list below.',
+            )}
+          </ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Switch
+                  checked={project.notifyFlowOwnerOnFailure}
+                  disabled={writeAlertPermission === false}
+                  onCheckedChange={(checked) =>
+                    projectCollectionUtils.update(project.id, {
+                      notifyFlowOwnerOnFailure: checked,
+                    })
+                  }
+                />
+              </span>
+            </TooltipTrigger>
+            {writeAlertPermission === false && (
+              <TooltipContent side="bottom">
+                {t('Only project admins can do this')}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </ItemActions>
+      </Item>
       <div>
         {alertsLoading && (
           <div className="flex items-center justify-center py-8">

@@ -3,6 +3,7 @@ import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, 
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
+import { redisConnections } from '../../database/redis-connections'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
@@ -103,6 +104,21 @@ async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBase
     return { recovered }
 }
 
+async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {
+    const redis = await redisConnections.useExisting()
+    // INCR + EXPIRE in one atomic script: a crash between the two would otherwise leave a key with
+    // no TTL, permanently blocking the user. EXPIRE only on first increment keeps a fixed window.
+    const count = await redis.eval(
+        `local count = redis.call('INCR', KEYS[1])
+if count == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+return count`,
+        1,
+        key,
+        ttlSeconds.toString(),
+    ) as number
+    return { allowed: count <= limit, count }
+}
+
 export const chatHelpers = {
     getConversationOrThrow,
     getUserProjects,
@@ -111,5 +127,6 @@ export const chatHelpers = {
     resolveModelIdForProvider,
     resolveFastModelId,
     recoverAllStaleStreamingConversations,
+    incrementAndCheckLimit,
     conversationRepo,
 }

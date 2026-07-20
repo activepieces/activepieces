@@ -1,10 +1,30 @@
 import { t } from 'i18next';
-import { Dot, FolderIcon, User } from 'lucide-react';
+import { FolderIcon, User } from 'lucide-react';
 
+import { BoxIcon } from '@/components/icons/box';
+import { ConnectIcon } from '@/components/icons/connect';
+import { HistoryIcon } from '@/components/icons/history';
+import { Settings2Icon } from '@/components/icons/settings2';
 import { TableIcon } from '@/components/icons/table';
+import { VariableIcon } from '@/components/icons/variable';
 import { WorkflowIcon } from '@/components/icons/workflow';
 
-import { type SearchResultItem } from './use-global-search-results';
+import {
+  type DestinationKind,
+  type SearchResultItem,
+} from './use-global-search-results';
+
+const DESTINATION_ICONS: Record<
+  DestinationKind,
+  React.ComponentType<{ className?: string; size?: number }>
+> = {
+  automations: WorkflowIcon,
+  connections: ConnectIcon,
+  runs: HistoryIcon,
+  variables: VariableIcon,
+  releases: BoxIcon,
+  settings: Settings2Icon,
+};
 
 function timeAgo(date: Date | string): string {
   const ms = Date.now() - new Date(date).getTime();
@@ -20,6 +40,7 @@ function timeAgo(date: Date | string): string {
 type ItemIconProps = {
   type: string;
   pageIcon?: React.ComponentType<{ className?: string; size?: number }>;
+  destinationKind?: DestinationKind;
   iconBgColor?: string;
   iconTextColor?: string;
   iconLetter?: string;
@@ -28,10 +49,18 @@ type ItemIconProps = {
 function ItemIcon({
   type,
   pageIcon: PageIcon,
+  destinationKind,
   iconBgColor,
   iconTextColor,
   iconLetter,
 }: ItemIconProps) {
+  if (type === 'destination' && destinationKind) {
+    const DestinationIcon = DESTINATION_ICONS[destinationKind];
+    return (
+      <DestinationIcon size={16} className="shrink-0 text-muted-foreground" />
+    );
+  }
+
   if (type === 'project') {
     if (iconBgColor) {
       return (
@@ -95,27 +124,22 @@ function ItemMeta({
   if (!hasProject && !hasFolder && !hasUpdated) return null;
 
   return (
-    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground/80">
-      <span>—</span>
-      {hasProject && <span>{projectName}</span>}
-      {hasProject && hasFolder && <span>/</span>}
+    <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground/55">
+      {hasProject && <span className="truncate">{projectName}</span>}
+      {hasProject && hasFolder && <span aria-hidden>·</span>}
       {hasFolder && (
-        <span className="flex items-center gap-0.5">
+        <span className="flex items-center gap-1">
           <FolderIcon
-            className="size-4! mr-0.5 text-muted-foreground/80 shrink-0"
+            className="size-3! text-muted-foreground/55 shrink-0"
             fill="currentColor"
             strokeWidth={0}
           />
-          <span>{folderName}</span>
+          <span className="truncate">{folderName}</span>
         </span>
       )}
-      {(hasProject || hasFolder) && hasUpdated && (
-        <Dot className="size-3! shrink-0 text-muted-foreground/80" />
-      )}
+      {(hasProject || hasFolder) && hasUpdated && <span aria-hidden>·</span>}
       {hasUpdated && (
-        <span className="whitespace-nowrap">{`Last Modified: ${timeAgo(
-          updated!,
-        )}`}</span>
+        <span className="whitespace-nowrap">{timeAgo(updated!)}</span>
       )}
     </span>
   );
@@ -155,15 +179,18 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 export function SearchResultRow({
   item,
   query,
+  actions,
 }: {
   item: SearchResultItem;
   query?: string;
+  actions?: React.ReactNode;
 }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
       <ItemIcon
         type={item.type}
         pageIcon={item.pageIcon}
+        destinationKind={item.destinationKind}
         iconBgColor={item.iconBgColor}
         iconTextColor={item.iconTextColor}
         iconLetter={item.iconLetter}
@@ -171,6 +198,11 @@ export function SearchResultRow({
       <span className="min-w-0 shrink truncate text-sm font-normal">
         <HighlightText text={item.label} query={query ?? ''} />
       </span>
+      {item.badge && (
+        <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          {item.badge}
+        </span>
+      )}
       {item.status === 'ENABLED' && (
         <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
           {t('Live')}
@@ -181,6 +213,7 @@ export function SearchResultRow({
         folderName={item.folderName}
         updated={item.updated}
       />
+      {actions && <span className="ml-auto shrink-0">{actions}</span>}
     </div>
   );
 }
