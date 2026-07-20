@@ -9,14 +9,21 @@ const ENV_VAR_NAMES = {
     QUEUE_MODE: 'AP_QUEUE_MODE',
 }
 
+// Memoized: migrate() sits on the system.get() hot path (every prop read, every request), and
+// spreading process.env allocates a fresh copy of the entire environment each call — measurable
+// on pods with large env surfaces. The environment is static for the process lifetime, so the
+// migrated snapshot is computed once on first read.
+let migratedEnvironment: Record<string, string | undefined> | undefined
+
 export const environmentMigrations = {
     migrate(): Record<string, string | undefined> {
-        return {
+        migratedEnvironment ??= {
             ...process.env,
             [ENV_VAR_NAMES.EXECUTION_MODE]: migrateExecutionMode(process.env[ENV_VAR_NAMES.EXECUTION_MODE]),
             [ENV_VAR_NAMES.REDIS_TYPE]: migrateRedisType(process.env[ENV_VAR_NAMES.REDIS_TYPE]),
             [ENV_VAR_NAMES.DB_TYPE]: migrateDbType(process.env[ENV_VAR_NAMES.DB_TYPE]),
         }
+        return migratedEnvironment
     },
 }
 
