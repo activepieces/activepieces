@@ -8,7 +8,7 @@ import {
 } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { ArrowUpCircle, Coins } from 'lucide-react';
+import { ArrowUpCircle, Coins, SquareArrowOutUpRight } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -130,8 +130,8 @@ const SidebarUsageLimits = React.memo(() => {
         <span className="grow"></span>
         {showBillingButton && (
           <Link to="/platform/setup/billing">
-            <Button variant="outline" size="xs">
-              {t('Billing')}
+            <Button variant="link" size="xs">
+              {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
             </Button>
           </Link>
         )}
