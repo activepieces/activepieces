@@ -128,6 +128,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
+        notifyFlowOwnerOnFailure: project?.notifyFlowOwnerOnFailure ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
         poolId: project?.poolId ?? null,
@@ -688,7 +689,7 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         provider: aiProvider?.provider ?? faker.helpers.enumValue(AIProviderName),
         displayName: aiProvider?.displayName ?? faker.lorem.word(),
         auth: await encryptUtils.encryptObject({
-            apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
+            apiKey: process.env.OPENAI_API_KEY || faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
         enabledForChat: aiProvider?.provider === AIProviderName.ACTIVEPIECES ? true : false,

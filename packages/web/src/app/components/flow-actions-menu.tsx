@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
+import { automationMutationUtils } from '@/features/automations/lib/mutation-bodies';
 import { flowHooks, flowsApi } from '@/features/flows';
 import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
@@ -136,27 +137,12 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   });
 
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
-    mutationFn: async () => {
-      const modifiedFlowVersion = {
-        ...flowVersion,
-        displayName: `${flowVersion.displayName} - Copy`,
-      };
-      const createdFlow = await flowsApi.create({
-        displayName: modifiedFlowVersion.displayName,
+    mutationFn: () =>
+      automationMutationUtils.duplicateFlow({
+        version: flowVersion,
+        folderId: flow.folderId,
         projectId: authenticationSession.getProjectId()!,
-        folderId: flow.folderId ?? undefined,
-      });
-      const updatedFlow = await flowsApi.update(createdFlow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: modifiedFlowVersion.displayName,
-          trigger: modifiedFlowVersion.trigger,
-          schemaVersion: modifiedFlowVersion.schemaVersion,
-          notes: modifiedFlowVersion.notes,
-        },
-      });
-      return updatedFlow;
-    },
+      }),
     onSuccess: (data) => {
       openNewWindow(`/flows/${data.id}`);
       onDuplicate();

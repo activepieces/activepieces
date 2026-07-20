@@ -151,10 +151,27 @@ const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedFilePartSchema,
 ])
 
+export const ChatFeedbackReason = z.enum([
+    'incorrect_or_incomplete',
+    'not_what_i_asked_for',
+    'slow_or_buggy',
+    'style_or_tone',
+    'safety_or_security',
+    'other',
+])
+export type ChatFeedbackReason = z.infer<typeof ChatFeedbackReason>
+
+export const ChatMessageFeedbackSchema = z.object({
+    rating: z.enum(['up', 'down']),
+    reasons: z.array(ChatFeedbackReason).optional(),
+    comment: z.string().max(2000).optional(),
+})
+
 export const PersistedChatMessageSchema = z.object({
     role: z.enum([PersistedChatRole.USER, PersistedChatRole.ASSISTANT]),
     parts: z.array(PersistedChatPartSchema),
     thinkingDurationMs: z.number().optional(),
+    feedback: ChatMessageFeedbackSchema.optional(),
 })
 
 export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
@@ -169,6 +186,7 @@ export type PersistedImagePart = z.infer<typeof PersistedImagePartSchema>
 export type PersistedFilePart = z.infer<typeof PersistedFilePartSchema>
 export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
 export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
+export type ChatMessageFeedback = z.infer<typeof ChatMessageFeedbackSchema>
 
 export enum ChatConversationStatus {
     IDLE = 'IDLE',
@@ -213,6 +231,13 @@ export const SendChatMessageRequest = z.object({
     { message: formErrors.messageRequiresContentOrFiles },
 )
 export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
+
+export const SetChatMessageFeedbackRequest = z.object({
+    rating: z.enum(['up', 'down']).nullable(),
+    reasons: z.array(ChatFeedbackReason).max(ChatFeedbackReason.options.length).optional(),
+    comment: z.string().max(2000).optional(),
+})
+export type SetChatMessageFeedbackRequest = z.infer<typeof SetChatMessageFeedbackRequest>
 
 export const SimulateChatRequest = z.object({
     platformId: z.string(),
