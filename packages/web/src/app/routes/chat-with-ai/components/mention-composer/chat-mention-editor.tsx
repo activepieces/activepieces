@@ -33,10 +33,8 @@ export const ChatMentionEditor = forwardRef<
   onSubmitRef.current = onSubmit;
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
-  // The editor is created once and never recreated (useEditor deps are []), so
-  // a static placeholder string would freeze at its first-mount value. Read it
-  // from a ref inside a function placeholder so the Placeholder plugin picks up
-  // the current value each time it recomputes decorations.
+  // The editor is created once, so read the placeholder from a ref inside the
+  // function form — a static string would freeze at its first-mount value.
   const placeholderRef = useRef(placeholder);
   placeholderRef.current = placeholder;
 
@@ -97,11 +95,9 @@ export const ChatMentionEditor = forwardRef<
     },
   });
 
-  // The Placeholder plugin only recomputes its decoration on an editor
-  // transaction, so an external placeholder change (e.g. entering the working
-  // "take over" state) wouldn't refresh on its own. Dispatch an empty
-  // transaction to force a re-read; it changes no content, so onUpdate (which
-  // gates on docChanged) does not fire.
+  // Placeholder only recomputes on a transaction, so dispatch an empty one to
+  // force a re-read when the placeholder changes externally. No docChanged, so
+  // onUpdate doesn't fire.
   useEffect(() => {
     if (!editor) return;
     editor.view.dispatch(editor.state.tr);

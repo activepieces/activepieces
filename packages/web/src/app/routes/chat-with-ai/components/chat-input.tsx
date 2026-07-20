@@ -112,11 +112,9 @@ export function ChatInput({
 
   const canSend = !isEmpty || attachedFiles.length > 0;
 
-  // Submitting while streaming is intentional: it preempts the in-flight turn
-  // (sendMessage folds the partial response into history + starts a fresh run,
-  // and the server auto-cancels the old run on the new message). We do NOT call
-  // onStop here — that path flashes "Response stopped"; this should read as the
-  // user taking over, not aborting.
+  // Submitting while streaming intentionally preempts the in-flight turn (server
+  // auto-cancels the old run). Don't call onStop — this reads as "taking over",
+  // not aborting (which would flash "Response stopped").
   const handleSubmit = useCallback(() => {
     if (canSend) {
       onSend(
