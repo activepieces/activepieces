@@ -11,6 +11,7 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { fileService } from '../file/file.service'
+import { attachMultipartFieldsToBody } from '../helper/multipart-body'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
@@ -209,6 +210,7 @@ const UpdatePlatformRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
+    preValidation: attachMultipartFieldsToBody,
     schema: {
         body: UpdatePlatformRequestBody,
         params: z.object({

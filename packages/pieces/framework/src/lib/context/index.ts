@@ -14,6 +14,7 @@ import {
 import type { SeekPage } from '@activepieces/core-utils';
 import type { FlowRunId, ProjectId } from '@activepieces/core-utils';
 import { LanguageModel, Tool } from 'ai'
+import type { Readable } from 'node:stream'
 
 import {
   BasicAuthProperty,
@@ -85,7 +86,7 @@ type PollingTriggerHookContext<
   TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
   server: ServerContext;
-  setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
+  setSchedule(schedule: SetScheduleRequest): void;
   isRepublish?: boolean;
 };
 
@@ -276,7 +277,7 @@ export interface FilesService {
     data,
   }: {
     fileName: string;
-    data: Buffer;
+    data: Buffer | Readable;
   }): Promise<string>;
 }
 
@@ -301,3 +302,7 @@ export enum StoreScope {
   PROJECT = 'COLLECTION',
   FLOW = 'FLOW',
 }
+
+export type SetScheduleRequest =
+  | { cronExpression: string; timezone?: string }
+  | { intervalMs: number };

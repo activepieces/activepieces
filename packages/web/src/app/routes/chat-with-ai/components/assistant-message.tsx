@@ -40,6 +40,7 @@ import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
+import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
@@ -64,6 +65,8 @@ export const AssistantMessage = memo(function AssistantMessage({
   onSendPrompt,
   claimedBuildIds = EMPTY_BUILD_IDS,
   isResumed = false,
+  conversationId,
+  messageIndex,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
@@ -71,6 +74,8 @@ export const AssistantMessage = memo(function AssistantMessage({
   onSendPrompt?: (text: string) => void;
   claimedBuildIds?: ReadonlySet<string>;
   isResumed?: boolean;
+  conversationId?: string | null;
+  messageIndex: number;
 }) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
@@ -107,6 +112,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   }
 
   const isFromHistory = message.id.startsWith('hist-');
+  const feedbackRating = message.feedback?.rating;
 
   return (
     <motion.div
@@ -194,6 +200,13 @@ export const AssistantMessage = memo(function AssistantMessage({
                       )}
                     </button>
                   </MessageAction>
+                )}
+                {conversationId && (
+                  <FeedbackButtons
+                    conversationId={conversationId}
+                    messageIndex={messageIndex}
+                    initialRating={feedbackRating}
+                  />
                 )}
               </>
             )}

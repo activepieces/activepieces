@@ -46,6 +46,8 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 - **Deduplication** — Redis INCR check on `__DEDUPE_KEY_PROPERTY` prevents duplicate payloads from polling triggers
 - **Renewal job** — BullMQ repeating job that calls ON_RENEW hook for webhook pieces that need periodic re-registration (e.g., expiring webhooks)
 - **sourceName** — format `pieceName@version:triggerName`; used as a stable identifier for TriggerEvents
+- **ScheduleOptions** — persisted schedule of a polling TriggerSource; discriminated union: `CRON_EXPRESSION` (cronExpression + timezone, fires at matching wall-clock minutes) or `INTERVAL` (intervalMs ≥ 60000, rolling fixed rate crossing hour boundaries)
+- **Every X Minutes payload compat** — the trigger's `run()` still emits `{ cron_expression, timezone }` even though scheduling switched to INTERVAL; kept deliberately so existing flows referencing `{{trigger.cron_expression}}` don't break. Do not "fix" it without a payload migration
 
 ## Entities
 
@@ -57,7 +59,7 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 
 ## Trigger Strategies
 
-- **POLLING**: Periodic checks via cron schedule. BullMQ repeating job. Deduplication via Redis.
+- **POLLING**: Periodic checks on a schedule — either a cron expression or a rolling fixed interval (`ScheduleOptions`, discriminated on `type`: `CRON_EXPRESSION` | `INTERVAL`). BullMQ repeating job. Deduplication via Redis.
 - **WEBHOOK**: External service pushes events to Activepieces webhook URL.
 - **APP_WEBHOOK**: App-native webhooks routed via AppEventRouting (e.g., Slack, GitHub).
 - **MANUAL**: User-triggered only, no automation.
@@ -65,7 +67,7 @@ Manages the full lifecycle of flow triggers — registration, event capture, tes
 ## Enable/Disable Side Effects
 
 **On enable** (`flowTriggerSideEffect.enable()`):
-- POLLING: Creates BullMQ repeating job with cron from piece or default interval (`AP_TRIGGER_DEFAULT_POLL_INTERVAL`)
+- POLLING: Creates BullMQ repeating job from the piece's `setSchedule` call — a cron expression (BullMQ `pattern`) or a rolling interval (`intervalMs` → BullMQ `every`; used by Schedule piece "Every X Minutes" because cron `*/X` cannot express intervals that don't divide 60 — it double-fires at :00 and :X for X>30). Default when the piece sets nothing: cron from `AP_TRIGGER_DEFAULT_POLL_INTERVAL`. Engine floor for intervals: 60000 ms (`trigger-helper.ts`)
 - WEBHOOK: Submits ON_ENABLE hook to worker (registers webhook with external service). If piece has renewConfiguration with CRON strategy, creates renewal job.
 - APP_WEBHOOK: Creates AppEventRouting records for each event type
 - MANUAL: No side effects
