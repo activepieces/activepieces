@@ -7,7 +7,7 @@ import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
 import { createVariableResolver } from '../piece-context/variable-resolver'
-import { utils } from '../utils'
+import { REDACTED_VALUE, utils } from '../utils'
 
 const CONNECTIONS = 'connections'
 const VARIABLES = 'variables'
@@ -40,17 +40,19 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
-            const currentState = await executionState.currentState(Array.from(referencedStepNames))
+            const stepNamesArray = Array.from(referencedStepNames)
+            const currentState = await executionState.currentState(stepNamesArray)
+            const censoredState = await executionState.currentState(stepNamesArray, { redactSensitive: true })
             const resolveOptions = {
                 engineToken,
                 projectId,
                 apiUrl,
-                currentState,
             }
             const resolvedInput = await applyFunctionToValues<T>(
                 unresolvedInput,
                 (token) => resolveInputAsync({
                     ...resolveOptions,
+                    currentState,
                     input: token,
                     censoredInput: false,
                     contextVersion,
@@ -59,6 +61,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 unresolvedInput,
                 (token) => resolveInputAsync({
                     ...resolveOptions,
+                    currentState: censoredState,
                     input: token,
                     censoredInput: true,
                     contextVersion,
@@ -181,7 +184,7 @@ async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown
         return ''
     }
     if (censoredInput) {
-        return '**REDACTED**'
+        return REDACTED_VALUE
     }
     return createVariableResolver({ engineToken, projectId, apiUrl }).obtain(name)
 }
@@ -204,7 +207,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
         return ''
     }
     if (censoredInput) {
-        return '**REDACTED**'
+        return REDACTED_VALUE
     }
     const connection = await createConnectionResolver({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)

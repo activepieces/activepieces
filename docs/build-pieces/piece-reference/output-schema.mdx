@@ -49,6 +49,29 @@ A field supports an optional `label`, a `value` path override, a `format` (`emai
 `datetime`, `number`, `boolean`, `image`, `html`, `currency`, `filesize`, `duration`), and
 `children` / `listItems` for nested objects and arrays of records.
 
+## Redacting Sensitive Output
+
+If an action can return a secret (e.g. a vault piece's "get secret" action), mark that field
+`sensitive: true`. The real value is kept in-process, so downstream steps that reference the field
+still receive it at runtime — the engine redacts it to `**REDACTED**` only at the log boundary:
+the persisted run log and any downstream step's **logged input** that maps the field in. In the
+builder, the value is masked at display time (output panel, data selector) while the real sample
+data stays intact so step-chaining still works. Only the logs and display are affected, never the
+flow's actual data:
+
+```typescript
+outputSchema: {
+  fields: [
+    { key: 'name', label: 'Name' },
+    { key: 'secretValue', label: 'Secret Value', sensitive: true },
+  ],
+},
+```
+
+`sensitive` only redacts **top-level** fields (resolved via `value` if set, otherwise `key`) — a
+field nested under `children`/`listItems`, or reached only through a dot-path `value`, is not
+redacted.
+
 ## Friendly Labels for Opaque Keys
 
 When your output is an object keyed by UUIDs/slugs (`dynamicKey: true`) or an array of records

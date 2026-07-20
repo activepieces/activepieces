@@ -18,6 +18,7 @@ type BaseStepOutputParams<T extends FlowActionType | FlowTriggerType, OUTPUT> = 
     outputType?: StepOutputType
     duration?: number
     errorMessage?: string
+    sensitiveOutputFields?: string[]
 }
 
 export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPUT> {
@@ -28,6 +29,12 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
     outputType?: StepOutputType
     duration?: number
     errorMessage?: string
+    /**
+     * Top-level output keys the piece declared `sensitive`. `output` stays real
+     * (so downstream `{{step.field}}` resolution works); the engine redacts these
+     * keys only at the run-log / websocket boundary and in the censored input view.
+     */
+    sensitiveOutputFields?: string[]
 
     constructor(step: BaseStepOutputParams<T, OUTPUT>) {
         this.type = step.type
@@ -37,12 +44,20 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         this.outputType = step.outputType
         this.duration = step.duration
         this.errorMessage = step.errorMessage
+        this.sensitiveOutputFields = step.sensitiveOutputFields
     }
 
     setOutput(output: OUTPUT): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             ...this,
             output,
+        })
+    }
+
+    setSensitiveOutputFields(sensitiveOutputFields: string[]): GenericStepOutput<T, OUTPUT> {
+        return new GenericStepOutput<T, OUTPUT>({
+            ...this,
+            sensitiveOutputFields,
         })
     }
 

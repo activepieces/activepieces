@@ -1,6 +1,7 @@
 import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
+import { REDACTED_DISPLAY_VALUE } from '@/components/custom/smart-output-viewer/redact-sensitive';
 import { schemaUtils } from '@/components/custom/smart-output-viewer/resolve-schema';
 import {
   OutputSchemaField,
@@ -34,6 +35,22 @@ function buildFieldNode({
     valuePath,
   );
   const label = schemaUtils.resolveFieldLabel(field);
+
+  // Mask the inline preview of a sensitive field; the inserted mention path is
+  // unaffected, so it still resolves to the real value at runtime.
+  if (field.sensitive) {
+    return {
+      key: propertyPath,
+      data: {
+        type: 'value' as const,
+        value: REDACTED_DISPLAY_VALUE,
+        displayName: label,
+        propertyPath,
+        insertable: true,
+        format: field.format,
+      },
+    };
+  }
 
   if (field.listItems && field.listItems.length > 0 && Array.isArray(value)) {
     const listItems = field.listItems;

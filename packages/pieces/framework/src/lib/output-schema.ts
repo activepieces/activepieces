@@ -29,6 +29,16 @@ export type OutputSchemaField = {
   currency?: string;
   children?: OutputSchemaField[];
   listItems?: OutputSchemaField[];
+  /**
+   * Marks this field's value as sensitive (e.g. a secret returned by a vault
+   * piece). The real value is kept in-process so downstream steps referencing
+   * it still receive it; the engine redacts it to `**REDACTED**` only at the
+   * log boundary — the persisted run log, the test websocket, and any
+   * downstream step's *logged input* that maps this field in. Only supported
+   * for top-level fields (resolved via `value` if set, otherwise `key`) — a
+   * nested/dot-path `value` is not redacted.
+   */
+  sensitive?: boolean;
 };
 
 export type OutputSchema = {
