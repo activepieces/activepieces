@@ -1,11 +1,12 @@
-import { PieceCategory, PieceOrderBy, PieceSortBy, SuggestionType } from '@activepieces/shared'
+import { ActionBase } from '@activepieces/pieces-framework'
+import { PieceAudienceFilter, PieceCategory, PieceOrderBy, PieceSortBy, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { pieceSearching } from './piece-searching'
 import { pieceSorting } from './piece-sorting'
 
 export const pieceListUtils = (_log: FastifyBaseLogger) => ({
-    async filterPieces(params: FilterPiecesParams): Promise<PieceMetadataSchema[]> {
+    async sortAndSearchPieces(params: SortAndSearchPiecesParams): Promise<PieceMetadataSchema[]> {
         const sortedPieces = pieceSorting.sortAndOrder(
             params.sortBy,
             params.orderBy,
@@ -21,7 +22,28 @@ export const pieceListUtils = (_log: FastifyBaseLogger) => ({
     },
 })
 
-export type FilterPiecesParams = {
+export function filterActionsByAudience(
+    actions: Record<string, ActionBase>,
+    audience: PieceAudienceFilter | undefined,
+): Record<string, ActionBase> {
+    return Object.fromEntries(
+        Object.entries(actions).filter(([, action]) => {
+            switch (audience) {
+                case PieceAudienceFilter.ALL:
+                    return true
+                case PieceAudienceFilter.AI:
+                    return action.audience !== 'human'
+                case PieceAudienceFilter.HUMAN:
+                case undefined:
+                default:                                
+                    return action.audience !== 'ai'
+            }
+            
+        }),
+    )
+}
+
+export type SortAndSearchPiecesParams = {
     searchQuery?: string
     categories?: PieceCategory[]
     sortBy?: PieceSortBy
