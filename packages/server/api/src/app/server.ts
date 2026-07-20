@@ -1,11 +1,11 @@
 import path from 'path'
-import { apId, ApMultipartFile, spreadIfDefined } from '@activepieces/core-utils'
+import { apId, spreadIfDefined } from '@activepieces/core-utils'
 import { apLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, maxSocketHttpBufferSizeBytes } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyHttpProxy from '@fastify/http-proxy'
-import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
+import fastifyMultipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import { evlog as evlogFastify, useLogger as useWideEventLogger } from 'evlog/fastify'
 import fastify, { FastifyInstance } from 'fastify'
@@ -177,17 +177,13 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         }
     })
 
+    // No attachFieldsToBody: consumers read files/fields explicitly via request.file()/parts(),
+    // so large uploads (webhook files) can stream to storage instead of being buffered whole.
+    // A route whose schema expects ApMultipartFile on the body must attach
+    // attachMultipartFieldsToBody (helper/multipart-body.ts) itself, or its validation will fail.
     await app.register(fastifyMultipart, {
-        attachFieldsToBody: 'keyValues',
-        async onFile(part: MultipartFile) {
-            const apFile: ApMultipartFile = {
-                filename: part.filename,
-                data: await part.toBuffer(),
-                type: 'file',
-                mimetype: part.mimetype,
-            };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (part as any).value = apFile
+        limits: {
+            fileSize: fileSizeLimit * 1024 * 1024,
         },
     })
     exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))

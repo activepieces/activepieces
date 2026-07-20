@@ -20,6 +20,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...rest,
             icon,
             releasesEnabled: false,
+            notifyFlowOwnerOnFailure: false,
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
@@ -72,6 +73,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
         const baseUpdate = {
             ...spreadIfDefined('externalId', externalId),
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+            ...spreadIfDefined('notifyFlowOwnerOnFailure', request.notifyFlowOwnerOnFailure),
             ...spreadIfDefined('metadata', request.metadata),
             ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
@@ -285,6 +287,7 @@ type UpdateTeamProjectParams = {
     displayName?: string
     externalId?: string
     releasesEnabled?: boolean
+    notifyFlowOwnerOnFailure?: boolean
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null
@@ -297,6 +300,7 @@ type UpdatePersonalProjectParams = {
     type: ProjectType.PERSONAL
     externalId?: string
     releasesEnabled?: boolean
+    notifyFlowOwnerOnFailure?: boolean
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null

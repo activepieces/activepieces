@@ -40,6 +40,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Coding Conventions
 
+- **npm dependencies go in the workspace that imports them, never the root `package.json`** — every workspace (api, worker, web, each piece, …) must declare what its own code imports, in its own `package.json` (`dependencies` for runtime imports, `devDependencies` for test/tooling-only). Bun's isolated linker resolves each workspace from its own manifest, and the Docker image installs only workspace manifests — an undeclared import that "works locally" will crash the production container. Root `dependencies` is only `jsonwebtoken` (required by `docker-entrypoint.sh`); root `devDependencies` is only for repo-level tooling under `scripts/` and `tools/`. Pin exact versions like the surrounding entries, and run `bun install` afterwards so `bun.lock` stays in sync.
 - **No `any` type** — Use proper type definitions or `unknown` with type guards
 - **No type casting** — Do not use `as SomeType` to force types. If you encounter an unnecessary cast, remove it.
 - **No deprecated APIs** — Before using any library method or export, check its JSDoc. If it carries a `@deprecated` tag, use the recommended replacement instead. Examples: prefer `z.enum` over `z.nativeEnum`.
@@ -95,6 +96,10 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 - If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the appropriate pieces label (in addition to the primary label above):
   - **`🧩 area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
   - **`🧩 area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
+- **Always fill the "Breaking change?" section of the PR template** — tick exactly one box (the `breaking-change-check` CI job fails if it is left unedited). A change is breaking if a self-hoster or API consumer must take action: removed/renamed API fields or endpoints, dropped columns, new required fields, removed/required env vars, or default/limit/behaviour changes. If it is breaking:
+  - also apply the **`⛓️‍💥 breaking-change`** label (in addition to the primary label above), and
+  - add an entry to `docs/install/reference/breaking-changes.mdx` describing what changed and the action required. CI enforces that the label and the docs entry travel together.
+- **Non-rollbackable migrations are a separate axis** from customer-facing breaking changes: a migration that runs destructive DDL (`DROP TABLE`/`DROP COLUMN`, `ADD ... NOT NULL` without `DEFAULT`, etc.) must set `breaking = true` on the migration class — this is the rollback-safety flag (used by `rollback-migrations.ts` and the release rollback note), enforced by `check-migration-rollback.ts`. It does **not** by itself require the `⛓️‍💥 breaking-change` label; decide that from the upgrade-impact question above.
 
 ## Database Migrations
 
