@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { isMac } from '@/lib/dom-utils';
+import { isEditableTarget, isMac } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 type AboveTriggerButtonProps = {
@@ -35,12 +35,13 @@ const AboveTriggerButton = ({
     const keydownHandler = (event: KeyboardEvent) => {
       const isEscapePressed = event.key === 'Escape' && shortCutIsEscape;
       const ctrlAndDPressed =
-        (isMacSystem &&
+        !isEditableTarget(event.target) &&
+        ((isMacSystem &&
           event.metaKey &&
           event.key.toLocaleLowerCase() === 'd') ||
-        (!isMacSystem &&
-          event.ctrlKey &&
-          event.key.toLocaleLowerCase() === 'd');
+          (!isMacSystem &&
+            event.ctrlKey &&
+            event.key.toLocaleLowerCase() === 'd'));
       if (isEscapePressed || ctrlAndDPressed) {
         event.preventDefault();
         event.stopPropagation();
