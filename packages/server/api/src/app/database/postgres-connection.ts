@@ -400,6 +400,7 @@ import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/180
 import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
 import { AddChatConversationStreamingUpdatedIndex1810000000000 } from './migration/postgres/1810000000000-AddChatConversationStreamingUpdatedIndex'
 import { AddDeprecatedToPieceMetadata1811000000000 } from './migration/postgres/1811000000000-AddDeprecatedToPieceMetadata'
+import { AddNotifyFlowOwnerOnFailureToProject1811000000000 } from './migration/postgres/1811000000000-AddNotifyFlowOwnerOnFailureToProject'
 import { AddTeamsBotInstallation1812000000000 } from './migration/postgres/1812000000000-AddTeamsBotInstallation'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -815,6 +816,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddProjectPieceSetIdIndex1808000000000,
         DropPlatformPieceFilters1809000000000,
         AddChatConversationStreamingUpdatedIndex1810000000000,
+        AddNotifyFlowOwnerOnFailureToProject1811000000000,
         AddDeprecatedToPieceMetadata1811000000000,
         AddTeamsBotInstallation1812000000000,
     ]
