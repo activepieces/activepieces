@@ -29,10 +29,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 log,
             }))
             const policy = await resolveVisibility({ platformId: params.platformId, projectId: params.projectId, log })
-            const audience = params.audience ?? PieceAudienceFilter.ALL
-            const audiencePieces = audience === PieceAudienceFilter.ALL
-                ? translatedPieces
-                : translatedPieces.map((piece) => ({ ...piece, actions: filterActionsByAudience(piece.actions, audience) }))
+            const audience = params.audience ?? PieceAudienceFilter.HUMAN
+            const audiencePieces = translatedPieces.map((piece) => ({ ...piece, actions: filterActionsByAudience(piece.actions, audience) }))
             const sortedPieces = await pieceListUtils(log).sortAndSearchPieces({
                 ...params,
                 pieces: audiencePieces,
