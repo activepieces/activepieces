@@ -58,6 +58,16 @@ describe('evaluateFanIn', () => {
     expect(r.timedOut).toBe(false);
   });
 
+  test('timedOut with more terminal than dispatched (count conflation) → stillRunning clamped to 0', () => {
+    const r = evaluateFanIn({
+      cur: { succeeded: 4, failed: 0, nonTerminal: 1 },
+      state: state({ batchesDispatched: 3 }),
+      nowMs: 20_000,
+    });
+    expect(r.timedOut).toBe(true);
+    expect(r.stillRunning).toBe(0);
+  });
+
   test('baseline terminal children are excluded from the delta', () => {
     const r = evaluateFanIn({
       cur: { succeeded: 12, failed: 3, nonTerminal: 0 },

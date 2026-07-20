@@ -133,7 +133,12 @@ export const streamCsvToSubflows = createAction({
     const check = async () => {
       const state = await context.store.get<StoredFanIn>(storeKey, StoreScope.FLOW);
       if (state === null) {
-        return { timedOut: false, waited: false };
+        throw new Error(
+          JSON.stringify({
+            message:
+              'Resumed to wait for subflows but the fan-in state is missing. The stored progress was lost, so completion can no longer be tracked.',
+          })
+        );
       }
       const cur = await fetchRollup();
       const verdict = evaluateFanIn({ cur, state, nowMs: Date.now() });

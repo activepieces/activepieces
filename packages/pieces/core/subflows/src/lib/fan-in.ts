@@ -10,7 +10,7 @@ export function evaluateFanIn({
   const done = terminalDelta >= state.batchesDispatched && cur.nonTerminal === 0;
   const timedOut = !done && nowMs > state.deadline;
   const stillRunning = timedOut
-    ? state.batchesDispatched - succeeded - failed
+    ? Math.max(0, state.batchesDispatched - succeeded - failed)
     : 0;
 
   return { done, timedOut, succeeded, failed, stillRunning };
