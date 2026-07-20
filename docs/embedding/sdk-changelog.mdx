@@ -18,11 +18,19 @@ Change log format: MM/DD/YYYY (version)
 
 
 
-### 07/08/2026 (0.12.0)
-- SDK URL: https://cdn.activepieces.com/sdk/embed/0.12.0.js
+### 07/20/2026 (0.15.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.15.0.js
 - `navigate()` calls made before the embedding finishes configuring are now deferred and applied once it is ready (the most recent route wins), instead of being silently dropped.
 - Calling `configure()` again now tears down the previous embedding: the old iframe and its listeners are removed (even when the previous call was still waiting for its container), open embed dialogs are closed, and the cached embed session is reset so a new `jwtToken` takes effect. A superseded `configure()` call resolves with `{ status: 'superseded' }`.
 - Added `embedding.initialRoute` parameter to the [configure](./embed-builder#configure-parameters) method **(value: string)**. Sets the route the iframe loads on instead of the default page.
+
+### 07/09/2026 (0.13.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.13.0.js
+- Added `embedding.hideGlobalSearch` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. When `true`, hides the global search button in the dashboard sidebar and disables the `CMD+K` / `Ctrl+K` command palette, so embedded users can't navigate to pages, flows, or tables through search. This version requires an Activepieces release that includes [#14135](https://github.com/activepieces/activepieces/pull/14135).
+
+### 07/09/2026 (0.12.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.12.0.js
+- Added `embedding.hideActiveUsers` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. When `true`, hides the active users (presence) avatars in the builder's header and the table editor's header. The embedded user will also not appear in other collaborators' active-users list. This version requires an Activepieces release that includes [#13630](https://github.com/activepieces/activepieces/pull/13630).
 
 ### 06/18/2026 (0.10.0)
 - SDK URL: https://cdn.activepieces.com/sdk/embed/0.10.0.js

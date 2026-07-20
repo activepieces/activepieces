@@ -100,7 +100,7 @@ describe('codeBuilder.processCodeStep', () => {
 
         await expect(
             codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
-        ).resolves.toBeUndefined()
+        ).resolves.toBe('install-failed')
 
         // Compilation is skipped once install fails — the step never reaches esbuild.
         expect(buildMock).not.toHaveBeenCalled()
@@ -122,7 +122,7 @@ describe('codeBuilder.processCodeStep', () => {
 
         await expect(
             codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
-        ).resolves.toBeUndefined()
+        ).resolves.toBe('install-failed')
 
         const stubPath = codeCache(codesFolderPath).compiledStepPath({
             flowVersionId: artifact.flowVersionId,
@@ -142,9 +142,42 @@ describe('codeBuilder.processCodeStep', () => {
 
         await expect(
             codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
-        ).resolves.toBeUndefined()
+        ).resolves.toBe('success')
 
         expect(installMock).toHaveBeenCalledTimes(1)
         expect(buildMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not cache a transient install failure — the next build re-runs install and self-heals (GIT-1608)', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        installMock
+            .mockRejectedValueOnce(new Error('Exit 1\nstderr: FileNotFound: copying file ts4.8/stream/web.d.ts'))
+            .mockResolvedValue({ stdout: '', stderr: '' })
+        buildMock.mockResolvedValue({ stdout: '', stderr: '' })
+
+        const builder = codeBuilder(noopLog, getSettings)
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('install-failed')
+        // Unchanged source must NOT be served from cache — bun is retried.
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
+
+        expect(installMock).toHaveBeenCalledTimes(2)
+        expect(buildMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('caches a deterministic compile failure — install is not re-run for unchanged source', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        installMock.mockResolvedValue({ stdout: '', stderr: '' })
+        buildMock.mockRejectedValue(new Error('esbuild: Unexpected token'))
+
+        const builder = codeBuilder(noopLog, getSettings)
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('compile-failed')
+        // Cache hit — the deterministic failure is not retried.
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
+
+        expect(installMock).toHaveBeenCalledTimes(1)
     })
 })

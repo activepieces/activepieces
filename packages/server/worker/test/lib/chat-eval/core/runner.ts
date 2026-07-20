@@ -124,7 +124,17 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
         tier: fixture.model.tier,
         phaseState,
         abortSignal: new AbortController().signal,
-        log: { debug: () => {}, info: () => {}, warn: () => {}, error: (obj) => obj.err !== undefined && capturedErrors.push(obj.err) },
+        log: {
+            debug: () => {},
+            info: () => {},
+            warn: () => {},
+            error: (obj) => {
+                const captured = obj.err ?? obj.error
+                if (captured !== undefined) {
+                    capturedErrors.push(captured)
+                }
+            },
+        },
         stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall)],
     }))
 

@@ -131,6 +131,32 @@ describe('Tool Search Engine (Phase 1)', () => {
         expect(await indexRowCount()).toBe(4)
     })
 
+    it('defaults requiresConnection to true when requireAuth is absent (legacy piece_metadata)', async () => {
+        // Simulates a piece_metadata row written before requireAuth became a required boolean: the stored
+        // JSON has no requireAuth key, so it reads back as undefined. Before the `?? true` coalesce this
+        // bound NULL into the NOT NULL requiresConnection column, aborting the whole upsert (index unbuilt).
+        const legacyAction = { name: 'legacy_action', displayName: 'Legacy Action', description: 'Send a message to a Slack channel', props: {} } as unknown as ActionBase
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-legacy',
+            displayName: 'Legacy',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { legacy_action: legacyAction },
+            triggers: {},
+        }))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        expect(result.status).toBe('done')
+        expect(result.objectsIndexed).toBe(1)
+        const [row] = await databaseConnection().query(
+            'SELECT "requiresConnection" FROM "tool_search_index" WHERE "pieceName" = $1 AND "objectName" = $2',
+            ['@activepieces/piece-legacy', 'legacy_action'],
+        )
+        expect(row.requiresConnection).toBe(true)
+    })
+
     it('searchActions ranks the semantically closest action first and returns the tiered envelope', async () => {
         await seedCatalog()
         await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })

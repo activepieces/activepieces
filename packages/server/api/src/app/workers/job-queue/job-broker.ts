@@ -73,6 +73,7 @@ function ensureDispatcher(queueName: string, worker: BullMQWorker, log: FastifyB
         queueName,
         worker,
         dequeue: tryDequeue,
+        onOrphanedJob: returnJobToQueue,
         log,
     })
     dispatchers.set(queueName, dispatcher)
@@ -83,7 +84,6 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     const token = `token-${Date.now()}-${Math.random().toString(36).slice(2)}`
     const job = await worker.getNextJob(token)
     if (isNil(job)) {
-        log.info({ queueName }, '[jobBroker#tryDequeue] no job found to dequeued')
         return null  // waiting list empty — drainDelay provided backpressure
     }
 
