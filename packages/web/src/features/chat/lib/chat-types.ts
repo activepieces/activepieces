@@ -1,6 +1,7 @@
 import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
 import {
   BatchProgressData,
+  ChatMessageFeedback,
   ChatToolName,
   ChatToolOutputs,
   chatToolClassification,
@@ -13,7 +14,7 @@ import {
   UIMessage,
 } from 'ai';
 
-export type ChatUIMessage = UIMessage;
+export type ChatUIMessage = UIMessage & { feedback?: ChatMessageFeedback };
 
 export type AnyToolPart = ToolUIPart | DynamicToolUIPart;
 
