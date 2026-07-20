@@ -149,9 +149,9 @@ export const fieldService = {
             where: { projectId, tableId },
         })
     },
-    async validateCount(params: CountParams): Promise<void> {
-        const countRes = await this.count(params)
-        if (countRes + 1 > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
+    async validateCount({ projectId, tableId, insertCount = 1 }: ValidateCountParams): Promise<void> {
+        const countRes = await this.count({ projectId, tableId })
+        if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: `Max fields per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)}`,
@@ -208,4 +208,10 @@ type ReorderParams = {
 type CountParams = {
     projectId: string
     tableId: string
+}
+
+type ValidateCountParams = {
+    projectId: string
+    tableId: string
+    insertCount?: number
 }

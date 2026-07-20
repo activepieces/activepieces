@@ -436,6 +436,7 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                         projectId,
                     },
                 })
+                await fieldService.validateCount({ projectId, tableId: table.id, insertCount: op.tableState.fields.length })
                 await Promise.all(op.tableState.fields.map((field, position) =>
                     fieldService.createFromState({ projectId, field, tableId: table.id, position }),
                 ))
@@ -449,6 +450,8 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                     request: { name: op.newTableState.name },
                 })
                 const fields = await fieldService.getAll({ projectId, tableId: updated.id })
+                const newFieldsCount = op.newTableState.fields.filter((field) => !fields.some((f) => f.externalId === field.externalId)).length
+                await fieldService.validateCount({ projectId, tableId: updated.id, insertCount: newFieldsCount })
                 await Promise.all(op.newTableState.fields.map((field, position) => {
                     const existingField = fields.find((f) => f.externalId === field.externalId)
                     if (!isNil(existingField)) {
