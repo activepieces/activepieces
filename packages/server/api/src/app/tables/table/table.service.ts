@@ -352,7 +352,6 @@ export const tableService = {
 
 }
 
-// ponytail: fixed page size; up to ~2000 records + their cells held per batch. Lower it if wide (100-field) tables pressure memory.
 const EXPORT_BATCH_SIZE = 2000
 
 const CELL_EDGE_CHARS = /^[\s\u0000-\u001F\u007F-\u009F]+|[\s\u0000-\u001F\u007F-\u009F]+$/g
@@ -364,7 +363,6 @@ async function fetchRecordPage({ tableId, projectId, afterCursor }: FetchRecordP
         query: {
             limit: EXPORT_BATCH_SIZE,
             orderBy: [
-                { field: 'created', order: Order.ASC },
                 { field: 'id', order: Order.ASC },
             ],
             afterCursor,
@@ -376,6 +374,9 @@ async function fetchRecordPage({ tableId, projectId, afterCursor }: FetchRecordP
 }
 
 async function fetchCellsByRecord({ projectId, fieldIds, recordIds }: FetchCellsByRecordParams): Promise<Map<string, Map<string, string>>> {
+    if (fieldIds.length === 0) {
+        return new Map()
+    }
     const cells = await cellRepo().find({
         where: { projectId, fieldId: In(fieldIds), recordId: In(recordIds) },
     })
