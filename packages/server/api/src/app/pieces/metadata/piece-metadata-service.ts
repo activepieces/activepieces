@@ -506,7 +506,6 @@ function filterRegistry(registry: PieceRegistryEntry[], params: { release: strin
 }
 
 
-// Types
 
 type ListParams = {
     projectId?: string

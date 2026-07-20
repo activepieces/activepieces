@@ -53,7 +53,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             orderBy: query.orderBy,
             suggestionType: query.suggestionType,
             locale: query.locale as LocalesEnum | undefined,
-            audience: query.audience ?? PieceAudienceFilter.HUMAN,
+            audience: query.audience
         })
         return pieceMetadataSummary.map((piece) => ({
             ...piece,
@@ -79,7 +79,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = isNil(policy) ? piece : policy.filterPieceComponents(piece)
-            return filterModelActionsByAudience(visiblePiece, req.query.audience ?? PieceAudienceFilter.HUMAN)
+            return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
 
@@ -99,7 +99,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = isNil(policy) ? piece : policy.filterPieceComponents(piece)
-            return filterModelActionsByAudience(visiblePiece, req.query.audience ?? PieceAudienceFilter.HUMAN)
+            return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
 
@@ -155,7 +155,7 @@ function getPlatformId(principal: Principal): string | undefined {
     return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
 }
 
-function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter): PieceMetadataModel {
+function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter|undefined): PieceMetadataModel {
     return {
         ...piece,
         actions: filterActionsByAudience(piece.actions, audience),

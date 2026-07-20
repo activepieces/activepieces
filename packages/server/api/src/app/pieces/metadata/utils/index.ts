@@ -24,17 +24,21 @@ export const pieceListUtils = (_log: FastifyBaseLogger) => ({
 
 export function filterActionsByAudience(
     actions: Record<string, ActionBase>,
-    audience: PieceAudienceFilter,
+    audience: PieceAudienceFilter | undefined,
 ): Record<string, ActionBase> {
     return Object.fromEntries(
         Object.entries(actions).filter(([, action]) => {
-            if (audience === PieceAudienceFilter.ALL) {
-                return true
+            switch (audience) {
+                case PieceAudienceFilter.ALL:
+                    return true
+                case PieceAudienceFilter.AI:
+                    return action.audience !== 'human'
+                case PieceAudienceFilter.HUMAN:
+                case undefined:
+                default:                                
+                    return action.audience !== 'ai'
             }
-            if (audience === PieceAudienceFilter.AI) {
-                return action.audience !== 'human'
-            }
-            return action.audience !== 'ai'
+            
         }),
     )
 }
