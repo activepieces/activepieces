@@ -30,8 +30,6 @@ export const readFile = createAction({
       Bucket: bucket,
       Key: key,
     });
-    // Stream the body straight to file storage instead of buffering the whole
-    // object (twice, as base64) in the sandbox — ctx.files.write streams a Readable.
     if (!(file.Body instanceof Readable)) {
       throw new Error(`Could not read file ${key} from S3`);
     }
