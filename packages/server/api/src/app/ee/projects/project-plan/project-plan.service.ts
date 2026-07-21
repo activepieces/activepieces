@@ -12,6 +12,20 @@ const edition = system.getEdition()
 
 export const projectLimitsService = (_log: FastifyBaseLogger) => ({
     async updateActiveFlowsLimit({ projectId, activeFlowsLimit, entityManager }: UpdateActiveFlowsLimitParams): Promise<ProjectPlan> {
+        if (!isNil(activeFlowsLimit)) {
+            const activeFlows = await flowService(_log).count({
+                projectId,
+                status: FlowStatus.ENABLED,
+            })
+            if (activeFlows > activeFlowsLimit) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `Project already has ${activeFlows} active flows, which exceeds the limit of ${activeFlowsLimit}`,
+                    },
+                })
+            }
+        }
         const projectPlan = await this.getOrCreateDefaultPlan(projectId)
         await projectPlanRepo(entityManager).update(projectPlan.id, {
             activeFlowsLimit,
