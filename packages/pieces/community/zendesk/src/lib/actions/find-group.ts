@@ -45,8 +45,9 @@ export const findGroupAction = createAction({
       let matchedGroup: ZendeskGroup | undefined;
 
       while (url && !matchedGroup) {
+        const currentUrl: string = url;
         const response = await httpClient.sendRequest<ZendeskGroupsResponse & { next_page?: string }>({
-          url,
+          url: currentUrl,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BASIC,

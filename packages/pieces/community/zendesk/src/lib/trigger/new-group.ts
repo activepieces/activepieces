@@ -32,8 +32,9 @@ const polling: Polling<ZendeskAuthValue, Record<string, never>> = {
     const groups: ZendeskGroup[] = [];
 
     while (url) {
+      const currentUrl: string = url;
       const response = await httpClient.sendRequest<{ groups: ZendeskGroup[]; next_page?: string }>({
-        url,
+        url: currentUrl,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BASIC,

@@ -62,8 +62,9 @@ export const findAgentAction = createAction({
       let matchedAgent: ZendeskAgent | undefined;
 
       while (url && !matchedAgent) {
+        const currentUrl: string = url;
         const response = await httpClient.sendRequest<ZendeskUsersResponse & { next_page?: string }>({
-          url,
+          url: currentUrl,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BASIC,

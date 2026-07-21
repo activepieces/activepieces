@@ -55,8 +55,9 @@ export const findLatestCommentAction = createAction({
       let isFirstPage = true;
 
       while (url) {
+        const currentUrl: string = url;
         const response = await httpClient.sendRequest<ZendeskCommentsResponse & { next_page?: string }>({
-          url,
+          url: currentUrl,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BASIC,
