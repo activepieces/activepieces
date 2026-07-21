@@ -6,12 +6,6 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 interface ZendeskTicket {
   id: number;
   subject: string;
