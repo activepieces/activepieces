@@ -94,7 +94,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
-        const { content, runId: clientRunId, files } = request.body
+        const { content, runId: clientRunId, files, mentions } = request.body
         const conversationId = request.params.id
         const userId = request.principal.id
         const platformId = request.principal.platform.id
@@ -164,6 +164,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
                 userMessage: content,
                 modelName: conversation.modelName ?? null,
                 files,
+                mentions,
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_CHAT_AGENT } }, '[chatController] Enqueued chat agent job')

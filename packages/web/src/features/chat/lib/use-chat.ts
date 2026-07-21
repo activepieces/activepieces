@@ -4,6 +4,7 @@ import {
   ActionReceiptEvent,
   BuildPlanEvent,
   ChatAllowedMimeType,
+  ChatMention,
   FileProducedEvent,
   ImageGeneratedEvent,
   ChatConversationStatus,
@@ -609,7 +610,7 @@ export function useAgentChat({
   );
 
   const sendMessage = useCallback(
-    async (content: string, files?: File[]) => {
+    async (content: string, files?: File[], mentions?: ChatMention[]) => {
       updateSendStatus({ type: 'submitting' });
 
       const fileNames = files?.map((f) => f.name) ?? [];
@@ -710,6 +711,7 @@ export function useAgentChat({
           content,
           runId,
           files: pendingFilesRef.current,
+          mentions,
         }),
       );
       if (sendError) {

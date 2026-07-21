@@ -1,5 +1,6 @@
+import { ChatMention } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
+import { ArrowUp, Hand, Mic, Paperclip, Square, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -13,11 +14,20 @@ import {
   PromptInput,
   PromptInputAction,
   PromptInputActions,
-  PromptInputTextarea,
 } from '@/components/prompt-kit/prompt-input';
 import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
+import { cn } from '@/lib/utils';
+
+import { EmojiButtonPopover } from './emoji/emoji-picker-popover';
+import {
+  ChatMentionEditor,
+  ChatMentionEditorHandle,
+  ChatMentionEditorValue,
+} from './mention-composer/chat-mention-editor';
+import { MentionButtonPopover } from './mention-composer/mention-button-popover';
+import { mentionSearch } from './mention-composer/use-mention-search';
 
 export function ChatInput({
   isStreaming,
@@ -29,22 +39,32 @@ export function ChatInput({
   rightActions,
 }: {
   isStreaming: boolean;
-  onSend: (text: string, files?: File[]) => void;
+  onSend: (text: string, files?: File[], mentions?: ChatMention[]) => void;
   onStop?: () => void;
   onInputChange?: (hasInput: boolean) => void;
   placeholder?: string;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
 }) {
-  const [value, setValue] = useState('');
+  const [content, setContent] = useState('');
+  const [mentions, setMentions] = useState<ChatMention[]>([]);
+  const [isEmpty, setIsEmpty] = useState(true);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [interimText, setInterimText] = useState('');
   const lastHasInputRef = useRef(false);
+  const editorRef = useRef<ChatMentionEditorHandle>(null);
+  const prefetchMentions = mentionSearch.usePrefetchMentionData();
 
-  const handleValueChange = useCallback(
-    (v: string) => {
-      setValue(v);
-      const hasInput = v.trim().length > 0;
+  useEffect(() => {
+    prefetchMentions();
+  }, [prefetchMentions]);
+
+  const handleEditorChange = useCallback(
+    (value: ChatMentionEditorValue) => {
+      setContent(value.content);
+      setMentions(value.mentions);
+      setIsEmpty(value.isEmpty);
+      const hasInput = !value.isEmpty;
       if (hasInput !== lastHasInputRef.current) {
         lastHasInputRef.current = hasInput;
         onInputChange?.(hasInput);
@@ -54,10 +74,7 @@ export function ChatInput({
   );
 
   const handleTranscript = useCallback((text: string) => {
-    setValue((prev) => {
-      const separator = prev.length > 0 ? ' ' : '';
-      return prev + separator + text;
-    });
+    editorRef.current?.insertText(text);
     setInterimText('');
   }, []);
 
@@ -93,30 +110,37 @@ export function ChatInput({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRecording, cancelRecording]);
 
+  const canSend = !isEmpty || attachedFiles.length > 0;
+
+  // Submitting while streaming intentionally preempts the in-flight turn (server
+  // auto-cancels the old run). Don't call onStop — this reads as "taking over",
+  // not aborting (which would flash "Response stopped").
   const handleSubmit = useCallback(() => {
-    if (!isStreaming && (value.trim() || attachedFiles.length > 0)) {
+    if (canSend) {
       onSend(
-        value.trim(),
+        content.trim(),
         attachedFiles.length > 0 ? attachedFiles : undefined,
+        mentions.length > 0 ? mentions : undefined,
       );
-      setValue('');
+      editorRef.current?.clear();
       setAttachedFiles([]);
     }
-  }, [isStreaming, value, attachedFiles, onSend]);
+  }, [canSend, content, mentions, attachedFiles, onSend]);
 
   const handleFilesAdded = useCallback((files: File[]) => {
     setAttachedFiles((prev) => [...prev, ...files]);
   }, []);
 
-  const canSend = value.trim().length > 0 || attachedFiles.length > 0;
+  const composerPlaceholder = isStreaming
+    ? t('Type to take over…')
+    : placeholder ?? t('Tell me what you need... (@ to mention, : for emoji)');
 
   return (
     <FileUpload onFilesAdded={handleFilesAdded} multiple>
       <PromptInput
         isLoading={isStreaming}
-        value={value}
-        onValueChange={handleValueChange}
         onSubmit={handleSubmit}
+        onClick={() => editorRef.current?.focus()}
         className="border-0 rounded-none shadow-none"
       >
         <AnimatePresence>
@@ -159,19 +183,28 @@ export function ChatInput({
             </motion.div>
           )}
         </AnimatePresence>
-        {isRecording ? (
-          <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-foreground whitespace-pre-wrap break-words">
-            {interimText || (
-              <span className="text-muted-foreground">{t('Listening...')}</span>
-            )}
-          </div>
-        ) : (
-          <PromptInputTextarea
+        <div className="relative">
+          <ChatMentionEditor
+            ref={editorRef}
             autoFocus
-            placeholder={placeholder ?? t('Tell me what you need...')}
-            className="min-h-[44px] text-base sm:text-sm"
+            placeholder={composerPlaceholder}
+            onChange={handleEditorChange}
+            onSubmit={handleSubmit}
+            className={cn(
+              'max-h-60 overflow-y-auto',
+              isRecording && 'invisible',
+            )}
           />
-        )}
+          {isRecording && (
+            <div className="absolute inset-0 min-h-[44px] px-3 py-2.5 text-base sm:text-sm text-foreground whitespace-pre-wrap break-words">
+              {interimText || (
+                <span className="text-muted-foreground">
+                  {t('Listening...')}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         <PromptInputActions className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <PromptInputAction tooltip={t('Attach files')}>
@@ -181,19 +214,29 @@ export function ChatInput({
                 </div>
               </FileUploadTrigger>
             </PromptInputAction>
+            <MentionButtonPopover editorRef={editorRef} />
+            <EmojiButtonPopover
+              onSelect={(emoji) => editorRef.current?.insertEmoji(emoji)}
+            />
             {leftActions}
           </div>
           <div className="flex items-center gap-1">
             {rightActions}
             {isStreaming && onStop ? (
-              <PromptInputAction tooltip={t('Stop')}>
+              <PromptInputAction
+                tooltip={canSend && !isRecording ? t('Take over') : t('Stop')}
+              >
                 <Button
                   variant="default"
                   size="icon"
-                  className="h-9 w-9 sm:h-7 sm:w-7 rounded-full"
-                  onClick={onStop}
+                  className="h-9 w-9 sm:h-7 sm:w-7 rounded-full transition-transform active:scale-90"
+                  onClick={canSend && !isRecording ? handleSubmit : onStop}
                 >
-                  <Square className="size-3 fill-current" />
+                  {canSend && !isRecording ? (
+                    <Hand className="size-4 animate-in zoom-in-75 duration-150" />
+                  ) : (
+                    <Square className="size-3 fill-current animate-in zoom-in-75 duration-150" />
+                  )}
                 </Button>
               </PromptInputAction>
             ) : isRecording ? (
@@ -214,7 +257,6 @@ export function ChatInput({
                   size="icon"
                   className="h-9 w-9 sm:h-7 sm:w-7 rounded-full"
                   onClick={handleSubmit}
-                  disabled={isStreaming}
                 >
                   <ArrowUp className="size-4" />
                 </Button>
