@@ -1,7 +1,8 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AutoTopUpConfig, ConsumableProductAutoTopupParams, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
+import { AutoTopUpConfig, BillableFeature, ConsumableProductAutoTopupParams, PurchasablePlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager } from 'typeorm'
 import { hooksFactory } from '../helper/hooks-factory'
 
 function defaultBillingInfo(): BillingInfo {
@@ -13,7 +14,7 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
         return []
     },
     getBillingOverview: async () => {
-        return { ...defaultBillingInfo(), autoTopUps: [], topUpFeatures: [] }
+        return { ...defaultBillingInfo(), autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null }
     },
     createCheckoutSession: async () => {
         return { checkoutUrl: null }
@@ -21,8 +22,11 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     getBillingPortalUrl: async () => {
         return { url: '' }
     },
-    topUpFeature: async () => {
+    adjustUnconsumableFeatureQuantity: async () => {
         return { checkoutUrl: null }
+    },
+    checkUsersExceededLimit: async () => {
+        return
     },
     configureAutoTopUp: async () => {
         return
@@ -247,14 +251,22 @@ export type BillingInfo = {
 
 export type BillingOverview = BillingInfo & {
     autoTopUps: AutoTopUpConfig[]
-    topUpFeatures: ToppableFeature[]
+    consumableFeatures: BillableFeature[]
+    nonConsumableFeatures: BillableFeature[]
+    includedSeats: number | null
+    additionalSeats: number | null
 }
 
-export type TopUpFeatureParams = {
+export type AdjustUnconsumableFeatureQuantityParams = {
     platformId: string
     featureId: string
     quantity: number
     successUrl?: string
+}
+
+export type CheckUsersExceededLimitParams = {
+    platformId: string
+    entityManager: EntityManager
 }
 
 export type ConfigureAutoTopUpParams = ConsumableProductAutoTopupParams & {
@@ -294,7 +306,8 @@ export type BillingProvider = {
     getBillingOverview(platformId: string): Promise<BillingOverview>
     createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{ checkoutUrl: string | null }>
     getBillingPortalUrl(params: BillingPortalParams): Promise<{ url: string }>
-    topUpFeature(params: TopUpFeatureParams): Promise<{ checkoutUrl: string | null }>
+    adjustUnconsumableFeatureQuantity(params: AdjustUnconsumableFeatureQuantityParams): Promise<{ checkoutUrl: string | null }>
+    checkUsersExceededLimit(params: CheckUsersExceededLimitParams): Promise<void>
     configureAutoTopUp(params: ConfigureAutoTopUpParams): Promise<void>
     setupPayment(params: SetupPaymentParams): Promise<{ url: string | null }>
     cancelSubscription(params: CancelSubscriptionParams): Promise<void>

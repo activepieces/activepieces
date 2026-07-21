@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils'
-import { AutumnFeatureId, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, ConsumableProductTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
+import { AdjustUnconsumableFeatureQuantityParams, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -14,13 +14,13 @@ import { platformPlanService } from './platform-plan.service'
 const FORCE_REFRESH_DEDUP_SECONDS = 60
 const DEFAULT_USAGE_PAGE_SIZE = 10
 
-export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => {
+export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
 
-    fastify.get('/info', InfoRequest, async (request) => {
+    app.get('/info', InfoRequest, async (request) => {
         return getBillingInformation(request.log, request.principal.platform.id)
     })
 
-    fastify.post('/refresh', RefreshRequest, async (request) => {
+    app.post('/refresh', RefreshRequest, async (request) => {
         const platformId = request.principal.platform.id
         await distributedStore.runOnceWithin(
             getEntitlementsForceRefreshKey(platformId),
@@ -30,11 +30,11 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return getBillingInformation(request.log, platformId)
     })
 
-    fastify.get('/plans', ListPlansRequest, async (request) => {
+    app.get('/plans', ListPlansRequest, async (request) => {
         return billingProvider.get(request.log).listPlans(request.principal.platform.id)
     })
 
-    fastify.get('/projects-usage', ProjectsUsageRequest, async (request) => {
+    app.get('/projects-usage', ProjectsUsageRequest, async (request) => {
         return platformPlanService(request.log).getCreditUsageByProject({
             platformId: request.principal.platform.id,
             startDate: request.query.startDate,
@@ -46,7 +46,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         })
     })
 
-    fastify.post('/checkout', CheckoutRequest, async (request) => {
+    app.post('/checkout', CheckoutRequest, async (request) => {
         const platformId = request.principal.platform.id
         const provider = billingProvider.get(request.log)
         const result = await provider.createCheckoutSession({
@@ -60,21 +60,21 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return result
     })
 
-    fastify.post('/cancel', CancelRequest, async (request) => {
+    app.post('/cancel', CancelRequest, async (request) => {
         const platformId = request.principal.platform.id
         const provider = billingProvider.get(request.log)
         await provider.cancelSubscription({ platformId })
         await provider.refreshEntitlements(platformId)
     })
 
-    fastify.post('/reactivate', ReactivateRequest, async (request) => {
+    app.post('/reactivate', ReactivateRequest, async (request) => {
         const platformId = request.principal.platform.id
         const provider = billingProvider.get(request.log)
         await provider.reactivateSubscription({ platformId })
         await provider.refreshEntitlements(platformId)
     })
 
-    fastify.post('/portal', {
+    app.post('/portal', {
         config: {
             security: securityAccess.platformAdminOnly([PrincipalType.USER]),
         },
@@ -83,23 +83,29 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return url
     })
 
-    fastify.post('/activate', ActivateLicenseRequest, async (request) => {
+    app.post('/activate', ActivateLicenseRequest, async (request) => {
         await billingProvider.get(request.log).activateLicense({
             platformId: request.principal.platform.id,
             licenseKey: request.body.licenseKey,
         })
     })
 
-    fastify.post('/consumable-product-topups/checkout', ConsumableProductTopupRequest, async (request) => {
-        const { credits, featureId } = request.body
-        const { checkoutUrl } = await billingProvider.get(request.log).topUpFeature({
-            platformId: request.principal.platform.id,
-            featureId: featureId ?? AutumnFeatureId.AP_CREDITS,
-            quantity: credits,
+    app.post('/unconsumable-feature-quantity', AdjustUnconsumableFeatureQuantityRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        const { checkoutUrl } = await provider.adjustUnconsumableFeatureQuantity({
+            platformId,
+            featureId: request.body.featureId,
+            quantity: request.body.quantity,
+            successUrl: request.body.successUrl,
         })
+        if (isNil(checkoutUrl)) {
+            await provider.refreshEntitlements(platformId)
+        }
         return { paymentUrl: checkoutUrl }
     })
-    fastify.post('/consumable-product-topups/auto-topup', ConsumableProductAutoTopupRequest, async (request) => {
+
+    app.post('/consumable-product-topups/auto-topup', ConsumableProductAutoTopupRequest, async (request) => {
         await billingProvider.get(request.log).configureAutoTopUp({
             ...request.body,
             platformId: request.principal.platform.id,
@@ -107,7 +113,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
         return {}
     })
 
-    fastify.post('/setup-payment', SetupPaymentRequest, async (request) => {
+    app.post('/setup-payment', SetupPaymentRequest, async (request) => {
         return billingProvider.get(request.log).setupPayment({
             redirectUrl: request.body.redirectUrl,
             platformId: request.principal.platform.id,
@@ -117,13 +123,14 @@ export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => 
 
 async function getBillingInformation(log: FastifyBaseLogger, platformId: string): Promise<PlatformBillingInformation> {
     const platform = await platformService(log).getOneOrThrow(platformId)
-    const [platformPlan, usage, overview] = await Promise.all([
+    const [platformPlan, usage, overview, billingEnforced] = await Promise.all([
         platformPlanService(log).getOrCreateForPlatform(platform.id),
         platformPlanService(log).getUsage(platform.id),
         billingProvider.get(log).getBillingOverview(platform.id),
+        billingProvider.get(log).isBillingEnforced(platform.id),
     ])
 
-    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, autoTopUps, topUpFeatures } = overview
+    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, autoTopUps, consumableFeatures, nonConsumableFeatures, includedSeats, additionalSeats } = overview
 
     const usageWithCredits = usage.creditsRemaining === null
         ? { ...usage, creditsUsed: (await billingProvider.get(log).getCreditUsage({ platformId: platform.id, startDate: billingPeriodStart, endDate: nextBillingDate })).total }
@@ -139,8 +146,12 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         cancelAt,
         trialEndsAt,
         autoTopUps,
-        topUpFeatures,
+        consumableFeatures,
+        nonConsumableFeatures,
         billingPortalAvailable,
+        billingEnforced,
+        includedSeats,
+        additionalSeats,
     }
 }
 
@@ -214,9 +225,10 @@ const ReactivateRequest = {
     },
 }
 
-const ConsumableProductTopupRequest = {
+
+const AdjustUnconsumableFeatureQuantityRequest = {
     schema: {
-        body: ConsumableProductTopupParams,
+        body: AdjustUnconsumableFeatureQuantityParams,
         response: {
             [StatusCodes.OK]: z.object({
                 paymentUrl: z.string().nullable(),

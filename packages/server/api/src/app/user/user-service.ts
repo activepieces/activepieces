@@ -3,14 +3,16 @@ import { ApEdition, PlatformRole, ProjectType, User, UserIdentity, UserStatus, U
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull } from 'typeorm'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
+import { billingProvider } from '../platform/billing-provider'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
@@ -80,7 +82,7 @@ export const userService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await userRepo().update({
+        const applyUpdate = (entityManager?: EntityManager): Promise<unknown> => userRepo(entityManager).update({
             id,
             platformId,
         }, {
@@ -89,6 +91,18 @@ export const userService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('externalId', externalId),
         })
 
+        const isReactivation = user.status === UserStatus.INACTIVE && status === UserStatus.ACTIVE
+        if (isReactivation) {
+            const reactivatingPlatformId = user.platformId
+            await transaction(async (entityManager) => {
+                await billingProvider.get(log).checkUsersExceededLimit({ platformId: reactivatingPlatformId, entityManager })
+                await applyUpdate(entityManager)
+            })
+        }
+        else {
+            await applyUpdate()
+        }
+
         return this.getMetaInformation({ id })
     },
     async getUsersByIdentityId({ identityId }: GetUsersByIdentityIdParams): Promise<Pick<User, 'id' | 'platformId'>[]> {
@@ -96,6 +110,9 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
     async countByPlatformId(platformId: string): Promise<number> {
         return userRepo().countBy({ platformId })
+    },
+    async countActiveByPlatformId(platformId: string): Promise<number> {
+        return userRepo().countBy({ platformId, status: UserStatus.ACTIVE })
     },
     async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)

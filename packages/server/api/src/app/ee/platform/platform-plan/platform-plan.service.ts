@@ -1,6 +1,7 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, PlatformUsageMetric, SeekPage, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, InvitationStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
@@ -11,6 +12,7 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { billingProvider } from '../../../platform/billing-provider'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
+import { getInvitationExpiryCutoff, userInvitationRepo } from '../../../user-invitations/user-invitation.service'
 import { platformProjectService } from '../../projects/platform-project-service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 
@@ -93,11 +95,13 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         const credits = consumables?.credits ?? null
         const appSumo = consumables?.appSumo ?? null
         const teamProjectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
-        const usersCount = await userService(log).countByPlatformId(platformId)
+        const { activeUsers, invitedSeats, usedSeats } = await countUsedSeats({ platformId, log })
         return {
             activeFlows: activeFlowsCount,
             teamProjects: teamProjectsCount,
-            users: usersCount,
+            users: usedSeats,
+            activeUsers,
+            invitedSeats,
             creditsUsed: credits?.usage ?? 0,
             creditsRemaining: isNil(credits) ? 0 : credits.remaining,
             creditsNextResetAt: credits?.nextResetAt ?? null,
@@ -144,19 +148,24 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             })
         }
     },
-    checkUsersExceededLimit: async (platformId: string): Promise<void> => {
+    checkUsersExceededLimit: async ({ platformId, entityManager, additionalSeatsNeeded = 1 }: CheckUsersExceededLimitParams): Promise<void> => {
         if (ApEdition.COMMUNITY === edition) {
             return
         }
         if (!await billingProvider.get(log).isBillingEnforced(platformId)) {
             return
         }
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (isNil(platformPlan.usersLimit)) {
+        await platformPlanService(log).getOrCreateForPlatform(platformId)
+        const platformPlan = await platformPlanRepo(entityManager)
+            .createQueryBuilder('platform_plan')
+            .setLock('pessimistic_write')
+            .where('platform_plan.platformId = :platformId', { platformId })
+            .getOne()
+        if (isNil(platformPlan) || isNil(platformPlan.usersLimit)) {
             return
         }
-        const usersCount = await userService(log).countByPlatformId(platformId)
-        if (usersCount >= platformPlan.usersLimit) {
+        const { usedSeats } = await countUsedSeats({ platformId, log, entityManager })
+        if (usedSeats + additionalSeatsNeeded > platformPlan.usersLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
                 params: {
@@ -178,6 +187,45 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         await platformPlanRepo().save({ ...platformPlan, autumnCustomerId, autumnApiKey })
     },
 })
+
+export async function assertSeatsNotBelowActiveUsers({ platformId, targetLimit, log }: AssertSeatsNotBelowActiveUsersParams): Promise<void> {
+    const { usedSeats } = await countUsedSeats({ platformId, log })
+    if (targetLimit < usedSeats) {
+        throw new ActivepiecesError({
+            code: ErrorCode.QUOTA_EXCEEDED,
+            params: {
+                metric: PlatformUsageMetric.USERS,
+            },
+        })
+    }
+}
+
+export async function countUsedSeats({ platformId, log, entityManager }: CountUsedSeatsParams): Promise<SeatBreakdown> {
+    const [activeUsers, invitedSeats] = await Promise.all([
+        userService(log).countActiveByPlatformId(platformId),
+        countReservedInvites({ platformId, entityManager }),
+    ])
+    return { activeUsers, invitedSeats, usedSeats: activeUsers + invitedSeats }
+}
+
+async function countReservedInvites({ platformId, entityManager }: { platformId: string, entityManager?: EntityManager }): Promise<number> {
+    const result = await userInvitationRepo(entityManager)
+        .createQueryBuilder('invitation')
+        .select('COUNT(DISTINCT LOWER(invitation.email))', 'count')
+        .where('invitation.platformId = :platformId', { platformId })
+        .andWhere('invitation.status IN (:...statuses)', { statuses: [InvitationStatus.PENDING, InvitationStatus.ACCEPTED] })
+        .andWhere('invitation.created > :expiryCutoff', { expiryCutoff: getInvitationExpiryCutoff() })
+        .andWhere(`NOT EXISTS (
+            SELECT 1
+            FROM user_identity identity
+            INNER JOIN "user" existing_user
+                ON existing_user."identityId" = identity.id
+                AND existing_user."platformId" = invitation."platformId"
+            WHERE LOWER(identity.email) = LOWER(invitation.email)
+        )`)
+        .getRawOne<{ count: string }>()
+    return Number(result?.count ?? 0)
+}
 
 function triggerLazyBillingProviderSync({ platformId, autumnCustomerId }: TriggerLazyBillingProviderSyncParams, log: FastifyBaseLogger): void {
     if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
@@ -253,4 +301,28 @@ type GetCreditUsageByProjectParams = {
     limit: number
     userId: string
     principalType: PrincipalType
+}
+
+type AssertSeatsNotBelowActiveUsersParams = {
+    platformId: string
+    targetLimit: number
+    log: FastifyBaseLogger
+}
+
+export type CheckUsersExceededLimitParams = {
+    platformId: string
+    entityManager: EntityManager
+    additionalSeatsNeeded?: number
+}
+
+export type CountUsedSeatsParams = {
+    platformId: string
+    log: FastifyBaseLogger
+    entityManager?: EntityManager
+}
+
+export type SeatBreakdown = {
+    activeUsers: number
+    invitedSeats: number
+    usedSeats: number
 }

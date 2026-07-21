@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { AutumnFeatureId, PlanName, PlatformPlanLimits, PurchasablePlan, ToppableFeature } from '@activepieces/shared'
+import { AutumnFeatureId, PlanName, PlatformPlanLimits, PurchasablePlan } from '@activepieces/shared'
 import {
     type AggregateEventsResponse,
     Autumn,
@@ -24,7 +24,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://console-testing.activepieces.com'
+const AUTUMN_CONSOLE_URL = 'https://summary-cables-returned-appreciated.trycloudflare.com'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
@@ -55,7 +55,6 @@ const AUTUMN_FLAG_FEATURE_IDS = [
 ] as const satisfies readonly (keyof PlatformPlanLimits & `${AutumnFeatureId}`)[]
 
 export const autumnUtils = {
-    consoleUrl: AUTUMN_CONSOLE_URL,
     client({ secretKey, customerId, serverURL }: AutumnClientParams) {
         const client = new Autumn({ secretKey, serverURL, failOpen: true })
         return {
@@ -270,21 +269,9 @@ export const autumnConsole = {
         )
         return response.data.data
     },
-    async toppableFeatures({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<ToppableFeature[]> {
-        const response = await consoleGet<{ data: RawToppableFeature[] }>(
-            `${AUTUMN_CONSOLE_URL}/api/billing/toppable-features`,
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, params: { autumnCustomerId }, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
-        return response.data.data.flatMap((feature) => {
-            if (!autumnUtils.isAutumnFeatureId(feature.featureId)) {
-                return []
-            }
-            return [{ featureId: feature.featureId, pricePerUnit: feature.pricePerUnit, billingUnits: feature.billingUnits }]
-        })
-    },
-    async topUp({ autumnCustomerId, autumnApiKey, featureId, quantity, successUrl }: ConsoleCustomerCall & { featureId: string, quantity: number, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
+    async setUnconsumableQuantity({ autumnCustomerId, autumnApiKey, featureId, quantity, successUrl }: ConsoleCustomerCall & { featureId: string, quantity: number, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
         const response = await consolePost<{ data: { paymentUrl: string | null } }>(
-            `${AUTUMN_CONSOLE_URL}/api/billing/topup`,
+            `${AUTUMN_CONSOLE_URL}/api/billing/unconsumable-feature-quantity`,
             { autumnCustomerId, featureId, quantity, successUrl },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
@@ -496,12 +483,6 @@ type ConfigureAutoTopUpOnConsoleParams =
         featureId: string
         enabled: false
     }
-
-type RawToppableFeature = {
-    featureId: string
-    pricePerUnit: number
-    billingUnits: number
-}
 
 type ConsoleBillingCredentials = {
     autumnCustomerId: string

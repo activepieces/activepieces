@@ -1,20 +1,19 @@
-import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, PlanName } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, BillableFeature, isConsumableAutumnFeature, PlanName } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { getBillingEnforcedKey, getBillingOverviewKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, ReportUsageCountsParams, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
-import { platformPlanService } from '../platform-plan.service'
+import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, CreditsBalanceCache } from './autumn-utils'
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
 const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 60
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
-const AUTO_TOP_UP_ONLY_FEATURE_IDS: string[] = [AutumnFeatureId.AP_CREDITS, AutumnFeatureId.APP_SUMO_AI_CREDITS]
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -43,6 +42,10 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (isNil(creds)) {
             return { checkoutUrl: null }
         }
+        const targetPlan = (await autumnConsole.listPlans({ platformId })).find((plan) => plan.id === planId)
+        if (!isNil(targetPlan) && !isNil(targetPlan.includedSeats)) {
+            await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: targetPlan.includedSeats, log })
+        }
         const { paymentUrl } = await autumnConsole.checkout({ ...creds, planId, successUrl })
         return { checkoutUrl: paymentUrl }
     },
@@ -54,20 +57,20 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const { url } = await autumnConsole.portal({ ...creds, returnUrl })
         return { url: url ?? '' }
     },
-    topUpFeature: async ({ platformId, featureId, quantity, successUrl }) => {
-        if (AUTO_TOP_UP_ONLY_FEATURE_IDS.includes(featureId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS,
-                params: { message: 'Manual top-up is not available for consumable credits; use auto-top-up instead' },
-            })
-        }
+    adjustUnconsumableFeatureQuantity: async ({ platformId, featureId, quantity, successUrl }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
+        if (featureId === AutumnFeatureId.USERS_LIMIT) {
+            await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: quantity, log })
+        }
         const creds = await autumnConsole.getCreds(log, platformId)
         if (isNil(creds)) {
             return { checkoutUrl: null }
         }
-        const { paymentUrl } = await autumnConsole.topUp({ ...creds, featureId, quantity, successUrl })
+        const { paymentUrl } = await autumnConsole.setUnconsumableQuantity({ ...creds, featureId, quantity, successUrl })
         return { checkoutUrl: paymentUrl }
+    },
+    checkUsersExceededLimit: async ({ platformId, entityManager }) => {
+        await platformPlanService(log).checkUsersExceededLimit({ platformId, entityManager })
     },
     configureAutoTopUp: async (params) => {
         await autumnUtils.ensureEnrolled(log, params.platformId)
@@ -102,6 +105,10 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const creds = await autumnConsole.getCreds(log, platformId)
         if (isNil(creds)) {
             return
+        }
+        const freePlan = (await autumnConsole.listPlans({ platformId })).find((plan) => plan.id === PlanName.FREE)
+        if (!isNil(freePlan) && !isNil(freePlan.includedSeats)) {
+            await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: freePlan.includedSeats, log })
         }
         await autumnConsole.cancel({ ...creds })
     },
@@ -220,6 +227,33 @@ function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthE
         trialEndsAt: msToIso(baseSubscription?.trialEndsAt) ?? null,
         scheduledPlanName: scheduledPlan?.plan?.name ?? null,
         billingPortalAvailable: !isNil(customer.paymentMethod),
+    }
+}
+
+function toBillableFeatures(customer: GetCustomerResponse): BillableFeature[] {
+    const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
+    const trialing = baseSubscriptions.some((subscription) => !isNil(subscription.trialEndsAt) && subscription.trialEndsAt > apDayjs().valueOf())
+    if (trialing) {
+        return []
+    }
+    const active = baseSubscriptions.find((subscription) => subscription.status === 'active')
+    return (active?.plan?.items ?? []).flatMap((item) => {
+        if (!autumnUtils.isAutumnFeatureId(item.featureId) || item.price?.billingMethod !== 'prepaid' || isNil(item.price.amount)) {
+            return []
+        }
+        return [{ featureId: item.featureId, pricePerUnit: item.price.amount, billingUnits: item.price.billingUnits ?? 1, interval: item.price.interval ?? null }]
+    })
+}
+
+function toSeatBreakdown(customer: GetCustomerResponse): { includedSeats: number | null, additionalSeats: number | null } {
+    const balance = customer.balances[AutumnFeatureId.USERS_LIMIT]
+    if (isNil(balance)) {
+        return { includedSeats: null, additionalSeats: null }
+    }
+    const breakdown = balance.breakdown ?? []
+    return {
+        includedSeats: breakdown.reduce((sum, entry) => sum + entry.includedGrant, 0),
+        additionalSeats: breakdown.reduce((sum, entry) => sum + entry.prepaidGrant, 0),
     }
 }
 
@@ -378,15 +412,17 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
     const monthStart = apDayjs().startOf('month').toISOString()
     const monthEnd = apDayjs().endOf('month').toISOString()
     const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-    const creds = await autumnConsole.getCreds(log, platformId)
-    if (isNil(client) || isNil(creds)) {
-        return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, autoTopUps: [], topUpFeatures: [] }
+    if (isNil(client)) {
+        return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null }
     }
     const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan', 'payment_method', 'billing_controls.auto_topups.purchase_limit'] })
+    const billableFeatures = toBillableFeatures(customer)
     const overview: BillingOverview = {
         ...toBillingInfo(customer, monthStart, monthEnd),
+        ...toSeatBreakdown(customer),
         autoTopUps: toAutoTopUps(customer),
-        topUpFeatures: await autumnConsole.toppableFeatures(creds),
+        consumableFeatures: billableFeatures.filter((feature) => isConsumableAutumnFeature(feature.featureId)),
+        nonConsumableFeatures: billableFeatures.filter((feature) => !isConsumableAutumnFeature(feature.featureId)),
     }
     await distributedStore.put(getBillingOverviewKey(platformId), overview, BILLING_OVERVIEW_TTL_SECONDS)
     return overview

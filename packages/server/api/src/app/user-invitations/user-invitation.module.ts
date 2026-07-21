@@ -1,11 +1,11 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
 import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
+import { transaction } from '../core/db/transaction'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
@@ -14,7 +14,7 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
-import { userInvitationsService } from './user-invitation.service'
+import { INVITATION_EXPIRY_SECONDS, userInvitationsService } from './user-invitation.service'
 
 export const invitationModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
@@ -34,24 +34,35 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
                 break
         }
         const platformId = request.principal.platform.id
-        // Fail at invitation time (not later at accept/user-creation) when the invite would add a NEW platform
-        // user. Applies to BOTH platform and project invites — a project invite to a new email also creates a
-        // user on accept. Adding an existing platform member to a project consumes no seat, so it's not gated.
-        if (await invitationWouldAddNewUser({ email, platformId, log: request.log })) {
-            await platformPlanService(request.log).checkUsersExceededLimit(platformId)
-        }
         const status = await shouldAutoAcceptInvitation(request.principal, request.body, platformId, request.log) ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
         const projectRole = await getProjectRoleAndAssertIfFound(platformId, request.body)
 
-        const invitation = await userInvitationsService(request.log).create({
+        const invitationRecordParams = {
             email,
             type,
             platformId,
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
             projectRoleId: type === InvitationType.PLATFORM ? null : projectRole?.id ?? null,
-            invitationExpirySeconds: dayjs.duration(7, 'days').asSeconds(),
             status,
+        }
+
+        const wouldAddNewUser = await userInvitationsService(request.log).wouldAddNewUser({ email, platformId })
+        const userInvitationRecord = wouldAddNewUser
+            ? await transaction(async (entityManager) => {
+                const additionalSeatsNeeded = await userInvitationsService(request.log).countAdditionalSeatsNeeded({
+                    email,
+                    platformId,
+                    entityManager,
+                })
+                await platformPlanService(request.log).checkUsersExceededLimit({ platformId, entityManager, additionalSeatsNeeded })
+                return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
+            })
+            : await userInvitationsService(request.log).createInvitationRecord(invitationRecordParams)
+
+        const invitation = await userInvitationsService(request.log).finalizeInvitation({
+            userInvitation: userInvitationRecord,
+            invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
         })
         await reply.status(StatusCodes.CREATED).send(invitation)
     })
@@ -104,15 +115,6 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-
-async function invitationWouldAddNewUser({ email, platformId, log }: { email: string, platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
-    const identity = await userIdentityService(log).getIdentityByEmail(email)
-    if (isNil(identity)) {
-        return true
-    }
-    const existingUser = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId })
-    return isNil(existingUser)
-}
 
 const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendUserInvitationRequest): Promise<ProjectRole | null> => {
     const { type } = request

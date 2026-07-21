@@ -1,5 +1,5 @@
 import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
-import { FlowStatus, ProjectType, RunEnvironment } from '@activepieces/shared'
+import { FlowStatus, ProjectType, RunEnvironment, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
@@ -98,6 +98,7 @@ async function queryUsersByPlatform(platformIds: string[]): Promise<Map<string, 
         .select('user.platformId', 'platformId')
         .addSelect('COUNT(*)', 'count')
         .where('user.platformId IN (:...platformIds)', { platformIds })
+        .andWhere('user.status = :status', { status: UserStatus.ACTIVE })
         .groupBy('user.platformId')
         .getRawMany<{ platformId: string, count: string }>()
 
