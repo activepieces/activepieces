@@ -33,6 +33,9 @@ export const findFile = createAction({
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { fileName, purpose } = context.propsValue;
 
+    // The OpenAI files endpoint is not paginated — the SDK returns every file in
+    // a single page (FileListParams has no cursor; the page is forwards-compat only),
+    // so response.data is the complete list.
     const response = await openai.files.list(purpose ? { purpose } : {});
 
     const target = fileName.toLowerCase();

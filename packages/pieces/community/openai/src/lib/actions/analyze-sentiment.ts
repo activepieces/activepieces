@@ -52,7 +52,7 @@ export const analyzeSentiment = createAction({
     });
 
     const raw = completion.choices[0]?.message.content ?? '{}';
-    let parsed: { sentiment?: string; confidence?: number; explanation?: string };
+    let parsed: { sentiment?: unknown; confidence?: unknown; explanation?: unknown };
     try {
       parsed = JSON.parse(raw);
     } catch {
@@ -60,13 +60,21 @@ export const analyzeSentiment = createAction({
       parsed = { explanation: raw };
     }
 
-    const normalized = (parsed.sentiment ?? '').toLowerCase();
+    const normalized = String(parsed.sentiment ?? '').toLowerCase();
     const sentiment = sentiments.find((s) => s === normalized) ?? 'neutral';
+
+    const confidence =
+      typeof parsed.confidence === 'number' &&
+      parsed.confidence >= 0 &&
+      parsed.confidence <= 1
+        ? parsed.confidence
+        : undefined;
 
     return {
       sentiment,
-      confidence: parsed.confidence,
-      explanation: parsed.explanation,
+      confidence,
+      explanation:
+        typeof parsed.explanation === 'string' ? parsed.explanation : undefined,
     };
   },
 });

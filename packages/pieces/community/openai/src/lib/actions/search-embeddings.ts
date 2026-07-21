@@ -48,14 +48,21 @@ export const searchEmbeddings = createAction({
       String(d)
     );
 
-    const response = await openai.embeddings.create({
-      model,
-      input: [query, ...documents],
-    });
+    const inputs = [query, ...documents];
+    const batchSize = 2048;
+    const embeddings: number[][] = [];
+    let totalTokens = 0;
 
-    const [queryEmbedding, ...docEmbeddings] = response.data.map(
-      (d) => d.embedding
-    );
+    for (let i = 0; i < inputs.length; i += batchSize) {
+      const response = await openai.embeddings.create({
+        model,
+        input: inputs.slice(i, i + batchSize),
+      });
+      embeddings.push(...response.data.map((d) => d.embedding));
+      totalTokens += response.usage?.total_tokens ?? 0;
+    }
+
+    const [queryEmbedding, ...docEmbeddings] = embeddings;
 
     const ranked = docEmbeddings
       .map((embedding, index) => ({
@@ -71,7 +78,7 @@ export const searchEmbeddings = createAction({
     return {
       bestMatch: results[0] ?? null,
       results,
-      usage: response.usage,
+      usage: { total_tokens: totalTokens },
     };
   },
 });
