@@ -75,6 +75,7 @@ const systemPropValidators: {
     [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
+    [AppSystemProp.OTEL_QUEUE_METRICS_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
     [AppSystemProp.AXIOM_TOKEN]: stringValidator,
     [AppSystemProp.AXIOM_DATASET]: stringValidator,

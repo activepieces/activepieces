@@ -57,7 +57,7 @@ function buildGaugePayload({ queueCounts, timeUnixNano, hostName }: BuildGaugePa
 
 async function push({ log, queueCounts }: PushParams): Promise<void> {
     const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
-    if (!system.getBoolean(AppSystemProp.OTEL_ENABLED) || !endpoint || Object.keys(queueCounts).length === 0) {
+    if (!system.getBoolean(AppSystemProp.OTEL_QUEUE_METRICS_ENABLED) || !endpoint || Object.keys(queueCounts).length === 0) {
         return
     }
     const payload = buildGaugePayload({

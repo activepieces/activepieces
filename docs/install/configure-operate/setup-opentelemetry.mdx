@@ -10,13 +10,14 @@ Activepieces exports structured logs via evlog. Each API request and worker job 
 
 | Variable | Description | Default Value | Example |
 |----------|-------------|---------------|---------|
-| `AP_OTEL_ENABLED` | Export logs via the OTLP log drain and queue metrics via OTLP | `false` | `true` |
+| `AP_OTEL_ENABLED` | Export logs via the OTLP log drain | `false` | `true` |
+| `AP_OTEL_QUEUE_METRICS_ENABLED` | Export BullMQ queue metrics via OTLP | `false` | `true` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint for log and metric export | None | `https://your-collector:4318` |
 | `OTEL_EXPORTER_OTLP_HEADERS` | Headers for OTLP exporter (comma-separated key=value pairs) | None | `Authorization=Bearer token` |
 
 ## Queue Metrics
 
-When `AP_OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` is set, the app container also exports BullMQ queue metrics to `<endpoint>/v1/metrics` every 60 seconds, so your monitoring stack receives queue depth without exposing any HTTP admin surface.
+When `AP_OTEL_QUEUE_METRICS_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` is set, the app container also exports BullMQ queue metrics to `<endpoint>/v1/metrics` every 60 seconds, so your monitoring stack receives queue depth without exposing any HTTP admin surface.
 
 | Metric | Type | Attributes | Description |
 |--------|------|------------|-------------|
@@ -37,5 +38,5 @@ Outbound requests from the app go through an SSRF filter that blocks private, lo
 
 <Note>
 Events with level `warn` or `error` are always kept regardless of sampling configuration.
-`AP_OTEL_ENABLED=true` enables the OTLP log drain and queue metrics export. OpenTelemetry tracing is not emitted.
+`AP_OTEL_ENABLED=true` enables the OTLP log drain; `AP_OTEL_QUEUE_METRICS_ENABLED=true` enables queue metrics export. OpenTelemetry tracing is not emitted.
 </Note>

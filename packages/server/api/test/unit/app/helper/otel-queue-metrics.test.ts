@@ -95,18 +95,18 @@ describe('otelQueueMetrics.push', () => {
     beforeEach(() => {
         postMock.mockReset()
         postMock.mockResolvedValue({ status: 200 })
-        delete process.env.AP_OTEL_ENABLED
+        delete process.env.AP_OTEL_QUEUE_METRICS_ENABLED
         delete process.env.OTEL_EXPORTER_OTLP_ENDPOINT
         delete process.env.OTEL_EXPORTER_OTLP_HEADERS
     })
 
     afterEach(() => {
-        delete process.env.AP_OTEL_ENABLED
+        delete process.env.AP_OTEL_QUEUE_METRICS_ENABLED
         delete process.env.OTEL_EXPORTER_OTLP_ENDPOINT
         delete process.env.OTEL_EXPORTER_OTLP_HEADERS
     })
 
-    it('does nothing when AP_OTEL_ENABLED is not true', async () => {
+    it('does nothing when AP_OTEL_QUEUE_METRICS_ENABLED is not true', async () => {
         process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318'
 
         await otelQueueMetrics.push({ log, queueCounts: { workerJobs: { waiting: 1 } } })
@@ -115,7 +115,7 @@ describe('otelQueueMetrics.push', () => {
     })
 
     it('does nothing when no endpoint is configured', async () => {
-        process.env.AP_OTEL_ENABLED = 'true'
+        process.env.AP_OTEL_QUEUE_METRICS_ENABLED = 'true'
 
         await otelQueueMetrics.push({ log, queueCounts: { workerJobs: { waiting: 1 } } })
 
@@ -123,7 +123,7 @@ describe('otelQueueMetrics.push', () => {
     })
 
     it('posts gauges to <endpoint>/v1/metrics with configured headers', async () => {
-        process.env.AP_OTEL_ENABLED = 'true'
+        process.env.AP_OTEL_QUEUE_METRICS_ENABLED = 'true'
         process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318/'
         process.env.OTEL_EXPORTER_OTLP_HEADERS = 'Authorization=Bearer token'
 
@@ -137,7 +137,7 @@ describe('otelQueueMetrics.push', () => {
     })
 
     it('never throws when the collector is unreachable', async () => {
-        process.env.AP_OTEL_ENABLED = 'true'
+        process.env.AP_OTEL_QUEUE_METRICS_ENABLED = 'true'
         process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318'
         postMock.mockRejectedValue(new Error('connect ECONNREFUSED'))
 
