@@ -217,8 +217,9 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                     return appConnection
                 }
                 const forceRefresh = REVALIDATE_FORCE_REFRESH_TYPES.has(appConnection.value.type)
+                const skipRefresh = appConnection.value.type === AppConnectionType.PLATFORM_OAUTH2
                 try {
-                    if (forceRefresh || await this.needRefresh(appConnection, log)) {
+                    if (!skipRefresh && (forceRefresh || await this.needRefresh(appConnection, log))) {
                         appConnection = await this.refresh(appConnection, projectId, log)
                         await appConnectionsRepo().update(appConnection.id, {
                             status: AppConnectionStatus.ACTIVE,
