@@ -214,8 +214,9 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 if (appConnection.value.type === AppConnectionType.NO_AUTH) {
                     return appConnection
                 }
+                const forceRefresh = OAUTH2_TYPES.has(appConnection.value.type)
                 try {
-                    if (await this.needRefresh(appConnection, log)) {
+                    if (forceRefresh || await this.needRefresh(appConnection, log)) {
                         appConnection = await this.refresh(appConnection, projectId, log)
                         await appConnectionsRepo().update(appConnection.id, {
                             status: AppConnectionStatus.ACTIVE,
@@ -300,6 +301,11 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
 const pieceRefreshSupportCache: LRU<boolean> = lru(1000, 0)
+const OAUTH2_TYPES: ReadonlySet<AppConnectionType> = new Set([
+    AppConnectionType.OAUTH2,
+    AppConnectionType.CLOUD_OAUTH2,
+    AppConnectionType.PLATFORM_OAUTH2,
+])
 
 export function isCustomAuthTokenStale(value: { access_token?: string, token_refresh_at?: number }): boolean {
     if (isNil(value.access_token)) return true
