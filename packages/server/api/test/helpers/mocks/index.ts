@@ -175,6 +175,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         chatEnabled: platformPlan?.chatEnabled ?? false,
         workerGroupsEnabled: platformPlan?.workerGroupsEnabled ?? false,
         teamProjectsLimit: platformPlan?.teamProjectsLimit ?? 0,
+        usersLimit: platformPlan?.usersLimit ?? null,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
