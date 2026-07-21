@@ -625,6 +625,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             .addSelect('COUNT(*)', 'count')
             .where('flow.projectId IN (:...projectIds)', { projectIds })
             .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
+            .andWhere('flow.operationStatus != :deleting', { deleting: FlowOperationStatus.DELETING })
             .groupBy('flow.projectId')
             .getRawMany()
         
