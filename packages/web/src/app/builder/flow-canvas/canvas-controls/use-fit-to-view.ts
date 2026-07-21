@@ -1,11 +1,5 @@
-import { Viewport, useReactFlow } from '@xyflow/react';
+import { Node, useReactFlow } from '@xyflow/react';
 import { useCallback, useEffect } from 'react';
-
-import {
-  StageTier,
-  useStageOptional,
-} from '@/app/components/workspace-shell/stage-context';
-import { STAGE_TRANSITION_MS, easeStageTransition } from '@/lib/ui-transitions';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';
@@ -13,132 +7,6 @@ import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApNode, CanvasOrientation } from '../utils/types';
 
 const verticalPaddingOnFitView = 100;
-const horizontalPaddingOnFitView = 40;
-
-// Zoom-out floor per Stage tier (ReactFlow minZoom 0.4 sits just below the lowest).
-function fitZoomFloorForTier(tier: StageTier): number {
-  switch (tier) {
-    case 'mini':
-      return 0.45;
-    case 'narrow':
-      return 0.5;
-    default:
-      return 0.6;
-  }
-}
-
-// Pure fit math: where the viewport lands to centre the whole flow in the canvas.
-// Shared by handleFitToView and the editor-toggle settle so both agree.
-function computeFitViewport({
-  nodes,
-  canvasWidth,
-  canvasHeight,
-  orientation,
-  zoomFloor,
-}: {
-  nodes: ApNode[];
-  canvasWidth: number;
-  canvasHeight: number;
-  orientation: CanvasOrientation;
-  zoomFloor: number;
-}): Viewport | null {
-  if (nodes.length === 0) return null;
-  if (orientation === 'horizontal') {
-    const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE.horizontal;
-    const minX = Math.min(...nodes.map((node) => node.position.x));
-    const maxX = Math.max(...nodes.map((node) => node.position.x));
-    const minY = Math.min(...nodes.map((node) => node.position.y));
-    const maxY =
-      Math.max(...nodes.map((node) => node.position.y)) + stepNodeSize.height;
-    const graphWidth = Math.max(maxX - minX, stepNodeSize.width);
-    const graphHeight = Math.max(maxY - minY, stepNodeSize.height);
-    const zoomRatio = Math.min(
-      Math.max(
-        Math.min(canvasWidth / graphWidth, canvasHeight / graphHeight),
-        0.9,
-      ),
-      1.25,
-    );
-    return {
-      x:
-        -minX * zoomRatio +
-        verticalPaddingOnFitView * zoomRatio +
-        stepNodeSize.width,
-      y: canvasHeight / 2 - ((minY + maxY) / 2) * zoomRatio,
-      zoom: zoomRatio,
-    };
-  }
-  const boundingBox = flowCanvasUtils.calculateGraphBoundingBox({
-    graph: {
-      nodes,
-      edges: [],
-    },
-    orientation,
-  });
-  const graphHeight = boundingBox.height;
-  // Fit against the wider side (extents from the trunk centre) so the outermost
-  // branch stays on-screen with the trunk centred; else wide router flows overflow.
-  const halfSpan = Math.max(
-    boundingBox.left,
-    boundingBox.right,
-    flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
-  );
-  const zoomToFitHeight = canvasHeight / graphHeight;
-  const zoomToFitWidth =
-    (canvasWidth / 2 - horizontalPaddingOnFitView) / halfSpan;
-  const zoomRatio = Math.min(
-    Math.max(Math.min(zoomToFitHeight, zoomToFitWidth), zoomFloor),
-    1.25,
-  );
-  return {
-    x:
-      canvasWidth / 2 -
-      (flowCanvasConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
-    y:
-      nodes[0].position.y +
-      verticalPaddingOnFitView * zoomRatio +
-      flowCanvasConsts.AP_NODE_SIZE.STEP.height,
-    zoom: zoomRatio,
-  };
-}
-
-// Glide the viewport to `target` on easeStageTransition (the shared morph curve),
-// reading the current viewport on frame one so it starts wherever the anchor left
-// it. Returns a cancel fn.
-function tweenViewport({
-  getViewport,
-  setViewport,
-  target,
-  durationMs,
-}: {
-  getViewport: () => Viewport;
-  setViewport: (viewport: Viewport) => void;
-  target: Viewport;
-  durationMs: number;
-}): () => void {
-  let rafId = 0;
-  let start: number | null = null;
-  let from: Viewport | null = null;
-  const tick = (now: number) => {
-    if (start === null || from === null) {
-      start = now;
-      from = getViewport();
-    }
-    const progress =
-      durationMs <= 0 ? 1 : Math.min((now - start) / durationMs, 1);
-    const eased = easeStageTransition(progress);
-    setViewport({
-      x: from.x + (target.x - from.x) * eased,
-      y: from.y + (target.y - from.y) * eased,
-      zoom: from.zoom + (target.zoom - from.zoom) * eased,
-    });
-    if (progress < 1) {
-      rafId = window.requestAnimationFrame(tick);
-    }
-  };
-  rafId = window.requestAnimationFrame(tick);
-  return () => window.cancelAnimationFrame(rafId);
-}
 
 const useFitToView = ({
   canvasWidth,
@@ -151,13 +19,10 @@ const useFitToView = ({
   hasCanvasBeenInitialised: boolean;
   selectedStep: string | null;
 }) => {
-  const { setViewport, getNodes, getNode, getViewport } =
-    useReactFlow<ApNode>();
+  const { setViewport, getNodes, getNode, getViewport } = useReactFlow();
   const canvasOrientation = useBuilderStateContext(
     (state) => state.canvasOrientation,
   );
-  const stageTier = useStageOptional()?.stageTier ?? 'comfortable';
-  const zoomFloor = fitZoomFloorForTier(stageTier);
 
   const handleFitToView = useCallback(
     ({
@@ -168,28 +33,69 @@ const useFitToView = ({
       orientation?: CanvasOrientation;
     }) => {
       const effectiveOrientation = orientation ?? canvasOrientation;
-      const target = computeFitViewport({
-        nodes: getNodes(),
-        canvasWidth,
-        canvasHeight,
+      const nodes = getNodes();
+      if (nodes.length === 0) return;
+      if (effectiveOrientation === 'horizontal') {
+        const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE.horizontal;
+        const minX = Math.min(...nodes.map((node) => node.position.x));
+        const maxX = Math.max(...nodes.map((node) => node.position.x));
+        const minY = Math.min(...nodes.map((node) => node.position.y));
+        const maxY =
+          Math.max(...nodes.map((node) => node.position.y)) +
+          stepNodeSize.height;
+        const graphWidth = Math.max(maxX - minX, stepNodeSize.width);
+        const graphHeight = Math.max(maxY - minY, stepNodeSize.height);
+        const zoomRatio = Math.min(
+          Math.max(
+            Math.min(canvasWidth / graphWidth, canvasHeight / graphHeight),
+            0.9,
+          ),
+          1.25,
+        );
+        setViewport(
+          {
+            x:
+              -minX * zoomRatio +
+              verticalPaddingOnFitView * zoomRatio +
+              stepNodeSize.width,
+            y: canvasHeight / 2 - ((minY + maxY) / 2) * zoomRatio,
+            zoom: zoomRatio,
+          },
+          {
+            duration: isInitialRenderCall ? 0 : 500,
+          },
+        );
+        return;
+      }
+      const graphHeight = flowCanvasUtils.calculateGraphBoundingBox({
+        graph: {
+          nodes: nodes as ApNode[],
+          edges: [],
+        },
         orientation: effectiveOrientation,
-        zoomFloor,
-      });
-      if (!target) return;
-      const settleDuration =
-        effectiveOrientation === 'horizontal' ? STAGE_TRANSITION_MS : 500;
-      setViewport(target, {
-        duration: isInitialRenderCall ? 0 : settleDuration,
-      });
+      }).height;
+      const zoomRatio = Math.min(
+        Math.max(canvasHeight / graphHeight, 0.9),
+        1.25,
+      );
+
+      setViewport(
+        {
+          x:
+            canvasWidth / 2 -
+            (flowCanvasConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
+          y:
+            nodes[0].position.y +
+            verticalPaddingOnFitView * zoomRatio +
+            flowCanvasConsts.AP_NODE_SIZE.STEP.height,
+          zoom: zoomRatio,
+        },
+        {
+          duration: isInitialRenderCall ? 0 : 500,
+        },
+      );
     },
-    [
-      getNodes,
-      canvasHeight,
-      setViewport,
-      canvasWidth,
-      canvasOrientation,
-      zoomFloor,
-    ],
+    [getNodes, canvasHeight, setViewport, canvasWidth, canvasOrientation],
   );
 
   const adjustViewportForSelectedStep = (stepId: string) => {
@@ -238,7 +144,7 @@ const useFitToView = ({
 
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
-  node: ApNode,
+  node: Node,
   zoom: number,
 ) => ({
   x:
@@ -280,4 +186,4 @@ const calculateViewportDelta = (
       : 0,
 });
 
-export { useFitToView, computeFitViewport, tweenViewport, fitZoomFloorForTier };
+export { useFitToView };
