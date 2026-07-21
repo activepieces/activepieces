@@ -37,6 +37,8 @@ export const DeploymentConfig = z.object({
     s3SignedUrls: z.boolean().nullable(),
     s3Endpoint: z.string().nullable(),
     s3Region: z.string().nullable(),
+    projectRateLimiterEnabled: z.boolean().nullable(),
+    defaultConcurrentJobsLimit: z.number().nullable(),
 })
 
 export const DiagnosticsWorker = z.object({
@@ -44,6 +46,7 @@ export const DiagnosticsWorker = z.object({
     cpuCores: z.number(),
     cpuUsagePercentage: z.number(),
     ramUsagePercentage: z.number(),
+    serverPingMs: z.number().nullable(),
     status: z.string(),
 })
 
@@ -59,6 +62,8 @@ export const AppInstance = z.object({
     ramUsagePercentage: z.number(),
     diskPercentage: z.number(),
     eventLoopDelayMs: z.number(),
+    cpuStealPercentage: z.number().optional(),
+    cpuThrottledPercentage: z.number().optional(),
     updated: z.string(),
 })
 

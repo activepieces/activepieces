@@ -57,10 +57,12 @@ export const Project = z.object({
     icon: ProjectIcon,
     externalId: Nullable(z.string()),
     releasesEnabled: z.boolean(),
+    notifyFlowOwnerOnFailure: z.boolean(),
     metadata: Nullable(Metadata),
     poolId: Nullable(ApId),
     pieceSetId: Nullable(ApId),
     workerGroupId: Nullable(z.string()),
+    executionDataRetentionDays: Nullable(z.number()),
 })
 
 const projectAnalytics = z.object({

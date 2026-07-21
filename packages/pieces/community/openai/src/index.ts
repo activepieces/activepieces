@@ -3,6 +3,7 @@ import {
 } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { analyzeSentiment } from './lib/actions/analyze-sentiment';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { askOpenAI } from './lib/actions/send-prompt';
 import { classifyText } from './lib/actions/classify-text';
@@ -10,8 +11,10 @@ import { createEmbedding } from './lib/actions/create-embedding';
 import { deleteFile } from './lib/actions/delete-file';
 import { editImage } from './lib/actions/edit-image';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
+import { findFile } from './lib/actions/find-file';
 import { generateImage } from './lib/actions/generate-image';
 import { listFiles } from './lib/actions/list-files';
+import { searchEmbeddings } from './lib/actions/search-embeddings';
 import { listModels } from './lib/actions/list-models';
 import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
@@ -34,7 +37,9 @@ export const openai = createPiece({
     visionPrompt,
     extractStructuredDataAction,
     classifyText,
+    analyzeSentiment,
     createEmbedding,
+    searchEmbeddings,
     generateImage,
     editImage,
     textToSpeech,
@@ -42,6 +47,7 @@ export const openai = createPiece({
     translateAction,
     uploadFile,
     listFiles,
+    findFile,
     deleteFile,
     listModels,
     createCustomApiCallAction({

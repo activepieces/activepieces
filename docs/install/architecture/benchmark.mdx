@@ -113,8 +113,10 @@ This benchmark runs in `SANDBOX_CODE_ONLY` mode. It does **not** represent the p
 Load-test and **diagnose** your own deployment — no cluster scripts required — with the CLI. It publishes a synchronous flow (webhook trigger → data mapper → return response), fires load at its sync webhook endpoint with [autocannon](https://github.com/mcollina/autocannon), and returns one self-contained diagnostic bundle you can hand to support.
 
 ```bash
-AP_API_KEY=<key> npx @activepieces/cli@latest benchmark --url https://your-instance.example.com --project-id <id>
+AP_API_KEY=<key> npx @activepieces/cli@latest benchmark --url https://your-instance.example.com
 ```
+
+The CLI provisions a **throwaway project** for the run (with a high concurrency cap so a project rate limiter can't queue-throttle the numbers) and deletes it when finished — nothing is left behind, and it never touches your real projects. The API key must be a platform-admin key.
 
 **Why the numbers are trustworthy.** The CLI runs from a different region than your servers, so its client-side latency is polluted by network distance. The numbers that matter are measured server-side instead: the QUEUE/PROVISION/BOOT/RUN split is timed *inside the worker*, and DB/Redis/S3 round-trips are measured *in-region* by an admin diagnostics endpoint. Client numbers are shown but marked observational.
 
@@ -123,8 +125,7 @@ AP_API_KEY=<key> npx @activepieces/cli@latest benchmark --url https://your-insta
 | Option | Default | Description |
 |---|---|---|
 | `--url` | `http://localhost:3000` | Base URL of your instance |
-| `--api-key` | `AP_API_KEY` env var | Platform API key (Bearer) — **required** |
-| `--project-id` | | Project to create the flow in — **required** |
+| `--api-key` | `AP_API_KEY` env var | Platform-admin API key (Bearer) — **required** |
 | `--concurrency` | auto = execution slots | Concurrent connections |
 | `--requests` | `40 × concurrency` | Total requests to fire |
 | `--body` | `{"test":true}` | JSON body sent to the webhook |
@@ -194,7 +195,7 @@ Each section answers one question:
 Here the read is unambiguous: workers pegged at ~100% of their 0.5-core limit and RUN ≈ 200 ms dominate, while QUEUE (~100 ms at concurrency = slots) and the infra round-trips are small — the deployment is **service-bound on worker CPU**, so the lever is more/bigger workers, not a code change.
 
 - Exits non-zero if any request fails — usable as a CI gate.
-- The benchmark flow stays in your project — delete it when done.
+- The throwaway project (and its benchmark flow) is deleted automatically when the run finishes.
 
 <Note>
 If your hardware or sandbox mode differs from the recommended shape, the absolute numbers shift — but the **shape** holds: match concurrency to your own slot count so nothing queues, then read whether you are queue-bound or service-bound and which tier dominates.

@@ -4,6 +4,7 @@ import { PiecesFilterType, ProjectIcon, ProjectType } from './project'
 
 export const UpdateProjectPlatformRequest = z.object({
     releasesEnabled: z.boolean().optional(),
+    notifyFlowOwnerOnFailure: z.boolean().optional(),
     displayName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
     externalId: z.string().optional(),
     metadata: z.optional(Metadata),
@@ -15,6 +16,7 @@ export const UpdateProjectPlatformRequest = z.object({
     globalConnectionExternalIds: z.array(z.string()).optional(),
     maxConcurrentJobs: z.optional(Nullable(z.number().int().positive())),
     workerGroupId: z.optional(Nullable(z.string())),
+    executionDataRetentionDays: z.optional(Nullable(z.number().int().positive())),
 })
 
 export type UpdateProjectPlatformRequest = z.infer<typeof UpdateProjectPlatformRequest>
