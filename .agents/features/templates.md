@@ -3,8 +3,6 @@
 ## Summary
 The Templates feature provides a library of reusable flow (and table) blueprints that users can browse, import, and build on. Templates are typed into three categories: OFFICIAL (curated by Activepieces, stored on Cloud or proxied from cloud.activepieces.com for self-hosted), CUSTOM (created by a platform owner to share within their platform), and SHARED (one-off sharing URLs, not listable). On Cloud, official templates are stored in the database with a null platformId. On Community/Enterprise self-hosted, official templates are fetched at request time from the Activepieces Cloud API (`https://cloud.activepieces.com/api/v1/templates`). Custom templates require the `manageTemplatesEnabled` plan flag. Before saving, flows inside a template are validated and piece names extracted into a searchable `pieces` array.
 
-On the web, template details open as a dialog over the still-mounted gallery: `/templates/:templateId` renders the same element chain as `/templates`, and `TemplatesPage` mounts `TemplateDetailsDialog` off the `:templateId` URL param (closing navigates back to `/templates`, preserving gallery state). Logged-out visitors to `/templates/:templateId` hit `SharedTemplateGate` (via the guard's `publicFallback`): SHARED templates render the public `ShareTemplate` view, anything else redirects to sign-in with a return path.
-
 ## Key Files
 - `packages/server/api/src/app/template/template.controller.ts` — REST controller (CRUD + listing + categories)
 - `packages/server/api/src/app/template/template.service.ts` — core CRUD, list filtering, flow validation
@@ -18,8 +16,7 @@ On the web, template details open as a dialog over the still-mounted gallery: `/
 - `packages/web/src/features/templates/components/templates-browse-dialog.tsx` — browsing/searching dialog
 - `packages/web/src/features/templates/components/use-template-dialog.tsx` — importing a template into a project
 - `packages/web/src/features/templates/components/share-template.tsx` — sharing a custom template
-- `packages/web/src/app/routes/templates/` — template gallery page; details render in `template-details-dialog.tsx` over the gallery, driven by the `:templateId` URL param
-- `packages/web/src/app/routes/templates/shared-template-gate.tsx` — logged-out path of `/templates/:templateId`: public view for SHARED templates, sign-in redirect otherwise
+- `packages/web/src/app/routes/templates/` — public-facing template gallery page
 
 ## Edition Availability
 - **Community (CE)**: OFFICIAL templates proxied from cloud. CUSTOM templates require `manageTemplatesEnabled` plan flag (off by default in CE).

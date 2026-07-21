@@ -401,6 +401,7 @@ import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809
 import { AddChatConversationStreamingUpdatedIndex1810000000000 } from './migration/postgres/1810000000000-AddChatConversationStreamingUpdatedIndex'
 import { AddDeprecatedToPieceMetadata1811000000000 } from './migration/postgres/1811000000000-AddDeprecatedToPieceMetadata'
 import { AddNotifyFlowOwnerOnFailureToProject1811000000000 } from './migration/postgres/1811000000000-AddNotifyFlowOwnerOnFailureToProject'
+import { AddProjectExecutionDataRetentionDays1812000000000 } from './migration/postgres/1812000000000-AddProjectExecutionDataRetentionDays'
 import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postgres/1814000000000-AddActiveFlowsLimitToProjectPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -818,6 +819,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatConversationStreamingUpdatedIndex1810000000000,
         AddNotifyFlowOwnerOnFailureToProject1811000000000,
         AddDeprecatedToPieceMetadata1811000000000,
+        AddProjectExecutionDataRetentionDays1812000000000,
         AddActiveFlowsLimitToProjectPlan1814000000000,
     ]
     return migrations
