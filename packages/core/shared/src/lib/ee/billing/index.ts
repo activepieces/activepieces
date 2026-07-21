@@ -11,11 +11,13 @@ export type ProjectPlanLimits = {
     piecesFilterType?: PiecesFilterType
 }
 
-export const ConsumableProductTopupParams = z.object({
-    credits: z.number(),
-    featureId: z.enum(AutumnFeatureId).optional(),
+
+export const AdjustUnconsumableFeatureQuantityParams = z.object({
+    featureId: z.enum(AutumnFeatureId),
+    quantity: z.number().int().nonnegative(),
+    successUrl: z.string().optional(),
 })
-export type ConsumableProductTopupParams = z.infer<typeof ConsumableProductTopupParams>
+export type AdjustUnconsumableFeatureQuantityParams = z.infer<typeof AdjustUnconsumableFeatureQuantityParams>
 
 export const CheckoutPlanParamsSchema = z.object({
     planId: z.string(),
@@ -36,6 +38,7 @@ export const PurchasablePlan = z.object({
     interval: Nullable(z.string()),
     priceDisplay: Nullable(z.string()),
     baseVariantId: Nullable(z.string()),
+    includedSeats: Nullable(z.number()),
 })
 export type PurchasablePlan = z.infer<typeof PurchasablePlan>
 

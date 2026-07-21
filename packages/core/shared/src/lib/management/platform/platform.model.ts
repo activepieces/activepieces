@@ -12,6 +12,8 @@ export const PlatformUsage = z.object({
     activeFlows: z.number(),
     teamProjects: z.number(),
     users: z.number(),
+    activeUsers: z.number(),
+    invitedSeats: z.number(),
 })
 
 export type PlatformUsage = z.infer<typeof PlatformUsage>
@@ -57,6 +59,18 @@ export enum AutumnFeatureId {
     SSO_ENABLED = 'ssoEnabled',
     SECRET_MANAGERS_ENABLED = 'secretManagersEnabled',
     SCIM_ENABLED = 'scimEnabled',
+}
+
+// Consumable features are prepaid balances the customer tops up (adds units to a depleting pool). Every other
+// billable feature (e.g. seats) is a recurring per-unit quantity the customer edits and is charged for each
+// period — it is NOT "topped up". This is the source of truth for splitting the two mechanics.
+export const CONSUMABLE_AUTUMN_FEATURE_IDS: readonly AutumnFeatureId[] = [
+    AutumnFeatureId.AP_CREDITS,
+    AutumnFeatureId.APP_SUMO_AI_CREDITS,
+]
+
+export function isConsumableAutumnFeature(featureId: AutumnFeatureId): boolean {
+    return CONSUMABLE_AUTUMN_FEATURE_IDS.includes(featureId)
 }
 
 
@@ -227,12 +241,13 @@ export const AutoTopUpConfig = z.object({
 })
 export type AutoTopUpConfig = z.infer<typeof AutoTopUpConfig>
 
-export const ToppableFeature = z.object({
+export const BillableFeature = z.object({
     featureId: z.enum(AutumnFeatureId),
     pricePerUnit: z.number(),
     billingUnits: z.number(),
+    interval: Nullable(z.string()),
 })
-export type ToppableFeature = z.infer<typeof ToppableFeature>
+export type BillableFeature = z.infer<typeof BillableFeature>
 
 export const ProjectCreditUsage = z.object({
     projectId: z.string(),
@@ -251,7 +266,11 @@ export const PlatformBillingInformation = z.object({
     cancelAt: Nullable(z.string()),
     trialEndsAt: Nullable(z.string()),
     autoTopUps: z.array(AutoTopUpConfig),
-    topUpFeatures: z.array(ToppableFeature),
+    consumableFeatures: z.array(BillableFeature),
+    nonConsumableFeatures: z.array(BillableFeature),
     billingPortalAvailable: z.boolean(),
+    billingEnforced: z.boolean(),
+    includedSeats: Nullable(z.number()),
+    additionalSeats: Nullable(z.number()),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>
