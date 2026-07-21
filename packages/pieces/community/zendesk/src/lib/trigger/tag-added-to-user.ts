@@ -9,55 +9,77 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
 
-const WEBHOOK_TRIGGER_KEY = 'zendesk_new_organization_webhook';
+const WEBHOOK_TRIGGER_KEY = 'zendesk_tag_added_to_user_webhook';
 
-interface ZendeskOrganization {
+interface ZendeskUser {
   id: number;
   name: string;
-  details: string;
-  notes: string;
-  group_id?: number;
-  shared_tickets: boolean;
-  shared_comments: boolean;
-  external_id?: string;
-  tags: string[];
-  organization_fields: Record<string, unknown>;
+  email: string;
   created_at: string;
   updated_at: string;
+  time_zone: string;
+  phone?: string;
+  locale_id: number;
+  locale: string;
+  organization_id?: number;
+  role: string;
+  verified: boolean;
+  external_id?: string;
+  tags: string[];
+  active: boolean;
+  shared: boolean;
+  shared_agent: boolean;
+  two_factor_auth_enabled: boolean;
+  moderator: boolean;
+  ticket_restriction: string;
+  only_private_comments: boolean;
+  restricted_agent: boolean;
+  suspended: boolean;
+  report_csv: boolean;
+  user_fields: Record<string, unknown>;
 }
 
-export const newOrganization = createTrigger({
-  name: 'new_organization',
-  displayName: 'New Organization',
-  description: 'Fires when a new organization record is created. Uses Zendesk event webhook (no Trigger needed).',
+export const tagAddedToUser = createTrigger({
+  name: 'tag_added_to_user',
+  displayName: 'Tag Added to User',
+  description: 'Triggers when one or more tags are added to a user.',
   aiMetadata: {
-    description: 'Fires when a new organization record is created in Zendesk. Represents a newly added company/account. Uses a Zendesk event-type webhook registered automatically, so no manual Zendesk Trigger setup is needed.',
+    description: 'Fires when one or more tags are added to a user in Zendesk. Useful for automating workflows based on user categorization or tagging events. Uses a Zendesk event-type webhook registered automatically, so no manual Zendesk Trigger setup is needed.',
   },
   auth: zendeskAuth,
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
     id: 12345,
-    url: 'https://example.zendesk.com/api/v2/organizations/12345.json',
-    name: 'Acme Corporation',
-    details: 'A leading technology company',
-    notes: 'Important client',
-    group_id: 67890,
-    shared_tickets: true,
-    shared_comments: true,
-    external_id: 'acme-001',
-    tags: ['enterprise', 'vip'],
-    organization_fields: {
-      industry: 'Technology',
-      company_size: 'Large',
-    },
+    url: 'https://example.zendesk.com/api/v2/users/12345.json',
+    name: 'John Doe',
+    email: 'john.doe@example.com',
     created_at: '2023-03-25T02:39:41Z',
     updated_at: '2023-03-25T02:39:41Z',
-    domain_names: ['acme.com', 'acmecorp.com'],
+    time_zone: 'America/New_York',
+    locale_id: 1,
+    locale: 'en-US',
+    organization_id: 67890,
+    role: 'end-user',
+    verified: true,
+    external_id: 'user-001',
+    tags: ['vip', 'enterprise'],
+    active: true,
+    shared: false,
+    shared_agent: false,
+    two_factor_auth_enabled: false,
+    moderator: false,
+    ticket_restriction: 'requested',
+    only_private_comments: false,
+    restricted_agent: false,
+    suspended: false,
+    report_csv: false,
+    user_fields: {},
+    added_tags: ['vip'],
   },
   async onEnable(context) {
     const authentication = context.auth;
-    
+
     try {
       const response = await httpClient.sendRequest<{
         webhook: { id: string };
@@ -74,12 +96,12 @@ export const newOrganization = createTrigger({
         },
         body: {
           webhook: {
-            name: `Activepieces New Organization Webhook - ${Date.now()}`,
+            name: `Activepieces Tag Added to User Webhook - ${Date.now()}`,
             endpoint: context.webhookUrl,
             http_method: 'POST',
             request_format: 'json',
             status: 'active',
-            subscriptions: ['zen:event-type:organization.created'],
+            subscriptions: ['zen:event-type:user.tags_changed'],
           },
         },
       });
@@ -105,10 +127,9 @@ export const newOrganization = createTrigger({
             password: authentication.props.token,
           },
         });
+        await context.store.delete(WEBHOOK_TRIGGER_KEY);
       } catch (error) {
         console.warn(`Warning: Failed to delete webhook ${webhookId}:`, (error as Error).message);
-      } finally {
-        await context.store.delete(WEBHOOK_TRIGGER_KEY);
       }
     }
   },
@@ -116,16 +137,22 @@ export const newOrganization = createTrigger({
   async run(context) {
     const payload = context.payload.body as {
       type?: string;
-      organization?: ZendeskOrganization;
-      detail?: ZendeskOrganization;
-      'zen:body'?: { organization?: ZendeskOrganization };
+      user?: ZendeskUser;
+      detail?: ZendeskUser;
+      event?: { added?: { tags?: string[] } };
+      'zen:body'?: { user?: ZendeskUser };
     };
 
-    const organization = payload.organization || payload['zen:body']?.organization || payload.detail;
-    if (!organization) {
+    const addedTags = payload.event?.added?.tags ?? [];
+    if (addedTags.length === 0) {
       return [];
     }
 
-    return [organization];
+    const user = payload.user || payload['zen:body']?.user || payload.detail;
+    if (!user) {
+      return [];
+    }
+
+    return [{ ...user, added_tags: addedTags }];
   },
 });
