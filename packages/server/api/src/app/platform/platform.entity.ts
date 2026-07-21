@@ -90,6 +90,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        mcpServerEndpointAllowlist: {
+            type: 'jsonb',
+            nullable: true,
+        },
     },
     indices: [
         {

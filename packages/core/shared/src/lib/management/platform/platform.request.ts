@@ -1,7 +1,11 @@
 import { ApId, ApMultipartFile, Nullable, OptionalArrayFromQuery, OptionalBooleanFromQuery, SAFE_STRING_PATTERN, tryCatchSync } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { mcpEndpointAllowlistUtil } from '../../automation/mcp/mcp-endpoint-allowlist'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
 import { PieceSelectorConfig, PlatformThemeColors } from './platform.model'
+
+const mcpServerEndpointSchema = z.string()
+    .refine((value) => mcpEndpointAllowlistUtil.isValidEntry(value), 'invalidMcpServerEndpoint')
 
 export const MAX_EMBED_ORIGIN_LENGTH = 300
 
@@ -64,6 +68,8 @@ export const UpdatePlatformRequestBody = z.object({
     pinnedPieces: OptionalArrayFromQuery(z.string()),
     pieceSelectorConfig: NullablePieceSelectorConfigFromMultipart.optional(),
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
+        .optional(),
+    mcpServerEndpointAllowlist: z.array(mcpServerEndpointSchema)
         .optional(),
 })
 

@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { AgentPieceProps, AgentToolType, ExecutionType, FileCompression, FileLocation, FileType, FlowActionType, FlowOperationType, FlowStatus, flowStructureUtil, FlowVersion, mcpEndpointAllowlistUtil, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
@@ -17,6 +17,7 @@ import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -153,7 +154,9 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             if (isNil(flow)) {
                 return null
             }
-            return flowVersion
+            const platformId = await projectService(log).getPlatformId(flow.projectId)
+            const platform = await platformService(log).getOne(platformId)
+            return enforceMcpEndpointAllowlist({ flowVersion, allowlist: platform?.mcpServerEndpointAllowlist ?? null, log })
         },
 
         async getPiece(input) {
@@ -318,6 +321,51 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
     }
 }
 
+// Server-side security gate for the external MCP endpoint allowlist (GIT-1584).
+// The runtime connect happens inside the sandboxed AI piece, which cannot read
+// platform config — so we strip off-list MCP tools here, before the flow version
+// reaches the worker. Empty/unset allowlist is the opt-in passthrough.
+function enforceMcpEndpointAllowlist({ flowVersion, allowlist, log }: EnforceMcpEndpointAllowlistParams): FlowVersion {
+    if (isNil(allowlist) || allowlist.length === 0) {
+        return flowVersion
+    }
+    return flowStructureUtil.transferFlow(flowVersion, (step) => {
+        if (step.type !== FlowActionType.PIECE) {
+            return step
+        }
+        const input = step.settings.input
+        const agentTools = isNil(input) ? undefined : input[AgentPieceProps.AGENT_TOOLS]
+        if (!Array.isArray(agentTools)) {
+            return step
+        }
+        const filtered = agentTools.filter((tool) => {
+            if (!isExternalMcpTool(tool)) {
+                return true
+            }
+            const approved = mcpEndpointAllowlistUtil.isServerUrlApproved({ serverUrl: tool.serverUrl, allowlist })
+            if (!approved) {
+                log.warn({ flowVersion: { id: flowVersion.id }, step: { name: step.name }, serverUrl: tool.serverUrl }, '[workerRpc#getFlowVersion] Stripped MCP tool whose endpoint is not on the platform allowlist')
+            }
+            return approved
+        })
+        if (filtered.length === agentTools.length) {
+            return step
+        }
+        return {
+            ...step,
+            settings: {
+                ...step.settings,
+                input: { ...input, [AgentPieceProps.AGENT_TOOLS]: filtered },
+            },
+        }
+    })
+}
+
+function isExternalMcpTool(tool: unknown): tool is { type: AgentToolType.MCP, serverUrl: string } {
+    return typeof tool === 'object' && tool !== null && 'type' in tool
+        && tool.type === AgentToolType.MCP && 'serverUrl' in tool && typeof tool.serverUrl === 'string'
+}
+
 // Binds conversation/run/platform/user to the per-call logger so every chat RPC
 // log line correlates with the worker turn and the analyze-logs timeline.
 function chatRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runId?: string, platformId?: string, userId?: string }): FastifyBaseLogger {
@@ -327,4 +375,10 @@ function chatRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runI
         ...spreadIfDefined('platform', isNil(ids.platformId) ? undefined : { id: ids.platformId }),
         ...spreadIfDefined('user', isNil(ids.userId) ? undefined : { id: ids.userId }),
     })
+}
+
+type EnforceMcpEndpointAllowlistParams = {
+    flowVersion: FlowVersion
+    allowlist: string[] | null
+    log: FastifyBaseLogger
 }

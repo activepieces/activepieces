@@ -11,6 +11,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/server/api/src/app/mcp/tools/piece-expertise.ts` — curated, piece-specific guidance (expert notes, example inputs) surfaced through MCP property discovery
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
 - `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
+- `packages/core/shared/src/lib/automation/mcp/mcp-endpoint-allowlist.ts` — `mcpEndpointAllowlistUtil`: host/wildcard matcher + entry validator for the platform allowlist of external MCP endpoints agents may connect to (see [agents.md](agents.md) → MCP Endpoint Allowlist)
 - `packages/core/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
 - `packages/web/src/app/components/project-settings/mcp-server/index.tsx` — project settings panel for MCP
 - `packages/web/src/app/components/project-settings/mcp-server/mcp-credentials.tsx` — token display and rotate UI
@@ -94,7 +95,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `POST /v1/projects/:projectId/mcp-server/token` — mint a short-lived (15-min, `scopes: ['mcp']`), project-scoped MCP OAuth access token and return `{ mcpServerUrl, mcpToken }`. Secured with `securityAccess.project([USER], READ_MCP, { PARAM })`; reuses `mcpOAuthTokenService.issueInternalAccessToken` (the same path the chat assistant uses internally). Powers the embed SDK's `generateMcpToken()` — a no-OAuth alternative to the `authorizeMcp()` consent flow for hosts that already have an embed session.
 - `POST /v1/mcp/:projectId/http` — StreamableHTTP MCP protocol endpoint (main protocol handler)
 
-External MCP server validation for the **agent piece** lives under `packages/server/api/src/app/agents/` (endpoint: `POST /v1/projects/:projectId/agent-tools/mcp/validate`), not here — it's a probe for URLs the agent will later connect to, not part of the Activepieces-as-MCP-server feature.
+External MCP server validation for the **agent piece** lives under `packages/server/api/src/app/agents/` (endpoint: `POST /v1/projects/:projectId/agent-tools/mcp/validate`), not here — it's a probe for URLs the agent will later connect to, not part of the Activepieces-as-MCP-server feature. Those external endpoints are additionally gated by a platform allowlist (`platform.mcpServerEndpointAllowlist`) — see [agents.md](agents.md) → MCP Endpoint Allowlist.
 
 ## Authentication
 

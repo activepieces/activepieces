@@ -1,16 +1,29 @@
 import { ApId, Permission } from '@activepieces/core-utils'
-import { AgentMcpTool, PrincipalType } from '@activepieces/shared'
+import { AgentMcpTool, mcpEndpointAllowlistUtil, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { platformService } from '../platform/platform.service'
+import { projectService } from '../project/project-service'
 import { mcpToolValidator } from './mcp-tool-validator'
 
 export const agentToolsController: FastifyPluginAsyncZod = async (app) => {
     app.post('/mcp/validate', ValidateMcpToolRequest, async (req) => {
+        const platformId = await projectService(req.log).getPlatformId(req.params.projectId)
+        const platform = await platformService(req.log).getOneOrThrow(platformId)
+        const approved = mcpEndpointAllowlistUtil.isServerUrlApproved({
+            serverUrl: req.body.serverUrl,
+            allowlist: platform.mcpServerEndpointAllowlist,
+        })
+        if (!approved) {
+            return { toolNames: undefined, error: NOT_APPROVED_ERROR }
+        }
         return mcpToolValidator.validateAgentMcpTool(req.body)
     })
 }
+
+const NOT_APPROVED_ERROR = 'This MCP server endpoint is not on the list of endpoints approved by your platform admin.'
 
 const ValidateMcpToolRequest = {
     config: {

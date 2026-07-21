@@ -578,8 +578,9 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(23)
+            expect(Object.keys(responseBody).length).toBe(24)
             expect(responseBody.id).toBe(mockPlatform.id)
+            expect(responseBody.mcpServerEndpointAllowlist).toBeNull()
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
