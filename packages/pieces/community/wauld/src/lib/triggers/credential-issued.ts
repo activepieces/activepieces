@@ -33,11 +33,19 @@ type WauldCredential = {
   parent?: string;
   published?: boolean;
   document?: {
-    id?: string;
     name?: string;
     engagementName?: string;
     type?: string;
     skills?: string[];
+    issuingAuthority?: {
+      name?: string;
+      websiteUrl?: string;
+    };
+    criteria?: Array<{
+      type?: string;
+      description?: string;
+      supportingLink?: string;
+    }>;
   };
   recipient?: {
     name?: string;
@@ -118,6 +126,14 @@ type CreateWebhookResponse = {
   };
 };
 
+function getHeaders(accessToken: string) {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    'Connect-Protocol-Version': '1',
+    'Content-Type': 'application/json',
+  };
+}
+
 async function fetchWorkspaces(
   accessToken: string,
   accountId: string,
@@ -132,11 +148,7 @@ async function fetchWorkspaces(
         url:
           `${WAULD_BASE_URL}` +
           '/wauld.WorkspaceService/ListWorkspaces',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Connect-Protocol-Version': '1',
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(accessToken),
         body: {
           parent: accountId,
           pageSize: 25,
@@ -168,11 +180,7 @@ async function fetchEngagements(
         url:
           `${WAULD_BASE_URL}` +
           '/wauld.EngagementService/ListEngagements',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Connect-Protocol-Version': '1',
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(accessToken),
         body: {
           parent: workspaceId,
           pageSize: 10,
@@ -204,11 +212,7 @@ async function fetchDocuments(
         url:
           `${WAULD_BASE_URL}` +
           '/wauld.DocumentService/ListDocuments',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Connect-Protocol-Version': '1',
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(accessToken),
         body: {
           parent: engagementId,
           pageSize: 10,
@@ -232,10 +236,10 @@ export const credentialIssued = createTrigger({
   displayName: 'New Credential Issued',
   description:
     'Triggers when a credential is issued using the selected Wauld document.',
-    aiMetadata: {
-        description:
-        'Triggers when a credential is issued from the selected Wauld document.',
-    },
+  aiMetadata: {
+    description:
+      'Triggers when a credential is issued from the selected Wauld document.',
+  },
 
   props: {
     workspaceId: Property.Dropdown<
@@ -245,7 +249,8 @@ export const credentialIssued = createTrigger({
     >({
       auth: wauldAuth,
       displayName: 'Workspace',
-      description: 'Choose the Wauld workspace where the relevant document is located.',
+      description:
+        'Choose the Wauld workspace where the relevant document is located.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -285,10 +290,14 @@ export const credentialIssued = createTrigger({
     engagementId: Property.Dropdown({
       auth: wauldAuth,
       displayName: 'Engagement',
-      description: 'Choose the engagement that contains the document you want this Zap to monitor.',
+      description:
+        'Choose the engagement that contains the document you want this flow to monitor.',
       required: true,
       refreshers: ['workspaceId'],
-      options: async ({ auth, workspaceId }) => {
+      options: async ({
+        auth,
+        workspaceId,
+      }) => {
         if (!auth || !workspaceId) {
           return {
             disabled: true,
@@ -328,7 +337,7 @@ export const credentialIssued = createTrigger({
       auth: wauldAuth,
       displayName: 'Document',
       description:
-        'Choose the document for this trigger. The Zap will run whenever a credential is issued for this document.',
+        'Choose the document for this trigger. The flow will run whenever a credential is issued for this document.',
       required: true,
       refreshers: ['engagementId'],
       options: async ({
@@ -375,9 +384,7 @@ export const credentialIssued = createTrigger({
       id: 'doc_sample123',
       name: 'Sample Certificate',
       type: 'CERTIFICATE',
-      skills: [
-        'Sample Skill',
-      ],
+      skills: ['Sample Skill'],
       earningCriteria: [
         {
           type: 'Course Completion',
@@ -415,12 +422,9 @@ export const credentialIssued = createTrigger({
         url:
           `${WAULD_BASE_URL}` +
           '/wauld.WebhookService/CreateWebhook',
-        headers: {
-          Authorization:
-            `Bearer ${context.auth.props.accessToken}`,
-          'Connect-Protocol-Version': '1',
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(
+          context.auth.props.accessToken,
+        ),
         body: {
           parent: context.auth.props.accountId,
           url: context.webhookUrl,
@@ -462,12 +466,9 @@ export const credentialIssued = createTrigger({
       url:
         `${WAULD_BASE_URL}` +
         '/wauld.WebhookService/DeleteWebhook',
-      headers: {
-        Authorization:
-          `Bearer ${context.auth.props.accessToken}`,
-        'Connect-Protocol-Version': '1',
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(
+        context.auth.props.accessToken,
+      ),
       body: {
         id: storedWebhook.id,
       },
@@ -490,12 +491,9 @@ export const credentialIssued = createTrigger({
         url:
           `${WAULD_BASE_URL}` +
           '/wauld.CredentialService/ListCredentials',
-        headers: {
-          Authorization:
-            `Bearer ${context.auth.props.accessToken}`,
-          'Connect-Protocol-Version': '1',
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(
+          context.auth.props.accessToken,
+        ),
         body: {
           parent: documentId,
           pageSize: 3,
@@ -516,7 +514,33 @@ export const credentialIssued = createTrigger({
       );
     }
 
-    return credentials.slice(0, 3);
+    return credentials
+      .slice(0, 3)
+      .map((credential) => ({
+        id: credential.id,
+        document: {
+          id: documentId,
+          name: credential.document?.name,
+          type: credential.document?.type,
+          skills:
+            credential.document?.skills ?? [],
+          earningCriteria:
+            credential.document?.criteria ?? [],
+        },
+        issuer: {
+          id: context.auth.props.accountId,
+          name:
+            credential.document
+              ?.issuingAuthority?.name,
+          website:
+            credential.document
+              ?.issuingAuthority?.websiteUrl,
+        },
+        attributes:
+          credential.attributes ?? [],
+        issueTime: credential.publishTime,
+        recipient: credential.recipient,
+      }));
   },
 
   async run(context) {
