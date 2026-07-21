@@ -9,17 +9,14 @@ const ENV_VAR_NAMES = {
     QUEUE_MODE: 'AP_QUEUE_MODE',
 }
 
-let migratedEnvironment: Record<string, string | undefined> | undefined
-
 export const environmentMigrations = {
-    migrate(): Record<string, string | undefined> {
-        migratedEnvironment ??= {
-            ...process.env,
-            [ENV_VAR_NAMES.EXECUTION_MODE]: migrateExecutionMode(process.env[ENV_VAR_NAMES.EXECUTION_MODE]),
-            [ENV_VAR_NAMES.REDIS_TYPE]: migrateRedisType(process.env[ENV_VAR_NAMES.REDIS_TYPE]),
-            [ENV_VAR_NAMES.DB_TYPE]: migrateDbType(process.env[ENV_VAR_NAMES.DB_TYPE]),
+    migrate(name: string): string | undefined {
+        switch (name) {
+            case ENV_VAR_NAMES.EXECUTION_MODE: return migrateExecutionMode(process.env[name])
+            case ENV_VAR_NAMES.REDIS_TYPE: return migrateRedisType(process.env[name])
+            case ENV_VAR_NAMES.DB_TYPE: return migrateDbType(process.env[name])
+            default: return process.env[name]
         }
-        return migratedEnvironment
     },
 }
 
