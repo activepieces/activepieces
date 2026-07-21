@@ -451,12 +451,6 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
     }
 }
 
-// Worker→app round-trip via the public /health endpoint — the path the engine's run callbacks travel.
-// /health does a single DB check, so the reading is transport + app responsiveness, not the cost of a
-// query-heavy handler (/flags on EE fans out ~10 sequential DB queries, which inflated this metric by
-// ~10× the per-query DB latency and made slow-DB deployments look like slow networks).
-// Plain fetch, not safeHttp: the app URL is an internal/private address the SSRF filter would reject,
-// and this is a trusted internal call. Best-effort — undefined if it fails or times out.
 async function probeServerPing(): Promise<number | undefined> {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), SERVER_PING_TIMEOUT_MS)

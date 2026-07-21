@@ -10,8 +10,6 @@ const MAX_REASONABLE_MEMORY_BYTES = 4 * 1024 ** 4 // 4 TiB
 
 let prevCpuUsage = process.cpuUsage()
 let prevTimestamp = Date.now()
-// Zero baselines: the first getCpuPressure() call reports the since-boot ratio (counters are
-// cumulative), subsequent calls report the delta since the previous call.
 let prevNodeCpu: CpuCounters = { steal: 0, total: 0 }
 let prevCfsThrottle: CfsCounters = { throttled: 0, periods: 0 }
 
