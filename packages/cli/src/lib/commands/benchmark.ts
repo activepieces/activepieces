@@ -283,10 +283,8 @@ function startDiagnosticsSampler(client: AxiosInstance): DiagnosticsSampler {
             const res = await client.get('/api/v1/health/diagnostics').catch(() => null);
             if (!stopped && res && res.status === 200 && res.data) {
                 const d = res.data;
-                const machines = (d.workers?.machines ?? []) as Array<{ serverPingMs?: number | null } & CpuPressureInfo>;
+                const machines = (d.workers?.machines ?? []) as Array<{ serverPingMs?: number | null }>;
                 const pings = machines.map((w) => w.serverPingMs).filter((v): v is number => typeof v === 'number');
-                const steals = machines.map((w) => w.cpuStealPercentage).filter((v): v is number => typeof v === 'number');
-                const throttles = machines.map((w) => w.cpuThrottledPercentage).filter((v): v is number => typeof v === 'number');
                 samples[sampledAt] = {
                     databaseMs: d.database?.latencyMs ?? null,
                     redisMs: d.redis?.latencyMs ?? null,
@@ -295,8 +293,6 @@ function startDiagnosticsSampler(client: AxiosInstance): DiagnosticsSampler {
                         .map((a) => ({ hostname: a.hostname, cpuUsagePercentage: a.cpuUsagePercentage, eventLoopDelayMs: a.eventLoopDelayMs, cpuStealPercentage: a.cpuStealPercentage, cpuThrottledPercentage: a.cpuThrottledPercentage })),
                     workerPingP50Ms: pings.length > 0 ? percentile(pings, 50) : null,
                     workerPingMaxMs: pings.length > 0 ? Math.max(...pings) : null,
-                    workerCpuStealMaxPct: steals.length > 0 ? Math.max(...steals) : null,
-                    workerCpuThrottledMaxPct: throttles.length > 0 ? Math.max(...throttles) : null,
                 };
             }
             await sleep(DIAGNOSTICS_SAMPLE_INTERVAL_MS);
@@ -643,7 +639,7 @@ function renderReport(report: BenchmarkReport): void {
         if (d.workers) {
             console.log(`  workers  : ${d.workers.count} connected`);
             for (const w of d.workers.machines) {
-                console.log(`    - ${w.status} ${w.workerId.slice(0, 8)} | ${w.cpuCores} core | cpu ${w.cpuUsagePercentage.toFixed(1)}% | ram ${w.ramUsagePercentage.toFixed(1)}% | worker→app ${w.serverPingMs == null ? 'n/a' : w.serverPingMs + 'ms'}${cpuPressureLabel(w)}`);
+                console.log(`    - ${w.status} ${w.workerId.slice(0, 8)} | ${w.cpuCores} core | cpu ${w.cpuUsagePercentage.toFixed(1)}% | ram ${w.ramUsagePercentage.toFixed(1)}% | worker→app ${w.serverPingMs == null ? 'n/a' : w.serverPingMs + 'ms'}`);
             }
         }
         renderCpuPressureVerdict(d);
@@ -767,7 +763,7 @@ function renderDiagnosticsTimeline(report: BenchmarkReport): void {
     const entries = Object.entries(samples);
     if (entries.length === 0) return;
     console.log(chalk.bold(`\nDiagnostics over time (server-probed every ${intervalMs / 1000}s across the benchmark)`));
-    console.log(chalk.gray('  time      db     redis  storage  app cpu%          evloop ms      worker ping p50/max  app steal/thr%  wkr steal/thr max%'));
+    console.log(chalk.gray('  time      db     redis  storage  app cpu%          evloop ms      worker ping p50/max  app steal/thr%'));
     for (const [at, s] of entries) {
         const time = at.slice(11, 19);
         const appsCpu = s.apps.map((a) => a.cpuUsagePercentage.toFixed(0)).join('/') || 'n/a';
@@ -775,8 +771,7 @@ function renderDiagnosticsTimeline(report: BenchmarkReport): void {
         const ping = s.workerPingP50Ms === null ? 'n/a' : `${s.workerPingP50Ms}/${s.workerPingMaxMs}ms`;
         const pct = (v: number | undefined | null) => (typeof v === 'number' ? v.toFixed(1) : '-');
         const appsPressure = s.apps.map((a) => `${pct(a.cpuStealPercentage)}/${pct(a.cpuThrottledPercentage)}`).join(' ') || 'n/a';
-        const workerPressure = `${pct(s.workerCpuStealMaxPct)}/${pct(s.workerCpuThrottledMaxPct)}`;
-        console.log(`  ${time}  ${String(s.databaseMs ?? 'n/a').padEnd(5)}  ${String(s.redisMs ?? 'n/a').padEnd(5)}  ${String(s.storageMs ?? 'n/a').padEnd(7)}  ${appsCpu.padEnd(16)}  ${appsLoop.padEnd(13)}  ${ping.padEnd(19)}  ${appsPressure.padEnd(14)}  ${workerPressure}`);
+        console.log(`  ${time}  ${String(s.databaseMs ?? 'n/a').padEnd(5)}  ${String(s.redisMs ?? 'n/a').padEnd(5)}  ${String(s.storageMs ?? 'n/a').padEnd(7)}  ${appsCpu.padEnd(16)}  ${appsLoop.padEnd(13)}  ${ping.padEnd(19)}  ${appsPressure}`);
     }
     console.log(chalk.gray('  app cpu/evloop and worker pings refresh on their ~60s ticks, so consecutive rows can repeat them; db/redis/storage are probed fresh each sample.'));
 }
@@ -816,16 +811,16 @@ function cpuPressureLabel(instance: CpuPressureInfo): string {
 // Both signals are latency the CPU-usage numbers cannot show: steal is the hypervisor running a
 // NEIGHBOR tenant while our vCPU was runnable (shared-CPU node types, e.g. GCE E2); throttled is
 // our own k8s CPU limit stalling the container in ~100ms CFS quanta. Either one inflates every
-// app/worker touch inside QUEUE and RUN while cpu% still looks idle.
+// app touch inside QUEUE and RUN while cpu% still looks idle. App-only: workers don't report these.
 function renderCpuPressureVerdict(d: DiagnosticsInfo): void {
-    const instances: CpuPressureInfo[] = [...(d.apps?.instances ?? []), ...(d.workers?.machines ?? [])];
+    const instances: CpuPressureInfo[] = d.apps?.instances ?? [];
     const steals = instances.map((i) => i.cpuStealPercentage).filter((v): v is number => v !== undefined);
     const throttles = instances.map((i) => i.cpuThrottledPercentage).filter((v): v is number => v !== undefined);
     if (steals.length === 0 && throttles.length === 0) return;
     const maxSteal = Math.max(0, ...steals);
     const maxThrottled = Math.max(0, ...throttles);
     if (maxSteal >= CPU_STEAL_WARN_PCT) {
-        console.log(chalk.yellow(`  !! CPU steal up to ${maxSteal.toFixed(1)}% — the hypervisor is running OTHER tenants on this node's physical cores (shared-CPU machine types, e.g. GCE E2). This adds latency that cpu%% cannot show; move app/worker/redis to dedicated-CPU nodes.`));
+        console.log(chalk.yellow(`  !! CPU steal up to ${maxSteal.toFixed(1)}% — the hypervisor is running OTHER tenants on this node's physical cores (shared-CPU machine types, e.g. GCE E2). This adds latency that cpu%% cannot show; move the app (and redis, if co-located) to dedicated-CPU nodes.`));
     }
     if (maxThrottled >= CPU_THROTTLE_WARN_PCT) {
         console.log(chalk.yellow(`  !! CFS throttling up to ${maxThrottled.toFixed(1)}% of periods — a container keeps hitting its k8s CPU limit and stalls in ~100ms quanta. Raise (or remove) the CPU limit on the affected pods.`));
@@ -1033,8 +1028,6 @@ type DiagnosticsSample = {
     apps: Array<{ hostname: string; cpuUsagePercentage: number; eventLoopDelayMs: number } & CpuPressureInfo>;
     workerPingP50Ms: number | null;
     workerPingMaxMs: number | null;
-    workerCpuStealMaxPct: number | null;
-    workerCpuThrottledMaxPct: number | null;
 };
 type DiagnosticsTimeline = { intervalMs: number; samples: Record<string, DiagnosticsSample> };
 type DiagnosticsSampler = { stop: () => Record<string, DiagnosticsSample> };
@@ -1081,7 +1074,7 @@ type DiagnosticsInfo = {
     };
     workers?: {
         count: number;
-        machines: Array<{ workerId: string; cpuCores: number; cpuUsagePercentage: number; ramUsagePercentage: number; serverPingMs: number | null; status: string } & CpuPressureInfo>;
+        machines: Array<{ workerId: string; cpuCores: number; cpuUsagePercentage: number; ramUsagePercentage: number; serverPingMs: number | null; status: string }>;
     };
 };
 

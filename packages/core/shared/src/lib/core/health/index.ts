@@ -48,11 +48,6 @@ export const DiagnosticsWorker = z.object({
     ramUsagePercentage: z.number(),
     // Worker→app round-trip (ms) — the callback path that inflates a run's RUN phase. null on older workers.
     serverPingMs: z.number().nullable(),
-    // CPU pressure invisible to usage%: hypervisor steal (noisy neighbors on shared-CPU nodes,
-    // e.g. GCE E2 — /proc/stat is node-wide) and CFS throttling against the container's own CPU
-    // limit (~100ms stalls per throttled period). Absent on older machines / non-Linux.
-    cpuStealPercentage: z.number().optional(),
-    cpuThrottledPercentage: z.number().optional(),
     status: z.string(),
 })
 
@@ -68,7 +63,9 @@ export const AppInstance = z.object({
     ramUsagePercentage: z.number(),
     diskPercentage: z.number(),
     eventLoopDelayMs: z.number(),
-    // Same pressure signals as DiagnosticsWorker — steal detects shared-CPU neighbor contention.
+    // CPU pressure invisible to usage%: hypervisor steal (noisy neighbors on shared-CPU nodes,
+    // e.g. GCE E2 — /proc/stat is node-wide) and CFS throttling against the container's own CPU
+    // limit (~100ms stalls per throttled period). Absent on older machines / non-Linux.
     cpuStealPercentage: z.number().optional(),
     cpuThrottledPercentage: z.number().optional(),
     updated: z.string(),
