@@ -269,7 +269,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         }
         case 'ap_revalidate_connection': {
             const externalId = toolInput.connectionExternalId as string
-            let projectId = projects[0]?.id
+            let projectId: string | undefined
             if (conversationId) {
                 const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
                 if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
@@ -277,25 +277,14 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 }
             }
             if (isNil(projectId)) {
-                return { connectionExternalId: externalId, notFound: true, note: 'No project is selected for this conversation.' }
+                return { connectionExternalId: externalId, notFound: true, note: 'No project is selected for this conversation. Ask the user which project this connection is in.' }
             }
             const checker = await resolvePermissionChecker({ userId, projectId, log })
             const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
             if (!isNil(denial)) {
                 return denial
             }
-            const { data } = await appConnectionService(log).list({
-                projectId,
-                platformId,
-                externalIds: [externalId],
-                pieceName: undefined,
-                displayName: undefined,
-                status: undefined,
-                scope: undefined,
-                cursorRequest: null,
-                limit: 1,
-            })
-            const found = data[0]
+            const found = await appConnectionService(log).getOne({ projectId, platformId, externalId })
             if (isNil(found)) {
                 return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId in the active project.' }
             }
