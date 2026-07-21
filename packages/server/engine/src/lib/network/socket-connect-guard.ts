@@ -21,7 +21,8 @@ export function installSocketConnectGuard(policy: GuardPolicy): UninstallFn {
 }
 
 function readConnectTarget(args: unknown[]): ConnectTarget | undefined {
-    const first = args[0]
+    // normalizeArgs hands connect an [options, callback] ARRAY, so skipping arrays waved every fetch through.
+    const first = Array.isArray(args[0]) ? args[0][0] : args[0]
     if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
         const opts = first as { host?: string, port?: number }
         return { host: opts.host, port: opts.port }
@@ -35,21 +36,25 @@ function readConnectTarget(args: unknown[]): ConnectTarget | undefined {
 
 function isBlockedRawIpTarget({ target, policy }: IsBlockedRawIpTargetParams): boolean {
     const host = target?.host
-    if (!host || isIP(host) === 0) return false
+    if (!host) return false
+    // A pinned hostname skips the dns blocked-IP check, so it must be scoped to the opened port here.
+    const pinned = policy.pinnedHosts.get(host.toLowerCase())
+    if (pinned) {
+        return !pinned.some((ip) => isExemptHostPort({ host: ip, port: target?.port, policy }))
+    }
+    if (isIP(host) === 0) return false
     if (!ssrfIpClassifier.isBlockedIp({ ip: host, allowList: policy.allowList })) return false
-    return !isExemptLoopbackPort({ host, port: target?.port, policy })
+    return !isExemptHostPort({ host, port: target?.port, policy })
 }
 
-function isExemptLoopbackPort({ host, port, policy }: IsExemptLoopbackPortParams): boolean {
-    if (!LOOPBACK_IPS.has(host) || port === undefined) return false
-    return policy.allowedLoopbackPorts.has(port)
+function isExemptHostPort({ host, port, policy }: IsExemptHostPortParams): boolean {
+    if (port === undefined) return false
+    return policy.allowedHostPorts.has(`${host}:${port}`)
 }
 
 function buildBlockedError({ host, ip }: BuildBlockedErrorParams): SSRFBlockedError {
     return new SSRFBlockedError({ host, ip })
 }
-
-const LOOPBACK_IPS = new Set(['127.0.0.1', '::1'])
 
 type ConnectTarget = {
     host?: string
@@ -61,7 +66,7 @@ type IsBlockedRawIpTargetParams = {
     policy: GuardPolicy
 }
 
-type IsExemptLoopbackPortParams = {
+type IsExemptHostPortParams = {
     host: string
     port: number | undefined
     policy: GuardPolicy

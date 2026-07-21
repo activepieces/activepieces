@@ -148,8 +148,9 @@ run timeouts, and the network egress posture for user code. Read
 | `AP_TRIGGER_TIMEOUT_SECONDS` | Maximum runtime for a trigger's polling, in seconds. | `60` |
 | `AP_DEFAULT_CONCURRENT_JOBS_LIMIT` | Default maximum concurrent runs per project. Can be overridden per project in settings. | `5` |
 | `AP_PROJECT_RATE_LIMITER_ENABLED` | Enforce per-project rate limits to prevent excessive usage. | `false` |
-| `AP_NETWORK_MODE` | Egress posture for user code. `STRICT` installs the engine's in-process SSRF guard, blocking outbound connections to private, loopback, link-local, and cloud-metadata IPs across every Node egress path (`axios`, `fetch`, `undici`, raw `http`/`net`). This is best-effort, in-process protection — enforce the real boundary in infrastructure (see [Network Security](/install/architecture/network-security)). `UNRESTRICTED` disables the guard. | `UNRESTRICTED` |
-| `AP_SSRF_ALLOW_LIST` | Comma-separated IPs or CIDR ranges that bypass `AP_NETWORK_MODE=STRICT`, e.g. `10.0.0.5,10.10.0.0/24`. Only applies when `AP_NETWORK_MODE=STRICT`. | `None` |
+| `AP_NETWORK_MODE` | Egress posture for user code. `STRICT` installs the engine's in-process SSRF guard. When execution mode is also `SANDBOX_PROCESS` or `SANDBOX_CODE_AND_PROCESS`, the worker adds per-box Linux network-namespace isolation (iptables NAT/FORWARD). Requires `net.ipv4.ip_forward=1` on the host (verified, not set by the worker) and one STRICT worker per container/pod network namespace. `UNRESTRICTED` disables the guards. See [Network Security](/install/architecture/network-security). | `UNRESTRICTED` |
+| `AP_SSRF_ALLOW_LIST` | Comma-separated IPs or CIDR ranges that bypass `AP_NETWORK_MODE=STRICT`, e.g. `10.0.0.5,10.10.0.0/24`. Only applies when `AP_NETWORK_MODE=STRICT`. Under isolate + STRICT, only IPv4 literals/CIDRs are applied in the kernel. | `None` |
+| `AP_SANDBOX_EGRESS_SUBNET` | IPv4 `/16` pool for per-box egress veth addresses when isolate + STRICT is active (e.g. `10.255.0.0/16`). Must not occupy addresses already used on the host inside that pool. | `10.255.0.0/16` |
 
 ---
 

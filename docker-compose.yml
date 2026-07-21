@@ -23,6 +23,12 @@ services:
     env_file: .env
     environment:
       - AP_CONTAINER_TYPE=WORKER
+    # Required only for AP_NETWORK_MODE=STRICT with AP_EXECUTION_MODE=SANDBOX_PROCESS or
+    # SANDBOX_CODE_AND_PROCESS, which also needs `privileged: true`. A container defaults
+    # ip_forward to 0 and the worker refuses to take jobs without it.
+    # See https://www.activepieces.com/docs/install/architecture/network-security
+    # sysctls:
+    #   - net.ipv4.ip_forward=1
     deploy:
       replicas: 5
     volumes:

@@ -56,6 +56,12 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async poll(input) {
             log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, assignment)
+            // onConnection above recorded the verdict for /v1/health/system; withhold the job so a
+            // worker whose STRICT egress prep failed idles instead of pulling a job onto broken egress.
+            if (input.workerProps.egressStatus === 'unavailable') {
+                log.warn({ worker: { id: input.workerId } }, '[workerRpc#poll] Withholding job — worker reports STRICT egress capabilities unavailable')
+                return null
+            }
             const workerVersion = input.workerProps.version
             const appVersion = apVersionUtil.getCurrentRelease()
             if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {

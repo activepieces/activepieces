@@ -19,6 +19,8 @@ export type CreateSandboxProcessParams = {
     mounts: SandboxMount[]
     env: Record<string, string>
     resourceLimits: SandboxResourceLimits
+    // When set, the box launches inside this pre-provisioned namespace instead of the host netns.
+    netnsName?: string
 }
 
 export type SandboxProcessMaker = {
@@ -56,6 +58,19 @@ export type SandboxInitOptions = {
     command?: string[]
     baseMounts?: SandboxMount[]
     wsRpcPort?: number
+    // Resolves the per-box egress namespace under isolate + STRICT; the WS-RPC server binds gatewayHost.
+    getEgress?: (log: SandboxLogger) => Promise<EgressInfo | null>
+    egressNeedsRotation?: (log: SandboxLogger) => Promise<boolean>
+}
+
+export type EgressInfo = {
+    netnsName: string
+    gatewayHost: string
+    callbackApiUrl: string | null
+    callbackPort: number | null
+    apiAllow: string | null
+    apiHostPin: string | null
+    fingerprint: string
 }
 
 export type SandboxOptions = {

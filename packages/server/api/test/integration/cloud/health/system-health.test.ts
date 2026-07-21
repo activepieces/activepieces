@@ -40,7 +40,23 @@ describe('System Health API', () => {
                         mismatchedVersions: expect.any(Array),
                     },
                 },
+                egress: {
+                    total: expect.any(Number),
+                    unavailable: expect.any(Number),
+                },
             })
+        })
+
+        // The combined container has no worker health server, so this block is the only place it shows up.
+        it('reports no egress-unavailable workers when none are connected', async () => {
+            const ctx = await createTestContext(app!)
+
+            const response = await ctx.get('/v1/health/system')
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const { egress } = response?.json()
+            expect(egress.total).toBe(0)
+            expect(egress.unavailable).toBe(0)
         })
 
         it('reports no worker version skew when no workers are connected', async () => {

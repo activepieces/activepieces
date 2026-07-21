@@ -59,7 +59,7 @@ const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
-            const { sandboxId, mounts, env, resourceLimits } = params
+            const { sandboxId, mounts, env, resourceLimits, netnsName } = params
 
             for (const mount of mounts) {
                 assertMountInsideRoot(mount)
@@ -123,9 +123,13 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 engineSandboxPath,
             ]
 
-            log.debug({ sandbox: { id: sandboxId }, command: `${isolateBinaryPath} ${args.join(' ')}` }, 'Spawning isolate process')
+            // --share-net makes isolate inherit the pre-provisioned netns rather than the host's.
+            const spawnCommand = netnsName ? 'ip' : isolateBinaryPath
+            const spawnArgs = netnsName ? ['netns', 'exec', netnsName, isolateBinaryPath, ...args] : args
 
-            const child = spawn(isolateBinaryPath, args, {
+            log.debug({ sandbox: { id: sandboxId }, netnsName: netnsName ?? 'host', command: `${spawnCommand} ${spawnArgs.join(' ')}` }, 'Spawning isolate process')
+
+            const child = spawn(spawnCommand, spawnArgs, {
                 shell: false,
             })
 

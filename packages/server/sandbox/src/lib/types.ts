@@ -30,6 +30,8 @@ export type Runtime = {
     // internally: acquire -> run -> release on success / invalidate on throw. Re-raises the sandbox
     // ActivepiecesError codes (timeout / memory / log-size) that handlers already catch.
     execute(params: ExecuteParams): Promise<RuntimeExecutionResult>
+    // True once a box's egress setup has failed repeatedly, so the poll loop can back that box off.
+    isExecutorPaused(workerIndex: number): boolean
     getActiveExecutors(): RuntimeExecutorInfo[]
     prewarm(params: PreWarmSandboxParams): Promise<void>
     shutdown(log: ApLogger): Promise<void>

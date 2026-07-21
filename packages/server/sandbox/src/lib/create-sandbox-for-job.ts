@@ -6,7 +6,7 @@ import { sandboxCapacity } from './sandbox/capacity'
 import { simpleProcess } from './sandbox/fork'
 import { isolateProcess } from './sandbox/isolate'
 import { createSandbox } from './sandbox/sandbox'
-import { Sandbox, SandboxMount } from './sandbox/types'
+import { EgressInfo, Sandbox, SandboxLogger, SandboxMount } from './sandbox/types'
 import { SandboxSettings } from './types'
 
 export function createSandboxForJob(params: {
@@ -15,8 +15,10 @@ export function createSandboxForJob(params: {
     reusable: boolean
     basePath: string
     getSettings: () => SandboxSettings
+    getEgress?: (log: SandboxLogger) => Promise<EgressInfo | null>
+    egressNeedsRotation?: (log: SandboxLogger) => Promise<boolean>
 }): Sandbox {
-    const { log, boxId, reusable, basePath, getSettings } = params
+    const { log, boxId, reusable, basePath, getSettings, getEgress, egressNeedsRotation } = params
     const settings = getSettings()
     const sandboxId = nanoid()
     const paths = cacheUtils(basePath)
@@ -43,6 +45,8 @@ export function createSandboxForJob(params: {
             basePath,
             baseMounts,
             wsRpcPort: isIsolateMode(executionMode) ? sandboxCapacity.wsRpcPortForBox(boxId) : undefined,
+            getEgress: isIsolateMode(executionMode) ? getEgress : undefined,
+            egressNeedsRotation: isIsolateMode(executionMode) ? egressNeedsRotation : undefined,
         },
         processMaker,
     )
@@ -73,9 +77,6 @@ function parseMemoryLimit(memoryLimitKb: string): number {
 function buildSandboxEnv({ settings }: {
     settings: SandboxSettings
 }): Record<string, string> {
-    // STRICT enables the engine's in-process ssrfGuard (best-effort dns + socket
-    // guards only — there is no longer an egress proxy or kernel firewall). The hard
-    // egress boundary now lives in infrastructure (e.g. the Cloud VPC firewall).
     const networkMode = settings.NETWORK_MODE
     return {
         ...baseEnv({ settings, networkMode }),

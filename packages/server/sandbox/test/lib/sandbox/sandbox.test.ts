@@ -127,6 +127,49 @@ describe('createSandbox', () => {
             )
         })
 
+        // These three env vars ARE the contract; rewriting the URL to an address dropped SNI and the Host.
+        it('hands the box the netns, the gateway WS host, and EVERY opened API endpoint plus the DNS pin', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            const getEgress = vi.fn().mockResolvedValue({
+                netnsName: 'ap-egress-1',
+                gatewayHost: '127.0.0.1',
+                callbackApiUrl: null,
+                callbackPort: null,
+                apiAllow: '10.0.0.9:3000,10.0.0.10:3000',
+                apiHostPin: 'api.internal=10.0.0.9,10.0.0.10',
+                fingerprint: '10.0.0.9:3000,10.0.0.10:3000',
+            })
+            sandbox = createSandbox(log, 'sb-egress', { ...defaultOptions, getEgress }, testPM.maker)
+
+            await sandbox.start(startOptions)
+
+            expect(testPM.maker.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    netnsName: 'ap-egress-1',
+                    env: expect.objectContaining({
+                        AP_SANDBOX_WS_HOST: '127.0.0.1',
+                        AP_SANDBOX_API_ALLOW: '10.0.0.9:3000,10.0.0.10:3000',
+                        AP_SANDBOX_API_HOST_PIN: 'api.internal=10.0.0.9,10.0.0.10',
+                    }),
+                }),
+            )
+        })
+
+        it('omits the netns and egress env entirely when there is no egress (host netns modes)', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-no-egress', defaultOptions, testPM.maker)
+
+            await sandbox.start(startOptions)
+
+            const params = testPM.maker.create.mock.calls[0][0]
+            expect(params.netnsName).toBeUndefined()
+            expect(params.env).not.toHaveProperty('AP_SANDBOX_WS_HOST')
+            expect(params.env).not.toHaveProperty('AP_SANDBOX_API_ALLOW')
+            expect(params.env).not.toHaveProperty('AP_SANDBOX_API_HOST_PIN')
+        })
+
         it('does not add custom piece mount when platformId is empty', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()

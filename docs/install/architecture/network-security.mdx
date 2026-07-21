@@ -24,11 +24,12 @@ Every flow eventually runs **user-supplied code**: Code steps, piece actions, HT
 | Value | Effect |
 |---|---|
 | `UNRESTRICTED` | No outbound guard. User code can reach any host the worker can reach. |
-| `STRICT` | The engine SSRF guard is installed. Outbound connections to private, loopback, link-local, and cloud-metadata IPs are blocked from user code. |
+| `STRICT` | The engine SSRF guard is installed in every execution mode. Additionally, when `AP_EXECUTION_MODE` is `SANDBOX_PROCESS` or `SANDBOX_CODE_AND_PROCESS`, each sandbox box runs inside a locked-down Linux network namespace with iptables NAT/FORWARD rules (kernel boundary). |
 
-Related env var:
+Related env vars:
 
-- `AP_SSRF_ALLOW_LIST`: comma-separated IPs/CIDRs that bypass the block (for example an internal DB or sidecar). Shared with server-side egress.
+- `AP_SSRF_ALLOW_LIST`: comma-separated IPs/CIDRs that bypass the block (for example an internal DB or sidecar). Shared with server-side egress. Under isolate + STRICT, only IPv4 literals/CIDRs are enforced in the kernel (hostnames are ignored for iptables).
+- `AP_SANDBOX_EGRESS_SUBNET`: IPv4 `/16` used for per-box veth addresses (default `10.255.0.0/16`). Must not overlap addresses the host already uses inside that pool.
 
 ## How Isolation Works
 
@@ -39,13 +40,135 @@ In `STRICT` mode the engine installs an **in-process SSRF guard** before any use
 
 Together these cover `axios`, `fetch`, `undici`, and raw `http`/`net` in a single pass. A blocked target throws `SSRFBlockedError`. The blocklist is every non-`unicast` range (RFC1918, loopback, link-local, multicast, cloud metadata), minus anything in `AP_SSRF_ALLOW_LIST`.
 
-<Warning>
-The engine SSRF guard is **best-effort, in-process protection**. It reliably stops *accidental* SSRF, such as a flow or piece that naively follows a user-supplied URL to an internal host. It is **not** a hard boundary against deliberately malicious code: `worker_threads`, `child_process`, native addons, and `process.binding` can all sidestep the JavaScript-level monkey-patches.
+### Kernel egress (isolate + STRICT only)
 
-For multi-tenant deployments that run untrusted code, enforce the real egress boundary in **infrastructure**: a VPC firewall, network policy, or egress gateway that blocks the cloud-metadata IP (`169.254.169.254`) and your private ranges independently of the application. Treat `AP_NETWORK_MODE=STRICT` as defense-in-depth on top of that, not as a replacement for it.
+When execution mode is `SANDBOX_PROCESS` or `SANDBOX_CODE_AND_PROCESS` **and** `AP_NETWORK_MODE=STRICT`, the worker also provisions a per-box network namespace:
+
+- Public IPv4 egress is NAT'd; RFC1918, loopback, link-local, and cloud-metadata ranges are REJECTed in iptables (with `AP_SSRF_ALLOW_LIST` IPv4 entries accepted above those rejects).
+- The engine's app API URL is opened automatically and **port-scoped**:
+  - Loopback URLs (combined `WORKER_AND_APP`) are rewritten to the gateway veth IP; that TCP port is opened on host INPUT. A literal `127.0.0.1` cannot survive into the namespace, where loopback is the box's own empty interface, so this one URL genuinely has to change.
+  - Non-loopback URLs (standalone `WORKER`) keep their URL **exactly as configured**. Every resolved IPv4 address is accepted in the FORWARD chain for that TCP port only, never all ports on the API host, and the address list is handed to the engine as a DNS pin so it resolves the app hostname to precisely those addresses. The URL is never rewritten to an IP: that would drop the TLS SNI and send the wrong `Host` header, breaking any https app URL outright and misrouting an http one behind a vhost or ingress. The in-process SSRF guard gets a matching `AP_SANDBOX_API_ALLOW=ip:port` exemption for each address.
+- IPv6 out of the box netns is dropped (and veths use `addrgenmode none` so link-local is not auto-assigned).
+- Reply traffic to the box is admitted on connection state `ESTABLISHED`; `RELATED` is admitted for **ICMP only**, so path-MTU discovery and ICMP errors work while a conntrack helper cannot open an inbound port. The egress chain itself carries no state-based ACCEPT, because one would override the blocked-range rejects below it.
+- The box veth MTU is **lowered** to match the host uplink when the uplink is below 1500 (overlay CNI, VPN, and cloud networks commonly run 1400-1460). Without this the box emits oversized frames and large uploads blackhole even though handshakes succeed. The MTU is never raised above 1500.
+- Exactly **one** STRICT isolate worker may own a given host network namespace (enforced by a process lease). Run one worker process per container/pod netns; do not share `hostNetwork` across multiple STRICT workers on the same node. The worker logs a warning at startup if it can see node-level bridge interfaces, which usually means it is sharing the node's namespace and is therefore writing rules into the **node's** iptables tables.
+- The host must already have `net.ipv4.ip_forward=1`. The worker **verifies** this and fails readiness if it is off; it does not write the sysctl. See [Enabling `ip_forward`](#enabling-ip-forward) below.
+- An orphaned sandbox left in a box's namespace by a crashed worker is SIGKILLed so the namespace can be reused, but only after the process is re-confirmed to still belong to that namespace. This needs root (which STRICT isolate already requires); a non-root worker skips the kill and refuses to reuse the namespace instead.
+
+<Warning>
+Two limits worth knowing before you rely on this:
+
+- **The app API port is reachable from user code inside the box.** Opening it is what lets the engine fetch connections, files, and properties, but the in-process guard's exemption for it is process-wide rather than scoped to the engine's own HTTP client, so a Code step can reach the internal API too. Treat the internal API's own authentication as the control here, not network reachability.
+- **Only the app API URL is adapted for the namespace.** `AP_FRONTEND_URL` / `PUBLIC_URL` must be a genuinely reachable URL: a piece that fetches `server.publicUrl` will not reach a loopback value from inside the box, where loopback is the namespace's own empty interface.
 </Warning>
 
-The guard is independent of the sandbox execution mode. It is installed in every mode when `AP_NETWORK_MODE=STRICT`. See [Sandboxing](./sandboxing) for what each sandbox mode isolates at the process level. Network security is independent: it constrains what code is allowed to *reach*, regardless of *how* it runs.
+`SANDBOX_CODE_ONLY` / `UNSANDBOXED` under STRICT keep the in-process guard only (no netns).
+
+<Warning>
+The engine SSRF guard alone is **best-effort, in-process protection**. It reliably stops *accidental* SSRF, such as a flow or piece that naively follows a user-supplied URL to an internal host. It is **not** a hard boundary against deliberately malicious code: `worker_threads`, `child_process`, native addons, and `process.binding` can all sidestep the JavaScript-level monkey-patches.
+
+For isolate + STRICT, the netns/iptables layer is the hard boundary for that execution mode. For other modes, or as defense-in-depth on top of isolate, still enforce egress in **infrastructure**: a VPC firewall, network policy, or egress gateway that blocks the cloud-metadata IP (`169.254.169.254`) and your private ranges independently of the application.
+</Warning>
+
+The in-process guard is installed in every mode when `AP_NETWORK_MODE=STRICT`. See [Sandboxing](./sandboxing) for what each sandbox mode isolates at the process level.
+
+### Enabling ip_forward
+
+Whether you need to do anything here depends on the host. On a typical Docker host forwarding is already on
+(Docker enables it for bridge networking) and containers come up with `net.ipv4.ip_forward=1` inherited, so
+nothing is required. It is `0` where the host or node has forwarding disabled by policy, where `dockerd` runs
+with `--ip-forward=false`, on some Kubernetes nodes and CNIs, or where it is explicitly set off.
+
+Check before assuming, from inside the worker container:
+
+```bash
+cat /proc/sys/net/ipv4/ip_forward
+```
+
+The worker only reads this value, never writes it. If it is `0` the worker pauses polling and takes **no
+jobs**, logging an error every 60 seconds and reporting itself on `GET /v1/health/system`.
+
+Docker:
+
+```bash
+docker run --privileged --sysctl net.ipv4.ip_forward=1 ...
+```
+
+Docker Compose:
+
+```yaml
+services:
+  worker:
+    privileged: true
+    sysctls:
+      - net.ipv4.ip_forward=1
+```
+
+Kubernetes needs one extra step. `net.ipv4.ip_forward` is namespaced but is **not** on the kubelet's
+safe-sysctl list, so a pod that sets it is rejected until the node's kubelet allows it:
+
+```bash
+kubelet --allowed-unsafe-sysctls 'net.ipv4.ip_forward'
+```
+
+```yaml
+spec:
+  securityContext:
+    sysctls:
+      - name: net.ipv4.ip_forward
+        value: "1"
+```
+
+On a managed cluster where the kubelet flag is not yours to change, set it on the node instead, with a
+privileged init container or a DaemonSet running `sysctl -w net.ipv4.ip_forward=1`.
+
+### Verifying the kernel layer
+
+The unit suites assert the generated `ip` / `iptables` command strings against mocks, which cannot catch MTU
+or connection-state mistakes. A real-kernel suite covers those, and is opt-in because it needs root plus
+`CAP_NET_ADMIN`.
+
+Preferred: run it in a privileged container on the same base image the product ships, over a network whose
+MTU is deliberately below 1500 so the MTU-lowering path is actually exercised (a default bridge is 1500,
+which correctly skips it).
+
+```bash
+docker network create --opt com.docker.network.driver.mtu=1400 ap-mtu-test
+
+docker run --rm -it --privileged \
+  --network ap-mtu-test \
+  --sysctl net.ipv4.ip_forward=1 \
+  -v "$PWD":/repo -w /repo/packages/server/sandbox \
+  -e AP_SANDBOX_NETNS_E2E=1 \
+  node:24.14.0-bullseye-slim \
+  bash -c 'apt-get -qq update && apt-get -qq install -y iproute2 iptables procps >/dev/null \
+    && npx vitest run test/lib/sandbox/netns.e2e.test.ts'
+
+docker network rm ap-mtu-test
+```
+
+Two of those flags are load-bearing and one is insurance. `--privileged` for `CAP_NET_ADMIN` +
+`CAP_SYS_ADMIN`. `procps`, because `tree-kill` spawns `ps` to reap children: without it every command the
+suite runs hangs until the hook times out and the whole suite silently reports as **skipped** rather than
+failed, so always confirm the summary says 7 passed. The shipped images already install `procps`; the bare
+base image does not. `--sysctl net.ipv4.ip_forward=1` is insurance: containers usually inherit `1` from a
+Docker host that already forwards, but the suite fails closed wherever that is not true, so passing it makes
+the run reproducible on any host.
+
+Host-only alternative, no Docker. Uses a throwaway namespace so the host firewall is never touched, but its
+dummy uplink is MTU 1500, so the MTU case asserts the correct no-op rather than proving the lowering:
+
+```bash
+sudo unshare --net bash -c '
+  cd packages/server/sandbox
+  PATH="$(dirname "$(which node)")":$PATH AP_SANDBOX_NETNS_E2E=1 \
+    npx vitest run test/lib/sandbox/netns.e2e.test.ts
+'
+```
+
+`sudo` drops a version-manager `PATH`, hence the explicit re-injection. The suite provisions its own
+blackhole uplink when no default route exists, because the packet-counter assertions need a successful
+route lookup for the box's packet to reach the host FORWARD chain.
 
 ## Verifying Your Setup
 

@@ -38,6 +38,8 @@ export const WorkerProps = z.object({
     SANDBOX_MEMORY_LIMIT: z.string().optional(),
     REUSE_SANDBOX: z.string().optional(),
     version: z.string().optional(),
+    // Absent until the capability probe has run, so the app learns a verdict from the next connect onward.
+    egressStatus: z.enum(['ok', 'unavailable']).optional(),
 })
 
 export type WorkerProps = z.infer<typeof WorkerProps>

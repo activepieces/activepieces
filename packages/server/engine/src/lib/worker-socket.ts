@@ -26,7 +26,8 @@ function clearInitialConnectWatchdog(): void {
 
 export const workerSocket = {
     init: (sandboxId: string): void => {
-        const wsUrl = `ws://127.0.0.1:${process.env.AP_SANDBOX_WS_PORT ?? '12345'}`
+        // In a netns 127.0.0.1 is the box's own loopback, so WS-RPC is only on the gateway veth IP.
+        const wsUrl = `ws://${process.env.AP_SANDBOX_WS_HOST ?? '127.0.0.1'}:${process.env.AP_SANDBOX_WS_PORT ?? '12345'}`
         socket = io(wsUrl, buildSocketOptions(sandboxId))
 
         // Without this watchdog, if the parent worker is SIGKILLed (OOM, crash) before

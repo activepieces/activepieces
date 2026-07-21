@@ -21,7 +21,7 @@ vi.mock('../../src/lib/cache/local-execution-cache', () => ({
 
 vi.mock('../../src/lib/sandbox-manager', () => ({
     createSandboxManager: vi.fn(({ boxId }: { boxId: number }) => ({
-        acquire: vi.fn(() => {
+        acquire: vi.fn(async () => {
             acquiredBoxIds.push(boxId)
             return {
                 start: vi.fn().mockResolvedValue(undefined),

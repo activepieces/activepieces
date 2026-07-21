@@ -8,7 +8,7 @@ import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
 import { assertSafePathSegment } from '../utils/path-safety'
-import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
+import { EgressInfo, Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
 function assertSandboxPathUnderRoot(mount: SandboxMount): void {
     const normalized = path.posix.normalize(mount.sandboxPath)
@@ -51,6 +51,7 @@ export function createSandbox(
     let connectedSocket: Socket | null = null
     let connectionResolve: (() => void) | null = null
     let wsRpcToken: string | null = null
+    let egressInfo: EgressInfo | null = null
     let busy = false
     let killedByShutdown = false
     let nativeStdOut = ''
@@ -88,7 +89,7 @@ export function createSandbox(
     // which is exactly what made busy workers crash-loop. Await the bind, and on a bind error retry a
     // few times (a concurrent close frees the port within a beat); if it never frees, fail just this
     // sandbox with a catchable error. A random port (listen(0)) can't collide, so it needs no retries.
-    async function createSocketServer(): Promise<number> {
+    async function createSocketServer(host: string): Promise<number> {
         const requestedPort = options.wsRpcPort ?? 0
         const maxAttempts = requestedPort === 0 ? 1 : 30
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -100,7 +101,7 @@ export function createSandbox(
             })
             wireConnectionHandler(ioServer)
 
-            const { error } = await tryCatch(() => listenOnce(server, requestedPort))
+            const { error } = await tryCatch(() => listenOnce(server, requestedPort, host))
             if (isNil(error)) {
                 io = ioServer
                 const address = server.address()
@@ -151,7 +152,28 @@ export function createSandbox(
         id: sandboxId,
         start: async ({ flowVersionId, platformId, mounts }) => {
             if (isReady()) {
-                return
+                const needsRotation = options.egressNeedsRotation
+                    ? await options.egressNeedsRotation(log)
+                    : false
+                if (!needsRotation) {
+                    return
+                }
+                log.info({ sandbox: { id: sandboxId } }, 'Egress allow-list or API endpoint changed; restarting sandbox')
+                killedByShutdown = true
+                if (!isNil(childProcess)) {
+                    await killProcess(childProcess, log)
+                    childProcess = null
+                }
+                connectedSocket?.disconnect()
+                connectedSocket = null
+                if (io) {
+                    // eslint-disable-next-line @typescript-eslint/await-thenable
+                    await io.close()
+                }
+                io = null
+                wsRpcToken = null
+                egressInfo = null
+                killedByShutdown = false
             }
             log.debug({
                 sandbox: { id: sandboxId },
@@ -160,7 +182,10 @@ export function createSandbox(
             }, 'Starting sandbox')
 
             wsRpcToken = randomBytes(32).toString('hex')
-            const port = await createSocketServer()
+            const egress = options.getEgress ? await options.getEgress(log) : null
+            egressInfo = egress
+            const wsRpcHost = egress?.gatewayHost ?? '127.0.0.1'
+            const port = await createSocketServer(wsRpcHost)
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
             const customPieceMounts: SandboxMount[] = []
@@ -188,10 +213,19 @@ export function createSandbox(
                 sandboxId,
                 command: options.command ?? [],
                 mounts: allMounts,
+                netnsName: egress?.netnsName,
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
                     AP_SANDBOX_WS_TOKEN: wsRpcToken,
+                    ...(egress
+                        ? {
+                            AP_SANDBOX_WS_HOST: egress.gatewayHost,
+                            ...(isNil(egress.callbackPort) ? {} : { AP_SANDBOX_CALLBACK_PORT: String(egress.callbackPort) }),
+                            ...(isNil(egress.apiAllow) ? {} : { AP_SANDBOX_API_ALLOW: egress.apiAllow }),
+                            ...(isNil(egress.apiHostPin) ? {} : { AP_SANDBOX_API_HOST_PIN: egress.apiHostPin }),
+                        }
+                        : {}),
                     ...(customPieceMounts.length > 0
                         ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }
                         : {}),
@@ -215,8 +249,6 @@ export function createSandbox(
             })
 
             const exitPromise = new Promise<never>((_, reject) => {
-                // 'close' (not 'exit') so the child's stdout/stderr pipes are fully drained first —
-                // 'exit' can fire before the final 'data' chunk, leaving nativeStdError empty.
                 childProcess!.once('close', (code, signal) => {
                     reject(new Error(`Sandbox ${sandboxId} exited before connecting (code=${code}, signal=${signal}) standardError=${nativeStdError}`))
                 })
@@ -286,7 +318,9 @@ export function createSandbox(
                 log.debug({ sandbox: { id: sandboxId }, operationType }, '[Sandbox] Executing operation via RPC')
                 const operationTimeoutMs = (executeOptions.timeoutInSeconds + 5) * 1000
                 const client = createRpcClient<EngineContract>(executeSocket, operationTimeoutMs)
-                client.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
+                // In a netns the loopback app API is unreachable, so point it at the gateway callback URL.
+                const dispatchOperation = rewriteInternalApiUrl(operation, egressInfo?.callbackApiUrl ?? null)
+                client.executeOperation({ operationType, operation: dispatchOperation }).then((engineResponse: EngineResponse<unknown>) => {
                     resolve({ ...engineResponse, logs: buildLogs(stdOut, stdError) })
                 }).catch((error: unknown) => {
                     log.error({ sandbox: { id: sandboxId }, error: String(error) }, '[Sandbox] RPC call failed')
@@ -334,7 +368,7 @@ export function createSandbox(
     }
 }
 
-function listenOnce(server: HttpServer, port: number): Promise<void> {
+function listenOnce(server: HttpServer, port: number, host: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         const onError = (err: Error): void => {
             server.removeListener('listening', onListening)
@@ -346,7 +380,7 @@ function listenOnce(server: HttpServer, port: number): Promise<void> {
         }
         server.once('error', onError)
         server.once('listening', onListening)
-        server.listen(port)
+        server.listen(port, host)
     })
 }
 
@@ -358,6 +392,13 @@ function closeServer(ioServer: SocketIOServer): Promise<void> {
 
 function delay(ms: number): Promise<void> {
     return new Promise<void>((resolve) => setTimeout(resolve, ms))
+}
+
+function rewriteInternalApiUrl(operation: EngineOperation, callbackApiUrl: string | null): EngineOperation {
+    if (isNil(callbackApiUrl) || !('internalApiUrl' in operation) || typeof operation.internalApiUrl !== 'string') {
+        return operation
+    }
+    return { ...operation, internalApiUrl: callbackApiUrl }
 }
 
 const MAX_NATIVE_OUTPUT_CHARS = 8192
@@ -469,6 +510,10 @@ function authenticateHandshake({ getExpectedToken, log, sandboxId }: {
         }
         next()
     }
+}
+
+export const sandboxRpcInternals = {
+    rewriteInternalApiUrl,
 }
 
 type ProcessExitParams = {
