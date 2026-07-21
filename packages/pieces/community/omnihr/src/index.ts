@@ -24,7 +24,7 @@ export const omnihr = createPiece({
     getDirectReports,
     generateReport,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.omnihr.co/api/v1/',
+      baseUrl: () => 'https://api.omnihr.co/api/',
       auth: omnihrAuth,
       authMapping: async (auth) => {
         const headers: Record<string, string> = {
