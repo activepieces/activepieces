@@ -269,9 +269,23 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         }
         case 'ap_revalidate_connection': {
             const externalId = toolInput.connectionExternalId as string
+            let projectId = projects[0]?.id
+            if (conversationId) {
+                const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+                if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
+                    projectId = conversation.projectId
+                }
+            }
+            if (isNil(projectId)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No project is selected for this conversation.' }
+            }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
+            if (!isNil(denial)) {
+                return denial
+            }
             const { data } = await appConnectionService(log).list({
-                projectId: null,
-                projectIds: availableProjectIds,
+                projectId,
                 platformId,
                 externalIds: [externalId],
                 pieceName: undefined,
@@ -282,14 +296,8 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 limit: 1,
             })
             const found = data[0]
-            const projectId = found?.projectIds.find((id) => availableProjectIds.includes(id))
-            if (isNil(found) || isNil(projectId)) {
-                return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId was found in the user’s projects.' }
-            }
-            const checker = await resolvePermissionChecker({ userId, projectId, log })
-            const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
-            if (!isNil(denial)) {
-                return denial
+            if (isNil(found)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId in the active project.' }
             }
             const revalidated = await appConnectionService(log).revalidate({ id: found.id, projectId, platformId })
             const working = revalidated.status === AppConnectionStatus.ACTIVE
