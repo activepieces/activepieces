@@ -403,6 +403,7 @@ import { AddDeprecatedToPieceMetadata1811000000000 } from './migration/postgres/
 import { AddNotifyFlowOwnerOnFailureToProject1811000000000 } from './migration/postgres/1811000000000-AddNotifyFlowOwnerOnFailureToProject'
 import { AddProjectExecutionDataRetentionDays1812000000000 } from './migration/postgres/1812000000000-AddProjectExecutionDataRetentionDays'
 import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postgres/1814000000000-AddActiveFlowsLimitToProjectPlan'
+import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgres/1815000000000-AddSampleDataFlowIdIndexToFile'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -821,6 +822,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDeprecatedToPieceMetadata1811000000000,
         AddProjectExecutionDataRetentionDays1812000000000,
         AddActiveFlowsLimitToProjectPlan1814000000000,
+        AddSampleDataFlowIdIndexToFile1815000000000,
     ]
     return migrations
 }

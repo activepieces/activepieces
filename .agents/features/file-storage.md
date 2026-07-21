@@ -49,7 +49,7 @@ The File Storage Service is the central infrastructure for persisting binary fil
 | type | string | FileType enum (default UNKNOWN) |
 | compression | string | FileCompression enum (default NONE) |
 
-Indices: `idx_file_project_id_type_created` on `(projectId, type, created)` for per-project cleanup passes (its leftmost prefix also serves plain `projectId` lookups, replacing the old `idx_file_project_id`); `idx_file_type_created_desc` on `(type, created)` for the global cleanup pass.
+Indices: `idx_file_project_id_type_created` on `(projectId, type, created)` for per-project cleanup passes (its leftmost prefix also serves plain `projectId` lookups, replacing the old `idx_file_project_id`); `idx_file_type_created_desc` on `(type, created)` for the global cleanup pass; `idx_file_sample_data_flow_id`, a partial expression index on `(type, (metadata->>'flowId'))` restricted to `SAMPLE_DATA`/`SAMPLE_DATA_INPUT`, so flow-deletion's `deleteForFlow` sample-data purge is index-driven instead of a seq scan that times out.
 Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`).
 
 ## FileType Enum

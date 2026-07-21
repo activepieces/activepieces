@@ -38,7 +38,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 
 ## Edition Availability
 - **Community (CE)**: Full flow authoring, publishing, folders, sample data, human-input forms.
-- **Enterprise (EE) / Cloud**: Same core. Some operational features (owner transfer, piece filtering, template sharing) integrate with EE plan flags. Active-flow quota enforcement on publish/enable: both the platform pooled limit and the per-project `project_plan.activeFlowsLimit` cap (see [ee-projects.md](./ee-projects.md)) are checked, and only on a real DISABLED-to-ENABLED transition, so re-enabling an already-enabled flow is never quota-blocked.
+- **Enterprise (EE) / Cloud**: Same core. Some operational features (owner transfer, piece filtering, template sharing) integrate with EE plan flags. Active-flow quota enforcement on publish/enable: both the platform pooled limit and the per-project `project_plan.activeFlowsLimit` cap (see [ee-projects.md](./ee-projects.md)) are checked, and only on a real DISABLED-to-ENABLED transition, so re-enabling an already-enabled flow is never quota-blocked. The active-flow count excludes flows whose `operationStatus` is `DELETING`, so a flow whose (durable, async) deletion has stalled no longer consumes quota.
 
 ## Domain Terms
 
