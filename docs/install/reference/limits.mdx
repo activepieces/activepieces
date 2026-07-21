@@ -51,6 +51,16 @@ window. `AP_PAUSED_FLOW_TIMEOUT_DAYS` **cannot exceed**
 needs to resume.
 </Tip>
 
+Platform admins can shorten the execution-data retention window for a single
+project by setting `executionDataRetentionDays` on the
+[update project endpoint](/endpoints/projects/update); `null` reverts the
+project to the instance-wide value. The value must be between
+`AP_PAUSED_FLOW_TIMEOUT_DAYS` (a shorter window would delete the data a
+still-paused run needs to resume) and `AP_EXECUTION_DATA_RETENTION_DAYS` (the
+instance value is the ceiling). Raise the instance value if you need a wider
+range to place projects in. If either variable changes after an override was
+saved, the override is clamped back into the new bounds at cleanup time.
+
 <Tip>
 At the recommended concurrency of 1, the worker container's memory cap (1 GB) is
 the memory limit for the flow. If a flow exhausts it, that one worker is
