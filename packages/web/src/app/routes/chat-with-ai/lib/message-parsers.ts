@@ -2,11 +2,15 @@ import { AppConnectionStatus } from '@activepieces/shared';
 
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
 
-export function normalizePieceName(piece: string): string {
-  const shortName = piece.replace(/[^a-z0-9-]/gi, '');
-  return piece.startsWith('@activepieces/')
-    ? piece
-    : `@activepieces/piece-${shortName}`;
+import { pieceTagMarker } from './piece-tag-marker';
+
+export function normalizePieceName(name: string): string {
+  const stripped = name
+    .replace(/^@activepieces\/piece-/, '')
+    .replace(/^piece-/, '');
+  return `@activepieces/piece-${stripped
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-')}`;
 }
 
 export function isConnectionHealthy(status: string): boolean {
@@ -33,10 +37,11 @@ export function pickDefaultConnectionExternalId({
 }
 
 export function getTextFromParts(parts: ChatUIMessage['parts']): string {
-  return parts
+  const text = parts
     .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
     .map((p) => p.text)
     .join('');
+  return pieceTagMarker.strip(text);
 }
 
 export function parseAnswerPairs(text: string): AnswerPair[] {

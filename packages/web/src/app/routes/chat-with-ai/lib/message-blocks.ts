@@ -184,6 +184,27 @@ export function buildMessageBlocks({
         }
         continue;
       }
+      if (toolName === 'ap_open_in_stage') {
+        const input = p.input as
+          | { resourceType?: string; resourceId?: string; displayName?: string }
+          | undefined;
+        const resourceType = input?.resourceType;
+        const resourceId = input?.resourceId;
+        if (
+          (resourceType === 'flow' ||
+            resourceType === 'table' ||
+            resourceType === 'run') &&
+          resourceId
+        ) {
+          result.push({
+            kind: 'stage-open',
+            resourceType,
+            resourceId,
+            displayName: input?.displayName,
+          });
+        }
+        continue;
+      }
       if (chatPartUtils.HIDDEN_TOOL_NAMES.has(toolName)) {
         continue;
       }
@@ -342,6 +363,17 @@ export function getLastThinkingSegment(steps: ThinkingStep[]): {
   return { thought, toolSteps };
 }
 
+// A grouped run of outcome cards is laid out by its content: a homogeneous run
+// gets a purpose-built layout (image carousel, receipt list, file grid); a mixed
+// run falls back to a plain stack. Pure so it can be unit-tested without rendering.
+export function pickGroupLayout(cards: OutcomeCardBlock[]): GroupLayout {
+  if (cards.length === 0) return 'mixed';
+  if (cards.every((card) => card.kind === 'image')) return 'gallery';
+  if (cards.every((card) => card.kind === 'action-receipt')) return 'receipts';
+  if (cards.every((card) => card.kind === 'files')) return 'files';
+  return 'mixed';
+}
+
 export type MessageBlock =
   | {
       kind: 'thinking';
@@ -350,6 +382,12 @@ export type MessageBlock =
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
+  | {
+      kind: 'stage-open';
+      resourceType: 'flow' | 'table' | 'run';
+      resourceId: string;
+      displayName?: string;
+    }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }
@@ -372,5 +410,7 @@ export type OutcomeCardBlock =
   | { kind: 'action-receipt'; toolCallId: string }
   | { kind: 'image'; toolCallId: string }
   | { kind: 'files'; toolCallId: string };
+
+export type GroupLayout = 'gallery' | 'receipts' | 'files' | 'mixed';
 
 export type SourceItem = { key: string; href?: string; title?: string };

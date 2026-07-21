@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
 
+import { byteFormatUtils } from '../lib/format-bytes';
+
 import { DocumentPreview } from './previews/document-preview';
 import { HtmlPreview } from './previews/html-preview';
 import { JsonPreview } from './previews/json-preview';
@@ -15,19 +17,6 @@ import { previewUtils } from './previews/preview-utils';
 import { SpreadsheetPreview } from './previews/spreadsheet-preview';
 
 const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
-
-function formatBytes(bytes: number): string {
-  if (bytes <= 0) return '';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const exponent = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1,
-  );
-  const value = bytes / Math.pow(1024, exponent);
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${
-    units[exponent]
-  }`;
-}
 
 function selectTextPreview(
   kind: ReturnType<typeof previewUtils.detectFileKind>,
@@ -62,7 +51,7 @@ function selectTextPreview(
 
 function FileChip({ file }: { file: FileProducedEvent }) {
   const label = file.title ?? file.fileName;
-  const size = formatBytes(file.byteSize);
+  const size = byteFormatUtils.formatBytes(file.byteSize);
   return (
     <motion.div
       className="flex max-w-md items-center gap-3 rounded-xl border bg-card p-3"
@@ -114,7 +103,7 @@ export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
   const label = file.title ?? file.fileName;
 
   if (kind === 'image') {
-    const size = formatBytes(file.byteSize);
+    const size = byteFormatUtils.formatBytes(file.byteSize);
     return (
       <>
         <motion.div

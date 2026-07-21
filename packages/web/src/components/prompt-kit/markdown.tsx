@@ -147,7 +147,7 @@ function MarkdownComponent({
     <div
       data-stream-animate={isAnimating ? '' : undefined}
       className={cn(
-        'text-sm leading-relaxed',
+        'chat-md text-sm leading-relaxed',
         '[&>*:first-child]:mt-0 [&>*:last-child]:mb-0',
         '[&_li>p]:my-0 [&_li_ul]:my-1.5 [&_li_ol]:my-1.5',
         '[&_pre]:overflow-x-auto [&_pre]:max-w-full',
