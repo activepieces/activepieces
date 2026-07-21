@@ -9,10 +9,6 @@ const ENV_VAR_NAMES = {
     QUEUE_MODE: 'AP_QUEUE_MODE',
 }
 
-// Memoized: migrate() sits on the system.get() hot path (every prop read, every request), and
-// spreading process.env allocates a fresh copy of the entire environment each call — measurable
-// on pods with large env surfaces. The environment is static for the process lifetime, so the
-// migrated snapshot is computed once on first read.
 let migratedEnvironment: Record<string, string | undefined> | undefined
 
 export const environmentMigrations = {
