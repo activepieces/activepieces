@@ -6,6 +6,7 @@ const BILLABLE_EXTERNAL_TOOL_NAMES = new Set<string>([
     'ap_generate_image',
     'ap_execute_action',
     'ap_explore_data',
+    'ap_run_code',
 ])
 
 function isBillableChatToolCall(toolName: string): boolean {

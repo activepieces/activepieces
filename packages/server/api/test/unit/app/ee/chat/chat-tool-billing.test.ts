@@ -24,9 +24,13 @@ describe('chatToolBilling.isBillableChatToolCall', () => {
         expect(chatToolBilling.isBillableChatToolCall('ap_generate_image')).toBe(true)
     })
 
-    it('does not bill executions or an unknown tool (fail-safe default)', () => {
-        expect(chatToolBilling.isBillableChatToolCall('ap_execute_action')).toBe(false)
-        expect(chatToolBilling.isBillableChatToolCall('ap_run_code')).toBe(false)
+    it('bills chat-initiated ad-hoc executions (not separately metered)', () => {
+        expect(chatToolBilling.isBillableChatToolCall('ap_execute_action')).toBe(true)
+        expect(chatToolBilling.isBillableChatToolCall('ap_explore_data')).toBe(true)
+        expect(chatToolBilling.isBillableChatToolCall('ap_run_code')).toBe(true)
+    })
+
+    it('does not bill an unknown tool (fail-safe default)', () => {
         expect(chatToolBilling.isBillableChatToolCall('ap_some_tool_added_later')).toBe(false)
     })
 })
