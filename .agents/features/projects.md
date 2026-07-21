@@ -13,7 +13,7 @@ A Project is the workspace within a platform where flows, connections, tables, a
 - `packages/core/shared/src/lib/management/project/project.ts` — `Project`, `ProjectPlan`, `ProjectIcon`, `UpdateProjectRequestInCommunity` schemas
 - `packages/web/src/features/projects/components/projects-selector.tsx` — project-switcher dropdown in the sidebar
 - `packages/web/src/features/projects/components/platform-switcher.tsx` — platform-level switcher component
-- `packages/web/src/features/projects/stores/project-collection.ts` — Zustand store for current project; also exposes reactive `useProjectById(projectId)` and `usePersonalProject()` lookups over the live collection (used by the Stage breadcrumb / shell)
+- `packages/web/src/features/projects/stores/project-collection.ts` — Zustand store for current project
 
 ## Edition Availability
 All editions. The CE controller exposes a minimal set: get, list (returns only the personal project), and update display name/metadata. EE adds `ee-projects` module with `platformProjectService` for full admin CRUD, project limits, and per-project piece filters.
@@ -28,6 +28,7 @@ All editions. The CE controller exposes a minimal set: get, list (returns only t
 - **releasesEnabled** — feature flag per-project for the project-releases module
 - **poolId** — optional FK to a `concurrency_pool` for worker concurrency limiting
 - **maxConcurrentJobs** — optional per-project override for concurrent execution limit
+- **executionDataRetentionDays** — optional per-project override for the instance-level `AP_EXECUTION_DATA_RETENTION_DAYS` execution-data retention window. Settable only by platform admins via `POST /v1/projects/:id` (ignored for non-admin callers, like `externalId`); `null` falls back to the instance value. `projectService.update` rejects values below `AP_PAUSED_FLOW_TIMEOUT_DAYS` (a shorter window would delete the logs a still-paused run needs to resume, the same invariant the boot validator enforces instance-wide) and above `AP_EXECUTION_DATA_RETENTION_DAYS` (the instance value is a hard ceiling; treating it as one is what lets the cleanup job keep its index-friendly global pass, see [file-storage.md](./file-storage.md)). Stored values are additionally clamped into those bounds at cleanup time by `getEffectiveExecutionDataRetentionDays`, so env changes made after an override was written degrade the override safely instead of causing early deletion or extended retention. The flow-run retry window uses the same effective value.
 
 ## Entity
 
@@ -42,6 +43,7 @@ All editions. The CE controller exposes a minimal set: get, list (returns only t
 | icon | jsonb | `{ color: ColorName }` |
 | externalId | string (nullable) | embedding integration ID |
 | maxConcurrentJobs | number (nullable) | concurrency cap |
+| executionDataRetentionDays | number (nullable) | per-project execution-data retention override |
 | releasesEnabled | boolean | default false |
 | metadata | jsonb (nullable) | arbitrary key-value |
 | poolId | string (nullable) | FK to `concurrency_pool` |

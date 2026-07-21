@@ -8,12 +8,6 @@ import { zendeskAuth } from '../..';
 import { isEmpty } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs'
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const findTicketsAction = createAction({
   auth: zendeskAuth,
   name: 'find-tickets',
