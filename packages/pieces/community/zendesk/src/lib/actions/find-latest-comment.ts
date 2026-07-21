@@ -25,11 +25,8 @@ interface ZendeskComment {
   }>;
 }
 
-interface ZendeskTicketResponse {
-  ticket: {
-    id: number;
-    comments: ZendeskComment[];
-  };
+interface ZendeskCommentsResponse {
+  comments: ZendeskComment[];
 }
 
 export const findLatestCommentAction = createAction({
@@ -53,8 +50,8 @@ export const findLatestCommentAction = createAction({
     const { ticket_id, include_private } = propsValue;
 
     try {
-      const response = await httpClient.sendRequest<ZendeskTicketResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}?include=comments`,
+      const response = await httpClient.sendRequest<ZendeskCommentsResponse>({
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/comments?sort_order=desc`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BASIC,
@@ -63,22 +60,23 @@ export const findLatestCommentAction = createAction({
         },
       });
 
-      const comments = response.body.ticket.comments || [];
+      const comments = response.body.comments || [];
 
       if (comments.length === 0) {
         throw new Error(`No comments found on ticket ${ticket_id}`);
       }
 
-      let latestComment = comments[comments.length - 1];
+      // sort_order=desc means comments[0] is already the most recent
+      let latestComment = comments[0];
 
       if (!include_private) {
-        const publicComments = comments.filter((c) => c.public);
-        if (publicComments.length === 0) {
+        const latestPublicComment = comments.find((c) => c.public);
+        if (!latestPublicComment) {
           throw new Error(
             `No public comments found on ticket ${ticket_id}`
           );
         }
-        latestComment = publicComments[publicComments.length - 1];
+        latestComment = latestPublicComment;
       }
 
       return {

@@ -26,7 +26,7 @@ export const findAgentAction = createAction({
   auth: zendeskAuth,
   name: 'find-agent',
   displayName: 'Find an Agent',
-  description: 'Find an agent (staff member) by email or name.',
+  description: 'Find an agent by email or name.',
   audience: 'both',
   aiMetadata: { description: 'Finds an agent (staff/support team member) in Zendesk by searching for their email or name. Returns the first matching agent with their profile details. Useful for assigning tickets or sending notifications to specific agents.', idempotent: true },
   props: {

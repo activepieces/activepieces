@@ -42,7 +42,7 @@ interface ZendeskUser {
 export const tagAddedToUser = createTrigger({
   name: 'tag_added_to_user',
   displayName: 'Tag Added to User',
-  description: 'Fires when one or more tags are added to a user.',
+  description: 'Triggers when one or more tags are added to a user.',
   aiMetadata: {
     description: 'Fires when one or more tags are added to a user in Zendesk. Useful for automating workflows based on user categorization or tagging events. Uses a Zendesk event-type webhook registered automatically, so no manual Zendesk Trigger setup is needed.',
   },
@@ -75,6 +75,7 @@ export const tagAddedToUser = createTrigger({
     suspended: false,
     report_csv: false,
     user_fields: {},
+    added_tags: ['vip'],
   },
   async onEnable(context) {
     const authentication = context.auth;
@@ -139,14 +140,20 @@ export const tagAddedToUser = createTrigger({
       type?: string;
       user?: ZendeskUser;
       detail?: ZendeskUser;
+      event?: { added?: { tags?: string[] } };
       'zen:body'?: { user?: ZendeskUser };
     };
+
+    const addedTags = payload.event?.added?.tags ?? [];
+    if (addedTags.length === 0) {
+      return [];
+    }
 
     const user = payload.user || payload['zen:body']?.user || payload.detail;
     if (!user) {
       return [];
     }
 
-    return [user];
+    return [{ ...user, added_tags: addedTags }];
   },
 });

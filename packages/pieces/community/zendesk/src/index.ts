@@ -14,7 +14,6 @@ import { newUser } from './lib/trigger/new-user';
 import { newSuspendedTicket } from './lib/trigger/new-suspended-ticket';
 import { newActionOnTicket } from './lib/trigger/new-action-on-ticket';
 import { newGroup } from './lib/trigger/new-group';
-import { newView } from './lib/trigger/new-view';
 import { tagAddedToUser } from './lib/trigger/tag-added-to-user';
 import { createTicketAction } from './lib/actions/create-ticket';
 import { updateTicketAction } from './lib/actions/update-ticket';
@@ -107,5 +106,5 @@ export const zendesk = createPiece({
       }),
     }),
   ],
-  triggers: [newTicketInView, newTicket, updatedTicket, tagAddedToTicket, newOrganization, newUser, newSuspendedTicket, newActionOnTicket, newGroup, newView, tagAddedToUser],
+  triggers: [newTicketInView, newTicket, updatedTicket, tagAddedToTicket, newOrganization, newUser, newSuspendedTicket, newActionOnTicket, newGroup, tagAddedToUser],
 });
