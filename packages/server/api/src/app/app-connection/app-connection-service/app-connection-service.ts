@@ -192,22 +192,12 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async revalidate({ id, projectId, platformId }: RevalidateParams): Promise<AppConnectionWithoutSensitiveData> {
-        const encrypted = await appConnectionsRepo().findOneBy({
-            id,
-            platformId,
-            projectIds: ArrayContains([projectId]),
-        })
-        if (isNil(encrypted)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'AppConnection', entityId: id },
-            })
-        }
+        const metadata = await this.getOneOrThrowWithoutValue({ id, projectId, platformId })
         const connection = await appConnectionHandler(log).revalidateConnection({
             id,
             platformId,
             projectId,
-            externalId: encrypted.externalId,
+            externalId: metadata.externalId,
             validate: ({ pieceName, value }) => engineValidateAuth({ pieceName, projectId, platformId, auth: value }, log),
             log,
         })
