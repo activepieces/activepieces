@@ -292,7 +292,9 @@ function AppConnectionsPage() {
             : userHasPermissionToWriteAppConnection;
           return (
             <div className="flex items-center gap-2 justify-end">
-              <RevalidateConnectionButton connectionId={row.original.id} />
+              {userHasPermissionToRename && (
+                <RevalidateConnectionButton connectionId={row.original.id} />
+              )}
               {row.original.scope === AppConnectionScope.PROJECT ? (
                 <RenameConnectionDialog
                   connectionId={row.original.id}

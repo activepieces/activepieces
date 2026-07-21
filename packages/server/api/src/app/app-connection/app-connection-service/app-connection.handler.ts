@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, isNil, PlatformId, ProjectId, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, UserId } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -188,6 +188,64 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                         })
                     }
                 }
+                return appConnection
+            },
+        })
+    },
+    async revalidateConnection({ platformId, projectId, externalId, validate, log }: {
+        platformId: PlatformId
+        projectId: ProjectId
+        externalId: string
+        validate: (params: { pieceName: string, value: AppConnectionValue }) => Promise<void>
+        log: FastifyBaseLogger
+    }): Promise<AppConnection | null> {
+        return distributedLock(log).runExclusive({
+            key: `${platformId}_${externalId}`,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const encryptedAppConnection = await appConnectionsRepo().findOneBy({
+                    projectIds: ArrayContains([projectId]),
+                    externalId,
+                })
+                if (isNil(encryptedAppConnection)) {
+                    return null
+                }
+                let appConnection = await this.decryptConnection(encryptedAppConnection)
+                if (appConnection.value.type === AppConnectionType.NO_AUTH) {
+                    return appConnection
+                }
+                try {
+                    if (await this.needRefresh(appConnection, log)) {
+                        appConnection = await this.refresh(appConnection, projectId, log)
+                        await appConnectionsRepo().update(appConnection.id, {
+                            status: AppConnectionStatus.ACTIVE,
+                            value: await encryptUtils.encryptObject(appConnection.value),
+                        })
+                    }
+                }
+                catch (e) {
+                    exceptionHandler.handle(e, log)
+                    const isOAuth2Error = oauth2Util(log).isUserError(e)
+                    const isCustomAuthError = e instanceof CustomAuthRefreshError
+                    if (!isOAuth2Error && !isCustomAuthError) {
+                        throw e
+                    }
+                    appConnection.status = AppConnectionStatus.ERROR
+                    await appConnectionsRepo().update(appConnection.id, {
+                        status: AppConnectionStatus.ERROR,
+                        updated: dayjs().toISOString(),
+                    })
+                    return appConnection
+                }
+                const { error } = await tryCatch(() => validate({ pieceName: appConnection.pieceName, value: appConnection.value }))
+                if (!isNil(error) && !(error instanceof ActivepiecesError && error.error.code === ErrorCode.INVALID_APP_CONNECTION)) {
+                    throw error
+                }
+                appConnection.status = isNil(error) ? AppConnectionStatus.ACTIVE : AppConnectionStatus.ERROR
+                await appConnectionsRepo().update(appConnection.id, {
+                    status: appConnection.status,
+                    updated: dayjs().toISOString(),
+                })
                 return appConnection
             },
         })

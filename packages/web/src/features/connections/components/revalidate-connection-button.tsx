@@ -26,6 +26,7 @@ export const RevalidateConnectionButton = ({
         <Button
           variant="ghost"
           size="icon"
+          aria-label={t('Recheck connection')}
           disabled={isPending}
           onClick={() => mutate(connectionId)}
         >

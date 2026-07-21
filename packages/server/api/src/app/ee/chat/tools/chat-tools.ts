@@ -286,6 +286,11 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (isNil(found) || isNil(projectId)) {
                 return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId was found in the user’s projects.' }
             }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
+            if (!isNil(denial)) {
+                return denial
+            }
             const revalidated = await appConnectionService(log).revalidate({ id: found.id, projectId, platformId })
             const working = revalidated.status === AppConnectionStatus.ACTIVE
             return {
