@@ -192,7 +192,8 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async revalidateConnection({ platformId, projectId, externalId, validate, log }: {
+    async revalidateConnection({ id, platformId, projectId, externalId, validate, log }: {
+        id: string
         platformId: PlatformId
         projectId: ProjectId
         externalId: string
@@ -204,8 +205,9 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
             timeoutInSeconds: 60,
             fn: async () => {
                 const encryptedAppConnection = await appConnectionsRepo().findOneBy({
+                    id,
+                    platformId,
                     projectIds: ArrayContains([projectId]),
-                    externalId,
                 })
                 if (isNil(encryptedAppConnection)) {
                     return null
@@ -214,7 +216,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 if (appConnection.value.type === AppConnectionType.NO_AUTH) {
                     return appConnection
                 }
-                const forceRefresh = OAUTH2_TYPES.has(appConnection.value.type)
+                const forceRefresh = REVALIDATE_FORCE_REFRESH_TYPES.has(appConnection.value.type)
                 try {
                     if (forceRefresh || await this.needRefresh(appConnection, log)) {
                         appConnection = await this.refresh(appConnection, projectId, log)
@@ -301,10 +303,9 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
 const pieceRefreshSupportCache: LRU<boolean> = lru(1000, 0)
-const OAUTH2_TYPES: ReadonlySet<AppConnectionType> = new Set([
+const REVALIDATE_FORCE_REFRESH_TYPES: ReadonlySet<AppConnectionType> = new Set([
     AppConnectionType.OAUTH2,
     AppConnectionType.CLOUD_OAUTH2,
-    AppConnectionType.PLATFORM_OAUTH2,
 ])
 
 export function isCustomAuthTokenStale(value: { access_token?: string, token_refresh_at?: number }): boolean {

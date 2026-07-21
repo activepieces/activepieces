@@ -195,6 +195,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
         const connection = await appConnectionHandler(log).revalidateConnection({
+            id,
             platformId,
             projectId,
             externalId: encrypted.externalId,
