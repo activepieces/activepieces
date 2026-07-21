@@ -133,6 +133,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         type: project?.type ?? ProjectType.TEAM,
         poolId: project?.poolId ?? null,
         workerGroupId: project?.workerGroupId ?? null,
+        executionDataRetentionDays: project?.executionDataRetentionDays ?? null,
         icon,
     }
 }

@@ -52,8 +52,8 @@ export const FileEntity = new EntitySchema<FileSchema>({
     },
     indices: [
         {
-            name: 'idx_file_project_id',
-            columns: ['projectId'],
+            name: 'idx_file_project_id_type_created',
+            columns: ['projectId', 'type', 'created'],
         },
         {
             name: 'idx_file_type_created_desc',
