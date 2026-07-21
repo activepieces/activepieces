@@ -4,7 +4,7 @@ import { Migration } from '../../migration'
 export class AddActiveFlowsLimitToProjectPlan1814000000000 implements Migration {
     name = 'AddActiveFlowsLimitToProjectPlan1814000000000'
     breaking = false
-    release = '0.86.3'
+    release = '0.86.4'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
