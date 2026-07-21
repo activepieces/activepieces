@@ -2,6 +2,7 @@ import {
   CreateFieldRequest,
   Field,
   ListFieldsRequestQuery,
+  ReorderFieldsRequest,
   UpdateFieldRequest,
 } from '@activepieces/shared';
 
@@ -26,5 +27,9 @@ export const fieldsApi = {
 
   update(id: string, request: UpdateFieldRequest): Promise<Field> {
     return api.post<Field>(`/v1/fields/${id}`, request);
+  },
+
+  reorder(request: ReorderFieldsRequest): Promise<Field[]> {
+    return api.post<Field[]>('/v1/fields/reorder', request);
   },
 };

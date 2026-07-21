@@ -14,15 +14,22 @@ export const CreateFieldRequest = z.union([z.object({
     tableId: z.string(),
     data: StaticDropdownData,
     externalId: z.string().optional(),
+    position: z.number().int().nonnegative().optional(),
 }), z.object({
     name: z.string(),
     type: z.union([z.literal(FieldType.TEXT), z.literal(FieldType.NUMBER), z.literal(FieldType.DATE)]),
     tableId: z.string(),
     externalId: z.string().optional(),
+    position: z.number().int().nonnegative().optional(),
 })])
 
 export const UpdateFieldRequest = z.object({
-    name: z.string(),
+    name: z.string().optional(),
+})
+
+export const ReorderFieldsRequest = z.object({
+    tableId: z.string(),
+    fieldIds: z.array(z.string()),
 })
 
 export const ListFieldsRequestQuery = z.object({
@@ -31,4 +38,5 @@ export const ListFieldsRequestQuery = z.object({
 
 export type CreateFieldRequest = z.infer<typeof CreateFieldRequest>
 export type UpdateFieldRequest = z.infer<typeof UpdateFieldRequest>
+export type ReorderFieldsRequest = z.infer<typeof ReorderFieldsRequest>
 export type ListFieldsRequestQuery = z.infer<typeof ListFieldsRequestQuery>

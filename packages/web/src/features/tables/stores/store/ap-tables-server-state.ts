@@ -120,6 +120,16 @@ export const createServerState = (
         });
       });
     },
+    reorderField: (fieldIndex: number, targetIndex: number) => {
+      addPromiseToQueue(async () => {
+        const [movedField] = clonedFields.splice(fieldIndex, 1);
+        clonedFields.splice(targetIndex, 0, movedField);
+        await fieldsApi.reorder({
+          tableId: clonedTable.id,
+          fieldIds: clonedFields.map((field) => field.id),
+        });
+      });
+    },
     update: async (request: UpdateTableRequest) => {
       addPromiseToQueue(async () => {
         const updatedTable = await tablesApi.update(clonedTable.id, request);
