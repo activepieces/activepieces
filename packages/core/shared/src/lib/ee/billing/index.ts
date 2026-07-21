@@ -15,7 +15,6 @@ export type ProjectPlanLimits = {
 export const AdjustUnconsumableFeatureQuantityParams = z.object({
     featureId: z.enum(AutumnFeatureId),
     quantity: z.number().int().nonnegative(),
-    successUrl: z.string().optional(),
 })
 export type AdjustUnconsumableFeatureQuantityParams = z.infer<typeof AdjustUnconsumableFeatureQuantityParams>
 

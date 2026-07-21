@@ -97,7 +97,6 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
             platformId,
             featureId: request.body.featureId,
             quantity: request.body.quantity,
-            successUrl: request.body.successUrl,
         })
         if (isNil(checkoutUrl)) {
             await provider.refreshEntitlements(platformId)

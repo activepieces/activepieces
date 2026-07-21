@@ -261,7 +261,6 @@ export type AdjustUnconsumableFeatureQuantityParams = {
     platformId: string
     featureId: string
     quantity: number
-    successUrl?: string
 }
 
 export type CheckUsersExceededLimitParams = {

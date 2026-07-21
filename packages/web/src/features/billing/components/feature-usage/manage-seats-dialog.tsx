@@ -88,7 +88,6 @@ function ManageSeatsForm({
     purchaseSeats({
       featureId: feature.featureId,
       quantity: total,
-      successUrl: window.location.href,
     });
 
   const handleSubmit = (values: ManageSeatsFormValues) => {

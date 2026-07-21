@@ -57,7 +57,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const { url } = await autumnConsole.portal({ ...creds, returnUrl })
         return { url: url ?? '' }
     },
-    adjustUnconsumableFeatureQuantity: async ({ platformId, featureId, quantity, successUrl }) => {
+    adjustUnconsumableFeatureQuantity: async ({ platformId, featureId, quantity }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
         if (featureId === AutumnFeatureId.USERS_LIMIT) {
             await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: quantity, log })
@@ -66,7 +66,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (isNil(creds)) {
             return { checkoutUrl: null }
         }
-        const { paymentUrl } = await autumnConsole.setUnconsumableQuantity({ ...creds, featureId, quantity, successUrl })
+        const { paymentUrl } = await autumnConsole.setUnconsumableQuantity({ ...creds, featureId, quantity })
         return { checkoutUrl: paymentUrl }
     },
     checkUsersExceededLimit: async ({ platformId, entityManager }) => {
