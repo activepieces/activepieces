@@ -3,6 +3,7 @@ import autocannon from 'autocannon';
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import chalk from 'chalk';
 import { Command } from 'commander';
+import { Project } from '@activepieces/shared';
 
 const BENCHMARK_DOC = 'Load-test a deployment\'s sync-webhook path, auto-discover its shape, and attribute latency (queue-wait vs service-time) against the recommended setup.';
 
@@ -474,11 +475,11 @@ async function deleteProject({ client, id }: { client: AxiosInstance; id: string
 // Reads the project's own concurrency cap so a queue-throttled benchmark can be told apart from a slow
 // server. PROJECT_RATE_LIMITER_ENABLED gates whether the cap is enforced at all.
 async function collectProjectLimits({ client, projectId, rateLimiterEnabled }: CollectProjectLimitsParams): Promise<ProjectLimits> {
-    const res = await client.get(`/api/v1/projects/${projectId}`);
+    const res = await client.get<Project>(`/api/v1/projects/${projectId}`);
     if (res.status !== 200 || typeof res.data !== 'object') {
         return { available: false, reason: `projects/${projectId} returned HTTP ${res.status}` };
     }
-    const maxConcurrentJobs: number | null = res.data?.plan?.maxConcurrentJobs ?? null;
+    const maxConcurrentJobs: number | null = res.data?.maxConcurrentJobs ?? null;
     return { available: true, maxConcurrentJobs, rateLimiterEnabled };
 }
 
