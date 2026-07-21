@@ -13,7 +13,7 @@ export const sendCampaign = createAction({
   audience: 'both',
   aiMetadata: { description: 'Sends an existing draft campaign to its configured recipients immediately (RSS campaigns follow their schedule instead). Use once the campaign is fully set up; there is no undo, so confirm the campaign content and audience beforehand. Not idempotent: calling again on an already-sent campaign fails.', idempotent: false },
   props: {
-    campaign_id: mailchimpCommon.mailChimpCampaignIdDropdown,
+    campaign_id: mailchimpCommon.mailChimpDraftCampaignIdDropdown,
   },
   async run(context) {
     const { campaign_id } = context.propsValue;
