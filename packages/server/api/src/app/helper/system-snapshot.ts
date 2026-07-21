@@ -5,6 +5,7 @@ import { createLogger } from 'evlog'
 import { FastifyBaseLogger } from 'fastify'
 import { jobQueue } from '../workers/job-queue/job-queue'
 import { appMachineCache } from './app-machine-cache'
+import { otelQueueMetrics, QueueCounts } from './otel-queue-metrics'
 import { system } from './system/system'
 
 const SNAPSHOT_INTERVAL_MS = 60_000
@@ -14,19 +15,16 @@ function mbRounded(bytes: number): number {
     return Math.round(bytes / (1024 * 1024))
 }
 
-async function buildQueueCounts(log: FastifyBaseLogger): Promise<Record<string, unknown>> {
+async function buildQueueCounts(log: FastifyBaseLogger): Promise<QueueCounts | null> {
     try {
         const queues = jobQueue(log).getAllQueues()
         const countEntries = await Promise.all(
-            queues.map(async (queue): Promise<readonly [string, unknown]> => {
-                const counts = await queue.getJobCounts()
-                return [queue.name, counts] as const
-            }),
+            queues.map(async (queue) => [queue.name, await queue.getJobCounts()] as const),
         )
         return Object.fromEntries(countEntries)
     }
     catch {
-        return { queueCountsError: true }
+        return null
     }
 }
 
@@ -50,7 +48,7 @@ export const systemSnapshot = {
                     memHeapUsedMb: mbRounded(mem.heapUsed),
                     memHeapTotalMb: mbRounded(mem.heapTotal),
                     eventLoopDelayP99Ms,
-                    queueCounts,
+                    queueCounts: queueCounts ?? { queueCountsError: true },
                 })
                 // Emit with _forceKeep to bypass info-level sampling — snapshots are
                 // operational metrics and must always reach the drain regardless of
@@ -63,6 +61,8 @@ export const systemSnapshot = {
                 if (system.getEdition() !== ApEdition.CLOUD) {
                     await appMachineCache.register(eventLoopDelayP99Ms)
                 }
+
+                await otelQueueMetrics.push({ log, queueCounts: queueCounts ?? {} })
             }
             catch {
                 // Never crash the process from a monitoring tick

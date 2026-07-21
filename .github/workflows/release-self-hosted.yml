@@ -12,6 +12,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish_rc_release:
+        description: 'Publish a GitHub Release for RC tags too (ignored for final tags)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   # Preflight: build the image and run functional smoke tests + the perf-regression
@@ -88,10 +93,11 @@ jobs:
           git push origin ${{ inputs.tag }} --force
 
       - name: Create or update changelog via release-drafter
+        if: ${{ !contains(inputs.tag, '-rc') || inputs.publish_rc_release }}
         uses: release-drafter/release-drafter@v7
         with:
           commitish: ${{ github.ref_name }}
-          prerelease: false
+          prerelease: ${{ contains(inputs.tag, '-rc') }}
           tag: ${{ inputs.tag }}
           name: ${{ inputs.tag }}
           version: ${{ inputs.tag }}

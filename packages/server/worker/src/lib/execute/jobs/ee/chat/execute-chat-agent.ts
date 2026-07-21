@@ -5,7 +5,7 @@ import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet 
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools, GateDecision, TaintState } from './chat-worker-tools'
-import { delayWithJitter, runChatTurn } from './run-chat-turn'
+import { delayWithJitter, isTransientFailureText, runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -193,7 +193,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 },
             })
 
-            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, continuations, usage, totalInputTokens, totalOutputTokens } = turn
+            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, continuations, usage, totalInputTokens, totalOutputTokens } = turn
 
             if (abortController.signal.aborted) {
                 if (streamError) {
@@ -278,6 +278,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 })
             }
 
+            if (budgetExceeded) {
+                await sendEventWithRetry({
+                    event: { type: ChatAgentEventType.ERROR, data: { message: 'This turn reached its usage limit and was stopped to prevent runaway cost. Your progress is saved — send a new message to continue.' } },
+                })
+            }
+
             await sendEventWithRetry({
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
             })
@@ -287,6 +293,9 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const isCreditError = isCreditExhaustedError(errorMessage)
             const errorCode = isCreditError ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
+            const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
+                ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
+                : errorMessage
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveChatMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateChatProgress) and only flips status, so an errored turn keeps
@@ -295,7 +304,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 conversationId, runId, messages: [], uiMessages: [],
             }).catch(() => {})
             await sendEventWithRetry({
-                event: { type: ChatAgentEventType.ERROR, data: { message: errorMessage, ...spreadIfDefined('code', errorCode) } },
+                event: { type: ChatAgentEventType.ERROR, data: { message: clientMessage, ...spreadIfDefined('code', errorCode) } },
             })
             await sendEventWithRetry({
                 event: { type: ChatAgentEventType.FINISHED, data: { conversationId } },
