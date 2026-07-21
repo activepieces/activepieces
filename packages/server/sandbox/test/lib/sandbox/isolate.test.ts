@@ -55,12 +55,14 @@ async function callCreate({
     boxId = 7,
     enginePath = '/host/cache/common/main.js',
     sandboxId = 'sb-abc',
+    netnsName,
 }: {
     mounts?: SandboxMount[]
     env?: Record<string, string>
     boxId?: number
     enginePath?: string
     sandboxId?: string
+    netnsName?: string
 } = {}) {
     const maker = isolateProcess(createMockLogger(), enginePath, '/host/cache/codes', boxId)
     return maker.create({
@@ -68,9 +70,12 @@ async function callCreate({
         command: [],
         mounts,
         env,
+        netnsName,
         resourceLimits: { memoryLimitMb: 256, cpuMsPerSec: 1000, timeLimitSeconds: 60 },
     })
 }
+
+const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
 
 describe('isolateProcess', () => {
     beforeEach(() => {
@@ -326,6 +331,32 @@ describe('isolateProcess', () => {
             await expect(callCreate({ env })).rejects.toThrow(/must not contain newlines or NUL bytes/)
             expect(execPromiseMock).not.toHaveBeenCalled()
             expect(spawnMock).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('netns wrapping', () => {
+        it('spawns the isolate binary directly (host netns) when no netnsName is given', async () => {
+            await callCreate({ boxId: 7 })
+            expect(spawnMock.mock.calls[0][0]).toBe(isolateBinaryPath)
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args[0]).toBe('--no-default-dirs')
+            expect(args).toContain('--share-net')
+        })
+
+        it('wraps the spawn in `ip netns exec <netns>` when a netnsName is given', async () => {
+            await callCreate({ boxId: 7, netnsName: 'ap-egress-7' })
+            expect(spawnMock.mock.calls[0][0]).toBe('ip')
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args.slice(0, 4)).toEqual(['netns', 'exec', 'ap-egress-7', isolateBinaryPath])
+            // the isolate flags follow, unchanged, so --share-net now binds the restricted netns
+            expect(args[4]).toBe('--no-default-dirs')
+            expect(args).toContain('--share-net')
+            expect(args[args.length - 1]).toBe('/root/common/main.js')
+        })
+
+        it('keeps shell: false whether or not a netns is used', async () => {
+            await callCreate({ netnsName: 'ap-egress-7' })
+            expect(spawnMock.mock.calls[0][2]).toEqual({ shell: false })
         })
     })
 

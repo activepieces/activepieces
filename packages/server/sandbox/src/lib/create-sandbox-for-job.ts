@@ -6,7 +6,7 @@ import { sandboxCapacity } from './sandbox/capacity'
 import { simpleProcess } from './sandbox/fork'
 import { isolateProcess } from './sandbox/isolate'
 import { createSandbox } from './sandbox/sandbox'
-import { Sandbox, SandboxMount } from './sandbox/types'
+import { EgressInfo, Sandbox, SandboxLogger, SandboxMount } from './sandbox/types'
 import { SandboxSettings } from './types'
 
 export function createSandboxForJob(params: {
@@ -15,8 +15,9 @@ export function createSandboxForJob(params: {
     reusable: boolean
     basePath: string
     getSettings: () => SandboxSettings
+    getEgress?: (log: SandboxLogger) => Promise<EgressInfo | null>
 }): Sandbox {
-    const { log, boxId, reusable, basePath, getSettings } = params
+    const { log, boxId, reusable, basePath, getSettings, getEgress } = params
     const settings = getSettings()
     const sandboxId = nanoid()
     const paths = cacheUtils(basePath)
@@ -43,6 +44,7 @@ export function createSandboxForJob(params: {
             basePath,
             baseMounts,
             wsRpcPort: isIsolateMode(executionMode) ? sandboxCapacity.wsRpcPortForBox(boxId) : undefined,
+            getEgress: isIsolateMode(executionMode) ? getEgress : undefined,
         },
         processMaker,
     )

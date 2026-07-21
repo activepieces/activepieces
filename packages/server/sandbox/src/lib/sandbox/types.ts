@@ -19,6 +19,9 @@ export type CreateSandboxProcessParams = {
     mounts: SandboxMount[]
     env: Record<string, string>
     resourceLimits: SandboxResourceLimits
+    // When set, the isolate box is launched inside this pre-provisioned network namespace
+    // (`ip netns exec <netnsName> isolate … --share-net`) instead of the host netns.
+    netnsName?: string
 }
 
 export type SandboxProcessMaker = {
@@ -56,6 +59,16 @@ export type SandboxInitOptions = {
     command?: string[]
     baseMounts?: SandboxMount[]
     wsRpcPort?: number
+    // Resolves the per-box egress network namespace (created once, cached by the manager) when
+    // running an isolate mode under NETWORK_MODE=STRICT; null in every other mode. When non-null,
+    // the box runs in `netnsName` and the WS-RPC server binds `gatewayHost` (the box's only reachable
+    // host address) instead of loopback.
+    getEgress?: (log: SandboxLogger) => Promise<EgressInfo | null>
+}
+
+export type EgressInfo = {
+    netnsName: string
+    gatewayHost: string
 }
 
 export type SandboxOptions = {

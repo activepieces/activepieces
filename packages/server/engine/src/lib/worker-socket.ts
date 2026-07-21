@@ -26,7 +26,10 @@ function clearInitialConnectWatchdog(): void {
 
 export const workerSocket = {
     init: (sandboxId: string): void => {
-        const wsUrl = `ws://127.0.0.1:${process.env.AP_SANDBOX_WS_PORT ?? '12345'}`
+        // In STRICT + isolate modes the box runs in its own netns where 127.0.0.1 is the namespace's
+        // isolated loopback; the worker's WS-RPC is reachable only on the gateway veth IP, injected as
+        // AP_SANDBOX_WS_HOST. Every other mode shares the host netns and stays on loopback.
+        const wsUrl = `ws://${process.env.AP_SANDBOX_WS_HOST ?? '127.0.0.1'}:${process.env.AP_SANDBOX_WS_PORT ?? '12345'}`
         socket = io(wsUrl, buildSocketOptions(sandboxId))
 
         // Without this watchdog, if the parent worker is SIGKILLed (OOM, crash) before

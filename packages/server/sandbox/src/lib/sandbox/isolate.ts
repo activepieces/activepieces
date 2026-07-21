@@ -58,7 +58,7 @@ const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
-            const { sandboxId, mounts, env } = params
+            const { sandboxId, mounts, env, netnsName } = params
 
             for (const mount of mounts) {
                 assertMountInsideRoot(mount)
@@ -121,9 +121,16 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 engineSandboxPath,
             ]
 
-            log.debug({ sandbox: { id: sandboxId }, command: `${isolateBinaryPath} ${args.join(' ')}` }, 'Spawning isolate process')
+            // In STRICT + isolate modes the box is launched inside a pre-provisioned, locked-down
+            // network namespace via `ip netns exec`. `--share-net` then makes isolate inherit THAT
+            // netns (not the host's), so untrusted code is confined to the veth /30 whose only routes
+            // are NAT'd public egress + the gateway WS-RPC — never host loopback, metadata, or RFC1918.
+            const spawnCommand = netnsName ? 'ip' : isolateBinaryPath
+            const spawnArgs = netnsName ? ['netns', 'exec', netnsName, isolateBinaryPath, ...args] : args
 
-            const child = spawn(isolateBinaryPath, args, {
+            log.debug({ sandbox: { id: sandboxId }, netnsName: netnsName ?? 'host', command: `${spawnCommand} ${spawnArgs.join(' ')}` }, 'Spawning isolate process')
+
+            const child = spawn(spawnCommand, spawnArgs, {
                 shell: false,
             })
 

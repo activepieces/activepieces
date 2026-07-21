@@ -88,7 +88,7 @@ export function createSandbox(
     // which is exactly what made busy workers crash-loop. Await the bind, and on a bind error retry a
     // few times (a concurrent close frees the port within a beat); if it never frees, fail just this
     // sandbox with a catchable error. A random port (listen(0)) can't collide, so it needs no retries.
-    async function createSocketServer(): Promise<number> {
+    async function createSocketServer(host: string): Promise<number> {
         const requestedPort = options.wsRpcPort ?? 0
         const maxAttempts = requestedPort === 0 ? 1 : 30
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -100,7 +100,7 @@ export function createSandbox(
             })
             wireConnectionHandler(ioServer)
 
-            const { error } = await tryCatch(() => listenOnce(server, requestedPort))
+            const { error } = await tryCatch(() => listenOnce(server, requestedPort, host))
             if (isNil(error)) {
                 io = ioServer
                 const address = server.address()
@@ -160,7 +160,12 @@ export function createSandbox(
             }, 'Starting sandbox')
 
             wsRpcToken = randomBytes(32).toString('hex')
-            const port = await createSocketServer()
+            // In STRICT + isolate modes the box lives in its own netns and cannot reach the host's
+            // loopback, so the WS-RPC server must bind the gateway veth IP (the box's only reachable
+            // host address). In every other mode there is no netns and it stays on loopback.
+            const egress = options.getEgress ? await options.getEgress(log) : null
+            const wsRpcHost = egress?.gatewayHost ?? '127.0.0.1'
+            const port = await createSocketServer(wsRpcHost)
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
             const customPieceMounts: SandboxMount[] = []
@@ -188,10 +193,19 @@ export function createSandbox(
                 sandboxId,
                 command: options.command ?? [],
                 mounts: allMounts,
+                netnsName: egress?.netnsName,
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
                     AP_SANDBOX_WS_TOKEN: wsRpcToken,
+                    ...(egress
+                        ? {
+                            AP_SANDBOX_WS_HOST: egress.gatewayHost,
+                            // The engine's socket-connect-guard blocks private IPs; the gateway veth IP
+                            // is private, so it must be allowlisted for the box to reach its own WS-RPC.
+                            AP_SSRF_ALLOW_LIST: [options.env['AP_SSRF_ALLOW_LIST'], egress.gatewayHost].filter(Boolean).join(','),
+                        }
+                        : {}),
                     ...(customPieceMounts.length > 0
                         ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }
                         : {}),
@@ -334,7 +348,7 @@ export function createSandbox(
     }
 }
 
-function listenOnce(server: HttpServer, port: number): Promise<void> {
+function listenOnce(server: HttpServer, port: number, host: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         const onError = (err: Error): void => {
             server.removeListener('listening', onListening)
@@ -346,7 +360,7 @@ function listenOnce(server: HttpServer, port: number): Promise<void> {
         }
         server.once('error', onError)
         server.once('listening', onListening)
-        server.listen(port)
+        server.listen(port, host)
     })
 }
 
