@@ -21,7 +21,10 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
     // to trace it. If pass 1 surfaced any such unsafe package, externalize it and rebuild ONCE —
     // auto-externalize the offending dep instead of failing the whole piece. Only the handful of
     // pieces with dynamic-require deps (couchbase, metabase, text-helper, scrapeless) hit pass 2.
-    const unsafe = unsafePackages({ metafile: pass.result.metafile, warnings: pass.result.warnings })
+    const unsafe = new Set([
+        ...unsafePackages({ metafile: pass.result.metafile, warnings: pass.result.warnings }),
+        ...importMetaPackages(pass.result.metafile),
+    ])
     if (unsafe.size > 0) {
         pass = await runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external: new Set([...excludeList, ...unsafe]) })
     }
@@ -45,7 +48,7 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
 
     const bundleBytes = statSync(outfile).size
     const rawBytes = totalInputBytes(pass.result.metafile)
-    const external = directDepsOf(manifest).filter((dep) => !pass.inlined.has(dep) && !dep.startsWith('@activepieces/') && !BUNDLE_HELPER_DEPS.has(dep))
+    const external = [...pass.externalized].filter((dep) => !dep.startsWith('@activepieces/') && !BUNDLE_HELPER_DEPS.has(dep))
 
     enforceSizeGate({ piecePath, bundleBytes })
 
@@ -54,6 +57,7 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
 
 async function runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external }: RunEsbuildParams): Promise<EsbuildPass> {
     const inlined = new Set<string>()
+    const externalized = new Set<string>()
     const result = await esbuild.build({
         entryPoints: [entryFile],
         bundle: true,
@@ -70,10 +74,10 @@ async function runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList,
         metafile: true,
         logLevel: 'silent',
         alias: workspaceAliases(repoRoot),
-        plugins: [externalizeThirdParty({ inlineAll, inlineList, external, inlined })],
+        plugins: [externalizeThirdParty({ inlineAll, inlineList, external, inlined, externalized })],
         loader: { '.node': 'file' },
     })
-    return { result, inlined }
+    return { result, inlined, externalized }
 }
 
 function readPieceManifest(piecePath: string): PieceManifest {
@@ -82,10 +86,6 @@ function readPieceManifest(piecePath: string): PieceManifest {
         return {}
     }
     return JSON.parse(readFileSync(pkgPath, 'utf-8'))
-}
-
-function directDepsOf(manifest: PieceManifest): string[] {
-    return Object.keys(manifest.dependencies ?? {})
 }
 
 // Inline-by-default. Third-party deps are bundled in unless they cannot be safely inlined
@@ -109,7 +109,7 @@ function readInlineConfig(manifest: PieceManifest): InlineConfig {
 // Only @activepieces/* workspace code and relative/absolute imports are always bundled in.
 // Node builtins and packages in `external` (known-native + auto-externalized dynamic-require
 // deps) are kept external. Everything else is inlined when inlineAll / listed in inlineList.
-function externalizeThirdParty({ inlineAll, inlineList, external, inlined }: ExternalizeParams): esbuild.Plugin {
+function externalizeThirdParty({ inlineAll, inlineList, external, inlined, externalized }: ExternalizeParams): esbuild.Plugin {
     return {
         name: 'externalize-third-party',
         setup(build) {
@@ -129,12 +129,14 @@ function externalizeThirdParty({ inlineAll, inlineList, external, inlined }: Ext
                 }
                 const top = topLevelPkg(id)
                 if (external.has(top)) {
+                    externalized.add(top)
                     return { path: id, external: true }
                 }
                 if (inlineAll || inlineList.has(top)) {
                     inlined.add(top)
                     return null
                 }
+                externalized.add(top)
                 return { path: id, external: true }
             })
         },
@@ -165,6 +167,32 @@ function unsafePackages({ metafile, warnings }: GateParams): Set<string> {
         }
     }
     return pkgs
+}
+
+// esbuild rewrites `import.meta` to `{}` in CJS output (silently), so an inlined package relying on
+// it (e.g. openpgp's `createRequire(import.meta.url)`) crashes at load. Externalize such packages so
+// they install and run in their own module context instead.
+function importMetaPackages(metafile: esbuild.Metafile): Set<string> {
+    const pkgs = new Set<string>()
+    for (const input of Object.keys(metafile.inputs)) {
+        const pkg = pkgOfInput(input)
+        if (pkg === null || pkgs.has(pkg)) {
+            continue
+        }
+        if (usesImportMeta(resolve(process.cwd(), input))) {
+            pkgs.add(pkg)
+        }
+    }
+    return pkgs
+}
+
+function usesImportMeta(file: string): boolean {
+    try {
+        return /\bimport\.meta\b/.test(readFileSync(file, 'utf-8'))
+    }
+    catch {
+        return false
+    }
 }
 
 // Build-time safety gate, evaluated on the FINAL pass. By now native/dynamic-require deps have
@@ -313,6 +341,7 @@ type InlineConfig = {
 type EsbuildPass = {
     result: esbuild.BuildResult & { metafile: esbuild.Metafile }
     inlined: Set<string>
+    externalized: Set<string>
 }
 
 type RunEsbuildParams = {
@@ -334,6 +363,7 @@ type ExternalizeParams = {
     inlineList: Set<string>
     external: Set<string>
     inlined: Set<string>
+    externalized: Set<string>
 }
 
 type GateParams = {
