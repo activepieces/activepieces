@@ -27,6 +27,10 @@ _Avoid_: table trigger
 A stored blob (S3 or DB) with type classification, optional compression, and expiry.
 _Avoid_: attachment, blob
 
+**ApStreamingFile**:
+The resolved value of a `Property.File({ streaming: true })` input — `{ filename, extension?, size?, body: Readable }`. A one-shot lazy file the engine exposes without buffering, so a piece can upload a large file to an external service. Contrast **ApFile**, the buffered (`Buffer` + `base64`) value of a plain `Property.File()`.
+_Avoid_: file stream, streamed file
+
 **Store Entry**:
 A key-value pair scoped to a project, used by pieces to persist state across flow runs.
 _Avoid_: kv store, project store

@@ -122,8 +122,16 @@ Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. 
 - **New dependency:** `@aws-sdk/lib-storage`.
 
 ### Deferred (not built)
-- **Property.file streaming (read side)** — a piece supplies its own `Readable`; a dedicated streaming file-input mode was judged YAGNI.
 - **Presigned multipart** (bytes off the app on `S3_USE_SIGNED_URLS`) — rejected as over-engineering; see ADR-0007.
+
+## Streaming — input path (implemented)
+
+`Property.File({ streaming: true })` resolves to `ApStreamingFile` instead of `ApFile`, so a piece can upload a large file to an external service without the engine buffering it in the sandbox first. See [ADR-0009](../../docs/adr/0009-streaming-file-inputs-resolve-to-a-lazy-apstreamingfile.md).
+
+- **Piece API:** `Property.File({ streaming: true })` → `ApStreamingFile = { filename, extension?, size?, body: Readable }` (`@activepieces/pieces-framework` ≥ 0.35.0). Plain `Property.File()` is unchanged (`ApFile`, buffered). Reuses `PropertyType.FILE` → **zero frontend change**.
+- **Resolution:** the engine's `fileProcessor` (`packages/server/engine/src/lib/variables/processors/file.ts`) branches on the `streaming` flag — a URL `fetch` exposes the undrained body as a `Readable` (`Readable.fromWeb`) with `size` from `Content-Length`; a base64 data URL decodes to a one-shot `Readable`. This replaces the unbounded `arrayBuffer()` buffer on the URL path. The `catch → null` contract is kept (a fetch failure fails required-prop validation as before).
+- **Consumers:** the Amazon S3 **Upload File** action — `putObject({ Body: file.body, ContentLength: file.size })` for a known size (single streamed PUT, no `@aws-sdk/lib-storage`), buffering only when `size` is absent (== pre-streaming behaviour). This is the reference pattern for Dropbox / Google Drive / any large-file upload piece.
+- **One-shot body:** no whole-stream retry; `size` is best-effort.
 
 ### Webhook streaming ingestion (implemented)
 Reuses `s3Helper.uploadStream` + `fileService.save({ data: Readable })` to stream inbound webhook files (multipart + raw-binary) to S3 without buffering. `@fastify/multipart`'s global `attachFieldsToBody` is gone, so every multipart consumer opts in explicitly — the webhook streams via `request.parts()`, `users` buffers via `request.file()`, and the routes whose schemas expect `ApMultipartFile` (piece install CE + EE, platform logos, knowledge-base upload) attach the per-route `attachMultipartFieldsToBody` hook. `rawBody` capture moved into a scoped `preParsing` hook (streamed types forgo `rawBody`). See the Webhooks feature doc for the full decision list and [ADR-0008](../../docs/adr/0008-webhook-files-stream-via-explicit-multipart-consumption.md).
