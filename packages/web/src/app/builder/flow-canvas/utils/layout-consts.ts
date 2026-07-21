@@ -13,6 +13,7 @@ import { ApNodeType, CanvasOrientation } from './types';
 const ARC_LENGTH = FLOW_CANVAS_ARC;
 const HORIZONTAL_LAYOUT_SPACE_BETWEEN_STEPS = 80;
 const HORIZONTAL_STEP_SIZE = 80;
+const HORIZONTAL_STEP_LABEL_WIDTH = 150;
 // extra room on branch entry lines so the label can sit on the line next to the add button
 const HORIZONTAL_BRANCH_LABEL_SPACE = 70;
 // horizontal view spaces router branches 20px wider apart than vertical
@@ -55,31 +56,6 @@ const ORIENTATION_LAYOUT: Record<CanvasOrientation, OrientationLayout> = {
   },
 };
 
-// Density tightens the cross-axis branch gap so more branches fit a narrow Stage
-// (only the vertical canvas narrows). The mini floor stays near 2*ARC + handle
-// clearance so curved edges don't kink.
-const VERTICAL_BRANCH_GAP_BY_DENSITY: Record<CanvasDensity, number> = {
-  comfortable: FLOW_CANVAS_HSPACE,
-  narrow: 56,
-  mini: 44,
-};
-
-const getOrientationLayout = (
-  orientation: CanvasOrientation,
-  density: CanvasDensity = 'comfortable',
-): OrientationLayout => {
-  const base = ORIENTATION_LAYOUT[orientation];
-  if (orientation !== 'vertical' || density === 'comfortable') {
-    return base;
-  }
-  const gap = VERTICAL_BRANCH_GAP_BY_DENSITY[density];
-  return {
-    ...base,
-    crossGapBetweenBranches: gap,
-    routerBranchGap: gap,
-  };
-};
-
 const NODE_SELECTION_RECT_CLASS_NAME = 'react-flow__nodesselection-rect';
 
 const doesNodeAffectBoundingBoxWidth: (
@@ -96,12 +72,10 @@ export const flowCanvasLayoutConsts = {
   ARC_LENGTH,
   ORIENTATION_LAYOUT,
   STEP_NODE_SIZE,
+  HORIZONTAL_STEP_LABEL_WIDTH,
   NODE_SELECTION_RECT_CLASS_NAME,
   doesNodeAffectBoundingBox: doesNodeAffectBoundingBoxWidth,
-  getOrientationLayout,
 };
-
-export type CanvasDensity = 'comfortable' | 'narrow' | 'mini';
 
 type OrientationLayout = {
   stepAlongSize: number;

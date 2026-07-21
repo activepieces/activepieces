@@ -324,6 +324,122 @@ describe('Project API', () => {
             expect(responseBody.displayName).toBe(request.displayName)
         })
 
+        it('sets and clears executionDataRetentionDays as platform owner', async () => {
+            const { mockProject, mockApiKey } = await createProjectAndPlatformAndApiKey()
+
+            const setResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: { executionDataRetentionDays: 30 },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(setResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(setResponse?.json().executionDataRetentionDays).toBe(30)
+
+            const clearResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: { executionDataRetentionDays: null },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(clearResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(clearResponse?.json().executionDataRetentionDays).toBeNull()
+        })
+
+        it('rejects a non-positive executionDataRetentionDays', async () => {
+            const { mockProject, mockApiKey } = await createProjectAndPlatformAndApiKey()
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: { executionDataRetentionDays: 0 },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('rejects executionDataRetentionDays outside the instance bounds', async () => {
+            const { mockProject, mockApiKey } = await createProjectAndPlatformAndApiKey()
+
+            const belowPausedFlowTimeout = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: { executionDataRetentionDays: 7 },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(belowPausedFlowTimeout?.statusCode).toBe(StatusCodes.CONFLICT)
+
+            const aboveInstanceRetention = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: { executionDataRetentionDays: 90 },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(aboveInstanceRetention?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('ignores executionDataRetentionDays when the caller is not a platform admin', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+            const { mockUser: memberUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            const role = createMockProjectRole({
+                platformId: mockPlatform.id,
+                type: RoleType.DEFAULT,
+                name: DefaultProjectRole.EDITOR,
+                permissions: [Permission.WRITE_PROJECT],
+            })
+            await db.save('project_role', role)
+
+            const membership = createMockProjectMember({
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                userId: memberUser.id,
+                projectRoleId: role.id,
+            })
+            await db.save('project_member', membership)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: memberUser.id,
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const request: UpdateProjectPlatformRequest = {
+                displayName: faker.animal.bird(),
+                executionDataRetentionDays: 7,
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+            expect(responseBody.displayName).toBe(request.displayName)
+            expect(responseBody.executionDataRetentionDays).toBeNull()
+        })
+
         it('Fails if user is not platform owner', async () => {
             const { mockOwner: platformOwnerUser, mockPlatform } = await mockAndSaveBasicSetup()
 

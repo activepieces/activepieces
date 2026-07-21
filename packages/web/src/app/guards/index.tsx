@@ -1,7 +1,5 @@
 import { lazy, Suspense } from 'react';
 import {
-  Outlet,
-  type RouteObject,
   RouterProvider,
   createBrowserRouter,
   createMemoryRouter,
@@ -10,74 +8,45 @@ import {
 import { PageTitle } from '@/app/components/page-title';
 import { authRoutes } from '@/app/routes/auth-routes';
 import { platformRoutes } from '@/app/routes/platform-routes';
-import {
-  projectBareRedirects,
-  projectShellRoutes,
-  projectStandaloneRoutes,
-} from '@/app/routes/project-routes';
+import { projectRoutes } from '@/app/routes/project-routes';
 import { publicRoutes } from '@/app/routes/public-routes';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { CHAT_ROUTE } from '@/lib/route-utils';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { RouteErrorBoundary } from '../components/global-error-boundary';
-import { WorkspaceShell } from '../components/workspace-shell';
-import { EmbedShell } from '../components/workspace-shell/embed-shell';
+import { ProjectDashboardLayout } from '../components/project-layout';
 
-import { ChatRouteRedirect } from './chat-route-redirect';
-import { ChatLandingGuard, DefaultRoute } from './default-route';
+import { DefaultRoute } from './default-route';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
-// Old /chat/:id deep links open that conversation in the persistent chat panel
-// via ?chat=. The bare /chat is now a real route (see workspaceShellRoute).
+const ChatWithAIPage = lazyWithRetry(
+  () =>
+    import('@/app/routes/chat-with-ai').then((m) => ({
+      default: m.ChatWithAIPage,
+    })),
+  'chat-with-ai',
+);
+
+function chatElement() {
+  return (
+    <AllowOnlyLoggedInUserOnlyGuard>
+      <ProjectDashboardLayout>
+        <PageTitle title="Chat">
+          <Suspense fallback={<RouteLoadingBar />}>
+            <ChatWithAIPage />
+          </Suspense>
+        </PageTitle>
+      </ProjectDashboardLayout>
+    </AllowOnlyLoggedInUserOnlyGuard>
+  );
+}
+
 const chatRoutes = [
-  { path: '/chat/:conversationId', element: <ChatRouteRedirect /> },
+  { path: '/chat', element: chatElement() },
+  { path: '/chat/:conversationId', element: chatElement() },
 ];
-
-// The project-scoped surfaces (builder, runs, tables, connections, …) are SHARED by
-// both shells below — one source of truth, so a new project route is automatically
-// reachable in the operator app and the embed. TokenCheckerWrapper runs the auth
-// guard + project switch before any child renders.
-const projectShellChildren = {
-  path: '/projects/:projectId',
-  element: (
-    <TokenCheckerWrapper>
-      <Outlet />
-    </TokenCheckerWrapper>
-  ),
-  children: projectShellRoutes,
-};
-
-// Operator app: one persistent shell (chat panel + Stage) wraps both the
-// project-agnostic chat landing (/chat) and every project route. The shell is a
-// pathless layout, so it stays mounted as the URL moves between /chat and a project
-// resource — only the Stage <Outlet/> swaps — and the chat stream/socket survive.
-const workspaceShellRoute = {
-  element: (
-    <AllowOnlyLoggedInUserOnlyGuard>
-      <WorkspaceShell />
-    </AllowOnlyLoggedInUserOnlyGuard>
-  ),
-  children: [
-    { path: CHAT_ROUTE, element: <ChatLandingGuard /> },
-    projectShellChildren,
-  ],
-};
-
-// Embedded app (iframe): a separate, minimal shell with NONE of the operator chrome
-// (no Stage, no chat, no global search, no sidebar) and no /chat landing — so an
-// embed can never surface the chat UI or get stranded on it. Operator chrome added
-// to WorkspaceShell can't leak here because the embed tree never mounts it. See the
-// router fork in ApRouter, which already branches on isEmbedded.
-const embedShellRoute = {
-  element: (
-    <AllowOnlyLoggedInUserOnlyGuard>
-      <EmbedShell />
-    </AllowOnlyLoggedInUserOnlyGuard>
-  ),
-  children: [projectShellChildren],
-};
 
 const CrashTestPage = import.meta.env.DEV
   ? lazy(() =>
@@ -87,64 +56,52 @@ const CrashTestPage = import.meta.env.DEV
     )
   : null;
 
-const devRoutes = import.meta.env.DEV
-  ? [
-      ...(CrashTestPage
-        ? [
-            {
-              path: '/__crashtest',
-              element: (
-                <Suspense fallback={<RouteLoadingBar />}>
-                  <CrashTestPage />
-                </Suspense>
-              ),
-            },
-          ]
-        : []),
-    ]
-  : [];
+const devRoutes =
+  import.meta.env.DEV && CrashTestPage
+    ? [
+        {
+          path: '/__crashtest',
+          element: (
+            <Suspense fallback={<RouteLoadingBar />}>
+              <CrashTestPage />
+            </Suspense>
+          ),
+        },
+      ]
+    : [];
 
-const catchAllRedirect = {
-  path: '/*',
-  element: (
-    <PageTitle title="Redirect">
-      <DefaultRoute></DefaultRoute>
-    </PageTitle>
-  ),
-};
-
-// Operator app (real browser URL): persistent WorkspaceShell + /chat landing.
-// Exported for the embed-isolation guardrail test (see test/app/guards).
-export const browserRoutes: RouteObject[] = [
+const routes = [
   ...devRoutes,
   ...publicRoutes,
-  workspaceShellRoute,
-  ...projectStandaloneRoutes,
-  ...projectBareRedirects,
+  ...projectRoutes,
   ...authRoutes,
   ...platformRoutes,
   ...chatRoutes,
-  catchAllRedirect,
+  {
+    path: '/projects/:projectId',
+    element: (
+      <TokenCheckerWrapper>
+        <DefaultRoute></DefaultRoute>
+      </TokenCheckerWrapper>
+    ),
+  },
+  {
+    path: '/*',
+    element: (
+      <PageTitle title="Redirect">
+        <DefaultRoute></DefaultRoute>
+      </PageTitle>
+    ),
+  },
 ];
 
-// Embedded app (in-memory URL inside the iframe): the same routes wrapped in the
-// chrome-free EmbedShell, with NO /chat landing or its legacy redirect.
-export const embedRoutes: RouteObject[] = [
-  ...devRoutes,
-  ...publicRoutes,
-  embedShellRoute,
-  ...projectStandaloneRoutes,
-  ...projectBareRedirects,
-  ...authRoutes,
-  ...platformRoutes,
-  catchAllRedirect,
-];
+const routesWithErrorBoundary = routes.map((route) => ({
+  errorElement: <RouteErrorBoundary />,
+  ...route,
+}));
 
-const withErrorBoundary = (routes: RouteObject[]): RouteObject[] =>
-  routes.map((route) => ({ errorElement: <RouteErrorBoundary />, ...route }));
-
-export const memoryRouter = createMemoryRouter(withErrorBoundary(embedRoutes));
-const browserRouter = createBrowserRouter(withErrorBoundary(browserRoutes));
+export const memoryRouter = createMemoryRouter(routesWithErrorBoundary);
+const browserRouter = createBrowserRouter(routesWithErrorBoundary);
 
 const ApRouter = () => {
   const { embedState } = useEmbedding();
