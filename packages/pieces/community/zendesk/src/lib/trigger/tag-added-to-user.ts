@@ -127,10 +127,9 @@ export const tagAddedToUser = createTrigger({
             password: authentication.props.token,
           },
         });
+        await context.store.delete(WEBHOOK_TRIGGER_KEY);
       } catch (error) {
         console.warn(`Warning: Failed to delete webhook ${webhookId}:`, (error as Error).message);
-      } finally {
-        await context.store.delete(WEBHOOK_TRIGGER_KEY);
       }
     }
   },

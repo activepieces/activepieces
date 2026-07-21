@@ -41,21 +41,28 @@ export const findGroupAction = createAction({
     }
 
     try {
-      const response = await httpClient.sendRequest<ZendeskGroupsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/groups.json?per_page=100`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
-      });
+      let url: string | undefined = `https://${authentication.props.subdomain}.zendesk.com/api/v2/groups.json?per_page=100`;
+      let matchedGroup: ZendeskGroup | undefined;
 
-      const groups = response.body.groups || [];
+      while (url && !matchedGroup) {
+        const response = await httpClient.sendRequest<ZendeskGroupsResponse & { next_page?: string }>({
+          url,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
+          },
+        });
 
-      const matchedGroup = groups.find(
-        (group) => group.name && group.name.toLowerCase() === group_name.toLowerCase()
-      );
+        const groups = response.body.groups || [];
+
+        matchedGroup = groups.find(
+          (group) => group.name && group.name.toLowerCase() === group_name.toLowerCase()
+        );
+
+        url = response.body.next_page;
+      }
 
       if (!matchedGroup) {
         throw new Error(`No group found with name "${group_name}"`);

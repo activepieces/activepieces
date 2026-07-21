@@ -58,28 +58,32 @@ export const findAgentAction = createAction({
     }
 
     try {
-      const response = await httpClient.sendRequest<ZendeskUsersResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users.json?role=agent&per_page=100`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
-      });
-
-      const agents = response.body.users || [];
-
+      let url: string | undefined = `https://${authentication.props.subdomain}.zendesk.com/api/v2/users.json?role=agent&per_page=100`;
       let matchedAgent: ZendeskAgent | undefined;
 
-      if (search_type === 'email') {
-        matchedAgent = agents.find(
-          (agent) => agent.email && agent.email.toLowerCase() === search_value.toLowerCase()
-        );
-      } else {
-        matchedAgent = agents.find(
-          (agent) => agent.name && agent.name.toLowerCase().includes(search_value.toLowerCase())
-        );
+      while (url && !matchedAgent) {
+        const response = await httpClient.sendRequest<ZendeskUsersResponse & { next_page?: string }>({
+          url,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
+          },
+        });
+
+        const agents = response.body.users || [];
+
+        matchedAgent =
+          search_type === 'email'
+            ? agents.find(
+                (agent) => agent.email && agent.email.toLowerCase() === search_value.toLowerCase()
+              )
+            : agents.find(
+                (agent) => agent.name && agent.name.toLowerCase().includes(search_value.toLowerCase())
+              );
+
+        url = response.body.next_page;
       }
 
       if (!matchedAgent) {

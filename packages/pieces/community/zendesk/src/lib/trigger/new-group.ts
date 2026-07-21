@@ -28,17 +28,25 @@ type ZendeskAuthValue = AppConnectionValueForAuthProperty<typeof zendeskAuth>;
 const polling: Polling<ZendeskAuthValue, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const response = await httpClient.sendRequest<{ groups: ZendeskGroup[] }>({
-      url: `https://${auth.props.subdomain}.zendesk.com/api/v2/groups?sort=-created_at`,
-      method: HttpMethod.GET,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.props.email + '/token',
-        password: auth.props.token,
-      },
-    });
+    let url: string | undefined = `https://${auth.props.subdomain}.zendesk.com/api/v2/groups?sort=-created_at`;
+    const groups: ZendeskGroup[] = [];
 
-    return response.body.groups.map((group) => ({
+    while (url) {
+      const response = await httpClient.sendRequest<{ groups: ZendeskGroup[]; next_page?: string }>({
+        url,
+        method: HttpMethod.GET,
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: auth.props.email + '/token',
+          password: auth.props.token,
+        },
+      });
+
+      groups.push(...response.body.groups);
+      url = response.body.next_page;
+    }
+
+    return groups.map((group) => ({
       epochMilliSeconds: new Date(group.created_at).getTime(),
       data: group,
     }));

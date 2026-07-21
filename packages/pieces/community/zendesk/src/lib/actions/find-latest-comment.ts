@@ -50,33 +50,46 @@ export const findLatestCommentAction = createAction({
     const { ticket_id, include_private } = propsValue;
 
     try {
-      const response = await httpClient.sendRequest<ZendeskCommentsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/comments?sort_order=desc`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
-      });
+      let url: string | undefined = `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/comments?sort_order=desc`;
+      let latestComment: ZendeskComment | undefined;
+      let isFirstPage = true;
 
-      const comments = response.body.comments || [];
+      while (url) {
+        const response = await httpClient.sendRequest<ZendeskCommentsResponse & { next_page?: string }>({
+          url,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: authentication.props.email + '/token',
+            password: authentication.props.token,
+          },
+        });
 
-      if (comments.length === 0) {
-        throw new Error(`No comments found on ticket ${ticket_id}`);
+        const comments = response.body.comments || [];
+
+        if (isFirstPage) {
+          if (comments.length === 0) {
+            throw new Error(`No comments found on ticket ${ticket_id}`);
+          }
+          if (include_private) {
+            // sort_order=desc means comments[0] is already the most recent
+            latestComment = comments[0];
+            break;
+          }
+          isFirstPage = false;
+        }
+
+        // sort_order=desc means the first public comment found across pages is the most recent
+        latestComment = comments.find((c) => c.public);
+        if (latestComment) {
+          break;
+        }
+
+        url = response.body.next_page;
       }
 
-      // sort_order=desc means comments[0] is already the most recent
-      let latestComment = comments[0];
-
-      if (!include_private) {
-        const latestPublicComment = comments.find((c) => c.public);
-        if (!latestPublicComment) {
-          throw new Error(
-            `No public comments found on ticket ${ticket_id}`
-          );
-        }
-        latestComment = latestPublicComment;
+      if (!latestComment) {
+        throw new Error(`No public comments found on ticket ${ticket_id}`);
       }
 
       return {
