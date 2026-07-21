@@ -155,6 +155,15 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }
     },
 
+    async getOneWithoutValue({ projectId, platformId, externalId }: GetOneByName): Promise<AppConnectionWithoutSensitiveData | null> {
+        const connection = await appConnectionsRepo().findOneBy({
+            projectIds: ArrayContains([projectId]),
+            externalId,
+            platformId,
+        })
+        return isNil(connection) ? null : this.removeSensitiveData(connection)
+    },
+
     async getOneOrThrowWithoutValue(params: GetOneParams): Promise<AppConnectionWithoutSensitiveData> {
         const connectionById = await appConnectionsRepo().findOneBy({
             id: params.id,

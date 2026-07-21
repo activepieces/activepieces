@@ -284,7 +284,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!isNil(denial)) {
                 return denial
             }
-            const found = await appConnectionService(log).getOne({ projectId, platformId, externalId })
+            const found = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId })
             if (isNil(found)) {
                 return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId in the active project.' }
             }
