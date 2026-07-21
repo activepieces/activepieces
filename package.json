@@ -65,7 +65,7 @@
     "@typescript-eslint/parser": "7.18.0",
     "@typescript-eslint/utils": "7.18.0",
     "@vitejs/plugin-react": "4.7.0",
-    "axios": "1.16.0",
+    "axios": "1.18.0",
     "chalk": "4.1.2",
     "concurrently": "8.2.1",
     "dotenv": "17.2.3",
@@ -133,6 +133,6 @@
   ],
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node",
-    "axios": "1.16.0"
+    "axios": "1.18.0"
   }
 }
