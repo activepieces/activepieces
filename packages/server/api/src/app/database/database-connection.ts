@@ -3,6 +3,7 @@ import {
     DataSource,
     EntitySchema,
 } from 'typeorm'
+import { AiCreditUsageEntity } from '../ai/ai-credit-usage-entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
@@ -88,6 +89,7 @@ function getEntities(): EntitySchema<unknown>[] {
         SecretManagerEntity,
         AlertEntity,
         UserInvitationEntity,
+        AiCreditUsageEntity,
         AIProviderEntity,
         AiToolConfigEntity,
         ProjectRoleEntity,

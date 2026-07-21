@@ -2178,5 +2178,8 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "AI credits by project": "AI credits by project",
+  "AI credit usage attributed to each project": "AI credit usage attributed to each project",
+  "This month": "This month"
 }

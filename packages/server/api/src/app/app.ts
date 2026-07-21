@@ -10,6 +10,7 @@ import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-pro
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
 import { agentsModule } from './agents/agents-module'
+import { aiCreditUsageModule } from './ai/ai-credit-usage.module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { aiToolConfigModule } from './ai/ai-tool-config.module'
@@ -248,6 +249,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
+    await app.register(aiCreditUsageModule)
     await app.register(licenseKeysModule)
     await app.register(flowRunTrackingModule)
     await app.register(tablesModule)

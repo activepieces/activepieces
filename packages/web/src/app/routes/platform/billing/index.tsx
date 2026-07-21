@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import {
   ActiveFlowAddon,
   AICreditUsage,
+  AiCreditUsageByProject,
   LicenseKey,
   SubscriptionInfo,
   billingMutations,
@@ -99,6 +100,7 @@ function BillingPageDetails() {
           <>
             <ActiveFlowAddon platformSubscription={platformPlanInfo} />
             <AICreditUsage platformSubscription={platformPlanInfo} />
+            <AiCreditUsageByProject />
           </>
         )}
         <LicenseKey platform={platform} />

@@ -1,5 +1,5 @@
 import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
-import { AiCreditsAutoTopUpState, CreateAICreditCheckoutSessionParamsSchema, PlatformPlan, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { AI_CREDITS_PER_DOLLAR, AiCreditsAutoTopUpState, CreateAICreditCheckoutSessionParamsSchema, PlatformPlan, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
@@ -13,7 +13,6 @@ import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
 import { platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
 
-const CREDIT_PER_DOLLAR = 1000
 const USAGE_CACHE_TTL_SECONDS = 180
 
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
@@ -74,10 +73,10 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         const usage = await getOpenRouterUsageCached(auth.apiKeyHash, log)
 
         return {
-            usageMonthly: usage.usage_monthly * CREDIT_PER_DOLLAR,
-            usageRemaining: usage.limit_remaining! * CREDIT_PER_DOLLAR,
-            usage: usage.usage * CREDIT_PER_DOLLAR,
-            limit: usage.limit! * CREDIT_PER_DOLLAR,
+            usageMonthly: usage.usage_monthly * AI_CREDITS_PER_DOLLAR,
+            usageRemaining: usage.limit_remaining! * AI_CREDITS_PER_DOLLAR,
+            usage: usage.usage * AI_CREDITS_PER_DOLLAR,
+            limit: usage.limit! * AI_CREDITS_PER_DOLLAR,
         }
     },
 
@@ -139,7 +138,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         const { stripeCustomerId: customerId } = await platformPlanService(log).getOrCreateForPlatform(platformId)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const amountInUsd = aiCredits / CREDIT_PER_DOLLAR
+        const amountInUsd = aiCredits / AI_CREDITS_PER_DOLLAR
 
         const stripeCheckoutUrl = await stripeHelper(log).createNewAICreditPaymentCheckoutSession({
             amountInUsd,
@@ -216,7 +215,7 @@ async function tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: strin
 
     const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
-    const amount = plan.includedAiCredits / CREDIT_PER_DOLLAR
+    const amount = plan.includedAiCredits / AI_CREDITS_PER_DOLLAR
 
     await openRouterApi.updateKey({
         hash: apiKeyHash,
@@ -240,7 +239,7 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
 
     const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
-    const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
+    const creditsRemaining = key.limit_remaining! * AI_CREDITS_PER_DOLLAR
     if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold) {
         return false
     }
@@ -248,7 +247,7 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
 
     if (!isNil(plan.maxAutoTopUpCreditsMonthly) && plan.maxAutoTopUpCreditsMonthly > 0) {
         const totalAmountThisMonth = await stripeHelper(log).getAutoTopUpInvoicesTotalThisMonth(plan.stripeCustomerId, plan.platformId)
-        const totalCreditsThisMonth = totalAmountThisMonth * CREDIT_PER_DOLLAR
+        const totalCreditsThisMonth = totalAmountThisMonth * AI_CREDITS_PER_DOLLAR
 
         const autoTopUpCreditsThisMonthAfterThisTopUp = totalCreditsThisMonth + plan.aiCreditsAutoTopUpCreditsToAdd
 
@@ -267,7 +266,7 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
 
     assertNotNullOrUndefined(paymentMethod, 'Auto Topup Stripe payment method is not set')
 
-    const amountInUsd = plan.aiCreditsAutoTopUpCreditsToAdd / CREDIT_PER_DOLLAR
+    const amountInUsd = plan.aiCreditsAutoTopUpCreditsToAdd / AI_CREDITS_PER_DOLLAR
 
     await stripeHelper(log).createNewAICreditAutoTopUpInvoice({
         amountInUsd,
