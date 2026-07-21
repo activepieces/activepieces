@@ -4,7 +4,7 @@ import { Migration } from '../../migration'
 export class AddMcpEndpointAllowlistToPlatform1816000000000 implements Migration {
     name = 'AddMcpEndpointAllowlistToPlatform1816000000000'
     breaking = false
-    release = '0.85.5'
+    release = '0.86.4'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
