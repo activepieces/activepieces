@@ -69,6 +69,40 @@ describe('File Processor', () => {
         expect(processedInput.file).toBeNull()
     })
 
+    it('cancels the response body when the URL responds with a non-ok status', async () => {
+        const response = new Response('error page', { status: 404 })
+        const cancelSpy = vi.spyOn(response.body!, 'cancel')
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response))
+
+        const { processedInput } = await resolveStreamingFile(FILE_URL, false)
+
+        expect(processedInput.file).toBeNull()
+        expect(cancelSpy).toHaveBeenCalled()
+    })
+
+    it('destroys an opened streaming body when a sibling property fails validation', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('hello world', {
+            headers: { 'content-type': 'text/csv', 'content-length': '11' },
+        })))
+
+        const props = {
+            file: Property.File({ displayName: 'File', required: true, streaming: true }),
+            count: Property.Number({ displayName: 'Count', required: true }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+            { file: FILE_URL, count: 'not-a-number' },
+            props,
+            PieceAuth.None(),
+            false,
+            {},
+        )
+
+        expect(Object.keys(errors)).toContain('count')
+        const file: ApStreamingFile = processedInput.file
+        expect(file.body.destroyed).toBe(true)
+    })
+
     it('resolves a streaming file property to a lazy body without buffering', async () => {
         const props = {
             file: Property.File({ displayName: 'File', required: true, streaming: true }),

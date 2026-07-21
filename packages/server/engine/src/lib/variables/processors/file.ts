@@ -76,6 +76,7 @@ async function handleStreamingFile(propertyValue: string): Promise<ApStreamingFi
 
     const fileResponse = await fetch(propertyValue)
     if (!fileResponse.ok || isNil(fileResponse.body)) {
+        await fileResponse.body?.cancel()
         return null
     }
     const filename = getFileName(propertyValue, fileResponse.headers.get('content-disposition'), fileResponse.headers.get('content-type') ?? undefined) ?? 'unknown'
