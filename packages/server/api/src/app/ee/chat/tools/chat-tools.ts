@@ -267,6 +267,36 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
             return discoveryResult
         }
+        case 'ap_revalidate_connection': {
+            const externalId = toolInput.connectionExternalId as string
+            const { data } = await appConnectionService(log).list({
+                projectId: null,
+                projectIds: availableProjectIds,
+                platformId,
+                externalIds: [externalId],
+                pieceName: undefined,
+                displayName: undefined,
+                status: undefined,
+                scope: undefined,
+                cursorRequest: null,
+                limit: 1,
+            })
+            const found = data[0]
+            const projectId = found?.projectIds.find((id) => availableProjectIds.includes(id))
+            if (isNil(found) || isNil(projectId)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId was found in the user’s projects.' }
+            }
+            const revalidated = await appConnectionService(log).revalidate({ id: found.id, projectId, platformId })
+            const working = revalidated.status === AppConnectionStatus.ACTIVE
+            return {
+                connectionExternalId: externalId,
+                status: revalidated.status,
+                working,
+                note: working
+                    ? 'This connection is valid — safe to build on.'
+                    : 'This connection is NOT working (its credentials failed). Do not build on it — show the connection picker so the user can reconnect, then retry.',
+            }
+        }
         case 'ap_execute_action': {
             return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }

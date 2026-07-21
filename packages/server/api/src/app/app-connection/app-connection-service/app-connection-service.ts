@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, unique, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, unique, UserId } from '@activepieces/core-utils'
 import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
@@ -180,6 +180,39 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...connection,
             flowIds: flowIdsByExternalId.get(connection.externalId) ?? [],
         }
+    },
+
+    async revalidate({ id, projectId, platformId }: RevalidateParams): Promise<AppConnectionWithoutSensitiveData> {
+        const encrypted = await appConnectionsRepo().findOneBy({
+            id,
+            platformId,
+            projectIds: ArrayContains([projectId]),
+        })
+        if (isNil(encrypted)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'AppConnection', entityId: id },
+            })
+        }
+        if (encrypted.type === AppConnectionType.NO_AUTH) {
+            return this.removeSensitiveData(encrypted)
+        }
+        const connection = await this.decryptAndRefreshConnection(encrypted, projectId, log)
+        if (isNil(connection)) {
+            return this.removeSensitiveData({ ...encrypted, status: AppConnectionStatus.ERROR })
+        }
+        const { error } = await tryCatch(() => engineValidateAuth({
+            pieceName: connection.pieceName,
+            projectId,
+            platformId,
+            auth: connection.value,
+        }, log))
+        if (error instanceof ActivepiecesError && error.error.code === ErrorCode.ENGINE_OPERATION_FAILURE) {
+            throw error
+        }
+        const status = isNil(error) ? AppConnectionStatus.ACTIVE : AppConnectionStatus.ERROR
+        await appConnectionsRepo().update({ id, platformId }, { status })
+        return this.removeSensitiveData({ ...connection, status })
     },
 
     async getManyConnectionStates(params: GetManyParams): Promise<ConnectionState[]> {
@@ -808,6 +841,12 @@ type GetOneParams = {
 
 type GetManyParams = {
     projectId: ProjectId
+}
+
+type RevalidateParams = {
+    id: AppConnectionId
+    projectId: ProjectId
+    platformId: PlatformId
 }
 
 type DeleteParams = {
