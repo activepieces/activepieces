@@ -10,6 +10,7 @@ const MAX_STREAM_RETRIES = 1
 const MAX_AGENT_STEPS = 50
 const MAX_IDENTICAL_TOOL_FAILURES = 2
 const IN_LOOP_COMPACTION_THRESHOLD = 0.6
+const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
 const STREAM_RETRY_BASE_DELAY_MS = 1_000
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
@@ -45,6 +46,7 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
         stepCountIs(MAX_AGENT_STEPS),
     ]
     const guardedTools = wrapToolsWithFailureGuard({ tools, log })
+    const maxTurnTokens = runawayTokenCeiling(provider)
 
     const uiParts: PersistedChatPart[] = []
     const toolCalls: ChatTurnToolCall[] = []
@@ -66,6 +68,7 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
     let totalInputTokens = 0
     let totalOutputTokens = 0
     let lastFinishReason = ''
+    let budgetExceeded = false
 
     const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => streamText({
         model,
@@ -192,6 +195,13 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
         totalOutputTokens += attemptUsage.outputTokens ?? 0
         lastFinishReason = finishReason
 
+        if (totalInputTokens + totalOutputTokens >= maxTurnTokens) {
+            accumulatedResponseMessages.push(...stepMessages)
+            budgetExceeded = true
+            log.error({ totalInputTokens, totalOutputTokens, maxTurnTokens }, 'Chat turn hit per-turn token budget — stopping to prevent runaway cost')
+            break
+        }
+
         const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
 
         if (decision === 'finish') {
@@ -224,6 +234,7 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
         usage,
         finishReason: lastFinishReason,
         truncatedAfterRetries,
+        budgetExceeded,
         streamError,
         continuations,
         totalInputTokens,
@@ -293,6 +304,10 @@ export function isTransientFailureText(text: string): boolean {
 // from the shapes our action results use (found:false, empty array) and the A3a empty-result note.
 export function looksEmptyResultText(text: string): boolean {
     return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
+}
+
+function runawayTokenCeiling(provider: AIProviderName): number {
+    return aiProviderUtils.getMaxContextTokens({ provider }) * RUNAWAY_TURN_CONTEXT_MULTIPLE
 }
 
 /**
@@ -382,6 +397,7 @@ export type ChatTurnResult = {
     usage: LanguageModelUsage | undefined
     finishReason: string
     truncatedAfterRetries: boolean
+    budgetExceeded: boolean
     streamError: Error | null
     continuations: number
     totalInputTokens: number

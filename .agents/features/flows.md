@@ -38,7 +38,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 
 ## Edition Availability
 - **Community (CE)**: Full flow authoring, publishing, folders, sample data, human-input forms.
-- **Enterprise (EE) / Cloud**: Same core. Some operational features (owner transfer, piece filtering, template sharing) integrate with EE plan flags. Active-flow quota enforcement on publish/enable.
+- **Enterprise (EE) / Cloud**: Same core. Some operational features (owner transfer, piece filtering, template sharing) integrate with EE plan flags. Active-flow quota enforcement on publish/enable: both the platform pooled limit and the per-project `project_plan.activeFlowsLimit` cap (see [ee-projects.md](./ee-projects.md)) are checked, and only on a real DISABLED-to-ENABLED transition, so re-enabling an already-enabled flow is never quota-blocked.
 
 ## Domain Terms
 
@@ -124,6 +124,8 @@ The visual builder (`packages/web/src/app/builder/`) uses XYFlow for the canvas.
 - `piece-selector-state.ts` — piece browser visibility and search
 - `notes-state.tsx` — sticky notes overlay
 - `chat-state.ts` — embedded chat drawer state for testing `chat_submission`-trigger flows from the builder
+
+The canvas **Run Flow** / **Test Flow** buttons live in `flow-canvas/widgets/test-flow-widget.tsx`. Starting a manual production run (the "Run Flow" button) requires `WRITE_RUN`: the button is hidden from members without it, mirroring the server-side `WRITE_RUN` check on the `MANUAL_TRIGGER_RUN_STARTED` websocket event (`flow.module.ts`). "Test Flow" runs are membership-only.
 
 ### Canvas Orientation (Horizontal Layout)
 
