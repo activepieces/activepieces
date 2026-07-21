@@ -112,6 +112,7 @@ Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. 
 `ctx.files.write()` accepts a `Readable` as well as a `Buffer`, so a piece can write a file it never fully holds in RAM. See [ADR-0007](../../docs/adr/0007-streaming-files-use-presigned-multipart-not-app-relay.md).
 
 - **Piece API:** `FilesService.write({ fileName, data: Buffer | Readable })` (`@activepieces/pieces-framework` ≥ 0.34.0). A `Buffer` keeps the exact existing behaviour; a `Readable` streams.
+- **Consumers:** the Amazon S3 **Read File** action streams `getObject().Body` straight into `files.write` (no in-sandbox buffering). This is the reference pattern for any piece that downloads an external object into AP storage.
 - **Transport — one path.** For a stream the engine (`engineFileApi.upload`) PUTs to `POST-less` `PUT /v1/files/:fileId` with **no `Content-Length`** (chunked, `duplex:'half'`, no retry — a stream can't replay). The app detects the stream by the **absence of `Content-Length`**, skips the presigned-redirect branch, and streams the body to storage:
   - S3 → `s3Helper.uploadStream()` (`@aws-sdk/lib-storage` `Upload`, ~5 MB parts, bounded memory; size read from `httpUploadProgress`).
   - DB → buffered into `bytea` (a stream can't stream into a column).
