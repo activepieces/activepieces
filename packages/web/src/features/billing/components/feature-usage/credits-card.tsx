@@ -27,7 +27,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
     <div className="flex flex-col rounded-xl border">
       <div className="flex flex-col gap-3 p-5">
         <span className="text-muted-foreground text-sm">
-          {isUnlimited ? t('Credits used') : t('Included in your plan')}
+          {isUnlimited ? t('Credits used') : t('Limit')}
         </span>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-baseline gap-1.5">

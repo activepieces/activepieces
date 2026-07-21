@@ -2,7 +2,7 @@ import {
   AiCreditsAutoTopUpState,
   AutoTopUpConfig,
   isNil,
-  ToppableFeature,
+  BillableFeature,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -147,7 +147,7 @@ const AutoRechargeRow = ({
 );
 
 type AutoRechargeCardProps = {
-  feature: ToppableFeature;
+  feature: BillableFeature;
   autoTopUp?: AutoTopUpConfig;
   includedCredits: number;
   hasCard: boolean;

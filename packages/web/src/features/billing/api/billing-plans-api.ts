@@ -1,6 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
-  ConsumableProductTopupParams,
   ConsumableProductAutoTopupParams,
   PlatformBillingInformation,
   ProjectCreditUsage,
@@ -8,6 +7,7 @@ import {
   CheckoutPlanParams,
   CheckoutSessionResponse,
   SetupPaymentParams,
+  AdjustUnconsumableFeatureQuantityParams,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -40,9 +40,11 @@ export const platformBillingApi = {
   reactivate() {
     return api.post<void>('/v1/platform-billing/reactivate', {});
   },
-  createConsumableProductTopup(params: ConsumableProductTopupParams) {
-    return api.post<{ paymentUrl: string }>(
-      '/v1/platform-billing/consumable-product-topups/checkout',
+  adjustUnconsumableFeatureQuantity(
+    params: AdjustUnconsumableFeatureQuantityParams,
+  ) {
+    return api.post<{ paymentUrl: string | null }>(
+      '/v1/platform-billing/unconsumable-feature-quantity',
       params,
     );
   },

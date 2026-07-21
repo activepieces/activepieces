@@ -3,7 +3,11 @@ import { t } from 'i18next';
 import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import {
+  Progress,
+  usageIndicatorClass,
+  usageTrackClass,
+} from '@/components/ui/progress';
 
 const HIDE_WHEN_UNLIMITED = ['active-flows', 'team-projects'];
 
@@ -48,20 +52,16 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
 
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {isUnlimited ? t('Used') : t('Included in plan')}
-          </span>
+          <span className="text-xs text-muted-foreground">{t('Used')}</span>
           <span className="text-2xl font-semibold text-foreground">
-            {isUnlimited
-              ? metric.used.toLocaleString()
-              : metric.included!.toLocaleString()}
+            {metric.used.toLocaleString()}
           </span>
         </div>
         {!isUnlimited && (
           <div className="flex flex-col items-end gap-1">
-            <span className="text-xs text-muted-foreground">{t('Used')}</span>
+            <span className="text-xs text-muted-foreground">{t('Limit')}</span>
             <span className="text-2xl font-semibold text-foreground">
-              {metric.used.toLocaleString()}
+              {metric.included!.toLocaleString()}
             </span>
           </div>
         )}
@@ -69,16 +69,13 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
 
       {!isUnlimited && (
         <div className="flex flex-col gap-1.5">
-          <Progress value={percent} usage />
+          <Progress
+            value={percent}
+            className={usageTrackClass(percent / 100)}
+            indicatorClassName={usageIndicatorClass(percent / 100)}
+          />
           <div className="flex items-center text-xs text-muted-foreground">
-            <span>
-              {t('{amount} remaining', {
-                amount: Math.max(
-                  0,
-                  metric.included! - metric.used,
-                ).toLocaleString(),
-              })}
-            </span>
+            <span>{t('{percent}% used', { percent })}</span>
           </div>
         </div>
       )}

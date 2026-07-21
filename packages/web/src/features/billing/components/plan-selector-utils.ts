@@ -95,7 +95,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
     featuresHeader: "What's included:",
     features: [
       { label: '100 credits/day' },
-      { label: '1 user' },
+      { label: '1 seat' },
       { label: 'Automation flows' },
       { label: 'Tables' },
       { label: 'API Keys' },
@@ -109,7 +109,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
     featuresHeader: 'Everything in Free, +',
     features: [
       { label: '10,000 credits/mo' },
-      { label: '5 users' },
+      { label: '5 seats' },
       { label: 'Agents / Chat' },
       { label: 'Projects, MCPs' },
       { label: 'BYOK' },
@@ -125,7 +125,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
     featuresHeader: 'Everything in Plus, +',
     features: [
       { label: '50,000 credits/mo' },
-      { label: '100 users' },
+      { label: '100 seats' },
       { label: 'SSO' },
       { label: 'Standard roles' },
       { label: 'Global connections' },

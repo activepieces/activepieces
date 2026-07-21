@@ -1,7 +1,7 @@
 import {
   ConsumableProductAutoTopupParams,
   AiCreditsAutoTopUpState,
-  ToppableFeature,
+  BillableFeature,
   isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -386,7 +386,7 @@ const AutoRechargeFormSchema = z.object({
 interface AutoRechargeConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  feature: ToppableFeature;
+  feature: BillableFeature;
   includedCredits: number;
   currentThreshold?: number | null;
   currentCreditsToAdd?: number | null;

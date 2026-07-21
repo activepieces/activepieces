@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
 import { useConfirmPurchaseDialogStore } from '../stores/confirm-purchase-dialog-state';
 
+import { DeactivateUsersDialog } from './feature-usage/deactivate-users-dialog';
 import {
   DROP_TO_FREE_MESSAGE,
   DROP_TO_FREE_WARNING,
@@ -50,11 +51,20 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
     enabled,
   );
   const { openDialog: openConfirmDialog } = useConfirmPurchaseDialogStore();
+  const [deactivateState, setDeactivateState] =
+    useState<DeactivateState | null>(null);
 
   const currentPlanId = subscription?.plan.plan ?? platform.plan.plan;
   const hasScheduledChange = !isNil(subscription?.cancelAt);
   const allPlans = plans ?? [];
+  const activeUsers = subscription?.usage.users ?? 0;
   const currentPlan = allPlans.find((plan) => plan.id === currentPlanId);
+  const freePlan = allPlans.find(
+    (plan) => plan.id === planSelectorUtils.FREE_PLAN_ID,
+  );
+  const freeIncludedSeats = freePlan?.includedSeats ?? null;
+  const freeNeedsDeactivation =
+    !isNil(freeIncludedSeats) && activeUsers > freeIncludedSeats;
   const hasAnnualOption = allPlans.some(
     (plan) => plan.interval === planSelectorUtils.ANNUAL_INTERVAL,
   );
@@ -65,7 +75,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
       ? 'year'
       : 'month');
 
-  const handleCheckout = (intent: CheckoutIntent) => {
+  const proceedCheckout = (intent: CheckoutIntent) => {
     const successUrl = planSelectorUtils.buildSuccessUrl(intent.action);
     if (subscription?.billingPortalAvailable) {
       openConfirmDialog({
@@ -81,6 +91,38 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
     }
     checkout({ planId: intent.planId, successUrl });
   };
+
+  const requireSeatFloor = ({
+    targetSeats,
+    planName,
+    warning,
+    proceed,
+  }: SeatFloorRequest) => {
+    if (!isNil(targetSeats) && activeUsers > targetSeats) {
+      setDeactivateState({ targetSeats, planName, warning, proceed });
+      return;
+    }
+    proceed();
+  };
+
+  const handleCheckout = (intent: CheckoutIntent) => {
+    const targetPlan = allPlans.find((plan) => plan.id === intent.planId);
+    requireSeatFloor({
+      targetSeats: targetPlan?.includedSeats ?? null,
+      planName: intent.planName,
+      proceed: () => proceedCheckout(intent),
+    });
+  };
+
+  const handleFreeDowngradeWithSeats = () =>
+    requireSeatFloor({
+      targetSeats: freeIncludedSeats,
+      planName: t('Free'),
+      warning: t(DROP_TO_FREE_WARNING),
+      proceed: async () => {
+        await cancelSubscription();
+      },
+    });
 
   if (isLoading || isNil(plans)) {
     return (
@@ -141,6 +183,8 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
               checkoutPlanId={isPending ? checkoutVariables?.planId : undefined}
               onCheckout={handleCheckout}
               onKeepPlan={() => reactivate()}
+              freeNeedsDeactivation={freeNeedsDeactivation}
+              onFreeDowngradeWithSeats={handleFreeDowngradeWithSeats}
               onDowngrade={async () => {
                 await cancelSubscription();
               }}
@@ -148,6 +192,26 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
           );
         })}
       </div>
+
+      {!isNil(deactivateState) && (
+        <DeactivateUsersDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeactivateState(null);
+            }
+          }}
+          targetSeats={deactivateState.targetSeats}
+          currentUsers={activeUsers}
+          planName={deactivateState.planName}
+          warning={deactivateState.warning}
+          onConfirmed={() => {
+            const proceed = deactivateState.proceed;
+            setDeactivateState(null);
+            void proceed();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -184,6 +248,8 @@ function PlanColumn({
   onCheckout,
   onKeepPlan,
   onDowngrade,
+  freeNeedsDeactivation,
+  onFreeDowngradeWithSeats,
 }: PlanColumnProps) {
   const isFree = entry.key === 'free';
   const isEnterprise = entry.key === 'enterprise';
@@ -262,6 +328,8 @@ function PlanColumn({
         onCheckout={handleCtaCheckout}
         onKeepPlan={onKeepPlan}
         onDowngrade={onDowngrade}
+        freeNeedsDeactivation={freeNeedsDeactivation}
+        onFreeDowngradeWithSeats={onFreeDowngradeWithSeats}
       />
 
       <div className="flex flex-col gap-3">
@@ -307,6 +375,8 @@ function PlanCta({
   onCheckout,
   onKeepPlan,
   onDowngrade,
+  freeNeedsDeactivation,
+  onFreeDowngradeWithSeats,
 }: PlanCtaProps) {
   if (isEnterprise) {
     return (
@@ -347,6 +417,17 @@ function PlanCta({
       return (
         <Button variant="outline" className="w-full" disabled>
           {t('Current plan')}
+        </Button>
+      );
+    }
+    if (freeNeedsDeactivation) {
+      return (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={onFreeDowngradeWithSeats}
+        >
+          {t('Downgrade')}
         </Button>
       );
     }
@@ -400,6 +481,8 @@ type PlanColumnProps = {
   onCheckout: (intent: CheckoutIntent) => void;
   onKeepPlan: () => void;
   onDowngrade: () => Promise<void>;
+  freeNeedsDeactivation: boolean;
+  onFreeDowngradeWithSeats: () => void;
 };
 
 type PlanCtaProps = {
@@ -417,6 +500,8 @@ type PlanCtaProps = {
   onCheckout: (planId: string, action: CheckoutAction) => void;
   onKeepPlan: () => void;
   onDowngrade: () => Promise<void>;
+  freeNeedsDeactivation: boolean;
+  onFreeDowngradeWithSeats: () => void;
 };
 
 type CheckoutIntent = {
@@ -425,4 +510,18 @@ type CheckoutIntent = {
   planName: string;
   priceAmount: string;
   features: string[];
+};
+
+type SeatFloorRequest = {
+  targetSeats: number | null;
+  planName?: string;
+  warning?: string;
+  proceed: () => void | Promise<void>;
+};
+
+type DeactivateState = {
+  targetSeats: number;
+  planName?: string;
+  warning?: string;
+  proceed: () => void | Promise<void>;
 };

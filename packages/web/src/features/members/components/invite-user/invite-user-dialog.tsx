@@ -1,4 +1,4 @@
-import { ErrorCode, Permission } from '@activepieces/core-utils';
+import { Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   InvitationStatus,
@@ -32,6 +32,7 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSeatLimitGuard } from '@/features/billing';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
@@ -41,7 +42,7 @@ import { projectCollectionUtils } from '@/features/projects/stores/project-colle
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { api, HttpError } from '@/lib/api';
+import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
@@ -106,6 +107,8 @@ export const InviteUserDialog = ({
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
+  const { handleSeatLimitError, ensureSeatsAvailable, seatLimitDialog } =
+    useSeatLimitGuard();
   const { data: isSmtpConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.SMTP_CONFIGURED,
   );
@@ -181,11 +184,10 @@ export const InviteUserDialog = ({
       onInviteSuccess?.();
     },
     onError: (error) => {
-      const message = error.message;
-      if (api.isApError(error, ErrorCode.QUOTA_EXCEEDED)) {
+      if (handleSeatLimitError(error)) {
         return;
       }
-      toast.error(message || t('Failed to send invitations'), {
+      toast.error(error.message || t('Failed to send invitations'), {
         duration: 4000,
       });
     },
@@ -235,6 +237,10 @@ export const InviteUserDialog = ({
         type: 'required',
         message: t('Please select a project role'),
       });
+      return;
+    }
+
+    if (!ensureSeatsAvailable(data.emails.length)) {
       return;
     }
 
@@ -400,6 +406,7 @@ export const InviteUserDialog = ({
           </DialogContent>
         </Dialog>
       }
+      {seatLimitDialog}
     </>
   );
 };

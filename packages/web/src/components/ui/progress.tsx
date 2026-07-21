@@ -43,10 +43,20 @@ function usageIndicatorClass(ratio: number): string {
   if (ratio >= 0.7) {
     return 'bg-amber-500';
   }
-  return 'bg-primary';
+  return 'bg-blue-600';
 }
 
-export { Progress };
+function usageTrackClass(ratio: number): string {
+  if (ratio >= 0.85) {
+    return 'bg-destructive/15';
+  }
+  if (ratio >= 0.7) {
+    return 'bg-amber-500/15';
+  }
+  return 'bg-blue-600/15';
+}
+
+export { Progress, usageIndicatorClass, usageTrackClass };
 
 type ProgressProps = React.ComponentProps<typeof ProgressPrimitive.Root> & {
   indicatorClassName?: string;

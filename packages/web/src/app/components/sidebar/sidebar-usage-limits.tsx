@@ -61,7 +61,7 @@ const SidebarUsageLimits = React.memo(() => {
     platform.id,
     needsSubscription,
   );
-  const creditsFeature = info?.topUpFeatures.find(
+  const creditsFeature = info?.consumableFeatures.find(
     (feature) => feature.featureId === AutumnFeatureId.AP_CREDITS,
   );
   const creditsAutoTopUp = info?.autoTopUps.find(

@@ -1,10 +1,10 @@
 import {
   AiCreditsAutoTopUpState,
   AutoTopUpConfig,
-  ConsumableProductTopupParams,
   ConsumableProductAutoTopupParams,
   CheckoutPlanParams,
   PlatformBillingInformation,
+  AdjustUnconsumableFeatureQuantityParams,
 } from '@activepieces/shared';
 import {
   QueryClient,
@@ -21,7 +21,7 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { platformBillingApi } from '../api/billing-plans-api';
 import { usePlanSwitchSuccessDialogStore } from '../stores/plan-switch-success-dialog-state';
 
-const PLATFORM_BILLING_SUBSCRIPTION_KEY = [
+export const PLATFORM_BILLING_SUBSCRIPTION_KEY = [
   'platform-billing-subscription',
 ] as const;
 
@@ -116,14 +116,18 @@ export const billingMutations = {
       },
     });
   },
-  useConsumableProductTopup: (setIsOpen?: (isOpen: boolean) => void) => {
+  useAdjustUnconsumableFeatureQuantity: (
+    setIsOpen?: (isOpen: boolean) => void,
+  ) => {
+    const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async (params: ConsumableProductTopupParams) => {
-        const { paymentUrl } =
-          await platformBillingApi.createConsumableProductTopup(params);
-        window.open(paymentUrl, '_blank');
-      },
-      onSuccess: () => {
+      mutationFn: (params: AdjustUnconsumableFeatureQuantityParams) =>
+        platformBillingApi.adjustUnconsumableFeatureQuantity(params),
+      onSuccess: ({ paymentUrl }) => {
+        if (paymentUrl) {
+          window.open(paymentUrl, '_blank');
+        }
+        refreshBillingCaches(queryClient);
         setIsOpen?.(false);
       },
       onError: (error) => {
@@ -188,6 +192,7 @@ export const billingQueries = {
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
       staleTime: 5 * 60 * 1000,
+      refetchOnMount: 'always',
       refetchOnWindowFocus: false,
       enabled,
     });

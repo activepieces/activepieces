@@ -8,8 +8,9 @@ import {
 } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { ArrowUpRight, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -24,6 +25,7 @@ import {
   DROP_TO_FREE_MESSAGE,
   DROP_TO_FREE_WARNING,
   LicenseKey,
+  UsersCard,
   billingMutations,
   billingQueries,
   useManagePlanDialogStore,
@@ -67,6 +69,8 @@ function BillingPageDetails() {
     billingMutations.useReactivateSubscription();
   const { mutateAsync: cancelSubscription } =
     billingMutations.useCancelSubscription();
+  const { mutate: refreshBilling, isPending: isRefreshing } =
+    billingMutations.useRefreshSubscription();
 
   const isCloud = edition === ApEdition.CLOUD;
   const [licenseKeyRevealed, setLicenseKeyRevealed] = useState(false);
@@ -101,10 +105,10 @@ function BillingPageDetails() {
 
   const isPaid = !isNil(info.plan.plan) && info.plan.plan !== PlanName.FREE;
   const creditsFeature =
-    info.topUpFeatures.find(
+    info.consumableFeatures.find(
       (feature) => feature.featureId === AutumnFeatureId.AP_CREDITS,
     ) ??
-    info.topUpFeatures.find(
+    info.consumableFeatures.find(
       (feature) => feature.featureId === AutumnFeatureId.APP_SUMO_AI_CREDITS,
     );
   const creditsAutoTopUp = info.autoTopUps.find(
@@ -118,6 +122,10 @@ function BillingPageDetails() {
   const includedCreditsForFeature = isAppSumoCredits
     ? appSumoAiCreditsTotal
     : info.plan.includedCredits;
+
+  const usersFeature = info.nonConsumableFeatures.find(
+    (feature) => feature.featureId === AutumnFeatureId.USERS_LIMIT,
+  );
 
   const autoRechargeNote = isAppSumoCredits
     ? t('Auto recharge your AI credits — {remaining} of {total} left.', {
@@ -133,13 +141,32 @@ function BillingPageDetails() {
 
   return (
     <div className="flex w-full flex-col gap-4 p-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-medium">{t('Billing & subscription')}</h1>
-        <div className="text-sm text-muted-foreground">
-          {t(
-            'For questions about billing contact us at support@activepieces.com',
-          )}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-medium">{t('Billing & subscription')}</h1>
+          <div className="text-sm text-muted-foreground">
+            {t(
+              'For questions about billing contact us at support@activepieces.com',
+            )}
+          </div>
         </div>
+        {!isCommunity && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            loading={isRefreshing}
+            onClick={() =>
+              refreshBilling(undefined, {
+                onSuccess: () =>
+                  toast.success(t('Billing information refreshed')),
+              })
+            }
+          >
+            <RefreshCw className="size-4 mr-2" />
+            {t('Refresh')}
+          </Button>
+        )}
       </div>
       <Separator />
       <div className="flex flex-col gap-6">
@@ -194,6 +221,20 @@ function BillingPageDetails() {
               />
             )}
           </BillingSection>
+        )}
+
+        {!isCommunity && !isNil(usersFeature) && (
+          <>
+            <Separator />
+            <BillingSection
+              title={t('Seats')}
+              description={t(
+                'Manage how many members can join your platform. New seats are available immediately.',
+              )}
+            >
+              <UsersCard info={info} feature={usersFeature} />
+            </BillingSection>
+          </>
         )}
 
         {isPaid && !isComped && (
