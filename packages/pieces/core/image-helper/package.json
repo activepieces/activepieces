@@ -6,7 +6,7 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "exifreader": "4.39.0",
+    "exifreader": "4.40.1",
     "heic-convert": "2.1.0",
     "jimp": "^0.22.12",
     "sharp": "^0.35.2",

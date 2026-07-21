@@ -96,6 +96,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         locked: plan?.locked ?? false,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
+        activeFlowsLimit: plan?.activeFlowsLimit ?? null,
     }
 }
 
@@ -133,6 +134,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         type: project?.type ?? ProjectType.TEAM,
         poolId: project?.poolId ?? null,
         workerGroupId: project?.workerGroupId ?? null,
+        executionDataRetentionDays: project?.executionDataRetentionDays ?? null,
         icon,
     }
 }

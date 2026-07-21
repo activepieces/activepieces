@@ -734,6 +734,23 @@ describe('Tool Search Engine (Phase 5 — keyword floor / degradation)', () => {
         expect(results.length).toBeGreaterThan(0)
         expect(results.every((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
     })
+
+    it('returns audience:"ai" actions in the keyword floor — the search engine sees the full audience, not the human view', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-agent-tools',
+            displayName: 'Agent Tools',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_ai_message: action({ name: 'send_ai_message', displayName: 'Send AI Message', description: 'Send a message to a channel', audience: 'ai' }) },
+            triggers: {},
+        }))
+
+        const { results, mode } = await toolSearchService(log).searchActions('send message', { limit: 5 })
+
+        expect(mode).toBe('keyword')
+        expect(results.some((r) => r.actionName === 'send_ai_message')).toBe(true)
+    })
 })
 
 // Two pieces each carrying both an action and a trigger, so the trigger-side query path can be

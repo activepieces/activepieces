@@ -1,4 +1,9 @@
-import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
+import {
+  ApErrorParams,
+  ErrorCode,
+  isNil,
+  SeekPage,
+} from '@activepieces/core-utils';
 import {
   getAuthPropertyForValue,
   PieceAuthProperty,
@@ -12,7 +17,7 @@ import {
   ReplaceAppConnectionsRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
 import { UseFormReturn } from 'react-hook-form';
@@ -246,6 +251,44 @@ export const appConnectionsMutations = {
         } else {
           internalErrorToast();
         }
+      },
+    });
+  },
+
+  useRevalidateConnection: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (connectionId: string) =>
+        appConnectionsApi.revalidate(connectionId),
+      onSuccess: (connection) => {
+        queryClient.setQueriesData<SeekPage<AppConnectionWithoutSensitiveData>>(
+          { queryKey: ['app-connections'] },
+          (page) =>
+            page && {
+              ...page,
+              data: page.data.map((row) =>
+                row.id === connection.id
+                  ? { ...row, status: connection.status }
+                  : row,
+              ),
+            },
+        );
+        if (connection.status === AppConnectionStatus.ACTIVE) {
+          toast.success(t('Success'), {
+            description: t('Connection is working.'),
+            duration: 3000,
+          });
+        } else {
+          toast.error(t('Connection failed'), {
+            description: t(
+              'This connection is no longer working. Reconnect it.',
+            ),
+            duration: 3000,
+          });
+        }
+      },
+      onError: () => {
+        internalErrorToast();
       },
     });
   },

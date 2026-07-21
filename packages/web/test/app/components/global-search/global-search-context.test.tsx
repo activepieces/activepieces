@@ -20,23 +20,44 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-vi.mock('@/components/ui/dialog', () => ({
-  Dialog: ({ open, children }: React.PropsWithChildren<{ open: boolean }>) =>
+vi.mock('lucide-react', () => ({
+  CornerDownLeft: () => null,
+  X: () => null,
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
+vi.mock('@/components/ui/command', () => ({
+  CommandDialog: ({
+    open,
+    children,
+  }: React.PropsWithChildren<{ open: boolean }>) =>
     open ? <div data-testid="global-search-dialog">{children}</div> : null,
-  DialogContent: ({ children }: React.PropsWithChildren) => (
+  CommandGroup: ({ children }: React.PropsWithChildren) => (
     <div>{children}</div>
   ),
-  DialogTitle: ({ children }: React.PropsWithChildren) => (
-    <div>{children}</div>
-  ),
+  CommandInput: () => <input />,
+  CommandItem: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  CommandList: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  CommandSeparator: () => null,
 }));
 
-vi.mock('@/app/components/global-search/style-spotlight', () => ({
-  StyleSpotlight: () => null,
+vi.mock('@/features/projects', () => ({
+  projectCollectionUtils: { setCurrentProject: vi.fn() },
 }));
 
-vi.mock('@/app/components/global-search/use-browse-controller', () => ({
-  useBrowseController: () => ({}),
+vi.mock('@/app/components/global-search/use-global-search-results', () => ({
+  useGlobalSearchResults: () => ({ groups: [], isLoading: false }),
+}));
+
+vi.mock('@/app/components/global-search/search-result-item', () => ({
+  SearchResultRow: () => null,
+}));
+
+vi.mock('@/app/components/global-search/access-history', () => ({
+  recordAccess: vi.fn(),
 }));
 
 import { GlobalSearchProvider } from '@/app/components/global-search/global-search-context';
