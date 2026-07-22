@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { getCrawlErrorsActionOutputSchema } from '../output-schemas';
 
 export const getCrawlErrors = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const getCrawlErrors = createAction({
   displayName: 'Get Crawl Errors',
   description: 'List the URLs that failed or were blocked in a crawl job.',
   audience: 'ai',
+  outputSchema: getCrawlErrorsActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the URLs that failed or were blocked (e.g. by robots.txt) within a crawl job, for retry triage. Pick this after Get Crawl Results shows the crawl missed pages; it complements the results poller rather than replacing it. Read-only, so repeating the call is safe.',

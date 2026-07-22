@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { batchScrapeActionOutputSchema } from '../output-schemas';
 
 export const batchScrape = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const batchScrape = createAction({
   displayName: 'Batch Scrape',
   description: 'Start a batch job that scrapes a list of known URLs and returns a job ID.',
   audience: 'ai',
+  outputSchema: batchScrapeActionOutputSchema,
   aiMetadata: {
     description:
       'Starts an asynchronous job that scrapes a fixed list of known URLs in the same format, and returns the job ID. Pick this when you already have several URLs to fetch at once; use Scrape URL for a single page or Crawl Website to discover-and-fetch a site. This action only STARTS the job (it does not wait, avoiding the action time limit) — then poll Get Batch Scrape Results with the returned ID, inspect Get Batch Scrape Errors, or stop it with Cancel Batch Scrape. Read-only against the targets, so re-running is safe.',

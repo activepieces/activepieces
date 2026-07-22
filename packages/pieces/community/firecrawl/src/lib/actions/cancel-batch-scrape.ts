@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { cancelBatchScrapeActionOutputSchema } from '../output-schemas';
 
 export const cancelBatchScrape = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const cancelBatchScrape = createAction({
   displayName: 'Cancel Batch Scrape',
   description: 'Cancel an in-flight batch scrape job by its ID.',
   audience: 'ai',
+  outputSchema: cancelBatchScrapeActionOutputSchema,
   aiMetadata: {
     description:
       'Cancels an in-flight batch scrape job by its ID, stopping further URL fetches. Pick this to abort a running Batch Scrape; use Get Batch Scrape Results to inspect what completed before cancelling. Cancelling an already-finished or unknown job errors, so this is not safe to repeat.',

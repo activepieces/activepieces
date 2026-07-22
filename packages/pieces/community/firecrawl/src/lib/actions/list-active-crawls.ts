@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { listActiveCrawlsActionOutputSchema } from '../output-schemas';
 
 export const listActiveCrawls = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const listActiveCrawls = createAction({
   displayName: 'List Active Crawls',
   description: 'List the account\'s in-flight crawl jobs.',
   audience: 'ai',
+  outputSchema: listActiveCrawlsActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the in-flight crawl jobs for the account, with their IDs and status. Pick this to discover a crawl ID you did not store so you can then poll it with Get Crawl Results, inspect Get Crawl Errors, or stop it with Cancel Crawl. Takes no input. Read-only, so repeating the call is safe.',

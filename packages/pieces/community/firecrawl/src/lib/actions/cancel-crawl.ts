@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { cancelCrawlActionOutputSchema } from '../output-schemas';
 
 export const cancelCrawl = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const cancelCrawl = createAction({
   displayName: 'Cancel Crawl',
   description: 'Cancel an in-flight crawl job by its ID.',
   audience: 'ai',
+  outputSchema: cancelCrawlActionOutputSchema,
   aiMetadata: {
     description:
       'Cancels an in-flight crawl job by its ID, stopping further page discovery and fetching. Pick this to abort a running Crawl Website (this is also the delete verb — Firecrawl has one DELETE for cancel and delete); use Get Crawl Results to inspect what completed first, or List Active Crawls to find the ID. Cancelling an already-finished or unknown job errors, so this is not safe to repeat.',

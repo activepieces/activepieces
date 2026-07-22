@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { searchWebActionOutputSchema } from '../output-schemas';
 
 export const searchWeb = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const searchWeb = createAction({
   displayName: 'Search Web',
   description: 'Search the web for a keyword query and return matching result URLs.',
   audience: 'ai',
+  outputSchema: searchWebActionOutputSchema,
   aiMetadata: {
     description:
       'Runs a keyword web search (a SERP wrapper, not semantic/embedding search) and returns the matching result URLs and snippets. Pick this as the entry point when you have a query but no URL yet; then feed a chosen URL into Scrape URL, Crawl Website, Map Website, or Extract Data. Read-only, so repeating the call is safe.',

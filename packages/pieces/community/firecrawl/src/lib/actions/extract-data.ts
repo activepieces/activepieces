@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { polling, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { extractDataActionOutputSchema } from '../output-schemas';
 
 export const extractData = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const extractData = createAction({
   displayName: 'Extract Data',
   description: 'Extract structured data from one or more known URLs using AI.',
   audience: 'ai',
+  outputSchema: extractDataActionOutputSchema,
   aiMetadata: {
     description:
       'Runs an AI extraction over one or more known URLs against a natural-language prompt and a JSON Schema, returning the typed fields you asked for. Pick this when you need specific structured values from pages whose URLs you already have; use Scrape URL for raw page content, Map Website / Search Web to find URLs first. Runs as a polled job bounded by the timeout; read-only against the sites, so repeating is safe. Note: Firecrawl is deprecating /v2/extract in favor of the agent endpoint.',

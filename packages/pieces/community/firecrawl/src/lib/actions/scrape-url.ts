@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { downloadAndSaveScreenshot, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { scrapeUrlActionOutputSchema } from '../output-schemas';
 
 export const scrapeUrl = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const scrapeUrl = createAction({
   displayName: 'Scrape URL',
   description: 'Fetch the content of a single web page in a chosen format.',
   audience: 'ai',
+  outputSchema: scrapeUrlActionOutputSchema,
   aiMetadata: {
     description:
       'Fetches one web page and returns its content in the requested format (markdown, html, rawHtml, links, summary, or screenshot). Pick this when you already have the exact URL of a single page; use Crawl Website for a whole site, Batch Scrape for a known list of URLs, Map Website to only enumerate links, or Extract Data when you need typed/structured fields. Read-only against the target, so repeating the call is safe.',

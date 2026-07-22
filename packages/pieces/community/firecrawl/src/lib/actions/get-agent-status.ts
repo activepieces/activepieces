@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { getAgentStatusActionOutputSchema } from '../output-schemas';
 
 export const getAgentStatus = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const getAgentStatus = createAction({
   displayName: 'Get Agent Status',
   description: 'Get the status and result of a Firecrawl (FIRE-1) agent job by its ID.',
   audience: 'ai',
+  outputSchema: getAgentStatusActionOutputSchema,
   aiMetadata: {
     description:
       'Looks up the status and result of a FIRE-1 agent job by its ID. Pick this to poll the job started by Start Agent until it completes. NOTE: /v2/agent is a beta, plan-gated endpoint that may be unavailable on your key. Read-only, so repeating the call is safe.',

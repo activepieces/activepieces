@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { getBatchScrapeResultsActionOutputSchema } from '../output-schemas';
 
 export const getBatchScrapeResults = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const getBatchScrapeResults = createAction({
   displayName: 'Get Batch Scrape Results',
   description: 'Get the status and accumulated page results of a batch scrape job by its ID.',
   audience: 'ai',
+  outputSchema: getBatchScrapeResultsActionOutputSchema,
   aiMetadata: {
     description:
       'Looks up the status and accumulated page results of a batch scrape job by its ID. Pick this to poll the job started by Batch Scrape until it completes; use Get Batch Scrape Errors to see which URLs failed, or Cancel Batch Scrape to stop it. Read-only, so repeating the call is safe.',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { startAgentActionOutputSchema } from '../output-schemas';
 
 export const startAgent = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const startAgent = createAction({
   displayName: 'Start Agent',
   description: 'Start an autonomous Firecrawl (FIRE-1) agent job from a natural-language prompt.',
   audience: 'ai',
+  outputSchema: startAgentActionOutputSchema,
   aiMetadata: {
     description:
       'Starts an autonomous interactive-browser agent (FIRE-1) that follows a natural-language prompt to gather data, optionally constrained to given URLs and a result schema, and returns a job ID. Pick this for blocked, thin, or JS-heavy pages where Scrape/Crawl/Extract fall short; for ordinary pages prefer those cheaper actions. NOTE: /v2/agent is a beta, plan-gated endpoint that may be unavailable on your key. Read-only against the targets, so re-running is safe; poll progress with Get Agent Status.',

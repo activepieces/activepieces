@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { getCrawlResultsActionOutputSchema } from '../output-schemas';
 
 export const getCrawlResults = createAction({
   auth: firecrawlAuth,
@@ -9,6 +10,7 @@ export const getCrawlResults = createAction({
   displayName: 'Get Crawl Results',
   description: 'Get the status and accumulated page results of a crawl job by its ID.',
   audience: 'ai',
+  outputSchema: getCrawlResultsActionOutputSchema,
   aiMetadata: {
     description:
       'Looks up the status and accumulated page results of a previously started crawl job by its crawl ID. Pick this to poll or fetch the output of a crawl that returned an ID instead of waiting inline; use List Active Crawls to discover a crawl ID you do not have, Get Crawl Errors to see which URLs failed, or Cancel Crawl to stop one. Read-only, so repeating the call is safe.',
