@@ -1,11 +1,13 @@
 import path from 'path'
-import { apId, spreadIfDefined } from '@activepieces/core-utils'
+import { apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, maxSocketHttpBufferSizeBytes } from '@activepieces/shared'
+import fastifyCookie from '@fastify/cookie'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyHttpProxy from '@fastify/http-proxy'
 import fastifyMultipart from '@fastify/multipart'
+import replyFrom from '@fastify/reply-from'
 import fastifyStatic from '@fastify/static'
 import { evlog as evlogFastify, useLogger as useWideEventLogger } from 'evlog/fastify'
 import fastify, { FastifyInstance } from 'fastify'
@@ -15,12 +17,15 @@ import { validatorCompiler } from 'fastify-type-provider-zod'
 import qs from 'qs'
 import { Socket } from 'socket.io'
 import { getAdapter, setupApp } from './app'
+import { canaryStaticRoutingMiddleware } from './core/canary/canary-static-routing.middleware'
+import { canaryWsRouting } from './core/canary/canary-ws-routing'
 import { oidcDiscoveryController } from './core/security/oidc/oidc-discovery.controller'
 import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
 import { embedSecurity } from './helper/embed-security'
 import { enrichWideEventWithError, errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
+import { jwtUtils } from './helper/jwt-utils'
 import { networkUtils } from './helper/network-utils'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
@@ -33,6 +38,21 @@ export let app: FastifyInstance | undefined = undefined
 
 export const setupServer = async (): Promise<FastifyInstance> => {
     app = await setupBaseApp()
+
+    // Signed-cookie support for canary routing, at the root so /api, static, and ws all see it.
+    await app.register(fastifyCookie, { secret: await jwtUtils.getJwtSecret() })
+
+    // Canary routing (see .agents/features/canary.md). reply-from is registered ONCE at the root and
+    // shared with the /api middleware — it is fastify-plugin wrapped, so a second registration collides.
+    const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
+    if (system.isApp() && !isNil(canaryAppUrl)) {
+        await app.register(replyFrom, { base: canaryAppUrl })
+        app.addHook('onRequest', canaryStaticRoutingMiddleware)
+        // onReady so socket.io's 'upgrade' listener is already attached to be captured.
+        app.addHook('onReady', async () => {
+            canaryWsRouting.install(app!)
+        })
+    }
 
     // MCP OAuth endpoints at domain root (required by MCP spec)
     // OIDC discovery endpoints at domain root (required by OIDC spec)
@@ -108,7 +128,10 @@ export const setupServer = async (): Promise<FastifyInstance> => {
             setHeaders: (res, filepath) => {
                 const normalized = filepath.replace(/\\/g, '/')
                 if (normalized.endsWith('.html')) {
-                    void res.setHeader('Cache-Control', 'no-cache')
+                    // Shared un-hashed URL that canary may swap per ap_canary cookie — never let a
+                    // shared/CDN cache reuse it across the boundary. See .agents/features/canary.md.
+                    void res.setHeader('Cache-Control', 'no-store, must-revalidate')
+                    void res.setHeader('Vary', 'Cookie')
                 }
                 else if (normalized.includes('/assets/')) {
                     void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')

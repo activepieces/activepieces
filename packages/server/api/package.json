@@ -30,6 +30,7 @@
     "@bull-board/fastify": "6.10.1",
     "@electric-sql/pglite": "0.3.14",
     "@fastify/basic-auth": "6.2.0",
+    "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.0.1",
     "@fastify/formbody": "8.0.2",
     "@fastify/http-proxy": "11.4.4",

@@ -16,6 +16,7 @@
  */
 
 import { PrincipalType } from '@activepieces/shared'
+import fastifyCookie from '@fastify/cookie'
 import replyFrom from '@fastify/reply-from'
 import fastify, { FastifyInstance, FastifyRequest } from 'fastify'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -96,6 +97,9 @@ let primaryApp: FastifyInstance
 async function buildPrimaryApp(platformId = 'canary-platform'): Promise<FastifyInstance> {
     const app = fastify()
 
+    // Mirror the real server: @fastify/cookie is registered at the root so the middleware can mint
+    // the signed canary routing cookie (canaryCookie.buildSetHeader uses app.signCookie/serializeCookie).
+    await app.register(fastifyCookie, { secret: 'integration-test-secret' })
     await app.register(replyFrom, { base: canaryUrl })
 
     app.addHook('onRequest', async (request: FastifyRequest) => {

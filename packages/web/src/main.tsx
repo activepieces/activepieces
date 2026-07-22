@@ -34,11 +34,19 @@ window.addEventListener('unhandledrejection', (event) => {
   errorReporting.report({ error: event.reason, source: 'unhandled-rejection' });
 });
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement,
-);
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// Canary transparent frontend: once the ap_canary cookie is set, reload once into the canary bundle.
+// Guarded to one reload/session so the canary bundle doesn't loop. See .agents/features/canary.md.
+const hasCanaryCookie = document.cookie
+  .split('; ')
+  .some((entry) => entry.startsWith('ap_canary='));
+
+if (!hasCanaryCookie || !reloadOnceForStaleChunk('canary-bundle-swap')) {
+  const root = ReactDOM.createRoot(
+    document.getElementById('root') as HTMLElement,
+  );
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}

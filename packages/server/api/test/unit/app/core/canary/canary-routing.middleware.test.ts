@@ -5,9 +5,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // --- mocks (must be before the import under test) ---
 
-const { mockSystemGet, mockIsCanaryPlatform } = vi.hoisted(() => ({
+const { mockSystemGet, mockIsCanaryPlatform, mockBuildSetHeader, mockClear, mockIsPresent } = vi.hoisted(() => ({
     mockSystemGet: vi.fn(),
     mockIsCanaryPlatform: vi.fn(),
+    mockBuildSetHeader: vi.fn(),
+    mockClear: vi.fn(),
+    mockIsPresent: vi.fn(),
+}))
+
+vi.mock('../../../../../src/app/core/canary/canary-cookie', () => ({
+    canaryCookie: {
+        buildSetHeader: (...args: unknown[]) => mockBuildSetHeader(...args),
+        clear: (...args: unknown[]) => mockClear(...args),
+        isPresent: (...args: unknown[]) => mockIsPresent(...args),
+    },
+    CANARY_COOKIE_NAME: 'ap_canary',
 }))
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({
@@ -78,6 +90,7 @@ function makeReply(opts: { sent?: boolean, proxyError?: Error } = {}): FastifyRe
         raw: rawEmitter,
         status: vi.fn().mockReturnThis(),
         headers: vi.fn().mockReturnThis(),
+        header: vi.fn().mockReturnThis(),
         send: vi.fn().mockReturnValue(undefined),
     }
 
@@ -105,6 +118,8 @@ describe('canaryRoutingMiddleware', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockIsCanaryPlatform.mockResolvedValue(false)
+        mockBuildSetHeader.mockReturnValue('ap_canary=signed; Path=/; HttpOnly; Secure; SameSite=Lax')
+        mockIsPresent.mockReturnValue(false)
     })
 
     it('does nothing when CANARY_APP_URL is not set', async () => {
@@ -149,6 +164,23 @@ describe('canaryRoutingMiddleware', () => {
         await canaryRoutingMiddleware(request, reply)
 
         expect(reply.from).not.toHaveBeenCalled()
+        expect(mockClear).not.toHaveBeenCalled()
+    })
+
+    it('clears a stale canary cookie for a non-canary platform that still carries one', async () => {
+        mockSystemGet.mockReturnValue('http://canary:3000')
+        mockIsCanaryPlatform.mockResolvedValue(false)
+        mockIsPresent.mockReturnValue(true)
+        const request = makeRequest({
+            headers: { cookie: 'ap_canary=signed' },
+            principal: { type: PrincipalType.USER, platform: { id: 'platform-abc' } } as never,
+        })
+        const reply = makeReply()
+
+        await canaryRoutingMiddleware(request, reply)
+
+        expect(reply.from).not.toHaveBeenCalled()
+        expect(mockClear).toHaveBeenCalledWith(reply)
     })
 
     it('proxies request for a canary platform resolved from principal', async () => {
@@ -168,8 +200,9 @@ describe('canaryRoutingMiddleware', () => {
 
         expect(reply.from).toHaveBeenCalledWith(
             '/v1/flows',
-            expect.objectContaining({ onError: expect.any(Function) }),
+            expect.objectContaining({ onError: expect.any(Function), rewriteHeaders: expect.any(Function) }),
         )
+        expect(mockBuildSetHeader).toHaveBeenCalled()
     })
 
     it('proxies request for a canary platform resolved from flowId cache', async () => {
