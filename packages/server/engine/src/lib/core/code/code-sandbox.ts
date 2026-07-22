@@ -14,12 +14,17 @@ const loadV8IsolateSandbox = async (): Promise<CodeSandbox> => {
     return v8IsolateCodeSandboxModule.v8IsolateCodeSandbox
 }
 
+const loadDenoCodeSandbox = async (): Promise<CodeSandbox> => {
+    const denoCodeSandboxModule = await import('./deno-code-sandbox')
+    return denoCodeSandboxModule.denoCodeSandbox
+}
+
 const loadCodeSandbox = async (): Promise<CodeSandbox> => {
     const loaders = {
         [ExecutionMode.UNSANDBOXED]: loadNoOpCodeSandbox,
         [ExecutionMode.SANDBOX_PROCESS]: loadNoOpCodeSandbox,
-        [ExecutionMode.SANDBOX_CODE_ONLY]: loadV8IsolateSandbox,
-        [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: loadV8IsolateSandbox,
+        [ExecutionMode.SANDBOX_CODE_ONLY]: loadDenoCodeSandbox,
+        [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: loadDenoCodeSandbox,
     }
 
     if (isNil(EXECUTION_MODE)) {
