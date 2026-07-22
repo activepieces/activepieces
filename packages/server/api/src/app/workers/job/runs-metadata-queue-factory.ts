@@ -62,9 +62,10 @@ export const runsMetadataQueueFactory = ({
             const cleanedParams = stripToRunsMetadataUpsertData(params)
             const key = redisMetadataKey(cleanedParams.id)
 
+            const requestId = apId()
             const written = await distributedStore.mergeIfKeyAbsent(key, {
                 ...cleanedParams,
-                requestId: apId(),
+                requestId,
             }, CLAIM_TTL_SECONDS)
             if (!written) {
                 return false
@@ -76,7 +77,7 @@ export const runsMetadataQueueFactory = ({
                 { deduplication: { id: cleanedParams.id } },
             ))
             if (error) {
-                await distributedStore.delete(key)
+                await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', requestId)
                 throw error
             }
             return true
