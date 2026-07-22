@@ -21,7 +21,7 @@ Primarily Enterprise self-hosted (`AP_EDITION=ee`). Also used on Cloud for inter
 
 - **LicenseKeyEntity**: The object returned by the remote secrets service describing what features a key enables.
 - **Trial key**: A key with `isTrial: true`; requested via `requestTrial()`.
-- **TRIAL_TRACKER**: A BullMQ system job (cron `*/59 23 * * *`, effectively daily) that re-validates all platforms' license keys.
+- **TRIAL_TRACKER**: A BullMQ system job (cron `59 23 * * *`, fires once daily at 23:59 UTC) that re-validates all platforms' license keys.
 - **applyLimits**: The operation that translates `LicenseKeyEntity` feature flags into the platform's `plan` object.
 - **downgradeToFreePlan**: Sets all plan feature flags to `false` when a license key expires.
 
@@ -81,7 +81,7 @@ The remote secrets service returns an object with these feature flags:
 
 ## Background Job
 
-The `TRIAL_TRACKER` system job runs at `*/59 23 * * *` (approximately daily at 23:59). For every platform:
+The `TRIAL_TRACKER` system job runs at `59 23 * * *` (daily at 23:59 UTC). For every platform:
 1. Skips platforms with no `licenseKey`.
 2. Calls `verifyKeyOrReturnNull`; if null (expired), calls `downgradeToFreePlan`.
 3. If valid, calls `applyLimits` to refresh the platform plan with current key flags.

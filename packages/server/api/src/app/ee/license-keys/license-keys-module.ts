@@ -43,7 +43,7 @@ export const licenseKeysModule: FastifyPluginAsyncZod = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: '*/59 23 * * *',
+            cron: '59 23 * * *',
         },
     })
     await app.register(licenseKeysController, { prefix: '/v1/license-keys' })
