@@ -13,7 +13,7 @@ export const omnihr = createPiece({
   description:
     'Smart, all-in-one HR platform for managing employees, time tracking, and HR workflows',
   auth: omnihrAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/omnihr.png',
   authors: ['arinmak', 'danielpoonwj'],
   categories: [PieceCategory.HUMAN_RESOURCES],

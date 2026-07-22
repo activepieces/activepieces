@@ -1,6 +1,7 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+// Docs: https://api-docs.omnihr.co/#auth-jwt
 const ACCESS_TOKEN_EXPIRY_BUFFER_SECONDS = 5 * 60;
 const OMNIHR_TOKEN_URL = 'https://api.omnihr.co/api/v1/auth/token/';
 
