@@ -1,6 +1,6 @@
 import { ApId, isNil } from '@activepieces/core-utils'
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
-import { EventDestinationJobData, ExecuteChatAgentJobData, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { EventDestinationJobData, ExecuteChatAgentJobData, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, TriggerSourceScheduleType, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -32,9 +32,13 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
 
         switch (type) {
             case JobType.REPEATING: {
-                await queue.upsertJobScheduler(data.flowVersionId, {
-                    pattern: params.scheduleOptions.cronExpression,
-                    tz: params.scheduleOptions.timezone,
+                const { scheduleOptions } = params
+                await queue.upsertJobScheduler(data.flowVersionId, scheduleOptions.type === TriggerSourceScheduleType.INTERVAL ? {
+                    every: scheduleOptions.intervalMs,
+                    startDate: Date.now() + scheduleOptions.intervalMs,
+                } : {
+                    pattern: scheduleOptions.cronExpression,
+                    tz: scheduleOptions.timezone,
                 }, {
                     name: data.flowVersionId,
                     data,
@@ -106,6 +110,15 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         return queue
     },
+    async removeAllFlowRunJobs({ flowRunId, platformId, projectId }: RemoveAllFlowRunJobsParams): Promise<void> {
+        const queueName = await getQueueName({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW }, log)
+        const queue = await ensureQueueExists({ log, queueName })
+        const allJobs = await queue.getJobs(['waiting', 'delayed'])
+        const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
+        await Promise.allSettled(matching.map((j) => j.remove()))
+        log.info({ flowRun: { id: flowRunId }, queueName, removedIds: matching.map((j) => j.id) }, '[jobQueue#removeAllFlowRunJobs] done')
+    },
+
     async close(): Promise<void> {
         log.info('[jobQueue#close] Closing job queue')
         const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
@@ -163,7 +176,6 @@ const USER_INTERACTION_JOB_TYPES = new Set([
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
-    WorkerJobType.EXECUTE_ACTION,
 ])
 
 export function isUserInteractionJob(jobType: WorkerJobType): boolean {
@@ -222,6 +234,12 @@ type RemoveOneTimeJobParams = {
     platformId: string | null
     projectId?: string | null
     jobType?: WorkerJobType
+}
+
+type RemoveAllFlowRunJobsParams = {
+    flowRunId: string
+    platformId: string | null
+    projectId?: string | null
 }
 
 type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> = {

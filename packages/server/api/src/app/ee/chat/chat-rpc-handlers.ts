@@ -5,7 +5,6 @@ import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { redisConnections } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -579,8 +578,8 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const conversationLimit = await incrementAndCheckLimit({ key: `chat-email-count:conv:${platformId}:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
-        const hourlyLimit = await incrementAndCheckLimit({ key: `chat-email-count:user:${platformId}:${userId}`, limit: EMAILS_PER_USER_PER_HOUR, ttlSeconds: HOURLY_LIMIT_TTL_SECONDS })
+        const conversationLimit = await chatHelpers.incrementAndCheckLimit({ key: `chat-email-count:conv:${platformId}:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
+        const hourlyLimit = await chatHelpers.incrementAndCheckLimit({ key: `chat-email-count:user:${platformId}:${userId}`, limit: EMAILS_PER_USER_PER_HOUR, ttlSeconds: HOURLY_LIMIT_TTL_SECONDS })
         if (!conversationLimit.allowed || !hourlyLimit.allowed) {
             log.warn({ conversation: { id: conversationId }, user: { id: userId }, conversationCount: conversationLimit.count, hourlyCount: hourlyLimit.count }, '[chatRpc#sendChatEmail] Email rate limit reached')
             return { sent: false, message: 'You have reached the email sending limit for now. Please try again later.' }
@@ -626,15 +625,6 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
         : []
     const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
-}
-
-async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {
-    const redis = await redisConnections.useExisting()
-    const count = await redis.incr(key)
-    if (count === 1) {
-        await redis.expire(key, ttlSeconds)
-    }
-    return { allowed: count <= limit, count }
 }
 
 function byteLengthOf(value: unknown): number {

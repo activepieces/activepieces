@@ -193,7 +193,7 @@ const FlowRunEventData = z.object({
         environment: z.string(),
         flowId: z.string(),
         flowVersionId: z.string(),
-        stepNameToTest: z.string().optional(),
+        stepNameToTest: z.string().nullish(),
         flowDisplayName: z.string().optional(),
         status: z.string(),
     }),
