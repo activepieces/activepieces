@@ -267,6 +267,38 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
             return discoveryResult
         }
+        case 'ap_revalidate_connection': {
+            const externalId = toolInput.connectionExternalId as string
+            let projectId: string | undefined
+            if (conversationId) {
+                const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+                if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
+                    projectId = conversation.projectId
+                }
+            }
+            if (isNil(projectId)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No project is selected for this conversation. Ask the user which project this connection is in.' }
+            }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
+            if (!isNil(denial)) {
+                return denial
+            }
+            const found = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId })
+            if (isNil(found)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId in the active project.' }
+            }
+            const revalidated = await appConnectionService(log).revalidate({ id: found.id, projectId, platformId })
+            const working = revalidated.status === AppConnectionStatus.ACTIVE
+            return {
+                connectionExternalId: externalId,
+                status: revalidated.status,
+                working,
+                note: working
+                    ? 'This connection is valid — safe to build on.'
+                    : 'This connection is NOT working (its credentials failed). Do not build on it — show the connection picker so the user can reconnect, then retry.',
+            }
+        }
         case 'ap_execute_action': {
             return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }

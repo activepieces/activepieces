@@ -12,6 +12,7 @@ export const UpdateProjectPlatformRequest = z.object({
     plan: z.object({
         pieces: z.array(z.string()).optional(),
         piecesFilterType: z.nativeEnum(PiecesFilterType).optional(),
+        activeFlowsLimit: z.optional(Nullable(z.number().int().positive())),
     }).optional(),
     globalConnectionExternalIds: z.array(z.string()).optional(),
     maxConcurrentJobs: z.optional(Nullable(z.number().int().positive())),
