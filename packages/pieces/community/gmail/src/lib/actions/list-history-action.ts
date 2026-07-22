@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
+import { gmailListHistoryActionOutputSchema } from '../output-schemas';
 
 export const gmailListHistoryAction = createAction({
   auth: gmailAuth,
@@ -41,6 +42,7 @@ export const gmailListHistoryAction = createAction({
       defaultValue: 100,
     }),
   },
+  outputSchema: gmailListHistoryActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });

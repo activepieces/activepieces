@@ -2,6 +2,7 @@ import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailMime } from '../common/mime';
+import { gmailCreateDraftActionOutputSchema } from '../output-schemas';
 
 export const gmailCreateDraftAction = createAction({
   auth: gmailAuth,
@@ -82,6 +83,7 @@ export const gmailCreateDraftAction = createAction({
       },
     }),
   },
+  outputSchema: gmailCreateDraftActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });

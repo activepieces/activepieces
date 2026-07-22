@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
+import { gmailGetAttachmentActionOutputSchema } from '../output-schemas';
 
 export const gmailGetAttachmentAction = createAction({
   auth: gmailAuth,
@@ -10,7 +11,7 @@ export const gmailGetAttachmentAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Fetches one email attachment\'s raw bytes by message ID + attachment ID, returning a stored file plus size. Note: Get Message already returns each attachment\'s downloaded content directly, so prefer that; use this only when you separately hold a raw Gmail attachment ID (from the message payload parts) and need the bytes on their own. Get the message ID from Search Email. Idempotent: a read-only fetch that does not modify the mailbox.',
+      "Fetches one email attachment's raw bytes by message ID + attachment ID, returning a stored file plus size. Note: Get Message already returns each attachment's downloaded content directly, so prefer that; use this only when you separately hold a raw Gmail attachment ID (from the message payload parts) and need the bytes on their own. Get the message ID from Search Email. Idempotent: a read-only fetch that does not modify the mailbox.",
     idempotent: true,
   },
   props: {
@@ -32,6 +33,7 @@ export const gmailGetAttachmentAction = createAction({
       required: false,
     }),
   },
+  outputSchema: gmailGetAttachmentActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });

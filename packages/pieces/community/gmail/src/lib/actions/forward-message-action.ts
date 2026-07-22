@@ -3,6 +3,7 @@ import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailMime } from '../common/mime';
 import { parseStream } from '../common/data';
+import { gmailForwardMessageActionOutputSchema } from '../output-schemas';
 
 export const gmailForwardMessageAction = createAction({
   auth: gmailAuth,
@@ -45,6 +46,7 @@ export const gmailForwardMessageAction = createAction({
       required: false,
     }),
   },
+  outputSchema: gmailForwardMessageActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });

@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { gmailAuth } from '../auth';
 import { gmailSendEmailAction } from './send-email-action';
+import { gmailAiSendEmailActionOutputSchema } from '../output-schemas';
 
 export const gmailAiSendEmailAction = createAction({
   auth: gmailAuth,
@@ -13,6 +14,7 @@ export const gmailAiSendEmailAction = createAction({
       'Composes and sends a new email from the connected Gmail account to one or more recipients, with optional CC/BCC, attachments, and a plain-text or HTML body. Use this to originate a fresh message; to answer an existing conversation prefer Reply to Thread, and to save an unsent message use Create Draft. Not idempotent: each call sends a separate message.',
     idempotent: false,
   },
+  outputSchema: gmailAiSendEmailActionOutputSchema,
   props: gmailSendEmailAction.props,
   run: gmailSendEmailAction.run,
 });

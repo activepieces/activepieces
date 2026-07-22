@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
+import { gmailSendDraftActionOutputSchema } from '../output-schemas';
 
 export const gmailSendDraftAction = createAction({
   auth: gmailAuth,
@@ -20,6 +21,7 @@ export const gmailSendDraftAction = createAction({
       required: true,
     }),
   },
+  outputSchema: gmailSendDraftActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });

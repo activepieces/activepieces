@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { GmailRequests } from '../common/data';
 import { GmailMessageFormat } from '../common/models';
 import { gmailAuth, getAccessToken } from '../auth';
+import { gmailGetThreadActionOutputSchema } from '../output-schemas';
 
 export const gmailGetThread = createAction({
   auth: gmailAuth,
@@ -36,6 +37,7 @@ export const gmailGetThread = createAction({
       },
     }),
   },
+  outputSchema: gmailGetThreadActionOutputSchema,
   run: async ({ auth, propsValue: { format, thread_id } }) =>
     await GmailRequests.getThread({
       access_token: await getAccessToken(auth),
