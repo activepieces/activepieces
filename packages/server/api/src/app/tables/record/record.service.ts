@@ -241,27 +241,30 @@ export const recordService = {
         })
         const resolvedTableId = tableId ?? existingRecord.tableId
 
-        const { webhooks, records: recordsToNotify } = await loadDeleteWebhookContext({
+        const { webhooks, records: candidateRecords } = await loadDeleteWebhookContext({
             projectId,
             tableId: resolvedTableId,
             loadRecordIds: async () => uniqueIds,
         })
 
-        const deletedCount = await transaction(async (entityManager: EntityManager) => {
-            let count = 0
+        const deletedIds = await transaction(async (entityManager: EntityManager) => {
+            const collected: string[] = []
             for (const batch of chunk(uniqueIds, MAX_BATCH_SIZE)) {
-                const result = await entityManager.getRepository(RecordEntity).delete({
-                    id: In(batch),
+                collected.push(...await deleteRecordsReturningIds({
+                    entityManager,
+                    recordIds: batch,
                     projectId,
                     tableId: resolvedTableId,
-                })
-                count += result.affected ?? 0
+                }))
             }
-            return count
+            return collected
         })
 
+        const deletedIdSet = new Set(deletedIds)
+        const recordsToNotify = candidateRecords.filter((record) => deletedIdSet.has(record.id))
+
         return {
-            deletedCount,
+            deletedCount: deletedIds.length,
             records: await formatRecordsAndFetchField({ records: recordsToNotify, tableId: resolvedTableId, projectId }),
             webhooks,
         }
@@ -271,26 +274,50 @@ export const recordService = {
         tableId,
         projectId,
     }: DeleteAllParams): Promise<DeleteRecordsResult> {
-        const { webhooks, records: recordsToNotify } = await loadDeleteWebhookContext({
+        const webhooks = await tableService.getWebhooks({
             projectId,
-            tableId,
-            loadRecordIds: async () => {
-                const rows = await recordRepo().find({
-                    where: { projectId, tableId },
-                    select: ['id'],
-                })
-                return rows.map((row) => row.id)
-            },
+            id: tableId,
+            events: [TableWebhookEventType.RECORD_DELETED],
         })
 
-        const result = await recordRepo().delete({
-            projectId,
-            tableId,
+        if (webhooks.length === 0) {
+            const result = await recordRepo().delete({
+                projectId,
+                tableId,
+            })
+            return { deletedCount: result.affected ?? 0, records: [], webhooks }
+        }
+
+        const deletedRecords = await transaction(async (entityManager: EntityManager) => {
+            const rows = await entityManager.getRepository(RecordEntity).find({
+                where: { projectId, tableId },
+                select: ['id'],
+            })
+            const recordIds = rows.map((row) => row.id)
+
+            const records: RecordSchema[] = []
+            for (const batch of chunk(recordIds, WEBHOOK_RECORDS_READ_BATCH_SIZE)) {
+                const batchRecords = await entityManager.getRepository(RecordEntity).find({
+                    where: { id: In(batch), projectId, tableId },
+                    relations: ['cells'],
+                })
+                records.push(...batchRecords)
+            }
+
+            for (const batch of chunk(recordIds, MAX_BATCH_SIZE)) {
+                await entityManager.getRepository(RecordEntity).delete({
+                    id: In(batch),
+                    projectId,
+                    tableId,
+                })
+            }
+
+            return records
         })
 
         return {
-            deletedCount: result.affected ?? 0,
-            records: await formatRecordsAndFetchField({ records: recordsToNotify, tableId, projectId }),
+            deletedCount: deletedRecords.length,
+            records: await formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId }),
             webhooks,
         }
     },
@@ -434,6 +461,28 @@ async function findAnyExistingRecord({
         code: ErrorCode.ENTITY_NOT_FOUND,
         params: { entityType: 'Record', entityId: recordIds[0] },
     })
+}
+
+async function deleteRecordsReturningIds({
+    entityManager,
+    recordIds,
+    projectId,
+    tableId,
+}: {
+    entityManager: EntityManager
+    recordIds: string[]
+    projectId: string
+    tableId: string
+}): Promise<string[]> {
+    const result = await entityManager
+        .getRepository(RecordEntity)
+        .createQueryBuilder()
+        .delete()
+        .where({ id: In(recordIds), projectId, tableId })
+        .returning('id')
+        .execute()
+    const rows: Array<{ id: string }> = result.raw
+    return rows.map((row) => row.id)
 }
 
 async function loadDeleteWebhookContext({
