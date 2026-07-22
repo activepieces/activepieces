@@ -67,7 +67,7 @@ A built-in relational database feature that lets users store structured data dir
 
 **Record**: id, tableId, projectId. Relations: table, cells[].
 
-**Cell**: id, recordId, fieldId, projectId, value (VARCHAR). Unique constraint: (projectId, fieldId, recordId).
+**Cell**: id, recordId, fieldId, projectId, value (VARCHAR). Unique constraint: (projectId, fieldId, recordId). Indexes: recordId, fieldId (each supports the FK cascade delete; without them a record/field delete seq-scans cell).
 
 **TableWebhook**: id, projectId, tableId, flowId, events[] (string array).
 - **Events**: `RECORD_CREATED`, `RECORD_UPDATED`, `RECORD_DELETED`
@@ -83,7 +83,8 @@ A built-in relational database feature that lets users store structured data dir
 - `record.create()` — bulk insert (max 50 per batch, transactional), validates field count
 - `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS); filtering is in-memory and a missing cell is treated as an empty value (`''`), so NEQ/NOT_EXISTS match unset columns
 - `record.update()` — update cells (empty fields unchanged)
-- `record.delete()` / `record.deleteAll()` — bulk delete
+- `record.delete()` — bulk delete in transactional 50-id batches via `DELETE ... RETURNING id`; deduplicates ids; anchors on the caller's `tableId` (REST) or resolves it from the first existing record (MCP); 404 only when none of the ids exist; hydrates record payloads (500-id read batches) only when a `RECORD_DELETED` webhook exists, and dispatches only for ids actually deleted by this request
+- `record.deleteAll()` — no webhooks: single criteria delete; with webhooks: transactional snapshot + delete-by-snapshot-ids so every deleted record gets its webhook (a record inserted mid-clear survives)
 
 ## Access Control
 
@@ -101,9 +102,9 @@ When adding a new route (read or write) on tables / fields / records, the `permi
 ## Side Effects
 
 After record create/update/delete, `recordSideEffects.handleRecordsEvent()`:
-1. Finds TableWebhooks matching the event type
-2. For each matching webhook, triggers the linked flow via webhook service
-3. Passes record data as payload
+1. Returns immediately when the event carries no records
+2. Fetches TableWebhooks matching the event type once per event (delete paths pass a prefetched list)
+3. Dispatches the linked flows via webhook service, at most 50 concurrent requests, one per record x webhook, with record data as payload
 
 ## Table → Flow Integration
 
