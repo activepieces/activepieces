@@ -79,7 +79,11 @@ function proxyUpgrade({ canaryAppUrl, request, clientSocket, head, app }: ProxyU
         upstreamSocket.pipe(clientSocket)
         clientSocket.pipe(upstreamSocket)
     })
-    proxyReq.on('timeout', () => destroyBoth(new Error('canary ws upstream timeout')))
+    proxyReq.on('timeout', () => {
+        // A 'timeout' does not close the request — destroy it so the upstream socket isn't leaked.
+        proxyReq.destroy()
+        destroyBoth(new Error('canary ws upstream timeout'))
+    })
     proxyReq.on('error', (error) => destroyBoth(error))
     proxyReq.end()
 }

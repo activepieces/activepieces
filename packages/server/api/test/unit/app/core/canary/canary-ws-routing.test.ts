@@ -98,6 +98,18 @@ describe('canaryWsRouting.install', () => {
         expect(socketIoListener).not.toHaveBeenCalled()
         expect(mockHttpRequest).toHaveBeenCalledWith(expect.objectContaining({ hostname: 'canary', path: '/api/socket.io/?EIO=4' }))
     })
+
+    it('destroys the upstream request (not just the client) on upstream timeout', () => {
+        mockIsValidHeader.mockReturnValue(true)
+        const proxyReq = Object.assign(new EventEmitter(), { end: vi.fn(), write: vi.fn(), destroy: vi.fn() })
+        mockHttpRequest.mockReturnValue(proxyReq)
+        canaryWsRouting.install(app)
+        const clientSocket = mockSocket()
+        server.emit('upgrade', { url: '/api/socket.io/', method: 'GET', headers: { cookie: 'ap_canary=x' } }, clientSocket, Buffer.alloc(0))
+        proxyReq.emit('timeout')
+        expect(proxyReq.destroy).toHaveBeenCalled()
+        expect(clientSocket.destroy).toHaveBeenCalled()
+    })
 })
 
 function mockSocket(): EventEmitter & { write: () => void, destroy: () => void, pipe: () => void } {

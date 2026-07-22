@@ -39,13 +39,12 @@ export let app: FastifyInstance | undefined = undefined
 export const setupServer = async (): Promise<FastifyInstance> => {
     app = await setupBaseApp()
 
-    // Signed-cookie support for canary routing, at the root so /api, static, and ws all see it.
-    await app.register(fastifyCookie, { secret: await jwtUtils.getJwtSecret() })
-
-    // Canary routing (see .agents/features/canary.md). reply-from is registered ONCE at the root and
-    // shared with the /api middleware — it is fastify-plugin wrapped, so a second registration collides.
+    // Canary routing (see .agents/features/canary.md). Cookie + reply-from are registered ONCE at the
+    // root here (only when canary is configured — no cost on workers / non-canary), before the /api
+    // scope so it inherits them. reply-from is fastify-plugin wrapped, so a second registration collides.
     const canaryAppUrl = system.get(AppSystemProp.CANARY_APP_URL)
     if (system.isApp() && !isNil(canaryAppUrl)) {
+        await app.register(fastifyCookie, { secret: await jwtUtils.getJwtSecret() })
         await app.register(replyFrom, { base: canaryAppUrl })
         app.addHook('onRequest', canaryStaticRoutingMiddleware)
         // onReady so socket.io's 'upgrade' listener is already attached to be captured.
