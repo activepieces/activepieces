@@ -5836,6 +5836,21 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/microsoft-teams-bot": {
+      "name": "@activepieces/piece-microsoft-teams-bot",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@microsoft/microsoft-graph-client": "3.0.7",
+        "@microsoft/microsoft-graph-types": "2.40.0",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/microsoft-todo": {
       "name": "@activepieces/piece-microsoft-todo",
       "version": "0.3.5",
@@ -11815,6 +11830,8 @@
     "@activepieces/piece-microsoft-sharepoint": ["@activepieces/piece-microsoft-sharepoint@workspace:packages/pieces/community/microsoft-sharepoint"],
 
     "@activepieces/piece-microsoft-teams": ["@activepieces/piece-microsoft-teams@workspace:packages/pieces/community/microsoft-teams"],
+
+    "@activepieces/piece-microsoft-teams-bot": ["@activepieces/piece-microsoft-teams-bot@workspace:packages/pieces/community/microsoft-teams-bot"],
 
     "@activepieces/piece-microsoft-todo": ["@activepieces/piece-microsoft-todo@workspace:packages/pieces/community/microsoft-todo"],
 
