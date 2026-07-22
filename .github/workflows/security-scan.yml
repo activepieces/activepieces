@@ -1,0 +1,78 @@
+name: deepsec security scan
+
+on:
+  # (disabled for now, re-enable when ready):
+  # schedule:
+  #   - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      project:
+        description: 'Which project to scan'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - server-api
+          - server-engine
+          - server-worker
+          - server-utils
+          - web
+          - shared
+          - pieces-common
+          - pieces-core
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install deepsec
+        working-directory: .deepsec
+        run: pnpm install --frozen-lockfile
+
+      - name: Scan
+        working-directory: .deepsec
+        env:
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: https://api.anthropic.com
+          PROJECT_INPUT: ${{ inputs.project }}
+          ALL_PROJECTS: server-api server-engine server-worker server-utils web shared pieces-common pieces-core
+        run: |
+          case "$PROJECT_INPUT" in
+            ''|all)                                                projects="$ALL_PROJECTS" ;;
+            server-api|server-engine|server-worker|server-utils|\
+            web|shared|pieces-common|pieces-core)                  projects="$PROJECT_INPUT" ;;
+            *)                                                     echo "Invalid project: $PROJECT_INPUT" >&2; exit 1 ;;
+          esac
+          for id in $projects; do
+            echo "::group::$id"
+            pnpm deepsec scan       --project-id "$id"
+            pnpm deepsec process    --project-id "$id" --concurrency 5 --max-turns 50
+            pnpm deepsec revalidate --project-id "$id" --concurrency 5 --min-severity HIGH
+            echo "::endgroup::"
+          done
+
+      - name: Convert findings to SARIF
+        if: always()
+        run: node .deepsec/scripts/deepsec-to-sarif.mjs .deepsec/data deepsec.sarif
+
+      - name: Upload SARIF to Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: deepsec.sarif
+          category: deepsec
