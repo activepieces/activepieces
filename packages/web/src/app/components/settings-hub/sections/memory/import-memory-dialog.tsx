@@ -47,17 +47,11 @@ function Step({
 }
 
 function ImportMemoryContent({ onClose }: { onClose: () => void }) {
-  const { invalidate, currentMemories } = useChatMemoryActions();
+  const { invalidate } = useChatMemoryActions();
   const [text, setText] = useState('');
 
   const runImport = useMutation({
-    mutationFn: async () => {
-      const draft = await chatApi.importMemory({ text });
-      const merged = Array.from(
-        new Set([...currentMemories(), ...draft.memories]),
-      );
-      return chatApi.saveMemory({ memories: merged });
-    },
+    mutationFn: () => chatApi.importMemory({ text }),
     onSuccess: () => {
       invalidate();
       toast.success(t('Memory imported'));

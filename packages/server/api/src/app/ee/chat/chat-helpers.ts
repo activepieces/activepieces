@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, unique } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetChatMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserChatMemory } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -155,16 +155,23 @@ async function withLockedMemoryRow<T>({ platformId, userId }: { platformId: stri
     })
 }
 
-async function saveUserChatMemory({ platformId, userId, instructions, memories }: {
+async function saveUserChatMemory({ platformId, userId, instructions, memories, baseMemories }: {
     platformId: string
     userId: string
     instructions?: string | null
     memories?: string[]
+    baseMemories?: string[]
 }): Promise<GetChatMemoryResponse> {
     return withLockedMemoryRow({ platformId, userId }, async ({ repo, row }) => {
+        const lockedMemories = row?.memories ?? []
+        const nextMemories = memories === undefined
+            ? lockedMemories
+            : isNil(baseMemories)
+                ? memories
+                : unique([...memories, ...lockedMemories.filter((m) => !baseMemories.includes(m))])
         const capped = capMemories({
             instructions: instructions === undefined ? row?.instructions ?? null : instructions,
-            memories: memories === undefined ? row?.memories ?? [] : memories,
+            memories: nextMemories,
         })
         await repo.update({ platformId, userId }, capped)
         return capped

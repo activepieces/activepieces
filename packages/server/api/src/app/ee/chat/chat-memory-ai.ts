@@ -109,7 +109,7 @@ async function applyInstruction({ platformId, userId, instruction, log }: {
         : '(none yet)'
     const parsed = await runMemoryLlm({ platformId, system: INSTRUCTION_SYSTEM_PROMPT, prompt: `Current memories:\n${currentList}\n\nInput: ${trimmed}`, schema: MemoriesSchema, log })
     const nextMemories = isNil(parsed) ? [...current.memories, trimmed] : parsed.memories
-    return chatHelpers.saveUserChatMemory({ platformId, userId, memories: nextMemories })
+    return chatHelpers.saveUserChatMemory({ platformId, userId, memories: nextMemories, baseMemories: current.memories })
 }
 
 export const chatMemoryAi = {

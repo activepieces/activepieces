@@ -254,10 +254,15 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/memory/import', ImportMemoryRoute, async (request) => {
-        return chatMemoryAi.extract({
-            platformId: request.principal.platform.id,
-            text: request.body.text,
-            log: request.log,
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        const draft = await chatMemoryAi.extract({ platformId, text: request.body.text, log: request.log })
+        const current = await chatHelpers.getUserChatMemory({ platformId, userId })
+        return chatHelpers.saveUserChatMemory({
+            platformId,
+            userId,
+            memories: [...current.memories, ...draft.memories],
+            baseMemories: current.memories,
         })
     })
 
