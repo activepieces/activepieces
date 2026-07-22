@@ -20,7 +20,11 @@ export function CreditsBanner({
   const isError = Boolean(creditsExhausted);
 
   const message = isError
-    ? t("You've reached your credits limit.")
+    ? isPlatformAdmin
+      ? t("You've reached your credits limit.")
+      : t(
+          "You've reached your credits limit. Contact a platform admin to get more credits.",
+        )
     : t("You've used {percentage}% of your credits.", {
         percentage: creditsWarning?.percentage ?? 0,
       });

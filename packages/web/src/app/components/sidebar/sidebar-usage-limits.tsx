@@ -109,7 +109,8 @@ const SidebarUsageLimits = React.memo(() => {
   const showUpgradeButton = canManage && (!isPaid || isTrial);
   const showAutoRechargeButton =
     canManage && isPaid && !isTrial && !isNil(creditsFeature);
-  const showBillingButton = !showUpgradeButton && !showAutoRechargeButton;
+  const showBillingButton =
+    isPlatformAdmin && !showUpgradeButton && !showAutoRechargeButton;
   return (
     <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
       <div className="flex items-center justify-between gap-2">

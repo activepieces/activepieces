@@ -22,12 +22,14 @@ import {
   CreditsCard,
   CreditsInfoDialog,
   AutoRechargeCard,
+  KeepPlanDialog,
   DROP_TO_FREE_MESSAGE,
-  DROP_TO_FREE_WARNING,
+  planSelectorUtils,
   LicenseKey,
   UsersCard,
   billingMutations,
   billingQueries,
+  useCancelSubscriptionGuard,
   useManagePlanDialogStore,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -65,10 +67,9 @@ function BillingPageDetails() {
   const isCommunity = edition === ApEdition.COMMUNITY;
   const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
     billingMutations.usePortalLink();
-  const { mutate: reactivateSubscription, isPending: isReactivating } =
-    billingMutations.useReactivateSubscription();
-  const { mutateAsync: cancelSubscription } =
-    billingMutations.useCancelSubscription();
+  const [isKeepPlanOpen, setIsKeepPlanOpen] = useState(false);
+  const { cancelWithSeatCheck, deactivateUsersDialog } =
+    useCancelSubscriptionGuard();
   const { mutate: refreshBilling, isPending: isRefreshing } =
     billingMutations.useRefreshSubscription();
 
@@ -263,12 +264,12 @@ function BillingPageDetails() {
                     <ConfirmationDeleteDialog
                       title={t('Cancel subscription')}
                       message={t(DROP_TO_FREE_MESSAGE)}
-                      warning={t(DROP_TO_FREE_WARNING)}
+                      warning={planSelectorUtils.dropToFreeWarning(
+                        info.additionalSeats,
+                      )}
                       buttonText={t('Cancel subscription')}
                       entityName={t('subscription')}
-                      mutationFn={async () => {
-                        await cancelSubscription();
-                      }}
+                      mutationFn={cancelWithSeatCheck}
                     >
                       <Button
                         variant="link"
@@ -281,8 +282,7 @@ function BillingPageDetails() {
                     <Button
                       variant="default"
                       className="w-full"
-                      loading={isReactivating}
-                      onClick={() => reactivateSubscription()}
+                      onClick={() => setIsKeepPlanOpen(true)}
                     >
                       {t('Keep current plan')}
                     </Button>
@@ -317,6 +317,12 @@ function BillingPageDetails() {
           </>
         )}
       </div>
+      {deactivateUsersDialog}
+      <KeepPlanDialog
+        open={isKeepPlanOpen}
+        onOpenChange={setIsKeepPlanOpen}
+        info={info}
+      />
     </div>
   );
 }

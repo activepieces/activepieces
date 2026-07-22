@@ -1,7 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   PlatformBillingInformation,
   BillableFeature,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Users } from 'lucide-react';
 import { useState } from 'react';
@@ -17,6 +19,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+import { billingMutations } from '../../hooks/billing-hooks';
+
 import { ManageSeatsDialog } from './manage-seats-dialog';
 
 export const OutOfSeatsDialog = ({
@@ -26,7 +30,13 @@ export const OutOfSeatsDialog = ({
   feature,
 }: OutOfSeatsDialogProps) => {
   const [isManageSeatsOpen, setIsManageSeatsOpen] = useState(false);
+  const { mutate: reactivate, isPending: isReactivating } =
+    billingMutations.useReactivateSubscription(() => onOpenChange(false));
   const total = info.plan.usersLimit ?? info.usage.users;
+  const scheduledCap = info.plan.scheduledUsersLimit;
+  const capBinds =
+    !isNil(scheduledCap) &&
+    (isNil(info.plan.usersLimit) || scheduledCap < info.plan.usersLimit);
 
   return (
     <>
@@ -38,15 +48,24 @@ export const OutOfSeatsDialog = ({
             </div>
             <DialogTitle>{t("You're out of seats")}</DialogTitle>
             <DialogDescription>
-              {t(
-                'All {total} seats on your plan are in use ({active} active, {invited} invited). {invitedCount, plural, =0 {Add seats to invite more.} other {Add seats or revoke a pending invitation to invite more.}}',
-                {
-                  total: total.toLocaleString(),
-                  active: info.usage.activeUsers.toLocaleString(),
-                  invited: info.usage.invitedSeats.toLocaleString(),
-                  invitedCount: info.usage.invitedSeats,
-                },
-              )}
+              {capBinds
+                ? t(
+                    'Seats are capped at {cap, plural, =1 {1 seat} other {# seats}} until your plan switches to {plan} on {date}. Keep your current plan to lift the cap.',
+                    {
+                      cap: scheduledCap,
+                      plan: info.scheduledPlanName ?? t('Free'),
+                      date: dayjs(info.cancelAt).format('MMM D, YYYY'),
+                    },
+                  )
+                : t(
+                    'All {total} seats on your plan are in use ({active} active, {invited} invited). {invitedCount, plural, =0 {Add seats to invite more.} other {Add seats or revoke a pending invitation to invite more.}}',
+                    {
+                      total: total.toLocaleString(),
+                      active: info.usage.activeUsers.toLocaleString(),
+                      invited: info.usage.invitedSeats.toLocaleString(),
+                      invitedCount: info.usage.invitedSeats,
+                    },
+                  )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -64,15 +83,25 @@ export const OutOfSeatsDialog = ({
                 </Link>
               </Button>
             )}
-            <Button
-              type="button"
-              onClick={() => {
-                onOpenChange(false);
-                setIsManageSeatsOpen(true);
-              }}
-            >
-              {t('Add seats')}
-            </Button>
+            {capBinds ? (
+              <Button
+                type="button"
+                loading={isReactivating}
+                onClick={() => reactivate()}
+              >
+                {t('Keep current plan')}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => {
+                  onOpenChange(false);
+                  setIsManageSeatsOpen(true);
+                }}
+              >
+                {t('Add seats')}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

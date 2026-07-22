@@ -18,12 +18,13 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
+import { useCancelSubscriptionGuard } from '../hooks/use-cancel-subscription-guard';
+import { usePlanSeatFloorGuard } from '../hooks/use-plan-seat-floor-guard';
 import { useConfirmPurchaseDialogStore } from '../stores/confirm-purchase-dialog-state';
 
-import { DeactivateUsersDialog } from './feature-usage/deactivate-users-dialog';
+import { KeepPlanDialog } from './keep-plan-dialog';
 import {
   DROP_TO_FREE_MESSAGE,
-  DROP_TO_FREE_WARNING,
   planSelectorUtils,
   type BillingCycle,
   type CheckoutAction,
@@ -37,34 +38,38 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
     platform.id,
     enabled,
   );
+  const { ensureSeatFloor, openSeatFloor, seatFloorDialog } =
+    usePlanSeatFloorGuard();
   const {
     mutate: checkout,
     isPending,
     variables: checkoutVariables,
-  } = billingMutations.useCheckout(onSelected);
-  const { mutateAsync: cancelSubscription } =
-    billingMutations.useCancelSubscription(onSelected);
-  const { mutate: reactivate, isPending: isReactivating } =
-    billingMutations.useReactivateSubscription(onSelected);
+  } = billingMutations.useCheckout({
+    onDone: onSelected,
+    onSeatLimitExceeded: ({ params, targetSeats, planName }) => {
+      openSeatFloor({
+        targetSeats,
+        planName,
+        proceed: () => checkout(params),
+      });
+    },
+  });
+  const { cancelWithSeatCheck, exceedsFreeSeats, deactivateUsersDialog } =
+    useCancelSubscriptionGuard({ onCanceled: onSelected });
+  const [isKeepPlanOpen, setIsKeepPlanOpen] = useState(false);
   const { data: subscription } = billingQueries.usePlatformSubscription(
     platform.id,
     enabled,
   );
   const { openDialog: openConfirmDialog } = useConfirmPurchaseDialogStore();
-  const [deactivateState, setDeactivateState] =
-    useState<DeactivateState | null>(null);
 
   const currentPlanId = subscription?.plan.plan ?? platform.plan.plan;
   const hasScheduledChange = !isNil(subscription?.cancelAt);
-  const allPlans = plans ?? [];
-  const activeUsers = subscription?.usage.users ?? 0;
-  const currentPlan = allPlans.find((plan) => plan.id === currentPlanId);
-  const freePlan = allPlans.find(
-    (plan) => plan.id === planSelectorUtils.FREE_PLAN_ID,
+  const downgradeWarning = planSelectorUtils.dropToFreeWarning(
+    subscription?.additionalSeats,
   );
-  const freeIncludedSeats = freePlan?.includedSeats ?? null;
-  const freeNeedsDeactivation =
-    !isNil(freeIncludedSeats) && activeUsers > freeIncludedSeats;
+  const allPlans = plans ?? [];
+  const currentPlan = allPlans.find((plan) => plan.id === currentPlanId);
   const hasAnnualOption = allPlans.some(
     (plan) => plan.interval === planSelectorUtils.ANNUAL_INTERVAL,
   );
@@ -92,37 +97,14 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
     checkout({ planId: intent.planId, successUrl });
   };
 
-  const requireSeatFloor = ({
-    targetSeats,
-    planName,
-    warning,
-    proceed,
-  }: SeatFloorRequest) => {
-    if (!isNil(targetSeats) && activeUsers > targetSeats) {
-      setDeactivateState({ targetSeats, planName, warning, proceed });
-      return;
-    }
-    proceed();
-  };
-
   const handleCheckout = (intent: CheckoutIntent) => {
     const targetPlan = allPlans.find((plan) => plan.id === intent.planId);
-    requireSeatFloor({
+    ensureSeatFloor({
       targetSeats: targetPlan?.includedSeats ?? null,
       planName: intent.planName,
       proceed: () => proceedCheckout(intent),
     });
   };
-
-  const handleFreeDowngradeWithSeats = () =>
-    requireSeatFloor({
-      targetSeats: freeIncludedSeats,
-      planName: t('Free'),
-      warning: t(DROP_TO_FREE_WARNING),
-      proceed: async () => {
-        await cancelSubscription();
-      },
-    });
 
   if (isLoading || isNil(plans)) {
     return (
@@ -156,7 +138,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
               : planSelectorUtils.findPurchasablePlan({
                   plans: allPlans,
                   key: entry.key,
-                  cycle: billingCycle,
+                  cycle: entry.key === 'free' ? 'month' : billingCycle,
                 });
           const monthlySibling =
             entry.key === 'enterprise' || entry.key === 'free'
@@ -178,38 +160,28 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
               })}
               currentPlanId={currentPlanId}
               hasScheduledChange={hasScheduledChange}
-              isReactivating={isReactivating}
               isPending={isPending}
               checkoutPlanId={isPending ? checkoutVariables?.planId : undefined}
               onCheckout={handleCheckout}
-              onKeepPlan={() => reactivate()}
-              freeNeedsDeactivation={freeNeedsDeactivation}
-              onFreeDowngradeWithSeats={handleFreeDowngradeWithSeats}
-              onDowngrade={async () => {
-                await cancelSubscription();
+              onKeepPlan={() => setIsKeepPlanOpen(true)}
+              downgradeWarning={downgradeWarning}
+              freeNeedsDeactivation={exceedsFreeSeats}
+              onFreeDowngradeWithSeats={() => {
+                void cancelWithSeatCheck();
               }}
+              onDowngrade={cancelWithSeatCheck}
             />
           );
         })}
       </div>
 
-      {!isNil(deactivateState) && (
-        <DeactivateUsersDialog
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) {
-              setDeactivateState(null);
-            }
-          }}
-          targetSeats={deactivateState.targetSeats}
-          currentUsers={activeUsers}
-          planName={deactivateState.planName}
-          warning={deactivateState.warning}
-          onConfirmed={() => {
-            const proceed = deactivateState.proceed;
-            setDeactivateState(null);
-            void proceed();
-          }}
+      {deactivateUsersDialog}
+      {seatFloorDialog}
+      {!isNil(subscription) && (
+        <KeepPlanDialog
+          open={isKeepPlanOpen}
+          onOpenChange={setIsKeepPlanOpen}
+          info={subscription}
         />
       )}
     </div>
@@ -242,12 +214,12 @@ function PlanColumn({
   pricing,
   currentPlanId,
   hasScheduledChange,
-  isReactivating,
   isPending,
   checkoutPlanId,
   onCheckout,
   onKeepPlan,
   onDowngrade,
+  downgradeWarning,
   freeNeedsDeactivation,
   onFreeDowngradeWithSeats,
 }: PlanColumnProps) {
@@ -260,13 +232,14 @@ function PlanColumn({
   const chargeAmount = isNil(apiPlan?.price)
     ? apiPlan?.priceDisplay ?? ''
     : `$${apiPlan.price.toLocaleString()}`;
+  const features = planSelectorUtils.resolveFeatures({ entry, apiPlan });
   const handleCtaCheckout = (planId: string, action: CheckoutAction) =>
     onCheckout({
       planId,
       action,
       planName: t(entry.name),
       priceAmount: chargeAmount,
-      features: entry.features.map((feature) => feature.label),
+      features: features.map((feature) => feature.label),
     });
 
   return (
@@ -319,7 +292,6 @@ function PlanColumn({
         isCurrent={isCurrent}
         isOnPaidPlan={isOnPaidPlan}
         hasScheduledChange={hasScheduledChange}
-        isReactivating={isReactivating}
         highlighted={entry.highlighted}
         apiPlan={apiPlan}
         currentPlanId={currentPlanId}
@@ -328,6 +300,7 @@ function PlanColumn({
         onCheckout={handleCtaCheckout}
         onKeepPlan={onKeepPlan}
         onDowngrade={onDowngrade}
+        downgradeWarning={downgradeWarning}
         freeNeedsDeactivation={freeNeedsDeactivation}
         onFreeDowngradeWithSeats={onFreeDowngradeWithSeats}
       />
@@ -335,7 +308,7 @@ function PlanColumn({
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium">{t(entry.featuresHeader)}</span>
         <ul className="flex flex-col gap-2.5">
-          {entry.features.map((feature) => (
+          {features.map((feature) => (
             <li
               key={feature.label}
               className="flex items-center gap-2 text-sm text-foreground"
@@ -366,7 +339,6 @@ function PlanCta({
   isCurrent,
   isOnPaidPlan,
   hasScheduledChange,
-  isReactivating,
   highlighted,
   apiPlan,
   currentPlanId,
@@ -375,6 +347,7 @@ function PlanCta({
   onCheckout,
   onKeepPlan,
   onDowngrade,
+  downgradeWarning,
   freeNeedsDeactivation,
   onFreeDowngradeWithSeats,
 }: PlanCtaProps) {
@@ -395,12 +368,7 @@ function PlanCta({
   if (isCurrent) {
     if (hasScheduledChange) {
       return (
-        <Button
-          variant="default"
-          className="w-full"
-          loading={isReactivating}
-          onClick={onKeepPlan}
-        >
+        <Button variant="default" className="w-full" onClick={onKeepPlan}>
           {t('Keep current plan')}
         </Button>
       );
@@ -435,7 +403,7 @@ function PlanCta({
       <ConfirmationDeleteDialog
         title={t('Downgrade to the Free plan')}
         message={t(DROP_TO_FREE_MESSAGE)}
-        warning={t(DROP_TO_FREE_WARNING)}
+        warning={downgradeWarning}
         buttonText={t('Downgrade to Free')}
         entityName={t('subscription')}
         mutationFn={onDowngrade}
@@ -475,12 +443,12 @@ type PlanColumnProps = {
   pricing: PlanPricing | null;
   currentPlanId: string | null | undefined;
   hasScheduledChange: boolean;
-  isReactivating: boolean;
   isPending: boolean;
   checkoutPlanId: string | undefined;
   onCheckout: (intent: CheckoutIntent) => void;
   onKeepPlan: () => void;
   onDowngrade: () => Promise<void>;
+  downgradeWarning: string;
   freeNeedsDeactivation: boolean;
   onFreeDowngradeWithSeats: () => void;
 };
@@ -491,7 +459,6 @@ type PlanCtaProps = {
   isCurrent: boolean;
   isOnPaidPlan: boolean;
   hasScheduledChange: boolean;
-  isReactivating: boolean;
   highlighted?: boolean;
   apiPlan?: PurchasablePlan;
   currentPlanId: string | null | undefined;
@@ -500,6 +467,7 @@ type PlanCtaProps = {
   onCheckout: (planId: string, action: CheckoutAction) => void;
   onKeepPlan: () => void;
   onDowngrade: () => Promise<void>;
+  downgradeWarning: string;
   freeNeedsDeactivation: boolean;
   onFreeDowngradeWithSeats: () => void;
 };
@@ -510,18 +478,4 @@ type CheckoutIntent = {
   planName: string;
   priceAmount: string;
   features: string[];
-};
-
-type SeatFloorRequest = {
-  targetSeats: number | null;
-  planName?: string;
-  warning?: string;
-  proceed: () => void | Promise<void>;
-};
-
-type DeactivateState = {
-  targetSeats: number;
-  planName?: string;
-  warning?: string;
-  proceed: () => void | Promise<void>;
 };

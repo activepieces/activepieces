@@ -1,9 +1,11 @@
+import { ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   AiCreditsAutoTopUpState,
   AutoTopUpConfig,
   ConsumableProductAutoTopupParams,
   CheckoutPlanParams,
   PlatformBillingInformation,
+  PurchasablePlan,
   AdjustUnconsumableFeatureQuantityParams,
 } from '@activepieces/shared';
 import {
@@ -17,8 +19,11 @@ import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 
 import { platformBillingApi } from '../api/billing-plans-api';
+import { planSelectorUtils } from '../components/plan-selector-utils';
 import { usePlanSwitchSuccessDialogStore } from '../stores/plan-switch-success-dialog-state';
 
 export const PLATFORM_BILLING_SUBSCRIPTION_KEY = [
@@ -42,8 +47,9 @@ export const billingKeys = {
 };
 
 export const billingMutations = {
-  useCheckout: (setIsOpen?: (isOpen: boolean) => void) => {
+  useCheckout: ({ onDone, onSeatLimitExceeded }: CheckoutOptions = {}) => {
     const queryClient = useQueryClient();
+    const { platform } = platformHooks.useCurrentPlatform();
     return useMutation({
       mutationFn: (params: CheckoutPlanParams) =>
         platformBillingApi.checkout(params),
@@ -54,9 +60,32 @@ export const billingMutations = {
           refreshBillingCaches(queryClient);
           usePlanSwitchSuccessDialogStore.getState().openDialog(planId);
         }
-        setIsOpen?.(false);
+        onDone?.();
       },
-      onError: (error) => {
+      onError: async (error, params) => {
+        if (
+          !isNil(onSeatLimitExceeded) &&
+          api.isApError(error, ErrorCode.QUOTA_EXCEEDED)
+        ) {
+          const { data: plans } = await tryCatch(() =>
+            queryClient.ensureQueryData<PurchasablePlan[]>({
+              queryKey: billingKeys.plans(platform.id),
+              queryFn: platformBillingApi.listPlans,
+            }),
+          );
+          const targetPlan = plans?.find((plan) => plan.id === params.planId);
+          if (!isNil(targetPlan?.includedSeats)) {
+            queryClient.invalidateQueries({
+              queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
+            });
+            onSeatLimitExceeded({
+              params,
+              targetSeats: targetPlan.includedSeats,
+              planName: planSelectorUtils.cleanName(targetPlan),
+            });
+            return;
+          }
+        }
         toast.error(t('Starting checkout failed'), {
           description: t(error.message),
           duration: 3000,
@@ -64,7 +93,10 @@ export const billingMutations = {
       },
     });
   },
-  useCancelSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
+  useCancelSubscription: ({
+    onDone,
+    onSeatLimitExceeded,
+  }: CancelSubscriptionOptions = {}) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: () => platformBillingApi.cancel(),
@@ -73,9 +105,19 @@ export const billingMutations = {
         toast.success(
           t('Your plan will be canceled at the end of the billing period'),
         );
-        setIsOpen?.(false);
+        onDone?.();
       },
-      onError: () => {
+      onError: (error) => {
+        if (
+          !isNil(onSeatLimitExceeded) &&
+          api.isApError(error, ErrorCode.QUOTA_EXCEEDED)
+        ) {
+          queryClient.invalidateQueries({
+            queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
+          });
+          onSeatLimitExceeded();
+          return;
+        }
         toast.error(t('Failed to cancel subscription'));
         internalErrorToast();
       },
@@ -273,3 +315,19 @@ function restoreBillingSubscription(
     queryClient.setQueryData<PlatformBillingInformation>(key, data),
   );
 }
+
+type SeatLimitExceededCheckout = {
+  params: CheckoutPlanParams;
+  targetSeats: number;
+  planName: string;
+};
+
+type CheckoutOptions = {
+  onDone?: () => void;
+  onSeatLimitExceeded?: (request: SeatLimitExceededCheckout) => void;
+};
+
+type CancelSubscriptionOptions = {
+  onDone?: () => void;
+  onSeatLimitExceeded?: () => void;
+};

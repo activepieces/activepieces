@@ -3,6 +3,7 @@ import {
   PlatformBillingInformation,
   BillableFeature,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -19,16 +20,22 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
   const hasAdditionalSeats = !isNil(additionalSeats) && additionalSeats > 0;
   const hasInvitedSeats = usage.invitedSeats > 0;
   const included = includedSeats ?? 0;
+  const hasScheduledChange =
+    !isNil(info.cancelAt) || !isNil(info.scheduledPlanName);
+  const scheduledCap = plan.scheduledUsersLimit;
+  const capBinds =
+    !isNil(scheduledCap) && (isUnlimited || scheduledCap < total);
+  const effectiveTotal = capBinds ? scheduledCap : total;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border p-5">
       <span className="text-lg font-semibold text-foreground">
-        {isUnlimited
+        {isNil(effectiveTotal)
           ? t('{used} seats', { used: used.toLocaleString() })
           : t('{used}/{total} seats', {
               used: used.toLocaleString(),
-              total: total.toLocaleString(),
+              total: effectiveTotal.toLocaleString(),
             })}
       </span>
 
@@ -45,7 +52,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
         </div>
       )}
 
-      {hasAdditionalSeats && (
+      {hasAdditionalSeats && !capBinds && (
         <div className="flex flex-col gap-1.5 text-sm">
           <SeatsBreakdownRow
             label={t('Plan seats')}
@@ -58,34 +65,52 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
         </div>
       )}
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="w-fit"
-        onClick={() => setIsDialogOpen(true)}
-      >
-        {hasAdditionalSeats ? (
-          <>
-            <Pencil className="mr-2 size-4" />
-            {t('Manage Seats')}
-          </>
-        ) : (
-          <>
-            <Plus className="mr-2 size-4" />
-            {t('Add Seats')}
-          </>
-        )}
-      </Button>
+      {capBinds ? (
+        <span className="text-sm text-muted-foreground">
+          {t(
+            "You're downgrading to the {plan} plan on {date} — the seat limit shown comes from your scheduled plan.",
+            {
+              plan: info.scheduledPlanName ?? t('Free'),
+              date: dayjs(info.cancelAt).format('MMM D, YYYY'),
+            },
+          )}
+        </span>
+      ) : hasScheduledChange ? (
+        <span className="text-sm text-muted-foreground">
+          {t('Seat changes are unavailable while a plan change is scheduled.')}
+        </span>
+      ) : (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => setIsDialogOpen(true)}
+          >
+            {hasAdditionalSeats ? (
+              <>
+                <Pencil className="mr-2 size-4" />
+                {t('Manage Seats')}
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 size-4" />
+                {t('Add Seats')}
+              </>
+            )}
+          </Button>
 
-      <ManageSeatsDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        feature={feature}
-        currentUsers={used}
-        includedSeats={includedSeats}
-        additionalSeats={additionalSeats}
-      />
+          <ManageSeatsDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            feature={feature}
+            currentUsers={used}
+            includedSeats={includedSeats}
+            additionalSeats={additionalSeats}
+          />
+        </>
+      )}
     </div>
   );
 };

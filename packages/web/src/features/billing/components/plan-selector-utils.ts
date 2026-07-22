@@ -71,6 +71,65 @@ function computePricing({
   };
 }
 
+function resolveFeatures({
+  entry,
+  apiPlan,
+}: {
+  entry: PlanCatalogEntry;
+  apiPlan?: PurchasablePlan;
+}): ResolvedPlanFeature[] {
+  return entry.features.flatMap((feature): ResolvedPlanFeature[] => {
+    if (isNil(feature.metric)) {
+      return isNil(feature.label)
+        ? []
+        : [{ label: feature.label, tooltip: feature.tooltip }];
+    }
+    if (feature.metric === 'seats') {
+      return isNil(apiPlan?.includedSeats)
+        ? []
+        : [
+            {
+              label: t('{count, plural, =1 {1 seat} other {# seats}}', {
+                count: apiPlan.includedSeats,
+              }),
+              tooltip: feature.tooltip,
+            },
+          ];
+    }
+    return isNil(apiPlan?.includedCredits)
+      ? []
+      : [
+          {
+            label: creditsLabel({
+              credits: apiPlan.includedCredits,
+              interval: apiPlan.creditsResetInterval,
+            }),
+            tooltip: feature.tooltip,
+          },
+        ];
+  });
+}
+
+function creditsLabel({
+  credits,
+  interval,
+}: {
+  credits: number;
+  interval: string | null | undefined;
+}): string {
+  const amount = credits.toLocaleString();
+  switch (interval) {
+    case 'day':
+      return t('{amount} credits/day', { amount });
+    case 'month':
+      return t('{amount} credits/mo', { amount });
+    case 'year':
+      return t('{amount} credits/yr', { amount });
+    default:
+      return t('{amount} credits', { amount });
+  }
+}
+
 function actionFor({
   currentPlanId,
 }: {
@@ -86,6 +145,17 @@ function buildSuccessUrl(action: CheckoutAction): string {
   return `${window.location.origin}/platform/setup/billing/success?action=${action}`;
 }
 
+function dropToFreeWarning(additionalSeats: number | null | undefined): string {
+  const base = t(DROP_TO_FREE_WARNING);
+  if (isNil(additionalSeats) || additionalSeats <= 0) {
+    return base;
+  }
+  return `${base} ${t(
+    'Your {count, plural, =1 {1 additional seat} other {# additional seats}} will be removed and the unused time credited back.',
+    { count: additionalSeats },
+  )}`;
+}
+
 const PLAN_CATALOG: PlanCatalogEntry[] = [
   {
     key: 'free',
@@ -94,8 +164,8 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
       'Perfect for individuals who want to explore automation without any commitment.',
     featuresHeader: "What's included:",
     features: [
-      { label: '100 credits/day' },
-      { label: '1 seat' },
+      { metric: 'credits' },
+      { metric: 'seats' },
       { label: 'Automation flows' },
       { label: 'Tables' },
       { label: 'API Keys' },
@@ -108,8 +178,8 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
       'Built for solo builders who automate regularly and need more credits and advanced tools.',
     featuresHeader: 'Everything in Free, +',
     features: [
-      { label: '10,000 credits/mo' },
-      { label: '5 seats' },
+      { metric: 'credits' },
+      { metric: 'seats' },
       { label: 'Agents / Chat' },
       { label: 'Projects, MCPs' },
       { label: 'BYOK' },
@@ -124,8 +194,8 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
       'Designed for teams that collaborate on automations and need user management and integrations.',
     featuresHeader: 'Everything in Plus, +',
     features: [
-      { label: '50,000 credits/mo' },
-      { label: '100 seats' },
+      { metric: 'credits' },
+      { metric: 'seats' },
       { label: 'SSO' },
       { label: 'Standard roles' },
       { label: 'Global connections' },
@@ -188,8 +258,12 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
 ];
 
 export const planSelectorUtils = {
+  cleanName,
   findPurchasablePlan,
   computePricing,
+  resolveFeatures,
+  creditsLabel,
+  dropToFreeWarning,
   actionFor,
   buildSuccessUrl,
   PLAN_CATALOG,
@@ -216,6 +290,12 @@ export type PlanPricing = {
 export type PlanKey = 'free' | 'plus' | 'team' | 'enterprise';
 
 export type PlanFeature = {
+  label?: string;
+  tooltip?: string;
+  metric?: 'seats' | 'credits';
+};
+
+export type ResolvedPlanFeature = {
   label: string;
   tooltip?: string;
 };

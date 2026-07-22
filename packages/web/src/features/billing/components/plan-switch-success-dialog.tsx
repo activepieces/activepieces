@@ -4,7 +4,9 @@ import { Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { platformHooks } from '@/hooks/platform-hooks';
 
+import { billingQueries } from '../hooks/billing-hooks';
 import { usePlanSwitchSuccessDialogStore } from '../stores/plan-switch-success-dialog-state';
 
 import {
@@ -21,7 +23,18 @@ function resolveEntry(planId: string): PlanCatalogEntry | undefined {
 
 export function PlanSwitchSuccessDialog() {
   const { planId, closeDialog } = usePlanSwitchSuccessDialogStore();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: plans } = billingQueries.useListPlans(
+    platform.id,
+    !isNil(planId),
+  );
   const entry = isNil(planId) ? undefined : resolveEntry(planId);
+  const features = isNil(entry)
+    ? []
+    : planSelectorUtils.resolveFeatures({
+        entry,
+        apiPlan: plans?.find((plan) => plan.id === planId),
+      });
 
   return (
     <Dialog
@@ -44,7 +57,7 @@ export function PlanSwitchSuccessDialog() {
                     style: 'long',
                     type: 'conjunction',
                   }).format(
-                    entry.features
+                    features
                       .slice(0, HIGHLIGHT_COUNT)
                       .map((feature) => t(feature.label)),
                   ),

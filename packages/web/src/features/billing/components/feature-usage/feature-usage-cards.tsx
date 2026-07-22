@@ -1,4 +1,5 @@
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 
@@ -79,12 +80,20 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
           </div>
         </div>
       )}
+
+      {!isNil(metric.note) && (
+        <span className="text-xs text-muted-foreground">{metric.note}</span>
+      )}
     </div>
   );
 }
 
 function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
   const { plan, usage } = info;
+  const scheduledCap = plan.scheduledUsersLimit;
+  const usersCapBinds =
+    !isNil(scheduledCap) &&
+    (isNil(plan.usersLimit) || scheduledCap < plan.usersLimit);
   const metrics: UsageMetric[] = [
     {
       key: 'credits',
@@ -98,7 +107,16 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
       label: 'Users',
       icon: Users,
       used: usage.users,
-      included: plan.usersLimit ?? null,
+      included: usersCapBinds ? scheduledCap : plan.usersLimit ?? null,
+      note: usersCapBinds
+        ? t(
+            "You're downgrading to the {plan} plan on {date} — the seat limit shown comes from your scheduled plan.",
+            {
+              plan: info.scheduledPlanName ?? t('Free'),
+              date: dayjs(info.cancelAt).format('MMM D, YYYY'),
+            },
+          )
+        : undefined,
     },
     {
       key: 'active-flows',
@@ -137,4 +155,5 @@ type UsageMetric = {
   icon: LucideIcon;
   used: number;
   included: number | null;
+  note?: string;
 };
