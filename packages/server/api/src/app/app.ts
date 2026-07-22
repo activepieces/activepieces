@@ -73,6 +73,7 @@ import { flagHooks } from './flags/flags.hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
+import { stuckRunSweeper } from './flows/flow-run/stuck-run-sweeper'
 import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
@@ -282,6 +283,23 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             cron: '* * * * *',
         },
     })
+
+    if (system.get(AppSystemProp.ENVIRONMENT) !== ApEnvironment.TESTING) {
+        systemJobHandlers.registerJobHandler(SystemJobName.STUCK_RUN_SWEEP, async () => {
+            await stuckRunSweeper(app.log).sweep()
+        })
+        await systemJobsSchedule(app.log).upsertJob({
+            job: {
+                name: SystemJobName.STUCK_RUN_SWEEP,
+                data: {},
+                jobId: SystemJobName.STUCK_RUN_SWEEP,
+            },
+            schedule: {
+                type: 'repeated',
+                cron: '* * * * *',
+            },
+        })
+    }
 
     app.get(
         '/redirect',

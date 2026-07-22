@@ -52,6 +52,10 @@ _Avoid_: execution, job, run instance
 **FlowRunStatus**:
 The state machine for a run: QUEUED, RUNNING, PAUSED, SUCCEEDED, FAILED, TIMEOUT, CANCELED, and others.
 
+**Stuck Run**:
+A FlowRun left in RUNNING with no live worker executing it (the worker died mid-run), detectable because its row stops receiving the engine's periodic progress writes. The Stuck Run Sweep finalizes these as TIMEOUT.
+_Avoid_: orphaned run, zombie run, limbo run
+
 **RunTimeline**:
 A run's latency breakdown as legs of four phases — Queue, Provision, Boot, Run — persisted on `flow_run` and shown as a stacked bar in the run detail view.
 _Avoid_: latency breakdown, waterfall
