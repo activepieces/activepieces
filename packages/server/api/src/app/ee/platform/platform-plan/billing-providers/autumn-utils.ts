@@ -24,7 +24,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://summary-cables-returned-appreciated.trycloudflare.com'
+const AUTUMN_CONSOLE_URL = 'https://mounts-already-ministries-candles.trycloudflare.com'
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
@@ -146,7 +146,7 @@ export const autumnUtils = {
         if (isNil(client)) {
             return
         }
-        const customer = await client.getCustomer()
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
         const entitlements = toAutumnEntitlements(customer)
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
         await autumnUtils.writeCustomerStateCaches(platformId, customer)
@@ -191,6 +191,7 @@ export const autumnUtils = {
             plan: entitlements.planId,
             teamProjectsLimit: toProjectedLimit(teamProjects, 1),
             usersLimit: toProjectedLimit(users, null),
+            scheduledUsersLimit: entitlements.scheduledUsersLimit,
             activeFlowsLimit: toProjectedLimit(activeFlows, null),
             includedCredits: credits?.granted ?? 0,
         }
@@ -366,6 +367,7 @@ async function consoleGet<T>(url: string, config: AxiosRequestConfig): Promise<A
 }
 
 function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
+    const creditsItem = (plan.items ?? []).find((item) => item.featureId === AutumnFeatureId.AP_CREDITS && isNil(item.price))
     return {
         id: plan.id,
         name: plan.name,
@@ -375,6 +377,8 @@ function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
         priceDisplay: plan.price?.display?.primaryText ?? null,
         baseVariantId: plan.baseVariantId ?? SELF_SERVE_ANNUAL_BASE[plan.id] ?? null,
         includedSeats: (plan.items ?? []).find((item) => item.featureId === AutumnFeatureId.USERS_LIMIT)?.included ?? null,
+        includedCredits: creditsItem?.included ?? null,
+        creditsResetInterval: creditsItem?.reset?.interval ?? null,
     }
 }
 
@@ -434,7 +438,18 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
         planId,
         flags,
         balances,
+        scheduledUsersLimit: toScheduledUsersLimit(baseSubscriptions),
     }
+}
+
+function toScheduledUsersLimit(baseSubscriptions: GetCustomerResponse['subscriptions']): number | null {
+    const scheduledSubscription = baseSubscriptions.find((subscription) => subscription.status === 'scheduled')
+    const usersLimitItem = (scheduledSubscription?.plan?.items ?? [])
+        .find((item) => item.featureId === AutumnFeatureId.USERS_LIMIT)
+    if (isNil(usersLimitItem) || usersLimitItem.unlimited) {
+        return null
+    }
+    return usersLimitItem.included ?? null
 }
 
 function toProjectedLimit(balance: AutumnFeatureBalance | undefined, whenAbsent: number | null): number | null {
@@ -476,6 +491,7 @@ type AutumnEntitlements = {
     planId: string | null
     flags: Record<string, boolean>
     balances: Record<string, AutumnFeatureBalance>
+    scheduledUsersLimit: number | null
 }
 
 type AutumnEnrollmentCredentials = {

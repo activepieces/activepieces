@@ -53,7 +53,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
     async onPlatformCreated(platformId: string): Promise<void> {
         await createInitialBilling(platformId)
-        triggerLazyBillingProviderSync({ platformId, autumnCustomerId: null }, log)
+        await enrollBillingProviderOnCreate(platformId, log)
     },
 
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
@@ -161,11 +161,15 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             .setLock('pessimistic_write')
             .where('platform_plan.platformId = :platformId', { platformId })
             .getOne()
-        if (isNil(platformPlan) || isNil(platformPlan.usersLimit)) {
+        if (isNil(platformPlan)) {
+            return
+        }
+        const usersLimit = effectiveUsersLimit(platformPlan)
+        if (isNil(usersLimit)) {
             return
         }
         const { usedSeats } = await countUsedSeats({ platformId, log, entityManager })
-        if (usedSeats + additionalSeatsNeeded > platformPlan.usersLimit) {
+        if (usedSeats + additionalSeatsNeeded > usersLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
                 params: {
@@ -198,6 +202,12 @@ export async function assertSeatsNotBelowActiveUsers({ platformId, targetLimit, 
             },
         })
     }
+}
+
+
+function effectiveUsersLimit({ usersLimit, scheduledUsersLimit }: Pick<PlatformPlan, 'usersLimit' | 'scheduledUsersLimit'>): number | null {
+    const limits = [usersLimit, scheduledUsersLimit].filter((limit): limit is number => !isNil(limit))
+    return limits.length === 0 ? null : Math.min(...limits)
 }
 
 export async function countUsedSeats({ platformId, log, entityManager }: CountUsedSeatsParams): Promise<SeatBreakdown> {
@@ -236,6 +246,14 @@ function triggerLazyBillingProviderSync({ platformId, autumnCustomerId }: Trigge
         return
     }
     rejectedPromiseHandler(throttledBillingProviderRefresh(platformId, log), log)
+}
+
+async function enrollBillingProviderOnCreate(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
+        return
+    }
+    await throttledBillingProviderEnrollment(platformId, log)
+        .catch((error) => log.warn({ error, platform: { id: platformId } }, 'Billing provider enrollment failed on platform creation'))
 }
 
 async function throttledBillingProviderEnrollment(platformId: string, log: FastifyBaseLogger): Promise<void> {

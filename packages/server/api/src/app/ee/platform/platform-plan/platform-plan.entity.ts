@@ -66,6 +66,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Number,
             nullable: true,
         },
+        scheduledUsersLimit: {
+            type: Number,
+            nullable: true,
+        },
         projectRolesEnabled: {
             type: Boolean,
         },

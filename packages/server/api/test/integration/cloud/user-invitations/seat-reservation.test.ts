@@ -145,6 +145,41 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
         })
     })
 
+    describe('Scheduled seat cap (ADR-0013)', () => {
+        it('blocks inviting past the scheduled cap even when under the current limit', async () => {
+            const { mockOwnerToken, mockProject } = await setupPlatform({ usersLimit: 5, scheduledUsersLimit: 1 })
+
+            const response = await invite({
+                token: mockOwnerToken,
+                projectId: mockProject.id,
+                email: faker.internet.email().toLowerCase(),
+            })
+
+            expectSeatQuotaExceeded(response)
+        })
+
+        it('blocks reactivating a user past the scheduled cap', async () => {
+            const { mockOwnerToken, mockPlatform } = await setupPlatform({ usersLimit: 5, scheduledUsersLimit: 1 })
+            const inactiveMember = await createInactiveMember(mockPlatform.id)
+
+            const response = await reactivate({ token: mockOwnerToken, userId: inactiveMember.id })
+
+            expectSeatQuotaExceeded(response)
+        })
+
+        it('allows seat use up to the scheduled cap', async () => {
+            const { mockOwnerToken, mockProject } = await setupPlatform({ usersLimit: 5, scheduledUsersLimit: 3 })
+
+            const response = await invite({
+                token: mockOwnerToken,
+                projectId: mockProject.id,
+                email: faker.internet.email().toLowerCase(),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        })
+    })
+
     describe('Active-user floor (assertSeatsNotBelowActiveUsers)', () => {
         it('rejects a target seat limit below used seats (active + reserved)', async () => {
             const { mockPlatform } = await setupPlatform({ usersLimit: 5 })
@@ -166,7 +201,7 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
     })
 })
 
-async function setupPlatform({ usersLimit }: { usersLimit: number }): Promise<{
+async function setupPlatform({ usersLimit, scheduledUsersLimit = null }: { usersLimit: number, scheduledUsersLimit?: number | null }): Promise<{
     mockOwner: User
     mockPlatform: Platform
     mockProject: Project
@@ -177,7 +212,7 @@ async function setupPlatform({ usersLimit }: { usersLimit: number }): Promise<{
     const ownerEmail = faker.internet.email().toLowerCase()
     const { mockOwner, mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey({
         userIdentity: { email: ownerEmail },
-        plan: { usersLimit, projectRolesEnabled: true, auditLogEnabled: false },
+        plan: { usersLimit, scheduledUsersLimit, projectRolesEnabled: true, auditLogEnabled: false },
     })
     await distributedStore.put(getBillingEnforcedKey(mockPlatform.id), true, 300)
     const mockOwnerToken = await generateMockToken({

@@ -38,6 +38,8 @@ export const PurchasablePlan = z.object({
     priceDisplay: Nullable(z.string()),
     baseVariantId: Nullable(z.string()),
     includedSeats: Nullable(z.number()),
+    includedCredits: Nullable(z.number()),
+    creditsResetInterval: Nullable(z.string()),
 })
 export type PurchasablePlan = z.infer<typeof PurchasablePlan>
 
