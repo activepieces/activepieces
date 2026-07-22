@@ -24,6 +24,13 @@ export const projectWorkerGroupService = (_log: FastifyBaseLogger) => ({
         await distributedStore.put(getProjectWorkerGroupCacheKey(projectId), workerGroupId ?? NO_WORKER_GROUP_SENTINEL, CACHE_TTL_SECONDS)
         return workerGroupId
     },
+    async getWorkerGroupProjects({ workerGroupId }: { workerGroupId: string }): Promise<string[]> {
+        const projects = await projectRepo().find({
+            select: ['id'],
+            where: { workerGroupId },
+        })
+        return projects.map((p) => p.id)
+    },
 
     async invalidate({ projectId }: { projectId: string }): Promise<void> {
         await distributedStore.delete(getProjectWorkerGroupCacheKey(projectId))

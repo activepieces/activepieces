@@ -1,11 +1,11 @@
 FROM node:24.14.0-bullseye-slim AS base
 
-# Set environment variables early for better layer caching
-ENV LANG=en_US.UTF-8 \
-    LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
+# C.UTF-8 ships with Debian, so no locale generation is needed
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
-# Install all system dependencies in a single layer with cache mounts
+# Install all system dependencies in a single layer with cache mounts.
+# libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
@@ -18,29 +18,24 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         poppler-utils \
         poppler-data \
         procps \
-        locales \
         unzip \
         curl \
         ca-certificates \
         iptables \
-        libcap-dev && \
-    yarn config set python /usr/bin/python3 && \
-    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
-    locale-gen en_US.UTF-8
+        libcap2
 
+# Download, extract, and clean up bun in a single layer so the zip never ships
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
       curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
     elif [ "$ARCH" = "aarch64" ]; then \
       curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
-    fi
-
-RUN unzip bun.zip \
-    && mv bun-*/bun /usr/local/bin/bun \
-    && chmod +x /usr/local/bin/bun \
-    && rm -rf bun.zip bun-*
-
-RUN bun --version
+    fi && \
+    unzip bun.zip && \
+    mv bun-*/bun /usr/local/bin/bun && \
+    chmod +x /usr/local/bin/bun && \
+    rm -rf bun.zip bun-* && \
+    bun --version
 
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
@@ -48,7 +43,6 @@ RUN --mount=type=cache,target=/root/.npm \
     node-gyp \
     npm@11.11.0 \
     pm2@6.0.10 \
-    typescript@4.9.4 \
     esbuild@0.25.0
 
 # Install isolated-vm globally (needed for sandboxes)
@@ -88,15 +82,19 @@ RUN node -e "\
   process.stdout.write(JSON.stringify(names));\
 " > packages/server/api/dist/src/migration-manifest.json
 
-# Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
-# Then regenerate bun.lock so it matches the trimmed workspace
-RUN rm -rf packages/pieces/core packages/pieces/custom && \
+# Remove workspaces not needed at runtime: pieces except the 4 the api imports,
+# plus web/cli/tests-e2e/embed-sdk whose deps (react & friends) would otherwise land
+# in the runtime node_modules. dist/packages/web is already built and kept.
+# Then drop the removed entries from the root workspaces list and regenerate bun.lock.
+RUN rm -rf packages/pieces/core packages/pieces/custom \
+      packages/web packages/cli packages/tests-e2e packages/ee && \
     find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
       ! -name slack \
       ! -name square \
       ! -name facebook-leads \
       ! -name intercom \
       -exec rm -rf {} + && \
+    node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.workspaces=p.workspaces.filter(w=>fs.existsSync(w.replace('/*','')));fs.writeFileSync('package.json',JSON.stringify(p,null,2))" && \
     rm -f bun.lock && bun install
 
 ### STAGE 2: Run ###
@@ -106,12 +104,7 @@ WORKDIR /usr/src/app
 
 # Copy static configuration files first (better layer caching)
 COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
-COPY docker-entrypoint.sh .
-
-# Create all necessary directories in one layer
-RUN mkdir -p \
-    /usr/src/app/dist/packages/engine && \
-    chmod +x docker-entrypoint.sh
+COPY --chmod=755 docker-entrypoint.sh .
 
 # Copy root config files needed for dependency resolution
 COPY --from=build /usr/src/app/package.json ./
@@ -134,6 +127,10 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
 LABEL service=activepieces
+
+# WORKER containers have no HTTP server; treat them as healthy (probe only the app).
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
+    CMD [ "$AP_CONTAINER_TYPE" = "WORKER" ] && exit 0 || curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/health" || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 EXPOSE 80

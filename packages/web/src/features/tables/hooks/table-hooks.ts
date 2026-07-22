@@ -117,17 +117,15 @@ export const tableHooks = {
       name: tableTemplate.name,
     });
 
-    await Promise.all(
-      tableTemplate.fields.map((fieldState) =>
-        fieldsApi.create({
-          name: fieldState.name,
-          type: fieldState.type as any,
-          tableId: existingTableId,
-          data: fieldState.data as any,
-          externalId: fieldState.externalId,
-        }),
-      ),
-    );
+    for (const fieldState of tableTemplate.fields) {
+      await fieldsApi.create({
+        name: fieldState.name,
+        type: fieldState.type as any,
+        tableId: existingTableId,
+        data: fieldState.data as any,
+        externalId: fieldState.externalId,
+      });
+    }
 
     if (tableTemplate.data && tableTemplate.data.rows.length > 0) {
       const createdFields = await fieldsApi.list({ tableId: existingTableId });
