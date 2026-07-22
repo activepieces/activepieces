@@ -4,7 +4,6 @@ export { analyticsApi } from './api/analytics-api';
 export { apiKeyApi } from './api/api-key-api';
 export { auditEventsApi } from './api/audit-events-api';
 export { embedSubdomainApi } from './api/embed-subdomain-api';
-export { piecesTagsApi } from './api/pieces-tags';
 export { projectRoleApi } from './api/project-role-api';
 export { samlSsoApi } from './api/saml-sso-api';
 export { signingKeyApi } from './api/signing-key-api';
@@ -44,17 +43,7 @@ export {
   aiToolConfigMutations,
   aiToolConfigKeys,
 } from './hooks/ai-tool-config-hooks';
-export {
-  piecesTagQueries,
-  piecesTagMutations,
-  piecesTagKeys,
-} from './hooks/pieces-tag-hooks';
 export { platformPiecesMutations } from './hooks/platform-pieces-hooks';
-export { platformPieceFilterApi } from './api/platform-piece-filter-api';
-export {
-  platformPieceFilterQueries,
-  platformPieceFilterKeys,
-} from './hooks/platform-piece-filter-hooks';
 export { brandingMutations } from './hooks/branding-hooks';
 export { workersQueries, workersKeys } from './hooks/workers-hooks';
 export { healthQueries, healthKeys } from './hooks/health-hooks';

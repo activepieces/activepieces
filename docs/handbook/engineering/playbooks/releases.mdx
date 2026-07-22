@@ -92,6 +92,12 @@ Manual dispatch only. Rolls back the canary environment to a previous image tag.
 
 Manual dispatch only. Prompts for a **release tag** (e.g., `0.79.2` or `0.79.2-hotfix.1`). Builds multi-platform images (amd64 + arm64), pushes to Docker Hub and GHCR, and creates a git tag. Can be run from any branch — useful for patching older versions.
 
+This is the **only** release path that takes a free-text version — the scheduled `continuous-delivery-release.yml` and `continuous-delivery-canary.yml` both derive the version from `package.json` (`node --print "require('./package.json').version"`) and never ask a human. The free-text input exists precisely because off-cycle patches carry deploy-only suffixes (`-hotfix.N`, `-rc.N`) that don't live in `package.json`. Because `package.json` is the single runtime source of truth (`apVersionUtil.getCurrentRelease` reads it, and it's baked into the image from source), a mistyped tag would publish an image whose real version disagrees with its tag — invisible until it's mixed with a correctly-built peer and the worker↔app version gate silently withholds jobs. The **`Verify tag matches package.json`** step fails the release when the tag's base `X.Y.Z` (suffix stripped) doesn't equal `package.json`, so bump `package.json` (or fix the tag) before releasing.
+
+### `publish-embed-sdk.yml`
+
+Publishes the embed SDK bundle (`packages/ee/embed-sdk`) to `https://cdn.activepieces.com/sdk/embed/<version>.js`. Runs on pushes to `main` that change `packages/ee/embed-sdk/package.json`, on a daily schedule, and on manual dispatch (`main` only). The check job compares the package version against the CDN and publishes only when that version is missing: a 200 skips, a 404 publishes, anything else fails the run. Bumping `version` in `packages/ee/embed-sdk/package.json` is the entire release procedure for the SDK; the daily schedule retries failed publishes, and already-published versions are never overwritten. Failures notify the on-call Discord channel. Requires the `CDN_S3_ENDPOINT`, `CDN_S3_BUCKET`, `CDN_S3_ACCESS_KEY_ID`, `CDN_S3_SECRET_ACCESS_KEY`, and `DISCORD_ON_CALL_WEBHOOK` secrets.
+
 ## Changelog
 
 Before each weekly release, ensure the draft GitHub release has accurate notes. PRs should be labeled correctly so the auto-generated changelog categorizes them properly.

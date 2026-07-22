@@ -1,11 +1,11 @@
 import { AIProviderName, apId } from '@activepieces/core-utils'
-import { PrincipalType } from '@activepieces/shared'
+import { DefaultProjectRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
-import { createTestContext, TestContext } from '../../../helpers/test-context'
+import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -177,6 +177,96 @@ describe('AI Providers API', () => {
             )
             expect(customProvider).toBeDefined()
             expect(customProvider.config.defaultHeaders).toEqual({ 'X-Test': 'test' })
+        })
+    })
+
+    describe('authorization: mutations require platform admin', () => {
+        const createBody = {
+            provider: AIProviderName.CUSTOM,
+            displayName: 'Attacker Provider',
+            config: {
+                baseUrl: 'https://attacker.example.com/v1',
+                apiKeyHeader: 'Authorization',
+                models: [],
+            },
+            auth: { apiKey: 'attacker-key' },
+        }
+
+        it('forbids a non-admin platform member from creating a provider', async () => {
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.VIEWER,
+            })
+
+            const response = await memberCtx.post('/v1/ai-providers', createBody)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('forbids a non-admin platform member from updating a provider', async () => {
+            const provider = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Victim Provider',
+                config: {
+                    baseUrl: 'https://api.example.com/v1',
+                    apiKeyHeader: 'Authorization',
+                    models: [],
+                },
+            })
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.VIEWER,
+            })
+
+            const response = await memberCtx.post(`/v1/ai-providers/${provider.id}`, createBody)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('forbids a non-admin platform member from deleting a provider', async () => {
+            const provider = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Victim Provider',
+                config: {
+                    baseUrl: 'https://api.example.com/v1',
+                    apiKeyHeader: 'Authorization',
+                    models: [],
+                },
+            })
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.VIEWER,
+            })
+
+            const response = await memberCtx.delete(`/v1/ai-providers/${provider.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('allows a platform admin to delete a provider', async () => {
+            const provider = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Admin Provider',
+                config: {
+                    baseUrl: 'https://api.example.com/v1',
+                    apiKeyHeader: 'Authorization',
+                    models: [],
+                },
+            })
+
+            const response = await ctx.delete(`/v1/ai-providers/${provider.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('still allows a non-admin platform member to list providers', async () => {
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.VIEWER,
+            })
+
+            const response = await memberCtx.get('/v1/ai-providers')
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 })

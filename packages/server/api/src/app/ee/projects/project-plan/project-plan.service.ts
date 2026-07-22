@@ -1,26 +1,58 @@
-import { apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { PiecesFilterType, ProjectPlan, ProjectPlanLimits } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
+import { ApEdition, FlowStatus, PiecesFilterType, ProjectPlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { flowService } from '../../../flows/flow/flow.service'
+import { system } from '../../../helper/system/system'
 import { ProjectPlanEntity } from './project-plan.entity'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
+const edition = system.getEdition()
 
 export const projectLimitsService = (_log: FastifyBaseLogger) => ({
-    async upsert(
-        planLimits: ProjectPlanLimits,
-        projectId: string,
-        entityManager?: EntityManager,
-    ): Promise<ProjectPlan> {
+    async updateActiveFlowsLimit({ projectId, activeFlowsLimit, entityManager }: UpdateActiveFlowsLimitParams): Promise<ProjectPlan> {
+        if (!isNil(activeFlowsLimit)) {
+            const activeFlows = await flowService(_log).count({
+                projectId,
+                status: FlowStatus.ENABLED,
+            })
+            if (activeFlows > activeFlowsLimit) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `Project already has ${activeFlows} active flows, which exceeds the limit of ${activeFlowsLimit}`,
+                    },
+                })
+            }
+        }
         const projectPlan = await this.getOrCreateDefaultPlan(projectId)
         await projectPlanRepo(entityManager).update(projectPlan.id, {
-            ...spreadIfDefined('name', planLimits.nickname),
-            ...spreadIfDefined('locked', planLimits.locked),
-            ...spreadIfDefined('pieces', planLimits.pieces),
-            ...spreadIfDefined('piecesFilterType', planLimits.piecesFilterType),
+            activeFlowsLimit,
         })
         return projectPlanRepo().findOneByOrFail({ projectId })
+    },
+
+    async checkActiveFlowsExceededLimit({ projectId }: { projectId: string }): Promise<void> {
+        if (edition === ApEdition.COMMUNITY) {
+            return
+        }
+        const projectPlan = await projectPlanRepo().findOneBy({ projectId })
+        if (isNil(projectPlan) || isNil(projectPlan.activeFlowsLimit)) {
+            return
+        }
+        const activeFlows = await flowService(_log).count({
+            projectId,
+            status: FlowStatus.ENABLED,
+        })
+        if (activeFlows >= projectPlan.activeFlowsLimit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: PlatformUsageMetric.ACTIVE_FLOWS,
+                },
+            })
+        }
     },
 
     async getOrCreateDefaultPlan(projectId: string): Promise<ProjectPlan> {
@@ -45,13 +77,13 @@ export const projectLimitsService = (_log: FastifyBaseLogger) => ({
     async getOrCreateDefaultPlansForProjects(projectIds: string[]): Promise<Map<string, ProjectPlan>> {
         if (projectIds.length === 0) return new Map()
 
-        const existingPlans = await projectPlanRepo().findBy({ 
+        const existingPlans = await projectPlanRepo().findBy({
             projectId: In(projectIds),
         })
         const plansMap = new Map<string, ProjectPlan>(existingPlans.map(p => [p.projectId, p]))
 
         const projectsWithoutPlans = projectIds.filter(id => !plansMap.has(id))
-        
+
         if (projectsWithoutPlans.length > 0) {
             const newPlans = await Promise.all(
                 projectsWithoutPlans.map(projectId => this.getOrCreateDefaultPlan(projectId)),
@@ -64,4 +96,8 @@ export const projectLimitsService = (_log: FastifyBaseLogger) => ({
 
 })
 
-
+type UpdateActiveFlowsLimitParams = {
+    projectId: string
+    activeFlowsLimit: number | null
+    entityManager?: EntityManager
+}

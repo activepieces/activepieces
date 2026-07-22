@@ -1,0 +1,108 @@
+name: Publish Embed SDK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/ee/embed-sdk/package.json'
+  schedule:
+    - cron: '17 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.repository == 'activepieces/activepieces' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish: ${{ steps.version.outputs.publish }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: packages/ee/embed-sdk/package.json
+          sparse-checkout-cone-mode: false
+
+      - name: Compare local version against CDN
+        id: version
+        run: |
+          VERSION=$(node -p "require('./packages/ee/embed-sdk/package.json').version")
+          echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$' || { echo "Invalid version: $VERSION"; exit 1; }
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://cdn.activepieces.com/sdk/embed/$VERSION.js" || true)
+          case "$STATUS" in
+            200) PUBLISH=false ;;
+            404) PUBLISH=true ;;
+            *) echo "Unexpected CDN status $STATUS for $VERSION.js"; exit 1 ;;
+          esac
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
+          echo "local=$VERSION cdn-status=$STATUS publish=$PUBLISH"
+
+  publish:
+    needs: check
+    if: needs.check.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v5
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Bundle embed SDK
+        run: bun run --cwd packages/ee/embed-sdk bundle
+
+      - name: Upload to CDN
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.CDN_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CDN_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          BUCKET: ${{ secrets.CDN_S3_BUCKET }}
+          ENDPOINT: ${{ secrets.CDN_S3_ENDPOINT }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          aws s3 cp dist/packages/ee/embed-sdk/bundled.js \
+            "s3://$BUCKET/sdk/embed/$VERSION.js" \
+            --endpoint-url "$ENDPOINT" \
+            --content-type "text/javascript" \
+            --cache-control "max-age=604800" \
+            --acl public-read
+
+      - name: Verify publish
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://cdn.activepieces.com/sdk/embed/$VERSION.js?run=$GITHUB_RUN_ID" || true)
+          [ "$STATUS" = "200" ] || { echo "Publish verification failed: HTTP $STATUS"; exit 1; }
+
+  notify:
+    needs:
+      - check
+      - publish
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord on failure
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Publish Embed SDK Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe embed SDK publish workflow has failed. Please check the logs for more details.\"}" \
+            "$DISCORD_WEBHOOK"
