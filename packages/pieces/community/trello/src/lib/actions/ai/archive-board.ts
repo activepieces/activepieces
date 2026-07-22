@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { archiveBoardActionOutputSchema } from '../../output-schemas';
 
 export const archiveBoard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const archiveBoard = createAction({
   displayName: 'Archive Board (Agent)',
   description: 'Close (archive) or reopen a Trello board.',
   audience: 'ai',
+  outputSchema: archiveBoardActionOutputSchema,
   aiMetadata: {
     description:
       'Closes (archives, closed=true) or reopens (closed=false) a Trello board identified by board_id. Archiving is recoverable; prefer this over permanently deleting a board. Obtain board_id from List Boards. Setting the same closed state again converges, so it is idempotent.',

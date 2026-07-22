@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { TrelloCard } from '../../common/props/card';
 import { trelloAuth } from '../../..';
+import { getCardAiActionOutputSchema } from '../../output-schemas';
 
 export const getCardAi = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const getCardAi = createAction({
   displayName: 'Get Card (Agent)',
   description: 'Get the full details of a Trello card by ID.',
   audience: 'ai',
+  outputSchema: getCardAiActionOutputSchema,
   aiMetadata: {
     description:
       'Retrieves the full details of a single Trello card by its card_id (name, description, due date, labels, list, members, and more). Obtain the card_id from Search Cards, List Cards In List, or List Cards In Board. Read-only and idempotent.',

@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listBoardLabelsActionOutputSchema } from '../../output-schemas';
 
 export const listBoardLabels = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listBoardLabels = createAction({
   displayName: 'List Board Labels (Agent)',
   description: "List a board's labels.",
   audience: 'ai',
+  outputSchema: listBoardLabelsActionOutputSchema,
   aiMetadata: {
     description:
       "Lists the labels defined on a Trello board, returning each label id, name, and color. Use it to resolve a label_id for Add Label To Card / Remove Label From Card. Obtain board_id from List Boards. Read-only and idempotent.",

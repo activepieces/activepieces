@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { archiveListActionOutputSchema } from '../../output-schemas';
 
 export const archiveList = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const archiveList = createAction({
   displayName: 'Archive List (Agent)',
   description: 'Archive or unarchive a Trello list.',
   audience: 'ai',
+  outputSchema: archiveListActionOutputSchema,
   aiMetadata: {
     description:
       'Archives (closed=true) or unarchives (closed=false) a Trello list identified by list_id. Obtain list_id from List Lists. Setting the same closed state again converges, so it is idempotent.',

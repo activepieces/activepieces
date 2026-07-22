@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { getMemberActionOutputSchema } from '../../output-schemas';
 
 export const getMember = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const getMember = createAction({
   displayName: 'Get Member (Agent)',
   description: 'Get a Trello member by id or username.',
   audience: 'ai',
+  outputSchema: getMemberActionOutputSchema,
   aiMetadata: {
     description:
       'Retrieves a Trello member profile by member id or username. Obtain a member id from Search Members or List Board Members. Read-only and idempotent.',

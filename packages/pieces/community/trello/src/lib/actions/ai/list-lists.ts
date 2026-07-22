@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listListsActionOutputSchema } from '../../output-schemas';
 
 export const listLists = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listLists = createAction({
   displayName: 'List Lists (Agent)',
   description: 'List the lists (columns) on a Trello board.',
   audience: 'ai',
+  outputSchema: listListsActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the lists (columns) on a Trello board, returning each list id and name. This is the key resolver for turning a column name into a list_id used by Create Card, Move Card, and other list actions. Obtain board_id from List Boards. Read-only and idempotent.',

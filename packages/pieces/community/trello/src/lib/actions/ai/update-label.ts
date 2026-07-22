@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { updateLabelActionOutputSchema } from '../../output-schemas';
 
 export const updateLabel = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const updateLabel = createAction({
   displayName: 'Update Label (Agent)',
   description: 'Rename or recolor a Trello label.',
   audience: 'ai',
+  outputSchema: updateLabelActionOutputSchema,
   aiMetadata: {
     description:
       'Renames or recolors an existing Trello label identified by label_id. Obtain label_id from List Board Labels. Only provided fields change; setting the same values again converges to the same label, so it is idempotent.',

@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { TrelloCard } from '../../common/props/card';
 import { trelloAuth } from '../../..';
+import { updateCardAiActionOutputSchema } from '../../output-schemas';
 
 export const updateCardAi = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const updateCardAi = createAction({
   displayName: 'Update Card (Agent)',
   description: 'Update fields on an existing Trello card.',
   audience: 'ai',
+  outputSchema: updateCardAiActionOutputSchema,
   aiMetadata: {
     description:
       'Updates fields on an existing Trello card identified by card_id: name, description, due date, label ids, position, archived (closed) state, and target list_id (to move it). This is the broad editor; for a single high-intent change prefer Move Card or Archive Card. Obtain card_id from Search Cards and list_id from List Lists. Only provided fields change; repeating with the same inputs converges to the same card state.',

@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { addLabelToCardActionOutputSchema } from '../../output-schemas';
 
 export const addLabelToCard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const addLabelToCard = createAction({
   displayName: 'Add Label To Card (Agent)',
   description: 'Attach an existing label to a Trello card.',
   audience: 'ai',
+  outputSchema: addLabelToCardActionOutputSchema,
   aiMetadata: {
     description:
       'Attaches an existing board label to a Trello card. Obtain card_id from Search Cards and label_id from List Board Labels (or Create Board Label). Re-attaching an already-present label converges to the same label set, so it is idempotent.',

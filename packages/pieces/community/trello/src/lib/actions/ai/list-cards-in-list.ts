@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listCardsInListActionOutputSchema } from '../../output-schemas';
 
 export const listCardsInList = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listCardsInList = createAction({
   displayName: 'List Cards In List (Agent)',
   description: 'List all cards in a Trello list.',
   audience: 'ai',
+  outputSchema: listCardsInListActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the cards in a single Trello list identified by list_id, returning each card id and fields. Use it to enumerate the cards of a column (e.g. "what is in To Do"). Obtain list_id from List Lists. Read-only and idempotent.',

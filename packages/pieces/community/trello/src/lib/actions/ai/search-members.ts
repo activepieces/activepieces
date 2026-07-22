@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { searchMembersActionOutputSchema } from '../../output-schemas';
 
 export const searchMembers = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const searchMembers = createAction({
   displayName: 'Search Members (Agent)',
   description: 'Find Trello members by name or username.',
   audience: 'ai',
+  outputSchema: searchMembersActionOutputSchema,
   aiMetadata: {
     description:
       'Searches Trello members by name or username and returns matches with their member ids. Use it to resolve a person to a member_id before assigning them with Add Member To Card. Optionally restrict to a board or to organization members. Read-only and idempotent.',

@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listCardsInBoardActionOutputSchema } from '../../output-schemas';
 
 export const listCardsInBoard = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listCardsInBoard = createAction({
   displayName: 'List Cards In Board (Agent)',
   description: 'List all cards on a Trello board.',
   audience: 'ai',
+  outputSchema: listCardsInBoardActionOutputSchema,
   aiMetadata: {
     description:
       'Lists every card on a Trello board identified by board_id, returning each card id and fields. Use it to enumerate all cards across a board. Obtain board_id from List Boards. Read-only and idempotent.',

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
+import { listCardAttachmentsAiActionOutputSchema } from '../../output-schemas';
 
 export const listCardAttachmentsAi = createAction({
   auth: trelloAuth,
@@ -13,6 +14,7 @@ export const listCardAttachmentsAi = createAction({
   displayName: 'List Card Attachments (Agent)',
   description: 'List all attachments on a Trello card.',
   audience: 'ai',
+  outputSchema: listCardAttachmentsAiActionOutputSchema,
   aiMetadata: {
     description:
       'Lists all attachments on a Trello card identified by card_id, returning each attachment id, name, and url. Use it to find an attachment id before fetching or deleting it. Obtain card_id from Search Cards. Read-only and idempotent.',

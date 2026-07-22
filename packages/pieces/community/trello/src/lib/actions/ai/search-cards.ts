@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
+import { searchCardsActionOutputSchema } from '../../output-schemas';
 
 export const searchCards = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const searchCards = createAction({
   displayName: 'Search Cards (Agent)',
   description: 'Full-text search for Trello cards.',
   audience: 'ai',
+  outputSchema: searchCardsActionOutputSchema,
   aiMetadata: {
     description:
       'Searches Trello cards by free-text query (name, description, comments) and returns matching cards with their ids. This is the primary way to resolve a card from text before acting on it; results are best-effort/eventually-consistent, so hydrate full fields via Get Card. Optionally narrow to specific boards or a list. Read-only and idempotent.',

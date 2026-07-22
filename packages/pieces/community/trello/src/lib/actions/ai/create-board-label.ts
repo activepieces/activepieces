@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { createBoardLabelActionOutputSchema } from '../../output-schemas';
 
 export const createBoardLabel = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const createBoardLabel = createAction({
   displayName: 'Create Board Label (Agent)',
   description: 'Define a reusable label on a Trello board.',
   audience: 'ai',
+  outputSchema: createBoardLabelActionOutputSchema,
   aiMetadata: {
     description:
       'Creates a reusable label (name + color) on a Trello board. Returns the new label id, which you can then attach to cards with Add Label To Card. Obtain board_id from List Boards. Each call creates a distinct label, so it is not idempotent.',

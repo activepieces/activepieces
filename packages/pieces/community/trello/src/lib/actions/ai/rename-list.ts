@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { renameListActionOutputSchema } from '../../output-schemas';
 
 export const renameList = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const renameList = createAction({
   displayName: 'Rename List (Agent)',
   description: 'Rename a Trello list.',
   audience: 'ai',
+  outputSchema: renameListActionOutputSchema,
   aiMetadata: {
     description:
       'Renames a Trello list identified by list_id. Obtain list_id from List Lists. Setting the same name again converges to the same list, so it is idempotent.',

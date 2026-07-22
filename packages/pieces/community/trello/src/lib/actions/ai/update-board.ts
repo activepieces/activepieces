@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { updateBoardActionOutputSchema } from '../../output-schemas';
 
 export const updateBoard = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const updateBoard = createAction({
   displayName: 'Update Board (Agent)',
   description: 'Rename or redescribe a Trello board.',
   audience: 'ai',
+  outputSchema: updateBoardActionOutputSchema,
   aiMetadata: {
     description:
       'Updates the name and/or description of a Trello board identified by board_id. Obtain board_id from List Boards. Only provided fields change; setting the same values again converges to the same board, so it is idempotent.',

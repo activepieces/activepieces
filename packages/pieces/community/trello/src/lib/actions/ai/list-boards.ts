@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listBoardsActionOutputSchema } from '../../output-schemas';
 
 export const listBoards = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listBoards = createAction({
   displayName: 'List Boards (Agent)',
   description: 'List the Trello boards you can access.',
   audience: 'ai',
+  outputSchema: listBoardsActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the Trello boards the connected user can access, returning each board id and name. This is the top-level resolver: start here to get a board_id, then use List Lists / List Board Labels / List Board Members to drill down. Defaults to the connected user (member "me"). Read-only and idempotent.',

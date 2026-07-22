@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listCardChecklistsActionOutputSchema } from '../../output-schemas';
 
 export const listCardChecklists = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const listCardChecklists = createAction({
   displayName: 'List Card Checklists (Agent)',
   description: "List a card's checklists and their items.",
   audience: 'ai',
+  outputSchema: listCardChecklistsActionOutputSchema,
   aiMetadata: {
     description:
       "Lists the checklists on a Trello card, each with its idChecklist and its check items (idCheckItem, name, state). This is the source for the ids needed by Set Checklist Item State, Add Checklist Item, Delete Checklist, and Delete Checklist Item. Obtain card_id from Search Cards. Read-only and idempotent.",

@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { getBoardActionOutputSchema } from '../../output-schemas';
 
 export const getBoard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const getBoard = createAction({
   displayName: 'Get Board (Agent)',
   description: 'Get the details of a Trello board by ID.',
   audience: 'ai',
+  outputSchema: getBoardActionOutputSchema,
   aiMetadata: {
     description:
       'Retrieves the details of a single Trello board by its board_id (name, description, url, prefs). Obtain board_id from List Boards. Read-only and idempotent.',

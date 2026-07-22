@@ -8,19 +8,16 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { addChecklistItemActionOutputSchema } from '../../output-schemas';
 
-// VERIFY-AT-AUTHORING: this atomic is authored from the real, documented
-// Trello REST verb `POST /1/checklists/{idChecklist}/checkItems` (name required,
-// optional `checked` and `pos`). It had no exact Composio union slug in the
-// harvest, so confirm the endpoint shape against Trello's live API docs / a
-// real call before relying on it. Without it the checklist family is read+state-
-// only (see trello-coverage.md tension #3 / open question #2).
+
 export const addChecklistItem = createAction({
   auth: trelloAuth,
   name: 'add_checklist_item',
   displayName: 'Add Checklist Item (Agent)',
   description: 'Add an item to a Trello checklist.',
   audience: 'ai',
+  outputSchema: addChecklistItemActionOutputSchema,
   aiMetadata: {
     description:
       'Adds a check item to an existing Trello checklist. Obtain checklist_id (idChecklist) from List Card Checklists (or the output of Add Checklist To Card). Each call adds a distinct item, so it is not idempotent.',

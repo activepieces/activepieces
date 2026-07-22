@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listOrganizationBoardsActionOutputSchema } from '../../output-schemas';
 
 export const listOrganizationBoards = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const listOrganizationBoards = createAction({
   displayName: 'List Organization Boards (Agent)',
   description: 'List the boards in a Trello workspace.',
   audience: 'ai',
+  outputSchema: listOrganizationBoardsActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the boards in a Trello workspace (organization), returning each board id and name. Use it when you have an org_id and want only that workspace\'s boards; for all boards you can access, use List Boards instead. Obtain org_id from Get My Member or List Boards. Read-only and idempotent.',

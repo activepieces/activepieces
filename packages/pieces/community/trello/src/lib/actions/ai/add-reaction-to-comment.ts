@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { addReactionToCommentActionOutputSchema } from '../../output-schemas';
 
 export const addReactionToComment = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const addReactionToComment = createAction({
   displayName: 'Add Reaction To Comment (Agent)',
   description: 'React (emoji) to a Trello comment.',
   audience: 'ai',
+  outputSchema: addReactionToCommentActionOutputSchema,
   aiMetadata: {
     description:
       'Adds an emoji reaction to a comment action on a Trello card. Provide the comment id (action_id) from List Card Comments and identify the emoji by its shortName (e.g. "thumbsup"). Each call adds a reaction, so it is not idempotent.',

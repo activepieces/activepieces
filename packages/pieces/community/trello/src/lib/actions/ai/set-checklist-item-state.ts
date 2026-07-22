@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { setChecklistItemStateActionOutputSchema } from '../../output-schemas';
 
 export const setChecklistItemState = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const setChecklistItemState = createAction({
   displayName: 'Set Checklist Item State (Agent)',
   description: 'Check or uncheck a checklist item.',
   audience: 'ai',
+  outputSchema: setChecklistItemStateActionOutputSchema,
   aiMetadata: {
     description:
       'Marks a checklist item complete or incomplete. This needs three ids that all come from List Card Checklists for the card: card_id, checklist_id (idChecklist), and checkitem_id (idCheckItem). Setting the same state again converges, so it is idempotent.',

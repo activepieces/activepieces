@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { removeMemberFromCardActionOutputSchema } from '../../output-schemas';
 
 export const removeMemberFromCard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const removeMemberFromCard = createAction({
   displayName: 'Remove Member From Card (Agent)',
   description: 'Unassign a member from a Trello card.',
   audience: 'ai',
+  outputSchema: removeMemberFromCardActionOutputSchema,
   aiMetadata: {
     description:
       'Unassigns a member from a Trello card. Obtain card_id from Search Cards and member_id from List Card Members. Removing an already-absent member converges to the same state, so it is idempotent.',

@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { getMyMemberActionOutputSchema } from '../../output-schemas';
 
 export const getMyMember = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const getMyMember = createAction({
   displayName: 'Get My Member (Agent)',
   description: 'Get the connected Trello user.',
   audience: 'ai',
+  outputSchema: getMyMemberActionOutputSchema,
   aiMetadata: {
     description:
       'Returns the connected Trello user (id, username, full name). Use it to resolve "me" — your own member id — for assigning yourself to cards or as the member filter in List Boards. Takes no inputs. Read-only and idempotent.',

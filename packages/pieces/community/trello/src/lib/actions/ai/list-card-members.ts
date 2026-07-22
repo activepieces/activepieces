@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listCardMembersActionOutputSchema } from '../../output-schemas';
 
 export const listCardMembers = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const listCardMembers = createAction({
   displayName: 'List Card Members (Agent)',
   description: 'List the members assigned to a Trello card.',
   audience: 'ai',
+  outputSchema: listCardMembersActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the members currently assigned to a Trello card, returning each member id and username. Use it to see who is on a card or to get a member_id for Remove Member From Card. Obtain card_id from Search Cards. Read-only and idempotent.',

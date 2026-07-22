@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listCardCommentsActionOutputSchema } from '../../output-schemas';
 
 export const listCardComments = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listCardComments = createAction({
   displayName: 'List Card Comments (Agent)',
   description: "Read a card's comment history.",
   audience: 'ai',
+  outputSchema: listCardCommentsActionOutputSchema,
   aiMetadata: {
     description:
       "Lists the comments on a Trello card identified by card_id, returning each comment's id (idAction), text, author, and date. Use the returned comment id with Update Comment / Delete Comment. Obtain card_id from Search Cards. Read-only and idempotent.",

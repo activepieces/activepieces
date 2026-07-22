@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { moveCardActionOutputSchema } from '../../output-schemas';
 
 export const moveCard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const moveCard = createAction({
   displayName: 'Move Card (Agent)',
   description: 'Move a Trello card to a different list.',
   audience: 'ai',
+  outputSchema: moveCardActionOutputSchema,
   aiMetadata: {
     description:
       'Moves a Trello card to a different list (the high-intent single-purpose alternative to Update Card). Obtain card_id from Search Cards and the destination list_id from List Lists. Moving to the list it is already in converges to the same state, so it is idempotent.',

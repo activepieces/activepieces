@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { addMemberToCardActionOutputSchema } from '../../output-schemas';
 
 export const addMemberToCard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const addMemberToCard = createAction({
   displayName: 'Add Member To Card (Agent)',
   description: 'Assign a member to a Trello card.',
   audience: 'ai',
+  outputSchema: addMemberToCardActionOutputSchema,
   aiMetadata: {
     description:
       'Assigns a member to a Trello card. Obtain card_id from Search Cards and member_id from Search Members or List Board Members. Re-adding an already-assigned member converges to the same member set (Trello returns the full member list rather than a clean no-op), so it is idempotent.',

@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { createListActionOutputSchema } from '../../output-schemas';
 
 export const createList = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const createList = createAction({
   displayName: 'Create List (Agent)',
   description: 'Create a list (column) on a Trello board.',
   audience: 'ai',
+  outputSchema: createListActionOutputSchema,
   aiMetadata: {
     description:
       'Creates a new list (column) on a Trello board. Returns the new list id for use with card actions. Obtain board_id from List Boards. Each call creates a distinct list, so it is not idempotent.',

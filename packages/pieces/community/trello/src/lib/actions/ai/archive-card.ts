@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { archiveCardActionOutputSchema } from '../../output-schemas';
 
 export const archiveCard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const archiveCard = createAction({
   displayName: 'Archive Card (Agent)',
   description: 'Archive or unarchive a Trello card.',
   audience: 'ai',
+  outputSchema: archiveCardActionOutputSchema,
   aiMetadata: {
     description:
       'Archives (closed=true) or unarchives (closed=false) a Trello card. Archiving is recoverable, so prefer this over Delete Card. Obtain card_id from Search Cards. Setting the same closed state again converges, so it is idempotent.',

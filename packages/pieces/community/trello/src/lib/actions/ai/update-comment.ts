@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { updateCommentActionOutputSchema } from '../../output-schemas';
 
 export const updateComment = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const updateComment = createAction({
   displayName: 'Update Comment (Agent)',
   description: 'Edit an existing comment on a Trello card.',
   audience: 'ai',
+  outputSchema: updateCommentActionOutputSchema,
   aiMetadata: {
     description:
       'Edits the text of an existing comment on a Trello card, identified by card_id and comment_id (the action id). Obtain card_id from Search Cards and comment_id from List Card Comments. Setting the same text again converges to the same comment, so it is idempotent.',

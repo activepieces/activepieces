@@ -8,6 +8,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { createBoardActionOutputSchema } from '../../output-schemas';
 
 export const createBoard = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const createBoard = createAction({
   displayName: 'Create Board (Agent)',
   description: 'Create a new Trello board.',
   audience: 'ai',
+  outputSchema: createBoardActionOutputSchema,
   aiMetadata: {
     description:
       'Creates a new Trello board with a name and optional description, optionally inside a workspace (organization). Returns the new board id. Obtain org_id (if used) from List Boards / Get My Member. Each call creates a distinct board, so it is not idempotent.',

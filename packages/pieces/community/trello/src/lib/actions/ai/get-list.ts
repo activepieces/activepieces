@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { getListActionOutputSchema } from '../../output-schemas';
 
 export const getList = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const getList = createAction({
   displayName: 'Get List (Agent)',
   description: 'Get the details of a Trello list by ID.',
   audience: 'ai',
+  outputSchema: getListActionOutputSchema,
   aiMetadata: {
     description:
       'Retrieves the details of a single Trello list by its list_id (name, board, open/closed state). Obtain list_id from List Lists. Read-only and idempotent.',

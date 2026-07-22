@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { addCommentToCardActionOutputSchema } from '../../output-schemas';
 
 export const addCommentToCard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const addCommentToCard = createAction({
   displayName: 'Add Comment To Card (Agent)',
   description: 'Add a comment to a Trello card.',
   audience: 'ai',
+  outputSchema: addCommentToCardActionOutputSchema,
   aiMetadata: {
     description:
       'Posts a comment on a Trello card identified by card_id. This is the primary way for an agent to report status or notes on a card. Obtain card_id from Search Cards. Each call adds a new comment, so it is not idempotent.',
