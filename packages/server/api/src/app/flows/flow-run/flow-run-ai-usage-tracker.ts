@@ -35,7 +35,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
         const appSumoAiValue = usage.breakdown
             .filter((entry) => entry.provider === AIProviderName.ACTIVEPIECES)
             .reduce((sum, entry) => sum + entry.messages + entry.toolCalls, 0)
-        const creditValue = usage.breakdown.reduce((sum, entry) => sum + (entry.messages + entry.toolCalls) * resolveAiCreditWeight({ provider: entry.provider, model: entry.model }), 0)
+        const creditValue = usage.breakdown.reduce((sum, entry) => sum + entry.messages * resolveAiCreditWeight({ provider: entry.provider, model: entry.model }) + entry.toolCalls, 0)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const isAppSumoPlan = platformPlan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false
         await trackCreditsWithAppSumo({
