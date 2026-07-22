@@ -2,7 +2,15 @@ import { URL } from 'node:url'
 import { FlowId, isNil } from '@activepieces/core-utils'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
 import { DeleteStoreEntryRequest, ExecutionError, FetchError, PutStoreEntryRequest, StorageError, StorageInvalidKeyError, StorageLimitError, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
+import fetchRetry from 'fetch-retry'
 import { utils } from '../utils'
+
+const fetchWithRetry = fetchRetry((...args: Parameters<typeof fetch>) => global.fetch(...args))
+const RETRY_CONFIG = {
+    retries: 3,
+    retryDelay: 3000,
+    retryOn: [408, 429, 500, 502, 503, 504],
+} as const
 
 export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { apiUrl: string, prefix: string, flowId: FlowId, engineToken: string }): Store {
     return {
@@ -40,10 +48,11 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
             const url = buildUrl(apiUrl, key)
 
             const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                const response = await fetch(url, {
+                const response = await fetchWithRetry(url, {
                     headers: {
                         Authorization: `Bearer ${engineToken}`,
                     },
+                    ...RETRY_CONFIG,
                 })
                 if (!response.ok) {
                     return handleResponseError({
@@ -72,13 +81,14 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
                 if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
                     throw new StorageLimitError(request.key, STORE_VALUE_MAX_SIZE)
                 }
-                const response = await fetch(url, {
+                const response = await fetchWithRetry(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${engineToken}`,
                     },
                     body: JSON.stringify(request),
+                    ...RETRY_CONFIG,
                 })
 
                 if (!response.ok) {
@@ -107,11 +117,12 @@ function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): St
             const url = buildUrl(apiUrl, request.key)
 
             const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                const response = await fetch(url, {
+                const response = await fetchWithRetry(url, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${engineToken}`,
                     },
+                    ...RETRY_CONFIG,
                 })
 
                 if (!response.ok) {
