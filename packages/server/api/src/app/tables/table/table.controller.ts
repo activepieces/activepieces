@@ -112,7 +112,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.post('/:id/clear', ClearTableRequest, async (request, reply) => {
-        const deletedRecords = await recordService.deleteAll({
+        const { records: deletedRecords, webhooks } = await recordService.deleteAll({
             tableId: request.params.id,
             projectId: request.projectId,
         })
@@ -123,6 +123,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
             records: deletedRecords,
             logger: request.log,
             authorization: request.headers.authorization as string,
+            webhooks,
         }, 'deleted')
     })
 }
