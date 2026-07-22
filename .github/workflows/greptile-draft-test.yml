@@ -1,0 +1,28 @@
+name: Greptile draft auto-trigger (test)
+
+# TEST-ONLY workflow: verifies whether a bot-authored comment (github-actions[bot])
+# can trigger a Greptile review on a draft PR. Uses `pull_request` so it runs from
+# this PR branch without needing to be on main. Delete after the experiment.
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  trigger-greptile:
+    if: github.event.pull_request.draft == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment @greptileai review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: |
+          echo "Posting Greptile trigger comment on: $PR"
+          gh pr comment "$PR" --body "@greptileai review"
+          echo "Comment posted as github-actions[bot]."
