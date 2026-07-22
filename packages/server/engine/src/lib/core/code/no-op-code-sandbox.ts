@@ -83,7 +83,7 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
             reject(buildError({ message: error.message, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
-        child.send({ codeFilePath, inputs })
+        child.send?.({ codeFilePath, inputs })
     })
 }
 
