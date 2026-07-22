@@ -4,7 +4,7 @@ import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionTy
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
-import { createPropsResolver } from '../../src/lib/variables/props-resolver'
+import { createPropsResolver, extractReferencedStepNames, inputNeedsCensoring } from '../../src/lib/variables/props-resolver'
 
 const propsResolverService = createPropsResolver({
     projectId: 'PROJECT_ID',
@@ -979,5 +979,72 @@ describe('Array Flatter Processor', () => {
             { id: '1', name: 'item1' },
         ])
         expect(errors).toEqual({})
+    })
+})
+
+describe('extractReferencedStepNames', () => {
+    const stepNames = ['trigger', 'step_1', 'step_10']
+
+    test('does not match step_1 inside step_10 (word boundary)', () => {
+        expect(extractReferencedStepNames('{{step_10.output}}', stepNames)).toEqual(new Set(['step_10']))
+    })
+
+    test('matches a step with a dot path', () => {
+        expect(extractReferencedStepNames('{{step_1.foo}}', stepNames)).toEqual(new Set(['step_1']))
+    })
+
+    test('matches a step with a bracket path', () => {
+        expect(extractReferencedStepNames('{{step_1[\'x\']}}', stepNames)).toEqual(new Set(['step_1']))
+    })
+
+    test('matches a bare step token', () => {
+        expect(extractReferencedStepNames('{{step_1}}', stepNames)).toEqual(new Set(['step_1']))
+    })
+
+    test('references only the steps that appear', () => {
+        expect(extractReferencedStepNames('{{trigger.output.name}}', stepNames)).toEqual(new Set(['trigger']))
+    })
+
+    test('collects every referenced step from a nested object', () => {
+        const input = { a: '{{step_1.output}}', b: ['{{step_10.output}}', '{{trigger.output}}'] }
+        expect(extractReferencedStepNames(input, stepNames)).toEqual(new Set(['trigger', 'step_1', 'step_10']))
+    })
+})
+
+describe('inputNeedsCensoring', () => {
+    test('returns false for step-output tokens', () => {
+        expect(inputNeedsCensoring('{{step_1.output}}')).toBe(false)
+        expect(inputNeedsCensoring('{{trigger.output.name}}')).toBe(false)
+    })
+
+    test('returns false for nested objects/arrays of step tokens', () => {
+        expect(inputNeedsCensoring({ a: '{{step_1.output}}', b: ['{{trigger.output}}'] })).toBe(false)
+    })
+
+    test('returns true for a connections token', () => {
+        expect(inputNeedsCensoring('{{connections[\'my-conn\'].token}}')).toBe(true)
+    })
+
+    test('returns true for a variables token', () => {
+        expect(inputNeedsCensoring('{{ variables.secret }}')).toBe(true)
+    })
+
+    test('returns true for a standalone connections token alongside a formula', () => {
+        expect(inputNeedsCensoring('{{connections.myConn}} {{ upper(trigger.output.name) }}')).toBe(true)
+    })
+
+    test('returns true when a secret token is nested inside an object', () => {
+        expect(inputNeedsCensoring({ url: '{{step_1.output.url}}', auth: '{{connections.myConn}}' })).toBe(true)
+    })
+})
+
+describe('censoring pass is skipped when no secrets are referenced', () => {
+    test('censoredInput deep-equals resolvedInput and is a distinct object', async () => {
+        const { resolvedInput, censoredInput } = await propsResolverService.resolve({
+            unresolvedInput: { name: '{{trigger.output.name}}', profile: '{{trigger.output}}' },
+            executionState,
+        })
+        expect(censoredInput).toEqual(resolvedInput)
+        expect(censoredInput).not.toBe(resolvedInput)
     })
 })
