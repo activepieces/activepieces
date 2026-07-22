@@ -304,15 +304,18 @@ export const recordService = {
                 records.push(...batchRecords)
             }
 
+            const deletedIds: string[] = []
             for (const batch of chunk(recordIds, MAX_BATCH_SIZE)) {
-                await entityManager.getRepository(RecordEntity).delete({
-                    id: In(batch),
+                deletedIds.push(...await deleteRecordsReturningIds({
+                    entityManager,
+                    recordIds: batch,
                     projectId,
                     tableId,
-                })
+                }))
             }
 
-            return records
+            const deletedIdSet = new Set(deletedIds)
+            return records.filter((record) => deletedIdSet.has(record.id))
         })
 
         return {
