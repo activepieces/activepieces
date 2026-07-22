@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getAccountActionOutputSchema } from '../output-schemas';
 
 export const apifyGetAccount = createAction({
   name: 'apify_get_account',
@@ -8,6 +9,7 @@ export const apifyGetAccount = createAction({
   displayName: 'Get Account',
   description: 'Retrieves the authenticated Apify account profile.',
   audience: 'ai',
+  outputSchema: getAccountActionOutputSchema,
   aiMetadata: {
     description:
       'Get the authenticated account profile (username, plan, ids). Use this to confirm which account the connection belongs to or to read the username needed to build a "username~actor-name" actor reference. Use Get Account Limits for plan limits and usage. Read-only and idempotent.',

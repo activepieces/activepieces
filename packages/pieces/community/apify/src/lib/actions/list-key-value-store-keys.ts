@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { listKeyValueStoreKeysActionOutputSchema } from '../output-schemas';
 
 export const apifyListKeyValueStoreKeys = createAction({
   name: 'apify_list_key_value_store_keys',
@@ -8,6 +9,7 @@ export const apifyListKeyValueStoreKeys = createAction({
   displayName: 'List Key-Value Store Keys',
   description: 'Lists the record keys in an Apify key-value store.',
   audience: 'ai',
+  outputSchema: listKeyValueStoreKeysActionOutputSchema,
   aiMetadata: {
     description:
       'List the record keys (and sizes) in a key-value store by its store ID, optionally filtered by key prefix. This is the prerequisite to reading a record: use it to discover which key to pass to Get Key-Value Store Record. Obtain the store ID from List Key-Value Stores. Read-only and idempotent.',

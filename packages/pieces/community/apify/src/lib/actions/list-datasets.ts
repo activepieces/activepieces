@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { listDatasetsActionOutputSchema } from '../output-schemas';
 
 export const apifyListDatasets = createAction({
   name: 'apify_list_datasets',
@@ -8,6 +9,7 @@ export const apifyListDatasets = createAction({
   displayName: 'List Datasets',
   description: 'Lists the datasets in the authenticated account.',
   audience: 'ai',
+  outputSchema: listDatasetsActionOutputSchema,
   aiMetadata: {
     description:
       'List the account\'s datasets (id, name, itemCount), newest first, so you can resolve a dataset ID without a dropdown. Use this to find the dataset to read with Get Dataset Items. Read-only and idempotent.',

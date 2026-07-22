@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getTaskActionOutputSchema } from '../output-schemas';
 
 export const apifyGetTask = createAction({
   name: 'apify_get_task',
@@ -8,6 +9,7 @@ export const apifyGetTask = createAction({
   displayName: 'Get Task',
   description: 'Retrieves metadata for a saved Actor task by task ID.',
   audience: 'ai',
+  outputSchema: getTaskActionOutputSchema,
   aiMetadata: {
     description:
       'Get metadata for one saved task by its task ID (name, actId, run options). Use this to inspect which Actor a task wraps before running it; use Get Task Input to see its stored input. Obtain the task ID from List Tasks. Read-only and idempotent.',

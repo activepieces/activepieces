@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { createTaskActionOutputSchema } from '../output-schemas';
 
 export const apifyCreateTask = createAction({
   name: 'apify_create_task',
@@ -8,6 +9,7 @@ export const apifyCreateTask = createAction({
   displayName: 'Create Task',
   description: 'Creates a new saved Actor task.',
   audience: 'ai',
+  outputSchema: createTaskActionOutputSchema,
   aiMetadata: {
     description:
       'Create a new saved Actor task — a reusable, named Actor configuration with stored input. Use this to set up a task an agent or flow can run repeatedly with Run Task. Resolve the actor ID with Find Actor or List Actors, and build the input from Get Actor Input Schema. Not idempotent — each call creates a new task and a duplicate name errors.',

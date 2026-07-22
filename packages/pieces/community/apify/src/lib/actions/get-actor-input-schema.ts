@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getActorInputSchemaActionOutputSchema } from '../output-schemas';
 
 export const apifyGetActorInputSchema = createAction({
   name: 'apify_get_actor_input_schema',
@@ -8,6 +9,7 @@ export const apifyGetActorInputSchema = createAction({
   displayName: 'Get Actor Input Schema',
   description: 'Retrieves the input schema (fields, types, required, enums) of an Actor\'s default build.',
   audience: 'ai',
+  outputSchema: getActorInputSchemaActionOutputSchema,
   aiMetadata: {
     description:
       'Get the raw input schema of an Actor\'s default build — field names, types, required flags, enums and prefill defaults. Use this before Run Actor to build a correct input JSON body and avoid HTTP 400 errors from guessed field names. Resolve the actor ID with Find Actor first. Read-only and idempotent.',

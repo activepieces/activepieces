@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getTaskInputActionOutputSchema } from '../output-schemas';
 
 export const apifyGetTaskInput = createAction({
   name: 'apify_get_task_input',
@@ -8,6 +9,7 @@ export const apifyGetTaskInput = createAction({
   displayName: 'Get Task Input',
   description: 'Retrieves the stored input body of a saved Actor task by task ID.',
   audience: 'ai',
+  outputSchema: getTaskInputActionOutputSchema,
   aiMetadata: {
     description:
       'Get the saved input body of a task by its task ID. Use this to inspect a task\'s current configuration before running it (Run Task) or before overwriting it (Update Task Input). Obtain the task ID from List Tasks. Read-only and idempotent.',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getActorLastRunDatasetItemsActionOutputSchema } from '../output-schemas';
 
 export const apifyGetActorLastRunDatasetItems = createAction({
   name: 'apify_get_actor_last_run_dataset_items',
@@ -8,6 +9,7 @@ export const apifyGetActorLastRunDatasetItems = createAction({
   displayName: 'Get Actor Last Run Dataset Items',
   description: 'Retrieves the dataset items of an Actor\'s most recent run by actor ID.',
   audience: 'ai',
+  outputSchema: getActorLastRunDatasetItemsActionOutputSchema,
   aiMetadata: {
     description:
       'Read the result rows of an Actor\'s most recent run directly by actor ID, with optional offset/limit paging. Use this one-shot shortcut to get "the latest results of this actor" without chaining run/dataset IDs. Optionally restrict to a status (e.g. SUCCEEDED) so you only read a completed run. Resolve the actor ID with Find Actor or List Actors. Read-only and idempotent.',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getTaskLastRunDatasetItemsActionOutputSchema } from '../output-schemas';
 
 export const apifyGetTaskLastRunDatasetItems = createAction({
   name: 'apify_get_task_last_run_dataset_items',
@@ -8,6 +9,7 @@ export const apifyGetTaskLastRunDatasetItems = createAction({
   displayName: 'Get Task Last Run Dataset Items',
   description: 'Retrieves the dataset items of a task\'s most recent run by task ID.',
   audience: 'ai',
+  outputSchema: getTaskLastRunDatasetItemsActionOutputSchema,
   aiMetadata: {
     description:
       'Read the result rows of a saved task\'s most recent run directly by task ID, with optional offset/limit paging. Use this one-shot shortcut to get "the latest results of this task" without chaining run/dataset IDs (the task analogue of Get Actor Last Run Dataset Items). Optionally restrict to a status. Resolve the task ID with List Tasks. Read-only and idempotent.',

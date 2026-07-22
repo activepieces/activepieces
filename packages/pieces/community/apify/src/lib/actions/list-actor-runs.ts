@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { listActorRunsActionOutputSchema } from '../output-schemas';
 
 const RUN_STATUS_OPTIONS = [
   { label: 'Ready', value: 'READY' },
@@ -19,6 +20,7 @@ export const apifyListActorRuns = createAction({
   displayName: 'List Actor Runs',
   description: 'Lists the run history of a single Actor.',
   audience: 'ai',
+  outputSchema: listActorRunsActionOutputSchema,
   aiMetadata: {
     description:
       'List the run history of one Actor by its actor ID, newest first, optionally filtered by status. Use this to recover a lost run ID or review past runs of a specific actor; use List Runs for runs across the whole account, or Get Last Actor Run for just the most recent. Resolve the actor ID with Find Actor or List Actors. Read-only and idempotent.',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { updateTaskInputActionOutputSchema } from '../output-schemas';
 
 export const apifyUpdateTaskInput = createAction({
   name: 'apify_update_task_input',
@@ -8,6 +9,7 @@ export const apifyUpdateTaskInput = createAction({
   displayName: 'Update Task Input',
   description: 'Overwrites the stored input body of a saved Actor task by task ID.',
   audience: 'ai',
+  outputSchema: updateTaskInputActionOutputSchema,
   aiMetadata: {
     description:
       'Overwrite the entire stored input of a saved task with a new JSON body. Use this to reconfigure a task before running it (reconfigure-then-run); to override input for a single run only, pass it to Run Task instead of changing the task. Inspect the current input first with Get Task Input. Obtain the task ID from List Tasks. Idempotent — it sets the task input to the given state, so repeating the same call has the same effect.',

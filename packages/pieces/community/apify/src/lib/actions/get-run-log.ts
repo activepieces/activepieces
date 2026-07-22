@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getRunLogActionOutputSchema } from '../output-schemas';
 
 export const apifyGetRunLog = createAction({
   name: 'apify_get_run_log',
@@ -8,6 +9,7 @@ export const apifyGetRunLog = createAction({
   displayName: 'Get Run Log',
   description: 'Retrieves the plain-text log of an Actor run or build by ID.',
   audience: 'ai',
+  outputSchema: getRunLogActionOutputSchema,
   aiMetadata: {
     description:
       'Get the plain-text log of an Actor run (or build) by its ID. Use this to diagnose why a run failed or what it did, after Get Actor Run reports a FAILED/ABORTED status. Pass a run ID (from Run Actor) or a build ID (from Get Build). Read-only and idempotent.',

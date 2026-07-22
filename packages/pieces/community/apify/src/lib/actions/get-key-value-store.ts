@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getKeyValueStoreActionOutputSchema } from '../output-schemas';
 
 export const apifyGetKeyValueStore = createAction({
   name: 'apify_get_key_value_store',
@@ -8,6 +9,7 @@ export const apifyGetKeyValueStore = createAction({
   displayName: 'Get Key-Value Store',
   description: 'Retrieves metadata for an Apify key-value store by store ID.',
   audience: 'ai',
+  outputSchema: getKeyValueStoreActionOutputSchema,
   aiMetadata: {
     description:
       'Get metadata for one key-value store by its store ID (name, stats) — distinct from reading its records. Use this to inspect a store before listing its keys (List Key-Value Store Keys) or reading a record (Get Key-Value Store Record). Obtain the store ID from List Key-Value Stores. Read-only and idempotent.',

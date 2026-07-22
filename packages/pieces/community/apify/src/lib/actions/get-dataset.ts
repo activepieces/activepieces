@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getDatasetActionOutputSchema } from '../output-schemas';
 
 export const apifyGetDataset = createAction({
   name: 'apify_get_dataset',
@@ -8,6 +9,7 @@ export const apifyGetDataset = createAction({
   displayName: 'Get Dataset',
   description: 'Retrieves metadata for an Apify dataset by dataset ID.',
   audience: 'ai',
+  outputSchema: getDatasetActionOutputSchema,
   aiMetadata: {
     description:
       'Get metadata for one dataset by its dataset ID (name, itemCount, stats) — distinct from reading its rows. Use this to check how many items a dataset holds before paging through it with Get Dataset Items. Obtain the dataset ID from List Datasets or a run\'s defaultDatasetId. Read-only and idempotent.',

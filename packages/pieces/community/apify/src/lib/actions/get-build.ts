@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getBuildActionOutputSchema } from '../output-schemas';
 
 export const apifyGetBuild = createAction({
   name: 'apify_get_build',
@@ -8,6 +9,7 @@ export const apifyGetBuild = createAction({
   displayName: 'Get Build',
   description: 'Retrieves the status and metadata of an Actor build by build ID.',
   audience: 'ai',
+  outputSchema: getBuildActionOutputSchema,
   aiMetadata: {
     description:
       'Read the status and metadata of one Actor build by its build ID. Use this to poll a build (e.g. one triggered elsewhere) until it reaches a terminal state. Optionally set waitForFinish (seconds, max 60) to block server-side. Read the build\'s log with Get Run Log. Read-only and idempotent; this performs a single status read, not an unbounded wait.',

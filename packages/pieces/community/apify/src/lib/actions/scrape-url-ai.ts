@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { scrapeUrlActionOutputSchema } from '../output-schemas';
 
 const WEBSITE_CONTENT_CRAWLER_ACTOR_ID = 'apify/website-content-crawler';
 
@@ -10,6 +11,7 @@ export const apifyScrapeUrl = createAction({
   displayName: 'Scrape URL',
   description: 'Scrapes a single web page via the Apify Website Content Crawler and returns its markdown and HTML.',
   audience: 'ai',
+  outputSchema: scrapeUrlActionOutputSchema,
   aiMetadata: {
     description:
       'Scrape the content of one web page using the Apify Website Content Crawler Actor and return its text as markdown and HTML. Use this for a quick single-page extraction without configuring a full Actor run; for multi-page crawls or other actors use Run Actor instead. The URL must be a valid http/https address; crawlerType selects the rendering engine (cheerio for static HTML, playwright variants for JS-heavy pages). Not idempotent — each call launches a new crawler run.',

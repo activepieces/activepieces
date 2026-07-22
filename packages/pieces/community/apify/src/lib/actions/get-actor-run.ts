@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getActorRunActionOutputSchema } from '../output-schemas';
 
 export const apifyGetActorRun = createAction({
   name: 'apify_get_actor_run',
@@ -8,6 +9,7 @@ export const apifyGetActorRun = createAction({
   displayName: 'Get Actor Run',
   description: 'Retrieves the status and details of an Actor run by run ID.',
   audience: 'ai',
+  outputSchema: getActorRunActionOutputSchema,
   aiMetadata: {
     description:
       'Read the current status and details of one Actor run by its run ID (status, defaultDatasetId, defaultKeyValueStoreId, exit fields). This is the poll primitive: call it repeatedly to check whether an async run from Run Actor has finished, then read results with Get Run Dataset Items. Optionally set waitForFinish (seconds, max 60) to block server-side. Obtain the run ID from Run Actor or Get Last Actor Run. Read-only and idempotent; this performs a single status read, not an unbounded wait.',

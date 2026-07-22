@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { listKeyValueStoresActionOutputSchema } from '../output-schemas';
 
 export const apifyListKeyValueStores = createAction({
   name: 'apify_list_key_value_stores',
@@ -8,6 +9,7 @@ export const apifyListKeyValueStores = createAction({
   displayName: 'List Key-Value Stores',
   description: 'Lists the key-value stores in the authenticated account.',
   audience: 'ai',
+  outputSchema: listKeyValueStoresActionOutputSchema,
   aiMetadata: {
     description:
       'List the account\'s key-value stores (id, name), newest first, so you can resolve a store ID without a dropdown. Use this to find the store to read with Get Key-Value Store Record (after listing its keys with List Key-Value Store Keys). Read-only and idempotent.',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getLastActorRunActionOutputSchema } from '../output-schemas';
 
 const RUN_STATUS_OPTIONS = [
   { label: 'Ready', value: 'READY' },
@@ -19,6 +20,7 @@ export const apifyGetLastActorRun = createAction({
   displayName: 'Get Last Actor Run',
   description: 'Retrieves the most recent run of an Actor, optionally filtered by status.',
   audience: 'ai',
+  outputSchema: getLastActorRunActionOutputSchema,
   aiMetadata: {
     description:
       'Get the most recent run of an Actor by its actor ID, optionally restricted to a status (e.g. SUCCEEDED). Use this when you have the actor ID but not a run ID — for example to find the run to poll with Get Actor Run or to read results from. Use Get Actor Last Run Dataset Items to jump straight to that run\'s results. Resolve the actor ID with Find Actor or List Actors. Read-only and idempotent.',

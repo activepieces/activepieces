@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { abortActorRunActionOutputSchema } from '../output-schemas';
 
 export const apifyAbortActorRun = createAction({
   name: 'apify_abort_actor_run',
@@ -8,6 +9,7 @@ export const apifyAbortActorRun = createAction({
   displayName: 'Abort Actor Run',
   description: 'Stops a running Actor run by run ID.',
   audience: 'ai',
+  outputSchema: abortActorRunActionOutputSchema,
   aiMetadata: {
     description:
       'Stop an in-progress Actor run by its run ID. Use this to cancel a run started by Run Actor (e.g. one that is taking too long or is no longer needed). Set gracefully=true to let the actor finish its current cycle and persist state; otherwise it is killed immediately. Obtain the run ID from Run Actor or List Actor Runs. Not idempotent — aborting an already-finished run errors.',

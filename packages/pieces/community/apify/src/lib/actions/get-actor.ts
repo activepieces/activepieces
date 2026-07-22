@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getActorActionOutputSchema } from '../output-schemas';
 
 export const apifyGetActor = createAction({
   name: 'apify_get_actor',
@@ -8,6 +9,7 @@ export const apifyGetActor = createAction({
   displayName: 'Get Actor',
   description: 'Retrieves metadata for a single Apify Actor by ID.',
   audience: 'ai',
+  outputSchema: getActorActionOutputSchema,
   aiMetadata: {
     description:
       'Get metadata for one Actor by its ID (name, default run options, stats, versions). Use after Find Actor to inspect an actor\'s details before running it. To discover an actor by name use Find Actor; to get its input fields use Get Actor Input Schema. Read-only and idempotent.',

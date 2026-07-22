@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { listRunsActionOutputSchema } from '../output-schemas';
 
 const RUN_STATUS_OPTIONS = [
   { label: 'Ready', value: 'READY' },
@@ -19,6 +20,7 @@ export const apifyListRuns = createAction({
   displayName: 'List Runs',
   description: 'Lists Actor runs across the whole account.',
   audience: 'ai',
+  outputSchema: listRunsActionOutputSchema,
   aiMetadata: {
     description:
       'List Actor runs across the entire account, newest first, optionally filtered by status. Use this when you do not know which actor produced a run; use List Actor Runs to scope to a single actor. Read-only and idempotent.',

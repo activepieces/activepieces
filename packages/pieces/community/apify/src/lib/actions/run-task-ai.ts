@@ -5,6 +5,7 @@ import {
   createRunOptions,
   handleRun,
 } from '../common';
+import { runTaskActionOutputSchema } from '../output-schemas';
 
 export const apifyRunTask = createAction({
   name: 'apify_run_task',
@@ -12,6 +13,7 @@ export const apifyRunTask = createAction({
   displayName: 'Run Task',
   description: 'Runs a saved Apify Actor task by ID and optionally waits for it to finish.',
   audience: 'ai',
+  outputSchema: runTaskActionOutputSchema,
   aiMetadata: {
     description:
       'Run a saved Apify Actor task (an Actor pre-configured with stored input) by its task ID, optionally overriding the stored input. Resolve the task ID with List Tasks; inspect its stored input with Get Task Input. Prefer this over Run Actor when the user already has a configured task. Set waitForFinish=true only for short runs (blocks server-side ~60s); for long runs leave false and poll with Get Actor Run. Not idempotent — each call launches a new run.',

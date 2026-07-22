@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getTaskLastRunActionOutputSchema } from '../output-schemas';
 
 const RUN_STATUS_OPTIONS = [
   { label: 'Ready', value: 'READY' },
@@ -19,6 +20,7 @@ export const apifyGetTaskLastRun = createAction({
   displayName: 'Get Task Last Run',
   description: 'Retrieves the most recent run of a saved Actor task, optionally filtered by status.',
   audience: 'ai',
+  outputSchema: getTaskLastRunActionOutputSchema,
   aiMetadata: {
     description:
       'Get the most recent run of a saved task by its task ID, optionally restricted to a status (e.g. SUCCEEDED). Use this when you have the task ID but not a run ID — for example to find the run to poll with Get Actor Run (task analogue of Get Last Actor Run). Use Get Task Last Run Dataset Items to jump straight to its results. Obtain the task ID from List Tasks. Read-only and idempotent.',

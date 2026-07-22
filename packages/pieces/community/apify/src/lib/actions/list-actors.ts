@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { ActorListSortBy } from 'apify-client';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { listActorsActionOutputSchema } from '../output-schemas';
 
 export const apifyListActors = createAction({
   name: 'apify_list_actors',
@@ -9,6 +10,7 @@ export const apifyListActors = createAction({
   displayName: 'List Actors',
   description: 'Lists the Actors owned by the authenticated account.',
   audience: 'ai',
+  outputSchema: listActorsActionOutputSchema,
   aiMetadata: {
     description:
       'List the account\'s OWN Actors (id, name, username) so you can resolve an actor ID without a dropdown. Use this for actors the account owns; use Find Actor to search the PUBLIC Apify Store. Read-only and idempotent.',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getDatasetItemsActionOutputSchema } from '../output-schemas';
 
 export const apifyGetDatasetItems = createAction({
   name: 'apify_get_dataset_items',
@@ -8,6 +9,7 @@ export const apifyGetDatasetItems = createAction({
   displayName: 'Get Dataset Items',
   description: 'Retrieves stored result items from an Apify dataset by dataset ID.',
   audience: 'ai',
+  outputSchema: getDatasetItemsActionOutputSchema,
   aiMetadata: {
     description:
       'Read the stored result rows of an Apify dataset by its dataset ID, with optional offset/limit paging. Obtain the dataset ID from a run\'s output (defaultDatasetId, via Get Actor Run) or from List Datasets. Use Get Run Dataset Items if you have a runId instead of a datasetId. Read-only and idempotent.',

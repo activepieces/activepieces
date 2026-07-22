@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { listTasksActionOutputSchema } from '../output-schemas';
 
 export const apifyListTasks = createAction({
   name: 'apify_list_tasks',
@@ -8,6 +9,7 @@ export const apifyListTasks = createAction({
   displayName: 'List Tasks',
   description: 'Lists the saved Actor tasks in the authenticated account.',
   audience: 'ai',
+  outputSchema: listTasksActionOutputSchema,
   aiMetadata: {
     description:
       'List the account\'s saved Actor tasks (id, name, actId) so you can resolve a task ID without a dropdown. Use this to find the task to run with Run Task or inspect with Get Task / Get Task Input. Read-only and idempotent.',

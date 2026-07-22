@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { getRunDatasetItemsActionOutputSchema } from '../output-schemas';
 
 export const apifyGetRunDatasetItems = createAction({
   name: 'apify_get_run_dataset_items',
@@ -8,6 +9,7 @@ export const apifyGetRunDatasetItems = createAction({
   displayName: 'Get Run Dataset Items',
   description: 'Retrieves the dataset items of an Actor run directly by run ID.',
   audience: 'ai',
+  outputSchema: getRunDatasetItemsActionOutputSchema,
   aiMetadata: {
     description:
       'Read the result rows of a run\'s default dataset directly by run ID, with optional offset/limit paging. Use this when you have a run ID (from Run Actor) but not a dataset ID — it saves a Get Actor Run call. If you already have the dataset ID, use Get Dataset Items. Read-only and idempotent.',

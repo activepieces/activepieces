@@ -5,6 +5,7 @@ import {
   getFileExtension,
   isBinaryContentType,
 } from '../common';
+import { getKeyValueStoreRecordActionOutputSchema } from '../output-schemas';
 
 export const apifyGetKeyValueStoreRecord = createAction({
   name: 'apify_get_key_value_store_record',
@@ -12,6 +13,7 @@ export const apifyGetKeyValueStoreRecord = createAction({
   displayName: 'Get Key-Value Store Record',
   description: 'Retrieves a single record from an Apify key-value store by store ID and key.',
   audience: 'ai',
+  outputSchema: getKeyValueStoreRecordActionOutputSchema,
   aiMetadata: {
     description:
       'Fetch one named record from an Apify key-value store by store ID and record key, returning JSON/text inline or binary content as a file. Use this for named outputs an Actor saved (e.g. OUTPUT, screenshots) rather than dataset rows (use Get Dataset Items for those). Resolve the store ID via List Key-Value Stores and the record key via List Key-Value Store Keys. Read-only and idempotent; errors if the key does not exist.',

@@ -5,6 +5,7 @@ import {
   createRunOptions,
   handleRun,
 } from '../common';
+import { runActorActionOutputSchema } from '../output-schemas';
 
 export const apifyRunActor = createAction({
   name: 'apify_run_actor',
@@ -12,6 +13,7 @@ export const apifyRunActor = createAction({
   displayName: 'Run Actor',
   description: 'Starts an Apify Actor by ID and optionally waits for it to finish.',
   audience: 'ai',
+  outputSchema: runActorActionOutputSchema,
   aiMetadata: {
     description:
       'Run an Apify Actor (a hosted scraper/automation program) by its actor ID, passing a JSON input body. Resolve the actor ID with Find Actor (public store) or List Actors (your own), and build the input body from Get Actor Input Schema. Prefer Run Task when the user has a saved, pre-configured task. Set waitForFinish=true only for short runs (it blocks server-side up to ~60s); for long scrapes leave it false and poll with Get Actor Run. Not idempotent — each call launches a new run.',

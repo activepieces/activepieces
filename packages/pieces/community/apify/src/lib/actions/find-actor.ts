@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { findActorActionOutputSchema } from '../output-schemas';
 
 export const apifyFindActor = createAction({
   name: 'apify_find_actor',
@@ -8,6 +9,7 @@ export const apifyFindActor = createAction({
   displayName: 'Find Actor',
   description: 'Searches the public Apify Store for Actors by name or keyword.',
   audience: 'ai',
+  outputSchema: findActorActionOutputSchema,
   aiMetadata: {
     description:
       'Search the public Apify Store by name/keyword and return matching Actors with their IDs. This is the primary resolver: use it to turn an actor name into the actor ID required by Run Actor, Get Actor Input Schema, and other actor operations. Use List Actors instead to list your account\'s OWN actors. Read-only and idempotent.',
