@@ -135,9 +135,9 @@ function capMemories({ instructions, memories }: { instructions: string | null, 
     const trimmedInstructions = instructions?.trim()
     return {
         instructions: trimmedInstructions ? trimmedInstructions.slice(0, MAX_INSTRUCTIONS_LENGTH) : null,
-        memories: memories
+        memories: unique(memories
             .map((memory) => memory.trim().slice(0, MAX_MEMORY_LENGTH))
-            .filter((memory) => memory.length > 0)
+            .filter((memory) => memory.length > 0))
             .slice(0, MAX_MEMORIES),
     }
 }

@@ -1,4 +1,4 @@
-import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { GetChatMemoryResponse } from '@activepieces/shared'
 import { generateText, LanguageModel } from 'ai'
@@ -47,11 +47,7 @@ function parseJsonObject<T>(raw: string, schema: z.ZodType<T>): T | null {
     if (start === -1 || end <= start) {
         return null
     }
-    const { data, error } = tryCatchSync<unknown>(() => JSON.parse(raw.slice(start, end + 1)))
-    if (!isNil(error)) {
-        return null
-    }
-    const parsed = schema.safeParse(data)
+    const parsed = schema.safeParse(parseToJsonIfPossible(raw.slice(start, end + 1)))
     return parsed.success ? parsed.data : null
 }
 

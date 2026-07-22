@@ -1,4 +1,4 @@
-import { isNil, isObject, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -235,7 +235,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 
     switch (toolName) {
         case 'ap_remember': {
-            const memory = typeof toolInput.memory === 'string' ? toolInput.memory.trim() : ''
+            const memory = isString(toolInput.memory) ? toolInput.memory.trim() : ''
             if (!memory) {
                 return { success: false, error: 'Empty memory.' }
             }
