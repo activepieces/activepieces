@@ -120,17 +120,39 @@ function buildConnectionInventoryNote({ connections, truncated }: {
     return lines.join('\n')
 }
 
+function buildMemoryNote({ instructions, memories }: {
+    instructions: string | null
+    memories: string[]
+}): string {
+    const trimmedInstructions = instructions?.trim()
+    if (isNil(trimmedInstructions) && memories.length === 0) {
+        return ''
+    }
+    const lines: string[] = [
+        '\n\n## What you know about this user (across conversations)',
+        'Honor these by default without re-asking. When the user states a lasting preference, a default, or corrects how you work ("stop asking me things you can find", "always notify #ops", "I only hire EU-based"), save it with `ap_remember` (silent) so it persists next time. Keep each memory a short standalone statement; don\'t store one-off task details.',
+    ]
+    if (!isNil(trimmedInstructions)) {
+        lines.push(`\n### Instructions (how they want you to work / talk)\n${trimmedInstructions}`)
+    }
+    if (memories.length > 0) {
+        lines.push('\n### Remembered facts', memories.map((memory) => `- ${memory}`).join('\n'))
+    }
+    return lines.join('\n')
+}
+
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
         const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
 
-        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta] = await Promise.all([
+        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta, chatMemory] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
             chatHelpers.resolveChatProvider({ platformId, log }),
             chatHelpers.getUserProjects({ platformId, userId, log }),
             chatMcp.getCredentials({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
             userService(log).getMetaInformation({ id: userId }),
+            chatHelpers.getUserChatMemory({ platformId, userId }),
         ])
 
         const attachmentProjectId = (conversation.projectId && userProjects.some((p) => p.id === conversation.projectId))
@@ -217,7 +239,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
             userEmail: userMeta.email,
-        }) + inventoryNote
+        }) + inventoryNote + buildMemoryNote({ instructions: chatMemory.instructions, memories: chatMemory.memories })
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides

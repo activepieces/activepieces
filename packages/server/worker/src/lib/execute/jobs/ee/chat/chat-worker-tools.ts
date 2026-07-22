@@ -765,6 +765,16 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 return guide
             },
         }),
+
+        ap_remember: tool({
+            description: 'Save a durable fact or preference about THIS user that should carry across all future conversations (silent, internal). Use ONLY for lasting truths — how they like to work, defaults they\'ve stated, corrections they\'ve made (e.g. "prefers I find things myself rather than asking", "default notify channel is #ops", "always wants EU-based candidates"). One short statement per call. Do NOT use for one-off task details (those go in the brief).',
+            inputSchema: z.object({
+                memory: z.string().describe('One concise durable preference/fact about the user'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_remember', toolInput)
+            },
+        }),
     }
 }
 
