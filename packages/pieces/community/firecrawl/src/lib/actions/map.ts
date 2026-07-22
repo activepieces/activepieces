@@ -1,4 +1,4 @@
-import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { FIRECRAWL_API_BASE_URL } from '../common/common';
@@ -8,7 +8,7 @@ export const map = createAction({
     name: 'map',
     displayName: 'Map Websites',
     description: 'Input a website and get all the urls on the website.' ,
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Discovers and returns the list of URLs reachable from a given website, optionally including subdomains, up to a configurable limit. Choose this for fast site-map / link discovery when you only need the URLs and not page content; follow with Scrape, Crawl, or Extract to fetch the pages. Read-only against the site, so repeating the call is safe.', idempotent: true },
     props: {
       url: Property.ShortText({
