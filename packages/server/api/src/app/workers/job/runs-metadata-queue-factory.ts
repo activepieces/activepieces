@@ -1,4 +1,4 @@
-import { apId, ApId } from '@activepieces/core-utils'
+import { apId, ApId, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { FailedStep, FlowRunStatus, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
@@ -57,22 +57,28 @@ export const runsMetadataQueueFactory = ({
             if (!queueInstance) {
                 throw new Error('Runs metadata queue not initialized')
             }
+            const queue = queueInstance
 
             const cleanedParams = stripToRunsMetadataUpsertData(params)
+            const key = redisMetadataKey(cleanedParams.id)
 
-            const written = await distributedStore.mergeIfKeyAbsent(redisMetadataKey(cleanedParams.id), {
+            const written = await distributedStore.mergeIfKeyAbsent(key, {
                 ...cleanedParams,
                 requestId: apId(),
-            })
+            }, CLAIM_TTL_SECONDS)
             if (!written) {
                 return false
             }
 
-            await queueInstance.add(
+            const { error } = await tryCatch(() => queue.add(
                 'update-run-metadata',
                 { runId: cleanedParams.id, projectId: cleanedParams.projectId },
                 { deduplication: { id: cleanedParams.id } },
-            )
+            ))
+            if (error) {
+                await distributedStore.delete(key)
+                throw error
+            }
             return true
         },
 
@@ -88,6 +94,8 @@ export const runsMetadataQueueFactory = ({
         },
     }
 }
+
+const CLAIM_TTL_SECONDS = apDayjsDuration(1, 'hour').asSeconds()
 
 const RUNS_METADATA_UPSERT_KEYS: (keyof RunsMetadataUpsertData)[] = [
     'id', 'projectId', 'created', 'flowId', 'flowVersionId', 'environment',
