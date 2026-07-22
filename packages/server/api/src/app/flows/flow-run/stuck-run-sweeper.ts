@@ -1,12 +1,9 @@
-import { isNil } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { FlowRunStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, LessThan } from 'typeorm'
-import { distributedStore } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { redisMetadataKey, RunsMetadataUpsertData } from '../../workers/job'
 import { flowRunRepo } from './flow-run-service'
 import { runsMetadataQueue } from './flow-runs-queue'
 
@@ -32,17 +29,15 @@ export const stuckRunSweeper = (log: FastifyBaseLogger) => ({
         const finishTime = apDayjs().toISOString()
         let sweptCount = 0
         for (const stuckRun of stuckRuns) {
-            const pendingMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(redisMetadataKey(stuckRun.id))
-            if (!isNil(pendingMetadata) && Object.keys(pendingMetadata).length > 0) {
-                continue
-            }
-            await runsMetadataQueue(log).add({
+            const swept = await runsMetadataQueue(log).addIfNoPendingWrite({
                 id: stuckRun.id,
                 projectId: stuckRun.projectId,
                 status: FlowRunStatus.TIMEOUT,
                 finishTime,
             })
-            sweptCount++
+            if (swept) {
+                sweptCount++
+            }
         }
         log.info({
             sweptCount,

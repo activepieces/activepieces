@@ -53,6 +53,29 @@ export const runsMetadataQueueFactory = ({
             )
         },
 
+        async addIfNoPendingWrite(params: RunsMetadataUpsertData): Promise<boolean> {
+            if (!queueInstance) {
+                throw new Error('Runs metadata queue not initialized')
+            }
+
+            const cleanedParams = stripToRunsMetadataUpsertData(params)
+
+            const written = await distributedStore.mergeIfKeyAbsent(redisMetadataKey(cleanedParams.id), {
+                ...cleanedParams,
+                requestId: apId(),
+            })
+            if (!written) {
+                return false
+            }
+
+            await queueInstance.add(
+                'update-run-metadata',
+                { runId: cleanedParams.id, projectId: cleanedParams.projectId },
+                { deduplication: { id: cleanedParams.id } },
+            )
+            return true
+        },
+
         get(): Queue<RunsMetadataJobData> {
             if (!queueInstance) {
                 throw new Error('Runs metadata queue not initialized')
