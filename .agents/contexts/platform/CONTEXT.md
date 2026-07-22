@@ -54,3 +54,7 @@ _Avoid_: add-on (ambiguous), upgrade (that is a plan switch).
 **Active-user floor**:
 The rule that a seat-lowering action — a **plan downgrade** or a **seat decrease** — cannot set `usersLimit` below the platform's current **used seats** (active Users **plus** reserved pending invites; see Seat and ADR-0010). Enforced at request time (not at the period-end effective date). To go lower, the admin frees seats by deactivating users and/or revoking pending invites (the deactivation dialog lists both); only the **owner** is protected (admins included), so the minimum reachable seat count is 1.
 _Avoid_: seat limit (that is `usersLimit` itself), overage (no seat overage exists — the floor blocks instead).
+
+**Scheduled seat cap**:
+The seat allotment of a **scheduled plan change** (paid→paid downgrade or cancel-to-Free, which apply at period end). While the schedule is pending, seat-consuming operations enforce `min(usersLimit, scheduled seat cap)`, so a platform that deactivated down to the target cannot re-inflate before the switch lands (ADR-0013). Derived from Autumn customer state by the projection sync (`scheduledUsersLimit` on PlatformPlan) — never set at initiation; lifted by reactivating the subscription ("Keep current plan") or when the switch applies. Complements the Active-user floor: the floor guards the moment a lower limit is *requested*, the cap guards the *window* until it takes effect.
+_Avoid_: pending limit, future cap.

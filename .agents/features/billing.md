@@ -51,7 +51,8 @@ Billable dimensions:
   the `invitationWouldAddNewUser` predicate). Projected `usersLimit` (never a live Autumn call). Throws
   `ErrorCode.QUOTA_EXCEEDED` (metric `USERS`). See ADR-0010.
   - **Adding/inviting + reactivation** → `checkUsersExceededLimit` (`usedSeats + additionalSeatsNeeded >
-    usersLimit`), run **inside a `transaction` that takes `SELECT … FOR UPDATE` (`pessimistic_write`) on the
+    min(usersLimit, scheduledUsersLimit)` — the scheduled term binds only while a plan change is scheduled,
+    ADR-0013), run **inside a `transaction` that takes `SELECT … FOR UPDATE` (`pessimistic_write`) on the
     platform's `platform_plan` row**, so the check + the invite/reactivation write are atomic and all
     seat-consuming writes for a platform serialize (closes the concurrent-invite race; no RedLock, no bulk
     endpoint). Seat-neutral invites (to an existing member) skip the lock. `finalizeInvitation` (SMTP/JWT)
@@ -74,9 +75,31 @@ Billable dimensions:
 - **`usersLimit` projection needs no usage push** — it maps from Autumn `balance.granted` (included + purchased
   prepaid). Toppability is derived from the customer's **actual active subscription** plan items
   (version-accurate), and is empty while trialing.
-- **Over-cap at renewal** does not arise under the current interim (immediate decreases drop the limit at
-  request time, alongside the floor guard). It would return if `on_decrease` is flipped back to deferred; that
-  transition is **out of scope / TBD** and only relevant once decreases are deferred again.
+- **Over-cap at renewal**: for *seat decreases* it does not arise under the current interim (immediate
+  decreases drop the limit at request time, alongside the floor guard; would return if `on_decrease` flips
+  back to deferred — out of scope / TBD). For **scheduled plan changes** (paid→paid downgrade, cancel-to-Free
+  — which apply at period end) it is closed by the **Scheduled seat cap** (ADR-0013): the projection sync
+  derives `scheduledUsersLimit` on `platform_plan` from the Autumn customer's **scheduled base subscription**
+  (cancel-to-Free included — Autumn schedules the auto-enable Free plan; verified in sandbox), and
+  `checkUsersExceededLimit` enforces `min(usersLimit, scheduledUsersLimit)`. Derived-not-set: self-heals for
+  out-of-band downgrades (Stripe portal) via the post-cancel/reactivate `refreshEntitlements` + the 15-min
+  lazy pull sync, and clears itself on reactivation or when the switch applies. UX: out-of-seats dialog
+  branches on overview state (`cancelAt`/`scheduledPlanName`) with a "Keep current plan" remediation, the
+  Users card shows the effective cap as the headline total with a downgrade note (the Plan/Additional
+  breakdown is hidden while the cap binds), and the manage-seats control is hidden while a schedule exists
+  (purchased extras cannot lift the cap). The hide is also enforced server-side: console
+  `setUnconsumableQuantity` throws 409 CONFLICT on `usersLimit` changes while a cancel or a downgrade to a
+  plan without a priced seat item is scheduled (`assertSeatsAdjustableWithSchedule`); a scheduled plan that
+  itself sells seats (e.g. team→team_annual) stays adjustable. Non-seat features are not gated. **Purchased extra seats are refunded at downgrade initiation —
+  console-side** so every API caller gets it, not just AP-initiated downgrades: `refundPurchasedSeats`
+  (console `billing-service.ts`) reads the customer's `usersLimit` balance breakdown (extras = summed
+  `prepaidGrant`), and if extras exist sets the quantity back to `includedSeats` (immediate prorated credit
+  via `on_decrease`) — before `cancel`, and before a seat-lowering `checkout` attach (target plan's seat
+  item `included` < current included + extras) — fairness pairing with the cap (customer can't use the
+  extras during the window, so they shouldn't pay for them). Fail-open: refund errors are logged, never
+  block the downgrade. Reactivating ("Keep current plan") does NOT restore extras — the admin re-buys if
+  needed. The AP downgrade confirmations surface it ("Your {n} additional seats will be removed and the
+  unused time credited back", `planSelectorUtils.dropToFreeWarning`).
 - **Accept-time seat gap — CLOSED** by seat reservation (ADR-0010): a `PENDING` invite now reserves a seat at
   **creation** (counted in `usedSeats`), so invites can no longer be created past the limit and then all
   accepted past it. Accept is net-zero (pending −1, active +1). Remaining unguarded creators (SCIM,
@@ -111,5 +134,6 @@ Seat top-ups are Cloud self-serve on the Team plan (plan-driven, so any plan car
 
 ## Domain Terms
 [Seat](../contexts/platform/CONTEXT.md), [Top-up](../contexts/platform/CONTEXT.md),
+[Active-user floor](../contexts/platform/CONTEXT.md), [Scheduled seat cap](../contexts/platform/CONTEXT.md),
 [PlatformPlan](../contexts/platform/CONTEXT.md), [AI Credit](../contexts/ai/CONTEXT.md),
 [Edition](../contexts/platform/CONTEXT.md).
