@@ -13,6 +13,22 @@ import { calendarEventChanged } from './lib/triggers/calendar-event';
 import { addAttendeesToEventAction } from './lib/actions/add-attendees.action';
 import { findFreeBusy } from './lib/actions/find-busy-free-periods';
 import { getEventById } from './lib/actions/get-event-by-id';
+import { searchEventsAllCalendars } from './lib/actions/search-events-all-calendars';
+import { findFreeSlots } from './lib/actions/find-free-slots';
+import { listRecurringEventInstances } from './lib/actions/list-recurring-event-instances';
+import { moveEvent } from './lib/actions/move-event';
+import { aiCreateEvent } from './lib/actions/ai-create-event';
+import { aiUpdateEvent } from './lib/actions/ai-update-event';
+import { aiDeleteEvent } from './lib/actions/ai-delete-event';
+import { aiGetEvent } from './lib/actions/ai-get-event';
+import { aiListEvents } from './lib/actions/ai-list-events';
+import { aiFindBusyPeriods } from './lib/actions/ai-find-busy-periods';
+import { aiRemoveAttendee } from './lib/actions/ai-remove-attendee';
+import { aiImportEvent } from './lib/actions/ai-import-event';
+import { aiListCalendars } from './lib/actions/ai-list-calendars';
+import { aiGetCalendar } from './lib/actions/ai-get-calendar';
+import { aiGetColors } from './lib/actions/ai-get-colors';
+import { aiListSettings } from './lib/actions/ai-list-settings';
 import { newEvent } from './lib/triggers/new-event';
 import { eventEnds } from './lib/triggers/event-ends';
 import { eventStartTimeBefore } from './lib/triggers/event-start-time-before';
@@ -53,6 +69,22 @@ export const googleCalendar = createPiece({
     deleteEventAction,
     findFreeBusy,
     getEventById,
+    searchEventsAllCalendars,
+    findFreeSlots,
+    listRecurringEventInstances,
+    moveEvent,
+    aiCreateEvent,
+    aiUpdateEvent,
+    aiDeleteEvent,
+    aiGetEvent,
+    aiListEvents,
+    aiFindBusyPeriods,
+    aiRemoveAttendee,
+    aiImportEvent,
+    aiListCalendars,
+    aiGetCalendar,
+    aiGetColors,
+    aiListSettings,
     // TODO: add action after calendarList scope is verified
     // addCalendarToCalendarlist,
     createCustomApiCallAction({
