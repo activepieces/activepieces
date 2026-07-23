@@ -1,20 +1,6 @@
 import { EntitySchema, ObjectLiteral } from 'typeorm'
 import Paginator, { Order, OrderByConfig } from './paginator'
 
-export type PagingQuery = {
-    afterCursor?: string
-    beforeCursor?: string
-    limit?: number
-    order?: Order | 'ASC' | 'DESC'
-    orderBy?: string | OrderByConfig[]
-}
-
-export type PaginationOptions<Entity> = {
-    entity: EntitySchema<Entity>
-    alias?: string
-    query?: PagingQuery
-}
-
 export function buildPaginator<Entity extends ObjectLiteral>(
     options: PaginationOptions<Entity>,
 ): Paginator<Entity> {
@@ -41,19 +27,29 @@ export function buildPaginator<Entity extends ObjectLiteral>(
     }
 
     if (query.orderBy) {
-        if (Array.isArray(query.orderBy)) {
-            paginator.setCompositeOrderBy(query.orderBy)
-        }
-        else {
-            paginator.setOrderBy(query.orderBy)
-            if (query.order) {
-                paginator.setOrder(query.order as Order)
-            }
-        }
+        paginator.setCompositeOrderBy(query.orderBy)
     }
     else if (query.order) {
-        paginator.setOrder(query.order as Order)
+        paginator.setCompositeOrderBy([{ field: 'created', order: toOrder(query.order) }])
     }
 
     return paginator
+}
+
+function toOrder(order: PagingQuery['order']): Order {
+    return order === Order.ASC ? Order.ASC : Order.DESC
+}
+
+export type PagingQuery = {
+    afterCursor?: string
+    beforeCursor?: string
+    limit?: number
+    order?: Order | 'ASC' | 'DESC'
+    orderBy?: OrderByConfig[]
+}
+
+export type PaginationOptions<Entity> = {
+    entity: EntitySchema<Entity>
+    alias?: string
+    query?: PagingQuery
 }
