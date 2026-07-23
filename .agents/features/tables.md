@@ -78,7 +78,8 @@ A built-in relational database feature that lets users store structured data dir
 - `table.list()` — paginated with optional row count, name filter, single-folder filter (`folderId`), multi-folder filter (`folderIds`), externalIds filter
 - `table.update()` — rename, move to folder, change trigger/status
 - `table.delete()` — cascades to fields, records, cells, webhooks
-- `table.exportTable()` — returns fields + rows as JSON
+- `table.exportTable()` — returns fields + rows as JSON (whole table loaded in memory; used by the web UI download)
+- `table.exportTableCsvToFile()` — streams the table as CSV using a keyset-paginated loop (batched records + per-batch cell lookup, no full hydration), saves it as a `FLOW_STEP_FILE`, and returns `{ url, name, rowCount }`; backs the Download Table action
 - `table.createWebhook()` / `table.deleteWebhook()` — link table events to flows
 - `record.create()` — bulk insert (max 50 per batch, transactional), validates field count
 - `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS); filtering is in-memory and a missing cell is treated as an empty value (`''`), so NEQ/NOT_EXISTS match unset columns
@@ -89,7 +90,7 @@ A built-in relational database feature that lets users store structured data dir
 
 All table / field / record routes use `securityAccess.project([...], <permission>, <resource>)`. The required permission per resource:
 
-- **Read** (`GET /v1/tables`, `GET /v1/tables/:id`, `GET /v1/fields`, `GET /v1/fields/:id`, `GET /v1/records`, `GET /v1/records/:id`): `READ_TABLE`
+- **Read** (`GET /v1/tables`, `GET /v1/tables/:id`, `GET /v1/tables/:id/export`, `GET /v1/tables/:id/export/csv`, `GET /v1/fields`, `GET /v1/fields/:id`, `GET /v1/records`, `GET /v1/records/:id`): `READ_TABLE`
 - **Write** (`POST /v1/tables`, `POST /v1/tables/:id`, `DELETE /v1/tables/:id`, `POST /v1/fields`, `POST /v1/fields/:id`, `DELETE /v1/fields/:id`, `POST /v1/records`, `POST /v1/records/:id`, `DELETE /v1/records`): `WRITE_TABLE`
 
 Default project roles: `ADMIN` and `EDITOR` have both; `VIEWER` has only `READ_TABLE`. Custom roles inherit whatever permissions are configured.
@@ -109,5 +110,5 @@ After record create/update/delete, `recordSideEffects.handleRecordsEvent()`:
 
 Tables piece (`packages/pieces/core/tables/`) provides:
 - **Triggers**: New Record, Record Updated, Record Deleted (register TableWebhook on enable, delete on disable)
-- **Actions**: Create Record(s), Get Record, Find Records, Update Record, Delete Record(s), Clear Table
+- **Actions**: Create Table, Delete Table, Create Record(s), Get Record, Find Records, Update Record, Delete Record(s), Clear Table, Download Table (streams the table CSV to a file via `GET /v1/tables/:id/export/csv` and returns the download URL)
 - Uses internal API with Bearer token authentication
