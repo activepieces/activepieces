@@ -25,7 +25,7 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     return { content: [{ type: 'text', text: '❌ No record IDs provided.' }] }
                 }
 
-                const deleted = await recordService.delete({
+                const { deletedCount } = await recordService.delete({
                     ids: recordIds,
                     projectId: mcp.projectId,
                 })
@@ -33,7 +33,7 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Deleted ${deleted.length} record(s).`,
+                        text: `✅ Deleted ${deletedCount} record(s).`,
                     }],
                 }
             }

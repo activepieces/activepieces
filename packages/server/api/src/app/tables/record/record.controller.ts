@@ -57,9 +57,10 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
-        const deletedRecords = await recordService.delete({
+        const { records: deletedRecords, webhooks } = await recordService.delete({
             ids: request.body.ids,
             projectId: request.projectId,
+            tableId: request.body.tableId,
         })
         await reply.status(StatusCodes.OK).send([])
         await recordSideEffects(fastify.log).handleRecordsEvent({
@@ -68,6 +69,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             records: deletedRecords,
             logger: request.log,
             authorization: request.headers.authorization as string,
+            webhooks,
         }, 'deleted')
     })
 
