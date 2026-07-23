@@ -1,0 +1,39 @@
+import { createAction } from '@activepieces/pieces-framework';
+import { gmailAuth, createGoogleClient } from '../auth';
+import { gmail as googleGmail } from '@googleapis/gmail';
+import { GmailProps } from '../common/props';
+
+export const gmailRemoveLabelFromThreadAction = createAction({
+  auth: gmailAuth,
+  name: 'remove_label_from_thread',
+  displayName: 'Remove Label from Thread',
+  description: 'Strip a label from all emails in a thread.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes a label from every message in a thread identified by its Gmail thread ID. Use this to un-categorize an entire conversation at once. Idempotent: removing a label that is not applied leaves the thread unchanged.',
+    idempotent: true,
+  },
+  props: {
+    thread_id: GmailProps.thread,
+    label: GmailProps.label({
+      displayName: 'Label',
+      description: 'The label to remove from the thread.',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const authClient = await createGoogleClient(context.auth);
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
+
+    const response = await gmail.users.threads.modify({
+      userId: 'me',
+      id: context.propsValue.thread_id,
+      requestBody: {
+        removeLabelIds: [context.propsValue.label.id],
+      },
+    });
+
+    return response.data;
+  },
+});
