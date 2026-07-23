@@ -1,6 +1,6 @@
 import { isNil, isObject, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, PieceRunSource, Project, RunEnvironment } from '@activepieces/shared'
+import { ActionRunSource, AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -9,7 +9,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { executePieceRunAction, executePieceRunCode, formatRunSummary, PieceRunOffload } from '../../../mcp/tools/flow-run-utils'
+import { ActionRunOffload, executeActionRunAction, executeActionRunCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -267,8 +267,40 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
             return discoveryResult
         }
+        case 'ap_revalidate_connection': {
+            const externalId = toolInput.connectionExternalId as string
+            let projectId: string | undefined
+            if (conversationId) {
+                const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+                if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
+                    projectId = conversation.projectId
+                }
+            }
+            if (isNil(projectId)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No project is selected for this conversation. Ask the user which project this connection is in.' }
+            }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
+            if (!isNil(denial)) {
+                return denial
+            }
+            const found = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId })
+            if (isNil(found)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId in the active project.' }
+            }
+            const revalidated = await appConnectionService(log).revalidate({ id: found.id, projectId, platformId })
+            const working = revalidated.status === AppConnectionStatus.ACTIVE
+            return {
+                connectionExternalId: externalId,
+                status: revalidated.status,
+                working,
+                note: working
+                    ? 'This connection is valid — safe to build on.'
+                    : 'This connection is NOT working (its credentials failed). Do not build on it — show the connection picker so the user can reconnect, then retry.',
+            }
+        }
         case 'ap_execute_action': {
-            return runChatPieceRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
+            return runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }
         case 'ap_run_code': {
             return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
@@ -279,7 +311,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
-            return runChatPieceRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -314,13 +346,13 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 // A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
 // the model context with a compact shape preview + the fileId. The agent then processes the FULL
 // data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
-function buildPieceRunOffload({ projectId, platformId, pieceName, actionName, log }: {
+function buildActionRunOffload({ projectId, platformId, pieceName, actionName, log }: {
     projectId: string
     platformId?: string
     pieceName: string
     actionName: string
     log: FastifyBaseLogger
-}): PieceRunOffload | undefined {
+}): ActionRunOffload | undefined {
     if (isNil(platformId)) {
         return undefined
     }
@@ -368,7 +400,7 @@ async function resolveConversationProjectId({ conversationId, platformId, userId
     return projects.some((p) => p.id === conversation.projectId) ? conversation.projectId : undefined
 }
 
-async function runChatPieceRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
+async function runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -416,7 +448,7 @@ async function runChatPieceRunAction({ toolInput, projects, availableProjectIds,
             parsedInput = parsed as Record<string, unknown>
         }
     }
-    const result = await executePieceRunAction({
+    const result = await executeActionRunAction({
         projectId: resolvedProjectId,
         userId,
         pieceName,
@@ -424,8 +456,8 @@ async function runChatPieceRunAction({ toolInput, projects, availableProjectIds,
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
         conversationId,
-        source: PieceRunSource.CHAT,
-        ...spreadIfDefined('offload', buildPieceRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
+        source: ActionRunSource.CHAT,
+        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
 
@@ -504,7 +536,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
         input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
     }
 
-    const result = await executePieceRunCode({ projectId, userId, code, packageJson, input, conversationId, source: PieceRunSource.CHAT, log })
+    const result = await executeActionRunCode({ projectId, userId, code, packageJson, input, conversationId, source: ActionRunSource.CHAT, log })
 
     if (result.status !== 'succeeded') {
         const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'

@@ -9,7 +9,7 @@ const MAX_BATCH_SIZE = 100
 const MAX_IDENTICAL_ACTION_FAILURES = 2
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 // Context-lean cap: large reads (e.g. a 1.4MB Attio query) are offloaded to a file at the chat
-// layer (runChatPieceRunAction) and only a preview + fileId reaches here, so this only needs to keep
+// layer (runChatActionRunAction) and only a preview + fileId reaches here, so this only needs to keep
 // the occasional un-offloaded result (web scrape, mcp__ tool, code output) from flooding context.
 const MAX_RESULT_SIZE_BYTES = 128 * 1024
 const MIN_PREVIEW_ARRAY_LENGTH = 3
@@ -507,7 +507,7 @@ function createProgressGuard() {
         `✋ This exact action already ran successfully earlier in this turn (${actionName}) — it was NOT run again to avoid a duplicate side effect. Treat it as done; only repeat it if the user explicitly asks or the input changes.`
 
     return {
-        checkPieceRunAction: ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): { content: { type: string, text: string }[] } | null => {
+        checkActionRunAction: ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): { content: { type: string, text: string }[] } | null => {
             const key = actionKey({ pieceName, actionName, input })
             if (succeededWrites.has(key)) {
                 return { content: [{ type: 'text', text: duplicateWriteText(actionName) }] }
@@ -517,7 +517,7 @@ function createProgressGuard() {
             }
             return null
         },
-        recordPieceRunResult: ({ pieceName, actionName, input, success }: { pieceName: string, actionName: string, input: unknown, success: boolean }): void => {
+        recordActionRunResult: ({ pieceName, actionName, input, success }: { pieceName: string, actionName: string, input: unknown, success: boolean }): void => {
             const key = actionKey({ pieceName, actionName, input })
             if (success) {
                 failureCounts.delete(key)
@@ -564,6 +564,16 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             },
         }),
 
+        ap_revalidate_connection: tool({
+            description: 'Verify a connection actually works right now by running its credentials against the live service — a connection can read as active while its token is dead or revoked. Use it when a piece action fails with an auth/credential error, or before building on a connection you suspect is stale. Pass the connectionExternalId returned by ap_discover_action_auth or ap_show_connection_picker. If it comes back not working, do NOT keep building on it: show the connection picker so the user can reconnect, then retry.',
+            inputSchema: z.object({
+                connectionExternalId: z.string().describe('The connectionExternalId of the connection to verify'),
+            }),
+            execute: async (input) => {
+                return executeWithTimeout('ap_revalidate_connection', input)
+            },
+        }),
+
         ap_execute_action: tool({
             description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Use ap_discover_action_auth first to check if auth is needed. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
             inputSchema: z.object({
@@ -578,7 +588,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             execute: async (toolInput, options) => {
                 const isBatch = toolInput.items && toolInput.items.length > 0
                 if (!isBatch) {
-                    const guardResult = progressGuard.checkPieceRunAction({
+                    const guardResult = progressGuard.checkActionRunAction({
                         pieceName: toolInput.pieceName,
                         actionName: toolInput.actionName,
                         input: toolInput.input,
@@ -640,7 +650,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 }
                 const rawResult = await executeWithTimeout('ap_execute_action', toolInput)
                 const rawSuccess = isSuccessResult(rawResult)
-                progressGuard.recordPieceRunResult({
+                progressGuard.recordActionRunResult({
                     pieceName: toolInput.pieceName,
                     actionName: toolInput.actionName,
                     input: toolInput.input,

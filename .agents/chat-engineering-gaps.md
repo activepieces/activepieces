@@ -5,7 +5,7 @@
 **Impact:** Critical — blocks 8 of 10 use cases (any multi-item task)
 **Effort:** Medium
 
-**Implemented:** Extended `ap_execute_action` with `items[]` array (max 100) + `description` for progress label. Worker-side batch loop calls `executePieceRunAction` per item via RPC, pushes `data-batch-progress` stream events for a live-updating `BatchProgressCard` in the chat UI. Continue-on-error. Timeout scales with item count. Single-item path unchanged.
+**Implemented:** Extended `ap_execute_action` with `items[]` array (max 100) + `description` for progress label. Worker-side batch loop calls `executeActionRunAction` per item via RPC, pushes `data-batch-progress` stream events for a live-updating `BatchProgressCard` in the chat UI. Continue-on-error. Timeout scales with item count. Single-item path unchanged.
 
 ---
 

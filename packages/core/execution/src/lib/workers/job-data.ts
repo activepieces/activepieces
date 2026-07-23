@@ -64,7 +64,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_TOKEN_REFRESH:
             return 'critical'
         case WorkerJobType.EXECUTE_CHAT_AGENT:
-        // Piece-run actions run synchronously but must never starve the truly-interactive (critical)
+        // Action-run actions run synchronously but must never starve the truly-interactive (critical)
         // property/validation/trigger-hook jobs a human is waiting on in the builder.
         case WorkerJobType.EXECUTE_ACTION:
             return 'high'

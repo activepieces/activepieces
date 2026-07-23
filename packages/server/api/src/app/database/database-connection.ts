@@ -3,6 +3,7 @@ import {
     DataSource,
     EntitySchema,
 } from 'typeorm'
+import { ActionRunEntity } from '../action-run/action-run.entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
@@ -45,7 +46,6 @@ import { McpServerEntity } from '../mcp/mcp-entity'
 import { McpOAuthClientEntity } from '../mcp/oauth/client/mcp-oauth-client.entity'
 import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/code/mcp-oauth-code.entity'
 import { McpOAuthTokenEntity } from '../mcp/oauth/token/mcp-oauth-token.entity'
-import { PieceRunEntity } from '../piece-run/piece-run.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -55,6 +55,7 @@ import { CellEntity } from '../tables/record/cell.entity'
 import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
+import { TeamsBotInstallationEntity } from '../teams-bot/teams-bot-installation.entity'
 import { TemplateEntity } from '../template/template.entity'
 import { ToolSearchIndexEntity } from '../tool-search/tool-search-index.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
@@ -78,7 +79,7 @@ function getEntities(): EntitySchema<unknown>[] {
         FlowEntity,
         FlowVersionEntity,
         FlowRunEntity,
-        PieceRunEntity,
+        ActionRunEntity,
         ProjectEntity,
         StoreEntryEntity,
         UserEntity,
@@ -110,6 +111,7 @@ function getEntities(): EntitySchema<unknown>[] {
         ChatRolloutUserEntity,
         TriggerSourceEntity,
         WaitpointEntity,
+        TeamsBotInstallationEntity,
         // Enterprise
         PieceSetEntity,
         ConcurrencyPoolEntity,

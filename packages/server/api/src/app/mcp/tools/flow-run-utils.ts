@@ -1,17 +1,17 @@
 import { formatPieceError, isNil, isObject, tryCatch, tryCatchSync, tryParseFriendlyPieceError } from '@activepieces/core-utils'
-import { CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, PieceRunSource, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
+import { ActionRunSource, CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { actionRunService } from '../../action-run/action-run.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { pieceRunService } from '../../piece-run/piece-run.service'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
-const PIECE_RUN_STEP_NAME = 'step_1'
+const ACTION_RUN_STEP_NAME = 'step_1'
 
 const POLL_INTERVAL_MS = 2000
 const MAX_WAIT_MS = 120_000
@@ -19,7 +19,7 @@ const MAX_WAIT_MS = 120_000
 // 300 chars, so the agent never saw it. Keep the head but allow enough to carry the real guidance.
 const ERROR_SUMMARY_MAX_LENGTH = 900
 
-type PieceRunActionResult = {
+type ActionRunActionResult = {
     text: string
     errorSummary?: string
 }
@@ -111,7 +111,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
     return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }], structuredContent: { usedMockTriggerData } }
 }
 
-export async function executePieceRunAction({
+export async function executeActionRunAction({
     projectId,
     userId,
     pieceName,
@@ -132,8 +132,8 @@ export async function executePieceRunAction({
     input?: Record<string, unknown>
     connectionExternalId?: string
     conversationId?: string
-    offload?: PieceRunOffload
-    source?: PieceRunSource
+    offload?: ActionRunOffload
+    source?: ActionRunSource
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
     const { auth: inlineAuth, ...inputWithoutAuth } = input ?? {}
@@ -210,7 +210,7 @@ export async function executePieceRunAction({
 
     const parsedAction = UpdateActionRequest.safeParse({
         type: FlowActionType.PIECE,
-        name: PIECE_RUN_STEP_NAME,
+        name: ACTION_RUN_STEP_NAME,
         displayName: action.displayName,
         valid: true,
         settings: pieceSettings,
@@ -223,44 +223,44 @@ export async function executePieceRunAction({
     }
     const step: PieceAction = { ...parsedAction.data, lastUpdatedDate: dayjs().toISOString() }
 
-    const { data: pieceRun, error: runError } = await tryCatch(() => pieceRunService(log).run({
+    const { data: actionRun, error: runError } = await tryCatch(() => actionRunService(log).run({
         projectId,
         platformId: project.platformId,
         userId,
-        source: source ?? PieceRunSource.MCP,
+        source: source ?? ActionRunSource.MCP,
         step,
         connectionExternalId: effectiveExternalId,
         conversationId,
     }))
     if (runError) {
-        log.error({ error: runError, project: { id: projectId } }, 'executePieceRunAction failed')
+        log.error({ error: runError, project: { id: projectId } }, 'executeActionRunAction failed')
         return mcpUtils.mcpToolError('Failed to run action', runError)
     }
 
-    if (pieceRun.status === FlowRunStatus.TIMEOUT) {
+    if (actionRun.status === FlowRunStatus.TIMEOUT) {
         return {
             content: [{
                 type: 'text',
-                text: `⏳ ${action.displayName} timed out before it finished. Run ID: ${pieceRun.id}.`,
+                text: `⏳ ${action.displayName} timed out before it finished. Run ID: ${actionRun.id}.`,
             }],
             structuredContent: { errorSummary: 'The action timed out before it finished.' },
         }
     }
 
-    if (pieceRun.status === FlowRunStatus.INTERNAL_ERROR) {
+    if (actionRun.status === FlowRunStatus.INTERNAL_ERROR) {
         return {
             content: [{
                 type: 'text',
-                text: `❌ ${action.displayName} failed with INTERNAL_ERROR — the engine crashed while loading or executing the piece. Run ID: ${pieceRun.id}.`,
+                text: `❌ ${action.displayName} failed with INTERNAL_ERROR — the engine crashed while loading or executing the piece. Run ID: ${actionRun.id}.`,
             }],
             structuredContent: { errorSummary: 'The step couldn’t start — something went wrong loading it.' },
         }
     }
 
-    const outcome: PieceRunOutcome = {
-        succeeded: pieceRun.status === FlowRunStatus.SUCCEEDED,
-        output: pieceRun.output,
-        errorMessage: pieceRun.errorMessage,
+    const outcome: ActionRunOutcome = {
+        succeeded: actionRun.status === FlowRunStatus.SUCCEEDED,
+        output: actionRun.output,
+        errorMessage: actionRun.errorMessage,
     }
 
     if (offload !== undefined) {
@@ -270,14 +270,14 @@ export async function executePieceRunAction({
         }
     }
 
-    const formatted = formatPieceRunActionResult({ outcome, runId: pieceRun.id, displayName: action.displayName, actionName: action.name })
+    const formatted = formatActionRunActionResult({ outcome, runId: actionRun.id, displayName: action.displayName, actionName: action.name })
     return {
         content: [{ type: 'text', text: formatted.text }],
         ...(formatted.errorSummary !== undefined ? { structuredContent: { errorSummary: formatted.errorSummary } } : {}),
     }
 }
 
-export async function executePieceRunCode({
+export async function executeActionRunCode({
     projectId,
     userId,
     code,
@@ -293,9 +293,9 @@ export async function executePieceRunCode({
     packageJson?: string
     input?: Record<string, unknown>
     conversationId?: string
-    source?: PieceRunSource
+    source?: ActionRunSource
     log: FastifyBaseLogger
-}): Promise<PieceRunCodeResult> {
+}): Promise<ActionRunCodeResult> {
     const { data: project, error: projectError } = await tryCatch(
         () => projectService(log).getOneOrThrow(projectId),
     )
@@ -305,7 +305,7 @@ export async function executePieceRunCode({
 
     const parsedAction = UpdateActionRequest.safeParse({
         type: FlowActionType.CODE,
-        name: PIECE_RUN_STEP_NAME,
+        name: ACTION_RUN_STEP_NAME,
         displayName: 'Run code',
         valid: true,
         settings: {
@@ -322,23 +322,23 @@ export async function executePieceRunCode({
     }
     const step: CodeAction = { ...parsedAction.data, lastUpdatedDate: dayjs().toISOString() }
 
-    const { data: pieceRun, error: runError } = await tryCatch(() => pieceRunService(log).run({
+    const { data: actionRun, error: runError } = await tryCatch(() => actionRunService(log).run({
         projectId,
         platformId: project.platformId,
         userId,
-        source: source ?? PieceRunSource.MCP,
+        source: source ?? ActionRunSource.MCP,
         step,
         conversationId,
     }))
     if (runError) {
-        log.error({ error: runError, project: { id: projectId } }, 'executePieceRunCode failed')
+        log.error({ error: runError, project: { id: projectId } }, 'executeActionRunCode failed')
         return { status: 'internal_error', errorMessage: 'Failed to run code.' }
     }
 
-    return mapCodeResult(pieceRun)
+    return mapCodeResult(actionRun)
 }
 
-function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknown, errorMessage?: string | null }): PieceRunCodeResult {
+function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknown, errorMessage?: string | null }): ActionRunCodeResult {
     switch (run.status) {
         case FlowRunStatus.SUCCEEDED:
             return { status: 'succeeded', runId: run.id, output: run.output }
@@ -424,10 +424,10 @@ function slimCustomApiCallOutput(output: unknown): { payload: unknown, statusNot
 // handler, which returns a compact preview + fileId in place of the blob. Returns null to fall
 // through to normal formatting (result small, empty, failed, or persistence declined/failed).
 async function maybeOffloadLargeResult({ outcome, actionName, displayName, offload }: {
-    outcome: PieceRunOutcome
+    outcome: ActionRunOutcome
     actionName: string
     displayName: string
-    offload: PieceRunOffload
+    offload: ActionRunOffload
 }): Promise<McpToolResult | null> {
     if (!outcome.succeeded) {
         return null
@@ -453,12 +453,12 @@ async function maybeOffloadLargeResult({ outcome, actionName, displayName, offlo
     return { content: [{ type: 'text', text }] }
 }
 
-function formatPieceRunActionResult({ outcome, runId, displayName, actionName }: {
-    outcome: PieceRunOutcome
+function formatActionRunActionResult({ outcome, runId, displayName, actionName }: {
+    outcome: ActionRunOutcome
     runId: string
     displayName: string
     actionName?: string
-}): PieceRunActionResult {
+}): ActionRunActionResult {
     if (outcome.succeeded) {
         const { payload, statusNote } = actionName === 'custom_api_call'
             ? slimCustomApiCallOutput(outcome.output)
@@ -583,20 +583,20 @@ function isStepDataExpired(run: FlowRun): boolean {
     return isOutsideRetentionWindow(run.created, retentionDays)
 }
 
-type PieceRunOutcome = {
+type ActionRunOutcome = {
     succeeded: boolean
     output: unknown
     errorMessage?: string | null
 }
 
-export type PieceRunCodeResult = {
+export type ActionRunCodeResult = {
     status: 'succeeded' | 'failed' | 'timeout' | 'internal_error'
     output?: unknown
     errorMessage?: string
     runId?: string
 }
 
-export type PieceRunOffload = {
+export type ActionRunOffload = {
     thresholdBytes: number
     handle: (args: { payload: unknown, byteSize: number, label: string, statusNote: string }) => Promise<string | null>
 }

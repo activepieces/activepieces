@@ -9,6 +9,7 @@ import { FastifyBaseLogger, FastifyInstance, FastifyRequest, HTTPMethods } from 
 import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod'
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
+import { actionRunModule } from './action-run/action-run.module'
 import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
@@ -92,7 +93,6 @@ import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
-import { pieceRunModule } from './piece-run/piece-run.module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
@@ -103,6 +103,7 @@ import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
+import { teamsBotModule } from './teams-bot/teams-bot.module'
 import { templateModule } from './template/template.module'
 import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
@@ -216,6 +217,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
+    await app.register(teamsBotModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
@@ -228,7 +230,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(collaborativeModule)
     await app.register(flowModule)
     await app.register(flowRunModule)
-    await app.register(pieceRunModule)
+    await app.register(actionRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
     await app.register(platformAppConnectionModule)

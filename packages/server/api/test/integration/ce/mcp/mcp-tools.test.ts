@@ -26,6 +26,7 @@ import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-bran
 import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
+import { apReadStepSettingsTool } from '../../../../src/app/mcp/tools/ap-read-step-settings'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 import { db } from '../../../helpers/db'
@@ -2552,5 +2553,87 @@ describe('MCP Tools integration', () => {
         expect(response.statusCode).toBe(StatusCodes.CREATED)
         const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: response.json().id, projectId: ctx.project.id })
         expect(flow.createdBy ?? null).toBeNull()
+    })
+
+    it('ap_read_step_settings — returns full untruncated input for a PIECE step', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Read Settings Flow')
+
+        const longValue = 'recipient-'.repeat(80)
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PIECE,
+            displayName: 'Send Email',
+            pieceName: '@activepieces/piece-test-email',
+            actionName: 'send_email',
+            input: { to: longValue, subject: 'Hello' },
+        })
+
+        const structure = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
+        expect(text(structure)).toContain('(truncated)')
+        expect(text(structure)).not.toContain(longValue)
+
+        const result = await apReadStepSettingsTool(mcp, mockLog).execute({ flowId, stepName: 'step_1' })
+        expect(text(result)).not.toContain('❌')
+        expect(text(result)).toContain(longValue)
+        expect(text(result)).toContain('send_email')
+    })
+
+    it('ap_read_step_settings — returns sourceCode and packageJson for a CODE step', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Read Code Settings Flow')
+
+        const sourceCode = 'export const code = async (inputs) => { return inputs.value * 2 }'
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.CODE,
+            displayName: 'Double It',
+            sourceCode,
+            input: { value: '{{trigger}}' },
+        })
+
+        const result = await apReadStepSettingsTool(mcp, mockLog).execute({ flowId, stepName: 'step_1' })
+        expect(text(result)).not.toContain('❌')
+        expect(text(result)).toContain('inputs.value * 2')
+        expect(text(result)).toContain('packageJson')
+    })
+
+    it('ap_read_step_settings — reads the trigger step', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Read Trigger Settings Flow')
+
+        const result = await apReadStepSettingsTool(mcp, mockLog).execute({ flowId, stepName: 'trigger' })
+        expect(text(result)).not.toContain('❌')
+        expect(text(result)).toContain('EMPTY')
+        expect(text(result)).toContain('ap_update_trigger')
+    })
+
+    it('ap_read_step_settings — unknown step returns available step names', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Read Missing Step Flow')
+
+        const result = await apReadStepSettingsTool(mcp, mockLog).execute({ flowId, stepName: 'step_99' })
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('Available steps')
+        expect(text(result)).toContain('trigger')
+    })
+
+    it('ap_read_step_settings — cannot read a flow from another project', async () => {
+        const ctx1 = await createTestContext(app)
+        const ctx2 = await createTestContext(app)
+        const mcp2 = makeMcp(ctx2.project.id)
+        const flowId = await createFlowAndGetId(mcp2, 'Other Project Flow')
+
+        const mcp1 = makeMcp(ctx1.project.id)
+        const result = await apReadStepSettingsTool(mcp1, mockLog).execute({ flowId, stepName: 'trigger' })
+        expect(text(result)).toContain('❌ Flow not found')
     })
 })

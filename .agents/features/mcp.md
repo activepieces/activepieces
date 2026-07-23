@@ -42,7 +42,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - **StreamableHTTP** — streaming variant of the MCP protocol used for the primary `/http` endpoint
 - **MCP trigger piece** — `@activepieces/piece-mcp`; a flow with this trigger is exposed as a callable tool via MCP
 - **disabledTools** — JSONB array of controllable tool names currently disabled; `null` or `[]` means all controllable tools are enabled
-- **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. These tools (plus `ap_run_action`) take `McpToolContext` (`{ mcp: ProjectScopedMcpServer, userId? }`) so they can attribute ownership; `ap_run_action` stamps the same `userId` onto the `piece_run` row it creates.
+- **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. These tools (plus `ap_run_action`) take `McpToolContext` (`{ mcp: ProjectScopedMcpServer, userId? }`) so they can attribute ownership; `ap_run_action` stamps the same `userId` onto the `action_run` row it creates.
 - **Embedded MCP OAuth** — in-embed consent flow where a managed-auth (embedded) user approves an MCP OAuth request inside the host app via the SDK's `authorizeMcp()`, instead of being redirected to a standalone Activepieces login they don't have. Backed by the `/embed/mcp-authorize` route and the existing `POST /v1/mcp-oauth/approve` (which accepts the embed USER session). `mcpSettings()` similarly renders the MCP settings page inside the embed.
 
 ## Entity
@@ -55,6 +55,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_list_flows` — list all flows in project
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
+- `ap_read_step_settings` — read the full untruncated settings of any step (trigger included): piece input, code source, loop items, router branches, error handling options
 - `ap_validate_flow`, `ap_validate_step_config` — validation helpers
 - `ap_research_pieces` — piece discovery with intent-based recommended-action ranking
 - `ap_get_piece_props` — action/trigger input schema with required-input summaries and example input, action cardinality, curated expert notes (via `piece-expertise.ts`), AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
@@ -77,7 +78,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_manage_fields`, `ap_insert_records`, `ap_update_record`, `ap_delete_records` — record operations
 - `ap_test_flow`, `ap_test_step` — flow/step testing
 - `ap_retry_run` — run management
-- `ap_run_action` — executes a single piece action as a first-class **piece run** (`executePieceRunAction` → `pieceRunService.run()`, synchronous `EXECUTE_ACTION` job — no temporary flow, no polling). Persists a `piece_run` row with `source: MCP`, attributed to the OAuth user via `McpToolContext.userId`. See `.agents/features/piece-run.md`
+- `ap_run_action` — executes a single piece action as a first-class **action run** (`executeActionRunAction` → `actionRunService.run()`, synchronous `EXECUTE_ACTION` job — no temporary flow, no polling). Persists a `action_run` row with `source: MCP`, attributed to the OAuth user via `McpToolContext.userId`. See `.agents/features/action-run.md`
 
 **Dynamic flow tools**: Each enabled flow with MCP trigger piece is registered as a callable tool. Name format: `{toolName}_{flowId.substring(0, 4)}`. Execution: submits webhook to flow (sync if `returnsResponse`, async otherwise).
 

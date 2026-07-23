@@ -27,6 +27,7 @@ import { apLockAndPublishTool } from './ap-lock-and-publish'
 import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
 import { apReadStepCodeTool } from './ap-read-step-code'
+import { apReadStepSettingsTool } from './ap-read-step-settings'
 import { apRenameFlowTool } from './ap-rename-flow'
 import { apResearchPiecesTool } from './ap-research-pieces'
 import { apResolvePropertyChainTool } from './ap-resolve-property-chain'
@@ -55,6 +56,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_flows',
     'ap_flow_structure',
     'ap_read_step_code',
+    'ap_read_step_settings',
     'ap_validate_flow',
     'ap_research_pieces',
     'ap_get_piece_props',
@@ -117,6 +119,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apListFlowsTool(mcp, log),
     apFlowStructureTool(mcp, log),
     apReadStepCodeTool(mcp, log),
+    apReadStepSettingsTool(mcp, log),
     apValidateFlowTool(mcp, log),
     apResearchPiecesTool(mcp, log),
     // Tool-search engine — gated behind the AP_TOOL_SEARCH_ENABLED rollout flag (default off).

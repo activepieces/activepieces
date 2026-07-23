@@ -1,7 +1,7 @@
 import path from 'path'
-import { isNil } from '@activepieces/core-utils'
+import { isNil, STEP_NAME_REGEX } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { CodeAction, EngineGenericError, ExecutionError, ExecutionErrorType, FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
@@ -43,10 +43,16 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             stepNameToUpdate: action.name,
         })
 
-        if (!constants.pieceRunMode && isNil(constants.runEnvironment)) {
+        if (!constants.actionRunMode && isNil(constants.runEnvironment)) {
             throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
         }
 
+        if (!STEP_NAME_REGEX.test(action.name)) {
+            // A malformed step name is bad user input, not an engine failure: fail the step
+            // (USER) instead of raising an ENGINE error that would page oncall. Ingress + the
+            // code-cache sink guard already block this upstream; this is the runtime backstop.
+            throw new ExecutionError('InvalidStepName', `Invalid code step name: "${action.name}"`, ExecutionErrorType.USER)
+        }
         const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
         const codeSandbox = await initCodeSandbox()
 

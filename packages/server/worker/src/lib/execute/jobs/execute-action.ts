@@ -4,12 +4,12 @@ import { DEFAULT_MCP_DATA, EngineOperationType, EngineResponseStatus, ExecuteAct
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 
-// Piece-run actions run synchronously while the caller waits on the API-side watcher, whose
+// Action-run actions run synchronously while the caller waits on the API-side watcher, whose
 // safety timeout is 5 minutes (WATCHER_SAFETY_TIMEOUT_MS). The sandbox timeout must stay well
 // below that so a long-running step returns a clean TIMEOUT instead of the watcher giving up
 // with an INTERNAL_ERROR. 120s matches the user-facing budget documented across the chat/MCP
 // tooling and is the effective limit the old temp-flow path exposed via polling.
-const PIECE_RUN_ACTION_TIMEOUT_SECONDS = 120
+const ACTION_RUN_ACTION_TIMEOUT_SECONDS = 120
 
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_ACTION,
@@ -17,7 +17,7 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
         const codes = toCodeArtifacts(data.step)
         const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, pieces: data.piece ? [data.piece] : [], codes })
         if (resolved.kind !== 'ready') {
-            throw new Error(`Unexpected resolve outcome "${resolved.kind}" for piece-run action job`)
+            throw new Error(`Unexpected resolve outcome "${resolved.kind}" for action-run action job`)
         }
 
         const { data: result, error } = await tryCatch(async () => {
@@ -32,9 +32,9 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                     engineToken: ctx.engineToken,
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
-                    timeoutInSeconds: PIECE_RUN_ACTION_TIMEOUT_SECONDS,
+                    timeoutInSeconds: ACTION_RUN_ACTION_TIMEOUT_SECONDS,
                 },
-                timeoutInSeconds: PIECE_RUN_ACTION_TIMEOUT_SECONDS,
+                timeoutInSeconds: ACTION_RUN_ACTION_TIMEOUT_SECONDS,
                 provision: resolved.provision,
             })
         })

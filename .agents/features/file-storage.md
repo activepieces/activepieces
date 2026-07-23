@@ -25,7 +25,7 @@ The File Storage Service is the central infrastructure for persisting binary fil
 - **FileLocation**: `DB` (stored as `bytea` in Postgres) or `S3` (stored in an S3-compatible bucket with the S3 key recorded in the `s3Key` column).
 - **FileCompression**: `NONE` or `ZSTD`. Applied to execution data files to reduce storage size. Decompression is transparent on read, including legacy auto-detection via magic bytes.
 - **s3Key**: The object key in the S3 bucket. Format: `platform/<platformId>/<type>/<fileId>` for platform-scoped files, or `project/<projectId>/<type>/<fileId>` for project-scoped files.
-- **Retention**: Execution data files are deleted after `EXECUTION_DATA_RETENTION_DAYS` days by a periodic cleanup job.
+- **Retention**: Execution data files are deleted after `EXECUTION_DATA_RETENTION_DAYS` days by a periodic cleanup job. Projects can shorten the window via `project.executionDataRetentionDays`; the instance value is the ceiling.
 - **Step file**: A file produced by a piece action during execution (e.g., a generated PDF). Uploaded by the engine, downloaded by end users via a signed JWT token.
 - **Platform asset**: Public binary (e.g., a platform logo). Always stored in DB; accessed via `/v1/platforms/assets/<fileId>`.
 - **Signed URL**: For S3-backed step files when `S3_USE_SIGNED_URLS=true`, the download endpoint redirects to a time-limited pre-signed S3 URL instead of streaming the data through the API server.
@@ -49,7 +49,7 @@ The File Storage Service is the central infrastructure for persisting binary fil
 | type | string | FileType enum (default UNKNOWN) |
 | compression | string | FileCompression enum (default NONE) |
 
-Indices: `idx_file_project_id` on `projectId`; `idx_file_type_created_desc` on `(type, created)` for cleanup queries.
+Indices: `idx_file_project_id_type_created` on `(projectId, type, created)` for per-project cleanup passes (its leftmost prefix also serves plain `projectId` lookups, replacing the old `idx_file_project_id`); `idx_file_type_created_desc` on `(type, created)` for the global cleanup pass; `idx_file_sample_data_flow_id`, a partial expression index on `(type, (metadata->>'flowId'))` restricted to `SAMPLE_DATA`/`SAMPLE_DATA_INPUT`, so flow-deletion's `deleteForFlow` sample-data purge is index-driven instead of a seq scan that times out.
 Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`).
 
 ## FileType Enum
@@ -58,7 +58,7 @@ Relation: many-to-one with `project` (CASCADE on delete, FK `fk_file_project_id`
 |---|---|---|---|
 | `FLOW_RUN_LOG` | Configurable | Yes | Execution log for a flow run |
 | `FLOW_RUN_LOG_SLICE` | Configurable | Yes | One step output (or loop-iteration bundle) sliced out of a flow-run-log manifest when it exceeds `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` |
-| `PIECE_RUN_LOG` | Configurable | Yes | Compressed `{ input, output, logs }` blob for a single piece run, offloaded out of the `piece_run` row |
+| `ACTION_RUN_LOG` | Configurable | Yes | Compressed `{ input, output, logs }` blob for a single action run, offloaded out of the `action_run` row |
 | `FLOW_STEP_FILE` | Configurable | Yes | File output from a piece action step |
 | `TRIGGER_PAYLOAD` | Configurable | Yes | (Deprecated) Stored trigger payload |
 | `TRIGGER_EVENT_FILE` | Configurable | Yes | File output from a trigger event |
@@ -107,7 +107,7 @@ Step file uploads are handled by the engine via the unified `PUT /v1/files/:file
 
 ## Cleanup Job
 
-Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. Calls `fileService.deleteStaleBulk` for types: `FLOW_RUN_LOG`, `FLOW_RUN_LOG_SLICE`, `PIECE_RUN_LOG`, `FLOW_STEP_FILE`, `TRIGGER_EVENT_FILE`, `TRIGGER_PAYLOAD`, `WEBHOOK_PAYLOAD`, then `pieceRunService.deleteStale()` to delete the stale `piece_run` rows themselves (the offloaded `PIECE_RUN_LOG` file is removed by the bulk pass above; the row is removed here). Retention period controlled by `EXECUTION_DATA_RETENTION_DAYS` system property.
+Scheduled every hour (`30 */1 * * *`) via `SystemJobName.FILE_CLEANUP_TRIGGER`. Calls `fileService.deleteStaleBulk` for types: `FLOW_RUN_LOG`, `FLOW_RUN_LOG_SLICE`, `ACTION_RUN_LOG`, `FLOW_STEP_FILE`, `TRIGGER_EVENT_FILE`, `TRIGGER_PAYLOAD`, `WEBHOOK_PAYLOAD`, then `actionRunService.deleteStale()` to delete the stale `action_run` rows themselves (the offloaded `ACTION_RUN_LOG` file is removed by the bulk pass above; the row is removed here). Retention period controlled by the `EXECUTION_DATA_RETENTION_DAYS` system property, overridable per project (shorter only) via `project.executionDataRetentionDays` ([projects.md](./projects.md)). Because the instance value is a hard ceiling, the global pass needs no project exclusions: any row older than the instance boundary is deletable regardless of overrides, so the performance-critical `(type, created)` query keeps its original shape on `idx_file_type_created_desc`. Overrides below the ceiling get one extra pass per **distinct** effective retention value (not per project), filtered by `projectId IN (...)` and served by `idx_file_project_id_type_created`. The effective value comes from `getEffectiveExecutionDataRetentionDays`, which clamps stored overrides into `[PAUSED_FLOW_TIMEOUT_DAYS, EXECUTION_DATA_RETENTION_DAYS]` at cleanup time, so later env changes can never delete data a still-paused run needs or extend retention past the instance policy. Override passes run before the global pass so a large instance-wide backlog cannot starve them out of the shared per-run deletion cap. The flow-run retry window (`flow-run-service.ts` retry) uses the same effective value, keeping the `FLOW_RUN_RETRY_OUTSIDE_RETENTION` guard aligned with when files are actually deleted.
 
 ## Streaming — write path (implemented)
 

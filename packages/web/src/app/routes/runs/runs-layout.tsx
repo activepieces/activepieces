@@ -13,8 +13,8 @@ const RunsLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   const flowRunsPath = authenticationSession.appendProjectRoutePrefix('/runs');
-  const pieceRunsPath =
-    authenticationSession.appendProjectRoutePrefix('/piece-runs');
+  const actionRunsPath =
+    authenticationSession.appendProjectRoutePrefix('/action-runs');
 
   const views: {
     to: string;
@@ -22,11 +22,11 @@ const RunsLayout = ({ children }: { children: React.ReactNode }) => {
     icon: ComponentType<{ className?: string; size?: number }>;
   }[] = [
     { to: flowRunsPath, label: t('Flow runs'), icon: WorkflowIcon },
-    { to: pieceRunsPath, label: t('Piece runs'), icon: PuzzleIcon },
+    { to: actionRunsPath, label: t('Action runs'), icon: PuzzleIcon },
   ];
 
-  const activeView = location.pathname.includes(pieceRunsPath)
-    ? pieceRunsPath
+  const activeView = location.pathname.includes(actionRunsPath)
+    ? actionRunsPath
     : flowRunsPath;
 
   return (

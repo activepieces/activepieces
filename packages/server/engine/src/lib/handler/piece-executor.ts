@@ -74,8 +74,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tags: [],
             },
         }
-        const outputContext = constants.pieceRunMode
-            ? { update: async (): Promise<void> => { /* no-op: piece runs have no live progress channel */ } }
+        const outputContext = constants.actionRunMode
+            ? { update: async (): Promise<void> => { /* no-op: action runs have no live progress channel */ } }
             : flowRunProgressReporter.createOutputContext({
                 engineConstants: constants,
             })
@@ -277,7 +277,7 @@ function createWaitpointHook({ constants, stepName, hookParams }: { constants: E
         // Throw synchronously (not from inside the async body) so that the deprecated pause() hook —
         // which does `createWaitpoint(...).catch(() => process.exit(1))` — never attaches its catch and
         // the error propagates as a FAILED step instead of killing the worker on a rejected promise.
-        assertPieceRunCannotSuspend(constants)
+        assertActionRunCannotSuspend(constants)
         return submitWaitpoint({ constants, stepName, hookParams, req })
     }
 }
@@ -312,7 +312,7 @@ async function submitWaitpoint({ constants, stepName, hookParams, req }: { const
 
 function createWaitForWaitpointHook({ constants, hookParams }: { constants: EngineConstants, hookParams: { hookResponse: HookResponse } }): WaitForWaitpointHook {
     return (_waitpointId: string) => {
-        assertPieceRunCannotSuspend(constants)
+        assertActionRunCannotSuspend(constants)
         hookParams.hookResponse = {
             ...hookParams.hookResponse,
             type: 'paused',
@@ -321,10 +321,10 @@ function createWaitForWaitpointHook({ constants, hookParams }: { constants: Engi
 }
 
 // Thrown as a plain Error (USER-level) so the step ends FAILED, not INTERNAL_ERROR — a waitpoint
-// in piece-run mode is a usage error, not an engine bug, and must not page oncall.
-function assertPieceRunCannotSuspend(constants: EngineConstants): void {
-    if (constants.pieceRunMode) {
-        throw new Error('This action pauses the run (waitpoint) and can only run inside a flow, not as a piece run.')
+// in action-run mode is a usage error, not an engine bug, and must not page oncall.
+function assertActionRunCannotSuspend(constants: EngineConstants): void {
+    if (constants.actionRunMode) {
+        throw new Error('This action pauses the run (waitpoint) and can only run inside a flow, not as a action run.')
     }
 }
 

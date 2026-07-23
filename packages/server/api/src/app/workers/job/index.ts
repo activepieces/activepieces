@@ -28,7 +28,7 @@ export enum JobStatus {
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
     RUNS_METADATA = 'runsMetadata',
-    PIECE_RUN_PERSIST = 'pieceRunPersist',
+    ACTION_RUN_PERSIST = 'actionRunPersist',
 }
 
 export const getPlatformGroupQueueName = (workerGroupId: string): string => {

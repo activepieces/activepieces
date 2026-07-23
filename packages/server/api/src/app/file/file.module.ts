@@ -1,18 +1,18 @@
 import { FileType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { actionRunService } from '../action-run/action-run.service'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { pieceRunService } from '../piece-run/piece-run.service'
 import { fileService } from './file.service'
 import { filesController, signedStepFileController } from './files-controller'
 
 export const fileModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     systemJobHandlers.registerJobHandler(SystemJobName.FILE_CLEANUP_TRIGGER, async () => {
-        await fileService(app.log).deleteStaleBulk([FileType.FLOW_RUN_LOG, FileType.FLOW_RUN_LOG_SLICE, FileType.PIECE_RUN_LOG, FileType.FLOW_STEP_FILE, FileType.TRIGGER_EVENT_FILE, FileType.TRIGGER_PAYLOAD, FileType.WEBHOOK_PAYLOAD])
-        await pieceRunService(app.log).deleteStale()
+        await fileService(app.log).deleteStaleBulk([FileType.FLOW_RUN_LOG, FileType.FLOW_RUN_LOG_SLICE, FileType.ACTION_RUN_LOG, FileType.FLOW_STEP_FILE, FileType.TRIGGER_EVENT_FILE, FileType.TRIGGER_PAYLOAD, FileType.WEBHOOK_PAYLOAD])
+        await actionRunService(app.log).deleteStale()
     })
     await systemJobsSchedule(app.log).upsertJob({
         job: {

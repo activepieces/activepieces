@@ -88,7 +88,7 @@ export const ProjectDashboardLayoutHeader = () => {
       hasPermission: checkAccess(Permission.READ_RUN),
       show: true,
       additionalActivePaths: [
-        authenticationSession.appendProjectRoutePrefix('/piece-runs'),
+        authenticationSession.appendProjectRoutePrefix('/action-runs'),
       ],
     },
     {
