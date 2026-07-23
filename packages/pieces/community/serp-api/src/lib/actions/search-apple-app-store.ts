@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { AppleAppStoreSearchConfig, SerpApiEngine } from '../types';
+import { searchAppleAppStoreOutputSchema } from '../output-schemas';
 
 export const searchAppleAppStore = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchAppleAppStore = createAction({
       'Searches the Apple App Store via SerpApi for iOS apps matching a term, returning results in `organic_results` (app name, developer, rating, price, link). Use to discover iOS apps or look up an app by name. For Android apps use Search Google Play instead. Read-only and idempotent; requires the search term and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchAppleAppStoreOutputSchema,
   props: {
     term: Property.ShortText({
       displayName: 'Search Term',

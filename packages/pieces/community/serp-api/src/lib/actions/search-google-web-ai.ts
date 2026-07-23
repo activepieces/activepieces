@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleWebAiOutputSchema } from '../output-schemas';
 
 export const searchGoogleWebAi = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleWebAi = createAction({
       'Runs a Google web search via SerpApi and returns organic web results (in `organic_results`) for a query. Use this for general web lookups, current information, rankings, or topic research. For news pick Search Google News, for videos Search YouTube, for products Search Google Shopping. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleWebAiOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

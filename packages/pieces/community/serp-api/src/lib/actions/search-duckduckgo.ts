@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { DuckDuckGoSearchConfig, SerpApiEngine } from '../types';
+import { searchDuckduckgoOutputSchema } from '../output-schemas';
 
 export const searchDuckduckgo = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchDuckduckgo = createAction({
       'Runs a DuckDuckGo web search via SerpApi and returns organic web results (in `organic_results`) for a query. Use as a privacy-oriented alternative web engine to cross-check or supplement Google and Bing web results. Scope results to a region with the Region code. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchDuckduckgoOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

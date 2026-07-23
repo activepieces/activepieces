@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleJobsSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleJobsOutputSchema } from '../output-schemas';
 
 export const searchGoogleJobs = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleJobs = createAction({
       'Searches Google Jobs via SerpApi for job listings matching a query, returning results in `jobs_results` (title, company, location, posted date, schedule, apply links). Use to find open positions for a role. Narrow with a free-text Location, and set Listing Type to "1" for work-from-home roles. Paginate with the next page token from a prior response. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleJobsOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

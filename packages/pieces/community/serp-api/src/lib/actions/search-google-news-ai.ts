@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleNewsSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleNewsAiOutputSchema } from '../output-schemas';
 
 export const searchGoogleNewsAi = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleNewsAi = createAction({
       'Searches Google News via SerpApi for recent articles matching a query and returns them in `news_results`. Use to monitor brand or topic mentions in the press, surface breaking coverage, or gather current headlines. For general web results pick Search Google instead. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleNewsAiOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

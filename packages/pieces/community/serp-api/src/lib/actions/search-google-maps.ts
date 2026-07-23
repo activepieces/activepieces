@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleMapsSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleMapsOutputSchema } from '../output-schemas';
 
 export const searchGoogleMaps = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleMaps = createAction({
       'Searches Google Maps via SerpApi for local businesses and places matching a query, returning results in `local_results` (name, rating, reviews, address, phone, type, GPS coordinates, hours). Use to find businesses, restaurants, or services in an area. Pass `ll` to anchor the search to a map center; `ll` is effectively required once you paginate with `start`. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleMapsOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

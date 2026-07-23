@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleTrendsSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleTrendsAiOutputSchema } from '../output-schemas';
 
 export const searchGoogleTrendsAi = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleTrendsAi = createAction({
       'Queries Google Trends via SerpApi for search interest in a keyword. Use to gauge a topic\'s popularity trajectory, compare geographic interest, or find related/rising queries. Choose the data type: "TIMESERIES" (interest over time), "GEO_MAP" (interest by region), "RELATED_TOPICS", or "RELATED_QUERIES" — the response key matches the chosen data type (e.g. `interest_over_time`). Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleTrendsAiOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

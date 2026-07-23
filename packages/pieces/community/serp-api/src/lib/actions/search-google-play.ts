@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GooglePlaySearchConfig, SerpApiEngine } from '../types';
+import { searchGooglePlayOutputSchema } from '../output-schemas';
 
 export const searchGooglePlay = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGooglePlay = createAction({
       'Searches the Google Play store via SerpApi for a query within a chosen store section, returning results in `organic_results` (title, developer, rating, link). Use to discover Android apps, games, movies, or books. Set Store to "apps" (default), "games", "movies", or "books". For iOS apps use Search Apple App Store instead. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGooglePlayOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

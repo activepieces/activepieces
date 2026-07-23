@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { SerpApiEngine, YelpSearchConfig } from '../types';
+import { searchYelpOutputSchema } from '../output-schemas';
 
 export const searchYelp = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchYelp = createAction({
       'Searches Yelp via SerpApi for businesses matching a description in a location, returning results in `organic_results` (name, rating, review count, category, price level, link). Use to find rated local businesses or read review summaries. Both what to search (Find Description) and where (Find Location) are required. Read-only and idempotent; requires those two fields and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchYelpOutputSchema,
   props: {
     find_desc: Property.ShortText({
       displayName: 'Find Description',

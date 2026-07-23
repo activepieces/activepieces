@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleImagesSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleImagesOutputSchema } from '../output-schemas';
 
 export const searchGoogleImages = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleImages = createAction({
       'Searches Google Images via SerpApi for a query, returning results in `images_results` (thumbnail URL, full-resolution image URL, title, and source page). Use to discover images, find a full-resolution URL, or locate the page an image came from. Page through results with the page index. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleImagesOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

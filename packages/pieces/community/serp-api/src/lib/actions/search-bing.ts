@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { BingSearchConfig, SerpApiEngine } from '../types';
+import { searchBingOutputSchema } from '../output-schemas';
 
 export const searchBing = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchBing = createAction({
       'Runs a Bing web search via SerpApi and returns organic web results (in `organic_results`) for a query. Use as an alternative web engine to cross-check or supplement Google web results. Paginate with Count (results per page) and First (offset of the first result). Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchBingOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

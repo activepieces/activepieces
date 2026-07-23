@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleScholarSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleScholarOutputSchema } from '../output-schemas';
 
 export const searchGoogleScholar = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleScholar = createAction({
       'Searches Google Scholar via SerpApi for academic papers and citations matching a query, returning results in `organic_results` (title, authors, publication, year, cited-by count, PDF/resource links). Use to research literature, find citations, or gather academic sources. Use `as_ylo`/`as_yhi` to restrict by publication year. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleScholarOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

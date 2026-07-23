@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { SerpApiEngine, WalmartSearchConfig } from '../types';
+import { searchWalmartOutputSchema } from '../output-schemas';
 
 export const searchWalmart = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchWalmart = createAction({
       'Searches Walmart via SerpApi for products matching a query, returning results in `organic_results` (title, price, rating, seller, product link). Use to look up Walmart product pricing and availability. Filter by price range and minimum rating, sort, and paginate by page. Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchWalmartOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

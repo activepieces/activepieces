@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleShoppingSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleShoppingOutputSchema } from '../output-schemas';
 
 export const searchGoogleShopping = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleShopping = createAction({
       'Searches Google Shopping via SerpApi for products matching a query, returning results in `shopping_results` (title, price, merchant/source, rating, product_id, link). Use to compare product prices across merchants or research products. Paginate with Start (preferred on this engine). Read-only and idempotent; requires the query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleShoppingOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

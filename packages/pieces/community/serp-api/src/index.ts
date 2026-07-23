@@ -26,7 +26,7 @@ export const serpApi = createPiece({
   displayName: 'SerpApi',
   description: 'Search Google, YouTube, News, and Trends with powerful filtering and analysis capabilities',
   auth: serpApiAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/serp-api.png',
   authors: ['AnkitSharmaOnGithub'],
   actions: [

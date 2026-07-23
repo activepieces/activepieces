@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { SerpApiEngine, YouTubeSearchConfig } from '../types';
+import { searchYoutubeAiOutputSchema } from '../output-schemas';
 
 export const searchYoutubeAi = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchYoutubeAi = createAction({
       'Searches YouTube via SerpApi for videos matching a query and returns them in `video_results`. Use to find video content on a topic, discover channels, or research what is being published. For news pick Search Google News, for general web Search Google. Read-only and idempotent; requires the search query and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchYoutubeAiOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

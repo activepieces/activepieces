@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleLocalServicesSearchConfig, SerpApiEngine } from '../types';
+import { searchGoogleLocalServicesOutputSchema } from '../output-schemas';
 
 export const searchGoogleLocalServices = createAction({
   auth: serpApiAuth,
@@ -14,6 +15,7 @@ export const searchGoogleLocalServices = createAction({
       'Searches Google Local Services Ads via SerpApi for vetted service providers (e.g. plumbers, electricians) matching a query, returning results in `local_ads`. Requires a Data CID identifying the geographic region; this is an opaque id with no resolver in this piece, so it must be supplied by the caller. Read-only and idempotent; requires the query, the Data CID, and a SerpApi API key.',
     idempotent: true,
   },
+  outputSchema: searchGoogleLocalServicesOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
