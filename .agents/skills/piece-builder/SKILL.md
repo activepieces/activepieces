@@ -135,7 +135,8 @@ The condensed rules in this file (Quick Auth Reference, Quick Piece Definition T
 | Wiring auth beyond the Quick Auth Reference table | `auth-patterns.md` |
 | Your first action in this piece (full file shape) | `action-patterns.md` |
 | A trigger — polling, webhook, handshake, or renewal | `trigger-patterns.md` |
-| A prop type you haven't used (dropdowns, dynamic, arrays, files) | `props-patterns.md` |
+| **Choosing which prop component, display mode, or layout/grouping fits a use case** | `property-ui-selection.md` |
+| The exact syntax of a prop type (dropdowns, dynamic, arrays, files) | `props-patterns.md` |
 | Shared API helper, pagination, or `createCustomApiCallAction` | `common-patterns.md` |
 | An advanced UX pattern (source selectors, AWS-style auth) | `ux-guidelines.md` |
 | Flattening a deeply nested API response | `output-quality.md` |
@@ -261,6 +262,8 @@ export const myApp = createPiece({
 ## UX Quality: Easy for Non-Technical Users
 
 Pieces are used by people who have never seen an API — props, dropdowns, and descriptions must be self-explanatory.
+
+**Before defining any `props`, read `property-ui-selection.md`** to pick the right component, display mode (`cards` / `stepper` / rich-text / date-range), and layout/grouping (`tabs` / `section` / filter `builder`) for each field.
 
 1. **Never ask users to type IDs** — Use dynamic dropdowns so they pick items by name (`"Jane Doe (jane@x.com)"` not `"cus_abc123"`).
 2. **Descriptions must teach** — Don't say "Enter the thread timestamp." Say "Click the three dots next to the message, select Copy Link, and paste the number at the end."

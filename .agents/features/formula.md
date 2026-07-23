@@ -12,8 +12,8 @@ Formulas let users transform input values inside any text input in the flow buil
 - `function-type-checker.ts` — `typeCheckTiptapDoc()` runs against the editor doc; reports arg-count and type-mismatch errors keyed by function-start node id. Expression-operator args (e.g. `3 == 9`) are skipped (line 219) so runtime-evaluated values don't get false-positive type errors.
 
 ### Editor UI (`packages/web/src/app/builder/piece-properties/text-input-with-mentions/`)
-- `index.tsx` — 14-line wrapper, just re-exports `TiptapEditor`.
-- `tiptap-editor.tsx` — main editor: unconditionally registers `FunctionSlashExtension`, live preview, type-checker integration, variable mentions integration. Embed status (`useEmbedding`) is read only so the search popover can hide the docs link in embedded builders.
+- `index.tsx` — thin wrapper over `TiptapEditor`; threads the editor props (`className`/`wrapperClassName`, `enableMarkdown`, `autoFocus`, and `outputFormat: 'text' | 'html'`) and exports the `TextInputWithMentionsProps` type.
+- `tiptap-editor.tsx` — main editor: unconditionally registers `FunctionSlashExtension`, live preview, type-checker integration, variable mentions integration. Embed status (`useEmbedding`) is read only so the search popover can hide the docs link in embedded builders. Also supports an `outputFormat: 'text' | 'html'` prop — see [Editor Composition](#editor-composition) for the HTML WYSIWYG mode.
 - `extensions/bracket-nodes.tsx` — three TipTap inline atom nodes (`function_start`, `function_sep`, `function_end`) rendered as badges. Always registered so saved formulas display as badges.
 - `extensions/function-slash-extension.ts` — ProseMirror plugin that watches for `/`, opens the search popover, inserts at the cursor.
 - `components/function-search-popover.tsx` — filter-as-you-type list backed by `AP_FUNCTIONS`.
@@ -99,6 +99,7 @@ The pre-pass:
 - `getExtensions(...)` always includes `FunctionStartNode`, `FunctionEndNode`, `FunctionArgSeparatorNode`, and `FunctionSlashExtension` — no plan flag, no conditional registration.
 - Holds slash-state, active-function-info, focus, type-errors, preview-result in component state. `typeCheckTiptapDoc(doc)` runs on doc updates; errors map to badge highlights and the preview panel.
 - Variables integration: fetches the project's variables via `variablesQueries.useVariables(...)` and threads the `name → name` map into `createMentionNodeFromText` and `convertTextToTipTapJsonContent` so variable mentions render with their display name.
+- Output format (`outputFormat: 'text' | 'html'`, default `'text'`): in `'html'` mode the editor becomes a rich-text WYSIWYG — `getExtensions` swaps the plain Document/Paragraph set for TipTap's `StarterKit` and renders a `RichTextToolbar` (bold / italic / underline / bullet-list / link). The stored value is serialized to/from HTML with mentions preserved as `{{...}}` tokens: `serializeHtmlWithMentions` collapses mention badges back to their server token on output, and `convertMentionTokensToNodes` turns saved `{{...}}` tokens back into mention badges on load. Function badges, the slash trigger, and variable mentions still work in HTML mode because the base extensions are always registered. Consumed by the `RICH_TEXT` property widget, whose editing mode is driven by a sibling `formatProperty`.
 
 ## Exit Strategies
 

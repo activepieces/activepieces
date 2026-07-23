@@ -96,4 +96,18 @@ span.ap-fn-badge.ap-fn-deprecated {
     line-height: 1.5rem;
     caret-color: currentColor;
 }
+
+/* ── Links inside the rich-text (HTML) editor ──────────────────────────── */
+/* Styled via CSS (not an element class) so the serialized HTML stays a clean
+   <a href> for the outgoing email. */
+.ap-text-with-mentions a {
+    color: #2563eb;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.dark .ap-text-with-mentions a {
+    color: #60a5fa;
+}
 .formula-editor .cm-line { padding: 0; }

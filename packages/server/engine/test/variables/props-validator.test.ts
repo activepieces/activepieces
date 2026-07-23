@@ -111,6 +111,46 @@ describe('Property Validation', () => {
             })
         })
 
+        it('should validate required date range property', async () => {
+            const props = {
+                range: Property.DateRange({
+                    displayName: 'Date Range',
+                    required: true,
+                }),
+            }
+
+            const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { range: { preset: 'last_7_days' } },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(validErrors).toEqual({})
+
+            const { errors: nullErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { range: null },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(nullErrors).toEqual({
+                range: ['Expected date range, received: null'],
+            })
+
+            const { errors: typeErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { range: 'not a range' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(typeErrors).toEqual({
+                range: ['Expected date range, received: not a range'],
+            })
+        })
+
         it('should validate required array property', async () => {
             const props = {
                 array: Property.Array({
