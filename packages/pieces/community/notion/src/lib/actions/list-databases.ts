@@ -12,7 +12,7 @@ export const listDatabases = createAction({
   displayName: 'List Databases',
   description:
     'Lists Notion databases accessible by the connected account with pagination support.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists Notion databases the connected account can access, sorted by last edited time. Use when an agent needs to discover available databases before querying or writing items; supports pagination via cursor. Idempotent read-only lookup.',

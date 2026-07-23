@@ -13,6 +13,7 @@ import { readDataRangeActionOutputSchema } from '../output-schemas';
 export const readDataRangeAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'read-data-range',
+	audience: 'human',
 	displayName: 'Read Data Range',
 	description:
 		'Read cells from a range using A1 notation (e.g. A1:D10). Returns rows and the resolved range.',

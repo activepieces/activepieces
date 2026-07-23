@@ -14,7 +14,7 @@ export const updateDatabaseItem = createAction({
   displayName: 'Update Database Item',
   description:
     'Update specific fields in a Notion database item. Perfect for maintaining data, tracking changes, or syncing information across systems.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Overwrites property fields on an existing Notion database item identified by its page id. Use when an agent must change values on a known record (status, assignee, dates) rather than create one; requires the database_id and the target item id. Idempotent: re-applying the same field values leaves the item in the same final state.',

@@ -10,7 +10,7 @@ export const findWorksheetAction = createAction({
 	name: 'find-worksheet',
 	displayName: 'Find Worksheet(s)',
 	description: 'Finds a worksheet(s) by title.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Searches the worksheets (tabs) of a given spreadsheet for ones whose title matches a query (exact or contains). Use to resolve a worksheet/sheet id from its tab name before acting on it. Read-only and idempotent.',

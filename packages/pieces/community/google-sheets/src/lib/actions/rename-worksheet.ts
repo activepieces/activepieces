@@ -10,7 +10,7 @@ export const renameWorksheetAction = createAction({
     name: 'rename-worksheet',
     displayName: 'Rename Worksheet',
     description: 'Rename specific worksheet.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: {
         description:
             'Changes the title of an existing worksheet, identified by its stable sheet id, within a spreadsheet. Use when an agent needs to relabel a tab. Idempotent — re-running with the same new name leaves the title unchanged.',

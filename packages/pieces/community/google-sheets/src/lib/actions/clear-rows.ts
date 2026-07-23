@@ -8,6 +8,7 @@ import { clearRowsActionOutputSchema } from '../output-schemas';
 export const clearRowsAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'clear-rows',
+	audience: 'human',
 	displayName: 'Clear Row(s)',
 	description:
 		'Clears the contents of one or more rows without removing the rows themselves. Useful when you want to keep formatting and references stable.',

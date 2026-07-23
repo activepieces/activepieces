@@ -37,6 +37,40 @@ import { insertRowAtTopAction } from './lib/actions/insert-row-at-top';
 import { clearRowsAction } from './lib/actions/clear-rows';
 import { readDataRangeAction } from './lib/actions/read-data-range';
 import { deleteMultipleRowsAction } from './lib/actions/delete-multiple-rows';
+import { sheetsAddColumn } from './lib/actions/sheets-add-column';
+import { sheetsAddMultipleRows } from './lib/actions/sheets-add-multiple-rows';
+import { sheetsAddRowAtTop } from './lib/actions/sheets-add-row-at-top';
+import { sheetsAddRow } from './lib/actions/sheets-add-row';
+import { sheetsAddWorksheet } from './lib/actions/sheets-add-worksheet';
+import { sheetsAppendDimension } from './lib/actions/sheets-append-dimension';
+import { sheetsAppendValues } from './lib/actions/sheets-append-values';
+import { sheetsAutoResizeDimensions } from './lib/actions/sheets-auto-resize-dimensions';
+import { sheetsClearValues } from './lib/actions/sheets-clear-values';
+import { sheetsCopyWorksheet } from './lib/actions/sheets-copy-worksheet';
+import { sheetsCreateSpreadsheet } from './lib/actions/sheets-create-spreadsheet';
+import { sheetsDeleteDimension } from './lib/actions/sheets-delete-dimension';
+import { sheetsDeleteMultipleRows } from './lib/actions/sheets-delete-multiple-rows';
+import { sheetsDeleteRow } from './lib/actions/sheets-delete-row';
+import { sheetsDeleteWorksheet } from './lib/actions/sheets-delete-worksheet';
+import { sheetsExportWorksheet } from './lib/actions/sheets-export-worksheet';
+import { sheetsFindOrCreateRow } from './lib/actions/sheets-find-or-create-row';
+import { sheetsFindOrCreateWorksheet } from './lib/actions/sheets-find-or-create-worksheet';
+import { sheetsFindRows } from './lib/actions/sheets-find-rows';
+import { sheetsFindWorksheet } from './lib/actions/sheets-find-worksheet';
+import { sheetsFormatCells } from './lib/actions/sheets-format-cells';
+import { sheetsGetAllRows } from './lib/actions/sheets-get-all-rows';
+import { sheetsGetNextRows } from './lib/actions/sheets-get-next-rows';
+import { sheetsGetRow } from './lib/actions/sheets-get-row';
+import { sheetsGetSpreadsheet } from './lib/actions/sheets-get-spreadsheet';
+import { sheetsGetValues } from './lib/actions/sheets-get-values';
+import { sheetsInsertDimension } from './lib/actions/sheets-insert-dimension';
+import { sheetsRenameWorksheet } from './lib/actions/sheets-rename-worksheet';
+import { sheetsSearchSpreadsheets } from './lib/actions/sheets-search-spreadsheets';
+import { sheetsUpdateDimensionProperties } from './lib/actions/sheets-update-dimension-properties';
+import { sheetsUpdateMultipleRows } from './lib/actions/sheets-update-multiple-rows';
+import { sheetsUpdateRow } from './lib/actions/sheets-update-row';
+import { sheetsUpdateSheetProperties } from './lib/actions/sheets-update-sheet-properties';
+import { sheetsUpdateValues } from './lib/actions/sheets-update-values';
 
 export const googleSheets = createPiece({
 	minimumSupportedRelease: '0.71.4',
@@ -81,6 +115,40 @@ export const googleSheets = createPiece({
 		copyWorksheetAction,
 		createColumnAction,
 		exportSheetAction,
+		sheetsAddColumn,
+		sheetsAddMultipleRows,
+		sheetsAddRowAtTop,
+		sheetsAddRow,
+		sheetsAddWorksheet,
+		sheetsAppendDimension,
+		sheetsAppendValues,
+		sheetsAutoResizeDimensions,
+		sheetsClearValues,
+		sheetsCopyWorksheet,
+		sheetsCreateSpreadsheet,
+		sheetsDeleteDimension,
+		sheetsDeleteMultipleRows,
+		sheetsDeleteRow,
+		sheetsDeleteWorksheet,
+		sheetsExportWorksheet,
+		sheetsFindOrCreateRow,
+		sheetsFindOrCreateWorksheet,
+		sheetsFindRows,
+		sheetsFindWorksheet,
+		sheetsFormatCells,
+		sheetsGetAllRows,
+		sheetsGetNextRows,
+		sheetsGetRow,
+		sheetsGetSpreadsheet,
+		sheetsGetValues,
+		sheetsInsertDimension,
+		sheetsRenameWorksheet,
+		sheetsSearchSpreadsheets,
+		sheetsUpdateDimensionProperties,
+		sheetsUpdateMultipleRows,
+		sheetsUpdateRow,
+		sheetsUpdateSheetProperties,
+		sheetsUpdateValues,
 		createCustomApiCallAction({
 			auth: googleSheetsAuth,
 			baseUrl: () => {
