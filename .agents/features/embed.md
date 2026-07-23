@@ -79,6 +79,15 @@ Uses Node.js `crypto.generateKeyPair` with:
 
 The private key is never stored and is only included in the creation response. The algorithm field is set to `KeyAlgorithm.RSA` for future extensibility.
 
+## Embed SDK (`packages/ee/embed-sdk`)
+
+`ActivepiecesEmbedded` (bundled to `https://cdn.activepieces.com/sdk/embed/<version>.js`) drives the vendor↔client postMessage handshake: SDK appends iframe → client posts `CLIENT_INIT` → SDK posts `VENDOR_INIT` (jwt, initialRoute, flags) → client exchanges the token via `POST /v1/managed-authn/external-token`, registers its `VENDOR_ROUTE_CHANGED` listener, then posts `CLIENT_CONFIGURATION_FINISHED` (`packages/web/src/app/routes/embed/index.tsx`).
+
+- **navigate() deferral**: `navigate()` before `CLIENT_CONFIGURATION_FINISHED` would vanish (the client listener isn't registered yet), so the latest route is kept in `_pendingRoute` (last-wins, bounded by construction) and applied when configuration finishes. Flushing on that event is race-free because the client registers the route listener before posting it. Deferral logs a `warn`; with no `embedding.containerId` configured, `navigate()` logs an error (no iframe will ever exist).
+- **Reconfigure teardown**: the cleanup closure (`_cleanDashboardIframe`) is armed before the container poll starts, so a `configure()` superseded even mid-poll is cancelled (no second iframe). All dashboard `message` listeners are registered with one `AbortSignal`; cleanup aborts it, removes the iframe, and resolves the superseded `configure()` promise with `{ status: 'superseded' }`. `configure()` also closes any open connection/MCP overlay dialogs (resolving a pending `connect()` with `connection: undefined`) and clears the cached `_embeddingAuth` so a new `jwtToken` cannot reuse the previous user's exchanged token.
+- **initialRoute**: `embedding.initialRoute` is passed through `VENDOR_INIT`; the client already honored it (`initialRoute ?? '/'`, where `/` means the role-based default route). Removed from the public API in 2024 (`b4d2060248`), re-exposed in SDK 0.12.0.
+- Tests: `packages/ee/embed-sdk/test/index.test.ts` (vitest + jsdom, simulates the client half by dispatching `MessageEvent`s with controlled `source`/`origin`). Runs in root `test-unit`.
+
 ## Relationship with Managed Auth
 
 Signing Keys are the cryptographic foundation for the Managed Auth flow:
