@@ -3,6 +3,8 @@ import { useContext, useMemo } from 'react';
 
 import { RefreshAnalyticsContext } from '@/features/platform-admin';
 
+import { impactRunsUtils } from './impact-runs-utils';
+
 export type FlowDetailRow = PlatformAnalyticsReport['flows'][number] & {
   id: string;
   runs: number;
@@ -18,7 +20,7 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
 
   const runsMap = useMemo(() => {
     if (!report) return new Map<string, number>();
-    return new Map(report.runs.map((run) => [run.flowId, run.runs ?? 0]));
+    return impactRunsUtils.sumRunsByFlow(report.runs);
   }, [report]);
 
   const flowDetails = useMemo((): FlowDetailRow[] | undefined => {

@@ -11,6 +11,7 @@ import {
   ApTableFooter,
   ApTableHeader,
   useTableState,
+  useTableLock,
   useTableColumns,
   mapRecordsToRows,
   Row,
@@ -19,7 +20,6 @@ import {
 } from '@/features/tables';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { useResourceLock } from '@/hooks/use-resource-lock';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -36,7 +36,6 @@ const ApTableEditorPage = () => {
     createRecord,
     fields,
     records,
-    table,
     setLockedByOtherUser,
   ] = useTableState((state) => [
     state.selectedRecords,
@@ -46,13 +45,12 @@ const ApTableEditorPage = () => {
     state.createRecord,
     state.fields,
     state.records,
-    state.table,
     state.setLockedByOtherUser,
   ]);
 
-  const { lockedBy, takeOver } = useResourceLock({
-    resourceId: table.id,
-  });
+  // the lock lives in the table state provider, above the take-over refresh
+  // remount boundary, so refreshing never releases the just-acquired lock
+  const { lockedBy, takeOver } = useTableLock();
 
   useEffect(() => {
     setLockedByOtherUser(!!lockedBy);

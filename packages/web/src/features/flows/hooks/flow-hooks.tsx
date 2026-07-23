@@ -16,6 +16,7 @@ import {
   FlowTrigger,
   FlowTriggerType,
   Template,
+  TelemetryEventName,
   UncategorizedFolderId,
   UpdateRunProgressRequest,
 } from '@activepieces/shared';
@@ -26,6 +27,7 @@ import { toast } from 'sonner';
 
 import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
 import { useSocket } from '@/components/providers/socket-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { foldersApi } from '@/features/folders/api/folders-api';
@@ -74,6 +76,7 @@ export const flowHooks = {
       ApFlagId.TRIGGER_TIMEOUT_SECONDS,
     );
     const { openDialog } = useApErrorDialogStore();
+    const { capture } = useTelemetry();
     return useMutation({
       mutationFn: async () => {
         if (change === 'publish') {
@@ -97,6 +100,10 @@ export const flowHooks = {
       onSuccess: (flow: PopulatedFlow) => {
         if (change === 'publish') {
           setIsPublishing?.(false);
+          capture({
+            name: TelemetryEventName.FLOW_PUBLISHED,
+            payload: { flowId: flow.id },
+          });
         }
         onSuccess?.(flow);
       },
@@ -140,6 +147,13 @@ export const flowHooks = {
               standardError: params.standardError || '',
               standardOutput: params.standardOutput || '',
             },
+          });
+        } else if (apError.code === ErrorCode.QUOTA_EXCEEDED) {
+          toast.error(t('Active flows limit reached'), {
+            description: t(
+              'You have reached the maximum number of active flows. Disable another flow or increase the limit.',
+            ),
+            duration: 5000,
           });
         } else {
           internalErrorToast();
