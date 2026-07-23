@@ -7,7 +7,7 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
-import { BillingEvents, captureBillingEvent, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
+import { BILLING_EVENTS_FLUSH_BATCH_SIZE, BillingEvents, captureBillingEvent, flushBillingEvents, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
 import { billingProvider } from '../../platform/billing-provider'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
@@ -46,28 +46,34 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
             const usersByPlatform = await queryUsersByPlatform(platformIds)
             const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)
             const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd)
-
             const reportedAt = new Date().toISOString()
 
-            for (const [platformId, licenseKey] of licenseKeysByPlatform) {
-                const activeFlows = activeFlowsByPlatform.get(platformId) ?? 0
-                const users = usersByPlatform.get(platformId) ?? 0
-                const teamProjects = teamProjectsByPlatform.get(platformId) ?? 0
-                captureBillingEvent({
-                    licenseKey,
-                    event: BillingEvents.TOTAL_RUNS_PER_DAY,
-                    properties: buildSnapshotBody({
-                        platformId,
-                        activeFlows,
-                        users,
-                        projects: teamProjects,
-                        dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
-                        reportedAt,
-                    }),
-                })
-                const { error } = await tryCatch(() => billingProvider.get(log).reportUsageCounts({ platformId, activeFlows, teamProjects, users }))
-                if (!isNil(error)) {
-                    log.warn({ error, platform: { id: platformId } }, 'Failed to report usage counts to billing provider')
+            for (const platformBatch of chunk([...licenseKeysByPlatform], BILLING_EVENTS_FLUSH_BATCH_SIZE)) {
+                for (const [platformId, licenseKey] of platformBatch) {
+                    const activeFlows = activeFlowsByPlatform.get(platformId) ?? 0
+                    const users = usersByPlatform.get(platformId) ?? 0
+                    const teamProjects = teamProjectsByPlatform.get(platformId) ?? 0
+                    captureBillingEvent({
+                        licenseKey,
+                        event: BillingEvents.TOTAL_RUNS_PER_DAY,
+                        properties: buildSnapshotBody({
+                            platformId,
+                            activeFlows,
+                            users,
+                            projects: teamProjects,
+                            dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
+                            reportedAt,
+                        }),
+                    })
+                    const { error } = await tryCatch(() => billingProvider.get(log).reportUsageCounts({ platformId, activeFlows, teamProjects, users }))
+                    if (!isNil(error)) {
+                        log.warn({ error, platform: { id: platformId } }, 'Failed to report usage counts to billing provider')
+                    }
+                }
+
+                const flushResult = await tryCatch(() => flushBillingEvents())
+                if (flushResult.error !== null) {
+                    log.warn({ error: flushResult.error }, '[billingUsageReport#reportAllPlatforms] Failed to flush billing events batch')
                 }
             }
         }
