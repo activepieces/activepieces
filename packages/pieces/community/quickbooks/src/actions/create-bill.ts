@@ -85,7 +85,7 @@ export const createBillAction = createAction({
 				expenseAccountId: Property.ShortText({
 					displayName: 'Expense Category/Account ID',
 					description:
-						'Enter the ID of the Expense Account. Required for Account Based Expense Line Detail.',
+						'The Id of the expense account. Use the "Find Account" action (filter by type Expense) to look this up.',
 					required: true,
 				}),
 			},

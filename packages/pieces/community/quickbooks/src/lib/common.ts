@@ -3,7 +3,7 @@ const QUICKBOOKS_API_URL_PRODUCTION = 'https://quickbooks.api.intuit.com/v3/comp
 
 export const quickbooksCommon = {
     getApiUrl: (realmId: string) => {
-        const baseUrl = QUICKBOOKS_API_URL_SANDBOX;
+        const baseUrl = QUICKBOOKS_API_URL_PRODUCTION;
         return `${baseUrl}/${realmId}`;
     },
 };

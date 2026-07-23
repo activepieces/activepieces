@@ -6,6 +6,7 @@ import { createInvoiceAction } from "./actions/create-invoice";
 import { createExpenseAction } from "./actions/create-expense";
 import { createBillAction } from "./actions/create-bill";
 import { findVendorAction } from "./actions/find-vendor";
+import { findAccountAction } from "./actions/find-account";
 import { recordPaymentAction } from "./actions/record-payment";
 import { readAgingReportAction } from "./actions/read-aging-report";
 import { newInvoice } from "./triggers/new-invoice";
@@ -31,6 +32,7 @@ export const quickbooks = createPiece({
     createExpenseAction,
     createBillAction,
     findVendorAction,
+    findAccountAction,
     recordPaymentAction,
     readAgingReportAction,
     createCustomApiCallAction({
