@@ -1,6 +1,6 @@
 import { ApId, isNil } from '@activepieces/core-utils'
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
-import { EventDestinationJobData, ExecuteChatAgentJobData, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, TriggerSourceScheduleType, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { EventDestinationJobData, ExecuteChatAgentJobData, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -32,13 +32,9 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
 
         switch (type) {
             case JobType.REPEATING: {
-                const { scheduleOptions } = params
-                await queue.upsertJobScheduler(data.flowVersionId, scheduleOptions.type === TriggerSourceScheduleType.INTERVAL ? {
-                    every: scheduleOptions.intervalMs,
-                    startDate: Date.now() + scheduleOptions.intervalMs,
-                } : {
-                    pattern: scheduleOptions.cronExpression,
-                    tz: scheduleOptions.timezone,
+                await queue.upsertJobScheduler(data.flowVersionId, {
+                    pattern: params.scheduleOptions.cronExpression,
+                    tz: params.scheduleOptions.timezone,
                 }, {
                     name: data.flowVersionId,
                     data,
