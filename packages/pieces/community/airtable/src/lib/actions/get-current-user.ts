@@ -6,6 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
+import { getCurrentUserActionOutputSchema } from '../output-schemas';
 
 export const airtableGetCurrentUserAction = createAction({
   auth: airtableAuth,
@@ -13,6 +14,7 @@ export const airtableGetCurrentUserAction = createAction({
   displayName: 'Get Current User (Agent)',
   description: 'Get the connected token identity and its scopes.',
   audience: 'ai',
+  outputSchema: getCurrentUserActionOutputSchema,
   aiMetadata: {
     description:
       'Returns the identity of the connected personal access token — its user id, and (where exposed) the scopes the token carries. Use to confirm which account is connected and which permissions are available before attempting scope-gated operations. Read-only and idempotent.',

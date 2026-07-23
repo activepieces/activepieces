@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { updateRecordAiActionOutputSchema } from '../output-schemas';
 
 export const airtableUpdateRecordAiAction = createAction({
   auth: airtableAuth,
@@ -8,6 +9,7 @@ export const airtableUpdateRecordAiAction = createAction({
   displayName: 'Update Record (Agent)',
   description: 'Update fields on an existing Airtable record by its ID.',
   audience: 'ai',
+  outputSchema: updateRecordAiActionOutputSchema,
   aiMetadata: {
     description:
       'Updates an existing record by its ID, writing only the supplied fields and leaving the rest untouched (PATCH semantics). Use when you know the record ID and want to change specific fields; to set a field empty pass null. Idempotent: repeating with the same input yields the same final state.',

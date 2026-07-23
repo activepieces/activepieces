@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
 import { AirtableComment } from '../common/models';
+import { listRecordCommentsActionOutputSchema } from '../output-schemas';
 
 export const airtableListRecordCommentsAction = createAction({
   auth: airtableAuth,
@@ -15,6 +16,7 @@ export const airtableListRecordCommentsAction = createAction({
   displayName: 'List Record Comments (Agent)',
   description: "Read a record's comment thread.",
   audience: 'ai',
+  outputSchema: listRecordCommentsActionOutputSchema,
   aiMetadata: {
     description:
       "Returns the comments on a record, each with its comment ID, author and text — use to read a record's discussion or to find a parent comment ID for a threaded reply. Requires a token with the data.recordComments:read scope. Read-only and idempotent.",

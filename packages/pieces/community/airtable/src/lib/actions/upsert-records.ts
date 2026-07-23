@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
 import { AirtableRecord } from '../common/models';
+import { upsertRecordsActionOutputSchema } from '../output-schemas';
 
 export const airtableUpsertRecordsAction = createAction({
   auth: airtableAuth,
@@ -14,6 +15,7 @@ export const airtableUpsertRecordsAction = createAction({
   displayName: 'Upsert Records (Agent)',
   description: 'Create or update up to 10 records in one batch call.',
   audience: 'ai',
+  outputSchema: upsertRecordsActionOutputSchema,
   aiMetadata: {
     description:
       'Batch upserts up to 10 records in one PATCH call. When Fields To Merge On is set, each record is matched on those field values and updated if found or created if not (keyed upsert). Without it, records that include an id are updated and the rest created. Idempotent: re-running with the same merge keys converges to the same state rather than duplicating.',

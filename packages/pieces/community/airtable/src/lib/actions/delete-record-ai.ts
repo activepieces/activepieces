@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { deleteRecordAiActionOutputSchema } from '../output-schemas';
 
 export const airtableDeleteRecordAiAction = createAction({
   auth: airtableAuth,
@@ -8,6 +9,7 @@ export const airtableDeleteRecordAiAction = createAction({
   displayName: 'Delete Record (Agent)',
   description: 'Delete a single Airtable record by its ID.',
   audience: 'ai',
+  outputSchema: deleteRecordAiActionOutputSchema,
   aiMetadata: {
     description:
       'Permanently deletes a single record from a table by its record ID. Use to remove one row when you have its ID; to delete several at once use Delete Records Batch (Agent). Effectively idempotent: once the record is gone the end state is unchanged (a repeat call errors on the missing ID).',

@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
 import { AirtableTable } from '../common/models';
+import { updateTableActionOutputSchema } from '../output-schemas';
 
 export const airtableUpdateTableAction = createAction({
   auth: airtableAuth,
@@ -14,6 +15,7 @@ export const airtableUpdateTableAction = createAction({
   displayName: 'Update Table (Agent)',
   description: 'Rename or re-describe a table.',
   audience: 'ai',
+  outputSchema: updateTableActionOutputSchema,
   aiMetadata: {
     description:
       'Renames a table and/or changes its description. Supply at least one of name or description. Requires a token with the schema.bases:write scope. Idempotent: setting the same name/description converges to the same state.',

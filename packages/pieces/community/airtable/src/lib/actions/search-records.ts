@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
 import { AirtableRecord } from '../common/models';
+import { searchRecordsActionOutputSchema } from '../output-schemas';
 
 export const airtableSearchRecordsAction = createAction({
   auth: airtableAuth,
@@ -15,6 +16,7 @@ export const airtableSearchRecordsAction = createAction({
   displayName: 'Search Records (Agent)',
   description: 'Find records where a field matches a value.',
   audience: 'ai',
+  outputSchema: searchRecordsActionOutputSchema,
   aiMetadata: {
     description:
       'Finds records in a table where a single field contains or exactly equals a value — the simple "find the record where X = Y" path that builds the Airtable formula for you. Use this by default to resolve a record ID from a known field value; for complex formula filters or sorting use List Records (Agent). Read-only and idempotent.',

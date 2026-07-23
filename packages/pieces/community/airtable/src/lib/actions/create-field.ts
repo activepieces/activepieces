@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
 import { AirtableField } from '../common/models';
+import { createFieldActionOutputSchema } from '../output-schemas';
 
 export const airtableCreateFieldAction = createAction({
   auth: airtableAuth,
@@ -14,6 +15,7 @@ export const airtableCreateFieldAction = createAction({
   displayName: 'Create Field (Agent)',
   description: 'Add a new field (column) to a table.',
   audience: 'ai',
+  outputSchema: createFieldActionOutputSchema,
   aiMetadata: {
     description:
       'Adds a new field (column) to a table. The type must be a valid Airtable field type (e.g. singleLineText, number, singleSelect, multipleSelects, date, checkbox); select-type fields require an options object with choices. Requires a token with the schema.bases:write scope. Not idempotent — each call creates a new field.',

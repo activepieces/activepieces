@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { listBasesActionOutputSchema } from '../output-schemas';
 
 export const airtableListBasesAction = createAction({
   auth: airtableAuth,
@@ -8,6 +9,7 @@ export const airtableListBasesAction = createAction({
   displayName: 'List Bases (Agent)',
   description: 'List all Airtable bases the token can access.',
   audience: 'ai',
+  outputSchema: listBasesActionOutputSchema,
   aiMetadata: {
     description:
       'Returns every base the connected token can access, each with its id, name and permission level — the top resolver for turning a base name into a base ID. Call this first, then Get Base Schema (Agent) to discover tables and fields. Read-only and idempotent.',

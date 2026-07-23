@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
 import { AirtableField } from '../common/models';
+import { updateFieldActionOutputSchema } from '../output-schemas';
 
 export const airtableUpdateFieldAction = createAction({
   auth: airtableAuth,
@@ -14,6 +15,7 @@ export const airtableUpdateFieldAction = createAction({
   displayName: 'Update Field (Agent)',
   description: "Rename or re-describe a field (column).",
   audience: 'ai',
+  outputSchema: updateFieldActionOutputSchema,
   aiMetadata: {
     description:
       'Renames a field and/or changes its description. Airtable does NOT allow changing a field\'s type or options via the API — only name and description are editable. Supply at least one of name or description. Note this endpoint requires the table ID (not the table name). Requires a token with the schema.bases:write scope. Idempotent: setting the same values converges to the same state.',

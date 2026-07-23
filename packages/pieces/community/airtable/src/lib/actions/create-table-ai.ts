@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableFieldConfig } from '../common/models';
+import { createTableAiActionOutputSchema } from '../output-schemas';
 
 export const airtableCreateTableAiAction = createAction({
   auth: airtableAuth,
@@ -9,6 +10,7 @@ export const airtableCreateTableAiAction = createAction({
   displayName: 'Create Table (Agent)',
   description: 'Create a new table in an existing base.',
   audience: 'ai',
+  outputSchema: createTableAiActionOutputSchema,
   aiMetadata: {
     description:
       'Creates a new table in an existing base from a JSON array of field definitions (the first field becomes the primary field), with an optional description. Requires a token with the schema.bases:write scope. Not idempotent — each call creates a new table.',

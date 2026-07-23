@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { getBaseSchemaAiActionOutputSchema } from '../output-schemas';
 
 export const airtableGetBaseSchemaAiAction = createAction({
   auth: airtableAuth,
@@ -8,6 +9,7 @@ export const airtableGetBaseSchemaAiAction = createAction({
   displayName: 'Get Base Schema (Agent)',
   description: 'Get every table and field in a base.',
   audience: 'ai',
+  outputSchema: getBaseSchemaAiActionOutputSchema,
   aiMetadata: {
     description:
       'Returns the full schema of a base — every table with its id, name, and the names and types of all its fields. This is the key resolver: call it to turn a base ID into table IDs and exact field names before reading or writing records. Read-only and idempotent.',

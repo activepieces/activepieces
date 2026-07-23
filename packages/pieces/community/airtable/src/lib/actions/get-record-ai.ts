@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { getRecordAiActionOutputSchema } from '../output-schemas';
 
 export const airtableGetRecordAiAction = createAction({
   auth: airtableAuth,
@@ -8,6 +9,7 @@ export const airtableGetRecordAiAction = createAction({
   displayName: 'Get Record (Agent)',
   description: 'Retrieve a single Airtable record by its ID.',
   audience: 'ai',
+  outputSchema: getRecordAiActionOutputSchema,
   aiMetadata: {
     description:
       'Retrieves a single record and its field values by record ID. Use when you already know the exact record ID; to find records by a field value instead use Search Records (Agent) or List Records (Agent). Read-only and idempotent.',

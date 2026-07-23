@@ -7,6 +7,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
+import { deleteRecordsBatchActionOutputSchema } from '../output-schemas';
 
 export const airtableDeleteRecordsBatchAction = createAction({
   auth: airtableAuth,
@@ -14,6 +15,7 @@ export const airtableDeleteRecordsBatchAction = createAction({
   displayName: 'Delete Records Batch (Agent)',
   description: 'Delete up to 10 records by ID in one call.',
   audience: 'ai',
+  outputSchema: deleteRecordsBatchActionOutputSchema,
   aiMetadata: {
     description:
       'Permanently deletes up to 10 records from a table in one call, given their record IDs. Use to remove several rows at once; to delete a single record use Delete Record (Agent). Effectively idempotent: the end state is the records gone (a repeat call reports the already-deleted IDs).',

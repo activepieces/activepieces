@@ -6,6 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
+import { uploadAttachmentAiActionOutputSchema } from '../output-schemas';
 
 export const airtableUploadAttachmentAiAction = createAction({
   auth: airtableAuth,
@@ -13,6 +14,7 @@ export const airtableUploadAttachmentAiAction = createAction({
   displayName: 'Upload Attachment (Agent)',
   description: 'Upload a file into an attachment field on a record.',
   audience: 'ai',
+  outputSchema: uploadAttachmentAiActionOutputSchema,
   aiMetadata: {
     description:
       'Uploads a file (base64-encoded content) into a multiple-attachments field on an existing record. Provide the attachment field ID (from Get Base Schema (Agent)), the record ID, the base64 content, its MIME content type, and a filename. Each call adds a new attachment, so it is not idempotent.',

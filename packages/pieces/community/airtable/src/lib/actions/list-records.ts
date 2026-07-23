@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { airtableAuth } from '../auth';
 import { AirtableRecord } from '../common/models';
+import { listRecordsActionOutputSchema } from '../output-schemas';
 
 export const airtableListRecordsAction = createAction({
   auth: airtableAuth,
@@ -15,6 +16,7 @@ export const airtableListRecordsAction = createAction({
   displayName: 'List Records (Agent)',
   description: 'List or query records in an Airtable table.',
   audience: 'ai',
+  outputSchema: listRecordsActionOutputSchema,
   aiMetadata: {
     description:
       'Lists records from a table with optional Airtable filterByFormula, view, sort, field selection and limits — the power-user query path. Use this when you need a formula filter or sorting; for a simple "field equals/contains value" lookup prefer Search Records (Agent). Read-only and idempotent.',

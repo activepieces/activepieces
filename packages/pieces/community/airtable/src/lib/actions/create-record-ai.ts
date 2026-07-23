@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { createRecordAiActionOutputSchema } from '../output-schemas';
 
 export const airtableCreateRecordAiAction = createAction({
   auth: airtableAuth,
@@ -8,6 +9,7 @@ export const airtableCreateRecordAiAction = createAction({
   displayName: 'Create Record (Agent)',
   description: 'Adds a record to an Airtable table.',
   audience: 'ai',
+  outputSchema: createRecordAiActionOutputSchema,
   aiMetadata: {
     description:
       'Creates a single new record in an Airtable table from a JSON map of field-name to value. Call Get Base Schema (Agent) first to learn the exact field names and types; linked-record and multi-select fields take arrays of ids/strings. Each call creates a new record, so it is not idempotent (retries duplicate).',
