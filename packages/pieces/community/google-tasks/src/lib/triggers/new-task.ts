@@ -1,7 +1,5 @@
 import {
   AppConnectionValueForAuthProperty,
-  OAuth2PropertyValue,
-  OAuth2Props,
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
@@ -27,12 +25,12 @@ const polling: Polling<
     const records = await getTasks(auth, propsValue.tasks_list!);
 
     const filtered_records = records.filter((record) => {
-      const updated = Date.parse(record.updated);
+      const updated = Date.parse(record.updated ?? '0');
       return updated > lastFetchEpochMS;
     });
 
     return filtered_records.map((record) => ({
-      epochMilliSeconds: Date.parse(record.updated),
+      epochMilliSeconds: Date.parse(record.updated ?? '0'),
       data: record,
     }));
   },

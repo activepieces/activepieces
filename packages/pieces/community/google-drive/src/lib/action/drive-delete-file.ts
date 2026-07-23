@@ -3,17 +3,22 @@ import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
 
-export const googleDriveDeleteFile = createAction({
+export const driveDeleteFile = createAction({
   auth: googleDriveAuth,
-  name: 'delete_gdrive_file',
-  description: 'Delete permanently a file from your Google Drive',
-  audience: 'human',
-  aiMetadata: { description: 'Permanently deletes a file from Google Drive by its ID, bypassing the trash and making it unrecoverable. Use only when permanent removal is intended; prefer Trash file for reversible deletion. Requires the file ID. Not idempotent: a repeat call fails because the file no longer exists.', idempotent: false },
-  displayName: 'Delete file',
+  name: 'drive_delete_file',
+  displayName: 'Delete File Permanently',
+  description: 'Permanently delete a Drive file by ID, bypassing the trash.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Permanently deletes a file by ID, bypassing the trash — unrecoverable. Use only when permanent removal is intended; for reversible deletion prefer drive_trash_file. A repeat call fails because the file no longer exists.',
+    idempotent: false,
+  },
   props: {
-    fileId: Property.ShortText({
+    file_id: Property.ShortText({
       displayName: 'File ID',
-      description: 'The ID of the file to delete',
+      description:
+        'The ID of the file to permanently delete. Resolve it via drive_search_files or drive_get_file.',
       required: true,
     }),
     include_team_drives: common.properties.include_team_drives,
@@ -24,7 +29,7 @@ export const googleDriveDeleteFile = createAction({
     const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const response = await drive.files.delete({
-      fileId: context.propsValue.fileId,
+      fileId: context.propsValue.file_id,
       supportsAllDrives: context.propsValue.include_team_drives,
     });
 

@@ -1,11 +1,19 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
-  PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
+import { googleTasksFindTasksAction } from './lib/actions/find-tasks';
+import { googleTasksCompleteTaskAction } from './lib/actions/complete-task';
+import { googleTasksUpdateTaskAction } from './lib/actions/update-task';
+import { googleTasksDeleteTaskAction } from './lib/actions/delete-task';
+import { googleTasksCreateTaskAction } from './lib/actions/create-task';
+import { googleTasksGetTaskAction } from './lib/actions/get-task';
+import { googleTasksMoveTaskAction } from './lib/actions/move-task';
+import { googleTasksClearCompletedTasksAction } from './lib/actions/clear-completed-tasks';
+import { googleTasksListTaskListsAction } from './lib/actions/list-task-lists';
 import { googleTasksCommon } from './lib/common';
 import { newTaskTrigger } from './lib/triggers/new-task';
 import { googleTasksAuth } from './lib/auth';
@@ -16,6 +24,15 @@ export const googleTasks = createPiece({
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     googleTasksAddNewTaskAction,
+    googleTasksFindTasksAction,
+    googleTasksCompleteTaskAction,
+    googleTasksUpdateTaskAction,
+    googleTasksDeleteTaskAction,
+    googleTasksCreateTaskAction,
+    googleTasksGetTaskAction,
+    googleTasksMoveTaskAction,
+    googleTasksClearCompletedTasksAction,
+    googleTasksListTaskListsAction,
     createCustomApiCallAction({
       baseUrl: () => googleTasksCommon.baseUrl,
       auth: googleTasksAuth,

@@ -1,18 +1,20 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
-import { common } from '../common';
-import { searchFolderActionOutputSchema } from '../output-schemas';
 
-export const googleDriveSearchFolder = createAction({
+export const driveSearchFiles = createAction({
   auth: googleDriveAuth,
-  name: 'search-folder',
-  displayName: 'Search',
+  name: 'drive_search_files',
+  displayName: 'Search Files and Folders',
   description: 'Search a Google Drive folder for files/sub-folders',
-  audience: 'human',
-  aiMetadata: { description: 'Searches Google Drive for files or folders matching a name, full-text, or MIME-type query, optionally scoped to a parent folder and filtered to files or folders only. Use to resolve a file/folder ID from a human-readable name before acting on it. Read-only and idempotent.', idempotent: true },
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Searches Drive for files or folders matching a name, full-text, or MIME-type query, optionally scoped to a parent folder. Use this to resolve a human-readable name into a file/folder ID before acting on it; to list a known folder\'s children use `drive_list_files` instead. Read-only.',
+    idempotent: true,
+  },
   props: {
-    queryTerm: Property.StaticDropdown({
+    query_term: Property.StaticDropdown({
       displayName: 'Query Term',
       description: 'The Query term or field of file/folder to search upon.',
       defaultValue: 'name',
@@ -37,7 +39,7 @@ export const googleDriveSearchFolder = createAction({
       },
       defaultValue: 'contains',
     }),
-    query: Property.ShortText({
+    value: Property.ShortText({
       displayName: 'Value',
       description: 'Value of the field of file/folder to search for.',
       required: true,
@@ -55,19 +57,29 @@ export const googleDriveSearchFolder = createAction({
       },
       defaultValue: 'all',
     }),
-    parentFolder: common.properties.parentFolder,
-    include_team_drives: common.properties.include_team_drives,
+    parent_folder_id: Property.ShortText({
+      displayName: 'Parent Folder ID',
+      description:
+        '(Optional) Restrict the search to files/folders inside this folder ID.',
+      required: false,
+    }),
+    include_team_drives: Property.Checkbox({
+      displayName: 'Include Team Drives',
+      description:
+        'Determines if folders from Team Drives should be included in the results.',
+      defaultValue: false,
+      required: false,
+    }),
   },
-  outputSchema: searchFolderActionOutputSchema,
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
 
     const drive = googleDrive({ version: 'v3', auth: authClient });
     const operator = context.propsValue.operator ?? 'contains';
-    const queryTerm = context.propsValue.queryTerm ?? 'name';
-    let finalQuery = `${queryTerm} ${operator} '${context.propsValue.query}'`;
-    if (context.propsValue.parentFolder) {
-      finalQuery = `${finalQuery} and '${context.propsValue.parentFolder}' in parents`;
+    const queryTerm = context.propsValue.query_term ?? 'name';
+    let finalQuery = `${queryTerm} ${operator} '${context.propsValue.value}'`;
+    if (context.propsValue.parent_folder_id) {
+      finalQuery = `${finalQuery} and '${context.propsValue.parent_folder_id}' in parents`;
     }
 
     const type = context.propsValue.type ?? 'all';
@@ -87,7 +99,8 @@ export const googleDriveSearchFolder = createAction({
     do {
       const listParams: Record<string, any> = {
         q: finalQuery,
-        fields: 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)',
+        fields:
+          'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)',
         includeItemsFromAllDrives: context.propsValue.include_team_drives,
         supportsAllDrives: true,
         corpora: context.propsValue.include_team_drives ? 'allDrives' : 'user',
