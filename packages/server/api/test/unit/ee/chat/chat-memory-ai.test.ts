@@ -21,6 +21,33 @@ describe('chatHelpers.capMemories', () => {
     })
 })
 
+describe('chatHelpers.mergeMemories (3-way, concurrency-safe)', () => {
+    it('applies my reconciled list when nothing changed concurrently', () => {
+        const result = chatHelpers.mergeMemories({ base: ['burgers'], incoming: ['pizza'], current: ['burgers'] })
+        expect(result).toEqual(['pizza'])
+    })
+
+    it('preserves a fact added concurrently by another request', () => {
+        const result = chatHelpers.mergeMemories({ base: ['burgers'], incoming: ['burgers', 'pizza'], current: ['burgers', 'cheese'] })
+        expect(result).toEqual(['burgers', 'pizza', 'cheese'])
+    })
+
+    it('does not restore a fact deleted concurrently by another request', () => {
+        const result = chatHelpers.mergeMemories({ base: ['burgers'], incoming: ['burgers', 'pizza'], current: [] })
+        expect(result).toEqual(['pizza'])
+    })
+
+    it('does not restore a wording superseded concurrently', () => {
+        const result = chatHelpers.mergeMemories({ base: ['prefers burgers'], incoming: ['prefers burgers'], current: ['prefers steak'] })
+        expect(result).toEqual(['prefers steak'])
+    })
+
+    it('honors my own deletion', () => {
+        const result = chatHelpers.mergeMemories({ base: ['burgers', 'pizza'], incoming: ['pizza'], current: ['burgers', 'pizza'] })
+        expect(result).toEqual(['pizza'])
+    })
+})
+
 describe('chatMemoryAi.parseJsonObject', () => {
     it('parses a clean extraction object', () => {
         const parsed = chatMemoryAi.parseJsonObject(

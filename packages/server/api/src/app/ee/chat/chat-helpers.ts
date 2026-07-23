@@ -155,6 +155,13 @@ async function withLockedMemoryRow<T>({ platformId, userId }: { platformId: stri
     })
 }
 
+function mergeMemories({ base, incoming, current }: { base: string[], incoming: string[], current: string[] }): string[] {
+    return unique([
+        ...incoming.filter((memory) => !base.includes(memory) || current.includes(memory)),
+        ...current.filter((memory) => !base.includes(memory)),
+    ])
+}
+
 async function saveUserChatMemory({ platformId, userId, instructions, memories, baseMemories }: {
     platformId: string
     userId: string
@@ -168,7 +175,7 @@ async function saveUserChatMemory({ platformId, userId, instructions, memories, 
             ? lockedMemories
             : isNil(baseMemories)
                 ? memories
-                : unique([...memories, ...lockedMemories.filter((m) => !baseMemories.includes(m))])
+                : mergeMemories({ base: baseMemories, incoming: memories, current: lockedMemories })
         const capped = capMemories({
             instructions: instructions === undefined ? row?.instructions ?? null : instructions,
             memories: nextMemories,
@@ -190,5 +197,6 @@ export const chatHelpers = {
     conversationRepo,
     getUserChatMemory,
     capMemories,
+    mergeMemories,
     saveUserChatMemory,
 }
