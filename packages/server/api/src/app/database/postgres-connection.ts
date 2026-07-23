@@ -402,6 +402,9 @@ import { AddChatConversationStreamingUpdatedIndex1810000000000 } from './migrati
 import { AddDeprecatedToPieceMetadata1811000000000 } from './migration/postgres/1811000000000-AddDeprecatedToPieceMetadata'
 import { AddNotifyFlowOwnerOnFailureToProject1811000000000 } from './migration/postgres/1811000000000-AddNotifyFlowOwnerOnFailureToProject'
 import { AddProjectExecutionDataRetentionDays1812000000000 } from './migration/postgres/1812000000000-AddProjectExecutionDataRetentionDays'
+import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postgres/1814000000000-AddActiveFlowsLimitToProjectPlan'
+import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgres/1815000000000-AddSampleDataFlowIdIndexToFile'
+import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -819,6 +822,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddNotifyFlowOwnerOnFailureToProject1811000000000,
         AddDeprecatedToPieceMetadata1811000000000,
         AddProjectExecutionDataRetentionDays1812000000000,
+        AddActiveFlowsLimitToProjectPlan1814000000000,
+        AddSampleDataFlowIdIndexToFile1815000000000,
+        AddTeamsBotInstallation1816000000000,
     ]
     return migrations
 }

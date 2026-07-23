@@ -54,6 +54,7 @@ import { CellEntity } from '../tables/record/cell.entity'
 import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
+import { TeamsBotInstallationEntity } from '../teams-bot/teams-bot-installation.entity'
 import { TemplateEntity } from '../template/template.entity'
 import { ToolSearchIndexEntity } from '../tool-search/tool-search-index.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
@@ -108,6 +109,7 @@ function getEntities(): EntitySchema<unknown>[] {
         ChatRolloutUserEntity,
         TriggerSourceEntity,
         WaitpointEntity,
+        TeamsBotInstallationEntity,
         // Enterprise
         PieceSetEntity,
         ConcurrencyPoolEntity,
