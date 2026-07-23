@@ -125,19 +125,21 @@ function buildMemoryNote({ instructions, memories }: {
     memories: string[]
 }): string {
     const trimmedInstructions = instructions?.trim()
-    if (isNil(trimmedInstructions) && memories.length === 0) {
-        return ''
-    }
     const lines: string[] = [
-        '\n\n## What you know about this user (across conversations)',
-        'Honor these by default without re-asking. When the user states a lasting preference, a default, or corrects how you work ("stop asking me things you can find", "always notify #ops", "I only hire EU-based"), save it with `ap_remember` (silent) so it persists next time. Keep each memory a short standalone statement; don\'t store one-off task details.',
+        '\n\n## Memory about this user (persists across every conversation)',
+        'Honor anything below by default without re-asking. Save to memory with `ap_remember` (silent) whenever it would spare the user from repeating themselves next time:',
+        '- The user asks you to remember or forget something ("remember I love cheese", "don\'t forget X", "forget that") — ALWAYS act on this immediately.',
+        '- The user volunteers a durable fact, preference, or default about themselves ("I love cheese", "I prefer TypeScript", "my main channel is #ops", "I only hire EU-based") — save it proactively.',
+        '- The user corrects how you work ("stop asking me things you can find") — save the correction.',
+        'One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so if you are unsure whether something is worth remembering, save it (or briefly ask). Do NOT save one-off task details (those belong in the brief).',
     ]
     if (!isNil(trimmedInstructions)) {
         lines.push(`\n### Instructions (how they want you to work / talk)\n${trimmedInstructions}`)
     }
-    if (memories.length > 0) {
-        lines.push('\n### Remembered facts', memories.map((memory) => `- ${memory}`).join('\n'))
-    }
+    lines.push(
+        '\n### Remembered facts',
+        memories.length > 0 ? memories.map((memory) => `- ${memory}`).join('\n') : 'Nothing remembered yet.',
+    )
     return lines.join('\n')
 }
 

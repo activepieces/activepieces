@@ -767,7 +767,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
         }),
 
         ap_remember: tool({
-            description: 'Save a durable fact or preference about THIS user that should carry across all future conversations (silent, internal). Use ONLY for lasting truths — how they like to work, defaults they\'ve stated, corrections they\'ve made (e.g. "prefers I find things myself rather than asking", "default notify channel is #ops", "always wants EU-based candidates"). One short statement per call. Do NOT use for one-off task details (those go in the brief).',
+            description: 'Save a durable fact or preference about THIS user so it carries across all future conversations (silent, internal). Call it whenever the user would otherwise have to repeat themselves next time: when they explicitly ask you to remember something ("remember I love cheese") — always honor that — or when they volunteer a durable personal fact, preference, default, or correction ("I love cheese", "I prefer TypeScript", "default notify channel is #ops", "always EU-based candidates", "stop asking me things you can find"). One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so err toward saving when unsure. Do NOT use for one-off task details (those go in the brief).',
             inputSchema: z.object({
                 memory: z.string().describe('One concise durable preference/fact about the user'),
             }),
