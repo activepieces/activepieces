@@ -64,6 +64,12 @@ export const findOrCreateLeadAction = createAction({
 			return { created: false, lead: existing.data[0] };
 		}
 
+		if (searchField === 'id') {
+			throw new Error(
+				'No lead found with that Intercom ID. Intercom assigns IDs itself, so a lead can only be created when searching by Email or User ID.',
+			);
+		}
+
 		const lead = await client.contacts.create({
 			role: 'lead',
 			email: searchField === 'email' ? searchValue : undefined,

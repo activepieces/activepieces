@@ -69,6 +69,10 @@ export const createOrUpdateCompanyAction = createAction({
 			customAttributes,
 		} = context.propsValue;
 
+		if (!companyId && !name) {
+			throw new Error('Provide a Company ID or a Name to create or update a company.');
+		}
+
 		const client = intercomClient(context.auth);
 
 		const response = await client.companies.createOrUpdate({
