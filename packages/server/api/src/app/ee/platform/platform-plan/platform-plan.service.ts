@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, PlatformUsageMetric, SeekPage, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowStatus, InvitationStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowStatus, InvitationStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -87,6 +87,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             .innerJoin('project', 'project', 'project.id = flow."projectId"')
             .where('project."platformId" = :platformId', { platformId })
             .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
+            .andWhere('flow.operationStatus != :deleting', { deleting: FlowOperationStatus.DELETING })
             .getCount()
         const { data: consumables, error: consumablesError } = await tryCatch(() => billingProvider.get(log).getConsumablesUsage(platformId))
         if (!isNil(consumablesError)) {

@@ -9,6 +9,7 @@ export type ProjectPlanLimits = {
     pieces?: string[]
     aiCredits?: number | null
     piecesFilterType?: PiecesFilterType
+    activeFlowsLimit?: number | null
 }
 
 

@@ -38,6 +38,7 @@ import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { billingUsageReportModule } from './ee/billing-usage-report/billing-usage-report-module'
 import { chatEvalModule } from './ee/chat/chat-eval-controller'
+import { chatHelpers } from './ee/chat/chat-helpers'
 import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
@@ -101,6 +102,7 @@ import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
+import { teamsBotModule } from './teams-bot/teams-bot.module'
 import { templateModule } from './template/template.module'
 import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
@@ -214,13 +216,14 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
+    await app.register(teamsBotModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
-    // Cold-start backfill: build the tool-search index once if the flag is on but it has never been
-    // built (existing deployment whose piece_metadata is already populated, so no sync delta fires).
-    // Fire-and-forget — a no-op once the index has rows, and must never block or fail boot.
-    rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfEmpty(), app.log)
+    // Boot backfill: build the tool-search index if the flag is on but it is empty or only partially
+    // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
+    // unembedded). Fire-and-forget — a no-op once fully built, and must never block or fail boot.
+    rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfNeeded(), app.log)
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
@@ -263,6 +266,21 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
+
+    systemJobHandlers.registerJobHandler(SystemJobName.CHAT_STALE_SWEEP, async () => {
+        await chatHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+    })
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.CHAT_STALE_SWEEP,
+            data: {},
+            jobId: SystemJobName.CHAT_STALE_SWEEP,
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '* * * * *',
+        },
+    })
 
     app.get(
         '/redirect',

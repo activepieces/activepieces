@@ -7,7 +7,7 @@ import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from '
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../database/redis-connections'
 import { fileCompressor } from '../../file/file-compressor'
-import { fileService } from '../../file/file.service'
+import { fileService, getEffectiveExecutionDataRetentionDays } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
@@ -118,7 +118,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
-        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+        const project = await projectService(log).getOneOrThrow(oldFlowRun.projectId)
+        const retentionDays = getEffectiveExecutionDataRetentionDays(project.executionDataRetentionDays)
         if (
             isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
             isOutsideRetentionWindow(oldFlowRun.created, retentionDays)

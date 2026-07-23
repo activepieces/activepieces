@@ -209,6 +209,21 @@ describe('flow operation invariants', () => {
             await expect(flowOperation.execute(operation)).rejects.toThrow('executionState is missing in logs file')
         })
 
+        it('surfaces a gone resume log file as a FAILED run + OK engine response (instead of INTERNAL_ERROR)', async () => {
+            mockDownload.mockReset()
+            mockSendUpdate.mockClear()
+            mockBackup.mockClear()
+            mockDownload.mockRejectedValue(new EngineFileNotFoundError('logs-file-gone'))
+            const operation = makeResumeOperation({ logsFileId: 'logs-file-gone' })
+
+            const response = await flowOperation.execute(operation)
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(mockBackup).toHaveBeenCalled()
+        })
+
         it('proceeds past hydration when logs file has non-empty execution state', async () => {
             mockDownload.mockReset()
             mockDownload.mockResolvedValue(
@@ -557,7 +572,7 @@ describe('flow operation invariants', () => {
         it('surfaces a plain TypeError thrown by the trigger run() hook as a FAILED run + OK engine response (instead of INTERNAL_ERROR)', async () => {
             mockSendUpdate.mockClear()
             mockBackup.mockClear()
-            mockExecuteTrigger.mockRejectedValue(new TypeError("Cannot read 'toLowerCase' of undefined"))
+            mockExecuteTrigger.mockRejectedValue(new TypeError('Cannot read \'toLowerCase\' of undefined'))
             const operation = makeBeginOperation({
                 triggerPayload: { type: 'inline', value: {} },
                 executeTrigger: true,

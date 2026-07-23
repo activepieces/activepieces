@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { benchmarkUtils } from './benchmark';
 
-const baseOpts = { url: 'http://localhost:3000/', requests: '10', concurrency: '2', apiKey: 'k', projectId: 'p1', body: '{"x":1}' };
+const baseOpts = { url: 'http://localhost:3000/', requests: '10', concurrency: '2', apiKey: 'k', body: '{"x":1}' };
 
 describe('benchmarkUtils.normalizeOptions', () => {
     it('parses valid options and strips the trailing slash', () => {
@@ -10,14 +10,12 @@ describe('benchmarkUtils.normalizeOptions', () => {
         expect(config.requests).toBe(10);
         expect(config.concurrency).toBe(2);
         expect(config.apiKey).toBe('k');
-        expect(config.projectId).toBe('p1');
         expect(config.body).toBe('{"x":1}');
     });
 
     it('leaves auth and load fields undefined when not provided', () => {
         const config = benchmarkUtils.normalizeOptions({ url: 'http://x', body: '{}' });
         expect(config.apiKey).toBeUndefined();
-        expect(config.projectId).toBeUndefined();
         expect(config.requests).toBeUndefined();
         expect(config.concurrency).toBeUndefined();
     });
@@ -122,5 +120,28 @@ describe('benchmarkUtils.aggregateTimeline', () => {
         const agg = benchmarkUtils.aggregateTimeline([{ timeline: null }, run(1, 1, 1, 20)]);
         expect(agg.sampleCount).toBe(1);
         expect(agg.serviceP50).toBe(20);
+    });
+
+    it('flags runs carrying the rate-limiter backoff delay (QUEUE >= 15s)', () => {
+        const agg = benchmarkUtils.aggregateTimeline([run(100, 1, 1, 50), run(21_000, 1, 1, 50), run(14_999, 1, 1, 50)]);
+        expect(agg.rateLimitedRunsCount).toBe(1);
+        expect(agg.queueMax).toBe(21_000);
+    });
+});
+
+describe('benchmarkUtils.aggregateOutsideRuns', () => {
+    it('groups runs by flow with count and avg run time, busiest first', () => {
+        const at = (ms: number) => new Date(ms).toISOString();
+        const flows = benchmarkUtils.aggregateOutsideRuns([
+            { flowId: 'a', projectId: 'p1', startTime: at(0), finishTime: at(100) },
+            { flowId: 'a', projectId: 'p1', startTime: at(0), finishTime: at(300) },
+            { flowId: 'a', projectId: 'p1' }, // still counted, excluded from avg (no timestamps)
+            { flowId: 'b', projectId: 'p2', startTime: at(0), finishTime: at(50) },
+            { projectId: 'p2' }, // no flowId — dropped
+        ]);
+        expect(flows).toEqual([
+            { flowId: 'a', projectId: 'p1', runs: 3, avgRunMs: 200 },
+            { flowId: 'b', projectId: 'p2', runs: 1, avgRunMs: 50 },
+        ]);
     });
 });

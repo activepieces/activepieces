@@ -48,7 +48,7 @@ are gone).
 
 ## Usage & Quota Enforcement
 - `getUsage(platformId)` → `{ activeFlows, aiCreditsLimit, aiCreditsRemaining, totalAiCreditsUsed, totalAiCreditsUsedThisMonth, appSumoAiCredits }`.
-- `checkActiveFlowsExceededLimit()` — **always-on**, throws `QUOTA_EXCEEDED` when `activeFlows >= activeFlowsLimit` (null = unlimited). CE-skipped.
+- `checkActiveFlowsExceededLimit()` — **always-on**, throws `QUOTA_EXCEEDED` when `activeFlows >= activeFlowsLimit` (null = unlimited). CE-skipped. A per-project cap (`project_plan.activeFlowsLimit`) is enforced alongside it — see [ee-projects.md](./ee-projects.md).
 - `checkUsersExceededLimit()` — **send-time only, OBSERVE-gated** (`shouldBlock`); throws at invite-send when a new seat would exceed `usersLimit`. (No accept-time enforcement — see billing-status plan.)
 - **Credit gate**: flow-run admission (`submitPayloads` → retryable `QUOTA_EXCEEDED` run, payload preserved), chat block, and the per-AI-step `GET /:provider/config` gate. `apCredits` gate is `shouldBlock`-gated; the `appSumoAiCredits` cap is always-on.
 

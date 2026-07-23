@@ -37,6 +37,7 @@ export const ProjectPlan = z.object({
     name: z.string(),
     piecesFilterType: z.nativeEnum(PiecesFilterType),
     pieces: z.array(z.string()),
+    activeFlowsLimit: Nullable(z.number()),
 })
 
 export type ProjectPlan = z.infer<typeof ProjectPlan>
@@ -57,10 +58,12 @@ export const Project = z.object({
     icon: ProjectIcon,
     externalId: Nullable(z.string()),
     releasesEnabled: z.boolean(),
+    notifyFlowOwnerOnFailure: z.boolean(),
     metadata: Nullable(Metadata),
     poolId: Nullable(ApId),
     pieceSetId: Nullable(ApId),
     workerGroupId: Nullable(z.string()),
+    executionDataRetentionDays: Nullable(z.number()),
 })
 
 const projectAnalytics = z.object({
