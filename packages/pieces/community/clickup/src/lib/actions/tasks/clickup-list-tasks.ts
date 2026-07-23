@@ -8,16 +8,19 @@ import qs from 'qs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon, listTags } from '../../common';
 import { ClickupTask } from '../../common/models';
-import { filterWorkspaceTasksOutputSchema } from '../../output-schemas';
 
-export const filterClickupWorkspaceTasks = createAction({
+export const clickupListTasksAi = createAction({
   auth: clickupAuth,
-  name: 'list_workspace_tasks',
-  displayName: 'List Team Tasks',
+  name: 'clickup_list_tasks',
+  displayName: 'List Tasks',
   description:
     'Retrieves the tasks that meet specific criteria from a Workspace.',
-  audience: 'human',
-  aiMetadata: { description: 'List tasks across an entire ClickUp workspace, filtered by space, folder, list, assignees, and tags, with paging, ordering, and inclusion of closed tasks. Pick this to search or browse tasks broadly when you do not know a specific task ID; use Get Task for a known ID or Get Task by Name to resolve a name within one list. Read-only and idempotent; results are paginated (page starts at 0).', idempotent: true },
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'List tasks across an entire ClickUp workspace, filtered by space, folder, list, assignees, and tags, with paging and ordering. Pick this to search or browse tasks broadly across the workspace when you do not know a task ID; to list only the tasks of one specific list use List List Tasks, and for a known ID use Get Task. Read-only and idempotent; results are paginated (page starts at 0).',
+    idempotent: true,
+  },
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     space_id: clickupCommon.space_id(false, true),
@@ -92,24 +95,35 @@ export const filterClickupWorkspaceTasks = createAction({
       },
     }),
   },
-  outputSchema: filterWorkspaceTasksOutputSchema,
   async run(configValue) {
     const { list_id, folder_id, space_id, workspace_id, ...params } =
       configValue.propsValue;
     const auth = getAccessTokenOrThrow(configValue.auth);
 
+    // These ClickUp filters MUST be arrays (the API rejects a scalar with
+    // "<x>_ids must be an array"). The props are multi-selects, but an agent
+    // may send a single id as a scalar string — coerce to an array so that
+    // shape works instead of 400-ing.
+    const toArray = (v: unknown): unknown[] | undefined => {
+      if (v === undefined || v === null || v === '') return undefined;
+      return Array.isArray(v) ? v : [v];
+    };
+
     const query: Record<string, unknown> = {
-      assignees: params.assignees,
-      tags: params.tags,
+      assignees: toArray(params.assignees),
+      tags: toArray(params.tags),
       page: params.page,
       reverse: params.reverse,
       include_closed: params.include_closed,
       order_by: params.order_by,
     };
 
-    if (list_id) query['list_ids'] = list_id;
-    if (folder_id) query['project_ids'] = folder_id;
-    if (space_id) query['space_ids'] = space_id;
+    const listIds = toArray(list_id);
+    const folderIds = toArray(folder_id);
+    const spaceIds = toArray(space_id);
+    if (listIds) query['list_ids'] = listIds;
+    if (folderIds) query['project_ids'] = folderIds;
+    if (spaceIds) query['space_ids'] = spaceIds;
 
     return (
       await callClickUpApi<ClickupTask>(

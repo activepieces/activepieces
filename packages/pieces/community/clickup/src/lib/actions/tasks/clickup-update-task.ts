@@ -3,14 +3,17 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
-import { taskOutputSchema } from '../../output-schemas';
 
-export const updateClickupTask = createAction({
+export const clickupUpdateTaskAi = createAction({
   auth: clickupAuth,
-  name: 'update_task',
+  name: 'clickup_update_task',
   description: 'Update task in a ClickUp workspace and list',
-  audience: 'human',
-  aiMetadata: { description: 'Modify fields of an existing ClickUp task identified by its task ID, including name, description, status, priority, and adding or removing assignees. Pick this to change a task you already have the ID for; use Create Task to make a new one. Only the fields you supply are changed, so repeating the same update produces the same end state.', idempotent: false },
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Modify fields of an existing ClickUp task identified by its task ID, including name, description, status, priority, and adding or removing assignees. Pick this to change multiple fields of a task you already have the ID for; for only the status use Set Task Status, and to create a new task use Create Task. Only the fields you supply are changed, so repeating the same update yields the same end state.',
+    idempotent: true,
+  },
   displayName: 'Update Task',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -40,7 +43,6 @@ export const updateClickupTask = createAction({
       'assignee(s) you want to remove from the task'
     ),
   },
-  outputSchema: taskOutputSchema,
   async run(configValue) {
     const {
       task_id,
@@ -60,10 +62,16 @@ export const updateClickupTask = createAction({
         description: description,
         status: status_id,
         priority: priority_id,
-        assignees: {
-          add: add_assignee,
-          rem: rem_assignee,
-        },
+        // Only send the assignees object for an actual add/remove. ClickUp
+        // rejects an empty/blank assignees object on ordinary field updates.
+        ...(add_assignee !== undefined || rem_assignee !== undefined
+          ? {
+              assignees: {
+                ...(add_assignee !== undefined ? { add: add_assignee } : {}),
+                ...(rem_assignee !== undefined ? { rem: rem_assignee } : {}),
+              },
+            }
+          : {}),
       }
     );
 

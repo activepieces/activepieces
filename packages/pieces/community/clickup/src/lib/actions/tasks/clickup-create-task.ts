@@ -12,14 +12,17 @@ import {
   listAccessibleCustomFields,
 } from '../../common';
 import { clickupAuth } from '../../auth';
-import { taskOutputSchema } from '../../output-schemas';
 
-export const createClickupTask = createAction({
+export const clickupCreateTaskAi = createAction({
   auth: clickupAuth,
-  name: 'create_task',
+  name: 'clickup_create_task',
   description: 'Create a new task in a ClickUp workspace and list',
-  audience: 'human',
-  aiMetadata: { description: 'Create a new top-level task in a ClickUp list, with optional status, priority, assignees, description, dates, time estimate, and custom fields. Pick this for a standalone task; use Create Subtask to nest under a parent or Create Task From Template to inherit a template. Each call creates a new task, so it is not idempotent.', idempotent: false },
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Create a new top-level task in a ClickUp list, with optional status, priority, assignees, description, dates, time estimate, and custom fields. Pick this for a standalone task; for setting only the status of an existing task use Set Task Status, and to modify other fields of an existing task use Update Task. Each call creates a new task, so retries duplicate it.',
+    idempotent: false,
+  },
   displayName: 'Create Task',
   props: {
     workspace_id: clickupCommon.workspace_id(),
@@ -95,16 +98,13 @@ export const createClickupTask = createAction({
           return {};
         }
 
-        // Ensure `auth` is of the correct type
         const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
 
-        // Fetch custom fields using clickupCommon
         const { fields: customFields } = await listAccessibleCustomFields(
           accessToken,
           list_id.toString()
         );
 
-        // Map custom fields to InputPropertyMap
         const dynamicProps: Record<string, any> = {};
         customFields.forEach((field) => {
           dynamicProps[field.id] = Property.ShortText({
@@ -119,7 +119,6 @@ export const createClickupTask = createAction({
     }),
   },
 
-  outputSchema: taskOutputSchema,
   async run(configValue) {
     const {
       list_id,
@@ -161,36 +160,30 @@ export const createClickupTask = createAction({
       assignees: assignee_id,
     };
 
-    // Add description or markdown content
     if (is_markdown && description) {
       data.markdown_content = description;
     } else if (description) {
       data.description = description;
     }
 
-    // Convert due_date to integer format and add it
     if (due_date) {
       data.due_date = new Date(due_date).getTime();
       data.due_date_time = due_date_time || false;
     }
 
-    // Convert start_date to integer format and add it
     if (start_date) {
       data.start_date = new Date(start_date).getTime();
       data.start_date_time = start_date_time || false;
     }
 
-    // Add time estimate
     if (time_estimate) {
       data.time_estimate = time_estimate;
     }
 
-    // Add check_required_custom_fields
     if (check_required_custom_fields) {
       data.check_required_custom_fields = check_required_custom_fields;
     }
 
-    // Map custom_fields into the required format
     if (custom_fields) {
       data.custom_fields = Object.entries(custom_fields).map(
         ([fieldId, value]) => ({
@@ -200,7 +193,6 @@ export const createClickupTask = createAction({
       );
     }
 
-    // Make the API request
     const response = await callClickUpApi(
       HttpMethod.POST,
       `list/${list_id}/task`,
