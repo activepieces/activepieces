@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
@@ -16,7 +16,6 @@ import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../../utils/consts';
-import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
 import { StepNodeChevron } from './step-node-chevron';
@@ -28,13 +27,14 @@ import { ApStepNodeStatusInRun } from './step-node-status-in-run';
 import { TriggerWidget } from './trigger-widget';
 
 const ApStepCanvasNode = React.memo(
-  ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
+  ({
+    data: { step, stepIndex, isSkipped },
+  }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
       selectStepByName,
       isSelected,
       isDragging,
       readonly,
-      flowVersion,
       setSelectedBranchIndex,
       isPieceSelectorOpened,
       setOpenedPieceSelectorStepNameOrAddButtonId,
@@ -45,7 +45,6 @@ const ApStepCanvasNode = React.memo(
       state.selectedStep === step.name,
       state.activeDraggingStep === step.name,
       state.readonly,
-      state.flowVersion,
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
@@ -56,12 +55,7 @@ const ApStepCanvasNode = React.memo(
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
-    const stepIndex = useMemo(
-      () => flowStructureUtil.getStepNumber(flowVersion.trigger, step.name),
-      [step, flowVersion],
-    );
     const isTrigger = flowStructureUtil.isTrigger(step.type);
-    const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
 
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: step.name,
@@ -152,8 +146,8 @@ const ApStepCanvasNode = React.memo(
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
         <LoopIterationInput stepName={step.name} />
         <ApStepNodeStatusInRun stepName={step.name} />
-        <ApStepNodeSkippedStatus stepName={step.name} />
-        <ApStepNodeStatusInDraft stepName={step.name} />
+        <ApStepNodeSkippedStatus stepName={step.name} isSkipped={isSkipped} />
+        <ApStepNodeStatusInDraft stepName={step.name} isSkipped={isSkipped} />
         <div
           className={cn('h-full w-full', {
             'px-3 overflow-hidden': !isHorizontal,

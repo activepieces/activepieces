@@ -32,6 +32,8 @@ export type ApStepNode = {
   };
   data: {
     step: FlowAction | FlowTrigger;
+    stepIndex: number;
+    isSkipped: boolean;
   };
   selectable?: boolean;
   style?: React.CSSProperties;

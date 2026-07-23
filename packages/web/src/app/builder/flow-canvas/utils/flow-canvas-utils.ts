@@ -103,6 +103,8 @@ const createStepGraph: (params: {
     position: { x: 0, y: 0 },
     data: {
       step,
+      stepIndex: 0,
+      isSkipped: false,
     },
     selectable: step.name !== 'trigger',
     draggable: true,
@@ -694,6 +696,53 @@ function buildNotesGraph(notes: Note[]): ApGraph {
   };
 }
 
+function deriveStepNodeData(trigger: FlowTrigger): Map<string, StepNodeData> {
+  const derivedData = new Map<string, StepNodeData>();
+  let stepIndex = 0;
+
+  function visit({
+    step,
+    isSkippedByParent,
+  }: {
+    step: FlowAction | FlowTrigger | null | undefined;
+    isSkippedByParent: boolean;
+  }): void {
+    if (isNil(step)) {
+      return;
+    }
+    stepIndex += 1;
+    derivedData.set(step.name, {
+      stepIndex,
+      isSkipped:
+        !flowStructureUtil.isTrigger(step.type) &&
+        (isSkippedByParent || ('skip' in step && !!step.skip)),
+    });
+
+    const isSkippedByStep =
+      isSkippedByParent || ('skip' in step && !!step.skip);
+    if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+      visit({ step: step.firstLoopAction, isSkippedByParent: isSkippedByStep });
+    } else if (step.type === FlowActionType.ROUTER) {
+      step.children.forEach((child) =>
+        visit({ step: child, isSkippedByParent: isSkippedByStep }),
+      );
+    } else if (
+      step.type === FlowActionType.CODE ||
+      step.type === FlowActionType.PIECE
+    ) {
+      sharedFlowCanvasUtils
+        .getContinueOnFailureBranchPair(step)
+        .forEach((child) =>
+          visit({ step: child, isSkippedByParent: isSkippedByStep }),
+        );
+    }
+    visit({ step: step.nextAction, isSkippedByParent });
+  }
+
+  visit({ step: trigger, isSkippedByParent: false });
+  return derivedData;
+}
+
 function determineInitiallySelectedStep(
   failedStepNameInRun: string | null,
   flowVersion: FlowVersion,
@@ -727,6 +776,7 @@ export const flowCanvasUtils = {
     notes: Note[];
     orientation: CanvasOrientation;
   }): ApGraph {
+    const stepNodeData = deriveStepNodeData(version.trigger);
     const stepsGraph = buildFlowGraph({
       step: version.trigger,
       orientation,
@@ -740,10 +790,23 @@ export const flowCanvasUtils = {
     } else {
       console.warn('Flow end widget not found');
     }
+    const graphWithStepNodeData: ApGraph = {
+      ...stepsGraph,
+      nodes: stepsGraph.nodes.map((node) => {
+        if (node.type !== ApNodeType.STEP) {
+          return node;
+        }
+        const derivedData = stepNodeData.get(node.id);
+        if (isNil(derivedData)) {
+          throw new Error(`Missing derived data for step node ${node.id}`);
+        }
+        return { ...node, data: { ...node.data, ...derivedData } };
+      }),
+    };
     const orientedGraph =
       orientation === 'horizontal'
-        ? transposeGraphPositions(stepsGraph)
-        : stepsGraph;
+        ? transposeGraphPositions(graphWithStepNodeData)
+        : graphWithStepNodeData;
     return mergeGraph(orientedGraph, notesGraph);
   },
   createFocusStepInGraphParams,
@@ -754,3 +817,5 @@ export const flowCanvasUtils = {
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,
 };
+
+type StepNodeData = Pick<ApStepNode['data'], 'stepIndex' | 'isSkipped'>;
