@@ -2,12 +2,19 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { GmailRequests } from '../common/data';
 import { GmailMessageFormat } from '../common/models';
 import { gmailAuth, getAccessToken } from '../auth';
+import { gmailGetThreadActionOutputSchema } from '../output-schemas';
 
 export const gmailGetThread = createAction({
   auth: gmailAuth,
   name: 'gmail_get_thread',
   description: 'Get a thread from your Gmail account via Id',
   displayName: 'Get Thread',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Fetches an entire email conversation by its Gmail thread ID, returning every message in the thread. Use this to read a full conversation or to discover the message IDs within a thread before replying; obtain the thread ID from Search Email or List Threads. Idempotent: a read-only lookup that does not modify the mailbox.',
+    idempotent: true,
+  },
   props: {
     thread_id: Property.ShortText({
       displayName: 'Thread ID',
@@ -30,6 +37,7 @@ export const gmailGetThread = createAction({
       },
     }),
   },
+  outputSchema: gmailGetThreadActionOutputSchema,
   run: async ({ auth, propsValue: { format, thread_id } }) =>
     await GmailRequests.getThread({
       access_token: await getAccessToken(auth),

@@ -1,5 +1,93 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
+const addressObjectFields: OutputSchema['fields'] = [
+  { key: 'text', label: 'Text' },
+  {
+    key: 'value',
+    label: 'Addresses',
+    labelKey: 'name',
+    listItems: [
+      { key: 'address', label: 'Email', format: 'email' },
+      { key: 'name', label: 'Name' },
+    ],
+  },
+];
+
+const attachmentFields: OutputSchema['fields'] = [
+  { key: 'fileName', label: 'File Name' },
+  { key: 'mimeType', label: 'MIME Type' },
+  { key: 'size', label: 'Size', format: 'filesize' },
+  { key: 'data', label: 'Download URL', format: 'url' },
+];
+
+const parsedMessageFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Message ID' },
+  { key: 'subject', label: 'Subject' },
+  { key: 'from', label: 'From', children: addressObjectFields },
+  { key: 'to', label: 'To', children: addressObjectFields },
+  { key: 'cc', label: 'Cc', children: addressObjectFields },
+  { key: 'date', label: 'Date', format: 'datetime' },
+  { key: 'messageId', label: 'RFC Message-ID' },
+  { key: 'text', label: 'Text Body' },
+  { key: 'html', label: 'HTML Body', format: 'html' },
+  {
+    key: 'attachments',
+    label: 'Attachments',
+    labelKey: 'fileName',
+    listItems: attachmentFields,
+  },
+];
+
+const messageSendResultFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Message ID' },
+  { key: 'threadId', label: 'Thread ID' },
+  { key: 'labelIds', label: 'Labels' },
+];
+
+const gmailMessageResourceFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Message ID' },
+  { key: 'threadId', label: 'Thread ID' },
+  { key: 'labelIds', label: 'Labels' },
+  { key: 'snippet', label: 'Snippet' },
+  { key: 'internalDate', label: 'Internal Date', format: 'datetime' },
+  { key: 'sizeEstimate', label: 'Size Estimate', format: 'filesize' },
+];
+
+const draftMutationFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Draft ID' },
+  {
+    key: 'message',
+    label: 'Message',
+    children: [
+      { key: 'id', label: 'Message ID' },
+      { key: 'threadId', label: 'Thread ID' },
+      { key: 'labelIds', label: 'Labels' },
+    ],
+  },
+];
+
+const gmailLabelBaseFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Label ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'type', label: 'Type' },
+  { key: 'messageListVisibility', label: 'Message List Visibility' },
+  { key: 'labelListVisibility', label: 'Label List Visibility' },
+  {
+    key: 'color',
+    label: 'Color',
+    children: [
+      { key: 'textColor', label: 'Text Color' },
+      { key: 'backgroundColor', label: 'Background Color' },
+    ],
+  },
+];
+
+const historyRecordMessageFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Message ID' },
+  { key: 'threadId', label: 'Thread ID' },
+  { key: 'labelIds', label: 'Labels' },
+];
+
 export const sendEmailActionOutputSchema: OutputSchema = {
   fields: [
     {
@@ -734,6 +822,237 @@ export const newLabeledEmailTriggerOutputSchema: OutputSchema = {
               value: 'sizeEstimate',
               format: 'filesize',
             },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const gmailAiSendEmailActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'data', label: 'Message', children: messageSendResultFields },
+    { key: 'status', label: 'Status Code', format: 'number' },
+    { key: 'statusText', label: 'Status Text' },
+  ],
+};
+
+export const gmailAiGetMessageActionOutputSchema: OutputSchema = {
+  fields: parsedMessageFields,
+};
+
+export const gmailAiSearchEmailActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'found', label: 'Found', format: 'boolean' },
+    {
+      key: 'results',
+      label: 'Results',
+      children: [
+        { key: 'count', label: 'Count', format: 'number' },
+        {
+          key: 'messages',
+          label: 'Messages',
+          labelKey: 'subject',
+          listItems: parsedMessageFields,
+        },
+      ],
+    },
+  ],
+};
+
+export const gmailAiReplyToThreadActionOutputSchema: OutputSchema = {
+  fields: messageSendResultFields,
+};
+
+export const gmailForwardMessageActionOutputSchema: OutputSchema = {
+  fields: messageSendResultFields,
+};
+
+export const gmailSendDraftActionOutputSchema: OutputSchema = {
+  fields: messageSendResultFields,
+};
+
+export const gmailCreateDraftActionOutputSchema: OutputSchema = {
+  fields: draftMutationFields,
+};
+
+export const gmailUpdateDraftActionOutputSchema: OutputSchema = {
+  fields: draftMutationFields,
+};
+
+export const gmailGetDraftActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Draft ID' },
+    { key: 'message', label: 'Message', children: gmailMessageResourceFields },
+  ],
+};
+
+export const gmailListDraftsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'drafts',
+      label: 'Drafts',
+      labelKey: 'id',
+      listItems: [
+        { key: 'id', label: 'Draft ID' },
+        {
+          key: 'message',
+          label: 'Message',
+          children: [
+            { key: 'id', label: 'Message ID' },
+            { key: 'threadId', label: 'Thread ID' },
+          ],
+        },
+      ],
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+    {
+      key: 'resultSizeEstimate',
+      label: 'Result Size Estimate',
+      format: 'number',
+    },
+    { key: 'nextPageToken', label: 'Next Page Token' },
+  ],
+};
+
+export const gmailGetThreadActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Thread ID' },
+    { key: 'snippet', label: 'Snippet' },
+    { key: 'historyId', label: 'History ID' },
+    {
+      key: 'messages',
+      label: 'Messages',
+      labelKey: 'snippet',
+      listItems: gmailMessageResourceFields,
+    },
+  ],
+};
+
+export const gmailListThreadsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'threads',
+      label: 'Threads',
+      labelKey: 'snippet',
+      listItems: [
+        { key: 'id', label: 'Thread ID' },
+        { key: 'snippet', label: 'Snippet' },
+        { key: 'historyId', label: 'History ID' },
+      ],
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+    {
+      key: 'resultSizeEstimate',
+      label: 'Result Size Estimate',
+      format: 'number',
+    },
+    { key: 'nextPageToken', label: 'Next Page Token' },
+  ],
+};
+
+export const gmailListLabelsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'labels',
+      label: 'Labels',
+      labelKey: 'name',
+      listItems: gmailLabelBaseFields,
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
+
+export const gmailGetLabelActionOutputSchema: OutputSchema = {
+  fields: [
+    ...gmailLabelBaseFields,
+    { key: 'messagesTotal', label: 'Messages Total', format: 'number' },
+    { key: 'messagesUnread', label: 'Messages Unread', format: 'number' },
+    { key: 'threadsTotal', label: 'Threads Total', format: 'number' },
+    { key: 'threadsUnread', label: 'Threads Unread', format: 'number' },
+  ],
+};
+
+export const gmailGetProfileActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'emailAddress', label: 'Email Address', format: 'email' },
+    { key: 'messagesTotal', label: 'Messages Total', format: 'number' },
+    { key: 'threadsTotal', label: 'Threads Total', format: 'number' },
+    { key: 'historyId', label: 'History ID' },
+  ],
+};
+
+export const gmailGetAttachmentActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'fileName', label: 'File Name' },
+    { key: 'size', label: 'Size', format: 'filesize' },
+    { key: 'data', label: 'File', format: 'url' },
+  ],
+};
+
+export const gmailListHistoryActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'historyId', label: 'History ID' },
+    { key: 'nextPageToken', label: 'Next Page Token' },
+    {
+      key: 'history',
+      label: 'History Records',
+      labelKey: 'id',
+      listItems: [
+        { key: 'id', label: 'History ID' },
+        {
+          key: 'messages',
+          label: 'Messages',
+          labelKey: 'id',
+          listItems: [
+            { key: 'id', label: 'Message ID' },
+            { key: 'threadId', label: 'Thread ID' },
+          ],
+        },
+        {
+          key: 'messagesAdded',
+          label: 'Messages Added',
+          listItems: [
+            {
+              key: 'message',
+              label: 'Message',
+              children: historyRecordMessageFields,
+            },
+          ],
+        },
+        {
+          key: 'messagesDeleted',
+          label: 'Messages Deleted',
+          listItems: [
+            {
+              key: 'message',
+              label: 'Message',
+              children: historyRecordMessageFields,
+            },
+          ],
+        },
+        {
+          key: 'labelsAdded',
+          label: 'Labels Added',
+          listItems: [
+            {
+              key: 'message',
+              label: 'Message',
+              children: historyRecordMessageFields,
+            },
+            { key: 'labelIds', label: 'Added Label IDs' },
+          ],
+        },
+        {
+          key: 'labelsRemoved',
+          label: 'Labels Removed',
+          listItems: [
+            {
+              key: 'message',
+              label: 'Message',
+              children: historyRecordMessageFields,
+            },
+            { key: 'labelIds', label: 'Removed Label IDs' },
           ],
         },
       ],
