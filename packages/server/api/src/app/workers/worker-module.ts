@@ -2,8 +2,6 @@ import { FastifyInstance } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { runsMetadataQueue } from '../flows/flow-run/flow-runs-queue'
 import { pubsub } from '../helper/pubsub'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
 import { flowEngineWorker } from './engine-controller'
 import { setupBullMQBoard } from './job-queue/bullboard'
 import { jobBroker } from './job-queue/job-broker'
@@ -34,12 +32,6 @@ export const workerModule: FastifyPluginAsyncZod = async (app) => {
 
 // This should be called after the app is booted, to ensure no plugin timeout
 export const migrateQueuesAndRunConsumers = async (app: FastifyInstance) => {
-    const isCanaryApp = system.getBoolean(AppSystemProp.IS_CANARY_APP) ?? false
-    if (isCanaryApp) {
-        app.log.info('[migrateQueuesAndRunConsumers] Skipping queue migration on canary app instance')
-    }
-    else {
-        await queueMigration(app.log).run()
-    }
+    await queueMigration(app.log).run()
     await jobBroker(app.log).init()
 }
