@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { GetChatMemoryResponse } from '@activepieces/shared'
@@ -8,19 +10,13 @@ import { chatHelpers } from './chat-helpers'
 
 const MAX_INPUT_LENGTH = 50_000
 
-const EXTRACTION_SYSTEM_PROMPT = `You convert a memory export from another AI assistant into two buckets for an automation copilot.
-Return ONLY a JSON object (no prose, no code fences), shaped exactly:
-{"instructions": string, "memories": string[]}
-- "instructions": standing instructions about tone, persona, and how the user wants the assistant to work and talk. One short paragraph. Empty string if none.
-- "memories": discrete durable facts, defaults, and corrections about the user — one short standalone statement per array item. Deduplicate. Omit one-off task details.`
+function loadMemoryPrompt(filename: string): string {
+    return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
+}
 
-const INSTRUCTION_SYSTEM_PROMPT = `You maintain a user's list of durable facts an AI assistant remembers about them. Given the current list and a new statement or instruction from the user, return the updated, reconciled list as JSON: {"memories": string[]}.
-Rules:
-- Integrate the new input as a short standalone fact in the user's own voice.
-- If it updates, contradicts, or duplicates an existing item, REPLACE that item — never keep two facts that conflict or overlap (e.g. do not keep both "prefers pizza over burgers" and "prefers burgers over pizza").
-- If the user asks to forget something, remove it.
-- Leave unrelated items unchanged.
-The final list must be internally consistent and free of duplicates. Return only the JSON object.`
+const EXTRACTION_SYSTEM_PROMPT = loadMemoryPrompt('chat-memory-extraction-prompt.md')
+
+const INSTRUCTION_SYSTEM_PROMPT = loadMemoryPrompt('chat-memory-instruction-prompt.md')
 
 const ExtractionSchema = z.object({
     instructions: z.string().catch(''),
