@@ -245,7 +245,7 @@ export const autumnConsole = {
             `${AUTUMN_CONSOLE_URL}/api/v1/billing/plans`,
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, params: { version: apVersionUtil.getCurrentRelease(), platformId } },
         )
-        return response.data.data.map(toPurchasablePlan)
+        return response.data.data.plans.map(toPurchasablePlan)
     },
     async enrollFree({ email }: { email: string }): Promise<AutumnEnrollmentCredentials> {
         const response = await consolePost<ConsoleBillingEnvelope>(
@@ -532,7 +532,9 @@ type ConsoleAutumnPlan = Awaited<ReturnType<Autumn['plans']['list']>>['list'][nu
 
 type ConsolePlansEnvelope = {
     success: boolean
-    data: ConsoleAutumnPlan[]
+    data: {
+        plans: ConsoleAutumnPlan[]
+    }
 }
 
 export type CreditsBalanceCache = {
