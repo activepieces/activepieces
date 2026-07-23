@@ -154,6 +154,6 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apTestFlowTool(mcp, log),
     apTestStepTool(mcp, log),
     apRetryRunTool(mcp, log),
-    apRunActionTool(mcp, log),
+    apRunActionTool({ mcp, userId }, log),
     apSetupGuideTool(mcp, log),
 ]

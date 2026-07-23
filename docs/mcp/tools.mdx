@@ -529,7 +529,7 @@ Retry a failed flow run.
 
 ### ap_run_action
 
-Execute a single piece action once without building or saving a flow. Designed for one-shot tasks like *"check my inbox"* or *"send one Slack message"* where building a full automation would be overkill. Under the hood the tool creates a disposable flow, runs the action, returns the output, and cleans the flow up — the user never sees it in their flow list.
+Execute a single piece action once without building or saving a flow. Designed for one-shot tasks like *"check my inbox"* or *"send one Slack message"* where building a full automation would be overkill. Under the hood the action runs directly in the engine and the result is returned immediately — no flow is created. Each call is recorded as a action run (visible in the project's "Action Runs" view) rather than a flow run.
 
 | Input | Type | Required | Description |
 |-------|------|----------|-------------|

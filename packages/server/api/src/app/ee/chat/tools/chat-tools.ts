@@ -1,6 +1,6 @@
 import { isNil, isObject, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { ActionRunSource, AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -9,7 +9,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { ActionRunOffload, executeActionRunAction, executeActionRunCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -300,7 +300,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
         }
         case 'ap_execute_action': {
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
+            return runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }
         case 'ap_run_code': {
             return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
@@ -311,7 +311,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -346,13 +346,13 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 // A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
 // the model context with a compact shape preview + the fileId. The agent then processes the FULL
 // data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
-function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }: {
+function buildActionRunOffload({ projectId, platformId, pieceName, actionName, log }: {
     projectId: string
     platformId?: string
     pieceName: string
     actionName: string
     log: FastifyBaseLogger
-}): AdhocOffload | undefined {
+}): ActionRunOffload | undefined {
     if (isNil(platformId)) {
         return undefined
     }
@@ -380,7 +380,27 @@ function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }
     }
 }
 
-async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
+// The conversation belongs to one project; runs it spawns should be recorded there so they all
+// surface together in that project's runs list. Connection-based actions are the exception — they
+// must execute (and so are recorded) under the connection's own project to resolve credentials.
+async function resolveConversationProjectId({ conversationId, platformId, userId, projects, log }: {
+    conversationId?: string
+    platformId?: string
+    userId: string
+    projects: Project[]
+    log: FastifyBaseLogger
+}): Promise<string | undefined> {
+    if (isNil(conversationId) || isNil(platformId)) {
+        return undefined
+    }
+    const { data: conversation } = await tryCatch(() => chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId, log }))
+    if (isNil(conversation) || isNil(conversation.projectId)) {
+        return undefined
+    }
+    return projects.some((p) => p.id === conversation.projectId) ? conversation.projectId : undefined
+}
+
+async function runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -406,7 +426,8 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
         }
     }
 
-    const resolvedProjectId = connectionProjectId ?? projects[0]?.id
+    const conversationProjectId = await resolveConversationProjectId({ conversationId, platformId, userId, projects, log })
+    const resolvedProjectId = connectionProjectId ?? conversationProjectId ?? projects[0]?.id
     if (!resolvedProjectId) {
         return { success: false, error: 'No projects available. Create a project first.' }
     }
@@ -427,13 +448,16 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
             parsedInput = parsed as Record<string, unknown>
         }
     }
-    const result = await executeAdhocAction({
+    const result = await executeActionRunAction({
         projectId: resolvedProjectId,
+        userId,
         pieceName,
         actionName,
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
-        ...spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
+        conversationId,
+        source: ActionRunSource.CHAT,
+        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
 
@@ -470,13 +494,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
     }
     const packageJson = typeof toolInput.packageJson === 'string' ? toolInput.packageJson : undefined
 
-    let projectId = projects[0]?.id
-    if (conversationId) {
-        const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
-        if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
-            projectId = conversation.projectId
-        }
-    }
+    const projectId = (await resolveConversationProjectId({ conversationId, platformId, userId, projects, log })) ?? projects[0]?.id
     if (isNil(projectId)) {
         return { text: '❌ No projects available. Create a project first.', producedFiles: [] }
     }
@@ -518,7 +536,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
         input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
     }
 
-    const result = await executeAdhocCode({ projectId, code, packageJson, input, log })
+    const result = await executeActionRunCode({ projectId, userId, code, packageJson, input, conversationId, source: ActionRunSource.CHAT, log })
 
     if (result.status !== 'succeeded') {
         const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'

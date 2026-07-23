@@ -20,6 +20,11 @@ export enum FileType {
      */
     FLOW_RUN_LOG_SLICE = 'FLOW_RUN_LOG_SLICE',
     /**
+     * Compressed (ZSTD) `{ input, output, logs }` blob for a single action run,
+     * offloaded out of the action_run row. Expires on the file-cleanup schedule.
+     */
+    ACTION_RUN_LOG = 'ACTION_RUN_LOG',
+    /**
      * Tarball of a custom piece's source, downloaded and extracted by the worker
      * to load piece code. Stored in DB, kept indefinitely.
      */

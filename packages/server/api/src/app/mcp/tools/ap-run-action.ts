@@ -1,8 +1,8 @@
 import { Permission } from '@activepieces/core-utils'
-import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { executeAdhocAction } from './flow-run-utils'
+import { executeActionRunAction } from './flow-run-utils'
 import { mcpUtils } from './mcp-utils'
 
 const runActionInput = z.object({
@@ -12,7 +12,7 @@ const runActionInput = z.object({
     connectionExternalId: z.string().optional().describe('externalId from ap_list_connections. Required if the piece needs auth. Auto-wrapped as {{connections[\'externalId\']}}.'),
 })
 
-export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apRunActionTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_run_action',
         permission: Permission.WRITE_RUN,
@@ -22,8 +22,9 @@ export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
         execute: async (args) => {
             try {
                 const { pieceName, actionName, input, connectionExternalId } = runActionInput.parse(args)
-                return await executeAdhocAction({
+                return await executeActionRunAction({
                     projectId: mcp.projectId,
+                    userId,
                     pieceName,
                     actionName,
                     input,

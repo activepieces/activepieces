@@ -28,6 +28,7 @@ export enum JobStatus {
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
     RUNS_METADATA = 'runsMetadata',
+    ACTION_RUN_PERSIST = 'actionRunPersist',
 }
 
 export const getPlatformGroupQueueName = (workerGroupId: string): string => {
@@ -81,6 +82,7 @@ export type SubmitPayloadsRequest = z.infer<typeof SubmitPayloadsRequest>
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
     switch (operationType) {
         case EngineOperationType.EXECUTE_FLOW:
+        case EngineOperationType.EXECUTE_ACTION:
             return flowTimeoutSandbox
         case EngineOperationType.EXECUTE_PROPERTY:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:

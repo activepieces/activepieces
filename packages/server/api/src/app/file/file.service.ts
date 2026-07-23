@@ -359,6 +359,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
     switch (type) {
         case FileType.FLOW_RUN_LOG:
         case FileType.FLOW_RUN_LOG_SLICE:
+        case FileType.ACTION_RUN_LOG:
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:

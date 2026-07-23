@@ -9,7 +9,7 @@ const MAX_BATCH_SIZE = 100
 const MAX_IDENTICAL_ACTION_FAILURES = 2
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 // Context-lean cap: large reads (e.g. a 1.4MB Attio query) are offloaded to a file at the chat
-// layer (runChatAdhocAction) and only a preview + fileId reaches here, so this only needs to keep
+// layer (runChatActionRunAction) and only a preview + fileId reaches here, so this only needs to keep
 // the occasional un-offloaded result (web scrape, mcp__ tool, code output) from flooding context.
 const MAX_RESULT_SIZE_BYTES = 128 * 1024
 const MIN_PREVIEW_ARRAY_LENGTH = 3
@@ -507,7 +507,7 @@ function createProgressGuard() {
         `✋ This exact action already ran successfully earlier in this turn (${actionName}) — it was NOT run again to avoid a duplicate side effect. Treat it as done; only repeat it if the user explicitly asks or the input changes.`
 
     return {
-        checkAdhocAction: ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): { content: { type: string, text: string }[] } | null => {
+        checkActionRunAction: ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): { content: { type: string, text: string }[] } | null => {
             const key = actionKey({ pieceName, actionName, input })
             if (succeededWrites.has(key)) {
                 return { content: [{ type: 'text', text: duplicateWriteText(actionName) }] }
@@ -517,7 +517,7 @@ function createProgressGuard() {
             }
             return null
         },
-        recordAdhocResult: ({ pieceName, actionName, input, success }: { pieceName: string, actionName: string, input: unknown, success: boolean }): void => {
+        recordActionRunResult: ({ pieceName, actionName, input, success }: { pieceName: string, actionName: string, input: unknown, success: boolean }): void => {
             const key = actionKey({ pieceName, actionName, input })
             if (success) {
                 failureCounts.delete(key)
@@ -588,7 +588,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             execute: async (toolInput, options) => {
                 const isBatch = toolInput.items && toolInput.items.length > 0
                 if (!isBatch) {
-                    const guardResult = progressGuard.checkAdhocAction({
+                    const guardResult = progressGuard.checkActionRunAction({
                         pieceName: toolInput.pieceName,
                         actionName: toolInput.actionName,
                         input: toolInput.input,
@@ -650,7 +650,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 }
                 const rawResult = await executeWithTimeout('ap_execute_action', toolInput)
                 const rawSuccess = isSuccessResult(rawResult)
-                progressGuard.recordAdhocResult({
+                progressGuard.recordActionRunResult({
                     pieceName: toolInput.pieceName,
                     actionName: toolInput.actionName,
                     input: toolInput.input,

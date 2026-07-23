@@ -5,6 +5,7 @@ import { authenticationSession } from './authentication-session';
 export const routesThatRequireProjectId = {
   runs: '/runs',
   singleRun: '/runs/:runId',
+  actionRuns: '/action-runs',
   flows: '/flows',
   singleFlow: '/flows/:flowId',
   automations: '/automations',
