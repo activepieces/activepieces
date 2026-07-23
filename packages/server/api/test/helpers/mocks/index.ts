@@ -96,6 +96,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         locked: plan?.locked ?? false,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
+        activeFlowsLimit: plan?.activeFlowsLimit ?? null,
     }
 }
 

@@ -287,6 +287,41 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
 
+        it('it should persist and clear plan.activeFlowsLimit as platform owner with api key', async () => {
+            const { mockProject, mockApiKey } =
+                await createProjectAndPlatformAndApiKey()
+
+            const setResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: {
+                    plan: {
+                        activeFlowsLimit: 5,
+                    },
+                },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(setResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(setResponse?.json().plan.activeFlowsLimit).toBe(5)
+
+            const clearResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: {
+                    plan: {
+                        activeFlowsLimit: null,
+                    },
+                },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(clearResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(clearResponse?.json().plan.activeFlowsLimit).toBeNull()
+        })
+
         it('it should update project as platform owner', async () => {
             const { mockProject, mockPlatform, mockUser } =
                 await createProjectAndPlatformAndApiKey()
