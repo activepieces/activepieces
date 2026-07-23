@@ -63,7 +63,7 @@ export const codyAuth = PieceAuth.SecretText({
 export const cody = createPiece({
     displayName: "Cody",
     auth: codyAuth,
-    minimumSupportedRelease: '0.36.1',
+    minimumSupportedRelease: '0.86.4',
     logoUrl: "https://cdn.activepieces.com/pieces/cody.png",
     authors: [ 'Pranith124','sanket-a11y' ],
     actions: [

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { deleteDocumentOutputSchema } from '../output-schemas';
 
 export const deleteDocumentAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const deleteDocumentAction = createAction({
             'Permanently removes a document from the Cody knowledge base by its ID. This is destructive and cannot be undone (Cody has no archive). Resolve the document ID via List Documents and confirm it is the correct one before calling. A retry on an already-deleted document returns a 404, so it is not idempotent.',
         idempotent: false,
     },
+    outputSchema: deleteDocumentOutputSchema,
     props: {
         document_id: Property.ShortText({
             displayName: 'Document ID',

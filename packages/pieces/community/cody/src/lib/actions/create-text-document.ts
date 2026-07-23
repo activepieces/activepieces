@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { createTextDocumentOutputSchema } from '../output-schemas';
 
 export const createTextDocumentAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const createTextDocumentAction = createAction({
             'Creates a new document in a Cody knowledge-base folder from raw text or HTML content, so a bot can later answer from it. Use when ingesting inline or generated text; for a file use Upload File to Knowledge Base, for a web page use Create Document From Webpage. Resolve the folder ID first via List Folders (or create one with Create Folder). Ingestion is asynchronous (the document starts in status pending) so poll Get Document for status before querying. Requires a folder ID, a name, and the content (max 768 KB); creates a new document each call, so it is not idempotent.',
         idempotent: false,
     },
+    outputSchema: createTextDocumentOutputSchema,
     props: {
         folder_id: Property.ShortText({
             displayName: 'Folder ID',

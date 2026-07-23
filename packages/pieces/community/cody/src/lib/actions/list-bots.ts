@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { listBotsOutputSchema } from '../output-schemas';
 
 export const listBotsAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const listBotsAction = createAction({
             'Lists the bots in the Cody workspace, optionally filtered by a name keyword (case-insensitive partial match). This is the primary resolver: bots are read-only and can only be created in the Cody web UI (there is no create-bot API), so this is the only way to obtain a bot ID for Create Conversation. Read-only and safe to retry.',
         idempotent: true,
     },
+    outputSchema: listBotsOutputSchema,
     props: {
         keyword: Property.ShortText({
             displayName: 'Keyword',

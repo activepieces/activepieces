@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { listMessagesOutputSchema } from '../output-schemas';
 
 export const listMessagesAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const listMessagesAction = createAction({
             "Lists the message history of a single Cody conversation, returning each message's ID and content. The conversation ID is required (the list is scoped to one conversation); resolve it via List Conversations. Use to read a thread's history; to fetch one message use Get Message. Read-only and safe to retry.",
         idempotent: true,
     },
+    outputSchema: listMessagesOutputSchema,
     props: {
         conversation_id: Property.ShortText({
             displayName: 'Conversation ID',

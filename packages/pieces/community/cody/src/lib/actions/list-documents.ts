@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { listDocumentsOutputSchema } from '../output-schemas';
 
 export const listDocumentsAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const listDocumentsAction = createAction({
             "Lists documents in the Cody knowledge base, optionally filtered by folder ID, conversation ID, or a name keyword, returning each document's ID and ingestion status. This is the resolver for the document IDs used in focus mode (Create/Update Conversation) and for Get Document and Delete Document. Read-only and safe to retry.",
         idempotent: true,
     },
+    outputSchema: listDocumentsOutputSchema,
     props: {
         folder_id: Property.ShortText({
             displayName: 'Folder ID',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { createDocumentFromWebpageOutputSchema } from '../output-schemas';
 
 export const createDocumentFromWebpageAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const createDocumentFromWebpageAction = createAction({
             'Scrapes a web page at the given URL into a new Cody knowledge-base document, so a bot can answer from it. Use to ingest a page by URL; for inline text use Create Text Document and for a file use Upload File to Knowledge Base. Resolve the folder ID via List Folders first. Ingestion is asynchronous (the document starts in status pending) and consumes the workspace embedding quota, so poll Get Document for status. Requires a URL and a folder ID; creates a new document each call, so it is not idempotent.',
         idempotent: false,
     },
+    outputSchema: createDocumentFromWebpageOutputSchema,
     props: {
         url: Property.ShortText({
             displayName: 'URL',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { renameFolderOutputSchema } from '../output-schemas';
 
 export const renameFolderAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const renameFolderAction = createAction({
             'Renames a Cody knowledge-base folder, identified by its ID. Resolve the folder ID via List Folders. Note Cody has no folder-delete endpoint, so folders can be created and renamed but not removed via the API. Convergent set-by-key (re-sending the same name yields the same state), so it is idempotent.',
         idempotent: true,
     },
+    outputSchema: renameFolderOutputSchema,
     props: {
         folder_id: Property.ShortText({
             displayName: 'Folder ID',

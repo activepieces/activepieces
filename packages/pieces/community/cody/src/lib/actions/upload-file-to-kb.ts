@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
 import mime from 'mime-types';
+import { uploadFileToKbOutputSchema } from '../output-schemas';
 
 export const uploadFileToKbAction = createAction({
     auth: codyAuth,
@@ -14,6 +15,7 @@ export const uploadFileToKbAction = createAction({
             'Uploads a binary file (e.g. txt, md, rtf, pdf, ppt, docx) into a Cody knowledge-base folder and registers it as a document. Use when ingesting an existing file rather than inline text (use Create Text Document) or a web page (use Create Document From Webpage). Resolve the folder ID first via List Folders. This is a composite operation (mint a signed upload URL, PUT the bytes to storage, then register the document); ingestion is asynchronous, so poll Get Document for status. Requires a folder ID and the file; creates a new document each call, so it is not idempotent.',
         idempotent: false,
     },
+    outputSchema: uploadFileToKbOutputSchema,
     props: {
         folder_id: Property.ShortText({
             displayName: 'Folder ID',

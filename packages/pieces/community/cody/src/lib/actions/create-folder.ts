@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { createFolderOutputSchema } from '../output-schemas';
 
 export const createFolderAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const createFolderAction = createAction({
             'Creates a new knowledge-base folder, the container that documents live in. Use to set up the knowledge-base structure before ingesting documents; the returned folder ID is then passed to the document-create actions. Requires a name; creates a new folder each call, so it is not idempotent.',
         idempotent: false,
     },
+    outputSchema: createFolderOutputSchema,
     props: {
         name: Property.ShortText({
             displayName: 'Name',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { listConversationsOutputSchema } from '../output-schemas';
 
 export const listConversationsAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const listConversationsAction = createAction({
             'Lists conversations in the Cody workspace, optionally filtered by owning bot ID and/or a name keyword (partial match). Use to resolve an existing conversation to its ID before sending a message; unlike Get Conversation this returns many and all filters are optional. Read-only and safe to retry.',
         idempotent: true,
     },
+    outputSchema: listConversationsOutputSchema,
     props: {
         bot_id: Property.ShortText({
             displayName: 'Bot ID',

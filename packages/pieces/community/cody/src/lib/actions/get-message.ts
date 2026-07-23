@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { getMessageOutputSchema } from '../output-schemas';
 
 export const getMessageAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const getMessageAction = createAction({
             'Retrieves the details of a single Cody message by its ID. Use when you already have a specific message ID; to read a whole thread use List Messages (which returns full message objects). Resolve the message ID via List Messages. Read-only and safe to retry.',
         idempotent: true,
     },
+    outputSchema: getMessageOutputSchema,
     props: {
         message_id: Property.ShortText({
             displayName: 'Message ID',

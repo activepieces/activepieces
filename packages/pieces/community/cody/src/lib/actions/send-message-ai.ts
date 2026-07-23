@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { sendMessageAiOutputSchema } from '../output-schemas';
 
 export const sendMessageAiAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const sendMessageAiAction = createAction({
             'Posts a message to an existing Cody conversation and returns the bot AI-generated reply. Use to query a bot within an already-created conversation thread; resolve or create the conversation ID first via List Conversations or Create Conversation. This is the non-streaming verb (returns the full reply as a single object). Requires the conversation ID and message text (max 2000 characters); each call appends a new message, so it is not idempotent.',
         idempotent: false,
     },
+    outputSchema: sendMessageAiOutputSchema,
     props: {
         conversation_id: Property.ShortText({
             displayName: 'Conversation ID',

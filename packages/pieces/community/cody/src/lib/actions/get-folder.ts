@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { getFolderOutputSchema } from '../output-schemas';
 
 export const getFolderAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const getFolderAction = createAction({
             'Retrieves the details of a single Cody knowledge-base folder by its ID. Use when you already have the folder ID; to search across folders use List Folders (which returns full folder objects). Resolve the folder ID via List Folders. Read-only and safe to retry.',
         idempotent: true,
     },
+    outputSchema: getFolderOutputSchema,
     props: {
         folder_id: Property.ShortText({
             displayName: 'Folder ID',

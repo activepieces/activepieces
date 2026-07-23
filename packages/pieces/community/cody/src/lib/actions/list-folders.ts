@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { listFoldersOutputSchema } from '../output-schemas';
 
 export const listFoldersAction = createAction({
     auth: codyAuth,
@@ -13,6 +14,7 @@ export const listFoldersAction = createAction({
             'Lists the knowledge-base folders in the Cody workspace, optionally filtered by a name keyword. This is the key resolver for the folder ID required by every document-create action (Create Text Document, Upload File to Knowledge Base, Create Document From Webpage). Read-only and safe to retry.',
         idempotent: true,
     },
+    outputSchema: listFoldersOutputSchema,
     props: {
         keyword: Property.ShortText({
             displayName: 'Keyword',

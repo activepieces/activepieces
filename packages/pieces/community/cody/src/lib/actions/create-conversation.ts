@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
 import { botIdDropdown } from '../common/props';
+import { createConversationOutputSchema } from '../output-schemas';
 
 export const createConversationAction = createAction({
   auth: codyAuth,
@@ -10,6 +11,7 @@ export const createConversationAction = createAction({
   description: 'Creates a new conversation with a bot.',
   audience: 'human',
   aiMetadata: { description: 'Starts a new conversation thread with a specific Cody bot, returning a conversation ID to use with Send Message. Optionally pass a list of document IDs to scope the bot knowledge base to just those documents (focus mode). Requires a bot ID and a name; creates a new conversation each call, so it is not idempotent.', idempotent: false },
+  outputSchema: createConversationOutputSchema,
   props: {
     bot_id: botIdDropdown,
     name: Property.ShortText({

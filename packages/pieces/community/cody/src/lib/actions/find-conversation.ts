@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
 import { botIdDropdown } from '../common/props';
+import { findConversationOutputSchema } from '../output-schemas';
 
 export const findConversationAction = createAction({
     auth: codyAuth,
@@ -10,6 +11,7 @@ export const findConversationAction = createAction({
     description: 'Finds a conversation based on its name and/or the bot it belongs to.',
     audience: 'human',
     aiMetadata: { description: 'Searches Cody conversations, filtering by owning bot ID and/or by name (partial match) and returns the matches. Use to resolve an existing conversation to its ID. At least one of bot or name must be provided. This is a read-only lookup and is idempotent.', idempotent: true },
+    outputSchema: findConversationOutputSchema,
     props: {
         
         bot_id: {
