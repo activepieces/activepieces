@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class RenameIncludedAiCreditsToIncludedCredits1800000000000 implements Migration {
-    name = 'RenameIncludedAiCreditsToIncludedCredits1800000000000'
+export class RenameIncludedAiCreditsToIncludedCredits1821000000000 implements Migration {
+    name = 'RenameIncludedAiCreditsToIncludedCredits1821000000000'
     breaking = true
     release = '0.85.4'
 

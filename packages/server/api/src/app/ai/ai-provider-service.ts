@@ -52,8 +52,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
         const hasActivepiecesProvider = configuredProviders.some((p) => p.provider === AIProviderName.ACTIVEPIECES)
-        const hideActivepiecesProvider = hasActivepiecesProvider
-            && (!aiCreditsEnabled || await shouldHideManagedAiProvider({ platformId, log }))
+        const hideActivepiecesProvider = hasActivepiecesProvider && await isManagedAiProviderHidden({ platformId, log })
 
         return configuredProviders
             .filter((p) => !(hideActivepiecesProvider && p.provider === AIProviderName.ACTIVEPIECES))
@@ -298,14 +297,20 @@ type GetOrCreateActivepiecesConfigResponse = {
     provider: AIProviderName
 }
 
-function isProviderAvailable({ provider, aiCreditsEnabled }: { provider: AIProviderName, aiCreditsEnabled: boolean }): boolean {
-    return provider !== AIProviderName.ACTIVEPIECES || aiCreditsEnabled
+async function findAvailableChatProviderRow({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+    const chatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
+    const candidate = chatProviders[0] ?? null
+    if (candidate?.provider === AIProviderName.ACTIVEPIECES && await isManagedAiProviderHidden({ platformId, log })) {
+        return null
+    }
+    return candidate
 }
 
-async function findAvailableChatProviderRow({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
-    const aiCreditsEnabled = flagService(log).aiCreditsEnabled()
-    const chatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
-    return chatProviders.find((p) => isProviderAvailable({ provider: p.provider, aiCreditsEnabled })) ?? null
+async function isManagedAiProviderHidden({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
+    if (!flagService(log).aiCreditsEnabled()) {
+        return true
+    }
+    return shouldHideManagedAiProvider({ platformId, log })
 }
 
 async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId): Promise<GetProviderConfigResponse> {

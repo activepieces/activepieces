@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class RemoveStripeColumnsFromPlatformPlan1782293944311 implements Migration {
-    name = 'RemoveStripeColumnsFromPlatformPlan1782293944311'
+export class RemoveStripeColumnsFromPlatformPlan1817000000000 implements Migration {
+    name = 'RemoveStripeColumnsFromPlatformPlan1817000000000'
     breaking = true
     release = '0.85.4'
 

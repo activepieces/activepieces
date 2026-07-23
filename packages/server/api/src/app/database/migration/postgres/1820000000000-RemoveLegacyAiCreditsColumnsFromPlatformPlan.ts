@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class RemoveLegacyAiCreditsColumnsFromPlatformPlan1799000000000 implements Migration {
-    name = 'RemoveLegacyAiCreditsColumnsFromPlatformPlan1799000000000'
+export class RemoveLegacyAiCreditsColumnsFromPlatformPlan1820000000000 implements Migration {
+    name = 'RemoveLegacyAiCreditsColumnsFromPlatformPlan1820000000000'
     breaking = true
     release = '0.85.4'
 

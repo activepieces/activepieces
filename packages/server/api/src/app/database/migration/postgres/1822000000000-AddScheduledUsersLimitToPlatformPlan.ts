@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddScheduledUsersLimitToPlatformPlan1811000000000 implements Migration {
-    name = 'AddScheduledUsersLimitToPlatformPlan1811000000000'
+export class AddScheduledUsersLimitToPlatformPlan1822000000000 implements Migration {
+    name = 'AddScheduledUsersLimitToPlatformPlan1822000000000'
     breaking = false
     release = '0.86.3'
 

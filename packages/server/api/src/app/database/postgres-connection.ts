@@ -368,7 +368,6 @@ import { AddRunStatusCoverIndex1777370308000 } from './migration/postgres/177737
 import { AddLastLoggedInPlatformIdToUserIdentity1777491000474 } from './migration/postgres/1777491000474-AddLastLoggedInPlatformIdToUserIdentity'
 import { AddThemeColorsToPlatform1781206955649 } from './migration/postgres/1781206955649-AddThemeColorsToPlatform'
 import { DropChatTokenColumns1782000000000 } from './migration/postgres/1782000000000-DropChatTokenColumns'
-import { RemoveStripeColumnsFromPlatformPlan1782293944311 } from './migration/postgres/1782293944311-RemoveStripeColumnsFromPlatformPlan'
 import { AddUserSandboxTable1784000000000 } from './migration/postgres/1784000000000-AddUserSandboxTable'
 import { ReplacesSandboxWithVercelAiSdk1785000000000 } from './migration/postgres/1785000000000-ReplacesSandboxWithVercelAiSdk'
 import { AddChatCompactionColumns1786000000000 } from './migration/postgres/1786000000000-AddChatCompactionColumns'
@@ -387,14 +386,10 @@ import { AddDataManipulationEnabledToPlatformPlan1794000000000 } from './migrati
 import { AddExternalIdToFolder1795000000000 } from './migration/postgres/1795000000000-AddExternalIdToFolder'
 import { AddPieceSelectorConfigToPlatform1796000000000 } from './migration/postgres/1796000000000-AddPieceSelectorConfigToPlatform'
 import { AddAiToolConfigTable1797000000000 } from './migration/postgres/1797000000000-AddAiToolConfigTable'
-import { AddAutumnBillingColumnsToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddAutumnBillingColumnsToPlatformPlan'
 import { AddWorkerGroupsEnabledToPlatformPlan1797000000000 } from './migration/postgres/1797000000000-AddWorkerGroupsEnabledToPlatformPlan'
 import { AddChatConversationActiveRunId1798000000000 } from './migration/postgres/1798000000000-AddChatConversationActiveRunId'
 import { AddWorkerGroupIdToProject1798000000000 } from './migration/postgres/1798000000000-AddWorkerGroupIdToProject'
-import { MigrateTeamProjectsLimitToNumberAndAddUsersLimit1798000000000 } from './migration/postgres/1798000000000-MigrateTeamProjectsLimitToNumberAndAddUsersLimit'
 import { AddChatRolloutUserTable1799000000000 } from './migration/postgres/1799000000000-AddChatRolloutUserTable'
-import { RemoveLegacyAiCreditsColumnsFromPlatformPlan1799000000000 } from './migration/postgres/1799000000000-RemoveLegacyAiCreditsColumnsFromPlatformPlan'
-import { RenameIncludedAiCreditsToIncludedCredits1800000000000 } from './migration/postgres/1800000000000-RenameIncludedAiCreditsToIncludedCredits'
 import { AddToolSearchIndexTable1801000000000 } from './migration/postgres/1801000000000-AddToolSearchIndexTable'
 import { AddChatRolloutFreeCreditGrant1802000000000 } from './migration/postgres/1802000000000-AddChatRolloutFreeCreditGrant'
 import { DropDataManipulationEnabledFromPlatformPlan1803000000000 } from './migration/postgres/1803000000000-DropDataManipulationEnabledFromPlatformPlan'
@@ -404,13 +399,18 @@ import { CreatePieceSetTable1807000000000 } from './migration/postgres/180700000
 import { AddProjectPieceSetIdIndex1808000000000 } from './migration/postgres/1808000000000-AddProjectPieceSetIdIndex'
 import { DropPlatformPieceFilters1809000000000 } from './migration/postgres/1809000000000-DropPlatformPieceFilters'
 import { AddChatConversationStreamingUpdatedIndex1810000000000 } from './migration/postgres/1810000000000-AddChatConversationStreamingUpdatedIndex'
-import { AddScheduledUsersLimitToPlatformPlan1811000000000 } from './migration/postgres/1811000000000-AddScheduledUsersLimitToPlatformPlan'
 import { AddDeprecatedToPieceMetadata1811000000000 } from './migration/postgres/1811000000000-AddDeprecatedToPieceMetadata'
 import { AddNotifyFlowOwnerOnFailureToProject1811000000000 } from './migration/postgres/1811000000000-AddNotifyFlowOwnerOnFailureToProject'
 import { AddProjectExecutionDataRetentionDays1812000000000 } from './migration/postgres/1812000000000-AddProjectExecutionDataRetentionDays'
 import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postgres/1814000000000-AddActiveFlowsLimitToProjectPlan'
 import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgres/1815000000000-AddSampleDataFlowIdIndexToFile'
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
+import { RemoveStripeColumnsFromPlatformPlan1817000000000 } from './migration/postgres/1817000000000-RemoveStripeColumnsFromPlatformPlan'
+import { AddAutumnBillingColumnsToPlatformPlan1818000000000 } from './migration/postgres/1818000000000-AddAutumnBillingColumnsToPlatformPlan'
+import { MigrateTeamProjectsLimitToNumberAndAddUsersLimit1819000000000 } from './migration/postgres/1819000000000-MigrateTeamProjectsLimitToNumberAndAddUsersLimit'
+import { RemoveLegacyAiCreditsColumnsFromPlatformPlan1820000000000 } from './migration/postgres/1820000000000-RemoveLegacyAiCreditsColumnsFromPlatformPlan'
+import { RenameIncludedAiCreditsToIncludedCredits1821000000000 } from './migration/postgres/1821000000000-RenameIncludedAiCreditsToIncludedCredits'
+import { AddScheduledUsersLimitToPlatformPlan1822000000000 } from './migration/postgres/1822000000000-AddScheduledUsersLimitToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -810,11 +810,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddThemeColorsToPlatform1781206955649,
         AddExternalIdToFolder1795000000000,
         AddPieceSelectorConfigToPlatform1796000000000,
-        AddAutumnBillingColumnsToPlatformPlan1797000000000,
-        MigrateTeamProjectsLimitToNumberAndAddUsersLimit1798000000000,
-        RemoveStripeColumnsFromPlatformPlan1782293944311,
-        RemoveLegacyAiCreditsColumnsFromPlatformPlan1799000000000,
-        RenameIncludedAiCreditsToIncludedCredits1800000000000,
         AddWorkerGroupsEnabledToPlatformPlan1797000000000,
         AddWorkerGroupIdToProject1798000000000,
         AddAiToolConfigTable1797000000000,
@@ -830,13 +825,18 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddProjectPieceSetIdIndex1808000000000,
         DropPlatformPieceFilters1809000000000,
         AddChatConversationStreamingUpdatedIndex1810000000000,
-        AddScheduledUsersLimitToPlatformPlan1811000000000,
         AddNotifyFlowOwnerOnFailureToProject1811000000000,
         AddDeprecatedToPieceMetadata1811000000000,
         AddProjectExecutionDataRetentionDays1812000000000,
         AddActiveFlowsLimitToProjectPlan1814000000000,
         AddSampleDataFlowIdIndexToFile1815000000000,
         AddTeamsBotInstallation1816000000000,
+        RemoveStripeColumnsFromPlatformPlan1817000000000,
+        AddAutumnBillingColumnsToPlatformPlan1818000000000,
+        MigrateTeamProjectsLimitToNumberAndAddUsersLimit1819000000000,
+        RemoveLegacyAiCreditsColumnsFromPlatformPlan1820000000000,
+        RenameIncludedAiCreditsToIncludedCredits1821000000000,
+        AddScheduledUsersLimitToPlatformPlan1822000000000,
     ]
     return migrations
 }

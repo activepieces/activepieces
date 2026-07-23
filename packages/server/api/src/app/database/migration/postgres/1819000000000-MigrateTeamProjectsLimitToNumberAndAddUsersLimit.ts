@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class MigrateTeamProjectsLimitToNumberAndAddUsersLimit1798000000000 implements Migration {
-    name = 'MigrateTeamProjectsLimitToNumberAndAddUsersLimit1798000000000'
+export class MigrateTeamProjectsLimitToNumberAndAddUsersLimit1819000000000 implements Migration {
+    name = 'MigrateTeamProjectsLimitToNumberAndAddUsersLimit1819000000000'
     breaking = false
     release = '0.85.4'
     transaction = true
