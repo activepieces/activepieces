@@ -197,7 +197,7 @@ Models listed per provider are cached in memory. Cache cleared daily at midnight
 Reads are open to any platform member (`GET /` / `/:provider/models` allow USER + ENGINE; `/:provider/config` is engine-only). Mutations are **platform-admin only**.
 
 - `GET /` — list providers (auto-creates ACTIVEPIECES if credits enabled)
-- `GET /:provider/config` — get provider config + decrypted auth (engine-only access)
+- `GET /:provider/config` — get provider config + decrypted auth (engine-only access). For the managed `ACTIVEPIECES` provider this route is also the **credit gate**: `assertCreditsAndAppSumoNotExceeded` (`platform/billing-provider.ts`) throws `QUOTA_EXCEEDED` when the platform's credit or AppSumo balance is blocked. The AI piece fetches config on every AI action execution, so the gate fires per AI call — including every iteration of a loop — but usage is only metered post-run/post-message, so a run's own in-flight spend is invisible to it. See `docs/adr/0012-managed-ai-metering-moves-to-centralized-worker-execution.md`.
 - `GET /:provider/models` — list available models (cached)
 - `POST /` — create provider (platform-admin only; validates credentials first)
 - `POST /:id` — update provider (platform-admin only; re-validates if auth changed, cannot update ACTIVEPIECES)
@@ -205,7 +205,7 @@ Reads are open to any platform member (`GET /` / `/:provider/models` allow USER 
 
 ## Engine Integration
 
-During flow execution, AI pieces call `GET /v1/ai-providers/{provider}/config` to get credentials. The engine token provides authorization.
+During flow execution, AI pieces call `GET /v1/ai-providers/{provider}/config` to get credentials (`createAIModel` → `fetchProviderConfig` in `packages/pieces/community/ai/src/lib/common/ai-sdk.ts`). The engine token provides authorization. The fetch happens on **every AI action execution** — there is no per-run caching — which is what makes the config route an effective per-call credit gate for the managed provider (see Endpoints above and ADR 0012).
 
 ## Frontend
 
