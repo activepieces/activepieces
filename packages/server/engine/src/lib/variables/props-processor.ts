@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream'
 import { isNil, isObject } from '@activepieces/core-utils'
 import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
 import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, PropertySettings } from '@activepieces/shared'
@@ -108,8 +109,28 @@ export const propsProcessor = {
             }
         }
 
+        // Streaming file inputs open a live connection when resolved. If any property
+        // fails validation the action never runs, so drain those bodies here to avoid
+        // leaking connections until GC.
+        if (Object.keys(errors).length > 0) {
+            destroyOpenStreams(processedInput)
+        }
+
         return { processedInput, errors }
     },
+}
+
+function destroyOpenStreams(value: unknown): void {
+    if (isNil(value) || typeof value !== 'object' || Buffer.isBuffer(value)) {
+        return
+    }
+    if (value instanceof Readable) {
+        value.destroy()
+        return
+    }
+    for (const child of Object.values(value)) {
+        destroyOpenStreams(child)
+    }
 }
 
 const validateProperty = (property: PieceProperty, value: unknown, originalValue: unknown): string[] => {
