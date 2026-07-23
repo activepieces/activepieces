@@ -13,9 +13,6 @@ import { ActionRunEntity } from './action-run.entity'
 
 const actionRunRepo = repoFactory<ActionRun>(ActionRunEntity)
 
-// ponytail: fixed concurrency. An action run is a single terminal insert (no coalescing,
-// no lock, no dedup — unlike runsMetadataQueue), so this stays a plain persist job. Add a
-// system prop only if write throughput ever needs tuning.
 const PERSIST_CONCURRENCY = 10
 
 let worker: Worker<PersistJobData> | undefined = undefined

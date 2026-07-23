@@ -47,9 +47,6 @@ export class AddActionRunTable1817000000000 implements Migration {
             CREATE INDEX "idx_action_run_project_id_user_id_created" ON "action_run" ("projectId", "userId", "created") WHERE "archivedAt" IS NULL
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_action_run_project_id_piece_name_created" ON "action_run" ("projectId", "pieceName", "created")
-        `)
-        await queryRunner.query(`
             CREATE INDEX "idx_action_run_conversation_id" ON "action_run" ("conversationId")
         `)
         await queryRunner.query(`
@@ -84,9 +81,6 @@ export class AddActionRunTable1817000000000 implements Migration {
         `)
         await queryRunner.query(`
             DROP INDEX "idx_action_run_conversation_id"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "idx_action_run_project_id_piece_name_created"
         `)
         await queryRunner.query(`
             DROP INDEX "idx_action_run_project_id_user_id_created"

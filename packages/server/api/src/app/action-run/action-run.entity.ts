@@ -121,10 +121,6 @@ export const ActionRunEntity = new EntitySchema<ActionRunSchema>({
             where: '"archivedAt" IS NULL',
         },
         {
-            name: 'idx_action_run_project_id_piece_name_created',
-            columns: ['projectId', 'pieceName', 'created'],
-        },
-        {
             name: 'idx_action_run_conversation_id',
             columns: ['conversationId'],
         },
