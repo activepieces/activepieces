@@ -1,4 +1,3 @@
-import { ApErrorParams } from '@activepieces/core-utils';
 import {
   EmbedSubdomain,
   GenerateEmbedSubdomainRequest,
@@ -64,7 +63,10 @@ const EmbedHostnameForm = () => {
       onError: (error) => {
         form.setError('root.serverError', {
           type: 'manual',
-          message: extractServerErrorMessage(error, t("Couldn't save domain")),
+          message: api.extractServerErrorMessage(
+            error,
+            t("Couldn't save domain"),
+          ),
         });
       },
     });
@@ -126,7 +128,7 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
       toast.success(t('Domain updated'));
     } catch (error) {
       setErrorMessage(
-        extractServerErrorMessage(error, t("Couldn't update domain")),
+        api.extractServerErrorMessage(error, t("Couldn't update domain")),
       );
       throw error;
     }
@@ -176,20 +178,3 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
     </Form>
   );
 };
-
-function extractServerErrorMessage(error: unknown, fallback: string): string {
-  if (api.isError(error)) {
-    const data = error.response?.data as ApErrorParams | undefined;
-    const message =
-      data?.params && 'message' in data.params
-        ? data.params.message
-        : undefined;
-    if (typeof message === 'string' && message.length > 0) {
-      return message;
-    }
-  }
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-  return fallback;
-}

@@ -1,12 +1,14 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetProviderConfigResponse, Project, ProjectType } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, unique } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetChatMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserChatMemory } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ChatConversationEntity } from './chat-conversation-entity'
+import { UserChatMemoryEntity } from './user-chat-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
 const FAST_TIER_ID = 'fast'
@@ -20,6 +22,11 @@ export function isEvalConversationId(id: string): boolean {
 }
 
 const conversationRepo = repoFactory(ChatConversationEntity)
+const userChatMemoryRepo = repoFactory(UserChatMemoryEntity)
+
+const MAX_MEMORIES = 50
+const MAX_MEMORY_LENGTH = 280
+const MAX_INSTRUCTIONS_LENGTH = 4000
 
 async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }) {
     const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
@@ -119,6 +126,65 @@ return count`,
     return { allowed: count <= limit, count }
 }
 
+async function getUserChatMemory({ platformId, userId }: { platformId: string, userId: string }): Promise<GetChatMemoryResponse> {
+    const row = await userChatMemoryRepo().findOneBy({ platformId, userId })
+    return { instructions: row?.instructions ?? null, memories: row?.memories ?? [] }
+}
+
+function capMemories({ instructions, memories }: { instructions: string | null, memories: string[] }): GetChatMemoryResponse {
+    const trimmedInstructions = instructions?.trim()
+    return {
+        instructions: trimmedInstructions ? trimmedInstructions.slice(0, MAX_INSTRUCTIONS_LENGTH) : null,
+        memories: unique(memories
+            .map((memory) => memory.trim().slice(0, MAX_MEMORY_LENGTH))
+            .filter((memory) => memory.length > 0))
+            .slice(0, MAX_MEMORIES),
+    }
+}
+
+async function withLockedMemoryRow<T>({ platformId, userId }: { platformId: string, userId: string }, cb: (args: { repo: ReturnType<typeof userChatMemoryRepo>, row: UserChatMemory | null }) => Promise<T>): Promise<T> {
+    return transaction(async (entityManager) => {
+        const repo = entityManager.getRepository(UserChatMemoryEntity)
+        await repo.createQueryBuilder()
+            .insert()
+            .values({ id: apId(), platformId, userId, memories: [] })
+            .orIgnore()
+            .execute()
+        const row = await repo.findOne({ where: { platformId, userId }, lock: { mode: 'pessimistic_write' } })
+        return cb({ repo, row })
+    })
+}
+
+function mergeMemories({ base, incoming, current }: { base: string[], incoming: string[], current: string[] }): string[] {
+    return unique([
+        ...incoming.filter((memory) => !base.includes(memory) || current.includes(memory)),
+        ...current.filter((memory) => !base.includes(memory)),
+    ])
+}
+
+async function saveUserChatMemory({ platformId, userId, instructions, memories, baseMemories }: {
+    platformId: string
+    userId: string
+    instructions?: string | null
+    memories?: string[]
+    baseMemories?: string[]
+}): Promise<GetChatMemoryResponse> {
+    return withLockedMemoryRow({ platformId, userId }, async ({ repo, row }) => {
+        const lockedMemories = row?.memories ?? []
+        const nextMemories = memories === undefined
+            ? lockedMemories
+            : isNil(baseMemories)
+                ? memories
+                : mergeMemories({ base: baseMemories, incoming: memories, current: lockedMemories })
+        const capped = capMemories({
+            instructions: instructions === undefined ? row?.instructions ?? null : instructions,
+            memories: nextMemories,
+        })
+        await repo.update({ platformId, userId }, capped)
+        return capped
+    })
+}
+
 export const chatHelpers = {
     getConversationOrThrow,
     getUserProjects,
@@ -129,4 +195,8 @@ export const chatHelpers = {
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,
+    getUserChatMemory,
+    capMemories,
+    mergeMemories,
+    saveUserChatMemory,
 }

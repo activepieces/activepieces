@@ -55,6 +55,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_list_flows` — list all flows in project
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
+- `ap_read_step_settings` — read the full untruncated settings of any step (trigger included): piece input, code source, loop items, router branches, error handling options
 - `ap_validate_flow`, `ap_validate_step_config` — validation helpers
 - `ap_research_pieces` — piece discovery with intent-based recommended-action ranking
 - `ap_get_piece_props` — action/trigger input schema with required-input summaries and example input, action cardinality, curated expert notes (via `piece-expertise.ts`), AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)

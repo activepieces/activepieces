@@ -6,7 +6,11 @@ import {
   ChatConversation,
   ConnectionOption,
   CreateChatConversationRequest,
+  GetChatMemoryResponse,
+  ImportChatMemoryRequest,
+  InstructChatMemoryRequest,
   UpdateChatConversationRequest,
+  UpdateChatMemoryRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -130,6 +134,28 @@ async function recordLanding(): Promise<void> {
   return api.post<void>('/v1/chat/funnel/landing');
 }
 
+async function getMemory(): Promise<GetChatMemoryResponse> {
+  return api.get<GetChatMemoryResponse>('/v1/chat/memory');
+}
+
+async function saveMemory(
+  request: UpdateChatMemoryRequest,
+): Promise<GetChatMemoryResponse> {
+  return api.post<GetChatMemoryResponse>('/v1/chat/memory', request);
+}
+
+async function importMemory(
+  request: ImportChatMemoryRequest,
+): Promise<GetChatMemoryResponse> {
+  return api.post<GetChatMemoryResponse>('/v1/chat/memory/import', request);
+}
+
+async function instructMemory(
+  request: InstructChatMemoryRequest,
+): Promise<GetChatMemoryResponse> {
+  return api.post<GetChatMemoryResponse>('/v1/chat/memory/instruct', request);
+}
+
 export const chatApi = {
   createConversation,
   listConversations,
@@ -144,6 +170,10 @@ export const chatApi = {
   getPickerConnections,
   getPendingGate,
   recordLanding,
+  getMemory,
+  saveMemory,
+  importMemory,
+  instructMemory,
 };
 
 export type PendingGate = {

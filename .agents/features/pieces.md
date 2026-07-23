@@ -12,7 +12,7 @@ The pieces feature manages the metadata catalog of automation integrations (call
 - `packages/server/api/src/app/pieces/piece-install-service.ts` — saves archive, calls engine to extract metadata, stores result
 - `packages/server/api/src/app/pieces/piece-sync-service.ts` — syncs canonical piece registry from NPM/bundled artifacts into DB
 - `packages/web/src/features/pieces/api/pieces-api.ts` — frontend HTTP client
-- `packages/web/src/features/pieces/hooks/pieces-hooks.ts` — React Query hooks for piece listing, piece model, piece options
+- `packages/web/src/features/pieces/hooks/pieces-hooks.ts` — React Query hooks for piece listing, piece model, piece options. `usePiece` skips retries on HTTP 404 and exposes `isNotFound: boolean` so callers can distinguish a genuinely-missing piece from a transient network error without waiting for the full retry backoff
 - `packages/web/src/features/pieces/hooks/use-piece-output-schema.ts` — reads `outputSchema` for a given step (PIECE action or trigger) off the cached piece model; shares the existing `['piece', name, version]` React Query cache so no extra network call is made
 - `packages/web/src/features/pieces/components/` — `PieceIcon`, `PieceIconList`, `PieceSelectorSearch`, `InstallPieceDialog`
 - `packages/pieces/framework/src/lib/output-schema.ts` — `OutputSchema` / `OutputSchemaField` / `FieldFormat` plain TypeScript types (embedded into the piece metadata via `z.custom`)
@@ -30,6 +30,7 @@ All editions. Base listing and installation is Community-level. EE/Cloud per-pie
 - **pieceCache** — an in-memory map of piece metadata keyed by name+version+platformId, rebuilt from DB
 - **PieceCategory** — enum grouping pieces (AI, CORE, COMMUNICATION, etc.)
 - **SuggestionType** — AGENT or ACTION; changes ordering in piece selector
+- **audience** — optional per-action visibility on `ActionBase` (`human` / `ai` / `both`, default `both`), set by the piece author. The human pieces API hides the opposite audience by default, selectable via the `audience` query param (`PieceAudienceFilter`) — see [Audience filtering](#audience-filtering-human-vs-ai). Triggers have no `audience`.
 - **OutputSchema** — optional, per-action / per-trigger structured description of how the step's output should be rendered. Shape: `{ fields: OutputSchemaField[], itemLabel?: string }`. Each `OutputSchemaField` carries `key`, optional `label` / `value` (path override) / `description`, an optional `format` (`email` / `url` / `date` / `datetime` / `number` / `boolean` / `image` / `html` / `currency` / `filesize` / `duration`), optional `currency` ISO code, optional `dynamicKey: true` for map-shaped values, optional `labelKey` (property within each map entry / list item to use as its display label — falls back to the raw key / `Item N`), and optional recursive `children` / `listItems` for nested objects and array-of-record shapes. `itemLabel` is a `{dotPath}` template (e.g. `{key}: {fields.summary}`) used when the step returns a top-level array; it labels each element in both the Smart Output Viewer and the Data Selector. Set by the piece author as the `outputSchema` of `createAction` / `createTrigger`. Consumed by the builder's `SmartOutputViewer` and the data selector — see [flows.md](./flows.md). Opt-in and non-breaking: pieces without an output schema render exactly as before.
 
 ## Entity
@@ -74,6 +75,23 @@ Unique index on `(name, version, platformId)`.
 | POST | `/v1/pieces/options` | project (USER, BODY) | Evaluate dynamic piece property options (dropdown values) |
 | POST | `/v1/pieces` | platformAdminOnly (USER, SERVICE) | Install a custom piece onto the platform |
 | DELETE | `/v1/pieces/:id` | platformAdminOnly (USER, SERVICE) | Delete all versions of a custom piece from the platform |
+
+## Audience filtering (human vs AI)
+
+Agent-only atomics are tagged `audience: 'ai'` so they surface to agents (MCP `ap_search_actions`) but not to the human flow-builder step picker. The human piece-metadata endpoints hide `audience: 'ai'` actions **by default**, filtered at the HTTP boundary — detail responses in the controller (`piece-metadata-controller.ts`), list summaries in the metadata service's `list()` (the only full-metadata path left unfiltered is `getOrThrow()`).
+
+Callers pick a perspective with the `audience` query param (`PieceAudienceFilter`: `human` (default) / `ai` / `all`). `both`-tagged and untagged actions (untagged defaults to `both`) are always included; only the opposite single audience is hidden:
+
+- `human` (default) — hides `audience: 'ai'`; keeps `human` + `both` + untagged. The flow-builder picker uses this.
+- `ai` — hides `audience: 'human'`; keeps `ai` + `both` + untagged.
+- `all` — returns everything. Used by callers that must resolve any action regardless of audience: the local dev page, and the agent tool-call renderer (`agent-tool-hooks.ts`), which looks up the metadata of a tool the agent already invoked (which may be `audience: 'ai'`).
+
+Where it applies:
+
+- `GET /v1/pieces/:name` and `GET /v1/pieces/:scope/:name` — filtered from the `actions` record (controller).
+- `GET /v1/pieces` — both `suggestedActions` and the `actions` **count** are filtered by audience in the service's `list()` (`toPieceMetadataModelSummary`), where the full action set is available — so the count stays consistent regardless of `suggestionType` (a piece with no actions for the perspective reports 0 and drops out of the picker).
+
+`getOrThrow()` (the full per-action metadata used by flow validation, MCP step editing, and the tool-search reindex) is deliberately **not** filtered — internal callers keep seeing every action. `list()` is consumed only by the human list endpoint, so filtering its summaries there is safe (`audience` defaults to `all`, so any future internal caller is unaffected).
 
 ## Service Methods
 

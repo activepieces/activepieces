@@ -564,6 +564,16 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             },
         }),
 
+        ap_revalidate_connection: tool({
+            description: 'Verify a connection actually works right now by running its credentials against the live service — a connection can read as active while its token is dead or revoked. Use it when a piece action fails with an auth/credential error, or before building on a connection you suspect is stale. Pass the connectionExternalId returned by ap_discover_action_auth or ap_show_connection_picker. If it comes back not working, do NOT keep building on it: show the connection picker so the user can reconnect, then retry.',
+            inputSchema: z.object({
+                connectionExternalId: z.string().describe('The connectionExternalId of the connection to verify'),
+            }),
+            execute: async (input) => {
+                return executeWithTimeout('ap_revalidate_connection', input)
+            },
+        }),
+
         ap_execute_action: tool({
             description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Use ap_discover_action_auth first to check if auth is needed. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
             inputSchema: z.object({
@@ -753,6 +763,16 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     return `You already loaded the "${toolInput.topic}" guide earlier in this turn — re-read it from the conversation above instead of reloading.`
                 }
                 return guide
+            },
+        }),
+
+        ap_remember: tool({
+            description: 'Save a durable fact or preference about THIS user so it carries across all future conversations (silent, internal). Call it whenever the user would otherwise have to repeat themselves next time: when they explicitly ask you to remember something ("remember I love cheese") — always honor that — or when they volunteer a durable personal fact, preference, default, or correction ("I love cheese", "I prefer TypeScript", "default notify channel is #ops", "always EU-based candidates", "stop asking me things you can find"). One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so err toward saving when unsure. Do NOT use for one-off task details (those go in the brief).',
+            inputSchema: z.object({
+                memory: z.string().describe('One concise durable preference/fact about the user'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_remember', toolInput)
             },
         }),
     }
