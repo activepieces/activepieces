@@ -5,7 +5,6 @@ import {
   PROJECT_COLOR_PALETTE,
   ProjectIcon,
   ProjectType,
-  TeamProjectsLimit,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
@@ -219,7 +218,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
               )}
             />
           )}
-        {platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+        {platform.plan.teamProjectsLimit !== 0 &&
           platformRole === PlatformRole.ADMIN && (
             <FormField
               name="activeFlowsLimit"
