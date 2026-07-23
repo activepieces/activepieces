@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/server-utils",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",
@@ -21,12 +21,13 @@
     "@openrouter/ai-sdk-provider": "2.1.1",
     "ai": "^6.0.0",
     "async-mutex": "0.4.0",
-    "axios": "1.16.0",
+    "axios": "1.18.0",
     "axios-retry": "4.4.1",
     "check-disk-space": "3.4.0",
     "dayjs": "1.11.9",
     "request-filtering-agent": "3.2.0",
-    "systeminformation": "5.31.6",
+    "systeminformation": "5.31.7",
+    "tslib": "2.6.2",
     "@activepieces/core-utils": "workspace:*",
     "@activepieces/core-formula": "workspace:*"
   },

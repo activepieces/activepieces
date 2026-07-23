@@ -16,6 +16,7 @@ import {
   selectGenericFormComponentForProperty,
   SelectGenericFormComponentForPropertyParams,
 } from '../../piece-properties/properties-utils';
+import { PieceNotAvailableAlert } from '../piece-not-available-alert';
 import { useStepSettingsContext } from '../step-settings-context';
 
 type AgentSettingsProps = {
@@ -25,9 +26,22 @@ type AgentSettingsProps = {
 };
 
 export const AgentSettings = (props: AgentSettingsProps) => {
-  const { pieceModel, updateFormSchema, updatePropertySettingsSchema } =
-    useStepSettingsContext();
+  const {
+    pieceModel,
+    pieceModelNotFound,
+    updateFormSchema,
+    updatePropertySettingsSchema,
+  } = useStepSettingsContext();
   const form = useFormContext();
+
+  if (isNil(pieceModel) && pieceModelNotFound) {
+    return (
+      <PieceNotAvailableAlert
+        pieceName={props.step.settings.pieceName}
+        pieceVersion={props.step.settings.pieceVersion}
+      />
+    );
+  }
 
   if (isNil(pieceModel)) {
     return (

@@ -1,6 +1,7 @@
 import { isNil, isObject } from '@activepieces/core-utils'
 import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
 import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, PropertySettings } from '@activepieces/shared'
+import { dynamicPropKeys } from '../helper/dynamic-prop-keys'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
 
@@ -44,17 +45,21 @@ export const propsProcessor = {
             if (isNil(property)) {
                 continue
             }
-            if (property.type === PropertyType.DYNAMIC && !isNil(dynamaicPropertiesSchema?.[key])) {
-                const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
-                    value,
-                    dynamaicPropertiesSchema[key],
-                    undefined,
-                    false,
-                    {},
-                )
-                processedInput[key] = itemProcessedInput
-                if (Object.keys(itemErrors).length > 0) {
-                    errors[key] = itemErrors
+            if (property.type === PropertyType.DYNAMIC) {
+                const valueWithOriginalKeys = dynamicPropKeys.unescapeInputKeys(value)
+                processedInput[key] = valueWithOriginalKeys
+                if (!isNil(dynamaicPropertiesSchema?.[key])) {
+                    const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
+                        valueWithOriginalKeys,
+                        dynamicPropKeys.unescapePropsKeys(dynamaicPropertiesSchema[key]),
+                        undefined,
+                        false,
+                        {},
+                    )
+                    processedInput[key] = itemProcessedInput
+                    if (Object.keys(itemErrors).length > 0) {
+                        errors[key] = itemErrors
+                    }
                 }
             }
             if (property.type === PropertyType.ARRAY && property.properties) {

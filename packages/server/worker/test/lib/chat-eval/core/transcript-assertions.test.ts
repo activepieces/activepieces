@@ -19,6 +19,7 @@ function makeResult(overrides: Partial<ChatTurnResult> = {}): ChatTurnResult {
         usage: undefined,
         finishReason: 'stop',
         truncatedAfterRetries: false,
+        budgetExceeded: false,
         streamError: null,
         continuations: 0,
         totalInputTokens: 0,

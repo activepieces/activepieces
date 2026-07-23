@@ -49,7 +49,13 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 | CUSTOM | apiKey, baseUrl | OpenAI-compatible (LM Studio, Ollama) |
 | ACTIVEPIECES | apiKey, apiKeyHash (auto-provisioned) | Uses OpenRouter, managed by platform |
 
+### Azure model listing
+
+`azureProvider.listModels` calls the legacy data-plane `GET {resource}.openai.azure.com/openai/deployments`, pinned to api-version `2023-03-15-preview`. Microsoft retired that endpoint — only `2022-12-01` and `2023-03-15-preview` still serve it; newer versions (e.g. `2024-10-21`) return 404, which also breaks `validateConnection` (it just calls `listModels`). The response carries the deployment name in `id`; there is no `name` property. The configured `AzureProviderConfig.apiVersion` must therefore never be used for the deployments listing — it only affects inference calls made by AI pieces through `@ai-sdk/azure`, which target Azure's GA v1 endpoint (`/openai/v1/`). (GIT-1310)
+
 ## Activepieces Provider (OpenRouter)
+
+Available only when `flagService.aiCreditsEnabled()` is true (`OPENROUTER_PROVISION_KEY` env var set). When the flag is false (typical self-hosted install), the provider is treated as absent everywhere: `listProviders()` omits any existing `activepieces` row and `getChatProvider()`/`getChatProviderName()` return null for it (shared rule in `findAvailableChatProviderRow`). This keeps a stale `enabledForChat` flag (e.g. set by the 0.82.1 migration `ReplacesSandboxWithVercelAiSdk` on upgraded platforms) from pinning chat to a managed provider that cannot work without the provision key — previously that state made every chat message fail with 402 `AI_CREDIT_LIMIT_EXCEEDED` (usage 0 / limit 0) with no top-up or reset path off cloud (GIT-1620).
 
 Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` env var set):
 1. `getOrCreateActivePiecesProviderAuthConfig()` auto-creates provider
@@ -71,12 +77,14 @@ Models listed per provider are cached in memory. Cache cleared daily at midnight
 
 ## Endpoints
 
+Reads are open to any platform member (`GET /` / `/:provider/models` allow USER + ENGINE; `/:provider/config` is engine-only). Mutations are **platform-admin only**.
+
 - `GET /` — list providers (auto-creates ACTIVEPIECES if credits enabled)
 - `GET /:provider/config` — get provider config + decrypted auth (engine-only access)
 - `GET /:provider/models` — list available models (cached)
-- `POST /` — create provider (validates credentials first)
-- `POST /:id` — update provider (re-validates if auth changed, cannot update ACTIVEPIECES)
-- `DELETE /:id` — delete provider (cannot delete ACTIVEPIECES)
+- `POST /` — create provider (platform-admin only; validates credentials first)
+- `POST /:id` — update provider (platform-admin only; re-validates if auth changed, cannot update ACTIVEPIECES)
+- `DELETE /:id` — delete provider (platform-admin only; cannot delete ACTIVEPIECES)
 
 ## Engine Integration
 
