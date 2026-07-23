@@ -1,3 +1,4 @@
+import { buffer as readableToBuffer } from 'node:stream/consumers';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
@@ -19,6 +20,7 @@ export const amazons3UploadFile = createAction({
       displayName: 'File',
       description: 'The file to upload to S3.',
       required: true,
+      streaming: true,
     }),
     fileName: Property.ShortText({
       displayName: 'File Name (Optional)',
@@ -96,12 +98,19 @@ export const amazons3UploadFile = createAction({
 
     const finalFileName = fileName ? (fileName.endsWith(extension) ? fileName : fileName + extension) : generatedName;
 
+    // A known size lets putObject stream the body straight through (single PUT,
+    // UNSIGNED-PAYLOAD) without buffering it in the sandbox. Sources that don't
+    // report a size fall back to buffering — same behaviour as before streaming.
+    const body = file.size != null
+      ? { Body: file.body, ContentLength: file.size }
+      : { Body: await readableToBuffer(file.body) };
+
     const uploadResponse = await s3.putObject({
       Bucket: bucket,
       Key: finalFileName,
       ACL: acl as ObjectCannedACL | undefined,
       ContentType: contentType,
-      Body: file.data,
+      ...body,
     });
 
     return {

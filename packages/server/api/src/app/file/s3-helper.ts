@@ -65,7 +65,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             await getS3Client().putObject({
                 Bucket: getS3BucketName(),
                 Key: s3Key,
-                Body: Readable.from(data),
+                Body: data,
                 ContentLength: data.length,
             })
             log.info({
