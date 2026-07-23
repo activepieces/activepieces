@@ -14,11 +14,15 @@ import {
   SelectionMode,
   OnSelectionChangeParams,
   useStoreApi,
+  useReactFlow,
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
   getNodesBounds,
   CoordinateExtent,
+  Connection,
+  Edge,
+  FinalConnectionState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -31,10 +35,12 @@ import {
   CanvasContextMenu,
   ContextMenuType,
 } from './context-menu/canvas-context-menu';
+import { NoteConnectionLine } from './edges/note-step-connection';
 import { FlowDragLayer } from './flow-drag-layer';
 import { flowCanvasHooks } from './hooks';
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
+import { ApNodeType } from './utils/types';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
@@ -55,6 +61,7 @@ export const FlowCanvas = React.memo(
       rightSidebar,
       notes,
       canvasOrientation,
+      moveNote,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -66,6 +73,7 @@ export const FlowCanvas = React.memo(
         state.rightSidebar,
         state.flowVersion.notes,
         state.canvasOrientation,
+        state.moveNote,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -74,6 +82,76 @@ export const FlowCanvas = React.memo(
     useHandleKeyPressOnCanvas();
     flowCanvasHooks.useResizeCanvas(containerRef, setHasCanvasBeenInitialised);
     const reactFlowStore = useStoreApi();
+    const reactFlow = useReactFlow();
+    const isValidNoteConnection = useCallback(
+      (connection: Connection | Edge) => {
+        if (isNil(connection.source) || isNil(connection.target)) {
+          return false;
+        }
+        return (
+          reactFlow.getNode(connection.source)?.type === ApNodeType.NOTE &&
+          reactFlow.getNode(connection.target)?.type === ApNodeType.STEP
+        );
+      },
+      [reactFlow],
+    );
+    const anchorNoteToStep = useCallback(
+      (noteId: string, stepName: string) => {
+        const noteNode = reactFlow.getNode(noteId);
+        const stepNode = reactFlow.getNode(stepName);
+        if (isNil(noteNode) || isNil(stepNode)) {
+          return;
+        }
+        moveNote({
+          id: noteId,
+          position: noteNode.position,
+          anchor: {
+            stepName,
+            offset: {
+              x: noteNode.position.x - stepNode.position.x,
+              y: noteNode.position.y - stepNode.position.y,
+            },
+          },
+        });
+      },
+      [reactFlow, moveNote],
+    );
+    const onConnectNoteToStep = useCallback(
+      (connection: Connection) => {
+        if (isNil(connection.source) || isNil(connection.target)) {
+          return;
+        }
+        anchorNoteToStep(connection.source, connection.target);
+      },
+      [anchorNoteToStep],
+    );
+    const onNoteConnectEnd = useCallback(
+      (
+        event: MouseEvent | TouchEvent,
+        connectionState: FinalConnectionState,
+      ) => {
+        if (connectionState.isValid) {
+          return;
+        }
+        const fromNote = connectionState.fromNode;
+        if (isNil(fromNote) || fromNote.type !== ApNodeType.NOTE) {
+          return;
+        }
+        const point =
+          'changedTouches' in event ? event.changedTouches[0] : event;
+        const stepName = document
+          .elementFromPoint(point.clientX, point.clientY)
+          ?.closest(`[data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}]`)
+          ?.getAttribute(
+            `data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`,
+          );
+        if (isNil(stepName)) {
+          return;
+        }
+        anchorNoteToStep(fromNote.id, stepName);
+      },
+      [anchorNoteToStep],
+    );
     const isShiftKeyPressed = useKeyPress('Shift');
     const inGrabPanningMode = !isShiftKeyPressed && panningMode === 'grab';
     const onSelectionChange = useCallback(
@@ -235,7 +313,12 @@ export const FlowCanvas = React.memo(
               panOnScroll={true}
               panOnScrollMode={PanOnScrollMode.Free}
               fitView={false}
-              nodesConnectable={false}
+              nodesConnectable={true}
+              onConnect={onConnectNoteToStep}
+              onConnectEnd={onNoteConnectEnd}
+              isValidConnection={isValidNoteConnection}
+              connectionLineComponent={NoteConnectionLine}
+              connectionRadius={30}
               elementsSelectable={true}
               nodesDraggable={false}
               nodesFocusable={false}
@@ -323,7 +406,14 @@ const createGraphKey = (
       }-${branchesNames}-${childrenKey}}`;
     }, '');
   const notesGraphKey = notes
-    .map((note) => `${note.id}-${note.position.x}-${note.position.y}`)
+    .map(
+      (note) =>
+        `${note.id}-${note.position.x}-${note.position.y}-${
+          note.anchor
+            ? `${note.anchor.stepName}-${note.anchor.offset.x}-${note.anchor.offset.y}`
+            : 'free'
+        }`,
+    )
     .join('-');
   return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}-${selectedStep}`;
 };

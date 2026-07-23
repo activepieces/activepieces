@@ -2,6 +2,7 @@ import { FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { DeleteActionRequest } from './index'
+import { notesOperations } from './notes-operations'
 
 function _deleteAction(
     flowVersion: FlowVersion,
@@ -51,7 +52,10 @@ function _deleteAction(
             return parentStep
         })
     }
-    return clonedVersion
+    if (request.preserveNoteAnchors) {
+        return clonedVersion
+    }
+    return notesOperations.clearDanglingNoteAnchors(clonedVersion)
 }
 
 export { _deleteAction }

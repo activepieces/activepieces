@@ -5,7 +5,12 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
-import { Handle, NodeProps, Position } from '@xyflow/react';
+import {
+  Handle,
+  NodeProps,
+  Position,
+  useHandleConnections,
+} from '@xyflow/react';
 import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -53,6 +58,16 @@ const ApStepCanvasNode = React.memo(
       state.canvasOrientation,
     ]);
     const isHorizontal = canvasOrientation === 'horizontal';
+    const leftNoteHandleId = flowCanvasConsts.NOTE_HANDLE_IDS.LEFT;
+    const rightNoteHandleId = flowCanvasConsts.NOTE_HANDLE_IDS.RIGHT;
+    const noteHandleOffsetStyle = isHorizontal
+      ? flowCanvasConsts.NOTE_HANDLE_HORIZONTAL_OFFSET_STYLE
+      : undefined;
+    const isLeftNoteHandleConnected =
+      useHandleConnections({ type: 'target', id: leftNoteHandleId }).length > 0;
+    const isRightNoteHandleConnected =
+      useHandleConnections({ type: 'target', id: rightNoteHandleId }).length >
+      0;
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
@@ -236,13 +251,35 @@ const ApStepCanvasNode = React.memo(
 
           <Handle
             type="source"
+            isConnectable={false}
             style={flowCanvasConsts.HANDLE_STYLING}
             position={isHorizontal ? Position.Right : Position.Bottom}
           />
           <Handle
             type="target"
+            isConnectable={false}
             style={flowCanvasConsts.HANDLE_STYLING}
             position={isHorizontal ? Position.Left : Position.Top}
+          />
+          <Handle
+            type="target"
+            id={leftNoteHandleId}
+            isConnectableStart={false}
+            className={flowCanvasConsts.noteHandleClassName(
+              isLeftNoteHandleConnected,
+            )}
+            style={noteHandleOffsetStyle}
+            position={Position.Left}
+          />
+          <Handle
+            type="target"
+            id={rightNoteHandleId}
+            isConnectableStart={false}
+            className={flowCanvasConsts.noteHandleClassName(
+              isRightNoteHandleConnected,
+            )}
+            style={noteHandleOffsetStyle}
+            position={Position.Right}
           />
         </div>
       </div>

@@ -1336,6 +1336,8 @@
   "Piece Sets": "Piece Sets",
   "Unpin this piece": "Unpin this piece",
   "Pin this piece": "Pin this piece",
+  "Unlink from {stepName}": "Unlink from {stepName}",
+  "Link to step": "Link to step",
   "Actions & triggers": "Actions & triggers",
   "For {name} in this piece set": "For {name} in this piece set",
   "All actions & triggers": "All actions & triggers",

@@ -1,10 +1,16 @@
-import { NoteColorVariant } from '@activepieces/shared';
+import {
+  flowStructureUtil,
+  isNil,
+  NoteColorVariant,
+} from '@activepieces/shared';
 import { Editor } from '@tiptap/core';
+import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { TrashIcon } from 'lucide-react';
+import { TrashIcon, Unlink } from 'lucide-react';
 import { forwardRef, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { flowCanvasConsts } from '@/app/builder/flow-canvas/utils/consts';
 import {
   MarkdownTools,
   ToolWrapper,
@@ -20,10 +26,28 @@ import { cn } from '@/lib/utils';
 
 export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [updateNoteColor, deleteNote] = useBuilderStateContext((state) => [
-    state.updateNoteColor,
-    state.deleteNote,
-  ]);
+  const [updateNoteColor, deleteNote, getNoteById, moveNote, flowVersion] =
+    useBuilderStateContext((state) => [
+      state.updateNoteColor,
+      state.deleteNote,
+      state.getNoteById,
+      state.moveNote,
+      state.flowVersion,
+    ]);
+  const reactFlow = useReactFlow();
+  const note = getNoteById(id);
+  const anchor = note?.anchor ?? null;
+  const anchoredStepDisplayName = anchor
+    ? flowStructureUtil.getStep(anchor.stepName, flowVersion.trigger)
+        ?.displayName ?? anchor.stepName
+    : null;
+  const unlink = () => {
+    if (isNil(note)) {
+      return;
+    }
+    const notePosition = reactFlow.getNode(id)?.position ?? note.position;
+    moveNote({ id, position: notePosition, anchor: null });
+  };
   return (
     <div
       ref={containerRef}
@@ -40,6 +64,17 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
           />
           <MarkdownTools editor={editor} />
           <Separator orientation="vertical" className="h-[30px]"></Separator>
+          {anchor && (
+            <ToolWrapper
+              tooltip={t('Unlink from {stepName}', {
+                stepName: anchoredStepDisplayName,
+              })}
+            >
+              <Button variant="ghost" size="icon" onClick={unlink}>
+                <Unlink className="size-4" />
+              </Button>
+            </ToolWrapper>
+          )}
           <ToolWrapper tooltip={t('Delete')}>
             <Button
               variant="ghost"
@@ -55,15 +90,6 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
       </div>
     </div>
   );
-};
-
-const NoteColorPickerClassName = {
-  [NoteColorVariant.YELLOW]: 'bg-amber-400',
-  [NoteColorVariant.ORANGE]: 'bg-orange-400',
-  [NoteColorVariant.RED]: 'bg-red-400',
-  [NoteColorVariant.GREEN]: 'bg-green-400',
-  [NoteColorVariant.BLUE]: 'bg-blue-400',
-  [NoteColorVariant.PURPLE]: 'bg-purple-400',
 };
 
 const NoteColorPicker = ({
@@ -144,9 +170,8 @@ const ColorButton = forwardRef<HTMLButtonElement, ColorButtonProps>(
       >
         <div
           className={cn(
-            NoteColorPickerClassName[color] ??
-              NoteColorPickerClassName[NoteColorVariant.YELLOW],
-            'size-4 shrink-0 rounded-full',
+            flowCanvasConsts.NOTE_COLOR_CLASS_NAME[color],
+            'size-4 shrink-0 rounded-full bg-current',
             {
               'size-5': big,
             },

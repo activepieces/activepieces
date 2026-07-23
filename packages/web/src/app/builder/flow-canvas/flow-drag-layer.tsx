@@ -228,7 +228,26 @@ function handleNoteDragEnd({
           x: element.getBoundingClientRect().left,
           y: element.getBoundingClientRect().top,
         });
-        moveNote(draggedNote.id, positionOnCanvas);
+        const anchoredStepNode = draggedNote.anchor
+          ? reactFlow.getNode(draggedNote.anchor.stepName)
+          : undefined;
+        moveNote({
+          id: draggedNote.id,
+          position: positionOnCanvas,
+          ...(draggedNote.anchor
+            ? {
+                anchor: anchoredStepNode
+                  ? {
+                      stepName: draggedNote.anchor.stepName,
+                      offset: {
+                        x: positionOnCanvas.x - anchoredStepNode.position.x,
+                        y: positionOnCanvas.y - anchoredStepNode.position.y,
+                      },
+                    }
+                  : null,
+              }
+            : {}),
+        });
       }
     }
   }

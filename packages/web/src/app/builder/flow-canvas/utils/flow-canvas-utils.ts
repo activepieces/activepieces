@@ -29,6 +29,7 @@ import {
   ApGraphEndNode,
   ApLoopReturnNode,
   ApNodeType,
+  ApNoteAnchorEdge,
   ApStepNode,
   ApStraightLineEdge,
   CanvasOrientation,
@@ -676,13 +677,21 @@ const getStepStatus = (
   );
   return stepOutput?.status;
 };
-function buildNotesGraph(notes: Note[]): ApGraph {
+function buildNotesGraph({
+  notes,
+  stepNodes,
+  orientation,
+}: {
+  notes: Note[];
+  stepNodes: ApGraph['nodes'];
+  orientation: CanvasOrientation;
+}): ApGraph {
   return {
     nodes: notes.map((note) => ({
       id: note.id,
       type: ApNodeType.NOTE,
       draggable: true,
-      position: note.position,
+      position: resolveNotePosition({ note, stepNodes }),
       data: {
         content: note.content,
         creatorId: note.ownerId,
@@ -690,7 +699,124 @@ function buildNotesGraph(notes: Note[]): ApGraph {
         size: note.size,
       },
     })),
-    edges: [],
+    edges: notes
+      .map((note) => buildNoteAnchorEdge({ note, stepNodes, orientation }))
+      .filter((edge) => !isNil(edge)),
+  };
+}
+
+function buildNoteAnchorEdge({
+  note,
+  stepNodes,
+  orientation,
+}: {
+  note: Note;
+  stepNodes: ApGraph['nodes'];
+  orientation: CanvasOrientation;
+}): ApNoteAnchorEdge | null {
+  const anchor = note.anchor;
+  if (isNil(anchor)) {
+    return null;
+  }
+  const stepNode = stepNodes.find(
+    (node) => node.type === ApNodeType.STEP && node.id === anchor.stepName,
+  );
+  if (isNil(stepNode)) {
+    return null;
+  }
+  const notePosition = resolveNotePosition({ note, stepNodes });
+  const stepSize = flowCanvasLayoutConsts.STEP_NODE_SIZE[orientation];
+  const { sourceHandle, targetHandle } = chooseNoteAnchorHandles({
+    noteRect: {
+      x: notePosition.x,
+      y: notePosition.y,
+      width: note.size.width,
+      height: note.size.height,
+    },
+    stepRect: {
+      x: stepNode.position.x,
+      y: stepNode.position.y,
+      width: stepSize.width,
+      height: stepSize.height,
+    },
+  });
+  return {
+    id: `note-anchor-${note.id}`,
+    source: note.id,
+    target: anchor.stepName,
+    sourceHandle,
+    targetHandle,
+    type: ApEdgeType.NOTE_ANCHOR_EDGE,
+    data: { color: note.color },
+    selectable: false,
+    focusable: false,
+    zIndex: 0,
+  };
+}
+
+function noteHandleCandidates(rect: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}): { id: string; point: { x: number; y: number } }[] {
+  const handleIds = flowCanvasLayoutConsts.NOTE_HANDLE_IDS;
+  return [
+    { id: handleIds.LEFT, point: { x: rect.x, y: rect.y + rect.height / 2 } },
+    {
+      id: handleIds.RIGHT,
+      point: { x: rect.x + rect.width, y: rect.y + rect.height / 2 },
+    },
+  ];
+}
+
+function chooseNoteAnchorHandles({
+  noteRect,
+  stepRect,
+}: {
+  noteRect: { x: number; y: number; width: number; height: number };
+  stepRect: { x: number; y: number; width: number; height: number };
+}): { sourceHandle: string; targetHandle: string } {
+  const noteCandidates = noteHandleCandidates(noteRect);
+  const stepCandidates = noteHandleCandidates(stepRect);
+  const combinations = noteCandidates.flatMap((noteHandle) =>
+    stepCandidates.map((stepHandle) => ({
+      sourceHandle: noteHandle.id,
+      targetHandle: stepHandle.id,
+      distance:
+        (noteHandle.point.x - stepHandle.point.x) ** 2 +
+        (noteHandle.point.y - stepHandle.point.y) ** 2,
+    })),
+  );
+  const closest = combinations.reduce((nearest, candidate) =>
+    candidate.distance < nearest.distance ? candidate : nearest,
+  );
+  return {
+    sourceHandle: closest.sourceHandle,
+    targetHandle: closest.targetHandle,
+  };
+}
+
+function resolveNotePosition({
+  note,
+  stepNodes,
+}: {
+  note: Note;
+  stepNodes: ApGraph['nodes'];
+}): { x: number; y: number } {
+  const anchor = note.anchor;
+  if (isNil(anchor)) {
+    return note.position;
+  }
+  const stepNode = stepNodes.find(
+    (node) => node.type === ApNodeType.STEP && node.id === anchor.stepName,
+  );
+  if (isNil(stepNode)) {
+    return note.position;
+  }
+  return {
+    x: stepNode.position.x + anchor.offset.x,
+    y: stepNode.position.y + anchor.offset.y,
   };
 }
 
@@ -731,7 +857,6 @@ export const flowCanvasUtils = {
       step: version.trigger,
       orientation,
     });
-    const notesGraph = buildNotesGraph(notes);
     const graphEndWidget = stepsGraph.nodes.findLast(
       (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
     ) as ApGraphEndNode;
@@ -744,6 +869,11 @@ export const flowCanvasUtils = {
       orientation === 'horizontal'
         ? transposeGraphPositions(stepsGraph)
         : stepsGraph;
+    const notesGraph = buildNotesGraph({
+      notes,
+      stepNodes: orientedGraph.nodes,
+      orientation,
+    });
     return mergeGraph(orientedGraph, notesGraph);
   },
   createFocusStepInGraphParams,

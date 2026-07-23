@@ -2,9 +2,10 @@ import { FlowActionType, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { DeleteBranchRequest } from '.'
+import { notesOperations } from './notes-operations'
 
 function _deleteBranch(flowVersion: FlowVersion, request: DeleteBranchRequest): FlowVersion {
-    return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
+    const updatedVersion = flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
         if (parentStep.name !== request.stepName || parentStep.type !== FlowActionType.ROUTER) {
             return parentStep
         }
@@ -18,6 +19,7 @@ function _deleteBranch(flowVersion: FlowVersion, request: DeleteBranchRequest): 
             children: routerAction.children.filter((_, index) => index !== request.branchIndex),
         }
     })
+    return notesOperations.clearDanglingNoteAnchors(updatedVersion)
 }
 
 export { _deleteBranch } 

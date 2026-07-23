@@ -21,6 +21,13 @@ export const Note = z.object({
         width: z.number(),
         height: z.number(),
     }),
+    anchor: Nullable(z.object({
+        stepName: z.string(),
+        offset: z.object({
+            x: z.number(),
+            y: z.number(),
+        }),
+    })),
     createdAt: z.string(),
     updatedAt: z.string(),
 })

@@ -7,9 +7,13 @@ import {
   FLOW_CANVAS_VSPACE,
   NoteColorVariant,
 } from '@activepieces/shared';
+import { CSSProperties } from 'react';
+
+import { cn } from '@/lib/utils';
 
 import { ApLoopReturnLineCanvasEdge as ApLoopReturnCanvasEdge } from '../edges/loop-return-edge';
 import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from '../edges/loop-start-edge';
+import { ApNoteAnchorCanvasEdge } from '../edges/note-step-connection';
 import { ApRouterEndCanvasEdge } from '../edges/router-end-edge';
 import { ApRouterStartCanvasEdge } from '../edges/router-start-edge';
 import { ApStraightLineCanvasEdge } from '../edges/straight-line-edge';
@@ -74,6 +78,31 @@ const AP_NODE_SIZE: Record<
   },
 };
 
+const NOTE_HANDLE_BASE_CLASS_NAME =
+  '!size-2 !min-w-0 !min-h-0 !rounded-full !bg-white !border !border-solid !border-border !shadow-md';
+
+const NOTE_COLOR_CLASS_NAME: Record<NoteColorVariant, string> = {
+  [NoteColorVariant.YELLOW]: 'text-amber-400',
+  [NoteColorVariant.ORANGE]: 'text-orange-400',
+  [NoteColorVariant.RED]: 'text-red-400',
+  [NoteColorVariant.GREEN]: 'text-green-400',
+  [NoteColorVariant.BLUE]: 'text-blue-400',
+  [NoteColorVariant.PURPLE]: 'text-purple-400',
+};
+
+const noteHandleClassName = (isConnected: boolean) =>
+  cn(NOTE_HANDLE_BASE_CLASS_NAME, {
+    'opacity-100': isConnected,
+    'opacity-0 group-hover:opacity-100': !isConnected,
+  });
+
+const NOTE_EDGE_STROKE_STYLE: CSSProperties = {
+  strokeWidth: `${LINE_WIDTH}px`,
+  strokeDasharray: '2 5',
+  strokeLinecap: 'round',
+  strokeOpacity: 0.8,
+};
+
 export const flowCanvasConsts = {
   ARC_LENGTH,
   ORIENTATION_LAYOUT,
@@ -101,6 +130,7 @@ export const flowCanvasConsts = {
     [ApEdgeType.LOOP_RETURN_EDGE]: ApLoopReturnCanvasEdge,
     [ApEdgeType.ROUTER_START_EDGE]: ApRouterStartCanvasEdge,
     [ApEdgeType.ROUTER_END_EDGE]: ApRouterEndCanvasEdge,
+    [ApEdgeType.NOTE_ANCHOR_EDGE]: ApNoteAnchorCanvasEdge,
   },
   nodeTypes: {
     [ApNodeType.STEP]: ApStepCanvasNode,
@@ -113,6 +143,10 @@ export const flowCanvasConsts = {
   DRAGGED_NOTE_TAG,
   HORIZONTAL_SPACE_BETWEEN_NODES,
   HANDLE_STYLING: { opacity: 0, cursor: 'default' },
+  NOTE_COLOR_CLASS_NAME,
+  noteHandleClassName,
+  NOTE_EDGE_STROKE_STYLE,
+  NOTE_HANDLE_HORIZONTAL_OFFSET_STYLE: { marginTop: '10px' },
   LABEL_VERTICAL_PADDING,
   STEP_DRAG_OVERLAY_WIDTH,
   STEP_DRAG_OVERLAY_HEIGHT,
@@ -123,6 +157,7 @@ export const flowCanvasConsts = {
   NODE_SELECTION_RECT_CLASS_NAME:
     flowCanvasLayoutConsts.NODE_SELECTION_RECT_CLASS_NAME,
   SIDEBAR_ANIMATION_DURATION: 200,
+  NOTE_HANDLE_IDS: flowCanvasLayoutConsts.NOTE_HANDLE_IDS,
   DEFAULT_NOTE_CONTENT: '<br>',
   DEFAULT_NOTE_COLOR: NoteColorVariant.BLUE,
   BUILDER_HEADER_HEIGHT: 60,

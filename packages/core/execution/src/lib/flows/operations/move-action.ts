@@ -16,6 +16,7 @@ export function _moveAction(flowVersion: FlowVersion, request: MoveActionRequest
             type: FlowOperationType.DELETE_ACTION,
             request: {
                 names: [request.name],
+                preserveNoteAnchors: true,
             },
         },
     ]
