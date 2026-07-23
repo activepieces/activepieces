@@ -40,4 +40,13 @@ describe('netsuiteRecords', () => {
     expect(query).toContain("email = 'o''brien@x.com'");
     expect(query).toContain('FROM customer');
   });
+
+  it('buildEntitySearchQuery escapes LIKE wildcards in name', () => {
+    const query = netsuiteRecords.buildEntitySearchQuery({
+      table: 'vendor',
+      name: '50%_off',
+    });
+    expect(query).toContain("LIKE '%50\\%\\_off%' ESCAPE '\\'");
+    expect(query).toContain('FROM vendor');
+  });
 });

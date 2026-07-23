@@ -36,6 +36,10 @@ export const createInvoice = createAction({
       ...(additionalFields ?? {}),
     });
 
+    if (!body['item']) {
+      throw new Error('Add at least one line item to the invoice.');
+    }
+
     return client.createRecord({ recordType: 'invoice', body });
   },
 });

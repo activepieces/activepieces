@@ -38,6 +38,10 @@ export const createBill = createAction({
       ...(additionalFields ?? {}),
     });
 
+    if (!body['item'] && !body['expense']) {
+      throw new Error('Add at least one item line or expense line to the bill.');
+    }
+
     return client.createRecord({ recordType: 'vendorBill', body });
   },
 });

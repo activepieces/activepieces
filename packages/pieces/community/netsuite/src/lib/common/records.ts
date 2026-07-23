@@ -70,6 +70,12 @@ function escapeLiteral(value: string): string {
   return value.replace(/'/g, "''");
 }
 
+// Backslash-escape the SuiteQL LIKE wildcards so user-typed % and _ match
+// literally (paired with an ESCAPE '\' clause on the predicate).
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 function buildEntitySearchQuery({
   table,
   email,
@@ -84,10 +90,9 @@ function buildEntitySearchQuery({
     filters.push(`email = '${escapeLiteral(email)}'`);
   }
   if (name) {
+    const pattern = escapeLiteral(escapeLikePattern(name));
     filters.push(
-      `(companyName LIKE '%${escapeLiteral(name)}%' OR entityId LIKE '%${escapeLiteral(
-        name
-      )}%')`
+      `(companyName LIKE '%${pattern}%' ESCAPE '\\' OR entityId LIKE '%${pattern}%' ESCAPE '\\')`
     );
   }
   if (!filters.length) {
