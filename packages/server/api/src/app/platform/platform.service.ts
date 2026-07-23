@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, FilteredPieceBehavior, OPEN_SOURCE_PLAN, Platform, PlatformPieceFilter, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformPieceFilterRequestBody, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'
@@ -53,12 +53,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
-            filteredPieceNames: [],
-            filteredActionNames: {},
-            filteredTriggerNames: {},
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
-            filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             federatedAuthProviders: { saml: null },
             cloudAuthEnabled: true,
             pinnedPieces: [],
@@ -190,26 +186,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
     async getOne(id: PlatformId): Promise<PlatformWithoutFederatedAuth | null> {
         return platformRepo().findOneBy({ id })
     },
-    async getPieceFilter(id: PlatformId): Promise<PlatformPieceFilter> {
-        const platform = await this.getOneOrThrow(id)
-        return {
-            filteredPieceNames: platform.filteredPieceNames,
-            filteredPieceBehavior: platform.filteredPieceBehavior,
-            filteredActionNames: platform.filteredActionNames,
-            filteredTriggerNames: platform.filteredTriggerNames,
-        }
-    },
-    async updatePieceFilter({ id, ...params }: UpdatePieceFilterParams): Promise<PlatformPieceFilter> {
-        const platform = await this.getOneOrThrow(id)
-        await platformRepo().save({
-            ...platform,
-            ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
-            ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
-            ...spreadIfDefined('filteredActionNames', params.filteredActionNames),
-            ...spreadIfDefined('filteredTriggerNames', params.filteredTriggerNames),
-        })
-        return this.getPieceFilter(id)
-    },
     async getOneWithFederatedAuthOrThrow(id: PlatformId): Promise<Platform> {
         return platformRepo()
             .createQueryBuilder('platform')
@@ -318,10 +294,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     favIconUrl?: string
     ssoDomain?: string | null
     ssoDomainVerification?: SsoDomainVerification | null
-}
-
-type UpdatePieceFilterParams = UpdatePlatformPieceFilterRequestBody & {
-    id: PlatformId
 }
 
 type CreatePlatformWithProjectParams = {

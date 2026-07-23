@@ -81,7 +81,7 @@ A built-in relational database feature that lets users store structured data dir
 - `table.exportTable()` — returns fields + rows as JSON
 - `table.createWebhook()` / `table.deleteWebhook()` — link table events to flows
 - `record.create()` — bulk insert (max 50 per batch, transactional), validates field count
-- `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS)
+- `record.list()` — with filters (EQ, NEQ, GT, GTE, LT, LTE, CO, EXISTS, NOT_EXISTS); filtering is in-memory and a missing cell is treated as an empty value (`''`), so NEQ/NOT_EXISTS match unset columns
 - `record.update()` — update cells (empty fields unchanged)
 - `record.delete()` / `record.deleteAll()` — bulk delete
 
@@ -109,5 +109,11 @@ After record create/update/delete, `recordSideEffects.handleRecordsEvent()`:
 
 Tables piece (`packages/pieces/core/tables/`) provides:
 - **Triggers**: New Record, Record Updated, Record Deleted (register TableWebhook on enable, delete on disable)
-- **Actions**: Create Record(s), Get Record, Find Records, Update Record, Delete Record(s), Clear Table
+- **Actions**: Create Table, Delete Table, Create Record(s), Get Record, Find Records, Update Record, Delete Record(s), Clear Table, Download Table
 - Uses internal API with Bearer token authentication
+
+### Runtime-created tables (dynamic targeting)
+
+`Create Table` (`POST /v1/tables`) returns the created `Table` plus a `fields: [{ name, type, externalId }]` echo (field `externalId`s are auto-generated). This lets a flow provision a table at runtime and pipe its `externalId` downstream. `Delete Table` (`DELETE /v1/tables/:id`) tears it down.
+
+A table created at runtime cannot be picked from the design-time `table_id` dropdown, and the record actions' per-field form (a `DynamicProperties` keyed on the selected table) can't render for it. To write to such a table, `Create Record(s)` has a **`records` (Raw)** JSON input: an array of objects keyed by **field name**, resolved against the live table fields at run time. It overrides the form when set, and is the intended path when `table_id` is bound to a dynamic `{{...externalId}}` value. `create-records`' form `values` resolver swallows table-resolution errors (returns an empty form) so a dynamic `table_id` doesn't error in the builder.

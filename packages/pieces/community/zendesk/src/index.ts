@@ -13,9 +13,13 @@ import { newOrganization } from './lib/trigger/new-organization';
 import { newUser } from './lib/trigger/new-user';
 import { newSuspendedTicket } from './lib/trigger/new-suspended-ticket';
 import { newActionOnTicket } from './lib/trigger/new-action-on-ticket';
+import { newGroup } from './lib/trigger/new-group';
+import { tagAddedToUser } from './lib/trigger/tag-added-to-user';
 import { createTicketAction } from './lib/actions/create-ticket';
 import { updateTicketAction } from './lib/actions/update-ticket';
 import { addTagToTicketAction } from './lib/actions/add-tag-to-ticket';
+import { removeTagFromTicketAction } from './lib/actions/remove-tag-from-ticket';
+import { attachFileToTicketAction } from './lib/actions/attach-file-to-ticket';
 import { addCommentToTicketAction } from './lib/actions/add-comment-to-ticket';
 import { createOrganizationAction } from './lib/actions/create-organization';
 import { updateOrganizationAction } from './lib/actions/update-organization';
@@ -24,6 +28,9 @@ import { deleteUserAction } from './lib/actions/delete-user';
 import { findOrganizationAction } from './lib/actions/find-organization';
 import { findTicketsAction } from './lib/actions/find-tickets';
 import { findUserAction } from './lib/actions/find-user';
+import { findAgentAction } from './lib/actions/find-agent';
+import { findGroupAction } from './lib/actions/find-group';
+import { findLatestCommentAction } from './lib/actions/find-latest-comment';
 import { updateUserAction } from './lib/actions/update-user';
 
 const markdownProperty = `
@@ -69,6 +76,8 @@ export const zendesk = createPiece({
     createTicketAction,
     updateTicketAction,
     addTagToTicketAction,
+    removeTagFromTicketAction,
+    attachFileToTicketAction,
     addCommentToTicketAction,
     createOrganizationAction,
     updateOrganizationAction,
@@ -77,6 +86,9 @@ export const zendesk = createPiece({
     findOrganizationAction,
     findTicketsAction,
     findUserAction,
+    findAgentAction,
+    findGroupAction,
+    findLatestCommentAction,
     updateUserAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>
@@ -94,5 +106,5 @@ export const zendesk = createPiece({
       }),
     }),
   ],
-  triggers: [newTicketInView, newTicket, updatedTicket, tagAddedToTicket, newOrganization, newUser, newSuspendedTicket, newActionOnTicket],
+  triggers: [newTicketInView, newTicket, updatedTicket, tagAddedToTicket, newOrganization, newUser, newSuspendedTicket, newActionOnTicket, newGroup, tagAddedToUser],
 });
