@@ -11,12 +11,12 @@ proxied through `console.activepieces.com`.
 
 Billable dimensions:
 - **AI Credits** — consumable; charged per production run + AI step + chat message (+ tool calls).
-  Top-up is **additive** (`topUpConsumableFeature`), auto-top-up supported.
+  Top-up is **additive** via native Autumn auto-top-up only (`configureAutoTopUp`) — there is no manual consumable top-up seam.
 - **Seats (`users`)** — non-consumable; a seat is consumed by an **active** User **or reserved by a
   non-expired invitation** (`PENDING`, or `ACCEPTED`-not-yet-provisioned) (GitHub model — `usedSeats =
   active + reserved invites`; counting `ACCEPTED` closes the API-key auto-accept bypass; see ADR-0010).
   On the **Team** plan, seats beyond the base allotment are a **paid prepaid add-on** ($25/user/mo). Top-up is
-  **set-total** (`topUpUnconsumableFeature`): both increase and decrease apply **immediately, prorated**
+  **set-total** (`adjustUnconsumableFeatureQuantity`): both increase and decrease apply **immediately, prorated**
   (added seats charged now, removed seats credited) — see the interim note in Seat top-up rules. Projects
   will later ride the same non-consumable seam.
 - **Projects (`teamProjects`)** — non-consumable limit; tracked/enforced, not yet self-serve toppable.
@@ -25,7 +25,7 @@ Billable dimensions:
 ### Seat top-up rules (Team plan)
 - Control adjusts **extra** seats; `usersLimit` = base + extras. Availability is **plan-driven** (the
   seat control shows iff the customer's **active subscription** carries a priced `usersLimit` prepaid item,
-  surfaced via `topUpFeatures`; empty while trialing). Team **v2** prices seats (`$25/mo`, or `$240/yr` on
+  derived from `BillingOverview.nonConsumableFeatures` + `includedSeats`/`additionalSeats`; empty while trialing). Team **v2** prices seats (`$25/mo`, or `$240/yr` on
   team_annual) and **includes 25 seats**, so paid extras start at seat 26. **Grandfathered customers on an
   older plan version (Team v1, `usersLimit.price: null`) have no priced seat item** — the control correctly
   hides for them, and they need a v1→v2 migration before they can buy seats (TBD).
@@ -48,7 +48,7 @@ Billable dimensions:
 - **Enforcement is DB-authoritative (on the AP server), against `usedSeats` = active + reserved pending
   invites** (`countUsedSeats` in `platform-plan.service.ts`: `countActiveByPlatformId` + `COUNT(DISTINCT
   lower(email))` of PENDING, non-expired invites whose email isn't already a platform user of any status —
-  the `invitationWouldAddNewUser` predicate). Projected `usersLimit` (never a live Autumn call). Throws
+  the `wouldAddNewUser` predicate). Projected `usersLimit` (never a live Autumn call). Throws
   `ErrorCode.QUOTA_EXCEEDED` (metric `USERS`). See ADR-0010.
   - **Adding/inviting + reactivation** → `checkUsersExceededLimit` (`usedSeats + additionalSeatsNeeded >
     min(usersLimit, scheduledUsersLimit)` — the scheduled term binds only while a plan change is scheduled,
@@ -108,25 +108,26 @@ Billable dimensions:
 ## Billing page UI (seats)
 The billing page (`app/routes/platform/billing/index.tsx`) shows a **Users** `BillingSection`
 directly **under the Credits section**, mirroring the Credits layout: a seat-count card (used vs
-`usersLimit`, progress bar) plus a "Manage seats" control (set total extra seats, priced from
-`topUpFeatures`, guarded by the active-user floor with a link to Platform → Users). The section is
-gated on `usersLimit` appearing in `info.topUpFeatures` (plan-driven — any plan version that prices a
+`usersLimit`, progress bar) plus a "Manage seats" control (set total extra seats, priced from the
+overview's `nonConsumableFeatures`, guarded by the active-user floor with a link to Platform → Users). The section is
+gated on the overview carrying a priced `usersLimit` item (`BillingOverview.nonConsumableFeatures` +
+`includedSeats`/`additionalSeats` — plan-driven: any plan version that prices a
 `usersLimit` prepaid item, and not trialing). The action calls the `useUnconsumableProductTopup` hook
-(`hooks/billing-hooks.ts`) → `topUpUnconsumableFeature` seam.
+(`hooks/billing-hooks.ts`) → `adjustUnconsumableFeatureQuantity` seam.
 
 ## Key Files
 - `packages/server/api/src/app/ee/platform/platform-plan/platform-plan.service.ts` — limit enforcement (`checkUsersExceededLimit`), credential accessors
-- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers/autumn-billing.ts` — EE `BillingProvider` impl (`topUpUnconsumableFeature` seat change, overview, entitlement projection)
-- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers/autumn-utils.ts` — console client, projection (`mapEntitlementsToPlanLimits`), `toppableFeatures`
+- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers/autumn-billing.ts` — EE `BillingProvider` impl (`adjustUnconsumableFeatureQuantity` seat change, overview, entitlement projection)
+- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers/autumn-utils.ts` — console client, projection (`mapAutumnFeaturesToPlatformPlan`), overview feature lists (`consumableFeatures`/`nonConsumableFeatures`)
 - `packages/server/api/src/app/ee/platform/platform-plan/platform-plan.controller.ts` — billing routes (checkout, top-ups, portal)
 - `packages/core/shared/src/lib/ee/billing/index.ts` — plan constants, top-up/checkout schemas
 - `packages/core/shared/src/lib/management/platform/platform.model.ts` — `AutumnFeatureId`, `ToppableFeature`, `AutoTopUpConfig`, `usersLimit`
 - `packages/web/src/features/billing/` — subscription info, AI-credit usage, top-up dialogs; seat control: `components/feature-usage/users-card.tsx`, `components/feature-usage/manage-seats-dialog.tsx`, `useUnconsumableProductTopup` hook, Users `BillingSection` in `app/routes/platform/billing/index.tsx`
-- Seat seam: `platform/billing-provider.ts` (`topUpUnconsumableFeature`, `checkUsersExceededLimit` on the CE/EE seam), `ee/.../platform-plan.service.ts` (`assertSeatsNotBelowActiveUsers` on downgrade + cancel + seat-decrease; `checkUsersExceededLimit`), `user-service.ts` (`countActiveByPlatformId`, reactivation guard), controller `POST /v1/platform-billing/unconsumable-product-topups/checkout` (refreshes entitlements when the change applies immediately), console `POST /api/billing/unconsumable-topup` → `updateSubscription`
+- Seat seam: `platform/billing-provider.ts` (`adjustUnconsumableFeatureQuantity`, `checkUsersExceededLimit` on the CE/EE seam), `ee/.../platform-plan.service.ts` (`assertSeatsNotBelowActiveUsers` on downgrade + cancel + seat-decrease; `checkUsersExceededLimit`), `user-service.ts` (`countActiveByPlatformId`, reactivation guard), controller `POST /v1/platform-billing/unconsumable-feature-quantity` (refreshes entitlements when the change applies immediately), console `POST /api/v1/billing/unconsumable-feature-quantity` → `updateSubscription`
 - Downgrade/seat-decrease deactivation flow: `packages/web/src/features/billing/components/feature-usage/deactivate-users-dialog.tsx` (proactive trigger from `plan-selector.tsx` — paid downgrade + drop-to-Free — and `manage-seats-dialog.tsx`, whose hard floor clamp is replaced by this flow); reuses the platform users list query + `platformUserApi.update`. Target included seats surfaced via new `PurchasablePlan.includedSeats` (`packages/core/shared/src/lib/ee/billing/index.ts`, populated by the console catalog mapper).
 - Global error routing: `packages/web/src/app/query-client.ts` `MutationCache.onError` now defers to a mutation's own `onError` (so `QUOTA_EXCEEDED` is remediated per call site — add-seats vs deactivate — instead of always force-opening the upgrade dialog).
-- Seat reservation (ADR-0010): `platform-plan.service.ts` (`countUsedSeats` = active + reserved pending; `checkUsersExceededLimit` takes the `platform_plan` `FOR UPDATE` lock + `additionalSeatsNeeded`; `assertSeatsNotBelowActiveUsers` uses `countUsedSeats`); `user-invitation.service.ts` (`INVITATION_EXPIRY_SECONDS` shared constant, `getInvitationExpiryCutoff`, `countAdditionalSeatsNeeded`, `invitationWouldAddNewUser`, `createInvitationRecord`/`finalizeInvitation` split so SMTP/JWT run outside the lock); `user-invitation.module.ts` (invite endpoint wraps seat-check + create in one `transaction`); `user-service.ts` (reactivation wraps check + status-flip in the same locked transaction); `platform/billing-provider.ts` (`checkUsersExceededLimit({ platformId, entityManager })` seam); `platform.model.ts` (`PlatformUsage.activeUsers` + `invitedSeats`). Frontend: `users-card.tsx` (active/invited breakdown), `out-of-seats-dialog.tsx` (breakdown copy + Manage-invitations link to `/platform/users`), `deactivate-users-dialog.tsx` (pending-invites revoke section via `usePlatformInvitations` + `userInvitationApi.delete`), seat-count invalidation in `platform-user-hooks.ts` `useUpdateUserStatus`.
-- Console (`/home/abdul/work/console`) `packages/server/api/src/app/modules/billing/` — bootstrap, migrate, checkout, `unconsumable-topup` (→ `autumn-client.updateSubscriptionQuantity`), `toppable-features` (version-accurate, trial-gated via `getBaseSubscriptions`), `auto-topup` (merges existing rules), master-key ops. **No seat-usage push / no console-side seat check** — enforcement is AP DB-authoritative (ADR-0009).
+- Seat reservation (ADR-0010): `platform-plan.service.ts` (`countUsedSeats` = active + reserved pending; `checkUsersExceededLimit` takes the `platform_plan` `FOR UPDATE` lock + `additionalSeatsNeeded`; `assertSeatsNotBelowActiveUsers` uses `countUsedSeats`); `user-invitation.service.ts` (`INVITATION_EXPIRY_SECONDS` shared constant, `getInvitationExpiryCutoff`, `countAdditionalSeatsNeeded`, `wouldAddNewUser`, `createInvitationRecord`/`finalizeInvitation` split so SMTP/JWT run outside the lock); `user-invitation.module.ts` (invite endpoint wraps seat-check + create in one `transaction`); `user-service.ts` (reactivation wraps check + status-flip in the same locked transaction); `platform/billing-provider.ts` (`checkUsersExceededLimit({ platformId, entityManager })` seam); `platform.model.ts` (`PlatformUsage.activeUsers` + `invitedSeats`). Frontend: `users-card.tsx` (active/invited breakdown), `out-of-seats-dialog.tsx` (breakdown copy + Manage-invitations link to `/platform/users`), `deactivate-users-dialog.tsx` (pending-invites revoke section via `usePlatformInvitations` + `userInvitationApi.delete`), seat-count invalidation in `platform-user-hooks.ts` `useUpdateUserStatus`.
+- Console (`/home/abdul/work/console`) `packages/server/api/src/app/modules/billing/` — bootstrap, migrate, checkout, `unconsumable-feature-quantity` (→ `autumn-client.updateSubscriptionQuantity`), overview feature lists (`consumableFeatures`/`nonConsumableFeatures`, version-accurate, trial-gated via `getBaseSubscriptions`), `auto-topup` (merges existing rules), master-key ops. **No seat-usage push / no console-side seat check** — enforcement is AP DB-authoritative (ADR-0009).
 
 ## Edition Availability
 Enterprise (self-hosted, licensed) and Cloud. Community is unbilled (`OPEN_SOURCE_PLAN`, no-op provider).

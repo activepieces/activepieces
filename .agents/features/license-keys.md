@@ -17,8 +17,9 @@ flags on the key — the console owns license data and Autumn owns entitlements.
 - `packages/server/api/src/app/ee/platform/platform-plan/platform-plan.controller.ts` — `POST /v1/platform-billing/activate`
   (license key in body; platformId from principal)
 - `packages/server/api/src/app/platform/billing-provider.ts` — `activateLicense(params)` seam (CE no-op)
-- `packages/server/api/src/app/ee/platform/platform-plan/autumn.ts` — EE `activateLicense` impl + `activateOnConsole`
-  helper (`POST {console}/api/billing/activate`, Bearer license key)
+- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers/autumn-billing.ts` — EE `activateLicense` impl
+- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers/autumn-utils.ts` — `autumnConsole.activate`
+  helper (`POST {console}/api/v1/billing/activate`, Bearer license key)
 - `packages/web/src/features/billing/components/activate-license-dialog.tsx` — activation dialog
 - `packages/web/src/api/platforms-api.ts` — `activateLicenseKey()` → the activate endpoint
 - `packages/web/src/hooks/platform-hooks.ts` — `useUpdateLisenceKey` mutation
@@ -29,11 +30,11 @@ EE + Cloud (the activate seam is CE no-op). The `licenseKey` column on `platform
 
 ## Activation flow
 1. User enters a license key in `activate-license-dialog` → `POST /v1/platform-billing/activate { licenseKey }`.
-2. `activateLicense`: save `platform_plan.licenseKey` → `activateOnConsole({ licenseKey, platformId })` (Bearer key) →
+2. `activateLicense`: save `platform_plan.licenseKey` → `autumnConsole.activate({ licenseKey, platformId })` (Bearer key) →
    `setAutumnCredentials` (autumnCustomerId + scoped key) → `refreshEntitlements`.
-3. Console `/api/billing/activate` resolves the key to an Autumn customer (idempotent: returns existing creds, else
+3. Console `/api/v1/billing/activate` resolves the key to an Autumn customer (idempotent: returns existing creds, else
    creates customer + mints a scoped key + attaches the license's plan with the comp term), and returns the creds.
-4. Plan limits + feature flags are projected from Autumn via `mapEntitlementsToPlanLimits` — NOT from the key.
+4. Plan limits + feature flags are projected from Autumn via `mapAutumnFeaturesToPlatformPlan` — NOT from the key.
 
 ## Domain Terms
 

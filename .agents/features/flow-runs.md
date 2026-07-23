@@ -124,7 +124,7 @@ On a terminal run, `flow-run-hooks.ts#onFinish` does two billing things, each wr
 
 **2. Per-run credit** — for a PRODUCTION run whose status is not `QUOTA_EXCEEDED`, `trackProductionRunCredit` charges **+1 `apCredit`**: `billingProvider.trackCredits({ source: FLOW_RUN, value: 1, idempotencyKey: <runId>:run })`. So a production run burns `1 + messages + toolCalls`.
 
-A separate scheduled EE job (`ee/flow-run-tracking/`, `SystemJobName.FLOW_RUN_TRACKING`) emits `BillingEvents.TOTAL_RUNS_PER_DAY` per licensed platform once a day. Events are captured in batches of `BILLING_EVENTS_FLUSH_BATCH_SIZE` platforms and flushed explicitly to PostHog after each batch, so at most one batch is buffered at a time — preventing the client's in-memory queue from overflowing (and silently dropping events) on cloud deployments with thousands of platforms.
+A separate scheduled EE job (`ee/billing-usage-report/`, `billing-usage-report-service.ts`; `SystemJobName.BILLING_USAGE_REPORT` = `'billing-usage-report'`, registered in `billing-usage-report-module.ts`) emits `BillingEvents.TOTAL_RUNS_PER_DAY` per licensed platform once a day. Events are captured in batches of `BILLING_EVENTS_FLUSH_BATCH_SIZE` platforms and flushed explicitly to PostHog after each batch, so at most one batch is buffered at a time — preventing the client's in-memory queue from overflowing (and silently dropping events) on cloud deployments with thousands of platforms.
 
 ## Frontend Integration
 

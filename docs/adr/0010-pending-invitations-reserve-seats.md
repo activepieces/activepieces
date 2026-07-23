@@ -17,7 +17,7 @@ proactively at invite time.
 - **`usedSeats = activeUsers + reservedInvites`.** `reservedInvites` = `COUNT(DISTINCT
   lower(email))` of non-expired `user_invitation` rows with `status IN (PENDING, ACCEPTED)` whose email does
   **not** already resolve to a platform user of **any status** (predicate identical to
-  `invitationWouldAddNewUser`). Both PLATFORM and PROJECT invites count (both create a platform User on
+  `wouldAddNewUser`). Both PLATFORM and PROJECT invites count (both create a platform User on
   accept). `ACCEPTED` rows are counted because an accepted invitation reserves a seat until the User is
   provisioned (and the row deleted) — this covers both the invitee-has-no-identity-yet case and the
   auto-accept path (see the API-key bypass consequence below). Expiry uses the single

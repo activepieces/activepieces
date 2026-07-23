@@ -13,7 +13,7 @@ A workspace within a platform that contains flows, tables, connections, and memb
 _Avoid_: workspace, environment
 
 **PlatformPlan**:
-The 40+ column entity controlling feature flags, quotas, billing state, and AI credit configuration per platform.
+The 35+ column entity controlling feature flags, quotas, billing state, and AI credit configuration per platform.
 _Avoid_: plan, subscription
 
 **Edition**:
@@ -38,7 +38,7 @@ A platform-scoped authentication token (hashed, `sk-` prefixed) for programmatic
 _Avoid_: service key, token
 
 **Custom Domain**:
-A white-label domain mapped to a platform, verified via DNS (CNAME/TXT) with PENDING/ACTIVE lifecycle.
+Removed feature — a white-label domain mapped to a platform; the column is kept only for backwards compatibility.
 
 **Signing Key**:
 An RSA-4096 key pair used to sign/verify JWTs for the embedded authentication (Managed Auth) flow.
@@ -48,7 +48,7 @@ A platform User slot. User-facing term for the `users`/`usersLimit` billing dime
 _Avoid_: license, user license (in billing UI); use "seat".
 
 **Top-up**:
-A purchase that raises a billable quantity beyond the plan's base allotment. Two kinds, split by feature type: a **consumable** top-up (AI Credits) is additive one-time balance; an **unconsumable** top-up (Seats, later Projects) is a recurring prepaid add-on set to a target total quantity — increases apply immediately (prorated), decreases schedule at period end.
+A purchase that raises a billable quantity beyond the plan's base allotment. Two kinds, split by feature type: a **consumable** top-up (AI Credits) is additive one-time balance; an **unconsumable** top-up (Seats, later Projects) is a recurring prepaid add-on set to a target total quantity — increases apply immediately (prorated); decreases are currently also immediate with a prorated refund (interim per ADR 0009; period-end scheduling is the intended, parked design).
 _Avoid_: add-on (ambiguous), upgrade (that is a plan switch).
 
 **Active-user floor**:

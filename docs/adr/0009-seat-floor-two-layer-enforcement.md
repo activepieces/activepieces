@@ -22,10 +22,11 @@ over-floor plan changes. That was abandoned:
 
 Enforce the floor in **one place: the AP server, against its own database.**
 
-- **Adding/inviting** is gated by `checkUsersExceededLimit` — `countActiveByPlatformId` vs the projected
-  `platform_plan.usersLimit` (throws `QUOTA_EXCEEDED` / metric `USERS`). Wired on invite and on
-  reactivation (INACTIVE→ACTIVE).
-- **Lowering** the limit is gated by `assertSeatsNotBelowActiveUsers` — same DB active-user count vs the
+- **Adding/inviting** is gated by `checkUsersExceededLimit` — used seats vs the projected limit (throws
+  `QUOTA_EXCEEDED` / metric `USERS`). Wired on invite and on reactivation (INACTIVE→ACTIVE). The count
+  and limit bases later evolved: the count is `usedSeats` = active users + reserved invites (ADR 0010),
+  and the limit is `effectiveUsersLimit` = `min(usersLimit, scheduledUsersLimit)` (ADR 0013).
+- **Lowering** the limit is gated by `assertSeatsNotBelowActiveUsers` — the same `usedSeats` count vs the
   target seat limit — on plan downgrade (`/checkout`), cancel-to-Free, and seat decrease.
 - The UI is **proactive**: before a downgrade/decrease it opens a deactivate-users dialog so the admin
   frees seats first; the backend guard is the authoritative check.

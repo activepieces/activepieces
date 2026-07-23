@@ -1,7 +1,7 @@
 # AI Providers
 
 ## Summary
-The AI Providers module lets platform admins configure one or more LLM backends (OpenAI, Anthropic, Google, Azure, OpenRouter, Cloudflare, or a custom OpenAI-compatible endpoint) for use by AI pieces inside flows. It also supports an auto-provisioned "Activepieces" provider backed by OpenRouter when the platform's `aiCreditsEnabled` plan flag is set, complete with a Stripe-integrated credit top-up system and monthly reset via a system job.
+The AI Providers module lets platform admins configure one or more LLM backends (OpenAI, Anthropic, Google, Azure, OpenRouter, Bedrock, Mistral, Cloudflare, or a custom OpenAI-compatible endpoint) for use by AI pieces inside flows. It also supports an auto-provisioned "Activepieces" provider backed by OpenRouter when the platform's `aiCreditsEnabled` plan flag is set; its credit balance and auto-top-up are metered and driven by Autumn billing (see Credit System).
 
 ## Key Files
 - `packages/server/api/src/app/ai/` — backend module (controller, service, entity)
@@ -26,7 +26,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 > Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
 
 - **AIProvider**: A platform-scoped entity linking an LLM vendor's credentials to the platform.
-- **AIProviderName**: Enum of supported vendors (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `cloudflare-gateway`, `custom`, `activepieces`).
+- **AIProviderName**: Enum of supported vendors (`openai`, `anthropic`, `google`, `azure`, `openrouter`, `bedrock`, `mistral`, `cloudflare-gateway`, `custom`, `activepieces`).
 - **EncryptedObject**: The `auth` field is AES-256-encrypted at rest; decrypted only for engine access.
 - **AI Credits**: Platform-level usage budget (1000 credits = $1 USD) metered through OpenRouter; drives the ACTIVEPIECES auto-provision flow.
 - **aiCreditsEnabled**: Platform plan flag that triggers auto-provisioning of the ACTIVEPIECES provider.
@@ -36,7 +36,7 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 
 **AIProvider**: id, displayName, platformId (UNIQUE with provider), provider (AIProviderName enum), auth (EncryptedObject), config (JSON). Relation: platform (CASCADE).
 
-## Supported Providers (8)
+## Supported Providers (10)
 
 | Provider | Auth Fields | Notes |
 |----------|------------|-------|
@@ -45,6 +45,8 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 | GOOGLE | apiKey | Gemini models |
 | AZURE | apiKey, deploymentName, instanceName | Azure OpenAI |
 | OPENROUTER | apiKey | 200+ models |
+| BEDROCK | accessKeyId, secretAccessKey (+ region in config) | AWS Bedrock |
+| MISTRAL | apiKey | Mistral models |
 | CLOUDFLARE | apiKey, accountId, gatewayId | Proxied via Cloudflare Workers AI |
 | CUSTOM | apiKey, baseUrl | OpenAI-compatible (LM Studio, Ollama) |
 | ACTIVEPIECES | apiKey, apiKeyHash (auto-provisioned) | Uses OpenRouter, managed by platform |
@@ -61,7 +63,8 @@ Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` en
 1. `getOrCreateActivePiecesProviderAuthConfig()` auto-creates provider
 2. `enrichWithKeysIfNeeded()` calls OpenRouter API to create API key
 3. Key minted with a fixed spend guardrail of **$1000 / month** (`limit: 1000, limit_reset: 'monthly'`) — a hard ceiling against runaway cost, independent of the Autumn-metered credit balance. See `MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD` in `ai-provider-service.ts`.
-4. Schedules `AI_CREDIT_UPDATE_CHECK` system job for auto-renewal and top-up
+
+No system job is scheduled — `enrichWithKeysIfNeeded` only provisions the key; credit renewal/top-up is handled by Autumn (see Credit System).
 
 > **Older keys predate the monthly guardrail** (they were minted with a lifetime `limit: 20` and no reset). Normalize them with the one-off backfill script below **before deploying** the monthly-limit change.
 
@@ -70,8 +73,7 @@ Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` en
 - Rate: 1000 credits = $1 USD
 - OpenRouter meters usage per API key
 - Usage cached 180 seconds
-- Monthly reset of included credits via system job
-- Auto top-up: when remaining < threshold, creates Stripe invoice
+- Credit balance and auto-top-up are driven by Autumn billing controls (`autoTopUps` in `autumn-billing.ts`) — there is no direct Stripe invoicing and no monthly credit-reset system job; the only "monthly" mechanism is the managed OpenRouter key's `limit_reset` guardrail
 
 ## Operational: OpenRouter key-limit backfill (run before deployment)
 
@@ -206,8 +208,8 @@ Reads are open to any platform member (`GET /` / `/:provider/models` allow USER 
 - `GET /:provider/config` — get provider config + decrypted auth (engine-only access). For the managed `ACTIVEPIECES` provider this route is also the **credit gate**: `assertCreditsAndAppSumoNotExceeded` (`platform/billing-provider.ts`) throws `QUOTA_EXCEEDED` when the platform's credit or AppSumo balance is blocked. The AI piece fetches config on every AI action execution, so the gate fires per AI call — including every iteration of a loop — but usage is only metered post-run/post-message, so a run's own in-flight spend is invisible to it. See `docs/adr/0012-managed-ai-metering-moves-to-centralized-worker-execution.md`.
 - `GET /:provider/models` — list available models (cached)
 - `POST /` — create provider (platform-admin only; validates credentials first)
-- `POST /:id` — update provider (platform-admin only; re-validates if auth changed, cannot update ACTIVEPIECES)
-- `DELETE /:id` — delete provider (platform-admin only; cannot delete ACTIVEPIECES)
+- `POST /:id` — update provider (platform-admin only; re-validates if auth changed. For ACTIVEPIECES, auth/config/displayName updates are blocked by an early return, but toggling `enabledForChat` IS allowed)
+- `DELETE /:id` — delete provider (platform-admin only; ACTIVEPIECES can be deleted too — deletion is self-healing since `listProviders` auto-creates the managed row again)
 
 ## Engine Integration
 

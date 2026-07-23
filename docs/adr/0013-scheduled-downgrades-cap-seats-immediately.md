@@ -24,9 +24,10 @@ and clears itself when the schedule is reactivated away or applies, riding the e
 triggers (post-cancel/reactivate refresh + 15-minute lazy pull sync).
 
 UX: the out-of-seats dialog branches on billing-overview state (`cancelAt`/`scheduledPlanName`)
-to show downgrade-specific copy with a "Keep current plan" remediation; the Users card shows the
-pending cap ("Drops to {n} seats on {date}"); the manage-seats control is hidden while a schedule
-exists (purchased extras could not lift the cap).
+to show downgrade-specific copy with a "Keep current plan" remediation; the Users card reflects the
+pending cap (the seats header uses `effectiveTotal` and a note explains the limit comes from the
+scheduled plan); the manage-seats control is hidden while a schedule exists (purchased extras could
+not lift the cap).
 
 ## Considered options
 
