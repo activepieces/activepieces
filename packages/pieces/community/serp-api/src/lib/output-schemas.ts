@@ -279,6 +279,38 @@ export const searchGoogleTrendsAiOutputSchema: OutputSchema = {
             },
           ],
         },
+        {
+          key: 'compared_breakdown_by_region',
+          label: 'Compared Breakdown By Region',
+          labelKey: 'location',
+          listItems: [
+            { key: 'geo', label: 'Geo Code' },
+            { key: 'location', label: 'Location' },
+            { key: 'max_value_index', label: 'Max Value Index', format: 'number' },
+            {
+              key: 'values',
+              label: 'Values',
+              labelKey: 'query',
+              listItems: [
+                { key: 'query', label: 'Query' },
+                { key: 'value', label: 'Value' },
+                { key: 'extracted_value', label: 'Extracted Value', format: 'number' },
+              ],
+            },
+          ],
+        },
+        {
+          key: 'interest_by_region',
+          label: 'Interest By Region',
+          labelKey: 'location',
+          listItems: [
+            { key: 'geo', label: 'Geo Code' },
+            { key: 'location', label: 'Location' },
+            { key: 'max_value_index', label: 'Max Value Index', format: 'number' },
+            { key: 'value', label: 'Value' },
+            { key: 'extracted_value', label: 'Extracted Value', format: 'number' },
+          ],
+        },
       ],
     },
   ],
@@ -777,3 +809,11 @@ export const searchGoogleLocalServicesOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const googleSearchOutputSchema: OutputSchema = searchGoogleWebAiOutputSchema;
+
+export const googleNewsSearchOutputSchema: OutputSchema = searchGoogleNewsAiOutputSchema;
+
+export const youtubeSearchOutputSchema: OutputSchema = searchYoutubeAiOutputSchema;
+
+export const googleTrendsSearchOutputSchema: OutputSchema = searchGoogleTrendsAiOutputSchema;
