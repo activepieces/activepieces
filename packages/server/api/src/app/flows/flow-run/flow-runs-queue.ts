@@ -161,6 +161,17 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
         await queue.add(params)
     },
 
+    async addIfNoPendingWrite(params: RunsMetadataUpsertData): Promise<boolean> {
+        const written = await queue.addIfNoPendingWrite(params)
+        if (written) {
+            log.info({
+                flowRun: { id: params.id },
+                project: { id: params.projectId },
+            }, '[runsMetadataQueue#addIfNoPendingWrite] Adding runs metadata to queue')
+        }
+        return written
+    },
+
     get(): Queue<RunsMetadataJobData> {
         return queue.get()
     },

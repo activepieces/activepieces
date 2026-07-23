@@ -98,6 +98,32 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         }
     },
 
+    async mergeIfKeyAbsent<T extends Record<string, unknown>>(key: string, value: T, ttlInSeconds?: number): Promise<boolean> {
+        const redisClient = await getRedisClient()
+        const serializedFields: string[] = []
+        for (const [field, fieldValue] of Object.entries(value)) {
+            if (isNil(fieldValue)) {
+                continue
+            }
+            serializedFields.push(field, JSON.stringify(fieldValue))
+        }
+        if (serializedFields.length === 0) {
+            return false
+        }
+        const lua = `
+            if redis.call('EXISTS', KEYS[1]) == 1 then
+                return 0
+            end
+            redis.call('HSET', KEYS[1], unpack(ARGV, 2))
+            if tonumber(ARGV[1]) > 0 then
+                redis.call('EXPIRE', KEYS[1], ARGV[1])
+            end
+            return 1
+        `
+        const result = await redisClient.eval(lua, 1, key, String(ttlInSeconds ?? 0), ...serializedFields)
+        return result === 1
+    },
+
     async deleteKeyIfFieldValueMatches(key: string, field: string, expectedValue: unknown): Promise<void> {
         const redisClient = await getRedisClient()
         const lua = `

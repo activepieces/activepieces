@@ -135,6 +135,11 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             name: 'idx_run_triggered_by',
             columns: ['triggeredBy'],
         },
+        {
+            name: 'idx_run_updated_where_status_running',
+            columns: ['updated'],
+            where: 'status = \'RUNNING\'',
+        },
     ],
     relations: {
         triggeredByUser: {
