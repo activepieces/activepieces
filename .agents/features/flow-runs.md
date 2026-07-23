@@ -10,7 +10,7 @@ Flow Runs records every execution of a flow, tracking its full lifecycle from qu
 - Approval pieces that link to the `/confirm` page via a single "Review & Respond" button (`${waitpoint.resumeUrl}/confirm`, extra context params like Telegram's `chat_id` appended and preserved through to resume): `gmail/.../request-approval-in-email.ts`, `microsoft-outlook/.../request-approval-send-email.ts` (email), and `telegram-bot`, `discord`, `microsoft-teams` request-approval actions (browser `url:` buttons). **Slack is intentionally unchanged** — its buttons are interactive (`action_id`/`value`) and resume via a server-side `POST` from the Slack webhook (`slack/src/index.ts`), so it is not browser-GET-prefetchable.
 - `packages/server/api/src/app/flows/flow-run/ai-usage-extractor.ts` — pure extractor that walks a finished run's step outputs and counts AI-piece usage (messages + agent tool calls) grouped per provider/model
 - `packages/server/api/src/app/flows/flow-run/ai-usage-tracker.ts` — orchestrates extraction and emits the `ai_usage_per_run` PostHog billing event (see Side Effects → AI Usage Billing)
-- `packages/server/api/src/app/helper/telemetry.utils.ts` — `captureBillingEvent` (PostHog capture keyed by license key) + `BillingEvents` enum
+- `packages/server/api/src/app/helper/telemetry.utils.ts` — `captureBillingEvent` (PostHog capture keyed by license key) + `BillingEvents` enum + `flushBillingEvents()` + `BILLING_EVENTS_FLUSH_BATCH_SIZE`
 - `packages/core/shared/src/lib/automation/flow-run/flow-run.ts` — `FlowRun` type
 - `packages/core/shared/src/lib/automation/flow-run/dto/` — list, retry, bulk request types
 - `packages/core/shared/src/lib/automation/flow-run/execution/` — `StepOutput`, `FlowExecution`, `ExecutionOutput`
@@ -119,7 +119,7 @@ On every terminal run, `flow-run-hooks.ts#onFinish` calls `aiUsageTracker(log).t
 5. `aiUsageExtractor.extractAiUsage(...)` walks the steps — recursing into loop iterations, fetching `FLOW_RUN_LOG_SLICE` files for sliced agent outputs, falling back to flow-version settings when the logged model is `**REDACTED**`, and (in single-step test mode) scoping to `flowRun.stepNameToTest` so testing one AI step doesn't bill the others. Each `@activepieces/piece-ai` step counts as one message; `run_agent` additionally counts its tool-call blocks.
 6. If any usage exists, emits `BillingEvents.AI_USAGE_PER_RUN` to PostHog (distinctId = license key) with per-`(provider, model)` breakdown, `messages`, `toolCalls`, edition, ids, status, and `environment`.
 
-A separate scheduled EE job (`ee/flow-run-tracking/`, `SystemJobName.FLOW_RUN_TRACKING`) emits `BillingEvents.TOTAL_RUNS_PER_DAY` per licensed platform once a day.
+A separate scheduled EE job (`ee/flow-run-tracking/`, `SystemJobName.FLOW_RUN_TRACKING`) emits `BillingEvents.TOTAL_RUNS_PER_DAY` per licensed platform once a day. Events are captured in batches of `BILLING_EVENTS_FLUSH_BATCH_SIZE` platforms and flushed explicitly to PostHog after each batch, so at most one batch is buffered at a time — preventing the client's in-memory queue from overflowing (and silently dropping events) on cloud deployments with thousands of platforms.
 
 ## Frontend Integration
 
