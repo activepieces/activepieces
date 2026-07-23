@@ -92,9 +92,14 @@ export const ActionRunEntity = new EntitySchema<ActionRunSchema>({
         },
     },
     indices: [
+        // Partial on `archivedAt IS NULL`: the default list + bulkArchive always filter out
+        // archived rows, so scoping the index to live rows keeps it small and lets the scan
+        // skip archived rows instead of reading-then-discarding them. The opt-in includeArchived
+        // view reads all rows and does not use these — acceptable, it is low-frequency.
         {
-            name: 'idx_action_run_project_id_created_archived_at',
-            columns: ['projectId', 'created', 'archivedAt'],
+            name: 'idx_action_run_project_id_created',
+            columns: ['projectId', 'created'],
+            where: '"archivedAt" IS NULL',
         },
         {
             name: 'idx_action_run_created',
@@ -103,14 +108,17 @@ export const ActionRunEntity = new EntitySchema<ActionRunSchema>({
         {
             name: 'idx_action_run_project_id_status_created',
             columns: ['projectId', 'status', 'created'],
+            where: '"archivedAt" IS NULL',
         },
         {
             name: 'idx_action_run_project_id_source_created',
             columns: ['projectId', 'source', 'created'],
+            where: '"archivedAt" IS NULL',
         },
         {
             name: 'idx_action_run_project_id_user_id_created',
             columns: ['projectId', 'userId', 'created'],
+            where: '"archivedAt" IS NULL',
         },
         {
             name: 'idx_action_run_project_id_piece_name_created',
