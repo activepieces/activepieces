@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
+import { getCrawlResultsActionOutputSchema } from '../output-schemas';
 
 export const crawlResults = createAction({
   auth: firecrawlAuth,
   name: 'crawlResults',
   displayName: 'Crawl Results',
   description: 'Get the results of a crawl job.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: getCrawlResultsActionOutputSchema,
   aiMetadata: { description: 'Looks up the status and accumulated page results of a previously started crawl job by its crawl ID. Choose this to poll or fetch the output of a Crawl run that delivered an ID rather than waiting inline. Requires a valid crawl ID; it is a read-only lookup, so repeating the call is safe.', idempotent: true },
   props: {
     crawlId: Property.ShortText({

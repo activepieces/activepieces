@@ -1,13 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient, createDropdownOptions, listDatasets } from '../common';
+import { getDatasetItemsActionOutputSchema } from '../output-schemas';
 
 export const getDatasetItems = createAction({
   name: 'getDatasetItems',
   auth: apifyAuth,
   displayName: 'Get Dataset Items',
   description: 'Retrieves items from a dataset.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: getDatasetItemsActionOutputSchema,
   aiMetadata: { description: 'Reads the stored result rows from an Apify dataset by dataset ID, with optional offset/limit paging. Use this to fetch the scraped/extracted output of an actor or task run once you know its dataset ID. Read-only and idempotent; it returns existing items without modifying them.', idempotent: true },
   props: {
     datasetId: Property.Dropdown({
@@ -53,6 +55,9 @@ export const getDatasetItems = createAction({
     return {
       items: response.items,
       count: response.count,
+      total: response.total,
+      offset: response.offset,
+      limit: response.limit,
       datasetId,
     };
   }
