@@ -12,7 +12,7 @@ export const discordDeleteGuildRole = createAction({
   name: 'deleteGuildRole',
   displayName: 'Delete guild role',
   description: 'Deletes the specified role from the specified guild',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Permanently deletes a role from a guild, identified by guild ID and role ID, with an optional audit-log reason; the role is removed from all members. Use to remove an unwanted role. Requires the bot to have Manage Roles permission; idempotent in end state, since deleting an already-removed role leaves it gone.', idempotent: true },
   props: {
     guild_id: discordCommon.guilds,
@@ -34,10 +34,18 @@ export const discordDeleteGuildRole = createAction({
       },
     };
 
-    const res = await httpClient.sendRequest(request);
-
-    return {
-      success: res.status === 204,
-    };
+    try {
+      const res = await httpClient.sendRequest(request);
+      return {
+        success: res.status === 204,
+      };
+    } catch (error: any) {
+      // Discord returns 404 (Unknown Role, 10011) when the role is already
+      // gone. Treat that as success so the action is idempotent.
+      if (error?.response?.status === 404) {
+        return { success: true, alreadyAbsent: true };
+      }
+      throw error;
+    }
   },
 });
