@@ -157,6 +157,15 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             return savedPiece
         },
 
+        async officialPieceExists({ name }: { name: string }): Promise<boolean> {
+            const existing = await pieceRepos().findOneBy({
+                name,
+                platformId: IsNull(),
+                pieceType: PieceType.OFFICIAL,
+            })
+            return !isNil(existing)
+        },
+
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
             const results = await Promise.all(pieces.map((piece) =>
                 pieceRepos().delete({ name: piece.name, version: piece.version }),
