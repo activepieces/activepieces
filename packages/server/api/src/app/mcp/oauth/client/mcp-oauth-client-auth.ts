@@ -7,11 +7,7 @@ function decodeCredentialPart(value: string): string {
     return result.error ? value : result.data
 }
 
-function parseBasicHeader(authorizationHeader: string | undefined): BasicCredentials | null {
-    const [scheme, encoded] = authorizationHeader?.split(' ') ?? []
-    if (scheme?.toLowerCase() !== 'basic' || !encoded) {
-        return null
-    }
+function parseBasicPayload(encoded: string): BasicCredentials | null {
     const decoded = Buffer.from(encoded, 'base64').toString('utf8')
     const separatorIndex = decoded.indexOf(':')
     if (separatorIndex === -1) {
@@ -25,11 +21,14 @@ function parseBasicHeader(authorizationHeader: string | undefined): BasicCredent
 
 export const mcpOAuthClientAuth = {
     async authenticate({ authorizationHeader, clientId: bodyClientId, clientSecret: bodyClientSecret }: AuthenticateParams): Promise<AuthenticateResult> {
-        const basic = parseBasicHeader(authorizationHeader)
-        if (!isNil(basic) && !isNil(bodyClientSecret)) {
+        const [scheme, encoded] = authorizationHeader?.split(' ') ?? []
+        const basicHeaderPresent = scheme?.toLowerCase() === 'basic'
+
+        if (basicHeaderPresent && !isNil(bodyClientSecret)) {
             return { status: 'error', error: 'invalid_request', errorDescription: 'Multiple client authentication mechanisms' }
         }
 
+        const basic = basicHeaderPresent && encoded ? parseBasicPayload(encoded) : null
         const clientId = basic?.clientId ?? bodyClientId
         if (!clientId) {
             return { status: 'anonymous' }

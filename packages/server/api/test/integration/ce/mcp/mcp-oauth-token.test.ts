@@ -131,7 +131,7 @@ describe('MCP OAuth token endpoint', () => {
         expect(res.json().error).toBe('invalid_client')
     })
 
-    it('falls back to body credentials when the Authorization header is malformed', async () => {
+    it('rejects a malformed Basic header presented alongside a body secret as mixed auth', async () => {
         const client = await registerClient('client_secret_post')
         const { verifier, challenge } = generatePkce()
         const code = await seedAuthorizationCode(client.client_id, challenge)
@@ -146,6 +146,29 @@ describe('MCP OAuth token endpoint', () => {
                 code,
                 client_id: client.client_id,
                 client_secret: client.client_secret ?? '',
+                code_verifier: verifier,
+                redirect_uri: REDIRECT_URI,
+            }).toString(),
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.json().error).toBe('invalid_request')
+    })
+
+    it('ignores a malformed Basic header for a public client with no body secret', async () => {
+        const client = await registerClient('none')
+        const { verifier, challenge } = generatePkce()
+        const code = await seedAuthorizationCode(client.client_id, challenge)
+        const malformedHeader = 'Basic ' + Buffer.from('no-colon-here').toString('base64')
+
+        const res = await app.inject({
+            method: 'POST',
+            url: '/token',
+            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: malformedHeader },
+            payload: new URLSearchParams({
+                grant_type: 'authorization_code',
+                code,
+                client_id: client.client_id,
                 code_verifier: verifier,
                 redirect_uri: REDIRECT_URI,
             }).toString(),
