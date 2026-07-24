@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
@@ -71,6 +71,15 @@ const ApStepCanvasNode = React.memo(
       },
     });
 
+    // Radix's Popover closes the piece selector on pointerdown (outside click detection)
+    // before our own click handler runs, so isPieceSelectorOpened already reads false by
+    // the time handleStepClick fires for that same click. Snapshotting it on pointerdown
+    // (which always runs first) lets us tell "clicked to dismiss" apart from "clicked to open".
+    const wasPieceSelectorOpenedRef = useRef(isPieceSelectorOpened);
+    const handlePointerDown = () => {
+      wasPieceSelectorOpenedRef.current = isPieceSelectorOpened;
+    };
+
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
       preventDefault = true,
@@ -88,8 +97,12 @@ const ApStepCanvasNode = React.memo(
     const handleContextMenu = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
-      handleStepClick(e, false);
-      if (isRightSidebarOpen) {
+      selectStepByName(step.name, { preventPieceSelectorOpen: true });
+      setSelectedBranchIndex(null);
+      // The delayed re-dispatch below is untrusted; bail here so it can't schedule
+      // another one. Without this, an empty trigger (whose rightSidebar never opens)
+      // would re-dispatch itself every SIDEBAR_ANIMATION_DURATION forever.
+      if (isRightSidebarOpen || !e.nativeEvent.isTrusted) {
         return;
       }
       e.preventDefault();
@@ -143,7 +156,12 @@ const ApStepCanvasNode = React.memo(
             'hover:border-ring': !isSelected,
           },
         )}
-        onClick={(e) => handleStepClick(e)}
+        onPointerDown={handlePointerDown}
+        onClick={(e) => {
+          if (!wasPieceSelectorOpenedRef.current) {
+            handleStepClick(e);
+          }
+        }}
         key={step.name}
         ref={isPieceSelectorOpened ? null : setNodeRef}
         {...stepNodeDivAttributes}
@@ -173,7 +191,7 @@ const ApStepCanvasNode = React.memo(
                 <div
                   className="flex items-center justify-center h-full w-full"
                   onClick={(e) => {
-                    if (!isPieceSelectorOpened) {
+                    if (!wasPieceSelectorOpenedRef.current) {
                       handleStepClick(e);
                     }
                   }}
@@ -188,7 +206,7 @@ const ApStepCanvasNode = React.memo(
                 <div
                   className="flex items-center justify-center h-full w-full gap-[10px]"
                   onClick={(e) => {
-                    if (!isPieceSelectorOpened) {
+                    if (!wasPieceSelectorOpenedRef.current) {
                       handleStepClick(e);
                     }
                   }}
