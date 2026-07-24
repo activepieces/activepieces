@@ -1,12 +1,12 @@
-import { isNil } from '@activepieces/core-utils'
+import { chunk, chunkIntoParts, isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { FlowRunStatus, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { FlowRunStatus, LoopBatchMode, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
 import { flowExecutor } from './flow-executor'
 
 type LoopOnActionResolvedSettings = {
-    items: readonly unknown[]
+    items: unknown[]
 }
 
 export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
@@ -63,12 +63,18 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
 
         const firstLoopAction = action.firstLoopAction
 
+        const batching = action.settings.batching
+        const iterationItems = isNil(batching)
+            ? resolvedInput.items
+            : batching.mode === LoopBatchMode.ITEMS_PER_BATCH
+                ? chunk(resolvedInput.items, batching.size)
+                : chunkIntoParts(resolvedInput.items, batching.size)
 
-        for (let i = 0; i < resolvedInput.items.length; ++i) {
+        for (let i = 0; i < iterationItems.length; ++i) {
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })
 
             const testSingleStepMode = !isNil(constants.stepNameToTest)
-            stepOutput = stepOutput.setItemAndIndex({ item: resolvedInput.items[i], index: i + 1 })
+            stepOutput = stepOutput.setItemAndIndex({ item: iterationItems[i], index: i + 1 })
             const addEmptyIteration = !stepOutput.hasIteration(i)
             if (addEmptyIteration) {
                 stepOutput = stepOutput.addIteration()

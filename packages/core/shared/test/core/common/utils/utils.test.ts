@@ -1,6 +1,7 @@
 import {
     camelCase,
     chunk,
+    chunkIntoParts,
     insertAt,
     isEmpty,
     isEnumValue,
@@ -122,6 +123,34 @@ describe('chunk', () => {
 
     it('should return empty array for empty input', () => {
         expect(chunk([], 3)).toEqual([])
+    })
+})
+
+describe('chunkIntoParts', () => {
+    it('splits evenly when divisible', () => {
+        expect(chunkIntoParts([1, 2, 3, 4], 2)).toEqual([[1, 2], [3, 4]])
+    })
+
+    it('balances remainder across parts (10 into 3)', () => {
+        const result = chunkIntoParts([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 3)
+        expect(result).toHaveLength(3)
+        expect(result.map((p) => p.length)).toEqual([3, 3, 4])
+        expect(result.flat()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    })
+
+    it('produces exactly the requested number of parts when sparse (10 into 7)', () => {
+        const result = chunkIntoParts([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 7)
+        expect(result).toHaveLength(7)
+        expect(result.every((p) => p.length === 1 || p.length === 2)).toBe(true)
+        expect(result.flat()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    })
+
+    it('caps parts at item count', () => {
+        expect(chunkIntoParts([1, 2, 3], 5)).toEqual([[1], [2], [3]])
+    })
+
+    it('returns empty array for empty input', () => {
+        expect(chunkIntoParts([], 3)).toEqual([])
     })
 })
 

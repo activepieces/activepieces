@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, PropertyExecutionType, RouterExecutionType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, LoopOnItemsActionSettings, PieceAction, PropertyExecutionType, RouterExecutionType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
@@ -36,11 +36,13 @@ export function buildSimpleLoopAction({
     loopItems,
     firstLoopAction,
     skip,
+    batching,
 }: {
     name: string
     loopItems: string
     firstLoopAction?: FlowAction
     skip?: boolean
+    batching?: LoopOnItemsActionSettings['batching']
 }): LoopOnItemsAction {
     return {
         name,
@@ -49,6 +51,7 @@ export function buildSimpleLoopAction({
         skip: skip ?? false,
         settings: {
             items: loopItems,
+            batching,
         },
         firstLoopAction,
         valid: true,

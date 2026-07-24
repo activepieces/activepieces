@@ -152,6 +152,17 @@ export function chunk<T>(records: T[], size: number) {
     return chunks
 }
 
+export function chunkIntoParts<T>(records: T[], parts: number): T[][] {
+    const count = Math.min(parts, records.length)
+    const chunks: T[][] = []
+    for (let i = 0; i < count; i++) {
+        const start = Math.floor((i * records.length) / count)
+        const end = Math.floor(((i + 1) * records.length) / count)
+        chunks.push(records.slice(start, end))
+    }
+    return chunks
+}
+
 export function partition<T>(array: T[], predicate: (item: T, index: number, arr: T[]) => boolean): [T[], T[]] {
     const truthy: T[] = []
     const falsy: T[] = []

@@ -96,9 +96,18 @@ export const PieceActionSchema = z.object({
 })
 
 // Loop Items
+export enum LoopBatchMode {
+    ITEMS_PER_BATCH = 'ITEMS_PER_BATCH',
+    NUMBER_OF_BATCHES = 'NUMBER_OF_BATCHES',
+}
+
 export const LoopOnItemsActionSettings = z.object({
     ...commonActionSettings,
     items: z.string(),
+    batching: z.object({
+        mode: z.enum(LoopBatchMode),
+        size: z.number().int().min(1, 'batchSizeMin'),
+    }).optional(),
 })
 export type LoopOnItemsActionSettings = z.infer<
   typeof LoopOnItemsActionSettings
