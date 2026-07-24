@@ -26,7 +26,8 @@ const BUCKETS: SizeBucket[] = [
     { name: 'packages/pieces', tests: [/^packages\/pieces\//], budget: null },
 ]
 
-const DEFAULT_BUCKET: SizeBucket = { name: 'other (default)', tests: [], budget: 400 }
+// Everything outside the gated logic areas (docs, tooling, cli, ee, sandbox, utils, …) is exempt too.
+const DEFAULT_BUCKET: SizeBucket = { name: 'other (default)', tests: [], budget: null }
 const BYPASS_LABEL = 'large-pr-ok'
 
 function resolveRenamePath({ raw }: { raw: string }): string {
