@@ -803,6 +803,7 @@
         "packages/pieces/community/mautic/src/index.ts"
       ],
       "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
+      "@activepieces/piece-mcp-client": ["packages/pieces/community/mcp-client/src/index.ts"],
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
@@ -839,6 +840,9 @@
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-teams-bot": [
+        "packages/pieces/community/microsoft-teams-bot/src/index.ts"
       ],
       "@activepieces/piece-microsoft-todo": [
         "packages/pieces/community/microsoft-todo/src/index.ts"
@@ -1026,6 +1030,9 @@
       ],
       "@activepieces/piece-productboard": [
         "packages/pieces/community/productboard/src/index.ts"
+      ],
+      "@activepieces/piece-produktly": [
+        "packages/pieces/community/produktly/src/index.ts"
       ],
       "@activepieces/piece-promotekit": [
         "packages/pieces/community/promotekit/src/index.ts"

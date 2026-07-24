@@ -124,7 +124,7 @@ export interface ActivepiecesVendorInit {
     hideTables?: boolean;
     sdkVersion?: string;
     jwtToken: string;
-    initialRoute?: string 
+    initialRoute?: string
     fontUrl?: string;
     fontFamily?: string;
     hideExportAndImportFlow?: boolean;
@@ -135,6 +135,8 @@ export interface ActivepiecesVendorInit {
     mode?: 'light' | 'dark';
     hideFlowsPageNavbar?: boolean;
     hidePageHeader?: boolean;
+    hideActiveUsers?: boolean;
+    hideGlobalSearch?: boolean;
   };
 }
 
@@ -171,6 +173,8 @@ type EmbeddingParam = {
   hideDuplicateFlow?: boolean;
   hideFolders?: boolean;
   hideTables?: boolean;
+  hideActiveUsers?: boolean;
+  hideGlobalSearch?: boolean;
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -193,7 +197,7 @@ export type McpCredentials = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.11.0";
+  readonly _sdkVersion = "0.13.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -306,6 +310,8 @@ class ActivepiecesEmbedded {
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
+                hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
+                hideGlobalSearch: this._embeddingState?.hideGlobalSearch ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');

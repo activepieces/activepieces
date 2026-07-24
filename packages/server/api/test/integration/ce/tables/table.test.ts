@@ -68,6 +68,31 @@ describe('Table API', () => {
             expect(fields.map((f: { name: string }) => f.name).sort()).toEqual(['Age', 'Name'])
         })
 
+        it('should preserve field order from the request', async () => {
+            const ctx = await setup()
+            const fieldNames = Array.from({ length: 10 }, (_, i) => `Field ${String.fromCharCode(65 + i)}`)
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Ordered Table',
+                fields: fieldNames.map((name) => ({
+                    name,
+                    type: FieldType.TEXT,
+                    data: null,
+                    externalId: apId(),
+                })),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+
+            const fieldsResponse = await ctx.get('/v1/fields', {
+                tableId: body.id,
+            })
+            const fields = fieldsResponse?.json()
+            expect(fields.map((f: { name: string }) => f.name)).toEqual(fieldNames)
+        })
+
         it('should create a table with externalId', async () => {
             const ctx = await setup()
             const externalId = apId()

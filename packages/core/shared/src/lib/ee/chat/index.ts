@@ -151,10 +151,27 @@ const PersistedChatPartSchema = z.discriminatedUnion('type', [
     PersistedFilePartSchema,
 ])
 
+export const ChatFeedbackReason = z.enum([
+    'incorrect_or_incomplete',
+    'not_what_i_asked_for',
+    'slow_or_buggy',
+    'style_or_tone',
+    'safety_or_security',
+    'other',
+])
+export type ChatFeedbackReason = z.infer<typeof ChatFeedbackReason>
+
+export const ChatMessageFeedbackSchema = z.object({
+    rating: z.enum(['up', 'down']),
+    reasons: z.array(ChatFeedbackReason).optional(),
+    comment: z.string().max(2000).optional(),
+})
+
 export const PersistedChatMessageSchema = z.object({
     role: z.enum([PersistedChatRole.USER, PersistedChatRole.ASSISTANT]),
     parts: z.array(PersistedChatPartSchema),
     thinkingDurationMs: z.number().optional(),
+    feedback: ChatMessageFeedbackSchema.optional(),
 })
 
 export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
@@ -169,6 +186,7 @@ export type PersistedImagePart = z.infer<typeof PersistedImagePartSchema>
 export type PersistedFilePart = z.infer<typeof PersistedFilePartSchema>
 export type PersistedChatPart = z.infer<typeof PersistedChatPartSchema>
 export type PersistedChatMessage = z.infer<typeof PersistedChatMessageSchema>
+export type ChatMessageFeedback = z.infer<typeof ChatMessageFeedbackSchema>
 
 export enum ChatConversationStatus {
     IDLE = 'IDLE',
@@ -204,6 +222,37 @@ export const UpdateChatConversationRequest = z.object({
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 
+export const UserChatMemory = z.object({
+    ...BaseModelSchema,
+    platformId: z.string(),
+    userId: z.string(),
+    instructions: Nullable(z.string()),
+    memories: z.array(z.string()).default([]),
+})
+export type UserChatMemory = z.infer<typeof UserChatMemory>
+
+export const GetChatMemoryResponse = z.object({
+    instructions: z.string().nullable(),
+    memories: z.array(z.string()),
+})
+export type GetChatMemoryResponse = z.infer<typeof GetChatMemoryResponse>
+
+export const UpdateChatMemoryRequest = z.object({
+    instructions: Nullable(z.string()),
+    memories: z.optional(z.array(z.string())),
+})
+export type UpdateChatMemoryRequest = z.infer<typeof UpdateChatMemoryRequest>
+
+export const ImportChatMemoryRequest = z.object({
+    text: z.string(),
+})
+export type ImportChatMemoryRequest = z.infer<typeof ImportChatMemoryRequest>
+
+export const InstructChatMemoryRequest = z.object({
+    instruction: z.string(),
+})
+export type InstructChatMemoryRequest = z.infer<typeof InstructChatMemoryRequest>
+
 export const SendChatMessageRequest = z.object({
     content: z.string().max(51200),
     runId: z.string().optional(),
@@ -213,6 +262,13 @@ export const SendChatMessageRequest = z.object({
     { message: formErrors.messageRequiresContentOrFiles },
 )
 export type SendChatMessageRequest = z.infer<typeof SendChatMessageRequest>
+
+export const SetChatMessageFeedbackRequest = z.object({
+    rating: z.enum(['up', 'down']).nullable(),
+    reasons: z.array(ChatFeedbackReason).max(ChatFeedbackReason.options.length).optional(),
+    comment: z.string().max(2000).optional(),
+})
+export type SetChatMessageFeedbackRequest = z.infer<typeof SetChatMessageFeedbackRequest>
 
 export const SimulateChatRequest = z.object({
     platformId: z.string(),

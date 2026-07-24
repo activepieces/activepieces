@@ -1,19 +1,18 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, LocalesEnum, PlatformId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
+import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceAudienceFilter, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
+import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
+import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
@@ -29,17 +28,19 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 locale,
                 log,
             }))
-            const piecesWithTags = await enrichTags(params.platformId, translatedPieces, params.includeTags)
-            const filterContext = await enterpriseFilteringUtils(log).loadFilterContext({ platformId: params.platformId, projectId: params.projectId })
-            const filteredPieces = await pieceListUtils(log).filterPieces({
+            const policy = await resolveVisibility({ platformId: params.platformId, projectId: params.projectId, log })
+            const audience = params.audience ?? PieceAudienceFilter.HUMAN
+            const audiencePieces = translatedPieces.map((piece) => ({ ...piece, actions: filterActionsByAudience(piece.actions, audience) }))
+            const sortedPieces = await pieceListUtils(log).sortAndSearchPieces({
                 ...params,
-                pieces: piecesWithTags,
+                pieces: audiencePieces,
                 suggestionType: params.suggestionType,
-                filterContext,
             })
+            const visiblePieces = params.includeHidden ? sortedPieces : sortedPieces.filter((piece) => !piece.deprecated)
+            const filteredPieces = params.includeHidden || isNil(policy) ? visiblePieces : policy.filterPieces(visiblePieces)
 
-            const summaries = toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
-            return enterpriseFilteringUtils(log).filterComponents({ platformId: params.platformId, projectId: params.projectId, summaries, filterContext })
+            const summaries = toPieceMetadataModelSummary(filteredPieces, audiencePieces, params.suggestionType)
+            return params.includeHidden || isNil(policy) ? summaries : policy.filterComponents(summaries)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const registry = filterRegistry(await loadRegistry(log), {
@@ -67,15 +68,14 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 return undefined
             }
 
-            const isFiltered = await enterpriseFilteringUtils(log).isFiltered({
-                piece,
-                projectId,
-                platformId,
-            })
-            if (isFiltered) {
+            const policy = await resolveVisibility({ platformId, projectId, log })
+            if (isNil(policy)) {
+                return piece
+            }
+            if (!policy.isPieceVisible(piece.name)) {
                 return undefined
             }
-            return piece
+            return policy.filterPieceComponents(piece)
         },
         async getOrThrow({ version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
             const piece = await this.get({ version, name, platformId })
@@ -312,19 +312,6 @@ const findOldestCreatedDate = async ({ name, platformId }: { name: string, platf
     return piece?.created ?? dayjs().toISOString()
 }
 
-const enrichTags = async (platformId: string | undefined, pieces: PieceMetadataSchema[], includeTags: boolean | undefined): Promise<PieceMetadataSchema[]> => {
-    if (!includeTags || isNil(platformId)) {
-        return pieces
-    }
-    const tags = await pieceTagService.findByPlatform(platformId)
-    return pieces.map((piece) => {
-        return {
-            ...piece,
-            tags: tags[piece.name] ?? [],
-        }
-    })
-}
-
 const sortByVersionDescending = <T extends { version: string }>(a: T, b: T): number => {
     const aValid = semVer.valid(a.version)
     const bValid = semVer.valid(b.version)
@@ -517,20 +504,18 @@ function filterRegistry(registry: PieceRegistryEntry[], params: { release: strin
 }
 
 
-// Types
 
 type ListParams = {
     projectId?: string
     platformId?: string
     includeHidden: boolean
     categories?: PieceCategory[]
-    includeTags?: boolean
-    tags?: string[]
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     searchQuery?: string
     suggestionType?: SuggestionType
     locale?: LocalesEnum
+    audience?: PieceAudienceFilter
 }
 
 type GetOrThrowParams = {

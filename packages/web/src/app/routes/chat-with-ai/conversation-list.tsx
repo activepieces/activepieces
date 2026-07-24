@@ -7,10 +7,12 @@ import {
   MessageSquare,
   Plus,
   Search,
+  Settings,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
+import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -40,6 +42,7 @@ export function ConversationList({
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   const { data: conversationsPage, isLoading: isLoadingConversations } =
@@ -276,6 +279,19 @@ export function ConversationList({
           <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-background to-transparent" />
         )}
       </div>
+      <div className="shrink-0 border-t px-2 py-2">
+        <button
+          type="button"
+          className={cn(
+            'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
+            mobile && 'px-3 py-2.5 text-sm',
+          )}
+          onClick={() => setSettingsOpen(true)}
+        >
+          <Settings size={mobile ? 16 : 14} />
+          {t('Settings')}
+        </button>
+      </div>
       {mobile && (
         <div className="shrink-0 border-t px-4 py-3">
           <p className="flex items-start gap-1.5 text-xs leading-snug text-muted-foreground">
@@ -284,6 +300,7 @@ export function ConversationList({
           </p>
         </div>
       )}
+      <SettingsHubDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }
