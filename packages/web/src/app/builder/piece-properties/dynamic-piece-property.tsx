@@ -58,6 +58,10 @@ const DynamicPropertiesImplementation = React.memo(
     }, {});
     const previousRefresherValues =
       useRef<Record<string, unknown>>(refresherValues);
+    const lastKnownValue = useRef<Record<string, unknown> | undefined>(
+      undefined,
+    );
+    const optionsRequestId = useRef(0);
     const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
       DynamicPropertiesContext,
     );
@@ -109,10 +113,26 @@ const DynamicPropertiesImplementation = React.memo(
       );
     };
     useDeepCompareEffectNoCheck(() => {
+      const propertyPath = prependPrefixToPropertyName({
+        propertyName: props.propertyName,
+        prefix: propertyPrefix,
+      });
+      const currentValue = form.getValues(propertyPath);
+      if (!isNil(currentValue)) {
+        lastKnownValue.current = { ...currentValue };
+      }
       if (!deepEqual(previousRefresherValues.current, refresherValues)) {
         clearPropertyValue();
       }
       previousRefresherValues.current = refresherValues;
+      const requestId = ++optionsRequestId.current;
+      const restoreLastKnownValue = () => {
+        if (!isNil(lastKnownValue.current)) {
+          form.setValue(propertyPath, lastKnownValue.current, {
+            shouldValidate: true,
+          });
+        }
+      };
       mutate(
         {
           request: {
@@ -129,25 +149,19 @@ const DynamicPropertiesImplementation = React.memo(
         },
         {
           onSuccess: (response) => {
-            const currentValue = form.getValues(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
-            );
+            if (requestId !== optionsRequestId.current) {
+              return;
+            }
             const defaultValue = formUtils.getDefaultValueForProperties({
               props: response.options,
-              existingInput: currentValue ?? {},
+              existingInput: lastKnownValue.current ?? {},
               propertySettings: props.propertySettings ?? {},
             });
             setPropertyMap(response.options);
             const schemaWithoutDropdownOptions =
               removeOptionsFromDropdownPropertiesSchema(response.options);
             props.updateFormSchema?.(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
+              propertyPath,
               schemaWithoutDropdownOptions,
             );
 
@@ -158,17 +172,16 @@ const DynamicPropertiesImplementation = React.memo(
                 form,
               );
             }
-            form.setValue(
-              prependPrefixToPropertyName({
-                propertyName: props.propertyName,
-                prefix: propertyPrefix,
-              }),
-              defaultValue,
-              {
-                shouldValidate: true,
-                shouldDirty: true,
-              },
-            );
+            form.setValue(propertyPath, defaultValue, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+          },
+          onError: () => {
+            if (requestId !== optionsRequestId.current) {
+              return;
+            }
+            restoreLastKnownValue();
           },
         },
       );

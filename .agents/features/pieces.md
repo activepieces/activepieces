@@ -76,6 +76,18 @@ Unique index on `(name, version, platformId)`.
 | POST | `/v1/pieces` | platformAdminOnly (USER, SERVICE) | Install a custom piece onto the platform |
 | DELETE | `/v1/pieces/:id` | platformAdminOnly (USER, SERVICE) | Delete all versions of a custom piece from the platform |
 
+## DynamicProperties in the builder (refresher clear/restore)
+
+`DynamicPropertiesImplementation` (`packages/web/src/app/builder/piece-properties/dynamic-piece-property.tsx`) re-fetches the child schema via `POST /v1/pieces/options` whenever a refresher (or auth) value changes, clearing the form value synchronously and re-populating it in the mutation's `onSuccess`. Three invariants keep user input from being wiped (GIT-1514):
+
+- **`lastKnownValue` ref** — the merge source for `getDefaultValueForProperties` is a snapshot of the last non-nil property value taken at effect time, never `form.getValues()` inside `onSuccess` (by then the clear has already nulled it). The snapshot must be spread-cloned: react-hook-form's `getValues` returns live references into its values tree, and `clearPropertyValue`'s `setValue(..., null)` calls mutate those objects in place. The `isNil` guard makes the ref survive rapid successive refresher changes (e.g. per-keystroke text refreshers), where later effect runs observe the already-cleared `null`.
+- **`optionsRequestId` ref** — each effect run's `onSuccess`/`onError` bails unless it belongs to the latest request. `@tanstack/query-core` currently detaches superseded `mutate()` calls (their per-call callbacks never fire), but that is a library-internal guarantee; the guard asserts it locally.
+- **`onError` restore** — a failed options request restores the snapshot instead of leaving the cleared `null` in the form (which would otherwise be auto-saved).
+
+Values for child keys absent from the newly returned schema drop automatically — `getDefaultValueForProperties` iterates only the new schema's keys.
+
+Known pre-existing gap (not covered here): `DynamicPropertiesContext` tracks loading by property name only, so with two in-flight requests for the same property the first completion clears the loading flag for both, briefly re-enabling Test Step while the value is still cleared.
+
 ## Audience filtering (human vs AI)
 
 Agent-only atomics are tagged `audience: 'ai'` so they surface to agents (MCP `ap_search_actions`) but not to the human flow-builder step picker. The human piece-metadata endpoints hide `audience: 'ai'` actions **by default**, filtered at the HTTP boundary — detail responses in the controller (`piece-metadata-controller.ts`), list summaries in the metadata service's `list()` (the only full-metadata path left unfiltered is `getOrThrow()`).
