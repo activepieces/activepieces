@@ -30,7 +30,7 @@ export type CanvasState = {
   removeStepSelection: () => void;
   selectStepByName: (
     stepName: string,
-    options?: { fromAutoFocus?: boolean },
+    options?: { fromAutoFocus?: boolean; preventPieceSelectorOpen?: boolean },
   ) => void;
   resumeLiveFollow: () => void;
   setActiveDraggingStep: (stepName: string | null) => void;
@@ -121,7 +121,7 @@ export const createCanvasState = (
     },
     selectStepByName: (
       selectedStep: string,
-      options?: { fromAutoFocus?: boolean },
+      options?: { fromAutoFocus?: boolean; preventPieceSelectorOpen?: boolean },
     ) => {
       set((state) => {
         const selectedNodes = isNil(selectedStep) ? [] : [selectedStep];
@@ -132,6 +132,7 @@ export const createCanvasState = (
             : RightSideBarType.PIECE_SETTINGS;
 
         const isEmptyTrigger =
+          !options?.preventPieceSelectorOpen &&
           selectedStep === 'trigger' &&
           state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
 

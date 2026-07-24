@@ -116,7 +116,7 @@ export const FlowCanvas = React.memo(
           );
 
           if (stepElement && stepName) {
-            selectStepByName(stepName);
+            selectStepByName(stepName, { preventPieceSelectorOpen: true });
             reactFlowStore.getState().addSelectedNodes([stepName]);
           }
           const targetIsSelectionChevron = ev.target.closest(
