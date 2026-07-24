@@ -5,7 +5,6 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { mcpOAuthClientAuth } from '../client/mcp-oauth-client-auth'
-import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 import { mcpOAuthCodeService } from '../code/mcp-oauth-code.service'
 import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token.service'
 
@@ -38,30 +37,24 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
 }
 
 async function authenticateClient(authorizationHeader: string | undefined, body: TokenRequestBody, reply: FastifyReply): Promise<McpOAuthClient | null> {
-    const { clientId, clientSecret } = mcpOAuthClientAuth.extractCredentials({
+    const result = await mcpOAuthClientAuth.authenticate({
         authorizationHeader,
         clientId: body.client_id,
         clientSecret: body.client_secret,
     })
-    if (!clientId) {
+    if (result.status === 'anonymous') {
         await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing client_id' })
         return null
     }
-
-    const client = await mcpOAuthClientService.getByClientId(clientId)
-    if (isNil(client)) {
-        await reply.status(400).send({ error: 'invalid_client' })
+    if (result.status === 'error') {
+        await reply.status(400).send(buildClientError(result.error, result.errorDescription))
         return null
     }
+    return result.client
+}
 
-    if (mcpOAuthClientAuth.requiresClientSecret(client)) {
-        if (!clientSecret || !mcpOAuthClientService.validateClientSecret(client, clientSecret)) {
-            await reply.status(400).send({ error: 'invalid_client', error_description: 'Invalid client secret' })
-            return null
-        }
-    }
-
-    return client
+function buildClientError(error: string, errorDescription?: string): Record<string, string> {
+    return errorDescription ? { error, error_description: errorDescription } : { error }
 }
 
 async function handleAuthorizationCode(authorizationHeader: string | undefined, body: TokenRequestBody, reply: FastifyReply): Promise<void> {
