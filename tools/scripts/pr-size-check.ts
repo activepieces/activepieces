@@ -94,10 +94,14 @@ function statusText({ row }: { row: SizeRow }): string {
         : `✅ ${row.lines.toLocaleString()} / ${row.budget.toLocaleString()}`
 }
 
+function isBlocked({ report, bypassReason }: { report: SizeReport, bypassReason: string | null }): boolean {
+    return report.rows.some((row) => row.over) && bypassReason === null
+}
+
 function renderSummary({ report, bypassReason }: { report: SizeReport, bypassReason: string | null }): string {
     const overRows = report.rows.filter((row) => row.over)
     const lines: string[] = []
-    lines.push('## PR size check — advisory (not enforced)')
+    lines.push('## PR size check')
     lines.push('')
     lines.push('Meaningful lines = additions + deletions, excluding generated files (lockfiles, translations, locales, snapshots, dist).')
     lines.push('')
@@ -109,15 +113,15 @@ function renderSummary({ report, bypassReason }: { report: SizeReport, bypassRea
     lines.push('')
     lines.push(`**Total meaningful:** ${report.meaningfulTotal.toLocaleString()} · **excluded (generated):** ${report.excludedTotal.toLocaleString()}`)
     lines.push('')
-    if (bypassReason !== null) {
-        lines.push(`🏷️ ${bypassReason} — this PR would be exempt from blocking once the gate is enforced.`)
-        lines.push('')
+    const over = overRows.map((row) => row.name).join(', ')
+    if (overRows.length === 0) {
+        lines.push('> ✅ All gated areas are within budget.')
     }
-    if (overRows.length > 0) {
-        lines.push(`> Heads-up: ${overRows.map((row) => row.name).join(', ')} exceed the review-size budget. This is advisory for now — consider splitting into a stack of smaller PRs (see CONTRIBUTING.md). When enforced, add the \`${BYPASS_LABEL}\` label to bypass.`)
+    else if (bypassReason !== null) {
+        lines.push(`> ⚠️ Over budget in ${over}, but bypassed (${bypassReason}) — not blocking.`)
     }
     else {
-        lines.push('> All gated areas are within budget. 👍')
+        lines.push(`> ❌ **Blocked:** ${over} exceed the review-size budget. Split this into smaller PRs (see CONTRIBUTING.md), or add the \`${BYPASS_LABEL}\` label to bypass.`)
     }
     return lines.join('\n')
 }
@@ -145,7 +149,9 @@ function main(): void {
     if (process.env.GITHUB_STEP_SUMMARY) {
         appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`)
     }
-    // Advisory mode: report only, never fail the check.
+    if (isBlocked({ report, bypassReason })) {
+        process.exitCode = 1
+    }
 }
 
 type SizeBucket = {
@@ -167,7 +173,7 @@ type SizeReport = {
     excludedTotal: number
 }
 
-export const prSizeCheck = { collectSizes, renderSummary, bucketFor, resolveRenamePath }
+export const prSizeCheck = { collectSizes, renderSummary, bucketFor, resolveRenamePath, isBlocked }
 
 if (import.meta.main) {
     main()

@@ -1,4 +1,4 @@
-name: PR size (advisory)
+name: PR size
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   pr-size:
-    name: PR size (advisory)
+    name: PR size
     runs-on: ubuntu-latest
     if: github.repository == 'activepieces/activepieces'
     steps:
@@ -21,7 +21,7 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Report PR size by area
+      - name: Check PR size by area
         env:
           GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
