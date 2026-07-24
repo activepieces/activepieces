@@ -5,6 +5,7 @@
   "Call a flow that has \"Callable Flow\" trigger": "Call a flow that has \"Callable Flow\" trigger",
   "Return response to the original flow": "Return response to the original flow",
   "Flow": "Flow",
+  "Subflow": "Subflow",
   "Mode": "Mode",
   "Wait for Response": "Wait for Response",
   "Response": "Response",
@@ -15,5 +16,17 @@
   "Callable Flow": "Callable Flow",
   "Waiting to be triggered from another flow": "Waiting to be triggered from another flow",
   "Sample Data": "Sample Data",
-  "The schema to be passed to the flow": "The schema to be passed to the flow"
+  "The schema to be passed to the flow": "The schema to be passed to the flow",
+  "Stream CSV to Subflows": "Stream CSV to Subflows",
+  "Stream a CSV from a URL and call a subflow once per batch of rows, without loading the whole file into memory.": "Stream a CSV from a URL and call a subflow once per batch of rows, without loading the whole file into memory.",
+  "CSV File URL": "CSV File URL",
+  "A direct URL to the CSV file. It is streamed, not downloaded into memory.": "A direct URL to the CSV file. It is streamed, not downloaded into memory.",
+  "The subflow to call for each batch. Published flows with a \"Callable Flow\" trigger appear here; disabled flows are marked \"(inactive)\".": "The subflow to call for each batch. Published flows with a \"Callable Flow\" trigger appear here; disabled flows are marked \"(inactive)\".",
+  "Rows per batch": "Rows per batch",
+  "How many CSV rows to send in each subflow call.": "How many CSV rows to send in each subflow call.",
+  "Delimiter": "Delimiter",
+  "Comma": "Comma",
+  "Tab": "Tab",
+  "Extra Data": "Extra Data",
+  "Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step.": "Optional data sent to every subflow call alongside the batch rows. Reference the output of a previous step."
 }
