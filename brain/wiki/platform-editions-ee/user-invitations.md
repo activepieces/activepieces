@@ -18,6 +18,7 @@ Lets platform owners (and project members with `WRITE_INVITATION`) invite users 
 - **Auto-accept**: SERVICE-key callers always auto-accept; project invites for already-registered users also auto-accept (added immediately, no click).
 - Project invitations require `projectMustBeTeamType` + `WRITE_INVITATION` + `projectRolesEnabled` plan flag; platform invitations require platform ownership.
 - If SMTP unconfigured, the `link` field is included in the response for the caller to surface manually; if configured, `link` is omitted and email is sent. Auto-accept + SMTP sends a "project member added" notification instead.
+- **Re-inviting a previously deleted user** works only because the CE/EE user delete also removes the now-orphaned `UserIdentity` (see [Users](./users.md)). The invitation itself always succeeds; when that cleanup has not run, the recipient's sign-up is what fails, with `EXISTING_USER`.
 
 ### Key files
 Entry point: `userInvitationsService`, defined in `user-invitation.service.ts` and called from the routes in `user-invitation.module.ts` (which exports `invitationModule`).

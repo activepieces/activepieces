@@ -3,9 +3,10 @@ import { ApEdition, PlatformRole, ProjectType, User, UserIdentity, UserStatus, U
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull } from 'typeorm'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -154,11 +155,13 @@ export const userService = (log: FastifyBaseLogger) => ({
             userId: id,
             platformId,
         })
-        await userRepo().delete({
-            id,
-            platformId,
+        await transaction(async (entityManager) => {
+            await userRepo(entityManager).delete({
+                id,
+                platformId,
+            })
+            await deleteIdentityIfOrphaned({ identityId: user.identityId, entityManager })
         })
-        await deleteIdentityIfOrphaned({ identityId: user.identityId })
     },
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
@@ -249,10 +252,10 @@ async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { 
     }
 }
 
-async function deleteIdentityIfOrphaned({ identityId }: { identityId: string }): Promise<void> {
-    const identityStillReferenced = await userRepo().existsBy({ identityId })
+async function deleteIdentityIfOrphaned({ identityId, entityManager }: { identityId: string, entityManager: EntityManager }): Promise<void> {
+    const identityStillReferenced = await userRepo(entityManager).existsBy({ identityId })
     if (!identityStillReferenced) {
-        await userIdentityRepository().delete({ id: identityId })
+        await userIdentityRepository(entityManager).delete({ id: identityId })
     }
 }
 
