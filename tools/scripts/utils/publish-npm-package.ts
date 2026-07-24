@@ -6,6 +6,7 @@ import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
 import { preparePieceDistForPublish } from '../../../packages/cli/src/lib/utils/prepare-piece-utils'
 import { isExactVersion } from '../../../packages/cli/src/lib/utils/workspace-utils'
+import { verifyPieceBundleUtils } from '../../../packages/cli/src/lib/utils/verify-piece-bundle'
 
 function assertNoSemverRanges(packageJsonPath: string): void {
   const json = JSON.parse(readFileSync(packageJsonPath).toString())
@@ -91,6 +92,10 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
 
   assertNoUnpublishableDeps(`${outputPath}/package.json`)
   assertNoSemverRanges(`${outputPath}/package.json`)
+
+  // Gate before publish, not after: a bundle that can't install-and-load in isolation must never
+  // reach npm.
+  await verifyPieceBundleUtils.verifyPieceBundleLoads({ distPath: outputPath })
 
   execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
 
