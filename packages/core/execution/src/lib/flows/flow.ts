@@ -72,3 +72,15 @@ export const PopulatedTriggerSource = zMini.extend(TriggerSource, {
     flow: Flow,
 })
 export type PopulatedTriggerSource = z.infer<typeof PopulatedTriggerSource>
+
+
+export const EMBED_CONSTRAINTS_METADATA_KEY = 'embedConstraints'
+
+export const TriggerLockMode = z.enum(['none', 'locked', 'frozen'])
+export type TriggerLockMode = z.infer<typeof TriggerLockMode>
+
+export const EmbedConstraints = z.object({
+    requiredPieceNames: z.array(z.string()).optional(),
+    triggerLock: TriggerLockMode.optional(),
+})
+export type EmbedConstraints = z.infer<typeof EmbedConstraints>

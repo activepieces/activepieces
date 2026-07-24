@@ -1,0 +1,85 @@
+---
+title: "Publish Constraints"
+description: "Require a specific piece and lock the trigger for embedded flows"
+icon: "lock"
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+When you build flows for your users through the API before embedding them, you can attach **publish constraints** to a flow so the embedded end-user cannot break the shape you rely on. Two constraints are supported:
+
+1. **Required piece** — the flow cannot be published unless it contains at least one of a set of pieces.
+2. **Trigger lock** — the trigger piece can be locked in place, optionally read-only.
+
+Both are enforced **in the builder UI and on the server**, so they cannot be bypassed by direct API calls from the embedded session.
+
+## Where constraints live
+
+Constraints are stored on the flow itself under `metadata.embedConstraints`. You set them when you create (or update) the flow via the REST API using your API key — the same request in which you seed the flow's default piece and properties. Requests authenticated with your API key can always update or remove the constraints later; the embedded end-user (a builder session) has no way to change them from the builder.
+
+```json
+{
+  "metadata": {
+    "embedConstraints": {
+      "requiredPieceNames": ["@activepieces/piece-example"],
+      "triggerLock": "frozen"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `requiredPieceNames` | `string[]` | Fully-qualified piece package names. The flow can be published only if at least one non-skipped step (trigger **or** action) uses one of these pieces. Omit or leave empty to impose no requirement. |
+| `triggerLock` | `'none' \| 'locked' \| 'frozen'` | Controls how much of the trigger the end-user can change. Defaults to `none`. |
+
+## Required piece
+
+Set `requiredPieceNames` to one or more piece names. Publishing is blocked until at least one listed piece is present in a step that is not skipped:
+
+- Providing multiple names means **"at least one of"** — the flow satisfies the rule if it contains any one of them.
+- Skipped steps do not count, so a disabled step holding the required piece will not satisfy the rule.
+- In the builder, the **Publish** button is disabled and a tooltip explains which piece is missing.
+- On the server, a publish attempt that violates the rule is rejected with `409 CONFLICT`.
+
+<Tip>
+**Subflows are exempt.** A flow whose trigger is the Subflows piece (`@activepieces/piece-subflows`) is never blocked by `requiredPieceNames`, so reusable subflows can still be published.
+</Tip>
+
+## Trigger lock
+
+`triggerLock` controls whether the end-user can swap or edit the trigger:
+
+| Mode | Swap / clear the trigger piece | Edit the trigger's inputs |
+| --- | --- | --- |
+| `none` (default) | Allowed | Allowed |
+| `locked` | Blocked | Allowed |
+| `frozen` | Blocked | Blocked (trigger is read-only) |
+
+- Under `locked`, the trigger's **Replace** affordance is hidden and the piece cannot be swapped or cleared, but the end-user can still edit the trigger's input fields.
+- Under `frozen`, the entire trigger step is read-only.
+- Both modes are enforced server-side: swapping a locked or frozen trigger via `UPDATE_TRIGGER` or `IMPORT_FLOW` from the embedded (builder) session is rejected with `409 CONFLICT`. Requests authenticated with your API key are exempt, so you can always seed and update the trigger yourself.
+
+## Example: create a locked, constrained flow
+
+```bash
+curl -X POST https://YOUR_INSTANCE_URL/api/v1/flows \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "displayName": "My constrained workflow",
+    "projectId": "YOUR_PROJECT_ID",
+    "metadata": {
+      "embedConstraints": {
+        "requiredPieceNames": ["@activepieces/piece-example"],
+        "triggerLock": "locked"
+      }
+    }
+  }'
+```
+
+After creation, seed the trigger and any default steps via the flow update operations, then embed the flow. The end-user can configure the flow but cannot publish it without the required piece, nor swap the locked trigger.
+
+<Tip>
+Because the constraints are read from the flow's metadata, they apply anywhere the flow is opened — no SDK `configure()` changes are required.
+</Tip>

@@ -35,6 +35,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/web/src/components/custom/smart-output-viewer/` — the new **Smart Output Viewer** used by test-step output and run details. `index.tsx` chooses between a labelled "Friendly view" (`output-field-list.tsx` → `output-field-row.tsx`, table-shaped arrays via `output-table-view.tsx`, schema-described top-level array outputs via `output-schema-array-list.tsx` which renders an expandable per-item list using `itemLabel` templates for labels, generic fallback via `output-generic-field-list.tsx`) and the existing Raw JSON view. Values render through `format-value.tsx` which applies per-field `FieldFormat` rendering (clickable email/url, inline image, formatted date / currency / filesize / duration / boolean / HTML badge) and enforces an SSRF/XSS-safe URL allow-list (`http(s)` only). Path resolution and the common wrapper-key fallback (`data.*`, `body.*`, `payload.*`, …) live in `packages/web/src/lib/path-utils.ts`. String values that are Activepieces file-read URLs (signed `/api/v1/files/…?token=` or legacy `/api/v1/step-files/…`, plus expired `file://` sandbox paths) render a **Download File** button via the shared `packages/web/src/components/custom/step-file-download-button.tsx` (`StepFileDownloadButton`); detection is `isStepFileUrl` in `packages/web/src/lib/dom-utils.ts` (the generic `/api/v1/files/` path is gated on a discrete `?token=`/`&token=` param so third-party URLs like Pipedrive's `?api_token=` don't false-positive). The button renders only in the Friendly view — the Raw JSON tab (`json-viewer.tsx`, a plain raw renderer) always shows the link as text
 - `packages/web/src/app/builder/test-step/test-sample-data-viewer.tsx` and `packages/web/src/app/builder/run-details/flow-step-input-output.tsx` — both wrap `SmartOutputViewer` for test-output and run-output panes, passing the resolved `pieceSchema` for the current step
 - `packages/web/src/app/routes/automations/index.tsx` — flows list page
+- `packages/core/execution/src/lib/flows/util/embed-constraints-util.ts` — shared embed-constraints validation helper (`getEmbedConstraints`, `flowSatisfiesRequiredPiece`, `isSubflow`), used by both the server publish/trigger guards and the builder UI
 
 ## Edition Availability
 - **Community (CE)**: Full flow authoring, publishing, folders, sample data, human-input forms.
@@ -57,6 +58,8 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - **Continue on Failure (CoF) Branches**: CODE and PIECE actions with `continueOnFailure.value: true` can carry an `onSuccess` and/or `onFailure` sub-action tree inside `settings.errorHandlingOptions.continueOnFailureBranches`. The engine routes execution into the matching branch based on the step outcome.
 - **Step output nesting (schema v21)**: All step outputs in execution state are wrapped as `{ output: <return value>, error: { message: <string> } | undefined }`. Expressions must use the `['output']` accessor; the v20→v21 migration rewrites existing expressions automatically via `expression-rewriter`.
 - **createdBy**: Records the automated source that created the flow as a discriminated union (`FlowCreator`: `{ type: 'MCP' | 'AGENT', id }`). Null for human-created flows. Server-set only — surfaced in the UI as the "AI" badge (`FlowCreatedByBadge`). Distinct from `ownerId`, which is the current owning user.
+- **EmbedConstraints**: Embed-scoped publish/edit rules stored under `flow.metadata.embedConstraints` (no dedicated column, set at flow creation via the API). Contains `requiredPieceNames` (array — the flow must use at least one) and `triggerLock`. Preserved across a `USER`-principal `UPDATE_METADATA` so an embed builder session cannot erase its own constraints; a trusted `SERVICE` principal (API key, `userId === null`) may still modify them.
+- **TriggerLockMode**: `none | locked | frozen`. `none` is default; `locked` blocks swapping/replacing the trigger piece while leaving its inputs editable; `frozen` makes the trigger fully read-only. Only applies to `PIECE` triggers — an unseeded (`EMPTY`) trigger is exempt on both server and UI so the embedded user can still pick a trigger.
 
 ## Entities
 
@@ -76,9 +79,9 @@ All flow modifications go through `POST /v1/flows/:id` with a `FlowOperationRequ
 
 - Structure: ADD_ACTION, UPDATE_ACTION, DELETE_ACTION, DUPLICATE_ACTION, MOVE_ACTION, SET_SKIP_ACTION (ADD_ACTION's `stepLocationRelativeToParent` also accepts `INSIDE_ON_SUCCESS_BRANCH` / `INSIDE_ON_FAILURE_BRANCH` for CoF sub-actions)
 - Branching: ADD_BRANCH, DELETE_BRANCH, DUPLICATE_BRANCH, MOVE_BRANCH
-- Trigger: UPDATE_TRIGGER
+- Trigger: UPDATE_TRIGGER (guarded by `TriggerLockMode` for `USER` principals — `locked`/`frozen` reject piece changes on a `PIECE` trigger with HTTP 409; a trusted `SERVICE` principal (API key, `userId === null`) bypasses the guard so the vendor can seed/update the trigger)
 - Publishing: LOCK_AND_PUBLISH, USE_AS_DRAFT, LOCK_FLOW, CHANGE_STATUS
-- Organization: CHANGE_FOLDER, CHANGE_NAME, UPDATE_OWNER, UPDATE_METADATA, IMPORT_FLOW
+- Organization: CHANGE_FOLDER, CHANGE_NAME, UPDATE_OWNER, UPDATE_METADATA, IMPORT_FLOW (`IMPORT_FLOW` carries the same `TriggerLockMode` guard as `UPDATE_TRIGGER`; `UPDATE_METADATA` preserves the reserved `embedConstraints` key for `USER` principals but lets a trusted `SERVICE` principal update it)
 - Data: SAVE_SAMPLE_DATA, UPDATE_SAMPLE_DATA_INFO, UPDATE_MINUTES_SAVED
 - Notes: ADD_NOTE, UPDATE_NOTE, DELETE_NOTE
 
@@ -98,6 +101,8 @@ When LOCK_AND_PUBLISH or CHANGE_STATUS to ENABLED:
 4. Emit WebSocket event
 5. Track telemetry — `telemetry().trackProject(...)` is fire-and-forget via `rejectedPromiseHandler` (`helper/promise-handler`); failures are logged and never block or fail the publish
 6. Client-side telemetry — `flowHooks.useChangeFlowStatus` captures a frontend `FLOW_PUBLISHED` event (`flowId`) when `change === 'publish'` succeeds, separate from the backend `trackProject` above
+
+Before locking, `LOCK_AND_PUBLISH` validates `EmbedConstraints.requiredPieceNames`: if the flow has required pieces and no non-skipped step uses any of them, publish is rejected with HTTP 409 (subflows are exempt via `isSubflow`).
 
 When CHANGE_STATUS to DISABLED:
 1. Disable trigger source (unregister webhook/polling)

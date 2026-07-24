@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateFlowRequest, EMBED_CONSTRAINTS_METADATA_KEY, EmbedConstraints, embedConstraintsUtil, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerLockMode, TriggerSource, UncategorizedFolderId, UpdateTriggerRequest, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
@@ -362,6 +362,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     id,
                     projectId,
                     metadata: operation.request.metadata,
+                    canManageEmbedConstraints: isNil(userId),
                 })
                 break
             }
@@ -388,6 +389,34 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     flowId: id,
                     versionId: undefined,
                 })
+                await flowVersionService(log).applyOperation({
+                    userId,
+                    projectId,
+                    platformId,
+                    flowVersion: lastVersion,
+                    userOperation: operation,
+                })
+                break
+            }
+            case FlowOperationType.UPDATE_TRIGGER:
+            case FlowOperationType.IMPORT_FLOW: {
+                const lastVersion = await createNewDraftIfVersionIsPublished({
+                    flowId: id,
+                    projectId,
+                    platformId,
+                    userId,
+                    log,
+                })
+                if (!isNil(userId)) {
+                    const flow = await this.getOneOrThrow({ id, projectId })
+                    assertTriggerLockAllowsUpdate({
+                        constraints: embedConstraintsUtil.getEmbedConstraints(flow),
+                        currentTrigger: lastVersion.trigger,
+                        incomingTrigger: operation.type === FlowOperationType.UPDATE_TRIGGER
+                            ? operation.request
+                            : operation.request.trigger,
+                    })
+                }
                 await flowVersionService(log).applyOperation({
                     userId,
                     projectId,
@@ -432,6 +461,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowId: id,
             versionId: undefined,
         })
+
+        const embedConstraints = embedConstraintsUtil.getEmbedConstraints(flowToUpdate)
+        if (!embedConstraintsUtil.flowSatisfiesRequiredPiece({ version: flowVersionToPublish, constraints: embedConstraints })) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Flow is missing a required piece and cannot be published',
+                },
+            })
+        }
 
         if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
             await triggerSourceService(log).disable({
@@ -553,13 +592,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
         id,
         projectId,
         metadata,
+        canManageEmbedConstraints,
     }: UpdateMetadataParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({
             id,
             projectId,
         })
 
-        flowToUpdate.metadata = metadata
+        flowToUpdate.metadata = canManageEmbedConstraints
+            ? (metadata ?? null)
+            : preserveEmbedConstraints({
+                existing: flowToUpdate.metadata,
+                incoming: metadata,
+            })
 
         await flowRepo().save(flowToUpdate)
 
@@ -633,6 +678,59 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 })
 
+
+const preserveEmbedConstraints = ({
+    existing,
+    incoming,
+}: {
+    existing: Metadata | null | undefined
+    incoming: Metadata | null | undefined
+}): Metadata | null => {
+    const existingConstraints = existing?.[EMBED_CONSTRAINTS_METADATA_KEY]
+    if (isNil(existingConstraints)) {
+        return incoming ?? null
+    }
+    return {
+        ...(incoming ?? {}),
+        [EMBED_CONSTRAINTS_METADATA_KEY]: existingConstraints,
+    }
+}
+
+const assertTriggerLockAllowsUpdate = ({
+    constraints,
+    currentTrigger,
+    incomingTrigger,
+}: {
+    constraints: EmbedConstraints | undefined
+    currentTrigger: FlowTrigger
+    incomingTrigger: FlowTrigger | UpdateTriggerRequest
+}): void => {
+    const lockMode = constraints?.triggerLock
+    if (isNil(lockMode) || lockMode === TriggerLockMode.enum.none) {
+        return
+    }
+    if (currentTrigger.type !== FlowTriggerType.PIECE) {
+        return
+    }
+    if (lockMode === TriggerLockMode.enum.frozen) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Trigger is frozen and cannot be modified',
+            },
+        })
+    }
+    const swappingPiece = incomingTrigger.type !== FlowTriggerType.PIECE
+        || incomingTrigger.settings.pieceName !== currentTrigger.settings.pieceName
+    if (swappingPiece) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Trigger piece is locked and cannot be changed',
+            },
+        })
+    }
+}
 
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,
@@ -824,6 +922,7 @@ type UpdateMetadataParams = {
     id: FlowId
     projectId: ProjectId
     metadata: Metadata | null | undefined
+    canManageEmbedConstraints: boolean
 }
 
 /** When the latest version is locked (published snapshot), creates a new draft and imports it. */
