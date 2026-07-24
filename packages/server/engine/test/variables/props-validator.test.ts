@@ -419,4 +419,146 @@ describe('Property Validation', () => {
             })
         })
     })
+
+    describe('multi-select dropdown processing', () => {
+        const props = {
+            staticMultiSelect: Property.StaticMultiSelectDropdown({
+                displayName: 'Static Multi Select',
+                required: false,
+                options: {
+                    options: [
+                        { label: 'Year', value: 'year' },
+                        { label: 'Month', value: 'month' },
+                    ],
+                },
+            }),
+            multiSelect: Property.MultiSelectDropdown({
+                displayName: 'Multi Select',
+                required: false,
+                refreshers: [],
+                options: async () => ({ options: [] }),
+            }),
+        }
+
+        it('should parse stringified arrays into arrays', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                {
+                    staticMultiSelect: '[]',
+                    multiSelect: '["year","month"]',
+                },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticMultiSelect).toEqual([])
+            expect(processedInput.multiSelect).toEqual(['year', 'month'])
+            expect(errors).toEqual({})
+        })
+
+        it('should pass arrays through unchanged', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                {
+                    staticMultiSelect: ['year'],
+                    multiSelect: ['month'],
+                },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticMultiSelect).toEqual(['year'])
+            expect(processedInput.multiSelect).toEqual(['month'])
+            expect(errors).toEqual({})
+        })
+
+        it('should pass non-array values through unchanged', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                {
+                    staticMultiSelect: 'year',
+                    multiSelect: '{"not":"an array"}',
+                },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticMultiSelect).toEqual('year')
+            expect(processedInput.multiSelect).toEqual('{"not":"an array"}')
+            expect(errors).toEqual({})
+        })
+
+        it('should pass nil values through unchanged', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                {
+                    staticMultiSelect: null,
+                    multiSelect: undefined,
+                },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticMultiSelect).toBeNull()
+            expect(processedInput.multiSelect).toBeUndefined()
+            expect(errors).toEqual({})
+        })
+    })
+
+    describe('checkbox processing', () => {
+        const props = {
+            checkbox: Property.Checkbox({
+                displayName: 'Checkbox',
+                required: true,
+            }),
+        }
+
+        it.each([
+            ['true', true],
+            ['false', false],
+        ])('should parse stringified boolean %s', async (input, expected) => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { checkbox: input },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.checkbox).toEqual(expected)
+            expect(errors).toEqual({})
+        })
+
+        it('should pass booleans through unchanged', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { checkbox: true },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.checkbox).toEqual(true)
+            expect(errors).toEqual({})
+        })
+
+        it('should leave non-boolean strings unchanged and fail validation', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { checkbox: 'not a boolean' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.checkbox).toEqual('not a boolean')
+            expect(errors).toEqual({
+                checkbox: ['Expected boolean, received: not a boolean'],
+            })
+        })
+    })
 })
