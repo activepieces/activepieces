@@ -2,13 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableFieldConfig } from '../common/models';
+import { createTableActionOutputSchema } from '../output-schemas';
 
 export const airtableCreateTableAction = createAction({
   auth: airtableAuth,
   name: 'airtable_create_table',
   displayName: 'Create Table',
   description: 'Create a new table in an existing base.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: createTableActionOutputSchema,
   aiMetadata: {
     description:
       'Creates a new table in an existing base from a JSON array of field definitions (the first field becomes the primary field), with an optional table description. Use to add a table to a base you already have. Not idempotent — each call creates a new table.',

@@ -8,13 +8,15 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { uploadFileToColumnActionOutputSchema } from '../output-schemas';
 
 export const airtableUploadFileToColumnAction = createAction({
   auth: airtableAuth,
   name: 'airtable_upload_file_to_column',
   displayName: 'Upload File to Column',
   description: 'Uploads a file to attachment type column.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: uploadFileToColumnActionOutputSchema,
   aiMetadata: {
     description:
       'Uploads a file (given as a public URL or base64) into a multiple-attachments column on an existing record, identified by base, table, record ID and the attachment column. Use to attach files to a record. The file content type is required; each call adds an attachment, so it is not idempotent.',
