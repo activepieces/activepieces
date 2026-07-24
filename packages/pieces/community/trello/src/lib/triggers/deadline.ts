@@ -3,6 +3,7 @@ import { TriggerStrategy, createTrigger, PiecePropValueSchema, Property, AppConn
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { trelloCommon, getCardsInBoard, getCardsInList } from '../common';
+import { deadlineTriggerOutputSchema } from '../output-schemas';
 
 interface Props {
     board_id: string;
@@ -45,6 +46,7 @@ export const deadlineTrigger = createTrigger({
     name: 'deadline',
     displayName: 'Card Deadline',
     description: 'Triggers at a specified time before a card deadline.',
+    outputSchema: deadlineTriggerOutputSchema,
     aiMetadata: {
         description: 'Fires for each card whose due date falls within a configured lead time (e.g. 24 hours) ahead of now, scoped to a board or an optional list. Represents an approaching, not-yet-completed card deadline; polls periodically and skips cards already marked due-complete.',
     },

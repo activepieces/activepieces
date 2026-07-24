@@ -6,13 +6,15 @@ import {
 } from '@activepieces/pieces-common';
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
+import { getCardAttachmentsActionOutputSchema } from '../../output-schemas';
 
 export const getCardAttachments = createAction({
   auth: trelloAuth,
   name: 'get_card_attachments',
   displayName: 'Get All Card Attachments',
   description: 'Gets all attachments on a card.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: getCardAttachmentsActionOutputSchema,
   aiMetadata: { description: 'Lists all attachments on a Trello card identified by card_id. Use to enumerate the files and links attached to a card, e.g. to find an attachment id before fetching or deleting it. Read-only and idempotent.', idempotent: true },
   props: {
     card_id: Property.ShortText({
