@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
-import { AgentPieceTool, FlowActionType, flowStructureUtil, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, Step, WorkerToApiContract } from '@activepieces/shared'
+import { AgentPieceTool, FailedStep, FlowActionType, flowStructureUtil, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, Step, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../types'
 import { pieceCache, PieceNotFoundError } from '../pieces/piece-cache'
 import { flowBundleStore } from './flow-bundle-store'
@@ -41,7 +41,7 @@ export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, 
             if (disableError) {
                 log.error({ error: String(disableError), flow: { id: flow.id } }, 'Failed to disable flow after missing piece')
             }
-            return { kind: 'disabled' }
+            return { kind: 'disabled', failedStep: buildMissingPieceFailedStep({ flowVersion, missingPiece: error }) }
         }
 
         const shouldPublish = flowVersion.state === FlowVersionState.LOCKED && flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION
@@ -79,6 +79,18 @@ async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath
             platformId,
         }),
     ))
+}
+
+function buildMissingPieceFailedStep({ flowVersion, missingPiece }: BuildMissingPieceFailedStepParams): FailedStep {
+    const pieceSteps = flowSteps.piece(flowVersion)
+    const stepMatch = pieceSteps.find((step) => step.settings.pieceName === missingPiece.pieceName && step.settings.pieceVersion === missingPiece.pieceVersion)
+    const agentToolMatch = pieceSteps.find((step) => extractAgentToolPieceRefs(step).some((ref) => ref.pieceName === missingPiece.pieceName && ref.pieceVersion === missingPiece.pieceVersion))
+    const step = stepMatch ?? agentToolMatch ?? flowVersion.trigger
+    return {
+        name: step.name,
+        displayName: step.displayName,
+        message: `The piece ${missingPiece.pieceName}@${missingPiece.pieceVersion} is not installed on this instance or has been hidden by an admin, so the flow was turned off. Install the missing piece version or update the step to an installed version, then publish and re-enable the flow.`,
+    }
 }
 
 // Pieces used as agent tools live in a PIECE step's `agentTools` input, not as their own flow steps, so the
@@ -149,6 +161,11 @@ type PieceRef = {
     pieceVersion: string
 }
 
+type BuildMissingPieceFailedStepParams = {
+    flowVersion: FlowVersion
+    missingPiece: PieceNotFoundError
+}
+
 export type PublishBundle = () => Promise<void>
 
 export type ProvisionedCode =
@@ -157,5 +174,5 @@ export type ProvisionedCode =
 
 export type ResolvedFlow =
     | { kind: 'flow-not-found' }
-    | { kind: 'disabled' }
+    | { kind: 'disabled', failedStep?: FailedStep }
     | { kind: 'ready', flowVersion: FlowVersion, pieces: PiecePackage[], code: ProvisionedCode, publishBundle: PublishBundle | null }

@@ -5,7 +5,6 @@ import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { redisConnections } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -121,17 +120,41 @@ function buildConnectionInventoryNote({ connections, truncated }: {
     return lines.join('\n')
 }
 
+function buildMemoryNote({ instructions, memories }: {
+    instructions: string | null
+    memories: string[]
+}): string {
+    const trimmedInstructions = instructions?.trim()
+    const lines: string[] = [
+        '\n\n## Memory about this user (persists across every conversation)',
+        'Honor anything below by default without re-asking. Save to memory with `ap_remember` (silent) whenever it would spare the user from repeating themselves next time:',
+        '- The user asks you to remember or forget something ("remember I love cheese", "don\'t forget X", "forget that") — ALWAYS act on this immediately.',
+        '- The user volunteers a durable fact, preference, or default about themselves ("I love cheese", "I prefer TypeScript", "my main channel is #ops", "I only hire EU-based") — save it proactively.',
+        '- The user corrects how you work ("stop asking me things you can find") — save the correction.',
+        'One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so if you are unsure whether something is worth remembering, save it (or briefly ask). Do NOT save one-off task details (those belong in the brief).',
+    ]
+    if (!isNil(trimmedInstructions)) {
+        lines.push(`\n### Instructions (how they want you to work / talk)\n${trimmedInstructions}`)
+    }
+    lines.push(
+        '\n### Remembered facts',
+        memories.length > 0 ? memories.map((memory) => `- ${memory}`).join('\n') : 'Nothing remembered yet.',
+    )
+    return lines.join('\n')
+}
+
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
         const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
 
-        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta] = await Promise.all([
+        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta, chatMemory] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
             chatHelpers.resolveChatProvider({ platformId, log }),
             chatHelpers.getUserProjects({ platformId, userId, log }),
             chatMcp.getCredentials({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
             userService(log).getMetaInformation({ id: userId }),
+            chatHelpers.getUserChatMemory({ platformId, userId }),
         ])
 
         const attachmentProjectId = (conversation.projectId && userProjects.some((p) => p.id === conversation.projectId))
@@ -218,7 +241,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
             userEmail: userMeta.email,
-        }) + inventoryNote
+        }) + inventoryNote + buildMemoryNote({ instructions: chatMemory.instructions, memories: chatMemory.memories })
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides
@@ -579,8 +602,8 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const conversationLimit = await incrementAndCheckLimit({ key: `chat-email-count:conv:${platformId}:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
-        const hourlyLimit = await incrementAndCheckLimit({ key: `chat-email-count:user:${platformId}:${userId}`, limit: EMAILS_PER_USER_PER_HOUR, ttlSeconds: HOURLY_LIMIT_TTL_SECONDS })
+        const conversationLimit = await chatHelpers.incrementAndCheckLimit({ key: `chat-email-count:conv:${platformId}:${conversationId}`, limit: EMAILS_PER_CONVERSATION, ttlSeconds: CONVERSATION_LIMIT_TTL_SECONDS })
+        const hourlyLimit = await chatHelpers.incrementAndCheckLimit({ key: `chat-email-count:user:${platformId}:${userId}`, limit: EMAILS_PER_USER_PER_HOUR, ttlSeconds: HOURLY_LIMIT_TTL_SECONDS })
         if (!conversationLimit.allowed || !hourlyLimit.allowed) {
             log.warn({ conversation: { id: conversationId }, user: { id: userId }, conversationCount: conversationLimit.count, hourlyCount: hourlyLimit.count }, '[chatRpc#sendChatEmail] Email rate limit reached')
             return { sent: false, message: 'You have reached the email sending limit for now. Please try again later.' }
@@ -626,15 +649,6 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
         : []
     const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
-}
-
-async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {
-    const redis = await redisConnections.useExisting()
-    const count = await redis.incr(key)
-    if (count === 1) {
-        await redis.expire(key, ttlSeconds)
-    }
-    return { allowed: count <= limit, count }
 }
 
 function byteLengthOf(value: unknown): number {

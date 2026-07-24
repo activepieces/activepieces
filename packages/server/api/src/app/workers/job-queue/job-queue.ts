@@ -106,6 +106,15 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         return queue
     },
+    async removeAllFlowRunJobs({ flowRunId, platformId, projectId }: RemoveAllFlowRunJobsParams): Promise<void> {
+        const queueName = await getQueueName({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW }, log)
+        const queue = await ensureQueueExists({ log, queueName })
+        const allJobs = await queue.getJobs(['waiting', 'delayed'])
+        const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
+        await Promise.allSettled(matching.map((j) => j.remove()))
+        log.info({ flowRun: { id: flowRunId }, queueName, removedIds: matching.map((j) => j.id) }, '[jobQueue#removeAllFlowRunJobs] done')
+    },
+
     async close(): Promise<void> {
         log.info('[jobQueue#close] Closing job queue')
         const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
@@ -163,7 +172,6 @@ const USER_INTERACTION_JOB_TYPES = new Set([
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
-    WorkerJobType.EXECUTE_ACTION,
 ])
 
 export function isUserInteractionJob(jobType: WorkerJobType): boolean {
@@ -222,6 +230,12 @@ type RemoveOneTimeJobParams = {
     platformId: string | null
     projectId?: string | null
     jobType?: WorkerJobType
+}
+
+type RemoveAllFlowRunJobsParams = {
+    flowRunId: string
+    platformId: string | null
+    projectId?: string | null
 }
 
 type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> = {

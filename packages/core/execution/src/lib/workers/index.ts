@@ -56,6 +56,7 @@ export const MachineInformation = z.object({
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
     ip: z.string(),
+    serverPingMs: z.number().optional(),
     sandboxes: z.array(SandboxInformation).default([]),
 })
 
@@ -134,6 +135,7 @@ export const WorkerSettingsResponse = z.object({
     SSRF_ALLOW_LIST: z.array(z.string()),
     PAGE_ONCALL_WEBHOOK: z.string().optional(),
     APP_VERSION: z.string().optional(),
+    PROJECT_WORKER: z.boolean().optional(),
 })
 
 export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

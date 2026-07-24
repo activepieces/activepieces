@@ -1,4 +1,4 @@
-import { chunk } from '@activepieces/core-utils'
+import { chunk, tryCatch } from '@activepieces/core-utils'
 import { FlowStatus, ProjectType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -7,7 +7,7 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
-import { BillingEvents, captureBillingEvent, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
+import { BILLING_EVENTS_FLUSH_BATCH_SIZE, BillingEvents, captureBillingEvent, flushBillingEvents, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -40,30 +40,32 @@ export const flowRunTrackingService = (log: FastifyBaseLogger) => ({
             const dayStart = utcMidnight(1)
             const dayEnd = utcMidnight(0)
 
-            // Run the aggregates sequentially rather than in parallel: this is a background report, and
-            // firing all four heavy GROUP BY queries at once would hold several connections from the shared
-            // pool simultaneously, starving live request traffic. One at a time keeps the report to a single
-            // connection so the app server stays responsive while it runs.
             const activeFlowsByPlatform = await queryActiveFlowsByPlatform(platformIds)
             const usersByPlatform = await queryUsersByPlatform(platformIds)
             const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)
             const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd)
-
             const reportedAt = new Date().toISOString()
 
-            for (const [platformId, licenseKey] of licenseKeysByPlatform) {
-                captureBillingEvent({
-                    licenseKey,
-                    event: BillingEvents.TOTAL_RUNS_PER_DAY,
-                    properties: buildSnapshotBody({
-                        platformId,
-                        activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
-                        users: usersByPlatform.get(platformId) ?? 0,
-                        projects: teamProjectsByPlatform.get(platformId) ?? 0,
-                        dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
-                        reportedAt,
-                    }),
-                })
+            for (const platformBatch of chunk([...licenseKeysByPlatform], BILLING_EVENTS_FLUSH_BATCH_SIZE)) {
+                for (const [platformId, licenseKey] of platformBatch) {
+                    captureBillingEvent({
+                        licenseKey,
+                        event: BillingEvents.TOTAL_RUNS_PER_DAY,
+                        properties: buildSnapshotBody({
+                            platformId,
+                            activeFlows: activeFlowsByPlatform.get(platformId) ?? 0,
+                            users: usersByPlatform.get(platformId) ?? 0,
+                            projects: teamProjectsByPlatform.get(platformId) ?? 0,
+                            dailyExecutions: dailyExecutionsByPlatform.get(platformId) ?? [],
+                            reportedAt,
+                        }),
+                    })
+                }
+
+                const flushResult = await tryCatch(() => flushBillingEvents())
+                if (flushResult.error !== null) {
+                    log.warn({ error: flushResult.error }, '[flowRunTracking#reportAllPlatforms] Failed to flush billing events batch')
+                }
             }
         }
         catch (error) {

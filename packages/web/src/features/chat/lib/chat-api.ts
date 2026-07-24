@@ -1,11 +1,16 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
+  type ChatFeedbackReason,
   type ChatHistoryMessage,
   type PersistedChatMessage,
   ChatConversation,
   ConnectionOption,
   CreateChatConversationRequest,
+  GetChatMemoryResponse,
+  ImportChatMemoryRequest,
+  InstructChatMemoryRequest,
   UpdateChatConversationRequest,
+  UpdateChatMemoryRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -88,6 +93,25 @@ async function cancelConversation(conversationId: string): Promise<void> {
   return api.post<void>(`/v1/chat/conversations/${conversationId}/cancel`);
 }
 
+async function submitMessageFeedback({
+  conversationId,
+  messageIndex,
+  rating,
+  reasons,
+  comment,
+}: {
+  conversationId: string;
+  messageIndex: number;
+  rating: 'up' | 'down' | null;
+  reasons?: ChatFeedbackReason[];
+  comment?: string;
+}): Promise<void> {
+  return api.post<void>(
+    `/v1/chat/conversations/${conversationId}/messages/${messageIndex}/feedback`,
+    { rating, reasons, comment },
+  );
+}
+
 async function getPickerConnections({
   conversationId,
   pieceName,
@@ -100,17 +124,36 @@ async function getPickerConnections({
   });
 }
 
-async function getPendingGate(conversationId: string): Promise<{
-  gateId: string;
-  toolName: string;
-  displayName: string;
-  toolInput: Record<string, unknown>;
-} | null> {
+async function getPendingGate(
+  conversationId: string,
+): Promise<PendingGate | null> {
   return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
 }
 
 async function recordLanding(): Promise<void> {
   return api.post<void>('/v1/chat/funnel/landing');
+}
+
+async function getMemory(): Promise<GetChatMemoryResponse> {
+  return api.get<GetChatMemoryResponse>('/v1/chat/memory');
+}
+
+async function saveMemory(
+  request: UpdateChatMemoryRequest,
+): Promise<GetChatMemoryResponse> {
+  return api.post<GetChatMemoryResponse>('/v1/chat/memory', request);
+}
+
+async function importMemory(
+  request: ImportChatMemoryRequest,
+): Promise<GetChatMemoryResponse> {
+  return api.post<GetChatMemoryResponse>('/v1/chat/memory/import', request);
+}
+
+async function instructMemory(
+  request: InstructChatMemoryRequest,
+): Promise<GetChatMemoryResponse> {
+  return api.post<GetChatMemoryResponse>('/v1/chat/memory/instruct', request);
 }
 
 export const chatApi = {
@@ -123,7 +166,19 @@ export const chatApi = {
   sendMessage,
   approveToolCall,
   cancelConversation,
+  submitMessageFeedback,
   getPickerConnections,
   getPendingGate,
   recordLanding,
+  getMemory,
+  saveMemory,
+  importMemory,
+  instructMemory,
+};
+
+export type PendingGate = {
+  gateId: string;
+  toolName: string;
+  displayName: string;
+  toolInput: Record<string, unknown>;
 };
