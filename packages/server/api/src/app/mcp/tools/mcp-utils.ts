@@ -359,6 +359,24 @@ function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): st
     })
 }
 
+// A whole-output scalar schema (one root field with value: '' and no
+// children/listItems, e.g. google-drive read-file where the entire output is
+// the file URL) flattens to no field paths — the agent should reference the
+// bare step output instead. Surface what that value is so the guidance isn't
+// silently dropped.
+function describeWholeOutputSchema(schema: OutputSchema): WholeOutputDescription | null {
+    const fields = schema.fields ?? []
+    const [field] = fields
+    if (fields.length !== 1 || field.value !== '' || (field.children?.length ?? 0) > 0 || (field.listItems?.length ?? 0) > 0) {
+        return null
+    }
+    return {
+        label: field.label ?? field.key,
+        ...(field.format && { format: field.format }),
+        ...(field.description && { description: field.description }),
+    }
+}
+
 function deriveFieldPathsFromSample(value: unknown, prefix = ''): string[] {
     if (Array.isArray(value)) {
         return value.length > 0
@@ -783,6 +801,7 @@ export const mcpUtils = {
     buildExampleInput,
     buildRequiredInputs,
     flattenOutputSchemaFields,
+    describeWholeOutputSchema,
     deriveFieldPathsFromSample,
     normalizePieceName,
     lookupPieceComponent,
@@ -876,6 +895,12 @@ type ResolveRouterStepResult =
 type ResolveLatestPieceVersionResult =
     | { pieceVersion: string, normalizedPieceName: string, error?: never }
     | { error: McpToolResult, pieceVersion?: never, normalizedPieceName?: never }
+
+type WholeOutputDescription = {
+    label: string
+    format?: OutputSchemaField['format']
+    description?: string
+}
 
 export type ActionCardinality = 'enumerate' | 'single' | 'other'
 
