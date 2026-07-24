@@ -89,6 +89,15 @@ All flow modifications go through `POST /v1/flows/:id` with a `FlowOperationRequ
 - USE_AS_DRAFT → copies published version back to draft for editing
 - Only published flows can be enabled (triggers registered)
 
+### Draft-creation atomicity (GIT-1590)
+
+- `flowService.create` wraps the flow row + first empty version in one `transaction()` — a failure between the two writes can no longer leave an unopenable zero-version flow.
+- Editing a published flow (latest version LOCKED) creates the working draft atomically: `createNewDraftIfVersionIsPublished` runs `createEmptyVersion` + the IMPORT_FLOW loop inside a single `transaction()`, threading the `entityManager` through `applyOperation` down to the `updateLastModified` side effect. A failed import rolls back, so no empty draft row survives.
+- If the user's operation fails after the draft was created from a published version, `update()`'s default case deletes the fresh draft (compensating cleanup, same pattern as the MCP flow tools) — a failed edit leaves the flow exactly as it was. The cleanup is best-effort (`tryCatch`-wrapped); wrapping the user operation into the same transaction was rejected because it would hold a transaction across piece-metadata network fetches and non-rollbackable side effects.
+- Inside any `applyOperation` transaction, every DB write must go through the passed `entityManager`. A write on the default connection from within an open transaction escapes the rollback, and TypeORM's `save()` self-wraps in BEGIN/COMMIT, which under the PGlite test driver (single session) commits the caller's open transaction. This is why `updateLastModified` is a single manager-scoped `UPDATE` and sits outside the swallow-all catch in `preApplyOperation` — a swallowed statement failure would leave the transaction aborted and resurface as a confusing error on the next statement.
+- Non-DB side effects (sample-data file deletion, webhook simulation teardown) intentionally stay outside transactions: they are not rollbackable, and they no-op for the operation types the transactional paths apply (IMPORT_FLOW, UPDATE_SAMPLE_DATA_INFO, LOCK_FLOW).
+- Regression coverage: `test/integration/ce/flows/flow/flow-operations.test.ts` ("draft creation rollback" describe block) — import failure rolls back the empty draft; user-operation failure after import deletes the copied draft.
+
 ## Publishing Side Effects
 
 When LOCK_AND_PUBLISH or CHANGE_STATUS to ENABLED:
