@@ -26,6 +26,10 @@ function parseBasicHeader(authorizationHeader: string | undefined): BasicCredent
 export const mcpOAuthClientAuth = {
     async authenticate({ authorizationHeader, clientId: bodyClientId, clientSecret: bodyClientSecret }: AuthenticateParams): Promise<AuthenticateResult> {
         const basic = parseBasicHeader(authorizationHeader)
+        if (!isNil(basic) && !isNil(bodyClientSecret)) {
+            return { status: 'error', error: 'invalid_request', errorDescription: 'Multiple client authentication mechanisms' }
+        }
+
         const clientId = basic?.clientId ?? bodyClientId
         if (!clientId) {
             return { status: 'anonymous' }

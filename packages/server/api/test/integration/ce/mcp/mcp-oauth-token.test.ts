@@ -273,6 +273,30 @@ describe('MCP OAuth token endpoint', () => {
         expect(res.statusCode).toBe(400)
         expect(res.json().error).toBe('invalid_client')
     })
+
+    it('rejects a request that presents both Basic-header and body credentials', async () => {
+        const client = await registerClient('client_secret_post')
+        const { verifier, challenge } = generatePkce()
+        const code = await seedAuthorizationCode(client.client_id, challenge)
+        const basicHeader = 'Basic ' + Buffer.from(`${client.client_id}:${client.client_secret}`).toString('base64')
+
+        const res = await app.inject({
+            method: 'POST',
+            url: '/token',
+            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader },
+            payload: new URLSearchParams({
+                grant_type: 'authorization_code',
+                code,
+                client_id: client.client_id,
+                client_secret: client.client_secret ?? '',
+                code_verifier: verifier,
+                redirect_uri: REDIRECT_URI,
+            }).toString(),
+        })
+
+        expect(res.statusCode).toBe(400)
+        expect(res.json().error).toBe('invalid_request')
+    })
 })
 
 type RegisteredClient = {
