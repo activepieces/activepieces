@@ -55,20 +55,13 @@ export type PiecePackage = PrivatePiecePackage | OfficialPiecePackage | CustomNp
 // ── trigger source / schedule ──────────────────────────────────────────────
 export enum TriggerSourceScheduleType {
     CRON_EXPRESSION = 'CRON_EXPRESSION',
-    INTERVAL = 'INTERVAL',
 }
 
-export const ScheduleOptions = z.discriminatedUnion('type', [
-    z.object({
-        type: z.literal(TriggerSourceScheduleType.CRON_EXPRESSION),
-        cronExpression: z.string(),
-        timezone: z.string(),
-    }),
-    z.object({
-        type: z.literal(TriggerSourceScheduleType.INTERVAL),
-        intervalMs: z.int().check(z.minimum(60000)),
-    }),
-])
+export const ScheduleOptions = z.object({
+    type: z.enum(TriggerSourceScheduleType),
+    cronExpression: z.string(),
+    timezone: z.string(),
+})
 export type ScheduleOptions = z.infer<typeof ScheduleOptions>
 
 export const TriggerSource = z.object({

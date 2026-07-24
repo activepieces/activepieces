@@ -1,4 +1,4 @@
-import { isNil, isObject, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -15,6 +15,7 @@ import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-se
 import { tableService } from '../../../tables/table/table.service'
 import { chatApprovalGate } from '../chat-approval-gate'
 import { chatHelpers } from '../chat-helpers'
+import { chatMemoryAi } from '../chat-memory-ai'
 import { chatPrompt } from '../prompt/chat-prompt'
 
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
@@ -233,6 +234,14 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
     const availableProjectIds = projects.map((p) => p.id)
 
     switch (toolName) {
+        case 'ap_remember': {
+            const memory = isString(toolInput.memory) ? toolInput.memory.trim() : ''
+            if (!memory) {
+                return { success: false, error: 'Empty memory.' }
+            }
+            await chatMemoryAi.applyInstruction({ platformId, userId, instruction: memory, log })
+            return { remembered: true }
+        }
         case 'ap_discover_action_auth': {
             const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
             // Sticky connection: if the user already chose a connection for this piece this
