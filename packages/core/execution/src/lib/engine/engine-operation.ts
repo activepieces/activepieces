@@ -15,6 +15,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+    EXECUTE_RESOLVE_CONNECTION_IDENTIFIER = 'EXECUTE_RESOLVE_CONNECTION_IDENTIFIER',
     EXECUTE_REFRESH_TOKEN_AUTH = 'EXECUTE_REFRESH_TOKEN_AUTH',
 }
 
@@ -34,6 +35,7 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
+    | ExecuteResolveConnectionIdentifierOperation
     | ExecuteRefreshTokenAuthOperation
 
 
@@ -60,6 +62,11 @@ export type BaseEngineOperation = {
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
+    piece: PiecePackage
+    auth: AppConnectionValue
+}
+
+export type ExecuteResolveConnectionIdentifierOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
     auth: AppConnectionValue
 }
@@ -290,6 +297,10 @@ type InvalidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseO
 export type ExecuteValidateAuthResponse =
     | ValidExecuteValidateAuthResponseOutput
     | InvalidExecuteValidateAuthResponseOutput
+
+export type ExecuteResolveConnectionIdentifierResponse = {
+    identifier: string | undefined
+}
 
 
 export type EngineResponse<T = unknown> = {

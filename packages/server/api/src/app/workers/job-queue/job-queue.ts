@@ -173,6 +173,7 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
 const USER_INTERACTION_JOB_TYPES = new Set([
     WorkerJobType.EXECUTE_PROPERTY,
     WorkerJobType.EXECUTE_VALIDATION,
+    WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,

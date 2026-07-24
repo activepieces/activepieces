@@ -59,6 +59,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
+        case WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
         case WorkerJobType.EXECUTE_TOKEN_REFRESH:
             return 'critical'
@@ -74,6 +75,7 @@ export enum WorkerJobType {
     EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
+    EXECUTE_RESOLVE_CONNECTION_IDENTIFIER = 'EXECUTE_RESOLVE_CONNECTION_IDENTIFIER',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
@@ -91,6 +93,7 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_AGENT_RUN,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
+    WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
@@ -178,6 +181,18 @@ export const ExecuteValidateAuthJobData = z.object({
 })
 export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobData>
 
+export const ExecuteResolveConnectionIdentifierJobData = z.object({
+    jobType: z.literal(WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER),
+    projectId: z.string().optional(),
+    platformId: z.string(),
+    piece: PiecePackage,
+    schemaVersion: z.number(),
+    connectionValue: z.unknown(),
+    requestId: z.string(),
+    webserverId: z.string(),
+})
+export type ExecuteResolveConnectionIdentifierJobData = z.infer<typeof ExecuteResolveConnectionIdentifierJobData>
+
 export const ExecuteTokenRefreshJobData = z.object({
     jobType: z.literal(WorkerJobType.EXECUTE_TOKEN_REFRESH),
     projectId: z.string().optional(),
@@ -236,6 +251,7 @@ export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPi
 
 export const UserInteractionJobData = z.union([
     ExecuteValidateAuthJobData,
+    ExecuteResolveConnectionIdentifierJobData,
     ExecuteTokenRefreshJobData,
     ExecuteTriggerHookJobData,
     ExecutePropertyJobData,
@@ -245,6 +261,7 @@ export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = z.union([
     ExecuteValidateAuthJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteResolveConnectionIdentifierJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteTokenRefreshJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteTriggerHookJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),

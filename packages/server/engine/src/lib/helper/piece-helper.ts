@@ -12,7 +12,7 @@ import {
     pieceTranslation,
     PropertyType,
     StaticPropsValue } from '@activepieces/pieces-framework'
-import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
+import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteResolveConnectionIdentifierOperation, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 
 const DEFAULT_REFRESH_EXPIRES_IN_SECONDS = 3300
@@ -138,6 +138,20 @@ export const pieceHelper = {
             server,
         })
 
+    },
+
+    async executeResolveConnectionIdentifier(
+        { params, devPieces }: { params: ExecuteResolveConnectionIdentifierOperation, devPieces: string[] },
+    ): Promise<ExecuteResolveConnectionIdentifierResponse> {
+        const { piece: piecePackage } = params
+
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
+        const server = buildServerContext(params)
+        return resolveConnectionIdentifier({
+            authValue: params.auth,
+            pieceAuth: piece.auth,
+            server,
+        })
     },
 
     async executeRefreshTokenAuth(
@@ -276,6 +290,56 @@ const validateAuth = async ({
         }
         default: {
             throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
+        }
+    }
+}
+
+const resolveConnectionIdentifier = async ({
+    server,
+    authValue,
+    pieceAuth,
+}: ValidateAuthParams): Promise<ExecuteResolveConnectionIdentifierResponse> => {
+    if (isNil(pieceAuth)) {
+        return { identifier: undefined }
+    }
+    const usedPieceAuth = getAuthPropertyForValue({
+        authValueType: authValue.type,
+        pieceAuth,
+    })
+    if (isNil(usedPieceAuth)) {
+        return { identifier: undefined }
+    }
+    // A cloud/platform OAuth claim result can reach the engine without a `type`
+    // field on the value, so dispatch on the piece's own declared auth type (always
+    // present) and narrow the value structurally rather than by authValue.type.
+    switch (usedPieceAuth.type) {
+        case PropertyType.OAUTH2: {
+            if (!('access_token' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue, server }) }
+        }
+        case PropertyType.BASIC_AUTH: {
+            if (!('username' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue, server }) }
+        }
+        case PropertyType.SECRET_TEXT: {
+            if (!('secret_text' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue.secret_text, server }) }
+        }
+        case PropertyType.CUSTOM_AUTH:
+        case PropertyType.OIDC: {
+            if (!('props' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue.props, server }) }
+        }
+        default: {
+            return { identifier: undefined }
         }
     }
 }
