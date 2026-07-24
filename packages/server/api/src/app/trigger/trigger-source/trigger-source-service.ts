@@ -15,7 +15,7 @@ export const triggerSourceRepo = repoFactory(TriggerSourceEntity)
 export const triggerSourceService = (log: FastifyBaseLogger) => {
     return {
         async enable(params: EnableTriggerParams): Promise<TriggerSource> {
-            const { flowVersion, projectId, simulate, templateId } = params
+            const { flowVersion, projectId, simulate, templateId, isRepublish } = params
             log.info({
                 flow: { id: flowVersion.flowId },
                 flowVersion: { id: flowVersion.id },
@@ -59,6 +59,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceTrigger,
                 simulate,
+                isRepublish: isRepublish ?? false,
             })
 
             if (templateId) {
@@ -233,4 +234,5 @@ type EnableTriggerParams = {
     projectId: string
     simulate: boolean
     templateId?: string
+    isRepublish?: boolean
 }
