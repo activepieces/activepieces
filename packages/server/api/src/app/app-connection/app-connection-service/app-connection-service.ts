@@ -1,5 +1,7 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, unique, UserId } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
+import { PropertyType } from '@activepieces/pieces-framework'
+import { safeHttp } from '@activepieces/server-utils'
+import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, resolveValueFromProps, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
@@ -8,6 +10,7 @@ import { projectMemberService } from '../../ee/projects/project-members/project-
 import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
+import { jwtUtils } from '../../helper/jwt-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
@@ -71,6 +74,21 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
         })
 
+        const accountIdentifier = await resolveConnectionAccountIdentifier({
+            connectionType: type,
+            data: 'data' in validatedConnectionValue ? validatedConnectionValue.data : undefined,
+            accessToken: 'access_token' in validatedConnectionValue ? validatedConnectionValue.access_token : undefined,
+            props: 'props' in validatedConnectionValue ? validatedConnectionValue.props : undefined,
+            pieceName,
+            pieceVersion,
+            platformId,
+            log,
+        })
+        const baseMetadata = metadata ?? existingConnection?.metadata ?? undefined
+        const connectionMetadata = isNil(accountIdentifier)
+            ? metadata
+            : { ...(baseMetadata ?? {}), accountIdentifier }
+
         const newId = existingConnection?.id ?? apId()
         const connection = {
             displayName,
@@ -84,7 +102,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope,
             projectIds,
             platformId,
-            ...spreadIfDefined('metadata', metadata),
+            ...spreadIfDefined('metadata', connectionMetadata),
             ...spreadIfDefined('preSelectForNewProjects', preSelectForNewProjects),
             pieceVersion,
         }
@@ -578,6 +596,193 @@ async function assertProjectIds(projectIds: ProjectId[], platformId: string): Pr
         })
     }
 }
+const OIDC_HTTP_TIMEOUT_MS = 4000
+
+// Resolves the account email for an OAuth connection using OIDC standards only,
+// so it generalises across providers instead of being tied to a single vendor:
+// decode the id_token when the provider returns one, otherwise discover the
+// provider's userinfo endpoint from its .well-known/openid-configuration and
+// read the email claim. Best-effort — never throws, returns undefined on any miss.
+const resolveConnectionAccountIdentifier = async ({
+    connectionType,
+    data,
+    accessToken,
+    props,
+    pieceName,
+    pieceVersion,
+    platformId,
+    log,
+}: {
+    connectionType: AppConnectionType
+    data: Record<string, unknown> | undefined
+    accessToken: string | undefined
+    props: Record<string, unknown> | undefined
+    pieceName: string
+    pieceVersion: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<string | undefined> => {
+    if (
+        connectionType !== AppConnectionType.OAUTH2 &&
+        connectionType !== AppConnectionType.CLOUD_OAUTH2 &&
+        connectionType !== AppConnectionType.PLATFORM_OAUTH2
+    ) {
+        return undefined
+    }
+    const emailFromToken = emailFromTokenResponse(data)
+    if (!isNil(emailFromToken)) {
+        return emailFromToken
+    }
+    const slackIdentifier = await resolveSlackAccountIdentifier({ data, accessToken })
+    if (!isNil(slackIdentifier)) {
+        return slackIdentifier
+    }
+    if (isNil(accessToken) || accessToken.length === 0) {
+        return undefined
+    }
+    return resolveEmailFromOpenIdUserInfo({
+        pieceName,
+        pieceVersion,
+        platformId,
+        props,
+        accessToken,
+        log,
+    })
+}
+
+// OIDC providers expose the sign-in email under different claims: Google uses
+// `email`; Microsoft/Azure AD usually put it in `preferred_username` (the UPN)
+// or `upn`. Fall back to those, but only when they actually look like an email.
+const pickEmailClaim = (claims: Record<string, unknown> | undefined): string | undefined => {
+    if (isNil(claims)) {
+        return undefined
+    }
+    const directEmail = claims['email'] ?? claims['mail']
+    if (typeof directEmail === 'string' && directEmail.length > 0) {
+        return directEmail
+    }
+    return ['preferred_username', 'upn', 'unique_name']
+        .map((key) => claims[key])
+        .find((value): value is string => typeof value === 'string' && value.includes('@'))
+}
+
+const emailFromTokenResponse = (data: Record<string, unknown> | undefined): string | undefined => {
+    const emailFromData = pickEmailClaim(data)
+    if (!isNil(emailFromData)) {
+        return emailFromData
+    }
+    const idToken = data?.['id_token']
+    if (typeof idToken !== 'string') {
+        return undefined
+    }
+    const { data: decoded } = tryCatchSync(() => jwtUtils.decode<Record<string, unknown>>({ jwt: idToken }))
+    return pickEmailClaim(decoded?.payload)
+}
+
+const nameOf = (value: unknown): string | undefined => {
+    if (typeof value === 'object' && value !== null && 'name' in value && typeof value.name === 'string' && value.name.length > 0) {
+        return value.name
+    }
+    return undefined
+}
+
+// Slack connects an entire workspace rather than an email account, so we show
+// it as "<user> (<workspace>)": the workspace comes from team.name in the token
+// response, and the authorizing user's display name is fetched via users.info
+// (best-effort — falls back to the workspace alone).
+const resolveSlackAccountIdentifier = async ({
+    data,
+    accessToken,
+}: {
+    data: Record<string, unknown> | undefined
+    accessToken: string | undefined
+}): Promise<string | undefined> => {
+    const workspace = nameOf(data?.['team']) ?? nameOf(data?.['enterprise'])
+    if (isNil(workspace)) {
+        return undefined
+    }
+    const authedUser = data?.['authed_user']
+    const userId = typeof authedUser === 'object' && authedUser !== null && 'id' in authedUser && typeof authedUser.id === 'string'
+        ? authedUser.id
+        : undefined
+    if (isNil(userId) || isNil(accessToken) || accessToken.length === 0) {
+        return workspace
+    }
+    const { data: username } = await tryCatch(async () => {
+        const response = (await safeHttp.axios.get<{ user?: { name?: string, real_name?: string, profile?: { display_name?: string } } }>('https://slack.com/api/users.info', {
+            params: { user: userId },
+            headers: { Authorization: `Bearer ${accessToken}` },
+            timeout: OIDC_HTTP_TIMEOUT_MS,
+        })).data
+        const user = response?.user
+        return user?.profile?.display_name || user?.real_name || user?.name
+    })
+    return isNil(username) || username.length === 0 ? workspace : `${username} (${workspace})`
+}
+
+const resolveEmailFromOpenIdUserInfo = async ({
+    pieceName,
+    pieceVersion,
+    platformId,
+    props,
+    accessToken,
+    log,
+}: {
+    pieceName: string
+    pieceVersion: string
+    platformId: string
+    props: Record<string, unknown> | undefined
+    accessToken: string
+    log: FastifyBaseLogger
+}): Promise<string | undefined> => {
+    const { data: email } = await tryCatch(async () => {
+        const authorizationUrl = await getOAuth2AuthorizationUrl({ pieceName, pieceVersion, platformId, props, log })
+        if (isNil(authorizationUrl)) {
+            return undefined
+        }
+        const discoveryUrl = new URL('/.well-known/openid-configuration', new URL(authorizationUrl).origin).toString()
+        const discovery = (await safeHttp.axios.get<{ userinfo_endpoint?: unknown }>(discoveryUrl, {
+            timeout: OIDC_HTTP_TIMEOUT_MS,
+        })).data
+        const userInfoUrl = discovery?.userinfo_endpoint
+        if (typeof userInfoUrl !== 'string') {
+            return undefined
+        }
+        const userInfo = (await safeHttp.axios.get<Record<string, unknown>>(userInfoUrl, {
+            timeout: OIDC_HTTP_TIMEOUT_MS,
+            headers: { Authorization: `Bearer ${accessToken}` },
+        })).data
+        return pickEmailClaim(userInfo)
+    })
+    return email ?? undefined
+}
+
+const getOAuth2AuthorizationUrl = async ({
+    pieceName,
+    pieceVersion,
+    platformId,
+    props,
+    log,
+}: {
+    pieceName: string
+    pieceVersion: string
+    platformId: string
+    props: Record<string, unknown> | undefined
+    log: FastifyBaseLogger
+}): Promise<string | undefined> => {
+    const { data: authorizationUrl } = await tryCatch(async () => {
+        const pieceMetadata = await pieceMetadataService(log).getOrThrow({ name: pieceName, platformId, version: pieceVersion })
+        const pieceAuth = Array.isArray(pieceMetadata.auth)
+            ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2)
+            : pieceMetadata.auth
+        if (isNil(pieceAuth) || pieceAuth.type !== PropertyType.OAUTH2) {
+            return undefined
+        }
+        return resolveValueFromProps(props, pieceAuth.authUrl)
+    })
+    return authorizationUrl ?? undefined
+}
+
 const validateConnectionValue = async (
     params: ValidateConnectionValueParams,
     log: FastifyBaseLogger,
