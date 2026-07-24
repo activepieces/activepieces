@@ -24,18 +24,11 @@ import { getAgentStatus } from './lib/actions/get-agent-status';
 import { FIRECRAWL_API_BASE_URL } from './lib/common/common';
 import { firecrawlAuth } from './lib/auth';
 
-const markdownDescription = `
-Follow these steps to obtain your Firecrawl API Key:
-
-1. Visit [Firecrawl](https://firecrawl.dev) and create an account.
-2. Log in and navigate to your dashboard.
-3. Locate and copy your API key from the API settings section.
-`;
 
 export const firecrawl = createPiece({
   displayName: 'Firecrawl',
   description: 'Extract structured data from websites using AI with natural language prompts',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.84.6',
   logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["geekyme-fsmk", "geekyme", "arinmakk"],
