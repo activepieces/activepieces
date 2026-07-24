@@ -1,4 +1,4 @@
-import { FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, TriggerStrategy, WorkerJobType } from '@activepieces/shared'
+import { FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, TriggerSourceScheduleType, TriggerStrategy, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { projectService } from '../../project/project-service'
@@ -35,7 +35,11 @@ export const refillPollingJobs = (log: FastifyBaseLogger) => ({
                         triggerType: FlowTriggerType.PIECE,
                         jobType: WorkerJobType.EXECUTE_POLLING,
                     },
-                    scheduleOptions: triggerSource.schedule,
+                    scheduleOptions: {
+                        type: TriggerSourceScheduleType.CRON_EXPRESSION,
+                        cronExpression: triggerSource.schedule.cronExpression,
+                        timezone: triggerSource.schedule.timezone,
+                    },
                 })
                 migratedPollingJobs++
             }))

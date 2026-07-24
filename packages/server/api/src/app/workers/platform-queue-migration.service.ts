@@ -75,7 +75,6 @@ async function migrateSchedulers({ sourceQueue, targetQueue, platformId, batchSi
                     pattern: scheduler.pattern,
                     every: scheduler.every,
                     tz: scheduler.tz,
-                    ...isNil(scheduler.every) ? {} : { startDate: Date.now() + Number(scheduler.every) },
                 },
                 {
                     name: scheduler.name,

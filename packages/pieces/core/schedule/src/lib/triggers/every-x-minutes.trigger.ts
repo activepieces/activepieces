@@ -26,8 +26,10 @@ export const everyXMinutesTrigger = createTrigger({
     }),
   },
   onEnable: async (ctx) => {
+    const cronExpression = `*/${ctx.propsValue.minutes} * * * *`;
     ctx.setSchedule({
-      intervalMs: ctx.propsValue.minutes * 60_000,
+      cronExpression: cronExpression,
+      timezone: 'UTC',
     });
   },
   run(ctx) {

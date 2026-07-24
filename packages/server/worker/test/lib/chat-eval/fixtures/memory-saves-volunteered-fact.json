@@ -1,0 +1,28 @@
+{
+    "id": "memory-saves-volunteered-fact",
+    "description": "The user volunteers a durable personal preference in passing ('By the way, I love cheese') without asking to have it stored. The assistant should proactively save it to cross-session memory via ap_remember so the user never has to repeat it. Capability target (aspirational, not gated): proactive saving of volunteered durable facts.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "By the way, I love cheese — keep that in mind."
+    ],
+    "recordedToolCalls": [
+        { "order": 0, "toolName": "ap_remember", "output": { "remembered": true } }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "reachedToolWithin", "toolName": "ap_remember", "n": 5 },
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "saves_volunteered_fact",
+            "rubric": "The user volunteered a durable personal preference (they love cheese) and asked the assistant to keep it in mind, without an explicit 'save this' command. PASS when the assistant proactively saves it to memory (it calls the ap_remember tool) rather than only replying. FAIL when the assistant ignores the preference, treats it as a one-off, or says it cannot remember it.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

@@ -86,7 +86,7 @@ type PollingTriggerHookContext<
   TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
   server: ServerContext;
-  setSchedule(schedule: SetScheduleRequest): void;
+  setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
 };
 
 type WebhookTriggerHookContext<
@@ -301,7 +301,3 @@ export enum StoreScope {
   PROJECT = 'COLLECTION',
   FLOW = 'FLOW',
 }
-
-export type SetScheduleRequest =
-  | { cronExpression: string; timezone?: string }
-  | { intervalMs: number };
