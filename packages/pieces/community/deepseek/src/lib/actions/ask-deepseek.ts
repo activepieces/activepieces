@@ -35,20 +35,31 @@ export const askDeepseek = createAction({
           const response = await openai.models.list();
           // We need to get only LLM models
           const models = response.data;
+          const options = models.map((model) => {
+            return {
+              label: model.id,
+              value: model.id,
+            };
+          });
+
+          if (!options.some((opt) => opt.value === 'deepseek-reasoner')) {
+            options.push({
+              label: 'deepseek-reasoner',
+              value: 'deepseek-reasoner',
+            });
+          }
+
           return {
             disabled: false,
-            options: models.map((model) => {
-              return {
-                label: model.id,
-                value: model.id,
-              };
-            }),
+            options,
           };
         } catch (error) {
           return {
-            disabled: true,
-            options: [],
-            placeholder: "Couldn't load models, API key is invalid",
+            disabled: false,
+            options: [
+              { label: 'deepseek-chat', value: 'deepseek-chat' },
+              { label: 'deepseek-reasoner', value: 'deepseek-reasoner' },
+            ],
           };
         }
       },
