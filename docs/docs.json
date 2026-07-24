@@ -369,6 +369,7 @@
                      "build-pieces/piece-reference/flow-control",
                      "build-pieces/piece-reference/persistent-storage",
                      "build-pieces/piece-reference/files",
+                     "build-pieces/piece-reference/large-file-streaming",
                      "build-pieces/piece-reference/external-libraries",
                      "build-pieces/piece-reference/piece-versioning",
                      "build-pieces/piece-reference/examples",

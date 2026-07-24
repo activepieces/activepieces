@@ -1,0 +1,144 @@
+---
+title: "Large File Streaming"
+icon: 'water'
+description: "Move large files through a flow without buffering them in memory"
+---
+
+Large file streaming lets a piece process a big file by passing it through as a stream —
+transferring the bytes a chunk at a time — instead of loading the whole file into memory
+first. It is useful when a file is too large to hold in RAM at either the source or the
+destination. Because the file is never fully buffered, a flow can move files far larger
+than the worker's memory budget.
+
+## Why it matters
+
+A worker runs your piece code inside a sandbox with a bounded memory budget (about 1&nbsp;GB,
+minus overhead — see [Limits](/install/reference/limits)). Reading a large file into a
+`Buffer` holds the entire file in that budget at once, so a big enough file exhausts the
+memory and the worker is OOM-killed.
+
+Streaming avoids this: the bytes flow through as a Node `Readable`, roughly 5&nbsp;MB at a
+time, so no process ever holds the whole file. The transfer is transparent — there are no
+extra "chunk" steps in your flow; a streaming action looks and behaves like any other.
+
+<Warning>
+**Requires S3 file storage.** Full streaming only works when file storage is set to S3
+(`AP_FILE_STORAGE_LOCATION=S3`). With the default database (`DB`) storage a stream **can't**
+be written into a column incrementally, so the server buffers the whole file in memory
+before saving it — which defeats the memory savings and means very large files can still
+fail. Self-hosted installs default to `DB`; set S3 to get the benefit. See
+[Set up S3](/install/configure-operate/setup-s3).
+</Warning>
+
+## When to use it
+
+<Note>
+**Which approach should you use?**
+
+- **Buffer** (a `Buffer`, the default) — small files of known size where holding the whole
+  file in memory is cheap and simple.
+- **Stream** (a `Readable`) — large files, files of unknown size, or app-to-app transfers
+  (e.g. downloading a large object from one service and uploading it to another) where
+  buffering would risk exhausting memory.
+</Note>
+
+Typical cases: large media files, multi-hundred-MB CSV or log exports, database dumps, and
+storage-to-storage transfers.
+
+## Pieces that support streaming
+
+Streaming is enabled per action. Today:
+
+| Piece | Action | Streams |
+|---|---|---|
+| Amazon S3 | Upload File | The file it reads **in** |
+| Amazon S3 | Read File | The object it writes **out** |
+
+More pieces are being enabled over time. Actions not listed here still work — they buffer
+the file in memory, which is fine within the [size limit](/install/reference/limits).
+
+## Building streaming actions
+
+If you are [building a piece](/build-pieces/building-pieces/overview), you can stream on both sides: read an
+input file as a stream, and write an output file as a stream.
+
+### Writing a file as a stream
+
+`ctx.files.write` accepts a `Buffer` **or** a `Readable`. Pass a `Readable` — such as an S3
+object body or a streaming HTTP response — and it streams straight to storage instead of
+being buffered. It returns a file reference string you return from the action, exactly like
+the buffered form (see [Files](./files)).
+
+```ts
+async run(context) {
+  const s3 = await resolveS3Client({ authProps, server: context.server });
+
+  const { Body } = await s3.getObject({ Bucket: bucket, Key: key });
+
+  // Body is a Readable — hand it straight to files.write, no Buffer in between
+  return context.files.write({
+    fileName: key,
+    data: Body,
+  });
+}
+```
+
+### Reading a file as a stream
+
+Add `streaming: true` to a `Property.File`. The property then resolves to an
+`ApStreamingFile` instead of an `ApFile`:
+
+```ts
+type ApStreamingFile = {
+  filename: string;
+  extension?: string;
+  size?: number;      // may be undefined when the source doesn't report a length
+  body: Readable;
+};
+```
+
+Consume `body` directly. When the source reports a `size`, forward it so the destination
+knows the content length; otherwise fall back to buffering.
+
+```ts
+props: {
+  file: Property.File({
+    displayName: 'File',
+    required: true,
+    streaming: true,
+  }),
+},
+async run(context) {
+  const { file } = context.propsValue;
+  const s3 = await resolveS3Client({ authProps, server: context.server });
+
+  await s3.putObject({
+    Bucket: bucket,
+    Key: finalFileName,
+    Body: file.body,
+    ContentLength: file.size,
+  });
+}
+```
+
+<Tip>
+`Property.File()` without `streaming` is unchanged — it still resolves to an `ApFile` with a
+`data` buffer, so existing actions keep working.
+</Tip>
+
+## Limits & storage
+
+- **Size limit still applies.** Streamed files are checked against `AP_MAX_FILE_SIZE_MB`
+  (Cloud: 10&nbsp;MB, self-hosted default: 25&nbsp;MB) *while* the bytes flow. Exceeding it
+  aborts the transfer with HTTP `413`. See [Limits](/install/reference/limits).
+- **Storage backend.** Streaming end-to-end requires S3 file storage — see the callout at
+  the top of this page.
+
+<Warning>
+- **Streams are one-shot.** A `Readable` can be read only once, so a streamed write that
+  fails partway through is **not** retried automatically.
+- **Multipart webhook signatures aren't verified.** Verifying an HMAC signature over an
+  uploaded file needs the raw bytes held in memory, which is exactly what streaming avoids.
+  Streamed multipart webhook uploads therefore skip signature verification. JSON, XML, form,
+  and text webhook bodies are unaffected.
+</Warning>

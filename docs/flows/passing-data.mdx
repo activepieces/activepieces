@@ -95,6 +95,17 @@ Dropdowns and some other input types don't let you select data from previous ste
   src="/resources/passing-data-dynamic-value.mp4"
 ></video>
 
+### Working with large files
+
+When a step produces a file, the file isn't copied into every step below it — the step
+passes a reference, and later steps read the file when they need it. For large files
+(big exports, media, storage-to-storage transfers), some actions **stream** the file
+instead of loading it fully into memory, so your flow can move files larger than the
+worker's memory budget. This happens automatically — there's nothing to configure; just
+pick an action that supports it. On self-hosted installs this requires S3 file storage. See
+[Large File Streaming](/build-pieces/piece-reference/large-file-streaming) for the list of
+supported actions, storage requirements, and size limits.
+
 ### Accessing data by path
 
 If you can't find the data you're looking for in the **Data to Insert** panel but you'd like to use it, you can write a JSON path instead.
