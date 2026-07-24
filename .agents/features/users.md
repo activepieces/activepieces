@@ -4,7 +4,7 @@
 Manages user identity, platform membership, roles, and session security. A `User` record ties a `UserIdentity` (the canonical email/password/OAuth identity) to a specific platform, enabling the same person to exist across multiple platforms. Platform roles gate what users can see and do.
 
 ## Key Files
-- `packages/server/api/src/app/user/user-service.ts` — user CRUD, `getMe`, profile update, role assignment
+- `packages/server/api/src/app/user/user-service.ts` — user CRUD, `getMe`, profile update, role assignment. `delete` (self-hosted CE/EE) also removes the underlying `UserIdentity` when no `User` row references it anymore, inside a transaction so the user-row delete and the identity cleanup commit together (prevents an orphaned identity that would block re-inviting the same email). `removeFromPlatform` (Cloud) keeps the identity.
 - `packages/server/api/src/app/user/user-entity.ts` — User and UserIdentity entities
 - `packages/server/api/src/app/user/platform/platform-user-controller.ts` — platform admin user management endpoints (EE)
 - `packages/server/api/src/app/user/platform/platform-user-module.ts` — platform user module
@@ -58,4 +58,4 @@ Manages user identity, platform membership, roles, and session security. A `User
 
 - `GET /v1/users/me` — get current user with identity info
 - `POST /v1/users/me` — update profile (firstName, lastName, profilePicture)
-- User CRUD managed via platform admin endpoints (EE): list users, update role/status, delete user
+- User CRUD managed via platform admin endpoints (EE): list users, update role/status, delete user. On self-hosted, deleting a user also deletes its `UserIdentity` once that identity has no remaining `User` on any platform (OTP rows cascade); this frees the email so the person can be re-invited and sign up fresh.
