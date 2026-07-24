@@ -3,6 +3,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { searchAction } from './lib/actions/search';
 import { extractAction } from './lib/actions/extract';
+import { qnaAction } from './lib/actions/qna';
 import { tavilyAuth } from './lib/auth';
 
 export const tavily = createPiece({
@@ -11,9 +12,12 @@ export const tavily = createPiece({
 	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/tavily.jpg',
 	categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-	authors: ['OsamaHaikal'],
+	authors: ['OsamaHaikal', 'mahenoorsalat'],
 	auth: tavilyAuth,
-	actions: [searchAction, extractAction,
+	actions: [
+		searchAction,
+		extractAction,
+		qnaAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.tavily.com',
 			auth: tavilyAuth,
