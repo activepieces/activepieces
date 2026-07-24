@@ -2,15 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../auth';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleTrendsSearchConfig, SerpApiEngine } from '../types';
+import { googleTrendsSearchOutputSchema } from '../output-schemas';
 
 export const googleTrendsSearch = createAction({
   auth: serpApiAuth,
   name: 'google_trends_search',
   displayName: 'Google Trends Search',
   description: 'Discover trending keywords over time to inform content strategy and market research with geographic insights.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Queries Google Trends via SerpApi for interest in a keyword over time and across regions. Use to gauge a topic\'s popularity trajectory, compare geographic interest, or find related/rising queries for content and market research. Read-only and idempotent; requires the query, a SerpApi API key, and a chosen data type (interest over time, by region, related topics, or related queries).', idempotent: true },
-
+  outputSchema: googleTrendsSearchOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
