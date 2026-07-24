@@ -7,6 +7,8 @@ import { getRecord } from "./lib/actions/get-record";
 import { findRecords } from "./lib/actions/find-records";
 import { clearTable } from "./lib/actions/clear-table";
 import { downloadTable } from "./lib/actions/download-table";
+import { createTable } from "./lib/actions/create-table";
+import { deleteTable } from "./lib/actions/delete-table";
 import { newRecordTrigger } from "./lib/triggers/new-record";
 import { deletedRecordTrigger } from "./lib/triggers/deleted-record";
 import { updatedRecordTrigger } from "./lib/triggers/updated-record";
@@ -18,6 +20,6 @@ export const tables = createPiece({
   minimumSupportedRelease: '0.80.0',
   authors: ['amrdb'],
   auth: PieceAuth.None(),
-  actions: [createRecords, deleteRecord, updateRecord, getRecord, findRecords, clearTable, downloadTable],
+  actions: [createTable, deleteTable, createRecords, deleteRecord, updateRecord, getRecord, findRecords, clearTable, downloadTable],
   triggers: [newRecordTrigger, updatedRecordTrigger, deletedRecordTrigger],
 });

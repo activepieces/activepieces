@@ -38,10 +38,6 @@ _Avoid_: event source, starter
 The mechanism a trigger uses: POLLING, WEBHOOK, APP_WEBHOOK, or MANUAL.
 _Avoid_: trigger type
 
-**Schedule (ScheduleOptions)**:
-When a polling trigger fires: either a cron expression (CRON_EXPRESSION — wall-clock minutes within the hour) or a rolling interval (INTERVAL — every `intervalMs`, crossing hour boundaries).
-_Avoid_: fixed rate, every (outside the BullMQ boundary)
-
 **TriggerSource**:
 The external registration (webhook URL, polling job, app-event subscription) that fires a flow.
 
