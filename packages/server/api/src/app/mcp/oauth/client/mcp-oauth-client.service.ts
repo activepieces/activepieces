@@ -26,7 +26,8 @@ export const mcpOAuthClientService = {
 
     async register(params: RegisterClientParams): Promise<RegisterClientResult> {
         const clientId = generateClientId()
-        const isPublicClient = params.tokenEndpointAuthMethod === 'none'
+        const tokenEndpointAuthMethod = params.tokenEndpointAuthMethod ?? 'none'
+        const isPublicClient = tokenEndpointAuthMethod === 'none'
         const rawSecret = isPublicClient ? null : generateClientSecret()
         const hashedSecret = rawSecret ? hashSecret(rawSecret) : null
 
@@ -42,7 +43,7 @@ export const mcpOAuthClientService = {
             redirectUris: params.redirectUris,
             clientName: params.clientName ?? null,
             grantTypes: params.grantTypes ?? ['authorization_code', 'refresh_token'],
-            tokenEndpointAuthMethod: params.tokenEndpointAuthMethod ?? 'none',
+            tokenEndpointAuthMethod,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
         }
