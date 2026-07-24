@@ -104,6 +104,24 @@ describe('mcpUtils.flattenOutputSchemaFields — declared output schema → refe
         ])
         expect(paths).toEqual(['event.start.dateTime'])
     })
+
+    it('emits nothing for a whole-output scalar leaf (value: "" at the root)', () => {
+        // e.g. google-drive read-file: the entire output IS the file URL —
+        // there is no field path to reference.
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'file', label: 'File URL', value: '', format: 'url' },
+        ])
+        expect(paths).toEqual([])
+    })
+
+    it('keeps a nested empty-value leaf at its parent path (each list item IS the value)', () => {
+        // e.g. gmail labels: [{ key: 'labels', listItems: [{ value: '' }] }] —
+        // labels[] itself is the string, a real referenceable path.
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'labels', listItems: [{ key: 'label', value: '' }] },
+        ])
+        expect(paths).toEqual(['labels[]'])
+    })
 })
 
 describe('mcpUtils.deriveFieldPathsFromSample — trigger sample data → reference paths', () => {

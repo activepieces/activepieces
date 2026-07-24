@@ -346,6 +346,13 @@ function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): st
         if (field.listItems && field.listItems.length > 0) {
             return flattenOutputSchemaFields(field.listItems, `${path}[]`)
         }
+        // A whole-output scalar leaf (value: '' at the root, e.g. an action whose
+        // entire output is one URL/string) has no field path to reference — the
+        // output itself is the value. Emit nothing, matching
+        // deriveFieldPathsFromSample's scalar-root behaviour.
+        if (path === '') {
+            return []
+        }
         const typeHint = field.format ? ` (${field.format})` : ''
         const dynamicNote = field.dynamicKey ? ' (dynamic key)' : ''
         return [`${path}${typeHint}${dynamicNote}`]
