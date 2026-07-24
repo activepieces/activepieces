@@ -8,6 +8,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { listProjects } from './lib/actions/list-projects';
 import { getProjectHead } from './lib/actions/get-project-head';
 import { runPrompt } from './lib/actions/run-prompt';
+import { getCurrentAccount } from './lib/actions/get-current-account';
 
 export const prompthubAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -46,6 +47,7 @@ export const prompthub = createPiece({
     listProjects,
     getProjectHead,
     runPrompt,
+    getCurrentAccount,
     createCustomApiCallAction({
       auth: prompthubAuth,
       baseUrl: () => 'https://app.prompthub.us/api/v1',

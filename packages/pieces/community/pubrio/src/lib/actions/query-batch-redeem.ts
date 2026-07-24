@@ -8,7 +8,6 @@ export const queryBatchRedeem = createAction({
   name: 'query_batch_redeem',
   displayName: 'Query Batch Redeem',
   description: 'Query the status and results of a batch redeem operation',
-  audience: 'both',
   aiMetadata: {
     description:
       'Poll the status and results of a previously submitted bulk people-redeem (contact reveal) job using its redeem_query_id. Read-only and safe to call repeatedly; it does not start or modify a redeem and consumes no credits itself. Use after a batch redeem has been queued to fetch the resolved emails/phones once ready.',

@@ -8,7 +8,6 @@ export const duplicateMonitor = createAction({
   name: 'duplicate_monitor',
   displayName: 'Duplicate Monitor',
   description: 'Duplicate an existing monitor',
-  audience: 'both',
   aiMetadata: {
     description:
       'Create a copy of an existing monitor (referenced by ID), optionally with a new name. Not idempotent: each call creates a separate new monitor, so repeated calls produce duplicates.',

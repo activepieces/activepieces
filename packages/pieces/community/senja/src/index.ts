@@ -12,6 +12,11 @@ import { getTestimonialAction } from './lib/actions/get-testimonial';
 import { createTestimonialAction } from './lib/actions/create-testimonial';
 import { updateTestimonialAction } from './lib/actions/update-testimonial';
 import { deleteTestimonialAction } from './lib/actions/delete-testimonial';
+import { findTestimonialsAction } from './lib/actions/find-testimonials';
+import { fetchTestimonialAction } from './lib/actions/fetch-testimonial';
+import { addTestimonialAction } from './lib/actions/add-testimonial';
+import { modifyTestimonialAction } from './lib/actions/modify-testimonial';
+import { removeTestimonialAction } from './lib/actions/remove-testimonial';
 import { testimonialEventTrigger } from './lib/triggers/testimonial-event';
 import { SENJA_BASE_URL } from './lib/common';
 
@@ -54,6 +59,11 @@ export const senja = createPiece({
     createTestimonialAction,
     updateTestimonialAction,
     deleteTestimonialAction,
+    findTestimonialsAction,
+    fetchTestimonialAction,
+    addTestimonialAction,
+    modifyTestimonialAction,
+    removeTestimonialAction,
     createCustomApiCallAction({
       baseUrl: () => SENJA_BASE_URL,
       auth: senjaAuth,

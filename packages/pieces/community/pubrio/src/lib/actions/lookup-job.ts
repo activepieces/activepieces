@@ -8,7 +8,7 @@ export const lookupJob = createAction({
   name: 'lookup_job',
   displayName: 'Lookup Job',
   description: 'Look up detailed job information by job search ID',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetch the full detail of one job posting given a job_search_id (obtained from the Search Jobs results). Read-only and repeatable. Use after Search Jobs to expand a single result; to discover jobs from criteria use Search Jobs instead.',

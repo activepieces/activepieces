@@ -10,6 +10,10 @@ import { getCustomer } from './lib/actions/get-customer';
 import { searchProducts } from './lib/actions/search-products';
 import { createProduct } from './lib/actions/create-product';
 import { updateProduct } from './lib/actions/update-product';
+import { findCustomers } from './lib/actions/find-customers';
+import { findProducts } from './lib/actions/find-products';
+import { createCatalogProduct } from './lib/actions/create-catalog-product';
+import { updateCatalogProduct } from './lib/actions/update-catalog-product';
 
 export const quizellAuth = PieceAuth.SecretText({
   displayName: 'API Token',
@@ -52,6 +56,10 @@ export const quizell = createPiece({
     searchProducts,
     createProduct,
     updateProduct,
+    findCustomers,
+    findProducts,
+    createCatalogProduct,
+    updateCatalogProduct,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.quizell.com/api/v1',
       auth: quizellAuth,
