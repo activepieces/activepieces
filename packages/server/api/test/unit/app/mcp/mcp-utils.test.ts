@@ -82,6 +82,75 @@ describe('mcpUtils.flattenOutputSchemaFields — declared output schema → refe
         ])
         expect(paths).toEqual(['l1.l2.l3.l4.l5.l6 (number)'])
     })
+
+    it('drops the wrapper key of a root-array schema (value: "" means the whole output)', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'rows', value: '', listItems: [{ key: 'row' }, { key: 'rowIndex', format: 'number' }] },
+        ])
+        // Real output is the array itself — there is no `rows` property to nest under.
+        expect(paths).toEqual(['[].row', '[].rowIndex (number)'])
+    })
+
+    it('exports the value path (not the key) when they differ, mirroring the builder', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'startDateTime', value: 'start.dateTime', format: 'datetime' },
+        ])
+        expect(paths).toEqual(['start.dateTime (datetime)'])
+    })
+
+    it('resolves a nested value path relative to its parent prefix', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'event', children: [{ key: 'startDateTime', value: 'start.dateTime' }] },
+        ])
+        expect(paths).toEqual(['event.start.dateTime'])
+    })
+
+    it('emits nothing for a whole-output scalar leaf (value: "" at the root)', () => {
+        // e.g. google-drive read-file: the entire output IS the file URL —
+        // there is no field path to reference.
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'file', label: 'File URL', value: '', format: 'url' },
+        ])
+        expect(paths).toEqual([])
+    })
+
+    it('keeps a nested empty-value leaf at its parent path (each list item IS the value)', () => {
+        // e.g. gmail labels: [{ key: 'labels', listItems: [{ value: '' }] }] —
+        // labels[] itself is the string, a real referenceable path.
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'labels', listItems: [{ key: 'label', value: '' }] },
+        ])
+        expect(paths).toEqual(['labels[]'])
+    })
+})
+
+describe('mcpUtils.describeWholeOutputSchema — whole-output scalar guidance', () => {
+    it('describes a whole-output scalar schema (single root leaf with value: "")', () => {
+        const description = mcpUtils.describeWholeOutputSchema({
+            fields: [{ key: 'file', label: 'File URL', value: '', format: 'url' }],
+        })
+        expect(description).toEqual({ label: 'File URL', format: 'url' })
+    })
+
+    it('falls back to the key when the field has no label', () => {
+        const description = mcpUtils.describeWholeOutputSchema({
+            fields: [{ key: 'response', value: '' }],
+        })
+        expect(description).toEqual({ label: 'response' })
+    })
+
+    it('returns null for a root-array wrapper (value: "" with listItems)', () => {
+        const description = mcpUtils.describeWholeOutputSchema({
+            fields: [{ key: 'rows', value: '', listItems: [{ key: 'row' }] }],
+        })
+        expect(description).toBeNull()
+    })
+
+    it('returns null for ordinary object schemas (fields with real paths)', () => {
+        expect(mcpUtils.describeWholeOutputSchema({ fields: [{ key: 'id' }, { key: 'name' }] })).toBeNull()
+        expect(mcpUtils.describeWholeOutputSchema({ fields: [{ key: 'id' }] })).toBeNull()
+        expect(mcpUtils.describeWholeOutputSchema({ fields: [] })).toBeNull()
+    })
 })
 
 describe('mcpUtils.deriveFieldPathsFromSample — trigger sample data → reference paths', () => {

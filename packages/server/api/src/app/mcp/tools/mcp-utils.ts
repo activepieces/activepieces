@@ -333,17 +333,48 @@ function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], need
 
 function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
     return fields.flatMap((field) => {
-        const path = prefix ? `${prefix}.${field.key}` : field.key
+        // Mirror the builder (data-selector / output viewer): the reference path is
+        // `value ?? key`. Must be `??`, not `||` — an empty-string value means "the
+        // whole parent scope" (root-array wrapper, see the builder's
+        // isWholeOutputSchema) and must NOT fall back to the key, or the flattener
+        // would invent a path level that doesn't exist in the real output.
+        const segment = field.value ?? field.key
+        const path = segment === '' ? prefix : (prefix ? `${prefix}.${segment}` : segment)
         if (field.children && field.children.length > 0) {
             return flattenOutputSchemaFields(field.children, path)
         }
         if (field.listItems && field.listItems.length > 0) {
             return flattenOutputSchemaFields(field.listItems, `${path}[]`)
         }
+        // A whole-output scalar leaf (value: '' at the root, e.g. an action whose
+        // entire output is one URL/string) has no field path to reference — the
+        // output itself is the value. Emit nothing, matching
+        // deriveFieldPathsFromSample's scalar-root behaviour.
+        if (path === '') {
+            return []
+        }
         const typeHint = field.format ? ` (${field.format})` : ''
         const dynamicNote = field.dynamicKey ? ' (dynamic key)' : ''
         return [`${path}${typeHint}${dynamicNote}`]
     })
+}
+
+// A whole-output scalar schema (one root field with value: '' and no
+// children/listItems, e.g. google-drive read-file where the entire output is
+// the file URL) flattens to no field paths — the agent should reference the
+// bare step output instead. Surface what that value is so the guidance isn't
+// silently dropped.
+function describeWholeOutputSchema(schema: OutputSchema): WholeOutputDescription | null {
+    const fields = schema.fields ?? []
+    const [field] = fields
+    if (fields.length !== 1 || field.value !== '' || (field.children?.length ?? 0) > 0 || (field.listItems?.length ?? 0) > 0) {
+        return null
+    }
+    return {
+        label: field.label ?? field.key,
+        ...(field.format && { format: field.format }),
+        ...(field.description && { description: field.description }),
+    }
 }
 
 function deriveFieldPathsFromSample(value: unknown, prefix = ''): string[] {
@@ -770,6 +801,7 @@ export const mcpUtils = {
     buildExampleInput,
     buildRequiredInputs,
     flattenOutputSchemaFields,
+    describeWholeOutputSchema,
     deriveFieldPathsFromSample,
     normalizePieceName,
     lookupPieceComponent,
@@ -863,6 +895,12 @@ type ResolveRouterStepResult =
 type ResolveLatestPieceVersionResult =
     | { pieceVersion: string, normalizedPieceName: string, error?: never }
     | { error: McpToolResult, pieceVersion?: never, normalizedPieceName?: never }
+
+type WholeOutputDescription = {
+    label: string
+    format?: OutputSchemaField['format']
+    description?: string
+}
 
 export type ActionCardinality = 'enumerate' | 'single' | 'other'
 
