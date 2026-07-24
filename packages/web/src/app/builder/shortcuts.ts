@@ -4,6 +4,8 @@ import {
 } from '@activepieces/shared';
 import { useCallback, useEffect } from 'react';
 
+import { isEditableTarget } from '@/lib/dom-utils';
+
 import { useBuilderStateContext } from './builder-hooks';
 import { CanvasShortcutsProps } from './flow-canvas/context-menu/canvas-context-menu';
 import { canvasBulkActions } from './flow-canvas/utils/bulk-actions';
@@ -36,6 +38,9 @@ export const useHandleKeyPressOnCanvas = () => {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target)) {
+        return;
+      }
       const insideSelectionRect =
         e.target instanceof HTMLElement &&
         e.target.classList.contains(
