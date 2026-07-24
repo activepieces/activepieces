@@ -2,68 +2,101 @@ import { spawn } from 'node:child_process'
 import { readFile, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { CodeSandbox } from './code-sandbox-common'
 
-const DENO_PATH =  process.env.AP_DENO_PATH ?? join(dirname(require.resolve('deno/bin.cjs')), 'deno')
+const getDenoPath = (): string => process.env.AP_DENO_PATH ?? join(dirname(require.resolve('deno/bin.cjs')), 'deno')
 const MEMORY_LIMIT_MB = 128
 const RESULT_MARKER = '__AP_DENO_SANDBOX_RESULT__'
 
-export const denoCodeSandbox: CodeSandbox = {
-    async runCodeModule({ codeFilePath, inputs }) {
-        // Deno compares permission paths after resolving symlinks (e.g. macOS
-        // /var -> /private/var), so the grant must be on the real path.
-        const stepDir = await realpath(dirname(codeFilePath))
-        const source = await readFile(codeFilePath, 'utf8')
+export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
+    return {
+        async runCodeModule({ codeFilePath, inputs }) {
+            // Deno compares permission paths after resolving symlinks (e.g. macOS
+            // /var -> /private/var), so the grant must be on the real path.
+            const stepDir = await realpath(dirname(codeFilePath))
+            const source = await readFile(codeFilePath, 'utf8')
 
-        const program = buildProgram({
-            body: `
+            const program = buildProgram({
+                requireBase: pathToFileURL(codeFilePath).href,
+                body: `
     const inputs = ${JSON.stringify(inputs)};
     const exportsObj = Object.create(null);
     const module = { exports: exportsObj };
-    new Function('exports', 'module', ${JSON.stringify(source)})(exportsObj, module);
+    new Function('exports', 'module', 'require', ${JSON.stringify(source)})(exportsObj, module, require);
     const result = await module.exports.code(inputs);
 `,
-        })
+            })
 
-        return runInDeno({
-            program,
-            permissionFlags: [
-                `--allow-read=${stepDir}`,
-                `--allow-write=${stepDir}`,
-            ],
-            cwd: stepDir,
-        })
-    },
+            return runInDeno({
+                program,
+                permissionFlags: toFlags({ permissions, stepDir }),
+                cwd: stepDir,
+            })
+        },
 
-    // spawns a deno process per eval (~30ms). Pool a long-lived
-    // process speaking ndjson over stdio if template resolution gets slow.
-    async runScript({ script, scriptContext, functions }) {
-        const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
+        // Expression evaluation never needs fs/net, so it always runs with no
+        // permissions regardless of what the caller granted for code modules.
+        async runScript({ script, scriptContext, functions }) {
+            const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
 
-        const program = buildProgram({
-            body: `
+            const program = buildProgram({
+                requireBase: pathToFileURL(join(tmpdir(), 'script.js')).href,
+                body: `
     Object.assign(globalThis, ${JSON.stringify(scriptContext)});
     let result = (0, eval)(${JSON.stringify(`${serializedFunctions}\n${script}`)});
     if (result instanceof Promise) {
         result = await result;
     }
 `,
-        })
+            })
 
-        // No permission flags: Deno denies everything by default,
-        // and --no-prompt turns would-be prompts into hard failures.
-        return runInDeno({
-            program,
-            permissionFlags: [],
-            cwd: tmpdir(),
-        })
-    },
+            return runInDeno({
+                program,
+                permissionFlags: [],
+                cwd: tmpdir(),
+            })
+        },
+    }
 }
 
-// The program runs as a Deno module (top-level await is available). The result
-// travels back on stdout behind a marker so user console.log output stays separate.
-function buildProgram({ body }: { body: string }): string {
+function toFlags({ permissions, stepDir }: { permissions: DenoPermission[], stepDir?: string }): string[] {
+    if (permissions.includes(DenoPermission.ALL)) {
+        return ['-A']
+    }
+    return permissions.flatMap((permission) => {
+        switch (permission) {
+            case DenoPermission.NET:
+                return ['--allow-net']
+            case DenoPermission.ENV:
+                return ['--allow-env']
+            case DenoPermission.RUN:
+                return ['--allow-run']
+            case DenoPermission.SYS:
+                return ['--allow-sys']
+            case DenoPermission.READ_ALL:
+                return ['--allow-read']
+            case DenoPermission.WRITE_TMP:
+                return [`--allow-write=${tmpdir()}`]
+            case DenoPermission.READ_STEP_DIR:
+                return stepDir ? [`--allow-read=${stepDir}`] : []
+            case DenoPermission.WRITE_STEP_DIR:
+                return stepDir ? [`--allow-write=${stepDir}`] : []
+            case DenoPermission.ALL:
+                return []
+        }
+    })
+}
+
+// The program runs as a Deno module (top-level await is available). A CJS-style
+// `require` is provided so esbuild bundles that reference node builtins
+// (require("node:crypto")) resolve. The result travels back on stdout behind a
+// marker so user console.log output stays separate.
+function buildProgram({ body, requireBase }: { body: string, requireBase: string }): string {
     return `
+import { createRequire } from 'node:module';
+const require = createRequire(${JSON.stringify(requireBase)});
+globalThis.require = require;
 try {
 ${body}
     console.log(${JSON.stringify(RESULT_MARKER)} + JSON.stringify({ success: true, result: result ?? null }));
@@ -77,7 +110,8 @@ catch (error) {
 
 async function runInDeno({ program, permissionFlags, cwd }: RunInDenoParams): Promise<unknown> {
     return new Promise((resolve, reject) => {
-        const child = spawn(DENO_PATH, [
+        const denoPath = getDenoPath()
+        const child = spawn(denoPath, [
             'run',
             '--quiet',
             '--no-prompt',
@@ -142,7 +176,7 @@ async function runInDeno({ program, permissionFlags, cwd }: RunInDenoParams): Pr
                 return
             }
             settled = true
-            reject(buildError({ message: `Failed to spawn deno (${DENO_PATH}): ${error.message}`, stdout: capturedStdout, stderr: capturedStderr }))
+            reject(buildError({ message: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
         child.stdin.end(program)
@@ -165,6 +199,18 @@ function buildError({ message, stdout, stderr }: BuildErrorParams): Error {
         parts.push(`\n--- stderr ---\n${stderr.trim()}`)
     }
     return new Error(parts.join(''))
+}
+
+export enum DenoPermission {
+    ALL = 'ALL',
+    NET = 'NET',
+    ENV = 'ENV',
+    RUN = 'RUN',
+    SYS = 'SYS',
+    READ_ALL = 'READ_ALL',
+    WRITE_TMP = 'WRITE_TMP',
+    READ_STEP_DIR = 'READ_STEP_DIR',
+    WRITE_STEP_DIR = 'WRITE_STEP_DIR',
 }
 
 type RunInDenoParams = {

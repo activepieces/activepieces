@@ -9,11 +9,16 @@ process.env.AP_DENO_PATH = path.join(path.dirname(require.resolve('deno/bin.cjs'
 
 let stepDir: string
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+let denoModule: any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let denoCodeSandbox: any
 
 beforeAll(async () => {
     // Dynamic import so AP_DENO_PATH is set before the module reads it.
-    ;({ denoCodeSandbox } = await import('../../../src/lib/core/code/deno-code-sandbox'))
+    denoModule = await import('../../../src/lib/core/code/deno-code-sandbox')
+    // The boundary suite asserts the real sandbox — scope fs to the step dir.
+    const { DenoPermission } = denoModule
+    denoCodeSandbox = denoModule.denoCodeSandbox([DenoPermission.READ_STEP_DIR, DenoPermission.WRITE_STEP_DIR])
     stepDir = await mkdtemp(path.join(tmpdir(), 'ap-deno-test-'))
 })
 
@@ -91,6 +96,13 @@ describe('denoCodeSandbox permission boundary', () => {
         })
     })
 
+    describe('resolves bundled node builtin requires (createRequire shim)', () => {
+        it('runs require("node:crypto") from an esbuild-style bundle', async () => {
+            const result = await runModule(`const crypto = require('node:crypto'); exports.code = async () => crypto.createHash('sha256').update('ap').digest('hex')`)
+            expect(result).toMatch(/^[0-9a-f]{64}$/)
+        })
+    })
+
     describe('runScript', () => {
         it('evaluates an expression with context', async () => {
             const result = await denoCodeSandbox.runScript({ script: '1 + a', scriptContext: { a: 41 }, functions: {} })
@@ -105,6 +117,62 @@ describe('denoCodeSandbox permission boundary', () => {
         it('runs without any permissions (network blocked)', async () => {
             await expect(denoCodeSandbox.runScript({ script: `fetch('https://example.com')`, scriptContext: {}, functions: {} }))
                 .rejects.toThrow(PERMISSION_DENIED)
+        })
+    })
+})
+
+describe('denoCodeSandbox permission profiles', () => {
+    let dir: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let DenoPermission: any
+
+    beforeAll(async () => {
+        ;({ DenoPermission } = denoModule)
+        dir = await mkdtemp(path.join(tmpdir(), 'ap-deno-profile-'))
+    })
+
+    afterAll(async () => {
+        await rm(dir, { recursive: true, force: true })
+    })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async function runWith(permissions: any[], source: string): Promise<unknown> {
+        const sandbox = denoModule.denoCodeSandbox(permissions)
+        const codeFilePath = path.join(dir, 'index.js')
+        await writeFile(codeFilePath, source)
+        return sandbox.runCodeModule({ codeFilePath, inputs: {} })
+    }
+
+    // Assert permissions are granted without hitting the network (hermetic for CI).
+    const grants = `exports.code = async () => ({
+        net: (await Deno.permissions.query({ name: 'net' })).state,
+        env: (await Deno.permissions.query({ name: 'env' })).state,
+        run: (await Deno.permissions.query({ name: 'run' })).state,
+        readEtc: (await Deno.permissions.query({ name: 'read', path: '/etc' })).state,
+    })`
+
+    describe('SANDBOX_PROCESS profile (read-all, write-tmp, net, env, run, sys)', () => {
+        const profile = () => [DenoPermission.READ_ALL, DenoPermission.WRITE_TMP, DenoPermission.NET, DenoPermission.ENV, DenoPermission.RUN, DenoPermission.SYS]
+
+        it('grants net, env, run and broad read', async () => {
+            const out = await runWith(profile(), grants)
+            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', readEtc: 'granted' })
+        })
+
+        it('allows writing to the OS temp dir (the /box scratch equivalent)', async () => {
+            const out = await runWith(profile(), `exports.code = async () => {
+                const f = Deno.makeTempFileSync();
+                await Deno.writeTextFile(f, 'scratch');
+                return Deno.readTextFile(f);
+            }`)
+            expect(out).toBe('scratch')
+        })
+    })
+
+    describe('ALL profile (full trust)', () => {
+        it('grants all permissions', async () => {
+            const out = await runWith([DenoPermission.ALL], grants)
+            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', readEtc: 'granted' })
         })
     })
 })
