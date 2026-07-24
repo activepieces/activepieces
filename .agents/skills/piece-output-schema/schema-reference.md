@@ -32,7 +32,7 @@ Every field has a required `key` and an optional `value` (the path). **When `val
 
 - **Plain field:** set `key` to the real JSON property name and **omit `value`** — the dominant shipped style (e.g. google-calendar's `eventOutputSchema` fields are all `{ key, label }`, no `value`).
 - **Set `value`** only when the path must differ from the `key` you want to show: to **unwrap** (`value: 'body'`, `value: 'data.documentId'`) or to give a field a cleaner `key`/label than its raw property name.
-- **Caveat for AI/MCP consumers:** the builder resolves `value ?? key`, but the AI/MCP path map (`flattenOutputSchemaFields` in `packages/server/api/src/app/mcp/tools/mcp-utils.ts`) is built from **`key` only** — it ignores `value`. A field like `{ key: 'startDateTime', value: 'start.dateTime' }` inserts the correct path in the builder yet exports the wrong one to agents. Keep `key` equal to the real leaf property name wherever that matters, and reserve `key != value` for genuine unwrapping.
+- The AI/MCP path map (`flattenOutputSchemaFields` in `packages/server/api/src/app/mcp/tools/mcp-utils.ts`) resolves `value ?? key` exactly like the builder, so a `key != value` field exports its real `value` path to agents too. `key` is purely the field's identity/label; the path always comes from `value ?? key`.
 
 ## The relative-path rule (most important)
 
@@ -87,7 +87,7 @@ export const findRowsActionOutputSchema: OutputSchema = {
 };
 ```
 
-> **AI/MCP caveat — root-array wrappers export a phantom path.** The builder resolves the `value: ''` wrapper correctly (whole array), but the AI/MCP path map (`flattenOutputSchemaFields` in `mcp/tools/mcp-utils.ts`) builds paths from **`key`** and ignores `value: ''`, so it emits paths under the wrapper key — e.g. `rows[].row` — while the real output is the array itself (there is no `rows` property). Those exported paths resolve to `undefined` for AI/MCP consumers. This is a limitation of the flattener, not something the schema can express around (the builder only accepts this one shape for root arrays). Until the flattener learns to drop the wrapper key when `value === ''`, treat the AI/MCP paths for **root-array actions** as unreliable; the builder/data-selector view is unaffected. (Give the wrapper a descriptive `key` anyway — it becomes the human label.)
+> The `value: ''` wrapper contributes **no path segment** anywhere: the builder resolves it as the whole array, and the AI/MCP path map exports the item fields as `[].row`, `[].values`, … (no wrapper key in the path). Give the wrapper a descriptive `key` anyway — it becomes the human label.
 
 ## Maps with opaque / variable keys → `dynamicKey`
 

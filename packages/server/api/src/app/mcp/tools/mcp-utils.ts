@@ -333,7 +333,13 @@ function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], need
 
 function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
     return fields.flatMap((field) => {
-        const path = prefix ? `${prefix}.${field.key}` : field.key
+        // Mirror the builder (data-selector / output viewer): the reference path is
+        // `value ?? key`. Must be `??`, not `||` — an empty-string value means "the
+        // whole parent scope" (root-array wrapper, see the builder's
+        // isWholeOutputSchema) and must NOT fall back to the key, or the flattener
+        // would invent a path level that doesn't exist in the real output.
+        const segment = field.value ?? field.key
+        const path = segment === '' ? prefix : (prefix ? `${prefix}.${segment}` : segment)
         if (field.children && field.children.length > 0) {
             return flattenOutputSchemaFields(field.children, path)
         }

@@ -82,6 +82,28 @@ describe('mcpUtils.flattenOutputSchemaFields — declared output schema → refe
         ])
         expect(paths).toEqual(['l1.l2.l3.l4.l5.l6 (number)'])
     })
+
+    it('drops the wrapper key of a root-array schema (value: "" means the whole output)', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'rows', value: '', listItems: [{ key: 'row' }, { key: 'rowIndex', format: 'number' }] },
+        ])
+        // Real output is the array itself — there is no `rows` property to nest under.
+        expect(paths).toEqual(['[].row', '[].rowIndex (number)'])
+    })
+
+    it('exports the value path (not the key) when they differ, mirroring the builder', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'startDateTime', value: 'start.dateTime', format: 'datetime' },
+        ])
+        expect(paths).toEqual(['start.dateTime (datetime)'])
+    })
+
+    it('resolves a nested value path relative to its parent prefix', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'event', children: [{ key: 'startDateTime', value: 'start.dateTime' }] },
+        ])
+        expect(paths).toEqual(['event.start.dateTime'])
+    })
 })
 
 describe('mcpUtils.deriveFieldPathsFromSample — trigger sample data → reference paths', () => {
