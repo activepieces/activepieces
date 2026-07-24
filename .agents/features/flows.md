@@ -19,7 +19,7 @@ Flows are the core automation primitive in Activepieces. Each flow is a versione
 - `packages/web/src/features/flows/api/flows-api.tsx` — `flowsApi` (list, create, update, get, versions, delete, count)
 - `packages/web/src/features/flows/hooks/flow-hooks.tsx` — `flowHooks` (status change, export, import, test, version management)
 - `packages/web/src/features/flows/components/` — `FlowStatusToggle`, `ImportFlowDialog`, `ShareTemplateDialog`, `ChangeOwnerDialog`, `FlowCreatedByBadge`
-- `packages/web/src/features/flows/utils/flows-utils.tsx` — download, zip, template parsing helpers
+- `packages/web/src/features/flows/utils/flows-utils.tsx` — download, zip, template parsing helpers; flow-status renderers (`flowStatusToolTipRenderer`, `flowStatusIconRenderer`) covering both `CRON_EXPRESSION` (cronstrue text) and `INTERVAL` ("Run every N minutes") schedules
 - `packages/web/src/app/builder/index.tsx` — visual flow builder entry point
 - `packages/web/src/app/builder/flow-canvas/` — XYFlow canvas (nodes, edges, drag layer, context menu)
 - `packages/web/src/app/builder/flow-canvas/canvas-controls/` — bottom canvas toolbar (zoom, fit-to-view, minimap, grab/select mode, add-note, orientation toggle, **download flow as PNG**); `use-fit-to-view.ts` owns the viewport-fitting math, `canvas-control-button.tsx` is the shared icon-button
