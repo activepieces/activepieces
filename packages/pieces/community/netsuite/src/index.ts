@@ -2,12 +2,18 @@ import {
   PieceAuth,
   createPiece,
   Property,
-  PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { getVendor } from './lib/actions/get-vendor';
 import { getCustomer } from './lib/actions/get-customer';
 import { runSuiteQL } from './lib/actions/run-suiteql';
 import { executeDataset } from './lib/actions/execute-dataset';
+import { createInvoice } from './lib/actions/create-invoice';
+import { createBill } from './lib/actions/create-bill';
+import { recordPayment } from './lib/actions/record-payment';
+import { createCustomer } from './lib/actions/create-customer';
+import { findCustomer } from './lib/actions/find-customer';
+import { createVendor } from './lib/actions/create-vendor';
+import { findVendor } from './lib/actions/find-vendor';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createOAuthHeader } from './lib/common/oauth';
@@ -52,6 +58,13 @@ export const netsuite = createPiece({
   actions: [
     getVendor,
     getCustomer,
+    createCustomer,
+    findCustomer,
+    createVendor,
+    findVendor,
+    createInvoice,
+    createBill,
+    recordPayment,
     runSuiteQL,
     executeDataset,
     createCustomApiCallAction({

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-netsuite",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -11,11 +11,13 @@
     "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
+    "vitest": "3.2.6",
     "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   }
 }
