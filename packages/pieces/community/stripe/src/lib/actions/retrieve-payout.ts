@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { payoutOutputSchema } from '../output-schemas';
 export const stripeRetrievePayout = createAction({
   name: 'retrieve_payout',
   auth: stripeAuth,
@@ -21,6 +22,7 @@ export const stripeRetrievePayout = createAction({
   props: {
     payout_id: stripeCommon.payout, 
   },
+  outputSchema: payoutOutputSchema,
   async run(context) {
     const { payout_id } = context.propsValue;
 

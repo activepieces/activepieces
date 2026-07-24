@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { eventOutputSchema } from '../output-schemas';
 export const stripeGetEvent = createAction({
   name: 'get_event',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeGetEvent = createAction({
       required: true,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run(context) {
     const { event_id } = context.propsValue;
     const response = await httpClient.sendRequest({

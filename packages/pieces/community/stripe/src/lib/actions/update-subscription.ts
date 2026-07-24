@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeUpdateSubscription = createAction({
   name: 'update_subscription',
   auth: stripeAuth,
@@ -67,6 +68,7 @@ export const stripeUpdateSubscription = createAction({
       required: false,
     }),
   },
+  outputSchema: subscriptionOutputSchema,
   async run(context) {
     const {
       subscription_id,

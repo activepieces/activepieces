@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { promotionCodeListOutputSchema } from '../output-schemas';
 export const stripeListPromotionCodes = createAction({
   name: 'list_promotion_codes',
   auth: stripeAuth,
@@ -46,6 +47,7 @@ export const stripeListPromotionCodes = createAction({
       required: false,
     }),
   },
+  outputSchema: promotionCodeListOutputSchema,
   async run(context) {
     const { coupon, active, code, limit } = context.propsValue;
 

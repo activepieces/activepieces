@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { checkoutSessionOutputSchema } from '../output-schemas';
 export const stripeCreateCheckoutSession = createAction({
   name: 'create_checkout_session',
   auth: stripeAuth,
@@ -64,6 +65,7 @@ export const stripeCreateCheckoutSession = createAction({
       required: false,
     }),
   },
+  outputSchema: checkoutSessionOutputSchema,
   async run(context) {
     const { mode, line_items, success_url, cancel_url, customer } =
       context.propsValue;

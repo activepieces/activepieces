@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 
+import { customerOutputSchema } from '../output-schemas';
 export const stripeUpdateCustomerAi = createAction({
   name: 'update_customer_ai',
   auth: stripeAuth,
@@ -61,6 +62,7 @@ export const stripeUpdateCustomerAi = createAction({
       required: false,
     }),
   },
+  outputSchema: customerOutputSchema,
   async run(context) {
     const { customer, ...propsValue } = context.propsValue;
 

@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { payoutListOutputSchema } from '../output-schemas';
 export const stripeListPayouts = createAction({
   name: 'list_payouts',
   auth: stripeAuth,
@@ -47,6 +48,7 @@ export const stripeListPayouts = createAction({
       required: false,
     }),
   },
+  outputSchema: payoutListOutputSchema,
   async run(context) {
     const { status, arrival_date_after, arrival_date_before, limit } =
       context.propsValue;

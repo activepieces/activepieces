@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeCancelPaymentIntent = createAction({
   name: 'cancel_payment_intent',
   auth: stripeAuth,
@@ -39,6 +40,7 @@ export const stripeCancelPaymentIntent = createAction({
       },
     }),
   },
+  outputSchema: paymentIntentOutputSchema,
   async run(context) {
     const { payment_intent_id, cancellation_reason } = context.propsValue;
 

@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { paymentLinkListOutputSchema } from '../output-schemas';
 export const stripeListPaymentLinks = createAction({
   name: 'list_payment_links',
   auth: stripeAuth,
@@ -36,6 +37,7 @@ export const stripeListPaymentLinks = createAction({
       required: false,
     }),
   },
+  outputSchema: paymentLinkListOutputSchema,
   async run(context) {
     const { active, limit } = context.propsValue;
 

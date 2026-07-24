@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeGetPaymentLink = createAction({
   name: 'get_payment_link',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeGetPaymentLink = createAction({
       required: true,
     }),
   },
+  outputSchema: paymentLinkOutputSchema,
   async run(context) {
     const { payment_link_id } = context.propsValue;
     const response = await httpClient.sendRequest({

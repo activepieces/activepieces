@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { invoiceOutputSchema } from '../output-schemas';
 export const stripeGetInvoice = createAction({
   name: 'get_invoice',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeGetInvoice = createAction({
       required: true,
     }),
   },
+  outputSchema: invoiceOutputSchema,
   async run(context) {
     const { invoice_id } = context.propsValue;
 

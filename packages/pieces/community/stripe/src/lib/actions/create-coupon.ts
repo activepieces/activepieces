@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { couponOutputSchema } from '../output-schemas';
 export const stripeCreateCoupon = createAction({
   name: 'create_coupon',
   auth: stripeAuth,
@@ -64,6 +65,7 @@ export const stripeCreateCoupon = createAction({
       required: false,
     }),
   },
+  outputSchema: couponOutputSchema,
   async run(context) {
     const {
       percent_off,

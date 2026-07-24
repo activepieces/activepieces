@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { paymentMethodOutputSchema } from '../output-schemas';
 export const stripeAttachPaymentMethod = createAction({
   name: 'attach_payment_method',
   auth: stripeAuth,
@@ -32,6 +33,7 @@ export const stripeAttachPaymentMethod = createAction({
       required: true,
     }),
   },
+  outputSchema: paymentMethodOutputSchema,
   async run(context) {
     const { payment_method_id, customer } = context.propsValue;
 

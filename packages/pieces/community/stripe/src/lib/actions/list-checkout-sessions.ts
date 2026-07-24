@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { checkoutSessionListOutputSchema } from '../output-schemas';
 export const stripeListCheckoutSessions = createAction({
   name: 'list_checkout_sessions',
   auth: stripeAuth,
@@ -47,6 +48,7 @@ export const stripeListCheckoutSessions = createAction({
       required: false,
     }),
   },
+  outputSchema: checkoutSessionListOutputSchema,
   async run(context) {
     const { customer, payment_intent, status, limit } = context.propsValue;
 

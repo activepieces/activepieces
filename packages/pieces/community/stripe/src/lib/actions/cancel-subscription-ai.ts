@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { stripeAuth } from '../..';
 import { getClient } from '../common';
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeCancelSubscriptionAi = createAction({
   name: 'cancel_subscription_ai',
   auth: stripeAuth,
@@ -29,6 +30,7 @@ export const stripeCancelSubscriptionAi = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: subscriptionOutputSchema,
   async run(context) {
     const { subscription, cancel_at_period_end } = context.propsValue;
 

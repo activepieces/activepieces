@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeCreateSubscription = createAction({
   name: 'create_subscription',
   auth: stripeAuth,
@@ -75,6 +76,7 @@ export const stripeCreateSubscription = createAction({
       required: false,
     }),
   },
+  outputSchema: subscriptionOutputSchema,
   async run(context) {
     const {
       customer,

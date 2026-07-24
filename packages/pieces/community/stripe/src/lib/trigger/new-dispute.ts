@@ -17,6 +17,7 @@ type StripeWebhookPayload = {
   };
 };
 
+import { disputeOutputSchema } from '../output-schemas';
 export const stripeNewDispute = createTrigger({
   auth: stripeAuth,
   name: 'new_dispute',
@@ -40,6 +41,7 @@ export const stripeNewDispute = createTrigger({
       required: false,
     }),
   },
+  outputSchema: disputeOutputSchema,
   sampleData: {
     id: 'du_1MtJUT2eZvKYlo2CNaw2HvEv',
     object: 'dispute',

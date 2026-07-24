@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { eventListOutputSchema } from '../output-schemas';
 export const stripeListEvents = createAction({
   name: 'list_events',
   auth: stripeAuth,
@@ -39,6 +40,7 @@ export const stripeListEvents = createAction({
       required: false,
     }),
   },
+  outputSchema: eventListOutputSchema,
   async run(context) {
     const { type, created_after, created_before, limit } = context.propsValue;
 

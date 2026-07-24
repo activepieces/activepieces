@@ -3,6 +3,7 @@ import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+import { customerSearchOutputSchema } from '../output-schemas';
 export const stripeSearchCustomer = createAction({
   name: 'search_customer',
   auth: stripeAuth,
@@ -21,6 +22,7 @@ export const stripeSearchCustomer = createAction({
       required: true,
     }),
   },
+  outputSchema: customerSearchOutputSchema,
   async run(context) {
     const customer = {
       email: context.propsValue.email,

@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { invoiceLineListOutputSchema } from '../output-schemas';
 export const stripeListInvoiceLines = createAction({
   name: 'list_invoice_lines',
   auth: stripeAuth,
@@ -32,6 +33,7 @@ export const stripeListInvoiceLines = createAction({
       required: false,
     }),
   },
+  outputSchema: invoiceLineListOutputSchema,
   async run(context) {
     const { invoice_id, limit } = context.propsValue;
 

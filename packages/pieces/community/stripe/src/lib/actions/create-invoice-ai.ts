@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 
+import { invoiceOutputSchema } from '../output-schemas';
 export const stripeCreateInvoiceAi = createAction({
   name: 'create_invoice_ai',
   auth: stripeAuth,
@@ -49,6 +50,7 @@ export const stripeCreateInvoiceAi = createAction({
       required: false,
     }),
   },
+  outputSchema: invoiceOutputSchema,
   async run(context) {
     const { customer_id, currency, description, collection_method, days_until_due } =
       context.propsValue;

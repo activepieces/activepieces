@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { paymentIntentSearchOutputSchema } from '../output-schemas';
 export const stripeSearchPaymentIntents = createAction({
   name: 'search_payment_intents',
   auth: stripeAuth,
@@ -32,6 +33,7 @@ export const stripeSearchPaymentIntents = createAction({
       required: false,
     }),
   },
+  outputSchema: paymentIntentSearchOutputSchema,
   async run(context) {
     const { query, limit } = context.propsValue;
 

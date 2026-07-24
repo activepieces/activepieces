@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeGetSubscription = createAction({
   name: 'get_subscription',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeGetSubscription = createAction({
       required: true,
     }),
   },
+  outputSchema: subscriptionOutputSchema,
   async run(context) {
     const { subscription_id } = context.propsValue;
     const response = await httpClient.sendRequest({

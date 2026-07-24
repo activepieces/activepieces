@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 
+import { customerOutputSchema } from '../output-schemas';
 export const stripeRetrieveCustomer = createAction({
   name: 'retrieve_customer',
   auth: stripeAuth,
@@ -24,6 +25,7 @@ export const stripeRetrieveCustomer = createAction({
       required: true,
     }),
   },
+  outputSchema: customerOutputSchema,
   async run(context) {
     const customer = {
       id: context.propsValue.id,

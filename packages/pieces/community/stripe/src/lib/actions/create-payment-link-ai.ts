@@ -3,6 +3,7 @@ import { stripeAuth } from '../..';
 import { getClient } from '../common';
 import { Stripe } from 'stripe';
 
+import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeCreatePaymentLinkAi = createAction({
   name: 'create_payment_link_ai',
   auth: stripeAuth,
@@ -71,6 +72,7 @@ export const stripeCreatePaymentLinkAi = createAction({
       required: false,
     }),
   },
+  outputSchema: paymentLinkOutputSchema,
   async run(context) {
     const client = getClient(context.auth.secret_text);
     const props = context.propsValue;

@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { taxRateListOutputSchema } from '../output-schemas';
 export const stripeListTaxRates = createAction({
   name: 'list_tax_rates',
   auth: stripeAuth,
@@ -46,6 +47,7 @@ export const stripeListTaxRates = createAction({
       required: false,
     }),
   },
+  outputSchema: taxRateListOutputSchema,
   async run(context) {
     const { active, inclusive, limit } = context.propsValue;
 

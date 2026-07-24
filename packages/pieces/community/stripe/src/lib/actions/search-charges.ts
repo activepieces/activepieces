@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { chargeSearchOutputSchema } from '../output-schemas';
 export const stripeSearchCharges = createAction({
   name: 'search_charges',
   auth: stripeAuth,
@@ -31,6 +32,7 @@ export const stripeSearchCharges = createAction({
       required: false,
     }),
   },
+  outputSchema: chargeSearchOutputSchema,
   async run(context) {
     const { query, limit } = context.propsValue;
 

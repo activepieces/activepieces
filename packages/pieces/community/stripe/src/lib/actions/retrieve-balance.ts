@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { balanceOutputSchema } from '../output-schemas';
 export const stripeRetrieveBalance = createAction({
   name: 'retrieve_balance',
   auth: stripeAuth,
@@ -19,6 +20,7 @@ export const stripeRetrieveBalance = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: balanceOutputSchema,
   async run(context) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,

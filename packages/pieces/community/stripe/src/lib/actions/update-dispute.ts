@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { disputeOutputSchema } from '../output-schemas';
 export const stripeUpdateDispute = createAction({
   name: 'update_dispute',
   auth: stripeAuth,
@@ -42,6 +43,7 @@ export const stripeUpdateDispute = createAction({
       required: false,
     }),
   },
+  outputSchema: disputeOutputSchema,
   async run(context) {
     const { dispute_id, evidence, submit, metadata } = context.propsValue;
 

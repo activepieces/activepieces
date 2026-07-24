@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { subscriptionItemListOutputSchema } from '../output-schemas';
 export const stripeListSubscriptionItems = createAction({
   name: 'list_subscription_items',
   auth: stripeAuth,
@@ -32,6 +33,7 @@ export const stripeListSubscriptionItems = createAction({
       required: false,
     }),
   },
+  outputSchema: subscriptionItemListOutputSchema,
   async run(context) {
     const { subscription_id, limit } = context.propsValue;
 

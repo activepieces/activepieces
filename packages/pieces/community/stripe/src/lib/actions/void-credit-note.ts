@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { creditNoteOutputSchema } from '../output-schemas';
 export const stripeVoidCreditNote = createAction({
   name: 'void_credit_note',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeVoidCreditNote = createAction({
       required: true,
     }),
   },
+  outputSchema: creditNoteOutputSchema,
   async run(context) {
     const { credit_note_id } = context.propsValue;
 

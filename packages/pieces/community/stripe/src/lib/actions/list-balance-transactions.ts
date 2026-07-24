@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { balanceTransactionListOutputSchema } from '../output-schemas';
 export const stripeListBalanceTransactions = createAction({
   name: 'list_balance_transactions',
   auth: stripeAuth,
@@ -44,6 +45,7 @@ export const stripeListBalanceTransactions = createAction({
       required: false,
     }),
   },
+  outputSchema: balanceTransactionListOutputSchema,
   async run(context) {
     const { type, payout, created_after, created_before, limit } =
       context.propsValue;

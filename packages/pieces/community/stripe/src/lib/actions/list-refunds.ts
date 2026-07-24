@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { refundListOutputSchema } from '../output-schemas';
 export const stripeListRefunds = createAction({
   name: 'list_refunds',
   auth: stripeAuth,
@@ -36,6 +37,7 @@ export const stripeListRefunds = createAction({
       required: false,
     }),
   },
+  outputSchema: refundListOutputSchema,
   async run(context) {
     const { payment_intent, charge, limit } = context.propsValue;
 

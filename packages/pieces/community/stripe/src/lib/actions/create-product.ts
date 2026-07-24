@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { productOutputSchema } from '../output-schemas';
 export const stripeCreateProduct = createAction({
   name: 'create_product',
   auth: stripeAuth,
@@ -54,6 +55,7 @@ export const stripeCreateProduct = createAction({
       required: false,
     }),
   },
+  outputSchema: productOutputSchema,
   async run(context) {
     const { name, description, active, images, url, metadata } =
       context.propsValue;

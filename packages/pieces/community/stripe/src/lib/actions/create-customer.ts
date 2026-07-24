@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 
+import { customerOutputSchema } from '../output-schemas';
 export const stripeCreateCustomer = createAction({
   name: 'create_customer',
   auth: stripeAuth,
@@ -52,6 +53,7 @@ export const stripeCreateCustomer = createAction({
       required: false,
     }),
   },
+  outputSchema: customerOutputSchema,
   async run(context) {
     const customer = {
       email: context.propsValue.email,

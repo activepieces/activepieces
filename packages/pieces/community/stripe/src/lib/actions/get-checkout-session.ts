@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { checkoutSessionOutputSchema } from '../output-schemas';
 export const stripeGetCheckoutSession = createAction({
   name: 'get_checkout_session',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeGetCheckoutSession = createAction({
       required: true,
     }),
   },
+  outputSchema: checkoutSessionOutputSchema,
   async run(context) {
     const { session_id } = context.propsValue;
     const response = await httpClient.sendRequest({

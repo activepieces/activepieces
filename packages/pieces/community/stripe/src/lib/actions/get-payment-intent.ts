@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeGetPaymentIntent = createAction({
   name: 'get_payment_intent',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeGetPaymentIntent = createAction({
       required: true,
     }),
   },
+  outputSchema: paymentIntentOutputSchema,
   async run(context) {
     const { payment_intent_id } = context.propsValue;
 

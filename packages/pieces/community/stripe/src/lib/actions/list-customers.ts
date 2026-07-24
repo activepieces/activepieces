@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { customerListOutputSchema } from '../output-schemas';
 export const stripeListCustomers = createAction({
   name: 'list_customers',
   auth: stripeAuth,
@@ -37,6 +38,7 @@ export const stripeListCustomers = createAction({
       required: false,
     }),
   },
+  outputSchema: customerListOutputSchema,
   async run(context) {
     const { email, limit, starting_after } = context.propsValue;
 

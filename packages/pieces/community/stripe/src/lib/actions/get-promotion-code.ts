@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { promotionCodeOutputSchema } from '../output-schemas';
 export const stripeGetPromotionCode = createAction({
   name: 'get_promotion_code',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeGetPromotionCode = createAction({
       required: true,
     }),
   },
+  outputSchema: promotionCodeOutputSchema,
   async run(context) {
     const { promotion_code_id } = context.propsValue;
     const response = await httpClient.sendRequest({

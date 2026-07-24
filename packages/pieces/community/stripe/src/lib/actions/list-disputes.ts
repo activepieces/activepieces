@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { disputeListOutputSchema } from '../output-schemas';
 export const stripeListDisputes = createAction({
   name: 'list_disputes',
   auth: stripeAuth,
@@ -44,6 +45,7 @@ export const stripeListDisputes = createAction({
       required: false,
     }),
   },
+  outputSchema: disputeListOutputSchema,
   async run(context) {
     const { charge, payment_intent, created_after, created_before, limit } =
       context.propsValue;

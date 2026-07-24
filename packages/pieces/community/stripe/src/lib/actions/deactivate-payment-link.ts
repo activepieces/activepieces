@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { stripeAuth } from '../..';
 import { stripeCommon, getClient } from '../common';
 
+import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeDeactivatePaymentLink = createAction({
   name: 'deactivate_payment_link',
   auth: stripeAuth,
@@ -17,6 +18,7 @@ export const stripeDeactivatePaymentLink = createAction({
   props: {
     payment_link_id: stripeCommon.paymentLink,
   },
+  outputSchema: paymentLinkOutputSchema,
   async run(context) {
     const { payment_link_id } = context.propsValue;
     const client = getClient(context.auth.secret_text);

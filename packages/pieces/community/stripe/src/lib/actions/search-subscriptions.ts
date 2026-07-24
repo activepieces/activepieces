@@ -20,6 +20,7 @@ const statusOptions = [
   { label: 'Paused', value: 'paused' },
 ]
 
+import { subscriptionSearchOutputSchema } from '../output-schemas';
 export const stripeSearchSubscriptions = createAction({
   name: 'search_subscriptions',
   auth: stripeAuth,
@@ -79,6 +80,7 @@ export const stripeSearchSubscriptions = createAction({
       defaultValue: true,
     }),
   },
+  outputSchema: subscriptionSearchOutputSchema,
   async run(context) {
     const {
       price_ids,

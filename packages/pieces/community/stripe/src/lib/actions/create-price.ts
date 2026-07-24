@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { priceOutputSchema } from '../output-schemas';
 export const stripeCreatePrice = createAction({
   name: 'create_price',
   auth: stripeAuth,
@@ -69,6 +70,7 @@ export const stripeCreatePrice = createAction({
       required: false,
     }),
   },
+  outputSchema: priceOutputSchema,
   async run(context) {
     const {
       product,

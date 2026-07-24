@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { disputeOutputSchema } from '../output-schemas';
 export const stripeCloseDispute = createAction({
   name: 'close_dispute',
   auth: stripeAuth,
@@ -26,6 +27,7 @@ export const stripeCloseDispute = createAction({
       required: true,
     }),
   },
+  outputSchema: disputeOutputSchema,
   async run(context) {
     const { dispute_id } = context.propsValue;
 

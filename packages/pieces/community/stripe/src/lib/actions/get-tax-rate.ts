@@ -7,6 +7,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { taxRateOutputSchema } from '../output-schemas';
 export const stripeGetTaxRate = createAction({
   name: 'get_tax_rate',
   auth: stripeAuth,
@@ -25,6 +26,7 @@ export const stripeGetTaxRate = createAction({
       required: true,
     }),
   },
+  outputSchema: taxRateOutputSchema,
   async run(context) {
     const { tax_rate_id } = context.propsValue;
     const response = await httpClient.sendRequest({

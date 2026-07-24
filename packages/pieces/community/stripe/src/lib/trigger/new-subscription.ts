@@ -5,6 +5,7 @@ import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isEmpty } from '@activepieces/pieces-framework';
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeNewSubscription = createTrigger({
   auth: stripeAuth,
   name: 'new_subscription',
@@ -16,6 +17,7 @@ export const stripeNewSubscription = createTrigger({
   },
   props: {},
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: subscriptionOutputSchema,
   sampleData: {
     id: 'sub_1MWMJXKZ0dZRqLEKJX80JXfv',
     object: 'subscription',

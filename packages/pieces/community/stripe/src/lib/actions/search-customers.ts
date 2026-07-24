@@ -8,6 +8,7 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 
+import { customerSearchOutputSchema } from '../output-schemas';
 export const stripeSearchCustomers = createAction({
   name: 'search_customers',
   auth: stripeAuth,
@@ -33,6 +34,7 @@ export const stripeSearchCustomers = createAction({
       required: false,
     }),
   },
+  outputSchema: customerSearchOutputSchema,
   async run(context) {
     const { email, query } = context.propsValue;
 

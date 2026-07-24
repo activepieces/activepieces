@@ -8,6 +8,7 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { transferListOutputSchema } from '../output-schemas';
 export const stripeListTransfers = createAction({
   name: 'list_transfers',
   auth: stripeAuth,
@@ -31,6 +32,7 @@ export const stripeListTransfers = createAction({
       required: false,
     }),
   },
+  outputSchema: transferListOutputSchema,
   async run(context) {
     const { destination, limit } = context.propsValue;
 
