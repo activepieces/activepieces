@@ -146,6 +146,10 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
+        const user = await userRepo().findOneBy({ id, platformId })
+        if (isNil(user)) {
+            return
+        }
         await platformProjectService(log).deletePersonalProjectForUser({
             userId: id,
             platformId,
@@ -154,6 +158,7 @@ export const userService = (log: FastifyBaseLogger) => ({
             id,
             platformId,
         })
+        await deleteIdentityIfOrphaned({ identityId: user.identityId })
     },
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
@@ -241,6 +246,13 @@ async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { 
                 message: 'Platform owner cannot be deleted',
             },
         })
+    }
+}
+
+async function deleteIdentityIfOrphaned({ identityId }: { identityId: string }): Promise<void> {
+    const identityStillReferenced = await userRepo().existsBy({ identityId })
+    if (!identityStillReferenced) {
+        await userIdentityRepository().delete({ id: identityId })
     }
 }
 
