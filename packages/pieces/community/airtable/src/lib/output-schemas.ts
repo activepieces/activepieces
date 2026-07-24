@@ -46,6 +46,17 @@ const airtableStrippedTableFields: OutputSchema['fields'] = [
   { key: 'fields', label: 'Fields', listItems: airtableStrippedFieldDefinitionFields },
 ];
 
+const airtableDeletedRecordFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Deleted Record ID' },
+  { key: 'deleted', label: 'Deleted', format: 'boolean' },
+];
+
+const airtableBaseFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Base ID' },
+  { key: 'name', label: 'Base Name' },
+  { key: 'permissionLevel', label: 'Permission Level' },
+];
+
 const airtableCommentFields: OutputSchema['fields'] = [
   { key: 'id', label: 'Comment ID' },
   { key: 'createdTime', label: 'Created Time', format: 'datetime' },
@@ -107,10 +118,7 @@ export const updateRecordAiActionOutputSchema: OutputSchema = {
 };
 
 export const deleteRecordAiActionOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'id', label: 'Deleted Record ID' },
-    { key: 'deleted', label: 'Deleted', format: 'boolean' },
-  ],
+  fields: airtableDeletedRecordFields,
 };
 
 export const uploadAttachmentAiActionOutputSchema: OutputSchema = {
@@ -162,11 +170,7 @@ export const listBasesActionOutputSchema: OutputSchema = {
       key: 'bases',
       label: 'Bases',
       labelKey: 'name',
-      listItems: [
-        { key: 'id', label: 'Base ID' },
-        { key: 'name', label: 'Base Name' },
-        { key: 'permissionLevel', label: 'Permission Level' },
-      ],
+      listItems: airtableBaseFields,
     },
   ],
 };
@@ -217,10 +221,7 @@ export const deleteRecordsBatchActionOutputSchema: OutputSchema = {
       key: 'records',
       label: 'Deleted Records',
       labelKey: 'id',
-      listItems: [
-        { key: 'id', label: 'Record ID' },
-        { key: 'deleted', label: 'Deleted', format: 'boolean' },
-      ],
+      listItems: airtableDeletedRecordFields,
     },
   ],
 };
@@ -241,3 +242,49 @@ export const listRecordCommentsActionOutputSchema: OutputSchema = {
 export const getCurrentUserActionOutputSchema: OutputSchema = {
   fields: [{ key: 'id', label: 'User ID' }],
 };
+
+export const createRecordActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
+
+export const updateRecordActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
+
+export const cleanRecordActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
+
+export const findRecordByIdActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
+
+export const uploadFileToColumnActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
+
+export const deleteRecordActionOutputSchema: OutputSchema = { fields: airtableDeletedRecordFields };
+
+export const addCommentToRecordActionOutputSchema: OutputSchema = { fields: airtableCommentFields };
+
+export const findRecordActionOutputSchema: OutputSchema = {
+  itemLabel: '{id}',
+  fields: [{ key: 'records', label: 'Records', value: '', listItems: airtableRecordFields }],
+};
+
+export const findTableByIdActionOutputSchema: OutputSchema = { fields: airtableRawTableFields };
+
+export const findTableActionOutputSchema: OutputSchema = { fields: airtableRawTableFields };
+
+export const createTableActionOutputSchema: OutputSchema = { fields: airtableRawTableFields };
+
+export const createBaseActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Base ID' },
+    { key: 'tables', label: 'Tables', listItems: airtableRawTableFields },
+  ],
+};
+
+export const getBaseSchemaActionOutputSchema: OutputSchema = {
+  itemLabel: '{name}',
+  fields: [{ key: 'tables', label: 'Tables', value: '', listItems: airtableRawTableFields }],
+};
+
+export const findBaseActionOutputSchema: OutputSchema = {
+  itemLabel: '{name}',
+  fields: [{ key: 'bases', label: 'Bases', value: '', listItems: airtableBaseFields }],
+};
+
+export const newRecordTriggerOutputSchema: OutputSchema = { fields: airtableRecordFields };
+
+export const updatedRecordTriggerOutputSchema: OutputSchema = { fields: airtableRecordFields };

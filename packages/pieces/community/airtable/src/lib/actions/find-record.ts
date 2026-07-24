@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { airtableCommon } from '../common';
 import { airtableAuth } from '../auth';
+import { findRecordActionOutputSchema } from '../output-schemas';
 
 export const airtableFindRecordAction = createAction({
   auth: airtableAuth,
@@ -9,6 +10,7 @@ export const airtableFindRecordAction = createAction({
   displayName: 'Find Airtable Record',
   description: 'Find a record in airtable',
   audience: 'human',
+  outputSchema: findRecordActionOutputSchema,
   aiMetadata: {
     description:
       'Searches a table for records whose chosen field contains the given search value, using a substring (FIND) match, and optionally limits the search to a specific view. Use to look up records by a field value when you do not have the record ID. The search field and a non-empty search value are required; read-only and idempotent.',

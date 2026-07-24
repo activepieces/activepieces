@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableField, AirtableTable } from '../common/models';
+import { updatedRecordTriggerOutputSchema } from '../output-schemas';
 
 const props = {
   base: airtableCommon.base,
@@ -107,6 +108,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
   displayName: 'New or Updated Record',
   description:
     'Triggers when a record is created or updated in selected table.',
+  outputSchema: updatedRecordTriggerOutputSchema,
   aiMetadata: {
     description:
       'Fires when a record is created or modified in the selected base and table (optionally scoped to a view), detected via a chosen Last Modified Time field. Represents a row that was newly added or changed since the last poll; the table must have a last-modified timestamp field for this to work.',

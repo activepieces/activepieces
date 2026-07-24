@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableTableConfig } from '../common/models';
+import { createBaseActionOutputSchema } from '../output-schemas';
 
 export const airtableCreateBaseAction = createAction({
   auth: airtableAuth,
@@ -9,6 +10,7 @@ export const airtableCreateBaseAction = createAction({
   displayName: 'Create Base',
   description: 'Create a new base with a specified table structure.',
   audience: 'human',
+  outputSchema: createBaseActionOutputSchema,
   aiMetadata: {
     description:
       'Creates a new Airtable base inside a workspace, seeded with one or more tables defined by a JSON structure (the first field of each table becomes its primary field). Use to provision a brand-new base. Requires a workspace ID and base name; not idempotent — each call creates a separate base.',

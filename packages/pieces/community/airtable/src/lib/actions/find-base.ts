@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
 import { AirtableBase } from '../common/models';
+import { findBaseActionOutputSchema } from '../output-schemas';
 
 export const airtableFindBaseAction = createAction({
   auth: airtableAuth,
@@ -9,6 +10,7 @@ export const airtableFindBaseAction = createAction({
   displayName: 'Find Base',
   description: 'Find a base by its name or a keyword.',
   audience: 'human',
+  outputSchema: findBaseActionOutputSchema,
   aiMetadata: {
     description:
       'Lists all accessible bases and returns those whose name contains the given keyword (case-insensitive substring match). Use to resolve a base ID from a name before other operations. Read-only and idempotent.',
