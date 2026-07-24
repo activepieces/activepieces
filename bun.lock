@@ -665,7 +665,7 @@
     },
     "packages/pieces/community/apify": {
       "name": "@activepieces/piece-apify",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2695,7 +2695,7 @@
     },
     "packages/pieces/community/docusign": {
       "name": "@activepieces/piece-docusign",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3156,7 +3156,7 @@
     },
     "packages/pieces/community/firecrawl": {
       "name": "@activepieces/piece-firecrawl",
-      "version": "0.3.8",
+      "version": "0.3.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6303,6 +6303,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/nutshell": {
+      "name": "@activepieces/piece-nutshell",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/octopush-sms": {
       "name": "@activepieces/piece-octopush-sms",
       "version": "0.1.6",
@@ -6456,7 +6469,7 @@
     },
     "packages/pieces/community/openai": {
       "name": "@activepieces/piece-openai",
-      "version": "0.10.0",
+      "version": "0.10.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10263,7 +10276,7 @@
     },
     "packages/pieces/core/graphql": {
       "name": "@activepieces/piece-graphql",
-      "version": "0.0.12",
+      "version": "0.0.13",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10278,7 +10291,7 @@
     },
     "packages/pieces/core/http": {
       "name": "@activepieces/piece-http",
-      "version": "0.11.10",
+      "version": "0.11.11",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -11898,6 +11911,8 @@
     "@activepieces/piece-ntfy": ["@activepieces/piece-ntfy@workspace:packages/pieces/community/ntfy"],
 
     "@activepieces/piece-nuelink": ["@activepieces/piece-nuelink@workspace:packages/pieces/community/nuelink"],
+
+    "@activepieces/piece-nutshell": ["@activepieces/piece-nutshell@workspace:packages/pieces/community/nutshell"],
 
     "@activepieces/piece-octopush-sms": ["@activepieces/piece-octopush-sms@workspace:packages/pieces/community/octopush-sms"],
 
