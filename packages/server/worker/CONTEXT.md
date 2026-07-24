@@ -35,6 +35,14 @@ The worker↔app release-compatibility check run before every poll, via
 `apVersionUtil.versionsAreCompatible`. Fail-closed: a version skew (or an unreadable `0.0.0` on either
 side) pauses polling rather than dispatching a skewed run. Shared across all poll loops.
 
+### Execution Slot
+One concurrent-flow capacity unit on the fleet. **Effective slots = Σ `AP_WORKER_CONCURRENCY` across all connected workers** — at the recommended shape (concurrency 1, one worker per flow) it equals the worker replica count. Driving load past the slot count is what produces **queue-wait**, not per-flow slowdown. The benchmark CLI reads this from `GET /v1/worker-machines` and derives its load from it.
+_Avoid_: "connections", "threads" for this concept.
+
+### Queue-wait vs Service-time
+The two halves of a sync request's latency, read from the stored `FlowRun.timeline` (`QUEUE / PROVISION / BOOT / RUN` phases). **Queue-wait** = time a job waits for a free slot (`QUEUE`, plus `PROVISION`/`BOOT` on a cold box). **Service-time** = the engine's actual run (`RUN` = `finishTime − startTime`). A throughput plateau with rising p50 under added concurrency is queue-wait (Little's Law), not service-time.
+_Avoid_: "service degradation" as a synonym for the latency rise — reserve it for a genuine rise in the `RUN` phase itself.
+
 ### Run-time callbacks
 See root **Run-time callbacks**: the engine posts `updateRunProgress`, `updateStepProgress`,
 `sendFlowResponse`, and `uploadRunLog` to the app **directly over HTTP**; they do not travel back

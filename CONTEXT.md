@@ -43,6 +43,14 @@ The calls a run emits to the app *during* execution: `updateRunProgress`, `updat
 **Flow Bundle**:
 A per-locked-flow-version artifact (frozen piece manifest + compiled code) stored in S3/DB. The **Resolver** uses it as the fast path (resolve from the manifest instead of re-fetch-and-compile); on a miss it builds and publishes the bundle to S3 itself, then passes the ref into `execute.provision`. The **Sandbox** only ever consumes a ready bundle — it pulls the blob from S3 and never builds one. (Distinct from **Piece Bundle**.)
 
+**Queued Job**:
+Work accepted onto the Redis queue that no worker has started yet. It exists *only* in Redis — an async-webhook Queued Job has no FlowRun row — so it is exactly as durable as the Redis dataset (see ADR-0006).
+_Avoid_: in-flight, pending run (an async-webhook Queued Job has no run yet).
+
+**In-flight Run**:
+A run a worker is actively executing. It has a FlowRun row and a checkpointed run log in Postgres/S3, so it survives the loss of its worker or of Redis and can resume from its last checkpoint.
+_Avoid_: queued (that is the pre-pickup state with a strictly weaker durability profile), active job.
+
 **Slot**:
 One unit of concurrency — capacity for exactly one in-flight job. Because a **Worker** is one box at concurrency 1, a slot maps to a worker's worth of compute. Throughput guarantees are counted in slots, not workers, so the backing (a replica, a Cloud Run instance) can vary.
 

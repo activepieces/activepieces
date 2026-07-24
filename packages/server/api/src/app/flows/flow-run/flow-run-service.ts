@@ -5,7 +5,8 @@ import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { fileService } from '../../file/file.service'
+import { distributedLock } from '../../database/redis-connections'
+import { fileService, getEffectiveExecutionDataRetentionDays } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
@@ -20,6 +21,7 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
+import { waitpointService } from './waitpoint/waitpoint-service'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 
@@ -115,7 +117,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
-        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+        const project = await projectService(log).getOneOrThrow(oldFlowRun.projectId)
+        const retentionDays = getEffectiveExecutionDataRetentionDays(project.executionDataRetentionDays)
         if (
             isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
             isOutsideRetentionWindow(oldFlowRun.created, retentionDays)
@@ -438,16 +441,18 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
 
 async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
-    await jobQueue(log).removeOneTimeJob({
-        jobId: flowRun.id,
-        platformId,
-        projectId: flowRun.projectId,
-        jobType: WorkerJobType.EXECUTE_FLOW,
-    })
-    await runsMetadataQueue(log).add({
-        id: flowRun.id,
-        projectId: flowRun.projectId,
-        status: FlowRunStatus.CANCELED,
+    await distributedLock(log).runExclusive({
+        key: `runs_metadata_${flowRun.id}`,
+        timeoutInSeconds: 30,
+        fn: async () => {
+            await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId })
+            await waitpointService(log).deleteByFlowRunId(flowRun.id)
+            await runsMetadataQueue(log).add({
+                id: flowRun.id,
+                projectId: flowRun.projectId,
+                status: FlowRunStatus.CANCELED,
+            })
+        },
     })
     log.info({
         flowRun: { id: flowRun.id },
@@ -589,7 +594,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             executeTrigger: params.executeTrigger,
         }
     await jobQueue(log).add({
-        id: params.flowRun.id,
+        id: params.jobId ?? params.flowRun.id,
         type: JobType.ONE_TIME,
         data,
     })
@@ -733,6 +738,7 @@ type AddToQueueParamsCommon = {
     httpRequestId: string | undefined
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
+    jobId?: string
 }
 
 export type AddToQueueParams = AddToQueueParamsCommon & (

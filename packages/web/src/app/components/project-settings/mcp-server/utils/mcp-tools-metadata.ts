@@ -28,6 +28,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Read full source code, package.json, and input of a CODE step',
       },
       {
+        name: 'ap_read_step_settings',
+        description:
+          'Read the full untruncated settings of any step, including piece input, code source, loop items, and router branches',
+      },
+      {
         name: 'ap_validate_flow',
         description:
           'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',

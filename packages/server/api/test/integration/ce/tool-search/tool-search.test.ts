@@ -131,6 +131,32 @@ describe('Tool Search Engine (Phase 1)', () => {
         expect(await indexRowCount()).toBe(4)
     })
 
+    it('defaults requiresConnection to true when requireAuth is absent (legacy piece_metadata)', async () => {
+        // Simulates a piece_metadata row written before requireAuth became a required boolean: the stored
+        // JSON has no requireAuth key, so it reads back as undefined. Before the `?? true` coalesce this
+        // bound NULL into the NOT NULL requiresConnection column, aborting the whole upsert (index unbuilt).
+        const legacyAction = { name: 'legacy_action', displayName: 'Legacy Action', description: 'Send a message to a Slack channel', props: {} } as unknown as ActionBase
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-legacy',
+            displayName: 'Legacy',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { legacy_action: legacyAction },
+            triggers: {},
+        }))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        expect(result.status).toBe('done')
+        expect(result.objectsIndexed).toBe(1)
+        const [row] = await databaseConnection().query(
+            'SELECT "requiresConnection" FROM "tool_search_index" WHERE "pieceName" = $1 AND "objectName" = $2',
+            ['@activepieces/piece-legacy', 'legacy_action'],
+        )
+        expect(row.requiresConnection).toBe(true)
+    })
+
     it('searchActions ranks the semantically closest action first and returns the tiered envelope', async () => {
         await seedCatalog()
         await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
@@ -659,9 +685,11 @@ describe('Tool Search Engine (Phase 5 — keyword floor / degradation)', () => {
         await seedCatalog()
         // No reindex, no embedder, no platformId → embedder resolves to null → keyword floor.
 
-        const { results, mode } = await toolSearchService(log).searchActions('send message', { limit: 5 })
+        const { results, mode, degradeReason } = await toolSearchService(log).searchActions('send message', { limit: 5 })
 
         expect(mode).toBe('keyword')
+        // No model is configured, so the reason must be no-embedder (not a failed call).
+        expect(degradeReason).toBe('no-embedder')
         const slack = results.find((r) => r.pieceName === '@activepieces/piece-slack')
         expect(slack).toMatchObject({
             actionName: 'send_channel_message',
@@ -681,10 +709,47 @@ describe('Tool Search Engine (Phase 5 — keyword floor / degradation)', () => {
             embed: () => Promise.reject(new Error('openai unreachable')),
         }
 
-        const { results, mode } = await toolSearchService(log).searchActions('send message', { embedder: throwingEmbedder, limit: 5 })
+        const { results, mode, degradeReason } = await toolSearchService(log).searchActions('send message', { embedder: throwingEmbedder, limit: 5 })
 
         expect(mode).toBe('keyword')
+        // A model WAS configured; its embed call threw — the reason must reflect the failure, not config.
+        expect(degradeReason).toBe('embed-failed')
         expect(results.some((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
+    })
+
+    it('honors the pieceName scope in the keyword floor — a scoped query returns only that piece’s rows', async () => {
+        await seedCatalog()
+        // No embedder → keyword floor. Unscoped, "send" matches more than one piece (Slack + Gmail),
+        // so the scope below is doing real work — it must not silently vanish on degrade.
+        const unscoped = await toolSearchService(log).searchActions('send', { limit: 10 })
+        expect(unscoped.mode).toBe('keyword')
+        expect(new Set(unscoped.results.map((r) => r.pieceName)).size).toBeGreaterThan(1)
+
+        const { results, mode } = await toolSearchService(log).searchActions('send', {
+            limit: 10,
+            pieceName: '@activepieces/piece-slack',
+        })
+
+        expect(mode).toBe('keyword')
+        expect(results.length).toBeGreaterThan(0)
+        expect(results.every((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
+    })
+
+    it('returns audience:"ai" actions in the keyword floor — the search engine sees the full audience, not the human view', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-agent-tools',
+            displayName: 'Agent Tools',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_ai_message: action({ name: 'send_ai_message', displayName: 'Send AI Message', description: 'Send a message to a channel', audience: 'ai' }) },
+            triggers: {},
+        }))
+
+        const { results, mode } = await toolSearchService(log).searchActions('send message', { limit: 5 })
+
+        expect(mode).toBe('keyword')
+        expect(results.some((r) => r.actionName === 'send_ai_message')).toBe(true)
     })
 })
 

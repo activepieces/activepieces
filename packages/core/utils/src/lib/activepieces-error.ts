@@ -59,6 +59,7 @@ export type ApErrorParams =
     | AIProviderNotSupportedParams
     | AIRequestNotSupportedParams
     | AICreditLimitExceededParams
+    | ChatMessageLimitExceededParams
     | SessionExpiredParams
     | InvalidLicenseKeyParams
     | NoChatResponseParams
@@ -154,6 +155,11 @@ Record<string, string> &
 export type AICreditLimitExceededParams = BaseErrorParams<ErrorCode.AI_CREDIT_LIMIT_EXCEEDED, {
     usage: number
     limit: number
+}>
+
+export type ChatMessageLimitExceededParams = BaseErrorParams<ErrorCode.CHAT_MESSAGE_LIMIT_EXCEEDED, {
+    limit: number
+    windowSeconds: number
 }>
 
 export type PermissionDeniedErrorParams = BaseErrorParams<
@@ -494,6 +500,7 @@ export enum ErrorCode {
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     CHAT_CONTEXT_LIMIT_EXCEEDED = 'CHAT_CONTEXT_LIMIT_EXCEEDED',
+    CHAT_MESSAGE_LIMIT_EXCEEDED = 'CHAT_MESSAGE_LIMIT_EXCEEDED',
     ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',

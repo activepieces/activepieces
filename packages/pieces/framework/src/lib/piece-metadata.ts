@@ -24,6 +24,7 @@ export const PieceBase = z.object({
   categories: z.optional(z.array(z.enum(PieceCategory))),
   minimumSupportedRelease: z.optional(z.string()),
   maximumSupportedRelease: z.optional(z.string()),
+  deprecated: z.optional(z.boolean()),
   i18n: I18nForPiece,
 })
 
@@ -41,6 +42,7 @@ export type PieceBase = {
   categories?: PieceCategory[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
+  deprecated?: boolean;
   i18n?: Partial<Record<LocalesEnum, Record<string, string>>>
   // this method didn't exist in older version
   getContextInfo: (() => { version: ContextVersion }) | undefined;
@@ -132,7 +134,6 @@ export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> &
 
 const PiecePackageMetadata = z.object({
   projectUsage: z.number(),
-  tags: z.optional(z.array(z.string())),
   pieceType: z.enum(PieceType),
   packageType: z.enum(PackageType),
   platformId: z.optional(z.string()),

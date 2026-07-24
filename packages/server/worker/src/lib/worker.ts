@@ -3,10 +3,11 @@ import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
+import { createApiToWorkerHandlers } from './api-notify-service'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
@@ -35,6 +36,20 @@ function pageOnceForUnreadableWorkerVersion(workerLog: typeof logger): void {
     })
 }
 
+// Front-loads the release-read failure signal to worker boot so a mis-packaged worker that hasn't
+// polled yet doesn't silently look healthy in the logs. This only LOGS: the on-call page needs
+// PAGE_ONCALL_WEBHOOK, which arrives with worker settings on socket connect and is not available at
+// boot, so paging is left to the poll loop's version-compatibility check (which calls
+// pageOnceForUnreadableWorkerVersion, once-guarded, as soon as settings are loaded). A '0.0.0' read
+// pauses polling and will NOT self-heal on reconnect until the deployment is fixed.
+function assertReleaseReadable(): void {
+    if (AP_VERSION !== UNKNOWN_VERSION) {
+        logger.info({ release: { version: AP_VERSION } }, 'Release version detected from package.json')
+        return
+    }
+    logger.error({ release: { version: AP_VERSION } }, 'Worker could not read its release version from package.json (reported as 0.0.0); polling is paused and will NOT self-heal on reconnect until the deployment is fixed (check cwd/packaging)')
+}
+
 let socket: Socket | null = null
 let polling = false
 let connectionGeneration = 0
@@ -61,9 +76,11 @@ const DRAIN_TIMEOUT_MS = 25_000
 let cachedSandboxInfo: SandboxInformation[] = []
 let sandboxInfoInterval: NodeJS.Timeout | null = null
 const SANDBOX_INFO_REFRESH_MS = 15_000
+const SERVER_PING_TIMEOUT_MS = 5_000
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
+        assertReleaseReadable()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
         socket = io(socketUrl.url, {
@@ -106,6 +123,13 @@ export const worker = {
         socket.on('connect_error', (error) => {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
+
+        createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
+            getRuntime: () => runtime,
+            apiClient,
+            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            log: logger,
+        }))
 
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
@@ -162,6 +186,13 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
+    })
+
+    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
+    void runtime.prewarm({
+        log: logger, 
+        apiClient,
+        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
     })
 
     logger.info({ concurrency }, 'Starting poll loops')
@@ -405,6 +436,7 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const memInfo = await systemUsage.getContainerMemoryUsage()
     const diskInfo = await systemUsage.getDiskInfo()
     const cpuCores = await systemUsage.getCpuCores()
+    const serverPingMs = await probeServerPing()
     return {
         workerId,
         cpuUsagePercentage: systemUsage.getCpuUsage(),
@@ -414,8 +446,18 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
         ip: workerHostname,
+        serverPingMs,
         sandboxes: cachedSandboxInfo,
     }
+}
+
+async function probeServerPing(): Promise<number | undefined> {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), SERVER_PING_TIMEOUT_MS)
+    const startedAt = Date.now()
+    const { error } = await tryCatch(() => fetch(`${getApiUrl()}v1/health`, { signal: controller.signal }))
+    clearTimeout(timeout)
+    return error ? undefined : Date.now() - startedAt
 }
 
 function startSandboxInfoSampling(): void {

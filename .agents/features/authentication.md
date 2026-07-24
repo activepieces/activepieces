@@ -80,7 +80,7 @@ All endpoints are rate-limited via `API_RATE_LIMIT_AUTHN_MAX` / `API_RATE_LIMIT_
 5. On Cloud (production): OTP email sent via `otpService`
 6. On CE/EE, or Cloud in development (`AP_ENVIRONMENT=development`): identity auto-verified
 7. `ApFlagId.USER_CREATED` flag saved
-8. Telemetry `SIGNED_UP` event fired
+8. Telemetry `SIGNED_UP` event fired (email/name included only on Cloud; CE/EE send non-PII fields only — `pickTelemetryPii`)
 9. Newsletter subscription attempted (production + non-embedding platforms only)
 
 ## Side Effects on Sign-In

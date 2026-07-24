@@ -1,5 +1,5 @@
 import { FastifyBaseLogger } from 'fastify'
-import { distributedStore, redisConnections } from '../../database/redis-connections'
+import { distributedStore } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
 const GATE_TTL_SECONDS = 15 * 60
@@ -49,23 +49,11 @@ async function checkDecision({ gateId }: { gateId: string }): Promise<GateDecisi
 
 async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutMs: number }): Promise<GateDecision | 'pending'> {
     const channel = channelName(gateId)
-    const subscriber = await redisConnections.create()
 
     return new Promise<GateDecision | 'pending'>((resolve) => {
         let settled = false
 
-        const settle = (result: GateDecision | 'pending') => {
-            if (settled) return
-            settled = true
-            clearTimeout(timeout)
-            subscriber.unsubscribe(channel).catch(() => undefined).finally(() => subscriber.quit().catch(() => undefined))
-            resolve(result)
-        }
-
-        const timeout = setTimeout(() => settle('pending'), timeoutMs)
-
-        subscriber.on('message', (_ch, message) => {
-            if (_ch !== channel) return
+        const listener = (message: string): void => {
             try {
                 const parsed = JSON.parse(message)
                 settle({ approved: parsed.approved === true, payload: parsed.payload })
@@ -73,11 +61,21 @@ async function waitForDecision({ gateId, timeoutMs }: { gateId: string, timeoutM
             catch {
                 settle('pending')
             }
-        })
+        }
+
+        const settle = (result: GateDecision | 'pending'): void => {
+            if (settled) return
+            settled = true
+            clearTimeout(timeout)
+            void pubsub.unsubscribe(channel, listener)
+            resolve(result)
+        }
+
+        const timeout = setTimeout(() => settle('pending'), timeoutMs)
 
         // Subscribe first, then check — eliminates the race where resolveGate
         // publishes between a check and a subscribe
-        void subscriber.subscribe(channel).then(async () => {
+        void pubsub.subscribe(channel, listener).then(async () => {
             const existing = await checkDecision({ gateId })
             if (existing !== 'pending') {
                 settle(existing)

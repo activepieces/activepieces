@@ -442,7 +442,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return transaction(async (entityManager) => {
+        const publishedFlow = await transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
                 userId,
@@ -461,6 +461,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 version: lockedFlowVersion,
             }
         })
+        // a static import here closes a circular graph (→ websockets → mcp/tools → mcp-utils → back here) that crashes module load.
+        const { websocketService } = await import('../../core/websockets.service')
+        websocketService.notifyWorkers().flowPublished({ flowId: publishedFlow.id, flowVersionId: publishedFlow.version.id, projectId: publishedFlow.projectId })
+        return publishedFlow
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
@@ -621,6 +625,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             .addSelect('COUNT(*)', 'count')
             .where('flow.projectId IN (:...projectIds)', { projectIds })
             .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
+            .andWhere('flow.operationStatus != :deleting', { deleting: FlowOperationStatus.DELETING })
             .groupBy('flow.projectId')
             .getRawMany()
         

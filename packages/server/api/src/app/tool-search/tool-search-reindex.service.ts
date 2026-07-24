@@ -35,14 +35,14 @@ export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
             : await resolveEmbedder({ platformId: params.platformId, log }))
         if (isNil(embedder)) {
             log.info('[toolSearchReindexService#reindex] No embedder resolved — skipping reindex (keyword floor serves).')
-            return { status: 'no-embedder', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0 }
+            return { status: 'no-embedder', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0, objectsPending: 0 }
         }
         // The migration no-ops when pgvector is absent, so the table can be missing even with the flag
         // on. Degrade gracefully (keyword floor) instead of throwing "relation does not exist" on every
         // catalog-change reconcile.
         if (!await toolSearchTableExists()) {
             log.warn('[toolSearchReindexService#reindex] tool_search_index is absent (pgvector not installed) — skipping reindex; keyword floor serves.')
-            return { status: 'no-table', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0 }
+            return { status: 'no-table', objectsIndexed: 0, objectsEmbedded: 0, objectsDeleted: 0, objectsPending: 0 }
         }
 
         const currentRelease = apVersionUtil.getCurrentRelease()
@@ -64,10 +64,17 @@ export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
 
         // Embed only the rows still missing an embedding (the new + changed ones, plus any that failed
         // a previous run). Embedding is batched and never blocks the upsert diff above.
-        const objectsEmbedded = await embedPendingRows(embedder, scope, log)
+        const { embedded: objectsEmbedded, pending: objectsPending } = await embedPendingRows(embedder, scope, log)
 
-        log.info({ scope: scope.type, objectsIndexed: desired.length, objectsEmbedded, objectsDeleted }, '[toolSearchReindexService#reindex] Reindex complete.')
-        return { status: 'done', objectsIndexed: desired.length, objectsEmbedded, objectsDeleted }
+        // Rows left unembedded after a reconcile mean the embedder failed or was rate-limited on those
+        // batches: a NULL-embedding row is invisible to semantic ranking, so search silently under-serves
+        // until they are re-embedded. Surface it loudly — both the boot backfill and the sync hook retry.
+        if (objectsPending > 0) {
+            log.warn({ scope: scope.type, objectsIndexed: desired.length, objectsEmbedded, objectsPending, objectsDeleted }, '[toolSearchReindexService#reindex] Reindex left rows unembedded — embedding degraded; search partially served until the next boot or catalog sync retries.')
+        }
+
+        log.info({ scope: scope.type, objectsIndexed: desired.length, objectsEmbedded, objectsPending, objectsDeleted }, '[toolSearchReindexService#reindex] Reindex complete.')
+        return { status: 'done', objectsIndexed: desired.length, objectsEmbedded, objectsDeleted, objectsPending }
     },
 })
 
@@ -134,20 +141,39 @@ export async function toolSearchTableExists(): Promise<boolean> {
 }
 
 /**
+ * Coverage of `tool_search_index` at one model version: total rows vs. how many carry an embedding. The
+ * boot backfill reads this to decide whether the index still needs work — an index with unembedded rows (a
+ * partial build a failed/rate-limited embed run left behind) is NOT "built", and search under-serves until
+ * those rows get vectors. Scoped to `modelVersion` (the one the current embedder fills) so NULL rows left
+ * at an OLD version by a past model transition — which the current embedder never touches — do not count
+ * as a permanent phantom `pending` that would re-enqueue a reconcile on every boot.
+ */
+export async function toolSearchIndexCoverage(modelVersion: string): Promise<ToolSearchIndexCoverage> {
+    const result = await databaseConnection().query(
+        'SELECT count(*)::int AS total, count("embedding")::int AS embedded FROM "tool_search_index" WHERE "modelVersion" = $1',
+        [modelVersion],
+    )
+    const total = Number(result?.[0]?.total ?? 0)
+    const embedded = Number(result?.[0]?.embedded ?? 0)
+    return { total, embedded, pending: total - embedded }
+}
+
+/**
  * Embed every row that still lacks an embedding at the current model_version (new rows, rows whose
  * text changed and were nulled by the upsert, and rows that failed a prior reindex). Batched; the
- * embedder owns retry/backoff. Returns the number of objects embedded.
+ * embedder owns retry/backoff. Returns the number of objects embedded this run plus the number still
+ * pending afterwards (rows whose batch failed) — a non-zero `pending` marks a degraded, partial index.
  */
-async function embedPendingRows(embedder: ToolSearchEmbedder, scope: ReindexScope, log: FastifyBaseLogger): Promise<number> {
+async function embedPendingRows(embedder: ToolSearchEmbedder, scope: ReindexScope, log: FastifyBaseLogger): Promise<EmbedResult> {
     const params: unknown[] = [embedder.modelVersion]
     const scopeClause = scope.type === 'platform' ? ` AND "platformId" = $${params.push(scope.platformId)}` : ''
-    const pending: PendingRow[] = await databaseConnection().query(
+    const pendingRows: PendingRow[] = await databaseConnection().query(
         `SELECT "id", "retrievalDoc" FROM "tool_search_index"
          WHERE "embedding" IS NULL AND "modelVersion" = $1${scopeClause}`,
         params,
     )
     let embedded = 0
-    for (const batch of chunk(pending, EMBED_BATCH_SIZE)) {
+    for (const batch of chunk(pendingRows, EMBED_BATCH_SIZE)) {
         // A batch that fails after the embedder's own retries leaves its rows NULL and is skipped, not
         // fatal — the next reindex re-selects them (still NULL) and retries. One bad batch never aborts
         // the whole reconcile or rolls back the rows that did embed.
@@ -173,10 +199,15 @@ async function embedPendingRows(embedder: ToolSearchEmbedder, scope: ReindexScop
         )
         embedded += batch.length
     }
-    return embedded
+    return { embedded, pending: pendingRows.length - embedded }
 }
 
 function explodePiece(piece: PieceMetadataSchema, modelVersion: string): DesiredRecord[] {
+    // `requireAuth` became a required boolean only recently (the framework defaults it `?? true` at
+    // construction); piece_metadata rows written by older versions omit the key, so it reads back as
+    // undefined. Coalesce to true — matching that framework default — so it never binds NULL into the
+    // NOT NULL requiresConnection column, which would otherwise abort the whole upsert and leave the
+    // index unbuilt (so embedPendingRows never runs and search silently serves nothing).
     const actionRecords = Object.entries(piece.actions).map(([objectName, action]) => buildRecord({
         piece,
         modelVersion,
@@ -185,7 +216,7 @@ function explodePiece(piece: PieceMetadataSchema, modelVersion: string): Desired
         displayName: action.displayName,
         description: action.description,
         aiDescription: action.aiMetadata?.description,
-        requiresConnection: action.requireAuth,
+        requiresConnection: action.requireAuth ?? true,
         audience: action.audience ?? null,
     }))
     const triggerRecords = Object.entries(piece.triggers).map(([objectName, trigger]) => buildRecord({
@@ -196,7 +227,7 @@ function explodePiece(piece: PieceMetadataSchema, modelVersion: string): Desired
         displayName: trigger.displayName,
         description: trigger.description,
         aiDescription: trigger.aiMetadata?.description,
-        requiresConnection: trigger.requireAuth,
+        requiresConnection: trigger.requireAuth ?? true,
         audience: null,
     }))
     return [...actionRecords, ...triggerRecords]
@@ -339,6 +370,19 @@ type ReindexResult = {
     objectsEmbedded: number
     /** rows removed because their key is no longer in the desired catalog. */
     objectsDeleted: number
+    /** rows still lacking an embedding after this run — non-zero means embedding is degraded. */
+    objectsPending: number
+}
+
+type EmbedResult = {
+    embedded: number
+    pending: number
+}
+
+type ToolSearchIndexCoverage = {
+    total: number
+    embedded: number
+    pending: number
 }
 
 type PendingRow = {

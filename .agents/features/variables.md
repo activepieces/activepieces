@@ -78,6 +78,8 @@ The engine's `resolveSingleToken` checks for the `variables` prefix first, then 
 
 ## Frontend
 
+The create/rotate dialog's Value field is deliberately NOT a `type="password"` input — Chrome runs its leaked-password breach check on every password field at form submission and pops a native "password found in a data breach" warning, and also offers to save the value to the password manager (GIT-1619). Instead it is a `type="text"` input masked visually with CSS `-webkit-text-security: disc` while the eye toggle is off, with `autoComplete="off"` and `spellCheck={false}` (Chrome Enhanced Spellcheck transmits text-field contents). The masking is CSS-only: unsupported engines (Firefox < 118) render the typed value unmasked, which is acceptable because the field only ever holds a value the user is currently typing — stored secrets are never rendered back into the dialog.
+
 The `/variables` page mirrors the connections page visually: an info Alert above a TanStack Data Table with search, owner column, bulk delete, and a per-row dropdown (`Edit` / `Copy reference` / `Copy value` / `Delete`). `Copy reference` writes `{{variables['NAME']}}` to the clipboard and is always enabled — copy and edit operations that need the plaintext (`Copy value`, `Edit`) require `WRITE_VARIABLE`. The builder data-selector exposes a "Variables" tab next to "Data"; inserting a row emits a mention chip that renders `Variable · <name>` with a key SVG icon.
 
 ## Audit Events

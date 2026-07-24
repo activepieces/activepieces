@@ -7,7 +7,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/server/api/src/app/mcp/mcp-service.ts` — server build logic, tool registration, token auth
 - `packages/server/api/src/app/mcp/mcp-server-controller.ts` — HTTP endpoints (get, update, rotate, issue embed token, protocol handler, agent validator)
 - `packages/server/api/src/app/mcp/mcp-entity.ts` — McpServer entity
-- `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports; user-attributing tools (`ap_create_flow`, `ap_build_flow`, `ap_duplicate_flow`, `ap_run_action`) receive `McpToolContext` (`{ mcp, userId? }`) instead of the bare `ProjectScopedMcpServer`
+- `packages/server/api/src/app/mcp/tools/index.ts` — static tool exports
 - `packages/server/api/src/app/mcp/tools/piece-expertise.ts` — curated, piece-specific guidance (expert notes, example inputs) surfaced through MCP property discovery
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
 - `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
@@ -42,7 +42,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - **StreamableHTTP** — streaming variant of the MCP protocol used for the primary `/http` endpoint
 - **MCP trigger piece** — `@activepieces/piece-mcp`; a flow with this trigger is exposed as a callable tool via MCP
 - **disabledTools** — JSONB array of controllable tool names currently disabled; `null` or `[]` means all controllable tools are enabled
-- **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. These tools (plus `ap_run_action`) take `McpToolContext` (`{ mcp: ProjectScopedMcpServer, userId? }`) so they can attribute ownership; `ap_run_action` stamps the same `userId` onto the `adhoc_run` row it creates.
+- **Flow attribution** — `ap_create_flow`, `ap_build_flow`, and `ap_duplicate_flow` stamp `ownerId` (the OAuth-authenticated user who connected the client) and `createdBy: { type: 'MCP', id: <mcpServerId> }` on every flow they create. `ProjectScopedMcpServer` carries `userId?` so the tools can attribute ownership.
 - **Embedded MCP OAuth** — in-embed consent flow where a managed-auth (embedded) user approves an MCP OAuth request inside the host app via the SDK's `authorizeMcp()`, instead of being redirected to a standalone Activepieces login they don't have. Backed by the `/embed/mcp-authorize` route and the existing `POST /v1/mcp-oauth/approve` (which accepts the embed USER session). `mcpSettings()` similarly renders the MCP settings page inside the embed.
 
 ## Entity
@@ -55,6 +55,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_list_flows` — list all flows in project
 - `ap_flow_structure` — get flow definition and structure
 - `ap_read_step_code` — read full source code of a CODE step
+- `ap_read_step_settings` — read the full untruncated settings of any step (trigger included): piece input, code source, loop items, router branches, error handling options
 - `ap_validate_flow`, `ap_validate_step_config` — validation helpers
 - `ap_research_pieces` — piece discovery with intent-based recommended-action ranking
 - `ap_get_piece_props` — action/trigger input schema with required-input summaries and example input, action cardinality, curated expert notes (via `piece-expertise.ts`), AI description + idempotency hint, and output field paths (from a declared output schema, or derived from a trigger's sample data)
@@ -76,8 +77,7 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `ap_create_table`, `ap_delete_table` — table management
 - `ap_manage_fields`, `ap_insert_records`, `ap_update_record`, `ap_delete_records` — record operations
 - `ap_test_flow`, `ap_test_step` — flow/step testing
-- `ap_retry_run` — run management
-- `ap_run_action` — executes a single piece action as a first-class **ad-hoc run** (`executeAdhocAction` → `adhocRunService.run()`, synchronous `EXECUTE_ACTION` job — no temporary flow, no polling). Persists an `adhoc_run` row with `source: MCP`, attributed to the OAuth user via `McpToolContext.userId`. See `.agents/features/adhoc-run.md`
+- `ap_retry_run`, `ap_run_action` — run management
 
 **Dynamic flow tools**: Each enabled flow with MCP trigger piece is registered as a callable tool. Name format: `{toolName}_{flowId.substring(0, 4)}`. Execution: submits webhook to flow (sync if `returnsResponse`, async otherwise).
 
@@ -102,6 +102,8 @@ External MCP server validation for the **agent piece** lives under `packages/ser
 Bearer token (`Authorization: Bearer {token}`) or query param (`?token={token}`). Returns 401 if invalid.
 
 OAuth 2.0 PKCE flow is supported for AI clients that require OAuth. The MCP OAuth module (`mcp-oauth.module.ts`) registers metadata, authorization, token, and revocation endpoints.
+
+**Telemetry** — `resolveMcpAndUser` (the OAuth token-resolution path in `mcp-oauth.controller.ts`) runs on every authenticated MCP request, so `MCP_SERVER_CONNECTED` is deduped via `telemetryDedupe.onceToday` to at most one event per user+server per day (per API process) — a daily-active signal, not request volume. Per-invocation usage is tracked separately by `MCP_TOOL_CALLED`.
 
 **Discovery & base-path awareness** — The OAuth issuer, `authorize`/`token`/`register`/`revoke` endpoints, the `resource`, and the `/mcp-authorize` redirect are built via `domainHelper.getPublicUrlFromRequest({ req, path })`. It keeps the request-derived host (so cloud custom domains still work) but appends the path prefix from `AP_FRONTEND_URL`, so subpath-hosted instances (`host/<prefix>/mcp` behind a reverse proxy) advertise URLs under the prefix. On root deployments the prefix is empty and behavior is unchanged.
 

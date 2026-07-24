@@ -40,6 +40,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Coding Conventions
 
+- **npm dependencies go in the workspace that imports them, never the root `package.json`** — every workspace (api, worker, web, each piece, …) must declare what its own code imports, in its own `package.json` (`dependencies` for runtime imports, `devDependencies` for test/tooling-only). Bun's isolated linker resolves each workspace from its own manifest, and the Docker image installs only workspace manifests — an undeclared import that "works locally" will crash the production container. Root `dependencies` is only `jsonwebtoken` (required by `docker-entrypoint.sh`); root `devDependencies` is only for repo-level tooling under `scripts/` and `tools/`. Pin exact versions like the surrounding entries, and run `bun install` afterwards so `bun.lock` stays in sync.
 - **No `any` type** — Use proper type definitions or `unknown` with type guards
 - **No type casting** — Do not use `as SomeType` to force types. If you encounter an unnecessary cast, remove it.
 - **No deprecated APIs** — Before using any library method or export, check its JSDoc. If it carries a `@deprecated` tag, use the recommended replacement instead. Examples: prefer `z.enum` over `z.nativeEnum`.
@@ -50,7 +51,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **Named parameters** — Always use a single destructured object parameter instead of positional arguments. This applies to every function with more than one parameter, regardless of type. It prevents mix-ups at the call site and makes future additions non-breaking.
 - **Prefer immutable data flow** — Functions should produce data by returning it, not by mutating an array/object the caller passes in. If a helper accumulates results (logs, derived rows, computed bindings), it should build the collection locally and return it — not take a pre-allocated bag the caller will read after. Local mutation inside a function's own body is fine; mutation that crosses the function boundary is not. Build new collections with `.map` / `.filter` / `.reduce` / spread rather than in-place `push` / `splice` / property assignment when feasible.
 - **File order**: Imports → Exported functions/constants → Helper functions → Types
-- **Comments** — Only comment to explain *why* something is done, never *what* the code is doing. Code should be self-explanatory; comments that restate the code add noise and rot.
+- **Comments** — Do NOT include comments in code. No inline comments, no explanatory comment blocks, no JSDoc narration. Code must be self-explanatory through naming and structure. If a *why* genuinely needs recording, put it in the commit message or PR description, not in the source.
 - **Util file exports** — When a util file exposes multiple plain functions or constants (non-React), do not export them individually. Instead, group them into a single named `const` and export that one object (e.g. `export const myUtils = { fn1, fn2 }`). Callers use `myUtils.fn1()` at the call site. **React components** in the same file should be **named exports** (e.g. `export function MyAlert()` or `export const MyAlert = …`) and imported by name — do not bundle them into a wrapper object for the sake of this rule.
 - **Safe outbound HTTP (SSRF)** — For any outbound HTTP in `packages/server/{api,worker,utils}`, use `safeHttp.axios` / `safeHttp.createAxios({ ... })` from `@activepieces/server-utils`. Never use raw `fetch` or `axios.create` for URLs that come from user input, admin config, OAuth endpoints, or third-party integrations — they bypass the SSRF filter (private/loopback/metadata IPs). See `.claude/rules/safe-http.md`.
 
@@ -86,19 +87,19 @@ npx turbo run serve --filter=web -- --mode=cloud # Run local frontend against th
 
 When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth provider will redirect back to `cloud.activepieces.com` after sign-in instead of your local frontend, breaking the flow. Use API-key / basic-auth connections, or test OAuth2 against a fully local backend.
 
-## Git Push
-
-- Always prefix `git push` with `CLAUDE_PUSH=yes` to auto-approve the pre-push lint/test gate, e.g. `CLAUDE_PUSH=yes git push -u origin HEAD`.
-
 ## Pull Requests
 
 - When creating a PR with `gh pr create`, always apply exactly one of these labels based on the nature of the change:
-  - **`feature`** — new functionality
-  - **`bug`** — bug fix
+  - **`🌟 feature`** — new functionality
+  - **`🐛 bug`** — bug fix
   - **`skip-changelog`** — changes that should not appear in the changelog (docs, CI tweaks, internal refactors, etc.)
 - If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the appropriate pieces label (in addition to the primary label above):
-  - **`area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
-  - **`area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
+  - **`🧩 area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
+  - **`🧩 area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
+- **Always fill the "Breaking change?" section of the PR template** — tick exactly one box (the `breaking-change-check` CI job fails if it is left unedited). A change is breaking if a self-hoster or API consumer must take action: removed/renamed API fields or endpoints, dropped columns, new required fields, removed/required env vars, or default/limit/behaviour changes. If it is breaking:
+  - also apply the **`⛓️‍💥 breaking-change`** label (in addition to the primary label above), and
+  - add an entry to `docs/install/reference/breaking-changes.mdx` describing what changed and the action required. CI enforces that the label and the docs entry travel together.
+- **Non-rollbackable migrations are a separate axis** from customer-facing breaking changes: a migration that runs destructive DDL (`DROP TABLE`/`DROP COLUMN`, `ADD ... NOT NULL` without `DEFAULT`, etc.) must set `breaking = true` on the migration class — this is the rollback-safety flag (used by `rollback-migrations.ts` and the release rollback note), enforced by `check-migration-rollback.ts`. It does **not** by itself require the `⛓️‍💥 breaking-change` label; decide that from the upgrade-impact question above.
 
 ## Database Migrations
 

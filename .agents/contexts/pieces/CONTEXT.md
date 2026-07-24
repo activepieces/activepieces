@@ -40,10 +40,14 @@ The single per-platform Piece Set (`isDefault: true`, `externalId: 'default'`) t
 The piece-level rule inside a Piece Set: a `mode` (`include_all` = everything incl. future minus exceptions; `exclude_all` = only the exceptions) and an `exceptions` list. `include_all` is the "auto-include new pieces" policy.
 _Avoid_: disabledPieces, includeNewPieces, curatedPieces (all retired)
 
+**Component**:
+An action or a trigger belonging to a piece — the umbrella term when a distinction between the two doesn't matter. Carried in code as `componentType: 'action' | 'trigger'` plus a `componentName`. Used by the MCP flow-building tools (`lookupPieceComponent`, `validatePieceComponent`, `diagnosePieceProps`) and the piece action/trigger visibility feature (`isComponentVisible`, `ComponentIntent`).
+_Avoid_: step, node, capability
+
 **Selected components**:
 A per-piece allow-list of visible actions/triggers (`selectedActions`/`selectedTriggers`). A piece with an entry is "curated" — only listed components are visible and new ones stay hidden; a piece with no entry shows all components including future ones.
 _Avoid_: disabledActions, disabledTriggers
 
-**Platform Piece Filter**:
-The platform-wide global killswitch — a blocklist of pieces (`filteredPieceNames` + `filteredPieceBehavior`) and hidden actions/triggers (`filteredActionNames`/`filteredTriggerNames`) applied to every project before and regardless of any Piece Set (including the Default Set). Stored on the `platform` row but served/edited through the dedicated `/v1/platform-piece-filter` endpoint, not the platform object. Distinct from Piece Set (per-project) and Selected components.
-_Avoid_: platform piece filtering (as a field on the platform payload)
+**Visibility Policy**:
+The resolved, pure value (`VisibilityPolicy`, from `resolveVisibility({ platformId, projectId })`) that answers every piece/component visibility question for a project — `filterPieces`, `filterComponents`, `filterPieceComponents`, `isPieceVisible`. Resolved once per read inside `pieceMetadataService.list`/`get` and the piece detail controller, so HTTP and MCP paths enforce identically. `null` for Community edition or when no project is in scope (both mean "no filtering"). `managePiecesEnabled` gates *managing* Piece Sets, never this resolution.
+_Avoid_: filterContext, enterpriseFilteringUtils (both retired)

@@ -53,7 +53,7 @@ The Enterprise Edition extends the Community Edition with commercial features gr
 | **authentication/otp/** | One-time passwords (10-min expiry, email verification + password reset) | — |
 | **authentication/enterprise-local-authn/** | Email verification + password reset via OTP | — |
 | **authentication/project-role/** | RBAC enforcement: assertPrincipalAccessToProject() | — |
-| **platform/platform-plan/** | PlatformPlan (40+ flags), Stripe billing, AI credits, auto top-up | — |
+| **platform/platform-plan/** | PlatformPlan (40+ flags), Stripe billing, AI credits, auto top-up, active-flow usage (excludes flows being deleted) | — |
 | **license-keys/** | License activation, trial (with expiry), feature mapping to plan | — |
 | **alerts/** | Flow failure email notifications per project | — |
 | **oauth-apps/** | Custom OAuth2 app credentials per piece (override defaults) | — |

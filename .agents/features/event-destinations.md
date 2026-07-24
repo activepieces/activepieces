@@ -30,7 +30,7 @@ Event Destinations streams platform and project activity events to webhook URLs 
 - **EventDestination**: A persisted webhook subscription — one URL receiving a chosen set of events for a platform or project scope.
 - **ApplicationEventName**: The 27-value enum that names every auditable action in the system.
 - **Scope**: PLATFORM (all platform-level events) or PROJECT (currently only `FLOW_RUN_FINISHED`).
-- **Event Delivery**: Async BullMQ `ONE_TIME` job that POSTs the event payload to the destination URL.
+- **Event Delivery**: External destinations get an async BullMQ `ONE_TIME` job that POSTs the event payload to the destination URL; same-origin handler-flow destinations (rewrite-safe routes only) skip BullMQ and are dispatched internally through `webhookService.handleWebhook`.
 - **Test Delivery**: Sends a mock payload for a selected event type (defaults to `FLOW_CREATED`) synchronously so the operator can verify connectivity. Backed by `buildMockEvent()`.
 - **Handler Flow**: An optional internal Activepieces flow generated from `handler-flow-builder.ts` that consumes the webhook and routes each event to its own branch (Slack/Gmail/Teams/HTTP).
 
@@ -58,9 +58,10 @@ Event Destinations streams platform and project activity events to webhook URLs 
 
 Events delivered via BullMQ job queue (`WorkerJobType.EVENT_DESTINATION`):
 1. Application event fires (user or worker event)
-2. `eventDestinationService.trigger()` finds matching destinations
-3. For each match: queues ONE_TIME job with webhook URL + event payload
-4. Worker delivers HTTP POST to destination URL
+2. `eventDestinationService.trigger()` finds matching destinations and classifies each URL as internal (same-origin handler flow) or external
+3. **Internal destinations** (URL origin exactly equals the instance's public API origin, path is under `/v1/webhooks/`, and the route suffix is `''` or `/sync`): dispatched directly through `webhookService.handleWebhook` (async EXECUTE_WEBHOOK path) — no outbound HTTP, so the SSRF filter never sees a self-referential private-IP call (GIT-1539). The destination URL's query params are forwarded as the synthesized payload's `queryParams`. `/draft` and `/test` route URLs are NOT rewritten (different version/sample-data semantics) and stay on the outbound path
+4. **External destinations**: queued as ONE_TIME `EVENT_DESTINATION` jobs; the worker delivers an HTTP POST via `safeHttp` (SSRF-protected) and logs delivery failures (transport errors and 4xx/5xx responses) at error level
+5. **Cycle guard**: keys off the *target flow* of any same-origin webhook URL (regardless of route suffix), so a self-targeting `/draft` destination is still dropped on its own flow-run events
 
 ## Endpoints
 
@@ -70,7 +71,7 @@ Events delivered via BullMQ job queue (`WorkerJobType.EVENT_DESTINATION`):
 - `DELETE /v1/event-destinations/:id` — delete destination
 - `POST /v1/event-destinations/test` — sends a mock event to the URL. Body accepts an optional `event: ApplicationEventName` field; defaults to `FLOW_CREATED`. The payload is built via `buildMockEvent()`.
 
-Internal flow webhook URLs are accepted as destination URLs — outbound webhook delivery is still routed through `safeHttp` (SSRF-protected). The previous `assertUrlIsExternal` check has been removed to support the internal handler-flow pattern; recursion is prevented by a server-side cycle guard that drops events whose payload originated from the same destination chain.
+Internal flow webhook URLs are accepted as destination URLs and are dispatched internally (no outbound HTTP, see Event Delivery) so self-hosted instances work without `AP_SSRF_ALLOW_LIST` configuration; external URLs are still delivered through `safeHttp` (SSRF-protected). The previous `assertUrlIsExternal` check has been removed to support the internal handler-flow pattern; recursion is prevented by a server-side cycle guard that drops events whose payload originated from the same destination chain.
 
 ## Gating & Sidebar
 

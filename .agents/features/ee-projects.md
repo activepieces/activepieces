@@ -29,7 +29,7 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Community (CE)**: Single-user projects only. No project members, no roles, no releases, no git sync.
 - **Enterprise (EE, self-hosted)**: Full feature set behind `projectRolesEnabled` and `environmentsEnabled` plan flags.
 - **Cloud**: Members and invitations available on paid plans. Custom roles behind `customRolesEnabled`. Git sync and releases behind `environmentsEnabled`.
-- **`workerGroupId` assignment / per-project worker routing**: Enterprise feature gated behind `platform_plan.isolatedWorkersEnabled`. Both setting a project's `workerGroupId` (via the project update endpoint) and listing project worker groups (`GET /v1/projects/worker-groups`) require the flag.
+- **`workerGroupId` assignment / per-project worker routing**: Enterprise feature gated behind `platform_plan.workerGroupsEnabled`. Both setting a project's `workerGroupId` (via the project update endpoint) and listing project worker groups (`GET /v1/projects/worker-groups`) require the flag.
 
 ## Domain Terms
 
@@ -43,8 +43,8 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - **Git Sync**: Configuration of an SSH-backed git repo + branch used as a release source or push target.
 - **RBAC**: Role-Based Access Control — enforced per-request via `rbacService.assertPrincipalAccessToProject()`.
 - **Release Type**: GIT_BRANCH (from git), MANUAL (from another project), ROLLBACK (revert to a previous release).
+- **workerGroupId**: Optional pool label on a project (bare, e.g. `1cpu_machine`). When set (and `workerGroupsEnabled` is on for the platform), the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs are routed to `project-<label>-jobs`; other job types are unaffected. The matching worker advertises `AP_WORKER_GROUP_ID=<label>` with `AP_PROJECT_WORKER=true` (scope comes from the flag, not a prefix). Set via `POST /v1/projects/:id`. See the Workers feature doc for the unified worker-group mechanics.
 - **Piece Set assignment**: a project references a piece set via the nullable `project.pieceSetId` column (FK `SET NULL`). When `managePiecesEnabled`, new EE projects are assigned the platform Default set on creation (`ee-project-hooks.ts`), and an unassigned project resolves to Default at filter time. This supersedes the legacy project-plan piece allow/block list. See [piece-sets.md](./piece-sets.md).
-- **workerGroupId**: Optional pool label on a project (bare, e.g. `1cpu_machine`). When set (and `isolatedWorkersEnabled` is on for the platform), the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs are routed to `project-<label>-jobs`; other job types are unaffected. The matching worker advertises `AP_WORKER_GROUP_ID=<label>` with `AP_PROJECT_WORKER=true` (scope comes from the flag, not a prefix). Set via `POST /v1/projects/:id`. See the Workers feature doc for the unified worker-group mechanics.
 
 ## Project Members
 
@@ -95,13 +95,19 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - Pull: imports from git branch as release source
 - Individual item push supported (specific flows/tables)
 
-## Project Plan (Piece Filtering)
+## Project Plan (Piece Filtering & Limits)
 
-**Entity**: id, projectId (one-to-one), name, pieces[] (string array), piecesFilterType (NONE/ALLOWED), locked (boolean).
+**Entity**: id, projectId (one-to-one), name, pieces[] (string array), piecesFilterType (NONE/ALLOWED), locked (boolean), activeFlowsLimit (nullable integer).
 
 - `NONE`: All pieces available
 - `ALLOWED`: Only pieces in `pieces[]` array visible
-- Platform-level filtering (`FilteredPieceBehavior.ALLOWED/BLOCKED`) applied first, then project-level
+
+**Per-project active flows limit** (`activeFlowsLimit`):
+- Null (default) = unlimited; every existing project keeps current behavior.
+- Set via `POST /v1/projects/:id` body `plan.activeFlowsLimit` (positive integer, or explicit `null` to clear). Rides the same authorization and `teamProjectsLimit` gate as the pieces filter.
+- Enforced in `flow.controller.ts` on the same enable/publish condition as the platform-wide check: `projectLimitsService.checkActiveFlowsExceededLimit({ projectId })` counts the project's `ENABLED` flows and throws `QUOTA_EXCEEDED` (402, metric `active-flows`) at/over the cap. Enforced in addition to the platform pooled `activeFlowsLimit`, not instead of it. Both checks fire only on a real status transition (`flow.status === DISABLED`), so re-enabling an already-enabled flow at the cap is not blocked.
+- Setting the cap below the project's current `ENABLED` flow count is rejected: `updateActiveFlowsLimit` throws `VALIDATION` (400) with a message stating the current active-flow count. Existing flows are never disabled by a cap change. Same check-then-act concurrency window as the platform check. Enable paths that bypass the flow controller (MCP flow tools, git-sync/project-release apply, connection-swap republish) skip BOTH quota checks - a pre-existing gap the per-project cap inherits.
+- The check returns immediately in CE (same edition guard as the platform check); `project_plan` does not even exist on SQLite CE. Known wart: the cloud UI opens the purchase-active-flows dialog on any `QUOTA_EXCEEDED`, including project-cap hits.
 
 ## Platform Project Service
 
@@ -110,6 +116,8 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - Operators: see all projects except others' personal
 - Regular users: see own personal + team projects where member
 
+`platformProjectService.deletePersonalProjectForUser()` — called when a user is removed. Reassigns the user's personal project to the platform owner and soft-deletes it in one transaction (then schedules the async `HARD_DELETE_PROJECT` job), so the `fk_project_owner_id` FK no longer blocks hard-deleting the user. `markForDeletion()` remains the generic soft-delete + schedule path used for ordinary project deletion.
+
 **Endpoints** (`platform-project-controller.ts`):
-- `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` accepts `workerGroupId` (validated against `^[a-z0-9_-]+$`, applied in `platformProjectService.update()` only when `platform_plan.isolatedWorkersEnabled` is on).
-- `GET /v1/projects/worker-groups` — platform-admin only; returns `{ groups: [{ label, slots }], sharedSlots }` from online project-scope workers (those started with `AP_PROJECT_WORKER=true`) via `machineService.listProjectWorkerGroups()` for the assignment UI; returns 402 `FEATURE_DISABLED` when `isolatedWorkersEnabled` is off.
+- `POST /v1/projects/:id` — update; body `UpdateProjectPlatformRequest` accepts `workerGroupId` (validated against `^[a-z0-9_-]+$`, applied in `platformProjectService.update()` only when `platform_plan.workerGroupsEnabled` is on) and `executionDataRetentionDays` (platform-admin only, stripped for other callers like `externalId`; bounds-checked to `[AP_PAUSED_FLOW_TIMEOUT_DAYS, AP_EXECUTION_DATA_RETENTION_DAYS]` in `projectService.update`, `null` reverts to the instance value, see [projects.md](./projects.md)).
+- `GET /v1/projects/worker-groups` — platform-admin only; returns `{ groups: [{ label, slots }], sharedSlots }` from online project-scope workers (those started with `AP_PROJECT_WORKER=true`) via `machineService.listProjectWorkerGroups()` for the assignment UI; returns 402 `FEATURE_DISABLED` when `workerGroupsEnabled` is off.

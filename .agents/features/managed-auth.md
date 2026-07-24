@@ -7,7 +7,7 @@ Managed Auth (also called "Embedding" or "Managed Authentication") enables SaaS 
 - `packages/server/api/src/app/ee/managed-authn/managed-authn-module.ts` — module registration (no plan gate at module level; gate is on signing-key module)
 - `packages/server/api/src/app/ee/managed-authn/managed-authn-controller.ts` — single `POST /external-token` endpoint
 - `packages/server/api/src/app/ee/managed-authn/managed-authn-service.ts` — orchestration: token extraction, user/project provisioning, token issuance
-- `packages/server/api/src/app/ee/managed-authn/lib/external-token-extractor.ts` — JWT verification using the platform's signing key; parses v1/v2/v3 token payloads
+- `packages/server/api/src/app/ee/managed-authn/lib/external-token-extractor.ts` — JWT verification using the platform's signing key; parses v2/v3/v4 token payloads
 - `packages/core/shared/src/lib/ee/managed-authn/managed-authn-requests.ts` — `ManagedAuthnRequestBody` schema
 - `packages/web/src/features/authentication/api/managed-auth-api.ts` — frontend API client (used by embed SDK integration)
 
@@ -36,24 +36,26 @@ Response: `AuthenticationResponse` (same shape as standard sign-in response, inc
 
 ## Token Payload Versions
 
-The extractor supports three token versions:
+The extractor supports these token versions. Each version carries **one** piece-access model, and the `z.union` is ordered most-specific-first (`[v4, v3, v2]`) because `v2` strips unknown keys and would otherwise swallow a `v3`/`v4` token:
 
-**v1/v2** (implicit — no `version` field):
+**v1/v2** (implicit — no `version` field): legacy nested `pieces` object.
 ```
 { externalUserId, externalProjectId, firstName, lastName, role?, pieces?, concurrencyPoolKey?, concurrencyPoolLimit? }
 ```
 
-**v3** (explicit `version: "v3"` field):
+**v3** (explicit `version: "v3"`): flat tag filter.
 ```
-{ version: "v3", externalUserId, externalProjectId, firstName, lastName, role?, piecesFilterType?, piecesTags?, pieceSet?, concurrencyPoolKey?, concurrencyPoolLimit? }
+{ version: "v3", externalUserId, externalProjectId, firstName, lastName, role?, piecesFilterType?, piecesTags?, concurrencyPoolKey?, concurrencyPoolLimit? }
+```
+
+**v4** (explicit `version: "v4"`): piece-set native. `pieceSet` is **required** and is the piece set's **key**.
+```
+{ version: "v4", externalUserId, externalProjectId, firstName, lastName, role?, pieceSet, concurrencyPoolKey?, concurrencyPoolLimit? }
 ```
 
 The JWT header must include `kid` set to the Signing Key ID.
 
-The optional `pieceSet` claim (all payload versions) is a piece-set **externalId**. How piece access is provisioned depends on `platform.plan.managePiecesEnabled`:
-
-- **`managePiecesEnabled` on** — the project is assigned a **named** piece set: the explicit `pieceSet` externalId; else (legacy claims) the **first** `piecesTags` entry matched against set `externalId` (the backfill migration created one named set per tag, `externalId = tagName`); else the platform Default set (also the fallback, with a warn log, when the externalId matches no set). The project plan is **not** written.
-- **`managePiecesEnabled` off** — the **deprecated** legacy path is preserved: tags are resolved to piece names via `pieceTagService` and upserted into the project plan (`default-embeddings-limit`, `pieces`/`piecesFilterType`), which drives read-time filtering. No piece set is assigned. This path is scheduled for removal once flag-off platforms are migrated to piece sets.
+The `pieceSet` claim (v4 only) is a piece-set **key**. `applyProjectPieceAccess` runs **unconditionally** on every token exchange — there is no `managePiecesEnabled` gate here. (That flag gates only the piece-set *management* endpoints and the new-project default-set assignment in `ee-project-hooks.ts`, never this enforcement path.) The project is assigned a **named** piece set — the explicit `pieceSet` key (v4); else (legacy v2/v3 claims) the **first** `piecesTags` entry matched against set `key` (the backfill migration created one named set per tag, `key = tagName`); else the platform Default set (also the fallback, with a warn log, when the key matches no set). The project plan is **not** written.
 
 See [piece-sets.md](./piece-sets.md).
 
@@ -63,7 +65,7 @@ See [piece-sets.md](./piece-sets.md).
 2. Call `getOrCreateProject` — looks up project by `(platformId, externalProjectId)`; if absent, creates a new `TEAM` type project owned by the platform owner.
 3. Optionally update the project's `displayName` from `projectDisplayName` claim.
 4. Optionally upsert a concurrency pool and assign it to the project.
-5. Call `applyProjectPieceAccess` — under `managePiecesEnabled`, assigns the project's named piece set (`pieceSet` externalId → first legacy tag matched against set `externalId` → Default set); otherwise runs the deprecated legacy path that upserts tag-resolved pieces into the project plan. Runs on every token exchange, so claim/tag changes (and later enabling the flag) take effect at the next embed sign-in.
+5. Call `applyProjectPieceAccess` — assigns the project's named piece set (`pieceSet` key → first legacy tag matched against set `key` → Default set). Runs unconditionally on every token exchange, so claim/tag changes take effect at the next embed sign-in.
 6. Call `getOrCreateUser` — finds user by `(platformId, externalUserId)`; if absent, creates a user identity using a deterministic hashed email (`managed_<platformId>_<externalUserId>` SHA-256), then creates the platform user.
 7. Upsert project membership with the specified role (defaults to `EDITOR`).
 8. Generate a 7-day Activepieces access token and return the full `AuthenticationResponse`.

@@ -20,6 +20,7 @@ import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../piece-context/flows'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
+import { dynamicPropKeys } from './dynamic-prop-keys'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
@@ -81,7 +82,7 @@ export const pieceHelper = {
                     const props = await dynamicProperty.props(resolvedInput, ctx)
                     return {
                         type: PropertyType.DYNAMIC,
-                        options: props,
+                        options: dynamicPropKeys.escapePropsKeys(props),
                     }
                 }
                 case PropertyType.MULTI_SELECT_DROPDOWN: {

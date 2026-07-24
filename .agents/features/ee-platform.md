@@ -48,7 +48,7 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 
 `platformPlanService.getUsage(platformId)` returns: `{ activeFlows, aiCreditsLimit, aiCreditsRemaining, totalAiCreditsUsed, totalAiCreditsUsedThisMonth }`
 
-`checkActiveFlowsExceededLimit()` — called when enabling/publishing flows. Throws `QUOTA_EXCEEDED` (402) if `activeFlows >= activeFlowsLimit`. Skipped in CE edition.
+`checkActiveFlowsExceededLimit()` — called when enabling/publishing flows. Throws `QUOTA_EXCEEDED` (402) if `activeFlows >= activeFlowsLimit`. Skipped in CE edition. A per-project cap (`project_plan.activeFlowsLimit`) is enforced alongside it — see [ee-projects.md](./ee-projects.md).
 
 ## AI Credits (OpenRouter)
 
