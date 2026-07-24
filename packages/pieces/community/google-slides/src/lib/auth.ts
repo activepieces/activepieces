@@ -10,5 +10,6 @@ export const googleSlidesAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/presentations',
     'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/spreadsheets',
+    'email',
   ],
 });
