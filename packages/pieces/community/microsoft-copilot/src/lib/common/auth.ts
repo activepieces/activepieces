@@ -36,6 +36,9 @@ export const microsoft365CopilotAuth = PieceAuth.OAuth2({
     'ExternalItem.Read.All',
     'AiEnterpriseInteraction.Read',
     'Files.Read.All',
+    'openid',
+    'email',
+    'profile',
   ],
   prompt: 'omit',
 });

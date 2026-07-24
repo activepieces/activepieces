@@ -1,5 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { microsoftCloudProperty, getPowerBiScopeHost } from './common/microsoft-cloud';
+import { microsoftCloudProperty } from './common/microsoft-cloud';
 
 const authDesc = `If you'd like to use your own custom Azure app instead of the default app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),
  set the **Redirect URI** to {{redirectUrl}} and add the following **Power BI Service (Delegated) permissions** under **API permissions**:
@@ -17,6 +17,9 @@ export const microsoftPowerBiAuth = PieceAuth.OAuth2({
   scope: [
     'https://analysis.windows.net/powerbi/api/Dataset.ReadWrite.All',
     'offline_access',
+    'openid',
+    'email',
+    'profile',
   ],
   prompt: 'omit',
 });

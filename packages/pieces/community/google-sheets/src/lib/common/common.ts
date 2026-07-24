@@ -340,6 +340,7 @@ export const googleSheetsScopes = [
 	'https://www.googleapis.com/auth/spreadsheets',
 	'https://www.googleapis.com/auth/drive.readonly',
 	'https://www.googleapis.com/auth/drive',
+	'email',
   ]
 
 export const googleSheetsAuth =[PieceAuth.OAuth2({

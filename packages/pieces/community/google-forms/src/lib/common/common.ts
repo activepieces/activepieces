@@ -10,6 +10,7 @@ import { JWT, OAuth2Client } from 'google-auth-library';
 export const googleFormsScopes = [
   'https://www.googleapis.com/auth/forms.responses.readonly',
   'https://www.googleapis.com/auth/drive.readonly',
+  'email',
 ];
 
 export const googleFormsAuth = [PieceAuth.OAuth2({

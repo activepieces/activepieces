@@ -7,6 +7,7 @@ export const googleCalendarScopes = [
   'https://www.googleapis.com/auth/calendar.readonly',
   // TODO: Add the scope after Google App Verification
   // 'https://www.googleapis.com/auth/calendar.calendarlist'
+  'email',
 ];
 
 export const googleCalendarAuth = [PieceAuth.OAuth2({
