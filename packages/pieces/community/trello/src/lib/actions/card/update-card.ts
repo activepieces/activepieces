@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { TrelloCard } from '../../common/props/card';
 import { trelloAuth } from '../../..';
+import { updateCardActionOutputSchema } from '../../output-schemas';
 
 export const updateCard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const updateCard = createAction({
   displayName: 'Update Card',
   description: 'Updates an existing card.',
   audience: 'human',
+  outputSchema: updateCardActionOutputSchema,
   aiMetadata: { description: 'Updates fields on an existing Trello card identified by card_id, including name, description, due date, labels, position, and archived (closed) state, and can move it to a different list. Use to edit, archive, or relocate a card. Requires card_id; only provided fields change. Repeating with the same inputs converges to the same card state.', idempotent: true },
   props: {
     card_id: Property.ShortText({

@@ -349,3 +349,26 @@ export const addReactionToCommentActionOutputSchema: OutputSchema = { fields: re
 export const updateBoardActionOutputSchema: OutputSchema = { fields: boardFields };
 
 export const archiveBoardActionOutputSchema: OutputSchema = { fields: boardFields };
+
+export const createCardActionOutputSchema: OutputSchema = { fields: cardFields };
+
+export const getCardActionOutputSchema: OutputSchema = { fields: cardFields };
+
+export const updateCardActionOutputSchema: OutputSchema = { fields: cardFields };
+
+export const getCardAttachmentActionOutputSchema: OutputSchema = { fields: attachmentFields };
+
+export const getCardAttachmentsActionOutputSchema: OutputSchema = {
+  itemLabel: '{name}',
+  fields: [
+    { key: 'attachments', label: 'Attachments', value: '', listItems: attachmentFields },
+  ],
+};
+
+export const addCardAttachmentActionOutputSchema: OutputSchema = { fields: attachmentFields };
+
+export const cardMovedTriggerOutputSchema: OutputSchema = { fields: cardFields };
+
+export const newCardTriggerOutputSchema: OutputSchema = { fields: cardFields };
+
+export const deadlineTriggerOutputSchema: OutputSchema = { fields: cardFields };

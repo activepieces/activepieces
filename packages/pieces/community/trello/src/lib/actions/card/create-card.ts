@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { TrelloCard } from '../../common/props/card';
 import { trelloAuth } from '../../..';
+import { createCardActionOutputSchema } from '../../output-schemas';
 
 export const createCard = createAction({
   auth: trelloAuth,
@@ -14,6 +15,7 @@ export const createCard = createAction({
   displayName: 'Create Card',
   description: 'Create a new card in Trello',
   audience: 'human',
+  outputSchema: createCardActionOutputSchema,
   aiMetadata: { description: 'Creates a new Trello card in a specific list, optionally with a description, position, and labels. Use to add a task or item to a board. Requires the target list_id (and the board_id it belongs to); each call creates a distinct card, so it is not idempotent.', idempotent: false },
   props: {
     board_id: trelloCommon.board_id,
