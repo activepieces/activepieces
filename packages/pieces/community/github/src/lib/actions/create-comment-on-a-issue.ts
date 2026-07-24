@@ -9,7 +9,7 @@ export const githubCreateCommentOnAIssue = createAction({
   displayName: 'Create comment on a issue',
   description:
     'Adds a comment to the specified issue (also works with pull requests)',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Posts a comment on an issue (or pull request, which shares the issue number space) in a repository. Use to add a reply or note to an existing issue/PR identified by its number. Not idempotent: each call appends a new comment.',

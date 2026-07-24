@@ -8,7 +8,7 @@ export const githubGetIssueInformation = createAction({
   name: 'getIssueInformation',
   displayName: 'Get issue information',
   description: 'Grabs information from a specific issue',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches the full details of a single issue in a repository by its issue number. Use when you already know the issue number and need its current state, title, body, labels, or assignees. Read-only and idempotent.',

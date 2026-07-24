@@ -8,7 +8,7 @@ export const githubUnlockIssueAction = createAction({
   name: 'unlockIssue',
   displayName: 'Unlock issue',
   description: 'Unlocks the specified issue',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Removes the conversation lock from an issue (by number) so anyone can comment again. Use to re-open discussion on a previously locked issue or pull request. Idempotent: unlocking an already-unlocked issue leaves it unlocked.',
