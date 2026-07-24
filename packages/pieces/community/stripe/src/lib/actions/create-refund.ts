@@ -7,12 +7,13 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { refundOutputSchema } from '../output-schemas';
 export const stripeCreateRefund = createAction({
   name: 'create_refund',
   auth: stripeAuth,
   displayName: 'Create a Refund',
   description: 'Create a full or partial refund for a payment.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Issues a refund against a payment identified by its PaymentIntent ID; refunds the full amount by default, or a partial amount if one is given, with an optional reason. Use to return funds to a customer for a captured payment. Not idempotent: each call creates a new refund and moves money again.',
@@ -45,6 +46,7 @@ export const stripeCreateRefund = createAction({
       required: false,
     }),
   },
+  outputSchema: refundOutputSchema,
   async run(context) {
     const { payment_intent, amount, reason, metadata } = context.propsValue;
 

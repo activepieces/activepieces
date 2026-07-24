@@ -17,6 +17,7 @@ type StripeWebhookPayload = {
   };
 };
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeUpdatedSubscription = createTrigger({
   auth: stripeAuth,
   name: 'updated_subscription',
@@ -52,6 +53,7 @@ export const stripeUpdatedSubscription = createTrigger({
       required: false,
     }),
   },
+  outputSchema: subscriptionOutputSchema,
   sampleData: {
     id: 'sub_1MowQVLkdIwHu7ixeRlqHVzs',
     object: 'subscription',
