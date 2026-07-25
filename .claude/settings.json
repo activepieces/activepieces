@@ -1,12 +1,13 @@
 {
-  "mcpServers": {
-    "context7": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp"
-      ]
-    }
+  "permissions": {
+    "deny": [
+      "Read(**/.env*)"
+    ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "ponytail@ponytail": true,
+    "craftspace@craftspace": true
   },
   "extraKnownMarketplaces": {
     "ponytail": {
@@ -20,17 +21,17 @@
       "source": {
         "source": "github",
         "repo": "abuaboud/craftspace-plugin"
-      }
+      },
+      "autoUpdate": true
     }
   },
-  "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true,
-    "ponytail@ponytail": true,
-    "craftspace@craftspace": true
-  },
-  "permissions": {
-    "deny": [
-      "Read(**/.env*)"
-    ]
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    }
   }
 }
