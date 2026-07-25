@@ -1,7 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { nutshellAuth } from '../common/auth';
-import { JsonPatchOperation, nutshellApiCall, nutshellPatch, unwrapFirst } from '../common/client';
+import {
+  escapeJsonPointerSegment,
+  JsonPatchOperation,
+  nutshellApiCall,
+  nutshellPatch,
+  unwrapFirst,
+} from '../common/client';
 
 export const updateCompany = createAction({
   auth: nutshellAuth,
@@ -94,34 +100,40 @@ export const updateCompany = createAction({
 
     const operations: JsonPatchOperation[] = [];
 
-    if (name) {
+    if (name !== undefined) {
       operations.push({ op: 'replace', path: '/accounts/0/name', value: name });
     }
-    if (description) {
+    if (description !== undefined) {
       operations.push({ op: 'replace', path: '/accounts/0/description', value: description });
     }
-    if (phone) {
+    if (phone !== undefined) {
       operations.push({
         op: 'replace',
         path: '/accounts/0/phones',
         value: [{ isPrimary: true, value: phone }],
       });
     }
-    if (email) {
+    if (email !== undefined) {
       operations.push({
         op: 'replace',
         path: '/accounts/0/emails',
         value: [{ value: email }],
       });
     }
-    if (website) {
+    if (website !== undefined) {
       operations.push({
         op: 'replace',
         path: '/accounts/0/urls',
         value: [{ value: website }],
       });
     }
-    if (addressLine1 || city || state || postalCode || country) {
+    if (
+      addressLine1 !== undefined ||
+      city !== undefined ||
+      state !== undefined ||
+      postalCode !== undefined ||
+      country !== undefined
+    ) {
       operations.push({
         op: 'replace',
         path: '/accounts/0/addresses',
@@ -135,7 +147,11 @@ export const updateCompany = createAction({
     }
     if (customFields) {
       for (const [key, value] of Object.entries(customFields as Record<string, unknown>)) {
-        operations.push({ op: 'replace', path: `/accounts/0/customFields/${key}`, value });
+        operations.push({
+          op: 'replace',
+          path: `/accounts/0/customFields/${escapeJsonPointerSegment(key)}`,
+          value,
+        });
       }
     }
     for (const id of addContactIds ?? []) {

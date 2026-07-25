@@ -12,6 +12,15 @@ export type JsonPatchOperation = {
   value?: unknown;
 };
 
+/**
+ * Escapes a literal path segment for use inside a JSON Pointer (RFC 6901). Required
+ * whenever a user-supplied key (e.g. a custom field name) is embedded in a JSON Patch
+ * path, since `~` and `/` are structural characters in JSON Pointer syntax.
+ */
+export function escapeJsonPointerSegment(segment: string): string {
+  return segment.replace(/~/g, '~0').replace(/\//g, '~1');
+}
+
 type QueryValue = string | number | boolean | undefined | null;
 
 /**

@@ -1,7 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { nutshellAuth } from '../common/auth';
-import { JsonPatchOperation, nutshellApiCall, nutshellPatch, unwrapFirst } from '../common/client';
+import {
+  escapeJsonPointerSegment,
+  JsonPatchOperation,
+  nutshellApiCall,
+  nutshellPatch,
+  unwrapFirst,
+} from '../common/client';
 
 export const updateContact = createAction({
   auth: nutshellAuth,
@@ -59,20 +65,20 @@ export const updateContact = createAction({
 
     const operations: JsonPatchOperation[] = [];
 
-    if (name) {
+    if (name !== undefined) {
       operations.push({ op: 'replace', path: '/contacts/0/name', value: name });
     }
-    if (description) {
+    if (description !== undefined) {
       operations.push({ op: 'replace', path: '/contacts/0/description', value: description });
     }
-    if (email) {
+    if (email !== undefined) {
       operations.push({
         op: 'replace',
         path: '/contacts/0/emails',
         value: [{ isPrimary: true, value: email }],
       });
     }
-    if (phone) {
+    if (phone !== undefined) {
       operations.push({
         op: 'replace',
         path: '/contacts/0/phones',
@@ -81,7 +87,11 @@ export const updateContact = createAction({
     }
     if (customFields) {
       for (const [key, value] of Object.entries(customFields as Record<string, unknown>)) {
-        operations.push({ op: 'replace', path: `/contacts/0/customFields/${key}`, value });
+        operations.push({
+          op: 'replace',
+          path: `/contacts/0/customFields/${escapeJsonPointerSegment(key)}`,
+          value,
+        });
       }
     }
     for (const id of addAccountIds ?? []) {

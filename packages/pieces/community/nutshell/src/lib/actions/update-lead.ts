@@ -1,7 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { nutshellAuth } from '../common/auth';
-import { JsonPatchOperation, nutshellApiCall, nutshellPatch, unwrapFirst } from '../common/client';
+import {
+  escapeJsonPointerSegment,
+  JsonPatchOperation,
+  nutshellApiCall,
+  nutshellPatch,
+  unwrapFirst,
+} from '../common/client';
 
 export const updateLead = createAction({
   auth: nutshellAuth,
@@ -55,15 +61,19 @@ export const updateLead = createAction({
 
     const operations: JsonPatchOperation[] = [];
 
-    if (description) {
+    if (description !== undefined) {
       operations.push({ op: 'replace', path: '/leads/0/description', value: description });
     }
-    if (manualValue) {
+    if (manualValue !== undefined) {
       operations.push({ op: 'replace', path: '/leads/0/manualValue', value: manualValue });
     }
     if (customFields) {
       for (const [key, value] of Object.entries(customFields as Record<string, unknown>)) {
-        operations.push({ op: 'replace', path: `/leads/0/customFields/${key}`, value });
+        operations.push({
+          op: 'replace',
+          path: `/leads/0/customFields/${escapeJsonPointerSegment(key)}`,
+          value,
+        });
       }
     }
     for (const id of addAccountIds ?? []) {
