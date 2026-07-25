@@ -1,3 +1,7 @@
+---
+icon: 📡
+---
+
 # Gotcha: canary doesn't proxy websockets (only broadcasts reach canary users)
 
 Canary is a **worker group that also has its own app tier** (`CANARY_APP_URL`, `IS_CANARY_APP`). The prod app is the ingress; `canaryRoutingMiddleware` HTTP-proxies a platform whose `workerGroupId === 'canary'` (`worker-group.service.ts` → `isCanaryPlatform`) to the canary app via `@fastify/reply-from`. **Only `/api/*` is proxied** — the middleware is registered inside the `/api` scope (`setupApp(apiApp)`), while the SPA is served at root from the baked-in bundle (`@fastify/static`, `Dockerfile` copies `dist/packages/web`). So a canary platform's browser runs the **prod** frontend and only its API calls reach canary. Canary shares prod's Postgres and Redis.

@@ -1,3 +1,7 @@
+---
+icon: 🏛️
+---
+
 # EE Overview
 
 The Enterprise Edition extends CE with commercial features living under `packages/server/api/src/app/ee/`. EE code is **never imported from CE**; instead CE declares hook interfaces via `hooksFactory.create<T>(ceDefault)` and EE injects real implementations via `.set(eeImpl)` inside the edition switch in `app.ts` (~lines 247–317). Plan flags on `PlatformPlan` (40+ booleans) gate individual features at the endpoint level.

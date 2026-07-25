@@ -1,3 +1,7 @@
+---
+icon: 🔀
+---
+
 # Flows & Execution
 
 How flows are authored, triggered, executed, and organized in Activepieces. Skim map of the core automation domain.

@@ -1,3 +1,7 @@
+---
+icon: 🏢
+---
+
 # Platform Configuration
 
 A **Platform** is the top-level tenant namespace in Activepieces. Every install has at least one. It owns branding (logo, colors, favicon), auth settings (email auth toggle, allowed auth domains, federated SSO), and a `PlatformPlan` that governs feature flags and limits. On Cloud a user can own many platforms; on CE/EE there's typically one. Available in all editions.

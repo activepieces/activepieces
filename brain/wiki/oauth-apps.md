@@ -1,3 +1,7 @@
+---
+icon: 🪪
+---
+
 # OAuth Apps
 
 Lets platform owners register their own OAuth 2.0 app credentials (client ID + secret) per piece. When a platform has a custom OAuth app for a piece, the connection dialog uses those credentials instead of Activepieces' shared ones — giving vendors control over consent screens, rate limits, and branding. No plan flag gate.

@@ -1,3 +1,7 @@
+---
+icon: 🗃️
+---
+
 # Tables
 
 A built-in relational database inside Activepieces: users store structured data (typed columns, rows) without an external DB, edited in a spreadsheet-like UI and wired into flows. Available in CE, EE, and Cloud.

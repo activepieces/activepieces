@@ -1,3 +1,7 @@
+---
+icon: 🧩
+---
+
 # Embedding
 
 How to embed the Activepieces builder iframe inside your own SaaS and auto-provision users. Enterprise feature. Source: `docs/embedding/`.

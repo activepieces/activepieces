@@ -1,3 +1,7 @@
+---
+icon: 💳
+---
+
 # EE Platform (Plans & Billing)
 
 The EE Platform module manages billing, quota enforcement, AI credits, license keys, and cloud admin. The `PlatformPlan` entity (one per platform, 40+ columns) gates every enterprise feature flag, enforces active-flow limits, integrates with Stripe (Cloud) and OpenRouter (AI credits). Self-hosted EE uses license keys instead of Stripe.

@@ -1,3 +1,7 @@
+---
+icon: 💬
+---
+
 # Chat
 
 A platform-level AI chat assistant that manages Activepieces projects via natural language. Streams LLM responses over WebSocket and exposes project resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations persist per-user with compaction, attachments, multi-project context, and two-phase tool gating. EE/Cloud only (not registered in CE).

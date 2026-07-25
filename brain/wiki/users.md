@@ -1,3 +1,7 @@
+---
+icon: 👥
+---
+
 # Users
 
 Manages user identity, platform membership, roles, and session security. A `User` ties a `UserIdentity` (canonical email/password/OAuth identity) to a specific platform, so the same person can exist across multiple platforms.

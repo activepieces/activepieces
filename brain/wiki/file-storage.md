@@ -1,3 +1,7 @@
+---
+icon: 💾
+---
+
 # File Storage
 
 The central service for persisting binary files, backing the execution engine and platform assets. Two backends — Postgres `bytea` (DB) or S3-compatible object storage (AWS S3, R2, MinIO, OCI) — chosen per file by its `FileType`. Available in CE, EE, and Cloud (Cloud typically uses S3 for execution files).

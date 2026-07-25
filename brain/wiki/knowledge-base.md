@@ -1,3 +1,7 @@
+---
+icon: 📚
+---
+
 # Knowledge Base
 
 A project-scoped document store: users upload PDF/DOCX/TXT/CSV files, which are split into text chunks, optionally embedded with a 768-dim vector model, and stored for semantic similarity search. Agents search one or more KB files to retrieve context. All editions; requires `READ_KNOWLEDGE_BASE`/`WRITE_KNOWLEDGE_BASE` permissions, and an AI provider for embedding generation.

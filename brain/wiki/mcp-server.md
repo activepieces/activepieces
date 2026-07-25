@@ -1,3 +1,7 @@
+---
+icon: 🔌
+---
+
 # MCP Server
 
 Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, Cursor, Windsurf) can read and manipulate flows, connections, tables, and runs through a typed tool interface. One `McpServer` record per project (UNIQUE `projectId`), authenticated by a bearer token. Available in CE, EE, and Cloud.

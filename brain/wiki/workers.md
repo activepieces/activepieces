@@ -1,3 +1,7 @@
+---
+icon: 🏗️
+---
+
 # Workers
 
 Separate Node processes that poll the app for jobs and execute flows/triggers. **The worker *is* the sandbox**: each forks the engine in-process via `@activepieces/sandbox` (`createSandboxRuntime`) — no separate sandbox pool. Destination model is one box per worker (`concurrency 1`), scaling out horizontally with small-capped replicas so an OOM kills one job, not a shared pool. A transitional mode still honors `AP_WORKER_CONCURRENCY`.

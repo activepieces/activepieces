@@ -1,3 +1,7 @@
+---
+icon: 🏢
+---
+
 # Platform & Editions (EE)
 
 How Activepieces' tenancy (Platform → Project) and Community/Enterprise split work. Rule of thumb: CE never imports `src/app/ee/`; CE declares hook interfaces via `hooksFactory.create<T>(ceDefault)`, EE injects the real impl via `.set(eeImpl)` in the `app.ts` edition switch. Plan flags on `PlatformPlan` (40+ booleans) gate features per-endpoint with `platformMustHaveFeatureEnabled()` (HTTP 402).

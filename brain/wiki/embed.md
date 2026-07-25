@@ -1,3 +1,7 @@
+---
+icon: 🔌
+---
+
 # Embed
 
 Embed Onboarding lets a platform admin configure embedded workflows via a stepper at `/platform/security/embed`. Cloud has 4 steps (register a Cloudflare custom hostname `embed_subdomain`, verify DNS, set `allowedEmbedDomains`, create signing keys); CE/EE has 2 (allowed domains + signing keys — self-hosted uses `FRONTEND_URL`). Whole feature gated by `platform.plan.embeddingEnabled`. Enterprise + Cloud only.

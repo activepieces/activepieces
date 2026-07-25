@@ -1,3 +1,7 @@
+---
+icon: 🔗
+---
+
 # App Connections
 
 Encrypted credential records (OAuth2 tokens, API keys, basic/custom auth, OIDC props) that flow steps use to call external services. Support automatic OAuth2 refresh with distributed locking, a project-or-platform scope model, and a project-scoped "replace" that rewires flow references from one connection to another.

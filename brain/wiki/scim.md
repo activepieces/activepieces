@@ -1,3 +1,7 @@
+---
+icon: 👤
+---
+
 # SCIM
 
 SCIM 2.0 provisioning: lets enterprise IdPs (Okta, Azure AD, Google Workspace) automatically provision, update, and deprovision users and groups. SCIM Users map to AP platform users; SCIM Groups map to AP `TEAM` projects only. Auth is an API key as a Bearer token (`platformAdminOnly [SERVICE]`). Gated by `platform.plan.scimEnabled` (EE/Cloud).

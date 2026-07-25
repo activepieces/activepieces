@@ -1,3 +1,7 @@
+---
+icon: 🏃
+---
+
 # Run tables architecture: flow_run, action_run, and future run kinds
 
 How Activepieces stores "run-like" observability records. The rule: **one table per write-shape, shared helpers for the machinery — never a discriminator mega-table.** Origin: review of PR #14176 (first-class single-step runs). See decision [Action runs stay a separate table from flow_run](pg_9Kc2QzEhq5hdxNCyVObJ9).

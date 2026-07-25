@@ -1,3 +1,7 @@
+---
+icon: 📊
+---
+
 # Analytics
 
 Platform-level reporting on automation usage — daily run counts, active flows/users, and time-saved estimates — powering the "Impact" dashboard (`/impact`). Gated by the `analyticsEnabled` plan flag (EE/Cloud only, not in CE).

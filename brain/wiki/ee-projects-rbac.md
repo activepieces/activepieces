@@ -1,3 +1,7 @@
+---
+icon: 👥
+---
+
 # EE Projects & RBAC
 
 The EE Projects module adds team collaboration, role-based access control, git-based environment sync, and per-project piece filtering on top of the base project. CE is single-user only; EE gates the feature set behind `projectRolesEnabled` and `environmentsEnabled` plan flags.

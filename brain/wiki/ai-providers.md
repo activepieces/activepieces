@@ -1,3 +1,7 @@
+---
+icon: 🧠
+---
+
 # AI Providers
 
 Lets platform admins configure one or more LLM backends for AI pieces in flows. Also auto-provisions an "Activepieces" provider (backed by OpenRouter) with a Stripe-integrated AI credit system when the plan's `aiCreditsEnabled` flag is set. EE/Cloud only (not registered in CE).

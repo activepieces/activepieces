@@ -1,3 +1,7 @@
+---
+icon: 🔒
+---
+
 # Variables
 
 Project-scoped, encrypted secret values (API keys, tokens) users create once and reference in any flow input via `{{variables['NAME']}}`. Stored in a dedicated `variable` table, fully separate from `app_connection`. Ships in every edition (no plan flag).

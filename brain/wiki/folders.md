@@ -1,3 +1,7 @@
+---
+icon: 📁
+---
+
 # Folders
 
 Folders are a lightweight organizational layer for flows within a project. Each folder has a display name (unique case-insensitively per project) and a display order; flows join a folder via their `folderId`.

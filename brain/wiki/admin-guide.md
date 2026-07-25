@@ -1,3 +1,7 @@
+---
+icon: 🛠️
+---
+
 # Admin Guide
 
 The Platform Admin panel: how a team controls users, integrations, security, and internal automation on their instance. Most features here are Platform/Enterprise edition. Source: `docs/admin-guide/`.

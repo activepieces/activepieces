@@ -1,3 +1,7 @@
+---
+icon: 🗝️
+---
+
 # API Keys
 
 Long-lived platform service credentials (prefixed `sk-`) for machine-to-machine API calls on behalf of a platform. Each key is 64 chars, stored only as a SHA-256 hash — the plaintext is returned once on creation and never again. Gated by `platform.plan.apiKeysEnabled` (EE/Cloud).

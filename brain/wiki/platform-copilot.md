@@ -1,3 +1,7 @@
+---
+icon: 🧑‍✈️
+---
+
 # Platform Copilot
 
 A backend-only RAG chat assistant that answers questions about the Activepieces platform itself — codebase, docs, config — aimed at developers building on Activepieces, not flow end-users. Enhances the query, retrieves from a pre-indexed vector+full-text store, and streams responses via the Vercel AI SDK UI message stream. All editions (no plan-flag guard); both endpoints require `publicPlatform` scope (any authenticated USER).

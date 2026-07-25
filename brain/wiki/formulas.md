@@ -1,3 +1,7 @@
+---
+icon: 🧮
+---
+
 # Formulas
 
 In-builder data transformation: users transform any text input using ~104 functions (text, number, date, list, logic) inserted via a `/` slash menu as TipTap badge nodes, with a live preview + type-check panel under the input.

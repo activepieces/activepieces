@@ -1,3 +1,7 @@
+---
+icon: 🏛️
+---
+
 # Architecture Spine
 
 Activepieces: open-source AI-first workflow automation platform (self-hosted or cloud, 400+ pieces, MCP support). Monorepo, Turbo (no Nx).

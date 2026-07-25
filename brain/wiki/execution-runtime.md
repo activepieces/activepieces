@@ -1,3 +1,7 @@
+---
+icon: ⚙️
+---
+
 # Execution Runtime
 
 Where and how a flow job runs. The **Worker is the Sandbox**: it polls a job, resolves it, and forks the engine in-process. Destination model is **concurrency 1 + horizontal replicas**; a transitional mode still honors `AP_WORKER_CONCURRENCY=N`. Glossary below; the *why* lives in the Decision records nested under this page.

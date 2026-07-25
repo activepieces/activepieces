@@ -1,3 +1,7 @@
+---
+icon: 💾
+---
+
 # Data, Storage & Observability
 
 How Activepieces stores data, secrets, files, and how it surfaces platform activity. One section per subsystem.

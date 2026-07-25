@@ -1,3 +1,7 @@
+---
+icon: 🔐
+---
+
 # Connections & Auth
 
 How Activepieces stores credentials and authenticates users, across CE/EE/Cloud. Multi-tenant rule throughout: connection queries filter by project via `ArrayContains([projectId])` on the `projectIds[]` array (never a scalar `projectId`), or by `scope = PLATFORM` for shared ones.

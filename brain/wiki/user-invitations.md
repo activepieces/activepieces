@@ -1,3 +1,7 @@
+---
+icon: ✉️
+---
+
 # User Invitations
 
 Lets platform owners (and project members with `WRITE_INVITATION`) invite users to a platform (granting a `PlatformRole`) or a specific project (granting a named `ProjectRole`). New invites are either auto-accepted or kept PENDING with an emailed JWT link the recipient clicks to accept without a login session. On acceptance, platform role or project membership is provisioned, then the invitation is deleted.

@@ -1,3 +1,7 @@
+---
+icon: ⚙️
+---
+
 # Gotcha: system-job "No handler" = worker running the wrong edition
 
 The single shared `system-job-queue` (BullMQ) is consumed by whatever app instance runs `startWorker()` (`app.ts`, gated only by `!IS_CANARY_APP`). Handlers are registered per-module as that instance boots — and **EE handlers only register in the CLOUD/ENTERPRISE branches of the edition switch**. So if the worker instance runs a different edition than the instance that *scheduled* the job, the job fires with no handler and throws `No handler for job <name>` every tick.

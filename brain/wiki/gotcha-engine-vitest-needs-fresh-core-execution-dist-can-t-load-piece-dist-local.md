@@ -1,3 +1,7 @@
+---
+icon: 🧪
+---
+
 # Gotcha: engine vitest needs fresh core-execution dist + can't load piece dist locally
 
 Two traps when running `packages/server/engine` vitest tests locally.

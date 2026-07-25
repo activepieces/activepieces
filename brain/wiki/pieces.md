@@ -1,3 +1,7 @@
+---
+icon: 🧩
+---
+
 # Pieces
 
 The metadata catalog of automation integrations ("pieces") — each a named integration like `@activepieces/piece-gmail` providing actions and triggers. Stored in `piece_metadata` and served from an in-memory `pieceCache` rebuilt from the DB on startup and refreshed via pub/sub.

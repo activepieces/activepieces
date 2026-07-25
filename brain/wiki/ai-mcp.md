@@ -1,3 +1,7 @@
+---
+icon: 🤖
+---
+
 # AI & MCP
 
 How Activepieces' AI and MCP surfaces fit together. One subsection per feature.

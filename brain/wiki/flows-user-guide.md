@@ -1,3 +1,7 @@
+---
+icon: 🔀
+---
+
 # Flows (User Guide)
 
 The no-code flow builder concepts for end users. Source: `docs/flows/`.

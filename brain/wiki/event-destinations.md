@@ -1,3 +1,7 @@
+---
+icon: 📡
+---
+
 # Event Destinations
 
 Streams platform/project activity events to webhook URLs in real time. Internal Activepieces flow webhooks are valid targets, so operators can route events into a flow and fan out to Slack/Gmail/Teams/HTTP without leaving the platform. EE/Cloud only, gated by `auditLogEnabled` (shares audit-log gating). Lives under the **Observability** sidebar group.

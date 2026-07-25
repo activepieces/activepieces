@@ -1,3 +1,7 @@
+---
+icon: 🖥️
+---
+
 # Self-Hosting & Install
 
 How to deploy and operate self-hosted Activepieces Community Edition, plus the runtime architecture behind it. Source: `docs/install/`.

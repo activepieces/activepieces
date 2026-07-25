@@ -1,3 +1,7 @@
+---
+icon: 🔌
+---
+
 # API & Endpoints
 
 The Activepieces REST API reference. Source: `docs/endpoints/` plus generated `openapi.json`.

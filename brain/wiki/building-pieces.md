@@ -1,3 +1,7 @@
+---
+icon: 🧱
+---
+
 # Building Pieces
 
 How to build, test, and publish custom pieces. Pieces are npm packages written in TypeScript; ~60% are community-contributed. Hot reload shows local changes in ~7s. Source: `docs/build-pieces/`.

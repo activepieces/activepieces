@@ -125,3 +125,33 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 
 - [Database Migrations Playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/database-migration)
 - [TypeORM Migrations Docs](https://orkhan.gitbook.io/typeorm/docs/migrations)
+
+<!-- craftspace:start -->
+## This repo carries its own brain
+
+Durable company context lives in `brain/` and syncs to Craftspace both ways. Read it BEFORE
+answering how this project works — its decisions, vocabulary, and gotchas are already written down.
+
+- `brain/wiki/` — how things work. Folders nest: `wiki/area/index.md` is the page for `area`,
+  and a leaf beside it is that page's child. Grep here first.
+- `brain/decisions/` — numbered, flat, one hard-to-reverse call each, newest number last.
+- `.agents/skills/` — repeatable procedures, one folder per skill (`.claude/skills` symlinks onto it).
+
+## Writing back
+
+Write a markdown FILE, do not call the Craftspace `upsert_*` tools — a file rides your PR and review,
+an MCP write pushes straight to the default branch. Edit the file that already covers the topic instead
+of adding a near-duplicate.
+
+Frontmatter each file understands:
+
+```
+---
+title: Optional, overrides the H1
+icon: 🧭
+status: accepted   # decisions only
+---
+```
+
+`icon:` is a single emoji and shows on the page in the web app. Keep the emoji out of the title.
+<!-- craftspace:end -->

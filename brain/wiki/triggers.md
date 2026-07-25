@@ -1,3 +1,7 @@
+---
+icon: ⚡
+---
+
 # Triggers
 
 Triggers define how and when a flow starts. The module handles registration, event capture, testing, and deduplication, tracking each enabled trigger as a `TriggerSource` record and driving enable/disable side effects (BullMQ scheduling, external webhook registration).

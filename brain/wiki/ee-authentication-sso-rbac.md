@@ -1,3 +1,7 @@
+---
+icon: 🛡️
+---
+
 # EE Authentication (SSO/RBAC)
 
 Enterprise auth layer extending CE with SAML 2.0 SSO, Google/GitHub federated OAuth, OTP email flows, per-project RBAC, and managed-auth JWT exchange for embedding. All SSO paths delegate to `authenticationService.federatedAuthn()` which creates/links a user and issues a standard AP JWT.

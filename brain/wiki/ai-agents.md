@@ -1,3 +1,7 @@
+---
+icon: 🤖
+---
+
 # AI Agents
 
 A flow step type (backed by `@activepieces/piece-agent`) that runs an LLM-driven autonomous loop. Given a prompt, tools, an AI provider/model, and optional structured-output fields, it runs a ReAct-style loop (up to `maxSteps`) where the model can call any configured tool before producing a final answer.

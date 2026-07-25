@@ -1,3 +1,7 @@
+---
+icon: 📜
+---
+
 # Audit Logs
 
 Records security-relevant actions for compliance and forensics, persisted to the `audit_event` table and queryable by platform admins. Enterprise/Cloud only, gated by `platform.plan.auditLogEnabled`.

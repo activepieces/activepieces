@@ -1,3 +1,7 @@
+---
+icon: 🌐
+---
+
 # Global Connections
 
 App connections scoped to a platform (`AppConnectionScope.PLATFORM`) rather than a single project, shared across projects so each doesn't re-authenticate the same service account. A platform admin creates them; accessible to any project in the connection's `projectIds[]` (or all new projects if `preSelectForNewProjects`). Gated by `platform.plan.globalConnectionsEnabled` (EE/Cloud only).

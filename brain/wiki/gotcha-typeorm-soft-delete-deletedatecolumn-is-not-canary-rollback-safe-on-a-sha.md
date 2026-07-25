@@ -1,3 +1,7 @@
+---
+icon: 🗑️
+---
+
 # Gotcha: TypeORM soft-delete (@DeleteDateColumn) is NOT canary/rollback-safe on a shared DB
 
 Switching an entity's deletes from hard `delete()` to `softDelete()` + a `@DeleteDateColumn` (`deleted` timestamp) is **backward-incompatible at the read layer** whenever two code versions share one Postgres — i.e. any canary release (canary shares prod DB) or a rollback.

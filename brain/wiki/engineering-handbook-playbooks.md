@@ -1,3 +1,7 @@
+---
+icon: 📗
+---
+
 # Engineering Handbook & Playbooks
 
 The public company handbook shipped with the docs — how the Activepieces team works. Source: `docs/handbook/`. (This is the published handbook, distinct from the internal Engineering area in this brain.)

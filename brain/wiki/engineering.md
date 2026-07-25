@@ -1,3 +1,7 @@
+---
+icon: 🧭
+---
+
 # Engineering
 
 The **Activepieces engineering brain**: how the system works, and *why* it was built that way. Read this first, then jump to an Area. Written for both people and agents — every page names its topic, front-loads the point, and stands alone.

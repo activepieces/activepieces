@@ -1,3 +1,7 @@
+---
+icon: 🏃
+---
+
 # Flow Runs
 
 A Flow Run records one execution of a specific flow version, from trigger to terminal state. It stores compressed step-by-step logs, supports pause/resume for delay and webhook waits, offers retry strategies, and emits WebSocket + application events for real-time UI.

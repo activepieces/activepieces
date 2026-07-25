@@ -1,3 +1,7 @@
+---
+icon: 🔑
+---
+
 # Key-Value Store
 
 A persistent, project-scoped key-value store that piece steps read/write during flow execution. Backend-only, no UI. Values are arbitrary JSON (`jsonb`). Available in CE, EE, Cloud.

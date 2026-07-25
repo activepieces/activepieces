@@ -1,3 +1,7 @@
+---
+icon: 📕
+---
+
 # Product Docs
 
 Activepieces' user-facing product documentation, organized for agents — what's documented and where.

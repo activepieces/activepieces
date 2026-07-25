@@ -1,3 +1,7 @@
+---
+icon: 📋
+---
+
 # Templates
 
 Templates are a library of reusable flow (and table) blueprints users can browse, import, and build on. Before saving, flows inside a template are validated and their piece names extracted into a searchable `pieces` array.

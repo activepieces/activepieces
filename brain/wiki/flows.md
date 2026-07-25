@@ -1,3 +1,7 @@
+---
+icon: 🌊
+---
+
 # Flows
 
 Flows are the core automation primitive: a versioned directed graph of trigger + action steps stored as a JSONB tree. The module covers the full lifecycle — draft editing, publishing, enable/disable, folders, sample data, human-input forms/chat, and the XYFlow visual builder.

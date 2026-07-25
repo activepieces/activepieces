@@ -1,3 +1,7 @@
+---
+icon: 🗑️
+---
+
 # Gotcha: flows stuck in DELETING keep eating the active-flow limit
 
 Flow deletion is a durable BullMQ system job (`delete-flow-<flowId>`, queue `system-job-queue`), not synchronous. `delete()` sets `operationStatus=DELETING` and enqueues the job; the row + `status=ENABLED` only go away when the job finishes. The job runs `preDelete` → **`sampleDataService.deleteForFlow`**, which does `DELETE FROM file WHERE projectId=? AND type=? AND metadata->>'flowId'=?`.

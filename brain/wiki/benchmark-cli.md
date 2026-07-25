@@ -1,3 +1,7 @@
+---
+icon: ⏱️
+---
+
 # Benchmark CLI
 
 `activepieces benchmark` load-tests a deployment's sync-webhook path and attributes *where* latency goes, so a self-hosted setup can be compared apples-to-apples against Activepieces' published reference numbers. Available in CE, EE, Cloud.

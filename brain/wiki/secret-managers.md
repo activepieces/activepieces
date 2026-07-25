@@ -1,3 +1,7 @@
+---
+icon: 🔐
+---
+
 # Secret Managers
 
 Lets platform admins connect Activepieces to an external secret store (HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur, 1Password) so sensitive values in flow steps/connections resolve from the vault at runtime instead of the DB. Reference syntax: `{{<connectionId><separator><path>}}`. Gated by `platform.plan.secretManagersEnabled` (EE/Cloud).

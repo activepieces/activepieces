@@ -1,3 +1,7 @@
+---
+icon: 🗂️
+---
+
 # Piece Sets
 
 A named, reusable piece/action/trigger visibility configuration a platform admin defines once and assigns to many projects. Visibility is **derived at read time** — nothing is written when a new piece or action is installed.

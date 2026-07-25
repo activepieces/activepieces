@@ -1,3 +1,7 @@
+---
+icon: 📝
+---
+
 # Human Input
 
 Human Input exposes public endpoints that let external users interact with flows via two modes: **Forms** (structured input fields) and **Chat** (conversational UI). Both are backed by flows whose trigger is the `@activepieces/piece-forms` piece. The backend endpoints are read-only and public — they return UI metadata (title, input schema, branding); the actual submission goes through the webhook endpoint.

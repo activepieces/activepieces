@@ -1,3 +1,7 @@
+---
+icon: 🔑
+---
+
 # License Keys
 
 License Keys are how self-hosted Enterprise customers activate and maintain their subscription. A key is a string encoding which EE features are enabled (SSO, SCIM, audit logs, custom domains, etc.) plus an expiry date. It's validated against the remote secrets service (`https://secrets.activepieces.com/license-keys`); when valid, its flags are written to the platform's `plan`, enabling gated features. Primarily EE self-hosted (`AP_EDITION=ee`); also used on Cloud for internal plan management.

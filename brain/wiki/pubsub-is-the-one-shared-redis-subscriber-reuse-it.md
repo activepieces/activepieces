@@ -1,3 +1,7 @@
+---
+icon: 📡
+---
+
 # pubsub is the one shared Redis subscriber — reuse it
 
 `pubsub` (`packages/server/api/src/app/helper/pubsub.ts`) is the app's single shared Redis subscriber connection. Use it for all in-process fan-out over Redis pub/sub — **do not** open your own `redisConnections.create()` subscriber per wait/request (that churns connections and can hit managed-Redis client caps).

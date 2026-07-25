@@ -1,3 +1,7 @@
+---
+icon: 🔑
+---
+
 # CE Authentication
 
 The core (all-editions) auth layer: user identity creation, sign-in, and JWT session management. Supports email/password, federated OAuth (Google, SAML), and invitation-only sign-up. On first sign-up (no `platformId`) a new platform + personal project are auto-created.

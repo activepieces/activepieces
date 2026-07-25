@@ -1,3 +1,7 @@
+---
+icon: 🎫
+---
+
 # Managed Auth
 
 Embedded authentication ("Embedding"): lets SaaS vendors embed the Activepieces builder in their own product. The vendor's backend signs a short-lived JWT with an RSA private key (from a Signing Key), passes it to the AP embed SDK, which calls `POST /v1/managed-authn/external-token`. The server verifies the JWT against the stored public key, auto-provisions/retrieves the user + project + limits from the claims, and returns a full `AuthenticationResponse` (with access token). Gated by `platform.plan.embeddingEnabled` (on the signing-key module, not the endpoint).

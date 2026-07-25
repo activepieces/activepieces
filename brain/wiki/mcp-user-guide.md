@@ -1,3 +1,7 @@
+---
+icon: 🔗
+---
+
 # MCP (User Guide)
 
 The built-in MCP server that lets AI assistants build flows, manage tables, and test automations in natural language. Source: `docs/mcp/`.

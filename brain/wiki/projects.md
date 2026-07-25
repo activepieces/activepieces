@@ -1,3 +1,7 @@
+---
+icon: 📂
+---
+
 # Projects
 
 A **Project** is the workspace within a platform where flows, connections, tables, and other resources live. Every platform has at least one, always scoped via `platformId`. CE gives a single user one personal project; the EE ee-projects module extends this with team projects, limits, and admin CRUD. All editions.

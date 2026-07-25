@@ -1,3 +1,7 @@
+---
+icon: 🚨
+---
+
 # Flow Failure Alerts
 
 Email notifications when a flow run fails. On the first failure of a flow version within a 24-hour window, the system emails all configured receivers for the project; later failures in the same window are suppressed via a Redis counter to avoid spam. Cloud/EE only (edition check is in service logic, no plan flag).

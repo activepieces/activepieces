@@ -1,3 +1,7 @@
+---
+icon: 🧩
+---
+
 # Pieces & Engine
 
 How the piece catalog, visibility, formulas, workers, and AI agents fit together. Sourced from `.agents/features/*.md`.
