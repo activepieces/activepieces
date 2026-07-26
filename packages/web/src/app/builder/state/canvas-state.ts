@@ -137,9 +137,6 @@ export const createCanvasState = (
           state.selectedStep !== selectedStep;
 
         return {
-          // Selecting a step never opens its piece selector as a side effect —
-          // opening is owned by the Popover trigger click (see pieces-selector);
-          // this only ever closes whatever selector was open for the previous step.
           openedPieceSelectorStepNameOrAddButtonId: null,
           selectedStep,
           rightSidebar,

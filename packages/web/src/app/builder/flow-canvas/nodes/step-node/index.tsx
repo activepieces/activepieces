@@ -1,5 +1,6 @@
 import {
   FlowOperationType,
+  FlowTriggerType,
   Step,
   flowStructureUtil,
 } from '@activepieces/shared';
@@ -61,6 +62,10 @@ const ApStepCanvasNode = React.memo(
     );
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
+    const chevronClickOverride =
+      step.type === FlowTriggerType.EMPTY
+        ? () => setOpenedPieceSelectorStepNameOrAddButtonId(step.name)
+        : undefined;
 
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: step.name,
@@ -76,10 +81,6 @@ const ApStepCanvasNode = React.memo(
     ) => {
       selectStepByName(step.name);
       setSelectedBranchIndex(null);
-      // Only stopPropagation, never preventDefault: Radix's Slot merges this
-      // handler with the Popover trigger's own composed onClick on the same
-      // DOM node, and that composed handler bails out on defaultPrevented —
-      // calling preventDefault here would silently break the popover's toggle.
       if (stopPropagation) {
         e.stopPropagation();
       }
@@ -88,11 +89,7 @@ const ApStepCanvasNode = React.memo(
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
       handleStepClick(e, false);
-      // A context menu takes over from any open piece selector on this step.
       setOpenedPieceSelectorStepNameOrAddButtonId(null);
-      // The delayed re-dispatch below is untrusted; bail here so it can't schedule
-      // another one. Without this, a step whose right sidebar never opens (e.g. an
-      // empty trigger) would re-dispatch itself every SIDEBAR_ANIMATION_DURATION forever.
       if (isRightSidebarOpen || !e.nativeEvent.isTrusted) {
         return;
       }
@@ -201,7 +198,9 @@ const ApStepCanvasNode = React.memo(
                     pieceDisplayName={stepMetadata?.displayName ?? ''}
                     stepName={step.name}
                   />
-                  {!readonly && <StepNodeChevron />}
+                  {!readonly && (
+                    <StepNodeChevron onClickOverride={chevronClickOverride} />
+                  )}
                 </div>
               )}
             </PieceSelector>
@@ -226,7 +225,7 @@ const ApStepCanvasNode = React.memo(
           )}
           {isHorizontal && !readonly && !isDragging && (
             <div className="absolute top-0 right-0  translate-x-[30px] z-10">
-              <StepNodeChevron />
+              <StepNodeChevron onClickOverride={chevronClickOverride} />
             </div>
           )}
 

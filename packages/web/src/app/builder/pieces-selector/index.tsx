@@ -199,6 +199,11 @@ const PieceSelectorContent = ({
           onContextMenu={(e) => {
             e.stopPropagation();
           }}
+          onInteractOutside={(e) => {
+            if (e.detail.originalEvent.type === 'focusin') {
+              e.preventDefault();
+            }
+          }}
           className="w-[340px] md:w-[600px] p-0 shadow-lg"
           onClick={(e) => {
             e.stopPropagation();
