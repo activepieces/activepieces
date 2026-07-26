@@ -9,7 +9,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { ActionRunOffload, executeActionRunAction, executeActionRunCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -309,7 +309,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
         }
         case 'ap_execute_action': {
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
+            return runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }
         case 'ap_run_code': {
             return runChatCode({ toolInput, projects, platformId, userId, conversationId, log })
@@ -320,7 +320,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
-            return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -355,13 +355,13 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 // A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
 // the model context with a compact shape preview + the fileId. The agent then processes the FULL
 // data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
-function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }: {
+function buildActionRunOffload({ projectId, platformId, pieceName, actionName, log }: {
     projectId: string
     platformId?: string
     pieceName: string
     actionName: string
     log: FastifyBaseLogger
-}): AdhocOffload | undefined {
+}): ActionRunOffload | undefined {
     if (isNil(platformId)) {
         return undefined
     }
@@ -389,7 +389,7 @@ function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }
     }
 }
 
-async function runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
+async function runChatActionRunAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -436,13 +436,13 @@ async function runChatAdhocAction({ toolInput, projects, availableProjectIds, co
             parsedInput = parsed as Record<string, unknown>
         }
     }
-    const result = await executeAdhocAction({
+    const result = await executeActionRunAction({
         projectId: resolvedProjectId,
         pieceName,
         actionName,
         input: parsedInput as Record<string, unknown> | undefined,
         connectionExternalId,
-        ...spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
+        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
 
@@ -527,7 +527,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
         input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
     }
 
-    const result = await executeAdhocCode({ projectId, code, packageJson, input, log })
+    const result = await executeActionRunCode({ projectId, code, packageJson, input, log })
 
     if (result.status !== 'succeeded') {
         const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'

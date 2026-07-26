@@ -1,5 +1,6 @@
 import { JobData, WorkerJobType } from '@activepieces/shared'
 import { eventDestinationJob } from './jobs/event-destination'
+import { executeActionJob } from './jobs/execute-action'
 import { executeFlowJob } from './jobs/execute-flow'
 import { executePollingJob } from './jobs/execute-polling'
 import { executePropertyJob } from './jobs/execute-property'
@@ -40,6 +41,7 @@ const registry: Partial<Record<WorkerJobType, JobHandler>> = {
     [WorkerJobType.EXECUTE_TOKEN_REFRESH]: executeTokenRefreshJob,
     [WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION]: extractPieceInfoJob,
     [WorkerJobType.EVENT_DESTINATION]: eventDestinationJob,
+    [WorkerJobType.EXECUTE_ACTION]: executeActionJob,
 }
 
 // Heavy handlers are loaded on first use so their dependency graph never enters worker memory unless

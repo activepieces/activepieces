@@ -2,7 +2,7 @@ import { Permission } from '@activepieces/core-utils'
 import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { executeAdhocAction } from './flow-run-utils'
+import { executeActionRunAction } from './flow-run-utils'
 import { mcpUtils } from './mcp-utils'
 
 const runActionInput = z.object({
@@ -22,7 +22,7 @@ export const apRunActionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
         execute: async (args) => {
             try {
                 const { pieceName, actionName, input, connectionExternalId } = runActionInput.parse(args)
-                return await executeAdhocAction({
+                return await executeActionRunAction({
                     projectId: mcp.projectId,
                     pieceName,
                     actionName,

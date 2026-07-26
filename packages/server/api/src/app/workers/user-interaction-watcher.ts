@@ -7,7 +7,7 @@ import { jobQueue, JobType } from './job-queue/job-queue'
 const WATCHER_SAFETY_TIMEOUT_MS = 5 * 60 * 1000
 
 export const userInteractionWatcher = {
-    submitAndWaitForResponse: async <T>(request: UserInteractionJobDataWithoutWatchingInformation, log: FastifyBaseLogger, requestId?: string): Promise<T> => {
+    submitAndWaitForResponse: async <T>(request: UserInteractionJobDataWithoutWatchingInformation, log: FastifyBaseLogger, requestId?: string, timeoutMs?: number): Promise<T> => {
         const id = requestId ?? apId()
         await jobQueue(log).add({
             id,
@@ -19,13 +19,15 @@ export const userInteractionWatcher = {
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             },
         })
-        const result = await engineResponseWatcher(log).oneTimeListener<T>(id, true, WATCHER_SAFETY_TIMEOUT_MS, undefined)
+        const result = await engineResponseWatcher(log).oneTimeListener<T>(id, true, timeoutMs ?? WATCHER_SAFETY_TIMEOUT_MS, undefined)
         if (isNil(result)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,
-                params: { message: 'Worker did not respond within the safety timeout' },
+                params: { message: WORKER_DID_NOT_RESPOND_MESSAGE },
             })
         }
         return result
     },
 }
+
+export const WORKER_DID_NOT_RESPOND_MESSAGE = 'Worker did not respond within the safety timeout'

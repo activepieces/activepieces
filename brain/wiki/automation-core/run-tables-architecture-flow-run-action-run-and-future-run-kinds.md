@@ -16,7 +16,7 @@ How Activepieces stores "run-like" observability records. The rule: **one table 
 
 ## Why separate tables, not a discriminator
 
-`flow_run`'s optimizations don't transfer: its 5 composite indexes all lead with `environment`+`flowId`, columns a flowless run lacks. A shared `run` table would force `flowId`/`flowVersionId` nullable (killing NOT NULL + CASCADE FKs on the hottest table), add always-NULL sparse columns per row, maintain a union of index families on every insert, and couple 2–3 different write engines (flow execution w/ subflows+waitpoints+pause vs `pieceRunMode` which *rejects* waitpoints vs a webhook handler) onto one hot table. Each concept has a different NOT-NULL set, different index leads, and wildly different volume/retention (rejected webhooks can be ~100× flow runs). The merge would save only ~60 lines of glue.
+`flow_run`'s optimizations don't transfer: its 5 composite indexes all lead with `environment`+`flowId`, columns a flowless run lacks. A shared `run` table would force `flowId`/`flowVersionId` nullable (killing NOT NULL + CASCADE FKs on the hottest table), add always-NULL sparse columns per row, maintain a union of index families on every insert, and couple 2–3 different write engines (flow execution w/ subflows+waitpoints+pause vs `actionRunMode` which *rejects* waitpoints vs a webhook handler) onto one hot table. Each concept has a different NOT-NULL set, different index leads, and wildly different volume/retention (rejected webhooks can be ~100× flow runs). The merge would save only ~60 lines of glue.
 
 ## What IS shared (the machinery, not the storage)
 
@@ -59,4 +59,10 @@ Note: `trigger_event` already exists but is unrelated — it stores *sampled tri
 
 ## Docs to update on the PR branch
 
-`.agents/features/piece-run.md`→`action-run.md`; fix `flow-runs.md` tab cross-ref; `mcp.md` + `chat.md` term swaps; add canonical **action run** to Execution Runtime `CONTEXT.md` with `_Avoid_: adhoc run, piece run`.
+This list predates the [unification of architecture docs into `brain/`](https://github.com/activepieces/activepieces/pull/14416), which deleted `.agents/features/`, `.agents/contexts/*/CONTEXT.md`, `docs/adr/` and `CONTEXT-MAP.md`. The live targets are:
+
+- [Action Runs](./action-run.md) — the feature page (replaces the never-created `.agents/features/piece-run.md`). Execution-only today; the persistence + UI sections land with the `action_run` table.
+- [Flow Runs](./flow-runs.md) — add the runs-tab cross-ref when the "Action runs" tab ships.
+- [Chat](./chat.md) and the MCP pages — term swaps (`adhoc`→`action run`, `executeAdhoc*`→`executeActionRun*`).
+- [File storage](../data-storage/file-storage.md) — `ACTION_RUN_LOG` row + cleanup-job list, when the payload offload ships.
+- Canonical **action run** terminology is settled by this page and [decision 000012](../../decisions/000012-action-runs-stay-a-separate-table-from-flow-run.md); there is no longer a `CONTEXT.md` glossary to add it to.
