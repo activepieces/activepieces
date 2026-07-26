@@ -59,6 +59,9 @@ export const newChangelogPost = createTrigger({
   name: 'new_changelog_post',
   displayName: 'New Changelog Post',
   description: 'Fires when a new post is published in the selected changelog.',
+  aiMetadata: {
+    description: 'Fires when a new post appears in one selected Produktly changelog, representing a product announcement or release note. Polls that changelog on a schedule and emits each post it has not seen before, including hidden (inactive) posts alongside published ones.',
+  },
   props: triggerProps,
   sampleData: {
     post_id: 123,
