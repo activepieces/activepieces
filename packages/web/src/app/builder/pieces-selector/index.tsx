@@ -158,14 +158,16 @@ const PieceSelectorContent = ({
   return (
     <Popover
       open={isOpen}
-      modal={true}
+      modal={false}
       onOpenChange={(open) => {
-        if (!open) {
-          clearSearch();
-          setOpenedPieceSelectorStepNameOrAddButtonId(null);
-          if (isForEmptyTrigger) {
-            deselectStep();
-          }
+        if (open) {
+          setOpenedPieceSelectorStepNameOrAddButtonId(id);
+          return;
+        }
+        clearSearch();
+        setOpenedPieceSelectorStepNameOrAddButtonId(null);
+        if (isForEmptyTrigger) {
+          deselectStep();
         }
       }}
     >

@@ -131,19 +131,16 @@ export const createCanvasState = (
             ? RightSideBarType.NONE
             : RightSideBarType.PIECE_SETTINGS;
 
-        const isEmptyTrigger =
-          selectedStep === 'trigger' &&
-          state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
-
         const userPickedDifferentStepDuringRun =
           !options?.fromAutoFocus &&
           !isNil(state.run) &&
           state.selectedStep !== selectedStep;
 
         return {
-          openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger
-            ? 'trigger'
-            : null,
+          // Selecting a step never opens its piece selector as a side effect —
+          // opening is owned by the Popover trigger click (see pieces-selector);
+          // this only ever closes whatever selector was open for the previous step.
+          openedPieceSelectorStepNameOrAddButtonId: null,
           selectedStep,
           rightSidebar,
           selectedBranchIndex: null,

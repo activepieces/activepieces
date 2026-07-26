@@ -1,7 +1,6 @@
 import {
   FlowOperationType,
   Step,
-  FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
@@ -73,23 +72,28 @@ const ApStepCanvasNode = React.memo(
 
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-      preventDefault = true,
+      stopPropagation = true,
     ) => {
       selectStepByName(step.name);
       setSelectedBranchIndex(null);
-      if (step.type === FlowTriggerType.EMPTY) {
-        setOpenedPieceSelectorStepNameOrAddButtonId(step.name);
-      }
-      if (preventDefault) {
+      // Only stopPropagation, never preventDefault: Radix's Slot merges this
+      // handler with the Popover trigger's own composed onClick on the same
+      // DOM node, and that composed handler bails out on defaultPrevented —
+      // calling preventDefault here would silently break the popover's toggle.
+      if (stopPropagation) {
         e.stopPropagation();
-        e.preventDefault();
       }
     };
     const handleContextMenu = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
       handleStepClick(e, false);
-      if (isRightSidebarOpen) {
+      // A context menu takes over from any open piece selector on this step.
+      setOpenedPieceSelectorStepNameOrAddButtonId(null);
+      // The delayed re-dispatch below is untrusted; bail here so it can't schedule
+      // another one. Without this, a step whose right sidebar never opens (e.g. an
+      // empty trigger) would re-dispatch itself every SIDEBAR_ANIMATION_DURATION forever.
+      if (isRightSidebarOpen || !e.nativeEvent.isTrusted) {
         return;
       }
       e.preventDefault();
@@ -172,11 +176,7 @@ const ApStepCanvasNode = React.memo(
               {isHorizontal ? (
                 <div
                   className="flex items-center justify-center h-full w-full"
-                  onClick={(e) => {
-                    if (!isPieceSelectorOpened) {
-                      handleStepClick(e);
-                    }
-                  }}
+                  onClick={(e) => handleStepClick(e)}
                 >
                   <StepNodeLogo
                     isSkipped={isSkipped}
@@ -187,11 +187,7 @@ const ApStepCanvasNode = React.memo(
               ) : (
                 <div
                   className="flex items-center justify-center h-full w-full gap-[10px]"
-                  onClick={(e) => {
-                    if (!isPieceSelectorOpened) {
-                      handleStepClick(e);
-                    }
-                  }}
+                  onClick={(e) => handleStepClick(e)}
                 >
                   <StepNodeLogo
                     isSkipped={isSkipped}
