@@ -45,7 +45,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                     tier: tier.id,
                 },
             },
-            appSumo: isManagedProvider && isAppSumoPlan ? {
+            appSumo: isAppSumoPlan ? {
                 platformId: conversation.platformId,
                 value: creditValue,
 
