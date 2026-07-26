@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ExecutioOutputFile, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunInternalError, RunInternalErrorSource, SendFlowResponseRequest, StreamStepProgress, truncateFailedStepMessage, UpdateStepProgressRequest, UploadRunLogsRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ApEdition, CALLBACK_SERIALIZATION_ERROR_NAME, ExecutioOutputFile, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunInternalError, RunInternalErrorSource, SendFlowResponseRequest, StreamStepProgress, truncateFailedStepMessage, UpdateStepProgressRequest, UploadRunLogsRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { fileCompressor } from '../../file/file-compressor'
@@ -54,6 +54,14 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
             runMs: request.runMs,
         }
         await runsMetadataQueue(log).add(logData)
+
+        if (request.failedStep?.message?.includes(CALLBACK_SERIALIZATION_ERROR_NAME)) {
+            log.error({
+                flowRun: { id: request.runId, status: request.status },
+                project: { id: projectId },
+                step: { name: request.failedStep.name },
+            }, '[uploadRunLog] Engine produced step data that cannot be serialized')
+        }
 
         if (request.stepResponse && request.streamStepProgress === StreamStepProgress.WEBSOCKET) {
             const stepData = { ...request.stepResponse, projectId }

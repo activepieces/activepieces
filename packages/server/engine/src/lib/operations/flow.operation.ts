@@ -38,11 +38,21 @@ export const flowOperation = {
             return reportFailedRun({ input, constants, error: executionError })
         }
         const finished = output.finishExecution()
-        await flowRunProgressReporter.sendUpdate({
-            engineConstants: constants,
-            flowExecutorContext: finished,
+        const { error: reportError } = await tryCatch(async () => {
+            await flowRunProgressReporter.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: finished,
+            })
+            await flowRunProgressReporter.backup()
         })
-        await flowRunProgressReporter.backup()
+        if (reportError) {
+            // Polarity is inverted vs. the execution guards above: an unknown failure here is likelier
+            // transient infra (a raw fetch rejection from the log upload) than a user fault, so it still retries.
+            if (isUserExecutionError(reportError)) {
+                return reportFailedRun({ input, constants, error: reportError })
+            }
+            throw reportError
+        }
         const status = finished.verdict.status === FlowRunStatus.LOG_SIZE_EXCEEDED
             ? EngineResponseStatus.LOG_SIZE_EXCEEDED
             : EngineResponseStatus.OK
@@ -55,6 +65,10 @@ export const flowOperation = {
 
 function isEngineExecutionError(error: unknown): boolean {
     return error instanceof ExecutionError && error.type === ExecutionErrorType.ENGINE
+}
+
+function isUserExecutionError(error: unknown): boolean {
+    return error instanceof ExecutionError && error.type === ExecutionErrorType.USER
 }
 
 async function reportFailedTriggerRun({ operation, error }: ReportFailedTriggerRunParams): Promise<EngineResponse<undefined>> {

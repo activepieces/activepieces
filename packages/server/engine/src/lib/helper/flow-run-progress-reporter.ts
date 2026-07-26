@@ -3,7 +3,7 @@ import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { CallbackSerializationError, DEFAULT_MCP_DATA, EngineGenericError, ExecutionError, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
@@ -103,12 +103,15 @@ export const flowRunProgressReporter = {
             const status = flowExecutorContext.verdict.status
             const isTerminal = isFlowRunStateTerminal({ status, ignoreInternalError: false })
 
-            const serialized = await logSerializer.serialize({
+            const { data: serialized, error: serializeError } = await tryCatch(() => logSerializer.serialize({
                 executionState: {
                     steps: flowExecutorContext.steps,
                     tags: Array.from(flowExecutorContext.tags),
                 },
-            })
+            }))
+            if (serializeError) {
+                throw new CallbackSerializationError({ path: 'run-logs', cause: serializeError })
+            }
             const executionState = await zstdCompress(serialized)
 
             const logsFileId = engineConstants.logsFileId
@@ -189,7 +192,9 @@ const sendUpdateProgress = async ({ engineConstants, request }: SendUpdateProgre
         }),
     )
     if (result.error) {
-        throw new EngineGenericError('ProgressUpdateError', 'Failed to send updateRunProgress', result.error)
+        throw result.error instanceof ExecutionError
+            ? result.error
+            : new EngineGenericError('ProgressUpdateError', 'Failed to send updateRunProgress', result.error)
     }
 }
 
@@ -202,7 +207,9 @@ const sendLogsUpdate = async ({ engineConstants, request }: SendLogsUpdateParams
         }),
     )
     if (result.error) {
-        throw new EngineGenericError('ProgressUpdateError', 'Failed to send uploadRunLog', result.error)
+        throw result.error instanceof ExecutionError
+            ? result.error
+            : new EngineGenericError('ProgressUpdateError', 'Failed to send uploadRunLog', result.error)
     }
 }
 

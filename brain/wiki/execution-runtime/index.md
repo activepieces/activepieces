@@ -50,3 +50,5 @@ The four calls a run emits to the app during execution: `updateRunProgress`, `up
 - **Benchmark CLI** — measuring throughput; queue-wait vs service-time
 - **Gotcha: engine vitest needs fresh core-execution dist** — why a stale dist fails the engine tests
 - **Gotcha: system-job "No handler" = worker running the wrong edition** — diagnosing edition skew
+- **Gotcha: the engine callback's error name tells you where it died** — `ProgressUpdateError` vs `EngineRunCallbackError`, and why the cause is missing
+- **Gotcha: retrying the failed-job backlog resurrects unfixable zombies** — why a "top failure reasons" count misleads

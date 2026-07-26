@@ -1,4 +1,5 @@
-import { EngineGenericError, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { tryCatchSync } from '@activepieces/core-utils'
+import { CallbackSerializationError, EngineGenericError, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
 
 const TERMINAL_RETRY_CONFIG = {
@@ -29,6 +30,10 @@ export const engineRunApi = {
 }
 
 async function post({ apiUrl, engineToken, path, body, retry }: PostParams): Promise<void> {
+    const { data: serializedBody, error: serializationError } = tryCatchSync(() => JSON.stringify(body))
+    if (serializationError) {
+        throw new CallbackSerializationError({ path, cause: serializationError })
+    }
     const fetchWithRetry = fetchRetry(global.fetch)
     const response = await fetchWithRetry(`${apiUrl}v1/engine/${path}`, {
         method: 'POST',
@@ -36,7 +41,7 @@ async function post({ apiUrl, engineToken, path, body, retry }: PostParams): Pro
             'Content-Type': 'application/json',
             Authorization: `Bearer ${engineToken}`,
         },
-        body: JSON.stringify(body),
+        body: serializedBody,
         ...retry,
     })
     if (!response.ok) {

@@ -137,3 +137,16 @@ export class SSRFBlockedError extends ExecutionError {
         )
     }
 }
+
+export class CallbackSerializationError extends ExecutionError {
+    constructor({ path, cause }: { path: string, cause?: unknown }) {
+        super(
+            CALLBACK_SERIALIZATION_ERROR_NAME,
+            formatMessage(`Step data cannot be converted to JSON, so the ${path} callback could not be sent: ${cause instanceof Error ? cause.message : String(cause)}`),
+            ExecutionErrorType.USER,
+            cause,
+        )
+    }
+}
+
+export const CALLBACK_SERIALIZATION_ERROR_NAME = 'CallbackSerializationError'
