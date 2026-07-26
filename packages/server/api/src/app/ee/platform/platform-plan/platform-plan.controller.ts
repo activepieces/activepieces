@@ -1,4 +1,4 @@
-import { SeekPage } from '@activepieces/core-utils'
+import { SeekPage, tryCatch } from '@activepieces/core-utils'
 import { AdjustUnconsumableFeatureQuantityParams, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -129,10 +129,10 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         billingProvider.get(log).isBillingEnforced(platform.id),
     ])
 
-    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, autoTopUps, consumableFeatures, nonConsumableFeatures, includedSeats, additionalSeats } = overview
+    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, autoTopUps, consumableFeatures, nonConsumableFeatures, includedSeats, additionalSeats, unavailable: billingUnavailable } = overview
 
     const usageWithCredits = usage.creditsRemaining === null
-        ? { ...usage, creditsUsed: (await billingProvider.get(log).getCreditUsage({ platformId: platform.id, startDate: billingPeriodStart, endDate: nextBillingDate })).total }
+        ? { ...usage, creditsUsed: await fetchUnlimitedCreditsUsed({ log, platformId: platform.id, startDate: billingPeriodStart, endDate: nextBillingDate, fallback: usage.creditsUsed }) }
         : usage
 
     return {
@@ -149,9 +149,19 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         nonConsumableFeatures,
         billingPortalAvailable,
         billingEnforced,
+        billingUnavailable,
         includedSeats,
         additionalSeats,
     }
+}
+
+async function fetchUnlimitedCreditsUsed({ log, platformId, startDate, endDate, fallback }: { log: FastifyBaseLogger, platformId: string, startDate: string, endDate: string, fallback: number }): Promise<number> {
+    const { data: creditUsage, error } = await tryCatch(() => billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate }))
+    if (!isNil(error) || isNil(creditUsage)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to aggregate credit usage for an unlimited plan; reporting the cached value')
+        return fallback
+    }
+    return creditUsage.total
 }
 
 const InfoRequest = {

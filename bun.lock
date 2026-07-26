@@ -10659,7 +10659,6 @@
         "simple-git": "3.36.0",
         "socket.io": "4.8.1",
         "sqlite3": "5.1.7",
-        "stripe": "18.2.1",
         "supergateway": "3.4.3",
         "tiny-lru": "11.4.7",
         "tinycolor2": "1.6.0",

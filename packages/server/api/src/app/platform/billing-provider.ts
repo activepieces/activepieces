@@ -13,7 +13,7 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
         return []
     },
     getBillingOverview: async () => {
-        return { ...defaultBillingInfo(), autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null }
+        return { ...defaultBillingInfo(), autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null, unavailable: false }
     },
     createCheckoutSession: async () => {
         return { checkoutUrl: null }
@@ -256,6 +256,7 @@ export type BillingOverview = BillingInfo & {
     nonConsumableFeatures: BillableFeature[]
     includedSeats: number | null
     additionalSeats: number | null
+    unavailable: boolean
 }
 
 export type AdjustUnconsumableFeatureQuantityParams = {

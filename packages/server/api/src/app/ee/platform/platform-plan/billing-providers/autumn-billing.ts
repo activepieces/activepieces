@@ -180,6 +180,10 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             key: getAutumnEnrollLockKey(platformId),
             timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
             fn: async () => {
+                const { autumnCustomerId: replacedCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
+                if (!isNil(replacedCustomerId) && replacedCustomerId !== credentials.autumnCustomerId) {
+                    log.warn({ platform: { id: platformId }, replacedCustomerId, autumnCustomerId: credentials.autumnCustomerId }, 'License activation replaced an existing Autumn customer; the previous subscription is now orphaned and needs manual reconciliation')
+                }
                 await platformPlanService(log).update({ platformId, licenseKey })
                 await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
             },
@@ -208,16 +212,12 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
 })
 
 function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthEnd: string): BillingInfo {
-    const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
-    const activeBaseSubscriptions = baseSubscriptions.filter((subscription) => subscription.status === 'active')
-    const baseSubscription = activeBaseSubscriptions.find((subscription) => subscription.planId !== PlanName.FREE)
-        ?? activeBaseSubscriptions[0]
-        ?? baseSubscriptions[0]
-    // A lifetime plan (e.g. AppSumo) has no recurring price, so Autumn models it as a one-off `purchase`
+    const baseSubscriptions = toBaseSubscriptions(customer)
+    const baseSubscription = selectCurrentBaseSubscription(baseSubscriptions)
     const purchasedPlan = (customer.purchases ?? []).find((purchase) =>
         !isNil(purchase.plan) && !purchase.plan.addOn && purchase.planId !== PlanName.FREE)
     const currentPlan = purchasedPlan ?? baseSubscription
-    const scheduledPlan = baseSubscriptions.find((subscription) => subscription !== baseSubscription)
+    const scheduledPlan = baseSubscriptions.find((subscription) => subscription.status === 'scheduled')
     return {
         planName: currentPlan?.plan?.name ?? null,
         startDate: msToIso(baseSubscription?.currentPeriodStart) ?? monthStart,
@@ -230,14 +230,25 @@ function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthE
     }
 }
 
+function toBaseSubscriptions(customer: GetCustomerResponse) {
+    return customer.subscriptions.filter((subscription) => !subscription.addOn)
+}
+
+function selectCurrentBaseSubscription(baseSubscriptions: ReturnType<typeof toBaseSubscriptions>) {
+    const activeBaseSubscriptions = baseSubscriptions.filter((subscription) => subscription.status === 'active')
+    return activeBaseSubscriptions.find((subscription) => subscription.planId !== PlanName.FREE)
+        ?? activeBaseSubscriptions[0]
+        ?? baseSubscriptions[0]
+}
+
 function toBillableFeatures(customer: GetCustomerResponse): BillableFeature[] {
-    const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
+    const baseSubscriptions = toBaseSubscriptions(customer)
     const trialing = baseSubscriptions.some((subscription) => !isNil(subscription.trialEndsAt) && subscription.trialEndsAt > apDayjs().valueOf())
     if (trialing) {
         return []
     }
-    const active = baseSubscriptions.find((subscription) => subscription.status === 'active')
-    return (active?.plan?.items ?? []).flatMap((item) => {
+    const current = selectCurrentBaseSubscription(baseSubscriptions)
+    return (current?.plan?.items ?? []).flatMap((item) => {
         if (!autumnUtils.isAutumnFeatureId(item.featureId) || item.price?.billingMethod !== 'prepaid' || isNil(item.price.amount)) {
             return []
         }
@@ -392,14 +403,22 @@ async function fetchCredits(log: FastifyBaseLogger, platformId: string): Promise
     return autumnUtils.writeCustomerStateCaches(platformId, customer)
 }
 
+function emptyBillingOverview({ monthStart, monthEnd, unavailable }: { monthStart: string, monthEnd: string, unavailable: boolean }): BillingOverview {
+    return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null, unavailable }
+}
+
 async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string): Promise<BillingOverview> {
     const monthStart = apDayjs().startOf('month').toISOString()
     const monthEnd = apDayjs().endOf('month').toISOString()
     const client = await autumnUtils.resolveClientForPlatform(log, platformId)
     if (isNil(client)) {
-        return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null }
+        return emptyBillingOverview({ monthStart, monthEnd, unavailable: false })
     }
-    const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan', 'payment_method', 'billing_controls.auto_topups.purchase_limit'] })
+    const { data: customer, error } = await tryCatch(() => client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan', 'payment_method', 'billing_controls.auto_topups.purchase_limit'] }))
+    if (!isNil(error) || isNil(customer)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to fetch billing overview; serving an empty overview without caching it')
+        return emptyBillingOverview({ monthStart, monthEnd, unavailable: true })
+    }
     const billableFeatures = toBillableFeatures(customer)
     const overview: BillingOverview = {
         ...toBillingInfo(customer, monthStart, monthEnd),
@@ -407,6 +426,7 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
         autoTopUps: toAutoTopUps(customer),
         consumableFeatures: billableFeatures.filter((feature) => isConsumableAutumnFeature(feature.featureId)),
         nonConsumableFeatures: billableFeatures.filter((feature) => !isConsumableAutumnFeature(feature.featureId)),
+        unavailable: false,
     }
     await distributedStore.put(getBillingOverviewKey(platformId), overview, BILLING_OVERVIEW_TTL_SECONDS)
     return overview

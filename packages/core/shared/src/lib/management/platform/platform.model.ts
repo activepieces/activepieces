@@ -264,6 +264,7 @@ export const PlatformBillingInformation = z.object({
     nonConsumableFeatures: z.array(BillableFeature),
     billingPortalAvailable: z.boolean(),
     billingEnforced: z.boolean(),
+    billingUnavailable: z.boolean(),
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
 })

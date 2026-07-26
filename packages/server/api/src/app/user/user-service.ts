@@ -111,8 +111,8 @@ export const userService = (log: FastifyBaseLogger) => ({
     async countByPlatformId(platformId: string): Promise<number> {
         return userRepo().countBy({ platformId })
     },
-    async countActiveByPlatformId(platformId: string): Promise<number> {
-        return userRepo().countBy({ platformId, status: UserStatus.ACTIVE })
+    async countActiveByPlatformId({ platformId, entityManager }: CountActiveByPlatformIdParams): Promise<number> {
+        return userRepo(entityManager).countBy({ platformId, status: UserStatus.ACTIVE })
     },
     async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -327,6 +327,11 @@ type CreateParams = {
 }
 type GetUsersByIdentityIdParams = {
     identityId: string
+}
+
+type CountActiveByPlatformIdParams = {
+    platformId: string
+    entityManager?: EntityManager
 }
 
 type NewUser = Omit<User, 'created' | 'updated'>

@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LoadingSpinner } from '@/components/custom/spinner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -170,6 +171,15 @@ function BillingPageDetails() {
         )}
       </div>
       <Separator />
+      {info.billingUnavailable && (
+        <Alert variant="warning">
+          <AlertDescription>
+            {t(
+              'Our billing service is temporarily unavailable, so plan and credit details may be out of date. Your flows keep running — we are working on a fix.',
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col gap-6">
         {!isCommunity && (
           <BillingSection

@@ -155,7 +155,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (!await billingProvider.get(log).isBillingEnforced(platformId)) {
             return
         }
-        await platformPlanService(log).getOrCreateForPlatform(platformId)
         const platformPlan = await platformPlanRepo(entityManager)
             .createQueryBuilder('platform_plan')
             .setLock('pessimistic_write')
@@ -212,7 +211,7 @@ function effectiveUsersLimit({ usersLimit, scheduledUsersLimit }: Pick<PlatformP
 
 export async function countUsedSeats({ platformId, log, entityManager }: CountUsedSeatsParams): Promise<SeatBreakdown> {
     const [activeUsers, invitedSeats] = await Promise.all([
-        userService(log).countActiveByPlatformId(platformId),
+        userService(log).countActiveByPlatformId({ platformId, entityManager }),
         countReservedInvites({ platformId, entityManager }),
     ])
     return { activeUsers, invitedSeats, usedSeats: activeUsers + invitedSeats }
