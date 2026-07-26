@@ -253,11 +253,11 @@ type GetOrCreateActivepiecesConfigResponse = {
 
 async function findAvailableChatProviderRow({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
     const chatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
-    const candidate = chatProviders[0] ?? null
-    if (candidate?.provider === AIProviderName.ACTIVEPIECES && await isActivepiecesAiProviderHidden({ platformId, log })) {
-        return null
+    if (!chatProviders.some((chatProvider) => chatProvider.provider === AIProviderName.ACTIVEPIECES)) {
+        return chatProviders[0] ?? null
     }
-    return candidate
+    const activepiecesHidden = await isActivepiecesAiProviderHidden({ platformId, log })
+    return chatProviders.find((chatProvider) => chatProvider.provider !== AIProviderName.ACTIVEPIECES || !activepiecesHidden) ?? null
 }
 
 async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {

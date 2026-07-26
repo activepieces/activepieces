@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -142,6 +143,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             await chatApprovalGate.clearPendingGate({ conversationId })
         }
 
+        await assertChatProviderConfigured({ platformId, log })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({
@@ -268,6 +270,16 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+}
+
+async function assertChatProviderConfigured({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const provider = await aiProviderService(log).getChatProviderName({ platformId })
+    if (isNil(provider)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: platformId, entityType: 'ChatAiProvider' },
+        })
+    }
 }
 
 const CHAT_MESSAGES_PER_WINDOW = 40
