@@ -261,6 +261,7 @@ export const billingQueries = {
       queryKey: billingKeys.projectsUsage(platformId, params),
       queryFn: () => platformBillingApi.getProjectsUsage(params),
       enabled,
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
 };

@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../hooks/billing-hooks';
 
@@ -110,9 +111,12 @@ export const Success = () => {
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center space-y-6">
             <div
-              className={`mx-auto w-20 h-20 ${config.iconBg} rounded-full flex items-center justify-center`}
+              className={cn(
+                'mx-auto w-20 h-20 rounded-full flex items-center justify-center',
+                config.iconBg,
+              )}
             >
-              <IconComponent className={`w-10 h-10 ${config.iconColor}`} />
+              <IconComponent className={cn('w-10 h-10', config.iconColor)} />
             </div>
 
             <div className="space-y-2">
