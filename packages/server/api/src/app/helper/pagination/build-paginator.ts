@@ -26,12 +26,7 @@ export function buildPaginator<Entity extends ObjectLiteral>(
         paginator.setLimit(query.limit)
     }
 
-    if (query.orderBy) {
-        paginator.setCompositeOrderBy(query.orderBy)
-    }
-    else if (query.order) {
-        paginator.setCompositeOrderBy([{ field: 'created', order: toOrder(query.order) }])
-    }
+    paginator.setCompositeOrderBy(query.orderBy ?? [{ field: 'created', order: toOrder(query.order) }])
 
     return paginator
 }

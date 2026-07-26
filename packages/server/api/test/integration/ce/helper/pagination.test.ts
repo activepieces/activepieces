@@ -121,55 +121,20 @@ describe('cursor pagination with duplicate timestamps', () => {
         expect(new Set(ids).size).toBe(15)
     })
 
-    it('treats a cursor with an invalid timestamp value as the first page', async () => {
-        const ctx = await createTestContext(app)
-        await seedFolders(ctx, 5)
-
-        const inner = Buffer.from(JSON.stringify({ created: 'not-a-date', id: 'x' })).toString('base64')
-        const cursor = Buffer.from(`next_${inner}`).toString('base64')
-
-        const response = await ctx.get('/v1/folders', {
-            projectId: ctx.project.id,
-            limit: 10,
-            cursor,
-        })
-
-        expect(response?.statusCode).toBe(StatusCodes.OK)
-        expect(response?.json().data).toHaveLength(5)
-    })
-
     it.each([
-        ['out-of-range date', '2026-13-45T99:99:99'],
-        ['zero date', '0000-00-00T00:00:00'],
-        ['bare digits', '12345'],
-    ])('treats a %s cursor as the first page instead of failing', async (_label, created) => {
+        ['an unparseable timestamp', { created: 'not-a-date', id: 'x' }],
+        ['an out-of-range date', { created: '2026-13-45T99:99:99', id: 'x' }],
+        ['a zero date', { created: '0000-00-00T00:00:00', id: 'x' }],
+        ['bare digits', { created: '12345', id: 'x' }],
+        ['no leading order field', { id: 'zzzzzzzzzzzzzzzzzzzzz' }],
+    ])('treats a cursor carrying %s as the first page', async (_label, payload) => {
         const ctx = await createTestContext(app)
         await seedFolders(ctx, 5)
-
-        const inner = Buffer.from(JSON.stringify({ created, id: 'x' })).toString('base64')
-        const cursor = Buffer.from(`next_${inner}`).toString('base64')
 
         const response = await ctx.get('/v1/folders', {
             projectId: ctx.project.id,
             limit: 10,
-            cursor,
-        })
-
-        expect(response?.statusCode).toBe(StatusCodes.OK)
-        expect(response?.json().data).toHaveLength(5)
-    })
-
-    it('treats a cursor missing leading order fields as the first page', async () => {
-        const ctx = await createTestContext(app)
-        await seedFolders(ctx, 5)
-
-        const inner = Buffer.from(JSON.stringify({ id: 'zzzzzzzzzzzzzzzzzzzzz' })).toString('base64')
-        const cursor = Buffer.from(`next_${inner}`).toString('base64')
-
-        const response = await ctx.get('/v1/folders', {
-            projectId: ctx.project.id,
-            limit: 10,
-            cursor,
+            cursor: encodeCursor(JSON.stringify(payload)),
         })
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
@@ -180,15 +145,16 @@ describe('cursor pagination with duplicate timestamps', () => {
         const ctx = await createTestContext(app)
         await seedFolders(ctx, 5)
 
-        const legacyInner = Buffer.from(`created:${Date.parse(SHARED_CREATED)}`).toString('base64')
-        const legacyCursor = Buffer.from(`next_${legacyInner}`).toString('base64')
-
         const response = await ctx.get('/v1/folders', {
             projectId: ctx.project.id,
             limit: 10,
-            cursor: legacyCursor,
+            cursor: encodeCursor(`created:${Date.parse(SHARED_CREATED)}`),
         })
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
     })
 })
+
+function encodeCursor(inner: string): string {
+    return Buffer.from(`next_${Buffer.from(inner).toString('base64')}`).toString('base64')
+}

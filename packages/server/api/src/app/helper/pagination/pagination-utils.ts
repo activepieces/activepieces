@@ -9,42 +9,6 @@ export function btoa(value: string): string {
     return Buffer.from(value).toString('base64')
 }
 
-export function decodeByType(
-    type: string,
-    value: string,
-): string | number | Date {
-    switch (type) {
-        case 'object':
-        case 'timestamp with time zone':
-        case 'datetime':
-        case 'date': {
-            const timestamp = parseInt(value, 10)
-            if (Number.isNaN(timestamp)) {
-                throw new Error('date column in cursor should be a valid timestamp')
-            }
-            return new Date(timestamp).toISOString()
-        }
-
-        case 'number': {
-            const num = parseFloat(value)
-
-            if (Number.isNaN(num)) {
-                throw new Error('number column in cursor should be a valid number')
-            }
-
-            return num
-        }
-
-        case 'string': {
-            return decodeURIComponent(value)
-        }
-
-        default: {
-            throw new Error(`unknown type in cursor: [${type}]${value}`)
-        }
-    }
-}
-
 const decode = (str: string): string =>
     Buffer.from(str, 'base64').toString('binary')
 const encode = (str: string): string =>

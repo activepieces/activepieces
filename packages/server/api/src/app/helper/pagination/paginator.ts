@@ -6,7 +6,7 @@ import {
     SelectQueryBuilder,
     WhereExpressionBuilder,
 } from 'typeorm'
-import { atob, btoa, decodeByType } from './pagination-utils'
+import { atob, btoa } from './pagination-utils'
 
 export default class Paginator<Entity extends ObjectLiteral> {
     public static readonly NO_LIMIT = -1
@@ -164,7 +164,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
             where.orWhere(new Brackets((subQb) => {
                 for (let j = 0; j < i; j++) {
                     const config = configs[j]
-                    const paramKey = `cursor_eq_${j}_${i}`
+                    const paramKey = `cursor_eq_${j}`
                     subQb.andWhere(`${this.alias}.${config.field} = :${paramKey}`, {
                         [paramKey]: cursors[config.field],
                     })
@@ -259,22 +259,12 @@ export default class Paginator<Entity extends ObjectLiteral> {
     }
 
     private decodeLegacyCursor(cursor: string): CursorParam {
-        const { data } = tryCatchSync(() => {
-            const cursors: CursorParam = {}
-
-            for (const column of atob(cursor).split(',')) {
-                const [key, raw] = column.split(':')
-                const columnDefinition = this.entity.options.columns[key]
-                if (columnDefinition === undefined) {
-                    continue
-                }
-                cursors[key] = decodeByType(columnDefinition.type.toString(), raw)
-            }
-
-            return cursors
-        })
-
-        return data ?? {}
+        const [key, epochMs] = atob(cursor).split(':')
+        const created = new Date(Number(epochMs))
+        if (key !== 'created' || Number.isNaN(created.getTime())) {
+            return {}
+        }
+        return { created: created.toISOString() }
     }
 
     private getColumnName(key: string): string {
