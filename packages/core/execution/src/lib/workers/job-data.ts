@@ -246,6 +246,7 @@ export const ExecuteActionJobData = z.object({
     schemaVersion: z.number(),
     step: z.custom<PieceAction | CodeAction>(),
     piece: z.optional(PiecePackage),
+    expiresAt: z.number().optional(),
     requestId: z.string(),
     webserverId: z.string(),
 })

@@ -231,9 +231,9 @@ export async function executeActionRunAction({
         return {
             content: [{
                 type: 'text',
-                text: `⏳ ${action.displayName} timed out before it finished. Run ID: ${actionRun.id}.`,
+                text: `⏳ ${action.displayName} timed out before it finished. Run ID: ${actionRun.id}. It may have partially completed, so do not re-run it blindly — check the app for a write from this attempt first, or ask the user.`,
             }],
-            structuredContent: { errorSummary: 'The action timed out before it finished.' },
+            structuredContent: { errorSummary: 'The action timed out before it finished and may have partially completed.' },
         }
     }
 

@@ -27,7 +27,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
     )
 
     return {
-        async execute({ workerIndex, log, operationType, operation, timeoutInSeconds, provision }: ExecuteParams): Promise<RuntimeExecutionResult> {
+        async execute({ workerIndex, log, operationType, operation, timeoutInSeconds, expiresAt, provision }: ExecuteParams): Promise<RuntimeExecutionResult> {
             const manager = managers[workerIndex]
             if (isNil(manager)) {
                 throw new ActivepiecesError({
@@ -49,6 +49,18 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 throw provisionError
             }
             const provisionMs = Date.now() - provisionStartedAt
+
+            const runTimeoutInSeconds = remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt })
+            if (runTimeoutInSeconds <= 0) {
+                await manager.release(log)
+                throw new ActivepiecesError({
+                    code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
+                    params: {
+                        standardOutput: '',
+                        standardError: `Caller deadline passed while provisioning (provisionMs=${provisionMs}), the operation was never started`,
+                    },
+                })
+            }
 
             try {
                 let bootMs = 0
@@ -74,7 +86,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                         const runStartedAt = Date.now()
                         const runResult = await wideEvent.timed({
                             name: 'sandboxRun',
-                            fn: () => sandbox.execute(operationType, operation, { timeoutInSeconds }),
+                            fn: () => sandbox.execute(operationType, operation, { timeoutInSeconds: runTimeoutInSeconds }),
                         })
                         runMs = Date.now() - runStartedAt
                         return runResult
@@ -135,6 +147,13 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))
         },
     }
+}
+
+function remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt }: { timeoutInSeconds: number, expiresAt?: number }): number {
+    if (isNil(expiresAt)) {
+        return timeoutInSeconds
+    }
+    return Math.min(timeoutInSeconds, Math.floor((expiresAt - Date.now()) / 1000))
 }
 
 type CreateSandboxRuntimeParams = {

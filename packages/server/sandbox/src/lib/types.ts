@@ -42,6 +42,10 @@ export type ExecuteParams = {
     operationType: EngineOperationType
     operation: EngineOperation
     timeoutInSeconds: number
+    // Absolute epoch ms the caller stops waiting at, for jobs someone blocks on. The run is clamped
+    // to what is left of it once provisioning is done, so a slow queue or a cold piece install eats
+    // the caller's budget instead of leaving a side-effecting action running past their timeout.
+    expiresAt?: number
     provision: ProvisionInput
 }
 

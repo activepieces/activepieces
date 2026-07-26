@@ -5,12 +5,15 @@ import { getPiecePackageWithoutArchive } from '../pieces/metadata/piece-metadata
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { ActionRunOutcome, deriveActionRunOutcome, EngineActionResponse } from './action-run-outcome'
 
-// The worker caps the sandbox at ACTION_RUN_ACTION_TIMEOUT_SECONDS (120s) and answers with a clean
-// TIMEOUT. This watcher budget sits just above it so the sandbox normally wins and the watcher is
-// only the backstop for a worker that never answers at all (killed mid-run by a deploy or an OOM).
-// Without it the caller would inherit the shared 5-minute WATCHER_SAFETY_TIMEOUT_MS, blocking an MCP
-// tool call or a chat turn for far longer than the 120s budget those callers document.
-const ACTION_RUN_WATCHER_TIMEOUT_MS = 130 * 1000
+// The budget is end-to-end and belongs to the caller: it is stamped onto the job as an absolute
+// deadline, so queueing, resolution and provisioning all spend the same 120s the sandbox does, and
+// the worker kills the run at the deadline instead of starting a fresh 120s clock of its own. A
+// watcher that expired first would hand the caller a TIMEOUT while the action kept running and
+// writing, and the retry that invites duplicates the write. The grace only has to cover the
+// sandbox kill and the pubsub hop back, so the watcher stays the backstop for a worker that never
+// answers at all (killed mid-run by a deploy or an OOM).
+const ACTION_RUN_BUDGET_MS = 120 * 1000
+const WATCHER_GRACE_MS = 10 * 1000
 
 export const actionRunService = (log: FastifyBaseLogger) => ({
     async run({ projectId, platformId, step }: RunParams): Promise<ActionRunResult> {
@@ -28,7 +31,8 @@ export const actionRunService = (log: FastifyBaseLogger) => ({
             platformId,
             step,
             piece,
-        }, log, undefined, ACTION_RUN_WATCHER_TIMEOUT_MS))
+            expiresAt: Date.now() + ACTION_RUN_BUDGET_MS,
+        }, log, undefined, ACTION_RUN_BUDGET_MS + WATCHER_GRACE_MS))
 
         const outcome = deriveActionRunOutcome({ result })
         log.info({ actionRun: { id, status: outcome.status } }, '[actionRunService#run] completed')

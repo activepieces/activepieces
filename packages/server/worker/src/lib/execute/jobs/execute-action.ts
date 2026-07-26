@@ -4,11 +4,10 @@ import { DEFAULT_MCP_DATA, EngineOperationType, EngineResponseStatus, ExecuteAct
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 
-// Action-run actions run synchronously while the caller waits on the API-side watcher, whose
-// safety timeout is 5 minutes (WATCHER_SAFETY_TIMEOUT_MS). The sandbox timeout must stay well
-// below that so a long-running step returns a clean TIMEOUT instead of the watcher giving up
-// with an INTERNAL_ERROR. 120s matches the user-facing budget documented across the chat/MCP
-// tooling and is the effective limit the old temp-flow path exposed via polling.
+// The caller's `expiresAt` is the real budget (see actionRunService) and the runtime clamps the run
+// to whatever is left of it after provisioning. This cap is the worker's own ceiling for a deadline
+// it cannot trust — a missing one from an older API, or one inflated by clock skew — and matches the
+// user-facing budget documented across the chat/MCP tooling.
 const ACTION_RUN_ACTION_TIMEOUT_SECONDS = 120
 
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
@@ -35,6 +34,7 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                     timeoutInSeconds: ACTION_RUN_ACTION_TIMEOUT_SECONDS,
                 },
                 timeoutInSeconds: ACTION_RUN_ACTION_TIMEOUT_SECONDS,
+                expiresAt: data.expiresAt,
                 provision: resolved.provision,
             })
         })
