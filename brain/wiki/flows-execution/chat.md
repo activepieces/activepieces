@@ -15,7 +15,7 @@ The chat LLM loop runs in the **worker**, not the API. Send path: `chat-controll
 - Tool logic in `ee/chat/`; shared tool phase/classification in `core/shared/.../ee/chat/`.
 
 ### How it works
-- **Tools**: local (`ap_execute_action`, `ap_select_project`, `ap_load_guide`, `ap_fetch_url`, `ap_set_phase`…), display cards (`ap_show_connection_picker`, `ap_show_questions`, `ap_show_quick_replies`…), and project-scoped MCP tools.
+- **Tools**: local (`ap_execute_action`, `ap_select_project`, `ap_load_guide`, `ap_fetch_url`, `ap_set_phase`…), display cards (`ap_show_connection_picker`, `ap_show_questions`, `ap_show_quick_replies`…), and project-scoped MCP tools. Each tool is wired across up to four files — see [gotcha: a chat tool lives in four files](./gotcha-a-chat-tool-lives-in-four-files-and-losing-the-worker-one-fails-silently.md).
 - **Two-phase gating** — `discovery` vs `build`; a denylist hides build-only tools during discovery to shrink the surface. `ap_set_phase` flips it; auto-widens if a build tool fires.
 - **Gates** (Redis pub/sub, 5-min timeout): display-tool cards, the [action-run](./action-run.md) action preview, and the test-flow write gate. Flow build + publish are NOT gated.
 - Web access: provider-native search rides the configured LLM credential (Anthropic `web_search_20250305`, Google grounding, OpenRouter `web` plugin); `ap_fetch_url` works everywhere.
