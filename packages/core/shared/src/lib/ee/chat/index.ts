@@ -357,6 +357,8 @@ export type BatchProgressData = {
 export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
-export { chatToolClassification } from './tool-classification'
+export { chatToolClassification, type StepEffect } from './tool-classification'
+export { actionEffect, type ActionEffect, type ActionEffectKind } from './action-effect'
+export { chatConsent, type ConsentDecision } from './chat-consent'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'

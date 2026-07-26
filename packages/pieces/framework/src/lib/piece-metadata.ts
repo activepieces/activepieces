@@ -52,9 +52,23 @@ export type PieceBase = {
 export const Audience = z.enum(['human', 'ai', 'both'])
 export type Audience = z.infer<typeof Audience>
 
+export const ActionEffectDeclaration = z.enum([
+  'read',
+  'internal_write',
+  'internal_destructive',
+  'external_write',
+  'outward_send',
+  'destructive',
+  'financial',
+  'input_dependent',
+])
+export type ActionEffectDeclaration = z.infer<typeof ActionEffectDeclaration>
+
 export const AiMetadata = z.object({
   description: z.optional(z.string()),
   idempotent: z.optional(z.boolean()),
+  effect: z.optional(ActionEffectDeclaration),
+  recipientProp: z.optional(z.string()),
 })
 export type AiMetadata = z.infer<typeof AiMetadata>
 

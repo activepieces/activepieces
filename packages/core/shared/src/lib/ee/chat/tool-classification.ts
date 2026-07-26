@@ -1,9 +1,18 @@
+import { FlowActionType, flowStructureUtil, Step } from '@activepieces/core-execution'
+import { isNil } from '@activepieces/core-utils'
+import { ActionEffect, actionEffect, ActionEffectKind } from './action-effect'
+import { chatConsent } from './chat-consent'
+
 const READ_ACTION_PATTERNS = ['list', 'get', 'search', 'find', 'fetch', 'read', 'count', 'check', 'verify', 'lookup']
 const WRITE_ACTION_PATTERNS = ['delete', 'remove', 'send', 'post', 'publish', 'create', 'update', 'write', 'insert', 'reply', 'forward']
 const READ_ONLY_HTTP_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
-// Pieces without a structured success flag signal failure with a leading status glyph.
 const FAILURE_TEXT_PREFIXES = ['❌', '⏳']
+
+const RECIPIENT_INPUT_KEYS = ['receiver', 'to', 'recipients', 'recipient', 'to_email', 'send_to', 'email', 'channel', 'channel_id', 'phone_number']
+const MAX_RECIPIENTS_ON_CARD = 3
+
+const CODE_REACHES_OUTSIDE = /\b(fetch|axios|XMLHttpRequest|WebSocket|child_process|process\.env)\b|https?\.request|require\s*\(|import\s*\(/
 
 function hasFailureTextPrefix(text: string): boolean {
     return FAILURE_TEXT_PREFIXES.some((prefix) => text.startsWith(prefix))
@@ -14,29 +23,22 @@ function actionNameMatchesPatterns({ actionName, patterns }: { actionName: strin
     return patterns.some((pattern) => words.includes(pattern))
 }
 
-function requiresActionPreview({ actionName, input, needsConfirmation, tainted }: {
+function requiresActionPreview({ pieceName, actionName, input, needsConfirmation, tainted, declaredEffect }: {
+    pieceName?: string
     actionName: string
     input?: Record<string, unknown>
     needsConfirmation?: boolean
     tainted?: boolean
+    declaredEffect?: string
 }): boolean {
-    // Raw HTTP: skip the gate only for a provably read-only method (GET/HEAD/OPTIONS). A mutating
-    // method (POST/PUT/PATCH/DELETE) — or an unknown/unspecified one — must be confirmed, so chat
-    // can't silently change external systems via custom_api_call.
-    if (actionName === 'custom_api_call') {
-        const method = typeof input?.['method'] === 'string' ? input['method'].toUpperCase() : undefined
-        return method === undefined || !READ_ONLY_HTTP_METHODS.includes(method)
+    const effect = actionEffect.resolve({ pieceName, actionName, input, declaredEffect })
+    if (tainted === true) {
+        return !actionEffect.isRead(effect.kind)
     }
-
-    const isRead = actionNameMatchesPatterns({ actionName, patterns: READ_ACTION_PATTERNS })
-    const isWrite = actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
-
-    if (isWrite) return true
-    // Untrusted content in the turn: gate anything not provably read-only, ignoring needsConfirmation
-    // (an injection could have set it false).
-    if (tainted) return !isReadOnlyActionCall({ actionName, input })
-    if (isRead) return false
-    return needsConfirmation ?? true
+    if (needsConfirmation === true) {
+        return true
+    }
+    return chatConsent.decide({ kind: effect.kind }) !== 'allow'
 }
 
 function isReadActionName(actionName: string): boolean {
@@ -44,17 +46,12 @@ function isReadActionName(actionName: string): boolean {
         && !actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
 }
 
-// custom_api_call carries no read/write verb in its name, so name-based classification
-// wrongly blocks a read-only GET. Treat it as read-only when its HTTP method is safe.
-function isReadOnlyActionCall({ actionName, input }: { actionName: string, input?: Record<string, unknown> }): boolean {
-    if (isReadActionName(actionName)) {
-        return true
-    }
-    if (actionName === 'custom_api_call') {
+function isReadOnlyActionCall({ pieceName, actionName, input }: { pieceName?: string, actionName: string, input?: Record<string, unknown> }): boolean {
+    if (actionName === 'custom_api_call' && isNil(pieceName)) {
         const method = typeof input?.['method'] === 'string' ? input['method'].toUpperCase() : undefined
-        return method === undefined || READ_ONLY_HTTP_METHODS.includes(method)
+        return !isNil(method) && READ_ONLY_HTTP_METHODS.includes(method)
     }
-    return false
+    return actionEffect.isRead(actionEffect.resolve({ pieceName, actionName, input }).kind)
 }
 
 function isWriteActionName(actionName: string): boolean {
@@ -68,6 +65,104 @@ function readOnlyRejection(actionName: string): { success: false, error: string 
     }
 }
 
+function renderStaticRecipientValue(value: unknown): string | undefined {
+    if (typeof value === 'string') {
+        const trimmed = value.trim()
+        return trimmed.length > 0 && !trimmed.includes('{{') ? trimmed : undefined
+    }
+    if (Array.isArray(value) && value.length > 0) {
+        const items = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0 && !item.includes('{{'))
+        if (items.length !== value.length) {
+            return undefined
+        }
+        const shown = items.slice(0, MAX_RECIPIENTS_ON_CARD).join(', ')
+        return items.length > MAX_RECIPIENTS_ON_CARD
+            ? `${shown} (+${items.length - MAX_RECIPIENTS_ON_CARD} more)`
+            : shown
+    }
+    return undefined
+}
+
+function deriveStaticRecipient({ input, recipientProp }: { input?: Record<string, unknown>, recipientProp?: string }): string | undefined {
+    if (isNil(input)) {
+        return undefined
+    }
+    const keys = isNil(recipientProp) ? RECIPIENT_INPUT_KEYS : [recipientProp, ...RECIPIENT_INPUT_KEYS]
+    for (const key of keys) {
+        const rendered = renderStaticRecipientValue(input[key])
+        if (!isNil(rendered)) {
+            return rendered
+        }
+    }
+    return undefined
+}
+
+function codeEffect({ code, stepName, displayName }: { code: string, stepName: string, displayName: string }): StepEffect {
+    const reachesOutside = CODE_REACHES_OUTSIDE.test(code)
+    return {
+        stepName,
+        displayName,
+        effect: { kind: reachesOutside ? 'input_dependent' : 'internal_write', source: 'heuristic' },
+        detail: reachesOutside ? 'custom code that can reach outside' : 'custom code, self-contained',
+        opaque: reachesOutside,
+    }
+}
+
+function codeStepEffect(step: Step): StepEffect {
+    return codeEffect({
+        code: typeof step.settings.sourceCode?.code === 'string' ? step.settings.sourceCode.code : '',
+        stepName: step.name,
+        displayName: step.displayName,
+    })
+}
+
+function stepEffectOf(step: Step): StepEffect {
+    if (step.type === FlowActionType.CODE) {
+        return codeStepEffect(step)
+    }
+    if (step.type !== FlowActionType.PIECE || typeof step.settings.actionName !== 'string') {
+        return {
+            stepName: step.name,
+            displayName: step.displayName,
+            effect: { kind: 'read', source: 'fallback' },
+            detail: 'no effect outside Activepieces',
+            opaque: false,
+        }
+    }
+    const pieceName = typeof step.settings.pieceName === 'string' ? step.settings.pieceName : undefined
+    const actionName = step.settings.actionName
+    const effect = actionEffect.resolve({ pieceName, actionName, input: step.settings.input })
+    const pieceLabel = isNil(pieceName) ? '' : pieceName.replace('@activepieces/piece-', '')
+    const recipient = deriveStaticRecipient({ input: step.settings.input, recipientProp: effect.recipientProp })
+    return {
+        stepName: step.name,
+        displayName: step.displayName,
+        effect,
+        detail: pieceLabel.length > 0 ? `${pieceLabel} · ${actionName}` : actionName,
+        ...(isNil(recipient) ? {} : { recipient }),
+        opaque: effect.kind === 'input_dependent',
+    }
+}
+
+function flowStepEffects(trigger: Step): StepEffect[] {
+    return flowStructureUtil.getAllSteps(trigger)
+        .map(stepEffectOf)
+        .filter((step) => !actionEffect.isInternal(step.effect.kind))
+}
+
+function stepEffectsForStep({ trigger, stepName }: { trigger: Step, stepName: string }): StepEffect[] {
+    const target = flowStructureUtil.getAllSteps(trigger).find((step) => step.name === stepName)
+    if (isNil(target)) {
+        return flowStepEffects(trigger)
+    }
+    const effect = stepEffectOf(target)
+    return actionEffect.isInternal(effect.effect.kind) ? [] : [effect]
+}
+
+function effectKindsOf(steps: StepEffect[]): ActionEffectKind[] {
+    return steps.map((step) => step.effect.kind)
+}
+
 export const chatToolClassification = {
     requiresActionPreview,
     isReadActionName,
@@ -75,4 +170,18 @@ export const chatToolClassification = {
     isWriteActionName,
     readOnlyRejection,
     hasFailureTextPrefix,
+    stepEffectOf,
+    codeEffect,
+    flowStepEffects,
+    stepEffectsForStep,
+    effectKindsOf,
+}
+
+export type StepEffect = {
+    stepName: string
+    displayName: string
+    effect: ActionEffect
+    detail: string
+    recipient?: string
+    opaque: boolean
 }

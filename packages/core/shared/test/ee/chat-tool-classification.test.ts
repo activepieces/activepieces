@@ -87,8 +87,13 @@ describe('chatToolClassification.requiresActionPreview — custom_api_call', () 
 
 describe('chatToolClassification.requiresActionPreview — taint (untrusted content in turn)', () => {
     it('forces the gate for an action the model marked needsConfirmation:false once tainted', () => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing', needsConfirmation: false })).toBe(false)
+        expect(chatToolClassification.requiresActionPreview({ pieceName: 'google-sheets', actionName: 'get_rows', needsConfirmation: false })).toBe(false)
+        expect(chatToolClassification.requiresActionPreview({ pieceName: 'google-sheets', actionName: 'get_rows', needsConfirmation: false, tainted: true })).toBe(false)
         expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing', needsConfirmation: false, tainted: true })).toBe(true)
+    })
+
+    it('gates an unclassifiable action even when the model says it is safe', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing', needsConfirmation: false })).toBe(true)
     })
 
     it('still skips the gate for a provably read-only action when tainted', () => {

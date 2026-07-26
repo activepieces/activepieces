@@ -459,27 +459,17 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         eventEmitter,
         getProjectId: () => projectState.projectId,
     })
-    const mcpTools = chatWorkerTools.wrapTestFlowGate({
-        mcpTools: chatMcpClient.withToolTimeouts({
-            mcpToolSet,
-            brokenConnectors,
-            getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
-            saveLargeResult: async ({ json, fileName }) => {
-                const { data: saved } = await tryCatch(() => ctx.apiClient.saveChatFile({
-                    platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
-                    ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
-                }))
-                return saved?.fileId ?? null
-            },
-        }),
-        checkFlowWrites: async (flowId) => {
-            const response = await ctx.apiClient.executeChatTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, conversationId })
-            return response.result
+    const mcpTools = chatMcpClient.withToolTimeouts({
+        mcpToolSet,
+        brokenConnectors,
+        getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
+        saveLargeResult: async ({ json, fileName }) => {
+            const { data: saved } = await tryCatch(() => ctx.apiClient.saveChatFile({
+                platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
+                ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
+            }))
+            return saved?.fileId ?? null
         },
-        waitForApproval,
-        storePendingGate,
-        eventEmitter,
-        log,
     })
     const emailTools = emailEnabled && !dryRun && !discoveryOnly
         ? chatWorkerTools.createEmailTools({
@@ -491,7 +481,25 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         })
         : {}
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    return chatWorkerTools.wrapWithConsent({
+        tools: allTools,
+        previewFlowEffects: async ({ flowId, stepName }) => {
+            const response = await ctx.apiClient.executeChatTool({ toolName: '__flow_effect_preview', toolInput: { flowId, ...spreadIfDefined('stepName', stepName) }, platformId, userId, conversationId })
+            return response.result
+        },
+        checkRememberedConsent: async ({ signature }) => {
+            const response = await ctx.apiClient.executeChatTool({ toolName: '__consent_check', toolInput: { signature }, platformId, userId, conversationId })
+            return isObject(response.result) && response.result['approved'] === true
+        },
+        rememberConsent: async ({ signature }) => {
+            await ctx.apiClient.executeChatTool({ toolName: '__consent_remember', toolInput: { signature }, platformId, userId, conversationId })
+        },
+        waitForApproval,
+        storePendingGate,
+        eventEmitter,
+        log,
+    }) as Record<string, typeof localTools[keyof typeof localTools]>
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {

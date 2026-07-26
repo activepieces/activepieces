@@ -12,6 +12,8 @@ const CANCEL_KEY_PREFIX = 'chat-cancel:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
 const PENDING_GATE_PREFIX = 'chat-pending-gate:'
+const CONSENT_PREFIX = 'chat-consent:'
+const CONSENT_TTL_SECONDS = 24 * 60 * 60
 
 function decisionKey(gateId: string): string {
     return `${KEY_PREFIX}${gateId}`
@@ -151,6 +153,21 @@ async function clearPendingGate({ conversationId }: { conversationId: string }):
     await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
 }
 
+async function rememberConsent({ conversationId, signature }: {
+    conversationId: string
+    signature: string
+}): Promise<void> {
+    await distributedStore.put(`${CONSENT_PREFIX}${conversationId}:${signature}`, { approved: true }, CONSENT_TTL_SECONDS)
+}
+
+async function hasRememberedConsent({ conversationId, signature }: {
+    conversationId: string
+    signature: string
+}): Promise<boolean> {
+    const stored = await distributedStore.get<{ approved: boolean }>(`${CONSENT_PREFIX}${conversationId}:${signature}`)
+    return stored?.approved === true
+}
+
 export const chatApprovalGate = {
     resolveGate,
     checkDecision,
@@ -165,6 +182,8 @@ export const chatApprovalGate = {
     storePendingGate,
     getPendingGate,
     clearPendingGate,
+    rememberConsent,
+    hasRememberedConsent,
 }
 
 type GateDecision = {

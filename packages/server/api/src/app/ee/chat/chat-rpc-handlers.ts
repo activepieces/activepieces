@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -490,26 +490,40 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             }
             return { result: { success: true } }
         }
-        if (input.toolName === '__flow_write_check') {
-            const flowId = input.toolInput.flowId
+        if (input.toolName === '__consent_check' || input.toolName === '__consent_remember') {
+            const { signature } = input.toolInput
+            if (typeof signature !== 'string' || typeof input.conversationId !== 'string') {
+                return { result: { approved: false } }
+            }
+            if (input.toolName === '__consent_remember') {
+                await chatApprovalGate.rememberConsent({ conversationId: input.conversationId, signature })
+                return { result: { remembered: true } }
+            }
+            const approved = await chatApprovalGate.hasRememberedConsent({ conversationId: input.conversationId, signature })
+            return { result: { approved } }
+        }
+        if (input.toolName === '__flow_effect_preview') {
+            const { flowId, stepName } = input.toolInput
             if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {
-                return { result: { hasWrites: false } }
+                return { result: { resolved: false, effects: [] } }
             }
             const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
             if (isNil(conversation.projectId)) {
-                return { result: { hasWrites: false } }
+                return { result: { resolved: false, effects: [] } }
             }
             const flow = await flowService(log).getOnePopulated({ id: flowId, projectId: conversation.projectId })
             if (isNil(flow)) {
-                return { result: { hasWrites: false } }
+                return { result: { resolved: false, effects: [] } }
             }
-            const writeSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
-                .filter((step) => step.type === FlowActionType.PIECE
-                    && typeof step.settings.actionName === 'string'
-                    && chatToolClassification.isWriteActionName(step.settings.actionName))
-                .map((step) => step.displayName)
-            log.info({ flow: { id: flowId }, hasWrites: writeSteps.length > 0, writeStepCount: writeSteps.length }, '[chatRpc#executeChatTool] Flow write check')
-            return { result: { hasWrites: writeSteps.length > 0, flowName: flow.version.displayName, writeSteps } }
+            const effects = typeof stepName === 'string'
+                ? chatToolClassification.stepEffectsForStep({ trigger: flow.version.trigger, stepName })
+                : chatToolClassification.flowStepEffects(flow.version.trigger)
+            log.info({
+                flow: { id: flowId },
+                stepName: typeof stepName === 'string' ? stepName : undefined,
+                effectKinds: chatToolClassification.effectKindsOf(effects),
+            }, '[chatRpc#executeChatTool] Flow effect preview')
+            return { result: { resolved: true, flowName: flow.version.displayName, effects } }
         }
         if (input.toolName === '__get_available_connections') {
             const { pieceName } = input.toolInput

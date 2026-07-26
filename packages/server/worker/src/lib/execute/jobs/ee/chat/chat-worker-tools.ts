@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, ToolProgressEvent } from '@activepieces/shared'
+import { actionEffect, ActionEffectKind, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -1291,66 +1291,178 @@ function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, u
     return typeof tool['execute'] === 'function'
 }
 
-function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePendingGate, eventEmitter, log }: {
-    mcpTools: Record<string, unknown>
-    checkFlowWrites: (flowId: string) => Promise<unknown>
+function describeEffects(effects: StepEffect[]): string {
+    return effects
+        .map((step) => {
+            const recipient = isNil(step.recipient) ? '' : ` → ${step.recipient}`
+            return `${step.displayName} (${step.detail}${recipient}) — ${chatConsent.describeEffect(step.effect.kind)}`
+        })
+        .join('; ')
+}
+
+function consentScopeOf({ toolName, args }: { toolName: string, args: unknown }): string | undefined {
+    if (!isObject(args)) {
+        return undefined
+    }
+    const scopeKey = CONSENT_SCOPE_KEYS[toolName]
+    if (isNil(scopeKey)) {
+        return toolName
+    }
+    const value = args[scopeKey]
+    return typeof value === 'string' ? value : undefined
+}
+
+async function resolveGatedEffects({ toolName, args, previewFlowEffects, log }: {
+    toolName: string
+    args: unknown
+    previewFlowEffects: (params: { flowId: string, stepName?: string }) => Promise<unknown>
+    log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
+}): Promise<{ effects: StepEffect[], flowName?: string, resolved: boolean }> {
+    const staticKind = STATIC_TOOL_EFFECTS[toolName]
+    if (!isNil(staticKind)) {
+        return {
+            effects: [{
+                stepName: toolName,
+                displayName: STATIC_TOOL_LABELS[toolName] ?? toolName,
+                effect: { kind: staticKind, source: 'catalog' },
+                detail: 'Activepieces',
+                opaque: false,
+            }],
+            resolved: true,
+        }
+    }
+    if (toolName === 'ap_run_code') {
+        const code = isObject(args) && typeof args['code'] === 'string' ? args['code'] : ''
+        const recipe = isObject(args) && Array.isArray(args['recipe'])
+            ? args['recipe'].filter((line): line is string => typeof line === 'string').join('; ')
+            : ''
+        const effect = chatToolClassification.codeEffect({
+            code,
+            stepName: 'code',
+            displayName: recipe.length > 0 ? recipe : 'Run code',
+        })
+        return { effects: actionEffect.isInternal(effect.effect.kind) ? [] : [effect], resolved: true }
+    }
+    const flowId = isObject(args) && typeof args['flowId'] === 'string' ? args['flowId'] : undefined
+    if (isNil(flowId)) {
+        return { effects: [], resolved: false }
+    }
+    const stepName = isObject(args) && typeof args['stepName'] === 'string' ? args['stepName'] : undefined
+    const { data: preview, error } = await tryCatch(() => previewFlowEffects({ flowId, ...spreadIfDefined('stepName', stepName) }))
+    if (error || !isObject(preview) || preview['resolved'] !== true) {
+        log?.warn({ error, flow: { id: flowId }, tool: { name: toolName } }, 'Effect preview failed, gating conservatively')
+        return { effects: [], resolved: false }
+    }
+    const effects = Array.isArray(preview['effects']) ? preview['effects'].filter(isStepEffect) : []
+    return {
+        effects,
+        ...(typeof preview['flowName'] === 'string' ? { flowName: preview['flowName'] } : {}),
+        resolved: true,
+    }
+}
+
+function isStepEffect(value: unknown): value is StepEffect {
+    return isObject(value)
+        && typeof value['stepName'] === 'string'
+        && typeof value['displayName'] === 'string'
+        && isObject(value['effect'])
+        && typeof value['effect']['kind'] === 'string'
+}
+
+function gateLabelFor({ toolName, flowName, effects, resolved }: {
+    toolName: string
+    flowName?: string
+    effects: StepEffect[]
+    resolved: boolean
+}): string {
+    const target = isNil(flowName) ? 'this automation' : `"${flowName}"`
+    const intro = CONSENT_INTROS[toolName] ?? 'Run this'
+    if (!resolved) {
+        return `${intro} ${target} — we could not check what it will touch`
+    }
+    const summary = effects
+        .map((step) => {
+            const recipient = isNil(step.recipient) ? '' : ` → ${step.recipient}`
+            return `${step.displayName}${recipient}`
+        })
+        .join(', ')
+    return summary.length > 0 ? `${intro} ${target} — performs: ${summary}` : `${intro} ${target}`
+}
+
+function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
+    tools: Record<string, unknown>
+    previewFlowEffects: (params: { flowId: string, stepName?: string }) => Promise<unknown>
+    checkRememberedConsent: (params: { signature: string }) => Promise<boolean>
+    rememberConsent: (params: { signature: string }) => Promise<void>
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     eventEmitter: ChatEventEmitter
     log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
 }): Record<string, unknown> {
-    const testFlow = mcpTools['ap_test_flow']
-    if (!isObject(testFlow) || !toolHasExecute(testFlow)) {
-        return mcpTools
-    }
-    const originalExecute = testFlow.execute.bind(testFlow)
-    const wrapped = Object.assign({}, testFlow, {
-        execute: async (args: unknown, options?: ToolExecutionOptions) => {
-            const flowId = isObject(args) && typeof args['flowId'] === 'string' ? args['flowId'] : undefined
-            const gateId = options?.toolCallId
-            if (flowId && gateId) {
-                const { data: check, error } = await tryCatch(() => checkFlowWrites(flowId))
-                if (error) {
-                    log?.warn({ error, flow: { id: flowId } }, 'ap_test_flow write-check failed, running test without confirmation gate')
+    const wrapped: Record<string, unknown> = { ...tools }
+    for (const toolName of CONSENT_GATED_TOOL_NAMES) {
+        const tool = tools[toolName]
+        if (!isObject(tool) || !toolHasExecute(tool)) {
+            continue
+        }
+        const originalExecute = tool.execute.bind(tool)
+        wrapped[toolName] = Object.assign({}, tool, {
+            execute: async (args: unknown, options?: ToolExecutionOptions) => {
+                const gateId = options?.toolCallId
+                if (isNil(gateId)) {
+                    return originalExecute(args, options)
                 }
-                else if (isObject(check) && check['hasWrites'] === true) {
-                    const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
-                    const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
-                    const gateLabel = writeSteps.length > 0
-                        ? `Run a live test of "${flowName}" — performs: ${writeSteps.join(', ')}`
-                        : `Run a live test of "${flowName}"`
-                    // Render the confirmation card in the live session (and persist it for refresh).
-                    // Without the emit the gate would block silently until the approval timeout.
-                    eventEmitter.emitActionPreview({
-                        toolCallId: gateId,
-                        pieceName: '',
-                        actionName: 'ap_test_flow',
-                        actionDisplayName: gateLabel,
-                        input: {},
-                        isBatch: false,
-                    })
-                    await tryCatch(() => storePendingGate({
-                        gateId,
-                        toolName: 'ap_test_flow',
-                        displayName: gateLabel,
-                        toolInput: { flowId, writeSteps },
-                    }))
-                    log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, flow: { id: flowId }, writeStepCount: writeSteps.length }, 'Test-flow write gate opened, awaiting approval')
-                    const decision = await waitForApproval({ gateId })
-                    log?.info?.({ gate: { id: gateId }, tool: { name: 'ap_test_flow' }, decision: decision.outcome }, 'Test-flow write gate resolved')
-                    if (decision.outcome !== 'approved') {
-                        if (decision.outcome === 'timeout') {
-                            return { content: [{ type: 'text', text: gateNoResponseMessage('live-test approval') }] }
-                        }
-                        const stepList = writeSteps.length > 0 ? ` It performs real actions: ${writeSteps.join(', ')}.` : ''
-                        return { content: [{ type: 'text', text: `Live test cancelled by the user.${stepList} The user declined a real run that would perform these actions. Do not run it; offer to test with mock trigger data instead, or ask whether to proceed.` }] }
+                const { effects, flowName, resolved } = await resolveGatedEffects({ toolName, args, previewFlowEffects, log })
+                const kinds = chatToolClassification.effectKindsOf(effects)
+                const decisions = resolved
+                    ? kinds.map((kind) => chatConsent.decide({ kind }))
+                    : [chatConsent.decide({ kind: 'unknown' })]
+                if (!decisions.includes('ask') && !decisions.includes('deny')) {
+                    return originalExecute(args, options)
+                }
+                const scope = consentScopeOf({ toolName, args }) ?? 'unknown'
+                const signature = chatConsent.signature({ toolName, scope, kinds })
+                const reusable = resolved && chatConsent.isReusable(kinds)
+                if (reusable) {
+                    const remembered = await tryCatch(() => checkRememberedConsent({ signature }))
+                    if (remembered.data === true) {
+                        log?.info?.({ tool: { name: toolName }, gate: { id: gateId } }, 'Consent reused from earlier approval in this conversation')
+                        return originalExecute(args, options)
                     }
                 }
-            }
-            return originalExecute(args, options)
-        },
-    })
-    return { ...mcpTools, ap_test_flow: wrapped }
+                const gateLabel = gateLabelFor({ toolName, flowName, effects, resolved })
+                eventEmitter.emitActionPreview({
+                    toolCallId: gateId,
+                    pieceName: '',
+                    actionName: toolName,
+                    actionDisplayName: gateLabel,
+                    input: {},
+                    isBatch: false,
+                })
+                await tryCatch(() => storePendingGate({
+                    gateId,
+                    toolName,
+                    displayName: gateLabel,
+                    toolInput: { scope, effects: effects.map((step) => step.stepName) },
+                }))
+                log?.info?.({ tool: { name: toolName }, gate: { id: gateId }, effectKinds: kinds, resolved }, 'Consent gate opened, awaiting approval')
+                const decision = await waitForApproval({ gateId })
+                log?.info?.({ tool: { name: toolName }, gate: { id: gateId }, decision: decision.outcome }, 'Consent gate resolved')
+                if (decision.outcome !== 'approved') {
+                    if (decision.outcome === 'timeout') {
+                        return { content: [{ type: 'text', text: gateNoResponseMessage(CONSENT_TIMEOUT_LABELS[toolName] ?? 'approval') }] }
+                    }
+                    const detail = effects.length > 0 ? ` It would have: ${describeEffects(effects)}.` : ''
+                    return { content: [{ type: 'text', text: `The user declined this.${detail} Do not run it, and do not retry the same call. Say what you skipped and offer a path that avoids the real effect.` }] }
+                }
+                if (reusable) {
+                    await tryCatch(() => rememberConsent({ signature }))
+                }
+                return originalExecute(args, options)
+            },
+        })
+    }
+    return wrapped
 }
 
 function createThinkingTools(): ToolSet {
@@ -1443,6 +1555,57 @@ export type TaintState = { tainted: boolean }
 export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
 
+const CONSENT_GATED_TOOL_NAMES = [
+    'ap_test_flow',
+    'ap_test_step',
+    'ap_retry_run',
+    'ap_run_code',
+    'ap_delete_flow',
+    'ap_delete_table',
+    'ap_delete_records',
+]
+
+const STATIC_TOOL_EFFECTS: Record<string, ActionEffectKind> = {
+    ap_delete_flow: 'internal_destructive',
+    ap_delete_table: 'internal_destructive',
+    ap_delete_records: 'internal_destructive',
+}
+
+const STATIC_TOOL_LABELS: Record<string, string> = {
+    ap_delete_flow: 'Delete this automation',
+    ap_delete_table: 'Delete this table and everything in it',
+    ap_delete_records: 'Delete these records',
+}
+
+const CONSENT_SCOPE_KEYS: Record<string, string> = {
+    ap_test_flow: 'flowId',
+    ap_test_step: 'flowId',
+    ap_retry_run: 'flowId',
+    ap_delete_flow: 'flowId',
+    ap_delete_table: 'tableId',
+    ap_delete_records: 'tableId',
+}
+
+const CONSENT_INTROS: Record<string, string> = {
+    ap_test_flow: 'Run a live test of',
+    ap_test_step: 'Run this step for real in',
+    ap_retry_run: 'Re-run a real run of',
+    ap_run_code: 'Run code that reaches outside for',
+    ap_delete_flow: 'Delete',
+    ap_delete_table: 'Delete',
+    ap_delete_records: 'Delete records in',
+}
+
+const CONSENT_TIMEOUT_LABELS: Record<string, string> = {
+    ap_test_flow: 'live-test approval',
+    ap_test_step: 'step-test approval',
+    ap_retry_run: 're-run approval',
+    ap_run_code: 'code-run approval',
+    ap_delete_flow: 'deletion approval',
+    ap_delete_table: 'deletion approval',
+    ap_delete_records: 'deletion approval',
+}
+
 export const chatWorkerTools = {
     createEventEmitter,
     createDisplayTools,
@@ -1453,7 +1616,7 @@ export const chatWorkerTools = {
     createScrapeTools,
     createImageTools,
     createEmailTools,
-    wrapTestFlowGate,
+    wrapWithConsent,
     createThinkingTools,
     createPhaseTools,
     createBuildPlanTools,
