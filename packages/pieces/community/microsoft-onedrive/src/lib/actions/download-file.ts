@@ -100,7 +100,7 @@ export const downloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType: 'arraybuffer',
+      responseType: 'stream',
     });
 
     const { id, name, size, createdDateTime, lastModifiedDateTime, webUrl, file, parentReference } =
@@ -118,7 +118,7 @@ export const downloadFile = createAction({
       driveId: parentReference?.driveId,
       data: await context.files.write({
         fileName: name,
-        data: Buffer.from(result.body),
+        data: result.body,
       }),
     };
   },

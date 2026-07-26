@@ -1,20 +1,8 @@
+import { PassThrough } from 'node:stream';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { azureBlobStorageAuth } from '../auth';
 import { BlobServiceClient } from '@azure/storage-blob';
 import { containerProp } from '../common';
-
-async function streamToBuffer(readableStream: NodeJS.ReadableStream): Promise<Buffer> {
-  return new Promise<Buffer>((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    readableStream.on('data', (data) => {
-      chunks.push(Buffer.isBuffer(data) ? data : Buffer.from(data));
-    });
-    readableStream.on('end', () => {
-      resolve(Buffer.concat(chunks));
-    });
-    readableStream.on('error', reject);
-  });
-};
 
 export const readBlob = createAction({
   auth: azureBlobStorageAuth,
@@ -41,9 +29,9 @@ export const readBlob = createAction({
 
     const downloadBlockBlobResponse = await blobClient.download();
     if (downloadBlockBlobResponse.readableStreamBody) {
-      return await context.files.write({ 
+      return await context.files.write({
         fileName: blobName.split('/').pop() || 'downloaded_blob',
-        data: await streamToBuffer(downloadBlockBlobResponse.readableStreamBody)
+        data: downloadBlockBlobResponse.readableStreamBody.pipe(new PassThrough())
       });
     } else {
       throw new Error('Failed to read blob stream');

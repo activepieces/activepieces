@@ -1,3 +1,4 @@
+import { buffer as readableToBuffer } from 'node:stream/consumers';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   httpClient,
@@ -24,6 +25,7 @@ export const dropboxUploadFile = createAction({
       displayName: 'File',
       description: 'The file URL or base64 to upload',
       required: true,
+      streaming: true,
     }),
     autorename: Property.Checkbox({
       displayName: 'Auto Rename',
@@ -56,18 +58,28 @@ export const dropboxUploadFile = createAction({
       strict_conflict: context.propsValue.strict_conflict,
     };
 
-    const fileBuffer = Buffer.from(fileData.base64, 'base64');
     // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
     const dropboxApiArg = JSON.stringify(params).replace(/[\u007f-\uffff]/g, (c) => '\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4));
+
+    const headers: Record<string, string> = {
+      'Dropbox-API-Arg': dropboxApiArg,
+      'Content-Type': 'application/octet-stream',
+    };
+    // A known size lets us stream the body straight through with an explicit
+    // Content-Length. Sources that don't report a size fall back to buffering.
+    let body;
+    if (fileData.size != null) {
+      headers['Content-Length'] = String(fileData.size);
+      body = fileData.body;
+    } else {
+      body = await readableToBuffer(fileData.body);
+    }
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://content.dropboxapi.com/2/files/upload`,
-      body: fileBuffer,
-      headers: {
-        'Dropbox-API-Arg': dropboxApiArg,
-        'Content-Type': 'application/octet-stream',
-      },
+      body,
+      headers,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,

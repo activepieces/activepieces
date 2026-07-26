@@ -1,5 +1,7 @@
+import { buffer as readableToBuffer } from 'node:stream/consumers';
 import { microsoftSharePointAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
@@ -21,6 +23,7 @@ export const uploadFile = createAction({
       displayName: "File",
       description: "The file or url you want to upload",
       required: true,
+      streaming: true,
     }),
     parentFolder: Property.ShortText({
       displayName: 'Parent Folder',
@@ -37,18 +40,41 @@ export const uploadFile = createAction({
     const { siteId, driveId, file, parentFolder, fileName } = context.propsValue;
 
     const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const baseUrl = getGraphBaseUrl(cloud);
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
-      baseUrl: getGraphBaseUrl(cloud),
+      baseUrl,
     });
 
     const parentIdResponse = await client.api(`/sites/${siteId}/drives/${driveId}/root:${parentFolder}`).get()
     const parentId = parentIdResponse.id ?? "test";
 
-    const uploadResponse = await client.api(`/sites/${siteId}/drives/${driveId}/items/${parentId}:/${fileName}:/content`).put(file.data)
+    // A known size lets us stream the body straight through with an explicit
+    // Content-Length. Sources that don't report a size fall back to buffering.
+    // (The Graph SDK's put() can't stream a Readable, so the upload goes through
+    // httpClient, which sets duplex: 'half' for stream bodies.)
+    const headers: Record<string, string> = { 'Content-Type': 'application/octet-stream' };
+    let body;
+    if (file.size != null) {
+      headers['Content-Length'] = String(file.size);
+      body = file.body;
+    } else {
+      body = await readableToBuffer(file.body);
+    }
 
-    return uploadResponse
+    const uploadResponse = await httpClient.sendRequest({
+      method: HttpMethod.PUT,
+      url: `${baseUrl}/v1.0/sites/${siteId}/drives/${driveId}/items/${parentId}:/${fileName}:/content`,
+      body,
+      headers,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.access_token,
+      },
+    });
+
+    return uploadResponse.body
   }
 });

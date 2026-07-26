@@ -13,6 +13,6 @@ export type HttpRequest<RequestBody extends HttpRequestBody = any> = {
   queryParams?: QueryParams | undefined;
   timeout?: number;
   retries?: number;
-  responseType?: 'arraybuffer' | 'json' | 'blob' | 'text';
+  responseType?: 'arraybuffer' | 'json' | 'blob' | 'text' | 'stream';
   followRedirects?: boolean;
 };
