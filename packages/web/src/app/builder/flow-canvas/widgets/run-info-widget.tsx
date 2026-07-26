@@ -48,7 +48,9 @@ function getStatusText({
     case FlowRunStatus.PAUSED:
       return t('Run Paused');
     case FlowRunStatus.QUOTA_EXCEEDED:
-      return t('Quota Exceeded');
+      return t(
+        'This run stopped because your platform ran out of credits. It can be retried once credits are available.',
+      );
     case FlowRunStatus.LOG_SIZE_EXCEEDED:
       return t(
         'Run failed due to output of steps exceeding the log size limit of {logSizeLimit} MB',

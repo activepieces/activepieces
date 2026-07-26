@@ -244,7 +244,10 @@ export const runsTableColumns = ({
         <div className="text-left">
           <StatusIconWithText
             icon={Icon}
-            text={formatUtils.convertEnumToReadable(status)}
+            text={
+              flowRunUtils.getStatusLabelOverride(status) ??
+              formatUtils.convertEnumToReadable(status)
+            }
             variant={variant}
           />
         </div>

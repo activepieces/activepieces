@@ -2469,5 +2469,7 @@
   "Instructions saved": "Instructions saved",
   "Could not save instructions": "Could not save instructions",
   "Personal instructions": "Personal instructions",
-  "Our billing service is temporarily unavailable, so plan and credit details may be out of date. Your flows keep running — we are working on a fix.": "Our billing service is temporarily unavailable, so plan and credit details may be out of date. Your flows keep running — we are working on a fix."
+  "Our billing service is temporarily unavailable, so plan and credit details may be out of date. Your flows keep running — we are working on a fix.": "Our billing service is temporarily unavailable, so plan and credit details may be out of date. Your flows keep running — we are working on a fix.",
+  "This run stopped because your platform ran out of credits. It can be retried once credits are available.": "This run stopped because your platform ran out of credits. It can be retried once credits are available.",
+  "Out of credits": "Out of credits"
 }
