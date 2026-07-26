@@ -87,7 +87,6 @@ describe('mcpUtils.flattenOutputSchemaFields — declared output schema → refe
         const paths = mcpUtils.flattenOutputSchemaFields([
             { key: 'rows', value: '', listItems: [{ key: 'row' }, { key: 'rowIndex', format: 'number' }] },
         ])
-        // Real output is the array itself — there is no `rows` property to nest under.
         expect(paths).toEqual(['[].row', '[].rowIndex (number)'])
     })
 
@@ -105,18 +104,14 @@ describe('mcpUtils.flattenOutputSchemaFields — declared output schema → refe
         expect(paths).toEqual(['event.start.dateTime'])
     })
 
-    it('emits nothing for a whole-output scalar leaf (value: "" at the root)', () => {
-        // e.g. google-drive read-file: the entire output IS the file URL —
-        // there is no field path to reference.
+    it('emits nothing for a whole-output scalar leaf, e.g. google-drive read-file (value: "" at the root)', () => {
         const paths = mcpUtils.flattenOutputSchemaFields([
             { key: 'file', label: 'File URL', value: '', format: 'url' },
         ])
         expect(paths).toEqual([])
     })
 
-    it('keeps a nested empty-value leaf at its parent path (each list item IS the value)', () => {
-        // e.g. gmail labels: [{ key: 'labels', listItems: [{ value: '' }] }] —
-        // labels[] itself is the string, a real referenceable path.
+    it('keeps a nested empty-value leaf at its parent path, e.g. gmail labels[] where each item IS the string', () => {
         const paths = mcpUtils.flattenOutputSchemaFields([
             { key: 'labels', listItems: [{ key: 'label', value: '' }] },
         ])
@@ -129,14 +124,21 @@ describe('mcpUtils.describeWholeOutputSchema — whole-output scalar guidance', 
         const description = mcpUtils.describeWholeOutputSchema({
             fields: [{ key: 'file', label: 'File URL', value: '', format: 'url' }],
         })
-        expect(description).toEqual({ label: 'File URL', format: 'url' })
+        expect(description).toBe('File URL (url)')
     })
 
     it('falls back to the key when the field has no label', () => {
         const description = mcpUtils.describeWholeOutputSchema({
             fields: [{ key: 'response', value: '' }],
         })
-        expect(description).toEqual({ label: 'response' })
+        expect(description).toBe('response')
+    })
+
+    it('appends the field description when present', () => {
+        const description = mcpUtils.describeWholeOutputSchema({
+            fields: [{ key: 'file', label: 'File URL', value: '', format: 'url', description: 'The downloaded file' }],
+        })
+        expect(description).toBe('File URL (url): The downloaded file')
     })
 
     it('returns null for a root-array wrapper (value: "" with listItems)', () => {

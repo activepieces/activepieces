@@ -85,8 +85,6 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     : []
                 const outputFields = declaredOutputFields.length > 0 ? declaredOutputFields : sampleOutputFields
                 const outputFieldsSource = declaredOutputFields.length > 0 ? 'declared' : 'sample'
-                // Whole-output scalar schemas flatten to no field paths — the agent
-                // should reference the bare step output instead of a field.
                 const wholeOutput = outputFields.length === 0 && component.outputSchema
                     ? mcpUtils.describeWholeOutputSchema(component.outputSchema)
                     : null
@@ -125,10 +123,13 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const outputHeader = outputFieldsSource === 'declared'
                     ? '📤 Output fields this step produces'
                     : '📤 Output fields (from this trigger\'s sample data)'
+                const arrayPathHint = outputFields.some(path => path.includes('[]'))
+                    ? '\nNote: `[]` marks an array — replace it with an index. A path starting with `[]` means the output itself is the array, e.g. {{<stepName>[\'output\'][0].row}}.'
+                    : ''
                 const outputSection = outputFields.length > 0
-                    ? `\n\n${outputHeader} — reference them directly as {{<stepName>['output'].<path>}}:\n${outputFields.map(p => `- ${p}`).join('\n')}`
+                    ? `\n\n${outputHeader} — reference them directly as {{<stepName>['output'].<path>}}:\n${outputFields.map(p => `- ${p}`).join('\n')}${arrayPathHint}`
                     : wholeOutput
-                        ? `\n\n📤 Output: the entire step output IS the value — ${wholeOutput.label}${wholeOutput.format ? ` (${wholeOutput.format})` : ''}${wholeOutput.description ? `: ${wholeOutput.description}` : ''}. Reference it as {{<stepName>['output']}} (no field path).`
+                        ? `\n\n📤 Output: the entire step output IS the value — ${wholeOutput}. Reference it as {{<stepName>['output']}} (no field path).`
                         : ''
                 const requiredLine = requiredInputs.provideNow.length > 0 || requiredInputs.needsResolution.length > 0
                     ? `\nRequired now: ${requiredInputs.provideNow.join(', ') || '(none)'}.${requiredInputs.needsResolution.length > 0 ? ` Resolve first (ap_resolve_property_options): ${requiredInputs.needsResolution.join(', ')}.` : ''}`
