@@ -3,7 +3,7 @@ import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowSt
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey, PLATFORM_PLAN_NAME_TTL_SECONDS } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -27,7 +27,6 @@ const environment = system.get(AppSystemProp.ENVIRONMENT)
 const ENROLL_ATTEMPT_TTL_SECONDS = 300
 const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
 const REFRESH_CLAIM_TTL_SECONDS = 60
-const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
 

@@ -14,3 +14,4 @@ export const getConcurrencyPoolLimitKey = (poolId: string): string => `concurren
 export const getConcurrencyPoolSetKey = (poolId: string): string => `active_jobs_set:pool:${poolId}`
 
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
+export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
