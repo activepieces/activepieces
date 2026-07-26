@@ -69,9 +69,6 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         const { paymentUrl } = await autumnConsole.setUnconsumableQuantity({ ...creds, featureId, quantity })
         return { checkoutUrl: paymentUrl }
     },
-    checkUsersExceededLimit: async ({ platformId, entityManager }) => {
-        await platformPlanService(log).checkUsersExceededLimit({ platformId, entityManager })
-    },
     configureAutoTopUp: async (params) => {
         await autumnUtils.ensureEnrolled(log, params.platformId)
         const creds = await autumnConsole.getCreds(log, params.platformId)
