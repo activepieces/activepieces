@@ -12,8 +12,11 @@ type ThemeProviderProps = {
   storageKey?: string;
 };
 
+type ResolvedTheme = 'dark' | 'light';
+
 type ThemeProviderState = {
   theme: Theme;
+  resolvedTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
   forceLightMode: boolean;
   setForceLightMode: (value: boolean) => void;
@@ -21,12 +24,16 @@ type ThemeProviderState = {
 
 const initialState: ThemeProviderState = {
   theme: 'system',
+  resolvedTheme: 'light',
   setTheme: () => null,
   forceLightMode: false,
   setForceLightMode: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+
+const prefersDarkMode = () =>
+  window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 const setFavicon = (url: string) => {
   document.querySelectorAll("link[rel*='icon']").forEach((el) => el.remove());
@@ -46,7 +53,25 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
   const [forceLightMode, setForceLightMode] = useState(false);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(prefersDarkMode);
   const branding = flagsHooks.useWebsiteBranding();
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (event: MediaQueryListEvent) =>
+      setSystemPrefersDark(event.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
+  const resolvedTheme: ResolvedTheme = forceLightMode
+    ? 'light'
+    : theme === 'system'
+    ? systemPrefersDark
+      ? 'dark'
+      : 'light'
+    : theme;
+
   useEffect(() => {
     if (!branding) {
       console.warn('Website brand is not defined');
@@ -54,11 +79,6 @@ export function ThemeProvider({
     }
     const root = window.document.documentElement;
 
-    const resolvedTheme = forceLightMode
-      ? 'light'
-      : theme === 'system'
-      ? 'light'
-      : theme;
     root.classList.remove('light', 'dark');
     document.title = branding.websiteName;
     document.documentElement.style.setProperty(
@@ -95,10 +115,11 @@ export function ThemeProvider({
     }
 
     root.classList.add(resolvedTheme);
-  }, [theme, branding, forceLightMode]);
+  }, [resolvedTheme, branding]);
 
   const value = {
     theme,
+    resolvedTheme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
@@ -124,10 +145,10 @@ export const useTheme = () => {
 };
 
 export const useApRipple = () => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   return RippleHook.default({
     color:
-      theme === 'dark'
+      resolvedTheme === 'dark'
         ? 'rgba(233, 233, 233, 0.2)'
         : 'rgba(155, 155, 155, 0.2)',
     cancelAutomatically: true,

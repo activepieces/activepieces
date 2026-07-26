@@ -41,10 +41,10 @@ const CodeEditor = ({
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
   const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
+  const codeEditorTheme = resolvedTheme === 'dark' ? githubDark : githubLight;
 
   const { data: allowNpmPackagesInCodeStep } = flagsHooks.useFlag<boolean>(
     ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,

@@ -10,8 +10,8 @@ import { useBuilderStateContext } from '../../builder-hooks';
 
 const Minimap = () => {
   const [showMinimap] = useBuilderStateContext((state) => [state.showMinimap]);
-  const { theme } = useTheme();
-  const maskTransparency = theme === 'dark' ? 0.8 : 0.055;
+  const { resolvedTheme } = useTheme();
+  const maskTransparency = resolvedTheme === 'dark' ? 0.8 : 0.055;
   return (
     <>
       {showMinimap && (

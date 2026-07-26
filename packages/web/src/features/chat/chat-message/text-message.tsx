@@ -23,9 +23,9 @@ interface TextMessageProps {
 
 export const TextMessage: React.FC<TextMessageProps> = React.memo(
   ({ content, role }) => {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const extensions = [
-      theme === 'dark' ? githubDark : githubLight,
+      resolvedTheme === 'dark' ? githubDark : githubLight,
       EditorState.readOnly.of(true),
       EditorView.editable.of(false),
       javascript({ jsx: false, typescript: true }),
@@ -47,7 +47,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                 <div
                   className={cn(
                     'relative border rounded-md p-4 pt-12',
-                    theme === 'dark' ? 'bg-[#0E1117]' : 'bg-background',
+                    resolvedTheme === 'dark' ? 'bg-[#0E1117]' : 'bg-background',
                   )}
                 >
                   <ReactCodeMirror
@@ -72,7 +72,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                       closeBrackets: false,
                     }}
                     lang={match[1]}
-                    theme={theme === 'dark' ? githubDark : githubLight}
+                    theme={resolvedTheme === 'dark' ? githubDark : githubLight}
                     readOnly={true}
                     extensions={extensions}
                   />
