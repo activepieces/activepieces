@@ -19,6 +19,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -152,7 +153,14 @@ const BulkPieceSetActions = ({
 };
 
 export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
+  const [searchParams] = useSearchParams();
+  // Search server-side like the main Pieces tab does, so a query matches the
+  // package name as well as the display name. Filtering client-side on
+  // `displayName` alone meant `@activepieces/piece-forms` found nothing,
+  // because that piece displays as "Human Input".
+  const searchQuery = searchParams.get('name') ?? '';
   const { pieces, isLoading } = piecesHooks.usePieces({
+    searchQuery,
     includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,
@@ -350,7 +358,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           {
             type: 'input',
             title: t('Piece Name'),
-            accessorKey: 'displayName',
+            accessorKey: 'name',
             icon: CheckIcon,
           },
         ]}
