@@ -77,6 +77,12 @@ let cachedSandboxInfo: SandboxInformation[] = []
 let sandboxInfoInterval: NodeJS.Timeout | null = null
 const SANDBOX_INFO_REFRESH_MS = 15_000
 const SERVER_PING_TIMEOUT_MS = 5_000
+const MACHINE_INFO_TIMEOUT_MS = 15_000
+const POLL_LIVENESS_TIMEOUT_MS = 180_000
+const POLL_WATCHDOG_INTERVAL_MS = 30_000
+
+let lastPollIterationAt: number | null = null
+let pollWatchdogInterval: NodeJS.Timeout | null = null
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
@@ -94,6 +100,7 @@ export const worker = {
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
+            lastPollIterationAt = Date.now()
             await fetchAndStoreSettings(socket!)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -135,11 +142,14 @@ export const worker = {
             healthServerInstance = startHealthServer()
         }
         startSandboxInfoSampling()
+        startPollWatchdog()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
     async stop(): Promise<void> {
         polling = false
+        lastPollIterationAt = null
+        stopPollWatchdog()
         stopSandboxInfoSampling()
         await drainInFlightJobs()
         if (runtime) {
@@ -208,6 +218,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
     workerLog.info('Polling worker started')
 
     while (polling && connectionGeneration === generation) {
+        lastPollIterationAt = Date.now()
         const appVersion = workerSettings.getSettings().APP_VERSION
         if (!apVersionUtil.versionsAreCompatible({ versionA: appVersion, versionB: AP_VERSION })) {
             const versionUnreadable = appVersion === UNKNOWN_VERSION || AP_VERSION === UNKNOWN_VERSION
@@ -285,6 +296,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
             inFlightJobs--
         }
     }
+    workerLog.warn({ polling, generation, connectionGeneration }, 'Poll loop exited — this worker consumes no jobs until it starts again')
 }
 
 async function drainInFlightJobs(): Promise<void> {
@@ -433,6 +445,14 @@ function getWorkerProps(): WorkerProps {
 }
 
 async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
+    return withTimeout({
+        promise: collectMachineInfo(),
+        timeoutMs: MACHINE_INFO_TIMEOUT_MS,
+        message: 'Timed out collecting machine info',
+    })
+}
+
+async function collectMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const memInfo = await systemUsage.getContainerMemoryUsage()
     const diskInfo = await systemUsage.getDiskInfo()
     const cpuCores = await systemUsage.getCpuCores()
@@ -452,12 +472,20 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
 }
 
 async function probeServerPing(): Promise<number | undefined> {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), SERVER_PING_TIMEOUT_MS)
     const startedAt = Date.now()
-    const { error } = await tryCatch(() => fetch(`${getApiUrl()}v1/health`, { signal: controller.signal }))
-    clearTimeout(timeout)
-    return error ? undefined : Date.now() - startedAt
+    const probe = tryCatch(() => fetch(`${getApiUrl()}v1/health`, { signal: AbortSignal.timeout(SERVER_PING_TIMEOUT_MS) }))
+        .then(({ data: response, error }) => {
+            void response?.body?.cancel()
+            return error ? undefined : Date.now() - startedAt
+        })
+    return Promise.race([probe, sleep(SERVER_PING_TIMEOUT_MS).then(() => undefined)])
+}
+
+function withTimeout<T>({ promise, timeoutMs, message }: { promise: Promise<T>, timeoutMs: number, message: string }): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(message)), timeoutMs)
+        promise.then(resolve, reject).finally(() => clearTimeout(timer))
+    })
 }
 
 function startSandboxInfoSampling(): void {
@@ -529,14 +557,44 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function pollLoopStalled(): boolean {
+    const connected = socket?.connected ?? false
+    if (!connected || isNil(lastPollIterationAt) || inFlightJobs > 0) {
+        return false
+    }
+    return Date.now() - lastPollIterationAt > POLL_LIVENESS_TIMEOUT_MS
+}
+
+function startPollWatchdog(): void {
+    if (!isNil(pollWatchdogInterval)) {
+        return
+    }
+    pollWatchdogInterval = setInterval(() => {
+        if (!pollLoopStalled()) {
+            return
+        }
+        logger.error({ lastPollIterationAt, stalledForMs: Date.now() - (lastPollIterationAt ?? 0) }, 'Poll loop stalled — exiting so the process manager restarts a worker that can consume jobs')
+        process.exit(1)
+    }, POLL_WATCHDOG_INTERVAL_MS)
+    pollWatchdogInterval.unref()
+}
+
+function stopPollWatchdog(): void {
+    if (!isNil(pollWatchdogInterval)) {
+        clearInterval(pollWatchdogInterval)
+        pollWatchdogInterval = null
+    }
+}
+
 
 function startHealthServer(): ReturnType<typeof createServer> {
     const port = Number(process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT))
     const healthPaths = new Set(['/worker/health', '/v1/health', '/api/v1/health'])
     const server = createServer((req, res) => {
         if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {
-            res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ status: 'ok' }))
+            const stalled = pollLoopStalled()
+            res.writeHead(stalled ? 503 : 200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ status: stalled ? 'poll_loop_stalled' : 'ok' }))
         }
         else {
             res.writeHead(404)

@@ -132,6 +132,7 @@ describe('worker integration', () => {
     afterEach(async () => {
         await worker.stop()
         mockGetHandler.mockReset()
+        vi.restoreAllMocks()
         delete process.env.AP_WORKER_CONCURRENCY
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
@@ -227,6 +228,33 @@ describe('worker integration', () => {
         expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
         expect(mockGetHandler).toHaveBeenCalledWith(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION)
     }, 15_000)
+
+    it('keeps polling when the server-ping probe never settles', async () => {
+        const realFetch = globalThis.fetch
+        let healthProbes = 0
+        vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+            const url = typeof input === 'string' ? input : input.toString()
+            if (!url.endsWith('/v1/health')) {
+                return realFetch(input, init)
+            }
+            healthProbes++
+            return healthProbes <= 2
+                ? Promise.resolve(new Response('{}', { status: 200 }))
+                : new Promise(() => {})
+        })
+
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
+        })
+
+        const job = buildConsumeJobRequest({ jobId: 'job-hung-ping' })
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].jobId).toBe('job-hung-ping')
+        expect(healthProbes).toBeGreaterThan(2)
+    }, 45_000)
 
     it('reports error when job execution fails', async () => {
         mockGetHandler.mockReturnValue({
