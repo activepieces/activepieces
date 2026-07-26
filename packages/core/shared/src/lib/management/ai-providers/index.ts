@@ -278,33 +278,6 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     ],
 }
 
-export function getEffectiveProviderAndModel({
-    provider,
-    model,
-}: {
-    provider: string | undefined
-    model: string | undefined
-}): { provider: string | undefined, model: string | undefined } {
-    if (provider !== AIProviderName.CLOUDFLARE_GATEWAY || !model) {
-        return { provider, model }
-    }
-    const split = splitCloudflareGatewayModelId(model)
-    // Prefix must match map keys (lowercase); some gateways/UI send "OpenAI/...".
-    const gatewaySubmodelPrefix = (split.provider ?? '').trim().toLowerCase()
-    const mapped = CF_GATEWAY_SUBMODEL_TO_PROVIDER[gatewaySubmodelPrefix]
-    if (!mapped) {
-        return { provider, model }
-    }
-    return { provider: mapped, model: split.model }
-}
-
-const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
-    openai: AIProviderName.OPENAI,
-    anthropic: AIProviderName.ANTHROPIC,
-    'google-ai-studio': AIProviderName.GOOGLE,
-    'google-vertex-ai': AIProviderName.GOOGLE,
-}
-
 /**
  * Splits a Cloudflare Gateway model ID into provider and model, i.e. "google-vertex-ai/google/gemini-2.5-pro" -> { provider: "google-vertex-ai", model: "google/gemini-2.5-pro" }.
  * @param modelId - The model ID to split.
