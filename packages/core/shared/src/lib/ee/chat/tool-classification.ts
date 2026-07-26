@@ -1,5 +1,5 @@
 import { FlowActionType, flowStructureUtil, Step } from '@activepieces/core-execution'
-import { isNil } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { ActionEffect, actionEffect, ActionEffectKind } from './action-effect'
 import { chatConsent } from './chat-consent'
 
@@ -12,7 +12,7 @@ const FAILURE_TEXT_PREFIXES = ['❌', '⏳']
 const RECIPIENT_INPUT_KEYS = ['receiver', 'to', 'recipients', 'recipient', 'to_email', 'send_to', 'email', 'channel', 'channel_id', 'phone_number']
 const MAX_RECIPIENTS_ON_CARD = 3
 
-const CODE_REACHES_OUTSIDE = /\b(fetch|axios|XMLHttpRequest|WebSocket|child_process|process\.env)\b|https?\.request|require\s*\(|import\s*\(/
+const CODE_REACHES_OUTSIDE = /\b(fetch|axios|XMLHttpRequest|WebSocket|EventSource|child_process|process\.env)\b|https?\.request|net\.(connect|createConnection)|dns\.|\bexec(Sync|File)?\s*\(/
 
 function hasFailureTextPrefix(text: string): boolean {
     return FAILURE_TEXT_PREFIXES.some((prefix) => text.startsWith(prefix))
@@ -116,7 +116,7 @@ function codeStepEffect(step: Step): StepEffect {
     })
 }
 
-function stepEffectOf(step: Step): StepEffect {
+function stepEffectOf(step: Step, options?: { declaredEffect?: string }): StepEffect {
     if (step.type === FlowActionType.CODE) {
         return codeStepEffect(step)
     }
@@ -131,7 +131,7 @@ function stepEffectOf(step: Step): StepEffect {
     }
     const pieceName = typeof step.settings.pieceName === 'string' ? step.settings.pieceName : undefined
     const actionName = step.settings.actionName
-    const effect = actionEffect.resolve({ pieceName, actionName, input: step.settings.input })
+    const effect = actionEffect.resolve({ pieceName, actionName, input: step.settings.input, ...spreadIfDefined('declaredEffect', options?.declaredEffect) })
     const pieceLabel = isNil(pieceName) ? '' : pieceName.replace('@activepieces/piece-', '')
     const recipient = deriveStaticRecipient({ input: step.settings.input, recipientProp: effect.recipientProp })
     return {
@@ -146,7 +146,7 @@ function stepEffectOf(step: Step): StepEffect {
 
 function flowStepEffects(trigger: Step): StepEffect[] {
     return flowStructureUtil.getAllSteps(trigger)
-        .map(stepEffectOf)
+        .map((step) => stepEffectOf(step))
         .filter((step) => !actionEffect.isInternal(step.effect.kind))
 }
 
@@ -163,6 +163,10 @@ function effectKindsOf(steps: StepEffect[]): ActionEffectKind[] {
     return steps.map((step) => step.effect.kind)
 }
 
+function effectFingerprintsOf(steps: StepEffect[]): string[] {
+    return steps.map((step) => [step.stepName, step.effect.kind, step.detail, step.recipient ?? ''].join('~'))
+}
+
 export const chatToolClassification = {
     requiresActionPreview,
     isReadActionName,
@@ -175,6 +179,7 @@ export const chatToolClassification = {
     flowStepEffects,
     stepEffectsForStep,
     effectKindsOf,
+    effectFingerprintsOf,
 }
 
 export type StepEffect = {

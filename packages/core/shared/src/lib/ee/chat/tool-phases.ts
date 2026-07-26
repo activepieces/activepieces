@@ -3,6 +3,10 @@
  * tools; the flow-construction/editing/publishing/table-write tools stay hidden
  * until it starts building. Denylist (not allowlist) on purpose — an unclassified
  * new tool degrades to "noisier discovery", never to "a needed tool vanished".
+ *
+ * Running a test is deliberately NOT build-only: "test my automation" is a discovery-time
+ * request, and what a test is allowed to do is decided by its classified effects, not by the
+ * phase. Hiding it here only produced agents telling users a capability did not exist.
  */
 
 const BUILD_ONLY_TOOL_NAMES = new Set<string>([
@@ -15,8 +19,6 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_add_branch',
     'ap_update_branch',
     'ap_delete_branch',
-    'ap_test_flow',
-    'ap_test_step',
     'ap_validate_flow',
     'ap_validate_step_config',
     'ap_execute_action',

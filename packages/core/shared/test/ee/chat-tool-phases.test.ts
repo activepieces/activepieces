@@ -23,9 +23,13 @@ describe('chatToolPhases.activeToolsForPhase', () => {
         expect(active).toContain('ap_show_questions')
         expect(active).not.toContain('ap_build_flow')
         expect(active).not.toContain('ap_add_step')
-        expect(active).not.toContain('ap_test_flow')
         expect(active).not.toContain('ap_lock_and_publish')
         expect(active).not.toContain('ap_execute_action')
+    })
+
+    it('keeps testing available during discovery, because consent is decided by effect not phase', () => {
+        const active = chatToolPhases.activeToolsForPhase({ phase: 'discovery', allToolNames: ALL })
+        expect(active).toContain('ap_test_flow')
     })
 
     it('exposes the full toolset during build', () => {

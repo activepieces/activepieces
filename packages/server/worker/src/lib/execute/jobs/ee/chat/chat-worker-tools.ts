@@ -248,8 +248,22 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
-// On a gate TIMEOUT (user away, not a decline) resume with guidance instead of a "cancelled" message,
-// so the model skips an optional step or stops for a required one — never mistaking silence for consent.
+// Gate outcomes carry two texts: the first block is the only one the user's card shows, so it
+// stays one short human line; the guidance the model needs never reaches the screen. The leading
+// glyph marks the call as unsuccessful for the receipt card (hasFailureTextPrefix).
+function gateOutcomeResult({ userLine, modelGuidance }: { userLine: string, modelGuidance: string }): {
+    content: { type: 'text', text: string }[]
+} {
+    return { content: [{ type: 'text', text: userLine }, { type: 'text', text: modelGuidance }] }
+}
+
+function gateNoResponseResult(step: string): { content: { type: 'text', text: string }[] } {
+    return gateOutcomeResult({
+        userLine: '⏳ Waiting on your go-ahead — nothing ran.',
+        modelGuidance: `The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`,
+    })
+}
+
 function gateNoResponseMessage(step: string): string {
     return `⏳ The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`
 }
@@ -632,8 +646,12 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
                     if (decision.outcome !== 'approved') {
-                        const text = decision.outcome === 'timeout' ? gateNoResponseMessage('action approval') : 'Action cancelled by user.'
-                        return { content: [{ type: 'text', text }] }
+                        return decision.outcome === 'timeout'
+                            ? gateNoResponseResult('action approval')
+                            : gateOutcomeResult({
+                                userLine: '❌ You declined this — nothing was changed.',
+                                modelGuidance: 'Action cancelled by user. Do not run it, do not retry the same call, and do not reach the same effect through another tool. In your own words say what you skipped and offer a path that avoids it — never mention gates, systems, or safety machinery.',
+                            })
                     }
                 }
 
@@ -1019,8 +1037,12 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
                     }
                     const decision = await waitForApproval({ gateId: options.toolCallId })
                     if (decision.outcome !== 'approved') {
-                        const text = decision.outcome === 'timeout' ? gateNoResponseMessage('email approval') : 'Email cancelled by user.'
-                        return { content: [{ type: 'text', text }] }
+                        return decision.outcome === 'timeout'
+                            ? gateNoResponseResult('email approval')
+                            : gateOutcomeResult({
+                                userLine: '❌ You declined this — the email was not sent.',
+                                modelGuidance: 'Email cancelled by user. Do not send it, do not retry, and do not send an equivalent message another way. In your own words say what you skipped — never mention gates or safety machinery.',
+                            })
                     }
                 }
 
@@ -1369,12 +1391,20 @@ function isStepEffect(value: unknown): value is StepEffect {
         && typeof value['effect']['kind'] === 'string'
 }
 
-function gateLabelFor({ toolName, flowName, effects, resolved }: {
+function gateLabelFor({ toolName, flowName, effects, resolved, args }: {
     toolName: string
     flowName?: string
     effects: StepEffect[]
     resolved: boolean
+    args?: unknown
 }): string {
+    const staticLabel = STATIC_TOOL_LABELS[toolName]
+    if (!isNil(staticLabel)) {
+        const named = isObject(args) && typeof args['displayName'] === 'string' && args['displayName'].trim().length > 0
+            ? args['displayName'].trim()
+            : undefined
+        return isNil(named) ? staticLabel : `${named} — ${staticLabel.toLowerCase()}`
+    }
     const target = isNil(flowName) ? 'this automation' : `"${flowName}"`
     const intro = CONSENT_INTROS[toolName] ?? 'Run this'
     if (!resolved) {
@@ -1417,11 +1447,23 @@ function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, re
                 const decisions = resolved
                     ? kinds.map((kind) => chatConsent.decide({ kind }))
                     : [chatConsent.decide({ kind: 'unknown' })]
-                if (!decisions.includes('ask') && !decisions.includes('deny')) {
+                if (decisions.includes('deny')) {
+                    const blocked = effects.filter((step) => chatConsent.decide({ kind: step.effect.kind }) === 'deny')
+                    log?.info?.({ tool: { name: toolName }, effectKinds: kinds }, 'Consent denied by policy, not asking')
+                    return gateOutcomeResult({
+                        userLine: '❌ Not allowed here — nothing ran.',
+                        modelGuidance: `This is blocked by the workspace's policy, not by the user: ${describeEffects(blocked)}. Asking will not change it. Tell the user plainly that this kind of action is not permitted in this workspace and offer an alternative that avoids it.`,
+                    })
+                }
+                if (!decisions.includes('ask')) {
                     return originalExecute(args, options)
                 }
                 const scope = consentScopeOf({ toolName, args }) ?? 'unknown'
-                const signature = chatConsent.signature({ toolName, scope, kinds })
+                const signature = chatConsent.signature({
+                    toolName,
+                    scope,
+                    fingerprints: resolved ? chatToolClassification.effectFingerprintsOf(effects) : ['unresolved'],
+                })
                 const reusable = resolved && chatConsent.isReusable(kinds)
                 if (reusable) {
                     const remembered = await tryCatch(() => checkRememberedConsent({ signature }))
@@ -1430,7 +1472,7 @@ function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, re
                         return originalExecute(args, options)
                     }
                 }
-                const gateLabel = gateLabelFor({ toolName, flowName, effects, resolved })
+                const gateLabel = gateLabelFor({ toolName, flowName, effects, resolved, args })
                 eventEmitter.emitActionPreview({
                     toolCallId: gateId,
                     pieceName: '',
@@ -1450,10 +1492,13 @@ function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, re
                 log?.info?.({ tool: { name: toolName }, gate: { id: gateId }, decision: decision.outcome }, 'Consent gate resolved')
                 if (decision.outcome !== 'approved') {
                     if (decision.outcome === 'timeout') {
-                        return { content: [{ type: 'text', text: gateNoResponseMessage(CONSENT_TIMEOUT_LABELS[toolName] ?? 'approval') }] }
+                        return gateNoResponseResult(CONSENT_TIMEOUT_LABELS[toolName] ?? 'approval')
                     }
                     const detail = effects.length > 0 ? ` It would have: ${describeEffects(effects)}.` : ''
-                    return { content: [{ type: 'text', text: `The user declined this.${detail} Do not run it, and do not retry the same call. Say what you skipped and offer a path that avoids the real effect.` }] }
+                    return gateOutcomeResult({
+                        userLine: '❌ You declined this — nothing ran.',
+                        modelGuidance: `The user declined this.${detail} Do not run it, do not retry the same call, and do not reach the same effect through another tool. In your own words tell them what you skipped and offer a path that avoids the real effect — never mention gates, systems, or safety machinery.`,
+                    })
                 }
                 if (reusable) {
                     await tryCatch(() => rememberConsent({ signature }))

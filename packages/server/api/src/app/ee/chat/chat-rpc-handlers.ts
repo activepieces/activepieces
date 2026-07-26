@@ -1,6 +1,7 @@
+import { FlowActionType, flowStructureUtil, Step } from '@activepieces/core-execution'
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, StepEffect, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -8,8 +9,10 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
+import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
@@ -50,6 +53,43 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
     }
     return builder.execute()
+}
+
+async function flowIdOfRun({ flowRunId, projectId, log }: {
+    flowRunId: unknown
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<string | undefined> {
+    if (typeof flowRunId !== 'string') {
+        return undefined
+    }
+    const { data: run } = await tryCatch(() => flowRunService(log).getOnePopulatedOrThrow({ id: flowRunId, projectId }))
+    return run?.flowId
+}
+
+async function declaredEffectsForSteps({ effects, platformId, trigger, log }: {
+    effects: StepEffect[]
+    platformId: string
+    trigger: Step
+    log: FastifyBaseLogger
+}): Promise<StepEffect[]> {
+    const stepsByName = new Map(flowStructureUtil.getAllSteps(trigger).map((step) => [step.name, step]))
+    return Promise.all(effects.map(async (effect) => {
+        const step = stepsByName.get(effect.stepName)
+        if (isNil(step) || step.type !== FlowActionType.PIECE || typeof step.settings.actionName !== 'string' || typeof step.settings.pieceName !== 'string') {
+            return effect
+        }
+        const { data: metadata } = await tryCatch(() => pieceMetadataService(log).getOrThrow({
+            name: step.settings.pieceName,
+            platformId,
+            version: step.settings.pieceVersion,
+        }))
+        const declaredEffect = metadata?.actions?.[step.settings.actionName]?.aiMetadata?.effect
+        if (isNil(declaredEffect)) {
+            return effect
+        }
+        return chatToolClassification.stepEffectOf(step, { declaredEffect })
+    }))
 }
 
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
@@ -495,6 +535,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (typeof signature !== 'string' || typeof input.conversationId !== 'string') {
                 return { result: { approved: false } }
             }
+            await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
             if (input.toolName === '__consent_remember') {
                 await chatApprovalGate.rememberConsent({ conversationId: input.conversationId, signature })
                 return { result: { remembered: true } }
@@ -503,27 +544,34 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             return { result: { approved } }
         }
         if (input.toolName === '__flow_effect_preview') {
-            const { flowId, stepName } = input.toolInput
-            if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {
+            const { flowId, stepName, flowRunId } = input.toolInput
+            if (typeof input.conversationId !== 'string') {
                 return { result: { resolved: false, effects: [] } }
             }
             const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
             if (isNil(conversation.projectId)) {
                 return { result: { resolved: false, effects: [] } }
             }
-            const flow = await flowService(log).getOnePopulated({ id: flowId, projectId: conversation.projectId })
+            const resolvedFlowId = typeof flowId === 'string'
+                ? flowId
+                : await flowIdOfRun({ flowRunId, projectId: conversation.projectId, log })
+            if (isNil(resolvedFlowId)) {
+                return { result: { resolved: false, effects: [] } }
+            }
+            const flow = await flowService(log).getOnePopulated({ id: resolvedFlowId, projectId: conversation.projectId })
             if (isNil(flow)) {
                 return { result: { resolved: false, effects: [] } }
             }
             const effects = typeof stepName === 'string'
                 ? chatToolClassification.stepEffectsForStep({ trigger: flow.version.trigger, stepName })
                 : chatToolClassification.flowStepEffects(flow.version.trigger)
+            const declared = await declaredEffectsForSteps({ effects, platformId: input.platformId, trigger: flow.version.trigger, log })
             log.info({
-                flow: { id: flowId },
-                stepName: typeof stepName === 'string' ? stepName : undefined,
-                effectKinds: chatToolClassification.effectKindsOf(effects),
+                flow: { id: resolvedFlowId },
+                step: { name: typeof stepName === 'string' ? stepName : undefined },
+                effectKinds: chatToolClassification.effectKindsOf(declared),
             }, '[chatRpc#executeChatTool] Flow effect preview')
-            return { result: { resolved: true, flowName: flow.version.displayName, effects } }
+            return { result: { resolved: true, flowName: flow.version.displayName, effects: declared } }
         }
         if (input.toolName === '__get_available_connections') {
             const { pieceName } = input.toolInput

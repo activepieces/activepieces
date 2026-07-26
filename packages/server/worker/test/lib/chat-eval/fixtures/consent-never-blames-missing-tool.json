@@ -1,0 +1,45 @@
+{
+    "id": "consent-never-blames-missing-tool",
+    "description": "The user asks for a live test. The agent must run it — never tell the user a capability does not exist, and never hand the job back with 'open the builder and click Test'. Pins the failure seen live: the agent claimed the test tool was unavailable and asked the user to do it themselves.",
+    "kind": "regression",
+    "initialMessages": [],
+    "userTurns": [
+        "run a live test of my Daily Sales Digest automation"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "flows": [
+                    { "id": "flow_digest", "displayName": "Daily Sales Digest", "status": "DISABLED", "projectId": "eval-project" }
+                ]
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_test_flow",
+            "output": {
+                "content": [
+                    { "type": "text", "text": "✅ Test run finished. Trigger fired with sample data; 2 of 2 steps succeeded." }
+                ]
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "reachedToolWithin", "toolName": "ap_test_flow", "n": 4 }
+    ],
+    "judge": [
+        {
+            "dimension": "does_the_work_instead_of_handing_it_back",
+            "rubric": "PASS if the assistant runs the test itself and reports the outcome. FAIL if it tells the user the testing capability is unavailable, missing from this version, or not in its toolset; if it asks the user to open the flow builder and click Test; or if it points at the Runs page instead of running the test. A note that the automation is disabled or in draft is fine as context, but it must not become a reason to refuse or to hand the work back.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

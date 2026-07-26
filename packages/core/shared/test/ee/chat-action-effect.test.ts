@@ -171,14 +171,29 @@ describe('chatConsent', () => {
     })
 
     it('changes the signature when the flow gains an effect, so a stale yes cannot cover it', () => {
-        const before = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', kinds: ['external_write'] })
-        const after = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', kinds: ['external_write', 'outward_send'] })
+        const before = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['save~external_write~sheets · insert_row~'] })
+        const after = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['save~external_write~sheets · insert_row~', 'notify~outward_send~gmail · send_email~omar@x.com'] })
         expect(before).not.toBe(after)
     })
 
+    it('changes the signature when only the recipient changes', () => {
+        const toOmar = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['notify~outward_send~gmail · send_email~omar@x.com'] })
+        const toEveryone = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['notify~outward_send~gmail · send_email~all@x.com'] })
+        expect(toOmar).not.toBe(toEveryone)
+    })
+
     it('keeps the signature stable across repeated identical asks', () => {
-        const first = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', kinds: ['outward_send', 'external_write'] })
-        const second = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', kinds: ['external_write', 'outward_send'] })
+        const first = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['a~outward_send~gmail · send_email~o@x', 'b~external_write~sheets · insert_row~'] })
+        const second = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['b~external_write~sheets · insert_row~', 'a~outward_send~gmail · send_email~o@x'] })
         expect(first).toBe(second)
+    })
+
+    it('fingerprints a flow down to the step, effect and recipient', () => {
+        const effects = chatToolClassification.flowStepEffects(triggerWith([
+            pieceStep({ name: 'notify_me', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'] } }),
+        ]))
+        expect(chatToolClassification.effectFingerprintsOf(effects)).toEqual([
+            'notify_me~outward_send~gmail · send_email~omar@activepieces.com',
+        ])
     })
 })

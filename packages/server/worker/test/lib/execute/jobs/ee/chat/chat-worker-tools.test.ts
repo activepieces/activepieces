@@ -6,7 +6,9 @@ function makeMockEventEmitter(): { eventEmitter: ChatEventEmitter, progressEvent
     const progressEvents: ToolProgressEvent[] = []
     return {
         eventEmitter: {
-            emitToolProgress: (data: ToolProgressEvent) => { progressEvents.push(data) },
+            emitToolProgress: (data: ToolProgressEvent) => {
+                progressEvents.push(data) 
+            },
             emitActionPreview: () => {},
             emitActionReceipt: () => {},
         },
@@ -343,7 +345,20 @@ describe('chatWorkerTools', () => {
             expect(waitForApproval).toHaveBeenCalledWith({ gateId: 'tc-taint' })
         })
 
-        it('does not gate the same action when the turn is untainted', async () => {
+        it('does not gate a read action when the turn is untainted', async () => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const executeTool = vi.fn().mockResolvedValue(mcpSuccess('ok'))
+            const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+            const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, guides: {}, taintState: { tainted: false } })
+
+            await tools.ap_execute_action.execute({
+                pieceName: 'slack', actionName: 'getChannelHistory', needsConfirmation: false, input: {},
+            }, { toolCallId: 'tc-clean', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(waitForApproval).not.toHaveBeenCalled()
+        })
+
+        it('gates an action nothing can classify, even untainted and marked no-confirmation', async () => {
             const { eventEmitter } = makeMockEventEmitter()
             const executeTool = vi.fn().mockResolvedValue(mcpSuccess('ok'))
             const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
@@ -351,9 +366,9 @@ describe('chatWorkerTools', () => {
 
             await tools.ap_execute_action.execute({
                 pieceName: 'slack', actionName: 'do_thing', needsConfirmation: false, input: {},
-            }, { toolCallId: 'tc-clean', messages: [], abortSignal: undefined as unknown as AbortSignal })
+            }, { toolCallId: 'tc-unknown', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
-            expect(waitForApproval).not.toHaveBeenCalled()
+            expect(waitForApproval).toHaveBeenCalledWith({ gateId: 'tc-unknown' })
         })
     })
 
@@ -369,16 +384,19 @@ describe('chatWorkerTools', () => {
             return { result: result as { content: Array<{ text: string }> }, executeTool }
         }
 
-        it('on timeout, resumes with a "no response — skip or require approval" message and does NOT run the action', async () => {
+        it('on timeout, shows the user one short line and keeps the model guidance out of it', async () => {
             const { result, executeTool } = await runExecuteActionWith('timeout')
-            expect(result.content[0].text).toMatch(/hasn't responded|timed out/i)
-            expect(result.content[0].text).toMatch(/skip|approve/i)
+            expect(result.content[0].text).toBe('⏳ Waiting on your go-ahead — nothing ran.')
+            expect(result.content[1].text).toMatch(/hasn't responded|timed out/i)
+            expect(result.content[1].text).toMatch(/skip|approve/i)
             expect(executeTool).not.toHaveBeenCalled()
         })
 
-        it('on an explicit decline, says cancelled by user', async () => {
+        it('on an explicit decline, shows the user one short line and tells the model not to reroute', async () => {
             const { result, executeTool } = await runExecuteActionWith('declined')
-            expect(result.content[0].text).toBe('Action cancelled by user.')
+            expect(result.content[0].text).toBe('❌ You declined this — nothing was changed.')
+            expect(result.content[1].text).toContain('Action cancelled by user.')
+            expect(result.content[1].text).toContain('another tool')
             expect(executeTool).not.toHaveBeenCalled()
         })
     })
@@ -552,8 +570,12 @@ describe('chatWorkerTools', () => {
             const receipts: ActionReceiptEvent[] = []
             const eventEmitter: ChatEventEmitter = {
                 emitToolProgress: () => {},
-                emitActionPreview: (data: ActionPreviewEvent) => { previews.push(data) },
-                emitActionReceipt: (data: ActionReceiptEvent) => { receipts.push(data) },
+                emitActionPreview: (data: ActionPreviewEvent) => {
+                    previews.push(data) 
+                },
+                emitActionReceipt: (data: ActionReceiptEvent) => {
+                    receipts.push(data) 
+                },
             }
             const sendEmail = vi.fn(sendImpl ?? (async () => ({ sent: true, message: 'Email sent to x.' })))
             const waitForApproval = vi.fn().mockResolvedValue({ outcome: approved ? 'approved' : 'declined' })
@@ -606,5 +628,152 @@ describe('chatWorkerTools', () => {
             expect(sendEmail).toHaveBeenCalledOnce()
             expect(receipts[0].status).toBe('failed')
         })
+    })
+})
+
+type FakeGate = { gateId: string, displayName: string }
+
+function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true }: {
+    effects: { stepName: string, displayName: string, kind: string, detail: string, recipient?: string }[]
+    decision?: 'approved' | 'declined' | 'timeout'
+    remembered?: boolean
+    resolved?: boolean
+}) {
+    const ran: unknown[] = []
+    const previews: ActionPreviewEvent[] = []
+    const gates: FakeGate[] = []
+    const remembers: string[] = []
+    const checked: string[] = []
+
+    const tools = {
+        ap_test_flow: {
+            execute: async (args: unknown) => {
+                ran.push(args)
+                return { content: [{ type: 'text', text: '✅ ran' }] }
+            },
+        },
+    }
+
+    const wrapped = chatWorkerTools.wrapWithConsent({
+        tools,
+        previewFlowEffects: async () => ({
+            resolved,
+            flowName: 'Daily Sales Digest',
+            effects: effects.map((step) => ({
+                stepName: step.stepName,
+                displayName: step.displayName,
+                detail: step.detail,
+                opaque: false,
+                effect: { kind: step.kind, source: 'catalog' },
+                ...(step.recipient === undefined ? {} : { recipient: step.recipient }),
+            })),
+        }),
+        checkRememberedConsent: async ({ signature }) => {
+            checked.push(signature)
+            return remembered
+        },
+        rememberConsent: async ({ signature }) => {
+            remembers.push(signature)
+        },
+        waitForApproval: async () => ({ outcome: decision }),
+        storePendingGate: async ({ gateId, displayName }) => {
+            gates.push({ gateId, displayName })
+        },
+        eventEmitter: {
+            emitToolProgress: () => {},
+            emitActionPreview: (data: ActionPreviewEvent) => {
+                previews.push(data) 
+            },
+            emitActionReceipt: () => {},
+        },
+    })
+
+    return { wrapped, ran, previews, gates, remembers, checked }
+}
+
+const SEND_STEP = { stepName: 'notify', displayName: 'Email me the digest', kind: 'outward_send', detail: 'gmail · send_email', recipient: 'omar@activepieces.com' }
+const TABLE_STEP = { stepName: 'save', displayName: 'Save the lead', kind: 'internal_write', detail: 'tables · create' }
+const REFUND_STEP = { stepName: 'refund', displayName: 'Refund the customer', kind: 'financial', detail: 'stripe · create_refund' }
+
+async function runTestFlow(wrapped: Record<string, unknown>) {
+    const tool = wrapped['ap_test_flow'] as { execute: (args: unknown, options?: { toolCallId: string }) => Promise<unknown> }
+    return tool.execute({ flowId: 'flow-1' }, { toolCallId: 'call-1' })
+}
+
+describe('chatWorkerTools.wrapWithConsent', () => {
+    it('asks before a test that sends, and names the step and recipient', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP] })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(1)
+        expect(h.gates[0].displayName).toBe('Run a live test of "Daily Sales Digest" — performs: Email me the digest → omar@activepieces.com')
+        expect(h.previews).toHaveLength(1)
+        expect(h.ran).toHaveLength(1)
+    })
+
+    it('does not ask when the test only touches Activepieces', async () => {
+        const h = makeConsentHarness({ effects: [] })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(0)
+        expect(h.previews).toHaveLength(0)
+        expect(h.ran).toHaveLength(1)
+    })
+
+    it('does not run the tool when the user declines, and keeps the model guidance off the card', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP], decision: 'declined' })
+        const result = await runTestFlow(h.wrapped) as { content: { text: string }[] }
+        expect(h.ran).toHaveLength(0)
+        expect(result.content[0].text).toBe('❌ You declined this — nothing ran.')
+        expect(result.content[0].text.length).toBeLessThan(80)
+        expect(result.content[1].text).toContain('Do not run it')
+    })
+
+    it('keeps the timeout guidance off the card too', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP], decision: 'timeout' })
+        const result = await runTestFlow(h.wrapped) as { content: { text: string }[] }
+        expect(h.ran).toHaveLength(0)
+        expect(result.content[0].text).toBe('⏳ Waiting on your go-ahead — nothing ran.')
+        expect(result.content[1].text).toContain('they did NOT decline')
+    })
+
+    it('remembers an approval so the same test does not ask twice', async () => {
+        const first = makeConsentHarness({ effects: [SEND_STEP] })
+        await runTestFlow(first.wrapped)
+        expect(first.remembers).toHaveLength(1)
+
+        const second = makeConsentHarness({ effects: [SEND_STEP], remembered: true })
+        await runTestFlow(second.wrapped)
+        expect(second.gates).toHaveLength(0)
+        expect(second.ran).toHaveLength(1)
+        expect(second.checked[0]).toBe(first.remembers[0])
+    })
+
+    it('asks again once the recipient changes, even though the effect kinds match', async () => {
+        const toOmar = makeConsentHarness({ effects: [SEND_STEP] })
+        await runTestFlow(toOmar.wrapped)
+        const toEveryone = makeConsentHarness({ effects: [{ ...SEND_STEP, recipient: 'all@activepieces.com' }], remembered: false })
+        await runTestFlow(toEveryone.wrapped)
+        expect(toEveryone.checked[0]).not.toBe(toOmar.remembers[0])
+        expect(toEveryone.gates).toHaveLength(1)
+    })
+
+    it('never remembers an approval that moved money', async () => {
+        const h = makeConsentHarness({ effects: [REFUND_STEP] })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(1)
+        expect(h.remembers).toHaveLength(0)
+    })
+
+    it('asks when the effects could not be resolved, instead of assuming they are harmless', async () => {
+        const h = makeConsentHarness({ effects: [], resolved: false })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(1)
+        expect(h.gates[0].displayName).toContain('could not check')
+    })
+
+    it('runs without asking when every effect is internal', async () => {
+        const h = makeConsentHarness({ effects: [TABLE_STEP] })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(0)
+        expect(h.ran).toHaveLength(1)
     })
 })

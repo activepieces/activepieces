@@ -45,12 +45,12 @@ function isReusableConsent(kinds: ActionEffectKind[]): boolean {
     return kinds.length > 0 && kinds.every((kind) => REUSABLE_EFFECT_KINDS.has(kind))
 }
 
-function consentSignature({ toolName, scope, kinds }: {
+function consentSignature({ toolName, scope, fingerprints }: {
     toolName: string
     scope: string
-    kinds: ActionEffectKind[]
+    fingerprints: string[]
 }): string {
-    return `${toolName}|${scope}|${[...new Set(kinds)].sort().join(',')}`
+    return `${toolName}|${scope}|${[...new Set(fingerprints)].sort().join(';')}`
 }
 
 export const chatConsent = {
