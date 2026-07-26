@@ -1,5 +1,5 @@
 import { PassThrough, Readable } from 'node:stream'
-import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
+import { DISPATCH_KEY_HEADER, EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
 import { MultipartFile } from '@fastify/multipart'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import mime from 'mime-types'
@@ -47,10 +47,11 @@ export async function convertRequest(
     }
 }
 
-export function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> {
+export function extractHeaderFromRequest(request: FastifyRequest): ExtractedWebhookHeaders {
     return {
         parentRunId: request.headers[PARENT_RUN_ID_HEADER] as string,
         failParentOnFailure: request.headers[FAIL_PARENT_ON_FAILURE_HEADER] === 'true',
+        dispatchKey: readDispatchKey({ request }),
     }
 }
 
@@ -136,6 +137,21 @@ function appendMultiValue(existing: unknown, value: unknown): unknown {
         return value
     }
     return Array.isArray(existing) ? [...existing, value] : [existing, value]
+}
+
+function readDispatchKey({ request }: { request: FastifyRequest }): string | undefined {
+    const value = request.headers[DISPATCH_KEY_HEADER]
+    if (typeof value !== 'string' || value.length > MAX_DISPATCH_KEY_LENGTH || !DISPATCH_KEY_PATTERN.test(value)) {
+        return undefined
+    }
+    return value
+}
+
+const MAX_DISPATCH_KEY_LENGTH = 64
+const DISPATCH_KEY_PATTERN = /^[0-9a-zA-Z-]+$/
+
+export type ExtractedWebhookHeaders = Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> & {
+    dispatchKey?: string
 }
 
 type SaveStepFileParams = {

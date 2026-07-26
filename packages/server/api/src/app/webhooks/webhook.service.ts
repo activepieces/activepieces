@@ -1,4 +1,4 @@
-import { apId, assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { apId, assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId, spreadIfDefined } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
 import { EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, LATEST_JOB_DATA_SCHEMA_VERSION, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -53,6 +53,7 @@ export const webhookService = {
         onRunCreated,
         parentRunId,
         failParentOnFailure,
+        dispatchKey,
         timeoutMs,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
@@ -172,6 +173,7 @@ export const webhookService = {
                 execute: flow.status === FlowStatus.ENABLED && execute,
                 parentRunId,
                 failParentOnFailure,
+                dispatchKey,
             })
         }
 
@@ -205,14 +207,14 @@ export const webhookService = {
 }
 
 async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
-    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure, platformId } = params
+    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure, dispatchKey, platformId } = params
 
     const jobPayload = await payloadOffloader.offloadPayload(logger, payload, flow.projectId, platformId)
 
     await wideEvent.timed({
         name: 'webhookQueueAdd',
         fn: () => jobQueue(logger).add({
-            id: webhookRequestId,
+            id: dispatchKey ?? webhookRequestId,
             type: JobType.ONE_TIME,
             data: {
                 platformId,
@@ -232,7 +234,7 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
         }),
     })
     logger.info('Async webhook request completed')
-    wideEvent.set({ webhook: { queuedSuccessfully: true } })
+    wideEvent.set({ webhook: { queuedSuccessfully: true, ...spreadIfDefined('dispatchKey', dispatchKey) } })
     return {
         status: StatusCodes.OK,
         body: {},
@@ -297,7 +299,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
     return listenerResult
 }
 
-async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute'>): Promise<void> {
+async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute' | 'dispatchKey'>): Promise<void> {
     const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, parentRunId, failParentOnFailure, platformId } = params
     await handleAsync({
         flow,
@@ -328,6 +330,7 @@ type HandleWebhookParams = {
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
     failParentOnFailure: boolean
+    dispatchKey?: string
     timeoutMs?: number
 }
 
@@ -344,6 +347,7 @@ type AsyncWebhookParams = {
     execute: boolean
     parentRunId?: string
     failParentOnFailure: boolean
+    dispatchKey?: string
 }
 
 type SyncWebhookParams = {

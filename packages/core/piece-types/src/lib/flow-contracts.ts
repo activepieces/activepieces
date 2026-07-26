@@ -33,6 +33,7 @@ export const USE_DRAFT_QUERY_PARAM_NAME = 'useDraft'
 export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
 export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'
 export const RAW_PAYLOAD_HEADER = 'ap-raw-payload'
+export const DISPATCH_KEY_HEADER = 'ap-dispatch-key'
 
 export type PopulatedFlow = {
     id: string

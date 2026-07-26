@@ -98,6 +98,7 @@ export {
   RAW_PAYLOAD_HEADER,
   PARENT_RUN_ID_HEADER,
   FAIL_PARENT_ON_FAILURE_HEADER,
+  DISPATCH_KEY_HEADER,
 } from '@activepieces/core-piece-types';
 export type {
   McpAuthConfig,

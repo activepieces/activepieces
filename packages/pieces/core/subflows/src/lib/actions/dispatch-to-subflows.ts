@@ -84,12 +84,13 @@ export const dispatchToSubflows = createAction({
       }));
     }
 
-    const dispatchAll = () => dispatchChildren({
+    const dispatchAll = (dispatchKeyPrefix?: string) => dispatchChildren({
       apiUrl: context.server.apiUrl,
       flowId: flow.id,
       items,
       parentRunId: context.run.id,
       failParentOnFailure: false,
+      dispatchKeyPrefix,
     });
 
     if (!context.propsValue.waitForAll) {
@@ -123,7 +124,7 @@ export const dispatchToSubflows = createAction({
     }
 
     const waitpoint = await context.run.createWaitpoint({ type: 'WEBHOOK', isFanIn: true });
-    const dispatch = await dispatchAll();
+    const dispatch = await dispatchAll(waitpoint.id);
     assertAnythingDispatched({ dispatch, requested: items.length });
     const timeoutAt = new Date(Date.now() + timeoutMinutes * 60_000).toISOString();
     await context.run.sealFanIn({

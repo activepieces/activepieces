@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { FAIL_PARENT_ON_FAILURE_HEADER, FlowTriggerType, isNil, PARENT_RUN_ID_HEADER, PopulatedFlow } from "@activepieces/pieces-framework";
+import { DISPATCH_KEY_HEADER, FAIL_PARENT_ON_FAILURE_HEADER, FlowTriggerType, isNil, PARENT_RUN_ID_HEADER, PopulatedFlow } from "@activepieces/pieces-framework";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 
 
@@ -60,7 +60,7 @@ export async function findFlowByExternalIdOrThrow({
     return allFlows[0];
 }
 
-export async function dispatchChild({ apiUrl, flowId, payload, parentRunId, failParentOnFailure, callbackUrl }: DispatchChildParams): Promise<unknown> {
+export async function dispatchChild({ apiUrl, flowId, payload, parentRunId, failParentOnFailure, callbackUrl, dispatchKey }: DispatchChildParams): Promise<unknown> {
     const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `${apiUrl}v1/webhooks/${flowId}`,
@@ -68,6 +68,7 @@ export async function dispatchChild({ apiUrl, flowId, payload, parentRunId, fail
             'Content-Type': 'application/json',
             [PARENT_RUN_ID_HEADER]: parentRunId,
             [FAIL_PARENT_ON_FAILURE_HEADER]: failParentOnFailure ? 'true' : 'false',
+            ...(isNil(dispatchKey) ? {} : { [DISPATCH_KEY_HEADER]: dispatchKey }),
         },
         body: {
             data: payload,
@@ -77,12 +78,19 @@ export async function dispatchChild({ apiUrl, flowId, payload, parentRunId, fail
     return response.body;
 }
 
-export async function dispatchChildren({ apiUrl, flowId, items, parentRunId, failParentOnFailure }: DispatchChildrenParams): Promise<DispatchChildrenResult> {
+export async function dispatchChildren({ apiUrl, flowId, items, parentRunId, failParentOnFailure, dispatchKeyPrefix }: DispatchChildrenParams): Promise<DispatchChildrenResult> {
     const failures: DispatchFailure[] = [];
     let accepted = 0;
     for (const [index, payload] of items.entries()) {
         try {
-            await dispatchChild({ apiUrl, flowId, payload, parentRunId, failParentOnFailure });
+            await dispatchChild({
+                apiUrl,
+                flowId,
+                payload,
+                parentRunId,
+                failParentOnFailure,
+                dispatchKey: isNil(dispatchKeyPrefix) ? undefined : `${dispatchKeyPrefix}-${index}`,
+            });
             accepted += 1;
         }
         catch (error) {
@@ -107,6 +115,7 @@ type DispatchChildParams = {
     parentRunId: string;
     failParentOnFailure: boolean;
     callbackUrl?: string;
+    dispatchKey?: string;
 }
 
 type DispatchChildrenParams = {
@@ -115,6 +124,7 @@ type DispatchChildrenParams = {
     items: unknown[];
     parentRunId: string;
     failParentOnFailure: boolean;
+    dispatchKeyPrefix?: string;
 }
 
 export type DispatchFailure = {
