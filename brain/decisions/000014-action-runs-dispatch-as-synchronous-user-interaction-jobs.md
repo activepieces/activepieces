@@ -9,7 +9,7 @@ An action run is submitted through `userInteractionWatcher.submitAndWaitForRespo
 `WorkerJobType.EXECUTE_ACTION` — the same request/response mechanism as property resolution and auth
 validation — and the caller blocks on the engine's answer. It is **not** a BullMQ `EXECUTE_FLOW` job
 polled for completion. Consequence: **no retry**. A worker killed mid-run fails the run instead of
-re-running it. Companion to [Action runs stay a separate table from flow_run](./000012-action-runs-stay-a-separate-table-from-flow-run.md), which decides the storage shape; this one decides the dispatch mechanism.
+re-running it. This decides the dispatch mechanism only — durable storage for action runs is not settled yet.
 
 ## Context
 The path being replaced created a throwaway flow, grafted one step onto it, called

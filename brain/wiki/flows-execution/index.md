@@ -51,6 +51,7 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 
 - **Flows** — the versioned trigger + action graph, DRAFT/LOCKED, publishing
 - **Flow Runs** — the status state machine and RunTimeline phases
+- **Action Runs** — a single step executed outside any flow, synchronously
 - **Triggers** — POLLING / WEBHOOK / APP_WEBHOOK / MANUAL
 - **Human Input** — forms, approvals, the resume confirmation page
 - **Folders** — flow organization; the uncategorized sentinel
@@ -58,5 +59,4 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 - **Variables** — project-scoped values referenced from steps
 - **Formulas** — the `{{ ... }}` evaluator shared by engine, api and web
 - **Chat** — the conversational surface over a flow
-- **Run tables architecture** — flow_run, action_run, and future run kinds
 - **Gotcha: flows stuck in DELETING keep eating the active-flow limit**

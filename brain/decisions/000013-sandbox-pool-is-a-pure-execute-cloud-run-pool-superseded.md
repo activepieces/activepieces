@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded
 ---
 
 # Sandbox pool is a pure execute() (Cloud Run pool, superseded)

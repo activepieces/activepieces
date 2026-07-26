@@ -105,16 +105,16 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         const frontendPath = path.resolve(process.cwd(), 'dist/packages/web')
         await app.register(fastifyStatic, {
             root: frontendPath,
-            setHeaders: (res, filepath) => {
+            setHeaders: (reply, filepath) => {
                 const normalized = filepath.replace(/\\/g, '/')
                 if (normalized.endsWith('.html')) {
-                    void res.setHeader('Cache-Control', 'no-cache')
+                    void reply.header('Cache-Control', 'no-cache')
                 }
                 else if (normalized.includes('/assets/')) {
-                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+                    void reply.header('Cache-Control', 'public, max-age=31536000, immutable')
                 }
                 else {
-                    void res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
+                    void reply.header('Cache-Control', 'public, max-age=0, must-revalidate')
                 }
             },
         })
