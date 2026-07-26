@@ -69,7 +69,7 @@ export class FetchHttpClient extends BaseHttpClient {
           clearTimeout(timeoutId);
         }
       }
-    }, retries);
+    }, isStream ? 0 : retries);
 
     const successCeiling = followRedirects ? 300 : 400;
     if (response.status < 200 || response.status >= successCeiling) {
