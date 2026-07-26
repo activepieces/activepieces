@@ -30,5 +30,5 @@ The **Activepieces engineering brain**: how the system works, and *why* it was b
 - **API & Endpoints** — route conventions and the security contract
 - **Architecture Spine** — the load-bearing structure of the codebase
 - **Gotcha: canary doesn't proxy websockets** — only broadcasts reach canary users
-- **Gotcha: don't zod `.max()` a business limit on a request body** — cap server-side
+- **Gotcha: don't zod** `.max()` **a business limit on a request body** — cap server-side
 - **Gotcha: TypeORM soft-delete is not canary/rollback-safe on a shared DB**
