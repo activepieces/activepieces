@@ -29,9 +29,6 @@ export enum AiCreditsAutoTopUpState {
     DISABLED = 'disabled',
 }
 
-// The canonical Autumn feature ids. Values MUST equal the matching `platform_plan` column names (camelCase):
-// they are projected onto the plan verbatim and forwarded as Autumn `featureId`s. Keep aligned with the
-// Autumn dashboard.
 export enum AutumnFeatureId {
     AP_CREDITS = 'apCredits',
     APP_SUMO_AI_CREDITS = 'appSumoAiCredits',
@@ -61,9 +58,6 @@ export enum AutumnFeatureId {
     SCIM_ENABLED = 'scimEnabled',
 }
 
-// Consumable features are prepaid balances the customer tops up (adds units to a depleting pool). Every other
-// billable feature (e.g. seats) is a recurring per-unit quantity the customer edits and is charged for each
-// period — it is NOT "topped up". This is the source of truth for splitting the two mechanics.
 export const CONSUMABLE_AUTUMN_FEATURE_IDS: readonly AutumnFeatureId[] = [
     AutumnFeatureId.AP_CREDITS,
     AutumnFeatureId.APP_SUMO_AI_CREDITS,
@@ -76,7 +70,6 @@ export function isConsumableAutumnFeature(featureId: AutumnFeatureId): boolean {
 
 export const PlatformPlan = z.object({
     ...BaseModelSchema,
-    // TODO: We have to use the enum when we finalize the plan names
     plan: Nullable(z.string()),
     platformId: z.string(),
     includedCredits: z.number(),

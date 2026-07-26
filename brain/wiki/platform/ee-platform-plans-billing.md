@@ -28,6 +28,8 @@ Billing and entitlements are powered by [Autumn](https://useautumn.com). Each pl
 - Initial plan by edition: CE/EE → `OPEN_SOURCE_PLAN`, Cloud → `AUTUMN_FREE_PLAN`. CE and `TESTING` environments skip enrollment/sync entirely.
 - `AUTUMN_CONSOLE_URL` currently points at `console-testing.activepieces.com` on this branch — flips to the production console at launch.
 - Credit metering for managed AI happens post-run in centralized worker execution (decision 000016), so in-flight spend is invisible to the gate.
+- `AutumnFeatureId` (`platform.model.ts`) is a three-way contract: each value must equal BOTH the `platform_plan` column name (the projection writes them verbatim via `mapAutumnFeaturesToPlatformPlan` and forwards them as Autumn `featureId`s) AND the feature id configured in the Autumn dashboard. Renaming any one side silently breaks projection or metering for that feature.
+- `CONSUMABLE_AUTUMN_FEATURE_IDS` (`apCredits`, `appSumoAiCredits`) is the source of truth splitting the two billing mechanics: consumables are prepaid balances the customer tops up (units added to a depleting pool); every other billable feature (e.g. seats) is a recurring per-unit quantity edited and charged each period — never "topped up".
 
 ### Key files
 Entry point: `platformPlanService` (`platform-plan.service.ts`) for projection, usage, and seat checks; `billingProvider.get(log)` for everything billing.
