@@ -9,13 +9,14 @@ A Flow Run records one execution of a specific flow version, from trigger to ter
 ### Entities & services
 - **FlowRun** — id, projectId, flowId, flowVersionId, environment (PRODUCTION/TESTING), status, logsFileId, parentRunId (subflows), failedStep (JSONB `{name, displayName, message?}`), timeline (JSONB), archivedAt (soft delete).
 - **12 statuses**: 3 non-terminal (QUEUED, RUNNING, PAUSED) + 9 terminal (SUCCEEDED, FAILED, TIMEOUT, CANCELED, QUOTA_EXCEEDED, MEMORY_LIMIT_EXCEEDED, INTERNAL_ERROR, LOG_SIZE_EXCEEDED).
-- **Waitpoint** — row per paused step: `type` (DELAY|WEBHOOK), `version` (V0|V1), `status` (PENDING|COMPLETED), unique on `(flow_run_id, step_name)`.
+- **Waitpoint** — row per paused step: `type` (DELAY|WEBHOOK), `version` (V0|V1), `status` (PENDING|COMPLETED), unique on `(flow_run_id, step_name)`. Fan-in barriers add `is_fan_in` (bool), `expected_children` (int, null until sealed), `terminal_children` (int, monotonic).
 - **LogsFile** — zstd-compressed File (type FLOW_RUN_LOG) holding the full executor context.
 
 ### How it works
 - **Endpoints**: `GET /` (cursor paginated by composite `(created DESC, id DESC)`, filters incl. `failedStepMessage` ILIKE), `GET /:id`, `POST /:id/retry`, `POST /retry|cancel|archive` (bulk), waitpoint resume routes.
 - **Retry strategies**: `FROM_FAILED_STEP` (rebuild context from logs, re-run from failure, prior outputs kept) or `ON_LATEST_VERSION` (fresh run on current published version). Both resolve the trigger payload via `resolveStepOutput`. If the trigger itself failed, they switch to `executeTrigger: true` to reprocess the raw event.
 - **Pause/resume (V1 waitpoints)**: pieces call `createWaitpoint` + `waitForWaitpoint`. DELAY upserts a `RESUME_DELAY_WAITPOINT` BullMQ job; WEBHOOK resumes on an HTTP call to `/:id/waitpoints/:waitpointId[/sync]`.
+- **Fan-in barrier** (subflow join): a piece dispatches N children (`ap-parent-run-id`, no `callbackUrl`) around a single `createWaitpoint({ isFanIn: true })` → `sealFanIn({ expectedChildren, timeoutAt })`. The runs-metadata worker increments `terminal_children` in the same transaction as each child's terminal status write; when `terminal_children >= expected_children` (or the `RESUME_DELAY_WAITPOINT` timeout fires) the barrier completes once with a `{succeeded, failed, canceled, stillRunning, timedOut}` summary and resumes the parent. Keyed on the one-PENDING-waitpoint-per-run invariant — see decision 000013. Piece: subflows `Fan Out to Subflows`.
 - Logs backed up every 15s during execution for crash recovery; uploaded via 7-day JWT-signed URLs.
 
 ### Gotchas

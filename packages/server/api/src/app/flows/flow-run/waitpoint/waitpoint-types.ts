@@ -32,6 +32,9 @@ type Waitpoint = {
     workerHandlerId: string | null
     httpRequestId: string | null
     resumePayload: WaitpointResumePayload | null
+    isFanIn: boolean
+    expectedChildren: number | null
+    terminalChildren: number
 }
 
 type CreateForPauseParams = {
@@ -44,6 +47,8 @@ type CreateForPauseParams = {
     responseToSend?: RespondResponse
     workerHandlerId?: string
     httpRequestId?: string
+    isFanIn?: boolean
+    expectedChildren?: number
 }
 
 type CreateForPauseResult = {

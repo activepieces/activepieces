@@ -13,9 +13,11 @@ import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunController } from './flow-run-controller'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunRepo, flowRunService } from './flow-run-service'
+import { fanInBarrier } from './waitpoint/fan-in-summary'
 import { resumeController } from './waitpoint/resume-controller'
 import { resumeService } from './waitpoint/resume-service'
 import { waitpointController } from './waitpoint/waitpoint-controller'
+import { waitpointService } from './waitpoint/waitpoint-service'
 
 const RUN_TELEMETRY_STATEMENT_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -89,6 +91,24 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         }
         app.log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
             '[RESUME_DELAY_WAITPOINT] Resuming flow')
+        const waitpoint = await waitpointService(app.log).findByIdAndFlowRunId({ waitpointId: data.waitpointId, flowRunId: data.flowRunId })
+        if (!isNil(waitpoint) && waitpoint.isFanIn) {
+            const summary = await fanInBarrier.buildSummary({ parentRunId: data.flowRunId, expectedChildren: waitpoint.expectedChildren ?? 0, timedOut: true })
+            const result = await waitpointService(app.log).complete({
+                flowRunId: data.flowRunId,
+                projectId: data.projectId,
+                waitpointId: waitpoint.id,
+                resumePayload: { body: summary, headers: {}, queryParams: {} },
+            })
+            if (result.completedExisting && !isNil(result.waitpoint)) {
+                await resumeService(app.log).resumeFromWaitpoint({
+                    flowRunId: data.flowRunId,
+                    waitpointId: result.waitpoint.id,
+                    resumePayload: result.waitpoint.resumePayload,
+                })
+            }
+            return
+        }
         await resumeService(app.log).resumeFromWaitpoint({
             flowRunId: data.flowRunId,
             waitpointId: data.waitpointId,

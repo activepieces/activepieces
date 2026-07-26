@@ -1,11 +1,13 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, PauseType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
+import { fanInBarrier } from './fan-in-summary'
 import { WaitpointEntity } from './waitpoint-entity'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
@@ -21,6 +23,18 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         if (!isNil(preCompleted)) {
             log.info({ flowRun: { id: params.flowRunId }, step: { name: params.stepName }, existingStatus: preCompleted.status }, '[waitpointService#createForPause] Waitpoint already pre-completed for this step')
             return { inserted: false, waitpoint: preCompleted }
+        }
+
+        const isSeal = !isNil(params.expectedChildren)
+        const isFanInCreate = (params.isFanIn ?? false) && !isSeal
+        if (isFanInCreate) {
+            const nonTerminalChildren = await fanInBarrier.countNonTerminalChildren({ parentRunId: params.flowRunId })
+            if (nonTerminalChildren > 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'Cannot start a wait-for-all fan-in step while this run still has subflow children running. Mixing a fire-and-forget fan-out with a wait-for-all fan-in in the same run is not supported.' },
+                })
+            }
         }
 
         const id = apId()
@@ -41,6 +55,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 workerHandlerId: params.workerHandlerId ?? null,
                 httpRequestId: params.httpRequestId ?? null,
                 resumePayload: null,
+                isFanIn: params.isFanIn ?? false,
             })
             .orIgnore()
             .execute()
@@ -62,11 +77,64 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
+            return { inserted, waitpoint }
         }
-        else {
-            log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+
+        log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+        if (isSeal) {
+            return { inserted: false, waitpoint: await this.sealFanInBarrier({ params, barrier: waitpoint }) }
         }
         return { inserted, waitpoint }
+    },
+
+    async sealFanInBarrier({ params, barrier }: SealFanInBarrierParams): Promise<Waitpoint> {
+        await waitpointRepo().update({ id: barrier.id }, {
+            expectedChildren: params.expectedChildren,
+            resumeDateTime: params.resumeDateTime ?? null,
+        })
+        if (!isNil(params.resumeDateTime)) {
+            await systemJobsSchedule(log).upsertJob({
+                job: {
+                    name: SystemJobName.RESUME_DELAY_WAITPOINT,
+                    data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: barrier.id },
+                    jobId: `resume-delay-${params.flowRunId}`,
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: dayjs(params.resumeDateTime),
+                },
+            })
+        }
+        const sealed = await waitpointRepo().findOneByOrFail({ id: barrier.id })
+        const allTerminal = sealed.status === WaitpointStatus.PENDING
+            && !isNil(sealed.expectedChildren)
+            && sealed.terminalChildren >= sealed.expectedChildren
+        if (allTerminal) {
+            const summary = await fanInBarrier.buildSummary({ parentRunId: params.flowRunId, expectedChildren: sealed.expectedChildren ?? 0, timedOut: false })
+            await this.complete({ flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: sealed.id, resumePayload: { body: summary, headers: {}, queryParams: {} } })
+            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: sealed.id } }, '[waitpointService#sealFanInBarrier] All children terminal at seal; completed barrier, PAUSED-upload reconciliation will resume')
+            return waitpointRepo().findOneByOrFail({ id: sealed.id })
+        }
+        return sealed
+    },
+
+    async incrementTerminalChildren({ parentRunId }: { parentRunId: string }, entityManager: EntityManager): Promise<Waitpoint | null> {
+        const repo = waitpointRepo(entityManager)
+        const barrier = await repo
+            .createQueryBuilder('waitpoint')
+            .setLock('pessimistic_write')
+            .where({ flowRunId: parentRunId, status: WaitpointStatus.PENDING, isFanIn: true })
+            .getOne()
+        if (isNil(barrier)) {
+            return null
+        }
+        const updated: Waitpoint = { ...barrier, terminalChildren: barrier.terminalChildren + 1 }
+        await repo.save(updated)
+        return updated
+    },
+
+    async getFanInBarrier(flowRunId: string): Promise<Waitpoint | null> {
+        return waitpointRepo().findOneBy({ flowRunId, status: WaitpointStatus.PENDING, isFanIn: true })
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
@@ -161,3 +229,8 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })
+
+type SealFanInBarrierParams = {
+    params: CreateForPauseParams
+    barrier: Waitpoint
+}

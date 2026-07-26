@@ -60,6 +60,20 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        isFanIn: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
+        expectedChildren: {
+            type: Number,
+            nullable: true,
+        },
+        terminalChildren: {
+            type: Number,
+            nullable: false,
+            default: 0,
+        },
     },
     indices: [
         {

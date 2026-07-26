@@ -7,7 +7,7 @@ import { waitpointService } from './waitpoint-service'
 
 export const waitpointController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateWaitpointParams, async (request, reply) => {
-        const { flowRunId, projectId, stepName, type, version, resumeDateTime, responseToSend, workerHandlerId, httpRequestId } = request.body
+        const { flowRunId, projectId, stepName, type, version, resumeDateTime, responseToSend, workerHandlerId, httpRequestId, isFanIn, expectedChildren } = request.body
         const { waitpoint } = await waitpointService(request.log).createForPause({
             flowRunId,
             projectId,
@@ -18,6 +18,8 @@ export const waitpointController: FastifyPluginAsyncZod = async (app) => {
             responseToSend: responseToSend ?? undefined,
             workerHandlerId: workerHandlerId ?? undefined,
             httpRequestId: httpRequestId ?? undefined,
+            isFanIn,
+            expectedChildren,
         })
         const resumeUrl = await domainHelper.getPublicApiUrl({
             path: `v1/flow-runs/${flowRunId}/waitpoints/${waitpoint.id}`,

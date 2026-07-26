@@ -1,4 +1,5 @@
-import { FlowTriggerType, isNil, PopulatedFlow } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { FAIL_PARENT_ON_FAILURE_HEADER, FlowTriggerType, isNil, PARENT_RUN_ID_HEADER, PopulatedFlow } from "@activepieces/pieces-framework";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 
 
@@ -6,7 +7,7 @@ export const callableFlowKey = (runId: string) => `callableFlow_${runId}`;
 
 export type CallableFlowRequest = {
     data: unknown;
-    callbackUrl: string;
+    callbackUrl?: string;
 }
 export type CallableFlowResponse = {
     status: 'success' | 'error';
@@ -59,7 +60,33 @@ export async function findFlowByExternalIdOrThrow({
     return allFlows[0];
 }
 
+export async function dispatchChild({ apiUrl, flowId, payload, parentRunId, failParentOnFailure, callbackUrl }: DispatchChildParams): Promise<unknown> {
+    const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: `${apiUrl}v1/webhooks/${flowId}`,
+        headers: {
+            'Content-Type': 'application/json',
+            [PARENT_RUN_ID_HEADER]: parentRunId,
+            [FAIL_PARENT_ON_FAILURE_HEADER]: failParentOnFailure ? 'true' : 'false',
+        },
+        body: {
+            data: payload,
+            callbackUrl,
+        },
+    });
+    return response.body;
+}
+
 type ListParams = {
     flowsContext: FlowsContext,
     params?: ListFlowsContextParams
+}
+
+type DispatchChildParams = {
+    apiUrl: string;
+    flowId: string;
+    payload: unknown;
+    parentRunId: string;
+    failParentOnFailure: boolean;
+    callbackUrl?: string;
 }
