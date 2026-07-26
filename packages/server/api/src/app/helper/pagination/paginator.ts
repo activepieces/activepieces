@@ -294,7 +294,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 }
 
 function isParseableTimestamp(value: string): boolean {
-    return TIMESTAMP_TEXT_PATTERN.test(value) || !Number.isNaN(Date.parse(value))
+    return TIMESTAMP_TEXT_PATTERN.test(value) && !Number.isNaN(Date.parse(value))
 }
 
 function withIdTiebreaker(orderByConfig: OrderByConfig[]): OrderByConfig[] {

@@ -138,6 +138,27 @@ describe('cursor pagination with duplicate timestamps', () => {
         expect(response?.json().data).toHaveLength(5)
     })
 
+    it.each([
+        ['out-of-range date', '2026-13-45T99:99:99'],
+        ['zero date', '0000-00-00T00:00:00'],
+        ['bare digits', '12345'],
+    ])('treats a %s cursor as the first page instead of failing', async (_label, created) => {
+        const ctx = await createTestContext(app)
+        await seedFolders(ctx, 5)
+
+        const inner = Buffer.from(JSON.stringify({ created, id: 'x' })).toString('base64')
+        const cursor = Buffer.from(`next_${inner}`).toString('base64')
+
+        const response = await ctx.get('/v1/folders', {
+            projectId: ctx.project.id,
+            limit: 10,
+            cursor,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().data).toHaveLength(5)
+    })
+
     it('treats a cursor missing leading order fields as the first page', async () => {
         const ctx = await createTestContext(app)
         await seedFolders(ctx, 5)
