@@ -24,7 +24,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
-const AUTUMN_CONSOLE_URL = 'https://console-testing.activepieces.com'
+const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).replace(/\/+$/, '')
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
@@ -59,8 +59,8 @@ const AUTUMN_FLAG_FEATURE_IDS = [
 ] as const satisfies readonly (keyof PlatformPlanLimits & `${AutumnFeatureId}`)[]
 
 export const autumnUtils = {
-    client({ secretKey, customerId, serverURL }: AutumnClientParams) {
-        const client = new Autumn({ secretKey, serverURL, failOpen: true })
+    client({ secretKey, customerId }: AutumnClientParams) {
+        const client = new Autumn({ secretKey, failOpen: true })
         return {
             check(params: WithoutCustomerId<CheckParams>) {
                 return client.check({ customerId, ...params })
@@ -464,7 +464,6 @@ type WithoutCustomerId<T> = Omit<T, 'customerId'>
 type AutumnClientParams = {
     secretKey: string
     customerId: string
-    serverURL?: string
 }
 
 type TrackInput = WithoutCustomerId<TrackParams> & {
