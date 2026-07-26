@@ -9,14 +9,16 @@ import {
     TriggerTestStrategy,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
 import {
     createMockFlow,
     createMockFlowVersion,
     createMockPieceMetadata,
+    createMockPlan,
 } from '../../../helpers/mocks'
 import { describeRolePermissions } from '../../../helpers/permission-test'
-import { TestContext } from '../../../helpers/test-context'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -123,6 +125,84 @@ describe('Flow API', () => {
             },
             allowedRoles: [DefaultProjectRole.ADMIN, DefaultProjectRole.EDITOR, DefaultProjectRole.VIEWER],
             forbiddenRoles: [],
+        })
+    })
+
+    describe('Project active flows limit', () => {
+        it('blocks enabling a flow when the project is at its active flows limit', async () => {
+            const ctx = await createTestContext(app!)
+            await db.save('project_plan', createMockPlan({
+                projectId: ctx.project.id,
+                activeFlowsLimit: 1,
+            }))
+            const enabledFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.ENABLED,
+            })
+            await db.save('flow', enabledFlow)
+            const { mockFlow } = await setupFlowWithScheduleTrigger(ctx)
+
+            const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'ENABLED' },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+            expect(response.json().code).toBe('QUOTA_EXCEEDED')
+        })
+
+        it('allows enabling a flow when the project is below its active flows limit', async () => {
+            const ctx = await createTestContext(app!)
+            await db.save('project_plan', createMockPlan({
+                projectId: ctx.project.id,
+                activeFlowsLimit: 1,
+            }))
+            const { mockFlow } = await setupFlowWithScheduleTrigger(ctx)
+
+            const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'ENABLED' },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('allows re-enabling an already enabled flow when the project is at its active flows limit', async () => {
+            const ctx = await createTestContext(app!)
+            await db.save('project_plan', createMockPlan({
+                projectId: ctx.project.id,
+                activeFlowsLimit: 1,
+            }))
+            const { mockFlow } = await setupFlowWithScheduleTrigger(ctx)
+
+            const enableResponse = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'ENABLED' },
+            })
+            expect(enableResponse.statusCode).toBe(StatusCodes.OK)
+
+            const reEnableResponse = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'ENABLED' },
+            })
+            expect(reEnableResponse.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('does not block enabling a flow when the project has no active flows limit', async () => {
+            const ctx = await createTestContext(app!)
+            const enabledFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.ENABLED,
+            })
+            await db.save('flow', enabledFlow)
+            const { mockFlow } = await setupFlowWithScheduleTrigger(ctx)
+
+            const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'ENABLED' },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
         })
     })
 })

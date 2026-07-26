@@ -7,23 +7,8 @@ import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, E
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
+import { assertSafePathSegment } from '../utils/path-safety'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
-
-function assertSafePathSegment(value: string, field: string): void {
-    const isUnsafe = value.length === 0
-        || value === '.'
-        || value === '..'
-        || value.includes('..')
-        || value.includes('/')
-        || value.includes('\\')
-        || value.includes('\0')
-    if (isUnsafe) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: { message: `Invalid ${field}: "${value}" — path segment contains disallowed characters` },
-        })
-    }
-}
 
 function assertSandboxPathUnderRoot(mount: SandboxMount): void {
     const normalized = path.posix.normalize(mount.sandboxPath)
