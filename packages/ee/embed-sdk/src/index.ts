@@ -227,8 +227,8 @@ class ActivepiecesEmbedded {
   };
   _embeddingState?: EmbeddingParam;
   _pendingRoute?: string;
-  _dashboardConfigurationFinished = false;
   _cleanDashboardIframe?: () => void;
+  _connectionListenersAbort?: AbortController;
   configure({
     jwtToken,
     instanceUrl,
@@ -241,7 +241,6 @@ class ActivepiecesEmbedded {
     this._cleanMcpIframe();
     this._embeddingAuth = undefined;
     this._pendingRoute = undefined;
-    this._dashboardConfigurationFinished = false;
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
     this._jwtToken = jwtToken;
     this._prefix = this._removeTrailingSlashes(this._prependForwardSlashToRoute(prefix ?? '/'));
@@ -284,7 +283,7 @@ class ActivepiecesEmbedded {
             iframe = this.connectToEmbed({
               iframeContainer,
               callbackAfterConfigurationFinished: () => {
-                this._dashboardConfigurationFinished = true;
+                this._dashboardAndBuilderIframeWindow = iframe?.contentWindow;
                 const pendingRoute = this._pendingRoute;
                 this._pendingRoute = undefined;
                 if (pendingRoute) {
@@ -295,7 +294,6 @@ class ActivepiecesEmbedded {
               initialRoute: this._prependForwardSlashToRoute(this._embeddingState?.initialRoute ?? '/'),
               signal: abortController.signal
             });
-            this._dashboardAndBuilderIframeWindow = iframe.contentWindow;
             this._checkForClientRouteChanges({ source: iframe.contentWindow, signal: abortController.signal });
             this._checkForBuilderHomeButtonClicked({ source: iframe.contentWindow, signal: abortController.signal });
           }
@@ -450,7 +448,7 @@ class ActivepiecesEmbedded {
     if (!popup) {
       this._errorCreator('Failed to open popup window');
     }
-    this._setupInitialMessageHandler({ targetWindow: popup, initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}` });
+    this._setupInitialMessageHandler({ targetWindow: popup, initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`, signal: this._connectionListenersAbort?.signal });
     return popup;
   }
   async connect({ pieceName, connectionName, newWindow }: { 
@@ -459,6 +457,7 @@ class ActivepiecesEmbedded {
     newWindow?:newWindowFeatures
   }) {
     this._cleanConnectionIframe();
+    this._connectionListenersAbort = new AbortController();
     return this._addGracePeriodBeforeMethod({
       condition: () => {
         return !!document.body;
@@ -488,7 +487,7 @@ class ActivepiecesEmbedded {
 
 
   navigate({ route }: { route: string }) {
-    if (!this._dashboardConfigurationFinished || !this._dashboardAndBuilderIframeWindow) {
+    if (!this._dashboardAndBuilderIframeWindow) {
       if (!this._embeddingState?.containerId) {
         this._logger().error('dashboard iframe not found');
         return;
@@ -704,6 +703,7 @@ class ActivepiecesEmbedded {
     );
     this._cleanConnectionIframe = () => {
       window.removeEventListener('message', connectionRelatedMessageHandler);
+      this._connectionListenersAbort?.abort();
       this._resolveNewConnectionDialogClosed?.({ connection: undefined });
       this._resolveNewConnectionDialogClosed = undefined;
       this._rejectNewConnectionDialogClosed = undefined;
