@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AutoTopUpConfig, BillableFeature, ConsumableProductAutoTopupParams, PurchasablePlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -96,9 +96,25 @@ export async function trackCreditsWithAppSumo({ log, credits, appSumo }: {
     appSumo?: TrackAppSumoAiUsageParams
 }): Promise<void> {
     const provider = billingProvider.get(log)
-    await provider.trackCredits(credits)
-    if (!isNil(appSumo)) {
-        await provider.trackAppSumoAiUsage(appSumo)
+    const [creditsTrack] = await Promise.all([
+        tryCatch(() => provider.trackCredits(credits)),
+        trackAppSumoAiUsageIndependently({ log, appSumo }),
+    ])
+    if (!isNil(creditsTrack.error)) {
+        throw creditsTrack.error
+    }
+}
+
+async function trackAppSumoAiUsageIndependently({ log, appSumo }: {
+    log: FastifyBaseLogger
+    appSumo?: TrackAppSumoAiUsageParams
+}): Promise<void> {
+    if (isNil(appSumo)) {
+        return
+    }
+    const { error } = await tryCatch(() => billingProvider.get(log).trackAppSumoAiUsage(appSumo))
+    if (!isNil(error)) {
+        log.warn({ error, platform: { id: appSumo.platformId } }, 'Failed to track AppSumo AI usage')
     }
 }
 
