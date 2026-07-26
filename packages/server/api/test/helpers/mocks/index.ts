@@ -177,7 +177,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
         chatEnabled: platformPlan?.chatEnabled ?? false,
         workerGroupsEnabled: platformPlan?.workerGroupsEnabled ?? false,
-        teamProjectsLimit: platformPlan?.teamProjectsLimit ?? 0,
+        billedTeamProjectsLimit: platformPlan?.billedTeamProjectsLimit ?? 0,
         usersLimit: platformPlan?.usersLimit ?? null,
         scheduledUsersLimit: platformPlan?.scheduledUsersLimit ?? null,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
@@ -590,7 +590,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             auditLogEnabled: true,
             apiKeysEnabled: true,
             customRolesEnabled: true,
-            teamProjectsLimit: null,
+            billedTeamProjectsLimit: null,
             includedCredits: 1000,
             ...params?.plan,
         })

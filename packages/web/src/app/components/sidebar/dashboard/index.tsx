@@ -77,21 +77,21 @@ export function ProjectDashboardSidebar({
   }, [searchOpen]);
 
   const shouldShowNewProjectButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === 0) {
+    if (platform.plan.billedTeamProjectsLimit === 0) {
       return false;
     }
     return currentUser?.platformRole === PlatformRole.ADMIN;
-  }, [platform.plan.teamProjectsLimit]);
+  }, [platform.plan.billedTeamProjectsLimit]);
 
   const shouldShowSearchButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === 0) {
+    if (platform.plan.billedTeamProjectsLimit === 0) {
       return false;
     }
     return true;
-  }, [platform.plan.teamProjectsLimit]);
+  }, [platform.plan.billedTeamProjectsLimit]);
 
   const shouldShowInlineAddButton =
-    platform.plan.teamProjectsLimit !== 0 &&
+    platform.plan.billedTeamProjectsLimit !== 0 &&
     currentUser?.platformRole === PlatformRole.ADMIN &&
     projects.filter((project) => project.type === ProjectType.TEAM).length ===
       0;

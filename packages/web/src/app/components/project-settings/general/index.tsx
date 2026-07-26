@@ -218,7 +218,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
               )}
             />
           )}
-        {platform.plan.teamProjectsLimit !== 0 &&
+        {platform.plan.billedTeamProjectsLimit !== 0 &&
           platformRole === PlatformRole.ADMIN && (
             <FormField
               name="activeFlowsLimit"

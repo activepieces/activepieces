@@ -18,7 +18,7 @@ The Enterprise Edition extends CE with commercial features living under `package
 - platform-plan (Autumn billing + license-key activation), billing-usage-report, alerts, oauth-apps, platform-webhooks, appsumo, flags (`enterpriseFlagsHooks`), helper (SMTP + appearance), users, admin.
 
 ### Plan flags & limits (overview)
-Feature flags are booleans on `PlatformPlan`; limits are `Nullable(number)` columns (null = unlimited, 0 = none, N = cap): `activeFlowsLimit`, `projectsLimit`, `teamProjectsLimit` (numeric now — the old `NONE/ONE/UNLIMITED` enum is gone), `usersLimit`, and `scheduledUsersLimit` (the seat cap of a pending scheduled downgrade; seat checks enforce `min(usersLimit, scheduledUsersLimit)`). All of it is a projection of the platform's Autumn entitlements — deep billing detail lives in [EE Platform (Plans & Billing)](./ee-platform-plans-billing.md).
+Feature flags are booleans on `PlatformPlan`; limits are `Nullable(number)` columns (null = unlimited, 0 = none, N = cap): `activeFlowsLimit`, `projectsLimit`, `billedTeamProjectsLimit` (numeric; the old `NONE/ONE/UNLIMITED` varchar `teamProjectsLimit` column stays until the cleanup PR — decision 000019), `usersLimit`, and `scheduledUsersLimit` (the seat cap of a pending scheduled downgrade; seat checks enforce `min(usersLimit, scheduledUsersLimit)`). All of it is a projection of the platform's Autumn entitlements — deep billing detail lives in [EE Platform (Plans & Billing)](./ee-platform-plans-billing.md).
 
 ### Gotchas
 - Some modules are Cloud-only, not self-hosted EE (AppSumo, cloud admin).

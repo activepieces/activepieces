@@ -134,7 +134,7 @@ export function PlatformSidebar() {
           to: '/platform/projects',
           label: t('Projects'),
           icon: LayoutGridIcon,
-          locked: platform.plan.teamProjectsLimit === 0,
+          locked: platform.plan.billedTeamProjectsLimit === 0,
         },
         {
           to: '/platform/users',

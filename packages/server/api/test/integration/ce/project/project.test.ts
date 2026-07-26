@@ -22,7 +22,7 @@ describe('Project API (CE)', () => {
         it('should create one team project', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 project: { type: ProjectType.PERSONAL },
-                plan: { teamProjectsLimit: 1 },
+                plan: { billedTeamProjectsLimit: 1 },
             })
 
             const testToken = await generateMockToken({
@@ -48,7 +48,7 @@ describe('Project API (CE)', () => {
 
         it('should fail to create a second team project', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                plan: { teamProjectsLimit: 1 },
+                plan: { billedTeamProjectsLimit: 1 },
             })
 
             const testToken = await generateMockToken({

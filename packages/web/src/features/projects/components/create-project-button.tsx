@@ -21,7 +21,7 @@ function useIsCreateProjectDisabled({
   projects: Pick<ProjectWithLimits, 'type'>[];
 }) {
   const { platform } = platformHooks.useCurrentPlatform();
-  if (platform.plan.teamProjectsLimit === 1) {
+  if (platform.plan.billedTeamProjectsLimit === 1) {
     const teamProjects = projects.filter(
       (project) => project.type === ProjectType.TEAM,
     );

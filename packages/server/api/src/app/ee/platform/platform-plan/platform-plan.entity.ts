@@ -58,7 +58,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         customAppearanceEnabled: {
             type: Boolean,
         },
-        teamProjectsLimit: {
+        billedTeamProjectsLimit: {
             type: Number,
             nullable: true,
         },

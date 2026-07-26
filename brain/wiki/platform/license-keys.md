@@ -11,7 +11,7 @@ A license key is a self-hosted customer's **activation/recovery handle** for the
 ### How it works
 - `autumnBilling.activateLicense({ platformId, licenseKey })` — calls `autumnConsole.activate({ licenseKey })` (`POST {console}/api/v1/billing/activate`, key as Bearer token), then saves `platform_plan.licenseKey`, stores the returned credentials via `platformPlanService.setAutumnCredentials`, and runs `refreshEntitlements`.
 - Console `/activate` is idempotent — a key maps to one Autumn customer, so re-activating on a fresh instance returns the same customer + creds (support hands the key back to a customer who lost their instance).
-- `refreshEntitlements` — fetches the Autumn customer and writes `mapAutumnFeaturesToPlatformPlan` output onto `platform_plan`: `plan`, `teamProjectsLimit`, `usersLimit`, `activeFlowsLimit`, `includedCredits`, and every boolean flag feature.
+- `refreshEntitlements` — fetches the Autumn customer and writes `mapAutumnFeaturesToPlatformPlan` output onto `platform_plan`: `plan`, `billedTeamProjectsLimit`, `usersLimit`, `activeFlowsLimit`, `includedCredits`, and every boolean flag feature.
 - `ensureEnrolled` — lazy enrollment under a `distributedLock`; if a `licenseKey` is already stored it re-activates through the console, otherwise `enrollFree` with the platform owner's email.
 - `provisionLicenseKeyIfPaid` — during `refreshEntitlements`, self-serve paid customers who never entered a key get one minted by the console and saved, so every paying platform ends up with a recovery handle.
 

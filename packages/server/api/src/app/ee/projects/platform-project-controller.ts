@@ -154,12 +154,12 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {
     const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-    const teamProjectsLimit = platform.plan.teamProjectsLimit
+    const billedTeamProjectsLimit = platform.plan.billedTeamProjectsLimit
 
-    if (isNil(teamProjectsLimit)) {
+    if (isNil(billedTeamProjectsLimit)) {
         return
     }
-    if (teamProjectsLimit <= 0) {
+    if (billedTeamProjectsLimit <= 0) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {
@@ -168,11 +168,11 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string,
         })
     }
     const projectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
-    if (projectsCount >= teamProjectsLimit) {
+    if (projectsCount >= billedTeamProjectsLimit) {
         throw new ActivepiecesError({
             code: ErrorCode.FEATURE_DISABLED,
             params: {
-                message: `Maximum limit of ${teamProjectsLimit} team project(s) reached for this plan. Upgrade your plan to add more team projects.`,
+                message: `Maximum limit of ${billedTeamProjectsLimit} team project(s) reached for this plan. Upgrade your plan to add more team projects.`,
             },
         })
     }

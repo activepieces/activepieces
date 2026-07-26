@@ -88,7 +88,7 @@ export const PlatformPlan = z.object({
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),
-    teamProjectsLimit: Nullable(z.number()),
+    billedTeamProjectsLimit: Nullable(z.number()),
     usersLimit: Nullable(z.number()),
     scheduledUsersLimit: Nullable(z.number()),
     projectRolesEnabled: z.boolean(),

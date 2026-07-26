@@ -186,7 +186,7 @@ export const autumnUtils = {
         return {
             ...flags,
             plan: entitlements.planId,
-            teamProjectsLimit: toProjectedLimit(teamProjects, 1),
+            billedTeamProjectsLimit: toProjectedLimit(teamProjects, 1),
             usersLimit: toProjectedLimit(users, null),
             scheduledUsersLimit: entitlements.scheduledUsersLimit,
             activeFlowsLimit: toProjectedLimit(activeFlows, null),

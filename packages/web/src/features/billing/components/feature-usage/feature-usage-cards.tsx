@@ -130,7 +130,7 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
       label: 'Team Projects',
       icon: Folder,
       used: usage.teamProjects,
-      included: plan.teamProjectsLimit ?? null,
+      included: plan.billedTeamProjectsLimit ?? null,
     },
   ];
   if (!isNil(usage.appSumoAiCreditsUsed)) {

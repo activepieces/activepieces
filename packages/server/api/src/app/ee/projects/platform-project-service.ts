@@ -181,7 +181,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             }
             if (!isNil(request.plan) && request.plan.activeFlowsLimit !== undefined) {
                 const platform = await platformService(log).getOneWithPlanOrThrow(project.platformId)
-                if (platform.plan.teamProjectsLimit !== 0) {
+                if (platform.plan.billedTeamProjectsLimit !== 0) {
                     await projectLimitsService(log).updateActiveFlowsLimit({
                         projectId,
                         activeFlowsLimit: request.plan.activeFlowsLimit,

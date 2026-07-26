@@ -38,7 +38,7 @@ export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isEnabled = platform.plan.teamProjectsLimit !== 0;
+  const isEnabled = platform.plan.billedTeamProjectsLimit !== 0;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
 
