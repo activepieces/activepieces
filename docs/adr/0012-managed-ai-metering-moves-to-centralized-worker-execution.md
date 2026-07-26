@@ -23,7 +23,7 @@ already been *tracked*, and a run's own usage is not tracked until the run finis
 long run spends invisibly past the limit for its whole duration, and the per-call gate cuts it off
 only once *previously finished* runs/chats have pushed the platform's tracked balance over. The only
 hard in-run ceiling is the OpenRouter key's own monthly limit (`MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD`,
-$1000/month). And token counts are derived, not observed, so metering accuracy depends on the
+$500/month for keys minted since 2026-07; older keys carry $1000/month). And token counts are derived, not observed, so metering accuracy depends on the
 reconstruction staying in sync with what OpenRouter actually billed.
 
 ## Decision

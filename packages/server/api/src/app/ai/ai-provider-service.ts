@@ -1,13 +1,11 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
-import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, PlanName, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
-import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
-import { billingProvider } from '../platform/billing-provider'
 import { platformService } from '../platform/platform.service'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
@@ -16,7 +14,7 @@ const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
 const modelsCache = new Map<string, AIProviderModel[]>()
 
-const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 1000
+const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
@@ -35,9 +33,6 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         })
 
         if (aiCreditsEnabled && !activepiecesExists) {
-            // Managed AI is the default chat provider so the chat page skips the "set up a
-            // provider" wall — but only when nothing else is already enabled for chat, so we never
-            // create a second chat provider or override an existing BYO choice (see update()).
             const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
             await aiProviderRepo().save({
                 id: apId(),
@@ -52,7 +47,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
         const hasActivepiecesProvider = configuredProviders.some((p) => p.provider === AIProviderName.ACTIVEPIECES)
-        const hideActivepiecesProvider = hasActivepiecesProvider && await isManagedAiProviderHidden({ platformId, log })
+        const hideActivepiecesProvider = hasActivepiecesProvider && await isActivepiecesAiProviderHidden({ platformId, log })
 
         return configuredProviders
             .filter((p) => !(hideActivepiecesProvider && p.provider === AIProviderName.ACTIVEPIECES))
@@ -223,23 +218,6 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
         return { provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
     },
-    async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {
-        const aiProvider = await aiProviderRepo().findOneBy({
-            platformId,
-            provider: AIProviderName.ACTIVEPIECES,
-        })
-        if (isNil(aiProvider)) {
-            return null
-        }
-        const doesHaveKeys = await doesActivepiecesProviderHasKeys(aiProvider)
-        if (!doesHaveKeys) {
-            return null
-        }
-        const { auth } = await this.getConfigOrThrow({ platformId, provider: aiProvider.provider })
-
-        return auth as ActivePiecesProviderAuthConfig
-    },
-
     async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
         const aiProvider = await aiProviderRepo().findOneBy({
             platformId,
@@ -261,35 +239,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES })
         return auth as ActivePiecesProviderAuthConfig
     },
-
-    async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig }> {
-        const aiProviders = await aiProviderRepo().find({
-            where: {
-                provider: AIProviderName.ACTIVEPIECES,
-                platformId: platformIds?.length ? In(platformIds) : undefined,
-            },
-        })
-
-        const result: { [platformId: string]: ActivePiecesProviderAuthConfig } = {}
-        for (const aiProvider of aiProviders) {
-            const hasKeys = await doesActivepiecesProviderHasKeys(aiProvider)
-            if (!hasKeys) continue
-
-            result[aiProvider.platformId] = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
-        }
-
-        return result
-    },
 })
 
-async function shouldHideManagedAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
+async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
-    if (plan.embeddingEnabled) {
-        return true
-    }
-    const isAppSumoPlan = plan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false
-    const { credits } = await billingProvider.get(log).getCreditsAndAppSumoState(platformId)
-    return credits.unlimited && !isAppSumoPlan
+    return plan.embeddingEnabled
 }
 
 type GetOrCreateActivepiecesConfigResponse = {
@@ -300,17 +254,17 @@ type GetOrCreateActivepiecesConfigResponse = {
 async function findAvailableChatProviderRow({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
     const chatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
     const candidate = chatProviders[0] ?? null
-    if (candidate?.provider === AIProviderName.ACTIVEPIECES && await isManagedAiProviderHidden({ platformId, log })) {
+    if (candidate?.provider === AIProviderName.ACTIVEPIECES && await isActivepiecesAiProviderHidden({ platformId, log })) {
         return null
     }
     return candidate
 }
 
-async function isManagedAiProviderHidden({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
+async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     if (!flagService(log).aiCreditsEnabled()) {
         return true
     }
-    return shouldHideManagedAiProvider({ platformId, log })
+    return shouldHideActivepiecesAiProvider({ platformId, log })
 }
 
 async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId): Promise<GetProviderConfigResponse> {
@@ -331,14 +285,6 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
     return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config, platformId }
 }
 
-
-async function doesActivepiecesProviderHasKeys(aiProvider: AIProviderSchema): Promise<boolean> {
-    if (isNil(aiProvider) || isNil(aiProvider.auth)) {
-        return false
-    }
-    const decryptedAuth = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
-    return !isNil(decryptedAuth) && !isNil(decryptedAuth.apiKey) && decryptedAuth.apiKey !== ''
-}
 
 function getAuthCacheFingerprint({ provider, auth, config }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig }): string {
     switch (provider) {

@@ -62,7 +62,7 @@ Available only when `flagService.aiCreditsEnabled()` is true (`OPENROUTER_PROVIS
 Auto-created when `aiCreditsEnabled` flag is true (`OPENROUTER_PROVISION_KEY` env var set):
 1. `getOrCreateActivePiecesProviderAuthConfig()` auto-creates provider
 2. `enrichWithKeysIfNeeded()` calls OpenRouter API to create API key
-3. Key minted with a fixed spend guardrail of **$1000 / month** (`limit: 1000, limit_reset: 'monthly'`) — a hard ceiling against runaway cost, independent of the Autumn-metered credit balance. See `MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD` in `ai-provider-service.ts`.
+3. Key minted with a fixed spend guardrail of **$500 / month** (`limit: 500, limit_reset: 'monthly'`) — a hard ceiling against runaway cost, independent of the Autumn-metered credit balance. See `MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD` in `ai-provider-service.ts`. Keys minted before the 2026-07 change carry $1000/monthly (set by the backfill below); the lower cap applies to new keys only.
 
 No system job is scheduled — `enrichWithKeysIfNeeded` only provisions the key; credit renewal/top-up is handled by Autumn (see Credit System).
 
