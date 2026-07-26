@@ -101,4 +101,34 @@ describe('deriveActionRunOutcome', () => {
             expect(deriveActionRunOutcome(ok({ success: true })).logs).toBeNull()
         })
     })
+
+    // Only a run that provably never executed is safe for the caller to retry blindly, so this flag
+    // must never be set on a run that may have written.
+    describe('neverStarted', () => {
+        it('is true when the worker refused to start an expired run', () => {
+            const outcome = deriveActionRunOutcome({
+                result: { data: { status: EngineResponseStatus.TIMEOUT, response: { success: false, input: {}, output: null, neverStarted: true } }, error: null },
+            })
+            expect(outcome.status).toBe(FlowRunStatus.TIMEOUT)
+            expect(outcome.neverStarted).toBe(true)
+        })
+        it('is false for a run the sandbox killed mid-flight', () => {
+            const outcome = deriveActionRunOutcome({
+                result: { data: { status: EngineResponseStatus.TIMEOUT, response: { success: false, input: {}, output: null } }, error: null },
+            })
+            expect(outcome.neverStarted).toBe(false)
+        })
+        it('is false on success', () => {
+            expect(deriveActionRunOutcome(ok({ success: true })).neverStarted).toBe(false)
+        })
+        // The watcher channel carries no evidence either way — actionRunService settles it by trying
+        // to cancel the job, so the default here must be the conservative one.
+        it('is false on the watcher-timeout channel', () => {
+            const error = new ActivepiecesError({
+                code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                params: { message: WORKER_DID_NOT_RESPOND_MESSAGE },
+            })
+            expect(deriveActionRunOutcome({ result: { data: null, error } }).neverStarted).toBe(false)
+        })
+    })
 })

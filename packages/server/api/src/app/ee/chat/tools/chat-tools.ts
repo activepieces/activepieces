@@ -530,7 +530,7 @@ async function runChatCode({ toolInput, projects, platformId, userId, conversati
     const result = await executeActionRunCode({ projectId, code, packageJson, input, log })
 
     if (result.status !== 'succeeded') {
-        const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'
+        const reason = result.errorMessage ?? (result.status === 'timeout' ? 'Code is still running after 120s.' : 'Code execution failed.')
         return { text: `❌ ${reason}`, producedFiles: [] }
     }
 

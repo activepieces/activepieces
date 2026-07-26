@@ -4,7 +4,7 @@ import { isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
-import { CodeAction, PieceAction } from '../flows/actions/action'
+import { CodeActionSchema, PieceActionSchema } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
@@ -239,12 +239,15 @@ export const ExecuteExtractPieceMetadataJobData = z.object({
 })
 export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPieceMetadataJobData>
 
+export const ActionRunStep = z.discriminatedUnion('type', [PieceActionSchema, CodeActionSchema])
+export type ActionRunStep = z.infer<typeof ActionRunStep>
+
 export const ExecuteActionJobData = z.object({
     jobType: z.literal(WorkerJobType.EXECUTE_ACTION),
     projectId: z.string(),
     platformId: z.string(),
     schemaVersion: z.number(),
-    step: z.custom<PieceAction | CodeAction>(),
+    step: ActionRunStep,
     piece: z.optional(PiecePackage),
     expiresAt: z.number().optional(),
     requestId: z.string(),

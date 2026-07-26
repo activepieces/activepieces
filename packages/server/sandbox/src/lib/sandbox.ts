@@ -58,6 +58,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     params: {
                         standardOutput: '',
                         standardError: `Caller deadline passed while provisioning (provisionMs=${provisionMs}), the operation was never started`,
+                        neverStarted: true,
                     },
                 })
             }

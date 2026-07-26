@@ -144,10 +144,10 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecuteActionInput(input: BaseEngineOperation): EngineConstants {
+    public static fromExecuteActionInput(input: BaseEngineOperation & { flowVersionId?: string }): EngineConstants {
         return new EngineConstants({
             flowId: DEFAULT_MCP_DATA.flowId,
-            flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
+            flowVersionId: input.flowVersionId ?? DEFAULT_MCP_DATA.flowVersionId,
             flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
             triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_MCP_DATA.flowRunId,

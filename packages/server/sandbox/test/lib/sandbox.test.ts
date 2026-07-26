@@ -114,6 +114,9 @@ describe('createSandboxRuntime concurrency', () => {
         const error = await runtime.execute(buildExecuteParams(0, Date.now() - 1000)).catch((e: unknown) => e)
         expect((error as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_EXECUTION_TIMEOUT)
         expect(runTimeouts).toEqual([])
+        // The caller must be able to tell this apart from a run that was killed mid-flight, or it is
+        // told a side effect may have landed when provably nothing ran.
+        expect((error as ActivepiecesError).error.params).toMatchObject({ neverStarted: true })
     })
 
     it('defaults to a single box when concurrency is omitted', async () => {

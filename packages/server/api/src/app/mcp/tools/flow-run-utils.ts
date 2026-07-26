@@ -227,6 +227,16 @@ export async function executeActionRunAction({
         return mcpUtils.mcpToolError('Failed to run action', runError)
     }
 
+    if (actionRun.status === FlowRunStatus.TIMEOUT && actionRun.neverStarted) {
+        return {
+            content: [{
+                type: 'text',
+                text: `⏳ ${action.displayName} never started — no worker picked it up within the time limit, so nothing ran and nothing was written. Run ID: ${actionRun.id}. Safe to retry as-is.`,
+            }],
+            structuredContent: { errorSummary: 'No worker was available in time, so the action never ran.' },
+        }
+    }
+
     if (actionRun.status === FlowRunStatus.TIMEOUT) {
         return {
             content: [{
@@ -319,12 +329,18 @@ export async function executeActionRunCode({
     return mapCodeResult(actionRun)
 }
 
-function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknown, errorMessage?: string | null }): ActionRunCodeResult {
+function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknown, errorMessage?: string | null, neverStarted?: boolean }): ActionRunCodeResult {
     switch (run.status) {
         case FlowRunStatus.SUCCEEDED:
             return { status: 'succeeded', runId: run.id, output: run.output }
         case FlowRunStatus.TIMEOUT:
-            return { status: 'timeout', runId: run.id, errorMessage: 'Code is still running after the time limit.' }
+            return {
+                status: 'timeout',
+                runId: run.id,
+                errorMessage: run.neverStarted
+                    ? 'No worker was available in time, so the code never ran. Safe to retry as-is.'
+                    : 'Code is still running after the time limit.',
+            }
         case FlowRunStatus.FAILED:
             return { status: 'failed', runId: run.id, errorMessage: isNil(run.errorMessage) ? 'Code failed without an error message.' : summarizeActionError(run.errorMessage) }
         default:

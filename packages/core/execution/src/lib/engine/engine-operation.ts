@@ -87,6 +87,7 @@ export type ExecuteToolOperation = BaseEngineOperation & {
 
 export type ExecuteActionOperation = BaseEngineOperation & {
     step: PieceAction | CodeAction
+    flowVersionId?: string
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -282,6 +283,7 @@ export type ExecuteActionResponse = {
     input: unknown
     output: unknown
     message?: string
+    neverStarted?: boolean
 }
 
 type BaseExecuteValidateAuthResponseOutput<Valid extends boolean> = {

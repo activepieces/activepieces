@@ -35,6 +35,11 @@ function isWatcherTimeout(error: unknown): boolean {
         && error.error.params.message === WORKER_DID_NOT_RESPOND_MESSAGE
 }
 
+// `neverStarted` separates "the action ran and we lost patience" from "nothing ever executed". Only
+// the latter is safe for the caller to retry blindly, so the two must never share a message. The
+// engine response carries it when the worker refused to start a run whose deadline had already
+// passed; the watcher-timeout channel cannot know on its own, so actionRunService settles that case
+// by trying to cancel the job.
 export function deriveActionRunOutcome({ result }: { result: Result<EngineActionResponse, unknown> }): ActionRunOutcome {
     if (!isNil(result.error) || isNil(result.data)) {
         return {
@@ -42,6 +47,7 @@ export function deriveActionRunOutcome({ result }: { result: Result<EngineAction
             output: null,
             logs: null,
             errorMessage: result.error instanceof Error ? result.error.message : String(result.error),
+            neverStarted: false,
         }
     }
     const engineResponse = result.data
@@ -51,6 +57,7 @@ export function deriveActionRunOutcome({ result }: { result: Result<EngineAction
         output: status === FlowRunStatus.SUCCEEDED ? engineResponse.response.output : null,
         logs: isNil(engineResponse.logs) ? null : engineResponse.logs,
         errorMessage: deriveErrorMessage(engineResponse, status),
+        neverStarted: engineResponse.response?.neverStarted === true,
     }
 }
 
@@ -66,4 +73,5 @@ export type ActionRunOutcome = {
     output: unknown
     logs: string | null
     errorMessage: string | null
+    neverStarted: boolean
 }

@@ -16,5 +16,5 @@ export const actionRunStepRunner = {
 
 type RunActionRunStepParams = {
     step: PieceAction | CodeAction
-    operation: BaseEngineOperation
+    operation: BaseEngineOperation & { flowVersionId?: string }
 }
