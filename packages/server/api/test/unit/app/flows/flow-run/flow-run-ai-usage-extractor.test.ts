@@ -8,11 +8,24 @@ import {
     StepOutputStatus,
     StepOutputType,
 } from '@activepieces/shared'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flowRunAiUsageExtractor } from '../../../../../src/app/flows/flow-run/flow-run-ai-usage-extractor'
+import { sleep } from '../../../../../src/app/helper/sleep'
+
+vi.mock('../../../../../src/app/helper/sleep', () => ({
+    sleep: vi.fn(async () => undefined),
+}))
 
 const RUN_AGENT = 'run_agent'
 const ASK_AI = 'askAi'
+
+function sleepCallCount(): number {
+    return vi.mocked(sleep).mock.calls.length
+}
+
+beforeEach(() => {
+    vi.mocked(sleep).mockClear()
+})
 
 function aiAction({ name, actionName, input }: { name: string, actionName: string, input?: Record<string, unknown> }) {
     return {
@@ -35,6 +48,46 @@ function loopAction({ name, firstLoopAction }: { name: string, firstLoopAction: 
         firstLoopAction,
         nextAction: undefined,
     }
+}
+
+function routerAction({ name, children }: { name: string, children: (Record<string, unknown> | null)[] }) {
+    return {
+        name,
+        type: FlowActionType.ROUTER,
+        settings: { branches: [] },
+        children,
+        nextAction: undefined,
+    }
+}
+
+function pieceActionWithFailureBranch({ name, onFailure }: { name: string, onFailure: Record<string, unknown> }) {
+    return {
+        name,
+        type: FlowActionType.PIECE,
+        settings: { pieceName: '@activepieces/piece-store', actionName: 'put', input: {} },
+        continueOnFailureBranches: { onFailure },
+        nextAction: undefined,
+    }
+}
+
+function succeededAskAi({ provider, model }: { provider: string, model: string }) {
+    return {
+        type: FlowActionType.PIECE,
+        status: StepOutputStatus.SUCCEEDED,
+        input: { provider, model },
+    }
+}
+
+function nonAiSteps(count: number): Record<string, unknown> {
+    return Array.from({ length: count }, (_unused, index) => index).reduce<Record<string, unknown>>((record, index) => ({
+        ...record,
+        [`filler_${index}`]: {
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: 'noise',
+        },
+    }), {})
 }
 
 function flowVersionWith(actions: Record<string, unknown>[]): FlowVersion {
@@ -409,5 +462,233 @@ describe('flowRunAiUsageExtractor', () => {
             toolCalls: 2,
             breakdown: [{ provider: 'anthropic', model: 'claude', messages: 1, toolCalls: 2 }],
         })
+    })
+})
+
+describe('flowRunAiUsageExtractor · container shapes', () => {
+    it('counts an AI step inside a router branch', async () => {
+        const flowVersion = flowVersionWith([
+            routerAction({ name: 'router_1', children: [aiAction({ name: 'step_1', actionName: ASK_AI }), null] }),
+        ])
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                router_1: { type: FlowActionType.ROUTER, status: StepOutputStatus.SUCCEEDED, output: { branches: [true, false] } },
+                step_1: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }),
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(1)
+        expect(usage.breakdown).toEqual([{ provider: 'openai', model: 'gpt-4o', messages: 1, toolCalls: 0 }])
+    })
+
+    it('counts an AI step inside an on-failure branch', async () => {
+        const flowVersion = flowVersionWith([
+            pieceActionWithFailureBranch({ name: 'store_1', onFailure: aiAction({ name: 'step_1', actionName: ASK_AI }) }),
+        ])
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                store_1: { type: FlowActionType.PIECE, status: StepOutputStatus.FAILED, input: {} },
+                step_1: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }),
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(1)
+    })
+
+    it('counts an AI step inside a router nested in a loop', async () => {
+        const flowVersion = flowVersionWith([
+            loopAction({
+                name: 'loop_1',
+                firstLoopAction: routerAction({ name: 'router_1', children: [aiAction({ name: 'step_1', actionName: ASK_AI })] }),
+            }),
+        ])
+        const iteration = {
+            router_1: { type: FlowActionType.ROUTER, status: StepOutputStatus.SUCCEEDED },
+            step_1: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }),
+        }
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: { iterations: [iteration, iteration] },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(2)
+    })
+
+    it('counts two distinct AI steps in the same loop iteration', async () => {
+        const flowVersion = flowVersionWith([
+            loopAction({
+                name: 'loop_1',
+                firstLoopAction: {
+                    ...aiAction({ name: 'step_1', actionName: ASK_AI }),
+                    nextAction: aiAction({ name: 'step_2', actionName: ASK_AI }),
+                },
+            }),
+        ])
+        const iteration = {
+            step_1: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }),
+            step_2: succeededAskAi({ provider: 'anthropic', model: 'claude' }),
+        }
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: { iterations: [iteration, iteration, iteration] },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(6)
+        expect(usage.breakdown).toHaveLength(2)
+        expect(usage.breakdown).toEqual(expect.arrayContaining([
+            { provider: 'openai', model: 'gpt-4o', messages: 3, toolCalls: 0 },
+            { provider: 'anthropic', model: 'claude', messages: 3, toolCalls: 0 },
+        ]))
+    })
+
+    it('ignores non-AI steps sharing an iteration record with an AI step', async () => {
+        const flowVersion = flowVersionWith([loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'step_1', actionName: ASK_AI }) })])
+        const iteration = {
+            ...nonAiSteps(9),
+            step_1: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }),
+        }
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: { iterations: [iteration, iteration] },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage).toEqual({
+            messages: 2,
+            toolCalls: 0,
+            breakdown: [{ provider: 'openai', model: 'gpt-4o', messages: 2, toolCalls: 0 }],
+        })
+    })
+
+    it('counts a top-level AI step and a loop AI step without double counting', async () => {
+        const flowVersion = flowVersionWith([
+            aiAction({ name: 'step_top', actionName: ASK_AI }),
+            loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'step_nested', actionName: ASK_AI }) }),
+        ])
+        const iteration = { step_nested: succeededAskAi({ provider: 'anthropic', model: 'claude' }) }
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                step_top: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }),
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: { iterations: [iteration, iteration] },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(3)
+        expect(usage.breakdown).toHaveLength(2)
+        expect(usage.breakdown).toEqual(expect.arrayContaining([
+            { provider: 'openai', model: 'gpt-4o', messages: 1, toolCalls: 0 },
+            { provider: 'anthropic', model: 'claude', messages: 2, toolCalls: 0 },
+        ]))
+    })
+
+    it('ignores an AI step present in the log but absent from the flow version', async () => {
+        const flowVersion = flowVersionWith([aiAction({ name: 'step_1', actionName: ASK_AI })])
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                step_1: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }),
+                step_deleted: succeededAskAi({ provider: 'anthropic', model: 'claude' }),
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage).toEqual({
+            messages: 1,
+            toolCalls: 0,
+            breakdown: [{ provider: 'openai', model: 'gpt-4o', messages: 1, toolCalls: 0 }],
+        })
+    })
+
+    it('counts only the succeeded iterations when one loop iteration failed', async () => {
+        const flowVersion = flowVersionWith([loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'step_1', actionName: ASK_AI }) })])
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.FAILED,
+                    output: {
+                        iterations: [
+                            { step_1: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }) },
+                            { step_1: { type: FlowActionType.PIECE, status: StepOutputStatus.FAILED, input: { provider: 'openai', model: 'gpt-4o' } } },
+                        ],
+                    },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(1)
+    })
+
+    it('fetches one slice per sliced agent iteration and counts every one', async () => {
+        const iterationCount = 25
+        const flowVersion = flowVersionWith([loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'agent_1', actionName: RUN_AGENT }) })])
+        const fetchSlice = vi.fn(async () => ({ status: 'COMPLETED', steps: [toolCallBlock(), toolCallBlock()] }))
+        const iteration = {
+            agent_1: {
+                type: FlowActionType.PIECE,
+                status: StepOutputStatus.SUCCEEDED,
+                input: { aiProviderModel: { provider: 'anthropic', model: 'claude' } },
+                outputType: StepOutputType.SLICE,
+                output: { fileId: 'file-1', size: 99999, url: 'http://x' },
+            },
+        }
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: { iterations: Array.from({ length: iterationCount }, () => iteration) },
+                },
+            }),
+            flowVersion,
+            fetchSlice,
+        })
+        expect(fetchSlice).toHaveBeenCalledTimes(iterationCount)
+        expect(usage.messages).toBe(iterationCount)
+        expect(usage.toolCalls).toBe(iterationCount * 2)
+    })
+})
+
+describe('flowRunAiUsageExtractor · walk cost', () => {
+    it('still yields the event loop while walking a large AI loop', async () => {
+        const flowVersion = flowVersionWith([loopAction({ name: 'loop_1', firstLoopAction: aiAction({ name: 'step_1', actionName: ASK_AI }) })])
+        const iteration = { step_1: succeededAskAi({ provider: 'openai', model: 'gpt-4o' }) }
+        const usage = await flowRunAiUsageExtractor.extractAiUsage({
+            steps: steps({
+                loop_1: {
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    status: StepOutputStatus.SUCCEEDED,
+                    output: { iterations: Array.from({ length: 2500 }, () => iteration) },
+                },
+            }),
+            flowVersion,
+            fetchSlice: noopFetchSlice,
+        })
+        expect(usage.messages).toBe(2500)
+        expect(sleepCallCount()).toBeGreaterThan(0)
     })
 })

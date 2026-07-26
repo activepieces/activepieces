@@ -63,7 +63,7 @@ async function collectStepAiUsages({ steps, aiStepsByName, loopStepsWithAi, fetc
 async function sleepEveryNSteps(walkCounter: WalkCounter): Promise<void> {
     walkCounter.stepsWalked += 1
     if (walkCounter.stepsWalked % SLEEP_EVERY_N_STEPS === 0) {
-        await sleep(1000)
+        await sleep(500)
     }
 }
 
@@ -146,7 +146,7 @@ function cleanString(value: unknown): string | undefined {
 const RUN_AGENT_ACTION_NAME = 'run_agent'
 const UNKNOWN = 'unknown'
 const REDACTED_MARKER = '**REDACTED**'
-const SLEEP_EVERY_N_STEPS = 1000
+const SLEEP_EVERY_N_STEPS = 500
 
 export const flowRunAiUsageExtractor = { extractAiUsage, flowVersionHasAiStep }
 
