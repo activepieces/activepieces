@@ -71,9 +71,6 @@ export const autumnUtils = {
                     idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
                 )
             },
-            setUsage({ featureId, usage }: SetUsageInput) {
-                return client.balances.update({ customerId, featureId, usage })
-            },
             getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
                 return client.customers.get({ customerId, expand: params?.expand })
             },
@@ -472,11 +469,6 @@ type AutumnClientParams = {
 
 type TrackInput = WithoutCustomerId<TrackParams> & {
     idempotencyKey?: string
-}
-
-type SetUsageInput = {
-    featureId: string
-    usage: number
 }
 
 type AutumnFeatureBalance = {

@@ -3,7 +3,7 @@
 ## Summary
 Per-platform billing and entitlements, powered by [Autumn](https://useautumn.com). Each platform is
 an Autumn customer holding a customer-scoped API key; every instance (Cloud + self-hosted EE) calls
-Autumn directly for entitlement reads, `track`, usage push, checkout, and top-ups. Reads are served
+Autumn directly for entitlement reads, `track`, checkout, and top-ups. Reads are served
 from the `platform_plan` projection cache (pull-based sync, never inline Autumn calls). CE is unbilled.
 Feature flags, credits, and non-consumable limits (`projects`, `users`) are projected from the
 customer's Autumn plan into `platform_plan`. Bootstrap/migration and any master-key operation are

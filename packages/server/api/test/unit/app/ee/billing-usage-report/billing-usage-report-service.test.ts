@@ -5,7 +5,6 @@ const {
     mockQueryBuilder,
     mockExceptionHandle,
     mockCaptureBillingEvent,
-    mockReportUsageCounts,
     mockFlushBillingEvents,
 } = vi.hoisted(() => {
     const mockGetRawMany = vi.fn()
@@ -24,7 +23,6 @@ const {
         mockQueryBuilder,
         mockExceptionHandle: vi.fn(),
         mockCaptureBillingEvent: vi.fn(),
-        mockReportUsageCounts: vi.fn().mockResolvedValue(undefined),
         mockFlushBillingEvents: vi.fn().mockResolvedValue(undefined),
     }
 })
@@ -71,12 +69,6 @@ vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
         AI_USAGE_PER_RUN: 'ai_usage_per_run',
         CHAT_MESSAGE: 'chat_message',
         TOTAL_RUNS_PER_DAY: 'total_runs_per_day',
-    },
-}))
-
-vi.mock('../../../../../src/app/platform/billing-provider', () => ({
-    billingProvider: {
-        get: vi.fn(() => ({ reportUsageCounts: mockReportUsageCounts })),
     },
 }))
 
@@ -133,10 +125,6 @@ describe('billingUsageReportService', () => {
                     event: 'total_runs_per_day',
                 }),
             )
-            expect(mockReportUsageCounts).toHaveBeenCalledTimes(1)
-            expect(mockReportUsageCounts).toHaveBeenCalledWith(
-                expect.objectContaining({ platformId: 'platform-1' }),
-            )
         })
 
         it('should skip the heavy aggregate queries and send nothing when no platform has a license key', async () => {
@@ -146,7 +134,6 @@ describe('billingUsageReportService', () => {
 
             expect(mockGetRawMany).toHaveBeenCalledTimes(1)
             expect(mockCaptureBillingEvent).not.toHaveBeenCalled()
-            expect(mockReportUsageCounts).not.toHaveBeenCalled()
         })
 
         it('should build the event properties with per-day executions and no key_value field', async () => {

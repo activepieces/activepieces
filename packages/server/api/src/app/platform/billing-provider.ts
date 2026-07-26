@@ -46,9 +46,6 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     trackAppSumoAiUsage: async () => {
         return
     },
-    reportUsageCounts: async () => {
-        return
-    },
     ensureEnrolled: async () => {
         return
     },
@@ -190,14 +187,6 @@ export type CreditUsage = {
     byProject: ProjectCreditsAggregate[]
 }
 
-export type ReportUsageCountsParams = {
-    platformId: string
-    activeFlows: number
-    teamProjects: number
-    users: number
-}
-
-
 export type CreditsGateState = {
     blocked: boolean
     usage: number
@@ -313,7 +302,6 @@ export type BillingProvider = {
     reactivateSubscription(params: ReactivateSubscriptionParams): Promise<void>
     trackCredits(params: TrackCreditsParams): Promise<void>
     trackAppSumoAiUsage(params: TrackAppSumoAiUsageParams): Promise<void>
-    reportUsageCounts(params: ReportUsageCountsParams): Promise<void>
     ensureEnrolled(platformId: string): Promise<void>
     refreshEntitlements(platformId: string): Promise<void>
     applyAppSumoPlan(params: ApplyAppSumoPlanParams): Promise<void>

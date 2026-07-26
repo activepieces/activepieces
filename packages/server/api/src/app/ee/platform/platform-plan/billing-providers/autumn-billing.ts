@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { getBillingEnforcedKey, getBillingOverviewKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
-import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, ReportUsageCountsParams, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, CreditsBalanceCache } from './autumn-utils'
 
@@ -165,9 +165,6 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             }
             throw error
         }
-    },
-    reportUsageCounts: async (params: ReportUsageCountsParams) => {
-        await reportUsageCounts(log, params)
     },
     ensureEnrolled: async (platformId: string) => {
         await autumnUtils.ensureEnrolled(log, platformId)
@@ -328,22 +325,6 @@ export function toAppSumoGateState(balance: CreditsBalanceCache | null): Credits
         limit: balance?.granted ?? 0,
         remaining: balance?.remaining ?? 0,
         unlimited: balance?.unlimited ?? false,
-    }
-}
-
-async function reportUsageCounts(log: FastifyBaseLogger, { platformId, activeFlows, teamProjects, users }: ReportUsageCountsParams): Promise<void> {
-    const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-    if (isNil(client)) {
-        return
-    }
-    const results = await Promise.allSettled([
-        client.setUsage({ featureId: AutumnFeatureId.ACTIVE_FLOWS_LIMIT, usage: activeFlows }),
-        client.setUsage({ featureId: AutumnFeatureId.TEAM_PROJECTS_LIMIT, usage: teamProjects }),
-        client.setUsage({ featureId: AutumnFeatureId.USERS_LIMIT, usage: users }),
-    ])
-    const errors = results.flatMap((result) => result.status === 'rejected' ? [result.reason] : [])
-    if (errors.length > 0) {
-        log.warn({ error: errors[0], platform: { id: platformId } }, 'Failed to report usage counts to Autumn')
     }
 }
 
