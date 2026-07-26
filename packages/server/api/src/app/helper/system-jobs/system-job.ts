@@ -86,10 +86,27 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             await systemJobsQueue.add(job.name, job.data, jobOptions)
             return
         }
+        if (schedule.type === 'one-time') {
+            log.warn({ jobName: job.name, jobId: job.jobId, existingDelay: existingJob.opts.delay },
+                '[systemJob#upsertJob] A one-time job already exists under this id; the requested schedule was dropped and the existing one stands')
+        }
     },
 
     async getJob<T extends SystemJobName>(jobId: string) {
         return await systemJobsQueue.getJob(jobId) as Job<SystemJobData<T>> | undefined
+    },
+
+    async removeJob({ jobId }): Promise<void> {
+        const job = await systemJobsQueue.getJob(jobId)
+        if (isNil(job)) {
+            return
+        }
+        const { error } = await tryCatch(async () => job.remove())
+        if (!isNil(error)) {
+            log.warn({ jobId, error }, '[systemJob#removeJob] Could not remove job')
+            return
+        }
+        log.info({ jobId }, '[systemJob#removeJob] Job removed')
     },
 
     async close(): Promise<void> {

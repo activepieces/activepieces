@@ -5,7 +5,12 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { dispatchChild, findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
+import { DispatchChildrenResult, dispatchChildren, findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
+
+const DEFAULT_TIMEOUT_MINUTES = 60;
+const MAX_TIMEOUT_MINUTES = 7 * 24 * 60;
+const MAX_ITEMS = 1000;
+const MAX_REPORTED_FAILURES = 10;
 
 export const dispatchToSubflows = createAction({
   audience: 'human',
@@ -49,7 +54,7 @@ export const dispatchToSubflows = createAction({
       displayName: 'Timeout (minutes)',
       description: 'When waiting, continue anyway after this many minutes even if some subflows are still running.',
       required: false,
-      defaultValue: 60,
+      defaultValue: DEFAULT_TIMEOUT_MINUTES,
     }),
   },
   async run(context) {
@@ -61,7 +66,12 @@ export const dispatchToSubflows = createAction({
     if (!Array.isArray(items)) {
       throw new Error(JSON.stringify({ message: 'Items must be an array.' }));
     }
-
+    if (items.length > MAX_ITEMS) {
+      throw new Error(JSON.stringify({
+        message: `Items must contain at most ${MAX_ITEMS} elements. Split the array across several runs, or dispatch from a child flow.`,
+        received: items.length,
+      }));
+    }
     const flow = await findFlowByExternalIdOrThrow({
       flowsContext: context.flows,
       externalId: context.propsValue.flowId,
@@ -74,28 +84,53 @@ export const dispatchToSubflows = createAction({
       }));
     }
 
-    const dispatchAll = async () => {
-      for (const item of items) {
-        await dispatchChild({
-          apiUrl: context.server.apiUrl,
-          flowId: flow.id,
-          payload: item,
-          parentRunId: context.run.id,
-          failParentOnFailure: false,
-        });
-      }
-    };
+    const dispatchAll = () => dispatchChildren({
+      apiUrl: context.server.apiUrl,
+      flowId: flow.id,
+      items,
+      parentRunId: context.run.id,
+      failParentOnFailure: false,
+    });
 
     if (!context.propsValue.waitForAll) {
-      await dispatchAll();
-      return { dispatched: items.length };
+      const dispatch = await dispatchAll();
+      assertAnythingDispatched({ dispatch, requested: items.length });
+      return {
+        dispatched: dispatch.accepted,
+        failedToDispatch: dispatch.failures.length,
+        failures: dispatch.failures.slice(0, MAX_REPORTED_FAILURES),
+      };
+    }
+
+    const timeoutMinutes = context.propsValue.timeoutMinutes ?? DEFAULT_TIMEOUT_MINUTES;
+    if (!Number.isInteger(timeoutMinutes) || timeoutMinutes <= 0 || timeoutMinutes > MAX_TIMEOUT_MINUTES) {
+      throw new Error(JSON.stringify({
+        message: `Timeout must be a whole number of minutes between 1 and ${MAX_TIMEOUT_MINUTES}.`,
+        received: context.propsValue.timeoutMinutes,
+      }));
+    }
+
+    if (items.length === 0) {
+      return {
+        expected: 0,
+        succeeded: 0,
+        failed: 0,
+        canceled: 0,
+        stillRunning: 0,
+        failedToDispatch: 0,
+        timedOut: false,
+      };
     }
 
     const waitpoint = await context.run.createWaitpoint({ type: 'WEBHOOK', isFanIn: true });
-    await dispatchAll();
-    const timeoutMinutes = context.propsValue.timeoutMinutes ?? 60;
+    const dispatch = await dispatchAll();
+    assertAnythingDispatched({ dispatch, requested: items.length });
     const timeoutAt = new Date(Date.now() + timeoutMinutes * 60_000).toISOString();
-    await context.run.sealFanIn({ expectedChildren: items.length, timeoutAt });
+    await context.run.sealFanIn({
+      expectedChildren: dispatch.accepted,
+      failedToDispatch: dispatch.failures.length,
+      timeoutAt,
+    });
     context.run.waitForWaitpoint(waitpoint.id);
     return {};
   },
@@ -110,3 +145,19 @@ export const dispatchToSubflows = createAction({
     },
   },
 });
+
+function assertAnythingDispatched({ dispatch, requested }: AssertAnythingDispatchedParams): void {
+  if (requested === 0 || dispatch.accepted > 0) {
+    return;
+  }
+  throw new Error(JSON.stringify({
+    message: 'None of the items could be dispatched to the subflow, so nothing is running and this step can be safely retried.',
+    requested,
+    failures: dispatch.failures.slice(0, MAX_REPORTED_FAILURES),
+  }));
+}
+
+type AssertAnythingDispatchedParams = {
+  dispatch: DispatchChildrenResult;
+  requested: number;
+}

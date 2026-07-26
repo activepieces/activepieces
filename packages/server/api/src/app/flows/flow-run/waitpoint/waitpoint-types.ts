@@ -34,7 +34,14 @@ type Waitpoint = {
     resumePayload: WaitpointResumePayload | null
     isFanIn: boolean
     expectedChildren: number | null
-    terminalChildren: number
+    failedToDispatch: number
+    fanInBaseline: FanInBaseline | null
+}
+
+type FanInBaseline = {
+    succeeded: number
+    failed: number
+    canceled: number
 }
 
 type CreateForPauseParams = {
@@ -49,6 +56,7 @@ type CreateForPauseParams = {
     httpRequestId?: string
     isFanIn?: boolean
     expectedChildren?: number
+    failedToDispatch?: number
 }
 
 type CreateForPauseResult = {
@@ -85,4 +93,4 @@ type FindPendingByVersionParams = {
 }
 
 export { WaitpointStatus, WaitpointVersionEnum }
-export type { Waitpoint, WaitpointResumePayload, CreateForPauseParams, CreateForPauseResult, CompleteParams, CompleteResult, FindPendingByVersionParams, HandleResumeSignalParams }
+export type { Waitpoint, WaitpointResumePayload, FanInBaseline, CreateForPauseParams, CreateForPauseResult, CompleteParams, CompleteResult, FindPendingByVersionParams, HandleResumeSignalParams }

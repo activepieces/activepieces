@@ -2,7 +2,6 @@ import { apId, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@acti
 import { FlowRun, FlowRunStatus, isFlowRunStateTerminal, RunTimeline } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { transaction } from '../../core/db/transaction'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../helper/domain-helper'
 import { exceptionHandler } from '../../helper/exception-handler'
@@ -14,7 +13,7 @@ import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { buildRunTimeline } from './run-timeline'
-import { fanInBarrier } from './waitpoint/fan-in-summary'
+import { fanInBarrier } from './waitpoint/fan-in-barrier'
 import { resumeService } from './waitpoint/resume-service'
 import { waitpointService } from './waitpoint/waitpoint-service'
 import { WaitpointStatus } from './waitpoint/waitpoint-types'
@@ -57,7 +56,38 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             const runMetadata = sanitizeObjectForPostgresql(rawRunMetadata)
 
                             const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
-                            if (isNil(existingFlowRun)) {
+                            let savedFlowRun: FlowRun
+                            if (!isNil(existingFlowRun)) {
+                                const timeline = buildTimeline({ existingFlowRun, runMetadata })
+                                await flowRunRepo().update(job.data.runId, {
+                                    ...spreadIfDefined('timeline', timeline),
+                                    ...spreadIfDefined('projectId', runMetadata.projectId),
+                                    ...spreadIfDefined('flowId', runMetadata.flowId),
+                                    ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
+                                    ...spreadIfDefined('environment', runMetadata.environment),
+                                    ...spreadIfDefined('startTime', runMetadata.startTime),
+                                    ...spreadIfDefined('finishTime', runMetadata.finishTime),
+                                    ...spreadIfDefined('status', runMetadata.status),
+                                    ...spreadIfDefined('tags', runMetadata.tags),
+                                    ...spreadIfDefined('failedStep', runMetadata.failedStep),
+                                    ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
+                                    ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
+                                    ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
+                                    ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
+                                    ...spreadIfDefined('updated', runMetadata.updated),
+                                    ...spreadIfDefined('stepsCount', runMetadata.stepsCount),
+                                })
+                                const updatedFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
+                                if (isNil(updatedFlowRun)) {
+                                    log.info({
+                                        job: { id: job.id },
+                                        flowRun: { id: job.data.runId },
+                                    }, '[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
+                                    return
+                                }
+                                savedFlowRun = updatedFlowRun
+                            }
+                            else {
                                 const flowId = runMetadata.flowId
                                 const flowExists = !isNil(flowId) && await flowService(log).exists(flowId)
                                 if (!flowExists) {
@@ -67,54 +97,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
                                     return
                                 }
-                            }
-
-                            const savedFlowRun = await transaction(async (entityManager) => {
-                                let saved: FlowRun
-                                if (!isNil(existingFlowRun)) {
-                                    const timeline = buildTimeline({ existingFlowRun, runMetadata })
-                                    await flowRunRepo(entityManager).update(job.data.runId, {
-                                        ...spreadIfDefined('timeline', timeline),
-                                        ...spreadIfDefined('projectId', runMetadata.projectId),
-                                        ...spreadIfDefined('flowId', runMetadata.flowId),
-                                        ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
-                                        ...spreadIfDefined('environment', runMetadata.environment),
-                                        ...spreadIfDefined('startTime', runMetadata.startTime),
-                                        ...spreadIfDefined('finishTime', runMetadata.finishTime),
-                                        ...spreadIfDefined('status', runMetadata.status),
-                                        ...spreadIfDefined('tags', runMetadata.tags),
-                                        ...spreadIfDefined('failedStep', runMetadata.failedStep),
-                                        ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
-                                        ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
-                                        ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
-                                        ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
-                                        ...spreadIfDefined('updated', runMetadata.updated),
-                                        ...spreadIfDefined('stepsCount', runMetadata.stepsCount),
-                                    })
-                                    const updatedFlowRun = await flowRunRepo(entityManager).findOneBy({ id: job.data.runId })
-                                    if (isNil(updatedFlowRun)) {
-                                        return null
-                                    }
-                                    saved = updatedFlowRun
-                                }
-                                else {
-                                    saved = await flowRunRepo(entityManager).save(runMetadata)
-                                }
-                                const becameTerminal =
-                                    (isNil(existingFlowRun) || !isFlowRunStateTerminal({ status: existingFlowRun.status, ignoreInternalError: false }))
-                                    && isFlowRunStateTerminal({ status: saved.status, ignoreInternalError: false })
-                                if (becameTerminal && !isNil(saved.parentRunId)) {
-                                    await waitpointService(log).incrementTerminalChildren({ parentRunId: saved.parentRunId }, entityManager)
-                                }
-                                return saved
-                            })
-
-                            if (isNil(savedFlowRun)) {
-                                log.info({
-                                    job: { id: job.id },
-                                    flowRun: { id: job.data.runId },
-                                }, '[runsMetadataQueue#worker] Flow run was deleted during update, skipping job')
-                                return
+                                savedFlowRun = await flowRunRepo().save(runMetadata)
                             }
 
                             const parentRunId = savedFlowRun.parentRunId
@@ -236,7 +219,7 @@ async function markParentRunAsFailed({
         queryParams: {},
     }
 
-    const existingWaitpoint = await waitpointService(log).getByFlowRunId(parentRunId)
+    const existingWaitpoint = await waitpointService(log).findNonFanInByFlowRunId(parentRunId)
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,
@@ -253,16 +236,35 @@ async function markParentRunAsFailed({
     }
 }
 
-async function maybeResumeFanInBarrier({ parentRunId, log }: MaybeResumeFanInBarrierParams): Promise<void> {
-    const barrier = await waitpointService(log).getFanInBarrier(parentRunId)
-    if (isNil(barrier) || isNil(barrier.expectedChildren) || barrier.terminalChildren < barrier.expectedChildren) {
+export async function maybeResumeFanInBarrier({ parentRunId, log }: MaybeResumeFanInBarrierParams): Promise<void> {
+    const barrier = await waitpointService(log).findFanInBarrier({ flowRunId: parentRunId })
+    if (isNil(barrier)) {
         return
     }
     const parentRun = await flowRunRepo().findOneBy({ id: parentRunId })
     if (isNil(parentRun) || isFlowRunStateTerminal({ status: parentRun.status, ignoreInternalError: false })) {
         return
     }
-    const summary = await fanInBarrier.buildSummary({ parentRunId, expectedChildren: barrier.expectedChildren, timedOut: false })
+
+    if (barrier.status === WaitpointStatus.COMPLETED) {
+        if (parentRun.status !== FlowRunStatus.PAUSED) {
+            return
+        }
+        log.warn({ flowRun: { id: parentRunId }, waitpoint: { id: barrier.id } },
+            '[maybeResumeFanInBarrier] Barrier was completed without a resume reaching the queue, recovering it')
+        await resumeService(log).resumeFromWaitpoint({
+            flowRunId: parentRunId,
+            waitpointId: barrier.id,
+            resumePayload: barrier.resumePayload,
+        })
+        return
+    }
+
+    const counts = await fanInBarrier.countChildren({ parentRunId })
+    if (!fanInBarrier.isReleasable({ counts, barrier })) {
+        return
+    }
+    const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false })
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: parentRun.projectId,

@@ -109,5 +109,10 @@ export type SystemJobSchedule = {
     startWorker(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
     getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
+    removeJob(params: { jobId: string }): Promise<void>
     close(): Promise<void>
 }
+
+export const resumeDelayJobId = ({ waitpointId }: { waitpointId: string }): string => `resume-delay-${waitpointId}`
+
+export const legacyResumeDelayJobId = ({ flowRunId }: { flowRunId: FlowRunId }): string => `resume-delay-${flowRunId}`

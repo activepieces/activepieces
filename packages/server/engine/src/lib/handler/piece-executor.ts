@@ -314,6 +314,7 @@ function createSealFanInHook({ constants, stepName }: { constants: EngineConstan
             version: 'V1',
             isFanIn: true,
             expectedChildren: req.expectedChildren,
+            failedToDispatch: req.failedToDispatch,
             resumeDateTime: req.timeoutAt,
             workerHandlerId: constants.workerHandlerId ?? undefined,
             httpRequestId: constants.httpRequestId ?? undefined,

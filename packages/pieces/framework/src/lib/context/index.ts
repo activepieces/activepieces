@@ -193,6 +193,7 @@ export type CreateWaitpointResult = {
 
 export type SealFanInParams = {
   expectedChildren: number;
+  failedToDispatch?: number;
   timeoutAt: string;
 };
 

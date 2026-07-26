@@ -69,10 +69,14 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: Number,
             nullable: true,
         },
-        terminalChildren: {
+        failedToDispatch: {
             type: Number,
             nullable: false,
             default: 0,
+        },
+        fanInBaseline: {
+            type: 'jsonb',
+            nullable: true,
         },
     },
     indices: [
@@ -84,6 +88,10 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
         {
             name: 'idx_waitpoint_project_id',
             columns: ['projectId'],
+        },
+        {
+            name: 'idx_waitpoint_flow_run_id_is_fan_in_status',
+            columns: ['flowRunId', 'isFanIn', 'status'],
         },
     ],
     relations: {

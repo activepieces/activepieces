@@ -1,7 +1,7 @@
 import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, TeamProjectsLimit, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PauseType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, TeamProjectsLimit, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
@@ -11,6 +11,7 @@ import { databaseConnection } from '../../../src/app/database/database-connectio
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
+import { Waitpoint, WaitpointStatus } from '../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
@@ -394,6 +395,29 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         finishTime: flowRun?.finishTime ?? faker.date.recent().toISOString(),
         environment:
             flowRun?.environment ?? faker.helpers.enumValue(RunEnvironment),
+    }
+}
+
+export const createMockWaitpoint = (waitpoint?: Partial<Waitpoint>): Waitpoint => {
+    return {
+        id: waitpoint?.id ?? apId(),
+        created: waitpoint?.created ?? faker.date.recent().toISOString(),
+        updated: waitpoint?.updated ?? faker.date.recent().toISOString(),
+        flowRunId: waitpoint?.flowRunId ?? apId(),
+        projectId: waitpoint?.projectId ?? apId(),
+        stepName: waitpoint?.stepName ?? 'step_1',
+        type: waitpoint?.type ?? PauseType.WEBHOOK,
+        version: waitpoint?.version ?? 'V1',
+        status: waitpoint?.status ?? WaitpointStatus.PENDING,
+        resumeDateTime: waitpoint?.resumeDateTime ?? null,
+        responseToSend: waitpoint?.responseToSend ?? null,
+        workerHandlerId: waitpoint?.workerHandlerId ?? null,
+        httpRequestId: waitpoint?.httpRequestId ?? null,
+        resumePayload: waitpoint?.resumePayload ?? null,
+        isFanIn: waitpoint?.isFanIn ?? false,
+        expectedChildren: waitpoint?.expectedChildren ?? null,
+        failedToDispatch: waitpoint?.failedToDispatch ?? 0,
+        fanInBaseline: waitpoint?.fanInBaseline ?? null,
     }
 }
 
