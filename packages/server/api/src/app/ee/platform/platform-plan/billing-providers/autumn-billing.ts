@@ -3,7 +3,7 @@ import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, BillableFeature, isConsumableAutumnFeature, PlanName } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { getBillingEnforcedKey, getBillingOverviewKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
@@ -176,8 +176,14 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
     activateLicense: async ({ platformId, licenseKey }: ActivateLicenseParams) => {
         const credentials = await autumnConsole.activate({ licenseKey })
-        await platformPlanService(log).update({ platformId, licenseKey })
-        await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
+        await distributedLock(log).runExclusive({
+            key: getAutumnEnrollLockKey(platformId),
+            timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
+            fn: async () => {
+                await platformPlanService(log).update({ platformId, licenseKey })
+                await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
+            },
+        })
         await autumnUtils.refreshEntitlements(log, platformId)
     },
     isBillingEnforced: async (platformId: string) => {

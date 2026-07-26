@@ -272,8 +272,8 @@ async function throttledBillingProviderRefresh(platformId: string, log: FastifyB
 function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
     switch (edition) {
         case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
             return OPEN_SOURCE_PLAN
+        case ApEdition.ENTERPRISE:
         case ApEdition.CLOUD:
             return AUTUMN_FREE_PLAN
     }

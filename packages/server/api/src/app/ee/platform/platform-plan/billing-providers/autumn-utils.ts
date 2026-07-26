@@ -15,7 +15,7 @@ import {
 } from 'autumn-js'
 import { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
@@ -122,8 +122,8 @@ export const autumnUtils = {
             return
         }
         await distributedLock(log).runExclusive({
-            key: `autumn_enroll_${platformId}`,
-            timeoutInSeconds: 60,
+            key: getAutumnEnrollLockKey(platformId),
+            timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
             fn: async () => {
                 const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
                 if (!isNil(autumnCustomerId)) {

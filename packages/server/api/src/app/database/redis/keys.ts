@@ -9,9 +9,11 @@ export const getEntitlementsForceRefreshKey = (platformId: PlatformId): string =
 export const getEntitlementsRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-refresh:${platformId}`
 export const getCustomerStateRefreshKey = (platformId: PlatformId): string => `platform_plan:customer-state-refresh:${platformId}`
 export const getEnrollAttemptKey = (platformId: PlatformId): string => `platform_plan:autumn-enroll-attempt:${platformId}`
+export const getAutumnEnrollLockKey = (platformId: PlatformId): string => `autumn_enroll_${platformId}`
 export const getProjectConcurrencyPoolKey = (projectId: ProjectId): string => `project:concurrency-pool:${projectId}` // gets pool id for the project
 export const getConcurrencyPoolLimitKey = (poolId: string): string => `concurrency-pool:limit:${poolId}` // gets limit value for the pool
 export const getConcurrencyPoolSetKey = (poolId: string): string => `active_jobs_set:pool:${poolId}`
 
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
+export const AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS = 60
