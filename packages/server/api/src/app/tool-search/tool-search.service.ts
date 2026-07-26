@@ -1,4 +1,4 @@
-import { AppConnectionStatus, isNil, SuggestionType, tryCatch } from '@activepieces/shared'
+import { AppConnectionStatus, isNil, PieceAudienceFilter, SuggestionType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../app-connection/app-connection-service/app-connection-service'
 import { databaseConnection } from '../database/database-connection'
@@ -155,6 +155,7 @@ async function keywordSearch({ objectKind, query, opts, log, degradeReason }: Ke
         includeHidden: false,
         searchQuery: query,
         suggestionType: objectKind === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
+        audience: PieceAudienceFilter.ALL,
     })
 
     // Honor the caller's pieceName scope in the keyword floor too. `pieceMetadataService.list`
@@ -194,6 +195,7 @@ async function resolveEnabledPieceNames(opts: ToolSearchParams, log: FastifyBase
         platformId,
         projectId,
         includeHidden: false,
+        audience: PieceAudienceFilter.ALL,
     }))
     if (isNil(pieces)) {
         log.warn({ error, platformId }, '[toolSearchService] Enabled-piece resolution failed — serving without the enabled filter.')

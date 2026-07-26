@@ -222,6 +222,37 @@ export const UpdateChatConversationRequest = z.object({
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 
+export const UserChatMemory = z.object({
+    ...BaseModelSchema,
+    platformId: z.string(),
+    userId: z.string(),
+    instructions: Nullable(z.string()),
+    memories: z.array(z.string()).default([]),
+})
+export type UserChatMemory = z.infer<typeof UserChatMemory>
+
+export const GetChatMemoryResponse = z.object({
+    instructions: z.string().nullable(),
+    memories: z.array(z.string()),
+})
+export type GetChatMemoryResponse = z.infer<typeof GetChatMemoryResponse>
+
+export const UpdateChatMemoryRequest = z.object({
+    instructions: Nullable(z.string()),
+    memories: z.optional(z.array(z.string())),
+})
+export type UpdateChatMemoryRequest = z.infer<typeof UpdateChatMemoryRequest>
+
+export const ImportChatMemoryRequest = z.object({
+    text: z.string(),
+})
+export type ImportChatMemoryRequest = z.infer<typeof ImportChatMemoryRequest>
+
+export const InstructChatMemoryRequest = z.object({
+    instruction: z.string(),
+})
+export type InstructChatMemoryRequest = z.infer<typeof InstructChatMemoryRequest>
+
 export const SendChatMessageRequest = z.object({
     content: z.string().max(51200),
     runId: z.string().optional(),

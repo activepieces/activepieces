@@ -657,6 +657,56 @@ describe('Flow Operations API', () => {
             expect(body.version.displayName).toBe('Imported Flow')
             expect(body.version.state).toBe(FlowVersionState.DRAFT)
         })
+
+        it('rejects an imported flow whose nested step name is a path traversal', async () => {
+            const ctx = await createTestContext(app!)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: {
+                    displayName: 'Malicious Flow',
+                    trigger: {
+                        type: FlowTriggerType.EMPTY,
+                        name: 'trigger',
+                        displayName: 'Select Trigger',
+                        settings: {},
+                        valid: false,
+                        nextAction: {
+                            type: FlowActionType.CODE,
+                            displayName: 'Code Step',
+                            name: '../../common/node_modules/bufferutil',
+                            settings: {
+                                input: {},
+                                sourceCode: {
+                                    code: 'export const code = async () => { return true; }',
+                                    packageJson: '{}',
+                                },
+                            },
+                            valid: true,
+                            skip: false,
+                        },
+                    },
+                    schemaVersion: null,
+                    notes: null,
+                },
+            })
+
+            // ErrorCode.VALIDATION maps to 409 in the API error handler (the convention for
+            // rejected-invalid-input across the codebase); the point is the import is rejected
+            // and the traversal name is never persisted.
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+
+            // The traversal step must never reach the flow version.
+            const afterImport = await ctx.get(`/v1/flows/${flow.id}`)
+            const persisted: PopulatedFlow = afterImport?.json()
+            expect(persisted.version.trigger.nextAction).toBeUndefined()
+        })
     })
 
     describe('GET /v1/flows/:flowId/versions', () => {
