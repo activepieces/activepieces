@@ -405,12 +405,13 @@ import { AddProjectExecutionDataRetentionDays1812000000000 } from './migration/p
 import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postgres/1814000000000-AddActiveFlowsLimitToProjectPlan'
 import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgres/1815000000000-AddSampleDataFlowIdIndexToFile'
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
-import { RemoveStripeColumnsFromPlatformPlan1817000000000 } from './migration/postgres/1817000000000-RemoveStripeColumnsFromPlatformPlan'
-import { AddAutumnBillingColumnsToPlatformPlan1818000000000 } from './migration/postgres/1818000000000-AddAutumnBillingColumnsToPlatformPlan'
-import { MigrateTeamProjectsLimitToNumberAndAddUsersLimit1819000000000 } from './migration/postgres/1819000000000-MigrateTeamProjectsLimitToNumberAndAddUsersLimit'
-import { RemoveLegacyAiCreditsColumnsFromPlatformPlan1820000000000 } from './migration/postgres/1820000000000-RemoveLegacyAiCreditsColumnsFromPlatformPlan'
-import { RenameIncludedAiCreditsToIncludedCredits1821000000000 } from './migration/postgres/1821000000000-RenameIncludedAiCreditsToIncludedCredits'
-import { AddScheduledUsersLimitToPlatformPlan1822000000000 } from './migration/postgres/1822000000000-AddScheduledUsersLimitToPlatformPlan'
+import { AddUserChatMemory1817000000000 } from './migration/postgres/1817000000000-AddUserChatMemory'
+import { RemoveStripeColumnsFromPlatformPlan1818000000000 } from './migration/postgres/1818000000000-RemoveStripeColumnsFromPlatformPlan'
+import { AddAutumnBillingColumnsToPlatformPlan1819000000000 } from './migration/postgres/1819000000000-AddAutumnBillingColumnsToPlatformPlan'
+import { MigrateTeamProjectsLimitToNumberAndAddUsersLimit1820000000000 } from './migration/postgres/1820000000000-MigrateTeamProjectsLimitToNumberAndAddUsersLimit'
+import { RemoveLegacyAiCreditsColumnsFromPlatformPlan1821000000000 } from './migration/postgres/1821000000000-RemoveLegacyAiCreditsColumnsFromPlatformPlan'
+import { RenameIncludedAiCreditsToIncludedCredits1822000000000 } from './migration/postgres/1822000000000-RenameIncludedAiCreditsToIncludedCredits'
+import { AddScheduledUsersLimitToPlatformPlan1823000000000 } from './migration/postgres/1823000000000-AddScheduledUsersLimitToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -831,12 +832,13 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddActiveFlowsLimitToProjectPlan1814000000000,
         AddSampleDataFlowIdIndexToFile1815000000000,
         AddTeamsBotInstallation1816000000000,
-        RemoveStripeColumnsFromPlatformPlan1817000000000,
-        AddAutumnBillingColumnsToPlatformPlan1818000000000,
-        MigrateTeamProjectsLimitToNumberAndAddUsersLimit1819000000000,
-        RemoveLegacyAiCreditsColumnsFromPlatformPlan1820000000000,
-        RenameIncludedAiCreditsToIncludedCredits1821000000000,
-        AddScheduledUsersLimitToPlatformPlan1822000000000,
+        AddUserChatMemory1817000000000,
+        RemoveStripeColumnsFromPlatformPlan1818000000000,
+        AddAutumnBillingColumnsToPlatformPlan1819000000000,
+        MigrateTeamProjectsLimitToNumberAndAddUsersLimit1820000000000,
+        RemoveLegacyAiCreditsColumnsFromPlatformPlan1821000000000,
+        RenameIncludedAiCreditsToIncludedCredits1822000000000,
+        AddScheduledUsersLimitToPlatformPlan1823000000000,
     ]
     return migrations
 }

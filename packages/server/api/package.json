@@ -36,7 +36,7 @@
     "@fastify/multipart": "9.0.3",
     "@fastify/rate-limit": "10.3.0",
     "@fastify/reply-from": "12.6.2",
-    "@fastify/static": "9.1.1",
+    "@fastify/static": "10.1.2",
     "@fastify/swagger": "9.5.1",
     "@modelcontextprotocol/sdk": "1.27.1",
     "@openrouter/ai-sdk-provider": "2.1.1",

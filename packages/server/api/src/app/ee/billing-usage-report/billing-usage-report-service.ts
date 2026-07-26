@@ -21,7 +21,7 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
     /**
      * Reports per-platform usage to PostHog (for billing/metering) from a single daily bulk pass — this
      * is NOT product telemetry, so it is intentionally not gated on AP_TELEMETRY_ENABLED. PostHog is the
-     * only sink: usage counts are not pushed to Autumn (see ADR 0014). The license key is the gate and
+     * only sink: usage counts are not pushed to Autumn (see brain/decisions/000018). The license key is the gate and
      * the PostHog event identifier: only licensed platforms are reported, keyed by their license key
      * (distinctId), so unlicensed instances bail before the heavy aggregate queries and send nothing.
      * Only the previous *completed* UTC day is reported (the

@@ -1,0 +1,44 @@
+---
+icon: 💳
+---
+
+# EE Platform (Plans & Billing)
+
+Billing and entitlements are powered by [Autumn](https://useautumn.com). Each platform is an Autumn customer holding a **customer-scoped API key**; every instance (Cloud + self-hosted EE) calls Autumn directly for entitlement reads, credit `track`, and cached customer state, while anything needing the Autumn **master key** (enroll, checkout, cancel, seat quantity, auto-top-up, portal) is proxied through the Activepieces console (`AUTUMN_CONSOLE_URL`). The `PlatformPlan` entity is a **projection cache** of the customer's Autumn plan — request-path reads never hit Autumn inline. CE is unbilled (`OPEN_SOURCE_PLAN`, no-op provider).
+
+### Entities & services
+- **PlatformPlan** (one per platform) holds `autumnCustomerId` + `autumnApiKey`, `licenseKey`, `plan`, feature flags (`ssoEnabled`, `scimEnabled`, `auditLogEnabled`, `embeddingEnabled`, `agentsEnabled`, etc.), projected limits (`activeFlowsLimit`, `projectsLimit`, numeric `teamProjectsLimit`, `usersLimit`, `scheduledUsersLimit`, `includedCredits`), and `dedicatedWorkers` jsonb.
+- **`billingProvider`** (`platform/billing-provider.ts`) is the CE/EE seam — a `hooksFactory` with a no-op CE default; EE/Cloud set `autumnBillingProvider`. Contract: `listPlans`, `getBillingOverview`, `createCheckoutSession`, `adjustUnconsumableFeatureQuantity` (seats), `checkUsersExceededLimit`, `configureAutoTopUp`, `trackCredits`/`trackAppSumoAiUsage`, `ensureEnrolled`, `refreshEntitlements`, `activateLicense`, `isBillingEnforced`, `shouldBlockOnCredits`, `getCreditsAndAppSumoState`, `cancelSubscription`/`reactivateSubscription`.
+- `platformPlanService.getUsage(platformId)` → `{ activeFlows, teamProjects, users, activeUsers, invitedSeats, creditsUsed, creditsRemaining, creditsNextResetAt, appSumoAiCreditsUsed, appSumoAiCreditsRemaining }` — flows/projects/seats counted from the AP database, consumables from the Redis balance cache.
+
+### How it works
+- **Enrollment**: on platform create (or lazily on first plan read) `ensureEnrolled` — under a distributed lock, throttled 5 min — calls console `enroll` (free, keyed by owner email) or `activate` (license key), then stores the returned `autumnCustomerId`/`autumnApiKey` on `platform_plan`.
+- **Entitlement projection (pull-based)**: `getOrCreateForPlatform` triggers a lazy `refreshEntitlements` at most every 15 min (`ENTITLEMENTS_REFRESH_TTL_SECONDS`); it does a scoped-key `getCustomer`, maps flags + granted balances into `platform_plan` via `mapAutumnFeaturesToPlatformPlan` (including `scheduledUsersLimit` from the scheduled base subscription), refreshes the Redis credit/`billingEnforced` caches, invalidates the billing overview, and auto-provisions a license key for self-serve paid customers. Mutations (checkout applied, cancel, seat change) call it eagerly.
+- **AI credits (consumable)**: 1 credit per production run (`flow-run-hooks`), plus per AI step (`flow-run-ai-usage-tracker`) and per chat message (`chat-usage-tracker`), sent via Autumn `track` with idempotency keys (duplicate-track errors swallowed). Balance cached in Redis, background-refetched when older than 180 s. Top-up is additive via native Autumn auto-top-up only (`configureAutoTopUp`).
+- **Credit gating**: flow runs **fail open** — `shouldBlockOnCredits` blocks only when the plan carries the `billingEnforced` Autumn flag AND the cached balance is exhausted; the worker RPC `submitPayloads` then creates `QUOTA_EXCEEDED` runs instead of executing. Chat and managed-AI calls are hard-blocked via `assertCreditsAndAppSumoNotExceeded` (402). AppSumo credits always block when exhausted, regardless of `billingEnforced`.
+- **Seats (non-consumable)**: `usedSeats` = active users + non-expired pending invites (reservation — decision 000014). `checkUsersExceededLimit` runs inside a transaction holding `FOR UPDATE` on the `platform_plan` row and enforces `min(usersLimit, scheduledUsersLimit)` (scheduled seat cap — decision 000017); lowering the limit is guarded by `assertSeatsNotBelowActiveUsers` (DB-authoritative floor — decision 000013). Seat quantity changes go through `adjustUnconsumableFeatureQuantity` → console `unconsumable-feature-quantity`.
+- **Purchases**: `/v1/platform-billing` routes (`/info`, `/plans`, `/checkout`, `/cancel`, `/reactivate`, `/portal`, `/activate`, `/unconsumable-feature-quantity`, `/consumable-product-topups/auto-topup`, `/setup-payment`, `/refresh`, `/projects-usage`) POST to the console with the scoped key as Bearer; the console holds the master key.
+- **License keys (self-hosted EE)**: `POST /v1/platform-billing/activate` → console `activate` → Autumn credentials; from then on the platform syncs entitlements like any Cloud customer. Paid self-serve customers get a key auto-provisioned (`provisionLicenseKeyIfPaid`).
+- **Usage counts** (active flows / team projects / users) are reported daily to **PostHog only** (`billing-usage-report-service.ts`) — the Autumn usage push was removed; scoped keys can't call `balances.update` and nothing consumed it (decision 000018).
+
+### Gotchas
+- `teamProjectsLimit` is now a **number** (migration `1820...MigrateTeamProjectsLimitToNumber...`), not the old `NONE/ONE/UNLIMITED` enum. Stripe columns are gone (`1818...RemoveStripeColumns...`), legacy OpenRouter AI-credit columns too (`1821...`), `includedAiCredits` → `includedCredits` (`1822...`), `scheduledUsersLimit` added (`1823...`).
+- Never read entitlements inline from Autumn on a request path — always the `platform_plan` projection + Redis caches (`isBillingEnforced` is a plain Redis read defaulting to `false`, i.e. fail open).
+- Active flows are unlimited in the new plans (projected `null`); `checkActiveFlowsExceededLimit` still runs on flow enable/publish but only binds when a limit is set.
+- Initial plan by edition: CE/EE → `OPEN_SOURCE_PLAN`, Cloud → `AUTUMN_FREE_PLAN`. CE and `TESTING` environments skip enrollment/sync entirely.
+- `AUTUMN_CONSOLE_URL` currently points at `console-testing.activepieces.com` on this branch — flips to the production console at launch.
+- Credit metering for managed AI happens post-run in centralized worker execution (decision 000016), so in-flight spend is invisible to the gate.
+
+### Key files
+Entry point: `platformPlanService` (`platform-plan.service.ts`) for projection, usage, and seat checks; `billingProvider.get(log)` for everything billing.
+
+- `packages/server/api/src/app/platform/billing-provider.ts` — `BillingProvider` contract, CE no-op default, `assertCreditsAndAppSumoNotExceeded`, `trackCreditsWithAppSumo`
+- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers/autumn-billing.ts` — EE provider impl (overview, gates, credit caches)
+- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers/autumn-utils.ts` — console client, enrollment, `refreshEntitlements`, `mapAutumnFeaturesToPlatformPlan`
+- `packages/server/api/src/app/ee/platform/platform-plan/platform-plan.service.ts` — lazy sync triggers, `countUsedSeats`, `checkUsersExceededLimit`, `getAutumnCredentials`
+- `packages/server/api/src/app/ee/platform/platform-plan/platform-plan.controller.ts` — `/v1/platform-billing` routes
+- `packages/server/api/src/app/ee/billing-usage-report/billing-usage-report-service.ts` — daily PostHog usage snapshots
+- `packages/core/shared/src/lib/ee/billing/index.ts` — plan constants (`AUTUMN_FREE_PLAN`, `OPEN_SOURCE_PLAN`), checkout/top-up schemas
+- `packages/web/src/features/billing/` + `packages/web/src/app/routes/platform/billing/index.tsx` — plans, credits, seats, license activation UI
+
+Decisions: `brain/decisions/000013-active-user-seat-floor-is-enforced-db-authoritatively.md`, `000014-pending-invitations-reserve-seats.md`, `000015-jit-provisioning-plans-imply-unlimited-seats.md`, `000016-managed-ai-metering-moves-to-centralized-worker-execution.md`, `000017-scheduled-downgrades-cap-seats-immediately.md`, `000018-usage-counts-report-to-posthog-only.md`. Paths verified 2026-07-26.

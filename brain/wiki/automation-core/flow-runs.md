@@ -1,0 +1,48 @@
+---
+icon: 🏃
+---
+
+# Flow Runs
+
+A Flow Run records one execution of a specific flow version, from trigger to terminal state. It stores compressed step-by-step logs, supports pause/resume for delay and webhook waits, offers retry strategies, and emits WebSocket + application events for real-time UI.
+
+### Entities & services
+- **FlowRun** — id, projectId, flowId, flowVersionId, environment (PRODUCTION/TESTING), status, logsFileId, parentRunId (subflows), failedStep (JSONB `{name, displayName, message?}`), timeline (JSONB), archivedAt (soft delete).
+- **12 statuses**: 3 non-terminal (QUEUED, RUNNING, PAUSED) + 9 terminal (SUCCEEDED, FAILED, TIMEOUT, CANCELED, QUOTA_EXCEEDED, MEMORY_LIMIT_EXCEEDED, INTERNAL_ERROR, LOG_SIZE_EXCEEDED).
+- **Waitpoint** — row per paused step: `type` (DELAY|WEBHOOK), `version` (V0|V1), `status` (PENDING|COMPLETED), unique on `(flow_run_id, step_name)`.
+- **LogsFile** — zstd-compressed File (type FLOW_RUN_LOG) holding the full executor context.
+
+### How it works
+- **Endpoints**: `GET /` (cursor paginated by composite `(created DESC, id DESC)`, filters incl. `failedStepMessage` ILIKE), `GET /:id`, `POST /:id/retry`, `POST /retry|cancel|archive` (bulk), waitpoint resume routes.
+- **Retry strategies**: `FROM_FAILED_STEP` (rebuild context from logs, re-run from failure, prior outputs kept) or `ON_LATEST_VERSION` (fresh run on current published version). Both resolve the trigger payload via `resolveStepOutput`. If the trigger itself failed, they switch to `executeTrigger: true` to reprocess the raw event.
+- **Pause/resume (V1 waitpoints)**: pieces call `createWaitpoint` + `waitForWaitpoint`. DELAY upserts a `RESUME_DELAY_WAITPOINT` BullMQ job; WEBHOOK resumes on an HTTP call to `/:id/waitpoints/:waitpointId[/sync]`.
+- Logs backed up every 15s during execution for crash recovery; uploaded via 7-day JWT-signed URLs.
+
+### Gotchas
+- **Resume Confirmation Page (scanner guard)**: the `/confirm` route serves an HTML Approve/Disapprove page on `GET`/`HEAD` (never consumes) and only resumes on `POST` — stops email security scanners (Safe Links, Mimecast, Proofpoint) prefetching approval links. The deprecated bare `GET /:id/waitpoints/:waitpointId` still resumes for old emails. Slack is unchanged (server-side POST from webhook).
+- **ResumeReason** (`WAITPOINT`|`RETRY`) discriminates whether FAILED steps are restored on resume: waitpoint resumes preserve them, retry resumes drop them so the failed step re-executes.
+- **Failed-trigger payload** survives past BullMQ job completion only because `buildFailedTriggerContext` writes it into the trigger step's `output` slot.
+- **Big step outputs**: over 32 KB inline → stored as a `LogSliceRef` pointer to a `FLOW_RUN_LOG_SLICE` file (`outputType === SLICE`); missing backing file throws `ENTITY_NOT_FOUND` (loud retry failure). Step *inputs* over 2 KB (`AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB`) become a display-only truncation placeholder.
+- Retries only allowed on terminal states within `EXECUTION_DATA_RETENTION_DAYS`.
+- **Credit metering (Autumn)**: on terminal runs (paid editions), `onFinish` does two tryCatch-wrapped billing steps that never break run completion. (1) A PRODUCTION run not in `QUOTA_EXCEEDED` charges +1 apCredit via `billingProvider.trackCredits` with idempotency key `{runId}:run`. (2) `flowRunAiUsageTracker` pre-scans the flow version for `@activepieces/piece-ai` steps, extracts per-provider/model usage from step outputs (`flow-run-ai-usage-extractor` — recurses into loops, fetches `FLOW_RUN_LOG_SLICE` files, falls back to flow-version settings on `**REDACTED**` models), meters `Σ(messages × model credit weight) + toolCalls` to Autumn (`{runId}:ai`, plus `{runId}:appSumoAi` for the managed-ACTIVEPIECES AppSumo cap), then emits the `AI_USAGE_PER_RUN` PostHog event — the license key is only the PostHog distinctId, no longer a gate on metering.
+- **Credit gate is fail-open at admission**: the worker RPC `submitPayloads` checks `shouldBlockOnCredits` (blocks only when the platform is `billingEnforced` AND the cached balance is exhausted; CE default and Autumn-outage behavior is false). A blocked run is still admitted — as a `QUOTA_EXCEEDED` run with the trigger payload persisted in its log — so it stays retryable once credits return instead of being dropped.
+- **Post-run metering window**: AI usage is metered only at `onFinish`, so a long run can spend past the credit limit before anything lands; interim by design — see decision 000016.
+
+### Editions
+CE has full run tracking. Cloud may enforce retention windows; bulk-retry admin endpoint is Cloud-only.
+
+### Key files
+Entry point: `flowRunService`, defined in `flow-run-service.ts` and wired through `flow-run-module.ts`.
+
+- `packages/server/api/src/app/flows/flow-run/` — controller, service, entity, hooks, side effects, runs queue, AI usage extractor/tracker
+- `packages/server/api/src/app/flows/flow-run/waitpoint/` — resume routes, the `/confirm` page, and its theme hooks
+- `packages/core/execution/src/lib/flow-run/` — `FlowRun` type, request dtos, execution types (`StepOutput`, `FlowExecution`), zstd log serializer
+- `packages/server/engine/src/lib/helper/logging-utils.ts` — produces the truncated-input placeholder the web run-details tab detects
+- `packages/server/api/src/app/ee/billing-usage-report/` — daily EE job emitting per-platform run counts to PostHog (`TOTAL_RUNS_PER_DAY`, captured and flushed in platform batches)
+- `packages/web/src/features/flow-runs/` — `flowRunsApi`, run query/mutation hooks, runs table and its dialogs
+- `packages/web/src/app/routes/runs/` — runs list and run detail pages
+- `packages/web/src/app/builder/run-details/` — step input/output inspector inside the builder
+- `packages/web/src/app/builder/run-list/` — recent runs sidebar in the builder
+- `packages/web/src/app/builder/state/` — run state and canvas state, including live-follow control
+
+Paths verified 2026-07-26. An earlier version pointed at `packages/core/shared/src/lib/automation/flow-run/` (moved to `packages/core/execution/src/lib/flow-run/`) and `packages/server/api/src/app/ee/flow-run-tracking/` (renamed to `packages/server/api/src/app/ee/billing-usage-report/`).
