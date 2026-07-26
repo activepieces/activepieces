@@ -1,7 +1,7 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
+import { PlatformUsage } from '@activepieces/shared';
 import { useCallback, useState } from 'react';
 
-import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { CreditsWarning } from './chat-types';
@@ -10,14 +10,21 @@ const CREDITS_WARNING_THRESHOLD = 70;
 
 export function useCreditsState() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: providers } = aiProviderQueries.useAiProviders();
 
-  const [creditsExhausted, setCreditsExhausted] = useState(false);
+  const [streamCreditsExhausted, setStreamCreditsExhausted] = useState(false);
   const [warningDismissed, setWarningDismissed] = useState(false);
 
-  const creditsWarning = warningDismissed
-    ? null
-    : computeCreditsWarning({ platform: platform ?? {}, providers });
+  const creditsExhausted =
+    streamCreditsExhausted ||
+    hasExhaustedCredits({
+      usage: platform?.usage,
+      billingEnforced: platform?.billingEnforced,
+    });
+
+  const creditsWarning =
+    warningDismissed || creditsExhausted
+      ? null
+      : computeCreditsWarning(platform?.usage);
 
   const dismissCreditsWarning = useCallback(() => {
     setWarningDismissed(true);
@@ -26,32 +33,39 @@ export function useCreditsState() {
   return {
     creditsWarning,
     creditsExhausted,
-    setCreditsExhausted,
+    setCreditsExhausted: setStreamCreditsExhausted,
     warningDismissed,
     dismissCreditsWarning,
   };
 }
 
-function computeCreditsWarning({
-  platform,
-  providers,
+function hasExhaustedCredits({
+  usage,
+  billingEnforced,
 }: {
-  platform: {
-    usage?: { creditsUsed: number; creditsRemaining?: number | null };
-  };
-  providers?: { provider: string; enabledForChat?: boolean }[];
-}): CreditsWarning | null {
-  const isActivepieces = providers?.some(
-    (p) => p.provider === AIProviderName.ACTIVEPIECES && p.enabledForChat,
-  );
-  if (
-    !isActivepieces ||
-    !platform.usage ||
-    isNil(platform.usage.creditsRemaining)
-  ) {
+  usage: PlatformUsage | undefined;
+  billingEnforced: boolean | undefined;
+}): boolean {
+  if (isNil(usage)) {
+    return false;
+  }
+  const appSumoExhausted =
+    !isNil(usage.appSumoAiCreditsRemaining) &&
+    usage.appSumoAiCreditsRemaining <= 0;
+  const creditsExhausted =
+    billingEnforced === true &&
+    !isNil(usage.creditsRemaining) &&
+    usage.creditsRemaining <= 0;
+  return appSumoExhausted || creditsExhausted;
+}
+
+function computeCreditsWarning(
+  usage: PlatformUsage | undefined,
+): CreditsWarning | null {
+  if (isNil(usage) || isNil(usage.creditsRemaining)) {
     return null;
   }
-  const { creditsUsed, creditsRemaining } = platform.usage;
+  const { creditsUsed, creditsRemaining } = usage;
   const total = creditsUsed + creditsRemaining;
   if (total <= 0) {
     return null;

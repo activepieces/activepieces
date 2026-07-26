@@ -203,6 +203,7 @@ export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
+    billingEnforced: z.boolean().optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
