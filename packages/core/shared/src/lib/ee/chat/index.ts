@@ -194,6 +194,18 @@ export enum ChatConversationStatus {
     ERROR = 'ERROR',
 }
 
+export const ChatAutonomyMode = z.enum(['ask_first', 'full_access'])
+export type ChatAutonomyMode = z.infer<typeof ChatAutonomyMode>
+
+export const ChatConsentDecision = z.enum(['allow', 'ask', 'deny'])
+export type ChatConsentDecision = z.infer<typeof ChatConsentDecision>
+
+export const ChatConsentPolicySettings = z.object({
+    fullAccessEnabled: z.boolean().optional(),
+    overrides: z.record(z.string(), ChatConsentDecision).optional(),
+})
+export type ChatConsentPolicySettings = z.infer<typeof ChatConsentPolicySettings>
+
 export const ChatConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
@@ -201,6 +213,7 @@ export const ChatConversation = z.object({
     userId: z.string(),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
+    autonomyMode: z.optional(Nullable(ChatAutonomyMode)),
     status: z.nativeEnum(ChatConversationStatus).default(ChatConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
@@ -219,6 +232,7 @@ export type CreateChatConversationRequest = z.infer<typeof CreateChatConversatio
 export const UpdateChatConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    autonomyMode: z.optional(ChatAutonomyMode),
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 

@@ -4,8 +4,9 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ShieldCheck } from 'lucide-react';
 
+import { platformApi } from '@/api/platforms-api';
 import { CenteredPage } from '@/app/components/centered-page';
 import {
   Select,
@@ -14,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { SUPPORTED_AI_PROVIDERS, AiProviderInfo } from '@/features/agents';
 import {
   aiProviderQueries,
@@ -80,6 +82,8 @@ export default function AIProvidersPage() {
           />
         )}
 
+        {allowWrite && <ChatFullAccessSetting />}
+
         <div className="flex flex-col gap-4">
           {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
             const config = providers?.find(
@@ -100,6 +104,44 @@ export default function AIProvidersPage() {
         </div>
       </CenteredPage>
     </LockedFeatureGuard>
+  );
+}
+
+function ChatFullAccessSetting() {
+  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const fullAccessEnabled =
+    platform.chatConsentPolicy?.fullAccessEnabled !== false;
+
+  const handleToggle = async (checked: boolean) => {
+    await platformApi.update(
+      {
+        chatConsentPolicy: {
+          ...(platform.chatConsentPolicy ?? {}),
+          fullAccessEnabled: checked,
+        },
+      },
+      platform.id,
+    );
+    await refetch();
+  };
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg border bg-card p-4 mb-6">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted shrink-0">
+        <ShieldCheck className="size-4 text-muted-foreground" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium leading-none">
+          {t('Full access in chat')}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {t(
+            'Let members allow the assistant to send and change connected apps without asking per action. Deleting data and moving money always ask.',
+          )}
+        </p>
+      </div>
+      <Switch checked={fullAccessEnabled} onCheckedChange={handleToggle} />
+    </div>
   );
 }
 

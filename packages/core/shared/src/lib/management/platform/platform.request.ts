@@ -1,6 +1,7 @@
 import { ApId, ApMultipartFile, Nullable, OptionalArrayFromQuery, OptionalBooleanFromQuery, SAFE_STRING_PATTERN, tryCatchSync } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
+import { ChatConsentPolicySettings } from '../../ee/chat'
 import { PieceSelectorConfig, PlatformThemeColors } from './platform.model'
 
 export const MAX_EMBED_ORIGIN_LENGTH = 300
@@ -65,6 +66,7 @@ export const UpdatePlatformRequestBody = z.object({
     pieceSelectorConfig: NullablePieceSelectorConfigFromMultipart.optional(),
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
         .optional(),
+    chatConsentPolicy: ChatConsentPolicySettings.optional(),
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>

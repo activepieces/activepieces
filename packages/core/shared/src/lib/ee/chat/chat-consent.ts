@@ -55,11 +55,43 @@ function consentSignature({ toolName, scope, fingerprints }: {
     return `${toolName}|${scope}|${[...new Set(fingerprints)].sort().join(';')}`
 }
 
+const FULL_ACCESS_ALLOWED_KINDS: ActionEffectKind[] = ['external_write', 'outward_send']
+const ALL_EFFECT_KINDS: ActionEffectKind[] = ['read', 'internal_write', 'internal_destructive', 'external_write', 'outward_send', 'destructive', 'financial', 'input_dependent', 'unknown']
+
+function toConsentKind(value: string): ActionEffectKind | undefined {
+    return ALL_EFFECT_KINDS.find((kind) => kind === value)
+}
+
+function toConsentDecision(value: string): ConsentDecision | undefined {
+    return value === 'allow' || value === 'ask' || value === 'deny' ? value : undefined
+}
+
+function composeConsentPolicy({ fullAccess, overrides }: {
+    fullAccess: boolean
+    overrides?: Record<string, string>
+}): Partial<Record<ActionEffectKind, ConsentDecision>> {
+    const policy: Partial<Record<ActionEffectKind, ConsentDecision>> = {}
+    if (fullAccess) {
+        for (const kind of FULL_ACCESS_ALLOWED_KINDS) {
+            policy[kind] = 'allow'
+        }
+    }
+    for (const [rawKind, rawDecision] of Object.entries(overrides ?? {})) {
+        const kind = toConsentKind(rawKind)
+        const decision = toConsentDecision(rawDecision)
+        if (kind !== undefined && decision !== undefined) {
+            policy[kind] = decision
+        }
+    }
+    return policy
+}
+
 export const chatConsent = {
     decide: decideConsent,
     describeEffect,
     isReusable: isReusableConsent,
     signature: consentSignature,
+    composePolicy: composeConsentPolicy,
     DEFAULT_CONSENT_POLICY,
 }
 

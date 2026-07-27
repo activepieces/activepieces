@@ -2256,5 +2256,19 @@
   "{count, plural, =0 {Delete them} =1 {Delete 1 record} other {Delete # records}}": "{count, plural, =0 {Delete them} =1 {Delete 1 record} other {Delete # records}}",
   "Run it": "Run it",
   "You said no — nothing ran": "You said no — nothing ran",
-  "Waited for your answer — nothing ran": "Waited for your answer — nothing ran"
+  "Waited for your answer — nothing ran": "Waited for your answer — nothing ran",
+  "Full access": "Full access",
+  "Asks first": "Asks first",
+  "Sends and app changes run without asking in this chat": "Sends and app changes run without asking in this chat",
+  "Real-world actions ask you before they run": "Real-world actions ask you before they run",
+  "Anything that sends, changes a connected app, deletes, or spends money asks you before it runs.": "Anything that sends, changes a connected app, deletes, or spends money asks you before it runs.",
+  "Sends and app changes run without asking. Deleting data and moving money still ask.": "Sends and app changes run without asking. Deleting data and moving money still ask.",
+  "Turned off by your workspace admin.": "Turned off by your workspace admin.",
+  "Give the assistant full access?": "Give the assistant full access?",
+  "In this conversation, the assistant will send real messages and change data in your connected apps without asking you first.": "In this conversation, the assistant will send real messages and change data in your connected apps without asking you first.",
+  "It will still ask before deleting data, moving money, or running anything it cannot identify.": "It will still ask before deleting data, moving money, or running anything it cannot identify.",
+  "Keep asking me": "Keep asking me",
+  "Give full access": "Give full access",
+  "Full access in chat": "Full access in chat",
+  "Let members allow the assistant to send and change connected apps without asking per action. Deleting data and moving money always ask.": "Let members allow the assistant to send and change connected apps without asking per action. Deleting data and moving money always ask."
 }

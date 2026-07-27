@@ -1,7 +1,7 @@
 import { FlowActionType, flowStructureUtil, Step } from '@activepieces/core-execution'
 import { isNil, isObject, spreadIfDefined, tryCatchSync } from '@activepieces/core-utils'
 import { ActionEffect, actionEffect, ActionEffectKind } from './action-effect'
-import { chatConsent } from './chat-consent'
+import { chatConsent, ConsentDecision } from './chat-consent'
 
 const READ_ACTION_PATTERNS = ['list', 'get', 'search', 'find', 'fetch', 'read', 'count', 'check', 'verify', 'lookup']
 const WRITE_ACTION_PATTERNS = ['delete', 'remove', 'send', 'post', 'publish', 'create', 'update', 'write', 'insert', 'reply', 'forward']
@@ -25,13 +25,14 @@ function actionNameMatchesPatterns({ actionName, patterns }: { actionName: strin
     return patterns.some((pattern) => words.includes(pattern))
 }
 
-function requiresActionPreview({ pieceName, actionName, input, needsConfirmation, tainted, declaredEffect }: {
+function requiresActionPreview({ pieceName, actionName, input, needsConfirmation, tainted, declaredEffect, policy }: {
     pieceName?: string
     actionName: string
     input?: Record<string, unknown>
     needsConfirmation?: boolean
     tainted?: boolean
     declaredEffect?: string
+    policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
 }): boolean {
     if (needsConfirmation === true) {
         return true
@@ -40,7 +41,7 @@ function requiresActionPreview({ pieceName, actionName, input, needsConfirmation
     if (tainted === true) {
         return !actionEffect.isRead(effect.kind)
     }
-    return chatConsent.decide({ kind: effect.kind }) !== 'allow'
+    return chatConsent.decide({ kind: effect.kind, policy }) !== 'allow'
 }
 
 function isReadActionName(actionName: string): boolean {

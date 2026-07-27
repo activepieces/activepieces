@@ -1,4 +1,4 @@
-import { ActionPreviewEvent, ActionReceiptEvent, SendChatEmailResponse, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, chatConsent, SendChatEmailResponse, ToolProgressEvent } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
 import { ChatEventEmitter, chatWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
 
@@ -637,12 +637,13 @@ type FakeGate = { gateId: string, displayName: string }
 
 const CONSENT_GATED_TOOL_NAMES = ['ap_test_flow', 'ap_test_step', 'ap_retry_run', 'ap_run_code', 'ap_delete_flow', 'ap_delete_table', 'ap_delete_records', 'ap_lock_and_publish', 'ap_change_flow_status', 'ap_manage_fields', 'mcp__attio__create_record', 'ap_brand_new_tool', 'ap_list_flows', 'ap_flow_structure', 'ap_insert_records', 'ap_add_step']
 
-function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true, disabled = false }: {
+function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true, disabled = false, policy }: {
     effects: { stepName: string, displayName: string, kind: string, detail: string, recipient?: string, inputDigest?: string }[]
     decision?: 'approved' | 'declined' | 'timeout'
     remembered?: boolean
     resolved?: boolean
     disabled?: boolean
+    policy?: ReturnType<typeof chatConsent.composePolicy>
 }) {
     const ran: unknown[] = []
     const previews: ActionPreviewEvent[] = []
@@ -661,6 +662,7 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
     const wrapped = chatWorkerTools.wrapWithConsent({
         tools,
         disabled,
+        policy,
         previewFlowEffects: async (params) => {
             previewCalls.push(params)
             return {
@@ -966,6 +968,53 @@ describe('chatWorkerTools.wrapWithConsent — the whole toolset is covered, defa
         expect(h.gates).toHaveLength(0)
         expect(h.previews).toHaveLength(0)
         expect(h.ran).toHaveLength(1)
+    })
+})
+
+describe('chatWorkerTools.wrapWithConsent — autonomy policy', () => {
+    const FULL_ACCESS = chatConsent.composePolicy({ fullAccess: true })
+
+    it('lets sends and app writes run without asking under full access', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP], policy: FULL_ACCESS })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(0)
+        expect(h.ran).toHaveLength(1)
+    })
+
+    it('still asks about money under full access', async () => {
+        const h = makeConsentHarness({ effects: [REFUND_STEP], policy: FULL_ACCESS, decision: 'declined' })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(0)
+    })
+
+    it('still asks about deletions under full access', async () => {
+        const h = makeConsentHarness({ effects: [], policy: FULL_ACCESS, decision: 'declined' })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_delete_records', args: { recordIds: ['r1'] } })
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(0)
+    })
+
+    it('still asks about tools nobody classified under full access', async () => {
+        const h = makeConsentHarness({ effects: [], policy: FULL_ACCESS, decision: 'declined' })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_brand_new_tool', args: {} })
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(0)
+    })
+
+    it('refuses outright, without asking, when the workspace denies an effect kind', async () => {
+        const denyPolicy = chatConsent.composePolicy({ fullAccess: false, overrides: { financial: 'deny' } })
+        const h = makeConsentHarness({ effects: [REFUND_STEP], policy: denyPolicy })
+        const result = await runTestFlow(h.wrapped) as { content: { text: string }[], _agentGuidance: string }
+        expect(h.gates).toHaveLength(0)
+        expect(h.ran).toHaveLength(0)
+        expect(result.content[0].text).toContain('Not allowed here')
+        expect(result._agentGuidance).toContain('policy')
+    })
+
+    it('ignores garbage kinds and decisions in admin overrides', () => {
+        const policy = chatConsent.composePolicy({ fullAccess: false, overrides: { financial: 'nope', not_a_kind: 'deny', outward_send: 'deny' } })
+        expect(policy).toEqual({ outward_send: 'deny' })
     })
 })
 

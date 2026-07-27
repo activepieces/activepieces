@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { actionEffect, actionEffectLabelCatalog, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, ChatToolConsentSpec, chatToolConsentSpecs, ConsentPreview, ConsentPreviewCategory, ConsentSeverity, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
+import { actionEffect, ActionEffectKind, actionEffectLabelCatalog, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, ChatToolConsentSpec, chatToolConsentSpecs, ConsentDecision, ConsentPreview, ConsentPreviewCategory, ConsentSeverity, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -548,13 +548,14 @@ function createProgressGuard() {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState, policy }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     guides: Record<string, string>
     taintState: TaintState
+    policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
 }): ToolSet {
     const progressGuard = createProgressGuard()
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
@@ -615,6 +616,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     input: toolInput.input,
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
+                    policy,
                 })
 
                 if (needsPreview) {
@@ -1534,9 +1536,10 @@ function gateLabelFor({ toolName, spec, flowName, effects, resolved, args }: {
     return summary.length > 0 ? `${intro} ${target} — performs: ${summary}` : `${intro} ${target}`
 }
 
-function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, previewFlowEffects, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
+function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, policy, previewFlowEffects, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
     tools: T
     disabled?: boolean
+    policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
     previewFlowEffects: PreviewFlowEffects
     checkRememberedConsent: (params: { signature: string }) => Promise<boolean>
     rememberConsent: (params: { signature: string }) => Promise<void>
@@ -1570,10 +1573,10 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
                 const { effects, flowName, resolved } = await resolveGatedEffects({ toolName, spec, args, previewFlowEffects, log })
                 const kinds = chatToolClassification.effectKindsOf(effects)
                 const decisions = resolved
-                    ? kinds.map((kind) => chatConsent.decide({ kind }))
-                    : [chatConsent.decide({ kind: 'unknown' })]
+                    ? kinds.map((kind) => chatConsent.decide({ kind, policy }))
+                    : [chatConsent.decide({ kind: 'unknown', policy })]
                 if (decisions.includes('deny')) {
-                    const blocked = effects.filter((step) => chatConsent.decide({ kind: step.effect.kind }) === 'deny')
+                    const blocked = effects.filter((step) => chatConsent.decide({ kind: step.effect.kind, policy }) === 'deny')
                     log?.info?.({ tool: { name: toolName }, effectKinds: kinds }, 'Consent denied by policy, not asking')
                     return gateOutcomeResult({
                         userLine: '❌ Not allowed here — nothing ran.',

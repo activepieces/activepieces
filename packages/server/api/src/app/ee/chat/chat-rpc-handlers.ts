@@ -13,6 +13,7 @@ import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
@@ -67,6 +68,17 @@ async function flowIdOfRun({ flowRunId, projectId, log }: {
     }
     const { data: run } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
     return run?.flowId
+}
+
+async function resolveConsentPolicy({ conversation, platformId, log }: {
+    conversation: { autonomyMode?: string | null }
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<Record<string, string>> {
+    const { data: platform } = await tryCatch(() => platformService(log).getOneOrThrow(platformId))
+    const settings = platform?.chatConsentPolicy
+    const fullAccess = conversation.autonomyMode === 'full_access' && settings?.fullAccessEnabled !== false
+    return chatConsent.composePolicy({ fullAccess, overrides: settings?.overrides })
 }
 
 function isDeclaringPieceStep(step: Step | undefined): step is Step & { settings: { actionName: string, pieceName: string } } {
@@ -391,6 +403,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             aiTools,
             emailEnabled,
             userEmail: userMeta.email,
+            consentPolicy: await resolveConsentPolicy({ conversation, platformId, log }),
         }
     },
 

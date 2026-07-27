@@ -1,3 +1,4 @@
+import { ChatAutonomyMode } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
@@ -16,6 +17,7 @@ import {
 } from '../lib/message-parsers';
 
 import { ActionPreviewCard } from './action-preview-card';
+import { ChatAutonomySelector } from './chat-autonomy-selector';
 import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
@@ -32,6 +34,8 @@ export function ChatBottomBar({
   onInputChange,
   selectedModel,
   onModelChange,
+  autonomyMode,
+  onAutonomyChange,
   lastAssistantMessage,
   lastMessageId,
   placeholder,
@@ -140,10 +144,16 @@ export function ChatBottomBar({
               : placeholder ?? t('Reply...')
           }
           rightActions={
-            <ChatModelSelector
-              selectedModel={selectedModel}
-              onModelChange={onModelChange}
-            />
+            <>
+              <ChatAutonomySelector
+                autonomyMode={autonomyMode}
+                onAutonomyChange={onAutonomyChange}
+              />
+              <ChatModelSelector
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+              />
+            </>
           }
         />
       </div>
@@ -218,6 +228,8 @@ type ChatBottomBarProps = {
   onInputChange?: (hasInput: boolean) => void;
   selectedModel: string | null;
   onModelChange: (modelId: string) => void;
+  autonomyMode: ChatAutonomyMode;
+  onAutonomyChange: (mode: ChatAutonomyMode) => void;
   lastAssistantMessage: ChatUIMessage | undefined;
   lastMessageId: string | undefined;
   placeholder?: string;
