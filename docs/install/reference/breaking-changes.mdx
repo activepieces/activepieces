@@ -16,7 +16,7 @@ Text that spells out a list (`["year","month"]`, `[]`) or a checkbox value (`tru
 
 Flows already saved in the broken state repair themselves. The first time each one is loaded after the upgrade, a migration puts the real list or true/false back into the field and returns it to being a picker, so your selections show up as chips again instead of as text. The previous copy of every migrated flow is kept as a backup, and a field whose value cannot be interpreted is left exactly as it was.
 
-**Action:** only if a flow has a multi-select set to a dynamic value that does not produce a list, such as a single item or a comma-separated line like `a,b`. Those steps used to run and now fail with the message above. Edit the field so it produces a list (`["a","b"]`), or switch it back to picking options. Checkboxes need nothing: they already failed in this case and now fail in fewer cases.
+**Action:** only if a flow has a multi-select set to a dynamic value that does not produce a list. That covers a typed-in single item or a comma-separated line like `a,b`, and also a reference such as `{{ trigger.body.tag }}` that arrives carrying one value instead of a list. The second case does not show up in the flow itself, it depends on the incoming data, so the error message is what will point you at it. Those steps used to run and now fail with the message above. Edit the field so it produces a list (`["a","b"]`, or wrap the reference in one), or switch it back to picking options. Checkboxes need nothing: they already failed in this case and now fail in fewer cases.
 
 ## 0.86.0
 
