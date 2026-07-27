@@ -21,7 +21,8 @@ export const POLL_INITIAL_DELAY_MS = 2_000;
 export const POLL_MAX_DELAY_MS = 10_000;
 export const POLL_BACKOFF_FACTOR = 1.5;
 
-/** Cap on Retry-After so a forged header cannot stall a flow. */
+/** Upper bound on rate-limit backoff. The API's Retry-After header is unreadable here:
+ *  the platform discards response headers before throwing, so we bound our own backoff. */
 export const RETRY_AFTER_CAP_SECONDS = 60;
 export const MAX_RATE_LIMIT_RETRIES = 3;
 
