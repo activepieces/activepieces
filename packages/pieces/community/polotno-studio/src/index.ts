@@ -6,6 +6,9 @@ import { getImage } from './lib/actions/get-image';
 import { getVideo } from './lib/actions/get-video';
 import { findTemplates } from './lib/actions/find-templates';
 import { getTemplate } from './lib/actions/get-template';
+import { imageRendered } from './lib/triggers/image-rendered';
+import { videoRendered } from './lib/triggers/video-rendered';
+import { renderFailed } from './lib/triggers/render-failed';
 
 export const polotnoStudio = createPiece({
   displayName: 'Polotno Studio',
@@ -16,5 +19,5 @@ export const polotnoStudio = createPiece({
   auth: polotnoStudioAuth,
   authors: ['polotno'],
   actions: [renderImage, renderVideo, getImage, getVideo, findTemplates, getTemplate],
-  triggers: [],
+  triggers: [imageRendered, videoRendered, renderFailed],
 });
