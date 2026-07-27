@@ -1,5 +1,5 @@
 import { FlowActionType, flowStructureUtil, Step } from '@activepieces/core-execution'
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatchSync } from '@activepieces/core-utils'
 import { ActionEffect, actionEffect, ActionEffectKind } from './action-effect'
 import { chatConsent } from './chat-consent'
 
@@ -14,7 +14,7 @@ const MAX_RECIPIENTS_ON_CARD = 3
 
 const SILENT_EFFECT_KINDS = new Set<ActionEffectKind>(['read', 'internal_write'])
 
-const CODE_REACHES_OUTSIDE = /\b(fetch|axios|XMLHttpRequest|WebSocket|EventSource|child_process|process\.env)\b|https?\.request|net\.(connect|createConnection)|dns\.|\bexec(Sync|File)?\s*\(/
+const CODE_REACHES_OUTSIDE = /\b(fetch|axios|XMLHttpRequest|WebSocket|EventSource|child_process|process|require|eval|Function|globalThis)\b|https?\.(request|get)\b|\bnet\.|\bdns\.|\btls\.|\bimport\s*\(|^\s*import\b/m
 
 function hasFailureTextPrefix(text: string): boolean {
     return FAILURE_TEXT_PREFIXES.some((prefix) => text.startsWith(prefix))
@@ -123,8 +123,21 @@ function inputDigestOf(input: unknown): string {
     return (hash >>> 0).toString(36)
 }
 
-function codeEffect({ code, stepName, displayName }: { code: string, stepName: string, displayName: string }): StepEffect {
-    const reachesOutside = CODE_REACHES_OUTSIDE.test(code)
+function declaresDependencies(packageJson: string | undefined): boolean {
+    if (isNil(packageJson) || packageJson.trim().length === 0) {
+        return false
+    }
+    const parsed: unknown = JSON.parse(packageJson.trim().startsWith('{') ? packageJson : '{}')
+    if (!isObject(parsed)) {
+        return false
+    }
+    const dependencies = parsed['dependencies']
+    return isObject(dependencies) && Object.keys(dependencies).length > 0
+}
+
+function codeEffect({ code, packageJson, stepName, displayName }: { code: string, packageJson?: string, stepName: string, displayName: string }): StepEffect {
+    const dependencies = tryCatchSync(() => declaresDependencies(packageJson))
+    const reachesOutside = CODE_REACHES_OUTSIDE.test(code) || dependencies.data !== false
     return {
         stepName,
         displayName,
@@ -138,6 +151,7 @@ function codeEffect({ code, stepName, displayName }: { code: string, stepName: s
 function codeStepEffect(step: Step): StepEffect {
     return codeEffect({
         code: typeof step.settings.sourceCode?.code === 'string' ? step.settings.sourceCode.code : '',
+        packageJson: typeof step.settings.sourceCode?.packageJson === 'string' ? step.settings.sourceCode.packageJson : undefined,
         stepName: step.name,
         displayName: step.displayName,
     })

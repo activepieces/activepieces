@@ -381,22 +381,24 @@ describe('chatWorkerTools', () => {
             const result = await tools.ap_execute_action.execute({
                 pieceName: 'slack', actionName: 'send_message', input: { channel: 'C1' },
             }, { toolCallId: 'tc-gate', messages: [], abortSignal: undefined as unknown as AbortSignal })
-            return { result: result as { content: Array<{ text: string }> }, executeTool }
+            return { result: result as { content: Array<{ text: string }>, _agentGuidance: string }, executeTool }
         }
 
-        it('on timeout, shows the user one short line and keeps the model guidance out of it', async () => {
+        it('on timeout, shows the user one short line and carries the model guidance out of band', async () => {
             const { result, executeTool } = await runExecuteActionWith('timeout')
+            expect(result.content).toHaveLength(1)
             expect(result.content[0].text).toBe('⏳ Waiting on your go-ahead — nothing ran.')
-            expect(result.content[1].text).toMatch(/hasn't responded|timed out/i)
-            expect(result.content[1].text).toMatch(/skip|approve/i)
+            expect(result._agentGuidance).toMatch(/hasn't responded|timed out/i)
+            expect(result._agentGuidance).toMatch(/skip|approve/i)
             expect(executeTool).not.toHaveBeenCalled()
         })
 
         it('on an explicit decline, shows the user one short line and tells the model not to reroute', async () => {
             const { result, executeTool } = await runExecuteActionWith('declined')
+            expect(result.content).toHaveLength(1)
             expect(result.content[0].text).toBe('❌ You declined this — nothing was changed.')
-            expect(result.content[1].text).toContain('Action cancelled by user.')
-            expect(result.content[1].text).toContain('another tool')
+            expect(result._agentGuidance).toContain('Action cancelled by user.')
+            expect(result._agentGuidance).toContain('another tool')
             expect(executeTool).not.toHaveBeenCalled()
         })
     })
@@ -633,13 +635,14 @@ describe('chatWorkerTools', () => {
 
 type FakeGate = { gateId: string, displayName: string }
 
-const CONSENT_GATED_TOOL_NAMES = ['ap_test_flow', 'ap_test_step', 'ap_retry_run', 'ap_run_code', 'ap_delete_flow', 'ap_delete_table', 'ap_delete_records']
+const CONSENT_GATED_TOOL_NAMES = ['ap_test_flow', 'ap_test_step', 'ap_retry_run', 'ap_run_code', 'ap_delete_flow', 'ap_delete_table', 'ap_delete_records', 'ap_lock_and_publish', 'ap_change_flow_status', 'ap_manage_fields', 'mcp__attio__create_record', 'ap_brand_new_tool', 'ap_list_flows', 'ap_flow_structure', 'ap_insert_records', 'ap_add_step']
 
-function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true }: {
+function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true, disabled = false }: {
     effects: { stepName: string, displayName: string, kind: string, detail: string, recipient?: string, inputDigest?: string }[]
     decision?: 'approved' | 'declined' | 'timeout'
     remembered?: boolean
     resolved?: boolean
+    disabled?: boolean
 }) {
     const ran: unknown[] = []
     const previews: ActionPreviewEvent[] = []
@@ -657,6 +660,7 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
 
     const wrapped = chatWorkerTools.wrapWithConsent({
         tools,
+        disabled,
         previewFlowEffects: async (params) => {
             previewCalls.push(params)
             return {
@@ -731,21 +735,23 @@ describe('chatWorkerTools.wrapWithConsent', () => {
         expect(h.ran).toHaveLength(1)
     })
 
-    it('does not run the tool when the user declines, and keeps the model guidance off the card', async () => {
+    it('does not run the tool when the user declines, and keeps the model guidance out of the visible content', async () => {
         const h = makeConsentHarness({ effects: [SEND_STEP], decision: 'declined' })
-        const result = await runTestFlow(h.wrapped) as { content: { text: string }[] }
+        const result = await runTestFlow(h.wrapped) as { content: { text: string }[], _agentGuidance: string }
         expect(h.ran).toHaveLength(0)
+        expect(result.content).toHaveLength(1)
         expect(result.content[0].text).toBe('❌ You declined this — nothing ran.')
         expect(result.content[0].text.length).toBeLessThan(80)
-        expect(result.content[1].text).toContain('Do not run it')
+        expect(result._agentGuidance).toContain('Do not run it')
     })
 
-    it('keeps the timeout guidance off the card too', async () => {
+    it('keeps the timeout guidance out of the visible content too', async () => {
         const h = makeConsentHarness({ effects: [SEND_STEP], decision: 'timeout' })
-        const result = await runTestFlow(h.wrapped) as { content: { text: string }[] }
+        const result = await runTestFlow(h.wrapped) as { content: { text: string }[], _agentGuidance: string }
         expect(h.ran).toHaveLength(0)
+        expect(result.content).toHaveLength(1)
         expect(result.content[0].text).toBe('⏳ Waiting on your go-ahead — nothing ran.')
-        expect(result.content[1].text).toContain('they did NOT decline')
+        expect(result._agentGuidance).toContain('they did NOT decline')
     })
 
     it('remembers an approval so the same test does not ask twice', async () => {
@@ -867,7 +873,7 @@ describe('chatWorkerTools.wrapWithConsent — deletion goes through its real pat
         await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_delete_records', args: { recordIds: ['r1', 'r2', 'r3'], displayName: 'Tidy up the Leads table' } })
         expect(h.previewCalls).toHaveLength(0)
         expect(h.gates).toHaveLength(1)
-        expect(h.gates[0].displayName).toBe('Tidy up the Leads table — delete these records')
+        expect(h.gates[0].displayName).toBe('Delete these records — "Tidy up the Leads table"')
         expect(h.ran).toHaveLength(1)
     })
 
@@ -881,6 +887,85 @@ describe('chatWorkerTools.wrapWithConsent — deletion goes through its real pat
         await runGatedTool({ wrapped: second.wrapped, toolName: 'ap_delete_records', args: { recordIds: ['r1'] } })
         expect(second.checked).toHaveLength(0)
         expect(second.gates).toHaveLength(1)
+    })
+})
+
+describe('chatWorkerTools.wrapWithConsent — the whole toolset is covered, default-closed', () => {
+    it('gates publishing, because enabling an automation is a standing licence to act', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP], decision: 'declined' })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_lock_and_publish', args: { flowId: 'flow-1' } })
+        expect(h.gates).toHaveLength(1)
+        expect(h.gates[0].displayName).toContain('Publish and switch on')
+        expect(h.ran).toHaveLength(0)
+    })
+
+    it('lets publishing a flow with no external effects proceed silently', async () => {
+        const h = makeConsentHarness({ effects: [] })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_lock_and_publish', args: { flowId: 'flow-1' } })
+        expect(h.gates).toHaveLength(0)
+        expect(h.ran).toHaveLength(1)
+    })
+
+    it('gates switching a flow ON, and ignores switching it OFF', async () => {
+        const on = makeConsentHarness({ effects: [SEND_STEP], decision: 'declined' })
+        await runGatedTool({ wrapped: on.wrapped, toolName: 'ap_change_flow_status', args: { flowId: 'flow-1', status: 'ENABLED' } })
+        expect(on.gates).toHaveLength(1)
+        expect(on.ran).toHaveLength(0)
+
+        const off = makeConsentHarness({ effects: [SEND_STEP] })
+        await runGatedTool({ wrapped: off.wrapped, toolName: 'ap_change_flow_status', args: { flowId: 'flow-1', status: 'DISABLED' } })
+        expect(off.gates).toHaveLength(0)
+        expect(off.ran).toHaveLength(1)
+    })
+
+    it('gates a third-party connector tool it has never seen, scoped to its exact arguments', async () => {
+        const first = makeConsentHarness({ effects: [] })
+        await runGatedTool({ wrapped: first.wrapped, toolName: 'mcp__attio__create_record', args: { record: { name: 'Acme' } } })
+        expect(first.gates).toHaveLength(1)
+        expect(first.gates[0].displayName).toContain('connected app')
+        expect(first.remembers).toHaveLength(1)
+
+        const differentArgs = makeConsentHarness({ effects: [], remembered: false })
+        await runGatedTool({ wrapped: differentArgs.wrapped, toolName: 'mcp__attio__create_record', args: { record: { name: 'Globex' } } })
+        expect(differentArgs.checked[0]).not.toBe(first.remembers[0])
+        expect(differentArgs.gates).toHaveLength(1)
+    })
+
+    it('asks about a tool nobody classified instead of letting it run', async () => {
+        const h = makeConsentHarness({ effects: [], decision: 'declined' })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_brand_new_tool', args: {} })
+        expect(h.gates).toHaveLength(1)
+        expect(h.gates[0].displayName).toContain('could not check')
+        expect(h.ran).toHaveLength(0)
+    })
+
+    it('gates dropping a table column, and leaves other field operations silent', async () => {
+        const dropColumn = makeConsentHarness({ effects: [], decision: 'declined' })
+        await runGatedTool({ wrapped: dropColumn.wrapped, toolName: 'ap_manage_fields', args: { tableId: 't1', operation: 'DELETE', fieldName: 'email' } })
+        expect(dropColumn.gates).toHaveLength(1)
+        expect(dropColumn.ran).toHaveLength(0)
+
+        const addColumn = makeConsentHarness({ effects: [] })
+        await runGatedTool({ wrapped: addColumn.wrapped, toolName: 'ap_manage_fields', args: { tableId: 't1', operation: 'CREATE', fieldName: 'email' } })
+        expect(addColumn.gates).toHaveLength(0)
+        expect(addColumn.ran).toHaveLength(1)
+    })
+
+    it('leaves read and internal tools untouched', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP] })
+        for (const toolName of ['ap_list_flows', 'ap_flow_structure', 'ap_insert_records', 'ap_add_step']) {
+            await runGatedTool({ wrapped: h.wrapped, toolName, args: { flowId: 'flow-1' } })
+        }
+        expect(h.gates).toHaveLength(0)
+        expect(h.ran).toHaveLength(4)
+    })
+
+    it('stands down entirely when the kill switch is on', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP], disabled: true })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(0)
+        expect(h.previews).toHaveLength(0)
+        expect(h.ran).toHaveLength(1)
     })
 })
 

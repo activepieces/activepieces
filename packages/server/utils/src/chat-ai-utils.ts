@@ -1,4 +1,4 @@
-import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils';
+import { AIProviderName, isObject, spreadIfDefined } from '@activepieces/core-utils';
 import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, chatPersistenceUtils, chatToolClassification, CloudflareGatewayProviderConfig, OpenAICompatibleProviderConfig, PersistedChatPart, PersistedChatPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -277,6 +277,14 @@ type ContentPartLike = {
     filename?: string
 }
 
+function stripAgentGuidanceFromOutput(output: unknown): unknown {
+    if (!isObject(output) || !('_agentGuidance' in output)) {
+        return output
+    }
+    const { _agentGuidance, ...visible } = output
+    return visible
+}
+
 function buildStepParts({ content }: {
     content: ContentPartLike[]
 }): PersistedChatPart[] {
@@ -326,7 +334,8 @@ function buildStepParts({ content }: {
                     break
                 }
                 const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
-                const rawOutput = result?.output ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
+                const unwrappedOutput = result?.output ? chatPersistenceUtils.unwrapToolOutput(result.output) : undefined
+                const rawOutput = stripAgentGuidanceFromOutput(unwrappedOutput)
                 const title = typeof input['title'] === 'string' ? input['title'] : undefined
                 const description = typeof input['description'] === 'string' ? input['description'] : undefined
                 parts.push({

@@ -128,6 +128,12 @@ describe('actionEffect.resolve — the catalog covers what a name never could', 
     it('keeps a read-only raw HTTP call ungated', () => {
         expect(actionEffect.resolve({ actionName: 'custom_api_call', input: { method: 'GET' } }).kind).toBe('read')
         expect(actionEffect.resolve({ actionName: 'custom_api_call', input: { method: 'POST' } }).kind).toBe('input_dependent')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-http', actionName: 'send_request', input: { method: 'GET', url: 'https://api.github.com/repos' } }).kind).toBe('read')
+    })
+
+    it('never lets a declared GET reach a webhook trigger URL silently', () => {
+        expect(actionEffect.resolve({ actionName: 'custom_api_call', input: { method: 'GET', url: 'https://cloud.activepieces.com/api/v1/webhooks/flow123/draft/sync' } }).kind).toBe('input_dependent')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-http', actionName: 'send_request', input: { method: 'GET', url: 'https://x.test/webhook/abc' } }).kind).toBe('input_dependent')
     })
 
     it('resolves actions the first catalog silently dropped to a comment-parsing bug', () => {

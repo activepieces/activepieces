@@ -566,6 +566,25 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             const approved = await chatApprovalGate.hasRememberedConsent({ conversationId: input.conversationId, signature })
             return { result: { approved } }
         }
+        if (input.toolName === '__flow_write_check') {
+            const flowId = input.toolInput.flowId
+            if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {
+                return { result: { hasWrites: false } }
+            }
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            if (isNil(conversation.projectId)) {
+                return { result: { hasWrites: false } }
+            }
+            const flow = await flowService(log).getOnePopulated({ id: flowId, projectId: conversation.projectId })
+            if (isNil(flow)) {
+                return { result: { hasWrites: false } }
+            }
+            const effects = chatToolClassification.flowStepEffects(flow.version.trigger)
+            const writeSteps = effects
+                .filter((step) => chatConsent.decide({ kind: step.effect.kind }) !== 'allow')
+                .map((step) => step.displayName)
+            return { result: { hasWrites: writeSteps.length > 0, flowName: flow.version.displayName, writeSteps } }
+        }
         if (input.toolName === '__flow_effect_preview') {
             const { flowId, stepName, flowRunId } = input.toolInput
             if (typeof input.conversationId !== 'string') {

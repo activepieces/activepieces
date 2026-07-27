@@ -484,6 +484,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
     return chatWorkerTools.wrapWithConsent({
         tools: allTools,
+        disabled: process.env['AP_CHAT_SIDE_EFFECT_CONSENT'] === 'false',
         previewFlowEffects: async ({ flowId, flowRunId, stepName }) => {
             const response = await ctx.apiClient.executeChatTool({
                 toolName: '__flow_effect_preview',
@@ -509,7 +510,19 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         storePendingGate,
         eventEmitter,
         log,
-    }) as Record<string, typeof localTools[keyof typeof localTools]>
+    })
+}
+
+function stripAgentGuidance(chunk: unknown): unknown {
+    if (!isObject(chunk) || typeof chunk['type'] !== 'string' || !chunk['type'].startsWith('tool-output')) {
+        return chunk
+    }
+    const output = chunk['output']
+    if (!isObject(output) || !('_agentGuidance' in output)) {
+        return chunk
+    }
+    const { _agentGuidance, ...visible } = output
+    return { ...chunk, output: visible }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
@@ -587,7 +600,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
             else if (chunkType === 'reasoning-end') {
                 reasoningInFlight = false
             }
-            chunkBuffer.push(chunk)
+            chunkBuffer.push(stripAgentGuidance(chunk))
             if (chunkBuffer.length >= BATCH_SIZE) {
                 if (flushTimer) {
                     clearTimeout(flushTimer)

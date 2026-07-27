@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { actionEffect, ActionEffectKind, actionEffectLabelCatalog, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
+import { actionEffect, actionEffectLabelCatalog, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, ChatToolConsentSpec, chatToolConsentSpecs, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -22,6 +22,7 @@ const CARD_ERROR_MAX_LENGTH = 300
 const FETCH_URL_TIMEOUT_MS = 30 * 1_000
 const MAX_FETCH_URL_BYTES = 5 * 1024 * 1024
 const READABLE_TEXT_CONTENT_TYPE = /^(text\/|application\/(json|xml|javascript|x-ndjson|[^;]*\+json|[^;]*\+xml))/i
+const WEBHOOK_URL_PATH = /\/webhooks?\//i
 
 // Keep in sync with ALLOWED_QUESTION_ICONS in packages/web/.../question-inputs/question-icon.tsx
 const QUESTION_ICON_NAMES = 'mail, message-square, message-circle, send, bell, calendar, calendar-clock, clock, zap, database, table, file-text, file, folder, globe, link, hash, phone, smartphone, user, users, user-plus, tag, tags, filter, search, check, check-circle, x, x-circle, circle, alert-triangle, alert-circle, info, star, heart, flag, bookmark, repeat, refresh-cw, play, pause, square, settings, sliders-horizontal, plus, minus, trash-2, pencil, download, upload, cloud, server, lock, key, shield, eye, dollar-sign, credit-card, bar-chart, line-chart, pie-chart, trending-up, image, video, mic, map-pin, truck, package, gift, briefcase, building, home, bot, sparkles, rocket, thumbs-up, thumbs-down, smile, sun, moon, wifi'
@@ -250,21 +251,19 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
-function gateOutcomeResult({ userLine, modelGuidance }: { userLine: string, modelGuidance: string }): {
-    content: { type: 'text', text: string }[]
-} {
-    return { content: [{ type: 'text', text: userLine }, { type: 'text', text: modelGuidance }] }
+function gateOutcomeResult({ userLine, modelGuidance }: { userLine: string, modelGuidance: string }): GateOutcomeResult {
+    return { content: [{ type: 'text', text: userLine }], _agentGuidance: modelGuidance }
 }
 
-function gateNoResponseResult(step: string): { content: { type: 'text', text: string }[] } {
+function gateNoResponseGuidance(step: string): string {
+    return `The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`
+}
+
+function gateNoResponseResult(step: string): GateOutcomeResult {
     return gateOutcomeResult({
         userLine: '⏳ Waiting on your go-ahead — nothing ran.',
-        modelGuidance: `The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`,
+        modelGuidance: gateNoResponseGuidance(step),
     })
-}
-
-function gateNoResponseMessage(step: string): string {
-    return `⏳ The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`
 }
 
 function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened }: {
@@ -293,7 +292,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             }
             const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
             if (decision.outcome === 'timeout') {
-                return { timedOut: true, message: gateNoResponseMessage(getDisplayName?.(input) ?? toolName) }
+                return { timedOut: true, message: '⏳ Waiting on your answer — nothing happened.', _agentGuidance: gateNoResponseGuidance(getDisplayName?.(input) ?? toolName) }
             }
             if (decision.outcome !== 'approved') {
                 return { dismissed: true, message: typeof dismissMessage === 'function' ? dismissMessage(input) : dismissMessage }
@@ -809,6 +808,9 @@ function createWebTools({ taintState }: { taintState: TaintState }): ToolSet {
                 if (!/^https?:\/\//i.test(toolInput.url)) {
                     return { content: [{ type: 'text', text: `"${toolInput.url}" is not a valid http(s) URL.` }] }
                 }
+                if (WEBHOOK_URL_PATH.test(toolInput.url)) {
+                    return { content: [{ type: 'text', text: `Fetching ${toolInput.url} would trigger an automation, not read a page — webhook URLs are not readable this way.` }] }
+                }
                 taintState.tainted = true
                 return withToolTimeout({
                     fn: async (signal) => {
@@ -922,6 +924,9 @@ function createScrapeTools({ scraping, taintState }: { scraping: ResolvedToolCon
             execute: async (toolInput) => {
                 if (!/^https?:\/\//i.test(toolInput.url)) {
                     return { content: [{ type: 'text', text: `"${toolInput.url}" is not a valid http(s) URL.` }] }
+                }
+                if (WEBHOOK_URL_PATH.test(toolInput.url)) {
+                    return { content: [{ type: 'text', text: `Scraping ${toolInput.url} would trigger an automation, not read a page — webhook URLs are not readable this way.` }] }
                 }
                 taintState.tainted = true
                 return withToolTimeout({
@@ -1314,12 +1319,23 @@ function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, u
     return typeof tool['execute'] === 'function'
 }
 
+const LABEL_PART_MAX_LENGTH = 60
+
+function sanitizeLabelPart(value: string): string {
+    const flattened = value.replace(/\s+/g, ' ').replace(/[—→"`]/g, ' ').replace(/\s{2,}/g, ' ').trim()
+    return flattened.length > LABEL_PART_MAX_LENGTH ? `${flattened.slice(0, LABEL_PART_MAX_LENGTH)}…` : flattened
+}
+
+function recipientSuffix(step: StepEffect): string {
+    if (!isNil(step.recipient)) {
+        return ` → ${sanitizeLabelPart(step.recipient)}`
+    }
+    return step.effect.kind === 'outward_send' ? ' → whoever the incoming data names' : ''
+}
+
 function describeEffects(effects: StepEffect[]): string {
     return effects
-        .map((step) => {
-            const recipient = isNil(step.recipient) ? '' : ` → ${step.recipient}`
-            return `${step.displayName} (${step.detail}${recipient}) — ${chatConsent.describeEffect(step.effect.kind)}`
-        })
+        .map((step) => `${sanitizeLabelPart(step.displayName)} (${step.detail}${recipientSuffix(step)}) — ${chatConsent.describeEffect(step.effect.kind)}`)
         .join('; ')
 }
 
@@ -1342,32 +1358,35 @@ function consentScopeOf({ toolName, args }: { toolName: string, args: unknown })
     return undefined
 }
 
-async function resolveGatedEffects({ toolName, args, previewFlowEffects, log }: {
+async function resolveGatedEffects({ toolName, spec, args, previewFlowEffects, log }: {
     toolName: string
+    spec: ChatToolConsentSpec
     args: unknown
     previewFlowEffects: PreviewFlowEffects
     log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): Promise<{ effects: StepEffect[], flowName?: string, resolved: boolean }> {
-    const staticKind = STATIC_TOOL_EFFECTS[toolName]
-    if (!isNil(staticKind)) {
+    if (spec.mode === 'static') {
         return {
             effects: [{
                 stepName: toolName,
                 displayName: STATIC_TOOL_LABELS[toolName] ?? toolName,
-                effect: { kind: staticKind, source: 'catalog' },
-                detail: 'Activepieces',
-                opaque: false,
+                effect: { kind: spec.kind, source: 'catalog' },
+                detail: chatToolConsentSpecs.isMcpConnectorTool(toolName) ? 'connected app' : 'Activepieces',
+                inputDigest: chatToolClassification.inputDigestOf(args),
+                opaque: spec.kind === 'unknown',
             }],
             resolved: true,
         }
     }
-    if (toolName === 'ap_run_code') {
+    if (spec.mode === 'code') {
         const code = isObject(args) && typeof args['code'] === 'string' ? args['code'] : ''
+        const packageJson = isObject(args) && typeof args['packageJson'] === 'string' ? args['packageJson'] : undefined
         const recipe = isObject(args) && Array.isArray(args['recipe'])
             ? args['recipe'].filter((line): line is string => typeof line === 'string').join('; ')
             : ''
         const effect = chatToolClassification.codeEffect({
             code,
+            ...spreadIfDefined('packageJson', packageJson),
             stepName: 'code',
             displayName: recipe.length > 0 ? recipe : 'Run code',
         })
@@ -1412,36 +1431,47 @@ function isStepEffect(value: unknown): value is StepEffect {
         && KNOWN_EFFECT_KINDS.has(value['effect']['kind'])
 }
 
-function gateLabelFor({ toolName, flowName, effects, resolved, args }: {
+function mcpConnectorToolLabel(toolName: string): string {
+    const parts = toolName.split('__').filter((part) => part.length > 0)
+    const readable = parts.slice(1).join(' · ').replace(/[_-]+/g, ' ').trim()
+    return readable.length > 0 ? readable : toolName
+}
+
+function gateLabelFor({ toolName, spec, flowName, effects, resolved, args }: {
     toolName: string
+    spec: ChatToolConsentSpec
     flowName?: string
     effects: StepEffect[]
     resolved: boolean
     args?: unknown
 }): string {
+    if (spec.mode === 'static' && chatToolConsentSpecs.isMcpConnectorTool(toolName)) {
+        return `Use "${mcpConnectorToolLabel(toolName)}" — it can change things in a connected app`
+    }
+    if (spec.mode === 'static' && spec.kind === 'unknown') {
+        return `Run "${toolName}" — we could not check what it will touch`
+    }
     const staticLabel = STATIC_TOOL_LABELS[toolName]
     if (!isNil(staticLabel)) {
         const named = isObject(args) && typeof args['displayName'] === 'string' && args['displayName'].trim().length > 0
-            ? args['displayName'].trim()
+            ? sanitizeLabelPart(args['displayName'])
             : undefined
-        return isNil(named) ? staticLabel : `${named} — ${staticLabel.toLowerCase()}`
+        return isNil(named) ? staticLabel : `${staticLabel} — "${named}"`
     }
-    const target = isNil(flowName) ? 'this automation' : `"${flowName}"`
+    const target = isNil(flowName) ? 'this automation' : `"${sanitizeLabelPart(flowName)}"`
     const intro = CONSENT_INTROS[toolName] ?? 'Run this'
     if (!resolved) {
         return `${intro} ${target} — we could not check what it will touch`
     }
     const summary = effects
-        .map((step) => {
-            const recipient = isNil(step.recipient) ? '' : ` → ${step.recipient}`
-            return `${step.displayName}${recipient}`
-        })
+        .map((step) => `${sanitizeLabelPart(step.displayName)}${recipientSuffix(step)}`)
         .join(', ')
     return summary.length > 0 ? `${intro} ${target} — performs: ${summary}` : `${intro} ${target}`
 }
 
-function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
-    tools: Record<string, unknown>
+function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, previewFlowEffects, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
+    tools: T
+    disabled?: boolean
     previewFlowEffects: PreviewFlowEffects
     checkRememberedConsent: (params: { signature: string }) => Promise<boolean>
     rememberConsent: (params: { signature: string }) => Promise<void>
@@ -1449,21 +1479,30 @@ function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, re
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     eventEmitter: ChatEventEmitter
     log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
-}): Record<string, unknown> {
-    const wrapped: Record<string, unknown> = { ...tools }
-    for (const toolName of CONSENT_GATED_TOOL_NAMES) {
-        const tool = tools[toolName]
+}): T {
+    if (disabled === true) {
+        return tools
+    }
+    const wrapped: T = { ...tools }
+    for (const [toolName, tool] of Object.entries(tools)) {
+        const spec = chatToolConsentSpecs.specOf(toolName)
+        if (spec.mode === 'silent' || spec.mode === 'self_gated') {
+            continue
+        }
         if (!isObject(tool) || !toolHasExecute(tool)) {
             continue
         }
         const originalExecute = tool.execute.bind(tool)
-        wrapped[toolName] = Object.assign({}, tool, {
+        Object.assign(wrapped, { [toolName]: Object.assign({}, tool, {
             execute: async (args: unknown, options?: ToolExecutionOptions) => {
                 const gateId = options?.toolCallId
                 if (isNil(gateId)) {
                     return originalExecute(args, options)
                 }
-                const { effects, flowName, resolved } = await resolveGatedEffects({ toolName, args, previewFlowEffects, log })
+                if (!chatToolConsentSpecs.applies({ spec, args })) {
+                    return originalExecute(args, options)
+                }
+                const { effects, flowName, resolved } = await resolveGatedEffects({ toolName, spec, args, previewFlowEffects, log })
                 const kinds = chatToolClassification.effectKindsOf(effects)
                 const decisions = resolved
                     ? kinds.map((kind) => chatConsent.decide({ kind }))
@@ -1493,7 +1532,7 @@ function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, re
                         return originalExecute(args, options)
                     }
                 }
-                const gateLabel = gateLabelFor({ toolName, flowName, effects, resolved, args })
+                const gateLabel = gateLabelFor({ toolName, spec, flowName, effects, resolved, args })
                 eventEmitter.emitActionPreview({
                     toolCallId: gateId,
                     pieceName: '',
@@ -1510,7 +1549,7 @@ function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, re
                 }))
                 log?.info?.({ tool: { name: toolName }, gate: { id: gateId }, effectKinds: kinds, resolved }, 'Consent gate opened, awaiting approval')
                 const decision = await waitForApproval({ gateId })
-                log?.info?.({ tool: { name: toolName }, gate: { id: gateId }, decision: decision.outcome }, 'Consent gate resolved')
+                log?.info?.({ tool: { name: toolName }, gate: { id: gateId }, decision: decision.outcome, effectKinds: kinds, reused: false }, 'Consent gate resolved')
                 if (decision.outcome !== 'approved') {
                     if (decision.outcome === 'timeout') {
                         return gateNoResponseResult(CONSENT_TIMEOUT_LABELS[toolName] ?? 'approval')
@@ -1526,7 +1565,7 @@ function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, re
                 }
                 return originalExecute(args, options)
             },
-        })
+        }) })
     }
     return wrapped
 }
@@ -1623,26 +1662,16 @@ export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unkn
 
 type PreviewFlowEffects = (params: { flowId?: string, flowRunId?: string, stepName?: string }) => Promise<unknown>
 
-const CONSENT_GATED_TOOL_NAMES = [
-    'ap_test_flow',
-    'ap_test_step',
-    'ap_retry_run',
-    'ap_run_code',
-    'ap_delete_flow',
-    'ap_delete_table',
-    'ap_delete_records',
-]
-
-const STATIC_TOOL_EFFECTS: Record<string, ActionEffectKind> = {
-    ap_delete_flow: 'internal_destructive',
-    ap_delete_table: 'internal_destructive',
-    ap_delete_records: 'internal_destructive',
+type GateOutcomeResult = {
+    content: { type: 'text', text: string }[]
+    _agentGuidance: string
 }
 
 const STATIC_TOOL_LABELS: Record<string, string> = {
     ap_delete_flow: 'Delete this automation',
     ap_delete_table: 'Delete this table and everything in it',
     ap_delete_records: 'Delete these records',
+    ap_manage_fields: 'Delete this table column and every value in it',
 }
 
 const CONSENT_SCOPE_KEYS: Record<string, string> = {
@@ -1653,6 +1682,9 @@ const CONSENT_SCOPE_KEYS: Record<string, string> = {
     ap_delete_flow: 'flowId',
     ap_delete_table: 'tableId',
     ap_delete_records: 'recordIds',
+    ap_manage_fields: 'tableId',
+    ap_lock_and_publish: 'flowId',
+    ap_change_flow_status: 'flowId',
 }
 
 const CONSENT_INTROS: Record<string, string> = {
@@ -1660,6 +1692,8 @@ const CONSENT_INTROS: Record<string, string> = {
     ap_test_step: 'Run this step for real in',
     ap_retry_run: 'Re-run a real run of',
     ap_run_code: 'Run code that reaches outside for',
+    ap_lock_and_publish: 'Publish and switch on',
+    ap_change_flow_status: 'Switch on',
     ap_delete_flow: 'Delete',
     ap_delete_table: 'Delete',
     ap_delete_records: 'Delete records in',
@@ -1670,9 +1704,12 @@ const CONSENT_TIMEOUT_LABELS: Record<string, string> = {
     ap_test_step: 'step-test approval',
     ap_retry_run: 're-run approval',
     ap_run_code: 'code-run approval',
+    ap_lock_and_publish: 'publish approval',
+    ap_change_flow_status: 'switch-on approval',
     ap_delete_flow: 'deletion approval',
     ap_delete_table: 'deletion approval',
     ap_delete_records: 'deletion approval',
+    ap_manage_fields: 'deletion approval',
 }
 
 export const chatWorkerTools = {

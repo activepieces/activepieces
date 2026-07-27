@@ -71,14 +71,20 @@ function toEffectKind(value: string | undefined): ActionEffectKind | undefined {
     return ACTION_EFFECT_KINDS.find((kind) => kind === value)
 }
 
-function readOnlyHttpMethod(input: Record<string, unknown> | undefined): boolean {
+const WEBHOOK_TRIGGER_PATH = /\/webhooks?\//i
+
+function readOnlyHttpRequest(input: Record<string, unknown> | undefined): boolean {
     const method = typeof input?.['method'] === 'string' ? input['method'].toUpperCase() : undefined
-    return !isNil(method) && READ_ONLY_HTTP_METHODS.includes(method)
+    if (isNil(method) || !READ_ONLY_HTTP_METHODS.includes(method)) {
+        return false
+    }
+    const url = typeof input?.['url'] === 'string' ? input['url'] : undefined
+    return isNil(url) || !WEBHOOK_TRIGGER_PATH.test(url)
 }
 
 function guessEffectKind({ actionName, input }: { actionName: string, input?: Record<string, unknown> }): ActionEffectKind {
     if (INPUT_DEPENDENT_ACTION_NAMES.has(actionName)) {
-        return readOnlyHttpMethod(input) ? 'read' : 'input_dependent'
+        return readOnlyHttpRequest(input) ? 'read' : 'input_dependent'
     }
     const words = actionNameWords(actionName)
     if (matchesAny({ words, patterns: MONEY_WORDS })) {
@@ -140,9 +146,10 @@ function resolveActionEffect({ pieceName, actionName, input, declaredEffect, dec
         return { kind: guessedKind, source: guessedKind === 'unknown' ? 'fallback' : 'heuristic' }
     }
     const trusted = !isNil(declaredKind) || catalogEntry?.authoritative === true
-    const kind = shouldEscalateLabel({ trusted, labelledKind, guessedKind, actionName })
+    const escalated = shouldEscalateLabel({ trusted, labelledKind, guessedKind, actionName })
         ? stricterEffectKind({ a: labelledKind, b: guessedKind })
         : labelledKind
+    const kind = escalated === 'input_dependent' && readOnlyHttpRequest(input) ? 'read' : escalated
     const recipientProp = declaredRecipientProp ?? catalogEntry?.recipientProp
     return {
         kind,
