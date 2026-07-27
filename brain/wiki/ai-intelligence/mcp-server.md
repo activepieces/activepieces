@@ -13,6 +13,7 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
 
 ### Tools
 - **Locked tools** — always on when MCP is enabled, cannot be disabled (e.g. `ap_list_flows`, `ap_flow_structure`, `ap_research_pieces`, `ap_get_piece_props`, `ap_list_connections`, `ap_list_tables`, `ap_get_run`).
+- **Tool-search tools** — `ap_search_actions` / `ap_search_triggers`: semantic (pgvector) search over the action and trigger catalog with a keyword-floor fallback. Registered only when `AP_TOOL_SEARCH_ENABLED` is on — that env flag is the master switch, so their `LOCKED_TOOL_NAMES` entries are inert while it is off. The settings panel lists them via the `TOOL_SEARCH_ENABLED` flag.
 - **Controllable tools** — toggled per-project via `disabledTools` (flow/step/branch management, publish, table + record ops, testing, run management).
 - **Dynamic flow tools** — each enabled flow using the MCP trigger piece (`@activepieces/piece-mcp`) becomes a callable tool named `{toolName}_{flowId[0..4]}`; execution submits a webhook (sync if `returnsResponse`, else async).
 
