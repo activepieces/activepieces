@@ -4,7 +4,12 @@ import { describe, expect, it } from 'vitest';
 import { consentPresentation } from '@/app/routes/chat-with-ai/lib/consent-presentation';
 
 function effect(kind: string, displayName = kind): ConsentEffectPreview {
-  return { displayName, detail: `piece · ${kind}`, kind, recipientResolved: false };
+  return {
+    displayName,
+    detail: `piece · ${kind}`,
+    kind,
+    recipientResolved: false,
+  };
 }
 
 function consent(partial: Partial<ConsentPreview>): ConsentPreview {
@@ -33,6 +38,22 @@ describe('consentPresentation.tone', () => {
       effects: [effect('financial'), effect('outward_send')],
     });
     expect(consentPresentation.tone({ consent: preview })).toBe('financial');
+  });
+
+  it('flags publishing as unattended, because nobody is asked again afterwards', () => {
+    const preview = consent({
+      category: 'publish',
+      effects: [effect('outward_send')],
+    });
+    expect(consentPresentation.tone({ consent: preview })).toBe('unattended');
+  });
+
+  it('still reports destructive for a publish whose flow deletes data', () => {
+    const preview = consent({
+      category: 'publish',
+      effects: [effect('outward_send'), effect('internal_destructive')],
+    });
+    expect(consentPresentation.tone({ consent: preview })).toBe('destructive');
   });
 
   it('reports unknown when an effect cannot be predicted', () => {
@@ -101,7 +122,9 @@ describe('consentPresentation.orderedEffects', () => {
       effect('input_dependent'),
     ];
     expect(
-      consentPresentation.orderedEffects({ effects: preview }).map((e) => e.kind),
+      consentPresentation
+        .orderedEffects({ effects: preview })
+        .map((e) => e.kind),
     ).toEqual([
       'internal_destructive',
       'financial',

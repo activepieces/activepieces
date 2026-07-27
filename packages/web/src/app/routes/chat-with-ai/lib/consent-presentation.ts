@@ -53,6 +53,9 @@ function consentTone({ consent }: { consent: ConsentPreview }): ConsentTone {
   if (consent.severity === 'financial') {
     return 'financial';
   }
+  if (consent.category === 'publish' || consent.category === 'enable') {
+    return 'unattended';
+  }
   if (
     !consent.resolved ||
     hasKindIn({ effects: consent.effects, kinds: UNPREDICTABLE_KINDS })
@@ -98,7 +101,12 @@ export const consentPresentation = {
   rankOf,
 };
 
-export type ConsentTone = 'destructive' | 'financial' | 'unknown' | 'external';
+export type ConsentTone =
+  | 'destructive'
+  | 'financial'
+  | 'unattended'
+  | 'unknown'
+  | 'external';
 export type ConsentWarning =
   | 'irreversible'
   | 'money'

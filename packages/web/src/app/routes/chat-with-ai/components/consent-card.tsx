@@ -7,8 +7,10 @@ import { t } from 'i18next';
 import {
   Banknote,
   CircleHelp,
+  Eye,
   LucideIcon,
   PenLine,
+  Repeat,
   Send,
   Trash2,
   TriangleAlert,
@@ -46,7 +48,7 @@ export function ConsentCard({
     effects: consent.effects,
   });
   const statedWarnings = warnings.filter(
-    (warning) => warning !== 'unpredictable',
+    (warning) => warning !== 'unpredictable' || tone !== 'unknown',
   );
   const titleId = `consent-${preview.toolCallId}-title`;
   const summaryId = `consent-${preview.toolCallId}-summary`;
@@ -163,12 +165,7 @@ function ToneIcon({ tone }: { tone: ConsentTone }) {
   if (tone === 'external') {
     return null;
   }
-  const Icon =
-    tone === 'destructive'
-      ? Trash2
-      : tone === 'financial'
-      ? Banknote
-      : CircleHelp;
+  const Icon = TONE_ICON[tone] ?? CircleHelp;
   return (
     <Icon
       className={cn('mt-0.5 size-[18px] shrink-0', TONE_ICON_CLASS[tone])}
@@ -210,7 +207,7 @@ function EffectRow({ effect }: { effect: ConsentEffectPreview }) {
 function recipientLine(effect: ConsentEffectPreview) {
   if (effect.recipientResolved && effect.recipient) {
     return (
-      <p className="mt-0.5 text-xs text-foreground">
+      <p dir="auto" className="mt-0.5 text-xs text-foreground">
         <span className="text-muted-foreground">{t('To')}</span>
         <span className="px-1 text-muted-foreground">·</span>
         <span dir="ltr" className="font-mono break-all">
@@ -249,6 +246,8 @@ function kindPhraseClass(kind: string): string {
     case 'internal_destructive':
       return 'text-destructive-700 dark:text-destructive-200';
     case 'financial':
+    case 'input_dependent':
+    case 'unknown':
       return 'text-warning-700 dark:text-warning-300';
     default:
       return 'text-foreground';
@@ -342,9 +341,7 @@ function consentSummary(consent: ConsentPreview): string {
   switch (consent.category) {
     case 'publish':
     case 'enable':
-      return t(
-        'Once on, it acts on its own every time its trigger fires — no one is asked again.',
-      );
+      return t('This switches the automation on for real.');
     case 'run_code':
       return t(
         "This code can reach other systems, so we can't tell what it does before it runs.",
@@ -402,6 +399,8 @@ function confirmLabel(consent: ConsentPreview): string {
 }
 
 const KIND_ICON: Record<string, LucideIcon> = {
+  read: Eye,
+  internal_write: PenLine,
   outward_send: Send,
   external_write: PenLine,
   destructive: Trash2,
@@ -411,9 +410,18 @@ const KIND_ICON: Record<string, LucideIcon> = {
   unknown: CircleHelp,
 };
 
+const TONE_ICON: Record<ConsentTone, LucideIcon | null> = {
+  destructive: Trash2,
+  financial: Banknote,
+  unattended: Repeat,
+  unknown: CircleHelp,
+  external: null,
+};
+
 const TONE_ICON_CLASS: Record<ConsentTone, string> = {
   destructive: 'text-destructive-700 dark:text-destructive-200',
   financial: 'text-warning-700 dark:text-warning-300',
+  unattended: 'text-warning-700 dark:text-warning-300',
   unknown: 'text-warning-700 dark:text-warning-300',
   external: '',
 };
@@ -421,14 +429,17 @@ const TONE_ICON_CLASS: Record<ConsentTone, string> = {
 const FRAME_CLASS: Record<ConsentTone, string> = {
   destructive: 'border-destructive/40 dark:border-destructive/50',
   financial: 'border-warning/60 dark:border-warning/50',
+  unattended: 'border-warning/60 dark:border-warning/50',
   unknown: 'border-warning/60 dark:border-warning/50',
-  external: 'border-border',
+  external: 'border-primary/30 dark:border-primary/40',
 };
 
 const CONFIRM_CLASS: Record<ConsentTone, string> = {
   destructive:
-    'bg-destructive-600 hover:bg-destructive-700 dark:bg-destructive-600 dark:hover:bg-destructive-500',
+    'bg-destructive-600 hover:bg-destructive-700 dark:bg-destructive-600 dark:hover:bg-destructive-500 focus-visible:ring-destructive/70',
   financial:
+    'bg-warning-700 text-white hover:bg-warning-800 dark:bg-warning-700 dark:hover:bg-warning-600',
+  unattended:
     'bg-warning-700 text-white hover:bg-warning-800 dark:bg-warning-700 dark:hover:bg-warning-600',
   unknown:
     'bg-warning-700 text-white hover:bg-warning-800 dark:bg-warning-700 dark:hover:bg-warning-600',

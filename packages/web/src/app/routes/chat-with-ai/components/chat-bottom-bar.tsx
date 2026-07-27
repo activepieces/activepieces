@@ -139,7 +139,9 @@ export function ChatBottomBar({
           onStop={onStop}
           onInputChange={onInputChange}
           placeholder={
-            activeCard
+            pendingActionPreview
+              ? t('Reply instead — nothing will run')
+              : activeCard
               ? t('Or reply in your own words')
               : placeholder ?? t('Reply...')
           }

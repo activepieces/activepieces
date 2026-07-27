@@ -2238,7 +2238,6 @@
   "Run this tool?": "Run this tool?",
   "This can't be undone.": "This can't be undone.",
   "We couldn't work out what this will touch, so we're asking.": "We couldn't work out what this will touch, so we're asking.",
-  "Once on, it acts on its own every time its trigger fires — no one is asked again.": "Once on, it acts on its own every time its trigger fires — no one is asked again.",
   "This code can reach other systems, so we can't tell what it does before it runs.": "This code can reach other systems, so we can't tell what it does before it runs.",
   "This changes data in a connected app.": "This changes data in a connected app.",
   "This has effects outside your workspace.": "This has effects outside your workspace.",
@@ -2278,5 +2277,7 @@
   "This moves real money.": "This moves real money.",
   "Reads data — changes nothing": "Reads data — changes nothing",
   "Changes data in your workspace": "Changes data in your workspace",
-  "Also covers repeats of this exact action, to the same recipients, in this chat.": "Also covers repeats of this exact action, to the same recipients, in this chat."
+  "Also covers repeats of this exact action, to the same recipients, in this chat.": "Also covers repeats of this exact action, to the same recipients, in this chat.",
+  "Reply instead — nothing will run": "Reply instead — nothing will run",
+  "This switches the automation on for real.": "This switches the automation on for real."
 }
