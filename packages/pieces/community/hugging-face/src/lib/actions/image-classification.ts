@@ -10,12 +10,17 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const imageClassification = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'image_classification',
   auth: huggingFaceAuth,
   displayName: 'Image Classification',
   description:
     'Classify images with pre-trained models or custom categories - perfect for content moderation, automated tagging, and smart asset management',
+  aiMetadata: {
+    description:
+      'Assigns category labels to a whole image, supplied either as an uploaded file or as a URL the action fetches, in one of two modes: standard mode returns labels from the set the pre-trained model was trained on, while zero-shot mode scores the image against custom candidate categories you supply. Pick it for whole-image tagging or moderation; use object_detection when the positions or counts of individual objects matter, and document_question_answering to read a specific value out of a scanned document. Zero-shot mode requires a non-empty category list; read-only and idempotent, as it only analyses the image.',
+    idempotent: true,
+  },
   props: {
     classificationMode: Property.StaticDropdown({
       displayName: 'Classification Mode',
