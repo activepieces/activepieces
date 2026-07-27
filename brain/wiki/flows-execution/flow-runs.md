@@ -17,6 +17,7 @@ A Flow Run records one execution of a specific flow version, from trigger to ter
 - **Retry strategies**: `FROM_FAILED_STEP` (rebuild context from logs, re-run from failure, prior outputs kept) or `ON_LATEST_VERSION` (fresh run on current published version). Both resolve the trigger payload via `resolveStepOutput`. If the trigger itself failed, they switch to `executeTrigger: true` to reprocess the raw event.
 - **Pause/resume (V1 waitpoints)**: pieces call `createWaitpoint` + `waitForWaitpoint`. DELAY upserts a `RESUME_DELAY_WAITPOINT` BullMQ job; WEBHOOK resumes on an HTTP call to `/:id/waitpoints/:waitpointId[/sync]`.
 - Logs backed up every 15s during execution for crash recovery; uploaded via 7-day JWT-signed URLs.
+- **RUN_TELEMETRY job**: `flow-run-module.ts` registers a BullMQ system job (cron `50 23 * * *`, once daily at 23:50 UTC) that aggregates the day's run counts by `(projectId, flowId, environment)` in one transaction (5-minute statement timeout) and emits a `FLOW_RUN_CREATED` telemetry event per group. No-op when telemetry is disabled. The cron was `0/50 23 * * *` until GIT-1632, which also fired at 23:00 with partial counts.
 
 ### Gotchas
 - **Resume Confirmation Page (scanner guard)**: the `/confirm` route serves an HTML Approve/Disapprove page on `GET`/`HEAD` (never consumes) and only resumes on `POST` — stops email security scanners (Safe Links, Mimecast, Proofpoint) prefetching approval links. The deprecated bare `GET /:id/waitpoints/:waitpointId` still resumes for old emails. Slack is unchanged (server-side POST from webhook).
