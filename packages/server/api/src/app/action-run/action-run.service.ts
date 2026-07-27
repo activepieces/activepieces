@@ -6,13 +6,6 @@ import { jobQueue } from '../workers/job-queue/job-queue'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { ActionRunOutcome, deriveActionRunOutcome, EngineActionResponse } from './action-run-outcome'
 
-// The budget is end-to-end and belongs to the caller: it is stamped onto the job as an absolute
-// deadline, so queueing, resolution and provisioning all spend the same 120s the sandbox does, and
-// the worker kills the run at the deadline instead of starting a fresh 120s clock of its own. A
-// watcher that expired first would hand the caller a TIMEOUT while the action kept running and
-// writing, and the retry that invites duplicates the write. The grace only has to cover the
-// sandbox kill and the pubsub hop back, so the watcher stays the backstop for a worker that never
-// answers at all (killed mid-run by a deploy or an OOM).
 const ACTION_RUN_BUDGET_MS = 120 * 1000
 const WATCHER_GRACE_MS = 10 * 1000
 
@@ -26,8 +19,6 @@ export const actionRunService = (log: FastifyBaseLogger) => ({
             })
             : undefined
 
-        // `id` is also the watcher's requestId, which becomes the BullMQ job id and the `requestId` on
-        // every worker and engine log line — so the id handed back to the caller traces the whole run.
         const id = apId()
         const result = await tryCatch(() => userInteractionWatcher.submitAndWaitForResponse<EngineActionResponse>({
             jobType: WorkerJobType.EXECUTE_ACTION,
@@ -45,9 +36,6 @@ export const actionRunService = (log: FastifyBaseLogger) => ({
     },
 })
 
-// Invalid here means a caller built a malformed step, not a user error. Left unvalidated it reaches
-// the queue, fails schema validation at dequeue as unrecoverable — a path that never publishes to the
-// watcher — and the caller hangs for the full budget before being told the action may have written.
 function parseStep(step: PieceAction | CodeAction): ActionRunStep {
     const parsed = ActionRunStep.safeParse(step)
     if (!parsed.success) {
@@ -59,9 +47,6 @@ function parseStep(step: PieceAction | CodeAction): ActionRunStep {
     return parsed.data
 }
 
-// The watcher gave up without an answer: either no worker ever took the job, or one died mid-run.
-// Cancelling settles which — a job still queued provably never executed — and it also stops that job
-// from running and writing later, long after the caller walked away.
 async function cancelledBeforeStarting({ outcome, result, id, projectId, platformId, log }: CancelledBeforeStartingParams): Promise<boolean> {
     if (outcome.status !== FlowRunStatus.TIMEOUT || !isNil(result.data)) {
         return false

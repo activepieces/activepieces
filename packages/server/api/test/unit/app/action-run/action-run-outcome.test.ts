@@ -40,7 +40,6 @@ describe('deriveActionRunOutcome', () => {
             const outcome = deriveActionRunOutcome({ result: { data: null, error: new Error('boom') } })
             expect(outcome.status).toBe(FlowRunStatus.INTERNAL_ERROR)
         })
-        // A worker that never answers must not be reported to the agent as an engine crash.
         it('watcher timeout maps to TIMEOUT, not INTERNAL_ERROR', () => {
             const error = new ActivepiecesError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,
@@ -102,8 +101,6 @@ describe('deriveActionRunOutcome', () => {
         })
     })
 
-    // Only a run that provably never executed is safe for the caller to retry blindly, so this flag
-    // must never be set on a run that may have written.
     describe('neverStarted', () => {
         it('is true when the worker refused to start an expired run', () => {
             const outcome = deriveActionRunOutcome({
@@ -121,8 +118,6 @@ describe('deriveActionRunOutcome', () => {
         it('is false on success', () => {
             expect(deriveActionRunOutcome(ok({ success: true })).neverStarted).toBe(false)
         })
-        // The watcher channel carries no evidence either way — actionRunService settles it by trying
-        // to cancel the job, so the default here must be the conservative one.
         it('is false on the watcher-timeout channel', () => {
             const error = new ActivepiecesError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,

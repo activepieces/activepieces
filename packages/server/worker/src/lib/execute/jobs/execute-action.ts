@@ -5,10 +5,6 @@ import { DEFAULT_MCP_DATA, EngineOperationType, EngineResponseStatus, ExecuteAct
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout, sandboxTimeoutNeverStarted } from '../utils/sandbox-helpers'
 
-// The caller's `expiresAt` is the real budget (see actionRunService) and the runtime clamps the run
-// to whatever is left of it after provisioning. This cap is the worker's own ceiling for a deadline
-// it cannot trust — a missing one from an older API, or one inflated by clock skew — and matches the
-// user-facing budget documented across the chat/MCP tooling.
 const ACTION_RUN_ACTION_TIMEOUT_SECONDS = 120
 
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
@@ -62,13 +58,6 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
     },
 }
 
-// The code cache is namespaced by `flowVersionId` + step name only, and an action run has neither a
-// flow version nor a unique step name. Hashing the source gives a namespace that is unique per
-// snippet, mounts correctly in isolate mode, and — because it is the very value code-builder stores
-// as its cache-state key — can never mismatch, so the destructive rebuild branch is unreachable.
-// The namespace and the artifact are returned together because the mount, the compiled path and the
-// engine's read path must all agree on it.
-// ponytail: one dir per distinct snippet, forever; no GC exists for the flow code cache either.
 async function resolveCodeStep(step: ExecuteActionJobData['step']): Promise<{ codes: CodeArtifact[], namespace?: string }> {
     if (step.type !== FlowActionType.CODE) {
         return { codes: [] }

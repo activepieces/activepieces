@@ -94,11 +94,6 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }, '[jobQueue#removeOneTimeJob] job not found in queue')
     },
 
-    // For a synchronous job whose caller has stopped waiting. Returns true only when the job was still
-    // queued and has now been removed — it provably never ran, so the caller can retry safely. A job
-    // that is already active, or whose removal loses the race with a worker picking it up, is left to
-    // finish and reported as started: a side-effecting action may already have written. The remove is
-    // the atomic arbiter of that race, not the state read.
     async cancelIfNotStarted({ jobId, platformId, projectId, jobType }: RemoveOneTimeJobParams): Promise<boolean> {
         const queueName = await getQueueName({ platformId, projectId, jobType }, log)
         const queue = await ensureQueueExists({ log, queueName })

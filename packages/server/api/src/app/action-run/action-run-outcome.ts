@@ -26,20 +26,12 @@ function deriveErrorMessage(engineResponse: EngineActionResponse, status: FlowRu
     return null
 }
 
-// A worker that never answers is a timeout, not an engine crash. Mapping it to INTERNAL_ERROR told
-// the calling agent "the engine crashed while loading or executing the piece" when nothing had run
-// at all, which sent it off debugging the piece instead of retrying.
 function isWatcherTimeout(error: unknown): boolean {
     return error instanceof ActivepiecesError
         && error.error.code === ErrorCode.ENGINE_OPERATION_FAILURE
         && error.error.params.message === WORKER_DID_NOT_RESPOND_MESSAGE
 }
 
-// `neverStarted` separates "the action ran and we lost patience" from "nothing ever executed". Only
-// the latter is safe for the caller to retry blindly, so the two must never share a message. The
-// engine response carries it when the worker refused to start a run whose deadline had already
-// passed; the watcher-timeout channel cannot know on its own, so actionRunService settles that case
-// by trying to cancel the job.
 export function deriveActionRunOutcome({ result }: { result: Result<EngineActionResponse, unknown> }): ActionRunOutcome {
     if (!isNil(result.error) || isNil(result.data)) {
         return {

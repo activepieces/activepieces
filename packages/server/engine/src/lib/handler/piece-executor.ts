@@ -274,9 +274,6 @@ type CreateRespondHookParams = {
 
 function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
     return (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
-        // Throw synchronously (not from inside the async body) so that the deprecated pause() hook —
-        // which does `createWaitpoint(...).catch(() => process.exit(1))` — never attaches its catch and
-        // the error propagates as a FAILED step instead of killing the worker on a rejected promise.
         assertActionRunCannotSuspend(constants)
         return submitWaitpoint({ constants, stepName, hookParams, req })
     }
@@ -320,8 +317,6 @@ function createWaitForWaitpointHook({ constants, hookParams }: { constants: Engi
     }
 }
 
-// Thrown as a plain Error (USER-level) so the step ends FAILED, not INTERNAL_ERROR — a waitpoint
-// in action-run mode is a usage error, not an engine bug, and must not page oncall.
 function assertActionRunCannotSuspend(constants: EngineConstants): void {
     if (constants.actionRunMode) {
         throw new Error('This action pauses the run (waitpoint) and can only run inside a flow, not as a action run.')
