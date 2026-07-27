@@ -26,11 +26,12 @@ function getFileExtension(filename: string): string {
 }
 
 export const uploadFile = createAction({
-  audience: 'human',
+  audience: 'both',
 	auth: mistralAuth,
 	name: 'upload_file',
 	displayName: 'Upload File',
 	description: 'Upload a file to Mistral AI (e.g., for fine-tuning or context storage).',
+	aiMetadata: { description: 'Stores a file in the connected Mistral account and returns its file id, tagged with a purpose of fine-tune, batch, or ocr that decides what the id may later be used for. Run it before Run OCR whenever the document is a step attachment rather than a public URL: upload with purpose=ocr and feed the returned id into that action. Rejects files above 512MB or with an extension outside jsonl, txt, csv, pdf, docx, png, jpg, jpeg, mp3, mp4; not idempotent: each call stores another copy and returns a new id.', idempotent: false },
 	props: {
 		file: Property.File({
 			displayName: 'File',

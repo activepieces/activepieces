@@ -104,6 +104,10 @@ export const newOrUpdatedBusinessObjectBatch = createTrigger({
 	displayName: 'New/Updated Business Object (Batch)',
 	description:
 		'Triggers with a batch of new or updated business objects in a single poll cycle.',
+	aiMetadata: {
+		description:
+			'Fires once per poll cycle carrying every Workday business object created or changed since the previous poll as a single batch, for the module (Recruiting, Onboarding, or HR Services & Time Tracking) and object type selected, or for a custom REST path. Recency is judged by a configurable date field, defaulting to lastFunctionallyUpdated. Use when the whole changed set should be processed at once instead of one flow run per record.',
+	},
 	props,
 	sampleData: {
 		total_count: 2,
