@@ -1348,6 +1348,9 @@
       "@activepieces/piece-telnyx": [
         "packages/pieces/community/telnyx/src/index.ts"
       ],
+      "@activepieces/piece-testmuai-browsercloud": [
+        "packages/pieces/community/testmuai-browsercloud/src/index.ts"
+      ],
       "@activepieces/piece-text-ai": [
         "packages/pieces/community/text-ai/src/index.ts"
       ],
