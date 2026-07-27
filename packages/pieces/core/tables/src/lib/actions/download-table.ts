@@ -12,7 +12,7 @@ import {
 import { ExportTableResponse } from '@activepieces/pieces-framework';
 
 export const downloadTable = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'tables-download-table',
   displayName: 'Download Table',
   description: 'Export a table as a CSV file.',
