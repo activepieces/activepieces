@@ -704,6 +704,7 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
 
 const SEND_STEP = { stepName: 'notify', displayName: 'Email me the digest', kind: 'outward_send', detail: 'gmail · send_email', recipient: 'omar@activepieces.com' }
 const REFUND_STEP = { stepName: 'refund', displayName: 'Refund the customer', kind: 'financial', detail: 'stripe · create_refund' }
+const DELETE_STEP = { stepName: 'cleanup', displayName: 'Delete the stale rows', kind: 'internal_destructive', detail: 'tables · delete_records' }
 
 async function runGatedTool({ wrapped, toolName, args, toolCallId = 'call-1' }: {
     wrapped: Record<string, unknown>
@@ -775,6 +776,19 @@ describe('chatWorkerTools.wrapWithConsent', () => {
         await runTestFlow(toEveryone.wrapped)
         expect(toEveryone.checked[0]).not.toBe(toOmar.remembers[0])
         expect(toEveryone.gates).toHaveLength(1)
+    })
+
+    it('escalates a card to destructive when a deletion is bundled with a refund, so the delete keeps its warning', async () => {
+        const h = makeConsentHarness({ effects: [REFUND_STEP, DELETE_STEP] })
+        await runTestFlow(h.wrapped)
+        expect(h.previews).toHaveLength(1)
+        expect(h.previews[0].consent?.severity).toBe('destructive')
+    })
+
+    it('reports financial severity when money moves and nothing is deleted', async () => {
+        const h = makeConsentHarness({ effects: [REFUND_STEP, SEND_STEP] })
+        await runTestFlow(h.wrapped)
+        expect(h.previews[0].consent?.severity).toBe('financial')
     })
 
     it('never remembers an approval that moved money', async () => {

@@ -4,10 +4,26 @@ import {
   ConsentPreview,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { AlertTriangle, Check } from 'lucide-react';
+import {
+  Banknote,
+  CircleHelp,
+  LucideIcon,
+  PenLine,
+  Send,
+  Trash2,
+  TriangleAlert,
+} from 'lucide-react';
+import { KeyboardEvent } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+import {
+  ConsentTone,
+  ConsentWarning,
+  consentPresentation,
+} from '../lib/consent-presentation';
 
 import { InteractiveCardShell } from './interactive-card-shell';
 
@@ -24,108 +40,227 @@ export function ConsentCard({
   onCancel: () => void;
   onDismiss: () => void;
 }) {
-  const destructive = consent.severity === 'destructive';
+  const tone = consentPresentation.tone({ consent });
+  const warnings = consentPresentation.warnings({ consent });
+  const effects = consentPresentation.orderedEffects({
+    effects: consent.effects,
+  });
+  const statedWarnings = warnings.filter(
+    (warning) => warning !== 'unpredictable',
+  );
+  const titleId = `consent-${preview.toolCallId}-title`;
+  const summaryId = `consent-${preview.toolCallId}-summary`;
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      onCancel();
+    }
+  };
+
   return (
     <InteractiveCardShell
       onDismiss={onDismiss}
+      showDismiss={false}
+      tone="decision"
+      frameClassName={FRAME_CLASS[tone]}
       title={
-        <div
-          role="alertdialog"
-          aria-labelledby={`consent-${preview.toolCallId}-title`}
-          aria-describedby={`consent-${preview.toolCallId}-effects`}
-        >
-          <h3
-            id={`consent-${preview.toolCallId}-title`}
-            className="text-base font-semibold leading-snug text-foreground flex items-start gap-2"
-          >
-            {destructive && (
-              <AlertTriangle className="size-4 mt-0.5 shrink-0 text-destructive" />
-            )}
-            <span>{consentTitle(consent)}</span>
-          </h3>
-          <p
-            className={cn('mt-1 text-sm', {
-              'font-medium text-destructive': destructive,
-              'text-muted-foreground': !destructive,
-            })}
-          >
-            {consentSubtitle(consent)}
-          </p>
+        <div className="flex items-start gap-2.5">
+          <ToneIcon tone={tone} />
+          <div className="min-w-0">
+            <h3
+              id={titleId}
+              dir="auto"
+              className="text-base font-semibold leading-snug text-foreground"
+            >
+              {consentTitle(consent)}
+            </h3>
+            <p
+              id={summaryId}
+              dir="auto"
+              className="mt-1 text-sm text-muted-foreground"
+            >
+              {consentSummary(consent)}
+            </p>
+          </div>
         </div>
       }
     >
-      {consent.effects.length > 0 && (
-        <div
-          id={`consent-${preview.toolCallId}-effects`}
-          className="mb-3 rounded-lg border bg-muted/20 divide-y overflow-hidden"
-        >
-          {consent.effects.map((effect, index) => (
-            <EffectRow key={`${effect.displayName}-${index}`} effect={effect} />
-          ))}
-        </div>
-      )}
-      {consent.reusable && (
-        <p className="mb-3 text-xs text-muted-foreground">
-          {t(
-            'Approving also covers repeats of this exact action in this conversation, as long as it keeps doing the same things to the same recipients.',
-          )}
+      <div
+        role="group"
+        aria-labelledby={titleId}
+        aria-describedby={summaryId}
+        onKeyDown={handleKeyDown}
+      >
+        <p className="sr-only" role="status">
+          {consentTitle(consent)}
         </p>
-      )}
-      <div className="flex items-center gap-2 pt-3 border-t">
-        <Button
-          size="sm"
-          variant={destructive ? 'destructive' : 'default'}
-          onClick={onRun}
-          className="gap-1.5"
-          type="button"
-          autoFocus={!destructive}
-        >
-          <Check className="size-3.5" />
-          {confirmLabel(consent)}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onCancel}
-          type="button"
-          autoFocus={destructive}
-        >
-          {t("Don't run it")}
-        </Button>
+        {effects.length > 0 && (
+          <ul className="flex flex-col divide-y">
+            {effects.map((effect, index) => (
+              <EffectRow
+                key={`${effect.displayName}-${index}`}
+                effect={effect}
+              />
+            ))}
+          </ul>
+        )}
+        {statedWarnings.length > 0 && (
+          <div
+            role="alert"
+            className={cn(
+              'mt-3 flex items-start gap-2 text-sm font-medium',
+              tone === 'destructive'
+                ? 'text-destructive-700 dark:text-destructive-200'
+                : 'text-warning-700 dark:text-warning-300',
+            )}
+          >
+            <TriangleAlert
+              className="mt-0.5 size-4 shrink-0"
+              aria-hidden={true}
+            />
+            <span dir="auto" className="flex flex-col gap-0.5">
+              {statedWarnings.map((warning) => (
+                <span key={warning}>{warningPhrase(warning)}</span>
+              ))}
+            </span>
+          </div>
+        )}
+        {consent.reusable && (
+          <p
+            dir="auto"
+            className="mt-3 max-w-prose text-xs text-muted-foreground"
+          >
+            {t(
+              'Also covers repeats of this exact action, to the same recipients, in this chat.',
+            )}
+          </p>
+        )}
+        <div className="mt-4 flex flex-col-reverse gap-2 border-t pt-3 sm:flex-row sm:items-center">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            type="button"
+            className="h-11 w-full sm:h-9 sm:w-auto"
+          >
+            {t("Don't run it")}
+          </Button>
+          <Button
+            variant={tone === 'destructive' ? 'destructive' : 'default'}
+            onClick={onRun}
+            type="button"
+            className={cn('h-11 w-full sm:h-9 sm:w-auto', CONFIRM_CLASS[tone])}
+          >
+            {confirmLabel(consent)}
+          </Button>
+        </div>
       </div>
     </InteractiveCardShell>
   );
 }
 
-function EffectRow({ effect }: { effect: ConsentEffectPreview }) {
+function ToneIcon({ tone }: { tone: ConsentTone }) {
+  if (tone === 'external') {
+    return null;
+  }
+  const Icon =
+    tone === 'destructive'
+      ? Trash2
+      : tone === 'financial'
+      ? Banknote
+      : CircleHelp;
   return (
-    <div className="px-3 py-2">
-      <div className="flex items-baseline gap-2 min-w-0">
-        <span className="text-sm font-medium text-foreground truncate">
-          {effect.displayName}
-        </span>
-        <span className="text-xs text-muted-foreground truncate">
-          {effect.detail}
-        </span>
-      </div>
-      <p className="text-xs text-foreground/80">{effectPhrase(effect.kind)}</p>
-      {effect.recipientResolved && effect.recipient ? (
-        <p className="text-xs text-muted-foreground font-mono truncate">
-          {t('To: {recipient}', { recipient: effect.recipient })}
-        </p>
-      ) : (
-        effect.kind === 'outward_send' && (
-          <p className="text-xs text-muted-foreground">
-            {t('To: whoever the incoming data names — not known until it runs')}
-          </p>
-        )
-      )}
-    </div>
+    <Icon
+      className={cn('mt-0.5 size-[18px] shrink-0', TONE_ICON_CLASS[tone])}
+      aria-hidden={true}
+    />
   );
+}
+
+function EffectRow({ effect }: { effect: ConsentEffectPreview }) {
+  const Icon = KIND_ICON[effect.kind] ?? CircleHelp;
+  return (
+    <li className="flex items-start gap-2.5 py-2.5">
+      <Icon
+        className={cn('mt-0.5 size-4 shrink-0', kindIconClass(effect.kind))}
+        aria-hidden={true}
+      />
+      <div className="min-w-0 flex-1">
+        <p
+          dir="auto"
+          className={cn('text-sm font-medium', kindPhraseClass(effect.kind))}
+        >
+          {effectPhrase(effect.kind)}
+        </p>
+        <TextWithTooltip
+          tooltipMessage={`${effect.displayName} · ${effect.detail}`}
+        >
+          <p dir="auto" className="truncate text-xs text-muted-foreground">
+            {effect.displayName}
+            <span className="px-1">·</span>
+            {effect.detail}
+          </p>
+        </TextWithTooltip>
+        {recipientLine(effect)}
+      </div>
+    </li>
+  );
+}
+
+function recipientLine(effect: ConsentEffectPreview) {
+  if (effect.recipientResolved && effect.recipient) {
+    return (
+      <p className="mt-0.5 text-xs text-foreground">
+        <span className="text-muted-foreground">{t('To')}</span>
+        <span className="px-1 text-muted-foreground">·</span>
+        <span dir="ltr" className="font-mono break-all">
+          {effect.recipient}
+        </span>
+      </p>
+    );
+  }
+  if (effect.kind === 'outward_send') {
+    return (
+      <p dir="auto" className="mt-0.5 text-xs text-muted-foreground">
+        {t('To whoever the incoming data names — not known until it runs')}
+      </p>
+    );
+  }
+  return null;
+}
+
+function kindIconClass(kind: string): string {
+  switch (kind) {
+    case 'destructive':
+    case 'internal_destructive':
+      return 'text-destructive-700 dark:text-destructive-200';
+    case 'financial':
+    case 'input_dependent':
+    case 'unknown':
+      return 'text-warning-700 dark:text-warning-300';
+    default:
+      return 'text-muted-foreground';
+  }
+}
+
+function kindPhraseClass(kind: string): string {
+  switch (kind) {
+    case 'destructive':
+    case 'internal_destructive':
+      return 'text-destructive-700 dark:text-destructive-200';
+    case 'financial':
+      return 'text-warning-700 dark:text-warning-300';
+    default:
+      return 'text-foreground';
+  }
 }
 
 function effectPhrase(kind: string): string {
   switch (kind) {
+    case 'read':
+      return t('Reads data — changes nothing');
+    case 'internal_write':
+      return t('Changes data in your workspace');
     case 'outward_send':
       return t('Sends a real message to someone');
     case 'external_write':
@@ -133,7 +268,7 @@ function effectPhrase(kind: string): string {
     case 'destructive':
       return t('Permanently deletes data');
     case 'internal_destructive':
-      return t("Deletes data in your workspace — this can't be undone");
+      return t('Deletes data in your workspace');
     case 'financial':
       return t('Moves money');
     case 'input_dependent':
@@ -143,8 +278,26 @@ function effectPhrase(kind: string): string {
   }
 }
 
+function warningPhrase(warning: ConsentWarning): string {
+  switch (warning) {
+    case 'irreversible':
+      return t("Deleted data can't be brought back.");
+    case 'money':
+      return t('This moves real money.');
+    case 'unpredictable':
+      return t("Part of this we can't predict until it runs.");
+    default:
+      return t('Once on, it keeps running on its own — no one is asked again.');
+  }
+}
+
 function consentTitle(consent: ConsentPreview): string {
-  const flowName = consent.flowName ?? t('this automation');
+  const flowName = consent.flowName
+    ? consentPresentation.isolate(consent.flowName)
+    : t('this automation');
+  const targetName = consent.targetName
+    ? consentPresentation.isolate(consent.targetName)
+    : undefined;
   switch (consent.category) {
     case 'live_test':
       return t('Run a live test of "{flowName}"?', { flowName });
@@ -159,13 +312,13 @@ function consentTitle(consent: ConsentPreview): string {
     case 'enable':
       return t('Switch "{flowName}" on?', { flowName });
     case 'delete_flow':
-      return consent.targetName
-        ? t('Delete the automation "{name}"?', { name: consent.targetName })
+      return targetName
+        ? t('Delete the automation "{name}"?', { name: targetName })
         : t('Delete this automation?');
     case 'delete_table':
-      return consent.targetName
+      return targetName
         ? t('Delete the table "{name}" and everything in it?', {
-            name: consent.targetName,
+            name: targetName,
           })
         : t('Delete this table and everything in it?');
     case 'delete_records':
@@ -176,27 +329,17 @@ function consentTitle(consent: ConsentPreview): string {
     case 'delete_column':
       return t('Delete this table column and every value in it?');
     case 'connector_action':
-      return t('Use "{name}"?', { name: consent.targetName ?? '' });
+      return t('Use "{name}"?', { name: targetName ?? '' });
     default:
       return t('Run this tool?');
   }
 }
 
-function consentSubtitle(consent: ConsentPreview): string {
-  if (consent.severity === 'destructive') {
-    return t("This can't be undone.");
-  }
+function consentSummary(consent: ConsentPreview): string {
   if (!consent.resolved) {
     return t("We couldn't work out what this will touch, so we're asking.");
   }
   switch (consent.category) {
-    case 'live_test':
-    case 'step_test':
-    case 'retry_run':
-      return t(
-        '{count, plural, =1 {This runs for real — 1 step has an effect outside your workspace.} other {This runs for real — # steps have effects outside your workspace.}}',
-        { count: consent.effects.length },
-      );
     case 'publish':
     case 'enable':
       return t(
@@ -208,8 +351,26 @@ function consentSubtitle(consent: ConsentPreview): string {
       );
     case 'connector_action':
       return t('This changes data in a connected app.');
+    case 'delete_flow':
+    case 'delete_table':
+    case 'delete_records':
+    case 'delete_column':
+      return t('Here is what it does:');
     default:
-      return t('This has effects outside your workspace.');
+      return summaryForTone(consentPresentation.tone({ consent }));
+  }
+}
+
+function summaryForTone(tone: ConsentTone): string {
+  switch (tone) {
+    case 'destructive':
+      return t('This runs for real, and part of it deletes data.');
+    case 'financial':
+      return t('This runs for real, and part of it moves money.');
+    case 'unknown':
+      return t("This runs for real, and part of it we can't predict.");
+    default:
+      return t('This runs for real, outside your workspace.');
   }
 }
 
@@ -239,3 +400,37 @@ function confirmLabel(consent: ConsentPreview): string {
       return t('Run it');
   }
 }
+
+const KIND_ICON: Record<string, LucideIcon> = {
+  outward_send: Send,
+  external_write: PenLine,
+  destructive: Trash2,
+  internal_destructive: Trash2,
+  financial: Banknote,
+  input_dependent: CircleHelp,
+  unknown: CircleHelp,
+};
+
+const TONE_ICON_CLASS: Record<ConsentTone, string> = {
+  destructive: 'text-destructive-700 dark:text-destructive-200',
+  financial: 'text-warning-700 dark:text-warning-300',
+  unknown: 'text-warning-700 dark:text-warning-300',
+  external: '',
+};
+
+const FRAME_CLASS: Record<ConsentTone, string> = {
+  destructive: 'border-destructive/40 dark:border-destructive/50',
+  financial: 'border-warning/60 dark:border-warning/50',
+  unknown: 'border-warning/60 dark:border-warning/50',
+  external: 'border-border',
+};
+
+const CONFIRM_CLASS: Record<ConsentTone, string> = {
+  destructive:
+    'bg-destructive-600 hover:bg-destructive-700 dark:bg-destructive-600 dark:hover:bg-destructive-500',
+  financial:
+    'bg-warning-700 text-white hover:bg-warning-800 dark:bg-warning-700 dark:hover:bg-warning-600',
+  unknown:
+    'bg-warning-700 text-white hover:bg-warning-800 dark:bg-warning-700 dark:hover:bg-warning-600',
+  external: '',
+};

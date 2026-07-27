@@ -1470,11 +1470,11 @@ function consentCategoryOf(toolName: string): ConsentPreviewCategory {
 
 function consentSeverityOf({ effects, resolved }: { effects: StepEffect[], resolved: boolean }): ConsentSeverity {
     const kinds = new Set(chatToolClassification.effectKindsOf(effects))
-    if (kinds.has('financial')) {
-        return 'financial'
-    }
     if (kinds.has('destructive') || kinds.has('internal_destructive')) {
         return 'destructive'
+    }
+    if (kinds.has('financial')) {
+        return 'financial'
     }
     if (!resolved || kinds.has('unknown') || kinds.has('input_dependent')) {
         return 'unknown'

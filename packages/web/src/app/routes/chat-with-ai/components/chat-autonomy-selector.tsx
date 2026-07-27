@@ -1,6 +1,6 @@
 import { ChatAutonomyMode } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Shield, ShieldCheck, Zap } from 'lucide-react';
+import { ShieldCheck, TriangleAlert, Zap } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,8 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -38,6 +39,14 @@ export function ChatAutonomySelector({
     platform.chatConsentPolicy?.fullAccessEnabled !== false;
   const fullAccess = autonomyMode === 'full_access';
 
+  const handleModeChange = (value: string) => {
+    if (value === 'full_access') {
+      setWarningOpen(true);
+      return;
+    }
+    onAutonomyChange('ask_first');
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -51,7 +60,7 @@ export function ChatAutonomySelector({
                 type="button"
               >
                 {fullAccess ? (
-                  <Zap className="size-3.5 text-amber-500" />
+                  <Zap className="size-3.5 text-warning-700 dark:text-warning-300" />
                 ) : (
                   <ShieldCheck className="size-3.5" />
                 )}
@@ -60,50 +69,53 @@ export function ChatAutonomySelector({
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent side="top">
-            {fullAccess
-              ? t('Sends and app changes run without asking in this chat')
-              : t('Real-world actions ask you before they run')}
+            {fullAccess ? t(FULL_ACCESS_SUMMARY) : t(ASK_FIRST_SUMMARY)}
           </TooltipContent>
         </Tooltip>
-        <DropdownMenuContent align="end" className="w-72">
-          <DropdownMenuItem
-            onClick={() => onAutonomyChange('ask_first')}
-            className="items-start gap-2 py-2"
+        <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuRadioGroup
+            value={autonomyMode}
+            onValueChange={handleModeChange}
           >
-            <ShieldCheck className="size-4 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm font-medium">{t('Asks first')}</p>
-              <p className="text-xs text-muted-foreground">
-                {t(
-                  'Anything that sends, changes a connected app, deletes, or spends money asks you before it runs.',
-                )}
-              </p>
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={!fullAccessAllowed}
-            onClick={() => setWarningOpen(true)}
-            className="items-start gap-2 py-2"
-          >
-            <Zap className="size-4 mt-0.5 shrink-0 text-amber-500" />
-            <div>
-              <p className="text-sm font-medium">{t('Full access')}</p>
-              <p className="text-xs text-muted-foreground">
-                {fullAccessAllowed
-                  ? t(
-                      'Sends and app changes run without asking. Deleting data and moving money still ask.',
-                    )
-                  : t('Turned off by your workspace admin.')}
-              </p>
-            </div>
-          </DropdownMenuItem>
+            <DropdownMenuRadioItem
+              value="ask_first"
+              className="items-start gap-2 py-2"
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  <ShieldCheck className="size-4 shrink-0" />
+                  {t('Asks first')}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t(ASK_FIRST_SUMMARY)}
+                </span>
+              </div>
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem
+              value="full_access"
+              disabled={!fullAccessAllowed}
+              className="items-start gap-2 py-2"
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  <Zap className="size-4 shrink-0 text-warning-700 dark:text-warning-300" />
+                  {t('Full access')}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {fullAccessAllowed
+                    ? t(FULL_ACCESS_SUMMARY)
+                    : t('Turned off by your workspace admin.')}
+                </span>
+              </div>
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
       <Dialog open={warningOpen} onOpenChange={setWarningOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Shield className="size-5 text-amber-500" />
+              <TriangleAlert className="size-5 text-warning-700 dark:text-warning-300" />
               {t('Give the assistant full access?')}
             </DialogTitle>
             <DialogDescription className="space-y-2">
@@ -112,11 +124,7 @@ export function ChatAutonomySelector({
                   'In this conversation, the assistant will send real messages and change data in your connected apps without asking you first.',
                 )}
               </span>
-              <span className="block">
-                {t(
-                  'It will still ask before deleting data, moving money, or running anything it cannot identify.',
-                )}
-              </span>
+              <span className="block">{t(FULL_ACCESS_CARVE_OUT)}</span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -142,3 +150,10 @@ export function ChatAutonomySelector({
     </>
   );
 }
+
+const ASK_FIRST_SUMMARY =
+  'Anything that sends, changes a connected app, deletes, or spends money asks you before it runs.';
+const FULL_ACCESS_SUMMARY =
+  'Sends and app changes run without asking in this chat. Deleting data, moving money, and anything we cannot identify still ask.';
+const FULL_ACCESS_CARVE_OUT =
+  'It will still ask before deleting data, moving money, or running anything it cannot identify.';
