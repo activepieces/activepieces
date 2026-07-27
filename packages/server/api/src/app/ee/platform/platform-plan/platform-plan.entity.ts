@@ -9,6 +9,29 @@ export type PlatformPlanSchema = PlatformPlan & {
     platform: Platform
     autumnCustomerId: string | null
     autumnApiKey: string | null
+} & RetiredPlatformPlanColumns
+
+/**
+ * @deprecated Columns the Autumn migration deliberately leaves in the database so a revert to
+ * pre-Autumn code still finds the schema it expects (decision 000019). Never read or written by
+ * this codebase — declared only so the entity matches the migrated schema. Dropped, along with
+ * these declarations, by the cleanup migration that closes the revert window.
+ */
+type RetiredPlatformPlanColumns = {
+    stripeCustomerId: string | null
+    stripeSubscriptionId: string | null
+    stripeSubscriptionStatus: string | null
+    stripeSubscriptionStartDate: number | null
+    stripeSubscriptionEndDate: number | null
+    stripeSubscriptionCancelDate: number | null
+    aiCreditsAutoTopUpState: string
+    aiCreditsAutoTopUpThreshold: number | null
+    aiCreditsAutoTopUpCreditsToAdd: number | null
+    maxAutoTopUpCreditsMonthly: number | null
+    lastFreeAiCreditsRenewalDate: Date | null
+    includedAiCredits: number
+    agentsEnabled: boolean
+    teamProjectsLimit: string
 }
 
 export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
@@ -22,6 +45,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         },
         includedCredits: {
             type: Number,
+            default: 0,
         },
         environmentsEnabled: {
             type: Boolean,
@@ -135,6 +159,76 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         workerGroupId: {
             type: String,
             nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        stripeCustomerId: {
+            type: String,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        stripeSubscriptionId: {
+            type: String,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        stripeSubscriptionStatus: {
+            type: String,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        stripeSubscriptionStartDate: {
+            type: Number,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        stripeSubscriptionEndDate: {
+            type: Number,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        stripeSubscriptionCancelDate: {
+            type: Number,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        aiCreditsAutoTopUpState: {
+            type: String,
+            default: 'disabled',
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        aiCreditsAutoTopUpThreshold: {
+            type: Number,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        aiCreditsAutoTopUpCreditsToAdd: {
+            type: Number,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        maxAutoTopUpCreditsMonthly: {
+            type: Number,
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        lastFreeAiCreditsRenewalDate: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        includedAiCredits: {
+            type: Number,
+            default: 0,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        agentsEnabled: {
+            type: Boolean,
+            default: true,
+        },
+        /** @deprecated see RetiredPlatformPlanColumns */
+        teamProjectsLimit: {
+            type: String,
+            default: 'NONE',
         },
     },
     indices: [
