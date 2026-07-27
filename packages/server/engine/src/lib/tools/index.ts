@@ -254,6 +254,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
+        case PropertyType.RICH_TEXT:
         case PropertyType.MARKDOWN:
         case PropertyType.DATE_TIME:
         case PropertyType.FILE:
@@ -283,6 +284,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
             break
         }
         case PropertyType.OBJECT:
+        case PropertyType.DATE_RANGE:
             schema = z.object({}).loose()
             break
         case PropertyType.JSON:

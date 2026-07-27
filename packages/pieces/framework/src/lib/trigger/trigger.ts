@@ -1,7 +1,7 @@
 import * as z from "zod/mini";
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import type { OutputSchema } from '../output-schema';
-import { AiMetadata, TriggerBase } from '../piece-metadata';
+import { ActionClassification, AiMetadata, PropertyGroup, TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 import { isNil } from '@activepieces/core-utils';
@@ -49,6 +49,7 @@ type BaseTriggerParams<
   requireAuth?: boolean
   auth?: PieceAuth
   props: TriggerProps
+  propertyGroups?: PropertyGroup[]
   type: TS
   onEnable: (context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>
   onDisable: (context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>
@@ -58,6 +59,7 @@ type BaseTriggerParams<
   sampleData: unknown
   outputSchema?: OutputSchema
   aiMetadata?: AiMetadata
+  classification?: ActionClassification
 }
 
 type WebhookTriggerParams<
@@ -104,6 +106,8 @@ export class ITrigger<
     public readonly testStrategy: TriggerTestStrategy,
     public readonly outputSchema?: OutputSchema,
     public readonly aiMetadata?: AiMetadata,
+    public readonly classification?: ActionClassification,
+    public readonly propertyGroups?: PropertyGroup[],
   ) { }
 }
 
@@ -142,6 +146,8 @@ export const createTrigger = <
         params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
         params.outputSchema,
         params.aiMetadata,
+        params.classification,
+        params.propertyGroups,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
@@ -164,6 +170,8 @@ export const createTrigger = <
         TriggerTestStrategy.TEST_FUNCTION,
         params.outputSchema,
         params.aiMetadata,
+        params.classification,
+        params.propertyGroups,
       )
     case TriggerStrategy.MANUAL:
       return new ITrigger(
@@ -186,6 +194,8 @@ export const createTrigger = <
         TriggerTestStrategy.TEST_FUNCTION,
         params.outputSchema,
         params.aiMetadata,
+        params.classification,
+        params.propertyGroups,
       )
     case TriggerStrategy.APP_WEBHOOK:
       return new ITrigger(
@@ -208,6 +218,8 @@ export const createTrigger = <
         (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
         params.outputSchema,
         params.aiMetadata,
+        params.classification,
+        params.propertyGroups,
       )
   }
 }

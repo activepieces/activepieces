@@ -119,8 +119,12 @@ function getDefaultPropertyValue({
       }
       return property.defaultValue ?? {};
     }
+    case PropertyType.DATE_RANGE: {
+      return property.defaultValue ?? { preset: 'any_time' };
+    }
     case PropertyType.SHORT_TEXT:
     case PropertyType.LONG_TEXT:
+    case PropertyType.RICH_TEXT:
     case PropertyType.MARKDOWN:
     case PropertyType.FILE:
     case PropertyType.DATE_TIME:
