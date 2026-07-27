@@ -52,3 +52,4 @@ The four calls a run emits to the app during execution: `updateRunProgress`, `up
 - **Gotcha: system-job "No handler" = worker running the wrong edition** — diagnosing edition skew
 - **Gotcha: `kamal app exec` on the worker image leaks a permanent worker** — the entrypoint ignores your command and boots a worker
 - **Gotcha: a worker can wedge mid-poll-loop and still report healthy** — live socket, green healthcheck, zero polls; how to tell it apart from the version gate and the app-side dispatcher
+- **Gotcha: polling starves first when the fleet loses capacity** — `EXECUTE_POLLING` is priority 5, so "my schedule flow isn't triggering" is the earliest symptom of a partial wedge; how to read the priority lanes

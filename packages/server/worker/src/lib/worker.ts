@@ -81,7 +81,7 @@ const MACHINE_INFO_TIMEOUT_MS = 15_000
 const POLL_LIVENESS_TIMEOUT_MS = 180_000
 const POLL_WATCHDOG_INTERVAL_MS = 30_000
 
-let lastPollIterationAt: number | null = null
+let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
 
 export const worker = {
@@ -100,7 +100,7 @@ export const worker = {
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
-            lastPollIterationAt = Date.now()
+            resetPollLoopLiveness({ loopCount: 1 })
             await fetchAndStoreSettings(socket!)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -148,7 +148,7 @@ export const worker = {
 
     async stop(): Promise<void> {
         polling = false
-        lastPollIterationAt = null
+        pollLoopLiveness = []
         stopPollWatchdog()
         stopSandboxInfoSampling()
         await drainInFlightJobs()
@@ -207,6 +207,7 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
 
     logger.info({ concurrency }, 'Starting poll loops')
 
+    resetPollLoopLiveness({ loopCount: concurrency })
     const activeRuntime = runtime
     await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
         pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
@@ -218,7 +219,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
     workerLog.info('Polling worker started')
 
     while (polling && connectionGeneration === generation) {
-        lastPollIterationAt = Date.now()
+        markPollLoopIteration({ workerIndex, busy: false })
         const appVersion = workerSettings.getSettings().APP_VERSION
         if (!apVersionUtil.versionsAreCompatible({ versionA: appVersion, versionB: AP_VERSION })) {
             const versionUnreadable = appVersion === UNKNOWN_VERSION || AP_VERSION === UNKNOWN_VERSION
@@ -259,6 +260,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
         // Counted for the duration of execute + completeJob so a graceful shutdown can wait for
         // the report to land before tearing down the socket (otherwise the job is orphaned in active).
         inFlightJobs++
+        markPollLoopIteration({ workerIndex, busy: true })
         try {
             const lockExtensionInterval = setInterval(() => {
                 void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
@@ -294,6 +296,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
         }
         finally {
             inFlightJobs--
+            markPollLoopIteration({ workerIndex, busy: false })
         }
     }
     workerLog.warn({ polling, generation, connectionGeneration }, 'Poll loop exited — this worker consumes no jobs until it starts again')
@@ -557,12 +560,31 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function pollLoopStalled(): boolean {
-    const connected = socket?.connected ?? false
-    if (!connected || isNil(lastPollIterationAt) || inFlightJobs > 0) {
-        return false
+function resetPollLoopLiveness({ loopCount }: { loopCount: number }): void {
+    const startedAt = Date.now()
+    pollLoopLiveness = Array.from({ length: loopCount }, () => ({ iteratedAt: startedAt, busy: false }))
+}
+
+function markPollLoopIteration({ workerIndex, busy }: { workerIndex: number, busy: boolean }): void {
+    const liveness = pollLoopLiveness[workerIndex]
+    if (isNil(liveness)) {
+        return
     }
-    return Date.now() - lastPollIterationAt > POLL_LIVENESS_TIMEOUT_MS
+    liveness.iteratedAt = Date.now()
+    liveness.busy = busy
+}
+
+function findStalledPollLoop(): StalledPollLoop | undefined {
+    const connected = socket?.connected ?? false
+    if (!connected) {
+        return undefined
+    }
+    const now = Date.now()
+    const workerIndex = findStalledLoopIndex({ loops: pollLoopLiveness, now, timeoutMs: POLL_LIVENESS_TIMEOUT_MS })
+    if (workerIndex === -1) {
+        return undefined
+    }
+    return { workerIndex, stalledForMs: now - pollLoopLiveness[workerIndex].iteratedAt }
 }
 
 function startPollWatchdog(): void {
@@ -570,10 +592,11 @@ function startPollWatchdog(): void {
         return
     }
     pollWatchdogInterval = setInterval(() => {
-        if (!pollLoopStalled()) {
+        const stalled = findStalledPollLoop()
+        if (isNil(stalled)) {
             return
         }
-        logger.error({ lastPollIterationAt, stalledForMs: Date.now() - (lastPollIterationAt ?? 0) }, 'Poll loop stalled — exiting so the process manager restarts a worker that can consume jobs')
+        logger.error({ ...stalled, loopCount: pollLoopLiveness.length }, 'Poll loop stalled — exiting so the process manager restarts a worker that can consume jobs')
         process.exit(1)
     }, POLL_WATCHDOG_INTERVAL_MS)
     pollWatchdogInterval.unref()
@@ -592,7 +615,7 @@ function startHealthServer(): ReturnType<typeof createServer> {
     const healthPaths = new Set(['/worker/health', '/v1/health', '/api/v1/health'])
     const server = createServer((req, res) => {
         if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {
-            const stalled = pollLoopStalled()
+            const stalled = !isNil(findStalledPollLoop())
             res.writeHead(stalled ? 503 : 200, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ status: stalled ? 'poll_loop_stalled' : 'ok' }))
         }
@@ -612,4 +635,18 @@ type WorkerStartParams = {
     socketUrl: { url: string, path: string }
     workerToken: string
     withHealthServer?: boolean
+}
+
+export function findStalledLoopIndex({ loops, now, timeoutMs }: { loops: PollLoopLiveness[], now: number, timeoutMs: number }): number {
+    return loops.findIndex((loop) => !loop.busy && now - loop.iteratedAt > timeoutMs)
+}
+
+export type PollLoopLiveness = {
+    iteratedAt: number
+    busy: boolean
+}
+
+type StalledPollLoop = {
+    workerIndex: number
+    stalledForMs: number
 }
