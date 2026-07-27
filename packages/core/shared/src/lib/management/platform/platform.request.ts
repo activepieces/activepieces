@@ -1,7 +1,7 @@
 import { ApId, ApMultipartFile, Nullable, OptionalArrayFromQuery, OptionalBooleanFromQuery, SAFE_STRING_PATTERN, tryCatchSync } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
-import { ChatConsentPolicySettings } from '../../ee/chat'
+import { ChatConsentPolicySettings } from '../../ee/chat/consent-policy-settings'
 import { PieceSelectorConfig, PlatformThemeColors } from './platform.model'
 
 export const MAX_EMBED_ORIGIN_LENGTH = 300

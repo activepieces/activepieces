@@ -2,6 +2,7 @@ import { ChatPromptOverride } from '@activepieces/core-execution'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
+import { ChatAutonomyMode } from './consent-policy-settings'
 
 const MAX_FILE_BINARY_SIZE = 10 * 1024 * 1024
 const MAX_FILE_BASE64_CHARS = Math.ceil(MAX_FILE_BINARY_SIZE * 4 / 3)
@@ -194,18 +195,6 @@ export enum ChatConversationStatus {
     ERROR = 'ERROR',
 }
 
-export const ChatAutonomyMode = z.enum(['ask_first', 'full_access'])
-export type ChatAutonomyMode = z.infer<typeof ChatAutonomyMode>
-
-export const ChatConsentDecision = z.enum(['allow', 'ask', 'deny'])
-export type ChatConsentDecision = z.infer<typeof ChatConsentDecision>
-
-export const ChatConsentPolicySettings = z.object({
-    fullAccessEnabled: z.boolean().optional(),
-    overrides: z.record(z.string(), ChatConsentDecision).optional(),
-})
-export type ChatConsentPolicySettings = z.infer<typeof ChatConsentPolicySettings>
-
 export const ChatConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
@@ -375,6 +364,7 @@ export { chatToolClassification, type StepEffect } from './tool-classification'
 export { actionEffect, type ActionEffect, type ActionEffectKind, type ActionEffectLabel } from './action-effect'
 export { actionEffectLabelCatalog } from './action-effect-labels'
 export { chatToolConsentSpecs, type ChatToolConsentSpec } from './tool-consent-specs'
+export { ChatAutonomyMode, ChatConsentDecision, ChatConsentPolicySettings } from './consent-policy-settings'
 export { chatConsent, type ConsentDecision } from './chat-consent'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'

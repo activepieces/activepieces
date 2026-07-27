@@ -5,7 +5,14 @@ import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
 
-actionEffect.setCatalog(actionEffectLabelCatalog.load())
+let effectCatalogLoaded = false
+
+function ensureEffectCatalog(): void {
+    if (!effectCatalogLoaded) {
+        actionEffect.setCatalog(actionEffectLabelCatalog.load())
+        effectCatalogLoaded = true
+    }
+}
 
 const MAX_BATCH_SIZE = 100
 const MAX_IDENTICAL_ACTION_FAILURES = 2
@@ -557,6 +564,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
     taintState: TaintState
     policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
 }): ToolSet {
+    ensureEffectCatalog()
     const progressGuard = createProgressGuard()
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
         withToolTimeout({
@@ -1548,6 +1556,7 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
     eventEmitter: ChatEventEmitter
     log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
 }): T {
+    ensureEffectCatalog()
     if (disabled === true) {
         return tools
     }

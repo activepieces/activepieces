@@ -26,7 +26,14 @@ import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
 import { executeCrossProjectTool } from './tools/chat-tools'
 
-actionEffect.setCatalog(actionEffectLabelCatalog.load())
+let effectCatalogLoaded = false
+
+function ensureEffectCatalog(): void {
+    if (!effectCatalogLoaded) {
+        actionEffect.setCatalog(actionEffectLabelCatalog.load())
+        effectCatalogLoaded = true
+    }
+}
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 
@@ -579,6 +586,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             const approved = await chatApprovalGate.hasRememberedConsent({ conversationId: input.conversationId, signature })
             return { result: { approved } }
         }
+        ensureEffectCatalog()
         if (input.toolName === '__flow_write_check') {
             const flowId = input.toolInput.flowId
             if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {

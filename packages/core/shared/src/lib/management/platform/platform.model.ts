@@ -1,7 +1,7 @@
 import { ApId, BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
-import { ChatConsentPolicySettings } from '../../ee/chat'
+import { ChatConsentPolicySettings } from '../../ee/chat/consent-policy-settings'
 import { SsoDomainVerification } from './sso-domain-verification'
 
 export const PlatformUsage = z.object({
