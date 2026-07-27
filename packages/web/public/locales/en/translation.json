@@ -2279,5 +2279,6 @@
   "Changes data in your workspace": "Changes data in your workspace",
   "Also covers repeats of this exact action, to the same recipients, in this chat.": "Also covers repeats of this exact action, to the same recipients, in this chat.",
   "Reply instead — nothing will run": "Reply instead — nothing will run",
-  "This switches the automation on for real.": "This switches the automation on for real."
+  "This switches the automation on for real.": "This switches the automation on for real.",
+  "It stays on for this chat until you switch it back.": "It stays on for this chat until you switch it back."
 }

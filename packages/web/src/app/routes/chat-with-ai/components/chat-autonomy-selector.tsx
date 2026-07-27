@@ -1,6 +1,6 @@
 import { ChatAutonomyMode } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ShieldCheck, TriangleAlert, Zap } from 'lucide-react';
+import { ShieldCheck, ShieldOff, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { cn } from '@/lib/utils';
 
 export function ChatAutonomySelector({
   autonomyMode,
@@ -56,11 +57,16 @@ export function ChatAutonomySelector({
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 text-xs text-muted-foreground"
+                className={cn(
+                  'gap-1.5 text-xs',
+                  fullAccess
+                    ? 'border border-warning/60 bg-warning-50 text-warning-700 hover:bg-warning-100 hover:text-warning-800 dark:border-warning/50 dark:bg-warning-950 dark:text-warning-300'
+                    : 'text-muted-foreground',
+                )}
                 type="button"
               >
                 {fullAccess ? (
-                  <Zap className="size-3.5 text-warning-700 dark:text-warning-300" />
+                  <ShieldOff className="size-3.5" />
                 ) : (
                   <ShieldCheck className="size-3.5" />
                 )}
@@ -98,7 +104,7 @@ export function ChatAutonomySelector({
             >
               <div className="flex flex-col gap-0.5">
                 <span className="flex items-center gap-1.5 text-sm font-medium">
-                  <Zap className="size-4 shrink-0 text-warning-700 dark:text-warning-300" />
+                  <ShieldOff className="size-4 shrink-0 text-warning-700 dark:text-warning-300" />
                   {t('Full access')}
                 </span>
                 <span className="text-xs text-muted-foreground">
@@ -125,6 +131,9 @@ export function ChatAutonomySelector({
                 )}
               </span>
               <span className="block">{t(FULL_ACCESS_CARVE_OUT)}</span>
+              <span className="block">
+                {t('It stays on for this chat until you switch it back.')}
+              </span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -137,6 +146,7 @@ export function ChatAutonomySelector({
             </Button>
             <Button
               type="button"
+              className="bg-warning-700 text-white hover:bg-warning-800 dark:bg-warning-700 dark:hover:bg-warning-600"
               onClick={() => {
                 setWarningOpen(false);
                 onAutonomyChange('full_access');
