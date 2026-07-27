@@ -1,5 +1,5 @@
 import { chunk } from '@activepieces/core-utils'
-import { PopulatedRecord, TableAutomationTrigger, TableWebhook, TableWebhookEventType } from '@activepieces/shared'
+import { PopulatedRecord, TableAutomationTrigger, TableWebhookEventType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
 import { tableService } from '../table/table.service'
@@ -15,7 +15,7 @@ export const recordSideEffects = (_log: FastifyBaseLogger) => ({
         }
         const { eventType } = EVENT_TYPE_MAP[eventKey]
 
-        const webhooks = params.webhooks ?? await tableService.getWebhooks({
+        const webhooks = await tableService.getWebhooks({
             projectId,
             id: tableId,
             events: [eventType],
@@ -82,5 +82,4 @@ type BulkSideEffectParams = {
     logger: FastifyBaseLogger
     authorization: string
     agentUpdate?: boolean
-    webhooks?: TableWebhook[]
 }

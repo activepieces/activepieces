@@ -21,6 +21,9 @@ A built-in relational database inside Activepieces: users store structured data 
 - Record filtering (EQ/NEQ/GT/CO/EXISTS/…) is **in-memory**, and a missing cell is treated as empty string `''`, so `NEQ`/`NOT_EXISTS` match unset columns.
 - `record.create()` bulk insert caps at 50 per batch, transactional.
 - When adding any new table/field/record route, the `permission` arg to `securityAccess.project(...)` is required — passing `undefined` silently allows any project member.
+- `cell`'s two `ON DELETE CASCADE` FKs need their **own** indexes (`idx_cell_record_id`, `idx_cell_field_id`). Postgres never indexes a referencing column for you, and the unique index `(projectId, fieldId, recordId)` can't serve a `recordId`- or `fieldId`-only lookup — neither is the leading column, and there's no index skip scan before PG 18. Without them every record delete seq-scans `cell` once per row: 10k records × 10 fields took 46.7s. Adding the index is the whole fix; chunking the `DELETE` is not (GIT-1652).
+- Deletes are anchored on `tableId`, not on the ids: `record.delete()` requires it, the REST route authorizes `body.tableId`, and `ap_delete_records` must send it. Resolving the table from the ids instead means a list spanning two tables silently deletes only one table's rows.
+- `deleteAll()` (Clear Table) hydrates records only when a `RECORD_DELETED` webhook exists — the HTTP response is always empty, so loading rows and cells otherwise is pure waste.
 
 ### Key files
 Entry point: `tablesModule`, registered in `packages/server/api/src/app/app.ts` and mounting the three controllers under `/v1/tables`, `/v1/fields`, `/v1/records`.

@@ -23,7 +23,6 @@ export const clearTable = createAction({
         token: context.server.token,
       },
       retries: 5,
-      timeout: 60000,
     });
 
     return {
