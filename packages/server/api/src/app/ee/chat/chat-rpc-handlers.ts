@@ -12,8 +12,10 @@ import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { resolveInternalTableId } from '../../mcp/tools/table-utils'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
+import { fieldService } from '../../tables/field/field.service'
 import { recordService } from '../../tables/record/record.service'
 import { tableService } from '../../tables/table/table.service'
 import { userService } from '../../user/user-service'
@@ -79,31 +81,37 @@ async function flowIdOfRun({ flowRunId, projectId, log }: {
     return run?.flowId
 }
 
-async function resolveConsentTargetName({ toolInput, projectId, log }: {
-    toolInput: Record<string, unknown>
+async function resolveConsentTargetName({ entity, ids, projectId, log }: {
+    entity: string
+    ids: string[]
     projectId: string
     log: FastifyBaseLogger
 }): Promise<string | undefined> {
-    const flowId = toolInput['flowId']
-    if (typeof flowId === 'string') {
-        const { data: flow } = await tryCatch(() => flowService(log).getOnePopulated({ id: flowId, projectId }))
+    const [firstId] = ids
+    if (isNil(firstId)) {
+        return undefined
+    }
+    if (entity === 'flow') {
+        const { data: flow } = await tryCatch(() => flowService(log).getOnePopulated({ id: firstId, projectId }))
         return flow?.version.displayName
     }
-    const tableId = toolInput['tableId']
-    if (typeof tableId === 'string') {
-        const { data: table } = await tryCatch(() => tableService.getOneOrThrow({ id: tableId, projectId }))
-        return table?.name
+    if (entity === 'table') {
+        const { data: table } = await tryCatch(() => resolveInternalTableId({ projectId, tableId: firstId }))
+        return isNil(table) ? undefined : tableNameOf({ tableId: table, projectId })
     }
-    const recordIds = toolInput['recordIds']
-    const firstRecordId = Array.isArray(recordIds) ? recordIds.find((id): id is string => typeof id === 'string') : undefined
-    if (isNil(firstRecordId)) {
+    if (entity === 'field') {
+        const { data: field } = await tryCatch(() => fieldService.getById({ id: firstId, projectId }))
+        return field?.name
+    }
+    if (entity !== 'records') {
         return undefined
     }
-    const { data: record } = await tryCatch(() => recordService.getById({ id: firstRecordId, projectId }))
-    if (isNil(record)) {
-        return undefined
-    }
-    const { data: table } = await tryCatch(() => tableService.getOneOrThrow({ id: record.tableId, projectId }))
+    const { data: tableIds } = await tryCatch(() => recordService.tableIdsOf({ ids, projectId }))
+    return tableIds?.length === 1 ? tableNameOf({ tableId: tableIds[0], projectId }) : undefined
+}
+
+async function tableNameOf({ tableId, projectId }: { tableId: string, projectId: string }): Promise<string | undefined> {
+    const { data: table } = await tryCatch(() => tableService.getOneOrThrow({ id: tableId, projectId }))
     return table?.name
 }
 
@@ -624,8 +632,15 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (isNil(conversation.projectId)) {
                 return { result: { targetName: null } }
             }
+            const entity = input.toolInput['entity']
+            const rawIds = input.toolInput['ids']
+            const ids = Array.isArray(rawIds) ? rawIds.filter((id): id is string => typeof id === 'string') : []
+            if (typeof entity !== 'string' || ids.length === 0) {
+                return { result: { targetName: null } }
+            }
             const targetName = await resolveConsentTargetName({
-                toolInput: input.toolInput,
+                entity,
+                ids,
                 projectId: conversation.projectId,
                 log,
             })

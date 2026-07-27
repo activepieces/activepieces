@@ -46,18 +46,6 @@ function actionConsentDecision({ pieceName, actionName, input, needsConfirmation
     return decision
 }
 
-function requiresActionPreview(params: {
-    pieceName?: string
-    actionName: string
-    input?: Record<string, unknown>
-    needsConfirmation?: boolean
-    tainted?: boolean
-    declaredEffect?: string
-    policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
-}): boolean {
-    return actionConsentDecision(params) !== 'allow'
-}
-
 function isReadActionName(actionName: string): boolean {
     return actionNameMatchesPatterns({ actionName, patterns: READ_ACTION_PATTERNS })
         && !actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
@@ -240,7 +228,6 @@ function stepEffectsReusable(steps: StepEffect[]): boolean {
 }
 
 export const chatToolClassification = {
-    requiresActionPreview,
     actionConsentDecision,
     isReadActionName,
     isReadOnlyActionCall,

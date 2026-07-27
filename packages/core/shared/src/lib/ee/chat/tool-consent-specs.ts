@@ -2,7 +2,7 @@ import { isNil, isObject } from '@activepieces/core-utils'
 import { actionEffect, ActionEffectKind } from './action-effect'
 
 const MCP_CONNECTOR_TOOL_PREFIX = 'mcp__'
-const MCP_CONNECTOR_TOOL_PATTERN = /^mcp__[^_]+__(.+)$/
+const MCP_CONNECTOR_TOOL_PATTERN = /^mcp__.+?__(.+)$/
 const MCP_CONNECTOR_FLOOR_KIND: ActionEffectKind = 'external_write'
 
 const CHAT_TOOL_CONSENT_SPECS: Record<string, ChatToolConsentSpec> = {

@@ -505,8 +505,8 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             })
             return response.result
         },
-        resolveTargetName: async ({ toolInput }) => {
-            const response = await ctx.apiClient.executeChatTool({ toolName: '__consent_target_name', toolInput, platformId, userId, conversationId })
+        resolveTargetName: async ({ entity, ids }) => {
+            const response = await ctx.apiClient.executeChatTool({ toolName: '__consent_target_name', toolInput: { entity, ids }, platformId, userId, conversationId })
             const targetName = isObject(response.result) ? response.result['targetName'] : undefined
             return typeof targetName === 'string' ? targetName : undefined
         },

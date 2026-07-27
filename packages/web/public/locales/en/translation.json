@@ -2225,7 +2225,7 @@
   "Run a live test of \"{flowName}\"?": "Run a live test of \"{flowName}\"?",
   "Run this step for real in \"{flowName}\"?": "Run this step for real in \"{flowName}\"?",
   "Re-run a real run of \"{flowName}\"?": "Re-run a real run of \"{flowName}\"?",
-  "Run code that can reach outside?": "Run code that can reach outside?",
+  "Run custom code?": "Run custom code?",
   "Publish \"{flowName}\" and switch it on?": "Publish \"{flowName}\" and switch it on?",
   "Switch \"{flowName}\" on?": "Switch \"{flowName}\" on?",
   "Delete the automation \"{name}\"?": "Delete the automation \"{name}\"?",
@@ -2238,7 +2238,7 @@
   "Run this tool?": "Run this tool?",
   "This can't be undone.": "This can't be undone.",
   "We couldn't work out what this will touch, so we're asking.": "We couldn't work out what this will touch, so we're asking.",
-  "This code can reach other systems, so we can't tell what it does before it runs.": "This code can reach other systems, so we can't tell what it does before it runs.",
+  "We can't tell what code will do until it runs.": "We can't tell what code will do until it runs.",
   "This changes data in a connected app.": "This changes data in a connected app.",
   "This has effects outside your workspace.": "This has effects outside your workspace.",
   "Run the live test": "Run the live test",
@@ -2280,5 +2280,7 @@
   "Also covers repeats of this exact action, to the same recipients, in this chat.": "Also covers repeats of this exact action, to the same recipients, in this chat.",
   "Reply instead — nothing will run": "Reply instead — nothing will run",
   "This switches the automation on for real.": "This switches the automation on for real.",
-  "It stays on for this chat until you switch it back.": "It stays on for this chat until you switch it back."
+  "It stays on for this chat until you switch it back.": "It stays on for this chat until you switch it back.",
+  "Asks before real actions.": "Asks before real actions.",
+  "Runs without asking.": "Runs without asking."
 }

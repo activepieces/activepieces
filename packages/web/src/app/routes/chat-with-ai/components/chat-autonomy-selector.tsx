@@ -149,9 +149,7 @@ export function ChatAutonomySelector({
   );
 }
 
-const ASK_FIRST_SUMMARY =
-  'Anything that sends, changes a connected app, deletes, or spends money asks you before it runs.';
-const FULL_ACCESS_SUMMARY =
-  'Sends and app changes run without asking in this chat. Deleting data, moving money, and anything we cannot identify still ask.';
+const ASK_FIRST_SUMMARY = 'Asks before real actions.';
+const FULL_ACCESS_SUMMARY = 'Runs without asking.';
 const FULL_ACCESS_CARVE_OUT =
   'It will still ask before deleting data, moving money, or running anything it cannot identify.';

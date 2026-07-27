@@ -157,18 +157,18 @@ describe('actionEffect.resolve — the catalog covers what a name never could', 
 
 describe('chatToolClassification.requiresActionPreview', () => {
     it('consults the catalog when the piece is known', () => {
-        expect(chatToolClassification.requiresActionPreview({ pieceName: '@activepieces/piece-mongodb', actionName: 'find_and_replace_documents' })).toBe(true)
-        expect(chatToolClassification.requiresActionPreview({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records' })).toBe(false)
+        expect(chatToolClassification.actionConsentDecision({ pieceName: '@activepieces/piece-mongodb', actionName: 'find_and_replace_documents' })).not.toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records' })).toBe('allow')
     })
 
     it('always honours an explicit request to confirm, even on a tainted turn', () => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'get_rows', needsConfirmation: true })).toBe(true)
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'get_rows', needsConfirmation: true, tainted: true })).toBe(true)
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'get_rows', needsConfirmation: true })).not.toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'get_rows', needsConfirmation: true, tainted: true })).not.toBe('allow')
     })
 
     it('tightens to reads-only on a tainted turn', () => {
-        expect(chatToolClassification.requiresActionPreview({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', tainted: true })).toBe(true)
-        expect(chatToolClassification.requiresActionPreview({ pieceName: '@activepieces/piece-tables', actionName: 'tables-find-records', tainted: true })).toBe(false)
+        expect(chatToolClassification.actionConsentDecision({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', tainted: true })).not.toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ pieceName: '@activepieces/piece-tables', actionName: 'tables-find-records', tainted: true })).toBe('allow')
     })
 })
 
@@ -260,6 +260,31 @@ describe('chatConsent', () => {
         expect(chatConsent.isReusable(['internal_destructive'])).toBe(false)
         expect(chatConsent.isReusable(['outward_send', 'internal_destructive'])).toBe(false)
         expect(chatConsent.isReusable([])).toBe(false)
+    })
+
+    it('does not let one code step permanently disable remembering a yes', () => {
+        const codeAndSend = chatToolClassification.flowStepEffects(triggerWith([
+            codeStep({ name: 'format', code: 'export const code = async (i) => i.a + i.b' }),
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'] } }),
+        ]))
+        expect(codeAndSend.map((step) => step.effect.kind)).toContain('input_dependent')
+        expect(chatToolClassification.stepEffectsReusable(codeAndSend)).toBe(true)
+    })
+
+    it('still refuses to remember a yes when a code step sits beside a deletion', () => {
+        const codeAndDelete = chatToolClassification.flowStepEffects(triggerWith([
+            codeStep({ name: 'format', code: 'export const code = async (i) => i.a' }),
+            pieceStep({ name: 'purge', pieceName: '@activepieces/piece-tables', actionName: 'tables-delete-table' }),
+        ]))
+        expect(chatToolClassification.stepEffectsReusable(codeAndDelete)).toBe(false)
+    })
+
+    it('keys a remembered code yes to the exact code, so an edit asks again', () => {
+        const digestOf = (code: string) => chatToolClassification.effectFingerprintsOf([
+            chatToolClassification.codeEffect({ code, stepName: 'c', displayName: 'c' }),
+        ])
+        expect(digestOf('return i.a + i.b')).not.toEqual(digestOf('return i.a - i.b'))
+        expect(digestOf('return i.a + i.b')).toEqual(digestOf('return i.a + i.b'))
     })
 
     it('never reuses a yes for a send whose recipient is decided at runtime', () => {

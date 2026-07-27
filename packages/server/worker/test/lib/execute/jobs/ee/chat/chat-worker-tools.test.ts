@@ -685,8 +685,8 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
                 })),
             }
         },
-        resolveTargetName: async ({ toolInput }) => {
-            targetNameCalls.push(toolInput)
+        resolveTargetName: async ({ entity, ids }) => {
+            targetNameCalls.push({ entity, ids })
             return serverTargetName
         },
         checkRememberedConsent: async ({ signature }) => {
@@ -912,7 +912,28 @@ describe('chatWorkerTools.wrapWithConsent — deletion goes through its real pat
         })
         expect(h.gates[0].displayName).toBe('Delete this table and everything in it — "Production Customers"')
         expect(h.previews[0].consent?.targetName).toBe('Production Customers')
-        expect(h.targetNameCalls).toEqual([{ tableId: 't1', displayName: 'Delete the Temp Import scratch table' }])
+        expect(h.targetNameCalls).toEqual([{ entity: 'table', ids: ['t1'] }])
+    })
+
+    it('looks up only the id its own tool declares, so a decoy id cannot rename the card', async () => {
+        const h = makeConsentHarness({ effects: [], serverTargetName: 'Production Customers' })
+        await runGatedTool({
+            wrapped: h.wrapped,
+            toolName: 'ap_delete_table',
+            args: { tableId: 't1', flowId: 'a-harmless-looking-flow' },
+        })
+        expect(h.targetNameCalls).toEqual([{ entity: 'table', ids: ['t1'] }])
+    })
+
+    it('names the column, not its table, when deleting a column', async () => {
+        const h = makeConsentHarness({ effects: [], serverTargetName: 'Email' })
+        await runGatedTool({
+            wrapped: h.wrapped,
+            toolName: 'ap_manage_fields',
+            args: { tableId: 't1', operation: 'DELETE', fieldId: 'f9' },
+        })
+        expect(h.targetNameCalls).toEqual([{ entity: 'field', ids: ['f9'] }])
+        expect(h.gates[0].displayName).toBe('Delete this table column and every value in it — "Email"')
     })
 
     it('does not spend a lookup on tools whose card never shows a target name', async () => {

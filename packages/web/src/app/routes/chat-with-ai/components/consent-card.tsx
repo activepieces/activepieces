@@ -305,7 +305,7 @@ function consentTitle(consent: ConsentPreview): string {
     case 'retry_run':
       return t('Re-run a real run of "{flowName}"?', { flowName });
     case 'run_code':
-      return t('Run code that can reach outside?');
+      return t('Run custom code?');
     case 'publish':
       return t('Publish "{flowName}" and switch it on?', { flowName });
     case 'enable':
@@ -343,9 +343,7 @@ function consentSummary(consent: ConsentPreview): string {
     case 'enable':
       return t('This switches the automation on for real.');
     case 'run_code':
-      return t(
-        "This code can reach other systems, so we can't tell what it does before it runs.",
-      );
+      return t("We can't tell what code will do until it runs.");
     case 'connector_action':
       return t('This changes data in a connected app.');
     case 'delete_flow':

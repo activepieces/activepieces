@@ -747,6 +747,15 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 if (!chatToolClassification.isReadOnlyActionCall({ pieceName: toolInput.pieceName, actionName: toolInput.actionName, input: toolInput.input })) {
                     return chatToolClassification.readOnlyRejection(toolInput.actionName)
                 }
+                if (chatToolClassification.actionConsentDecision({
+                    pieceName: toolInput.pieceName,
+                    actionName: toolInput.actionName,
+                    input: toolInput.input,
+                    policy,
+                }) === 'deny') {
+                    log?.info?.({ tool: { name: 'ap_explore_data' }, piece: { name: toolInput.pieceName } }, 'Consent denied by policy, not asking')
+                    return policyDeniedResult(toolInput.actionName)
+                }
                 taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
@@ -1354,6 +1363,14 @@ function sanitizeLabelPart(value: string): string {
     return flattened.length > LABEL_PART_MAX_LENGTH ? `${flattened.slice(0, LABEL_PART_MAX_LENGTH)}…` : flattened
 }
 
+function optionalLabelPart(value: string | undefined): string | undefined {
+    if (isNil(value)) {
+        return undefined
+    }
+    const sanitized = sanitizeLabelPart(value)
+    return sanitized.length > 0 ? sanitized : undefined
+}
+
 function recipientSuffix(step: StepEffect): string {
     if (!isNil(step.recipient)) {
         return ` → ${sanitizeLabelPart(step.recipient)}`
@@ -1509,9 +1526,8 @@ function buildConsentPreview({ toolName, args, effects, flowName, resolved, reus
     reusable: boolean
     resolvedTargetName?: string
 }): ConsentPreview {
-    const targetName = !isNil(resolvedTargetName) && resolvedTargetName.trim().length > 0
-        ? sanitizeLabelPart(resolvedTargetName)
-        : chatToolConsentSpecs.isMcpConnectorTool(toolName) ? mcpConnectorToolLabel(toolName) : undefined
+    const targetName = optionalLabelPart(resolvedTargetName)
+        ?? (chatToolConsentSpecs.isMcpConnectorTool(toolName) ? mcpConnectorToolLabel(toolName) : undefined)
     const recordIds = isObject(args) && Array.isArray(args['recordIds']) ? args['recordIds'] : undefined
     return {
         category: consentCategoryOf(toolName),
@@ -1531,6 +1547,30 @@ function buildConsentPreview({ toolName, args, effects, flowName, resolved, reus
     }
 }
 
+async function resolveConsentTarget({ toolName, args, resolveTargetName, log }: {
+    toolName: string
+    args: unknown
+    resolveTargetName: ResolveConsentTargetName
+    log?: ChatToolLogger
+}): Promise<string | undefined> {
+    if (!Object.hasOwn(CONSENT_TARGET_LOOKUPS, toolName)) {
+        return undefined
+    }
+    const { entity, argKey } = CONSENT_TARGET_LOOKUPS[toolName]
+    const raw = isObject(args) ? args[argKey] : undefined
+    const ids = (Array.isArray(raw) ? raw : [raw])
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+    if (ids.length === 0) {
+        return undefined
+    }
+    const { data, error } = await tryCatch(() => resolveTargetName({ entity, ids }))
+    if (error) {
+        log?.warn({ error, tool: { name: toolName }, entity }, 'Consent target lookup failed, card will not name the target')
+        return undefined
+    }
+    return data
+}
+
 function gateLabelFor({ toolName, spec, flowName, effects, resolved, resolvedTargetName }: {
     toolName: string
     spec: ChatToolConsentSpec
@@ -1545,11 +1585,9 @@ function gateLabelFor({ toolName, spec, flowName, effects, resolved, resolvedTar
     if (spec.mode === 'static' && spec.kind === 'unknown') {
         return `Run "${toolName}" — we could not check what it will touch`
     }
-    const staticLabel = STATIC_TOOL_LABELS[toolName]
+    const staticLabel = Object.hasOwn(STATIC_TOOL_LABELS, toolName) ? STATIC_TOOL_LABELS[toolName] : undefined
     if (!isNil(staticLabel)) {
-        const named = !isNil(resolvedTargetName) && resolvedTargetName.trim().length > 0
-            ? sanitizeLabelPart(resolvedTargetName)
-            : undefined
+        const named = optionalLabelPart(resolvedTargetName)
         return isNil(named) ? staticLabel : `${staticLabel} — "${named}"`
     }
     const target = isNil(flowName) ? 'this automation' : `"${sanitizeLabelPart(flowName)}"`
@@ -1629,9 +1667,7 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
                         return originalExecute(args, options)
                     }
                 }
-                const { data: resolvedTargetName } = isNil(STATIC_TOOL_LABELS[toolName])
-                    ? { data: undefined }
-                    : await tryCatch(() => resolveTargetName({ toolInput: isObject(args) ? args : {} }))
+                const resolvedTargetName = await resolveConsentTarget({ toolName, args, resolveTargetName, log })
                 const gateLabel = gateLabelFor({ toolName, spec, flowName, effects, resolved, ...spreadIfDefined('resolvedTargetName', resolvedTargetName) })
                 const consent = buildConsentPreview({ toolName, args, effects, flowName, resolved, reusable, ...spreadIfDefined('resolvedTargetName', resolvedTargetName) })
                 eventEmitter.emitActionPreview({
@@ -1772,7 +1808,9 @@ export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unkn
 
 type PreviewFlowEffects = (params: { flowId?: string, flowRunId?: string, stepName?: string }) => Promise<unknown>
 
-type ResolveConsentTargetName = (params: { toolInput: Record<string, unknown> }) => Promise<string | undefined>
+type ConsentTargetEntity = 'flow' | 'table' | 'records' | 'field'
+
+type ResolveConsentTargetName = (params: { entity: ConsentTargetEntity, ids: string[] }) => Promise<string | undefined>
 
 type ChatToolLogger = { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
 
@@ -1786,6 +1824,13 @@ const STATIC_TOOL_LABELS: Record<string, string> = {
     ap_delete_table: 'Delete this table and everything in it',
     ap_delete_records: 'Delete these records',
     ap_manage_fields: 'Delete this table column and every value in it',
+}
+
+const CONSENT_TARGET_LOOKUPS: Record<string, { entity: ConsentTargetEntity, argKey: string }> = {
+    ap_delete_flow: { entity: 'flow', argKey: 'flowId' },
+    ap_delete_table: { entity: 'table', argKey: 'tableId' },
+    ap_delete_records: { entity: 'records', argKey: 'recordIds' },
+    ap_manage_fields: { entity: 'field', argKey: 'fieldId' },
 }
 
 const CONSENT_SCOPE_KEYS: Record<string, string> = {
@@ -1805,7 +1850,7 @@ const CONSENT_INTROS: Record<string, string> = {
     ap_test_flow: 'Run a live test of',
     ap_test_step: 'Run this step for real in',
     ap_retry_run: 'Re-run a real run of',
-    ap_run_code: 'Run code that reaches outside for',
+    ap_run_code: 'Run custom code for',
     ap_lock_and_publish: 'Publish and switch on',
     ap_change_flow_status: 'Switch on',
     ap_delete_flow: 'Delete',
