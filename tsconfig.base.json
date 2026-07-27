@@ -1007,6 +1007,9 @@
       "@activepieces/piece-podio": [
         "packages/pieces/community/podio/src/index.ts"
       ],
+      "@activepieces/piece-polotno-studio": [
+        "packages/pieces/community/polotno-studio/src/index.ts"
+      ],
       "@activepieces/piece-polydoc": [
         "packages/pieces/community/polydoc/src/index.ts"
       ],

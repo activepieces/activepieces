@@ -6987,6 +6987,20 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/polotno-studio": {
+      "name": "@activepieces/piece-polotno-studio",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/polydoc": {
       "name": "@activepieces/piece-polydoc",
       "version": "0.0.3",
@@ -12003,6 +12017,8 @@
     "@activepieces/piece-podio": ["@activepieces/piece-podio@workspace:packages/pieces/community/podio"],
 
     "@activepieces/piece-pollybot-ai": ["@activepieces/piece-pollybot-ai@workspace:packages/pieces/community/pollybot-ai"],
+
+    "@activepieces/piece-polotno-studio": ["@activepieces/piece-polotno-studio@workspace:packages/pieces/community/polotno-studio"],
 
     "@activepieces/piece-polydoc": ["@activepieces/piece-polydoc@workspace:packages/pieces/community/polydoc"],
 
