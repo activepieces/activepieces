@@ -438,6 +438,13 @@ describe('Property Validation', () => {
                 refreshers: [],
                 options: async () => ({ options: [] }),
             }),
+            requiredMultiSelect: Property.StaticMultiSelectDropdown({
+                displayName: 'Required Multi Select',
+                required: true,
+                options: {
+                    options: [{ label: 'Year', value: 'year' }],
+                },
+            }),
         }
 
         it('should parse stringified arrays into arrays', async () => {
@@ -474,7 +481,7 @@ describe('Property Validation', () => {
             expect(errors).toEqual({})
         })
 
-        it('should pass non-array values through unchanged', async () => {
+        it('should leave strings that are not arrays unchanged and fail validation', async () => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
                 {
                     staticMultiSelect: 'year',
@@ -488,7 +495,38 @@ describe('Property Validation', () => {
 
             expect(processedInput.staticMultiSelect).toEqual('year')
             expect(processedInput.multiSelect).toEqual('{"not":"an array"}')
+            expect(errors).toEqual({
+                staticMultiSelect: ['Expected array, received: year'],
+                multiSelect: ['Expected array, received: {"not":"an array"}'],
+            })
+        })
+
+        it('should treat an empty dynamic value as unset when optional', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { staticMultiSelect: '' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticMultiSelect).toBeUndefined()
             expect(errors).toEqual({})
+        })
+
+        it('should fail validation for an empty dynamic value when required', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { requiredMultiSelect: '' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.requiredMultiSelect).toEqual('')
+            expect(errors).toEqual({
+                requiredMultiSelect: ['Expected array, received: '],
+            })
         })
 
         it('should pass nil values through unchanged', async () => {
@@ -514,6 +552,10 @@ describe('Property Validation', () => {
             checkbox: Property.Checkbox({
                 displayName: 'Checkbox',
                 required: true,
+            }),
+            optionalCheckbox: Property.Checkbox({
+                displayName: 'Optional Checkbox',
+                required: false,
             }),
         }
 
@@ -558,6 +600,34 @@ describe('Property Validation', () => {
             expect(processedInput.checkbox).toEqual('not a boolean')
             expect(errors).toEqual({
                 checkbox: ['Expected boolean, received: not a boolean'],
+            })
+        })
+
+        it('should treat an empty dynamic value as unset when optional', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { optionalCheckbox: '' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.optionalCheckbox).toBeUndefined()
+            expect(errors).toEqual({})
+        })
+
+        it('should fail validation for an empty dynamic value when required', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { checkbox: '' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.checkbox).toEqual('')
+            expect(errors).toEqual({
+                checkbox: ['Expected boolean, received: '],
             })
         })
     })
