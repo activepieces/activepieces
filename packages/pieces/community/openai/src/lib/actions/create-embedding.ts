@@ -3,12 +3,13 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const createEmbedding = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: openaiAuth,
   name: 'create_embedding',
   displayName: 'Create Embedding',
   description:
     'Generate a vector embedding for the supplied text. Useful for semantic search, clustering and RAG pipelines.',
+  aiMetadata: { description: 'Converts one block of text into a numeric embedding vector for storage in a vector database or for semantic search, clustering, and RAG pipelines. It handles a single input per call, so batch by looping or by using the custom API call action, and the dimensions option only takes effect on the text-embedding-3 models. Pick search_embeddings instead when the goal is simply ranking a list of candidate strings against a query in one step with no vector persisted. Deterministic stateless inference, so repeat calls with the same model and text return the same vector and are idempotent.', idempotent: true },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',

@@ -36,10 +36,15 @@ interface ChatMessage {
 }
 
 export const askCometApiAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'ask-cometapi',
   displayName: 'Ask CometAPI',
   description: 'Sends a prompt to any AI model supported by CometAPI.',
+  aiMetadata: {
+    description:
+      'Sends a single-turn chat completion (one prompt plus an optional system message, with no multi-turn history) to any model in the CometAPI catalog, which fronts OpenAI, Anthropic, Gemini and other vendors behind one key. Requires a model id chosen from CometAPI\'s live model list, and accepts temperature, top_p and max tokens as optional sampling controls; pick it when the model should be selectable at runtime rather than fixed to a single vendor, and use this piece\'s Custom API Call for any other CometAPI endpoint such as image generation or embeddings. Not idempotent: each call runs a fresh generation and consumes tokens.',
+    idempotent: false,
+  },
   auth: cometApiAuth,
   props: {
     model: modelIdDropdown,
