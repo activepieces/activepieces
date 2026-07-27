@@ -17,9 +17,16 @@ The central service for persisting binary files, backing the execution engine an
 - `file` entity columns: `location`, `s3Key`, `type`, `compression`, `data` (bytea), `metadata` (jsonb).
 - Files served through `PUT/GET /v1/files/:fileId`; legacy `/v1/step-files/signed` is a thin JWT-validating 302 redirect.
 
-### Streaming
-- `ctx.files.write()` accepts a `Readable` or `Buffer` (pieces-framework ≥ 0.34.0). Streams are detected by **absent `Content-Length`** → `s3Helper.uploadStream` (~5MB parts) for S3, buffered into bytea for DB. See ADR-0007/0008.
-- Inbound webhook files stream to S3 too; `@fastify/multipart` global `attachFieldsToBody` was removed, so each multipart consumer opts in explicitly.
+### Streaming — write side (into AP storage)
+- `ctx.files.write()` accepts a `Readable` or `Buffer` (pieces-framework ≥ 0.34.0). Streams are detected by **absent `Content-Length`** → `s3Helper.uploadStream` (~5MB parts) for S3, buffered into bytea for DB. See [decision 000008](../../decisions/000008-streaming-file-writes-go-through-the-app-one-path.md).
+- Reference consumer: the Amazon S3 **Read File** action streams `getObject().Body` straight into `files.write`, no in-sandbox buffering.
+- Inbound webhook files stream to S3 too; `@fastify/multipart` global `attachFieldsToBody` was removed, so each multipart consumer opts in explicitly ([decision 000011](../../decisions/000011-webhook-files-stream-to-s3-by-dropping-global-multipart-buffering.md)).
+
+### Streaming — input side (out to an external service)
+- `Property.File({ streaming: true })` resolves to `ApStreamingFile = { filename, extension?, size?, body: Readable }` instead of the buffered `ApFile` (pieces-framework ≥ 0.35.0). Same `PropertyType.FILE` on the wire, so **zero frontend change**. See [decision 000014](../../decisions/000014-streaming-file-inputs-resolve-to-a-lazy-apstreamingfile.md).
+- Resolved in the engine's `fileProcessor` (`packages/server/engine/src/lib/variables/processors/file.ts`): a URL exposes the undrained `fetch` body via `Readable.fromWeb` with `size` from `Content-Length`; a base64 data URL decodes to a one-shot `Readable`. Replaces the unbounded `arrayBuffer()` on the URL path; the `catch → null` contract is kept.
+- Reference consumer: the Amazon S3 **Upload File** action — `putObject({ Body: file.body, ContentLength: file.size })`, buffering only when `size` is absent.
+- The body is **one-shot**: no whole-stream retry, and `size` is best-effort.
 
 ### Gotchas
 - Cleanup job runs hourly (`30 */1 * * *`), deletes stale execution files past `EXECUTION_DATA_RETENTION_DAYS`; processes ~4000/iteration, deletes S3 keys in batches of 100.
