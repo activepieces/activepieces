@@ -46,10 +46,5 @@ The four calls a run emits to the app during execution: `updateRunProgress`, `up
 
 ## Pages
 
-- **Workers** — the poll loop, worker groups, slots and reservations
+- **Workers** — the poll loop, worker groups, slots and reservations, and its gotchas: the version gate, system-job edition skew, `kamal app exec` leaking a permanent worker, serial per-queue dispatch as the real throughput cap, the silent mid-poll-loop wedge, and why polling starves first
 - **Benchmark CLI** — measuring throughput; queue-wait vs service-time
-- **Gotcha: engine vitest needs fresh core-execution dist** — why a stale dist fails the engine tests
-- **Gotcha: system-job "No handler" = worker running the wrong edition** — diagnosing edition skew
-- **Gotcha: `kamal app exec` on the worker image leaks a permanent worker** — the entrypoint ignores your command and boots a worker
-- **Gotcha: a worker can wedge mid-poll-loop and still report healthy** — live socket, green healthcheck, zero polls; how to tell it apart from the version gate and the app-side dispatcher
-- **Gotcha: polling starves first when the fleet loses capacity** — `EXECUTE_POLLING` is priority 5, so "my schedule flow isn't triggering" is the earliest symptom of a partial wedge; how to read the priority lanes
