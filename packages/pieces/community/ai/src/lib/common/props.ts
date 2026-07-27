@@ -1,5 +1,4 @@
-import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/core-utils';
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ACTIVEPIECES_CHAT_TIERS, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from '@activepieces/pieces-framework';

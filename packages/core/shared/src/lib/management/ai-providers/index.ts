@@ -260,22 +260,31 @@ export type AIErrorResponse = z.infer<typeof AIErrorResponse>
  * prefixes or missing input fall back to the raw inputs so callers never end up with a
  * wrong-but-confident answer.
  */
-const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
-const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
-const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
-const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
-const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
+export function getEffectiveProviderAndModel({
+    provider,
+    model,
+}: {
+    provider: string | undefined
+    model: string | undefined
+}): { provider: string | undefined, model: string | undefined } {
+    if (provider !== AIProviderName.CLOUDFLARE_GATEWAY || !model) {
+        return { provider, model }
+    }
+    const split = splitCloudflareGatewayModelId(model)
+    // Prefix must match map keys (lowercase); some gateways/UI send "OpenAI/...".
+    const gatewaySubmodelPrefix = (split.provider ?? '').trim().toLowerCase()
+    const mapped = CF_GATEWAY_SUBMODEL_TO_PROVIDER[gatewaySubmodelPrefix]
+    if (!mapped) {
+        return { provider, model }
+    }
+    return { provider: mapped, model: split.model }
+}
 
-export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
-    [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
-    [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
-    [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
-    [AIProviderName.ACTIVEPIECES]: [
-        ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
-        ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
-        ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
-        ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
-    ],
+const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
+    openai: AIProviderName.OPENAI,
+    anthropic: AIProviderName.ANTHROPIC,
+    'google-ai-studio': AIProviderName.GOOGLE,
+    'google-vertex-ai': AIProviderName.GOOGLE,
 }
 
 /**
@@ -333,24 +342,11 @@ export function splitCloudflareGatewayModelId(modelId: string): {
     }
 }
 
-const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
-
-const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
-    [AIProviderName.OPENAI]: 128_000,
-    [AIProviderName.ANTHROPIC]: 200_000,
-    [AIProviderName.GOOGLE]: 1_048_576,
-    [AIProviderName.BEDROCK]: 200_000,
-    [AIProviderName.AZURE]: 128_000,
-    [AIProviderName.OPENROUTER]: 128_000,
-    [AIProviderName.ACTIVEPIECES]: 200_000,
-    [AIProviderName.MISTRAL]: 128_000,
-}
-
-function getMaxContextTokens({ provider }: { provider: AIProviderName | undefined }): number {
-    if (!provider) return DEFAULT_MAX_CONTEXT_TOKENS
-    return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
-}
-
-export const aiProviderUtils = {
-    getMaxContextTokens,
-}
+export {
+    ALLOWED_CHAT_MODELS_BY_PROVIDER,
+    ACTIVEPIECES_CHAT_TIERS,
+    DEFAULT_CHAT_TIER_ID,
+    AI_PROVIDER_CAPABILITIES,
+    aiProviderUtils,
+} from '@activepieces/core-piece-types'
+export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode } from '@activepieces/core-piece-types'
