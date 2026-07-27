@@ -1,5 +1,6 @@
 import { PieceCategory, createPiece } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from './lib/auth';
+import { renderImage } from './lib/actions/render-image';
 
 export const polotnoStudio = createPiece({
   displayName: 'Polotno Studio',
@@ -9,6 +10,6 @@ export const polotnoStudio = createPiece({
   categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.MARKETING],
   auth: polotnoStudioAuth,
   authors: ['polotno'],
-  actions: [],
+  actions: [renderImage],
   triggers: [],
 });
