@@ -1,6 +1,6 @@
 import { ChatAutonomyMode } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ShieldCheck, ShieldOff, TriangleAlert } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -19,11 +19,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
@@ -51,33 +46,26 @@ export function ChatAutonomySelector({
   return (
     <>
       <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  'gap-1.5 text-xs',
-                  fullAccess
-                    ? 'border border-warning/60 bg-warning-50 text-warning-700 hover:bg-warning-100 hover:text-warning-800 dark:border-warning/50 dark:bg-warning-950 dark:text-warning-300'
-                    : 'text-muted-foreground',
-                )}
-                type="button"
-              >
-                {fullAccess ? (
-                  <ShieldOff className="size-3.5" />
-                ) : (
-                  <ShieldCheck className="size-3.5" />
-                )}
-                {fullAccess ? t('Full access') : t('Asks first')}
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            {fullAccess ? t(FULL_ACCESS_SUMMARY) : t(ASK_FIRST_SUMMARY)}
-          </TooltipContent>
-        </Tooltip>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              'gap-1.5 text-xs',
+              fullAccess
+                ? 'text-warning-700 hover:text-warning-800 dark:text-warning-300'
+                : 'text-muted-foreground',
+            )}
+            type="button"
+          >
+            {fullAccess ? (
+              <ShieldAlert className="size-3.5" />
+            ) : (
+              <ShieldCheck className="size-3.5" />
+            )}
+            {fullAccess ? t('Full access') : t('Asks first')}
+          </Button>
+        </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
           <DropdownMenuRadioGroup
             value={autonomyMode}
@@ -104,7 +92,7 @@ export function ChatAutonomySelector({
             >
               <div className="flex flex-col gap-0.5">
                 <span className="flex items-center gap-1.5 text-sm font-medium">
-                  <ShieldOff className="size-4 shrink-0 text-warning-700 dark:text-warning-300" />
+                  <ShieldAlert className="size-4 shrink-0 text-warning-700 dark:text-warning-300" />
                   {t('Full access')}
                 </span>
                 <span className="text-xs text-muted-foreground">
