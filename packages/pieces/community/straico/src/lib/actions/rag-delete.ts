@@ -8,11 +8,12 @@ import {
 import { baseUrlv0 } from '../common/common';
 
 export const deleteRag = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'delete_rag',
   displayName: 'Delete RAG',
   description: 'Delete a specific RAG (Retrieval-Augmented Generation) base by its ID.',
+  aiMetadata: { description: 'Permanently deletes a RAG knowledge base and its indexed documents from the account. Use it to retire a corpus entirely; there is no action to remove a single file from a base, so rebuilding a smaller base means Create RAG again. Requires a raw RAG id typed as text, obtainable from List RAGs, and any agent still pointing at that base will lose its grounding. Idempotent: the base ends up gone regardless of how many times it is called.', idempotent: true },
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',

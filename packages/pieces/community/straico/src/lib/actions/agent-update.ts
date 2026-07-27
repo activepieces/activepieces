@@ -38,11 +38,12 @@ interface AgentUpdateResponse {
 }
 
 export const agentUpdate = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'agent_update',
   displayName: 'Update Agent',
   description: 'Update the details of a specific agent',
+  aiMetadata: { description: 'Edits an existing Straico agent in place, changing any subset of its name, description, custom prompt, default LLM, status (active or inactive) and visibility (private or public). Use it to retune or pause an agent instead of recreating it with Create Agent, and use Add RAG to Agent when the change is attaching a knowledge base rather than editing these fields. Requires the agent id plus at least one field to change, otherwise the call fails. Idempotent: sending the same values leaves the agent in the same state.', idempotent: true },
   props: {
     agentId: Property.Dropdown({
   auth: straicoAuth,
