@@ -2,17 +2,21 @@ import { ActionPreviewEvent, ActionReceiptEvent, chatConsent, SendChatEmailRespo
 import { describe, expect, it, vi } from 'vitest'
 import { ChatEventEmitter, chatWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
 
-function makeMockEventEmitter(): { eventEmitter: ChatEventEmitter, progressEvents: ToolProgressEvent[] } {
+function makeMockEventEmitter(): { eventEmitter: ChatEventEmitter, progressEvents: ToolProgressEvent[], previewEvents: ActionPreviewEvent[] } {
     const progressEvents: ToolProgressEvent[] = []
+    const previewEvents: ActionPreviewEvent[] = []
     return {
         eventEmitter: {
             emitToolProgress: (data: ToolProgressEvent) => {
-                progressEvents.push(data) 
+                progressEvents.push(data)
             },
-            emitActionPreview: () => {},
+            emitActionPreview: (data: ActionPreviewEvent) => {
+                previewEvents.push(data)
+            },
             emitActionReceipt: () => {},
         },
         progressEvents,
+        previewEvents,
     }
 }
 
@@ -635,15 +639,16 @@ describe('chatWorkerTools', () => {
 
 type FakeGate = { gateId: string, displayName: string }
 
-const CONSENT_GATED_TOOL_NAMES = ['ap_test_flow', 'ap_test_step', 'ap_retry_run', 'ap_run_code', 'ap_delete_flow', 'ap_delete_table', 'ap_delete_records', 'ap_lock_and_publish', 'ap_change_flow_status', 'ap_manage_fields', 'mcp__attio__create_record', 'ap_brand_new_tool', 'ap_list_flows', 'ap_flow_structure', 'ap_insert_records', 'ap_add_step']
+const CONSENT_GATED_TOOL_NAMES = ['ap_test_flow', 'ap_test_step', 'ap_retry_run', 'ap_run_code', 'ap_delete_flow', 'ap_delete_table', 'ap_delete_records', 'ap_lock_and_publish', 'ap_change_flow_status', 'ap_manage_fields', 'mcp__attio__create_record', 'mcp__stripe__create_refund', 'mcp__attio__delete_record', 'ap_brand_new_tool', 'ap_list_flows', 'ap_flow_structure', 'ap_insert_records', 'ap_add_step']
 
-function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true, disabled = false, policy }: {
+function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true, disabled = false, policy, serverTargetName }: {
     effects: { stepName: string, displayName: string, kind: string, detail: string, recipient?: string, inputDigest?: string }[]
     decision?: 'approved' | 'declined' | 'timeout'
     remembered?: boolean
     resolved?: boolean
     disabled?: boolean
     policy?: ReturnType<typeof chatConsent.composePolicy>
+    serverTargetName?: string
 }) {
     const ran: unknown[] = []
     const previews: ActionPreviewEvent[] = []
@@ -651,6 +656,7 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
     const remembers: string[] = []
     const checked: string[] = []
     const previewCalls: unknown[] = []
+    const targetNameCalls: unknown[] = []
 
     const tools = Object.fromEntries(CONSENT_GATED_TOOL_NAMES.map((toolName) => [toolName, {
         execute: async (args: unknown) => {
@@ -679,6 +685,10 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
                 })),
             }
         },
+        resolveTargetName: async ({ toolInput }) => {
+            targetNameCalls.push(toolInput)
+            return serverTargetName
+        },
         checkRememberedConsent: async ({ signature }) => {
             checked.push(signature)
             return remembered
@@ -699,7 +709,7 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
         },
     })
 
-    return { wrapped, ran, previews, gates, remembers, checked, previewCalls }
+    return { wrapped, ran, previews, gates, remembers, checked, previewCalls, targetNameCalls }
 }
 
 const SEND_STEP = { stepName: 'notify', displayName: 'Email me the digest', kind: 'outward_send', detail: 'gmail · send_email', recipient: 'omar@activepieces.com' }
@@ -885,12 +895,43 @@ describe('chatWorkerTools.wrapWithConsent — every gated tool is really wrapped
 
 describe('chatWorkerTools.wrapWithConsent — deletion goes through its real path', () => {
     it('gates a record deletion from its static effect, without any flow preview', async () => {
-        const h = makeConsentHarness({ effects: [] })
-        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_delete_records', args: { recordIds: ['r1', 'r2', 'r3'], displayName: 'Tidy up the Leads table' } })
+        const h = makeConsentHarness({ effects: [], serverTargetName: 'Leads' })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_delete_records', args: { recordIds: ['r1', 'r2', 'r3'] } })
         expect(h.previewCalls).toHaveLength(0)
         expect(h.gates).toHaveLength(1)
-        expect(h.gates[0].displayName).toBe('Delete these records — "Tidy up the Leads table"')
+        expect(h.gates[0].displayName).toBe('Delete these records — "Leads"')
         expect(h.ran).toHaveLength(1)
+    })
+
+    it('names the target from the server, never from what the model typed', async () => {
+        const h = makeConsentHarness({ effects: [], serverTargetName: 'Production Customers' })
+        await runGatedTool({
+            wrapped: h.wrapped,
+            toolName: 'ap_delete_table',
+            args: { tableId: 't1', displayName: 'Delete the Temp Import scratch table' },
+        })
+        expect(h.gates[0].displayName).toBe('Delete this table and everything in it — "Production Customers"')
+        expect(h.previews[0].consent?.targetName).toBe('Production Customers')
+        expect(h.targetNameCalls).toEqual([{ tableId: 't1', displayName: 'Delete the Temp Import scratch table' }])
+    })
+
+    it('does not spend a lookup on tools whose card never shows a target name', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP], serverTargetName: 'Daily Sales Digest' })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(1)
+        expect(h.targetNameCalls).toHaveLength(0)
+        expect(h.previews[0].consent?.targetName).toBeUndefined()
+    })
+
+    it('stays unnamed rather than borrowing the model\'s label when the server cannot resolve it', async () => {
+        const h = makeConsentHarness({ effects: [] })
+        await runGatedTool({
+            wrapped: h.wrapped,
+            toolName: 'ap_delete_table',
+            args: { tableId: 't1', displayName: 'Delete the Temp Import scratch table' },
+        })
+        expect(h.gates[0].displayName).toBe('Delete this table and everything in it')
+        expect(h.previews[0].consent?.targetName).toBeUndefined()
     })
 
     it('asks again for a second deletion in the same conversation — a deletion yes is never remembered', async () => {
@@ -1016,6 +1057,27 @@ describe('chatWorkerTools.wrapWithConsent — autonomy policy', () => {
         expect(h.ran).toHaveLength(0)
     })
 
+    it('still asks before a connector refund under full access, as the dialog promises', async () => {
+        const h = makeConsentHarness({ effects: [], policy: FULL_ACCESS, decision: 'declined' })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'mcp__stripe__create_refund', args: { amount: 4200 } })
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(0)
+    })
+
+    it('still asks before a connector deletion under full access', async () => {
+        const h = makeConsentHarness({ effects: [], policy: FULL_ACCESS, decision: 'declined' })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'mcp__attio__delete_record', args: { id: 'r1' } })
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(0)
+    })
+
+    it('lets an ordinary connector app change run card-free under full access', async () => {
+        const h = makeConsentHarness({ effects: [], policy: FULL_ACCESS })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'mcp__attio__create_record', args: { name: 'Acme' } })
+        expect(h.gates).toHaveLength(0)
+        expect(h.ran).toHaveLength(1)
+    })
+
     it('refuses outright, without asking, when the workspace denies an effect kind', async () => {
         const denyPolicy = chatConsent.composePolicy({ fullAccess: false, overrides: { financial: 'deny' } })
         const h = makeConsentHarness({ effects: [REFUND_STEP], policy: denyPolicy })
@@ -1040,10 +1102,92 @@ describe('chatWorkerTools.wrapWithConsent — code runs', () => {
         expect(h.previewCalls).toHaveLength(0)
     })
 
-    it('lets self-contained code run silently', async () => {
+    it('gates code that looks self-contained, because reading it cannot prove that it is', async () => {
         const h = makeConsentHarness({ effects: [] })
         await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_run_code', args: { code: 'return inputs.a + inputs.b', recipe: ['Add the numbers'] } })
-        expect(h.gates).toHaveLength(0)
+        expect(h.gates).toHaveLength(1)
         expect(h.ran).toHaveLength(1)
+    })
+
+    it('gates code that reaches the network without naming it, under full access too', async () => {
+        const evasive = 'return (()=>{}).constructor("return this")()["fet"+"ch"](inputs.url, { method: "POST", body: inputs.secret })'
+        const h = makeConsentHarness({ effects: [], policy: chatConsent.composePolicy({ fullAccess: true }), decision: 'declined' })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_run_code', args: { code: evasive, recipe: ['Sync the data'] } })
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(0)
+    })
+})
+
+describe('chatWorkerTools self-gated tools honour an admin deny', () => {
+    it('refuses an execute_action the workspace denies, without opening a card', async () => {
+        const { eventEmitter, previewEvents } = makeMockEventEmitter()
+        const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
+        const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+        const tools = chatWorkerTools.createCrossProjectTools({
+            executeTool,
+            eventEmitter,
+            waitForApproval,
+            guides: {},
+            taintState: { tainted: false },
+            policy: chatConsent.composePolicy({ fullAccess: false, overrides: { outward_send: 'deny' } }),
+        })
+
+        const result = await tools.ap_execute_action.execute({
+            pieceName: 'slack',
+            actionName: 'send_message',
+            input: { channel: 'C01', text: 'Hi' },
+            needsConfirmation: true,
+        }, { toolCallId: 'deny-1', messages: [], abortSignal: undefined as unknown as AbortSignal }) as { content: { text: string }[], _agentGuidance: string }
+
+        expect(waitForApproval).not.toHaveBeenCalled()
+        expect(executeTool).not.toHaveBeenCalled()
+        expect(previewEvents).toHaveLength(0)
+        expect(result.content[0].text).toContain('Not allowed here')
+        expect(result._agentGuidance).toContain('policy')
+    })
+
+    it('refuses to send email the workspace denies, even to the user themselves', async () => {
+        const { eventEmitter } = makeMockEventEmitter()
+        const sendEmail = vi.fn().mockResolvedValue({ sent: true, message: 'Email sent.' })
+        const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+        const tools = chatWorkerTools.createEmailTools({
+            sendEmail,
+            eventEmitter,
+            userEmail: 'omar@activepieces.com',
+            waitForApproval,
+            policy: chatConsent.composePolicy({ fullAccess: false, overrides: { outward_send: 'deny' } }),
+        })
+
+        const result = await tools.ap_send_email.execute({
+            to: ['omar@activepieces.com'],
+            subject: 'Recap',
+            body: 'Here it is',
+        }, { toolCallId: 'deny-2', messages: [], abortSignal: undefined as unknown as AbortSignal }) as { content: { text: string }[] }
+
+        expect(sendEmail).not.toHaveBeenCalled()
+        expect(waitForApproval).not.toHaveBeenCalled()
+        expect(result.content[0].text).toContain('Not allowed here')
+    })
+
+    it('still gates an external recipient when the policy merely allows sends', async () => {
+        const { eventEmitter } = makeMockEventEmitter()
+        const sendEmail = vi.fn().mockResolvedValue({ sent: true, message: 'Email sent.' })
+        const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+        const tools = chatWorkerTools.createEmailTools({
+            sendEmail,
+            eventEmitter,
+            userEmail: 'omar@activepieces.com',
+            waitForApproval,
+            policy: chatConsent.composePolicy({ fullAccess: true }),
+        })
+
+        await tools.ap_send_email.execute({
+            to: ['someone@else.com'],
+            subject: 'Recap',
+            body: 'Here it is',
+        }, { toolCallId: 'allow-1', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+        expect(waitForApproval).toHaveBeenCalledOnce()
+        expect(sendEmail).toHaveBeenCalledOnce()
     })
 })

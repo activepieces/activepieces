@@ -1,7 +1,9 @@
 import { isNil, isObject } from '@activepieces/core-utils'
-import { ActionEffectKind } from './action-effect'
+import { actionEffect, ActionEffectKind } from './action-effect'
 
 const MCP_CONNECTOR_TOOL_PREFIX = 'mcp__'
+const MCP_CONNECTOR_TOOL_PATTERN = /^mcp__[^_]+__(.+)$/
+const MCP_CONNECTOR_FLOOR_KIND: ActionEffectKind = 'external_write'
 
 const CHAT_TOOL_CONSENT_SPECS: Record<string, ChatToolConsentSpec> = {
     ap_test_flow: { mode: 'flow_effects' },
@@ -84,9 +86,20 @@ function consentSpecOf(toolName: string): ChatToolConsentSpec {
         return spec
     }
     if (toolName.startsWith(MCP_CONNECTOR_TOOL_PREFIX)) {
-        return { mode: 'static', kind: 'external_write' }
+        return { mode: 'static', kind: mcpConnectorEffectKind(toolName) }
     }
     return { mode: 'static', kind: 'unknown' }
+}
+
+function mcpConnectorEffectKind(toolName: string): ActionEffectKind {
+    const actionName = MCP_CONNECTOR_TOOL_PATTERN.exec(toolName)?.[1]
+    if (isNil(actionName)) {
+        return 'unknown'
+    }
+    return actionEffect.stricter({
+        a: MCP_CONNECTOR_FLOOR_KIND,
+        b: actionEffect.guess({ actionName }),
+    })
 }
 
 function specApplies({ spec, args }: { spec: ChatToolConsentSpec, args: unknown }): boolean {

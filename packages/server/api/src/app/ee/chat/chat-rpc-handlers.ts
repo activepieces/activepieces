@@ -14,6 +14,8 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
+import { recordService } from '../../tables/record/record.service'
+import { tableService } from '../../tables/table/table.service'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
@@ -75,6 +77,34 @@ async function flowIdOfRun({ flowRunId, projectId, log }: {
     }
     const { data: run } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
     return run?.flowId
+}
+
+async function resolveConsentTargetName({ toolInput, projectId, log }: {
+    toolInput: Record<string, unknown>
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<string | undefined> {
+    const flowId = toolInput['flowId']
+    if (typeof flowId === 'string') {
+        const { data: flow } = await tryCatch(() => flowService(log).getOnePopulated({ id: flowId, projectId }))
+        return flow?.version.displayName
+    }
+    const tableId = toolInput['tableId']
+    if (typeof tableId === 'string') {
+        const { data: table } = await tryCatch(() => tableService.getOneOrThrow({ id: tableId, projectId }))
+        return table?.name
+    }
+    const recordIds = toolInput['recordIds']
+    const firstRecordId = Array.isArray(recordIds) ? recordIds.find((id): id is string => typeof id === 'string') : undefined
+    if (isNil(firstRecordId)) {
+        return undefined
+    }
+    const { data: record } = await tryCatch(() => recordService.getById({ id: firstRecordId, projectId }))
+    if (isNil(record)) {
+        return undefined
+    }
+    const { data: table } = await tryCatch(() => tableService.getOneOrThrow({ id: record.tableId, projectId }))
+    return table?.name
 }
 
 async function resolveConsentPolicy({ conversation, platformId, log }: {
@@ -585,6 +615,21 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             }
             const approved = await chatApprovalGate.hasRememberedConsent({ conversationId: input.conversationId, signature })
             return { result: { approved } }
+        }
+        if (input.toolName === '__consent_target_name') {
+            if (typeof input.conversationId !== 'string') {
+                return { result: { targetName: null } }
+            }
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            if (isNil(conversation.projectId)) {
+                return { result: { targetName: null } }
+            }
+            const targetName = await resolveConsentTargetName({
+                toolInput: input.toolInput,
+                projectId: conversation.projectId,
+                log,
+            })
+            return { result: { targetName: targetName ?? null } }
         }
         ensureEffectCatalog()
         if (input.toolName === '__flow_write_check') {

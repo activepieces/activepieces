@@ -453,7 +453,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState, policy })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState, policy, log })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -481,6 +481,8 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             userEmail,
             waitForApproval,
             onGateOpened: storePendingGate,
+            policy,
+            log,
         })
         : {}
 
@@ -502,6 +504,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
                 conversationId,
             })
             return response.result
+        },
+        resolveTargetName: async ({ toolInput }) => {
+            const response = await ctx.apiClient.executeChatTool({ toolName: '__consent_target_name', toolInput, platformId, userId, conversationId })
+            const targetName = isObject(response.result) ? response.result['targetName'] : undefined
+            return typeof targetName === 'string' ? targetName : undefined
         },
         checkRememberedConsent: async ({ signature }) => {
             const response = await ctx.apiClient.executeChatTool({ toolName: '__consent_check', toolInput: { signature }, platformId, userId, conversationId })

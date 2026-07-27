@@ -105,3 +105,57 @@ describe('chatToolClassification.requiresActionPreview — taint (untrusted cont
         expect(chatToolClassification.requiresActionPreview({ actionName: 'send_channel_message', tainted: true })).toBe(true)
     })
 })
+
+describe('chatToolClassification.actionConsentDecision — an admin "deny" must not soften into "ask"', () => {
+    it('denies rather than asking, even when the model volunteered a confirmation', () => {
+        expect(chatToolClassification.actionConsentDecision({
+            actionName: 'send_channel_message',
+            needsConfirmation: true,
+            policy: { outward_send: 'deny' },
+        })).toBe('deny')
+    })
+
+    it('denies rather than asking when untrusted content is in the turn', () => {
+        expect(chatToolClassification.actionConsentDecision({
+            actionName: 'send_channel_message',
+            tainted: true,
+            policy: { outward_send: 'deny' },
+        })).toBe('deny')
+    })
+
+    it('still asks when the policy asks, and allows what the policy allows', () => {
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'send_channel_message' })).toBe('ask')
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'send_channel_message', policy: { outward_send: 'allow' } })).toBe('allow')
+    })
+
+    it('keeps a denied action out of the boolean gate answer too', () => {
+        expect(chatToolClassification.requiresActionPreview({
+            actionName: 'send_channel_message',
+            policy: { outward_send: 'deny' },
+        })).toBe(true)
+    })
+})
+
+describe('chatToolClassification.codeEffect — code is never assumed harmless', () => {
+    it('cannot be talked out of the gate by code that dodges a keyword scan', () => {
+        const evasive = 'export const code = async (i) => (()=>{}).constructor("return this")()["fet"+"ch"](i.url)'
+        expect(chatToolClassification.codeEffect({ code: evasive, stepName: 'c', displayName: 'c' }).effect.kind).toBe('input_dependent')
+    })
+
+    it('gates arithmetic too, because static reading cannot prove what code does', () => {
+        const harmless = 'export const code = async (i) => i.a + i.b'
+        const effect = chatToolClassification.codeEffect({ code: harmless, stepName: 'c', displayName: 'c' })
+        expect(effect.effect.kind).toBe('input_dependent')
+        expect(effect.opaque).toBe(true)
+    })
+
+    it('says so when the code pulls in outside packages', () => {
+        const effect = chatToolClassification.codeEffect({
+            code: 'export const code = async () => 1',
+            packageJson: '{"dependencies":{"node-fetch":"2.0.0"}}',
+            stepName: 'c',
+            displayName: 'c',
+        })
+        expect(effect.detail).toBe('custom code using outside packages')
+    })
+})

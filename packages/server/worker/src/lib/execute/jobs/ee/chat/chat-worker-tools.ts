@@ -273,6 +273,13 @@ function gateNoResponseResult(step: string): GateOutcomeResult {
     })
 }
 
+function policyDeniedResult(what: string): GateOutcomeResult {
+    return gateOutcomeResult({
+        userLine: '❌ Not allowed here — nothing ran.',
+        modelGuidance: `"${what}" is blocked by the workspace's policy, not by the user. Asking will not change it, and there is no approval that unlocks it. Tell the user plainly that this kind of action is not permitted in this workspace and offer an alternative that avoids it.`,
+    })
+}
+
 function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
@@ -555,7 +562,7 @@ function createProgressGuard() {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState, policy }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState, policy, log }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
@@ -563,6 +570,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
     guides: Record<string, string>
     taintState: TaintState
     policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
+    log?: ChatToolLogger
 }): ToolSet {
     ensureEffectCatalog()
     const progressGuard = createProgressGuard()
@@ -618,7 +626,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                         return guardResult
                     }
                 }
-                const needsPreview = chatToolClassification.requiresActionPreview({
+                const consentDecision = chatToolClassification.actionConsentDecision({
                     pieceName: toolInput.pieceName,
                     actionName: toolInput.actionName,
                     input: toolInput.input,
@@ -626,8 +634,12 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     tainted: taintState.tainted,
                     policy,
                 })
+                if (consentDecision === 'deny') {
+                    log?.info?.({ tool: { name: 'ap_execute_action' }, piece: { name: toolInput.pieceName } }, 'Consent denied by policy, not asking')
+                    return policyDeniedResult(toolInput.actionName)
+                }
 
-                if (needsPreview) {
+                if (consentDecision === 'ask') {
                     const previewData: ActionPreviewEvent = {
                         toolCallId: options.toolCallId,
                         pieceName: toolInput.pieceName,
@@ -1010,12 +1022,14 @@ function createImageTools({ imageGeneration, saveFile, emitImage }: {
     }
 }
 
-function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval, onGateOpened }: {
+function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval, onGateOpened, policy, log }: {
     sendEmail: (params: { to: string[], subject: string, body: string, gateId?: string }) => Promise<SendChatEmailResponse>
     eventEmitter: ChatEventEmitter
     userEmail: string
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
+    log?: ChatToolLogger
 }): ToolSet {
     const normalizedSelf = userEmail.toLowerCase().trim()
     return {
@@ -1029,6 +1043,10 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
             }),
             execute: async (toolInput, options) => {
                 const displayName = toolInput.title ?? 'Send email'
+                if (chatConsent.decide({ kind: 'outward_send', policy }) === 'deny') {
+                    log?.info?.({ tool: { name: 'ap_send_email' } }, 'Consent denied by policy, not asking')
+                    return policyDeniedResult('Send an email')
+                }
 
                 // Require user approval for any non-self recipient — injected content (a fetched page
                 // or tool result) could otherwise steer the model into emailing data to an attacker.
@@ -1482,16 +1500,17 @@ function consentSeverityOf({ effects, resolved }: { effects: StepEffect[], resol
     return 'external'
 }
 
-function buildConsentPreview({ toolName, args, effects, flowName, resolved, reusable }: {
+function buildConsentPreview({ toolName, args, effects, flowName, resolved, reusable, resolvedTargetName }: {
     toolName: string
     args: unknown
     effects: StepEffect[]
     flowName?: string
     resolved: boolean
     reusable: boolean
+    resolvedTargetName?: string
 }): ConsentPreview {
-    const targetName = isObject(args) && typeof args['displayName'] === 'string' && args['displayName'].trim().length > 0
-        ? sanitizeLabelPart(args['displayName'])
+    const targetName = !isNil(resolvedTargetName) && resolvedTargetName.trim().length > 0
+        ? sanitizeLabelPart(resolvedTargetName)
         : chatToolConsentSpecs.isMcpConnectorTool(toolName) ? mcpConnectorToolLabel(toolName) : undefined
     const recordIds = isObject(args) && Array.isArray(args['recordIds']) ? args['recordIds'] : undefined
     return {
@@ -1512,13 +1531,13 @@ function buildConsentPreview({ toolName, args, effects, flowName, resolved, reus
     }
 }
 
-function gateLabelFor({ toolName, spec, flowName, effects, resolved, args }: {
+function gateLabelFor({ toolName, spec, flowName, effects, resolved, resolvedTargetName }: {
     toolName: string
     spec: ChatToolConsentSpec
     flowName?: string
     effects: StepEffect[]
     resolved: boolean
-    args?: unknown
+    resolvedTargetName?: string
 }): string {
     if (spec.mode === 'static' && chatToolConsentSpecs.isMcpConnectorTool(toolName)) {
         return `Use "${mcpConnectorToolLabel(toolName)}" — it can change things in a connected app`
@@ -1528,8 +1547,8 @@ function gateLabelFor({ toolName, spec, flowName, effects, resolved, args }: {
     }
     const staticLabel = STATIC_TOOL_LABELS[toolName]
     if (!isNil(staticLabel)) {
-        const named = isObject(args) && typeof args['displayName'] === 'string' && args['displayName'].trim().length > 0
-            ? sanitizeLabelPart(args['displayName'])
+        const named = !isNil(resolvedTargetName) && resolvedTargetName.trim().length > 0
+            ? sanitizeLabelPart(resolvedTargetName)
             : undefined
         return isNil(named) ? staticLabel : `${staticLabel} — "${named}"`
     }
@@ -1544,17 +1563,18 @@ function gateLabelFor({ toolName, spec, flowName, effects, resolved, args }: {
     return summary.length > 0 ? `${intro} ${target} — performs: ${summary}` : `${intro} ${target}`
 }
 
-function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, policy, previewFlowEffects, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
+function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, policy, previewFlowEffects, resolveTargetName, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
     tools: T
     disabled?: boolean
     policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
     previewFlowEffects: PreviewFlowEffects
+    resolveTargetName: ResolveConsentTargetName
     checkRememberedConsent: (params: { signature: string }) => Promise<boolean>
     rememberConsent: (params: { signature: string }) => Promise<void>
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     eventEmitter: ChatEventEmitter
-    log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
+    log?: ChatToolLogger
 }): T {
     ensureEffectCatalog()
     if (disabled === true) {
@@ -1609,8 +1629,11 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
                         return originalExecute(args, options)
                     }
                 }
-                const gateLabel = gateLabelFor({ toolName, spec, flowName, effects, resolved, args })
-                const consent = buildConsentPreview({ toolName, args, effects, flowName, resolved, reusable })
+                const { data: resolvedTargetName } = isNil(STATIC_TOOL_LABELS[toolName])
+                    ? { data: undefined }
+                    : await tryCatch(() => resolveTargetName({ toolInput: isObject(args) ? args : {} }))
+                const gateLabel = gateLabelFor({ toolName, spec, flowName, effects, resolved, ...spreadIfDefined('resolvedTargetName', resolvedTargetName) })
+                const consent = buildConsentPreview({ toolName, args, effects, flowName, resolved, reusable, ...spreadIfDefined('resolvedTargetName', resolvedTargetName) })
                 eventEmitter.emitActionPreview({
                     toolCallId: gateId,
                     pieceName: '',
@@ -1748,6 +1771,10 @@ export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
 
 type PreviewFlowEffects = (params: { flowId?: string, flowRunId?: string, stepName?: string }) => Promise<unknown>
+
+type ResolveConsentTargetName = (params: { toolInput: Record<string, unknown> }) => Promise<string | undefined>
+
+type ChatToolLogger = { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
 
 type GateOutcomeResult = {
     content: { type: 'text', text: string }[]

@@ -14,8 +14,6 @@ const MAX_RECIPIENTS_ON_CARD = 3
 
 const SILENT_EFFECT_KINDS = new Set<ActionEffectKind>(['read', 'internal_write'])
 
-const CODE_REACHES_OUTSIDE = /\b(fetch|axios|XMLHttpRequest|WebSocket|EventSource|child_process|process|require|eval|Function|globalThis)\b|https?\.(request|get)\b|\bnet\.|\bdns\.|\btls\.|\bimport\s*\(|^\s*import\b/m
-
 function hasFailureTextPrefix(text: string): boolean {
     return FAILURE_TEXT_PREFIXES.some((prefix) => text.startsWith(prefix))
 }
@@ -25,7 +23,30 @@ function actionNameMatchesPatterns({ actionName, patterns }: { actionName: strin
     return patterns.some((pattern) => words.includes(pattern))
 }
 
-function requiresActionPreview({ pieceName, actionName, input, needsConfirmation, tainted, declaredEffect, policy }: {
+function actionConsentDecision({ pieceName, actionName, input, needsConfirmation, tainted, declaredEffect, policy }: {
+    pieceName?: string
+    actionName: string
+    input?: Record<string, unknown>
+    needsConfirmation?: boolean
+    tainted?: boolean
+    declaredEffect?: string
+    policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
+}): ConsentDecision {
+    const effect = actionEffect.resolve({ pieceName, actionName, input, declaredEffect })
+    const decision = chatConsent.decide({ kind: effect.kind, policy })
+    if (decision === 'deny') {
+        return 'deny'
+    }
+    if (needsConfirmation === true) {
+        return 'ask'
+    }
+    if (tainted === true) {
+        return actionEffect.isRead(effect.kind) ? decision : 'ask'
+    }
+    return decision
+}
+
+function requiresActionPreview(params: {
     pieceName?: string
     actionName: string
     input?: Record<string, unknown>
@@ -34,14 +55,7 @@ function requiresActionPreview({ pieceName, actionName, input, needsConfirmation
     declaredEffect?: string
     policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
 }): boolean {
-    if (needsConfirmation === true) {
-        return true
-    }
-    const effect = actionEffect.resolve({ pieceName, actionName, input, declaredEffect })
-    if (tainted === true) {
-        return !actionEffect.isRead(effect.kind)
-    }
-    return chatConsent.decide({ kind: effect.kind, policy }) !== 'allow'
+    return actionConsentDecision(params) !== 'allow'
 }
 
 function isReadActionName(actionName: string): boolean {
@@ -138,14 +152,13 @@ function declaresDependencies(packageJson: string | undefined): boolean {
 
 function codeEffect({ code, packageJson, stepName, displayName }: { code: string, packageJson?: string, stepName: string, displayName: string }): StepEffect {
     const dependencies = tryCatchSync(() => declaresDependencies(packageJson))
-    const reachesOutside = CODE_REACHES_OUTSIDE.test(code) || dependencies.data !== false
     return {
         stepName,
         displayName,
-        effect: { kind: reachesOutside ? 'input_dependent' : 'internal_write', source: 'heuristic' },
-        detail: reachesOutside ? 'custom code that can reach outside' : 'custom code, self-contained',
+        effect: { kind: 'input_dependent', source: 'heuristic' },
+        detail: dependencies.data === true ? 'custom code using outside packages' : 'custom code',
         inputDigest: inputDigestOf(code),
-        opaque: reachesOutside,
+        opaque: true,
     }
 }
 
@@ -228,6 +241,7 @@ function stepEffectsReusable(steps: StepEffect[]): boolean {
 
 export const chatToolClassification = {
     requiresActionPreview,
+    actionConsentDecision,
     isReadActionName,
     isReadOnlyActionCall,
     isWriteActionName,
