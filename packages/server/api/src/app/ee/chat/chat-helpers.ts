@@ -69,13 +69,12 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
     return chatProvider
 }
 
+function findTier({ tierId }: { tierId: string | null }) {
+    return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
+}
+
 function resolveTier({ tierId }: { tierId: string | null }) {
-    if (tierId) {
-        const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
-        if (tier) return tier
-    }
-    const defaultTier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === DEFAULT_CHAT_TIER_ID)
-    return defaultTier ?? ACTIVEPIECES_CHAT_TIERS[0]
+    return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
 }
 
 function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }): string {
@@ -197,6 +196,7 @@ export const chatHelpers = {
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,
+    findTier,
     resolveTier,
     resolveModelIdForProvider,
     resolveFastModelId,

@@ -282,8 +282,11 @@ function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChat
 
 
 function resolveModelId({ selectedModel, provider }: { selectedModel: string | null, provider: AIProviderName | null }): string | null {
-    if (isNil(selectedModel) || isNil(provider)) {
-        return selectedModel
+    if (isNil(selectedModel)) {
+        return null
+    }
+    if (isNil(provider)) {
+        return chatHelpers.findTier({ tierId: selectedModel })?.modelId ?? selectedModel
     }
     return chatHelpers.resolveModelIdForProvider({ provider, selectedModel })
 }

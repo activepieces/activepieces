@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import * as z from 'zod/mini'
 
 export enum AIProviderModelType {
@@ -235,10 +235,11 @@ const CHAT_MODEL_LABELS: Record<string, string> = {
 }
 
 function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id: string, label: string }[] | undefined {
-    if (provider === AIProviderName.ACTIVEPIECES) {
+    const curatedIds = provider === AIProviderName.ACTIVEPIECES ? undefined : ALLOWED_CHAT_MODELS_BY_PROVIDER[provider]
+    if (isNil(curatedIds) || curatedIds.length === 0) {
         return undefined
     }
-    return ALLOWED_CHAT_MODELS_BY_PROVIDER[provider]?.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
+    return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
 }
 
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
