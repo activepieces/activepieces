@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { toBuffer } from 'qrcode';
 
 export const outputQrcodeAction = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'text_to_qrcode',
   displayName: 'Text to QR Code',
   description: 'Convert text to QR code',

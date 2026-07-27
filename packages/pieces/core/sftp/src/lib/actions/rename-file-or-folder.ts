@@ -16,7 +16,7 @@ async function renameSFTP(client: Client, oldPath: string, newPath: string) {
 }
 
 export const renameFileOrFolderAction = createAction({
-  audience: 'both',
+  audience: 'human',
   auth: sftpAuth,
   name: 'renameFileOrFolder',
   displayName: 'Rename File or Folder',

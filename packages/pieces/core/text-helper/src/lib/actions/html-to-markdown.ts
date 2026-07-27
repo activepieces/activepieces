@@ -5,7 +5,7 @@ import { gfm } from '@joplin/turndown-plugin-gfm';
 import turndownPluginTableNormalizer from '../utilities/html-to-markdown/turndown-table-normalizer-plugin';
 
 export const htmlToMarkdown = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'html_to_markdown',
   displayName: 'HTML to Markdown',
   description: 'Convert HTML to Markdown',

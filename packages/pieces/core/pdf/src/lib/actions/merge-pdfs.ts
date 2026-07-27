@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument } from 'pdf-lib';
 
 export const mergePdfs = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'mergePdfs',
   displayName: 'Merge PDFs',
   description: 'Merges multiple PDF files into a single PDF document.',

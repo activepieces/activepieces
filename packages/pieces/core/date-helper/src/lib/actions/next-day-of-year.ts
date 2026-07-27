@@ -14,7 +14,7 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const nextDayofYear = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'next_day_of_year',
   displayName: 'Next Day of Year',
   description: 'Get the date and time of the next day of the year',

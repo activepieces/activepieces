@@ -23,7 +23,7 @@ Throw an error if zip file has more than expected entries.
 `;
 
 export const unzipFile = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'unzipFile',
   displayName: 'Unzip File',
   description: 'Unzip compressed zip file',

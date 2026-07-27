@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import jimp from 'jimp';
 
 export const cropImage = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'crop_image',
   description: 'Crops an image',
   displayName: 'Crop an image',

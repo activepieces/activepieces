@@ -5,7 +5,7 @@ import jimp from 'jimp';
 import * as mime from 'mime-types';
 
 export const convertImageFormat = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'convert_image_format',
   displayName: 'Image Conversion Helper',
   description: 'Converts a image to supported formats',

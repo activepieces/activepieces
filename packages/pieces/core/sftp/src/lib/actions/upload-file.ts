@@ -23,7 +23,7 @@ async function uploadFileToSFTP(client: Client, fileName: string, fileContent: {
 }
 
 export const uploadFileAction = createAction({
-  audience: 'both',
+  audience: 'human',
   auth: sftpAuth,
   name: 'upload_file',
   displayName: 'Upload File',
