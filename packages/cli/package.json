@@ -16,7 +16,7 @@
     "@activepieces/pieces-framework": "*",
     "@activepieces/shared": "*",
     "autocannon": "8.0.0",
-    "axios": "1.16.0",
+    "axios": "1.18.0",
     "chalk": "4.1.2",
     "commander": "11.1.0",
     "dayjs": "1.11.9",
