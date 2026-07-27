@@ -11,10 +11,11 @@ import { redisConnections } from '../database/redis-connections'
 // hash so an app is never counted as a worker execution slot by worker-capacity.
 export const appMachineCache = {
     async register(eventLoopDelayMs: number): Promise<void> {
-        const [cpuCores, memory, disk] = await Promise.all([
+        const [cpuCores, memory, disk, cpuPressure] = await Promise.all([
             systemUsage.getCpuCores(),
             systemUsage.getContainerMemoryUsage(),
             systemUsage.getDiskInfo(),
+            systemUsage.getCpuPressure(),
         ])
         const instance: AppInstance = {
             hostname: os.hostname(),
@@ -25,6 +26,7 @@ export const appMachineCache = {
             ramUsagePercentage: memory.ramUsage,
             diskPercentage: disk.percentage,
             eventLoopDelayMs,
+            ...cpuPressure,
             updated: apDayjs().toISOString(),
         }
         const redisConnection = await redisConnections.useExisting()

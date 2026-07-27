@@ -16,11 +16,12 @@ import {
 import * as z from 'zod/mini'
 
 export const generateImage = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: grokAuth,
   name: 'generate_image',
   displayName: 'Generate Image',
   description: 'Create images from text prompts using Grok\'s image generation.',
+  aiMetadata: { description: 'Generates one to ten images from a text prompt with a Grok image model, delivered either as hosted URLs or as base64 payloads depending on the chosen response format. This is the only action in the piece that produces images; ask_grok can accept an image URL as vision input but only ever returns text. Requires a non-empty prompt of at most 4000 characters, and the model must be an image model (the dropdown filters to those). Not idempotent: each call renders new images.', idempotent: false },
   props: {
     prompt: Property.LongText({
       displayName: 'Image Prompt',

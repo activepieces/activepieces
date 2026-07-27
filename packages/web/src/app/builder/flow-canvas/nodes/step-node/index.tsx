@@ -5,14 +5,13 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
-import { Handle, NodeProps, Position, useStore } from '@xyflow/react';
+import { Handle, NodeProps, Position } from '@xyflow/react';
 import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { RightSideBarType } from '@/app/builder/types';
-import { useChatDockOptional } from '@/app/components/workspace-shell/chat-dock-context';
 import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -53,11 +52,7 @@ const ApStepCanvasNode = React.memo(
       state.rightSidebar !== RightSideBarType.NONE,
       state.canvasOrientation,
     ]);
-    const chatDock = useChatDockOptional();
     const isHorizontal = canvasOrientation === 'horizontal';
-    // Level-of-detail: hide the index/chevron clutter when zoomed out. Return a
-    // discrete bucket so nodes re-render only when the threshold is crossed.
-    const isLowDetail = useStore((s) => s.transform[2] < 0.7);
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
@@ -89,16 +84,6 @@ const ApStepCanvasNode = React.memo(
         e.stopPropagation();
         e.preventDefault();
       }
-    };
-    // Double-click forces the full sidebar by popping the chat out of the dock.
-    const handleStepDoubleClick = (
-      e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    ) => {
-      selectStepByName(step.name);
-      setSelectedBranchIndex(null);
-      chatDock?.popOutChat({ teachDock: true });
-      e.stopPropagation();
-      e.preventDefault();
     };
     const handleContextMenu = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -159,7 +144,6 @@ const ApStepCanvasNode = React.memo(
           },
         )}
         onClick={(e) => handleStepClick(e)}
-        onDoubleClick={(e) => handleStepDoubleClick(e)}
         key={step.name}
         ref={isPieceSelectorOpened ? null : setNodeRef}
         {...stepNodeDivAttributes}
@@ -220,23 +204,20 @@ const ApStepCanvasNode = React.memo(
                     isSkipped={isSkipped}
                     pieceDisplayName={stepMetadata?.displayName ?? ''}
                     stepName={step.name}
-                    hideIndex={isLowDetail}
                   />
-                  {!readonly && (
-                    <StepNodeChevron
-                      className={cn({
-                        'opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100':
-                          isLowDetail && !isSelected,
-                      })}
-                    />
-                  )}
+                  {!readonly && <StepNodeChevron />}
                 </div>
               )}
             </PieceSelector>
           )}
           {isHorizontal && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-[180px] flex justify-center pointer-events-none">
-              <div className="flex flex-col items-center min-w-0">
+            <div
+              style={{
+                width: `${flowCanvasConsts.HORIZONTAL_STEP_LABEL_WIDTH}px`,
+              }}
+              className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 flex justify-center pointer-events-none"
+            >
+              <div className="flex flex-col items-center min-w-0 pointer-events-auto">
                 <StepNodeDisplayName
                   stepDisplayName={step.displayName}
                   stepIndex={stepIndex}

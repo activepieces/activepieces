@@ -1,4 +1,4 @@
-import { isNil, isObject, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { AppConnectionStatus, AppConnectionType, chatToolClassification, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -15,6 +15,7 @@ import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-se
 import { tableService } from '../../../tables/table/table.service'
 import { chatApprovalGate } from '../chat-approval-gate'
 import { chatHelpers } from '../chat-helpers'
+import { chatMemoryAi } from '../chat-memory-ai'
 import { chatPrompt } from '../prompt/chat-prompt'
 
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
@@ -233,6 +234,14 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
     const availableProjectIds = projects.map((p) => p.id)
 
     switch (toolName) {
+        case 'ap_remember': {
+            const memory = isString(toolInput.memory) ? toolInput.memory.trim() : ''
+            if (!memory) {
+                return { success: false, error: 'Empty memory.' }
+            }
+            await chatMemoryAi.applyInstruction({ platformId, userId, instruction: memory, log })
+            return { remembered: true }
+        }
         case 'ap_discover_action_auth': {
             const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
             // Sticky connection: if the user already chose a connection for this piece this
@@ -266,6 +275,38 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 }
             }
             return discoveryResult
+        }
+        case 'ap_revalidate_connection': {
+            const externalId = toolInput.connectionExternalId as string
+            let projectId: string | undefined
+            if (conversationId) {
+                const conversation = await chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+                if (conversation.projectId && projects.some((p) => p.id === conversation.projectId)) {
+                    projectId = conversation.projectId
+                }
+            }
+            if (isNil(projectId)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No project is selected for this conversation. Ask the user which project this connection is in.' }
+            }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
+            if (!isNil(denial)) {
+                return denial
+            }
+            const found = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId })
+            if (isNil(found)) {
+                return { connectionExternalId: externalId, notFound: true, note: 'No connection with that externalId in the active project.' }
+            }
+            const revalidated = await appConnectionService(log).revalidate({ id: found.id, projectId, platformId })
+            const working = revalidated.status === AppConnectionStatus.ACTIVE
+            return {
+                connectionExternalId: externalId,
+                status: revalidated.status,
+                working,
+                note: working
+                    ? 'This connection is valid — safe to build on.'
+                    : 'This connection is NOT working (its credentials failed). Do not build on it — show the connection picker so the user can reconnect, then retry.',
+            }
         }
         case 'ap_execute_action': {
             return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })

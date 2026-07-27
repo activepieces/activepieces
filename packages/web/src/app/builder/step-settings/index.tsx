@@ -46,11 +46,7 @@ import { StepNavigationButtons } from './step-navigation-buttons';
 import { useStepSettingsContext } from './step-settings-context';
 import { UpdatePieceVersionDialog } from './update-piece-version-dialog/update-piece-version-dialog';
 
-const StepSettingsContainer = ({
-  hideTestPanel = false,
-}: {
-  hideTestPanel?: boolean;
-}) => {
+const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [
@@ -174,11 +170,7 @@ const StepSettingsContainer = ({
     form.trigger();
   }, []);
 
-  // The compact step card reuses this container for the settings form only; the
-  // test/run panel stays exclusive to the full sidebar.
-  const showTestPanel =
-    !hideTestPanel && (showGenerateSampleData || showStepInputOutFromRun);
-  const isTestPanelOpen = isStepDataPanelOpen && !hideTestPanel;
+  const showTestPanel = showGenerateSampleData || showStepInputOutFromRun;
 
   const settingsForm = (
     <ScrollArea className="h-full">
@@ -342,11 +334,11 @@ const StepSettingsContainer = ({
             <StepSettingsLayout
               isSplit={
                 showTestPanel &&
-                isTestPanelOpen &&
+                isStepDataPanelOpen &&
                 stepDataPanelView === 'split'
               }
               showTestPanel={showTestPanel}
-              isStepDataPanelOpen={isTestPanelOpen}
+              isStepDataPanelOpen={isStepDataPanelOpen}
               settingsForm={settingsForm}
               testPanelHost={
                 showTestPanel ? (

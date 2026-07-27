@@ -148,6 +148,13 @@ export const flowHooks = {
               standardOutput: params.standardOutput || '',
             },
           });
+        } else if (apError.code === ErrorCode.QUOTA_EXCEEDED) {
+          toast.error(t('Active flows limit reached'), {
+            description: t(
+              'You have reached the maximum number of active flows. Disable another flow or increase the limit.',
+            ),
+            duration: 5000,
+          });
         } else {
           internalErrorToast();
         }

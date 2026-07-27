@@ -65,6 +65,9 @@ export const newNpsResponse = createTrigger({
   name: 'new_nps_response',
   displayName: 'New NPS Response',
   description: 'Fires when a user submits a new NPS rating for the selected widget.',
+  aiMetadata: {
+    description: 'Fires when an end user submits an NPS rating through one selected Produktly NPS widget. Polls that widget on a schedule and emits each new response with its score, any free-text comment, and the submitter name, email, user ID, and page URL, so detractors can be routed for follow-up as they arrive.',
+  },
   props: triggerProps,
   sampleData: {
     response_id: 789,
