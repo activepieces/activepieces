@@ -67,7 +67,7 @@ async function concatImagesVertically(imageBuffers: Buffer[]): Promise<Buffer> {
 }
 
 export const convertToImage = createAction({
-  audience: 'both',
+  audience: 'human',
     name: 'convertToImage',
     displayName: 'Convert to Image',
     description: 'Convert a PDF file or URL to an image',

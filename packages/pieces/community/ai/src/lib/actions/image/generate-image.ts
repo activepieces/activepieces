@@ -23,7 +23,7 @@ import { AIProviderName } from '@activepieces/pieces-framework';
 import { aiProps } from '../../common/props';
 
 export const generateImageAction = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'generateImage',
   displayName: 'Generate Image',
   description: 'Create unique, high-quality images from simple text descriptions using AI.',

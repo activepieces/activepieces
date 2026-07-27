@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const replace = createAction({
-  audience: 'both',
+  audience: 'human',
   description:
     'Replaces all instances of any word, character or phrase in text, with another.',
   displayName: 'Replace',
