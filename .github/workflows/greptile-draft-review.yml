@@ -1,0 +1,27 @@
+name: Greptile review on draft open
+
+# Greptile does not auto-review draft PRs (by design, to avoid noise during development).
+# We open PRs as drafts so no human reviewer is auto-assigned until "Ready for review" —
+# this asks Greptile for its first-pass review immediately, while the PR is still a draft.
+# When the author later marks the PR ready, Greptile reviews again and a human is assigned.
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  request-review:
+    name: Ask Greptile to review the draft
+    runs-on: ubuntu-latest
+    if: >
+      github.repository == 'activepieces/activepieces' &&
+      github.event.pull_request.draft == true &&
+      github.event.pull_request.user.type != 'Bot'
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: gh pr comment "$PR" --body "@greptileai review"

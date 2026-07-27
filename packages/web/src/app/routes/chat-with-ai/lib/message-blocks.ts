@@ -184,6 +184,15 @@ export function buildMessageBlocks({
         }
         continue;
       }
+      if (toolName === 'ap_remember') {
+        const memory = (
+          p.input as { memory?: string } | undefined
+        )?.memory?.trim();
+        if (memory && p.state === 'output-available') {
+          result.push({ kind: 'memory-saved', memory });
+        }
+        continue;
+      }
       if (chatPartUtils.HIDDEN_TOOL_NAMES.has(toolName)) {
         continue;
       }
@@ -350,6 +359,7 @@ export type MessageBlock =
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
+  | { kind: 'memory-saved'; memory: string }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }

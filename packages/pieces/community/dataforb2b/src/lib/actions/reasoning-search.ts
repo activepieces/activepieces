@@ -7,6 +7,11 @@ export const reasoningSearch = createAction({
   displayName: 'Reasoning Search',
   description:
     'Describe who you are looking for in plain language. An AI agent builds the best filters and runs the search. It may return status "needs_input" with questions — answer by calling again with the returned session_id and an answers object.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Run a plain-language people or company search in which a DataForB2B agent builds the filters, over two possible turns: a first call carrying the query, or a follow-up call carrying the session ID plus an answers object when a prior turn returned needs_input. Use when the criteria are fuzzy or unstructured; prefer Search People or Search Companies when the criteria map to explicit field filters. Requires either a query or a session ID with answers; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.LongText({
       displayName: 'Query',

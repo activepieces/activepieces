@@ -339,9 +339,7 @@ export const handleRun = async (
     client
   }: {
     resourceClient: ActorClient | TaskClient;
-    // Optional: when undefined, the Apify client uses the task's saved input
-    // instead of overriding it with an empty object.
-    body?: Dictionary;
+    body: Dictionary;
     runOptions: { timeout?: number; memory?: number; build?: string; };
     waitForFinish: boolean;
     client: ApifyClient;
