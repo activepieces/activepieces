@@ -6,6 +6,8 @@ export const searchCompanies = createAction({
   name: 'search_companies',
   displayName: 'Search Companies',
   description: 'Search LinkedIn companies by keyword, location, sector and company size.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches LinkedIn company pages by keyword, location, sector, or company size, over a configurable page range. Use it to locate a company page when only a name or profile of the firm is known; call Get Company Info afterwards for the full record of a known company URL, and Search People to find individuals. Requires the account ID from List Accounts. Read-only and idempotent.', idempotent: true },
   props: {
     accountId: accountIdProp,
     keyword: Property.ShortText({ displayName: 'Keyword', required: false }),

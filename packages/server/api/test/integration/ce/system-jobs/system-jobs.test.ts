@@ -109,6 +109,33 @@ describe('System Jobs', () => {
         expect(matching.length).toBeGreaterThanOrEqual(1)
     })
 
+    it('should remove stale schedulers when the cron pattern changes', async () => {
+        const jobId = 'test-pattern-change'
+        await systemJobsQueue.add(SystemJobName.FILE_CLEANUP_TRIGGER, {} as never, {
+            repeat: { pattern: '*/59 23 * * *', tz: 'UTC' },
+            jobId,
+        })
+
+        await schedule.upsertJob({
+            job: {
+                name: SystemJobName.FILE_CLEANUP_TRIGGER,
+                data: {},
+                jobId,
+            },
+            schedule: {
+                type: 'repeated',
+                cron: '59 23 * * *',
+            },
+        })
+
+        const schedulers = await systemJobsQueue.getJobSchedulers()
+        const matching = schedulers.filter(s => s.name === SystemJobName.FILE_CLEANUP_TRIGGER)
+        expect(matching).toHaveLength(1)
+        expect(matching[0].pattern).toBe('59 23 * * *')
+
+        await systemJobsQueue.removeJobScheduler(SystemJobName.FILE_CLEANUP_TRIGGER)
+    })
+
     it('should return undefined for non-existent jobId', async () => {
         const result = await schedule.getJob('does-not-exist')
         expect(result).toBeUndefined()
@@ -154,16 +181,12 @@ describe('System Jobs', () => {
         })
 
         // Create a new-format scheduler (key is just the jobId, no ::)
-        await schedule.upsertJob({
-            job: {
-                name: SystemJobName.PIECES_ANALYTICS,
-                data: {},
-                jobId: 'pieces-analytics',
-            },
-            schedule: {
-                type: 'repeated',
-                cron: '0 12 * * *',
-            },
+        await systemJobsQueue.upsertJobScheduler('pieces-analytics', {
+            pattern: '0 12 * * *',
+            tz: 'UTC',
+        }, {
+            name: SystemJobName.PIECES_ANALYTICS,
+            data: {} as never,
         })
 
         const before = await systemJobsQueue.getJobSchedulers()
