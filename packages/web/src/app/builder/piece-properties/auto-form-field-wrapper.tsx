@@ -1,4 +1,5 @@
 import {
+  piecePropertiesUtils,
   PieceAuthProperty,
   PieceProperty,
   PropertyType,
@@ -176,14 +177,21 @@ function getValueForInputOnDynamicToggleChange(
       }
       return JSON.stringify(currentValue);
     }
-    case PropertyExecutionType.MANUAL:
+    case PropertyExecutionType.MANUAL: {
       if (isAuthProperty) {
         return '';
       }
-      return formUtils.getDefaultPropertyValue({
-        property,
-        dynamicInputModeToggled: false,
-      });
+      return (
+        piecePropertiesUtils.parseDynamicValue({
+          property,
+          value: currentValue,
+        }) ??
+        formUtils.getDefaultPropertyValue({
+          property,
+          dynamicInputModeToggled: false,
+        })
+      );
+    }
   }
 }
 
