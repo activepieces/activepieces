@@ -9,7 +9,7 @@ import { createAIModel } from '../../common/ai-sdk';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
 export const askAI = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'askAi',
   displayName: 'Ask AI',
   description: 'A flexible AI step. ask it to analyze data, explain, draft, or decide based on your flow\'s data.',

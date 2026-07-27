@@ -64,7 +64,7 @@ export type InputProperty =
   | DynamicProperties<boolean, PieceAuthProperty | PieceAuthProperty[] | undefined>
   | DateTimeProperty<boolean>
   | DateRangeProperty<boolean>
-  | FileProperty<boolean>
+  | FileProperty<boolean, boolean>
   | CustomProperty<boolean>
   | ColorProperty<boolean>;
 
@@ -256,14 +256,14 @@ export const Property = {
       ? DateRangeProperty<true>
       : DateRangeProperty<false>;
   },
-  File<R extends boolean>(
-    request: Properties<FileProperty<R>>
-  ): R extends true ? FileProperty<true> : FileProperty<false> {
+  File<R extends boolean, S extends boolean = false>(
+    request: Properties<FileProperty<R, S>>
+  ): FileProperty<R extends true ? true : false, S extends true ? true : false> {
     return {
       ...request,
       valueSchema: undefined,
       type: PropertyType.FILE,
-    } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
+    } as unknown as FileProperty<R extends true ? true : false, S extends true ? true : false>;
   },
   Custom<R extends boolean>(
     request: Omit<Properties<CustomProperty<R>>, 'code'> & {

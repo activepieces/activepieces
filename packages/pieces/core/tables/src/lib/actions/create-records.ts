@@ -4,7 +4,7 @@ import { CreateRecordsRequest } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 
 export const createRecords = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'tables-create-records',
   displayName: 'Create Record(s)',
   description: 'Insert one or more new records to a table.',

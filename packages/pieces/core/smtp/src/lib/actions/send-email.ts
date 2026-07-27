@@ -5,7 +5,7 @@ import { Attachment, Headers } from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
 
 export const sendEmail = createAction({
-  audience: 'both',
+  audience: 'human',
   auth: smtpAuth,
   name: 'send-email',
   displayName: 'Send Email',

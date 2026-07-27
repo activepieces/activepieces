@@ -3,7 +3,7 @@ import { apId, createAction, FieldType, PieceAuth, Property, Table } from '@acti
 import * as z from 'zod/mini';
 
 export const createTable = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'tables-create-table',
   displayName: 'Create Table',
   description: 'Create a new table, optionally with fields.',

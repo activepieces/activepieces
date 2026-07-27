@@ -4,7 +4,7 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 import { PopulatedRecord } from '@activepieces/pieces-framework';
 
 export const getRecord = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'tables-get-record',
   displayName: 'Get Record',
   description: 'Get single record by its id.',
