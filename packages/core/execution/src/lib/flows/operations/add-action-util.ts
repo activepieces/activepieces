@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { applyFunctionToValuesSync, isString } from '@activepieces/core-utils'
+import { applyFunctionToValuesSync } from '@activepieces/core-utils'
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
@@ -50,30 +50,23 @@ function replaceOldStepNameWithNewOne({
 function clone(step: FlowAction, oldNameToNewName: Record<string, string>): FlowAction {
     step.displayName = `${step.displayName} Copy`
     step.name = oldNameToNewName[step.name]
-    if ('input' in step.settings) {
-        Object.keys(oldNameToNewName).forEach((oldName) => {
-            const settings = step.settings as { input: unknown }
-            settings.input = applyFunctionToValuesSync(
-                settings.input,
-                (value: unknown) => {
-                    if (isString(value)) {
-                        return replaceOldStepNameWithNewOne({
-                            input: value,
-                            oldStepName: oldName,
-                            newStepName: oldNameToNewName[oldName],
-                        })
-                    }
-                    return value
-                },
-            )
-        })
-    }
     if (step.settings.sampleData) {
         step.settings = {
             ...step.settings,
             sampleData: {},
         }
     }
+    step.settings = applyFunctionToValuesSync(
+        step.settings,
+        (value) => Object.keys(oldNameToNewName).reduce(
+            (renamed, oldName) => replaceOldStepNameWithNewOne({
+                input: renamed,
+                oldStepName: oldName,
+                newStepName: oldNameToNewName[oldName],
+            }),
+            value,
+        ),
+    )
     step.lastUpdatedDate = dayjs().toISOString()
     return step
 }

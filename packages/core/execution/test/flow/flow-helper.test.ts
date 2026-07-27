@@ -12,7 +12,10 @@ import {
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    LoopOnItemsAction,
+    PieceAction,
     PropertyExecutionType,
+    RouterAction,
     RouterExecutionType,
     StepLocationRelativeToParent,
 } from '../../src'
@@ -634,4 +637,150 @@ test('Duplicate Flow With Loops using Import', () => {
 
     const importOperations = _getImportOperations(flowVersion.trigger)
     expect(importOperations).toEqual(expectedResult)
+})
+
+describe('Paste remaps references to copied steps (GIT-1075)', () => {
+    const originalNames = ['trigger', 'step_1', 'step_2']
+
+    function flowWith(secondStep: FlowAction): FlowVersion {
+        return {
+            id: 'git1075flowversionid',
+            created: '2023-05-24T00:16:41.353Z',
+            updated: '2023-05-24T00:16:41.353Z',
+            flowId: 'git1075flowid',
+            updatedBy: '',
+            displayName: 'GIT-1075',
+            agentIds: [],
+            notes: [],
+            valid: true,
+            state: FlowVersionState.DRAFT,
+            connectionIds: [],
+            trigger: {
+                name: 'trigger',
+                type: FlowTriggerType.PIECE,
+                valid: true,
+                settings: {
+                    input: { cronExpression: '25 10 * * *' },
+                    pieceName: 'schedule',
+                    pieceVersion: '0.0.2',
+                    propertySettings: {
+                        cronExpression: { type: PropertyExecutionType.MANUAL },
+                    },
+                    triggerName: 'cron_expression',
+                },
+                displayName: 'Cron',
+                nextAction: {
+                    name: 'step_1',
+                    type: FlowActionType.CODE,
+                    valid: true,
+                    settings: {
+                        input: {},
+                        sourceCode: { code: 'test', packageJson: '{}' },
+                    },
+                    displayName: 'Code',
+                    nextAction: secondStep,
+                },
+            },
+        }
+    }
+
+    function paste(flowVersion: FlowVersion): FlowVersion {
+        const actions = flowOperations.getActionsForCopy(['step_1', 'step_2'], flowVersion)
+        const operations = flowOperations.getOperationsForPaste(actions, flowVersion, {
+            parentStepName: 'step_2',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+        })
+        return operations.reduce((flow, operation) => flowOperations.apply(flow, operation), flowVersion)
+    }
+
+    it('remaps a copied router branch condition to the copied step', () => {
+        const flowVersion = flowWith({
+            name: 'step_2',
+            type: FlowActionType.ROUTER,
+            valid: true,
+            settings: {
+                branches: [
+                    {
+                        conditions: [[{
+                            operator: BranchOperator.TEXT_CONTAINS,
+                            firstValue: "{{ step_1['output'].value }}",
+                            secondValue: 'x',
+                            caseSensitive: true,
+                        }]],
+                        branchType: BranchExecutionType.CONDITION,
+                        branchName: 'Branch 1',
+                    },
+                    { branchType: BranchExecutionType.FALLBACK, branchName: 'Otherwise' },
+                ],
+                executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            },
+            displayName: 'Router',
+            children: [null, null],
+        })
+
+        const steps = flowStructureUtil.getAllSteps(paste(flowVersion).trigger)
+        const pastedCode = steps.find((step): step is CodeAction => step.type === FlowActionType.CODE && !originalNames.includes(step.name))
+        const pastedRouter = steps.find((step): step is RouterAction => step.type === FlowActionType.ROUTER && !originalNames.includes(step.name))
+        if (!pastedCode || !pastedRouter) {
+            throw new Error('paste did not create the copied steps')
+        }
+        const branch = pastedRouter.settings.branches[0]
+        if (branch.branchType !== BranchExecutionType.CONDITION) {
+            throw new Error('expected a condition branch')
+        }
+        expect(branch.conditions[0][0].firstValue).toBe(`{{ ${pastedCode.name}['output'].value }}`)
+        expect(branch.conditions[0][0].firstValue).not.toContain('step_1')
+    })
+
+    it('remaps copied loop items to the copied step', () => {
+        const flowVersion = flowWith({
+            name: 'step_2',
+            type: FlowActionType.LOOP_ON_ITEMS,
+            valid: true,
+            settings: {
+                items: "{{ step_1['output'].rows }}",
+            },
+            displayName: 'Loop on Items',
+        })
+
+        const steps = flowStructureUtil.getAllSteps(paste(flowVersion).trigger)
+        const pastedCode = steps.find((step): step is CodeAction => step.type === FlowActionType.CODE && !originalNames.includes(step.name))
+        const pastedLoop = steps.find((step): step is LoopOnItemsAction => step.type === FlowActionType.LOOP_ON_ITEMS && !originalNames.includes(step.name))
+        if (!pastedCode || !pastedLoop) {
+            throw new Error('paste did not create the copied steps')
+        }
+        expect(pastedLoop.settings.items).toBe(`{{ ${pastedCode.name}['output'].rows }}`)
+        expect(pastedLoop.settings.items).not.toContain('step_1')
+    })
+
+    it('remaps a copied piece input reference and leaves bare step-name strings alone', () => {
+        const flowVersion = flowWith({
+            name: 'step_2',
+            type: FlowActionType.PIECE,
+            valid: true,
+            settings: {
+                input: {
+                    key: "{{ step_1['output'].id }}",
+                    label: 'step_1',
+                },
+                pieceName: 'store',
+                pieceVersion: '0.2.6',
+                actionName: 'get',
+                propertySettings: {
+                    key: { type: PropertyExecutionType.MANUAL },
+                    label: { type: PropertyExecutionType.MANUAL },
+                },
+            },
+            displayName: 'Get',
+        })
+
+        const steps = flowStructureUtil.getAllSteps(paste(flowVersion).trigger)
+        const pastedCode = steps.find((step): step is CodeAction => step.type === FlowActionType.CODE && !originalNames.includes(step.name))
+        const pastedPiece = steps.find((step): step is PieceAction => step.type === FlowActionType.PIECE && !originalNames.includes(step.name))
+        if (!pastedCode || !pastedPiece) {
+            throw new Error('paste did not create the copied steps')
+        }
+        expect(pastedPiece.settings.input.key).toBe(`{{ ${pastedCode.name}['output'].id }}`)
+        expect(pastedPiece.settings.input.label).toBe('step_1')
+    })
 })
