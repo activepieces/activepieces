@@ -8,6 +8,8 @@ export const listTags = createAction({
   name: 'list_tags',
   displayName: 'List Tags',
   description: 'List all tags that can be attached to changelog posts.',
+  audience: 'both',
+  aiMetadata: { description: 'List the tags defined in the Produktly account that can label changelog posts, with their display colours, paginated with limit and offset. Pick this to resolve valid tag names before Create Changelog Post or Update Changelog Post, which only accept tags that already exist. Read-only and idempotent.', idempotent: true },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

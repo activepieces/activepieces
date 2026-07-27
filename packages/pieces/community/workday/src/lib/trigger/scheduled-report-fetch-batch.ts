@@ -70,6 +70,10 @@ export const scheduledReportFetchBatch = createTrigger({
 	displayName: 'Scheduled Report Fetch (Batch)',
 	description:
 		'Polls a Workday report on a schedule and returns all rows as a batch.',
+	aiMetadata: {
+		description:
+			'Fires on every poll with the full row set of a published Workday custom report, identified by report ID or web service alias and optionally given prompt values as JSON. The whole report is re-fetched each cycle rather than only changed rows, so treat it as a scheduled extract, not a change feed. Use Scheduled Report Fetch using WQL (Batch) instead when the data comes from a WQL query.',
+	},
 	props,
 	sampleData: {
 		total_count: 1,
