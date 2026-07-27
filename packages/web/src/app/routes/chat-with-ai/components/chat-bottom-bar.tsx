@@ -20,6 +20,7 @@ import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
+import { ConsentCard } from './consent-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
@@ -65,7 +66,16 @@ export function ChatBottomBar({
   if (pendingActionPreview) {
     const toolCallId = pendingActionPreview.toolCallId;
     dismissActiveCard = () => rejectGate(toolCallId);
-    activeCard = (
+    activeCard = pendingActionPreview.consent ? (
+      <ConsentCard
+        key={toolCallId}
+        preview={pendingActionPreview}
+        consent={pendingActionPreview.consent}
+        onRun={() => approveGate(toolCallId)}
+        onCancel={() => rejectGate(toolCallId)}
+        onDismiss={() => rejectGate(toolCallId)}
+      />
+    ) : (
       <ActionPreviewCard
         key={toolCallId}
         preview={pendingActionPreview}

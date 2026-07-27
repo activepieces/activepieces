@@ -1,9 +1,16 @@
-import { apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
+import {
+  apId,
+  ErrorCode,
+  isNil,
+  isObject,
+  tryCatch,
+} from '@activepieces/core-utils';
 import {
   ActionPreviewEvent,
   ActionReceiptEvent,
   BuildPlanEvent,
   ChatAllowedMimeType,
+  ConsentPreview,
   FileProducedEvent,
   ImageGeneratedEvent,
   ChatConversationStatus,
@@ -119,17 +126,36 @@ function buildToolCallMetaFromGate(
         ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
         : undefined,
     };
-  } else if (gate.toolName === 'ap_test_flow') {
+  } else if (isConsentPreview(gateInput.consent)) {
     actionPreview = {
       toolCallId: gate.gateId,
       pieceName: '',
-      actionName: 'ap_test_flow',
+      actionName: gate.toolName,
+      actionDisplayName: gate.displayName,
+      input: {},
+      isBatch: false,
+      consent: gateInput.consent,
+    };
+  } else {
+    actionPreview = {
+      toolCallId: gate.gateId,
+      pieceName: '',
+      actionName: gate.toolName,
       actionDisplayName: gate.displayName,
       input: {},
       isBatch: false,
     };
   }
   return actionPreview ? { [gate.gateId]: { actionPreview } } : {};
+}
+
+function isConsentPreview(value: unknown): value is ConsentPreview {
+  return (
+    isObject(value) &&
+    typeof value.category === 'string' &&
+    typeof value.severity === 'string' &&
+    Array.isArray(value.effects)
+  );
 }
 
 // History only persists resolved tool calls, so a live pending gate loses its `input-available`

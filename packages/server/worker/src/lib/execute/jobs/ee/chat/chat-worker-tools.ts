@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { actionEffect, actionEffectLabelCatalog, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, ChatToolConsentSpec, chatToolConsentSpecs, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
+import { actionEffect, actionEffectLabelCatalog, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, ChatToolConsentSpec, chatToolConsentSpecs, ConsentPreview, ConsentPreviewCategory, ConsentSeverity, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -1437,6 +1437,71 @@ function mcpConnectorToolLabel(toolName: string): string {
     return readable.length > 0 ? readable : toolName
 }
 
+const CONSENT_CATEGORIES: Record<string, ConsentPreviewCategory> = {
+    ap_test_flow: 'live_test',
+    ap_test_step: 'step_test',
+    ap_retry_run: 'retry_run',
+    ap_run_code: 'run_code',
+    ap_lock_and_publish: 'publish',
+    ap_change_flow_status: 'enable',
+    ap_delete_flow: 'delete_flow',
+    ap_delete_table: 'delete_table',
+    ap_delete_records: 'delete_records',
+    ap_manage_fields: 'delete_column',
+}
+
+function consentCategoryOf(toolName: string): ConsentPreviewCategory {
+    const category = CONSENT_CATEGORIES[toolName]
+    if (!isNil(category)) {
+        return category
+    }
+    return chatToolConsentSpecs.isMcpConnectorTool(toolName) ? 'connector_action' : 'unknown_tool'
+}
+
+function consentSeverityOf({ effects, resolved }: { effects: StepEffect[], resolved: boolean }): ConsentSeverity {
+    const kinds = new Set(chatToolClassification.effectKindsOf(effects))
+    if (kinds.has('financial')) {
+        return 'financial'
+    }
+    if (kinds.has('destructive') || kinds.has('internal_destructive')) {
+        return 'destructive'
+    }
+    if (!resolved || kinds.has('unknown') || kinds.has('input_dependent')) {
+        return 'unknown'
+    }
+    return 'external'
+}
+
+function buildConsentPreview({ toolName, args, effects, flowName, resolved, reusable }: {
+    toolName: string
+    args: unknown
+    effects: StepEffect[]
+    flowName?: string
+    resolved: boolean
+    reusable: boolean
+}): ConsentPreview {
+    const targetName = isObject(args) && typeof args['displayName'] === 'string' && args['displayName'].trim().length > 0
+        ? sanitizeLabelPart(args['displayName'])
+        : chatToolConsentSpecs.isMcpConnectorTool(toolName) ? mcpConnectorToolLabel(toolName) : undefined
+    const recordIds = isObject(args) && Array.isArray(args['recordIds']) ? args['recordIds'] : undefined
+    return {
+        category: consentCategoryOf(toolName),
+        severity: consentSeverityOf({ effects, resolved }),
+        ...(isNil(flowName) ? {} : { flowName: sanitizeLabelPart(flowName) }),
+        ...(isNil(targetName) ? {} : { targetName }),
+        ...(isNil(recordIds) ? {} : { recordCount: recordIds.length }),
+        effects: effects.map((step) => ({
+            displayName: sanitizeLabelPart(step.displayName),
+            detail: step.detail,
+            kind: step.effect.kind,
+            ...(isNil(step.recipient) ? {} : { recipient: sanitizeLabelPart(step.recipient) }),
+            recipientResolved: !isNil(step.recipient),
+        })),
+        resolved,
+        reusable,
+    }
+}
+
 function gateLabelFor({ toolName, spec, flowName, effects, resolved, args }: {
     toolName: string
     spec: ChatToolConsentSpec
@@ -1533,6 +1598,7 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
                     }
                 }
                 const gateLabel = gateLabelFor({ toolName, spec, flowName, effects, resolved, args })
+                const consent = buildConsentPreview({ toolName, args, effects, flowName, resolved, reusable })
                 eventEmitter.emitActionPreview({
                     toolCallId: gateId,
                     pieceName: '',
@@ -1540,17 +1606,26 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
                     actionDisplayName: gateLabel,
                     input: {},
                     isBatch: false,
+                    consent,
                 })
                 await tryCatch(() => storePendingGate({
                     gateId,
                     toolName,
                     displayName: gateLabel,
-                    toolInput: { scope, effects: effects.map((step) => step.stepName) },
+                    toolInput: { scope, effects: effects.map((step) => step.stepName), consent },
                 }))
                 log?.info?.({ tool: { name: toolName }, gate: { id: gateId }, effectKinds: kinds, resolved }, 'Consent gate opened, awaiting approval')
                 const decision = await waitForApproval({ gateId })
                 log?.info?.({ tool: { name: toolName }, gate: { id: gateId }, decision: decision.outcome, effectKinds: kinds, reused: false }, 'Consent gate resolved')
                 if (decision.outcome !== 'approved') {
+                    eventEmitter.emitActionReceipt({
+                        toolCallId: gateId,
+                        actionDisplayName: gateLabel,
+                        pieceName: '',
+                        status: decision.outcome === 'timeout' ? 'timed_out' : 'declined',
+                        output: null,
+                        timestamp: new Date().toISOString(),
+                    })
                     if (decision.outcome === 'timeout') {
                         return gateNoResponseResult(CONSENT_TIMEOUT_LABELS[toolName] ?? 'approval')
                     }
