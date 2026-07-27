@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 export const multiplication = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'multiplication_math',
   auth: PieceAuth.None(),
   displayName: 'Multiplication',

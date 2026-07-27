@@ -18,7 +18,7 @@ License Keys are how self-hosted Enterprise customers activate and maintain thei
 - `POST /verify` — body `{ licenseKey, platformId }`; returns `LicenseKeyEntity` or `INVALID_LICENSE_KEY` if expired/not found.
 
 ### Background job
-`TRIAL_TRACKER` (cron `*/59 23 * * *`, ~daily 23:59): for each platform, skip if no key, else `verifyKeyOrReturnNull` → `downgradeToFreePlan` if expired, else `applyLimits` to refresh flags.
+`TRIAL_TRACKER` (cron `59 23 * * *`, once daily at 23:59 UTC): for each platform, skip if no key, else `verifyKeyOrReturnNull` → `downgradeToFreePlan` if expired, else `applyLimits` to refresh flags. The cron was `*/59 23 * * *` until GIT-1632 — on the minutes field `*/59` means "minutes divisible by 59", so the sweep fired twice nightly (23:00 and 23:59).
 
 ### Gotchas
 - Endpoints are **public on purpose** — used during self-hosted setup before auth exists.

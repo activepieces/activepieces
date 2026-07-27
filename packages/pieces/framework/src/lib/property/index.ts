@@ -6,6 +6,7 @@ import { DropdownState } from './input/dropdown/common';
 
 // EXPORTED
 export { ApFile } from './input/file-property';
+export type { ApStreamingFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
