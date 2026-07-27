@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetChatMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserChatMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, aiProviderUtils, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetChatMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserChatMemory } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -78,19 +78,27 @@ function resolveTier({ tierId }: { tierId: string | null }) {
     return defaultTier ?? ACTIVEPIECES_CHAT_TIERS[0]
 }
 
-function resolveModelIdForProvider({ tier, provider }: { tier: { modelId: string }, provider: AIProviderName }): string {
-    const openrouterModelId = tier.modelId
-    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
-        return openrouterModelId
+function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }): string {
+    const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
+    if (selectedModel && curatedModels?.some((model) => model.id === selectedModel)) {
+        return selectedModel
     }
-    return openrouterModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
+    const tierModelId = resolveTier({ tierId: selectedModel }).modelId
+    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
+        return tierModelId
+    }
+    const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
+    if (isNil(curatedModels)) {
+        return nativeModelId
+    }
+    return curatedModels.some((model) => model.id === nativeModelId) ? nativeModelId : curatedModels[0].id
 }
 
 // Round one of the chat turn runs on the fastest tier so its first token streams in ~400ms
 // (the opener + first discovery) — fast enough to replace the bare "Thinking…" gap —
 // regardless of which tier the user picked for the main turn.
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
-    return resolveModelIdForProvider({ tier: resolveTier({ tierId: FAST_TIER_ID }), provider })
+    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
 }
 
 async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
