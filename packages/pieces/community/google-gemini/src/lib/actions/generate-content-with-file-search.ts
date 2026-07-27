@@ -6,8 +6,9 @@ import mime from 'mime-types';
 import { generateContentWithFilesearchActionOutputSchema } from '../output-schemas';
 
 export const generateContentWithFileSearchAction = createAction({
-  audience: 'human',
+  audience: 'both',
   description: 'Generate content with file search functionality.',
+  aiMetadata: { description: 'Uploads one file to a newly created Gemini File Search store, waits for indexing to finish, then answers the prompt grounded on that document. Use it for one-shot question answering over a document supplied at run time; prefer generate_content when no file grounding is needed or when a different built-in tool such as Google Search or URL Context fits better. Both a file and a store display name are required. Not idempotent: every call creates another file search store and a fresh completion.', idempotent: false },
   displayName: 'Generate Content with File Search',
   name: 'generate_content_with_filesearch',
   auth: googleGeminiAuth,

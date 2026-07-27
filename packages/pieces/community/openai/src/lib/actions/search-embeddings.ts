@@ -3,12 +3,13 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const searchEmbeddings = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: openaiAuth,
   name: 'search_embeddings',
   displayName: 'Search Embeddings',
   description:
     'Matches a query string to a list of document strings for best results.',
+  aiMetadata: { description: 'Embeds a query and a list of document strings passed inline in the same call, then ranks those documents against the query by cosine similarity and returns the best match plus the scored ranking; setting Top K keeps only the leading matches, leaving it empty returns every document ranked. It is self-contained with no vector store, so the documents must be supplied on every run - use create_embedding with an external vector database when the corpus is large or must persist. Requires the query, the document list, and one embedding model used for both sides. Read-only and idempotent: the same inputs produce the same ranking.', idempotent: true },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',

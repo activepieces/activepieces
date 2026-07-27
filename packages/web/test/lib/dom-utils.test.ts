@@ -3,7 +3,7 @@
 // suite needs a DOM.
 import { describe, expect, it } from 'vitest';
 
-import { isStepFileUrl } from '@/lib/dom-utils';
+import { isEditableTarget, isStepFileUrl } from '@/lib/dom-utils';
 
 describe('isStepFileUrl', () => {
   it('detects the unified /api/v1/files/ read URLs (GIT-1618 regression)', () => {
@@ -69,5 +69,27 @@ describe('isStepFileUrl', () => {
     expect(isStepFileUrl(undefined)).toBe(false);
     expect(isStepFileUrl(42)).toBe(false);
     expect(isStepFileUrl({ url: '/api/v1/files/abc' })).toBe(false);
+  });
+});
+
+describe('isEditableTarget', () => {
+  it.each(['input', 'textarea', 'select'] as const)(
+    'is true for a %s element',
+    (tagName) => {
+      expect(isEditableTarget(document.createElement(tagName))).toBe(true);
+    },
+  );
+
+  it('is true for a contenteditable element', () => {
+    const div = document.createElement('div');
+    Object.defineProperty(div, 'isContentEditable', { value: true });
+    expect(isEditableTarget(div)).toBe(true);
+  });
+
+  it('is false for non-editable elements and null', () => {
+    expect(isEditableTarget(document.createElement('div'))).toBe(false);
+    expect(isEditableTarget(document.createElement('button'))).toBe(false);
+    expect(isEditableTarget(document.body)).toBe(false);
+    expect(isEditableTarget(null)).toBe(false);
   });
 });
