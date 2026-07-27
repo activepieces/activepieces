@@ -6,6 +6,8 @@ export const sendConnectionRequest = createAction({
   name: 'send_connection_request',
   displayName: 'Send Connection Request',
   description: 'Send a LinkedIn connection invitation to a profile, with an optional note.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a LinkedIn connection invitation from the connected account to a person addressed by either profile URL or public identifier, with an optional note. Use it to open contact with someone outside the account network; Send Message is for people already reachable. Requires the account ID and one of the two address inputs. Not idempotent: each call issues a fresh invitation and consumes LinkedIn invite quota, so check Check Invitation Status before retrying.', idempotent: false },
   props: {
     accountId: accountIdProp,
     profileUrl: Property.ShortText({
