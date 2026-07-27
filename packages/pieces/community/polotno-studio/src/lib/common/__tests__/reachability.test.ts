@@ -5,6 +5,7 @@ describe('isPubliclyReachable', () => {
   it.each([
     'https://cloud.activepieces.com/api/v1/flow-runs/abc/requests/def',
     'https://ap.example.co.uk/api/v1/x',
+    'https://[::ffff:8.8.8.8]/x',
   ])('accepts public https URL %s', (url) => {
     expect(isPubliclyReachable(url)).toBe(true);
   });
@@ -23,6 +24,10 @@ describe('isPubliclyReachable', () => {
     'https://[fd12:3456::1]/api/v1/x',
     'https://activepieces.local/api/v1/x',
     'https://ap.internal/api/v1/x',
+    'https://[::ffff:127.0.0.1]/x',
+    'https://[::ffff:10.1.2.3]/x',
+    'https://[::ffff:192.168.1.1]/x',
+    'https://[::ffff:7f00:1]/x',
     'not-a-url',
   ])('rejects unreachable URL %s', (url) => {
     expect(isPubliclyReachable(url)).toBe(false);
