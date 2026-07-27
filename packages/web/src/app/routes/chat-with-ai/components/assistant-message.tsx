@@ -1,8 +1,9 @@
 import { t } from 'i18next';
-import { ChevronDown, Volume2, VolumeOff } from 'lucide-react';
+import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
   Message,
@@ -396,6 +397,20 @@ function MessageBlocks({
             return (
               <div key={`batch-${i}`} className="py-2">
                 <BatchProgressCard progress={block.data} />
+              </div>
+            );
+          case 'memory-saved':
+            return (
+              <div
+                key={`memory-${i}`}
+                className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground"
+              >
+                <Brain className="h-3.5 w-3.5 shrink-0" />
+                <span className="shrink-0">{t('Memory updated')}</span>
+                <span className="shrink-0 opacity-50">·</span>
+                <TextWithTooltip tooltipMessage={block.memory}>
+                  <span className="min-w-0 flex-1">{block.memory}</span>
+                </TextWithTooltip>
               </div>
             );
           case 'action-receipt':

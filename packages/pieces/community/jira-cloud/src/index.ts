@@ -25,6 +25,9 @@ import { transitionIssueAction } from './lib/actions/transition-issue';
 import { newComment } from './lib/triggers/new-comment';
 import { issueAssigned } from './lib/triggers/issue-assigned';
 import { newAttachment } from './lib/triggers/new-attachment';
+import { newIssueType } from './lib/triggers/new-issue-type';
+import { newProject } from './lib/triggers/new-project';
+import { newPriority } from './lib/triggers/new-priority';
 
 export const jiraCloud = createPiece({
 	displayName: 'Jira Cloud',
@@ -67,5 +70,5 @@ export const jiraCloud = createPiece({
 			},
 		}),
 	],
-	triggers: [newIssue, updatedIssue, updatedIssueStatus, newComment, issueAssigned, newAttachment],
+	triggers: [newIssue, updatedIssue, updatedIssueStatus, newComment, issueAssigned, newAttachment, newIssueType, newProject, newPriority],
 });

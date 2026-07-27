@@ -50,9 +50,18 @@ The phases run in order:
 
 Queue, Setup, and Warm-up are the orchestration around your flow; **Run** is the flow itself. On a warm worker the first three collapse toward zero — the reused sandbox is already booted, so Warm-up is ~0 — and the bar is almost entirely **Run**, which is why warm calls are dominated by your own work.
 
-## Your own work usually dominates
+## Where the Run phase actually goes
 
-A warm call is almost entirely per-step bookkeeping, not your code: a progress callback per step, tens of ms each. A step that calls a third-party API waits on that API, often far longer. Next to a real outbound call, the Activepieces overhead is the smaller number.
+For a flow that does real work — a step calling a third-party API — that outbound call dominates **Run**, and the Activepieces overhead is the smaller number next to it.
+
+For a *bare* flow (no external calls), **Run is mostly persisting the run, not executing it.** A production run makes a fixed set of network round-trips to the app and object store, independent of step count:
+
+- **Two log-backup writes to your object store (S3/GCS)** — an initial snapshot and a final one. With signed URLs on, each is a direct worker→object-store upload. On a warm in-region cluster this is the single largest slice of Run (measured ~45% of worker-busy time); on a distant or public object-store endpoint it grows proportionally.
+- **A handful of worker→app callbacks** (send-response, run-log metadata) — each roughly one worker→app round-trip. Database and Redis touches ride inside these and are a few ms each.
+
+Per-step progress callbacks fire only for **test runs in the builder**, not production webhook runs — so adding steps does not add a callback per step to a live run.
+
+The practical consequence: a bare warm run's latency tracks your **object-store proximity** more than anything else. Keep the object store in-region and reachable over a private, same-zone path.
 
 ## Measured (warm)
 
@@ -69,6 +78,7 @@ The same setup measures ~165 ms unloaded but ~505 ms under sustained peak: the a
 ## Reduce it
 
 - **Keep workers warm:** `AP_REUSE_SANDBOX=true` plus a statically sized, always-on fleet.
+- **Put the object store next to the workers:** a bare warm run spends most of its Run phase on two log-backup writes to S3/GCS. In-region, same-zone, private connectivity to the object store is the biggest lever on that overhead — a distant or public endpoint multiplies it.
 - **Size for peak concurrency:** N concurrent requests need N warm workers ([sizing](/install/configure-operate/production-setup#sizing)).
 - **Fewer, heavier steps:** each step adds overhead.
 - **Don't let a slow third party block the response:** use an async webhook and callback instead of holding against the 30 s ceiling.

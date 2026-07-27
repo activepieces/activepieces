@@ -174,6 +174,22 @@ export const api = {
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
   },
+  extractServerErrorMessage(error: unknown, fallback: string): string {
+    if (api.isError(error)) {
+      const data = error.response?.data as ApErrorParams | undefined;
+      const message =
+        data?.params && 'message' in data.params
+          ? data.params.message
+          : undefined;
+      if (typeof message === 'string' && message.length > 0) {
+        return message;
+      }
+    }
+    if (error instanceof Error && error.message.length > 0) {
+      return error.message;
+    }
+    return fallback;
+  },
   any: <TResponse>(url: string, config?: AxiosRequestConfig) =>
     request<TResponse>(url, config),
   get: <TResponse>(url: string, query?: unknown, config?: AxiosRequestConfig) =>

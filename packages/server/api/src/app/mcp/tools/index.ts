@@ -27,6 +27,7 @@ import { apLockAndPublishTool } from './ap-lock-and-publish'
 import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
 import { apReadStepCodeTool } from './ap-read-step-code'
+import { apReadStepSettingsTool } from './ap-read-step-settings'
 import { apRenameFlowTool } from './ap-rename-flow'
 import { apResearchPiecesTool } from './ap-research-pieces'
 import { apResolvePropertyChainTool } from './ap-resolve-property-chain'
@@ -45,18 +46,19 @@ import { apUpdateTriggerTool } from './ap-update-trigger'
 import { apValidateFlowTool } from './ap-validate-flow'
 import { apValidateStepConfigTool } from './ap-validate-step-config'
 
-// Rollout flag (default off, imported from the tool-search engine): the tool-search tools
-// (ap_search_actions / ap_search_triggers) only register when AP_TOOL_SEARCH_ENABLED=true. They are
-// deliberately NOT in LOCKED_TOOL_NAMES — a locked tool is force-on and can't be turned off, which is
-// exactly what must not happen while the engine is behind a Cloud rollout. The flag is the master
-// switch; once on, the tools behave like the other read-only discovery tools (platform-level, on by
-// default).
+// The tool-search tools (ap_search_actions / ap_search_triggers) only register when
+// AP_TOOL_SEARCH_ENABLED=true — the flag stays the master switch and the rollback path. Once
+// registered they are locked like the other read-only discovery tools; the locked entries are
+// inert while the flag is off (a tool that never registers can't be force-on).
 export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_flows',
     'ap_flow_structure',
     'ap_read_step_code',
+    'ap_read_step_settings',
     'ap_validate_flow',
     'ap_research_pieces',
+    'ap_search_actions',
+    'ap_search_triggers',
     'ap_get_piece_props',
     'ap_resolve_property_options',
     'ap_resolve_property_chain',
@@ -117,6 +119,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apListFlowsTool(mcp, log),
     apFlowStructureTool(mcp, log),
     apReadStepCodeTool(mcp, log),
+    apReadStepSettingsTool(mcp, log),
     apValidateFlowTool(mcp, log),
     apResearchPiecesTool(mcp, log),
     // Tool-search engine — gated behind the AP_TOOL_SEARCH_ENABLED rollout flag (default off).

@@ -10,6 +10,8 @@ export const updateChangelogPost = createAction({
   displayName: 'Update Changelog Post',
   description:
     'Edit an existing changelog post — change its title, body, tags or visibility.',
+  audience: 'both',
+  aiMetadata: { description: 'Partially update one existing post in a Produktly changelog: any of title, body, release date, active/hidden visibility, or the full tag list, leaving omitted fields untouched. Pick this to revise, publish, or unpublish an announcement that already exists; use Create Changelog Post for a new one. Requires both the changelog ID and the post ID (resolve it with List Changelog Posts), and any supplied tag names must already exist. Idempotent: repeating the same call converges on the same post state.', idempotent: true },
   props: {
     changelog: produktlyProps.changelog,
     post_id: Property.ShortText({
