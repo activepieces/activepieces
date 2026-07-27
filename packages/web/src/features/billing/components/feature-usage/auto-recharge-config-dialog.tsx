@@ -48,26 +48,22 @@ export function AutoRechargeConfigDialog({
   isOpen,
   onOpenChange,
   feature,
-  includedCredits,
   currentThreshold,
   currentCreditsToAdd,
   currentMaxMonthlyTopUps,
 }: AutoRechargeConfigDialogProps) {
   const queryClient = useQueryClient();
 
-  const simpleCap = Math.max(SIMPLE_BASE, Math.floor(includedCredits / 2));
-  const creditOptions = simpleCreditOptions(simpleCap);
-
   const form = useForm<AutoRechargeFormValues>({
     resolver: zodResolver(AutoRechargeFormSchema),
     defaultValues: {
       threshold: nearestOption(
         currentThreshold ?? feature.billingUnits,
-        creditOptions,
+        CREDIT_OPTIONS,
       ),
       creditsToAdd: nearestOption(
         currentCreditsToAdd ?? DEFAULT_CREDITS_TO_ADD,
-        creditOptions,
+        CREDIT_OPTIONS,
       ),
       maxMonthlyTopUps: normalizeTopUps(currentMaxMonthlyTopUps),
     },
@@ -122,7 +118,7 @@ export function AutoRechargeConfigDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {creditOptions.map((option) => (
+                        {CREDIT_OPTIONS.map((option) => (
                           <SelectItem key={option} value={String(option)}>
                             {option.toLocaleString()}
                           </SelectItem>
@@ -142,7 +138,7 @@ export function AutoRechargeConfigDialog({
                     <FormControl>
                       <CreditsAmountSelect
                         value={field.value}
-                        options={creditOptions}
+                        options={CREDIT_OPTIONS}
                         onChange={field.onChange}
                       />
                     </FormControl>
@@ -326,7 +322,7 @@ function CreditsAmountSelect({
               }
             }}
             onBlur={commitCustom}
-            placeholder={t('Custom amount')}
+            placeholder={t('Custom amount (rounded up to nearest 1,000)')}
             className="w-full bg-transparent text-sm outline-none"
           />
           <span className="shrink-0 text-sm text-muted-foreground">
@@ -339,16 +335,8 @@ function CreditsAmountSelect({
 }
 
 function clampToStep(value: number): number {
-  const snapped = Math.round(value / CREDITS_STEP) * CREDITS_STEP;
+  const snapped = Math.ceil(value / CREDITS_STEP) * CREDITS_STEP;
   return Math.min(CREDITS_MAX, Math.max(CREDITS_MIN, snapped));
-}
-
-function simpleCreditOptions(cap: number): number[] {
-  const options = [SIMPLE_BASE];
-  for (let value = SIMPLE_STEP; value <= cap; value += SIMPLE_STEP) {
-    options.push(value);
-  }
-  return options;
 }
 
 function nearestOption(value: number, options: number[]): number {
@@ -369,11 +357,12 @@ function normalizeTopUps(value: number | null | undefined): number | null {
 }
 
 const DEFAULT_CREDITS_TO_ADD = 1000;
-const SIMPLE_BASE = 1000;
-const SIMPLE_STEP = 5000;
 const CREDITS_MIN = 1000;
 const CREDITS_MAX = 1000000;
 const CREDITS_STEP = 1000;
+const CREDIT_OPTIONS = [
+  1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000,
+];
 const MONTHLY_TOPUP_OPTIONS = [1, 2, 4, 6];
 const UNLIMITED_VALUE = 'unlimited';
 
@@ -387,7 +376,6 @@ interface AutoRechargeConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   feature: BillableFeature;
-  includedCredits: number;
   currentThreshold?: number | null;
   currentCreditsToAdd?: number | null;
   currentMaxMonthlyTopUps?: number | null;

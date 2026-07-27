@@ -121,10 +121,6 @@ function BillingPageDetails() {
   const appSumoAiCreditsTotal =
     (info.usage.appSumoAiCreditsUsed ?? 0) +
     (info.usage.appSumoAiCreditsRemaining ?? 0);
-  const includedCreditsForFeature = isAppSumoCredits
-    ? appSumoAiCreditsTotal
-    : info.plan.includedCredits;
-
   const usersFeature = info.nonConsumableFeatures.find(
     (feature) => feature.featureId === AutumnFeatureId.USERS_LIMIT,
   );
@@ -226,7 +222,6 @@ function BillingPageDetails() {
               <AutoRechargeCard
                 feature={creditsFeature}
                 autoTopUp={creditsAutoTopUp}
-                includedCredits={includedCreditsForFeature}
                 hasCard={hasBillingPortal}
                 note={autoRechargeNote}
               />

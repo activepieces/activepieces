@@ -816,6 +816,7 @@
   "You're on the {plan} plan": "You're on the {plan} plan",
   "You now have access to {benefits}.": "You now have access to {benefits}.",
   "Custom amount": "Custom amount",
+  "Custom amount (rounded up to nearest 1,000)": "Custom amount (rounded up to nearest 1,000)",
   "Credits used": "Credits used",
   "Included in your plan": "Included in your plan",
   "Limit": "Limit",

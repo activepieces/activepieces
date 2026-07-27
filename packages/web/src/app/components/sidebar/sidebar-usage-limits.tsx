@@ -168,7 +168,6 @@ const SidebarUsageLimits = React.memo(() => {
             isOpen={autoRechargeOpen}
             onOpenChange={setAutoRechargeOpen}
             feature={creditsFeature}
-            includedCredits={platform.plan.includedCredits}
             currentThreshold={
               autoRechargeEnabled ? creditsAutoTopUp.threshold : undefined
             }

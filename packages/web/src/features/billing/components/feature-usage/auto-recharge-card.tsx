@@ -19,7 +19,6 @@ import { AutoRechargeConfigDialog } from './auto-recharge-config-dialog';
 export const AutoRechargeCard = ({
   feature,
   autoTopUp,
-  includedCredits,
   hasCard,
   note,
 }: AutoRechargeCardProps) => {
@@ -122,7 +121,6 @@ export const AutoRechargeCard = ({
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         feature={feature}
-        includedCredits={includedCredits}
         currentThreshold={enabled ? autoTopUp.threshold : undefined}
         currentCreditsToAdd={enabled ? autoTopUp.quantity : undefined}
         currentMaxMonthlyTopUps={
@@ -149,7 +147,6 @@ const AutoRechargeRow = ({
 type AutoRechargeCardProps = {
   feature: BillableFeature;
   autoTopUp?: AutoTopUpConfig;
-  includedCredits: number;
   hasCard: boolean;
   note?: ReactNode;
 };
