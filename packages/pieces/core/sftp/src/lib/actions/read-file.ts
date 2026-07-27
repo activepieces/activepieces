@@ -22,7 +22,7 @@ function readSFTP(client: Client, filePath: string): Readable {
 }
 
 export const readFileContent = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: sftpAuth,
   name: 'read_file_content',
   displayName: 'Read File Content',

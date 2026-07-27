@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 export const subtraction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'subtraction_math',
   auth: PieceAuth.None(),
   displayName: 'Subtraction',

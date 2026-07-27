@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import jimp from 'jimp';
 
 export const resizeImage = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'resize_image',
   description: 'Resizes an image',
   displayName: 'Resize an image',

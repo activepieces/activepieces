@@ -3,7 +3,7 @@ import Crypto from 'crypto';
 import { Buffer } from 'buffer';
 
 export const hmacSignature = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'hmac-signature',
   description:
     'Converts text to a HMAC signed hash value using various hashing algorithms',

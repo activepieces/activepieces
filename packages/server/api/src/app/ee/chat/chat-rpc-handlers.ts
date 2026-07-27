@@ -120,17 +120,41 @@ function buildConnectionInventoryNote({ connections, truncated }: {
     return lines.join('\n')
 }
 
+function buildMemoryNote({ instructions, memories }: {
+    instructions: string | null
+    memories: string[]
+}): string {
+    const trimmedInstructions = instructions?.trim()
+    const lines: string[] = [
+        '\n\n## Memory about this user (persists across every conversation)',
+        'Honor anything below by default without re-asking. Save to memory with `ap_remember` (silent) whenever it would spare the user from repeating themselves next time:',
+        '- The user asks you to remember or forget something ("remember I love cheese", "don\'t forget X", "forget that") — ALWAYS act on this immediately.',
+        '- The user volunteers a durable fact, preference, or default about themselves ("I love cheese", "I prefer TypeScript", "my main channel is #ops", "I only hire EU-based") — save it proactively.',
+        '- The user corrects how you work ("stop asking me things you can find") — save the correction.',
+        'One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so if you are unsure whether something is worth remembering, save it (or briefly ask). Do NOT save one-off task details (those belong in the brief).',
+    ]
+    if (!isNil(trimmedInstructions)) {
+        lines.push(`\n### Instructions (how they want you to work / talk)\n${trimmedInstructions}`)
+    }
+    lines.push(
+        '\n### Remembered facts',
+        memories.length > 0 ? memories.map((memory) => `- ${memory}`).join('\n') : 'Nothing remembered yet.',
+    )
+    return lines.join('\n')
+}
+
 export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
     async getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse> {
         const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
 
-        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta] = await Promise.all([
+        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta, chatMemory] = await Promise.all([
             chatHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
             chatHelpers.resolveChatProvider({ platformId, log }),
             chatHelpers.getUserProjects({ platformId, userId, log }),
             chatMcp.getCredentials({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
             userService(log).getMetaInformation({ id: userId }),
+            chatHelpers.getUserChatMemory({ platformId, userId }),
         ])
 
         const attachmentProjectId = (conversation.projectId && userProjects.some((p) => p.id === conversation.projectId))
@@ -217,7 +241,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
             userEmail: userMeta.email,
-        }) + inventoryNote
+        }) + inventoryNote + buildMemoryNote({ instructions: chatMemory.instructions, memories: chatMemory.memories })
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides
