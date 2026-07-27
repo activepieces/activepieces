@@ -14,7 +14,7 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const nextDayofWeek = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'next_day_of_week',
   displayName: 'Next Day of Week',
   description: 'Get the date and time of the next day of the week',

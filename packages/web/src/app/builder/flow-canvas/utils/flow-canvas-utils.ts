@@ -17,8 +17,9 @@ import {
 import { t } from 'i18next';
 
 import { flowRunUtils } from '@/features/flow-runs';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 
-import { CanvasDensity, flowCanvasLayoutConsts } from './layout-consts';
+import { flowCanvasLayoutConsts } from './layout-consts';
 import {
   ApBigAddButtonNode,
   ApButtonData,
@@ -43,10 +44,8 @@ import {
  * below, edge SVG paths by svgPathUtils.transposePath inside the edge
  * components — turning the top-to-bottom layout into a left-to-right one.
  */
-const getLayout = (
-  orientation: CanvasOrientation,
-  density: CanvasDensity = 'comfortable',
-) => flowCanvasLayoutConsts.getOrientationLayout(orientation, density);
+const getLayout = (orientation: CanvasOrientation) =>
+  flowCanvasLayoutConsts.ORIENTATION_LAYOUT[orientation];
 
 const createBigAddButtonGraph: (params: {
   parentStep: FlowAction;
@@ -147,15 +146,14 @@ const createStepGraph: (params: {
 const buildFlowGraph: (params: {
   step: FlowAction | FlowTrigger | undefined;
   orientation: CanvasOrientation;
-  density: CanvasDensity;
-}) => ApGraph = ({ step, orientation, density }) => {
+}) => ApGraph = ({ step, orientation }) => {
   if (isNil(step)) {
     return {
       nodes: [],
       edges: [],
     };
   }
-  const layout = getLayout(orientation, density);
+  const layout = getLayout(orientation);
   const graph: ApGraph = createStepGraph({
     step,
     graphAlongSize: layout.stepAlongSize + layout.spaceAlongBetweenSteps,
@@ -163,18 +161,17 @@ const buildFlowGraph: (params: {
   });
   const childGraph =
     step.type === FlowActionType.LOOP_ON_ITEMS
-      ? buildLoopChildGraph({ step, orientation, density })
+      ? buildLoopChildGraph({ step, orientation })
       : step.type === FlowActionType.ROUTER
-      ? buildRouterChildGraph({ step, orientation, density })
+      ? buildRouterChildGraph({ step, orientation })
       : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
-      ? buildContinueOnFailureBranchesGraph({ step, orientation, density })
+      ? buildContinueOnFailureBranchesGraph({ step, orientation })
       : null;
 
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
   const nextStepGraph = buildFlowGraph({
     step: step.nextAction,
     orientation,
-    density,
   });
   return mergeGraph(
     graphWithChild,
@@ -275,14 +272,12 @@ const calculateGraphBoundingBox = ({
 const buildLoopChildGraph: (params: {
   step: LoopOnItemsAction;
   orientation: CanvasOrientation;
-  density: CanvasDensity;
-}) => ApGraph = ({ step, orientation, density }) => {
-  const layout = getLayout(orientation, density);
+}) => ApGraph = ({ step, orientation }) => {
+  const layout = getLayout(orientation);
   const childGraph = step.firstLoopAction
     ? buildFlowGraph({
         step: step.firstLoopAction,
         orientation,
-        density,
       })
     : createBigAddButtonGraph({
         parentStep: step,
@@ -381,16 +376,14 @@ const buildLoopChildGraph: (params: {
 const buildRouterChildGraph = ({
   step,
   orientation,
-  density,
 }: {
   step: RouterAction;
   orientation: CanvasOrientation;
-  density: CanvasDensity;
 }) => {
-  const layout = getLayout(orientation, density);
+  const layout = getLayout(orientation);
   const childGraphs = step.children.map((branch, index) => {
     return branch
-      ? buildFlowGraph({ step: branch, orientation, density })
+      ? buildFlowGraph({ step: branch, orientation })
       : createBigAddButtonGraph({
           parentStep: step,
           nodeData: {
@@ -407,7 +400,6 @@ const buildRouterChildGraph = ({
   const childGraphsAfterOffset = offsetRouterChildSteps({
     childGraphs,
     orientation,
-    density,
   });
 
   const maxHeight = Math.max(
@@ -488,13 +480,11 @@ const buildRouterChildGraph = ({
 const buildContinueOnFailureBranchesGraph = ({
   step,
   orientation,
-  density,
 }: {
   step: FlowAction;
   orientation: CanvasOrientation;
-  density: CanvasDensity;
 }): ApGraph => {
-  const layout = getLayout(orientation, density);
+  const layout = getLayout(orientation);
   const branches =
     step.type === FlowActionType.CODE || step.type === FlowActionType.PIECE
       ? step.continueOnFailureBranches
@@ -514,7 +504,7 @@ const buildContinueOnFailureBranchesGraph = ({
 
   const childGraphs = branchOrder.map(({ branch, location }, index) =>
     branch
-      ? buildFlowGraph({ step: branch, orientation, density })
+      ? buildFlowGraph({ step: branch, orientation })
       : createBigAddButtonGraph({
           parentStep: step,
           nodeData: {
@@ -529,7 +519,6 @@ const buildContinueOnFailureBranchesGraph = ({
   const childGraphsAfterOffset = offsetRouterChildSteps({
     childGraphs,
     orientation,
-    density,
   });
 
   const maxHeight = Math.max(
@@ -604,13 +593,11 @@ const buildContinueOnFailureBranchesGraph = ({
 const offsetRouterChildSteps = ({
   childGraphs,
   orientation,
-  density,
 }: {
   childGraphs: ApGraph[];
   orientation: CanvasOrientation;
-  density: CanvasDensity;
 }) => {
-  const layout = getLayout(orientation, density);
+  const layout = getLayout(orientation);
   const boundingBoxes = childGraphs.map((g) =>
     calculateGraphBoundingBox({ graph: g, orientation }),
   );
@@ -707,6 +694,22 @@ function buildNotesGraph(notes: Note[]): ApGraph {
   };
 }
 
+function determineInitiallySelectedStep(
+  failedStepNameInRun: string | null,
+  flowVersion: FlowVersion,
+): string | null {
+  const firstInvalidStep = flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .find((s) => !s.valid);
+  const isNewFlow = window.location.search.includes(NEW_FLOW_QUERY_PARAM);
+  if (failedStepNameInRun) {
+    return failedStepNameInRun;
+  }
+  if (isNewFlow) {
+    return null;
+  }
+  return firstInvalidStep?.name ?? 'trigger';
+}
 const doesSelectionRectangleExist = () => {
   return (
     document.querySelector(
@@ -719,17 +722,14 @@ export const flowCanvasUtils = {
     version,
     notes,
     orientation,
-    density = 'comfortable',
   }: {
     version: FlowVersion;
     notes: Note[];
     orientation: CanvasOrientation;
-    density?: CanvasDensity;
   }): ApGraph {
     const stepsGraph = buildFlowGraph({
       step: version.trigger,
       orientation,
-      density,
     });
     const notesGraph = buildNotesGraph(notes);
     const graphEndWidget = stepsGraph.nodes.findLast(
@@ -751,5 +751,6 @@ export const flowCanvasUtils = {
   createAddOperationFromAddButtonData,
   isSkipped,
   getStepStatus,
+  determineInitiallySelectedStep,
   doesSelectionRectangleExist,
 };

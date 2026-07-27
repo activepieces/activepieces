@@ -31,7 +31,7 @@ async function executeStorageRemoveValue(context: ActionContext<PieceAuthPropert
 }
 
 export const storageRemoveValue = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'remove_value',
   displayName: 'Remove',
   description: 'Remove a value from storage',

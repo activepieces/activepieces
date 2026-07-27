@@ -11,7 +11,7 @@ import {
 import { tablesCommon } from '../common';
 
 export const downloadTable = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'tables-download-table',
   displayName: 'Download Table',
   description: 'Export a table as a CSV file.',

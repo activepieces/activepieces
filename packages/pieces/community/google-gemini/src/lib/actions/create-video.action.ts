@@ -6,11 +6,12 @@ import { GoogleGenAI } from '@google/genai';
 import mime from 'mime-types';
 
 export const createVideoAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'create_video',
   auth: googleGeminiAuth,
   displayName: 'Create Video',
   description: 'Generate a video from a text prompt using Google Veo models.',
+  aiMetadata: { description: 'Generates a short video with a Google Veo model from a text prompt, optionally seeded by a start image (image-to-video) or by both a start and end image (interpolation between those frames), polling the long-running generation job for up to 10 minutes before returning the finished MP4 as a file. Use it whenever the required output is video; text goes through generate_content and speech through text-to-speech. Note the model-dependent limits: 1080p needs Veo 3.0 or newer, 4K needs Veo 3.1, and both require an 8-second duration. Not idempotent: each call renders a new video.', idempotent: false },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',

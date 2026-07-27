@@ -4,12 +4,13 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { greenptAuth } from '../common/auth';
 
 export const transcribeAudio = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: greenptAuth,
   name: 'transcribeAudio',
   displayName: 'Transcribe Audio',
   description:
     'Transcribe pre-recorded audio files with speaker diarization and advanced features',
+  aiMetadata: { description: 'Transcribes a pre-recorded audio file with a GreenPT speech-to-text model (green-s or green-s-pro), with optional speaker diarization, punctuation, smart formatting, filler words, numeral conversion, and sentiment, topic, or intent analysis. Requires the audio as a file input, supplied either as base64 data or as a URL the engine fetches, language is auto-detected unless a code is supplied, and only the plain transcript text is returned. Use this for speech input; use Ask GreenPT for text generation. Read-only inference and idempotent: nothing is created and the same file with the same options yields the same transcript.', idempotent: true },
   props: {
     audioUrl: Property.File({
       displayName: 'Audio File',

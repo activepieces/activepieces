@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 export const generateRandom = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'generateRandom_math',
   auth: PieceAuth.None(),
   displayName: 'Generate Random Number',

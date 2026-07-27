@@ -22,7 +22,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
-import { useReportConnectionsExcerpt } from '@/app/routes/connections/use-report-connections-excerpt';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
@@ -51,6 +50,7 @@ import {
 import {
   EditGlobalConnectionDialog,
   RenameConnectionDialog,
+  RevalidateConnectionButton,
   appConnectionsMutations,
   appConnectionsQueries,
   appConnectionUtils,
@@ -123,11 +123,6 @@ function AppConnectionsPage() {
       previous: connections.previous,
     };
   }, [connections, location.search]);
-
-  useReportConnectionsExcerpt({
-    connections: filteredData?.data,
-    total: filteredData?.data?.length,
-  });
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -297,6 +292,9 @@ function AppConnectionsPage() {
             : userHasPermissionToWriteAppConnection;
           return (
             <div className="flex items-center gap-2 justify-end">
+              {userHasPermissionToRename && (
+                <RevalidateConnectionButton connectionId={row.original.id} />
+              )}
               {row.original.scope === AppConnectionScope.PROJECT ? (
                 <RenameConnectionDialog
                   connectionId={row.original.id}

@@ -350,19 +350,6 @@
     }
   }
 
-  @keyframes stage-enter {
-    0% {
-      opacity: 0;
-      transform: translateY(5px);
-      filter: blur(2px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-      filter: blur(0);
-    }
-  }
-
   @keyframes dash {
     to {
       stroke-dashoffset: -20;
@@ -442,10 +429,6 @@
 
 @utility animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out;
-}
-
-@utility animate-stage-enter {
-  animation: stage-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @utility animate-dash {

@@ -32,7 +32,7 @@ async function executeStorageGet(context: ActionContext<PieceAuthProperty | unde
 }
 
 export const storageGetAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'get',
   displayName: 'Get',
   description: 'Get a value from storage',

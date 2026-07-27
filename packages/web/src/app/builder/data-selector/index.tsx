@@ -353,7 +353,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               : `${parentHeight - 100}px`,
           width:
             dataSelectorSize !== DataSelectorSizeState.EXPANDED
-              ? `${parentWidth > 0 ? Math.min(450, parentWidth - 24) : 450}px`
+              ? '450px'
               : `${parentWidth - 40}px`,
         }}
         className="transition-all overflow-hidden"

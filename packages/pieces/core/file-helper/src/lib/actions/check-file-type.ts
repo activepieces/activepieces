@@ -3,7 +3,7 @@ import { predefinedMimeTypes } from '../common/mimeTypes';
 import mime from 'mime-types';
 
 export const checkFileType = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'checkFileType',
   displayName: 'Check file type',
   description: 'Check MIME type of a file and filter based on selected types',
