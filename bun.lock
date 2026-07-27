@@ -158,6 +158,7 @@
         "zod": "4.3.6",
       },
       "devDependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
         "@types/node": "24.11.0",
         "@types/semver": "7.5.6",
         "vitest": "3.2.6",
@@ -311,7 +312,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

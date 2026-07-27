@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { getEffectiveProviderAndModel } from '../../src/lib/management/ai-providers'
+import { getEffectiveProviderAndModel } from '@activepieces/core-piece-types'
 
 describe('getEffectiveProviderAndModel', () => {
     describe('direct providers', () => {
