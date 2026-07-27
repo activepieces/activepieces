@@ -14,7 +14,7 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const addSubtractDateAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'add_subtract_date',
   displayName: 'Add/Subtract Time',
   description: 'Add or subtract time from a date',
