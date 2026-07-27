@@ -7,8 +7,9 @@ const OBJECT = { id: 'img_1', object: 'image', status: 'completed' };
 const ENVELOPE = { id: 'evt_1', type: 'image.completed', created_at: 'now', api_version: 'v1', data: { object: OBJECT } };
 const RAW = JSON.stringify(ENVELOPE);
 const NOW = 1_800_000_000;
-const sign = (body: string) =>
-  `t=${NOW},v1=${createHmac('sha256', SECRET).update(`${NOW}.${body}`).digest('hex')}`;
+const signAt = (t: number, body: string) =>
+  `t=${t},v1=${createHmac('sha256', SECRET).update(`${t}.${body}`).digest('hex')}`;
+const sign = (body: string) => signAt(NOW, body);
 
 const delivery = (over: Record<string, unknown> = {}) => ({
   rawBody: RAW,
@@ -30,8 +31,26 @@ describe('handleWebhookDelivery', () => {
     expect(handleWebhookDelivery(delivery({ headers }))).toEqual([OBJECT]);
   });
 
-  it('drops a delivery with a bad signature', () => {
-    expect(handleWebhookDelivery(delivery({ headers: { 'x-signature': 't=1,v1=deadbeef' } }))).toEqual([]);
+  it('drops a delivery whose digest is wrong', () => {
+    // Fresh timestamp, wrong digest — isolates bad_signature from stale_timestamp,
+    // which is checked first and would otherwise mask this branch.
+    const headers = {
+      'x-signature': `t=${NOW},v1=${'0'.repeat(64)}`,
+      'x-event-type': 'image.completed',
+    };
+    expect(handleWebhookDelivery(delivery({ headers }))).toEqual([]);
+  });
+
+  it('drops a delivery whose timestamp is stale', () => {
+    const headers = {
+      'x-signature': signAt(NOW - 301, RAW),
+      'x-event-type': 'image.completed',
+    };
+    expect(handleWebhookDelivery(delivery({ headers }))).toEqual([]);
+  });
+
+  it('drops a correctly signed delivery carrying no event type', () => {
+    expect(handleWebhookDelivery(delivery({ headers: { 'x-signature': sign(RAW) } }))).toEqual([]);
   });
 
   it('drops a delivery with no stored secret', () => {

@@ -28,8 +28,10 @@ export function handleWebhookDelivery(params: DeliveryParams): RenderLike[] {
   const verification = verifyWebhookSignature(signature, params.rawBody, params.secret, params.now);
   if (!verification.ok) return [];
 
+  // Fail closed: an absent x-event-type is not a subscribed type either, so it
+  // is rejected rather than waved through.
   const eventType = findHeader(params.headers, 'x-event-type');
-  if (eventType && !params.events.includes(eventType)) return [];
+  if (!eventType || !params.events.includes(eventType)) return [];
 
   const body = params.body as { data?: { object?: RenderLike } } | undefined;
   const object = body?.data?.object;
