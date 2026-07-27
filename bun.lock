@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -313,7 +312,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.4.7",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -668,7 +667,7 @@
     },
     "packages/pieces/community/apify": {
       "name": "@activepieces/piece-apify",
-      "version": "0.2.7",
+      "version": "0.2.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3159,7 +3158,7 @@
     },
     "packages/pieces/community/firecrawl": {
       "name": "@activepieces/piece-firecrawl",
-      "version": "0.3.10",
+      "version": "0.3.12",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3557,7 +3556,7 @@
     },
     "packages/pieces/community/ghostcms": {
       "name": "@activepieces/piece-ghostcms",
-      "version": "0.1.6",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3568,6 +3567,7 @@
       "devDependencies": {
         "@types/jsonwebtoken": "9.0.10",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/giftbit": {
@@ -10383,7 +10383,7 @@
     },
     "packages/pieces/core/schedule": {
       "name": "@activepieces/piece-schedule",
-      "version": "0.1.19",
+      "version": "0.1.20",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -22015,4 +22015,4 @@
 
     "@bull-board/fastify/@fastify/static/glob/minimatch/brace-expansion/balanced-match": ["balanced-match@4.0.4", "", {}, "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="],
   }
-} 
+}
