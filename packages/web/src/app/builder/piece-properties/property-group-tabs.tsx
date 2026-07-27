@@ -69,7 +69,7 @@ function PropertyGroupTabs({
     tabKeys.map((key, index) => [key, watched[index]]),
   );
 
-  const allowDynamicValues = propertySettings !== null;
+  const allowDynamicValues = propertySettings != null;
 
   const isDynamicKey = (key: string): boolean =>
     propertySettings?.[key]?.type === PropertyExecutionType.DYNAMIC;
