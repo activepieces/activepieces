@@ -10397,7 +10397,7 @@
     },
     "packages/pieces/core/sftp": {
       "name": "@activepieces/piece-sftp",
-      "version": "0.5.3",
+      "version": "0.5.4",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
