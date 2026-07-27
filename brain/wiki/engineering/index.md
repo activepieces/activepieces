@@ -20,6 +20,7 @@ The **Activepieces engineering brain**: how the system works, and *why* it was b
 ## 🧭 How this wiki is organized
 
 - 📄 **Area pages** are the skim-map of a subsystem — one section per component, gotchas called out. They hold *what a thing is now*.
+- ⚠️ **A gotcha is never its own page.** It belongs in the `Gotchas` section of the page for the feature it bites, so whoever reads about that feature meets it in place instead of having to already know it exists. Add a bullet there; only start a new page when the *topic* is new.
 - 🧠 **Decisions** are filed under the Area they touch — they hold *why* a hard-to-reverse call was made, and the alternatives rejected. Read them before you change how a subsystem works.
 - 🛠️ **Skills** are separate reusable procedures — *how* to run a repeatable task.
 - **Vocabulary** lives inline on the Area pages — especially Execution Runtime. One term, one meaning; match it.
@@ -28,7 +29,5 @@ The **Activepieces engineering brain**: how the system works, and *why* it was b
 
 - **Engineering Handbook & Playbooks** — how we build and ship
 - **API & Endpoints** — route conventions and the security contract
-- **Architecture Spine** — the load-bearing structure of the codebase
-- **Gotcha: canary doesn't proxy websockets** — only broadcasts reach canary users
-- **Gotcha: don't zod `.max()` a business limit on a request body** — cap server-side
-- **Gotcha: TypeORM soft-delete is not canary/rollback-safe on a shared DB**
+- **CI PR Review Hygiene** — draft-first Greptile review, the per-area PR size gate, and the workflow conventions reviewers keep re-litigating
+- **Architecture Spine** — the load-bearing structure of the codebase, and the gotchas that come with it: request-body `.max()` as data loss, TypeORM soft-delete across a canary window, and canary not proxying websockets
