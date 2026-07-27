@@ -168,8 +168,10 @@ const InfoRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
-    response: {
-        [StatusCodes.OK]: PlatformBillingInformation,
+    schema: {
+        response: {
+            [StatusCodes.OK]: PlatformBillingInformation,
+        },
     },
 }
 
@@ -177,8 +179,10 @@ const RefreshRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
-    response: {
-        [StatusCodes.OK]: PlatformBillingInformation,
+    schema: {
+        response: {
+            [StatusCodes.OK]: PlatformBillingInformation,
+        },
     },
 }
 
