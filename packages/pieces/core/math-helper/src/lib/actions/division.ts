@@ -7,7 +7,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 import * as z from 'zod/mini';
 
 export const division = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'division_math',
   auth: PieceAuth.None(),
   displayName: 'Division',
