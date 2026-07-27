@@ -9,7 +9,7 @@ import {
 } from '../common';
 
 export const getCurrentDate = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'get_current_date',
   displayName: 'Get Current Date',
   description: 'Get the current date',

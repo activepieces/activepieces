@@ -31,7 +31,7 @@ async function listFTP(client: FTPClient, directoryPath: string) {
 }
 
 export const listFolderContentsAction = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: sftpAuth,
   name: 'listFolderContents',
   displayName: 'List Folder Contents',

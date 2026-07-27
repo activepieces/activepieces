@@ -29,6 +29,10 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         piecesFilterType: {
             type: String,
         },
+        activeFlowsLimit: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {

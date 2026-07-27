@@ -1,5 +1,5 @@
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction} from '@activepieces/pieces-common';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { scrape } from './lib/actions/scrape';
 import { extract } from './lib/actions/extract';
@@ -9,13 +9,6 @@ import { map } from './lib/actions/map';
 import { FIRECRAWL_API_BASE_URL } from './lib/common/common';
 import { firecrawlAuth } from './lib/auth';
 
-const markdownDescription = `
-Follow these steps to obtain your Firecrawl API Key:
-
-1. Visit [Firecrawl](https://firecrawl.dev) and create an account.
-2. Log in and navigate to your dashboard.
-3. Locate and copy your API key from the API settings section.
-`;
 
 export const firecrawl = createPiece({
   displayName: 'Firecrawl',

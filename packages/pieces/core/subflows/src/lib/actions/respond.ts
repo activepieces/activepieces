@@ -4,7 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 
 export const response = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'returnResponse',
   displayName: 'Return Response',
   description: 'Return response to the original flow',

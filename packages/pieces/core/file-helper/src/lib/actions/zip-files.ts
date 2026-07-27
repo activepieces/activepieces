@@ -28,7 +28,7 @@ const encryptionMethodDescription = `
 `;
 
 export const zipFiles = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'zipFiles',
   displayName: 'Zip Files',
   description: 'Create compressed zip file from one or many files',

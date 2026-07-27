@@ -139,7 +139,7 @@ export const projectCollectionUtils = {
     });
   },
   update: (projectId: string, request: UpdateProjectPlatformRequest) => {
-    projectCollection.update(projectId, (draft) => {
+    return projectCollection.update(projectId, (draft) => {
       Object.assign(
         draft,
         Object.fromEntries(
