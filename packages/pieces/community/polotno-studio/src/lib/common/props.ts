@@ -2,6 +2,7 @@ import { type InputPropertyMap, Property } from '@activepieces/pieces-framework'
 import { polotnoStudioAuth } from '../auth';
 import type { PolotnoClient } from './client';
 import {
+  DEFAULT_MAX_TEMPLATE_RESULTS,
   DEFAULT_MAX_WAIT_SECONDS,
   MAX_TEMPLATE_RESULTS,
   TEMPLATE_PAGE_SIZE,
@@ -61,7 +62,12 @@ export async function fetchAllTemplates(
   client: PolotnoClient,
   filters: TemplateFilters = {},
 ): Promise<TemplateSummary[]> {
-  const limit = Math.min(filters.maxResults ?? MAX_TEMPLATE_RESULTS, MAX_TEMPLATE_RESULTS);
+  // Default to 100, cap at 1000, and never let a caller-supplied 0 or negative
+  // through — Task 12 passes a user-entered value straight in.
+  const limit = Math.max(
+    1,
+    Math.min(filters.maxResults ?? DEFAULT_MAX_TEMPLATE_RESULTS, MAX_TEMPLATE_RESULTS),
+  );
   const items: TemplateSummary[] = [];
   let cursor: string | undefined;
 
