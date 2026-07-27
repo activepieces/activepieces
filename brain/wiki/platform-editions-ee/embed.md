@@ -34,7 +34,7 @@ Each entry must be a bare origin — validated by `new URL(v).origin === v`, so 
 
 - **`navigate()` before configuration finishes is deferred, not dropped.** The client's route listener is not registered yet, so the call would vanish. The latest route is held in `_pendingRoute` (last-wins, so it cannot grow) and applied once configuration finishes — race-free because the client registers the listener *before* posting that event. Deferral logs a `warn`; with no `embedding.containerId` configured it logs an error instead, since no iframe will ever exist.
 - **`configure()` tears down the previous embed before building a new one.** The cleanup closure (`_cleanDashboardIframe`) is armed *before* the container poll starts, so a `configure()` superseded mid-poll is cancelled rather than leaving a second iframe. Every dashboard `message` listener shares one `AbortSignal`; cleanup aborts it, removes the iframe, and resolves the superseded `configure()` with `{ status: 'superseded' }`. It also closes any open connection/MCP overlay dialog (resolving a pending `connect()` with `connection: undefined`) and clears the cached `_embeddingAuth`, so a new `jwtToken` cannot reuse the previous user's exchanged token.
-- **`initialRoute`** rides `VENDOR_INIT`; the client already honored it (`initialRoute ?? '/'`, where `/` means the role-based default). It was removed from the public API in 2024 (`b4d2060248`) and re-exposed in SDK 0.12.0.
+- **`initialRoute`** rides `VENDOR_INIT`; the client already honored it (`initialRoute ?? '/'`, where `/` means the role-based default). It was removed from the public API in 2024 (`b4d2060248`) and re-exposed in SDK 0.14.0.
 
 ## How the CSP is resolved
 
