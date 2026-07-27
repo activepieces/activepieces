@@ -262,29 +262,13 @@ describe('chatConsent', () => {
         expect(chatConsent.isReusable([])).toBe(false)
     })
 
-    it('does not let one code step permanently disable remembering a yes', () => {
+    it('never remembers a yes for a code step, because the reuse key is not collision-proof', () => {
         const codeAndSend = chatToolClassification.flowStepEffects(triggerWith([
             codeStep({ name: 'format', code: 'export const code = async (i) => i.a + i.b' }),
             pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'] } }),
         ]))
         expect(codeAndSend.map((step) => step.effect.kind)).toContain('input_dependent')
-        expect(chatToolClassification.stepEffectsReusable(codeAndSend)).toBe(true)
-    })
-
-    it('still refuses to remember a yes when a code step sits beside a deletion', () => {
-        const codeAndDelete = chatToolClassification.flowStepEffects(triggerWith([
-            codeStep({ name: 'format', code: 'export const code = async (i) => i.a' }),
-            pieceStep({ name: 'purge', pieceName: '@activepieces/piece-tables', actionName: 'tables-delete-table' }),
-        ]))
-        expect(chatToolClassification.stepEffectsReusable(codeAndDelete)).toBe(false)
-    })
-
-    it('keys a remembered code yes to the exact code, so an edit asks again', () => {
-        const digestOf = (code: string) => chatToolClassification.effectFingerprintsOf([
-            chatToolClassification.codeEffect({ code, stepName: 'c', displayName: 'c' }),
-        ])
-        expect(digestOf('return i.a + i.b')).not.toEqual(digestOf('return i.a - i.b'))
-        expect(digestOf('return i.a + i.b')).toEqual(digestOf('return i.a + i.b'))
+        expect(chatToolClassification.stepEffectsReusable(codeAndSend)).toBe(false)
     })
 
     it('never reuses a yes for a send whose recipient is decided at runtime', () => {
