@@ -1,8 +1,9 @@
-import { DefaultProjectRole } from '@activepieces/shared'
+import { DefaultProjectRole, PersistedChatPartType, PersistedChatRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { redisConnections } from '../../../../src/app/database/redis-connections'
+import { chatHelpers } from '../../../../src/app/ee/chat/chat-helpers'
 import { executeCrossProjectTool } from '../../../../src/app/ee/chat/tools/chat-tools'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -252,6 +253,52 @@ describe('Chat Conversations API', () => {
 
             const deleteResponse = await ctx.delete(`${CONVERSATIONS_URL}/non-existent-id`)
             expect(deleteResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Message feedback', () => {
+        const seedAssistantConversation = async (ctx: Awaited<ReturnType<typeof createTestContext>>) => {
+            const conversationId = (await ctx.post(CONVERSATIONS_URL, { title: 'Feedback test' })).json().id
+            const uiMessages = [
+                { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text: 'hi' }] },
+                { role: PersistedChatRole.ASSISTANT, parts: [{ type: PersistedChatPartType.TEXT, text: 'hello' }] },
+            ]
+            await chatHelpers.conversationRepo().update(conversationId, { uiMessages: JSON.parse(JSON.stringify(uiMessages)) })
+            return conversationId
+        }
+
+        it('records a down rating with reasons and comment, then clears it', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const conversationId = await seedAssistantConversation(ctx)
+
+            const down = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/1/feedback`, {
+                rating: 'down',
+                reasons: ['incorrect_or_incomplete', 'other'],
+                comment: 'missed a step',
+            })
+            expect(down.statusCode).toBe(StatusCodes.OK)
+            let messages = (await ctx.get(`${CONVERSATIONS_URL}/${conversationId}/messages`)).json()
+            expect(messages.data[1].feedback).toMatchObject({
+                rating: 'down',
+                reasons: ['incorrect_or_incomplete', 'other'],
+                comment: 'missed a step',
+            })
+
+            const cleared = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/1/feedback`, { rating: null })
+            expect(cleared.statusCode).toBe(StatusCodes.OK)
+            messages = (await ctx.get(`${CONVERSATIONS_URL}/${conversationId}/messages`)).json()
+            expect(messages.data[1].feedback).toBeUndefined()
+        })
+
+        it('rejects feedback targeting a non-assistant message', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const conversationId = await seedAssistantConversation(ctx)
+
+            const onUser = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/0/feedback`, { rating: 'up' })
+            expect(onUser.statusCode).toBe(StatusCodes.NOT_FOUND)
+
+            const outOfRange = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/99/feedback`, { rating: 'up' })
+            expect(outOfRange.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 

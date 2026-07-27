@@ -13,9 +13,11 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **Side effects**: Separated into `*-side-effects.ts` files, called explicitly after mutations.
 - **Multi-server**: Use `distributedLock`, BullMQ deduplication, or `FOR UPDATE SKIP LOCKED` for concurrent operations.
 - **Managed PostgreSQL**: No custom extensions. Use `sanitizeObjectForPostgresql()` for external data.
-- **Before modifying a module**: Read its `.agents/features/<name>.md` file for entities, services, and integration details.
+- **Before modifying a module**: Read its subsystem page in `brain/wiki/<area>/` (and that area's `index.md` glossary) for domain language, entities, services, and integration details.
 - **Cross-cutting libraries live in `packages/core/*`**, ordered thin → thick: `core-utils`, `core-piece-types`, `core-formula`, `core-execution` (thin, bundleable, framework-agnostic) and `core/shared` (the one thick, app-level member — **keeps the name `@activepieces/shared`**, carries DB/EE/management schemas + heavy deps). Pieces and the engine may import the thin members but **never** `@activepieces/shared`; pieces get what they need via `@activepieces/pieces-framework`. See `.claude/rules/core-packages.md`.
-| `.agents/features/*.md` | ~60 lines each | When Claude explores the feature | Entity schemas, services, data flows |
+| `brain/wiki/<area>/index.md` | 9 areas | First stop for an unfamiliar subsystem | Area glossary + list of its pages |
+| `brain/wiki/<area>/*.md` | one page per subsystem | When Claude explores that subsystem | Entity schemas, services, data flows, gotchas |
+| `brain/decisions/*.md` | numbered, flat | When Claude needs the *why* behind a design | One hard-to-reverse call each |
 | `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety) |
 | `.agents/skills/` | 30-65 lines each | When invoked | Step-by-step workflows (`/add-feature`, `/add-entity`, `/add-endpoint`) |
 - **Exported types and constants must be placed at the end of the file**, after all logic (functions, hooks, components, classes, etc.). This keeps the logic front and centre when reading a file, and groups the public contract at a predictable location.
@@ -40,6 +42,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Coding Conventions
 
+- **npm dependencies go in the workspace that imports them, never the root `package.json`** — every workspace (api, worker, web, each piece, …) must declare what its own code imports, in its own `package.json` (`dependencies` for runtime imports, `devDependencies` for test/tooling-only). Bun's isolated linker resolves each workspace from its own manifest, and the Docker image installs only workspace manifests — an undeclared import that "works locally" will crash the production container. Root `dependencies` is only `jsonwebtoken` (required by `docker-entrypoint.sh`); root `devDependencies` is only for repo-level tooling under `scripts/` and `tools/`. Pin exact versions like the surrounding entries, and run `bun install` afterwards so `bun.lock` stays in sync.
 - **No `any` type** — Use proper type definitions or `unknown` with type guards
 - **No type casting** — Do not use `as SomeType` to force types. If you encounter an unnecessary cast, remove it.
 - **No deprecated APIs** — Before using any library method or export, check its JSDoc. If it carries a `@deprecated` tag, use the recommended replacement instead. Examples: prefer `z.enum` over `z.nativeEnum`.
@@ -50,7 +53,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **Named parameters** — Always use a single destructured object parameter instead of positional arguments. This applies to every function with more than one parameter, regardless of type. It prevents mix-ups at the call site and makes future additions non-breaking.
 - **Prefer immutable data flow** — Functions should produce data by returning it, not by mutating an array/object the caller passes in. If a helper accumulates results (logs, derived rows, computed bindings), it should build the collection locally and return it — not take a pre-allocated bag the caller will read after. Local mutation inside a function's own body is fine; mutation that crosses the function boundary is not. Build new collections with `.map` / `.filter` / `.reduce` / spread rather than in-place `push` / `splice` / property assignment when feasible.
 - **File order**: Imports → Exported functions/constants → Helper functions → Types
-- **Comments** — Only comment to explain *why* something is done, never *what* the code is doing. Code should be self-explanatory; comments that restate the code add noise and rot.
+- **Comments** — Do NOT include comments in code. No inline comments, no explanatory comment blocks, no JSDoc narration. Code must be self-explanatory through naming and structure. If a *why* genuinely needs recording, put it in the commit message or PR description, not in the source.
 - **Util file exports** — When a util file exposes multiple plain functions or constants (non-React), do not export them individually. Instead, group them into a single named `const` and export that one object (e.g. `export const myUtils = { fn1, fn2 }`). Callers use `myUtils.fn1()` at the call site. **React components** in the same file should be **named exports** (e.g. `export function MyAlert()` or `export const MyAlert = …`) and imported by name — do not bundle them into a wrapper object for the sake of this rule.
 - **Safe outbound HTTP (SSRF)** — For any outbound HTTP in `packages/server/{api,worker,utils}`, use `safeHttp.axios` / `safeHttp.createAxios({ ... })` from `@activepieces/server-utils`. Never use raw `fetch` or `axios.create` for URLs that come from user input, admin config, OAuth endpoints, or third-party integrations — they bypass the SSRF filter (private/loopback/metadata IPs). See `.claude/rules/safe-http.md`.
 
@@ -95,6 +98,10 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 - If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the appropriate pieces label (in addition to the primary label above):
   - **`🧩 area/third-party-pieces`** — for third-party integrations (most pieces under `packages/pieces/community/`)
   - **`🧩 area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
+- **Always fill the "Breaking change?" section of the PR template** — tick exactly one box (the `breaking-change-check` CI job fails if it is left unedited). A change is breaking if a self-hoster or API consumer must take action: removed/renamed API fields or endpoints, dropped columns, new required fields, removed/required env vars, or default/limit/behaviour changes. If it is breaking:
+  - also apply the **`⛓️‍💥 breaking-change`** label (in addition to the primary label above), and
+  - add an entry to `docs/install/reference/breaking-changes.mdx` describing what changed and the action required. CI enforces that the label and the docs entry travel together.
+- **Non-rollbackable migrations are a separate axis** from customer-facing breaking changes: a migration that runs destructive DDL (`DROP TABLE`/`DROP COLUMN`, `ADD ... NOT NULL` without `DEFAULT`, etc.) must set `breaking = true` on the migration class — this is the rollback-safety flag (used by `rollback-migrations.ts` and the release rollback note), enforced by `check-migration-rollback.ts`. It does **not** by itself require the `⛓️‍💥 breaking-change` label; decide that from the upgrade-impact question above.
 
 ## Database Migrations
 
@@ -120,3 +127,37 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 
 - [Database Migrations Playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/database-migration)
 - [TypeORM Migrations Docs](https://orkhan.gitbook.io/typeorm/docs/migrations)
+
+<!-- craftspace:start -->
+## This repo carries its own brain
+
+Durable company context lives in `brain/` and syncs to Craftspace both ways. Read it BEFORE
+answering how this project works — its decisions, vocabulary, and gotchas are already written down.
+
+- `brain/wiki/` — how things work. Folders nest: `wiki/area/index.md` is the page for `area`,
+  and a leaf beside it is that page's child. Grep here first.
+- `brain/decisions/` — numbered, flat, one hard-to-reverse call each, newest number last.
+- `.agents/skills/` — repeatable procedures, one folder per skill (`.claude/skills` symlinks onto it).
+
+## Writing back
+
+Write a markdown FILE, do not call the Craftspace `upsert_*` tools — a file rides your PR and review,
+an MCP write pushes straight to the default branch. Edit the file that already covers the topic instead
+of adding a near-duplicate.
+
+**A gotcha is not a page.** Add it as a bullet under the `Gotchas` heading of the page for the feature it
+bites, so whoever reads about that feature meets it in place instead of having to know it exists. Same for
+any other fact about an existing feature. Start a new file only when the TOPIC is new.
+
+Frontmatter each file understands:
+
+```
+---
+title: Optional, overrides the H1
+icon: 🧭
+status: accepted   # decisions only
+---
+```
+
+`icon:` is a single emoji and shows on the page in the web app. Keep the emoji out of the title.
+<!-- craftspace:end -->

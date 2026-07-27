@@ -39,6 +39,7 @@
     "tree-kill": "1.2.2",
     "tslib": "2.6.2",
     "write-file-atomic": "5.0.1",
+    "zod": "4.3.6",
     "@activepieces/core-utils": "workspace:*",
     "@activepieces/core-formula": "workspace:*"
   },
@@ -46,6 +47,9 @@
     "@types/decompress": "4.2.7",
     "@types/node": "24.11.0",
     "@types/write-file-atomic": "4.0.3",
+    "cli-table3": "0.6.3",
+    "commander": "11.1.0",
+    "fastify": "5.8.5",
     "vitest": "3.2.6"
   }
 }

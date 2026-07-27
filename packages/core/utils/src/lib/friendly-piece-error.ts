@@ -157,10 +157,6 @@ const extractResponseHttpDetails = (error: Record<string, unknown>): HttpDetails
     if (!isObjectRecord(response)) {
         return null
     }
-    // A nested `response` object already establishes HTTP context, so any numeric status is
-    // trusted here — including non-standard codes some services emit (e.g. LinkedIn's 999).
-    // The 100–599 range guard is only needed by the broad top-level fallback below, where a
-    // numeric `status` is the sole HTTP signal.
     const statusValue = response['status']
     const status = typeof statusValue === 'number' ? statusValue : undefined
     const responseBody = response['body']
@@ -188,11 +184,6 @@ const extractResponseHttpDetails = (error: Record<string, unknown>): HttpDetails
     }
 }
 
-// SDK clients (Anthropic, OpenAI, etc.) expose status/error/headers at the top level
-// instead of nesting them under `response`. This is deliberately a broad match: any error
-// carrying a numeric HTTP-range `status` is treated as an HTTP error. To keep false
-// positives contained (e.g. a non-HTTP library that reuses a `status` field), it runs only
-// as a fallback after the stricter response-shape extractor — see `extractHttpDetails`.
 const extractClientHttpDetails = (error: Record<string, unknown>): HttpDetails | null => {
     const status = toHttpStatus(error['status'])
     if (isNil(status)) {

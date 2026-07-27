@@ -333,17 +333,32 @@ function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], need
 
 function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
     return fields.flatMap((field) => {
-        const path = prefix ? `${prefix}.${field.key}` : field.key
+        const segment = field.value ?? field.key
+        const path = segment === '' ? prefix : (prefix ? `${prefix}.${segment}` : segment)
         if (field.children && field.children.length > 0) {
             return flattenOutputSchemaFields(field.children, path)
         }
         if (field.listItems && field.listItems.length > 0) {
             return flattenOutputSchemaFields(field.listItems, `${path}[]`)
         }
+        if (path === '') {
+            return []
+        }
         const typeHint = field.format ? ` (${field.format})` : ''
         const dynamicNote = field.dynamicKey ? ' (dynamic key)' : ''
         return [`${path}${typeHint}${dynamicNote}`]
     })
+}
+
+function describeWholeOutputSchema(schema: OutputSchema): string | null {
+    const fields = schema.fields ?? []
+    const [field] = fields
+    if (fields.length !== 1 || field.value !== '' || (field.children?.length ?? 0) > 0 || (field.listItems?.length ?? 0) > 0) {
+        return null
+    }
+    const format = field.format ? ` (${field.format})` : ''
+    const description = field.description ? `: ${field.description}` : ''
+    return `${field.label ?? field.key}${format}${description}`
 }
 
 function deriveFieldPathsFromSample(value: unknown, prefix = ''): string[] {
@@ -770,6 +785,7 @@ export const mcpUtils = {
     buildExampleInput,
     buildRequiredInputs,
     flattenOutputSchemaFields,
+    describeWholeOutputSchema,
     deriveFieldPathsFromSample,
     normalizePieceName,
     lookupPieceComponent,

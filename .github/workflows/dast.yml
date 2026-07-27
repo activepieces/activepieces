@@ -140,6 +140,11 @@ jobs:
           done
           if [ -n "$found" ]; then
             cp "$found" "${GITHUB_WORKSPACE}/.zap/reports/zap-dast.sarif"
+            # Code scanning rejects https URIs (expects repo-relative paths). Strip the scheme
+            # from finding/artifact LOCATIONS only — leave tool/rule metadata URIs (helpUri,
+            # informationUri) intact so Security-tab rule-help links stay clickable.
+            SARIF="${GITHUB_WORKSPACE}/.zap/reports/zap-dast.sarif"
+            jq '(.runs[]?.results[]?.locations[]?.physicalLocation.artifactLocation.uri?) |= sub("^https?://"; "") | (.runs[]?.results[]?.relatedLocations[]?.physicalLocation.artifactLocation.uri?) |= sub("^https?://"; "") | (.runs[]?.artifacts[]?.location.uri?) |= sub("^https?://"; "")' "$SARIF" > "$SARIF.tmp" && mv "$SARIF.tmp" "$SARIF"
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"

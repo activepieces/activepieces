@@ -1,6 +1,8 @@
 import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
+import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
+import { isStepFileUrl } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 import { schemaUtils } from './resolve-schema';
@@ -75,6 +77,10 @@ function getCellValue(row: Record<string, unknown>, path: string[]): unknown {
 }
 
 function CellValue({ value }: { value: unknown }) {
+  if (isStepFileUrl(value)) {
+    return <StepFileDownloadButton fileUrl={value} />;
+  }
+
   if (value === null || value === undefined || value === '') {
     return (
       <span className="text-muted-foreground/40 italic">{t('empty')}</span>

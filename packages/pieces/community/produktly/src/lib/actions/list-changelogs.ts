@@ -8,6 +8,8 @@ export const listChangelogs = createAction({
   name: 'list_changelogs',
   displayName: 'List Changelogs',
   description: 'List all changelogs in your Produktly account.',
+  audience: 'both',
+  aiMetadata: { description: 'List every changelog in the Produktly account with its name, active state, and creation date, paginated with limit and offset. Pick this to discover changelog IDs before reading or writing posts; use List Changelog Posts for the announcements inside one changelog. Read-only and idempotent.', idempotent: true },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

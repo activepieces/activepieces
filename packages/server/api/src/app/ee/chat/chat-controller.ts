@@ -1,16 +1,16 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdateChatConversationRequest, WorkerJobType } from '@activepieces/shared'
+import { ChatConversationStatus, CreateChatConversationRequest, ImportChatMemoryRequest, InstructChatMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetChatMessageFeedbackRequest, UpdateChatConversationRequest, UpdateChatMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
+import { chatMemoryAi } from './chat-memory-ai'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
 import { chatAnalyticsTelemetry } from './chat-sync-job'
@@ -70,6 +70,17 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             platformId: request.principal.platform.id,
             userId: request.principal.id,
         })
+    })
+
+    app.post('/conversations/:id/messages/:messageIndex/feedback', SetMessageFeedbackRoute, async (request, reply) => {
+        await chatService(request.log).setMessageFeedback({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+            messageIndex: request.params.messageIndex,
+            request: request.body,
+        })
+        return reply.status(StatusCodes.OK).send({ success: true })
     })
 
     app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
@@ -138,7 +149,7 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
             await chatApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertAiCreditsNotExhausted({ platformId, log })
+        await assertChatProviderUsable({ platformId, log })
 
         await jobQueue(runLog).add({
             id: apId(),
@@ -226,6 +237,44 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send([])
     })
 
+    app.get('/memory', GetMemoryRoute, async (request) => {
+        return chatHelpers.getUserChatMemory({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+    })
+
+    app.post('/memory', UpdateMemoryRoute, async (request) => {
+        return chatHelpers.saveUserChatMemory({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+            instructions: request.body.instructions,
+            memories: request.body.memories,
+        })
+    })
+
+    app.post('/memory/import', ImportMemoryRoute, async (request) => {
+        const platformId = request.principal.platform.id
+        const userId = request.principal.id
+        const draft = await chatMemoryAi.extract({ platformId, text: request.body.text, log: request.log })
+        const current = await chatHelpers.getUserChatMemory({ platformId, userId })
+        return chatHelpers.saveUserChatMemory({
+            platformId,
+            userId,
+            memories: [...current.memories, ...draft.memories],
+            baseMemories: current.memories,
+        })
+    })
+
+    app.post('/memory/instruct', InstructMemoryRoute, async (request) => {
+        return chatMemoryAi.applyInstruction({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+            instruction: request.body.instruction,
+            log: request.log,
+        })
+    })
+
 }
 
 const FREE_CHAT_CREDIT_USD = 10
@@ -274,9 +323,9 @@ async function assertChatMessageRateLimitNotExceeded({ platformId, userId, log }
     }
 }
 
-async function assertAiCreditsNotExhausted({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
-    if (!chatProvider || chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
+async function assertChatProviderUsable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const chatProvider = await chatHelpers.resolveChatProvider({ platformId, log })
+    if (chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
         return
     }
     const usage = await platformAiCreditsService(log).getUsage(platformId)
@@ -364,6 +413,18 @@ const GetMessagesRoute = {
     },
 }
 
+const SetMessageFeedbackRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: z.object({ id: z.string(), messageIndex: z.coerce.number().int().min(0) }),
+        body: SetChatMessageFeedbackRequest,
+    },
+}
+
 const SendMessageRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
@@ -418,6 +479,49 @@ const GetPickerConnectionsRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
         querystring: z.object({ pieceName: z.string() }),
+    },
+}
+
+const GetMemoryRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
+
+const UpdateMemoryRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: UpdateChatMemoryRequest,
+    },
+}
+
+const ImportMemoryRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: ImportChatMemoryRequest,
+    },
+}
+
+const InstructMemoryRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['chat'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: InstructChatMemoryRequest,
     },
 }
 

@@ -73,8 +73,9 @@ function ChatBoxContent({
   const credits = useCreditsState();
 
   const {
-    messages,
+    conversationId,
     modelName,
+    messages,
     isStreaming,
     isResumedStream,
     isAwaitingResponse,
@@ -230,6 +231,8 @@ function ChatBoxContent({
                       isLastMessage={isLastAssistant}
                       onSendPrompt={(text) => void handleSend(text)}
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
+                      conversationId={conversationId}
+                      messageIndex={idx}
                     />
                   );
                 })}

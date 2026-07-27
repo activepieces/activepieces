@@ -10,10 +10,11 @@ import mime from 'mime-types';
 import { Languages, baseUrl } from '../common/common';
 
 export const transcribeAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'transcribe',
   displayName: 'Transcribe Audio',
   description: 'Transcribe audio to text using whisper-1 model',
+  aiMetadata: { description: 'Transcribes an uploaded audio file to text with the whisper-1 model, keeping the words in the language that was spoken, with an optional language hint (defaulting to English, and silently falling back to English when an unsupported code is given) that improves accuracy. Choose the sibling translate action instead whenever the output must be English no matter what language was spoken, and text_to_speech for the opposite direction. Requires an audio file; not idempotent: each call re-runs the model and the wording can vary slightly.', idempotent: false },
   auth: openaiAuth,
   props: {
     audio: Property.File({

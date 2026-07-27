@@ -9,6 +9,7 @@ const zstdDecompress = promisify(zstdDecompressCallback)
 const RETRY_CONFIG = {
     retries: 3,
     retryDelay: 3000,
+    retryOn: [408, 429, 500, 502, 503, 504],
 } as const
 
 const READ_URL_HEADER = 'x-ap-file-read-url'
