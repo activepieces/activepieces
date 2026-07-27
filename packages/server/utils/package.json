@@ -9,6 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@activepieces/ai-providers": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "evlog": "2.18.1",
     "@ai-sdk/amazon-bedrock": "3.0.97",

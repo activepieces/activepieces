@@ -127,6 +127,7 @@
     "packages/tests-e2e",
     "packages/pieces/framework",
     "packages/pieces/common",
+    "packages/pieces/ai-providers",
     "packages/pieces/core/*",
     "packages/pieces/community/*",
     "packages/pieces/custom/*"

@@ -189,6 +189,26 @@
         "@types/node": "24.11.0",
       },
     },
+    "packages/pieces/ai-providers": {
+      "name": "@activepieces/ai-providers",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@ai-sdk/amazon-bedrock": "3.0.97",
+        "@ai-sdk/anthropic": "3.0.72",
+        "@ai-sdk/azure": "3.0.55",
+        "@ai-sdk/google": "3.0.65",
+        "@ai-sdk/openai": "3.0.54",
+        "@ai-sdk/openai-compatible": "2.0.42",
+        "@openrouter/ai-sdk-provider": "2.1.1",
+        "ai": "6.0.170",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/common": {
       "name": "@activepieces/pieces-common",
       "version": "0.12.6",
@@ -312,8 +332,9 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.4.7",
+      "version": "0.4.8",
       "dependencies": {
+        "@activepieces/ai-providers": "workspace:*",
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
@@ -10750,6 +10771,7 @@
       "name": "@activepieces/server-utils",
       "version": "0.1.6",
       "dependencies": {
+        "@activepieces/ai-providers": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/shared": "workspace:*",
