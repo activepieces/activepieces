@@ -5,6 +5,17 @@ icon: "hammer"
 ---
 
 
+## 0.87.0
+
+### What has changed?
+
+#### Multi-select and checkbox fields set to a dynamic value are now checked before the step runs
+Switching a field to a dynamic value turns it into a text box, so whatever it holds is text. A multi-select or checkbox holding text used to be handed to the step exactly as typed. The step then ran with a value of the wrong shape and usually failed later inside the integration, with a message that gave no hint of the real cause.
+
+Text that spells out a list (`["year","month"]`, `[]`) or a checkbox value (`true`, `false`) is now turned back into a real list or true/false, so fields that were quietly broken work again without being edited. Any other text in a multi-select now stops the step before it runs, with `Expected array, received: <your value>`, which names the field and the value. An optional field left empty now counts as not filled in, so an untouched optional checkbox no longer fails its step.
+
+**Action:** only if a flow has a multi-select set to a dynamic value that does not produce a list, such as a single item or a comma-separated line like `a,b`. Those steps used to run and now fail with the message above. Edit the field so it produces a list (`["a","b"]`), or switch it back to picking options. Checkboxes need nothing: they already failed in this case and now fail in fewer cases.
+
 ## 0.86.0
 
 ### What has changed?
