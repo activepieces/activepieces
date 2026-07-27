@@ -3555,7 +3555,7 @@
     },
     "packages/pieces/community/ghostcms": {
       "name": "@activepieces/piece-ghostcms",
-      "version": "0.1.7",
+      "version": "0.1.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3566,7 +3566,6 @@
       "devDependencies": {
         "@types/jsonwebtoken": "9.0.10",
         "tslib": "2.6.2",
-        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/giftbit": {
