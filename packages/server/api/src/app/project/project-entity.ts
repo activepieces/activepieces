@@ -96,6 +96,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: String,
             nullable: true,
         },
+        executionDataRetentionDays: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -127,6 +131,12 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         {
             name: 'idx_project_worker_group',
             columns: ['workerGroupId'],
+            unique: false,
+        },
+        {
+            name: 'idx_project_execution_data_retention_days',
+            columns: ['executionDataRetentionDays'],
+            where: '"executionDataRetentionDays" IS NOT NULL',
             unique: false,
         },
     ],

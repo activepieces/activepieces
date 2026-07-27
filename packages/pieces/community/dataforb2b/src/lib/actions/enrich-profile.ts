@@ -6,6 +6,11 @@ export const enrichProfile = createAction({
   name: 'enrich_profile',
   displayName: 'Enrich Profile',
   description: 'Retrieve detailed professional data, work/personal email and phone for a person.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Look up one person in the DataForB2B database by LinkedIn URL, public ID, or encoded ID, with separate toggles selecting which enrichments run: full profile (the default when no toggle is set), work email, personal email, phone, and GitHub. Use when you already hold a person identifier and need their profile or contact details; use Search People instead to find people matching criteria. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     profileIdentifier: Property.ShortText({
       displayName: 'Profile Identifier',
