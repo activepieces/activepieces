@@ -4,7 +4,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 import { z, type ZodTypeAny } from 'zod';
 
 export const markdownToHTML = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'markdown_to_html',
   displayName: 'Markdown to HTML',
   description: 'Convert markdown to HTML',

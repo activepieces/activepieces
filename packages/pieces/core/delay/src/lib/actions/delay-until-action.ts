@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { markdownDescription } from '../common';
 
 export const delayUntilAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'delay_until',
   displayName: 'Delay Until',
   description:

@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { extractText as pdfExtractText, getDocumentProxy } from 'unpdf';
 
 export const extractText = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'extractText',
   displayName: 'Extract Text',
   description: 'Extract text from PDF file or url',

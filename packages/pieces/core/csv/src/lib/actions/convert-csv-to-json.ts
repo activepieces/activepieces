@@ -3,7 +3,7 @@ import { isString } from '@activepieces/pieces-framework';
 import {parse} from 'csv-parse/sync';
 
 export const csvToJsonAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'convert_csv_to_json',
   displayName: 'Convert CSV to JSON',
   description:

@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const base64Encode = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'base64-encode',
   displayName: 'Base64 Encode',
   description: 'Converts plain text into base64 format.',

@@ -9,7 +9,7 @@ import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PARENT
 import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
 
 export const callFlow = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'callFlow',
   displayName: 'Call Flow',
   description: 'Call a flow that has "Callable Flow" trigger',
