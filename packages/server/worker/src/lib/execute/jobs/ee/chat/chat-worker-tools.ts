@@ -1625,7 +1625,7 @@ const STATIC_TOOL_LABELS: Record<string, string> = {
 const CONSENT_SCOPE_KEYS: Record<string, string> = {
     ap_test_flow: 'flowId',
     ap_test_step: 'flowId',
-    ap_retry_run: 'flowId',
+    ap_retry_run: 'flowRunId',
     ap_delete_flow: 'flowId',
     ap_delete_table: 'tableId',
     ap_delete_records: 'tableId',

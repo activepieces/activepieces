@@ -167,6 +167,8 @@ describe('chatConsent', () => {
         expect(chatConsent.isReusable(['outward_send', 'external_write'])).toBe(true)
         expect(chatConsent.isReusable(['financial'])).toBe(false)
         expect(chatConsent.isReusable(['destructive'])).toBe(false)
+        expect(chatConsent.isReusable(['internal_destructive'])).toBe(false)
+        expect(chatConsent.isReusable(['outward_send', 'internal_destructive'])).toBe(false)
         expect(chatConsent.isReusable([])).toBe(false)
     })
 

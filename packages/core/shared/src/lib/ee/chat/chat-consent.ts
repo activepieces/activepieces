@@ -15,7 +15,6 @@ const DEFAULT_CONSENT_POLICY: Record<ActionEffectKind, ConsentDecision> = {
 const REUSABLE_EFFECT_KINDS = new Set<ActionEffectKind>([
     'external_write',
     'outward_send',
-    'internal_destructive',
 ])
 
 const EFFECT_PHRASES: Record<ActionEffectKind, string> = {

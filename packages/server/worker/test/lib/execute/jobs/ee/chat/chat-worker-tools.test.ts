@@ -777,3 +777,17 @@ describe('chatWorkerTools.wrapWithConsent', () => {
         expect(h.ran).toHaveLength(1)
     })
 })
+
+describe('chatWorkerTools.wrapWithConsent — deletion is never covered by an earlier yes', () => {
+    it('asks again for a second deletion in the same conversation', async () => {
+        const DELETE_STEP = { stepName: 'ap_delete_records', displayName: 'Delete these records', kind: 'internal_destructive', detail: 'Activepieces' }
+        const first = makeConsentHarness({ effects: [DELETE_STEP] })
+        await runTestFlow(first.wrapped)
+        expect(first.gates).toHaveLength(1)
+        expect(first.remembers).toHaveLength(0)
+
+        const second = makeConsentHarness({ effects: [DELETE_STEP], remembered: true })
+        await runTestFlow(second.wrapped)
+        expect(second.gates).toHaveLength(1)
+    })
+})
