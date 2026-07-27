@@ -30,11 +30,6 @@ const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
 const PROJECT_ID_PROPERTY = 'projectId'
 const CREDIT_USAGE_MAX_GROUPS = 250
-const SELF_SERVE_ANNUAL_BASE: Readonly<Record<string, string>> = {
-    plus_annual: 'plus',
-    team_annual: 'team',
-}
-
 const AUTUMN_FLAG_FEATURE_IDS = [
     'tablesEnabled',
     'eventStreamingEnabled',
@@ -372,7 +367,7 @@ function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
         price: plan.price?.amount ?? null,
         interval: plan.price?.interval ?? null,
         priceDisplay: plan.price?.display?.primaryText ?? null,
-        baseVariantId: plan.baseVariantId ?? SELF_SERVE_ANNUAL_BASE[plan.id] ?? null,
+        baseVariantId: plan.variantDetails?.basePlanId ?? plan.baseVariantId ?? null,
         includedSeats: (plan.items ?? []).find((item) => item.featureId === AutumnFeatureId.USERS_LIMIT)?.included ?? null,
         includedCredits: creditsItem?.included ?? null,
         creditsResetInterval: creditsItem?.reset?.interval ?? null,
