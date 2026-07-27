@@ -200,3 +200,108 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
     'google-ai-studio': AIProviderName.GOOGLE,
     'google-vertex-ai': AIProviderName.GOOGLE,
 }
+
+const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
+const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
+
+export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
+    [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
+    [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
+    [AIProviderName.ACTIVEPIECES]: [
+        ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
+        ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
+        ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
+        ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
+    ],
+}
+
+const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
+
+const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
+    [AIProviderName.OPENAI]: 128_000,
+    [AIProviderName.ANTHROPIC]: 200_000,
+    [AIProviderName.GOOGLE]: 1_048_576,
+    [AIProviderName.BEDROCK]: 200_000,
+    [AIProviderName.AZURE]: 128_000,
+    [AIProviderName.OPENROUTER]: 128_000,
+    [AIProviderName.ACTIVEPIECES]: 200_000,
+    [AIProviderName.MISTRAL]: 128_000,
+}
+
+function getMaxContextTokens({ provider }: { provider: AIProviderName | undefined }): number {
+    if (!provider) return DEFAULT_MAX_CONTEXT_TOKENS
+    return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
+}
+
+const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
+    [AIProviderName.OPENAI]: 'text-embedding-3-small',
+    [AIProviderName.GOOGLE]: 'text-embedding-004',
+    [AIProviderName.AZURE]: 'text-embedding-3-small',
+    [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
+    [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+}
+
+const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMode>> = {
+    [AIProviderName.ANTHROPIC]: 'native',
+    [AIProviderName.GOOGLE]: 'native',
+    [AIProviderName.OPENROUTER]: 'plugin',
+    [AIProviderName.ACTIVEPIECES]: 'plugin',
+}
+
+const NO_IMAGE_GENERATION_PROVIDERS = new Set<AIProviderName>([
+    AIProviderName.ANTHROPIC,
+    AIProviderName.MISTRAL,
+])
+
+function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabilities {
+    return {
+        chatModels: ALLOWED_CHAT_MODELS_BY_PROVIDER[provider],
+        maxContextTokens: getMaxContextTokens({ provider }),
+        defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
+        supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
+        supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
+        webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
+    }
+}
+
+export const ACTIVEPIECES_CHAT_TIERS = [
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', thinkingBudget: 20_000 },
+] as const
+
+export const DEFAULT_CHAT_TIER_ID = 'smart' as const
+
+export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
+
+export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
+    [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
+    [AIProviderName.ANTHROPIC]: buildProviderCapabilities(AIProviderName.ANTHROPIC),
+    [AIProviderName.OPENROUTER]: buildProviderCapabilities(AIProviderName.OPENROUTER),
+    [AIProviderName.AZURE]: buildProviderCapabilities(AIProviderName.AZURE),
+    [AIProviderName.GOOGLE]: buildProviderCapabilities(AIProviderName.GOOGLE),
+    [AIProviderName.CLOUDFLARE_GATEWAY]: buildProviderCapabilities(AIProviderName.CLOUDFLARE_GATEWAY),
+    [AIProviderName.CUSTOM]: buildProviderCapabilities(AIProviderName.CUSTOM),
+    [AIProviderName.BEDROCK]: buildProviderCapabilities(AIProviderName.BEDROCK),
+    [AIProviderName.MISTRAL]: buildProviderCapabilities(AIProviderName.MISTRAL),
+    [AIProviderName.ACTIVEPIECES]: buildProviderCapabilities(AIProviderName.ACTIVEPIECES),
+}
+
+export const aiProviderUtils = {
+    getMaxContextTokens,
+}
+
+export type AIWebSearchMode = 'native' | 'plugin'
+
+export type AIProviderCapabilities = {
+    chatModels?: readonly string[] | undefined
+    maxContextTokens: number
+    defaultEmbeddingModel: string | undefined
+    supportsEmbedding: boolean
+    supportsImageGeneration: boolean
+    webSearch: AIWebSearchMode | undefined
+}
