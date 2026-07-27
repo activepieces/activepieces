@@ -15,7 +15,7 @@ enum TimeUnit {
 }
 
 export const delayForAction = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'delayFor',
   displayName: 'Delay For',
   description: 'Delays the execution of the next action for a given duration',

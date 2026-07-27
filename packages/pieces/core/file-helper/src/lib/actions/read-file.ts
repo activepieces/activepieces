@@ -7,7 +7,7 @@ export const filesOutput = {
 };
 
 export const readFileAction = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'read_file',
   displayName: 'Read File',
   description: 'Read a file from the file system',

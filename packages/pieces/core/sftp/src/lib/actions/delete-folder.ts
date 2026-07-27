@@ -18,7 +18,7 @@ async function deleteFolderSFTP(client: Client, directoryPath: string, recursive
 }
 
 export const deleteFolderAction = createAction({
-  audience: 'both',
+  audience: 'human',
   auth: sftpAuth,
   name: 'deleteFolder',
   displayName: 'Delete Folder',
