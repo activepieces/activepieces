@@ -27,6 +27,16 @@ User-facing data transforms (81+ functions) inside any builder text input via a 
 - **Where**: shared lib `packages/core/shared/src/lib/formula/` (`AP_FUNCTIONS` registry is the single source of truth; `formulaEvaluator.evaluate`, type checker). Editor is the TipTap `text-input-with-mentions`. Runtime hooks in the engine's `props-resolver.ts` pre-pass.
 - **Gotchas**: no HTTP endpoints, no DB tables, no worker job — evaluation is synchronous in the engine. Runs on **every** edition, unconditionally (even if the editor flag is off, saved formulas still evaluate). Uses `expr-eval`; preprocess normalizes `;`→`,`, `and/or/not`, and rewrites `if()` to lazy ternary. Changing a function = bump `@activepieces/shared` minor; never hard-remove a function (mark `deprecated`).
 
+### Code steps (`noOpCodeSandbox`)
+
+Each CODE step is run in a fresh `node --eval` child process spawned with `stdio: ['pipe','pipe','pipe','ipc']` (`packages/server/engine/src/lib/core/code/no-op-code-sandbox.ts`). Inputs go over IPC via `child.send(...)`, the result comes back as one message.
+
+- **Gotchas**:
+  - **`TypeError: <x>.send is not a function` on a random CODE step means the worker ran out of file descriptors, not a code bug.** Node assigns `child.send` per-instance inside `setupChannel()`, and on `EMFILE`/`ENFILE` `ChildProcess.prototype.spawn` returns *before* that setup — so `child.send` is `undefined`. `runInChildProcess` calls it unconditionally, the synchronous `TypeError` rejects the promise first, and the real `EMFILE` that arrives on the `'error'` event a tick later is discarded. Only EMFILE/ENFILE do this — `EAGAIN` and `ENOENT` still define `send`. Fix shape: guard `typeof child.send !== 'function'` and return, letting the `'error'` handler reject with the true cause.
+  - No timeout or `child.kill()` on the parent side: a code step that never resolves holds its 4 fds (3 pipes + IPC) for the life of the worker process.
+  - `runWithExponentialBackoff` retries a failed CODE step, so an fd-exhausted worker re-spawns several times per step.
+  - Install/compile failure degrades to a throwing stub (user-attributed FAILED, not INTERNAL_ERROR + retries).
+
 ### Workers
 
 Node processes that poll the app over Socket.IO and execute flows. The worker *is* the sandbox — the full execution model (concurrency 1, replicas, Resolver, box lifecycle) lives on [Execution Runtime](https://craftspace.app/o/activepieces/pages/pg_xLVaOvA8hs9XVLj7kNZNE). Here, the piece-relevant behavior:
