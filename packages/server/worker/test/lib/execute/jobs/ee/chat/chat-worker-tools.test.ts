@@ -633,8 +633,10 @@ describe('chatWorkerTools', () => {
 
 type FakeGate = { gateId: string, displayName: string }
 
+const CONSENT_GATED_TOOL_NAMES = ['ap_test_flow', 'ap_test_step', 'ap_retry_run', 'ap_run_code', 'ap_delete_flow', 'ap_delete_table', 'ap_delete_records']
+
 function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true }: {
-    effects: { stepName: string, displayName: string, kind: string, detail: string, recipient?: string }[]
+    effects: { stepName: string, displayName: string, kind: string, detail: string, recipient?: string, inputDigest?: string }[]
     decision?: 'approved' | 'declined' | 'timeout'
     remembered?: boolean
     resolved?: boolean
@@ -644,30 +646,33 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
     const gates: FakeGate[] = []
     const remembers: string[] = []
     const checked: string[] = []
+    const previewCalls: unknown[] = []
 
-    const tools = {
-        ap_test_flow: {
-            execute: async (args: unknown) => {
-                ran.push(args)
-                return { content: [{ type: 'text', text: '✅ ran' }] }
-            },
+    const tools = Object.fromEntries(CONSENT_GATED_TOOL_NAMES.map((toolName) => [toolName, {
+        execute: async (args: unknown) => {
+            ran.push({ toolName, args })
+            return { content: [{ type: 'text', text: '✅ ran' }] }
         },
-    }
+    }]))
 
     const wrapped = chatWorkerTools.wrapWithConsent({
         tools,
-        previewFlowEffects: async () => ({
-            resolved,
-            flowName: 'Daily Sales Digest',
-            effects: effects.map((step) => ({
-                stepName: step.stepName,
-                displayName: step.displayName,
-                detail: step.detail,
-                opaque: false,
-                effect: { kind: step.kind, source: 'catalog' },
-                ...(step.recipient === undefined ? {} : { recipient: step.recipient }),
-            })),
-        }),
+        previewFlowEffects: async (params) => {
+            previewCalls.push(params)
+            return {
+                resolved,
+                flowName: 'Daily Sales Digest',
+                effects: effects.map((step) => ({
+                    stepName: step.stepName,
+                    displayName: step.displayName,
+                    detail: step.detail,
+                    opaque: false,
+                    effect: { kind: step.kind, source: 'catalog' },
+                    ...(step.recipient === undefined ? {} : { recipient: step.recipient }),
+                    ...(step.inputDigest === undefined ? {} : { inputDigest: step.inputDigest }),
+                })),
+            }
+        },
         checkRememberedConsent: async ({ signature }) => {
             checked.push(signature)
             return remembered
@@ -682,22 +687,30 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
         eventEmitter: {
             emitToolProgress: () => {},
             emitActionPreview: (data: ActionPreviewEvent) => {
-                previews.push(data) 
+                previews.push(data)
             },
             emitActionReceipt: () => {},
         },
     })
 
-    return { wrapped, ran, previews, gates, remembers, checked }
+    return { wrapped, ran, previews, gates, remembers, checked, previewCalls }
 }
 
 const SEND_STEP = { stepName: 'notify', displayName: 'Email me the digest', kind: 'outward_send', detail: 'gmail · send_email', recipient: 'omar@activepieces.com' }
-const TABLE_STEP = { stepName: 'save', displayName: 'Save the lead', kind: 'internal_write', detail: 'tables · create' }
 const REFUND_STEP = { stepName: 'refund', displayName: 'Refund the customer', kind: 'financial', detail: 'stripe · create_refund' }
 
-async function runTestFlow(wrapped: Record<string, unknown>) {
-    const tool = wrapped['ap_test_flow'] as { execute: (args: unknown, options?: { toolCallId: string }) => Promise<unknown> }
-    return tool.execute({ flowId: 'flow-1' }, { toolCallId: 'call-1' })
+async function runGatedTool({ wrapped, toolName, args, toolCallId = 'call-1' }: {
+    wrapped: Record<string, unknown>
+    toolName: string
+    args: Record<string, unknown>
+    toolCallId?: string
+}) {
+    const tool = wrapped[toolName] as { execute: (args: unknown, options?: { toolCallId: string }) => Promise<unknown> }
+    return tool.execute(args, { toolCallId })
+}
+
+async function runTestFlow(wrapped: Record<string, unknown>, args: Record<string, unknown> = { flowId: 'flow-1' }) {
+    return runGatedTool({ wrapped, toolName: 'ap_test_flow', args })
 }
 
 describe('chatWorkerTools.wrapWithConsent', () => {
@@ -770,24 +783,119 @@ describe('chatWorkerTools.wrapWithConsent', () => {
         expect(h.gates[0].displayName).toContain('could not check')
     })
 
-    it('runs without asking when every effect is internal', async () => {
-        const h = makeConsentHarness({ effects: [TABLE_STEP] })
+    it('asks when a test of a flow that deletes Activepieces data arrives from the preview', async () => {
+        const h = makeConsentHarness({ effects: [{ stepName: 'wipe', displayName: 'Clear the table', kind: 'internal_destructive', detail: 'tables · tables-clear-table' }] })
         await runTestFlow(h.wrapped)
-        expect(h.gates).toHaveLength(0)
+        expect(h.gates).toHaveLength(1)
+        expect(h.remembers).toHaveLength(0)
+    })
+
+    it('refuses to trust a preview carrying an effect kind this worker does not know', async () => {
+        const h = makeConsentHarness({ effects: [{ stepName: 'notify', displayName: 'Send it', kind: 'brand_new_kind', detail: 'gmail · send_email' }], decision: 'declined' })
+        await runTestFlow(h.wrapped)
+        expect(h.ran).toHaveLength(0)
+        expect(h.gates).toHaveLength(1)
+        expect(h.gates[0].displayName).toContain('could not check')
+    })
+
+    it('never reuses a yes when the send has no static recipient', async () => {
+        const h = makeConsentHarness({ effects: [{ ...SEND_STEP, recipient: undefined }], remembered: true })
+        await runTestFlow(h.wrapped)
+        expect(h.checked).toHaveLength(0)
+        expect(h.gates).toHaveLength(1)
+        expect(h.remembers).toHaveLength(0)
+    })
+
+    it('scopes a remembered yes to one flow — a second flow with identical effects asks again', async () => {
+        const flowOne = makeConsentHarness({ effects: [SEND_STEP] })
+        await runTestFlow(flowOne.wrapped, { flowId: 'flow-1' })
+        const flowTwo = makeConsentHarness({ effects: [SEND_STEP], remembered: false })
+        await runTestFlow(flowTwo.wrapped, { flowId: 'flow-2' })
+        expect(flowTwo.checked[0]).not.toBe(flowOne.remembers[0])
+        expect(flowTwo.gates).toHaveLength(1)
+    })
+
+    it('changes the signature when the message content changes, even to the same recipient', async () => {
+        const original = makeConsentHarness({ effects: [{ ...SEND_STEP, inputDigest: 'digest-a' }] })
+        await runTestFlow(original.wrapped)
+        const rewritten = makeConsentHarness({ effects: [{ ...SEND_STEP, inputDigest: 'digest-b' }], remembered: false })
+        await runTestFlow(rewritten.wrapped)
+        expect(rewritten.checked[0]).not.toBe(original.remembers[0])
+        expect(rewritten.gates).toHaveLength(1)
+    })
+
+    it('resolves a retry through its run id, never through a flow id it does not have', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP] })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_retry_run', args: { flowRunId: 'run-9', strategy: 'ON_LATEST_VERSION' } })
+        expect(h.previewCalls).toHaveLength(1)
+        expect(h.previewCalls[0]).toEqual({ flowRunId: 'run-9' })
+        expect(h.gates).toHaveLength(1)
+        expect(h.gates[0].displayName).not.toContain('could not check')
+    })
+
+    it('runs the tool untouched when no gate id exists to anchor a card', async () => {
+        const h = makeConsentHarness({ effects: [SEND_STEP] })
+        const tool = h.wrapped['ap_test_flow'] as { execute: (args: unknown, options?: { toolCallId?: string }) => Promise<unknown> }
+        await tool.execute({ flowId: 'flow-1' }, {})
         expect(h.ran).toHaveLength(1)
+        expect(h.gates).toHaveLength(0)
     })
 })
 
-describe('chatWorkerTools.wrapWithConsent — deletion is never covered by an earlier yes', () => {
-    it('asks again for a second deletion in the same conversation', async () => {
-        const DELETE_STEP = { stepName: 'ap_delete_records', displayName: 'Delete these records', kind: 'internal_destructive', detail: 'Activepieces' }
-        const first = makeConsentHarness({ effects: [DELETE_STEP] })
-        await runTestFlow(first.wrapped)
+describe('chatWorkerTools.wrapWithConsent — every gated tool is really wrapped', () => {
+    const CASES: [string, Record<string, unknown>][] = [
+        ['ap_test_flow', { flowId: 'flow-1' }],
+        ['ap_test_step', { flowId: 'flow-1', stepName: 'notify' }],
+        ['ap_retry_run', { flowRunId: 'run-1', strategy: 'ON_LATEST_VERSION' }],
+        ['ap_run_code', { code: 'const res = await fetch("https://x.test"); return res', recipe: ['Call the API'] }],
+        ['ap_delete_flow', { flowId: 'flow-1' }],
+        ['ap_delete_table', { tableId: 'table-1' }],
+        ['ap_delete_records', { recordIds: ['r1', 'r2'] }],
+    ]
+
+    it.each(CASES)('%s asks before running', async (toolName, args) => {
+        const h = makeConsentHarness({ effects: [SEND_STEP], decision: 'declined' })
+        await runGatedTool({ wrapped: h.wrapped, toolName, args })
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(0)
+    })
+})
+
+describe('chatWorkerTools.wrapWithConsent — deletion goes through its real path', () => {
+    it('gates a record deletion from its static effect, without any flow preview', async () => {
+        const h = makeConsentHarness({ effects: [] })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_delete_records', args: { recordIds: ['r1', 'r2', 'r3'], displayName: 'Tidy up the Leads table' } })
+        expect(h.previewCalls).toHaveLength(0)
+        expect(h.gates).toHaveLength(1)
+        expect(h.gates[0].displayName).toBe('Tidy up the Leads table — delete these records')
+        expect(h.ran).toHaveLength(1)
+    })
+
+    it('asks again for a second deletion in the same conversation — a deletion yes is never remembered', async () => {
+        const first = makeConsentHarness({ effects: [] })
+        await runGatedTool({ wrapped: first.wrapped, toolName: 'ap_delete_records', args: { recordIds: ['r1'] } })
         expect(first.gates).toHaveLength(1)
         expect(first.remembers).toHaveLength(0)
 
-        const second = makeConsentHarness({ effects: [DELETE_STEP], remembered: true })
-        await runTestFlow(second.wrapped)
+        const second = makeConsentHarness({ effects: [], remembered: true })
+        await runGatedTool({ wrapped: second.wrapped, toolName: 'ap_delete_records', args: { recordIds: ['r1'] } })
+        expect(second.checked).toHaveLength(0)
         expect(second.gates).toHaveLength(1)
+    })
+})
+
+describe('chatWorkerTools.wrapWithConsent — code runs', () => {
+    it('gates code that can reach the network', async () => {
+        const h = makeConsentHarness({ effects: [] })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_run_code', args: { code: 'const res = await fetch("https://api.test"); return res.json()', recipe: ['Pull the data'] } })
+        expect(h.gates).toHaveLength(1)
+        expect(h.previewCalls).toHaveLength(0)
+    })
+
+    it('lets self-contained code run silently', async () => {
+        const h = makeConsentHarness({ effects: [] })
+        await runGatedTool({ wrapped: h.wrapped, toolName: 'ap_run_code', args: { code: 'return inputs.a + inputs.b', recipe: ['Add the numbers'] } })
+        expect(h.gates).toHaveLength(0)
+        expect(h.ran).toHaveLength(1)
     })
 })

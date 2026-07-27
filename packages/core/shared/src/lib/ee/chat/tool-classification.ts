@@ -12,6 +12,8 @@ const FAILURE_TEXT_PREFIXES = ['❌', '⏳']
 const RECIPIENT_INPUT_KEYS = ['receiver', 'to', 'recipients', 'recipient', 'to_email', 'send_to', 'email', 'channel', 'channel_id', 'phone_number']
 const MAX_RECIPIENTS_ON_CARD = 3
 
+const SILENT_EFFECT_KINDS = new Set<ActionEffectKind>(['read', 'internal_write'])
+
 const CODE_REACHES_OUTSIDE = /\b(fetch|axios|XMLHttpRequest|WebSocket|EventSource|child_process|process\.env)\b|https?\.request|net\.(connect|createConnection)|dns\.|\bexec(Sync|File)?\s*\(/
 
 function hasFailureTextPrefix(text: string): boolean {
@@ -31,12 +33,12 @@ function requiresActionPreview({ pieceName, actionName, input, needsConfirmation
     tainted?: boolean
     declaredEffect?: string
 }): boolean {
+    if (needsConfirmation === true) {
+        return true
+    }
     const effect = actionEffect.resolve({ pieceName, actionName, input, declaredEffect })
     if (tainted === true) {
         return !actionEffect.isRead(effect.kind)
-    }
-    if (needsConfirmation === true) {
-        return true
     }
     return chatConsent.decide({ kind: effect.kind }) !== 'allow'
 }
@@ -97,6 +99,30 @@ function deriveStaticRecipient({ input, recipientProp }: { input?: Record<string
     return undefined
 }
 
+function stableStringify(value: unknown): string {
+    if (Array.isArray(value)) {
+        return `[${value.map(stableStringify).join(',')}]`
+    }
+    if (typeof value === 'object' && value !== null) {
+        const entries = Object.entries(value as Record<string, unknown>)
+            .filter(([key]) => key !== 'auth')
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+        return `{${entries.join(',')}}`
+    }
+    return JSON.stringify(value) ?? 'undefined'
+}
+
+function inputDigestOf(input: unknown): string {
+    const text = stableStringify(input)
+    let hash = 0x811c9dc5
+    for (let index = 0; index < text.length; index++) {
+        hash ^= text.charCodeAt(index)
+        hash = Math.imul(hash, 0x01000193)
+    }
+    return (hash >>> 0).toString(36)
+}
+
 function codeEffect({ code, stepName, displayName }: { code: string, stepName: string, displayName: string }): StepEffect {
     const reachesOutside = CODE_REACHES_OUTSIDE.test(code)
     return {
@@ -104,6 +130,7 @@ function codeEffect({ code, stepName, displayName }: { code: string, stepName: s
         displayName,
         effect: { kind: reachesOutside ? 'input_dependent' : 'internal_write', source: 'heuristic' },
         detail: reachesOutside ? 'custom code that can reach outside' : 'custom code, self-contained',
+        inputDigest: inputDigestOf(code),
         opaque: reachesOutside,
     }
 }
@@ -116,7 +143,11 @@ function codeStepEffect(step: Step): StepEffect {
     })
 }
 
-function stepEffectOf(step: Step, options?: { declaredEffect?: string }): StepEffect {
+function stepEffectOf({ step, declaredEffect, declaredRecipientProp }: {
+    step: Step
+    declaredEffect?: string
+    declaredRecipientProp?: string
+}): StepEffect {
     if (step.type === FlowActionType.CODE) {
         return codeStepEffect(step)
     }
@@ -126,12 +157,19 @@ function stepEffectOf(step: Step, options?: { declaredEffect?: string }): StepEf
             displayName: step.displayName,
             effect: { kind: 'read', source: 'fallback' },
             detail: 'no effect outside Activepieces',
+            inputDigest: inputDigestOf(undefined),
             opaque: false,
         }
     }
     const pieceName = typeof step.settings.pieceName === 'string' ? step.settings.pieceName : undefined
     const actionName = step.settings.actionName
-    const effect = actionEffect.resolve({ pieceName, actionName, input: step.settings.input, ...spreadIfDefined('declaredEffect', options?.declaredEffect) })
+    const effect = actionEffect.resolve({
+        pieceName,
+        actionName,
+        input: step.settings.input,
+        ...spreadIfDefined('declaredEffect', declaredEffect),
+        ...spreadIfDefined('declaredRecipientProp', declaredRecipientProp),
+    })
     const pieceLabel = isNil(pieceName) ? '' : pieceName.replace('@activepieces/piece-', '')
     const recipient = deriveStaticRecipient({ input: step.settings.input, recipientProp: effect.recipientProp })
     return {
@@ -139,6 +177,7 @@ function stepEffectOf(step: Step, options?: { declaredEffect?: string }): StepEf
         displayName: step.displayName,
         effect,
         detail: pieceLabel.length > 0 ? `${pieceLabel} · ${actionName}` : actionName,
+        inputDigest: inputDigestOf(step.settings.input),
         ...(isNil(recipient) ? {} : { recipient }),
         opaque: effect.kind === 'input_dependent',
     }
@@ -146,8 +185,8 @@ function stepEffectOf(step: Step, options?: { declaredEffect?: string }): StepEf
 
 function flowStepEffects(trigger: Step): StepEffect[] {
     return flowStructureUtil.getAllSteps(trigger)
-        .map((step) => stepEffectOf(step))
-        .filter((step) => !actionEffect.isInternal(step.effect.kind))
+        .map((step) => stepEffectOf({ step }))
+        .filter((step) => !SILENT_EFFECT_KINDS.has(step.effect.kind))
 }
 
 function stepEffectsForStep({ trigger, stepName }: { trigger: Step, stepName: string }): StepEffect[] {
@@ -155,8 +194,8 @@ function stepEffectsForStep({ trigger, stepName }: { trigger: Step, stepName: st
     if (isNil(target)) {
         return flowStepEffects(trigger)
     }
-    const effect = stepEffectOf(target)
-    return actionEffect.isInternal(effect.effect.kind) ? [] : [effect]
+    const effect = stepEffectOf({ step: target })
+    return SILENT_EFFECT_KINDS.has(effect.effect.kind) ? [] : [effect]
 }
 
 function effectKindsOf(steps: StepEffect[]): ActionEffectKind[] {
@@ -164,7 +203,12 @@ function effectKindsOf(steps: StepEffect[]): ActionEffectKind[] {
 }
 
 function effectFingerprintsOf(steps: StepEffect[]): string[] {
-    return steps.map((step) => [step.stepName, step.effect.kind, step.detail, step.recipient ?? ''].join('~'))
+    return steps.map((step) => [step.stepName, step.effect.kind, step.detail, step.recipient ?? '', step.inputDigest ?? ''].join('~'))
+}
+
+function stepEffectsReusable(steps: StepEffect[]): boolean {
+    return chatConsent.isReusable(effectKindsOf(steps))
+        && steps.every((step) => step.effect.kind !== 'outward_send' || !isNil(step.recipient))
 }
 
 export const chatToolClassification = {
@@ -180,6 +224,8 @@ export const chatToolClassification = {
     stepEffectsForStep,
     effectKindsOf,
     effectFingerprintsOf,
+    stepEffectsReusable,
+    inputDigestOf,
 }
 
 export type StepEffect = {
@@ -188,5 +234,6 @@ export type StepEffect = {
     effect: ActionEffect
     detail: string
     recipient?: string
+    inputDigest?: string
     opaque: boolean
 }

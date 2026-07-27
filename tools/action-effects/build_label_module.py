@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
-"""Merge the hand labels + every Codex batch into the shipped label module.
+"""Merge the hand labels + every model batch into the shipped label module.
 
-Fails loudly on anything unaccounted for: a missing action, an unknown effect, a label
-for an action that does not exist, or a duplicate. A silently-incomplete map would read
-as "everything is harmless", which is the exact failure mode this feature exists to fix.
+Fails hard on anything unaccounted for: an action with no label, an unknown effect,
+an action name the encoding cannot carry, or a key collision. A silently-incomplete
+map would read as "everything is harmless", which is the exact failure mode this
+feature exists to fix. Labels for actions that no longer exist are dropped with a
+notice (pieces get deleted; that is normal).
+
+Inputs, resolved from the working directory:
+  catalog.jsonl              full catalog from extract_actions.py (piece = package name)
+  labels_builtin.json        from builtin_labels.py (hand)
+  out/batch_*.json           model batch replies, keyed by bare action name
+  batches/batch_*.ids        piece attribution for those replies
+  out_fix/batch_*.json       re-runs keyed piece::action for name collisions
+  labels_added_*.json        reviewed labels for actions found after the model pass
+  labels_verify_overrides.json  stricter-label pins from the blind verify pass
+
+Usage: build_label_module.py [<output .ts path>]
 """
 import glob
 import json
@@ -12,16 +25,28 @@ import sys
 VALID = {'read', 'internal_write', 'internal_destructive', 'external_write',
          'outward_send', 'destructive', 'financial', 'input_dependent'}
 
-catalog_model = [json.loads(l) for l in open('catalog_model.jsonl', encoding='utf8')]
-catalog_builtin = [json.loads(l) for l in open('catalog_builtin.jsonl', encoding='utf8')]
+STRICTNESS = ['read', 'internal_write', 'internal_destructive', 'external_write',
+              'outward_send', 'destructive', 'financial', 'input_dependent']
 
-# action name -> the pieces that define it (a name can repeat across pieces)
-by_action = {}
-for rec in catalog_model:
-    by_action.setdefault(rec['action'], []).append(rec['piece'])
+FORBIDDEN = set('=:!`"\'\n\t')
+
+
+def package_key(piece, action):
+    prefixed = piece if piece.startswith('@activepieces/piece-') else f'@activepieces/piece-{piece}'
+    return f'{prefixed}:{action}'
+
+
+def encode_token(value):
+    for ch in FORBIDDEN:
+        if ch in value:
+            sys.exit(f'FATAL {value!r} contains {ch!r} and cannot be encoded')
+    return value.replace('%', '%25').replace(' ', '%20')
+
+
+catalog = [json.loads(line) for line in open('catalog.jsonl', encoding='utf8')]
+expected = {package_key(r['piece'], r['action']) for r in catalog}
 
 labels = {k: dict(v) for k, v in json.load(open('labels_builtin.json')).items()}
-seen_actions = set()
 orphans = []
 batches = sorted(glob.glob('out/batch_*.json'))
 
@@ -39,25 +64,17 @@ for path in batches:
         if piece is None:
             orphans.append((path, action))
             continue
-        key = f'@activepieces/piece-{piece}:{action}'
-        recipient = row.get('recipientProp') or None
-        # An action can legitimately appear in two batches only if a batch was re-run;
-        # keep the stricter answer rather than whichever landed last.
+        key = package_key(piece, action)
         prev = labels.get(key)
         if prev and prev['effect'] != effect:
-            order = ['read', 'internal_write', 'internal_destructive', 'external_write',
-                     'outward_send', 'destructive', 'financial', 'input_dependent']
-            effect = max(prev['effect'], effect, key=order.index)
+            effect = max(prev['effect'], effect, key=STRICTNESS.index)
         labels[key] = {
             'effect': effect,
-            'recipientProp': recipient,
+            'recipientProp': row.get('recipientProp') or None,
             'confidence': row.get('confidence', 'high'),
             'source': 'model',
         }
-        seen_actions.add((piece, action))
 
-# Second sweep: actions whose NAME is shared by several pieces were re-run with a
-# `piece::action` id, because a reply keyed on the bare name cannot be attributed.
 for path in sorted(glob.glob('out_fix/batch_*.json')):
     for row in json.load(open(path))['labels']:
         if '::' not in row['action']:
@@ -65,32 +82,45 @@ for path in sorted(glob.glob('out_fix/batch_*.json')):
         piece, action = row['action'].split('::', 1)
         if row['effect'] not in VALID:
             sys.exit(f'FATAL invalid effect {row["effect"]!r} for {row["action"]} in {path}')
-        labels[f'@activepieces/piece-{piece}:{action}'] = {
+        labels[package_key(piece, action)] = {
             'effect': row['effect'],
             'recipientProp': row.get('recipientProp') or None,
             'confidence': row.get('confidence', 'high'),
             'source': 'model',
         }
-        seen_actions.add((piece, action))
 
-# A blind second pass re-labeled a stratified 600-action sample. Where the two passes implied
-# a DIFFERENT gate decision, the stricter label wins and is pinned here — never averaged away.
+for path in sorted(glob.glob('labels_added_*.json')):
+    for key, entry in json.load(open(path)).items():
+        if entry['effect'] not in VALID:
+            sys.exit(f'FATAL invalid effect {entry["effect"]!r} for {key} in {path}')
+        labels[key] = dict(entry)
+
 try:
     for key, entry in json.load(open('labels_verify_overrides.json')).items():
-        labels[key] = entry
+        labels[key] = dict(entry)
 except FileNotFoundError:
     pass
 
-expected = {(r['piece'], r['action']) for r in catalog_model}
-missing = sorted(expected - seen_actions)
-print(f'batches merged={len(batches)}  labels={len(labels)}  '
-      f'model-covered={len(seen_actions)}/{len(expected)}  builtins={len(catalog_builtin)}')
+stale = sorted(set(labels) - expected)
+for key in stale:
+    del labels[key]
+missing = sorted(expected - set(labels))
+
+print(f'batches merged={len(batches)}  labels={len(labels)}  catalog={len(expected)}')
+if stale:
+    print(f'DROPPED {len(stale)} labels whose action no longer exists:')
+    for key in stale[:20]:
+        print(f'   {key}')
 if orphans:
-    print(f'WARNING {len(orphans)} labels for actions not in their batch (model renamed them):')
+    print(f'{len(orphans)} batch replies for actions not in their batch (model renamed them):')
     for path, action in orphans[:10]:
         print(f'   {path} -> {action}')
+    sys.exit('FATAL: orphaned replies — re-run those actions with piece::action ids (out_fix)')
 if missing:
-    print(f'MISSING {len(missing)} actions still unlabeled (first 10): {missing[:10]}')
+    print(f'MISSING {len(missing)} actions still unlabeled:')
+    for key in missing[:20]:
+        print(f'   {key}')
+    sys.exit('FATAL: refusing to write a partial table — label the missing actions first')
 
 json.dump(labels, open('labels_merged.json', 'w'), indent=0, sort_keys=True)
 
@@ -106,42 +136,49 @@ CODES = {
 }
 
 if len(sys.argv) > 1:
-    # One line per piece keeps the table greppable and reviewable at 700-odd lines instead
-    # of 5,000, and drops the repeated package prefix (~100KB of pure noise).
     by_piece = {}
+    seen_keys = set()
     for key in sorted(labels):
         piece, action = key.split(':', 1)
         entry = labels[key]
         code = CODES[entry['effect']]
         recipient = entry.get('recipientProp')
         authoritative = '!' if entry.get('source') == 'hand' else ''
-        by_piece.setdefault(piece.replace('@activepieces/piece-', ''), []).append(
-            f'{action}={code}{authoritative}' + (f':{recipient}' if recipient else ''))
+        short_piece = encode_token(piece.replace('@activepieces/piece-', ''))
+        token = f'{encode_token(action)}={code}{authoritative}'
+        if recipient:
+            token += f':{encode_token(recipient)}'
+        collision_key = f'{short_piece}:{encode_token(action)}'
+        if collision_key in seen_keys:
+            sys.exit(f'FATAL encoded key collision for {collision_key}')
+        seen_keys.add(collision_key)
+        by_piece.setdefault(short_piece, []).append(token)
     lines = [f'{piece} {" ".join(entries)}' for piece, entries in sorted(by_piece.items())]
     body = '\n'.join(lines)
     module = '''/**
  * Effect label for every action in the piece catalog: what it does in the real world, so
- * chat can decide what needs a human's yes. Read/internal labels are only trusted when the
- * action's own name agrees (see resolveActionEffect) — a label can never make something
- * look safer than its name suggests.
+ * chat can decide what needs a human's yes before it runs.
  *
- * GENERATED — do not hand-edit a line here. Regenerate with tools/action-effects. A piece
- * overrides its own entry by declaring `aiMetadata.effect` on the action.
+ * GENERATED — do not hand-edit a line here. Regenerate with tools/action-effects; the
+ * generator refuses to write a partial table. A piece overrides its own entry by
+ * declaring `aiMetadata.effect` on the action, which the resolver trusts outright.
  *
- * One line per piece: `<piece> <action>=<code>[!][:<recipientInputKey>] ...`
- * Codes: r read · W internal write · D internal destructive · w external write ·
- *        o outward send · d destructive · f financial · i depends on input
- * A trailing `!` marks a hand-reviewed entry that the resolver trusts as-is; every other
- * entry may still be escalated when the action's own name implies something worse.
+ * One line per piece: `<piece> <action>=<code>[!][:<recipientInputKey>] ...` with
+ * spaces in names carried as %%20 (and %% as %%25).
+ * Codes: r read | W internal write | D internal destructive | w external write |
+ *        o outward send | d destructive | f financial | i depends on input
+ * A trailing `!` marks a hand-reviewed entry the resolver trusts as-is; any other
+ * read/internal label may be escalated when the action's own name clearly implies an
+ * external effect and contains no read verb (see resolveActionEffect).
+ *
+ * The table is decoded on first use, never at import time, and reaches the resolver
+ * only through actionEffect.setCatalog on server boot — the web bundle must not pay
+ * for it. Keep this file free of top-level work.
  */
 
-export type ActionEffectLabel = {
-    kind: string
-    recipientProp?: string
-    authoritative?: boolean
-}
+import { ActionEffectKind, ActionEffectLabel } from './action-effect'
 
-const KIND_BY_CODE: Record<string, string> = {
+const KIND_BY_CODE: Record<string, ActionEffectKind> = {
     r: 'read',
     W: 'internal_write',
     D: 'internal_destructive',
@@ -156,6 +193,10 @@ const ENCODED_LABELS = `
 %s
 `
 
+function decodeToken(raw: string): string {
+    return raw.replace(/%%20/g, ' ').replace(/%%25/g, '%%')
+}
+
 function decode(encoded: string): Record<string, ActionEffectLabel> {
     const labels: Record<string, ActionEffectLabel> = {}
     for (const line of encoded.split('\\n')) {
@@ -167,22 +208,22 @@ function decode(encoded: string): Record<string, ActionEffectLabel> {
         if (firstSpace <= 0) {
             continue
         }
-        const piece = trimmed.slice(0, firstSpace)
+        const piece = decodeToken(trimmed.slice(0, firstSpace))
         for (const entry of trimmed.slice(firstSpace + 1).split(' ')) {
             const separator = entry.lastIndexOf('=')
             if (separator <= 0) {
                 continue
             }
-            const [rawCode, recipientProp] = entry.slice(separator + 1).split(':')
+            const [rawCode, rawRecipient] = entry.slice(separator + 1).split(':')
             const authoritative = rawCode.endsWith('!')
             const kind = KIND_BY_CODE[authoritative ? rawCode.slice(0, -1) : rawCode]
             if (kind === undefined) {
                 continue
             }
-            const key = `@activepieces/piece-${piece}:${entry.slice(0, separator)}`
+            const key = `@activepieces/piece-${piece}:${decodeToken(entry.slice(0, separator))}`
             labels[key] = {
                 kind,
-                ...(recipientProp ? { recipientProp } : {}),
+                ...(rawRecipient ? { recipientProp: decodeToken(rawRecipient) } : {}),
                 ...(authoritative ? { authoritative: true } : {}),
             }
         }
@@ -190,7 +231,18 @@ function decode(encoded: string): Record<string, ActionEffectLabel> {
     return labels
 }
 
-export const ACTION_EFFECT_LABELS: Record<string, ActionEffectLabel> = decode(ENCODED_LABELS)
+let decoded: Record<string, ActionEffectLabel> | undefined
+
+function loadActionEffectLabels(): Record<string, ActionEffectLabel> {
+    if (decoded === undefined) {
+        decoded = decode(ENCODED_LABELS)
+    }
+    return decoded
+}
+
+export const actionEffectLabelCatalog = {
+    load: loadActionEffectLabels,
+}
 ''' % body
     open(sys.argv[1], 'w', encoding='utf8').write(module)
-    print(f'wrote {sys.argv[1]} ({len(lines)} entries, {len(module) // 1024}KB)')
+    print(f'wrote {sys.argv[1]} ({sum(len(v) for v in by_piece.values())} entries, {len(module) // 1024}KB)')

@@ -1,8 +1,13 @@
 import { FlowActionType, Step } from '@activepieces/core-execution'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { actionEffect } from '../../src/lib/ee/chat/action-effect'
+import { actionEffectLabelCatalog } from '../../src/lib/ee/chat/action-effect-labels'
 import { chatConsent } from '../../src/lib/ee/chat/chat-consent'
 import { chatToolClassification } from '../../src/lib/ee/chat/tool-classification'
+
+beforeAll(() => {
+    actionEffect.setCatalog(actionEffectLabelCatalog.load())
+})
 
 function pieceStep({ name, pieceName, actionName, input }: {
     name: string
@@ -85,15 +90,79 @@ describe('actionEffect.resolve — the catalog covers what a name never could', 
         expect(effect.source).toBe('declared')
     })
 
-    it('ignores a declaration that claims to be safer than the action name implies', () => {
-        const effect = actionEffect.resolve({ pieceName: '@activepieces/piece-made-up', actionName: 'send_invoice_email', declaredEffect: 'read' })
-        expect(effect.kind).not.toBe('read')
-        expect(chatConsent.decide({ kind: effect.kind })).toBe('ask')
+    it('trusts a first-party declaration even when the name sounds worse', () => {
+        const effect = actionEffect.resolve({ pieceName: '@activepieces/piece-made-up', actionName: 'send_internal_ping', declaredEffect: 'internal_write' })
+        expect(effect.kind).toBe('internal_write')
+        expect(effect.source).toBe('declared')
+    })
+
+    it('uses a declared recipient prop over the catalog one', () => {
+        const effect = actionEffect.resolve({ pieceName: '@activepieces/piece-made-up', actionName: 'notify', declaredEffect: 'outward_send', declaredRecipientProp: 'destination' })
+        expect(effect.recipientProp).toBe('destination')
+    })
+
+    it('escalates an unreviewed internal label whose name clearly implies an external effect', () => {
+        actionEffect.setCatalog({ '@activepieces/piece-fake:send_alert': { kind: 'internal_write' } })
+        const effect = actionEffect.resolve({ pieceName: '@activepieces/piece-fake', actionName: 'send_alert' })
+        expect(effect.kind).toBe('outward_send')
+        actionEffect.setCatalog(actionEffectLabelCatalog.load())
+    })
+
+    it('never escalates a read label to unknown — absence of evidence is not evidence', () => {
+        actionEffect.setCatalog({ '@activepieces/piece-fake:browse-records': { kind: 'read' } })
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-fake', actionName: 'browse-records' }).kind).toBe('read')
+        actionEffect.setCatalog(actionEffectLabelCatalog.load())
+    })
+
+    it('does not escalate when the name itself contains a read verb', () => {
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-ampeco', actionName: 'chargePointRead' }).kind).toBe('read')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-aircall', actionName: 'getCall' }).kind).toBe('read')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-mollie', actionName: 'search_order' }).kind).toBe('read')
+    })
+
+    it('trusts a hand-reviewed catalog entry as-is', () => {
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records' }).kind).toBe('internal_write')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-store', actionName: 'put' }).kind).toBe('internal_write')
     })
 
     it('keeps a read-only raw HTTP call ungated', () => {
         expect(actionEffect.resolve({ actionName: 'custom_api_call', input: { method: 'GET' } }).kind).toBe('read')
         expect(actionEffect.resolve({ actionName: 'custom_api_call', input: { method: 'POST' } }).kind).toBe('input_dependent')
+    })
+
+    it('resolves actions the first catalog silently dropped to a comment-parsing bug', () => {
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-line', actionName: 'push_message' }).kind).toBe('outward_send')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-hackernews', actionName: 'fetch_top_stories' }).kind).toBe('read')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-workday', actionName: 'hire_employee' }).kind).toBe('external_write')
+    })
+
+    it('resolves action names that contain spaces', () => {
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-woocommerce', actionName: 'Create Coupon' }).kind).toBe('external_write')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-woocommerce', actionName: 'Find Coupon' }).kind).toBe('read')
+    })
+
+    it('classifies without a catalog only by name, never trusting an empty catalog as safe', () => {
+        actionEffect.setCatalog({})
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-gmail', actionName: 'send_email' }).kind).toBe('outward_send')
+        expect(actionEffect.resolve({ pieceName: '@activepieces/piece-gmail', actionName: 'frobnicate' }).kind).toBe('unknown')
+        actionEffect.setCatalog(actionEffectLabelCatalog.load())
+    })
+})
+
+describe('chatToolClassification.requiresActionPreview', () => {
+    it('consults the catalog when the piece is known', () => {
+        expect(chatToolClassification.requiresActionPreview({ pieceName: '@activepieces/piece-mongodb', actionName: 'find_and_replace_documents' })).toBe(true)
+        expect(chatToolClassification.requiresActionPreview({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records' })).toBe(false)
+    })
+
+    it('always honours an explicit request to confirm, even on a tainted turn', () => {
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'get_rows', needsConfirmation: true })).toBe(true)
+        expect(chatToolClassification.requiresActionPreview({ actionName: 'get_rows', needsConfirmation: true, tainted: true })).toBe(true)
+    })
+
+    it('tightens to reads-only on a tainted turn', () => {
+        expect(chatToolClassification.requiresActionPreview({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', tainted: true })).toBe(true)
+        expect(chatToolClassification.requiresActionPreview({ pieceName: '@activepieces/piece-tables', actionName: 'tables-find-records', tainted: true })).toBe(false)
     })
 })
 
@@ -108,6 +177,16 @@ describe('chatToolClassification.flowStepEffects — what a live test would real
         expect(effects[0].stepName).toBe('notify_me')
         expect(effects[0].effect.kind).toBe('outward_send')
         expect(effects[0].recipient).toBe('omar@activepieces.com')
+    })
+
+    it('keeps a step that deletes Activepieces data in the preview — a live test must ask first', () => {
+        const trigger = triggerWith([
+            pieceStep({ name: 'wipe', pieceName: '@activepieces/piece-tables', actionName: 'tables-delete-table' }),
+        ])
+        const effects = chatToolClassification.flowStepEffects(trigger)
+        expect(effects).toHaveLength(1)
+        expect(effects[0].effect.kind).toBe('internal_destructive')
+        expect(chatConsent.decide({ kind: effects[0].effect.kind })).toBe('ask')
     })
 
     it('does not guess a templated recipient', () => {
@@ -172,6 +251,17 @@ describe('chatConsent', () => {
         expect(chatConsent.isReusable([])).toBe(false)
     })
 
+    it('never reuses a yes for a send whose recipient is decided at runtime', () => {
+        const staticRecipient = chatToolClassification.flowStepEffects(triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'] } }),
+        ]))
+        const templated = chatToolClassification.flowStepEffects(triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['{{trigger.email}}'] } }),
+        ]))
+        expect(chatToolClassification.stepEffectsReusable(staticRecipient)).toBe(true)
+        expect(chatToolClassification.stepEffectsReusable(templated)).toBe(false)
+    })
+
     it('changes the signature when the flow gains an effect, so a stale yes cannot cover it', () => {
         const before = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['save~external_write~sheets · insert_row~'] })
         const after = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['save~external_write~sheets · insert_row~', 'notify~outward_send~gmail · send_email~omar@x.com'] })
@@ -190,12 +280,24 @@ describe('chatConsent', () => {
         expect(first).toBe(second)
     })
 
-    it('fingerprints a flow down to the step, effect and recipient', () => {
-        const effects = chatToolClassification.flowStepEffects(triggerWith([
-            pieceStep({ name: 'notify_me', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'] } }),
-        ]))
-        expect(chatToolClassification.effectFingerprintsOf(effects)).toEqual([
-            'notify_me~outward_send~gmail · send_email~omar@activepieces.com',
+    it('changes the fingerprint when the message body is rewritten, so an old yes cannot cover a new message', () => {
+        const original = triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'], subject: 'Daily digest', body_text: 'Here is your digest.' } }),
         ])
+        const rewritten = triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'], subject: 'URGENT: wire money', body_text: 'Completely different message.' } }),
+        ])
+        const first = chatToolClassification.effectFingerprintsOf(chatToolClassification.flowStepEffects(original))
+        const second = chatToolClassification.effectFingerprintsOf(chatToolClassification.flowStepEffects(rewritten))
+        expect(first).not.toEqual(second)
+    })
+
+    it('fingerprints identical inputs identically', () => {
+        const build = () => triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'], subject: 'Daily digest' } }),
+        ])
+        const first = chatToolClassification.effectFingerprintsOf(chatToolClassification.flowStepEffects(build()))
+        const second = chatToolClassification.effectFingerprintsOf(chatToolClassification.flowStepEffects(build()))
+        expect(first).toEqual(second)
     })
 })

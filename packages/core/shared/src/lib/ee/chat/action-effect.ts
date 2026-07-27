@@ -1,5 +1,4 @@
 import { isNil } from '@activepieces/core-utils'
-import { ACTION_EFFECT_LABELS } from './action-effect-labels'
 
 const ACTION_EFFECT_KINDS = [
     'read',
@@ -13,12 +12,19 @@ const ACTION_EFFECT_KINDS = [
     'unknown',
 ] as const
 
-const EFFECT_RANK: Record<string, number> = ACTION_EFFECT_KINDS.reduce(
-    (ranks, kind, index) => ({ ...ranks, [kind]: index }),
-    {},
-)
+const EFFECT_RANK: Record<ActionEffectKind, number> = {
+    read: 0,
+    internal_write: 1,
+    internal_destructive: 2,
+    external_write: 3,
+    outward_send: 4,
+    destructive: 5,
+    financial: 6,
+    input_dependent: 7,
+    unknown: 8,
+}
 
-const INTERNAL_EFFECT_KINDS = new Set<string>(['read', 'internal_write', 'internal_destructive'])
+const INTERNAL_EFFECT_KINDS = new Set<ActionEffectKind>(['read', 'internal_write', 'internal_destructive'])
 const READ_ONLY_HTTP_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
 const READ_WORDS = ['list', 'listing', 'get', 'search', 'find', 'fetch', 'read', 'count', 'check', 'verify', 'lookup', 'query', 'retrieve', 'describe', 'inspect', 'export', 'download']
@@ -36,6 +42,12 @@ const INPUT_DEPENDENT_ACTION_NAMES = new Set([
     'execute_query',
     'execute_sql',
 ])
+
+let effectCatalog: Record<string, ActionEffectLabel> = {}
+
+function setEffectCatalog(catalog: Record<string, ActionEffectLabel>): void {
+    effectCatalog = catalog
+}
 
 function actionNameWords(actionName: string): Set<string> {
     const spaced = actionName.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_\-.]/g, ' ')
@@ -87,24 +99,38 @@ function guessEffectKind({ actionName, input }: { actionName: string, input?: Re
     return 'unknown'
 }
 
-function compareEffectKinds(a: ActionEffectKind, b: ActionEffectKind): number {
+function compareEffectKinds({ a, b }: { a: ActionEffectKind, b: ActionEffectKind }): number {
     return EFFECT_RANK[a] - EFFECT_RANK[b]
 }
 
-function stricterEffectKind(a: ActionEffectKind, b: ActionEffectKind): ActionEffectKind {
-    return compareEffectKinds(a, b) >= 0 ? a : b
+function stricterEffectKind({ a, b }: { a: ActionEffectKind, b: ActionEffectKind }): ActionEffectKind {
+    return compareEffectKinds({ a, b }) >= 0 ? a : b
 }
 
-function resolveActionEffect({ pieceName, actionName, input, declaredEffect }: {
+function shouldEscalateLabel({ trusted, labelledKind, guessedKind, actionName }: {
+    trusted: boolean
+    labelledKind: ActionEffectKind
+    guessedKind: ActionEffectKind
+    actionName: string
+}): boolean {
+    return !trusted
+        && INTERNAL_EFFECT_KINDS.has(labelledKind)
+        && !INTERNAL_EFFECT_KINDS.has(guessedKind)
+        && guessedKind !== 'unknown'
+        && !matchesAny({ words: actionNameWords(actionName), patterns: READ_WORDS })
+}
+
+function resolveActionEffect({ pieceName, actionName, input, declaredEffect, declaredRecipientProp }: {
     pieceName?: string
     actionName: string
     input?: Record<string, unknown>
     declaredEffect?: string
+    declaredRecipientProp?: string
 }): ActionEffect {
     const normalizedPieceName = normalizePieceName(pieceName)
     const catalogEntry = isNil(normalizedPieceName)
         ? undefined
-        : ACTION_EFFECT_LABELS[`${normalizedPieceName}:${actionName}`]
+        : effectCatalog[`${normalizedPieceName}:${actionName}`]
     const declaredKind = toEffectKind(declaredEffect)
     const catalogKind = toEffectKind(catalogEntry?.kind)
     const labelledKind = declaredKind ?? catalogKind
@@ -113,13 +139,14 @@ function resolveActionEffect({ pieceName, actionName, input, declaredEffect }: {
     if (isNil(labelledKind)) {
         return { kind: guessedKind, source: guessedKind === 'unknown' ? 'fallback' : 'heuristic' }
     }
-    const trusted = catalogEntry?.authoritative === true && isNil(declaredKind)
-    const kind = !trusted && INTERNAL_EFFECT_KINDS.has(labelledKind) && !INTERNAL_EFFECT_KINDS.has(guessedKind)
-        ? stricterEffectKind(labelledKind, guessedKind)
+    const trusted = !isNil(declaredKind) || catalogEntry?.authoritative === true
+    const kind = shouldEscalateLabel({ trusted, labelledKind, guessedKind, actionName })
+        ? stricterEffectKind({ a: labelledKind, b: guessedKind })
         : labelledKind
+    const recipientProp = declaredRecipientProp ?? catalogEntry?.recipientProp
     return {
         kind,
-        ...(isNil(catalogEntry?.recipientProp) ? {} : { recipientProp: catalogEntry.recipientProp }),
+        ...(isNil(recipientProp) ? {} : { recipientProp }),
         source: isNil(declaredKind) ? 'catalog' : 'declared',
     }
 }
@@ -139,10 +166,17 @@ export const actionEffect = {
     isRead: isReadEffect,
     stricter: stricterEffectKind,
     compare: compareEffectKinds,
+    setCatalog: setEffectCatalog,
     KINDS: ACTION_EFFECT_KINDS,
 }
 
 export type ActionEffectKind = typeof ACTION_EFFECT_KINDS[number]
+
+export type ActionEffectLabel = {
+    kind: ActionEffectKind
+    recipientProp?: string
+    authoritative?: boolean
+}
 
 export type ActionEffect = {
     kind: ActionEffectKind

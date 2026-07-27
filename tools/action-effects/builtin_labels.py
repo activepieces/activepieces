@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Exact, hand-reasoned effect labels for the Activepieces built-in pieces.
 
-These 91 actions are the ones the agent uses constantly, so a wrong label here is
-felt on every task: too strict and it nags on its own Tables, too loose and it
-lets a whole table get cleared silently. Labeled by hand, not by model.
+These are the actions the agent uses constantly, so a wrong label here is felt on
+every task: too strict and it nags on its own Tables, too loose and it lets a whole
+table get cleared silently. Labeled by hand, not by model.
+
+Reads the full catalog (piece = package name) and emits labels only for the pieces
+listed here; everything else is the model pass's job.
 
 Vocabulary (same as the model pass, plus the internal_* pair only built-ins can be):
   read                 changes nothing anywhere (includes pure computation)
@@ -14,24 +17,22 @@ Vocabulary (same as the model pass, plus the internal_* pair only built-ins can 
 import json
 import sys
 
-# Whole pieces that are pure computation — no state anywhere.
 PURE_READ_PIECES = {'crypto', 'csv', 'data-mapper', 'date-helper', 'delay',
                     'json', 'math-helper', 'text-helper', 'xml'}
 
 OVERRIDES = {
-    # AI actions spend platform credits but touch nothing outside Activepieces.
     ('ai', 'askAi'): 'internal_write',
     ('ai', 'classifyText'): 'internal_write',
     ('ai', 'extractStructuredData'): 'internal_write',
     ('ai', 'generateImage'): 'internal_write',
     ('ai', 'summarizeText'): 'internal_write',
-    # An agent picks its own tools at runtime — its effects are unknowable here.
     ('ai', 'run_agent'): 'input_dependent',
 
     ('approval', 'create_approval_links'): 'internal_write',
     ('approval', 'wait_for_approval'): 'read',
 
     ('file-helper', 'change_file_encoding'): 'internal_write',
+    ('file-helper', 'checkFileType'): 'read',
     ('file-helper', 'createFile'): 'internal_write',
     ('file-helper', 'get_file_name'): 'read',
     ('file-helper', 'read_file'): 'read',
@@ -40,7 +41,6 @@ OVERRIDES = {
 
     ('forms', 'return_response'): 'internal_write',
 
-    # Raw request builders: the caller supplies method, URL and body.
     ('graphql', 'send_request'): 'input_dependent',
     ('http', 'send_request'): 'input_dependent',
     ('http', 'parse_url'): 'read',
@@ -64,7 +64,6 @@ OVERRIDES = {
     ('store', 'remove_value'): 'internal_destructive',
     ('store', 'remove_from_list'): 'internal_destructive',
 
-    # Calling another flow runs whatever that flow does — including real sends.
     ('subflows', 'callFlow'): 'input_dependent',
     ('subflows', 'returnResponse'): 'internal_write',
 
@@ -82,19 +81,24 @@ OVERRIDES = {
     ('webhook', 'return_response_and_wait_for_next_webhook'): 'internal_write',
 }
 
+BUILTIN_PIECES = PURE_READ_PIECES | {piece for piece, _ in OVERRIDES}
+
 catalog = [json.loads(line) for line in open(sys.argv[1], encoding='utf8')]
 labels = {}
 missing = []
 for rec in catalog:
-    key = (rec['piece'], rec['action'])
+    piece = rec['piece'].replace('@activepieces/piece-', '')
+    if piece not in BUILTIN_PIECES:
+        continue
+    key = (piece, rec['action'])
     if key in OVERRIDES:
         effect = OVERRIDES[key]
-    elif rec['piece'] in PURE_READ_PIECES:
+    elif piece in PURE_READ_PIECES:
         effect = 'read'
     else:
         missing.append(key)
         continue
-    labels[f"@activepieces/piece-{rec['piece']}:{rec['action']}"] = {
+    labels[f'@activepieces/piece-{piece}:{rec["action"]}'] = {
         'effect': effect,
         'recipientProp': None,
         'confidence': 'high',
@@ -105,3 +109,5 @@ json.dump(labels, open(sys.argv[2], 'w'), indent=0, sort_keys=True)
 print(f'hand-labeled={len(labels)} unlabeled={len(missing)}')
 for key in missing:
     print('  MISSING', key)
+if missing:
+    sys.exit('FATAL: built-in actions without a hand label — add them to OVERRIDES')

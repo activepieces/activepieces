@@ -1,9 +1,11 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { actionEffect, ActionEffectKind, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
+import { actionEffect, ActionEffectKind, actionEffectLabelCatalog, ActionPreviewEvent, ActionReceiptEvent, apId, BatchItemResult, BuildPlanEvent, ChatAgentEventType, chatConsent, ChatPhase, chatToolClassification, FileProducedEvent, ImageGeneratedEvent, SaveChatFileResponse, SendChatEmailResponse, SendChatEventRequest, StepEffect, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
+
+actionEffect.setCatalog(actionEffectLabelCatalog.load())
 
 const MAX_BATCH_SIZE = 100
 const MAX_IDENTICAL_ACTION_FAILURES = 2
@@ -248,9 +250,6 @@ function createEventEmitter({ sendEvent, userId, conversationId, log }: {
     }
 }
 
-// Gate outcomes carry two texts: the first block is the only one the user's card shows, so it
-// stays one short human line; the guidance the model needs never reaches the screen. The leading
-// glyph marks the call as unsuccessful for the receipt card (hasFailureTextPrefix).
 function gateOutcomeResult({ userLine, modelGuidance }: { userLine: string, modelGuidance: string }): {
     content: { type: 'text', text: string }[]
 } {
@@ -612,6 +611,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     }
                 }
                 const needsPreview = chatToolClassification.requiresActionPreview({
+                    pieceName: toolInput.pieceName,
                     actionName: toolInput.actionName,
                     input: toolInput.input,
                     needsConfirmation: toolInput.needsConfirmation,
@@ -682,6 +682,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 // thinking accordion as a step, same as ap_explore_data. Only writes/outcomes
                 // get a receipt card. The frontend mirrors this gate (no skeleton either).
                 const isReadOnly = chatToolClassification.isReadOnlyActionCall({
+                    pieceName: toolInput.pieceName,
                     actionName: toolInput.actionName,
                     input: toolInput.input,
                 })
@@ -722,7 +723,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                if (!chatToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
+                if (!chatToolClassification.isReadOnlyActionCall({ pieceName: toolInput.pieceName, actionName: toolInput.actionName, input: toolInput.input })) {
                     return chatToolClassification.readOnlyRejection(toolInput.actionName)
                 }
                 taintState.tainted = true
@@ -1331,13 +1332,20 @@ function consentScopeOf({ toolName, args }: { toolName: string, args: unknown })
         return toolName
     }
     const value = args[scopeKey]
-    return typeof value === 'string' ? value : undefined
+    if (typeof value === 'string' && value.trim().length > 0) {
+        return value.length > 64 ? chatToolClassification.inputDigestOf(value) : value
+    }
+    if (Array.isArray(value) && value.length > 0) {
+        const items = value.filter((item): item is string => typeof item === 'string')
+        return items.length === value.length ? chatToolClassification.inputDigestOf([...items].sort()) : undefined
+    }
+    return undefined
 }
 
 async function resolveGatedEffects({ toolName, args, previewFlowEffects, log }: {
     toolName: string
     args: unknown
-    previewFlowEffects: (params: { flowId: string, stepName?: string }) => Promise<unknown>
+    previewFlowEffects: PreviewFlowEffects
     log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): Promise<{ effects: StepEffect[], flowName?: string, resolved: boolean }> {
     const staticKind = STATIC_TOOL_EFFECTS[toolName]
@@ -1366,16 +1374,26 @@ async function resolveGatedEffects({ toolName, args, previewFlowEffects, log }: 
         return { effects: actionEffect.isInternal(effect.effect.kind) ? [] : [effect], resolved: true }
     }
     const flowId = isObject(args) && typeof args['flowId'] === 'string' ? args['flowId'] : undefined
-    if (isNil(flowId)) {
+    const flowRunId = isObject(args) && typeof args['flowRunId'] === 'string' ? args['flowRunId'] : undefined
+    if (isNil(flowId) && isNil(flowRunId)) {
         return { effects: [], resolved: false }
     }
     const stepName = isObject(args) && typeof args['stepName'] === 'string' ? args['stepName'] : undefined
-    const { data: preview, error } = await tryCatch(() => previewFlowEffects({ flowId, ...spreadIfDefined('stepName', stepName) }))
+    const { data: preview, error } = await tryCatch(() => previewFlowEffects({
+        ...spreadIfDefined('flowId', flowId),
+        ...spreadIfDefined('flowRunId', flowRunId),
+        ...spreadIfDefined('stepName', stepName),
+    }))
     if (error || !isObject(preview) || preview['resolved'] !== true) {
-        log?.warn({ error, flow: { id: flowId }, tool: { name: toolName } }, 'Effect preview failed, gating conservatively')
+        log?.warn({ error, flow: { id: flowId ?? flowRunId }, tool: { name: toolName } }, 'Effect preview failed, gating conservatively')
         return { effects: [], resolved: false }
     }
-    const effects = Array.isArray(preview['effects']) ? preview['effects'].filter(isStepEffect) : []
+    const rawEffects = Array.isArray(preview['effects']) ? preview['effects'] : []
+    const effects = rawEffects.filter(isStepEffect)
+    if (effects.length !== rawEffects.length) {
+        log?.warn({ flow: { id: flowId ?? flowRunId }, tool: { name: toolName }, effectCount: rawEffects.length }, 'Effect preview carried entries this worker cannot classify, gating conservatively')
+        return { effects: [], resolved: false }
+    }
     return {
         effects,
         ...(typeof preview['flowName'] === 'string' ? { flowName: preview['flowName'] } : {}),
@@ -1383,12 +1401,15 @@ async function resolveGatedEffects({ toolName, args, previewFlowEffects, log }: 
     }
 }
 
+const KNOWN_EFFECT_KINDS = new Set<string>(actionEffect.KINDS)
+
 function isStepEffect(value: unknown): value is StepEffect {
     return isObject(value)
         && typeof value['stepName'] === 'string'
         && typeof value['displayName'] === 'string'
         && isObject(value['effect'])
         && typeof value['effect']['kind'] === 'string'
+        && KNOWN_EFFECT_KINDS.has(value['effect']['kind'])
 }
 
 function gateLabelFor({ toolName, flowName, effects, resolved, args }: {
@@ -1421,7 +1442,7 @@ function gateLabelFor({ toolName, flowName, effects, resolved, args }: {
 
 function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
     tools: Record<string, unknown>
-    previewFlowEffects: (params: { flowId: string, stepName?: string }) => Promise<unknown>
+    previewFlowEffects: PreviewFlowEffects
     checkRememberedConsent: (params: { signature: string }) => Promise<boolean>
     rememberConsent: (params: { signature: string }) => Promise<void>
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
@@ -1464,7 +1485,7 @@ function wrapWithConsent({ tools, previewFlowEffects, checkRememberedConsent, re
                     scope,
                     fingerprints: resolved ? chatToolClassification.effectFingerprintsOf(effects) : ['unresolved'],
                 })
-                const reusable = resolved && chatConsent.isReusable(kinds)
+                const reusable = resolved && chatToolClassification.stepEffectsReusable(effects)
                 if (reusable) {
                     const remembered = await tryCatch(() => checkRememberedConsent({ signature }))
                     if (remembered.data === true) {
@@ -1600,6 +1621,8 @@ export type TaintState = { tainted: boolean }
 export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
 
+type PreviewFlowEffects = (params: { flowId?: string, flowRunId?: string, stepName?: string }) => Promise<unknown>
+
 const CONSENT_GATED_TOOL_NAMES = [
     'ap_test_flow',
     'ap_test_step',
@@ -1626,9 +1649,10 @@ const CONSENT_SCOPE_KEYS: Record<string, string> = {
     ap_test_flow: 'flowId',
     ap_test_step: 'flowId',
     ap_retry_run: 'flowRunId',
+    ap_run_code: 'code',
     ap_delete_flow: 'flowId',
     ap_delete_table: 'tableId',
-    ap_delete_records: 'tableId',
+    ap_delete_records: 'recordIds',
 }
 
 const CONSENT_INTROS: Record<string, string> = {

@@ -1,26 +1,27 @@
 /**
  * Effect label for every action in the piece catalog: what it does in the real world, so
- * chat can decide what needs a human's yes. Read/internal labels are only trusted when the
- * action's own name agrees (see resolveActionEffect) — a label can never make something
- * look safer than its name suggests.
+ * chat can decide what needs a human's yes before it runs.
  *
- * GENERATED — do not hand-edit a line here. Regenerate with tools/action-effects. A piece
- * overrides its own entry by declaring `aiMetadata.effect` on the action.
+ * GENERATED — do not hand-edit a line here. Regenerate with tools/action-effects; the
+ * generator refuses to write a partial table. A piece overrides its own entry by
+ * declaring `aiMetadata.effect` on the action, which the resolver trusts outright.
  *
- * One line per piece: `<piece> <action>=<code>[!][:<recipientInputKey>] ...`
- * Codes: r read · W internal write · D internal destructive · w external write ·
- *        o outward send · d destructive · f financial · i depends on input
- * A trailing `!` marks a hand-reviewed entry that the resolver trusts as-is; every other
- * entry may still be escalated when the action's own name implies something worse.
+ * One line per piece: `<piece> <action>=<code>[!][:<recipientInputKey>] ...` with
+ * spaces in names carried as %20 (and % as %25).
+ * Codes: r read | W internal write | D internal destructive | w external write |
+ *        o outward send | d destructive | f financial | i depends on input
+ * A trailing `!` marks a hand-reviewed entry the resolver trusts as-is; any other
+ * read/internal label may be escalated when the action's own name clearly implies an
+ * external effect and contains no read verb (see resolveActionEffect).
+ *
+ * The table is decoded on first use, never at import time, and reaches the resolver
+ * only through actionEffect.setCatalog on server boot — the web bundle must not pay
+ * for it. Keep this file free of top-level work.
  */
 
-export type ActionEffectLabel = {
-    kind: string
-    recipientProp?: string
-    authoritative?: boolean
-}
+import { ActionEffectKind, ActionEffectLabel } from './action-effect'
 
-const KIND_BY_CODE: Record<string, string> = {
+const KIND_BY_CODE: Record<string, ActionEffectKind> = {
     r: 'read',
     W: 'internal_write',
     D: 'internal_destructive',
@@ -88,12 +89,12 @@ bannerbear bannerbear_create_image=w
 barcode-lookup searchByBarcode=r
 baremetrics create_customer=w create_plan=w create_subscription=w update_customer=w
 base44 create_entity=w find_entity=r find_or_create_entity=w
-baserow baserow_aggregate_field=r baserow_batch_create_rows=w baserow_batch_delete_rows=d baserow_batch_update_rows=w baserow_clean_row=w baserow_create_row=w baserow_delete_row=d baserow_find_row=r baserow_get_row=r baserow_list_rows=r baserow_update_row=w baserow_upload_file=w
+baserow baserow_aggregate_field=r baserow_batch_create_rows=w baserow_batch_delete_rows=d baserow_batch_update_rows=w baserow_clean_row=w baserow_create_row=w baserow_delete_row=d baserow_find_row=r baserow_get_row=r baserow_list_rows=r baserow_update_row=w baserow_upload_file=w baserow_upsert_row=w
 beamer create_beamer_post=o create_new_comment=o create_new_feature_request=o create_vote=w
 beebole create_company=w create_multiple_time_entries=w create_person=o:email create_project=w create_subproject=w deactivate_subproject=w delete_multiple_time_entries=d
 beehiiv add_subscription_to_automation=w create_subscription=o:email delete_subscription=d list_automations=r list_posts=r list_subscriptions=r update_subscription=w
 bettermode assign_badge=w create_discussion=o create_question=o revoke_badge=w
-bexio create_company=w create_manual_entry=f create_person=w create_product=w create_project=w create_sales_invoice=f create_sales_order=f create_sales_quote=w create_time_tracking=w export_invoice_pdf=r find_account=r find_company=r find_country=r find_product=r search_invoice=r search_order=r search_quote=r send_sales_invoice=o:recipient_email update_company=w update_person=w update_product=w
+bexio create_company=w create_file=w create_manual_entry=f create_person=w create_product=w create_project=w create_sales_invoice=f create_sales_order=f create_sales_quote=w create_time_tracking=w export_invoice_pdf=r find_account=r find_company=r find_country=r find_person=r find_product=r search_invoice=r search_order=r search_quote=r send_sales_invoice=o:recipient_email update_company=w update_person=w update_product=w
 bigcommerce createAProduct=w createBlogPost=o createCustomer=w createCustomerAddress=w deleteAProduct=d findOrCreateCustomer=w findOrCreateCustomersAddress=w findOrCreateProduct=w getOrder=r listCategories=r listOrders=r searchCustomer=r searchCustomerAddress=r searchProduct=r updateAProduct=w
 bigin-by-zoho createCall=w createCompany=w createContact=w createEvent=w createPipeline=w createTask=w searchCompanyRecord=r searchContactRecord=r searchPipelineRecord=r searchProductRecord=r searchUser=r updateCompany=w updateContact=w updateEvent=w updatePipeline=w updateTask=w
 bika bika_create_record=w bika_delete_record=d bika_find_record=r bika_find_records=r bika_update_record=w
@@ -123,7 +124,7 @@ canny create_post=w create_vote=w delete_vote=d list_posts=r retrieve_post=r
 canva create_design=w export_design=w find_design=r get_asset=r get_design=r get_folder=r import_design=w move_folder_item=w upload_asset=w
 capsule-crm add_note_to_entity=w create_contact=w create_opportunity=w create_project=w create_task=w find_contact=r find_opportunity=r find_project=r update_contact=w update_opportunity=w
 captain-data getJobResults=r launchWorkflow=w
-carbone carbone_delete_template=d carbone_list_categories=r carbone_list_tags=r carbone_list_templates=r carbone_update_template=w carbone_upload_template=w
+carbone carbone_delete_template=d carbone_list_categories=r carbone_list_tags=r carbone_list_templates=r carbone_render_document=w carbone_update_template=w carbone_upload_template=w
 cartloom create_discount=w get_all_discounts=r get_discount=r get_order=r get_orders_by_date=r get_orders_by_email=r get_products=r
 cashfree-payments cancel-payment-link=d create-cashgram=f:phone create-order=w create-payment-link=o:customerPhone create-refund=f deactivate-cashgram=f fetch-payment-link-details=r get-all-refunds-for-order=r get-orders-for-payment-link=r
 certopus create_credential=o:email
@@ -131,7 +132,7 @@ chain-aware auditWalletAddress=r creditScore=r fraudCheck=r rugPullCheck=r walle
 chainalysis-api checkAddressSanction=r
 chaindesk query-agent=w query-datastore=r upload-file=w
 chargebee cancel_subscription=f create_customer=w create_subscription=f get_customer=r
-chargekeep addOrUpdateContact=w addOrUpdateContact(extended)=o addOrUpdateSubscription=f createInvoice=f createProduct=w
+chargekeep addOrUpdateContact=w addOrUpdateContact(extended)=o addOrUpdateSubscription=f createInvoice=f createProduct=w getContactDetails=r
 chartly create_chart=r get_chart=r
 chat-aid addCustomSources=w askQuestions=w getCustomSourceById=r
 chat-data create_chatbot=w delete_chatbot=d retrain_chatbot=w send_message=w update_chatbot_settings=w upload_file=w
@@ -177,7 +178,7 @@ copy-ai get_workflow_run_outputs=r get_workflow_run_status=r run_workflow=w
 coralogix acknowledgeIncidents=w assignIncidents=w closeIncidents=w getIncidentById=r getIncidentEvents=r listIncidents=r resolveIncidents=w sendLogs=w setAlertActive=w
 couchbase delete_document=d get_document=r insert_document=w query=r upsert_document=w
 coupa add_file_attachment_to_object=w cancel_purchase_order=w close_purchase_order=w create_object=w get_object_by_id=r get_remit_to_addresses_by_object_id=r get_supplier_sites_by_supplier=r grant_approval=w reject_approval=w search_objects=r set_integration_run_status=w update_object=w
-crisp add_note=w change_state=w create_update_contact=w find_conversation=r find_user_profile=r
+crisp add_note=w change_state=w create_conversation=o:email create_update_contact=w find_conversation=r find_user_profile=r
 crypto base64-decode=r! base64-encode=r! generate-password=r! hash-text=r! hmac-signature=r! openpgpEncrypt=r! rsa-signature=r!
 cryptolens addCustomer=w blockKey=w createKey=w extendLicense=w
 csv convert_csv_to_json=r! convert_excel_to_csv=r! convert_json_to_csv=r!
@@ -192,7 +193,7 @@ data-summarizer calculateAverage=r calculateSum=r countUniques=r getMinMax=r
 datadog sendMultipleLogs=w sendOneLog=w
 dataforb2b enrich_company=r enrich_profile=r reasoning_search=r search_companies=r search_people=r typeahead=r
 datafuel crawl-website=r get-scrape=r scrape-website=w
-date-helper add_subtract_date=r! date_difference=r! extract_date_parts=r! first_day_of_previous_month=r! format_date=r! get_current_date=r! last_day_of_previous_month=r! next_day_of_year=r!
+date-helper add_subtract_date=r! date_difference=r! extract_date_parts=r! first_day_of_previous_month=r! format_date=r! get_current_date=r! last_day_of_previous_month=r! next_day_of_week=r! next_day_of_year=r!
 deepgram create_summary=w create_transcription_callback=o:callbackUrl list_projects=r text_to_speech=f
 deepl translate_text=r
 deepseek ask_deepseek=r
@@ -242,11 +243,11 @@ feathery create_form=w delete_form=d export_submission_pdf=w list_form_submissio
 feedhive create_label=w create_post=w delete_post=d fire_workflow_trigger=w get_post=r list_posts=r update_post=w
 fellow get-note=r
 figma get_comments=r get_file=r post_comment=w
-file-helper change_file_encoding=W! createFile=W! get_file_name=r! read_file=r! unzipFile=W! zipFiles=W!
+file-helper change_file_encoding=W! checkFileType=r! createFile=W! get_file_name=r! read_file=r! unzipFile=W! zipFiles=W!
 filetopdf convert_file=r convert_html=r convert_markdown=r get_account=r
 fillout-forms findFormByTitle=r getFormResponses=r getSingleResponse=r
 fireberry create_record=w delete_record=d find_record=r update_record=w
-firecrawl crawl=r crawlResults=r extract=r map=r
+firecrawl crawl=r crawlResults=r extract=r map=r scrape=r
 fireflies-ai find-meeting-by-id=r find_meeting_by_query=r find_recent_meeting=r get-user-details=r upload_audio=w
 flipando getAllApps=r getTask=r runApp=w runAppGenerator=w
 fliqr-ai get_fliqr_account_details=r get_fliqr_account_flows=r
@@ -261,7 +262,7 @@ formstack createSubmission=w findFormByNameOrId=r findSubmissionByFieldValue=r g
 fountain create_applicant=w delete_applicant=d get_applicant_details=r get_interview_sessions=r get_opening=r get_stage=r list_applicants=r list_openings=r list_stages=r update_applicant=w
 fragment create_task=w delete_task=d get_task=r list_tasks=r update_task=w
 free-agent create_contact=w create_task=w
-freshdesk get_all_tickets_by_status=r get_contact_from_id=r get_contacts=r get_tickets=r
+freshdesk get_all_tickets_by_status=r get_contact_from_id=r get_contacts=r get_ticket_status=r get_tickets=r
 freshsales freshsales_create_contact=w
 freshservice add_note_to_change=i add_note_to_ticket=i create_change=w create_change_task=w create_requester=w create_ticket=w delete_change=d delete_change_task=d request_ticket_approval=o:approver_id update_change=w update_change_task=w
 frill create_announcement=i create_comment=i create_follower=w create_idea=w get_comments=r get_ideas=r update_follower=w update_idea=w
@@ -282,7 +283,7 @@ gladia createTranscription=w uploadAFile=w
 glide add-rows=w delete-row=d get-rows=r list-tables=r update-row=w
 gmail create_draft_reply=w gmail_get_mail=r gmail_get_thread=r gmail_search_mail=r reply_to_email=o request_approval_in_mail=o:receiver send_email=o:receiver
 goodmem create_memory=w create_space=w delete_memory=d get_memory=r retrieve_memories=r
-google-bigquery create_rows=w delete_rows=d find_one_row=r find_or_create_row=w get_rows_for_job=r import_data=w run_query=i update_rows=i
+google-bigquery create_row=w create_rows=w delete_rows=d find_one_row=r find_or_create_row=w get_rows_for_job=r import_data=w run_query=i update_rows=i
 google-calendar addCalendarToCalendarlist=w create_google_calendar_event=o:attendees create_quick_event=o delete_event=d google-calendar-add-attendees=o:attendees google_calendar_find_busy_free_periods=r google_calendar_get_event_by_id=r google_calendar_get_events=r update_event=w
 google-cloud-storage clone_object=w create_bucket=w create_bucket_acl=w create_bucket_default_object_acl=w create_object_acl=w delete_bucket_acl=w delete_bucket_default_object_acl=w delete_empty_bucket=d delete_object=d delete_object_acl=w search_buckets=r search_objects=r
 google-contacts add_contact=w search_contact=r update_contact=w
@@ -310,7 +311,8 @@ grist grist-create-record=w grist-search-record=r grist-update-record=w grist-up
 grok-xai ask_grok=r categorize_text=r extract_data_from_text=r generate_image=r
 groq ask-ai=r transcribe-audio=r translate-audio=r
 guidelite sendAPrompt=w
-harvest get_clients=r get_projects=r get_users=r reports-uninvoiced=r
+hackernews fetch_top_stories=r
+harvest get_clients=r get_estimates=r get_expenses=r get_invoices=r get_projects=r get_roles=r get_tasks=r get_time_entries=r get_users=r reports-uninvoiced=r
 hashi-corp-vault delete_secret=d list_secrets=r read_secret=r write_secret=w
 hastewire detect-text=r humanize-text=r
 heartbeat heartbeat_create_user=w
@@ -342,11 +344,11 @@ instantly-ai add_lead_to_campaign=w create_campaign=w create_lead_list=w search_
 instasent add_event=w add_or_update_contact=w delete_contact=d
 intercom add-note-to-user=w add-or-remove-tag-on-company=w add-or-remove-tag-on-contact=w add-or-remove-tag-on-conversation=w addNoteToConversation=w assignConversationAction=w create-article=o create-conversation=o:contactId create-data-event=w create-or-update-company=w create-or-update-lead=w create-or-update-user=w create-ticket=w create-user=w find-company=r find-conversation=r find-lead=r find-or-create-company=w find-or-create-lead=w find-user=r get-conversation=r list-all-tags=r replyToConversation=o:conversationId send_message=o:to update-ticket=w
 intruder addTarget=w searchForATarget=r searchForAnIssue=r searchForAnIssueOccurrence=r startScan=w
-invoiceninja action_recurring_invoice=i create_client=w create_invoice=f create_task=w exists_task=r
+invoiceninja action_recurring_invoice=i create_client=w create_invoice=f create_recurring_invoice=f create_task=w exists_task=r getclient_task=r getinvoices_task=r getreport_task=r
 jina-ai classify_content=r deepsearch_query=r extract_webpage_content=r train_custom_classifier=w web_search_summarization=r
 jira-cloud add-watcher-to-issue=o:userId add_issue_attachment=w add_issue_comment=o assign_issue=w create_issue=w delete_issue_comment=d find-user=r get-issue-attachment=r get_issue=r link-issues=w list_issue_comments=r markdownToJiraFormat=r search_issues=r transition_issue=w update_issue=w update_issue_comment=o
 jira-data-center add-watcher-to-issue=o:userId add_issue_attachment=w add_issue_comment=o assign_issue=w create_issue=w delete_issue_comment=d find-user=r get-issue-attachment=r get_issue=r link-issues=w list_issue_comments=r search_issues=r update_issue=w update_issue_comment=o
-jogg-ai createAiAvatarPhoto=w createAvatarVideo=w createProductFromProductInfo=w createProductFromUrl=w createVideoFromTemplate=w getGeneratedVideo=r updateProductInfo=w
+jogg-ai createAiAvatarPhoto=w createAvatarVideo=w createProductFromProductInfo=w createProductFromUrl=w createVideoFromTemplate=w getGeneratedVideo=r updateProductInfo=w uploadMedia=w
 json convert_json_to_text=r! convert_text_to_json=r! merge_json=r! run_jsonata_query=r!
 jungle-grid cancel_job=w estimate_job=r get_artifact_download_url=r get_job_logs=r get_job_runtime=r get_job_status=r list_artifacts=r list_jobs=r submit_job=w
 just-invoice create_invoice=f:customerEmail delete_invoice=d get_invoice=r mark_invoice_cancelled=f mark_invoice_final=f mark_invoice_paid=w
@@ -355,7 +357,7 @@ kapso mark_as_read=o request_user_location=o:to send_audio=o:to send_buttons=o:t
 katana create_customer=w create_sales_order=f find_customer=r
 kimai create_timesheet=w
 kissflow downloadAttachmentFromFormField=r
-kizeo-forms create_list_item=w delete_list_item=d edit_list_item=w get_all_list_items=r get_list_definition=r get_list_item=r
+kizeo-forms create_list_item=w delete_list_item=d download_custom_export_in_its_original_format=r download_standard_pdf=r edit_list_item=w get_all_list_items=r get_data_definition=r get_list_definition=r get_list_item=r push_data=w
 klaviyo addProfileToList=w createList=w createProfile=w findListByName=r findProfileByEmailPhone=r findTagByName=r removeProfileFromList=w subscribeProfile=w unsubscribeProfile=w updateProfile=w
 klenty add_prospect_to_campaign=o:email create_prospect=w get_prospect=r update_prospect=w
 klipy search_clips=r search_gifs=r search_stickers=r
@@ -375,8 +377,9 @@ lets-calendar addContactToCampaign=w
 letta createAgentFromTemplate=w createIdentity=w getIdentities=r sendMessageToAgent=o:agentId
 lever addFeedbackToOpportunity=w getOpportunity=r listOpportunityFeedback=r listOpportunityForms=r updateOpportunityStage=w
 lightfunnels cancel_order=f create_customer=w create_product=w get_customer=r get_funnel=r get_order=r get_product=r list_customers=r list_orders=r list_products=r
+line push_message=o:userId
 linear linear_create_comment=o linear_create_issue=w linear_create_project=w linear_update_issue=w linear_update_project=w rawGraphqlQuery=i
-linka addOrUpdateContact=w addOrUpdateContactExtended=o addOrUpdateSubscription=f createInvoice=f createProduct=w
+linka addOrUpdateContact=w addOrUpdateContactExtended=o addOrUpdateSubscription=f createInvoice=f createProduct=w getContactDetails=r
 linkedin create_company_update=o:company create_share_update=o
 linkup fetch=r search=r
 linkupapi check_invitation_status=r get_account=r get_company=r get_conversation=r get_my_profile=r get_profile=r list_accounts=r search_companies=r search_people=r send_connection_request=o:profileUrl send_message=o:profileUrl
@@ -405,6 +408,7 @@ math-helper addition_math=r! division_math=r! generateRandom_math=r! modulo_math
 matomo add_annotation=w
 matrix send_message=o:room_alias
 mattermost send_message=o:channel_id
+mautic create_mautic_company=w create_mautic_contact=w search_mautic_company=r search_mautic_contact=r update_mautic_company=w update_mautic_contact=w
 mcp reply_to_mcp_client=r
 mcp-client call-tool=i
 medullar addSpaceRecord=w askSpace=r createSpace=w deleteSpace=d listSpaces=r renameSpace=w
@@ -413,23 +417,23 @@ meistertask create_attachment=w create_label=w create_task=w create_task_label=w
 mem create_mem=w create_note=w delete_note=d
 mempool-space get_address_details=r get_address_transactions=r get_address_transactions_chain=r get_address_transactions_mempool=r get_address_utxo=r get_block=r get_block_header=r get_block_height=r get_block_raw=r get_block_status=r get_block_timestamp=r get_block_tip_hash=r get_block_tip_height=r get_block_transaction_id=r get_block_transaction_ids=r get_block_transactions=r get_blocks_bulk=r get_difficulty_adjustment=r get_historical_price=r get_mempool_blocks_fees=r get_price=r get_recommended_fees=r get_transaction=r get_transaction_hex=r get_transaction_merkle_proof=r get_transaction_merkleblock_proof=r get_transaction_outspend=r get_transaction_outspends=r get_transaction_raw=r get_transaction_rbf_timeline=r get_transaction_status=r get_transaction_times=r post_transaction=f validate_address=r
 messagebird listMessages=r send-sms=o:recipient
-metabase embedQuestion=w getDashboardQuestions=r getQuestion=r getQuestionPngPreview=r
+metabase embedQuestion=w getDashboardQuestions=r getGraphQuestion=r getQuestion=r getQuestionPngPreview=r
 metatext classify_text=r extract_text=r finetune_model=w
 microsoft-365-people createContact=w createContactFolder=w deleteContact=d getContactFolder=r searchContacts=r updateContact=w
 microsoft-365-planner createBucket=w createPlan=w createTask=w deleteBucket=d deleteTask=d findAPlan=r findTask=r getABucket=r updateBucket=w updatePlan=w updateTask=w
 microsoft-copilot chatWithCopilot=w retrieveGroundingData=r searchCopilot=r
 microsoft-dynamics-365-business-central create-record=w delete-record=d get-record=r search-records=r update-record=w
 microsoft-dynamics-crm dynamics_crm_create_record=w dynamics_crm_delete_record=d dynamics_crm_get_record=r dynamics_crm_update_record=w
-microsoft-excel-365 add_worksheet=w append_multiple_rows=w append_row=w append_table_rows=w clear_column=d clear_range=d clear_row=d clear_worksheet=d convert_to_range=d copy_worksheet=w createWorkbook=w create_table=w create_worksheet=w delete_row=d delete_table=d delete_workbook=d delete_worksheet=d find-workbook=r find-worksheet=r get-worksheet-columns=r getRowById=r get_range=r get_table_columns=r get_table_rows=r get_workbooks=r get_worksheet_rows=r get_worksheets=r lookup_table_column=r update_row=w
-microsoft-onedrive copy_file=w list_files=r list_folders=r upload_onedrive_file=w
+microsoft-excel-365 add_worksheet=w append_multiple_rows=w append_row=w append_table_rows=w clear_column=d clear_range=d clear_row=d clear_worksheet=d convert_to_range=d copy_worksheet=w createWorkbook=w create_table=w create_worksheet=w delete_row=d delete_table=d delete_workbook=d delete_worksheet=d find-workbook=r find-worksheet=r find_row=r get-worksheet-columns=r getRowById=r get_range=r get_table_columns=r get_table_rows=r get_workbooks=r get_worksheet=r get_worksheet_rows=r get_worksheets=r lookup_table_column=r rename_worksheet=w update_row=w
+microsoft-onedrive copy_file=w download_file=r list_files=r list_folders=r upload_onedrive_file=w
 microsoft-onenote append_note=w create_image_note=w create_note_in_section=w create_notebook=w create_page=w create_section=w
 microsoft-outlook addLabelToEmail=w createDraftEmail=w downloadAttachment=r findEmail=r forwardEmail=o:recipients moveEmailToFolder=w removeLabelFromEmail=w reply-email=o:ccRecipients request_approval_in_mail=o:recipients send-email=o:recipients sendDraftEmail=o
 microsoft-outlook-calendar create_event=w delete_event=d list_events=r
-microsoft-power-bi create_dataset=w
+microsoft-power-bi create_dataset=w push_rows_to_dataset_table=w
 microsoft-sharepoint microsoft_sharepoint_copy_item=w microsoft_sharepoint_copy_item_within_site=w microsoft_sharepoint_create_folder=w microsoft_sharepoint_create_list=w microsoft_sharepoint_create_list_item=w microsoft_sharepoint_delete_list_item=d microsoft_sharepoint_find_file=r microsoft_sharepoint_find_site=r microsoft_sharepoint_get_folder_contents=r microsoft_sharepoint_get_site_information=r microsoft_sharepoint_move_file=w microsoft_sharepoint_publish_page=w microsoft_sharepoint_search_list_item=r microsoft_sharepoint_update_list_item=w microsoft_sharepoint_upload_file=w
 microsoft-teams microsoft_teams_create_channel=w microsoft_teams_create_chat_and_send_message=o:members microsoft_teams_create_private_channel=w microsoft_teams_delete_chat_message=d microsoft_teams_find_channel=r microsoft_teams_find_team_member=r microsoft_teams_get_channel_message=r microsoft_teams_get_chat_message=r microsoft_teams_get_meeting_recording=r microsoft_teams_get_meeting_transcript=r microsoft_teams_reply_to_channel_message=o:channelId microsoft_teams_send_channel_message=o:channelId microsoft_teams_send_chat_message=o:chatId request_approval_direct_message=o:chatId request_approval_in_channel=o:channelId
 microsoft-teams-bot microsoft_teams_send_channel_message_as_bot=o:channelId
-microsoft-todo add_attachment=w complete_task=w create_task=w create_task_list=w delete_task=d find_task_by_title=r find_task_list_by_name=r get_task=r list_task_lists=r update_task_list=w
+microsoft-todo add_attachment=w complete_task=w create_task=w create_task_list=w delete_task=d find_task_by_title=r find_task_list_by_name=r get_task=r list_task_lists=r list_tasks=r update_task=w update_task_list=w
 millionverifier verifyEmail=r
 mind-studio run_workflow=i
 mindee mindee_predict_document=r
@@ -440,7 +444,7 @@ mixpanel track_event=w
 modelslab text-to-image=w
 mollie create_customer=w create_order=f create_payment=f create_payment_link=f create_payment_refund=f search_customer=r search_order=r search_payment=r
 monday monday_create_column=w monday_create_group=w monday_create_item=w monday_create_update=w monday_get_board_values=r monday_get_item_column_values=r monday_update_column_values_of_item=w monday_update_item_name=w monday_upload_file_to_column=w
-mongodb aggregate_documents=r delete_documents=d find_and_replace_documents=w find_and_update_documents=w insert_documents=w update_documents=w
+mongodb aggregate_documents=r delete_documents=d find_and_replace_documents=w find_and_update_documents=w find_documents=r insert_documents=w update_documents=w
 moonclerk retrivePlan=r
 mooninvoice addNewContact=w createCreditNote=f createEstimate=w createExpense=w createInvoice=f createProduct=w createTask=w
 motion create-project=w create-task=w find-task=r get-task=r moveTask=w update-task=w
@@ -461,7 +465,7 @@ notion add_comment=o append_to_page=w archive_database_item=w createPage=w creat
 ntfy send_notification=o:topic
 nuelink createPost=o
 octopush-sms addContact=w sendANewSms=o:phone_number
-odoo create_record=w custom_odoo_api_call=i get_records=r update_record=w
+odoo create_company=w create_contact=w create_record=w custom_odoo_api_call=i get_contacts=r get_records=r update_record=w
 okta activate_user=o add_user_to_group=w create_user=o deactivate_user=o find_group_by_name=r find_user_by_email=r remove_user_from_group=w suspend_user=w update_user=w
 omni-co createADocument=w createASchedule=o:recipients deleteADocument=d deleteASchedule=d editSchedule=o:recipients generateQuery=r moveDocument=w runQuery=r
 omnihr generateReport=r get_direct_reports=r get_employee_info=r get_employee_organizational_chart=r get_employee_system_id=r
@@ -471,13 +475,13 @@ oneclickimpact captureCarbon=f cleanOcean=f donateMoney=f plantTrees=f
 onfleet clone_task=w complete_task=w create_admin=w create_destination=w create_hub=w create_recipient=w create_task=w create_team=w create_worker=w delete_admin=d delete_task=d delete_team=d delete_worker=d get_admins=r get_container=r get_delegatee_details=r get_destination=r get_hubs=r get_organization=r get_recipient=r get_task=r get_tasks=r get_team=r get_teams=r get_worker=r get_worker_schedule=r update_admin=w update_hub=w update_recipient=w update_task=w update_team=w update_worker=w
 open-phone create_contact=w get_call_summary=r send_message=o:to update_contact=w
 open-router ask-lmm=r
-openai analyze_sentiment=r ask_chatgpt=r classify_text=r create_embedding=r delete_file=d edit_image=w extract-structured-data=r find_file=r generate_image=w list_files=r list_models=r search_embeddings=r text_to_speech=w transcribe=r translate=r upload_file=w vision_prompt=r
+openai analyze_sentiment=r ask_assistant=r ask_chatgpt=r classify_text=r create_embedding=r delete_file=d edit_image=w extract-structured-data=r find_file=r generate_image=w list_files=r list_models=r search_embeddings=r text_to_speech=w transcribe=r translate=r upload_file=w vision_prompt=r
 openmic-ai createPhoneCall=o:toNumber findBot=r findCall=r getBots=r getCalls=r
 opportify analyze-email=r analyze-ip-address=r
 oracle-database delete_row=d find_row=r insert_row=w insert_rows=w run_custom_sql=i update_row=w
 oracle-fusion-cloud-erp cancel_invoice=w create_invoice=f create_payment=f create_receivables_invoice=f delete_invoice=d delete_journal_batch=d delete_receivables_invoice=d find_invoices=r find_journal_batches=r find_payments=r find_receivables_invoices=r get_invoice=r get_journal_batch=r get_payment=r get_receivables_invoice=r stop_payment=w update_invoice=w update_journal_batch=w update_payment=w update_receivables_invoice=w validate_invoice=w void_payment=f
 orimon sendMessage=o:tenantId
-outseta add_addon_to_subscription=f add_addon_usage=f add_case=o:personUid add_custom_activity=w add_discount_to_subscription=w add_invoice=f add_invoice_payment=f add_reply=o:caseUid change_account_plan=f create_account=f create_deal=w create_discount=w delete_account=d delete_deal=d delete_person=d extend_trial_subscription=w find_or_add_deal=w find_or_add_person=w get_account=r get_deal=r get_last_payment=r get_person=r get_subscription=r list_accounts=r list_addons=r list_cases=r list_deals=r list_discounts=r list_persons=r list_plans=r list_transactions=r manage_account_membership=w manage_email_list_subscription=o:email process_payment=f remove_cancellation=w send_confirmation_email=o:personUid send_invoice_email=o update_account=w update_account_membership=w update_payment_information=w update_person=w
+outseta add_addon_to_subscription=f add_addon_usage=f add_case=o:personUid add_custom_activity=w add_discount_to_subscription=w add_invoice=f add_invoice_payment=f add_reply=o:caseUid cancel_subscription=f change_account_plan=f create_account=f create_deal=w create_discount=w delete_account=d delete_deal=d delete_person=d extend_trial_subscription=w find_or_add_deal=w find_or_add_person=w get_account=r get_deal=r get_last_payment=r get_person=r get_subscription=r list_accounts=r list_addons=r list_cases=r list_deals=r list_discounts=r list_persons=r list_plans=r list_transactions=r manage_account_membership=w manage_email_list_subscription=o:email process_payment=f remove_cancellation=w send_confirmation_email=o:personUid send_invoice_email=o update_account=w update_account_membership=w update_deal=w update_payment_information=w update_person=w
 paddle cancel-subscription=f create-transaction=f get-subscription=r list-customers=r update-subscription=f
 pagerduty acknowledge_incident=w create_incident=o get_incident=r list_incidents=r resolve_incident=w
 pandadoc createAttachment=w createDocumentFromTemplate=w createOrUpdateContact=w downloadDocument=r findDocument=r getDocumentAttachments=r getDocumentDetails=r
@@ -488,7 +492,7 @@ parseur createDocument=w createDocumentFromFile=w findDocument=r getParsedDocume
 pastebin create_paste=o get_paste_content=r
 pastefy create_folder=w create_paste=w delete_folder=d delete_paste=d edit_paste=w get_folder=r get_folder_hierarchy=r get_paste=r
 paywhirl cancelSubscription=f createCustomer=w getCustomer=r searchCustomersSubscription=r subscribeCustomer=f
-pdf addImageToPdf=w addTextToPdf=w convertToImage=w extractPdfPages=w extractText=r imageToPdf=w pdfPageCount=r textToPdf=w
+pdf addImageToPdf=w addTextToPdf=w convertToImage=w extractPdfPages=w extractText=r imageToPdf=w mergePdfs=W pdfPageCount=r textToPdf=w
 pdf-co add_barcode_to_pdf=w add_image_to_pdf=w add_text_to_pdf=w convert_html_to_pdf=w convert_pdf_to_structured_format=w extract_tables_from_pdf=r extract_text_from_pdf=r search_and_replace_text=w
 pdf4me compress_pdf=r convert_to_pdf=r merge_pdfs=r pdf_to_image=r pdf_to_word=r protect_pdf=r split_pdf=r
 pdfcrowd html_to_pdf=r url_to_pdf=r
@@ -547,7 +551,7 @@ reachinbox addBlocklist=w addEmail=w addLeads=w enableWarmup=w getCampaignAnalyt
 readwise create_highlight=w get_highlights=r
 recall-ai createBot=w retrieveBot=r sendChatMessage=o:to
 recurly create_account=w create_subscription=f get_account=r list_subscriptions=r
-reddit createRedditPost=o deleteRedditComment=d deleteRedditPost=d editRedditComment=w editRedditPost=w fetchPostComments=r getRedditPostDetails=r retrieveRedditPost=r
+reddit createRedditComment=o createRedditPost=o deleteRedditComment=d deleteRedditPost=d editRedditComment=w editRedditPost=w fetchPostComments=r getRedditPostDetails=r retrieveRedditPost=r
 rendex render_to_image=r
 reoon-verifier bulkEmailVerificationTask=w bulkVerificationResult=r verifyEmail=r
 reply-io create_and_push_to_campaign=o:email create_or_update_contact=w delete_contact=d get_contact=r mark_finished=w mark_replied=w push_to_campaign=o:email remove_from_all_campaigns=w remove_from_campaign=w
@@ -564,7 +568,7 @@ runware generateImagesFromExistingImage=w generateImagesFromText=w generateVideo
 runway cancel_or_delete_task=d generate_image_from_text=w generate_video_from_image=w get_task_details=r
 saastic create_charge=w create_customer=w
 saleor addOrderNote=w getOrder=r rawGraphqlQuery=i
-salesforce add_contact_to_campaign=w add_file_to_record=w add_lead_to_campaign=w create_attachment=w create_case=w create_contact=w create_lead=w create_new_object=w create_note=w create_opportunity=w create_record=w create_task=w delete_opportunity=d delete_record=d export_report=r find_child_records=r find_records_by_query=r get_record_attachments=r run_query=i run_report=r send_email=o:recipientId update_contact=w update_lead=w update_object_by_id=w update_record=w upsert_by_external_id=w upsert_by_external_id_bulk=w
+salesforce add_contact_to_campaign=w add_file_to_record=w add_lead_to_campaign=w create_attachment=w create_case=w create_contact=w create_lead=w create_new_object=w create_note=w create_opportunity=w create_record=w create_task=w delete_opportunity=d delete_record=d export_report=r find_child_records=r find_record=r find_records_by_query=r get_record_attachments=r run_query=i run_report=r send_email=o:recipientId update_contact=w update_lead=w update_object_by_id=w update_record=w upsert_by_external_id=w upsert_by_external_id_bulk=w
 salesloft create_cadence_membership=o:person_id create_note=w create_person=w get_person=r list_cadences=r list_people=r update_person=w
 sap-ariba create_contract_workspace=w delete_contract_workspace=d get_active_catalogs=r get_catalog_items=r get_contract_workspace=r get_document_changes=r get_facet_data=r get_pending_approvables=r list_invoices=r list_purchase_order_items=r list_purchase_orders=r search_contract_workspaces=r update_contract_status=w update_contract_workspace=w
 sardis check_balance=r check_policy=r list_transactions=r send_payment=f:to set_policy=w
@@ -595,17 +599,17 @@ sign-now cancel_invite=o create_document_from_template_and_send_invite=o:to crea
 signrequest send_signrequest=o:signers
 simpliroute add_visit_items=w bulk_delete_clients=d create_client_property=w create_clients=w create_plan=w create_route=w create_users=w create_vehicle=w create_visits=w delete_route=d delete_vehicle=d delete_visit=d get_clients=r get_drivers=r get_fleets=r get_me=r get_observations=r get_plan_vehicles=r get_plans=r get_route=r get_routes=r get_sellers=r get_skills=r get_tags=r get_user=r get_vehicle=r get_vehicles=r get_visit=r get_visit_detail=r get_visits=r get_zones=r update_user=w update_visit=w update_visit_partial=w
 simplybookme cancel_booking=w create_booking=w create_booking_comment=w create_client=w create_detailed_report=r create_note=w delete_client=d find_booking=r find_client=r find_invoice=r
-simplyprint add_to_queue=w adjust_filament_weight=w approve_queue_item=w archive_print_jobs=w assign_filament=w cancel_pending_print=w clear_printer_bed=w create_filament=w create_folder=w create_tag=w delete_files=d delete_folders=d delete_queue_group=d delete_tag=d deny_queue_item=o detach_tag=w get_current_user=r get_farm_overview=r get_filament=r get_filament_history=r get_next_queue_items=r get_print_job=r get_printer=r get_printer_notifications=r get_queue_item=r list_custom_fields=r list_files=r list_pending_queue_items=r list_print_history=r list_queue_groups=r list_tags=r move_file=w move_queue_item=w opts.name=i remove_from_queue=d resolve_printer_notification=w revive_queue_item=w save_queue_group=w send_gcode=w set_custom_field_values=w set_printer_out_of_order=w set_queue_item_printers=w skip_print_objects=w start_print=w unarchive_print_jobs=w update_file=w update_queue_item=w upload_and_queue=w upload_file=w upload_to_folder=w
+simplyprint add_to_queue=w adjust_filament_weight=w approve_queue_item=w archive_print_jobs=w assign_filament=w assign_tag=w cancel_pending_print=w clear_printer_bed=w create_filament=w create_folder=w create_tag=w custom_api_call=i delete_files=d delete_folders=d delete_queue_group=d delete_tag=d deny_queue_item=o detach_tag=w download_file=r empty_queue=d get_current_user=r get_farm_overview=r get_filament=r get_filament_history=r get_next_queue_items=r get_next_queue_items_for_printers=r get_print_job=r get_printer=r get_printer_notifications=r get_queue_item=r get_statistics=r list_custom_fields=r list_filaments=r list_files=r list_pending_queue_items=r list_print_history=r list_printers=r list_queue=r list_queue_groups=r list_tags=r mark_filament_dried=w move_file=w move_queue_item=w remove_from_queue=d resolve_printer_notification=w revive_queue_item=w save_queue_group=w send_gcode=w set_custom_field_values=w set_printer_out_of_order=w set_queue_item_printers=w skip_print_objects=w start_print=w unarchive_print_jobs=w unassign_filament=w update_file=w update_queue_item=w upload_and_queue=w upload_file=w upload_to_folder=w
 sitespeakai create_finetune=w delete_finetune=d sendQuery=w
 skyprep enrollAUserIntoACource=w enrollAUserIntoAUserGroup=w updateUser=w
 skyvern cancel-run=w find-workflow=r get-run=r run-agent-task=i run-workflow=i
-slack delete-message=d find-user-by-id=r get-file=r get-message=r getChannelHistory=r get_group_by_handle=r invite-user-to-channel=o:userId listUsers=r markdownToSlackFormat=r request_action_direct_message=o:userId request_action_message=o:channel retrieveThreadMessages=r send_channel_message=o:channel send_direct_message=o:userId set-channel-topic=w slack-add-reaction-to-message=w slack-create-channel=w slack-find-user-by-email=r slack-find-user-by-handle=r slack-set-user-status=w slack-update-profile=o:email updateMessage=w update_group_users=w uploadFile=w
+slack delete-message=d find-user-by-id=r get-file=r get-message=r getChannelHistory=r get_group_by_handle=r invite-user-to-channel=o:userId listUsers=r markdownToSlackFormat=r request_action_direct_message=o:userId request_action_message=o:channel request_approval_direct_message=o:userId request_approval_message=o:channel retrieveThreadMessages=r searchMessages=r send_channel_message=o:channel send_direct_message=o:userId set-channel-topic=w slack-add-reaction-to-message=w slack-create-channel=w slack-find-user-by-email=r slack-find-user-by-handle=r slack-set-user-status=w slack-update-profile=o:email updateMessage=w update_group_users=w uploadFile=w
 slashed encode_video=w
 slidespeak create-presentation=w edit-presentation=w get-task-status=r upload-docuemnt=w
 slite ask_question=r create_doc=w fetch_doc=r fetch_sub_docs=r index_askx_object=w replace_doc=w search_docs=r update_doc=w
 smaily create-or-update-subscriber=w get-subscriber=r
 smartlead add_leads_to_campaign=w create_campaign=w get_campaign_statistics=r update_campaign_settings=w
-smartsheet add_row_to_sheet=w find_attachment_by_row_id=r find_rows_by_query=r find_sheet_by_name=r update_row=w
+smartsheet add_row_to_sheet=w attach_file_to_row=w find_attachment_by_row_id=r find_rows_by_query=r find_sheet_by_name=r update_row=w
 smartsuite create_record=w delete_record=d find_records=r get_record=r update_record=w upload_file=w
 smoove addOrUpdateSubscriber=w createAList=w findSubscriber=r unsubscribe=w
 smsmode sendMessage=o:to
@@ -615,10 +619,9 @@ soap call_method=i
 socialkit get_youtube_comments=r get_youtube_details=r get_youtube_summary=r get_youtube_transcript=r
 softr createAppUser=w createDatabaseRecord=w deleteAppUser=d deleteDatabaseRecord=d findDatabaseRecord=r updateDatabaseRecord=w
 sofya extract=r fetch=r research=r search=r
-sperse addOrUpdateContact=w addOrUpdateContactExtended=o addOrUpdateSubscription=w createInvoice=f createProduct=w
+sperse addOrUpdateContact=w addOrUpdateContactExtended=o addOrUpdateSubscription=w createInvoice=f createProduct=w getContactDetails=r
 splitwise create_expense=f
 spotify add_library_items=w add_playlist_items=w create_playlist=w get_playback_state=r get_playlist_info=r get_playlist_items=r get_playlists=r get_saved_tracks=r pause=w play=w remove_library_items=d remove_playlist_items=d reorder_playlist=w search=r set_volume=w update_playlist=w
-src name ? name : 'custom_api_call'=i
 stability-ai text-to-image=w
 stable-diffusion-webui textToImage=w
 store add_to_list=W! append=W! get=r! put=W! remove_from_list=D! remove_value=D!
@@ -633,10 +636,10 @@ surrealdb run-query=i
 swarmnode execute-agent=i get-execution=r
 synthesia createAVideoFromATemplate=w createVideo=w
 systeme-io addTagToContact=w createContact=w findContactByEmail=r removeTagFromContact=w updateContact=w
-tableau download_view=r find_workbook=r
+tableau download_view=r find_view=r find_workbook=r refresh_workbook=w run_extract_refresh_task=w
 tables tables-clear-table=D! tables-create-records=W! tables-create-table=W! tables-delete-record=D! tables-delete-table=D! tables-download-table=r! tables-find-records=r! tables-get-record=r! tables-update-record=W!
 tags add_tag=w
-talkable anonymize_person=d find_person=r get_loyalty_redeem_actions=r update-referral-status=w update_person=w
+talkable anonymize_person=d claim-offer=f:friend_email create_event=w create_events_batch=w create_purchase=w create_purchases_batch=w find_coupon=r find_person=r get_loyalty_redeem_actions=r refund=w unsubscribe_person=w update-referral-status=w update_person=w
 tapfiliate create_affiliate=w create_conversion=f get_affiliate=r list_affiliates=r
 tarvent tarvent_create_audience_group=w tarvent_create_contact=w tarvent_create_contact_note=w tarvent_create_suppression_filter=w tarvent_create_transaction=o:toEmail tarvent_generate_custom_event=w tarvent_get_audience_groups=r tarvent_get_audiences=r tarvent_get_campaigns=r tarvent_get_contact=r tarvent_get_custom_event=r tarvent_get_journey=r tarvent_send_campaign=o tarvent_update_contact_group=w tarvent_update_contact_journey=w tarvent_update_contact_status=w tarvent_update_contact_tag=w tarvent_update_journey_status=w
 taskade taskade-complete-task=w taskade-create-task=w taskade-delete-task=d
@@ -647,7 +650,7 @@ teamleader create_company=w create_contact=w create_deal=w link_contact_to_compa
 teamwork add_people_to_project=w create_company=w create_expense=w create_message_reply=o create_milestone=w create_notebook_comment=o create_person=o:email-address create_project=w create_stage=w create_task=w create_task_comment=o create_task_list=w create_time_entry_on_task=w find_company=r find_milestone=r find_notebook_or_comment=r find_task=r mark_task_complete=w update_task=w upload_file_to_project=w
 telegram-bot answer_callback_query=o create_invite_link=w delete_message=d edit_message_text=o forward_message=o:chat_id get_chat=r get_chat_member=r get_file=r pin_message=w request_approval_message=o:chat_id send_audio=o:chat_id send_chat_action=o:chat_id send_document=o:chat_id send_location=o:chat_id send_media=o:chat_id send_media_group=o:chat_id send_poll=o:chat_id send_text_message=o:chat_id unpin_message=w
 telnyx make_call=o:to send_sms=o:to
-text-helper concat=r! defaultValue=r! find=r! find_all=r! html_to_markdown=r! json_to_ascii_table=r! markdown_to_html=r! replace=r! slugify=r! split=r! stripHtml=r!
+text-helper concat=r! defaultValue=r! extract_from_html=r! find=r! find_all=r! html_to_markdown=r! json_to_ascii_table=r! markdown_to_html=r! replace=r! slugify=r! split=r! stripHtml=r!
 textcortex-ai create_code=w create_email=w create_paraphrase=r create_product_description=r create_social_media_caption=r create_summary=r create_translation=r send_prompt=r
 thankster send_handwritten_cards=o:r_address
 ticktick complete_task=w create_task=w delete_task=d find_task=r get_project=r get_task=r update_task=w
@@ -663,12 +666,12 @@ trello add_card_attachment=w create_card=w delete_card=d delete_card_attachment=
 truelayer cancel-payment=f confirm-mandate-funds=r create-mandate=f create-payment=f create-payment-link=w create-payment-refund=f create-payout=f get-constraints=r get-mandate=r get-merchant-account-payment-sources=r get-operating-account=r get-payment=r get-payment-link=r get-payment-link-payments=r get-payment-provider=r get-payment-refund=r get-payment-refunds=r get-payout=r list-mandate=r list-operating-accounts=r merchant-account-disable-sweeping=w merchant-account-get-sweeping=r merchant-account-get-transactions=r merchant-account-setup-sweeping=f revoke-mandate=d save-user-account-payment=w search-payment-providers=r start-mandate-authorization-flow=w start-payment-authorization-flow=w start-payout-authorization-flow=w submit-consent=w submit-consent-mandate=w submit-form=w submit-mandate-provider-selection=w submit-payments-provider-return-parameters=w submit-provider-selection=w submit-scheme-selection=w submit-user-account-selection=w
 trust create_contact=w create_testimonial=o delete_contact=d delete_testimonial=d find_contact=r find_testimonial=r update_contact=w update_testimonial=w upload_image=w upload_small_video=w upload_video=w
 twenty create_company=w create_contact=w create_opportunity=w find_company=r find_person=r update_company=w update_person=w
-twilio download_recording_media=r get_message=r phone_number_lookup=r send_sms=f:to
+twilio download_recording_media=r get_message=r make_call=f:to phone_number_lookup=r send_sms=f:to
 twin-labs startBrowsingTask=r
 twitter create-reply=o create-tweet=o
 typefully typefully_create_draft=w typefully_create_draft_advanced=w typefully_delete_draft=d typefully_get_draft=r typefully_list_drafts=r typefully_publish_draft_now=o typefully_schedule_draft=w typefully_upload_media=w
 umami get_active_visitors=r get_pageviews=r get_website_metrics=r get_website_stats=r list_websites=r send_event=w
-upgradechat addOrUpdateContact=w addOrUpdateContactExtended=o:contactId addOrUpdateSubscription=f createInvoice=f createProduct=w
+upgradechat addOrUpdateContact=w addOrUpdateContactExtended=o:contactId addOrUpdateSubscription=f createInvoice=f createProduct=w getContactDetails=r
 uptimerobot create_monitor=w delete_monitor=d edit_monitor=w get_monitors=r pause_resume_monitor=w
 uscreen assign_user_access=w create_user=o:email
 useinbox add_contact_to_list=w create_campaign=o:lists create_contact_list=w send_transactional_email=o:toEmail unsubscribe_contact=w update_contact=w
@@ -689,7 +692,7 @@ vlm-run analyzeAudio=w analyzeDocument=w analyzeImage=w analyzeVideo=w getFile=r
 voipstudio createContact=w makeACall=o:to makeACallToLead=o:to makeAWebcall=o:to sendSms=o:to
 vouchery-io createAVoucher=f createCustomer=w findVoucher=i
 vtex Update-product=w create-brand=w create-product=w create-sku=w create-sku-file=w delete-brand=d get-brand-by-id=r get-brand-list=r get-category-by-id=r get-client-by-id=r get-client-list=r get-order-by-id=r get-order-list=r get-product-by-id=r get-sku-by-product-id=r update-brand=w
-vtiger create_record=w delete_record=d get_record=r make_api_call=i query_records=i search_records=r
+vtiger create_record=w delete_record=d get_record=r make_api_call=i query_records=i search_records=r update_record=w
 wafeq convert_quote_to_invoice=f create_bill=f create_contact=w create_credit_note=f create_invoice=f create_item=w create_quote=w create_simplified_invoice=f download_invoice_pdf=r find_contact=r list_accounts=r list_items=r record_payment=f report_invoice_to_tax_authority=w
 waitwhile createACustomer=w createOrUpdateAVisit=w deleteAVisit=d searchCustomers=r
 wayfront complete_activity=w create_activity=w create_client=w create_order=f create_ticket=w list_orders=r list_tickets=r update_activity=w update_client=w update_order=w update_ticket=w
@@ -701,19 +704,19 @@ webling EventsById=r
 webscraping-ai askAQuestionAboutTheWebPage=r extractStructuredData=r getAccountInformation=r getPageHtml=r scrapeWebsiteText=r
 wedof abortCertificationFolder=w addExecutionTag=w billRegistrationFolder=f cancelRegistrationFolder=w createActivitie=w createCertificationFolder=w createCertificationPartnerAudit=w createGeneralAudit=w createPartnership=w createRegistrationFolder=w createTask=w declareCertificationFolderFailed=w declareCertificationFolderRegistred=w declareCertificationFolderSuccess=w declareCertificationFolderToControl=w declareCertificationFolderToRetake=w declareCertificationFolderToTake=w declareRegistrationFolderIntraining=w declareRegistrationFolderServicedone=w declareRegistrationFolderTerminated=w deletePartnership=d getCertificationFolder=r getCertificationFolderDocuments=r getCertificationFolderSurvey=r getMinimalSessionsDates=r getPartnership=r getRegistrationFolder=r getRegistrationFolderDocuments=r listActivitiesAndTasks=r listCertificationFolderSurveys=r listPartnerStats=r listPartnerships=r listRegistrationFolders=r me=r myOrganism=r refuseCertificationFolder=w refuseRegistrationFolder=w resetPartnership=w searchCertificationFolder=r sendFile=w updateCertificationFolder=w updateCompletionRate=w updatePartnership=w updateRegistrationFolder=w validateRegistrationFolder=w
 week-done add_item_comment=w add_item_like=w assign_item=w create_item=w delete_item=d delete_item_comment=d delete_item_like=w get_company_info=r get_item_comments=r get_item_likes=r search_items=r sort_items=w update_item=w
-weekdone create_objective=w update_item=w update_objective=w
+weekdone create_item=w create_objective=w update_item=w update_objective=w
 what-converts create_lead=o export_leads=r find_lead=r update_lead=w
 whatsable sendMessage=o:to
 whatsapp send-template-message=o:to sendMedia=o:to sendMessage=o:to
 whatsscale whatsscale_add_crm_contact_tag=w whatsscale_check_whatsapp=r whatsscale_create_crm_contact=w whatsscale_delete_crm_contact=d whatsscale_find_crm_contact_by_phone=r whatsscale_get_crm_contact=r whatsscale_list_crm_contacts=r whatsscale_remove_crm_contact_tag=w whatsscale_send_document_to_contact=o:contact whatsscale_send_document_to_crm_contact=o:crmContact whatsscale_send_document_to_group=o:group whatsscale_send_image_manual=o:recipient whatsscale_send_image_to_channel=o:channel whatsscale_send_image_to_contact=o:contact whatsscale_send_image_to_crm_contact=o:crmContact whatsscale_send_image_to_group=o:group whatsscale_send_text_manual=o:recipient whatsscale_send_text_to_channel=o:channel whatsscale_send_text_to_contact=o:contact whatsscale_send_text_to_crm_contact=o:crmContact whatsscale_send_text_to_group=o:group whatsscale_send_video_manual=o:recipient whatsscale_send_video_to_channel=o:channel whatsscale_send_video_to_contact=o:contact whatsscale_send_video_to_crm_contact=o:crmContact whatsscale_send_video_to_group=o:group whatsscale_update_crm_contact=w
 wistia copy_media=w create_project=w delete_media=d find_media=r get_media=r update_media=w update_project=w
 wonderchat addPage=w addTag=w askQuestion=r removeTag=w
-woocommerce Create Coupon=w Create Customer=w Create Product=w Find Coupon=r Find Customer=r Find Product=r
+woocommerce Create%20Coupon=w Create%20Customer=w Create%20Product=w Find%20Coupon=r Find%20Customer=r Find%20Product=r
 woodpecker add_prospect_to_campaign=w add_prospect_to_list=w blacklist_domain=w find_prospect_by_email=r get_prospect_responses=r
 wootric trigger_wootric_survey=o:emails
 wordpress create_page=o create_post=o get_post=r update_post=w
 workable getCandidate=r getJob=r getMembers=r getStages=r moveCandidate=w rateCandidate=w
-workday call_operation=i create_update_custom_object=w find_purchase_order=r find_records_wql=i find_supplier=r find_supplier_invoice=r find_supplier_payment=r get_business_object_details_batch=r get_custom_objects=r get_report=r get_report_wql_batch=i list_custom_object_definitions_batch=r search_business_object_batch=r update_business_object=w
+workday approve_task=w call_operation=i change_job=w create_job_requisition=w create_pre_hire=w create_supplier_credit_memo=f create_time_off_request=w create_update_custom_object=w create_worker_time_block=w find_purchase_order=r find_records_wql=i find_supplier=r find_supplier_invoice=r find_supplier_payment=r get_business_object_details_batch=r get_custom_objects=r get_report=r get_report_wql_batch=i hire_employee=w list_custom_object_definitions_batch=r search_business_object_batch=r update_business_object=w update_supplier=w update_supplier_invoice=f
 wrike add_comment=o create_folder=w create_project=w create_task=w find_folder=r find_task=r update_task=w upload_attachment=w
 writesonic-bulk blogIdeas=f blogIntros=f blogOutlines=f contentRephraser=f contentShorten=f facebookAds=f generateProductDescriptions=f googleAds=f landingPageHeadlines=f sentenceExpander=f
 wufoo create-form-entry=w find-form=r find-submission-by-field=r get-entry-details=r
@@ -721,7 +724,7 @@ xero xero_add_items_to_sales_invoice=f xero_allocate_credit_note_to_invoice=f xe
 xml convert-json-to-xml=r! convert-xml-to-json=r!
 xquik get_trends=r get_tweet=r get_user=r get_user_tweets=r search_tweets=r search_users=r
 youcanbookme create-profile=w retrieveBookingById=r
-youtrack add_comment=o add_tag_to_issue=w add_user_to_team=w apply_command=w create_issue=w create_tag=w delete_attachment=d download_attachment=r get_issue=r get_issue_history=r link_issues=w list_attachments=r list_comments=r list_tags=r remove_tag_from_issue=w search_issues=r update_issue=w
+youtrack add_comment=o add_tag_to_issue=w add_user_to_team=w apply_command=w create_issue=w create_tag=w delete_attachment=d download_attachment=r get_issue=r get_issue_history=r link_issues=w list_attachments=r list_comments=r list_tags=r remove_tag_from_issue=w search_issues=r update_issue=w upload_attachment=w
 youtube download_caption=r list_captions=r list_playlist_items=r search=r
 zagomail createSubscriber=w getCampaignDetails=r getSubscriberDetails=r searchSubscriberByEmail=r tagSubscriber=w unsubscribeSubscriber=w updateSubscriber=w
 zendesk add-comment-to-ticket=o add-tag-to-ticket=w attach-file-to-ticket=w create-organization=w create-ticket=o:requester_email create-user=w delete-user=d find-agent=r find-group=r find-latest-comment=r find-organization=r find-tickets=r find-user=r remove-tag-from-ticket=w update-organization=w update-ticket=w update-user=w
@@ -738,6 +741,10 @@ zoom zoom_create_meeting=w zoom_create_meeting_registrant=w zoom_find_meeting=r 
 zuora create-invoice=f find-account=r find-product=r find-product-rate-plan=r
 `
 
+function decodeToken(raw: string): string {
+    return raw.replace(/%20/g, ' ').replace(/%25/g, '%')
+}
+
 function decode(encoded: string): Record<string, ActionEffectLabel> {
     const labels: Record<string, ActionEffectLabel> = {}
     for (const line of encoded.split('\n')) {
@@ -749,22 +756,22 @@ function decode(encoded: string): Record<string, ActionEffectLabel> {
         if (firstSpace <= 0) {
             continue
         }
-        const piece = trimmed.slice(0, firstSpace)
+        const piece = decodeToken(trimmed.slice(0, firstSpace))
         for (const entry of trimmed.slice(firstSpace + 1).split(' ')) {
             const separator = entry.lastIndexOf('=')
             if (separator <= 0) {
                 continue
             }
-            const [rawCode, recipientProp] = entry.slice(separator + 1).split(':')
+            const [rawCode, rawRecipient] = entry.slice(separator + 1).split(':')
             const authoritative = rawCode.endsWith('!')
             const kind = KIND_BY_CODE[authoritative ? rawCode.slice(0, -1) : rawCode]
             if (kind === undefined) {
                 continue
             }
-            const key = `@activepieces/piece-${piece}:${entry.slice(0, separator)}`
+            const key = `@activepieces/piece-${piece}:${decodeToken(entry.slice(0, separator))}`
             labels[key] = {
                 kind,
-                ...(recipientProp ? { recipientProp } : {}),
+                ...(rawRecipient ? { recipientProp: decodeToken(rawRecipient) } : {}),
                 ...(authoritative ? { authoritative: true } : {}),
             }
         }
@@ -772,4 +779,15 @@ function decode(encoded: string): Record<string, ActionEffectLabel> {
     return labels
 }
 
-export const ACTION_EFFECT_LABELS: Record<string, ActionEffectLabel> = decode(ENCODED_LABELS)
+let decoded: Record<string, ActionEffectLabel> | undefined
+
+function loadActionEffectLabels(): Record<string, ActionEffectLabel> {
+    if (decoded === undefined) {
+        decoded = decode(ENCODED_LABELS)
+    }
+    return decoded
+}
+
+export const actionEffectLabelCatalog = {
+    load: loadActionEffectLabels,
+}

@@ -1,7 +1,7 @@
 import { FlowActionType, flowStructureUtil, Step } from '@activepieces/core-execution'
-import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, StepEffect, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { actionEffect, actionEffectLabelCatalog, ChatConfigResponse, chatConsent, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, StepEffect, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -24,6 +24,8 @@ import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
 import { executeCrossProjectTool } from './tools/chat-tools'
+
+actionEffect.setCatalog(actionEffectLabelCatalog.load())
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 
@@ -63,8 +65,15 @@ async function flowIdOfRun({ flowRunId, projectId, log }: {
     if (typeof flowRunId !== 'string') {
         return undefined
     }
-    const { data: run } = await tryCatch(() => flowRunService(log).getOnePopulatedOrThrow({ id: flowRunId, projectId }))
+    const { data: run } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
     return run?.flowId
+}
+
+function isDeclaringPieceStep(step: Step | undefined): step is Step & { settings: { actionName: string, pieceName: string } } {
+    return !isNil(step)
+        && step.type === FlowActionType.PIECE
+        && typeof step.settings.actionName === 'string'
+        && typeof step.settings.pieceName === 'string'
 }
 
 async function declaredEffectsForSteps({ effects, platformId, trigger, log }: {
@@ -74,22 +83,36 @@ async function declaredEffectsForSteps({ effects, platformId, trigger, log }: {
     log: FastifyBaseLogger
 }): Promise<StepEffect[]> {
     const stepsByName = new Map(flowStructureUtil.getAllSteps(trigger).map((step) => [step.name, step]))
-    return Promise.all(effects.map(async (effect) => {
+    const pieceKeys = unique(effects
+        .map((effect) => stepsByName.get(effect.stepName))
+        .filter(isDeclaringPieceStep)
+        .map((step) => `${step.settings.pieceName}\n${step.settings.pieceVersion ?? ''}`))
+    const metadataEntries = await Promise.all(pieceKeys.map(async (key) => {
+        const [name, version] = key.split('\n')
+        const { data: metadata } = await tryCatch(() => pieceMetadataService(log).getOrThrow({
+            name,
+            platformId,
+            version: version.length > 0 ? version : undefined,
+        }))
+        return [key, metadata] as const
+    }))
+    const metadataByKey = new Map(metadataEntries)
+    return effects.map((effect) => {
         const step = stepsByName.get(effect.stepName)
-        if (isNil(step) || step.type !== FlowActionType.PIECE || typeof step.settings.actionName !== 'string' || typeof step.settings.pieceName !== 'string') {
+        if (!isDeclaringPieceStep(step)) {
             return effect
         }
-        const { data: metadata } = await tryCatch(() => pieceMetadataService(log).getOrThrow({
-            name: step.settings.pieceName,
-            platformId,
-            version: step.settings.pieceVersion,
-        }))
-        const declaredEffect = metadata?.actions?.[step.settings.actionName]?.aiMetadata?.effect
+        const action = metadataByKey.get(`${step.settings.pieceName}\n${step.settings.pieceVersion ?? ''}`)?.actions?.[step.settings.actionName]
+        const declaredEffect = action?.aiMetadata?.effect
         if (isNil(declaredEffect)) {
             return effect
         }
-        return chatToolClassification.stepEffectOf(step, { declaredEffect })
-    }))
+        return chatToolClassification.stepEffectOf({
+            step,
+            declaredEffect,
+            ...spreadIfDefined('declaredRecipientProp', action?.aiMetadata?.recipientProp),
+        })
+    })
 }
 
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
@@ -566,12 +589,13 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 ? chatToolClassification.stepEffectsForStep({ trigger: flow.version.trigger, stepName })
                 : chatToolClassification.flowStepEffects(flow.version.trigger)
             const declared = await declaredEffectsForSteps({ effects, platformId: input.platformId, trigger: flow.version.trigger, log })
+            const gated = declared.filter((step) => chatConsent.decide({ kind: step.effect.kind }) !== 'allow')
             log.info({
                 flow: { id: resolvedFlowId },
                 step: { name: typeof stepName === 'string' ? stepName : undefined },
-                effectKinds: chatToolClassification.effectKindsOf(declared),
+                effectKinds: chatToolClassification.effectKindsOf(gated),
             }, '[chatRpc#executeChatTool] Flow effect preview')
-            return { result: { resolved: true, flowName: flow.version.displayName, effects: declared } }
+            return { result: { resolved: true, flowName: flow.version.displayName, effects: gated } }
         }
         if (input.toolName === '__get_available_connections') {
             const { pieceName } = input.toolInput

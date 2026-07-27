@@ -484,8 +484,18 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
     return chatWorkerTools.wrapWithConsent({
         tools: allTools,
-        previewFlowEffects: async ({ flowId, stepName }) => {
-            const response = await ctx.apiClient.executeChatTool({ toolName: '__flow_effect_preview', toolInput: { flowId, ...spreadIfDefined('stepName', stepName) }, platformId, userId, conversationId })
+        previewFlowEffects: async ({ flowId, flowRunId, stepName }) => {
+            const response = await ctx.apiClient.executeChatTool({
+                toolName: '__flow_effect_preview',
+                toolInput: {
+                    ...spreadIfDefined('flowId', flowId),
+                    ...spreadIfDefined('flowRunId', flowRunId),
+                    ...spreadIfDefined('stepName', stepName),
+                },
+                platformId,
+                userId,
+                conversationId,
+            })
             return response.result
         },
         checkRememberedConsent: async ({ signature }) => {

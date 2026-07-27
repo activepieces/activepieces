@@ -33,11 +33,14 @@ function decideConsent({ kind, policy }: {
     kind: ActionEffectKind
     policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
 }): ConsentDecision {
-    return policy?.[kind] ?? DEFAULT_CONSENT_POLICY[kind]
+    const configured: ConsentDecision | undefined = policy?.[kind]
+    const fallback: ConsentDecision | undefined = DEFAULT_CONSENT_POLICY[kind]
+    return configured ?? fallback ?? 'ask'
 }
 
 function describeEffect(kind: ActionEffectKind): string {
-    return EFFECT_PHRASES[kind]
+    const phrase: string | undefined = EFFECT_PHRASES[kind]
+    return phrase ?? EFFECT_PHRASES.unknown
 }
 
 function isReusableConsent(kinds: ActionEffectKind[]): boolean {
