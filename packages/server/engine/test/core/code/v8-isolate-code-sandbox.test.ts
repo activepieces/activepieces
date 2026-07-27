@@ -67,5 +67,48 @@ describe('v8IsolateCodeSandbox', () => {
             const source = 'module.exports = { code: async () => process.env }'
             await expect(runWithSource(source)).rejects.toThrow(/process/)
         })
+
+        // --- memory limit (128 MB isolate cap) ---
+        //
+        // Reproduces the "Apply Watermark" incident: a code step that decodes a full-resolution
+        // photo into a raw RGBA bitmap exceeds the hardcoded 128 MB isolate cap and the step fails
+        // with an out-of-memory error. This is a regression baseline — when the engine's handling of
+        // this changes (e.g. a configurable limit, or clearer error classification), update the
+        // assertions here and diff the behaviour. An image's decoded size is width*height*4 bytes and
+        // is independent of the compressed file size; we allocate raw byte buffers as the faithful,
+        // dependency-free stand-in for what Jimp/sharp hold in memory.
+
+        // Allocates `megabytes` MB inside the isolate in ~16 MB chunks (filled so pages are actually
+        // committed), mimicking decode + watermark-composite working set.
+        const imageWorkloadSource = (megabytes: number): string => `
+            module.exports = {
+                code: async () => {
+                    const CHUNK_MB = 16
+                    const chunks = []
+                    let allocatedMb = 0
+                    while (allocatedMb < ${megabytes}) {
+                        chunks.push(new Uint8Array(CHUNK_MB * 1024 * 1024).fill(allocatedMb & 0xff))
+                        allocatedMb += CHUNK_MB
+                    }
+                    return { allocatedMb }
+                },
+            }`
+
+        it('succeeds when the working set fits under the 128 MB cap (~48 MB image)', async () => {
+            const result = await runWithSource(imageWorkloadSource(48))
+            expect(result).toEqual({ allocatedMb: 48 })
+        })
+
+        it('fails with an out-of-memory error when the working set exceeds the 128 MB cap (~512 MB image)', async () => {
+            // Baseline today: the OOM surfaces as a raw V8 `RangeError: Array buffer allocation failed`
+            // from inside the isolate — it is NOT classified as a memory-limit error here (that mapping
+            // only happens at the outer sandbox process-exit layer for a SIGKILL). The broad matcher
+            // stays green if a fix wraps it in a clearer "memory limit exceeded" message, but breaks
+            // loudly if the allocation starts SUCCEEDING (e.g. the 128 MB cap is raised) — which is the
+            // signal to re-baseline this test against the new behaviour.
+            await expect(runWithSource(imageWorkloadSource(512))).rejects.toThrow(
+                /Array buffer allocation failed|out of memory|memory limit/i,
+            )
+        }, 30_000)
     })
 })

@@ -1,5 +1,5 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
-import { applyFunctionToValues, extractMustacheTokens, isNil, isString } from '@activepieces/core-utils'
+import { applyFunctionToValues, extractMustacheTokens, isNil, isObject, isString } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { FormulaEvaluationError } from '@activepieces/shared'
 
@@ -8,6 +8,7 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
 import { createVariableResolver } from '../piece-context/variable-resolver'
 import { utils } from '../utils'
+import { plainPath } from './plain-path'
 
 const CONNECTIONS = 'connections'
 const VARIABLES = 'variables'
@@ -55,14 +56,16 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: false,
                     contextVersion,
                 }))
-            const censoredInput = await applyFunctionToValues<T>(
-                unresolvedInput,
-                (token) => resolveInputAsync({
-                    ...resolveOptions,
-                    input: token,
-                    censoredInput: true,
-                    contextVersion,
-                }))
+            const censoredInput = inputNeedsCensoring(unresolvedInput)
+                ? await applyFunctionToValues<T>(
+                    unresolvedInput,
+                    (token) => resolveInputAsync({
+                        ...resolveOptions,
+                        input: token,
+                        censoredInput: true,
+                        contextVersion,
+                    }))
+                : structuredClone(resolvedInput)
             return {
                 resolvedInput,
                 censoredInput,
@@ -100,15 +103,36 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
 
-function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
+export function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
     const stringifiedInput = JSON.stringify(input)
     const referencedSteps = new Set<string>()
     for (const stepName of stepNames) {
-        if (stringifiedInput.includes(stepName)) {
+        const pattern = new RegExp(`\\b${escapeRegExp(stepName)}\\b`)
+        if (pattern.test(stringifiedInput)) {
             referencedSteps.add(stepName)
         }
     }
     return referencedSteps
+}
+
+export function inputNeedsCensoring(input: unknown): boolean {
+    if (isString(input)) {
+        return extractMustacheTokens(input).some(({ inner }) => {
+            const name = inner.trim()
+            return name.startsWith(VARIABLES) || name.startsWith(CONNECTIONS)
+        })
+    }
+    if (Array.isArray(input)) {
+        return input.some(inputNeedsCensoring)
+    }
+    if (isObject(input)) {
+        return Object.values(input).some(inputNeedsCensoring)
+    }
+    return false
+}
+
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /** 
@@ -163,6 +187,13 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
     })
 }
 
+function narrowScopeToToken(variableName: string, currentState: Record<string, unknown>): Record<string, unknown> {
+    const referencedSteps = extractReferencedStepNames(variableName, Object.keys(currentState))
+    return Object.fromEntries(
+        Array.from(referencedSteps, (stepName) => [stepName, currentState[stepName]]),
+    )
+}
+
 async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
     const { variableName, currentState } = params
     if (variableName.startsWith(VARIABLES)) {
@@ -171,7 +202,15 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     if (variableName.startsWith(CONNECTIONS)) {
         return handleConnection(params)
     }
-    return evalInScope(variableName, { ...currentState }, { flattenNestedKeys })
+    const segments = plainPath.parseToken(variableName)
+    if (segments !== null) {
+        const result = plainPath.resolve({ segments, root: currentState })
+        if (result.kind === 'hit') {
+            return result.value
+        }
+    }
+    const tokenScope = narrowScopeToToken(variableName, currentState)
+    return evalInScope(variableName, tokenScope, { flattenNestedKeys })
 }
 
 async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown> {
