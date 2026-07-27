@@ -28,11 +28,12 @@ interface AgentAddRagResponse {
 }
 
 export const agentAddRag = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'agent-add-rag',
   displayName: 'Add RAG to Agent',
   description: 'Adds a new RAG to an agent in the database for the user.',
+  aiMetadata: { description: 'Associates an existing RAG knowledge base with an existing Straico agent so that later Agent Prompt Completion calls answer from that document set. Use it as the wiring step after Create Agent and Create RAG; it neither creates the agent nor ingests files, so use those actions first. Requires both an agent id and a RAG id that already exist in the account. Idempotent: attaching the same RAG again leaves the agent with the same association.', idempotent: true },
   props: {
     agent_id: agentIdDropdown('Agent','The agent to add the RAG to.'),
     rag_id: Property.Dropdown({

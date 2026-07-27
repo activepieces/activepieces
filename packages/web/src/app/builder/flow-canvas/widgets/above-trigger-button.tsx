@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { isMac } from '@/lib/dom-utils';
+import { isEditableTarget, isMac } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 type AboveTriggerButtonProps = {
@@ -33,6 +33,9 @@ const AboveTriggerButton = ({
 
   useEffect(() => {
     const keydownHandler = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) {
+        return;
+      }
       const isEscapePressed = event.key === 'Escape' && shortCutIsEscape;
       const ctrlAndDPressed =
         (isMacSystem &&

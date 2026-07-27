@@ -35,10 +35,11 @@ describe('tool-search rollout flag (AP_TOOL_SEARCH_ENABLED)', () => {
         expect(titles).toContain('ap_search_triggers')
     })
 
-    it('never force-locks the tool-search tools — the rollout flag must be able to keep them off', () => {
-        // A LOCKED tool is force-on and cannot be disabled; the engine must stay gated by the flag, not pinned on.
-        expect(LOCKED_TOOL_NAMES).not.toContain('ap_search_actions')
-        expect(LOCKED_TOOL_NAMES).not.toContain('ap_search_triggers')
+    it('locks the tool-search tools so per-project disabledTools cannot turn them off once the flag registers them', () => {
+        // The flag stays the master switch: locked entries are inert while the flag is off (the
+        // flag-unset test above proves the tools never register), so rollback is still flag-off.
+        expect(LOCKED_TOOL_NAMES).toContain('ap_search_actions')
+        expect(LOCKED_TOOL_NAMES).toContain('ap_search_triggers')
     })
 
     it('keeps both tools platform-level (catalog-wide search across all pieces)', () => {

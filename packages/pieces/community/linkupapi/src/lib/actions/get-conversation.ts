@@ -6,6 +6,8 @@ export const getConversation = createAction({
   name: 'get_conversation',
   displayName: 'Get Conversation',
   description: 'Retrieve the message history of a LinkedIn conversation, by conversation ID or profile URL.',
+  audience: 'both',
+  aiMetadata: { description: 'Reads the message history of one LinkedIn thread, addressed either by conversation ID or by the other participant\'s profile URL, with count and cursor paging for longer threads. Use it to gather context before replying with Send Message. Requires the account ID plus one of the two addressing inputs. Read-only and idempotent.', idempotent: true },
   props: {
     accountId: accountIdProp,
     conversationId: Property.ShortText({

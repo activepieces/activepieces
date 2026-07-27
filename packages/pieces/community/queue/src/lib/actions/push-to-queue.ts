@@ -11,9 +11,10 @@ const notes = `**Note:**
 - The testing step work in isolation and doesn't affect the actual queue after publishing.
 `
 export const pushToQueue = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'push-to-queue',
   description: 'Push item to queue',
+  aiMetadata: { description: 'Appends one or more items to the end of a named project-scoped FIFO queue, creating the queue on first use; the queue name is a plain string shared across the whole project, so any flow using the same name writes to the same queue. Use it to buffer or throttle work for later consumption, then read it back with Pull items from queue, or discard everything with Clear queue. Not idempotent: each call appends the items again, and the write fails once the accumulated queue exceeds the project store size limit.', idempotent: false },
   displayName: 'Push to Queue',
   props: {
     info: Property.MarkDown({

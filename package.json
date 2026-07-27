@@ -32,7 +32,7 @@
     "test-unit": "turbo run test --filter=@activepieces/engine --filter=@activepieces/shared --filter=web",
     "test-api": "turbo run check-migrations test-ce test-ee test-cloud --filter=api --concurrency=1",
     "chat-evals": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/chat-eval/cli/tsconfig.json packages/server/worker/test/lib/chat-eval/cli/index.ts",
-    "chat-evals:ci": "set -a && . ./.env.dev && set +a && vitest run --dir packages/server/worker/test/lib/chat-eval",
+    "chat-evals:ci": "if [ -f ./.env.dev ]; then set -a && . ./.env.dev && set +a; fi && vitest run --dir packages/server/worker/test/lib/chat-eval",
     "chat-evals:live": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/chat-eval/cli/tsconfig.json packages/server/worker/test/lib/chat-eval/live/run.ts",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
@@ -65,7 +65,7 @@
     "@typescript-eslint/parser": "7.18.0",
     "@typescript-eslint/utils": "7.18.0",
     "@vitejs/plugin-react": "4.7.0",
-    "axios": "1.16.0",
+    "axios": "1.18.0",
     "chalk": "4.1.2",
     "concurrently": "8.2.1",
     "dotenv": "17.2.3",
@@ -133,6 +133,6 @@
   ],
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node",
-    "axios": "1.16.0"
+    "axios": "1.18.0"
   }
 }
