@@ -93,6 +93,23 @@ function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIPr
     return curatedModels.some((model) => model.id === nativeModelId) ? nativeModelId : curatedModels[0].id
 }
 
+// Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
+// chat provider no longer resolves, so fall back to the stored selection — but only when it is one
+// of our own ids, never echoing an arbitrary stored string out to the analytics sink.
+function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIProviderName | null, selectedModel: string | null }): string | null {
+    if (isNil(selectedModel)) {
+        return null
+    }
+    if (!isNil(provider)) {
+        return resolveModelIdForProvider({ provider, selectedModel })
+    }
+    const tier = findTier({ tierId: selectedModel })
+    if (!isNil(tier)) {
+        return tier.modelId
+    }
+    return aiProviderUtils.isKnownChatModelId({ modelId: selectedModel }) ? selectedModel : null
+}
+
 // Round one of the chat turn runs on the fastest tier so its first token streams in ~400ms
 // (the opener + first discovery) — fast enough to replace the bare "Thinking…" gap —
 // regardless of which tier the user picked for the main turn.
@@ -196,9 +213,9 @@ export const chatHelpers = {
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,
-    findTier,
     resolveTier,
     resolveModelIdForProvider,
+    resolveModelIdForAnalytics,
     resolveFastModelId,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,

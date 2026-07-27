@@ -242,6 +242,13 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
 }
 
+function isKnownChatModelId({ modelId }: { modelId: string }): boolean {
+    if (ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === modelId)) {
+        return true
+    }
+    return Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).some((curatedIds) => curatedIds.includes(modelId))
+}
+
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
 
 const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
@@ -317,6 +324,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
 export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
+    isKnownChatModelId,
 }
 
 export type AIWebSearchMode = 'native' | 'plugin'

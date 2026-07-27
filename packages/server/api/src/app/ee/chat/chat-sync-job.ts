@@ -226,7 +226,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
         userId: conversation.userId,
         userEmail,
         title: conversation.title,
-        modelName: resolveModelId({ selectedModel: conversation.modelName ?? null, provider }),
+        modelName: chatHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider }),
         provider,
         messages,
         messageCount: messages.length,
@@ -281,16 +281,6 @@ function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChat
 }
 
 
-function resolveModelId({ selectedModel, provider }: { selectedModel: string | null, provider: AIProviderName | null }): string | null {
-    if (isNil(selectedModel)) {
-        return null
-    }
-    if (isNil(provider)) {
-        return chatHelpers.findTier({ tierId: selectedModel })?.modelId ?? selectedModel
-    }
-    return chatHelpers.resolveModelIdForProvider({ provider, selectedModel })
-}
-
 async function emitMessageBillingEvent({ conversation, log }: {
     conversation: ChatConversation
     log: FastifyBaseLogger
@@ -302,7 +292,7 @@ async function emitMessageBillingEvent({ conversation, log }: {
     }
 
     const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
-    const model = resolveModelId({ selectedModel: conversation.modelName ?? null, provider })
+    const model = chatHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
     const toolsUsed = countToolCallsInLatestTurn(resolveMessages(conversation))
 
     captureBillingEvent({

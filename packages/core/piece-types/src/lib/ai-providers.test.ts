@@ -1,6 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { describe, expect, it } from 'vitest'
-import { AI_PROVIDER_CAPABILITIES, aiProviderUtils, ALLOWED_CHAT_MODELS_BY_PROVIDER } from './ai-providers'
+import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_CAPABILITIES, aiProviderUtils, ALLOWED_CHAT_MODELS_BY_PROVIDER } from './ai-providers'
 
 describe('AI_PROVIDER_CAPABILITIES', () => {
     it('has an entry for every provider', () => {
@@ -50,5 +50,23 @@ describe('getCuratedChatModels', () => {
         for (const provider of Object.values(AIProviderName)) {
             expect(aiProviderUtils.getCuratedChatModels({ provider })?.length ?? 1).toBeGreaterThan(0)
         }
+    })
+})
+
+describe('isKnownChatModelId', () => {
+    it('accepts every tier id and every curated model id', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(aiProviderUtils.isKnownChatModelId({ modelId: tier.id })).toBe(true)
+        }
+        for (const curatedIds of Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER)) {
+            for (const id of curatedIds) {
+                expect(aiProviderUtils.isKnownChatModelId({ modelId: id })).toBe(true)
+            }
+        }
+    })
+
+    it('rejects anything outside that vocabulary', () => {
+        expect(aiProviderUtils.isKnownChatModelId({ modelId: 'gpt-9' })).toBe(false)
+        expect(aiProviderUtils.isKnownChatModelId({ modelId: '' })).toBe(false)
     })
 })

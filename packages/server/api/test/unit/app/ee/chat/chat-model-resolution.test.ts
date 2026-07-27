@@ -54,10 +54,27 @@ describe('resolveModelIdForProvider', () => {
     })
 })
 
-describe('findTier', () => {
-    it('only matches real tier ids', () => {
-        expect(chatHelpers.findTier({ tierId: 'smart' })?.modelId).toBe('anthropic/claude-sonnet-4.6')
-        expect(chatHelpers.findTier({ tierId: 'gpt-5.5' })).toBeUndefined()
-        expect(chatHelpers.findTier({ tierId: null })).toBeUndefined()
+describe('resolveModelIdForAnalytics', () => {
+    const forAnalytics = ({ provider, selectedModel }: { provider: AIProviderName | null, selectedModel: string | null }) =>
+        chatHelpers.resolveModelIdForAnalytics({ provider, selectedModel })
+
+    it('reports the model the turn ran on when the provider is known', () => {
+        expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'gpt-4.1' })).toBe('gpt-4.1')
+        expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'smart' })).toBe('gpt-5.5')
+    })
+
+    it('reports nothing when no model was ever selected', () => {
+        expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: null })).toBeNull()
+        expect(forAnalytics({ provider: null, selectedModel: null })).toBeNull()
+    })
+
+    it('falls back to the tier model id when the provider no longer resolves', () => {
+        expect(forAnalytics({ provider: null, selectedModel: 'smart' })).toBe('anthropic/claude-sonnet-4.6')
+        expect(forAnalytics({ provider: null, selectedModel: 'gpt-4.1-mini' })).toBe('gpt-4.1-mini')
+    })
+
+    it('never forwards an unrecognised stored value to the analytics sink', () => {
+        expect(forAnalytics({ provider: null, selectedModel: 'totally-made-up-model' })).toBeNull()
+        expect(forAnalytics({ provider: null, selectedModel: '<script>alert(1)</script>' })).toBeNull()
     })
 })
