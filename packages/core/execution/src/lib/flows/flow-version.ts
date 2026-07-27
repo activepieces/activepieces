@@ -4,7 +4,7 @@ import { UserWithMetaInformation } from '@activepieces/core-piece-types'
 import { Note } from './note'
 import { FlowTrigger } from './triggers/trigger'
 
-export const LATEST_FLOW_SCHEMA_VERSION = '22'
+export const LATEST_FLOW_SCHEMA_VERSION = '23'
 
 export enum FlowVersionState {
     LOCKED = 'LOCKED',

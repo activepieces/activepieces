@@ -14,6 +14,8 @@ Switching a field to a dynamic value turns it into a text box, so whatever it ho
 
 Text that spells out a list (`["year","month"]`, `[]`) or a checkbox value (`true`, `false`) is now turned back into a real list or true/false, so fields that were quietly broken work again without being edited. Any other text in a multi-select now stops the step before it runs, with `Expected array, received: <your value>`, which names the field and the value. An optional field left empty now counts as not filled in, so an untouched optional checkbox no longer fails its step.
 
+Flows already saved in the broken state repair themselves. The first time each one is loaded after the upgrade, a migration puts the real list or true/false back into the field and returns it to being a picker, so your selections show up as chips again instead of as text. The previous copy of every migrated flow is kept as a backup, and a field whose value cannot be interpreted is left exactly as it was.
+
 **Action:** only if a flow has a multi-select set to a dynamic value that does not produce a list, such as a single item or a comma-separated line like `a,b`. Those steps used to run and now fail with the message above. Edit the field so it produces a list (`["a","b"]`), or switch it back to picking options. Checkboxes need nothing: they already failed in this case and now fail in fewer cases.
 
 ## 0.86.0
