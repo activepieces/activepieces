@@ -25,12 +25,17 @@ export interface FieldDef {
   default?: string | number | boolean;
 }
 
+/**
+ * `data` and `data.object` are typed optional even though the API always sends both:
+ * this shape is cast onto unauthenticated webhook input and untrusted resume payloads,
+ * which callers must treat as possibly malformed until they have checked it.
+ */
 export interface EventEnvelope {
   id: string;
   type: string;
   created_at: string;
   api_version: string;
-  data: { object: RenderLike };
+  data?: { object?: RenderLike };
 }
 
 export interface WebhookSubscription {

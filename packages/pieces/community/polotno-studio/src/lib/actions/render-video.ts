@@ -22,7 +22,7 @@ export const renderVideo = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Renders a video (MP4 or GIF) from a Polotno Studio template, filling the template dynamic fields with the supplied values. Choose this to produce a finished video asset from a template. Requires a template id. Video rendering is always asynchronous; by default the flow waits until it finishes. Costs one credit per second of output. Not idempotent — each call with a new flow run starts a new render.',
+      'Renders a video (MP4 or GIF) from a Polotno Studio template, filling the template dynamic fields with the supplied values. Choose this to produce a finished video asset from a template. Requires a template id. Video rendering is always asynchronous; by default the flow waits until it finishes and returns the completed render with its URL. Costs one credit per second of output. Not idempotent — each call with a new flow run starts a new render.',
     idempotent: false,
   },
   props: {

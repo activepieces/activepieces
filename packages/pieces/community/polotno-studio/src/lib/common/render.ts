@@ -3,7 +3,7 @@ import type { PolotnoClient } from './client';
 import { MAX_MAX_WAIT_SECONDS, isTerminal } from './constants';
 import { pollUntilTerminal } from './poll';
 import { isPubliclyReachable } from './reachability';
-import type { RenderKind, RenderLike } from './types';
+import type { EventEnvelope, RenderKind, RenderLike } from './types';
 
 export interface Waitpoint {
   id: string;
@@ -89,9 +89,15 @@ export async function executeRender(params: ExecuteRenderParams): Promise<Record
   return { ...result.render, timed_out: result.timedOut };
 }
 
-/** Read the render out of the per-render webhook envelope that resumed this run. */
+/**
+ * Read the render out of the per-render webhook envelope that resumed this run.
+ *
+ * Must read from the RESUME callback envelope, never from `context.store`: the store is
+ * FLOW-scoped, so two concurrent runs of the same flow would clobber each other's render id.
+ * The envelope already carries the whole render object for exactly this run.
+ */
 export function readResumedRender(resumePayload: { body: unknown }): Record<string, unknown> {
-  const body = resumePayload.body as { data?: { object?: RenderLike } } | undefined;
+  const body = resumePayload.body as EventEnvelope | undefined;
   const object = body?.data?.object;
   if (!object || typeof object !== 'object' || typeof object.id !== 'string') {
     throw new Error(

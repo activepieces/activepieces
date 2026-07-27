@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from '../auth';
 import { createClient } from '../common/client';
 import { templateIdProp } from '../common/props';
@@ -12,27 +12,18 @@ export const getTemplate = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Fetches a single Polotno Studio template by id, returning its name, tags and metadata. Leave Omit Design enabled unless the full design JSON is genuinely needed — it can be very large. Read-only and safe to retry.',
+      'Fetches a single Polotno Studio template by id, returning its full details — name, tags, metadata and design JSON. Choose this to look up a specific template when you already have its id. Read-only and safe to retry.',
     idempotent: true,
   },
   props: {
-    template_id: templateIdProp,
-    omit_design: Property.Checkbox({
-      displayName: 'Omit Design',
-      description: 'Leave on to exclude the full design JSON, which can be several megabytes.',
-      required: false,
-      defaultValue: true,
-    }),
+    // GET /v1/templates/{id} has no omit_design parameter (that only exists on the
+    // list endpoint), so this always returns the full template including its design.
+    template_id: { ...templateIdProp, description: 'The template to look up.' },
   },
   async run(context) {
     const client = createClient(context.auth.secret_text);
-    const queryParams: Record<string, string> = {};
-    // Present-but-false reads as truthy to the API, so send it only when true.
-    if (context.propsValue.omit_design !== false) queryParams['omit_design'] = 'true';
-
     return client.request<TemplateSummary>({
       path: `/v1/templates/${encodeURIComponent(context.propsValue.template_id)}`,
-      queryParams,
     });
   },
 });

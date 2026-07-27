@@ -3,7 +3,7 @@ import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from '../auth';
 import { createClient } from '../common/client';
 import { findHeader, verifyWebhookSignature } from '../common/signature';
-import type { RenderLike, WebhookSubscription } from '../common/types';
+import type { EventEnvelope, RenderLike, WebhookSubscription } from '../common/types';
 
 export interface DeliveryParams {
   rawBody: unknown;
@@ -33,7 +33,7 @@ export function handleWebhookDelivery(params: DeliveryParams): RenderLike[] {
   const eventType = findHeader(params.headers, 'x-event-type');
   if (!eventType || !params.events.includes(eventType)) return [];
 
-  const body = params.body as { data?: { object?: RenderLike } } | undefined;
+  const body = params.body as EventEnvelope | undefined;
   const object = body?.data?.object;
   if (!object || typeof object !== 'object' || typeof object.id !== 'string') return [];
 

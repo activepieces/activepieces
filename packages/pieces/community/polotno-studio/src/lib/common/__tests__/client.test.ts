@@ -65,7 +65,7 @@ describe('createClient', () => {
     expect(send).toHaveBeenCalledTimes(4); // 1 initial + 3 retries
   });
 
-  it('does not retry a 400 and surfaces the friendly message', async () => {
+  it('does not retry a 401 and surfaces the friendly message', async () => {
     const send = vi.fn().mockRejectedValue(
       new HttpError({}, { status: 401, responseBody: { error: { type: 't', code: 'invalid_api_key', message: 'nope' } } }),
     );

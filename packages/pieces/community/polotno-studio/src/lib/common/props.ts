@@ -168,5 +168,12 @@ export const textOverflowProp = Property.StaticDropdown<string>({
   displayName: 'Text Overflow',
   description: 'How text that does not fit its box is handled.',
   required: false,
-  options: { options: TEXT_OVERFLOW_MODES.map((mode) => ({ label: mode, value: mode })) },
+  // Labels are title-cased for consistency with the piece's other dropdowns; the
+  // values themselves stay exactly as the API expects (shrink | grow | truncate).
+  options: {
+    options: TEXT_OVERFLOW_MODES.map((mode) => ({
+      label: mode.charAt(0).toUpperCase() + mode.slice(1),
+      value: mode,
+    })),
+  },
 });
