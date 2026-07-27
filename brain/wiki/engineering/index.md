@@ -29,4 +29,5 @@ The **Activepieces engineering brain**: how the system works, and *why* it was b
 
 - **Engineering Handbook & Playbooks** — how we build and ship
 - **API & Endpoints** — route conventions and the security contract
+- **CI PR Review Hygiene** — draft-first Greptile review, the per-area PR size gate, and the workflow conventions reviewers keep re-litigating
 - **Architecture Spine** — the load-bearing structure of the codebase, and the gotchas that come with it: request-body `.max()` as data loss, TypeORM soft-delete across a canary window, and canary not proxying websockets
