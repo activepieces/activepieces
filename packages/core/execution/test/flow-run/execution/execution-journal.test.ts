@@ -129,58 +129,49 @@ describe('executionJournal.getStateAtPath', () => {
     })
 })
 
-describe('executionJournal.getOrCreateStateAtPath', () => {
-    it('should auto-create missing loop steps', () => {
-        const steps: Record<string, StepOutput> = {}
-        executionJournal.getOrCreateStateAtPath({ path: [['newLoop', 0]], steps })
-        expect(steps['newLoop']).toBeDefined()
-        expect(steps['newLoop'].type).toBe(FlowActionType.LOOP_ON_ITEMS)
-    })
-
-    it('should auto-create missing iterations', () => {
-        const loop = LoopStepOutput.init({ input: null })
-        const steps: Record<string, StepOutput> = { loop }
-        const result = executionJournal.getOrCreateStateAtPath({ path: [['loop', 0]], steps })
-        expect(result).toBeDefined()
-        expect(typeof result).toBe('object')
-    })
-
-    it('should throw for non-loop type mismatch', () => {
-        const steps: Record<string, StepOutput> = { step1: createCodeStep() }
-        expect(() => executionJournal.getOrCreateStateAtPath({ path: [['step1', 0]], steps })).toThrow('is not a loop on items step')
-    })
-})
-
 describe('executionJournal.upsertStep and getStep', () => {
     it('should insert and retrieve a step at root path', () => {
-        const steps: Record<string, StepOutput> = {}
         const stepOutput = createCodeStep()
-        executionJournal.upsertStep({ stepName: 'myStep', stepOutput, path: [], steps })
+        const steps = executionJournal.upsertStep({ stepName: 'myStep', stepOutput, path: [], steps: {} })
         const retrieved = executionJournal.getStep({ stepName: 'myStep', path: [], steps })
         expect(retrieved).toBe(stepOutput)
     })
 
     it('should overwrite an existing step', () => {
-        const steps: Record<string, StepOutput> = { myStep: createCodeStep() }
         const newOutput = createCodeStep(StepOutputStatus.FAILED)
-        executionJournal.upsertStep({ stepName: 'myStep', stepOutput: newOutput, path: [], steps })
+        const steps = executionJournal.upsertStep({ stepName: 'myStep', stepOutput: newOutput, path: [], steps: { myStep: createCodeStep() } })
         const retrieved = executionJournal.getStep({ stepName: 'myStep', path: [], steps })
         expect(retrieved?.status).toBe(StepOutputStatus.FAILED)
     })
 
     it('should insert a step inside a loop iteration with createLoopIterationIfNotExists', () => {
-        const steps: Record<string, StepOutput> = {}
         const stepOutput = createCodeStep()
-        executionJournal.upsertStep({
+        const steps = executionJournal.upsertStep({
             stepName: 'innerStep',
             stepOutput,
-            path: [['loop', 0]],
-            steps,
+            path: [['loop', 2]],
+            steps: {},
             createLoopIterationIfNotExists: true,
         })
-        expect(steps['loop']).toBeDefined()
-        const retrieved = executionJournal.getStep({ stepName: 'innerStep', path: [['loop', 0]], steps })
-        expect(retrieved).toBe(stepOutput)
+        const loop = steps['loop']
+        expect(loop.type).toBe(FlowActionType.LOOP_ON_ITEMS)
+        expect(loop.output).toEqual({ item: undefined, index: 0, iterations: [{}, {}, { innerStep: stepOutput }] })
+        expect(executionJournal.getStep({ stepName: 'innerStep', path: [['loop', 2]], steps })).toBe(stepOutput)
+    })
+
+    it('should throw when the iteration does not exist and creation is not requested', () => {
+        const steps: Record<string, StepOutput> = { loop: createLoopWithIterations([{}]) }
+        expect(() => executionJournal.upsertStep({ stepName: 'innerStep', stepOutput: createCodeStep(), path: [['loop', 5]], steps })).toThrow('Iteration 5 not found')
+    })
+
+    it('should not mutate the steps it was given', () => {
+        const loop = createLoopWithIterations([{}])
+        const steps: Record<string, StepOutput> = { loop }
+        const updated = executionJournal.upsertStep({ stepName: 'innerStep', stepOutput: createCodeStep(), path: [['loop', 0]], steps })
+
+        expect(executionJournal.getStep({ stepName: 'innerStep', path: [['loop', 0]], steps: updated })).toBeDefined()
+        expect(steps).not.toBe(updated)
+        expect(loop.output?.iterations[0]).toEqual({})
     })
 })
 

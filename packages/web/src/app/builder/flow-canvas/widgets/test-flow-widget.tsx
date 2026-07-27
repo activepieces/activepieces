@@ -55,21 +55,17 @@ const TestFlowWidget = () => {
       isForManualTrigger: isManualTrigger,
       onUpdateRun: (response: UpdateRunProgressRequest) => {
         assertNotNullOrUndefined(response.flowRun, 'flowRun');
-        const steps = runRef.current?.steps ?? {};
+        const previousSteps = runRef.current?.steps ?? {};
         const startTime =
           response.flowRun.startTime ?? runRef.current?.startTime;
-        if (!isNil(response.step)) {
-          const updatedSteps = flowRunUtils.updateRunSteps(
-            steps,
-            response.step?.name,
-            response.step?.path,
-            response.step?.output,
-          );
-          setRun(
-            { ...response.flowRun, startTime, steps: updatedSteps },
-            flowVersion,
-          );
-        }
+        const steps = isNil(response.step)
+          ? previousSteps
+          : flowRunUtils.updateRunSteps(
+              previousSteps,
+              response.step.name,
+              response.step.path,
+              response.step.output,
+            );
         setRun({ ...response.flowRun, startTime, steps }, flowVersion);
       },
     });

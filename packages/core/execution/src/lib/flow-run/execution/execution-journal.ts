@@ -5,9 +5,43 @@ import { BaseStepOutput, LoopStepOutput, StepOutput, StepOutputStatus } from './
 export const executionJournal = {
   
     upsertStep({ stepName, stepOutput, path, steps, createLoopIterationIfNotExists }: UpsertStepParams): Record<string, StepOutput> {
-        const target: Record<string, BaseStepOutput> = createLoopIterationIfNotExists ? this.getOrCreateStateAtPath({ path, steps }) : this.getStateAtPath({ path, steps })
-        target[stepName] = stepOutput
-        return steps
+        if (path.length === 0) {
+            return Object.assign({}, steps, { [stepName]: stepOutput })
+        }
+        const [[parentStepName, iteration], ...remainingPath] = path
+        const parentStep = steps[parentStepName] ?? (createLoopIterationIfNotExists ? LoopStepOutput.init({ input: null }) : undefined)
+        if (isNil(parentStep)) {
+            throw new Error(`Step ${parentStepName} not found in path ${path}`)
+        }
+        if (parentStep.type !== FlowActionType.LOOP_ON_ITEMS) {
+            throw new Error(`Step ${parentStepName} is not a loop on items step in path ${path}`)
+        }
+        const iterations = [...parentStep.output?.iterations ?? []]
+        const iterationOutput = iterations[iteration]
+        if (isNil(iterationOutput) && !createLoopIterationIfNotExists) {
+            throw new Error(`Iteration ${iteration} not found in path ${path}`)
+        }
+        while (iterations.length <= iteration) {
+            iterations.push({})
+        }
+        iterations[iteration] = this.upsertStep({
+            stepName,
+            stepOutput,
+            path: remainingPath,
+            steps: iterationOutput ?? {},
+            createLoopIterationIfNotExists,
+        })
+        return {
+            ...steps,
+            [parentStepName]: new LoopStepOutput({
+                ...parentStep,
+                output: {
+                    item: parentStep.output?.item,
+                    index: parentStep.output?.index ?? 0,
+                    iterations,
+                },
+            }),
+        }
     },
 
     getStep({ stepName, path, steps }: GetStepParams): StepOutput | undefined {
@@ -30,33 +64,6 @@ export const executionJournal = {
             if (!iterationOutput) {
                 throw new Error(`Iteration ${iteration} not found in path ${path}`)
             }
-            target = iterationOutput
-        }
-        return target
-    },
-
-    /*
-     * if the steps object does not include loop step mentioned in the path, it gets created.
-     * same for the iteration in the path. If the iteration is not found, it gets created.
-     */
-    getOrCreateStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
-        let target = steps
-
-        for (const [parentStepName, iteration] of path) {
-            let step = target[parentStepName]
-            if (!step ) {
-                step = LoopStepOutput.init({ input: null })
-            }
-            if (step.type !== FlowActionType.LOOP_ON_ITEMS) {
-                throw new Error(`Step ${parentStepName} is not a loop on items step in path ${path}`)
-            }
-            let loopStepOutput = step as LoopStepOutput
-            let iterationOutput = loopStepOutput.output?.iterations[iteration]
-            if (!iterationOutput ) {
-                loopStepOutput = loopStepOutput.setItemAndIndex({ item: undefined, index: iteration }).addIteration()
-                iterationOutput = loopStepOutput.output?.iterations[iteration] ?? {}
-            }
-            target[parentStepName] = loopStepOutput
             target = iterationOutput
         }
         return target
