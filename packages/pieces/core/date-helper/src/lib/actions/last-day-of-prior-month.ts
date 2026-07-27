@@ -11,7 +11,7 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const lastDayOfPreviousMonthAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'last_day_of_previous_month',
   displayName: 'Last Day of Previous Month',
   description: 'Get the date and time of the last day of the previous month',

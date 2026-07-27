@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import Crypto from 'crypto';
 
 export const rsaSignature = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'rsa-signature',
   displayName: 'Generate RSA Signature',
   description:

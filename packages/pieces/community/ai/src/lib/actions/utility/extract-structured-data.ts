@@ -7,7 +7,7 @@ import { aiProps } from '../../common/props';
 import { AIProviderName } from '@activepieces/pieces-framework';
 
 export const extractStructuredData = createAction({
-  audience: 'human',
+  audience: 'both',
 	name: 'extractStructuredData',
 	displayName: 'Extract Structured Data',
 	description: 'Accurately Pull names, amounts, and other structured data from emails, invoices, and scanned documents.',

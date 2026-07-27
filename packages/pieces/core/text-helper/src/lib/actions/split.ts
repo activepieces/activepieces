@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const split = createAction({
-  audience: 'human',
+  audience: 'both',
   description: 'Split a text by a delimiter',
   displayName: 'Split',
   name: 'split',

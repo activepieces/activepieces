@@ -2,7 +2,7 @@ import { createAction, PieceAuth, Property } from '@activepieces/pieces-framewor
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const createApprovalLink = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: PieceAuth.None(),
   name: 'create_approval_links',
   displayName: 'Create Approval Links',
