@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import jimp from 'jimp';
 
 export const rotateImage = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'rotate_image',
   description: 'Rotates an image',
   displayName: 'Rotate an image',

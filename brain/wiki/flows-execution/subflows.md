@@ -17,8 +17,8 @@ No server entity of its own — subflows are ordinary flows plus two conventions
 
 ### How it works
 - **Call Flow**: resolves the target by `externalId` → POSTs `{ data, callbackUrl? }` to the subflow's production webhook. With wait-for-response it creates a `WEBHOOK` waitpoint, passes its resume URL as `callbackUrl`, and pauses until `Respond` calls back; the RESUME branch rethrows when the subflow answered `status: 'error'`. Without it the step returns as soon as the webhook is acknowledged.
-- **Stream CSV to Subflows**: input is a CSV **URL** (not `Property.File` — that materializes an `ApFile` Buffer before `run()` starts and would OOM), a Callable Flow dropdown target, `batchSize` (default 100), delimiter (comma/tab) and optional `extraData` merged into every call.
-  - The action does its own `responseType: 'stream'` GET and pipes into a streaming `csv-parse` parser. Framework read-side streaming is deferred ([000008](../../decisions/000008-streaming-file-writes-go-through-the-app-one-path.md)), so a piece streaming its own source is the sanctioned path — zero engine or framework change.
+- **Stream CSV to Subflows**: input is a CSV **URL** (a plain `Property.File` would materialize an `ApFile` Buffer before `run()` starts and OOM), a Callable Flow dropdown target, `batchSize` (default 100), delimiter (comma/tab) and optional `extraData` merged into every call.
+  - The action does its own `responseType: 'stream'` GET and pipes into a streaming `csv-parse` parser — zero engine or framework change.
   - Payload per call: `data = { batchIndex, headers, rows, extraData }`. Dispatch is fire-and-forget — no `callbackUrl`, `x-fail-parent-on-failure: false`.
   - `fanOutBatches` bounds in-flight dispatches (5) and awaits `Promise.race` when the window is full, so parsing back-pressures instead of buffering the file.
   - Returns `{ headers, firstRow, rowsProcessed, batchesDispatched }`.
@@ -26,8 +26,9 @@ No server entity of its own — subflows are ordinary flows plus two conventions
 
 ### Gotchas
 - **`text/csv` is a binary content type on the webhook path.** The converter uploads it to the File service rather than parsing it as text, which is what lets a subflow receive a CSV body without buffering.
-- **Time, not memory, is the ceiling.** Streaming bounds memory; the step is still capped by `FLOW_TIMEOUT_SECONDS` (default 600s, fixed on Cloud). A file whose fan-out cannot finish inside that window is out of scope for v1 — it fails loud, never a silent partial fan-out. See [000014](../../decisions/000014-streaming-csv-fanout-is-a-bounded-fire-and-forget-action.md).
+- **Time, not memory, is the ceiling.** Streaming bounds memory; the step is still capped by `FLOW_TIMEOUT_SECONDS` (default 600s, fixed on Cloud). A file whose fan-out cannot finish inside that window is out of scope for v1 — it fails loud, never a silent partial fan-out. See [000015](../../decisions/000015-streaming-csv-fanout-is-a-bounded-fire-and-forget-action.md).
 - **Fan-out is not Call Flow.** Wait-for-response is incompatible with many batches inside one step; only Call Flow can wait.
+- **The URL input predates streaming file inputs.** `Property.File({ streaming: true })` now resolves to an `ApStreamingFile` carrying a `body: Readable` (pieces-framework ≥ 0.35.0, [000014](../../decisions/000014-streaming-file-inputs-resolve-to-a-lazy-apstreamingfile.md)), so a file-picker input is viable today — it just is not what shipped. Swapping to it is a follow-up, not a bug.
 - The dropdown lists published flows carrying a Callable Flow trigger and labels disabled ones `(inactive)`; streaming to a disabled flow throws before the first request.
 
 ### Editions

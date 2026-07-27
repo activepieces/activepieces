@@ -145,6 +145,10 @@ Write a markdown FILE, do not call the Craftspace `upsert_*` tools — a file ri
 an MCP write pushes straight to the default branch. Edit the file that already covers the topic instead
 of adding a near-duplicate.
 
+**A gotcha is not a page.** Add it as a bullet under the `Gotchas` heading of the page for the feature it
+bites, so whoever reads about that feature meets it in place instead of having to know it exists. Same for
+any other fact about an existing feature. Start a new file only when the TOPIC is new.
+
 Frontmatter each file understands:
 
 ```

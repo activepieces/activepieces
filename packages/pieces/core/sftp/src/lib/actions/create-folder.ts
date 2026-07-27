@@ -6,7 +6,7 @@ import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { getSftpError } from './common';
 
 export const createFolderAction = createAction({
-  audience: 'both',
+  audience: 'human',
   auth: sftpAuth,
   name: 'createFolder',
   displayName: 'Create Folder',

@@ -4,7 +4,7 @@ import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@ac
 import { PopulatedRecord, UpdateRecordRequest } from '@activepieces/pieces-framework';
 
 export const updateRecord = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'tables-update-record',
   displayName: 'Update Record',
   description: 'Update values in an existing record',

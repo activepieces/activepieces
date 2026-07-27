@@ -60,7 +60,7 @@ This action can extract or rearrange the pages in a PDF.
 `;
 
 export const extractPdfPages = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'extractPdfPages',
   displayName: 'Extract PDF Pages',
   description: 'Extract or rearrange page(s)from PDF File.',
