@@ -1,3 +1,4 @@
+import { ChatAutonomyMode } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
@@ -16,10 +17,12 @@ import {
 } from '../lib/message-parsers';
 
 import { ActionPreviewCard } from './action-preview-card';
+import { ChatAutonomySelector } from './chat-autonomy-selector';
 import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
+import { ConsentCard } from './consent-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
@@ -31,6 +34,8 @@ export function ChatBottomBar({
   onInputChange,
   selectedModel,
   onModelChange,
+  autonomyMode,
+  onAutonomyChange,
   lastAssistantMessage,
   lastMessageId,
   placeholder,
@@ -65,7 +70,16 @@ export function ChatBottomBar({
   if (pendingActionPreview) {
     const toolCallId = pendingActionPreview.toolCallId;
     dismissActiveCard = () => rejectGate(toolCallId);
-    activeCard = (
+    activeCard = pendingActionPreview.consent ? (
+      <ConsentCard
+        key={toolCallId}
+        preview={pendingActionPreview}
+        consent={pendingActionPreview.consent}
+        onRun={() => approveGate(toolCallId)}
+        onCancel={() => rejectGate(toolCallId)}
+        onDismiss={() => rejectGate(toolCallId)}
+      />
+    ) : (
       <ActionPreviewCard
         key={toolCallId}
         preview={pendingActionPreview}
@@ -125,15 +139,23 @@ export function ChatBottomBar({
           onStop={onStop}
           onInputChange={onInputChange}
           placeholder={
-            activeCard
+            pendingActionPreview
+              ? t('Reply instead — nothing will run')
+              : activeCard
               ? t('Or reply in your own words')
               : placeholder ?? t('Reply...')
           }
           rightActions={
-            <ChatModelSelector
-              selectedModel={selectedModel}
-              onModelChange={onModelChange}
-            />
+            <>
+              <ChatAutonomySelector
+                autonomyMode={autonomyMode}
+                onAutonomyChange={onAutonomyChange}
+              />
+              <ChatModelSelector
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+              />
+            </>
           }
         />
       </div>
@@ -208,6 +230,8 @@ type ChatBottomBarProps = {
   onInputChange?: (hasInput: boolean) => void;
   selectedModel: string | null;
   onModelChange: (modelId: string) => void;
+  autonomyMode: ChatAutonomyMode;
+  onAutonomyChange: (mode: ChatAutonomyMode) => void;
   lastAssistantMessage: ChatUIMessage | undefined;
   lastMessageId: string | undefined;
   placeholder?: string;

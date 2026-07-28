@@ -2,6 +2,7 @@ import { ChatPromptOverride } from '@activepieces/core-execution'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
+import { ChatAutonomyMode } from './consent-policy-settings'
 
 const MAX_FILE_BINARY_SIZE = 10 * 1024 * 1024
 const MAX_FILE_BASE64_CHARS = Math.ceil(MAX_FILE_BINARY_SIZE * 4 / 3)
@@ -201,6 +202,7 @@ export const ChatConversation = z.object({
     userId: z.string(),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
+    autonomyMode: z.optional(Nullable(ChatAutonomyMode)),
     status: z.nativeEnum(ChatConversationStatus).default(ChatConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
@@ -219,6 +221,7 @@ export type CreateChatConversationRequest = z.infer<typeof CreateChatConversatio
 export const UpdateChatConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    autonomyMode: z.optional(ChatAutonomyMode),
 })
 export type UpdateChatConversationRequest = z.infer<typeof UpdateChatConversationRequest>
 
@@ -361,6 +364,7 @@ export { chatToolClassification, type StepEffect } from './tool-classification'
 export { actionEffect, type ActionEffect, type ActionEffectKind, type ActionEffectLabel } from './action-effect'
 export { actionEffectLabelCatalog } from './action-effect-labels'
 export { chatToolConsentSpecs, type ChatToolConsentSpec } from './tool-consent-specs'
+export { ChatAutonomyMode, ChatConsentDecision, ChatConsentPolicySettings } from './consent-policy-settings'
 export { chatConsent, type ConsentDecision } from './chat-consent'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'

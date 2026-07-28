@@ -72,6 +72,7 @@ function ChatBoxContent({
   const {
     conversationId,
     modelName,
+    autonomyMode,
     messages,
     isStreaming,
     isResumedStream,
@@ -83,6 +84,7 @@ function ChatBoxContent({
     cancelStream,
     setConversationId,
     setModelName,
+    setAutonomyMode,
   } = useAgentChat({
     onTitleUpdate,
     onConversationCreated,
@@ -292,6 +294,8 @@ function ChatBoxContent({
             onInputChange={setHasInput}
             selectedModel={modelName}
             onModelChange={setModelName}
+            autonomyMode={autonomyMode}
+            onAutonomyChange={setAutonomyMode}
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
             placeholder={

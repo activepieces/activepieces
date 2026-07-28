@@ -431,6 +431,111 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         }),
 
+        it('persists the chat consent policy so the admin switch is not a placebo', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const chatConsentPolicy = {
+                fullAccessEnabled: false,
+                overrides: { outward_send: 'deny' },
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { chatConsentPolicy },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().chatConsentPolicy).toStrictEqual(chatConsentPolicy)
+
+            // act - re-read it, because the bug was that the write was silently dropped
+            const readBack = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(readBack?.statusCode).toBe(StatusCodes.OK)
+            expect(readBack?.json().chatConsentPolicy).toStrictEqual(chatConsentPolicy)
+        }),
+
+        it('rejects a chat consent override on a kind the gate cannot enforce', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { chatConsentPolicy: { overrides: { internal_write: 'deny' } } },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        }),
+
+        it('rejects a misspelled chat consent override instead of dropping it', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { chatConsentPolicy: { overrides: { outward_sends: 'deny' } } },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        }),
+
         it('rejects a custom piece selector tab without a name', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
@@ -578,8 +683,9 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(23)
+            expect(Object.keys(responseBody).length).toBe(24)
             expect(responseBody.id).toBe(mockPlatform.id)
+            expect(responseBody.chatConsentPolicy).toBeNull()
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})

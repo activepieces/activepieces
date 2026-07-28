@@ -10,6 +10,7 @@ import {
   ActionReceiptEvent,
   BuildPlanEvent,
   ChatAllowedMimeType,
+  ChatAutonomyMode,
   ConsentPreview,
   FileProducedEvent,
   ImageGeneratedEvent,
@@ -290,6 +291,8 @@ export function useAgentChat({
   const [modelName, setModelNameState] = useState<string | null>(
     DEFAULT_CHAT_TIER_ID,
   );
+  const [autonomyMode, setAutonomyModeState] =
+    useState<ChatAutonomyMode>('ask_first');
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
@@ -313,6 +316,7 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const modelNameRef = useRef<string | null>(DEFAULT_CHAT_TIER_ID);
+  const autonomyModeRef = useRef<ChatAutonomyMode>('ask_first');
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -629,6 +633,8 @@ export function useAgentChat({
       });
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
+      autonomyModeRef.current = 'ask_first';
+      setAutonomyModeState('ask_first');
       return conv;
     },
     [],
@@ -810,6 +816,8 @@ export function useAgentChat({
       });
       modelNameRef.current = convResult.data.modelName ?? null;
       setModelNameState(convResult.data.modelName ?? null);
+      autonomyModeRef.current = convResult.data.autonomyMode ?? 'ask_first';
+      setAutonomyModeState(convResult.data.autonomyMode ?? 'ask_first');
       if (convResult.data.status === ChatConversationStatus.STREAMING) {
         const lastAssistantIdx = mapped.findLastIndex(
           (m) => m.role === 'assistant',
@@ -911,9 +919,25 @@ export function useAgentChat({
     }
   }, []);
 
+  const setAutonomyMode = useCallback(async (newMode: ChatAutonomyMode) => {
+    const previous = autonomyModeRef.current;
+    autonomyModeRef.current = newMode;
+    setAutonomyModeState(newMode);
+    const convId = conversationIdRef.current;
+    if (convId) {
+      try {
+        await chatApi.updateConversation(convId, { autonomyMode: newMode });
+      } catch {
+        autonomyModeRef.current = previous;
+        setAutonomyModeState(previous);
+      }
+    }
+  }, []);
+
   return {
     conversationId,
     modelName,
+    autonomyMode,
     messages,
     isStreaming,
     isResumedStream,
@@ -925,5 +949,6 @@ export function useAgentChat({
     cancelStream,
     setConversationId,
     setModelName,
+    setAutonomyMode,
   };
 }
