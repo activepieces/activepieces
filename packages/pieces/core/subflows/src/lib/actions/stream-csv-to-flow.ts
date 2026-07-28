@@ -1,9 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { parse } from 'csv-parse';
+import { createCsvParser, CsvRow } from '../csv';
 import { dispatchToSubflow, findEnabledSubflowOrThrow, subflowDropdown } from '../common';
 import { fanOutBatches } from '../fan-out';
-
-type CsvRow = Record<string, string>;
 
 const MAX_IN_FLIGHT = 5;
 const MAX_BATCH_SIZE = 10_000;
@@ -58,6 +56,7 @@ export const streamCsvToSubflows = createAction({
       batchSize < 1 ||
       batchSize > MAX_BATCH_SIZE
     ) {
+      file.body.destroy();
       throw new Error(
         JSON.stringify({
           message: `Rows per batch must be an integer between 1 and ${MAX_BATCH_SIZE}.`,
@@ -68,23 +67,19 @@ export const streamCsvToSubflows = createAction({
     const flow = await findEnabledSubflowOrThrow({
       flowsContext: context.flows,
       externalId: context.propsValue.subflow,
+    }).catch((error) => {
+      file.body.destroy();
+      throw error;
     });
 
-    let headers: string[] = [];
     let firstRow: CsvRow | undefined;
-    const parser = parse({
-      delimiter,
-      bom: true,
-      relax_column_count: true,
-      columns: (header: string[]) => {
-        headers = header;
-        return header;
-      },
-      skip_empty_lines: true,
-      trim: true,
-    });
+    const { parser, getHeaders } = createCsvParser({ delimiter });
     file.body.pipe(parser);
-    file.body.on('error', (err) => parser.destroy(err));
+    file.body.on('error', (err) => {
+      if (!parser.destroyed) {
+        parser.destroy(err);
+      }
+    });
 
     const dispatch = async ({
       batchIndex,
@@ -101,7 +96,7 @@ export const streamCsvToSubflows = createAction({
         flowId: flow.id,
         parentRunId: context.run.id,
         failParentOnFailure: false,
-        data: { batchIndex, headers, rows, extraData },
+        data: { batchIndex, headers: getHeaders(), rows, extraData },
         retries: 2,
       });
     };
@@ -113,10 +108,20 @@ export const streamCsvToSubflows = createAction({
         maxInFlight: MAX_IN_FLIGHT,
         dispatch,
       });
-      return { headers, firstRow, ...result };
+      return { headers: getHeaders(), firstRow, ...result };
     } finally {
       parser.destroy();
       file.body.destroy();
     }
+  },
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: false,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
   },
 });
