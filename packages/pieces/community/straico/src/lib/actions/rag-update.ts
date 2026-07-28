@@ -9,11 +9,12 @@ import { baseUrlv0 } from '../common/common';
 import FormData from 'form-data';
 
 export const updateRag = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'update_rag',
   displayName: 'Update RAG',
   description: 'Update an existing RAG (Retrieval-Augmented Generation) base with additional files.',
+  aiMetadata: { description: 'Adds one more document to an existing RAG knowledge base, re-indexing it so later RAG Prompt Completion calls can draw on the new content. Despite the name it only appends a file and cannot rename a base or change its chunking settings, and it cannot remove content; use Create RAG to start a fresh base with different settings. Requires a raw RAG id typed as text and a file with a supported extension (pdf, docx, csv, txt, xlsx or py). Not idempotent: sending the same file twice ingests it again and spends credits each time.', idempotent: false },
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',

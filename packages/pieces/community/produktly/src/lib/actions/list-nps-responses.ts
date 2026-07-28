@@ -9,6 +9,8 @@ export const listNpsResponses = createAction({
   name: 'list_nps_responses',
   displayName: 'List NPS Responses',
   description: 'List individual NPS responses (rating + comment + user info) for a widget.',
+  audience: 'both',
+  aiMetadata: { description: 'List the individual NPS submissions for one Produktly NPS widget, each with its rating, free-text comment, and submitter name, email, user ID, and page URL; paginated with limit and offset and optionally narrowed to a submission-date range. Pick this when you need the raw responses; use Get NPS Score for the aggregated score and promoter/detractor breakdown. Requires an NPS widget ID. Read-only and idempotent.', idempotent: true },
   props: {
     widget: produktlyProps.npsWidget,
     limit: Property.Number({

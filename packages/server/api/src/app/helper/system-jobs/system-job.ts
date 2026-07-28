@@ -1,10 +1,11 @@
 import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
+import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 import { exceptionHandler } from '../exception-handler'
-import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
+import { SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
@@ -68,23 +69,24 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
 
     async upsertJob({ job, schedule, customConfig }): Promise<void> {
         log.info({ jobName: job.name }, '[systemJob#upsertJob] Upserting job')
-        const existingJob = await getJobByNameAndJobId(job.name, job.jobId)
-
-        const patternChanged = !isNil(existingJob) && schedule.type === 'repeated' ? schedule.cron !== existingJob.opts.repeat?.pattern : false
-
-        if (patternChanged && !isNil(existingJob) && !isNil(existingJob.opts.repeat) && !isNil(existingJob.name)) {
-            log.info({ jobName: job.name }, '[systemJob#upsertJob] Pattern changed, removing job from queue')
-            await systemJobsQueue.removeRepeatable(existingJob.name as SystemJobName, existingJob.opts.repeat)
+        if (schedule.type === 'repeated') {
+            const schedulers = await systemJobsQueue.getJobSchedulers()
+            const legacySchedulers = schedulers.filter(scheduler => scheduler.name === job.name && (scheduler.id ?? scheduler.key) !== job.name)
+            for (const scheduler of legacySchedulers) {
+                log.info({ jobName: job.name, stalePattern: scheduler.pattern }, '[systemJob#upsertJob] Removing scheduler with a non-canonical key')
+                await systemJobsQueue.removeJobScheduler(scheduler.id ?? scheduler.key)
+            }
+            await systemJobsQueue.upsertJobScheduler(job.name, { pattern: schedule.cron, tz: 'UTC' }, { name: job.name, data: job.data, opts: customConfig })
+            return
         }
+        const existingJob = await getJobByNameAndJobId(job.name, job.jobId)
         if (!isNil(existingJob) && await existingJob.isFailed()) {
             log.info({ jobName: job.name }, '[systemJob#upsertJob] Retrying failed job')
             await existingJob.retry()
         }
-        if (isNil(existingJob) || patternChanged) {
+        if (isNil(existingJob)) {
             log.info({ jobName: job.name }, '[systemJob#upsertJob] Adding job to queue')
-            const jobOptions = configureJobOptions({ schedule, jobId: job.jobId, customConfig })
-            await systemJobsQueue.add(job.name, job.data, jobOptions)
-            return
+            await systemJobsQueue.add(job.name, job.data, configureJobOptions({ date: schedule.date, jobId: job.jobId, customConfig }))
         }
     },
 
@@ -140,24 +142,9 @@ async function removeDeprecatedJobs(): Promise<void> {
     )
 }
 
-const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobSchedule, jobId: string, customConfig?: JobsOptions }): JobsOptions => {
+const configureJobOptions = ({ date, jobId, customConfig }: { date: Dayjs, jobId: string, customConfig?: JobsOptions }): JobsOptions => {
     const config: JobsOptions = customConfig ?? {}
-
-    switch (schedule.type) {
-        case 'one-time': {
-            const now = apDayjs()
-            config.delay = schedule.date.diff(now, 'milliseconds')
-            break
-        }
-        case 'repeated': {
-            config.repeat = {
-                pattern: schedule.cron,
-                tz: 'UTC',
-            }
-            break
-        }
-    }
-
+    config.delay = date.diff(apDayjs(), 'milliseconds')
     return {
         ...config,
         jobId,
