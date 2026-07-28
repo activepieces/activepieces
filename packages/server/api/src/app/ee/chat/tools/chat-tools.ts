@@ -316,8 +316,9 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         }
         case 'ap_explore_data': {
             const actionName = toolInput.actionName as string
+            const explorePieceName = typeof toolInput.pieceName === 'string' ? toolInput.pieceName : undefined
             const exploreInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : undefined
-            if (!chatToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
+            if (!chatToolClassification.isReadOnlyActionCall({ pieceName: explorePieceName, actionName, input: exploreInput })) {
                 return chatToolClassification.readOnlyRejection(actionName)
             }
             return runChatAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })

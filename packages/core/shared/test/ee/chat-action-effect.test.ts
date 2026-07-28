@@ -1,11 +1,59 @@
+import { FlowActionType, Step } from '@activepieces/core-execution'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { actionEffect } from '../../src/lib/ee/chat/action-effect'
 import { actionEffectLabelCatalog } from '../../src/lib/ee/chat/action-effect-labels'
 import { chatConsent } from '../../src/lib/ee/chat/chat-consent'
+import { chatToolClassification } from '../../src/lib/ee/chat/tool-classification'
 
 beforeAll(() => {
     actionEffect.setCatalog(actionEffectLabelCatalog.load())
 })
+
+function pieceStep({ name, pieceName, actionName, input }: {
+    name: string
+    pieceName: string
+    actionName: string
+    input?: Record<string, unknown>
+}): Step {
+    return {
+        name,
+        displayName: name,
+        type: FlowActionType.PIECE,
+        valid: true,
+        settings: {
+            pieceName,
+            pieceVersion: '~0.0.1',
+            actionName,
+            input: input ?? {},
+            inputUiInfo: {},
+            errorHandlingOptions: {},
+        },
+    } as unknown as Step
+}
+
+function codeStep({ name, code }: { name: string, code: string }): Step {
+    return {
+        name,
+        displayName: name,
+        type: FlowActionType.CODE,
+        valid: true,
+        settings: {
+            sourceCode: { code, packageJson: '{}' },
+            input: {},
+        },
+    } as unknown as Step
+}
+
+function triggerWith(steps: Step[]): Step {
+    return {
+        name: 'trigger',
+        displayName: 'Every day',
+        type: 'PIECE_TRIGGER',
+        valid: true,
+        nextAction: steps.reduceRight<Step | undefined>((next, step) => ({ ...step, nextAction: next }), undefined),
+        settings: { pieceName: '@activepieces/piece-schedule', triggerName: 'every_day', input: {} },
+    } as unknown as Step
+}
 
 describe('actionEffect.resolve — the catalog covers what a name never could', () => {
     it.each([
@@ -107,6 +155,89 @@ describe('actionEffect.resolve — the catalog covers what a name never could', 
     })
 })
 
+describe('chatToolClassification.requiresActionPreview', () => {
+    it('consults the catalog when the piece is known', () => {
+        expect(chatToolClassification.actionConsentDecision({ pieceName: '@activepieces/piece-mongodb', actionName: 'find_and_replace_documents' })).not.toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records' })).toBe('allow')
+    })
+
+    it('always honours an explicit request to confirm, even on a tainted turn', () => {
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'get_rows', needsConfirmation: true })).not.toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'get_rows', needsConfirmation: true, tainted: true })).not.toBe('allow')
+    })
+
+    it('tightens to reads-only on a tainted turn', () => {
+        expect(chatToolClassification.actionConsentDecision({ pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', tainted: true })).not.toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ pieceName: '@activepieces/piece-tables', actionName: 'tables-find-records', tainted: true })).toBe('allow')
+    })
+})
+
+describe('chatToolClassification.flowStepEffects — what a live test would really do', () => {
+    it('reports the sending step with its static recipient and stays quiet about internal steps', () => {
+        const trigger = triggerWith([
+            pieceStep({ name: 'save_row', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records' }),
+            pieceStep({ name: 'notify_me', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'] } }),
+        ])
+        const effects = chatToolClassification.flowStepEffects(trigger)
+        expect(effects).toHaveLength(1)
+        expect(effects[0].stepName).toBe('notify_me')
+        expect(effects[0].effect.kind).toBe('outward_send')
+        expect(effects[0].recipient).toBe('omar@activepieces.com')
+    })
+
+    it('keeps a step that deletes Activepieces data in the preview — a live test must ask first', () => {
+        const trigger = triggerWith([
+            pieceStep({ name: 'wipe', pieceName: '@activepieces/piece-tables', actionName: 'tables-delete-table' }),
+        ])
+        const effects = chatToolClassification.flowStepEffects(trigger)
+        expect(effects).toHaveLength(1)
+        expect(effects[0].effect.kind).toBe('internal_destructive')
+        expect(chatConsent.decide({ kind: effects[0].effect.kind })).toBe('ask')
+    })
+
+    it('does not guess a templated recipient', () => {
+        const trigger = triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['{{trigger.email}}'] } }),
+        ])
+        expect(chatToolClassification.flowStepEffects(trigger)[0].recipient).toBeUndefined()
+    })
+
+    it('treats every code step as unknowable, however harmless it looks', () => {
+        const reaching = triggerWith([codeStep({ name: 'push', code: 'export const code = async () => fetch("https://example.com", { method: "POST" })' })])
+        const looksPure = triggerWith([codeStep({ name: 'sum', code: 'export const code = async (inputs) => inputs.a + inputs.b' })])
+        expect(chatToolClassification.flowStepEffects(reaching)[0].effect.kind).toBe('input_dependent')
+        expect(chatToolClassification.flowStepEffects(looksPure)[0].effect.kind).toBe('input_dependent')
+    })
+
+    it('does not let code smuggle network reach past a keyword scan', () => {
+        const evasive = triggerWith([codeStep({ name: 'exfil', code: 'export const code = async (i) => (()=>{}).constructor("return this")()["fet"+"ch"](i.url, { method: "POST", body: i.secret })' })])
+        expect(chatToolClassification.flowStepEffects(evasive)[0].effect.kind).toBe('input_dependent')
+    })
+
+    it('catches a raw HTTP step in a flow, which a write-verb name check misses entirely', () => {
+        const trigger = triggerWith([
+            pieceStep({ name: 'call_api', pieceName: '@activepieces/piece-http', actionName: 'send_request', input: { method: 'POST', url: 'https://example.com' } }),
+        ])
+        expect(chatToolClassification.flowStepEffects(trigger)).toHaveLength(1)
+    })
+
+    it('scopes a single-step test to that step alone', () => {
+        const trigger = triggerWith([
+            pieceStep({ name: 'read_rows', pieceName: '@activepieces/piece-google-sheets', actionName: 'get_rows' }),
+            pieceStep({ name: 'notify_me', pieceName: '@activepieces/piece-gmail', actionName: 'send_email' }),
+        ])
+        expect(chatToolClassification.stepEffectsForStep({ trigger, stepName: 'read_rows' })).toHaveLength(0)
+        expect(chatToolClassification.stepEffectsForStep({ trigger, stepName: 'notify_me' })).toHaveLength(1)
+    })
+
+    it('falls back to the whole flow when the step name is unknown', () => {
+        const trigger = triggerWith([
+            pieceStep({ name: 'notify_me', pieceName: '@activepieces/piece-gmail', actionName: 'send_email' }),
+        ])
+        expect(chatToolClassification.stepEffectsForStep({ trigger, stepName: 'nope' })).toHaveLength(1)
+    })
+})
+
 describe('chatConsent', () => {
     it('lets internal work run and asks about everything else', () => {
         expect(chatConsent.decide({ kind: 'read' })).toBe('allow')
@@ -131,6 +262,26 @@ describe('chatConsent', () => {
         expect(chatConsent.isReusable([])).toBe(false)
     })
 
+    it('never remembers a yes for a code step, because the reuse key is not collision-proof', () => {
+        const codeAndSend = chatToolClassification.flowStepEffects(triggerWith([
+            codeStep({ name: 'format', code: 'export const code = async (i) => i.a + i.b' }),
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'] } }),
+        ]))
+        expect(codeAndSend.map((step) => step.effect.kind)).toContain('input_dependent')
+        expect(chatToolClassification.stepEffectsReusable(codeAndSend)).toBe(false)
+    })
+
+    it('never reuses a yes for a send whose recipient is decided at runtime', () => {
+        const staticRecipient = chatToolClassification.flowStepEffects(triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'] } }),
+        ]))
+        const templated = chatToolClassification.flowStepEffects(triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['{{trigger.email}}'] } }),
+        ]))
+        expect(chatToolClassification.stepEffectsReusable(staticRecipient)).toBe(true)
+        expect(chatToolClassification.stepEffectsReusable(templated)).toBe(false)
+    })
+
     it('changes the signature when the flow gains an effect, so a stale yes cannot cover it', () => {
         const before = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['save~external_write~sheets · insert_row~'] })
         const after = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['save~external_write~sheets · insert_row~', 'notify~outward_send~gmail · send_email~omar@x.com'] })
@@ -147,5 +298,26 @@ describe('chatConsent', () => {
         const first = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['a~outward_send~gmail · send_email~o@x', 'b~external_write~sheets · insert_row~'] })
         const second = chatConsent.signature({ toolName: 'ap_test_flow', scope: 'flow-1', fingerprints: ['b~external_write~sheets · insert_row~', 'a~outward_send~gmail · send_email~o@x'] })
         expect(first).toBe(second)
+    })
+
+    it('changes the fingerprint when the message body is rewritten, so an old yes cannot cover a new message', () => {
+        const original = triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'], subject: 'Daily digest', body_text: 'Here is your digest.' } }),
+        ])
+        const rewritten = triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'], subject: 'URGENT: wire money', body_text: 'Completely different message.' } }),
+        ])
+        const first = chatToolClassification.effectFingerprintsOf(chatToolClassification.flowStepEffects(original))
+        const second = chatToolClassification.effectFingerprintsOf(chatToolClassification.flowStepEffects(rewritten))
+        expect(first).not.toEqual(second)
+    })
+
+    it('fingerprints identical inputs identically', () => {
+        const build = () => triggerWith([
+            pieceStep({ name: 'notify', pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { receiver: ['omar@activepieces.com'], subject: 'Daily digest' } }),
+        ])
+        const first = chatToolClassification.effectFingerprintsOf(chatToolClassification.flowStepEffects(build()))
+        const second = chatToolClassification.effectFingerprintsOf(chatToolClassification.flowStepEffects(build()))
+        expect(first).toEqual(second)
     })
 })

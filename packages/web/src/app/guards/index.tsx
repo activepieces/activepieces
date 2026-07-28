@@ -56,7 +56,15 @@ const CrashTestPage = import.meta.env.DEV
     )
   : null;
 
-const devRoutes =
+const DesignLabPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('../routes/design-lab').then((m) => ({
+        default: m.DesignLabPage,
+      })),
+    )
+  : null;
+
+const crashTestRoutes =
   import.meta.env.DEV && CrashTestPage
     ? [
         {
@@ -69,6 +77,22 @@ const devRoutes =
         },
       ]
     : [];
+
+const designLabRoutes =
+  import.meta.env.DEV && DesignLabPage
+    ? [
+        {
+          path: '/__designlab',
+          element: (
+            <Suspense fallback={<RouteLoadingBar />}>
+              <DesignLabPage />
+            </Suspense>
+          ),
+        },
+      ]
+    : [];
+
+const devRoutes = [...crashTestRoutes, ...designLabRoutes];
 
 const routes = [
   ...devRoutes,

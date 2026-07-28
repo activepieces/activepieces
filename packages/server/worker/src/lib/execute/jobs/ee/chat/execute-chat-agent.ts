@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
+import { ChatAgentEvent, ChatAgentEventType, chatConsent, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
@@ -137,6 +137,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
+                consentPolicy: config.consentPolicy,
                 abortSignal: abortController.signal,
             })
 
@@ -332,7 +333,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, consentPolicy, abortSignal }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof chatWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -351,8 +352,10 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     dryRun: boolean
     discoveryOnly: boolean
     emailEnabled: boolean
+    consentPolicy?: Record<string, string>
     abortSignal: AbortSignal
 }) {
+    const policy = chatConsent.composePolicy({ fullAccess: false, overrides: consentPolicy })
     const brokenConnectors = new Set<string>()
 
     const executeCrossProjectTool = async (toolName: string, toolInput: Record<string, unknown>) => {
@@ -450,7 +453,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState, policy, log })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -459,27 +462,17 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         eventEmitter,
         getProjectId: () => projectState.projectId,
     })
-    const mcpTools = chatWorkerTools.wrapTestFlowGate({
-        mcpTools: chatMcpClient.withToolTimeouts({
-            mcpToolSet,
-            brokenConnectors,
-            getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
-            saveLargeResult: async ({ json, fileName }) => {
-                const { data: saved } = await tryCatch(() => ctx.apiClient.saveChatFile({
-                    platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
-                    ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
-                }))
-                return saved?.fileId ?? null
-            },
-        }),
-        checkFlowWrites: async (flowId) => {
-            const response = await ctx.apiClient.executeChatTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, conversationId })
-            return response.result
+    const mcpTools = chatMcpClient.withToolTimeouts({
+        mcpToolSet,
+        brokenConnectors,
+        getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
+        saveLargeResult: async ({ json, fileName }) => {
+            const { data: saved } = await tryCatch(() => ctx.apiClient.saveChatFile({
+                platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
+                ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
+            }))
+            return saved?.fileId ?? null
         },
-        waitForApproval,
-        storePendingGate,
-        eventEmitter,
-        log,
     })
     const emailTools = emailEnabled && !dryRun && !discoveryOnly
         ? chatWorkerTools.createEmailTools({
@@ -488,10 +481,59 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             userEmail,
             waitForApproval,
             onGateOpened: storePendingGate,
+            policy,
+            log,
         })
         : {}
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    return chatWorkerTools.wrapWithConsent({
+        tools: allTools,
+        disabled: process.env['AP_CHAT_SIDE_EFFECT_CONSENT'] === 'false',
+        policy,
+        previewFlowEffects: async ({ flowId, flowRunId, stepName }) => {
+            const response = await ctx.apiClient.executeChatTool({
+                toolName: '__flow_effect_preview',
+                toolInput: {
+                    ...spreadIfDefined('flowId', flowId),
+                    ...spreadIfDefined('flowRunId', flowRunId),
+                    ...spreadIfDefined('stepName', stepName),
+                },
+                platformId,
+                userId,
+                conversationId,
+            })
+            return response.result
+        },
+        resolveTargetName: async ({ entity, ids }) => {
+            const response = await ctx.apiClient.executeChatTool({ toolName: '__consent_target_name', toolInput: { entity, ids }, platformId, userId, conversationId })
+            const targetName = isObject(response.result) ? response.result['targetName'] : undefined
+            return typeof targetName === 'string' ? targetName : undefined
+        },
+        checkRememberedConsent: async ({ signature }) => {
+            const response = await ctx.apiClient.executeChatTool({ toolName: '__consent_check', toolInput: { signature }, platformId, userId, conversationId })
+            return isObject(response.result) && response.result['approved'] === true
+        },
+        rememberConsent: async ({ signature }) => {
+            await ctx.apiClient.executeChatTool({ toolName: '__consent_remember', toolInput: { signature }, platformId, userId, conversationId })
+        },
+        waitForApproval,
+        storePendingGate,
+        eventEmitter,
+        log,
+    })
+}
+
+function stripAgentGuidance(chunk: unknown): unknown {
+    if (!isObject(chunk) || typeof chunk['type'] !== 'string' || !chunk['type'].startsWith('tool-output')) {
+        return chunk
+    }
+    const output = chunk['output']
+    if (!isObject(output) || !('_agentGuidance' in output)) {
+        return chunk
+    }
+    const { _agentGuidance, ...visible } = output
+    return { ...chunk, output: visible }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
@@ -569,7 +611,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
             else if (chunkType === 'reasoning-end') {
                 reasoningInFlight = false
             }
-            chunkBuffer.push(chunk)
+            chunkBuffer.push(stripAgentGuidance(chunk))
             if (chunkBuffer.length >= BATCH_SIZE) {
                 if (flushTimer) {
                     clearTimeout(flushTimer)

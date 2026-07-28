@@ -269,6 +269,10 @@ function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: ChatTu
                     return { content: [{ type: 'text', text: `✋ This exact ${name} call already came back the same unproductive way ${MAX_IDENTICAL_TOOL_FAILURES} times (an error, or an empty result) and was NOT retried. Stop repeating it: change the parameters, switch the action (e.g. a list/search action instead of a find-one), or try a different approach. Do not re-send the identical call.` }] }
                 }
                 const result = await originalExecute(input, options)
+                const isConsentOutcome = isObject(result) && '_agentGuidance' in result
+                if (isConsentOutcome) {
+                    return result
+                }
                 const text = extractResultText(result)
                 const isFailure = text.length > 0 && chatToolClassification.hasFailureTextPrefix(text)
                 const isEmptyRead = text.length > 0 && !isFailure && looksEmptyResultText(text)

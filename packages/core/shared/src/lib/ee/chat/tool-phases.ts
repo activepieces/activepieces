@@ -1,10 +1,3 @@
-/**
- * Two-phase tool visibility: in DISCOVERY the agent sees only read/understand
- * tools; the flow-construction/editing/publishing/table-write tools stay hidden
- * until it starts building. Denylist (not allowlist) on purpose — an unclassified
- * new tool degrades to "noisier discovery", never to "a needed tool vanished".
- */
-
 const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_build_flow',
     'ap_create_flow',
@@ -15,8 +8,6 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_add_branch',
     'ap_update_branch',
     'ap_delete_branch',
-    'ap_test_flow',
-    'ap_test_step',
     'ap_validate_flow',
     'ap_validate_step_config',
     'ap_execute_action',

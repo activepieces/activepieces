@@ -331,6 +331,18 @@ export const recordService = {
             where: { projectId, tableId },
         })
     },
+    async tableIdsOf({ ids, projectId }: { ids: string[], projectId: string }): Promise<string[]> {
+        if (ids.length === 0) {
+            return []
+        }
+        const rows = await recordRepo()
+            .createQueryBuilder('record')
+            .select('DISTINCT record."tableId"', 'tableId')
+            .where('record.id IN (:...ids)', { ids })
+            .andWhere('record."projectId" = :projectId', { projectId })
+            .getRawMany<{ tableId: string }>()
+        return rows.map((row) => row.tableId)
+    },
     async validateCount(params: CountParams, insertCount: number): Promise<void> {
         const countRes = await this.count(params)
         if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {

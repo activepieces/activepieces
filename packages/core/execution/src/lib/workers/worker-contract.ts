@@ -141,6 +141,7 @@ export type ChatConfigResponse = {
     aiTools: ChatAiToolsConfig
     emailEnabled: boolean
     userEmail: string
+    consentPolicy?: Record<string, string>
 }
 
 export type SaveChatMessagesRequest = {

@@ -24,6 +24,41 @@ export type ToolProgressEvent = {
     }
 }
 
+export type ConsentEffectPreview = {
+    displayName: string
+    detail: string
+    kind: string
+    recipient?: string
+    recipientResolved: boolean
+}
+
+export type ConsentPreviewCategory =
+    | 'live_test'
+    | 'step_test'
+    | 'retry_run'
+    | 'run_code'
+    | 'publish'
+    | 'enable'
+    | 'delete_flow'
+    | 'delete_table'
+    | 'delete_records'
+    | 'delete_column'
+    | 'connector_action'
+    | 'unknown_tool'
+
+export type ConsentSeverity = 'destructive' | 'financial' | 'external' | 'unknown'
+
+export type ConsentPreview = {
+    category: ConsentPreviewCategory
+    severity: ConsentSeverity
+    flowName?: string
+    targetName?: string
+    recordCount?: number
+    effects: ConsentEffectPreview[]
+    resolved: boolean
+    reusable: boolean
+}
+
 export type ActionPreviewEvent = {
     toolCallId: string
     pieceName: string
@@ -34,6 +69,7 @@ export type ActionPreviewEvent = {
     isBatch: boolean
     batchCount?: number
     batchSamples?: Record<string, unknown>[]
+    consent?: ConsentPreview
 }
 
 export type ActionReceiptEvent = {
@@ -41,7 +77,7 @@ export type ActionReceiptEvent = {
     actionDisplayName: string
     pieceName: string
     connectionLabel?: string
-    status: 'success' | 'failed'
+    status: 'success' | 'failed' | 'declined' | 'timed_out'
     output: unknown
     errorMessage?: string
     timestamp: string

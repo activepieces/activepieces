@@ -88,9 +88,7 @@ export function buildMessageBlocks({
     // skeleton. They already show as a step in the thinking accordion above.
     if (chatPartUtils.isReadOnlyExecuteAction(p)) return;
 
-    const hasReceipt =
-      toolName === 'ap_execute_action' &&
-      !!toolCallMeta[toolCallId]?.actionReceipt;
+    const hasReceipt = !!toolCallMeta[toolCallId]?.actionReceipt;
     const hasImage =
       toolName === 'ap_generate_image' && !!toolCallMeta[toolCallId]?.image;
     const hasFiles =
