@@ -230,5 +230,56 @@ export const codyClient = {
         return response.body;
     },
 
-    
+    // Generic helper for the agent atomics: a GET against any Cody v1 path
+    // with optional query params, returning the raw response body.
+    async get<T>(
+        {secret_text}: AppConnectionValueForAuthProperty<typeof codyAuth>,
+        path: string,
+        queryParams?: Record<string, string>
+    ): Promise<T> {
+        const response = await httpClient.sendRequest<T>({
+            method: HttpMethod.GET,
+            url: `${CODY_BASE_URL}${path}`,
+            queryParams,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: secret_text,
+            },
+        });
+        return response.body;
+    },
+
+    // Generic helper for the agent atomics: a POST against any Cody v1 path.
+    async post<T>(
+        {secret_text}: AppConnectionValueForAuthProperty<typeof codyAuth>,
+        path: string,
+        body: Record<string, unknown>
+    ): Promise<T> {
+        const response = await httpClient.sendRequest<T>({
+            method: HttpMethod.POST,
+            url: `${CODY_BASE_URL}${path}`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: secret_text,
+            },
+            body,
+        });
+        return response.body;
+    },
+
+    // Generic helper for the agent atomics: a DELETE against any Cody v1 path.
+    async delete<T>(
+        {secret_text}: AppConnectionValueForAuthProperty<typeof codyAuth>,
+        path: string
+    ): Promise<T> {
+        const response = await httpClient.sendRequest<T>({
+            method: HttpMethod.DELETE,
+            url: `${CODY_BASE_URL}${path}`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: secret_text,
+            },
+        });
+        return response.body;
+    },
 };

@@ -11,6 +11,12 @@ export const clearRowsAction = createAction({
 	displayName: 'Clear Row(s)',
 	description:
 		'Clears the contents of one or more rows without removing the rows themselves. Useful when you want to keep formatting and references stable.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Blanks the cell contents of one row or a contiguous row range in a worksheet without removing the rows, so row numbers and downstream references stay stable — prefer Delete Row or Delete Multiple Rows when the rows themselves should disappear, and Clear Sheet when the whole sheet should be emptied. Requires a selected spreadsheet and worksheet plus a 1-based starting row; leaving the ending row empty clears only that single row. Idempotent — re-running over the same range leaves it equally empty, but the erased values cannot be recovered.',
+		idempotent: true,
+	},
 	props: {
 		...commonProps,
 		startingRow: Property.Number({

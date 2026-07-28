@@ -21,11 +21,12 @@ import {
 } from '../common';
 
 export const sendPrompt = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'send_prompt',
   displayName: 'Ask Bedrock',
   description: 'Send a text prompt to an Amazon Bedrock model.',
+  aiMetadata: { description: 'Sends a text prompt to a foundation model on Amazon Bedrock via the Converse API and returns the generated text, with optional system prompt, temperature, top-p, max-tokens, and stop sequences; leave Conversation Memory ID empty for a stateless one-off question or set one to persist message history across runs, and optionally attach a single file either uploaded directly or referenced by S3 bucket and key. This is the general-purpose text entry point for Bedrock - prefer Generate Content from Image for a one-off vision question, Generate Image to produce a picture, or Generate Embeddings for vectors. Requires a model id enabled in the connected AWS region. Not idempotent: each call bills a fresh non-deterministic completion and appends to the stored history whenever a memory key is set.', idempotent: false },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',

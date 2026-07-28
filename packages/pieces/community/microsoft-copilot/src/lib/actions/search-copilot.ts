@@ -4,12 +4,16 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsoft-cloud';
 
 export const searchCopilot = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: microsoft365CopilotAuth,
   name: 'searchCopilot',
   displayName: 'Search Copilot',
   description:
     'Perform hybrid (semantic and lexical) search across OneDrive for work or school content using natural language queries',
+  aiMetadata: {
+    description: 'Runs a hybrid semantic and lexical search over the connected user\'s OneDrive for work or school content from a natural-language query, optionally scoped by a KQL filter expression. Use it to find matching files in OneDrive; prefer Chat with Copilot when you want a synthesized answer rather than a list of results. Requires a query of at most 1,500 characters. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.LongText({
       displayName: 'Search Query',

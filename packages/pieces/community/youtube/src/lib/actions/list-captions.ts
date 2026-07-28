@@ -11,6 +11,8 @@ export const youtubeListCaptionsAction = createAction({
   displayName: 'List Captions',
   description:
     'Returns caption tracks for a specific YouTube video using the captions.list endpoint.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the caption tracks attached to a single YouTube video, covering every track on that video or only the ones named by a comma-separated list of caption IDs. Use it to discover which languages a video is captioned in and to obtain the caption ID that the Download Caption action requires. The video ID is mandatory. Read-only and idempotent.', idempotent: true },
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',
