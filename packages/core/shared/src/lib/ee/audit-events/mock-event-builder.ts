@@ -4,6 +4,7 @@ import {
     ApplicationEvent,
     ApplicationEventName,
     AuthenticationEvent,
+    ChatConsentEvent,
     ConnectionEvent,
     FlowActivatedEvent,
     FlowCreatedEvent,
@@ -279,6 +280,23 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     failedCount: 0,
                     outcome: 'SUCCESS',
                     durationMs: 1234,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.CHAT_FULL_ACCESS_ENABLED:
+        case ApplicationEventName.CHAT_FULL_ACCESS_DISABLED:
+        case ApplicationEventName.CHAT_CONSENT_GRANTED:
+        case ApplicationEventName.CHAT_CONSENT_DECLINED:
+        case ApplicationEventName.CHAT_CONSENT_POLICY_DENIED: {
+            const mock: ChatConsentEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    conversation: { id: apId() },
+                    tool: { name: 'ap_test_flow', displayName: 'Run a live test' },
+                    effectKinds: ['outward_send'],
+                    targetName: 'Daily digest',
                 },
             }
             return mock

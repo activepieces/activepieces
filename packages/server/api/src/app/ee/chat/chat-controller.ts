@@ -1,10 +1,11 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, ImportChatMemoryRequest, InstructChatMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetChatMessageFeedbackRequest, UpdateChatConversationRequest, UpdateChatMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ApplicationEventName, ChatConversationStatus, CreateChatConversationRequest, ImportChatMemoryRequest, InstructChatMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetChatMessageFeedbackRequest, UpdateChatConversationRequest, UpdateChatMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { applicationEvents } from '../../helper/application-events'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
@@ -174,12 +175,18 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
         request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[chatController] Tool approval received')
-        await chatApprovalGate.resolveGate({
+        const resolved = await chatApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
             payload: request.body.payload,
             log: request.log,
         })
+        if (resolved.decided && !isNil(resolved.conversationId)) {
+            applicationEvents(request.log).sendUserEvent(request, {
+                action: request.body.approved ? ApplicationEventName.CHAT_CONSENT_GRANTED : ApplicationEventName.CHAT_CONSENT_DECLINED,
+                data: consentAuditData({ conversationId: resolved.conversationId, pendingGate: resolved.pendingGate }),
+            })
+        }
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
@@ -300,6 +307,27 @@ async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platform
     if (!isNil(error)) {
         await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
         log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[chatController] Failed to grant free chat credits')
+    }
+}
+
+function consentAuditData({ conversationId, pendingGate }: {
+    conversationId: string
+    pendingGate: { toolName: string, displayName: string, toolInput: Record<string, unknown> } | null
+}): { conversation: { id: string }, tool?: { name: string, displayName?: string }, effectKinds?: string[], targetName?: string } {
+    if (isNil(pendingGate)) {
+        return { conversation: { id: conversationId } }
+    }
+    const consent = pendingGate.toolInput['consent']
+    const effects = isObject(consent) && Array.isArray(consent['effects']) ? consent['effects'] : []
+    const effectKinds = effects
+        .map((effect) => isObject(effect) && typeof effect['kind'] === 'string' ? effect['kind'] : undefined)
+        .filter((kind): kind is string => !isNil(kind))
+    const targetName = isObject(consent) && typeof consent['targetName'] === 'string' ? consent['targetName'] : undefined
+    return {
+        conversation: { id: conversationId },
+        tool: { name: pendingGate.toolName, displayName: pendingGate.displayName },
+        ...(effectKinds.length > 0 ? { effectKinds } : {}),
+        ...spreadIfDefined('targetName', targetName),
     }
 }
 

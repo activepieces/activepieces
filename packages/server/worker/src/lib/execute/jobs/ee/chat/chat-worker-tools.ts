@@ -562,7 +562,7 @@ function createProgressGuard() {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState, policy, log }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState, policy, auditPolicyDenied, log }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: ChatEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
@@ -570,6 +570,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
     guides: Record<string, string>
     taintState: TaintState
     policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
+    auditPolicyDenied?: AuditPolicyDenied
     log?: ChatToolLogger
 }): ToolSet {
     ensureEffectCatalog()
@@ -636,6 +637,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 })
                 if (consentDecision === 'deny') {
                     log?.info?.({ tool: { name: 'ap_execute_action' }, piece: { name: toolInput.pieceName } }, 'Consent denied by policy, not asking')
+                    void auditPolicyDenied?.({ toolName: 'ap_execute_action', displayName: toolInput.actionName })
                     return policyDeniedResult(toolInput.actionName)
                 }
 
@@ -754,6 +756,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     policy,
                 }) === 'deny') {
                     log?.info?.({ tool: { name: 'ap_explore_data' }, piece: { name: toolInput.pieceName } }, 'Consent denied by policy, not asking')
+                    void auditPolicyDenied?.({ toolName: 'ap_explore_data', displayName: toolInput.actionName })
                     return policyDeniedResult(toolInput.actionName)
                 }
                 taintState.tainted = true
@@ -1031,13 +1034,14 @@ function createImageTools({ imageGeneration, saveFile, emitImage }: {
     }
 }
 
-function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval, onGateOpened, policy, log }: {
+function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval, onGateOpened, policy, auditPolicyDenied, log }: {
     sendEmail: (params: { to: string[], subject: string, body: string, gateId?: string }) => Promise<SendChatEmailResponse>
     eventEmitter: ChatEventEmitter
     userEmail: string
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
+    auditPolicyDenied?: AuditPolicyDenied
     log?: ChatToolLogger
 }): ToolSet {
     const normalizedSelf = userEmail.toLowerCase().trim()
@@ -1054,6 +1058,7 @@ function createEmailTools({ sendEmail, eventEmitter, userEmail, waitForApproval,
                 const displayName = toolInput.title ?? 'Send email'
                 if (chatConsent.decide({ kind: 'outward_send', policy }) === 'deny') {
                     log?.info?.({ tool: { name: 'ap_send_email' } }, 'Consent denied by policy, not asking')
+                    void auditPolicyDenied?.({ toolName: 'ap_send_email', displayName: 'Send email', effectKinds: ['outward_send'] })
                     return policyDeniedResult('Send an email')
                 }
 
@@ -1601,7 +1606,7 @@ function gateLabelFor({ toolName, spec, flowName, effects, resolved, resolvedTar
     return summary.length > 0 ? `${intro} ${target} — performs: ${summary}` : `${intro} ${target}`
 }
 
-function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, policy, previewFlowEffects, resolveTargetName, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, log }: {
+function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, policy, previewFlowEffects, resolveTargetName, checkRememberedConsent, rememberConsent, waitForApproval, storePendingGate, eventEmitter, auditPolicyDenied, log }: {
     tools: T
     disabled?: boolean
     policy?: Partial<Record<ActionEffectKind, ConsentDecision>>
@@ -1612,6 +1617,7 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     eventEmitter: ChatEventEmitter
+    auditPolicyDenied?: AuditPolicyDenied
     log?: ChatToolLogger
 }): T {
     ensureEffectCatalog()
@@ -1645,6 +1651,7 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
                 if (decisions.includes('deny')) {
                     const blocked = effects.filter((step) => chatConsent.decide({ kind: step.effect.kind, policy }) === 'deny')
                     log?.info?.({ tool: { name: toolName }, effectKinds: kinds }, 'Consent denied by policy, not asking')
+                    void auditPolicyDenied?.({ toolName, effectKinds: kinds })
                     return gateOutcomeResult({
                         userLine: '❌ Not allowed here — nothing ran.',
                         modelGuidance: `This is blocked by the workspace's policy, not by the user: ${describeEffects(blocked)}. Asking will not change it. Tell the user plainly that this kind of action is not permitted in this workspace and offer an alternative that avoids it.`,
@@ -1813,6 +1820,8 @@ type ConsentTargetEntity = 'flow' | 'table' | 'records' | 'field'
 type ResolveConsentTargetName = (params: { entity: ConsentTargetEntity, ids: string[] }) => Promise<string | undefined>
 
 type ChatToolLogger = { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
+
+type AuditPolicyDenied = (params: { toolName: string, displayName?: string, effectKinds?: string[] }) => Promise<void>
 
 type GateOutcomeResult = {
     content: { type: 'text', text: string }[]

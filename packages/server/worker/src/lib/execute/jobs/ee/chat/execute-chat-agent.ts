@@ -358,6 +358,20 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const policy = chatConsent.composePolicy({ fullAccess: false, overrides: consentPolicy })
     const brokenConnectors = new Set<string>()
 
+    const auditPolicyDenied = async ({ toolName, displayName, effectKinds }: { toolName: string, displayName?: string, effectKinds?: string[] }) => {
+        await tryCatch(() => ctx.apiClient.executeChatTool({
+            toolName: '__consent_audit',
+            toolInput: {
+                tool: toolName,
+                ...spreadIfDefined('displayName', displayName),
+                ...(!isNil(effectKinds) && effectKinds.length > 0 ? { effectKinds } : {}),
+            },
+            platformId,
+            userId,
+            conversationId,
+        }))
+    }
+
     const executeCrossProjectTool = async (toolName: string, toolInput: Record<string, unknown>) => {
         if (dryRun) {
             return { preview: true, message: `Tool "${toolName}" was not executed (prompt playground preview).` }
@@ -453,7 +467,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState, policy, log })
+    const crossProjectTools = chatWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState, policy, auditPolicyDenied, log })
     const thinkingTools = chatWorkerTools.createThinkingTools()
     const phaseTools = chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -482,6 +496,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             waitForApproval,
             onGateOpened: storePendingGate,
             policy,
+            auditPolicyDenied,
             log,
         })
         : {}
@@ -514,6 +529,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             const response = await ctx.apiClient.executeChatTool({ toolName: '__consent_check', toolInput: { signature }, platformId, userId, conversationId })
             return isObject(response.result) && response.result['approved'] === true
         },
+        auditPolicyDenied,
         rememberConsent: async ({ signature }) => {
             await ctx.apiClient.executeChatTool({ toolName: '__consent_remember', toolInput: { signature }, platformId, userId, conversationId })
         },

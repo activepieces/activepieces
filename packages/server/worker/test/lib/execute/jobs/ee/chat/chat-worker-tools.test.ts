@@ -657,6 +657,7 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
     const checked: string[] = []
     const previewCalls: unknown[] = []
     const targetNameCalls: unknown[] = []
+    const auditCalls: { toolName: string, displayName?: string, effectKinds?: string[] }[] = []
 
     const tools = Object.fromEntries(CONSENT_GATED_TOOL_NAMES.map((toolName) => [toolName, {
         execute: async (args: unknown) => {
@@ -707,9 +708,12 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
             },
             emitActionReceipt: () => {},
         },
+        auditPolicyDenied: async (params) => {
+            auditCalls.push(params)
+        },
     })
 
-    return { wrapped, ran, previews, gates, remembers, checked, previewCalls, targetNameCalls }
+    return { wrapped, ran, previews, gates, remembers, checked, previewCalls, targetNameCalls, auditCalls }
 }
 
 const SEND_STEP = { stepName: 'notify', displayName: 'Email me the digest', kind: 'outward_send', detail: 'gmail · send_email', recipient: 'omar@activepieces.com' }
@@ -1107,6 +1111,9 @@ describe('chatWorkerTools.wrapWithConsent — autonomy policy', () => {
         expect(h.ran).toHaveLength(0)
         expect(result.content[0].text).toContain('Not allowed here')
         expect(result._agentGuidance).toContain('policy')
+        expect(h.auditCalls).toHaveLength(1)
+        expect(h.auditCalls[0].toolName).toBe('ap_test_flow')
+        expect(h.auditCalls[0].effectKinds).toContain('financial')
     })
 
     it('ignores garbage kinds and decisions in admin overrides', () => {
@@ -1144,6 +1151,7 @@ describe('chatWorkerTools self-gated tools honour an admin deny', () => {
         const { eventEmitter, previewEvents } = makeMockEventEmitter()
         const executeTool = vi.fn().mockResolvedValue(mcpSuccess('done'))
         const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+        const auditPolicyDenied = vi.fn().mockResolvedValue(undefined)
         const tools = chatWorkerTools.createCrossProjectTools({
             executeTool,
             eventEmitter,
@@ -1151,6 +1159,7 @@ describe('chatWorkerTools self-gated tools honour an admin deny', () => {
             guides: {},
             taintState: { tainted: false },
             policy: chatConsent.composePolicy({ fullAccess: false, overrides: { outward_send: 'deny' } }),
+            auditPolicyDenied,
         })
 
         const result = await tools.ap_execute_action.execute({
@@ -1165,18 +1174,21 @@ describe('chatWorkerTools self-gated tools honour an admin deny', () => {
         expect(previewEvents).toHaveLength(0)
         expect(result.content[0].text).toContain('Not allowed here')
         expect(result._agentGuidance).toContain('policy')
+        expect(auditPolicyDenied).toHaveBeenCalledWith(expect.objectContaining({ toolName: 'ap_execute_action', displayName: 'send_message' }))
     })
 
     it('refuses to send email the workspace denies, even to the user themselves', async () => {
         const { eventEmitter } = makeMockEventEmitter()
         const sendEmail = vi.fn().mockResolvedValue({ sent: true, message: 'Email sent.' })
         const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+        const auditPolicyDenied = vi.fn().mockResolvedValue(undefined)
         const tools = chatWorkerTools.createEmailTools({
             sendEmail,
             eventEmitter,
             userEmail: 'omar@activepieces.com',
             waitForApproval,
             policy: chatConsent.composePolicy({ fullAccess: false, overrides: { outward_send: 'deny' } }),
+            auditPolicyDenied,
         })
 
         const result = await tools.ap_send_email.execute({
@@ -1188,6 +1200,7 @@ describe('chatWorkerTools self-gated tools honour an admin deny', () => {
         expect(sendEmail).not.toHaveBeenCalled()
         expect(waitForApproval).not.toHaveBeenCalled()
         expect(result.content[0].text).toContain('Not allowed here')
+        expect(auditPolicyDenied).toHaveBeenCalledWith(expect.objectContaining({ toolName: 'ap_send_email', effectKinds: ['outward_send'] }))
     })
 
     it('still gates an external recipient when the policy merely allows sends', async () => {

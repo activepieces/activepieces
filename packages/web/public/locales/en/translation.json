@@ -2258,7 +2258,6 @@
   "Keep asking me": "Keep asking me",
   "Give full access": "Give full access",
   "Full access in chat": "Full access in chat",
-  "Let members allow the assistant to send and change connected apps without asking per action. Deleting data and moving money always ask.": "Let members allow the assistant to send and change connected apps without asking per action. Deleting data and moving money always ask.",
   "Deletes data in your workspace": "Deletes data in your workspace",
   "Deleted data can't be brought back.": "Deleted data can't be brought back.",
   "Part of this we can't predict until it runs.": "Part of this we can't predict until it runs.",
@@ -2278,5 +2277,17 @@
   "This switches the automation on for real.": "This switches the automation on for real.",
   "It stays on for this chat until you switch it back.": "It stays on for this chat until you switch it back.",
   "Asks before real actions.": "Asks before real actions.",
-  "Runs without asking.": "Runs without asking."
+  "Runs without asking.": "Runs without asking.",
+  "Everyone": "Everyone",
+  "Admins only": "Admins only",
+  "No one": "No one",
+  "Limited to workspace admins.": "Limited to workspace admins.",
+  "Chat full access turned on": "Chat full access turned on",
+  "Chat full access turned off": "Chat full access turned off",
+  "Chat action approved": "Chat action approved",
+  "Chat action declined": "Chat action declined",
+  "Chat action blocked by policy": "Chat action blocked by policy",
+  "Saved.": "Saved.",
+  "Couldn't save — nothing was changed.": "Couldn't save — nothing was changed.",
+  "Who can let the assistant send and change connected apps without asking per action. Deleting data and moving money still ask, unless a workspace rule allows them.": "Who can let the assistant send and change connected apps without asking per action. Deleting data and moving money still ask, unless a workspace rule allows them."
 }

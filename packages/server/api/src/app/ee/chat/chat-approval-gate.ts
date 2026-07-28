@@ -23,12 +23,13 @@ function channelName(gateId: string): string {
     return `${CHANNEL_PREFIX}${gateId}`
 }
 
-async function resolveGate({ gateId, approved, payload, log }: { gateId: string, approved: boolean, payload?: Record<string, unknown>, log?: FastifyBaseLogger }): Promise<void> {
+async function resolveGate({ gateId, approved, payload, log }: { gateId: string, approved: boolean, payload?: Record<string, unknown>, log?: FastifyBaseLogger }): Promise<ResolvedGate> {
     // Bind the decision to the exact inputs the user saw in the preview, so a consumer can verify
     // the action it's about to run matches what was approved (not a different payload reusing the id).
     const conversationId = await distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
     const pendingGate = conversationId ? await distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`) : null
-    const approvedInput = pendingGate?.gateId === gateId ? pendingGate.toolInput : undefined
+    const matchedGate = pendingGate?.gateId === gateId ? pendingGate : null
+    const approvedInput = matchedGate?.toolInput
     const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload, approvedInput }, GATE_TTL_SECONDS)
     if (wasSet) {
         await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
@@ -40,6 +41,11 @@ async function resolveGate({ gateId, approved, payload, log }: { gateId: string,
     }
     else {
         log?.info({ gate: { id: gateId } }, '[chatApprovalGate] Gate decision ignored (already decided)')
+    }
+    return {
+        decided: wasSet === true,
+        conversationId: conversationId ?? null,
+        pendingGate: matchedGate,
     }
 }
 
@@ -203,10 +209,16 @@ type StoredConnection = {
 
 type SelectedConnection = Pick<StoredConnection, 'externalId' | 'label' | 'projectId'>
 
-type PendingGate = {
+export type PendingGate = {
     gateId: string
     toolName: string
     displayName: string
     toolInput: Record<string, unknown>
     runId?: string
+}
+
+export type ResolvedGate = {
+    decided: boolean
+    conversationId: string | null
+    pendingGate: PendingGate | null
 }
