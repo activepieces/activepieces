@@ -158,14 +158,16 @@ const PieceSelectorContent = ({
   return (
     <Popover
       open={isOpen}
-      modal={true}
+      modal={false}
       onOpenChange={(open) => {
-        if (!open) {
-          clearSearch();
-          setOpenedPieceSelectorStepNameOrAddButtonId(null);
-          if (isForEmptyTrigger) {
-            deselectStep();
-          }
+        if (open) {
+          setOpenedPieceSelectorStepNameOrAddButtonId(id);
+          return;
+        }
+        clearSearch();
+        setOpenedPieceSelectorStepNameOrAddButtonId(null);
+        if (isForEmptyTrigger) {
+          deselectStep();
         }
       }}
     >
@@ -196,6 +198,11 @@ const PieceSelectorContent = ({
         <PopoverContent
           onContextMenu={(e) => {
             e.stopPropagation();
+          }}
+          onInteractOutside={(e) => {
+            if (e.detail.originalEvent.type === 'focusin') {
+              e.preventDefault();
+            }
           }}
           className="w-[340px] md:w-[600px] p-0 shadow-lg"
           onClick={(e) => {
