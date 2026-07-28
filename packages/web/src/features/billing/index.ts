@@ -16,6 +16,7 @@ export { LicenseKey } from './components/license-key';
 export { Success } from './components/success';
 export { billingMutations, billingQueries } from './hooks/billing-hooks';
 export { useSeatLimitGuard } from './hooks/use-seat-limit-guard';
+export { useTeamProjectLimitGuard } from './hooks/use-team-project-limit-guard';
 export { useCancelSubscriptionGuard } from './hooks/use-cancel-subscription-guard';
 export {
   DROP_TO_FREE_MESSAGE,

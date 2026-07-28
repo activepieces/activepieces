@@ -167,6 +167,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
       { metric: 'credits' },
       { metric: 'seats' },
       { label: 'Automation flows' },
+      { label: 'Personal project only' },
       { label: 'Tables' },
       { label: 'API Keys' },
     ],
