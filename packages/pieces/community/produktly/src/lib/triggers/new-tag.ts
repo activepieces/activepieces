@@ -51,6 +51,9 @@ export const newTag = createTrigger({
   name: 'new_tag',
   displayName: 'New Tag',
   description: 'Fires when a new tag is created in your Produktly account.',
+  aiMetadata: {
+    description: 'Fires when a new tag is created anywhere in the Produktly account. Polls the account-wide tag list on a schedule and emits each tag it has not seen before, with its name and display colours; tags are the labels that changelog posts can be categorised with.',
+  },
   props: triggerProps,
   sampleData: {
     tag_id: 1,
