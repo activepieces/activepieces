@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { treeBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetRepositoryTreeAction = createAction({
   auth: githubAuth,
@@ -29,6 +30,7 @@ export const githubGetRepositoryTreeAction = createAction({
       required: false,
     }),
   },
+  outputSchema: treeBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, tree_sha, recursive } = propsValue;
     const query: RequestParams = {};

@@ -2,6 +2,7 @@ import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createCommentActionOutputSchema } from '../output-schemas';
 
 export const githubCreateCommentOnAIssue = createAction({
   auth: githubAuth,
@@ -28,6 +29,7 @@ export const githubCreateCommentOnAIssue = createAction({
       required: true,
     }),
   },
+  outputSchema: createCommentActionOutputSchema,
   async run({ auth, propsValue }) {
     const issue_number = propsValue.issue_number;
     const { owner, repo } = propsValue.repository!;

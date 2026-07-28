@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { addCollaboratorOutputSchema } from '../../output-schemas';
 
 export const githubAddCollaboratorAction = createAction({
   auth: githubAuth,
@@ -37,6 +38,7 @@ export const githubAddCollaboratorAction = createAction({
       },
     }),
   },
+  outputSchema: addCollaboratorOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, username, permission } = propsValue;
     const body: Record<string, unknown> = {};

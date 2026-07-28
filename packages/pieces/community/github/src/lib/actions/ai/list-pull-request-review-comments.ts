@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { listPullRequestReviewCommentsOutputSchema } from '../../output-schemas';
 
 export const githubListPullRequestReviewCommentsAction = createAction({
   auth: githubAuth,
@@ -24,6 +25,7 @@ export const githubListPullRequestReviewCommentsAction = createAction({
       required: true,
     }),
   },
+  outputSchema: listPullRequestReviewCommentsOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, pull_number } = propsValue;
     try {

@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { fileContentBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetFileContentAction = createAction({
   auth: githubAuth,
@@ -31,6 +32,7 @@ export const githubGetFileContentAction = createAction({
       required: false,
     }),
   },
+  outputSchema: fileContentBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, path, ref } = propsValue;
     const query: RequestParams = {};

@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { listPullRequestsOutputSchema } from '../../output-schemas';
 
 export const githubListPullRequestsAction = createAction({
   auth: githubAuth,
@@ -62,6 +63,7 @@ export const githubListPullRequestsAction = createAction({
       },
     }),
   },
+  outputSchema: listPullRequestsOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     const query: RequestParams = {};

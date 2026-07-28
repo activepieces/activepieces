@@ -2,6 +2,7 @@ import { githubAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { addLabelsToIssueActionOutputSchema } from '../output-schemas';
 
 export const githubAddLabelsToIssueAction = createAction({
   auth: githubAuth,
@@ -19,6 +20,7 @@ export const githubAddLabelsToIssueAction = createAction({
     issue_number: githubCommon.issueDropdown(true),
     labels: githubCommon.labelDropDown(true),
   },
+  outputSchema: addLabelsToIssueActionOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
     const issue_number = propsValue.issue_number;

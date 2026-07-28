@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { commitBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetCommitAction = createAction({
   auth: githubAuth,
@@ -24,6 +25,7 @@ export const githubGetCommitAction = createAction({
       required: true,
     }),
   },
+  outputSchema: commitBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, ref } = propsValue;
     try {

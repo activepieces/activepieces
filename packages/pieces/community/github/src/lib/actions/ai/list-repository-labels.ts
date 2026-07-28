@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { listLabelsOutputSchema } from '../../output-schemas';
 
 export const githubListRepositoryLabelsAction = createAction({
   auth: githubAuth,
@@ -19,6 +20,7 @@ export const githubListRepositoryLabelsAction = createAction({
     owner: ownerProp,
     repo: repoProp,
   },
+  outputSchema: listLabelsOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     try {

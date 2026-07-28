@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { listRepositoriesOutputSchema } from '../../output-schemas';
 
 export const githubListStarredRepositoriesAction = createAction({
   auth: githubAuth,
@@ -16,6 +17,7 @@ export const githubListStarredRepositoriesAction = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: listRepositoriesOutputSchema,
   async run({ auth }) {
     try {
       const items = await githubPaginatedApiCall<Record<string, unknown>>({

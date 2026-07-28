@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { repositoryBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetRepositoryAction = createAction({
   auth: githubAuth,
@@ -19,6 +20,7 @@ export const githubGetRepositoryAction = createAction({
     owner: ownerProp,
     repo: repoProp,
   },
+  outputSchema: repositoryBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     try {

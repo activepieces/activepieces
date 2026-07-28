@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { listIssueCommentsOutputSchema } from '../../output-schemas';
 
 export const githubListIssueCommentsAction = createAction({
   auth: githubAuth,
@@ -25,6 +26,7 @@ export const githubListIssueCommentsAction = createAction({
       required: true,
     }),
   },
+  outputSchema: listIssueCommentsOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, issue_number } = propsValue;
     try {

@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { listCommitsOutputSchema } from '../../output-schemas';
 
 export const githubListCommitsAction = createAction({
   auth: githubAuth,
@@ -44,6 +45,7 @@ export const githubListCommitsAction = createAction({
       required: false,
     }),
   },
+  outputSchema: listCommitsOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     const query: RequestParams = {};

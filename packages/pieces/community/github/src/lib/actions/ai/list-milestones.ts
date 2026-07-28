@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { listMilestonesOutputSchema } from '../../output-schemas';
 
 export const githubListMilestonesAction = createAction({
   auth: githubAuth,
@@ -30,6 +31,7 @@ export const githubListMilestonesAction = createAction({
       },
     }),
   },
+  outputSchema: listMilestonesOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     const query: RequestParams = {};

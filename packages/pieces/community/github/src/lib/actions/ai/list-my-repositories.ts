@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { listRepositoriesOutputSchema } from '../../output-schemas';
 
 export const githubListMyRepositoriesAction = createAction({
   auth: githubAuth,
@@ -45,6 +46,7 @@ export const githubListMyRepositoriesAction = createAction({
       },
     }),
   },
+  outputSchema: listRepositoriesOutputSchema,
   async run({ auth, propsValue }) {
     const query: RequestParams = {};
     if (propsValue.visibility) query['visibility'] = propsValue.visibility;

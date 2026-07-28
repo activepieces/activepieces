@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { authenticatedUserBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetAuthenticatedUserAction = createAction({
   auth: githubAuth,
@@ -16,6 +17,7 @@ export const githubGetAuthenticatedUserAction = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: authenticatedUserBodyOutputSchema,
   async run({ auth }) {
     try {
       const response = await githubApiCall({

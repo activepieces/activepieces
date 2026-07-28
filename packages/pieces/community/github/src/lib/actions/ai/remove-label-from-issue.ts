@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { labelsArrayOutputSchema } from '../../output-schemas';
 
 export const githubRemoveLabelFromIssueAction = createAction({
   auth: githubAuth,
@@ -31,6 +32,7 @@ export const githubRemoveLabelFromIssueAction = createAction({
       required: true,
     }),
   },
+  outputSchema: labelsArrayOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, issue_number, name } = propsValue;
     try {

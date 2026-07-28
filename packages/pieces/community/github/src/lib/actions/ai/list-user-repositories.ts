@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { listRepositoriesOutputSchema } from '../../output-schemas';
 
 export const githubListUserRepositoriesAction = createAction({
   auth: githubAuth,
@@ -22,6 +23,7 @@ export const githubListUserRepositoriesAction = createAction({
       required: true,
     }),
   },
+  outputSchema: listRepositoriesOutputSchema,
   async run({ auth, propsValue }) {
     const { username } = propsValue;
     try {

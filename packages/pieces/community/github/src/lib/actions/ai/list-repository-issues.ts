@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { listIssuesOutputSchema } from '../../output-schemas';
 
 export const githubListRepositoryIssuesAction = createAction({
   auth: githubAuth,
@@ -76,6 +77,7 @@ export const githubListRepositoryIssuesAction = createAction({
       },
     }),
   },
+  outputSchema: listIssuesOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     const query: RequestParams = {};

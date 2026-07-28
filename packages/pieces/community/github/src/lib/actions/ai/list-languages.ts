@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { languagesOutputSchema } from '../../output-schemas';
 
 export const githubListLanguagesAction = createAction({
   auth: githubAuth,
@@ -19,6 +20,7 @@ export const githubListLanguagesAction = createAction({
     owner: ownerProp,
     repo: repoProp,
   },
+  outputSchema: languagesOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     try {

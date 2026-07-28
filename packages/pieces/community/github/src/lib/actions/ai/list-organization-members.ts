@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { listUsersOutputSchema } from '../../output-schemas';
 
 export const githubListOrganizationMembersAction = createAction({
   auth: githubAuth,
@@ -22,6 +23,7 @@ export const githubListOrganizationMembersAction = createAction({
       required: true,
     }),
   },
+  outputSchema: listUsersOutputSchema,
   async run({ auth, propsValue }) {
     const { org } = propsValue;
     try {

@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { milestoneBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetMilestoneAction = createAction({
   auth: githubAuth,
@@ -24,6 +25,7 @@ export const githubGetMilestoneAction = createAction({
       required: true,
     }),
   },
+  outputSchema: milestoneBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, milestone_number } = propsValue;
     try {

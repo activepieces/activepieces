@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { gitRefBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetReferenceAction = createAction({
   auth: githubAuth,
@@ -24,6 +25,7 @@ export const githubGetReferenceAction = createAction({
       required: true,
     }),
   },
+  outputSchema: gitRefBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, ref } = propsValue;
     try {

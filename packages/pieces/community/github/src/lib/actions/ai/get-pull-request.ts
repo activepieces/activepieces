@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { pullRequestBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetPullRequestAction = createAction({
   auth: githubAuth,
@@ -24,6 +25,7 @@ export const githubGetPullRequestAction = createAction({
       required: true,
     }),
   },
+  outputSchema: pullRequestBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, pull_number } = propsValue;
     try {

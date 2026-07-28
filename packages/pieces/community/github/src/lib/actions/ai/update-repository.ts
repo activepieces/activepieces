@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { repositoryBodyOutputSchema } from '../../output-schemas';
 
 export const githubUpdateRepositoryAction = createAction({
   auth: githubAuth,
@@ -45,6 +46,7 @@ export const githubUpdateRepositoryAction = createAction({
       required: false,
     }),
   },
+  outputSchema: repositoryBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     const body: Record<string, unknown> = {};

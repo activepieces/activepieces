@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { labelBodyOutputSchema } from '../../output-schemas';
 
 export const githubUpdateLabelAction = createAction({
   auth: githubAuth,
@@ -40,6 +41,7 @@ export const githubUpdateLabelAction = createAction({
       required: false,
     }),
   },
+  outputSchema: labelBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, name, new_name, color, description } = propsValue;
     const body: Record<string, unknown> = {};

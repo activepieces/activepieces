@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { issueBodyOutputSchema } from '../../output-schemas';
 
 export const githubRemoveAssigneesFromIssueAction = createAction({
   auth: githubAuth,
@@ -30,6 +31,7 @@ export const githubRemoveAssigneesFromIssueAction = createAction({
       required: true,
     }),
   },
+  outputSchema: issueBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, issue_number } = propsValue;
     const assignees = propsValue.assignees as string[];

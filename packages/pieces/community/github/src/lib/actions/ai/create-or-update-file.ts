@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { fileMutationResultOutputSchema } from '../../output-schemas';
 
 export const githubCreateOrUpdateFileAction = createAction({
   auth: githubAuth,
@@ -44,6 +45,7 @@ export const githubCreateOrUpdateFileAction = createAction({
       required: false,
     }),
   },
+  outputSchema: fileMutationResultOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, path, message, content, sha, branch } = propsValue;
     const body: Record<string, unknown> = { message, content };

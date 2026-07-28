@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createBranchActionOutputSchema } from '../output-schemas';
 
 export const githubCreateBranchAction = createAction({
   auth: githubAuth,
@@ -27,6 +28,7 @@ export const githubCreateBranchAction = createAction({
       required: true,
     }),
   },
+  outputSchema: createBranchActionOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
 

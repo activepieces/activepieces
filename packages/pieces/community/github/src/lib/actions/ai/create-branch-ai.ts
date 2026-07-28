@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { gitRefBodyOutputSchema } from '../../output-schemas';
 
 export const githubCreateBranchAiAction = createAction({
   auth: githubAuth,
@@ -38,6 +39,7 @@ export const githubCreateBranchAiAction = createAction({
       required: true,
     }),
   },
+  outputSchema: gitRefBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, source_branch, new_branch_name } = propsValue;
     try {

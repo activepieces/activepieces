@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { repositoryBodyOutputSchema } from '../../output-schemas';
 
 export const githubCreateOrganizationRepositoryAction = createAction({
   auth: githubAuth,
@@ -36,6 +37,7 @@ export const githubCreateOrganizationRepositoryAction = createAction({
       required: false,
     }),
   },
+  outputSchema: repositoryBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { org, name, description } = propsValue;
     const body: Record<string, unknown> = { name };

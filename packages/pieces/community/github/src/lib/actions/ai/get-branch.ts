@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { branchBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetBranchAction = createAction({
   auth: githubAuth,
@@ -24,6 +25,7 @@ export const githubGetBranchAction = createAction({
       required: true,
     }),
   },
+  outputSchema: branchBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, branch } = propsValue;
     try {

@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { userBodyOutputSchema } from '../../output-schemas';
 
 export const githubGetUserAction = createAction({
   auth: githubAuth,
@@ -22,6 +23,7 @@ export const githubGetUserAction = createAction({
       required: true,
     }),
   },
+  outputSchema: userBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { username } = propsValue;
     try {

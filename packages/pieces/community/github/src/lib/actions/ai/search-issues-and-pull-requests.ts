@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { searchIssuesOutputSchema } from '../../output-schemas';
 
 export const githubSearchIssuesAndPullRequestsAction = createAction({
   auth: githubAuth,
@@ -47,6 +48,7 @@ export const githubSearchIssuesAndPullRequestsAction = createAction({
       required: false,
     }),
   },
+  outputSchema: searchIssuesOutputSchema,
   async run({ auth, propsValue }) {
     const query: RequestParams = { q: propsValue.q };
     if (propsValue.sort) query['sort'] = propsValue.sort;

@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { compareCommitsOutputSchema } from '../../output-schemas';
 
 export const githubCompareCommitsAction = createAction({
   auth: githubAuth,
@@ -29,6 +30,7 @@ export const githubCompareCommitsAction = createAction({
       required: true,
     }),
   },
+  outputSchema: compareCommitsOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, base, head } = propsValue;
     try {

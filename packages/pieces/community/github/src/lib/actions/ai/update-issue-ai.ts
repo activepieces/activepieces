@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { issueBodyOutputSchema } from '../../output-schemas';
 
 export const githubUpdateIssueAiAction = createAction({
   auth: githubAuth,
@@ -90,6 +91,7 @@ export const githubUpdateIssueAiAction = createAction({
       required: false,
     }),
   },
+  outputSchema: issueBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, issue_number } = propsValue;
 

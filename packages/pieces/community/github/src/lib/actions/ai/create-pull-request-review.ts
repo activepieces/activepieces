@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { pullRequestReviewBodyOutputSchema } from '../../output-schemas';
 
 export const githubCreatePullRequestReviewAction = createAction({
   auth: githubAuth,
@@ -54,6 +55,7 @@ export const githubCreatePullRequestReviewAction = createAction({
       required: false,
     }),
   },
+  outputSchema: pullRequestReviewBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo, pull_number, event, body, commit_id, comments } =
       propsValue;

@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { searchUsersOutputSchema } from '../../output-schemas';
 
 export const githubSearchUsersAction = createAction({
   auth: githubAuth,
@@ -31,6 +32,7 @@ export const githubSearchUsersAction = createAction({
       required: false,
     }),
   },
+  outputSchema: searchUsersOutputSchema,
   async run({ auth, propsValue }) {
     const query: RequestParams = { q: propsValue.q };
     if (propsValue.per_page) query['per_page'] = propsValue.per_page;

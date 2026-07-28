@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubApiCall, RequestParams } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { githubError } from './common';
+import { searchRepositoriesOutputSchema } from '../../output-schemas';
 
 export const githubSearchRepositoriesAction = createAction({
   auth: githubAuth,
@@ -54,6 +55,7 @@ export const githubSearchRepositoriesAction = createAction({
       required: false,
     }),
   },
+  outputSchema: searchRepositoriesOutputSchema,
   async run({ auth, propsValue }) {
     const query: RequestParams = { q: propsValue.q };
     if (propsValue.sort) query['sort'] = propsValue.sort;

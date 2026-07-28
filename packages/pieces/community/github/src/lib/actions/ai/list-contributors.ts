@@ -3,6 +3,7 @@ import { githubAuth } from '../../auth';
 import { githubPaginatedApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ownerProp, repoProp, githubError } from './common';
+import { listContributorsOutputSchema } from '../../output-schemas';
 
 export const githubListContributorsAction = createAction({
   auth: githubAuth,
@@ -19,6 +20,7 @@ export const githubListContributorsAction = createAction({
     owner: ownerProp,
     repo: repoProp,
   },
+  outputSchema: listContributorsOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
     try {
