@@ -1,13 +1,15 @@
 import { spawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { readFile, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { CodeSandbox } from './code-sandbox-common'
 
-const getDenoPath = (): string => process.env.AP_DENO_PATH ?? join(dirname(require.resolve('deno/bin.cjs')), 'deno')
 const MEMORY_LIMIT_MB = 128
-const RESULT_MARKER = '__AP_DENO_SANDBOX_RESULT__'
+const getDenoPath = (): string => process.env.AP_DENO_PATH ?? join(dirname(require.resolve('deno/bin.cjs')), 'deno')
+const newResultMarker = (): string => `__AP_DENO_RESULT_${randomUUID().replace(/-/g, '')}__` // Add random uuid so it's not guessable and potentionnaly written by a user in the source 
+
 
 export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
     return {
@@ -17,7 +19,9 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             const stepDir = await realpath(dirname(codeFilePath))
             const source = await readFile(codeFilePath, 'utf8')
 
+            const marker = newResultMarker()
             const program = buildProgram({
+                marker,
                 requireBase: pathToFileURL(codeFilePath).href,
                 body: `
     const inputs = ${JSON.stringify(inputs)};
@@ -30,17 +34,18 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
 
             return runInDeno({
                 program,
-                permissionFlags: toFlags({ permissions, stepDir }),
+                marker,
+                permissionFlags: toFlags({ permissions }),
                 cwd: stepDir,
             })
         },
 
-        // Expression evaluation never needs fs/net, so it always runs with no
-        // permissions regardless of what the caller granted for code modules.
         async runScript({ script, scriptContext, functions }) {
             const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
 
+            const marker = newResultMarker()
             const program = buildProgram({
+                marker,
                 requireBase: pathToFileURL(join(tmpdir(), 'script.js')).href,
                 body: `
     Object.assign(globalThis, ${JSON.stringify(scriptContext)});
@@ -53,6 +58,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
 
             return runInDeno({
                 program,
+                marker,
                 permissionFlags: [],
                 cwd: tmpdir(),
             })
@@ -60,7 +66,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
     }
 }
 
-function toFlags({ permissions, stepDir }: { permissions: DenoPermission[], stepDir?: string }): string[] {
+function toFlags({ permissions }: { permissions: DenoPermission[] }): string[] {
     if (permissions.includes(DenoPermission.ALL)) {
         return ['-A']
     }
@@ -74,41 +80,34 @@ function toFlags({ permissions, stepDir }: { permissions: DenoPermission[], step
                 return ['--allow-run']
             case DenoPermission.SYS:
                 return ['--allow-sys']
-            case DenoPermission.READ_ALL:
-                return ['--allow-read']
             case DenoPermission.WRITE_TMP:
                 return [`--allow-write=${tmpdir()}`]
-            case DenoPermission.READ_STEP_DIR:
-                return stepDir ? [`--allow-read=${stepDir}`] : []
-            case DenoPermission.WRITE_STEP_DIR:
-                return stepDir ? [`--allow-write=${stepDir}`] : []
+            case DenoPermission.READ_TMP:
+                return [`--allow-write=${tmpdir()}`]
             case DenoPermission.ALL:
+            default:
                 return []
         }
     })
 }
 
-// The program runs as a Deno module (top-level await is available). A CJS-style
-// `require` is provided so esbuild bundles that reference node builtins
-// (require("node:crypto")) resolve. The result travels back on stdout behind a
-// marker so user console.log output stays separate.
-function buildProgram({ body, requireBase }: { body: string, requireBase: string }): string {
+function buildProgram({ body, requireBase, marker }: { body: string, requireBase: string, marker: string }): string {
     return `
 import { createRequire } from 'node:module';
 const require = createRequire(${JSON.stringify(requireBase)});
 globalThis.require = require;
 try {
 ${body}
-    console.log(${JSON.stringify(RESULT_MARKER)} + JSON.stringify({ success: true, result: result ?? null }));
+    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: true, result: result ?? null }));
 }
 catch (error) {
-    console.log(${JSON.stringify(RESULT_MARKER)} + JSON.stringify({ success: false, error: (error && error.stack) || String(error) }));
+    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: false, error: (error && error.stack) || String(error) }));
     Deno.exit(1);
 }
 `
 }
 
-async function runInDeno({ program, permissionFlags, cwd }: RunInDenoParams): Promise<unknown> {
+async function runInDeno({ program, marker, permissionFlags, cwd }: RunInDenoParams): Promise<unknown> {
     return new Promise((resolve, reject) => {
         const denoPath = getDenoPath()
         const child = spawn(denoPath, [
@@ -152,17 +151,25 @@ async function runInDeno({ program, permissionFlags, cwd }: RunInDenoParams): Pr
             }
             settled = true
 
-            const { userOutput, resultLine } = splitResultFromStdout(capturedStdout)
+            const { userOutput, resultJson } = extractResult(capturedStdout, marker)
             if (userOutput.trim()) {
                 console.log(userOutput.trimEnd())
             }
 
-            if (!resultLine) {
+            if (resultJson === null) {
                 reject(buildError({ message: `Deno process exited with code ${code} and signal ${signal} without returning a result`, stdout: userOutput, stderr: capturedStderr }))
                 return
             }
 
-            const message: SandboxResultMessage = JSON.parse(resultLine.slice(RESULT_MARKER.length))
+            let message: SandboxResultMessage
+            try {
+                message = JSON.parse(resultJson)
+            }
+            catch {
+                reject(buildError({ message: 'Sandbox returned a malformed result', stdout: userOutput, stderr: capturedStderr }))
+                return
+            }
+
             if (message.success) {
                 resolve(message.result)
             }
@@ -183,11 +190,16 @@ async function runInDeno({ program, permissionFlags, cwd }: RunInDenoParams): Pr
     })
 }
 
-function splitResultFromStdout(stdout: string): { userOutput: string, resultLine: string | null } {
-    const lines = stdout.split('\n')
-    const resultLine = lines.filter((line) => line.startsWith(RESULT_MARKER)).at(-1) ?? null
-    const userOutput = lines.filter((line) => !line.startsWith(RESULT_MARKER)).join('\n')
-    return { userOutput, resultLine }
+function extractResult(stdout: string, marker: string): { userOutput: string, resultJson: string | null } {
+    const idx = stdout.lastIndexOf(marker)
+    if (idx === -1) {
+        return { userOutput: stdout, resultJson: null }
+    }
+    const after = stdout.slice(idx + marker.length)
+    const newline = after.indexOf('\n')
+    const resultJson = newline === -1 ? after : after.slice(0, newline)
+    const trailing = newline === -1 ? '' : after.slice(newline + 1)
+    return { userOutput: stdout.slice(0, idx) + trailing, resultJson }
 }
 
 function buildError({ message, stdout, stderr }: BuildErrorParams): Error {
@@ -207,14 +219,13 @@ export enum DenoPermission {
     ENV = 'ENV',
     RUN = 'RUN',
     SYS = 'SYS',
-    READ_ALL = 'READ_ALL',
     WRITE_TMP = 'WRITE_TMP',
-    READ_STEP_DIR = 'READ_STEP_DIR',
-    WRITE_STEP_DIR = 'WRITE_STEP_DIR',
+    READ_TMP = 'READ_TMP',
 }
 
 type RunInDenoParams = {
     program: string
+    marker: string
     permissionFlags: string[]
     cwd?: string
 }

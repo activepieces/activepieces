@@ -16,9 +16,9 @@ let denoCodeSandbox: any
 beforeAll(async () => {
     // Dynamic import so AP_DENO_PATH is set before the module reads it.
     denoModule = await import('../../../src/lib/core/code/deno-code-sandbox')
-    // The boundary suite asserts the real sandbox — scope fs to the step dir.
-    const { DenoPermission } = denoModule
-    denoCodeSandbox = denoModule.denoCodeSandbox([DenoPermission.READ_STEP_DIR, DenoPermission.WRITE_STEP_DIR])
+    // The boundary suite asserts the locked profile (the code-only modes) — an
+    // empty permission set, so every syscall (fs/net/env/run) is denied.
+    denoCodeSandbox = denoModule.denoCodeSandbox([])
     stepDir = await mkdtemp(path.join(tmpdir(), 'ap-deno-test-'))
 })
 
@@ -70,6 +70,11 @@ describe('denoCodeSandbox permission boundary', () => {
                 .rejects.toThrow(PERMISSION_DENIED)
         })
 
+        it('rejects writing inside the step directory (locked profile grants no fs)', async () => {
+            await expect(runModule(`exports.code = async () => Deno.writeTextFile('./data.json', 'x')`))
+                .rejects.toThrow(PERMISSION_DENIED)
+        })
+
         it('rejects path traversal out of the step directory', async () => {
             await expect(runModule(`exports.code = async () => Deno.readTextFile('../../../../etc/hosts')`))
                 .rejects.toThrow(PERMISSION_DENIED)
@@ -80,14 +85,6 @@ describe('denoCodeSandbox permission boundary', () => {
         it('runs pure compute over inputs', async () => {
             const result = await runModule(`exports.code = async (inputs) => ({ doubled: inputs.n * 2 })`, { n: 21 })
             expect(result).toEqual({ doubled: 42 })
-        })
-
-        it('reads and writes files inside the step directory', async () => {
-            const result = await runModule(`exports.code = async (inputs) => {
-                await Deno.writeTextFile('./data.json', JSON.stringify(inputs))
-                return JSON.parse(await Deno.readTextFile('./data.json'))
-            }`, { hello: 'world' })
-            expect(result).toEqual({ hello: 'world' })
         })
 
         it('surfaces user thrown errors', async () => {
@@ -143,36 +140,32 @@ describe('denoCodeSandbox permission profiles', () => {
         return sandbox.runCodeModule({ codeFilePath, inputs: {} })
     }
 
-    // Assert permissions are granted without hitting the network (hermetic for CI).
-    const grants = `exports.code = async () => ({
+    // Assert the permission state without hitting the network/fs (hermetic for CI).
+    // The path grant is queried against os.tmpdir() so it matches the WRITE_TMP flag.
+    const grants = (writePath: string): string => `exports.code = async () => ({
         net: (await Deno.permissions.query({ name: 'net' })).state,
         env: (await Deno.permissions.query({ name: 'env' })).state,
         run: (await Deno.permissions.query({ name: 'run' })).state,
+        sys: (await Deno.permissions.query({ name: 'sys' })).state,
         readEtc: (await Deno.permissions.query({ name: 'read', path: '/etc' })).state,
+        writeTmp: (await Deno.permissions.query({ name: 'write', path: ${JSON.stringify(writePath)} })).state,
     })`
 
-    describe('SANDBOX_PROCESS profile (read-all, write-tmp, net, env, run, sys)', () => {
-        const profile = () => [DenoPermission.READ_ALL, DenoPermission.WRITE_TMP, DenoPermission.NET, DenoPermission.ENV, DenoPermission.RUN, DenoPermission.SYS]
+    describe('SANDBOX_PROCESS profile (write-tmp, read-tmp, net, env, run, sys)', () => {
+        const profile = () => [DenoPermission.WRITE_TMP, DenoPermission.READ_TMP, DenoPermission.NET, DenoPermission.ENV, DenoPermission.RUN, DenoPermission.SYS]
 
-        it('grants net, env, run and broad read', async () => {
-            const out = await runWith(profile(), grants)
-            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', readEtc: 'granted' })
-        })
-
-        it('allows writing to the OS temp dir (the /box scratch equivalent)', async () => {
-            const out = await runWith(profile(), `exports.code = async () => {
-                const f = Deno.makeTempFileSync();
-                await Deno.writeTextFile(f, 'scratch');
-                return Deno.readTextFile(f);
-            }`)
-            expect(out).toBe('scratch')
+        it('grants net, env, run, sys and tmp write; does not grant read', async () => {
+            const out = await runWith(profile(), grants(tmpdir()))
+            // 'prompt' (not 'granted') = read is absent from the flags; --no-prompt turns any
+            // actual read into a hard NotCapable failure at use time.
+            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'prompt', writeTmp: 'granted' })
         })
     })
 
     describe('ALL profile (full trust)', () => {
         it('grants all permissions', async () => {
-            const out = await runWith([DenoPermission.ALL], grants)
-            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', readEtc: 'granted' })
+            const out = await runWith([DenoPermission.ALL], grants(tmpdir()))
+            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'granted', writeTmp: 'granted' })
         })
     })
 })

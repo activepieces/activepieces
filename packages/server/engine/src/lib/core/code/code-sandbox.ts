@@ -22,17 +22,22 @@ const loadDenoCodeSandbox = async (permissions: DenoPermission[]): Promise<CodeS
 
 const loadCodeSandbox = async (): Promise<CodeSandbox> => {
     const loaders = {
-        [ExecutionMode.UNSANDBOXED]: () => loadDenoCodeSandbox([DenoPermission.ALL]),
-        [ExecutionMode.SANDBOX_PROCESS]: () => loadDenoCodeSandbox([
-            DenoPermission.READ_ALL,
+        [ExecutionMode.UNSANDBOXED]: () => loadDenoCodeSandbox([
             DenoPermission.WRITE_TMP,
+            DenoPermission.READ_TMP,
             DenoPermission.NET,
             DenoPermission.ENV,
-            DenoPermission.RUN,
             DenoPermission.SYS,
         ]),
-        [ExecutionMode.SANDBOX_CODE_ONLY]: () => loadDenoCodeSandbox( [DenoPermission.READ_STEP_DIR, DenoPermission.WRITE_STEP_DIR]),
-        [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: () => loadDenoCodeSandbox( [DenoPermission.READ_STEP_DIR, DenoPermission.WRITE_STEP_DIR]),
+        [ExecutionMode.SANDBOX_PROCESS]: () => loadDenoCodeSandbox([
+            DenoPermission.WRITE_TMP,
+            DenoPermission.READ_TMP,
+            DenoPermission.NET,
+            DenoPermission.ENV,
+            DenoPermission.SYS,
+        ]),
+        [ExecutionMode.SANDBOX_CODE_ONLY]: () => loadDenoCodeSandbox([]),
+        [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: () => loadDenoCodeSandbox([]),
     }
 
     if (isNil(EXECUTION_MODE)) {
