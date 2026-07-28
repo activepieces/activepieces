@@ -141,9 +141,11 @@ export class EngineConstants {
     }
 
     public static fromExecutePropertyInput(input: Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }): EngineConstants {
+        const flow = flowFields(input.flowVersion)
         return new EngineConstants({
             ...sharedFields(input),
-            ...flowFields(input.flowVersion),
+            ...flow,
+            triggerPieceName: flow.triggerPieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_EXECUTE_PROPERTY,
         })
     }
@@ -216,7 +218,7 @@ function flowFields(flowVersion: FlowFieldsSource | undefined) {
         flowId: flowVersion.flowId,
         flowVersionId: flowVersion.id,
         flowVersionState: flowVersion.state,
-        triggerPieceName: flowVersion.trigger?.settings.pieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
+        triggerPieceName: flowVersion.trigger?.settings.pieceName,
         stepNames: isNil(flowVersion.trigger) ? [] : flowStructureUtil.getAllSteps(flowVersion.trigger).map((step) => step.name),
     }
 }
