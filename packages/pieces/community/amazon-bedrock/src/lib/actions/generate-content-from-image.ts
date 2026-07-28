@@ -15,11 +15,12 @@ import {
 } from '../common';
 
 export const generateContentFromImage = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'generate_content_from_image',
   displayName: 'Generate Content from Image',
   description: 'Ask a Bedrock model a question about an image.',
+  aiMetadata: { description: 'Asks a vision-capable Bedrock foundation model a question about one image and returns the answer as text; the image is supplied either as an uploaded file or by S3 bucket and key, and the model list is filtered to models that accept image input. Pick this for one-off image understanding such as OCR, description, classification, or extraction, and use Ask Bedrock instead when the prompt is text-only, needs conversation memory, or carries a document, video, or audio attachment; use Generate Image to create a picture rather than read one. Not idempotent: each call bills a fresh non-deterministic completion.', idempotent: false },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',

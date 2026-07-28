@@ -1,5 +1,5 @@
 import { AIProviderName, isObject, spreadIfDefined } from '@activepieces/core-utils';
-import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, chatPersistenceUtils, chatToolClassification, CloudflareGatewayProviderConfig, OpenAICompatibleProviderConfig, PersistedChatPart, PersistedChatPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
+import { AI_PROVIDER_CAPABILITIES, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, chatPersistenceUtils, chatToolClassification, CloudflareGatewayProviderConfig, OpenAICompatibleProviderConfig, PersistedChatPart, PersistedChatPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
@@ -19,36 +19,27 @@ const COLLAPSE_OUTPUT_OVER_CHARS = 600
 const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action'])
 const CHARS_PER_TOKEN_ESTIMATE = 4
 
-type WebSearchSupport = {
-    nativeTools?: (auth: BaseAIProviderAuthConfig) => ToolSet
-    plugin?: boolean
-}
-
 // OpenAI is absent on purpose: its web search needs the Responses API, which breaks legacy BYOK models.
-const WEB_SEARCH_BY_PROVIDER: Partial<Record<AIProviderName, WebSearchSupport>> = {
-    [AIProviderName.ANTHROPIC]: {
-        nativeTools: ({ apiKey }) => ({ web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }),
-    },
-    [AIProviderName.GOOGLE]: {
-        nativeTools: ({ apiKey }) => ({ google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }),
-    },
-    [AIProviderName.OPENROUTER]: { plugin: true },
-    [AIProviderName.ACTIVEPIECES]: { plugin: true },
+// Which providers support web search (and how) is declared in AI_PROVIDER_CAPABILITIES; the native
+// tool builders below stay here because they need the provider SDKs.
+const NATIVE_WEB_SEARCH_TOOLS: Partial<Record<AIProviderName, (auth: BaseAIProviderAuthConfig) => ToolSet>> = {
+    [AIProviderName.ANTHROPIC]: ({ apiKey }) => ({ web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }),
+    [AIProviderName.GOOGLE]: ({ apiKey }) => ({ google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }),
 }
 
 function supportsWebSearch(provider: AIProviderName): boolean {
-    return WEB_SEARCH_BY_PROVIDER[provider] !== undefined
+    return AI_PROVIDER_CAPABILITIES[provider].webSearch !== undefined
 }
 
 function buildWebSearchTools({ provider, auth }: {
     provider: AIProviderName
     auth: Record<string, unknown>
 }): ToolSet {
-    return WEB_SEARCH_BY_PROVIDER[provider]?.nativeTools?.(auth as BaseAIProviderAuthConfig) ?? {}
+    return NATIVE_WEB_SEARCH_TOOLS[provider]?.(auth as BaseAIProviderAuthConfig) ?? {}
 }
 
 function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
-    if (!webSearchEnabled || !WEB_SEARCH_BY_PROVIDER[provider]?.plugin) {
+    if (!webSearchEnabled || AI_PROVIDER_CAPABILITIES[provider].webSearch !== 'plugin') {
         return undefined
     }
     return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }

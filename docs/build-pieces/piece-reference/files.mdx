@@ -8,7 +8,7 @@ The `ctx.files` object allow you to store files in local storage or in a remote 
 
 ## Write
 
-You can use the `write` method to write a file to the storage, It returns a string that can be used in other actions or triggers properties to reference the file.
+You can use the `write` method to write a file to the storage, It returns a string that can be used in other actions or triggers properties to reference the file. The `data` accepts a `Buffer` or a `Readable`.
 
 **Example:**
 ```ts
@@ -17,6 +17,11 @@ const fileReference = await files.write({
     data: Buffer.from('text')
 });
 ```
+
+<Tip>
+For large files, pass a `Readable` instead of a `Buffer` so the file streams to storage
+without being held in memory — see [Large File Streaming](./large-file-streaming).
+</Tip>
 
 <Tip>
 This code will store the file in the database If the run environment is testing mode since it will be required to test other steps, other wise it will store it in the local temporary directory.
