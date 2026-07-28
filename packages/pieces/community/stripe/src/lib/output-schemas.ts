@@ -230,6 +230,37 @@ const chargeFields: OutputSchema['fields'] = [
   { key: 'receipt_number', label: 'Receipt Number' },
   { key: 'calculated_statement_descriptor', label: 'Statement Descriptor' },
   { key: 'billing_details', label: 'Billing Details', children: billingDetailsFields },
+  {
+    key: 'payment_method_details',
+    label: 'Payment Method Details',
+    children: [
+      { key: 'type', label: 'Type' },
+      {
+        key: 'card',
+        label: 'Card',
+        children: [
+          { key: 'brand', label: 'Brand' },
+          { key: 'last4', label: 'Last 4' },
+          { key: 'exp_month', label: 'Expiry Month', format: 'number' },
+          { key: 'exp_year', label: 'Expiry Year', format: 'number' },
+          { key: 'funding', label: 'Funding' },
+          { key: 'country', label: 'Country' },
+          { key: 'network', label: 'Network' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'outcome',
+    label: 'Outcome',
+    children: [
+      { key: 'network_status', label: 'Network Status' },
+      { key: 'risk_level', label: 'Risk Level' },
+      { key: 'risk_score', label: 'Risk Score', format: 'number' },
+      { key: 'seller_message', label: 'Seller Message' },
+      { key: 'type', label: 'Type' },
+    ],
+  },
   { key: 'failure_code', label: 'Failure Code' },
   { key: 'failure_message', label: 'Failure Message' },
   { key: 'created', label: 'Created', format: 'datetime' },
@@ -313,7 +344,9 @@ const creditNoteFields: OutputSchema['fields'] = [
   { key: 'invoice', label: 'Invoice' },
   { key: 'memo', label: 'Memo' },
   { key: 'subtotal', label: 'Subtotal', format: 'number' },
+  { key: 'subtotal_excluding_tax', label: 'Subtotal Excluding Tax', format: 'number' },
   { key: 'total', label: 'Total', format: 'number' },
+  { key: 'total_excluding_tax', label: 'Total Excluding Tax', format: 'number' },
   { key: 'discount_amount', label: 'Discount Amount', format: 'number' },
   { key: 'pre_payment_amount', label: 'Pre-Payment Amount', format: 'number' },
   { key: 'post_payment_amount', label: 'Post-Payment Amount', format: 'number' },
@@ -522,6 +555,8 @@ const invoiceLineFields: OutputSchema['fields'] = [
     ],
   },
   { key: 'discountable', label: 'Discountable', format: 'boolean' },
+  { key: 'livemode', label: 'Live Mode', format: 'boolean' },
+  { key: 'metadata', label: 'Metadata', dynamicKey: true },
 ];
 
 const invoiceFields: OutputSchema['fields'] = [
