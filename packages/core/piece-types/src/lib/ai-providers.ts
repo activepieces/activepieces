@@ -242,7 +242,7 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
 }
 
-function isKnownChatModelId({ modelId }: { modelId: string }): boolean {
+function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
     if (ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === modelId)) {
         return true
     }
@@ -324,7 +324,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
 export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
-    isKnownChatModelId,
+    isCuratedChatModelId,
 }
 
 export type AIWebSearchMode = 'native' | 'plugin'

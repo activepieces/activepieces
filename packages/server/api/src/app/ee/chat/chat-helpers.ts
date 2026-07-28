@@ -107,7 +107,7 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     if (!isNil(tier)) {
         return tier.modelId
     }
-    return aiProviderUtils.isKnownChatModelId({ modelId: selectedModel }) ? selectedModel : null
+    return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
 // Round one of the chat turn runs on the fastest tier so its first token streams in ~400ms
