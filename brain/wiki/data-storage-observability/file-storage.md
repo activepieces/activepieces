@@ -25,8 +25,9 @@ The central service for persisting binary files, backing the execution engine an
 ### Streaming — input side (out to an external service)
 - `Property.File({ streaming: true })` resolves to `ApStreamingFile = { filename, extension?, size?, body: Readable }` instead of the buffered `ApFile` (pieces-framework ≥ 0.35.0). Same `PropertyType.FILE` on the wire, so **zero frontend change**. See [decision 000014](../../decisions/000014-streaming-file-inputs-resolve-to-a-lazy-apstreamingfile.md).
 - Resolved in the engine's `fileProcessor` (`packages/server/engine/src/lib/variables/processors/file.ts`): a URL exposes the undrained `fetch` body via `Readable.fromWeb` with `size` from `Content-Length`; a base64 data URL decodes to a one-shot `Readable`. Replaces the unbounded `arrayBuffer()` on the URL path; the `catch → null` contract is kept.
-- Reference consumer: the Amazon S3 **Upload File** action — `putObject({ Body: file.body, ContentLength: file.size })`, buffering only when `size` is absent.
-- The body is **one-shot**: no whole-stream retry, and `size` is best-effort.
+- Reference consumer: the Amazon S3 **Upload File** action — `lib-storage`'s `Upload` (~5MB parts, no content length needed) since [#14347](https://github.com/activepieces/activepieces/pull/14347); it previously used `putObject({ ContentLength: file.size })` and buffered whenever `size` was absent.
+- The body is **one-shot**: `lib-storage` replays individual parts, but the transfer as a whole cannot be retried. `size` is best-effort — also dropped on `Content-Encoding` responses.
+- User-facing docs: [Large File Streaming](../../../docs/build-pieces/piece-reference/large-file-streaming.mdx).
 
 ### Gotchas
 - Cleanup job runs hourly (`30 */1 * * *`), deletes stale execution files past `EXECUTION_DATA_RETENTION_DAYS`; processes ~4000/iteration, deletes S3 keys in batches of 100.

@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetChatMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserChatMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, aiProviderUtils, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetChatMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserChatMemory } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -69,28 +69,52 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
     return chatProvider
 }
 
-function resolveTier({ tierId }: { tierId: string | null }) {
-    if (tierId) {
-        const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
-        if (tier) return tier
-    }
-    const defaultTier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === DEFAULT_CHAT_TIER_ID)
-    return defaultTier ?? ACTIVEPIECES_CHAT_TIERS[0]
+function findTier({ tierId }: { tierId: string | null }) {
+    return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
 }
 
-function resolveModelIdForProvider({ tier, provider }: { tier: { modelId: string }, provider: AIProviderName }): string {
-    const openrouterModelId = tier.modelId
-    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
-        return openrouterModelId
+function resolveTier({ tierId }: { tierId: string | null }) {
+    return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
+}
+
+function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }): string {
+    const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
+    if (selectedModel && curatedModels?.some((model) => model.id === selectedModel)) {
+        return selectedModel
     }
-    return openrouterModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
+    const tierModelId = resolveTier({ tierId: selectedModel }).modelId
+    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
+        return tierModelId
+    }
+    const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
+    if (isNil(curatedModels)) {
+        return nativeModelId
+    }
+    return curatedModels.some((model) => model.id === nativeModelId) ? nativeModelId : curatedModels[0].id
+}
+
+// Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
+// chat provider no longer resolves, so fall back to the stored selection — but only when it is one
+// of our own ids, never echoing an arbitrary stored string out to the analytics sink.
+function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIProviderName | null, selectedModel: string | null }): string | null {
+    if (isNil(selectedModel)) {
+        return null
+    }
+    if (!isNil(provider)) {
+        return resolveModelIdForProvider({ provider, selectedModel })
+    }
+    const tier = findTier({ tierId: selectedModel })
+    if (!isNil(tier)) {
+        return tier.modelId
+    }
+    return aiProviderUtils.isKnownChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
 // Round one of the chat turn runs on the fastest tier so its first token streams in ~400ms
 // (the opener + first discovery) — fast enough to replace the bare "Thinking…" gap —
 // regardless of which tier the user picked for the main turn.
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
-    return resolveModelIdForProvider({ tier: resolveTier({ tierId: FAST_TIER_ID }), provider })
+    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
 }
 
 async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
@@ -191,6 +215,7 @@ export const chatHelpers = {
     resolveChatProvider,
     resolveTier,
     resolveModelIdForProvider,
+    resolveModelIdForAnalytics,
     resolveFastModelId,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
