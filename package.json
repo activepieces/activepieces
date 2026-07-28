@@ -5,7 +5,8 @@
   "trustedDependencies": [
     "sqlite3",
     "isolated-vm",
-    "redis-memory-server"
+    "redis-memory-server",
+    "deno"
   ],
   "scripts": {
     "prepare": "husky install || true",
