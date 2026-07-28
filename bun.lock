@@ -146,6 +146,7 @@
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
+        "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "dayjs": "1.11.9",
         "deepmerge-ts": "7.1.0",
@@ -180,7 +181,7 @@
     },
     "packages/ee/embed-sdk": {
       "name": "ee-embed-sdk",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "dependencies": {
         "tslib": "2.6.2",
       },
@@ -311,7 +312,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.4.5",
+      "version": "0.4.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -21981,4 +21982,4 @@
 
     "@bull-board/fastify/@fastify/static/glob/minimatch/brace-expansion/balanced-match": ["balanced-match@4.0.4", "", {}, "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="],
   }
-}
+} 

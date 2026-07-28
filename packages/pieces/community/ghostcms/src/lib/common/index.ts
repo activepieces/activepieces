@@ -132,10 +132,10 @@ export const common = {
 
   async subscribeWebhook(auth: any, webhookType: string, webhookUrl: string) {
     const response = await httpClient.sendRequest({
-      url: `${auth.baseUrl}/ghost/api/admin/webhooks`,
+      url: `${auth.props.baseUrl}/ghost/api/admin/webhooks`,
       method: HttpMethod.POST,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
       body: {
         webhooks: [
@@ -152,10 +152,10 @@ export const common = {
 
   async unsubscribeWebhook(auth: any, webhookId: string) {
     const response = await httpClient.sendRequest({
-      url: `${auth.baseUrl}/ghost/api/admin/webhooks/${webhookId}`,
+      url: `${auth.props.baseUrl}/ghost/api/admin/webhooks/${webhookId}`,
       method: HttpMethod.DELETE,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
     });
 
@@ -164,10 +164,10 @@ export const common = {
 
   async getNewsletters(auth: any) {
     const response = await httpClient.sendRequest({
-      url: `${auth.baseUrl}/ghost/api/admin/newsletters`,
+      url: `${auth.props.baseUrl}/ghost/api/admin/newsletters`,
       method: HttpMethod.GET,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
     });
 
@@ -176,10 +176,10 @@ export const common = {
 
   async getMembers(auth: any) {
     const response = await httpClient.sendRequest({
-      url: `${auth.baseUrl}/ghost/api/admin/members`,
+      url: `${auth.props.baseUrl}/ghost/api/admin/members`,
       method: HttpMethod.GET,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
     });
 
@@ -188,10 +188,10 @@ export const common = {
 
   async getUsers(auth: any) {
     const response = await httpClient.sendRequest({
-      url: `${auth.baseUrl}/ghost/api/admin/users`,
+      url: `${auth.props.baseUrl}/ghost/api/admin/users`,
       method: HttpMethod.GET,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
     });
 
@@ -200,10 +200,10 @@ export const common = {
 
   async getTags(auth: any) {
     const response = await httpClient.sendRequest({
-      url: `${auth.baseUrl}/ghost/api/admin/tags`,
+      url: `${auth.props.baseUrl}/ghost/api/admin/tags`,
       method: HttpMethod.GET,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(auth.props.apiKey)}`,
       },
     });
 

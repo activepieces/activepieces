@@ -11,12 +11,14 @@ import {
   createWebhookSampleData,
 } from '../common';
 import { WebhookEventType } from 'apify-client';
+import { watchRunsTriggerOutputSchema } from '../output-schemas';
 
 export const watchTaskRunsTrigger = createTrigger({
   auth: apifyAuth,
   name: 'watchTaskRunsTrigger',
   displayName: 'Watch Task Runs',
   description: 'Triggers a Flow on Apify Actor task run events',
+  outputSchema: watchRunsTriggerOutputSchema,
   aiMetadata: {
     description: 'Fires when a run of the selected Apify Actor task reaches one of the chosen statuses (e.g. succeeded, failed, aborted). Use to react to a configured task finishing, delivering the run event payload via webhook.',
   },
