@@ -19,16 +19,9 @@ export class AddFanInToWaitpoint1818000000000 implements Migration {
             ALTER TABLE "waitpoint"
             ADD "failedToDispatch" integer NOT NULL DEFAULT 0
         `)
-        await queryRunner.query(`
-            ALTER TABLE "waitpoint"
-            ADD "fanInBaseline" jsonb
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "waitpoint" DROP COLUMN "fanInBaseline"
-        `)
         await queryRunner.query(`
             ALTER TABLE "waitpoint" DROP COLUMN "failedToDispatch"
         `)

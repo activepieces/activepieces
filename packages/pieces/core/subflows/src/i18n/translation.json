@@ -15,14 +15,5 @@
   "Callable Flow": "Callable Flow",
   "Waiting to be triggered from another flow": "Waiting to be triggered from another flow",
   "Sample Data": "Sample Data",
-  "The schema to be passed to the flow": "The schema to be passed to the flow",
-  "Fan Out to Subflows": "Fan Out to Subflows",
-  "Loop over an array and dispatch each item to a subflow. Optionally wait for all of them to finish before continuing.": "Loop over an array and dispatch each item to a subflow. Optionally wait for all of them to finish before continuing.",
-  "The flow to dispatch each item to. Published flows with a \"Callable Flow\" trigger appear here; disabled flows are marked \"(inactive)\".": "The flow to dispatch each item to. Published flows with a \"Callable Flow\" trigger appear here; disabled flows are marked \"(inactive)\".",
-  "Items": "Items",
-  "An array. Each element is sent as the payload of one subflow run.": "An array. Each element is sent as the payload of one subflow run.",
-  "Wait for All": "Wait for All",
-  "Wait until every dispatched subflow finishes before continuing. When off, dispatch all items and continue immediately.": "Wait until every dispatched subflow finishes before continuing. When off, dispatch all items and continue immediately.",
-  "Timeout (minutes)": "Timeout (minutes)",
-  "When waiting, continue anyway after this many minutes even if some subflows are still running.": "When waiting, continue anyway after this many minutes even if some subflows are still running."
+  "The schema to be passed to the flow": "The schema to be passed to the flow"
 }

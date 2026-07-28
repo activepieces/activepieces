@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
 import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -271,6 +271,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         projectId,
         flowVersionId,
         parentRunId,
+        parentWaitpointId,
         failParentOnFailure,
         platformId,
         stepNameToTest,
@@ -280,6 +281,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowVersionId,
             parentRunId,
+            parentWaitpointId,
             flowId,
             failParentOnFailure,
             stepNameToTest,
@@ -353,6 +355,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowVersionId: flowVersion.id,
             environment: RunEnvironment.PRODUCTION,
             parentRunId: undefined,
+            parentWaitpointId: undefined,
             failParentOnFailure: undefined,
             stepNameToTest: undefined,
             triggeredBy,
@@ -670,6 +673,7 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
         flowVersionId: params.flowVersionId,
         environment: params.environment,
         parentRunId: params.parentRunId,
+        parentWaitpointId: params.parentWaitpointId,
         failParentOnFailure: params.failParentOnFailure ?? true,
         status: FlowRunStatus.QUEUED,
         stepNameToTest: params.stepNameToTest,
@@ -698,6 +702,7 @@ type CreateParams = {
     flowVersionId: FlowVersionId
     triggeredBy?: string
     parentRunId?: FlowRunId
+    parentWaitpointId?: ApId
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     flowId: FlowId
@@ -756,6 +761,7 @@ type StartParams = {
     flowVersionId: FlowVersionId
     projectId: ProjectId
     parentRunId?: FlowRunId
+    parentWaitpointId?: ApId
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     executeTrigger: boolean

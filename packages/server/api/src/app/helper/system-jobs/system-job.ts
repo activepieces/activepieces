@@ -87,11 +87,10 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         if (isNil(existingJob)) {
             log.info({ jobName: job.name }, '[systemJob#upsertJob] Adding job to queue')
             await systemJobsQueue.add(job.name, job.data, configureJobOptions({ date: schedule.date, jobId: job.jobId, customConfig }))
+            return
         }
-        if (schedule.type === 'one-time') {
-            log.warn({ jobName: job.name, jobId: job.jobId, existingDelay: existingJob.opts.delay },
-                '[systemJob#upsertJob] A one-time job already exists under this id; the requested schedule was dropped and the existing one stands')
-        }
+        log.warn({ jobName: job.name, jobId: job.jobId, existingDelay: existingJob.opts.delay },
+            '[systemJob#upsertJob] A one-time job already exists under this id; the requested schedule was dropped and the existing one stands')
     },
 
     async getJob<T extends SystemJobName>(jobId: string) {

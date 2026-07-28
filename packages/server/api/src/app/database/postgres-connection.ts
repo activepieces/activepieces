@@ -407,6 +407,7 @@ import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgre
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
 import { AddUserChatMemory1817000000000 } from './migration/postgres/1817000000000-AddUserChatMemory'
 import { AddFanInToWaitpoint1818000000000 } from './migration/postgres/1818000000000-AddFanInToWaitpoint'
+import { AddParentWaitpointIdToFlowRun1819000000000 } from './migration/postgres/1819000000000-AddParentWaitpointIdToFlowRun'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -829,6 +830,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddTeamsBotInstallation1816000000000,
         AddUserChatMemory1817000000000,
         AddFanInToWaitpoint1818000000000,
+        AddParentWaitpointIdToFlowRun1819000000000,
     ]
     return migrations
 }

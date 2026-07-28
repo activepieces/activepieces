@@ -36,7 +36,7 @@ async function createEnabledFlow() {
     return { mockFlow, mockToken }
 }
 
-async function dispatch({ flowId, token, dispatchKey, body }: DispatchParams) {
+async function dispatch({ flowId, token, dispatchKey, parentWaitpointId, body }: DispatchParams) {
     return app.inject({
         method: 'POST',
         url: `/api/v1/webhooks/${flowId}`,
@@ -45,6 +45,7 @@ async function dispatch({ flowId, token, dispatchKey, body }: DispatchParams) {
             'ap-parent-run-id': apId(),
             'ap-fail-parent-on-failure': 'false',
             ...(dispatchKey ? { 'ap-dispatch-key': dispatchKey } : {}),
+            ...(parentWaitpointId ? { 'ap-parent-waitpoint-id': parentWaitpointId } : {}),
         },
         body,
     })
@@ -109,9 +110,43 @@ describe('Webhook dispatch key', () => {
     })
 })
 
+describe('Parent waitpoint header', () => {
+    it('should carry a valid parent waitpoint id onto the queued job', async () => {
+        const { mockFlow, mockToken } = await createEnabledFlow()
+        const parentWaitpointId = apId()
+
+        await dispatch({ flowId: mockFlow.id, token: mockToken, parentWaitpointId, body: { item: 1 } })
+
+        const jobs = await findQueuedJobsForFlow(mockFlow.id)
+        expect(jobs).toHaveLength(1)
+        expect(jobs[0].data.parentWaitpointId).toBe(parentWaitpointId)
+    })
+
+    it('should drop a malformed parent waitpoint id', async () => {
+        const { mockFlow, mockToken } = await createEnabledFlow()
+
+        await dispatch({ flowId: mockFlow.id, token: mockToken, parentWaitpointId: 'not-an-ap-id', body: { item: 1 } })
+
+        const jobs = await findQueuedJobsForFlow(mockFlow.id)
+        expect(jobs).toHaveLength(1)
+        expect(jobs[0].data.parentWaitpointId).toBeUndefined()
+    })
+
+    it('should leave the job without a parent waitpoint id when the header is absent', async () => {
+        const { mockFlow, mockToken } = await createEnabledFlow()
+
+        await dispatch({ flowId: mockFlow.id, token: mockToken, body: { item: 1 } })
+
+        const jobs = await findQueuedJobsForFlow(mockFlow.id)
+        expect(jobs).toHaveLength(1)
+        expect(jobs[0].data.parentWaitpointId).toBeUndefined()
+    })
+})
+
 type DispatchParams = {
     flowId: string
     token: string
     dispatchKey?: string
+    parentWaitpointId?: string
     body: unknown
 }

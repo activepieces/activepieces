@@ -72,6 +72,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
+                                    ...spreadIfDefined('parentWaitpointId', runMetadata.parentWaitpointId),
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
                                     ...spreadIfDefined('updated', runMetadata.updated),
@@ -110,8 +111,8 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     log,
                                 })
                             }
-                            else if (!isNil(parentRunId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
-                                await maybeResumeFanInBarrier({ parentRunId, log })
+                            else if (!isNil(savedFlowRun.parentWaitpointId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
+                                await maybeResumeFanInBarrier({ parentWaitpointId: savedFlowRun.parentWaitpointId, projectId: savedFlowRun.projectId, log })
                             }
 
                             if (!isNil(runMetadata.requestId)) {
@@ -236,12 +237,12 @@ async function markParentRunAsFailed({
     }
 }
 
-export async function maybeResumeFanInBarrier({ parentRunId, log }: MaybeResumeFanInBarrierParams): Promise<void> {
-    const barrier = await waitpointService(log).findFanInBarrier({ flowRunId: parentRunId })
+export async function maybeResumeFanInBarrier({ parentWaitpointId, projectId, log }: MaybeResumeFanInBarrierParams): Promise<void> {
+    const barrier = await waitpointService(log).findFanInBarrierById({ waitpointId: parentWaitpointId, projectId })
     if (isNil(barrier)) {
         return
     }
-    const parentRun = await flowRunRepo().findOneBy({ id: parentRunId })
+    const parentRun = await flowRunRepo().findOneBy({ id: barrier.flowRunId, projectId })
     if (isNil(parentRun) || isFlowRunStateTerminal({ status: parentRun.status, ignoreInternalError: false })) {
         return
     }
@@ -250,30 +251,30 @@ export async function maybeResumeFanInBarrier({ parentRunId, log }: MaybeResumeF
         if (parentRun.status !== FlowRunStatus.PAUSED) {
             return
         }
-        log.warn({ flowRun: { id: parentRunId }, waitpoint: { id: barrier.id } },
+        log.warn({ flowRun: { id: parentRun.id }, waitpoint: { id: barrier.id } },
             '[maybeResumeFanInBarrier] Barrier was completed without a resume reaching the queue, recovering it')
         await resumeService(log).resumeFromWaitpoint({
-            flowRunId: parentRunId,
+            flowRunId: parentRun.id,
             waitpointId: barrier.id,
             resumePayload: barrier.resumePayload,
         })
         return
     }
 
-    const counts = await fanInBarrier.countChildren({ parentRunId })
+    const counts = await fanInBarrier.countChildren({ parentWaitpointId: barrier.id, projectId })
     if (!fanInBarrier.isReleasable({ counts, barrier })) {
         return
     }
     const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false })
     const result = await waitpointService(log).complete({
-        flowRunId: parentRunId,
+        flowRunId: parentRun.id,
         projectId: parentRun.projectId,
         waitpointId: barrier.id,
         resumePayload: { body: summary, headers: {}, queryParams: {} },
     })
     if (result.completedExisting && !isNil(result.waitpoint)) {
         await resumeService(log).resumeFromWaitpoint({
-            flowRunId: parentRunId,
+            flowRunId: parentRun.id,
             waitpointId: result.waitpoint.id,
             resumePayload: result.waitpoint.resumePayload,
         })
@@ -293,6 +294,7 @@ type MarkParentRunAsFailedParams = {
 }
 
 type MaybeResumeFanInBarrierParams = {
-    parentRunId: string
+    parentWaitpointId: string
+    projectId: string
     log: FastifyBaseLogger
 }

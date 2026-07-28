@@ -39,7 +39,7 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
         return
     }
 
-    const counts = await fanInBarrier.countChildren({ parentRunId: data.flowRunId })
+    const counts = await fanInBarrier.countChildren({ parentWaitpointId: waitpoint.id, projectId: data.projectId })
     const result = await waitpointService(log).complete({
         flowRunId: data.flowRunId,
         projectId: data.projectId,

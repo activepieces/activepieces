@@ -78,31 +78,6 @@ export async function dispatchChild({ apiUrl, flowId, payload, parentRunId, fail
     return response.body;
 }
 
-export async function dispatchChildren({ apiUrl, flowId, items, parentRunId, failParentOnFailure, dispatchKeyPrefix }: DispatchChildrenParams): Promise<DispatchChildrenResult> {
-    const failures: DispatchFailure[] = [];
-    let accepted = 0;
-    for (const [index, payload] of items.entries()) {
-        try {
-            await dispatchChild({
-                apiUrl,
-                flowId,
-                payload,
-                parentRunId,
-                failParentOnFailure,
-                dispatchKey: isNil(dispatchKeyPrefix) ? undefined : `${dispatchKeyPrefix}-${index}`,
-            });
-            accepted += 1;
-        }
-        catch (error) {
-            failures.push({
-                index,
-                message: error instanceof Error ? error.message : String(error),
-            });
-        }
-    }
-    return { accepted, failures };
-}
-
 type ListParams = {
     flowsContext: FlowsContext,
     params?: ListFlowsContextParams
@@ -116,23 +91,4 @@ type DispatchChildParams = {
     failParentOnFailure: boolean;
     callbackUrl?: string;
     dispatchKey?: string;
-}
-
-type DispatchChildrenParams = {
-    apiUrl: string;
-    flowId: string;
-    items: unknown[];
-    parentRunId: string;
-    failParentOnFailure: boolean;
-    dispatchKeyPrefix?: string;
-}
-
-export type DispatchFailure = {
-    index: number;
-    message: string;
-}
-
-export type DispatchChildrenResult = {
-    accepted: number;
-    failures: DispatchFailure[];
 }

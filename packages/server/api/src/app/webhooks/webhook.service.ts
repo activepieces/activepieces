@@ -52,6 +52,7 @@ export const webhookService = {
         execute,
         onRunCreated,
         parentRunId,
+        parentWaitpointId,
         failParentOnFailure,
         dispatchKey,
         timeoutMs,
@@ -172,6 +173,7 @@ export const webhookService = {
                 webhookHeader,
                 execute: flow.status === FlowStatus.ENABLED && execute,
                 parentRunId,
+                parentWaitpointId,
                 failParentOnFailure,
                 dispatchKey,
             })
@@ -192,6 +194,7 @@ export const webhookService = {
             flowVersionToRun,
             onRunCreated,
             parentRunId,
+            parentWaitpointId,
             failParentOnFailure,
             timeoutMs,
         })
@@ -207,7 +210,7 @@ export const webhookService = {
 }
 
 async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
-    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure, dispatchKey, platformId } = params
+    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, parentWaitpointId, failParentOnFailure, dispatchKey, platformId } = params
 
     const jobPayload = await payloadOffloader.offloadPayload(logger, payload, flow.projectId, platformId)
 
@@ -229,6 +232,7 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
                 runEnvironment,
                 execute,
                 parentRunId,
+                parentWaitpointId,
                 failParentOnFailure,
             },
         }),
@@ -245,7 +249,7 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
 }
 
 async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-    const { payload, projectId, flow, logger, webhookRequestId, workerHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure, platformId, timeoutMs } = params
+    const { payload, projectId, flow, logger, webhookRequestId, workerHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, parentWaitpointId, failParentOnFailure, platformId, timeoutMs } = params
 
     if (saveSampleData) {
         rejectedPromiseHandler(savePayload({
@@ -257,6 +261,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
             flowVersionIdToRun,
             runEnvironment,
             parentRunId,
+            parentWaitpointId,
             failParentOnFailure,
         }), logger)
     }
@@ -285,6 +290,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         executionType: ExecutionType.BEGIN,
         streamStepProgress: StreamStepProgress.NONE,
         parentRunId,
+        parentWaitpointId,
         failParentOnFailure,
     })
 
@@ -300,7 +306,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
 }
 
 async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute' | 'dispatchKey'>): Promise<void> {
-    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, parentRunId, failParentOnFailure, platformId } = params
+    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, parentRunId, parentWaitpointId, failParentOnFailure, platformId } = params
     await handleAsync({
         flow,
         logger,
@@ -313,6 +319,7 @@ async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | '
         webhookHeader: '',
         platformId,
         parentRunId,
+        parentWaitpointId,
         failParentOnFailure,
     })
     await triggerSourceService(logger).disable({ flowId: flow.id, projectId: flow.projectId, simulate: true, ignoreError: true })
@@ -329,6 +336,7 @@ type HandleWebhookParams = {
     execute: boolean
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
+    parentWaitpointId?: string
     failParentOnFailure: boolean
     dispatchKey?: string
     timeoutMs?: number
@@ -346,6 +354,7 @@ type AsyncWebhookParams = {
     runEnvironment: RunEnvironment
     execute: boolean
     parentRunId?: string
+    parentWaitpointId?: string
     failParentOnFailure: boolean
     dispatchKey?: string
 }
@@ -364,6 +373,7 @@ type SyncWebhookParams = {
     flowVersionIdToRun: FlowVersionId
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
+    parentWaitpointId?: string
     failParentOnFailure: boolean
     timeoutMs?: number
 }

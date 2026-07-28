@@ -2,13 +2,15 @@ import { apId } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
-import { maybeResumeFanInBarrier } from '../../../../../src/app/flows/flow-run/flow-runs-queue'
+import { distributedStore } from '../../../../../src/app/database/redis-connections'
+import { maybeResumeFanInBarrier, runsMetadataQueue } from '../../../../../src/app/flows/flow-run/flow-runs-queue'
 import { fanInBarrier, FanInSummary } from '../../../../../src/app/flows/flow-run/waitpoint/fan-in-barrier'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/flows/flow-run/waitpoint/resume-delay-handler'
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
 import { Waitpoint, WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { resumeDelayJobId, SystemJobName } from '../../../../../src/app/helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
+import { redisMetadataKey } from '../../../../../src/app/workers/job'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion, createMockWaitpoint } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
@@ -45,7 +47,11 @@ async function createParentRun(status: FlowRunStatus = FlowRunStatus.PAUSED) {
     return { flow, flowVersion, flowRun }
 }
 
-async function createChildren({ parentRunId, statuses }: { parentRunId: string, statuses: FlowRunStatus[] }) {
+async function createChildren({ parentRunId, parentWaitpointId, statuses }: {
+    parentRunId?: string
+    parentWaitpointId?: string
+    statuses: FlowRunStatus[]
+}) {
     const flow = createMockFlow({ projectId: ctx.project.id })
     await db.save('flow', flow)
     const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED })
@@ -56,6 +62,7 @@ async function createChildren({ parentRunId, statuses }: { parentRunId: string, 
         flowVersionId: flowVersion.id,
         status,
         parentRunId,
+        parentWaitpointId,
         environment: RunEnvironment.PRODUCTION,
     }))
     for (const child of children) {
@@ -64,20 +71,19 @@ async function createChildren({ parentRunId, statuses }: { parentRunId: string, 
     return children
 }
 
-async function seedBarrier({ flowRunId, expectedChildren, baseline, status, resumePayload }: {
+async function seedBarrier({ flowRunId, expectedChildren, status, resumePayload, stepName }: {
     flowRunId: string
     expectedChildren?: number | null
-    baseline?: { succeeded: number, failed: number, canceled: number } | null
     status?: WaitpointStatus
     resumePayload?: Waitpoint['resumePayload']
+    stepName?: string
 }) {
     const waitpoint = createMockWaitpoint({
         flowRunId,
         projectId: ctx.project.id,
-        stepName: 'fan_out',
+        stepName: stepName ?? 'fan_out',
         isFanIn: true,
         expectedChildren: expectedChildren ?? null,
-        fanInBaseline: baseline ?? null,
         status: status ?? WaitpointStatus.PENDING,
         resumePayload: resumePayload ?? null,
     })
@@ -85,11 +91,23 @@ async function seedBarrier({ flowRunId, expectedChildren, baseline, status, resu
     return waitpoint
 }
 
+function createBarrier({ flowRunId }: { flowRunId: string }) {
+    return waitpointService(app.log).createForPause({
+        flowRunId,
+        projectId: ctx.project.id,
+        stepName: 'fan_out',
+        type: PauseType.WEBHOOK,
+        version: 'V1',
+        isFanIn: true,
+    })
+}
+
 describe('fanInBarrier predicate', () => {
     it('classifies every terminal status into the right bucket', async () => {
         const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
         await createChildren({
-            parentRunId: flowRun.id,
+            parentWaitpointId: barrier.id,
             statuses: [
                 FlowRunStatus.SUCCEEDED,
                 FlowRunStatus.FAILED,
@@ -105,7 +123,7 @@ describe('fanInBarrier predicate', () => {
             ],
         })
 
-        const counts = await fanInBarrier.countChildren({ parentRunId: flowRun.id })
+        const counts = await fanInBarrier.countChildren({ parentWaitpointId: barrier.id, projectId: ctx.project.id })
 
         expect(counts.succeeded).toBe(1)
         expect(counts.failed).toBe(6)
@@ -114,88 +132,89 @@ describe('fanInBarrier predicate', () => {
         expect(counts.terminal).toBe(8)
     })
 
-    it('ignores children of another parent and the parent itself', async () => {
+    it('ignores children of another barrier and unattributed children of the same run', async () => {
         const { flowRun } = await createParentRun()
-        const { flowRun: otherParent } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        const otherBarrier = await seedBarrier({ flowRunId: flowRun.id, stepName: 'fan_out_other' })
+        await createChildren({ parentRunId: flowRun.id, parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
+        await createChildren({ parentRunId: flowRun.id, parentWaitpointId: otherBarrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED] })
         await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED] })
-        await createChildren({ parentRunId: otherParent.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED] })
 
-        const counts = await fanInBarrier.countChildren({ parentRunId: flowRun.id })
+        const counts = await fanInBarrier.countChildren({ parentWaitpointId: barrier.id, projectId: ctx.project.id })
 
         expect(counts.terminal).toBe(1)
         expect(counts.succeeded).toBe(1)
     })
 
+    it('ignores children belonging to another project', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
+
+        const counts = await fanInBarrier.countChildren({ parentWaitpointId: barrier.id, projectId: apId() })
+
+        expect(counts.terminal).toBe(0)
+    })
+
     it('counts archived children', async () => {
         const { flowRun } = await createParentRun()
-        const [child] = await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        const [child] = await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
         await db.update('flow_run', child.id, { archivedAt: dayjs().toISOString() })
 
-        const counts = await fanInBarrier.countChildren({ parentRunId: flowRun.id })
+        const counts = await fanInBarrier.countChildren({ parentWaitpointId: barrier.id, projectId: ctx.project.id })
 
         expect(counts.succeeded).toBe(1)
     })
 
     it('is not releasable while unsealed, even when every child is terminal', async () => {
-        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: null, fanInBaseline: null })
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: null })
         const counts = { succeeded: 3, failed: 0, canceled: 0, stillRunning: 0, terminal: 3 }
 
         expect(fanInBarrier.isReleasable({ counts, barrier })).toBe(false)
     })
 
     it('is not releasable while any child is non-terminal', async () => {
-        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 3, fanInBaseline: null })
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 3 })
         const counts = { succeeded: 3, failed: 0, canceled: 0, stillRunning: 1, terminal: 3 }
 
         expect(fanInBarrier.isReleasable({ counts, barrier })).toBe(false)
     })
 
-    it('is not releasable while the baseline-adjusted terminal count is short', async () => {
-        const barrier = createMockWaitpoint({
-            isFanIn: true,
-            expectedChildren: 3,
-            fanInBaseline: { succeeded: 3, failed: 0, canceled: 0 },
-        })
-        const counts = { succeeded: 5, failed: 0, canceled: 0, stillRunning: 0, terminal: 5 }
+    it('is not releasable while the terminal count is short of the expected count', async () => {
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 3 })
+        const counts = { succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, terminal: 2 }
 
         expect(fanInBarrier.isReleasable({ counts, barrier })).toBe(false)
     })
 
     it('is releasable for an empty fan-out', async () => {
-        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 0, fanInBaseline: null })
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 0 })
         const counts = { succeeded: 0, failed: 0, canceled: 0, stillRunning: 0, terminal: 0 }
 
         expect(fanInBarrier.isReleasable({ counts, barrier })).toBe(true)
     })
 
-    it('subtracts the baseline from each reported bucket', async () => {
-        const barrier = createMockWaitpoint({
-            isFanIn: true,
-            expectedChildren: 3,
-            fanInBaseline: { succeeded: 2, failed: 1, canceled: 0 },
-        })
-        const counts = { succeeded: 4, failed: 2, canceled: 1, stillRunning: 0, terminal: 7 }
+    it('reports every bucket exactly, without baseline arithmetic', async () => {
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 4 })
+        const counts = { succeeded: 2, failed: 1, canceled: 1, stillRunning: 0, terminal: 4 }
 
         const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false })
 
         expect(summary).toEqual({
-            expected: 3,
+            expected: 4,
             succeeded: 2,
             failed: 1,
             canceled: 1,
             stillRunning: 0,
+            notStarted: 0,
             failedToDispatch: 0,
             timedOut: false,
         })
     })
 
     it('reports items that never reached the subflow and folds them into the expected total', async () => {
-        const barrier = createMockWaitpoint({
-            isFanIn: true,
-            expectedChildren: 2,
-            failedToDispatch: 1,
-            fanInBaseline: null,
-        })
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 2, failedToDispatch: 1 })
         const counts = { succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, terminal: 2 }
 
         const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false })
@@ -206,18 +225,25 @@ describe('fanInBarrier predicate', () => {
             failed: 0,
             canceled: 0,
             stillRunning: 0,
+            notStarted: 0,
             failedToDispatch: 1,
             timedOut: false,
         })
     })
 
+    it('reports an accepted dispatch that never produced a run as notStarted', async () => {
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 3 })
+        const counts = { succeeded: 1, failed: 0, canceled: 0, stillRunning: 1, terminal: 1 }
+
+        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: true })
+
+        expect(summary.notStarted).toBe(1)
+        expect(summary.expected).toBe(3)
+        expect(summary.timedOut).toBe(true)
+    })
+
     it('releases on the dispatched count, not on the requested count', async () => {
-        const barrier = createMockWaitpoint({
-            isFanIn: true,
-            expectedChildren: 2,
-            failedToDispatch: 1,
-            fanInBaseline: null,
-        })
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 2, failedToDispatch: 1 })
         const counts = { succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, terminal: 2 }
 
         expect(fanInBarrier.isReleasable({ counts, barrier })).toBe(true)
@@ -225,131 +251,57 @@ describe('fanInBarrier predicate', () => {
 })
 
 describe('createFanInBarrier', () => {
-    it('snapshots the terminal children present at create as the baseline', async () => {
+    it('creates an unsealed barrier', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await createChildren({
-            parentRunId: flowRun.id,
-            statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED],
-        })
 
-        const { inserted, waitpoint } = await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })
+        const { inserted, waitpoint } = await createBarrier({ flowRunId: flowRun.id })
 
         expect(inserted).toBe(true)
         expect(waitpoint.isFanIn).toBe(true)
         expect(waitpoint.expectedChildren).toBeNull()
-        expect(waitpoint.fanInBaseline).toEqual({ succeeded: 2, failed: 1, canceled: 0 })
     })
 
     it('reuses the existing barrier on an idempotent re-entry before anything was dispatched', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED] })
-        const first = await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })
+        const first = await createBarrier({ flowRunId: flowRun.id })
 
-        const second = await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })
+        const second = await createBarrier({ flowRunId: flowRun.id })
 
         expect(second.inserted).toBe(false)
         expect(second.waitpoint.id).toBe(first.waitpoint.id)
-        expect(second.waitpoint.fanInBaseline).toEqual(first.waitpoint.fanInBaseline)
     })
 
     it('refuses to re-enter a barrier whose previous attempt already dispatched children', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.RUNNING] })
+        const first = await createBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.RUNNING] })
 
-        await expect(waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })).rejects.toThrow()
+        await expect(createBarrier({ flowRunId: flowRun.id })).rejects.toThrow()
     })
 
     it('refuses to re-enter a barrier whose previously dispatched children already finished', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED] })
+        const first = await createBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.SUCCEEDED] })
 
-        await expect(waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })).rejects.toThrow()
+        await expect(createBarrier({ flowRunId: flowRun.id })).rejects.toThrow()
     })
 
-    it('throws when the run still has a non-terminal child', async () => {
+    it('allows a fan-in while an unrelated fire-and-forget child of the same run is still running', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING] })
 
-        await expect(waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })).rejects.toThrow()
+        const { inserted, waitpoint } = await createBarrier({ flowRunId: flowRun.id })
+
+        expect(inserted).toBe(true)
+        expect(waitpoint.expectedChildren).toBeNull()
     })
 
     it('discards an unsealed barrier leaked by an earlier step of the same run', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        const leaked = createMockWaitpoint({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out_earlier',
-            isFanIn: true,
-            expectedChildren: null,
-        })
-        await db.save('waitpoint', leaked)
+        const leaked = await seedBarrier({ flowRunId: flowRun.id, stepName: 'fan_out_earlier' })
 
-        await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })
+        await createBarrier({ flowRunId: flowRun.id })
 
         expect(await db.findOneBy('waitpoint', { id: leaked.id })).toBeNull()
     })
@@ -363,14 +315,7 @@ describe('createFanInBarrier', () => {
             resumePayload: { body: { stale: true } },
         })
 
-        const { inserted, waitpoint } = await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })
+        const { inserted, waitpoint } = await createBarrier({ flowRunId: flowRun.id })
 
         expect(inserted).toBe(true)
         expect(waitpoint.id).not.toBe(leftover.id)
@@ -396,8 +341,8 @@ describe('sealFanInBarrier', () => {
 
     it('records the expected count and schedules a timeout job keyed on the waitpoint', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        const barrier = await seedBarrier({ flowRunId: flowRun.id, baseline: { succeeded: 0, failed: 0, canceled: 0 } })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.RUNNING] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.RUNNING] })
         const timeoutAt = dayjs().add(30, 'minute').toISOString()
 
         const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, resumeDateTime: timeoutAt })
@@ -410,48 +355,53 @@ describe('sealFanInBarrier', () => {
         expect(job?.data.waitpointId).toBe(barrier.id)
     })
 
+    it('falls back to the maximum pause duration when the seal carries no timeout', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
+
+        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 1 })
+
+        expect(waitpoint.resumeDateTime).not.toBeNull()
+        expect(dayjs(waitpoint.resumeDateTime).isAfter(dayjs().add(29, 'day'))).toBe(true)
+        expect(await systemJobsSchedule(app.log).getJob(resumeDelayJobId({ waitpointId: barrier.id }))).toBeDefined()
+    })
+
     it('completes immediately without scheduling a timeout when every child is already terminal', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        const barrier = await seedBarrier({ flowRunId: flowRun.id, baseline: { succeeded: 0, failed: 0, canceled: 0 } })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED] })
 
         const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
 
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         const summary = waitpoint.resumePayload?.body as FanInSummary
-        expect(summary).toEqual({ expected: 2, succeeded: 1, failed: 1, canceled: 0, stillRunning: 0, failedToDispatch: 0, timedOut: false })
+        expect(summary).toEqual({ expected: 2, succeeded: 1, failed: 1, canceled: 0, stillRunning: 0, notStarted: 0, failedToDispatch: 0, timedOut: false })
         expect(await systemJobsSchedule(app.log).getJob(resumeDelayJobId({ waitpointId: barrier.id }))).toBeUndefined()
     })
 
     it('persists the undispatched item count and reports it in the summary', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await seedBarrier({ flowRunId: flowRun.id, baseline: { succeeded: 0, failed: 0, canceled: 0 } })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
 
         const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, failedToDispatch: 1 })
 
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         const summary = waitpoint.resumePayload?.body as FanInSummary
-        expect(summary).toEqual({ expected: 3, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, failedToDispatch: 1, timedOut: false })
+        expect(summary).toEqual({ expected: 3, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, notStarted: 0, failedToDispatch: 1, timedOut: false })
     })
 
     it('does not release the second barrier of a run off the first barrier children (loop regression)', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const firstBarrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 3, stepName: 'fan_out_earlier' })
         await createChildren({
             parentRunId: flowRun.id,
+            parentWaitpointId: firstBarrier.id,
             statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED],
         })
 
-        const created = await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
-            projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
-        })
-        expect(created.waitpoint.fanInBaseline).toEqual({ succeeded: 3, failed: 0, canceled: 0 })
-
+        await createBarrier({ flowRunId: flowRun.id })
         const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 3, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
 
         expect(waitpoint.status).toBe(WaitpointStatus.PENDING)
@@ -459,8 +409,8 @@ describe('sealFanInBarrier', () => {
 
     it('clamps a timeout beyond the maximum pause duration', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await seedBarrier({ flowRunId: flowRun.id, baseline: { succeeded: 0, failed: 0, canceled: 0 } })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.RUNNING] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
 
         const { waitpoint } = await seal({
             flowRunId: flowRun.id,
@@ -474,8 +424,8 @@ describe('sealFanInBarrier', () => {
 
     it('floors a timeout that is already in the past', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await seedBarrier({ flowRunId: flowRun.id, baseline: { succeeded: 0, failed: 0, canceled: 0 } })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.RUNNING] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
 
         const { waitpoint } = await seal({
             flowRunId: flowRun.id,
@@ -488,7 +438,7 @@ describe('sealFanInBarrier', () => {
 
     it('rejects an invalid timeout', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await seedBarrier({ flowRunId: flowRun.id, baseline: { succeeded: 0, failed: 0, canceled: 0 } })
+        await seedBarrier({ flowRunId: flowRun.id })
 
         await expect(seal({ flowRunId: flowRun.id, expectedChildren: 1, resumeDateTime: 'not-a-date' })).rejects.toThrow()
     })
@@ -498,7 +448,6 @@ describe('sealFanInBarrier', () => {
         const barrier = await seedBarrier({
             flowRunId: flowRun.id,
             expectedChildren: 2,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
             status: WaitpointStatus.COMPLETED,
             resumePayload: { body: { expected: 2, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, timedOut: false } },
         })
@@ -518,36 +467,32 @@ describe('sealFanInBarrier', () => {
 })
 
 describe('maybeResumeFanInBarrier', () => {
+    function resume({ parentWaitpointId }: { parentWaitpointId: string }) {
+        return maybeResumeFanInBarrier({ parentWaitpointId, projectId: ctx.project.id, log: app.log })
+    }
+
     it('completes the barrier once the last child reaches a terminal state', async () => {
         const { flowRun } = await createParentRun()
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 3,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 3 })
         await createChildren({
-            parentRunId: flowRun.id,
+            parentWaitpointId: barrier.id,
             statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED, FlowRunStatus.CANCELED],
         })
 
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: barrier.id })
 
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
     })
 
     it('does nothing while children are still running', async () => {
         const { flowRun } = await createParentRun()
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 3,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 3 })
         await createChildren({
-            parentRunId: flowRun.id,
+            parentWaitpointId: barrier.id,
             statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING],
         })
 
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: barrier.id })
 
         const stored = await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })
         expect(stored.status).toBe(WaitpointStatus.PENDING)
@@ -555,44 +500,33 @@ describe('maybeResumeFanInBarrier', () => {
 
     it('blocks release while a child is being retried in place, then releases once it finishes', async () => {
         const { flowRun } = await createParentRun()
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 3,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 3 })
         const children = await createChildren({
-            parentRunId: flowRun.id,
+            parentWaitpointId: barrier.id,
             statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED],
         })
         await db.update('flow_run', children[2].id, { status: FlowRunStatus.QUEUED })
 
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: barrier.id })
         expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
 
         await db.update('flow_run', children[2].id, { status: FlowRunStatus.SUCCEEDED })
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: barrier.id })
 
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
     })
 
-    it('waits for an extra child created by a retry on the latest version', async () => {
+    it('is unaffected by a retry on the latest version, which is not attributed to the barrier', async () => {
         const { flowRun } = await createParentRun()
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 3,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 3 })
         await createChildren({
             parentRunId: flowRun.id,
+            parentWaitpointId: barrier.id,
             statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED],
         })
-        const [retry] = await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.RUNNING] })
+        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.RUNNING] })
 
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
-        expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
-
-        await db.update('flow_run', retry.id, { status: FlowRunStatus.SUCCEEDED })
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: barrier.id })
 
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
     })
@@ -602,13 +536,12 @@ describe('maybeResumeFanInBarrier', () => {
         const barrier = await seedBarrier({
             flowRunId: flowRun.id,
             expectedChildren: 1,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
             status: WaitpointStatus.COMPLETED,
             resumePayload: { body: { expected: 1, succeeded: 1, failed: 0, canceled: 0, stillRunning: 0, timedOut: false } },
         })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED] })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
 
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: barrier.id })
 
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
     })
@@ -618,30 +551,25 @@ describe('maybeResumeFanInBarrier', () => {
         const barrier = await seedBarrier({
             flowRunId: flowRun.id,
             expectedChildren: 1,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
             status: WaitpointStatus.COMPLETED,
         })
 
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: barrier.id })
 
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).not.toBeNull()
     })
 
     it('does nothing when the parent run is already terminal', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.SUCCEEDED)
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 1,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
 
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: barrier.id })
 
         expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
     })
 
-    it('does nothing when the run has no fan-in barrier', async () => {
+    it('does nothing when the waitpoint is not a fan-in barrier', async () => {
         const { flowRun } = await createParentRun()
         const waitpoint = createMockWaitpoint({
             flowRunId: flowRun.id,
@@ -651,23 +579,29 @@ describe('maybeResumeFanInBarrier', () => {
         })
         await db.save('waitpoint', waitpoint)
 
-        await maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log })
+        await resume({ parentWaitpointId: waitpoint.id })
 
         expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: waitpoint.id })).status).toBe(WaitpointStatus.PENDING)
     })
 
+    it('does nothing when the barrier belongs to another project', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
+
+        await maybeResumeFanInBarrier({ parentWaitpointId: barrier.id, projectId: apId(), log: app.log })
+
+        expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
+    })
+
     it('releases exactly once under concurrent evaluation', async () => {
         const { flowRun } = await createParentRun()
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 2,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 2 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
 
         await Promise.all([
-            maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log }),
-            maybeResumeFanInBarrier({ parentRunId: flowRun.id, log: app.log }),
+            resume({ parentWaitpointId: barrier.id }),
+            resume({ parentWaitpointId: barrier.id }),
         ])
 
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
@@ -677,12 +611,8 @@ describe('maybeResumeFanInBarrier', () => {
 describe('handleResumeDelayWaitpoint', () => {
     it('times out a barrier and reports the stragglers without touching them', async () => {
         const { flowRun } = await createParentRun()
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 2,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
-        const children = await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING] })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 2 })
+        const children = await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING] })
 
         await handleResumeDelayWaitpoint({
             data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
@@ -700,7 +630,6 @@ describe('handleResumeDelayWaitpoint', () => {
         const barrier = await seedBarrier({
             flowRunId: flowRun.id,
             expectedChildren: 2,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
             status: WaitpointStatus.COMPLETED,
             resumePayload: { body: storedSummary },
         })
@@ -743,11 +672,7 @@ describe('handleResumeDelayWaitpoint', () => {
 
     it('skips a run that is no longer paused', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.SUCCEEDED)
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 1,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
 
         await handleResumeDelayWaitpoint({
             data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
@@ -758,15 +683,66 @@ describe('handleResumeDelayWaitpoint', () => {
     })
 })
 
+describe('external resume of a fan-in barrier', () => {
+    it('refuses to release the barrier and leaves it pending', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 2 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.RUNNING] })
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/waitpoints/${barrier.id}`, { approved: true })
+
+        expect(response.statusCode).toBe(200)
+        expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
+    })
+
+    it('refuses the sync resume path with GONE', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/waitpoints/${barrier.id}/sync`, {})
+
+        expect(response.statusCode).toBe(410)
+        expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
+    })
+
+    it('still resumes a non-fan-in waitpoint', async () => {
+        const { flowRun } = await createParentRun()
+        const waitpoint = createMockWaitpoint({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: 'approval',
+            isFanIn: false,
+        })
+        await db.save('waitpoint', waitpoint)
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint.id}`, { approved: true })
+
+        expect(response.statusCode).toBe(200)
+        expect(await db.findOneBy('waitpoint', { id: waitpoint.id })).toBeNull()
+    })
+})
+
+describe('parentWaitpointId persistence', () => {
+    it('survives the runs-metadata upsert allowlist', async () => {
+        const { flowRun } = await createParentRun()
+        const parentWaitpointId = apId()
+
+        await runsMetadataQueue(app.log).add({
+            id: flowRun.id,
+            projectId: ctx.project.id,
+            parentWaitpointId,
+        })
+
+        const stored = await distributedStore.hgetJson<{ parentWaitpointId?: string }>(redisMetadataKey(flowRun.id))
+        expect(stored?.parentWaitpointId).toBe(parentWaitpointId)
+    })
+})
+
 describe('timeout job lifecycle', () => {
     it('frees the job id so a later barrier in the same run gets its own timeout', async () => {
         const { flowRun } = await createParentRun()
-        const first = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 1,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
-        await createChildren({ parentRunId: flowRun.id, statuses: [FlowRunStatus.RUNNING] })
+        const first = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: first.id, statuses: [FlowRunStatus.RUNNING] })
         await waitpointService(app.log).createForPause({
             flowRunId: flowRun.id,
             projectId: ctx.project.id,
@@ -783,7 +759,8 @@ describe('timeout job lifecycle', () => {
 
         expect(await systemJobsSchedule(app.log).getJob(resumeDelayJobId({ waitpointId: first.id }))).toBeUndefined()
 
-        const second = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: null, baseline: { succeeded: 0, failed: 0, canceled: 0 } })
+        const second = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: second.id, statuses: [FlowRunStatus.RUNNING] })
         await waitpointService(app.log).createForPause({
             flowRunId: flowRun.id,
             projectId: ctx.project.id,
@@ -801,11 +778,7 @@ describe('timeout job lifecycle', () => {
 
     it('drains a legacy per-run job only when it names the waitpoint being deleted', async () => {
         const { flowRun } = await createParentRun()
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 1,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
         await systemJobsSchedule(app.log).upsertJob({
             job: {
                 name: SystemJobName.RESUME_DELAY_WAITPOINT,
@@ -822,11 +795,7 @@ describe('timeout job lifecycle', () => {
 
     it('keeps a legacy per-run job that names a different waitpoint', async () => {
         const { flowRun } = await createParentRun()
-        const barrier = await seedBarrier({
-            flowRunId: flowRun.id,
-            expectedChildren: 1,
-            baseline: { succeeded: 0, failed: 0, canceled: 0 },
-        })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
         await systemJobsSchedule(app.log).upsertJob({
             job: {
                 name: SystemJobName.RESUME_DELAY_WAITPOINT,

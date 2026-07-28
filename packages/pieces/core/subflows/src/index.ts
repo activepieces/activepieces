@@ -1,6 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { callFlow } from './lib/actions/call-flow';
-import { dispatchToSubflows } from './lib/actions/dispatch-to-subflows';
 import { callableFlow } from './lib/triggers/callable-flow';
 import { response } from './lib/actions/respond';
 import { PieceCategory } from '@activepieces/pieces-framework';
@@ -13,6 +12,6 @@ export const flows = createPiece({
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/subflows.svg',
   authors: ['hazemadelkhalel'],
-  actions: [callFlow, dispatchToSubflows, response],
+  actions: [callFlow, response],
   triggers: [callableFlow],
 });

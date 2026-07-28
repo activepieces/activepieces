@@ -3,16 +3,17 @@ import { FlowRunStatus, isFlowRunStateTerminal } from '@activepieces/shared'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { FlowRunEntity } from '../flow-run-entity'
-import { FanInBaseline, Waitpoint } from './waitpoint-types'
+import { Waitpoint } from './waitpoint-types'
 
 const flowRunRepo = repoFactory(FlowRunEntity)
 
-async function countChildren({ parentRunId }: CountChildrenParams, entityManager?: EntityManager): Promise<FanInChildCounts> {
+async function countChildren({ parentWaitpointId, projectId }: CountChildrenParams, entityManager?: EntityManager): Promise<FanInChildCounts> {
     const rows = await flowRunRepo(entityManager)
         .createQueryBuilder('flowRun')
         .select('"flowRun"."status"', 'status')
         .addSelect('COUNT(*)', 'count')
-        .where('"flowRun"."parentRunId" = :parentRunId', { parentRunId })
+        .where('"flowRun"."parentWaitpointId" = :parentWaitpointId', { parentWaitpointId })
+        .andWhere('"flowRun"."projectId" = :projectId', { projectId })
         .groupBy('"flowRun"."status"')
         .getRawMany<{ status: FlowRunStatus, count: string }>()
 
@@ -38,39 +39,26 @@ function isReleasable({ counts, barrier }: EvaluateBarrierParams): boolean {
     if (counts.stillRunning > 0) {
         return false
     }
-    return counts.terminal - baselineTotal(barrier.fanInBaseline) >= barrier.expectedChildren
+    return counts.terminal >= barrier.expectedChildren
 }
 
 function toSummary({ counts, barrier, timedOut }: ToSummaryParams): FanInSummary {
-    const baseline = barrier.fanInBaseline
+    const expectedChildren = barrier.expectedChildren ?? 0
+    const accountedFor = counts.succeeded + counts.failed + counts.canceled + counts.stillRunning
     return {
-        expected: (barrier.expectedChildren ?? 0) + barrier.failedToDispatch,
-        succeeded: Math.max(counts.succeeded - (baseline?.succeeded ?? 0), 0),
-        failed: Math.max(counts.failed - (baseline?.failed ?? 0), 0),
-        canceled: Math.max(counts.canceled - (baseline?.canceled ?? 0), 0),
+        expected: expectedChildren + barrier.failedToDispatch,
+        succeeded: counts.succeeded,
+        failed: counts.failed,
+        canceled: counts.canceled,
         stillRunning: counts.stillRunning,
+        notStarted: Math.max(expectedChildren - accountedFor, 0),
         failedToDispatch: barrier.failedToDispatch,
         timedOut,
     }
 }
 
-function hasChildrenBeyondBaseline({ counts, barrier }: EvaluateBarrierParams): boolean {
-    return counts.stillRunning > 0 || counts.terminal - baselineTotal(barrier.fanInBaseline) > 0
-}
-
-function toBaseline(counts: FanInChildCounts): FanInBaseline {
-    return {
-        succeeded: counts.succeeded,
-        failed: counts.failed,
-        canceled: counts.canceled,
-    }
-}
-
-function baselineTotal(baseline: FanInBaseline | null): number {
-    if (isNil(baseline)) {
-        return 0
-    }
-    return baseline.succeeded + baseline.failed + baseline.canceled
+function hasAnyChildren(counts: FanInChildCounts): boolean {
+    return counts.stillRunning > 0 || counts.terminal > 0
 }
 
 const EMPTY_COUNTS: FanInChildCounts = {
@@ -81,7 +69,7 @@ const EMPTY_COUNTS: FanInChildCounts = {
     terminal: 0,
 }
 
-export const fanInBarrier = { countChildren, isReleasable, toSummary, toBaseline, hasChildrenBeyondBaseline }
+export const fanInBarrier = { countChildren, isReleasable, toSummary, hasAnyChildren }
 
 export type FanInChildCounts = {
     succeeded: number
@@ -97,12 +85,14 @@ export type FanInSummary = {
     failed: number
     canceled: number
     stillRunning: number
+    notStarted: number
     failedToDispatch: number
     timedOut: boolean
 }
 
 type CountChildrenParams = {
-    parentRunId: string
+    parentWaitpointId: string
+    projectId: string
 }
 
 type EvaluateBarrierParams = {

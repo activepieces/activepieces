@@ -2,7 +2,7 @@ import { apId, isNil } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode, FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { IsNull, Not } from 'typeorm'
+import { IsNull } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { system } from '../../../helper/system/system'
@@ -54,7 +54,6 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 resumePayload: null,
                 isFanIn: false,
                 failedToDispatch: 0,
-                fanInBaseline: null,
             })
             .orIgnore()
             .execute()
@@ -82,13 +81,13 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     async createFanInBarrier(params: CreateForPauseParams): Promise<CreateForPauseResult> {
         return transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
-            const counts = await fanInBarrier.countChildren({ parentRunId: params.flowRunId }, entityManager)
             const existing = await repo.findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
             if (!isNil(existing) && existing.status === WaitpointStatus.PENDING) {
-                if (fanInBarrier.hasChildrenBeyondBaseline({ counts, barrier: existing })) {
+                const counts = await fanInBarrier.countChildren({ parentWaitpointId: existing.id, projectId: params.projectId }, entityManager)
+                if (fanInBarrier.hasAnyChildren(counts)) {
                     throw new ActivepiecesError({
                         code: ErrorCode.VALIDATION,
-                        params: { message: 'This fan-in step already dispatched subflows for this run, so it cannot be started again — re-running the dispatch loop would create duplicate children. Retry the parent run from the beginning instead of retrying the step.' },
+                        params: { message: 'This fan-in step already dispatched subflows, so it cannot be started again — re-running the dispatch loop would create duplicate children. Retry the parent run from the beginning instead of retrying the step.' },
                     })
                 }
                 log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id } }, '[waitpointService#createFanInBarrier] Barrier already exists for this step, reusing it')
@@ -99,13 +98,6 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 await repo.delete({ id: existing.id })
             }
             await repo.delete({ flowRunId: params.flowRunId, isFanIn: true, status: WaitpointStatus.PENDING, expectedChildren: IsNull() })
-
-            if (counts.stillRunning > 0) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: { message: 'Cannot start a wait-for-all fan-in step while this run still has subflow children running. Either a fire-and-forget fan-out is still in flight, or an earlier fan-in timed out and left stragglers behind. Mixing those with a wait-for-all fan-in in the same run is not supported; move the fire-and-forget dispatch into a child flow, or raise the earlier timeout.' },
-                })
-            }
 
             const id = apId()
             await repo
@@ -128,13 +120,12 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     isFanIn: true,
                     expectedChildren: null,
                     failedToDispatch: 0,
-                    fanInBaseline: fanInBarrier.toBaseline(counts),
                 })
                 .orIgnore()
                 .execute()
 
             const waitpoint = await repo.findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
-            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: waitpoint.id }, baseline: waitpoint.fanInBaseline }, '[waitpointService#createFanInBarrier] Barrier created')
+            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: waitpoint.id } }, '[waitpointService#createFanInBarrier] Barrier created')
             return { inserted: waitpoint.id === id, waitpoint }
         })
     },
@@ -151,7 +142,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         await waitpointRepo().update({ id: barrier.id, status: WaitpointStatus.PENDING }, {
             expectedChildren: params.expectedChildren,
             failedToDispatch: params.failedToDispatch ?? 0,
-            resumeDateTime: timeoutAt ?? null,
+            resumeDateTime: timeoutAt,
         })
         const sealed = await waitpointRepo().findOneByOrFail({ id: barrier.id })
         if (sealed.status !== WaitpointStatus.PENDING) {
@@ -159,7 +150,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             return sealed
         }
 
-        const counts = await fanInBarrier.countChildren({ parentRunId: params.flowRunId })
+        const counts = await fanInBarrier.countChildren({ parentWaitpointId: sealed.id, projectId: params.projectId })
         if (fanInBarrier.isReleasable({ counts, barrier: sealed })) {
             const summary = fanInBarrier.toSummary({ counts, barrier: sealed, timedOut: false })
             await this.complete({ flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: sealed.id, resumePayload: { body: summary, headers: {}, queryParams: {} } })
@@ -167,30 +158,22 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             return waitpointRepo().findOneByOrFail({ id: sealed.id })
         }
 
-        if (!isNil(timeoutAt)) {
-            await scheduleTimeoutJob({
-                flowRunId: params.flowRunId,
-                projectId: params.projectId,
-                waitpointId: sealed.id,
-                resumeDateTime: timeoutAt,
-                log,
-            })
-        }
+        await scheduleTimeoutJob({
+            flowRunId: params.flowRunId,
+            projectId: params.projectId,
+            waitpointId: sealed.id,
+            resumeDateTime: timeoutAt,
+            log,
+        })
         return sealed
     },
 
-    async findFanInBarrier({ flowRunId }: { flowRunId: string }): Promise<Waitpoint | null> {
-        const sealedAndPending = await waitpointRepo().findOne({
-            where: { flowRunId, isFanIn: true, status: WaitpointStatus.PENDING, expectedChildren: Not(IsNull()) },
-            order: { created: 'DESC' },
-        })
-        if (!isNil(sealedAndPending)) {
-            return sealedAndPending
+    async findFanInBarrierById({ waitpointId, projectId }: FindFanInBarrierByIdParams): Promise<Waitpoint | null> {
+        const waitpoint = await waitpointRepo().findOneBy({ id: waitpointId, projectId })
+        if (isNil(waitpoint) || !waitpoint.isFanIn) {
+            return null
         }
-        return waitpointRepo().findOne({
-            where: { flowRunId, isFanIn: true, status: WaitpointStatus.COMPLETED },
-            order: { created: 'DESC' },
-        })
+        return waitpoint
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
@@ -323,9 +306,12 @@ async function removeTimeoutJobs({ waitpointId, flowRunId, log }: RemoveTimeoutJ
     }
 }
 
-function clampFanInTimeout({ requested, log }: ClampFanInTimeoutParams): string | undefined {
+function clampFanInTimeout({ requested, log }: ClampFanInTimeoutParams): string {
+    const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
     if (isNil(requested)) {
-        return undefined
+        const ceiling = dayjs().add(maxDurationInDays, 'day').toISOString()
+        log.warn({ ceiling }, '[waitpointService#clampFanInTimeout] Fan-in barrier sealed without a timeout, falling back to the maximum pause duration so the barrier always has a backstop')
+        return ceiling
     }
     const requestedAt = dayjs(requested)
     if (!requestedAt.isValid()) {
@@ -338,7 +324,7 @@ function clampFanInTimeout({ requested, log }: ClampFanInTimeoutParams): string 
     if (requestedAt.isBefore(now)) {
         return now.toISOString()
     }
-    const maxAt = now.add(system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS), 'day')
+    const maxAt = now.add(maxDurationInDays, 'day')
     if (requestedAt.isAfter(maxAt)) {
         log.warn({ requested, clampedTo: maxAt.toISOString() }, '[waitpointService#clampFanInTimeout] Fan-in timeout exceeds the maximum pause duration, clamping it')
         return maxAt.toISOString()
@@ -348,6 +334,11 @@ function clampFanInTimeout({ requested, log }: ClampFanInTimeoutParams): string 
 
 type SealFanInBarrierParams = {
     params: CreateForPauseParams
+}
+
+type FindFanInBarrierByIdParams = {
+    waitpointId: string
+    projectId: string
 }
 
 type ScheduleTimeoutJobParams = {

@@ -74,10 +74,6 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             nullable: false,
             default: 0,
         },
-        fanInBaseline: {
-            type: 'jsonb',
-            nullable: true,
-        },
     },
     indices: [
         {
