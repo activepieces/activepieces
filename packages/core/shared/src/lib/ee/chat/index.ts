@@ -358,5 +358,9 @@ export type ChatAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
 export { chatToolClassification } from './tool-classification'
+export { actionEffect, type ActionEffect, type ActionEffectKind, type ActionEffectLabel } from './action-effect'
+export { actionEffectLabelCatalog } from './action-effect-labels'
+export { chatToolConsentSpecs, type ChatToolConsentSpec } from './tool-consent-specs'
+export { chatConsent, type ConsentDecision } from './chat-consent'
 export { chatToolPhases, type ChatPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
