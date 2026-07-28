@@ -75,6 +75,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             nullable: false,
             default: false,
         },
+        notifyFlowOwnerOnFailure: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
         metadata: {
             type: 'jsonb',
             nullable: true,
@@ -89,6 +94,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
         workerGroupId: {
             type: String,
+            nullable: true,
+        },
+        executionDataRetentionDays: {
+            type: Number,
             nullable: true,
         },
     },
@@ -122,6 +131,12 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         {
             name: 'idx_project_worker_group',
             columns: ['workerGroupId'],
+            unique: false,
+        },
+        {
+            name: 'idx_project_execution_data_retention_days',
+            columns: ['executionDataRetentionDays'],
+            where: '"executionDataRetentionDays" IS NOT NULL',
             unique: false,
         },
     ],

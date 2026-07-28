@@ -1,4 +1,4 @@
-import { AppConnectionStatus, isNil, SuggestionType, tryCatch } from '@activepieces/shared'
+import { AppConnectionStatus, isNil, PieceAudienceFilter, SuggestionType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../app-connection/app-connection-service/app-connection-service'
 import { databaseConnection } from '../database/database-connection'
@@ -155,6 +155,7 @@ async function keywordSearch({ objectKind, query, opts, log, degradeReason }: Ke
         includeHidden: false,
         searchQuery: query,
         suggestionType: objectKind === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
+        audience: PieceAudienceFilter.ALL,
     })
 
     // Honor the caller's pieceName scope in the keyword floor too. `pieceMetadataService.list`
@@ -166,12 +167,13 @@ async function keywordSearch({ objectKind, query, opts, log, degradeReason }: Ke
 
     const results = scopedPieces.flatMap((piece) => {
         const suggestions = objectKind === 'action' ? (piece.suggestedActions ?? []) : (piece.suggestedTriggers ?? [])
+        const pieceHasAuth = !isNil(piece.auth)
         return suggestions.map((object): ToolSearchObjectResult => ({
             pieceName: piece.name,
             objectName: object.name,
             displayName: object.displayName,
             oneLineDescription: object.description,
-            requiresConnection: object.requireAuth,
+            requiresConnection: pieceHasAuth && (object.requireAuth ?? true),
         }))
     }).slice(0, limit)
     return { results, mode: 'keyword', degradeReason }
@@ -194,6 +196,7 @@ async function resolveEnabledPieceNames(opts: ToolSearchParams, log: FastifyBase
         platformId,
         projectId,
         includeHidden: false,
+        audience: PieceAudienceFilter.ALL,
     }))
     if (isNil(pieces)) {
         log.warn({ error, platformId }, '[toolSearchService] Enabled-piece resolution failed — serving without the enabled filter.')

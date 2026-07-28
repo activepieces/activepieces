@@ -5,6 +5,7 @@ import {
   PROJECT_COLOR_PALETTE,
   ProjectIcon,
   ProjectType,
+  TeamProjectsLimit,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
@@ -38,6 +39,7 @@ export type FormValues = {
   icon: ProjectIcon;
   externalId?: string;
   maxConcurrentJobs?: number | null;
+  activeFlowsLimit?: number | null;
 };
 
 type GeneralSettingsProps = {
@@ -211,6 +213,43 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                       : t(
                           'Maximum number of flows that can run at the same time for this project',
                         )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        {platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+          platformRole === PlatformRole.ADMIN && (
+            <FormField
+              name="activeFlowsLimit"
+              render={({ field }) => (
+                <FormItem>
+                  <Label
+                    htmlFor="activeFlowsLimit"
+                    className="text-sm font-medium"
+                  >
+                    {t('Active Flows Limit')}
+                  </Label>
+                  <ClearableInput
+                    {...field}
+                    id="activeFlowsLimit"
+                    type="number"
+                    min={1}
+                    placeholder={t('Unlimited')}
+                    value={field.value ?? ''}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : null,
+                      )
+                    }
+                    onClear={() => field.onChange(null)}
+                    disabled={form.formState.disabled}
+                  />
+                  <FormDescription className="text-xs text-muted-foreground">
+                    {t(
+                      'Maximum number of enabled flows in this project. Leave empty for no limit.',
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

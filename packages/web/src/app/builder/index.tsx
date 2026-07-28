@@ -132,14 +132,17 @@ const BuilderPage = () => {
     setStepDataPanelView,
     setStepDataPanelOpen,
   ]);
-  const { pieceModel, refetch: refetchPiece } =
-    piecesHooks.usePieceModelForStepSettings({
-      name: selectedStep?.settings.pieceName,
-      version: selectedStep?.settings.pieceVersion,
-      enabled:
-        selectedStep?.type === FlowActionType.PIECE ||
-        selectedStep?.type === FlowTriggerType.PIECE,
-    });
+  const {
+    pieceModel,
+    isNotFound: pieceModelNotFound,
+    refetch: refetchPiece,
+  } = piecesHooks.usePieceModelForStepSettings({
+    name: selectedStep?.settings.pieceName,
+    version: selectedStep?.settings.pieceVersion,
+    enabled:
+      selectedStep?.type === FlowActionType.PIECE ||
+      selectedStep?.type === FlowTriggerType.PIECE,
+  });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
   flowCanvasHooks.useListenToExistingRun();
 
@@ -222,6 +225,7 @@ const BuilderPage = () => {
               selectedStep && (
                 <StepSettingsProvider
                   pieceModel={pieceModel}
+                  pieceModelNotFound={pieceModelNotFound}
                   selectedStep={selectedStep}
                   key={constructContainerKey({
                     flowVersionId: flowVersion.id,

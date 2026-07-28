@@ -1,13 +1,15 @@
-import { apId, Cursor, isNil, PlatformId, ProjectId, SeekPage, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { apId, Cursor, isNil, partition, PlatformId, ProjectId, SeekPage, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../helper/application-events'
 import { domainHelper } from '../helper/domain-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
@@ -28,6 +30,8 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
     ApplicationEventName.FLOW_RUN_RESUMED,
     ApplicationEventName.FLOW_RUN_RETRIED,
 ])
+
+const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
 
 export const eventDestinationService = (log: FastifyBaseLogger) => ({
     setup(): void {
@@ -116,6 +120,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         if (destinations.length === 0) {
             return
         }
+        const enrichedEvent = await enrichFlowRunEvent({ event, log })
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
         })
@@ -123,7 +128,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             classifyDestination({ destination, webhookUrlPrefix }))
         const destinationsToDispatch = skipInternalDestinationsOnFlowCycle({
             classifiedDestinations,
-            event,
+            event: enrichedEvent,
             log,
         })
         await Promise.all(destinationsToDispatch.map(({ destination, internalFlowId }) =>
@@ -134,7 +139,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 destinationId: destination.id,
                 destinationUrl: destination.url,
                 internalFlowId,
-                event,
+                event: enrichedEvent,
             }),
         ))
     },
@@ -260,28 +265,67 @@ const skipInternalDestinationsOnFlowCycle = ({
     event,
     log,
 }: SkipDestinationsParams): ClassifiedDestination[] => {
-    if (classifiedDestinations.length === 0 || !isFlowRunEvent(event)) {
+    if (!isFlowRunEvent(event)) {
         return classifiedDestinations
     }
-    const targetedFlowIds = new Set(
-        classifiedDestinations
-            .map(({ internalFlowId }) => internalFlowId)
-            .filter((flowId): flowId is string => !isNil(flowId)),
-    )
     const eventFlowId = event.data.flowRun.flowId
-    if (!targetedFlowIds.has(eventFlowId)) {
+    const targetsEventFlow = classifiedDestinations.some(({ destination }) =>
+        extractWebhookFlowIdCandidate({ destinationUrl: destination.url }) === eventFlowId)
+    if (!targetsEventFlow) {
         return classifiedDestinations
     }
+    const [keptDestinations, droppedDestinations] = partition(classifiedDestinations, ({ destination }) =>
+        isNil(extractWebhookFlowIdCandidate({ destinationUrl: destination.url })))
     log.warn({
         flow: { id: eventFlowId },
         action: event.action,
-    }, '[eventDestinationService#trigger] Source flow is wired as an internal webhook target; dropping internal destinations to break the cycle, external destinations will still fire')
-    return classifiedDestinations.filter(({ internalFlowId }) => isNil(internalFlowId))
+        droppedDestinations: droppedDestinations.map(({ destination }) => ({ id: destination.id, url: destination.url })),
+    }, '[eventDestinationService#trigger] Source flow is wired as a webhook-flow destination; dropping all webhook-flow destinations to break the cycle, non-webhook destinations will still fire')
+    return keptDestinations
 }
 
 const isFlowRunEvent = (
     event: Pick<ApplicationEvent, 'action' | 'data'>,
 ): event is Pick<FlowRunEvent, 'action' | 'data'> => FLOW_RUN_EVENT_ACTIONS.has(event.action)
+
+const extractWebhookFlowIdCandidate = ({ destinationUrl }: ExtractWebhookFlowIdCandidateParams): string | null => {
+    const { data: url } = tryCatchSync(() => new URL(destinationUrl))
+    if (isNil(url)) {
+        return null
+    }
+    const markerIndex = url.pathname.lastIndexOf(WEBHOOK_PATH_MARKER)
+    if (markerIndex === -1) {
+        return null
+    }
+    const rawFlowId = url.pathname.slice(markerIndex + WEBHOOK_PATH_MARKER.length).split('/')[0]
+    if (!rawFlowId) {
+        return null
+    }
+    const { data: decodedFlowId } = tryCatchSync(() => decodeURIComponent(rawFlowId))
+    return decodedFlowId ?? rawFlowId
+}
+
+const enrichFlowRunEvent = async ({ event, log }: EnrichFlowRunEventParams): Promise<ApplicationEvent> => {
+    const projectId = event.projectId
+    if (!isFlowRunEvent(event)) {
+        return event
+    }
+    const [flowVersion, project] = await Promise.all([
+        flowVersionService(log).getOne(event.data.flowRun.flowVersionId),
+        isNil(projectId) ? Promise.resolve(null) : projectService(log).getOne(projectId),
+    ])
+    return {
+        ...event,
+        data: {
+            ...event.data,
+            flowRun: {
+                ...event.data.flowRun,
+                flowDisplayName: flowVersion?.displayName ?? event.data.flowRun.flowDisplayName,
+            },
+            ...(isNil(project) ? {} : { project: { displayName: project.displayName } }),
+        },
+    }
+}
 
 const matchInternalWebhookFlowId = ({
     destinationUrl,
@@ -340,6 +384,11 @@ type TestParams = {
     event?: ApplicationEventName
 }
 
+type EnrichFlowRunEventParams = {
+    event: ApplicationEvent
+    log: FastifyBaseLogger
+}
+
 type ClassifiedDestination = {
     destination: EventDestinationSchema
     internalFlowId: string | null
@@ -377,6 +426,10 @@ type DispatchToInternalFlowParams = {
 type BuildInternalWebhookPayloadParams = {
     destinationUrl: string
     event: ApplicationEvent
+}
+
+type ExtractWebhookFlowIdCandidateParams = {
+    destinationUrl: string
 }
 
 type MatchInternalWebhookFlowIdParams = {

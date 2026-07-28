@@ -9,11 +9,12 @@ import { modelDropdown } from '../common/common';
 import { extractStructuredDataActionOutputSchema } from '../output-schemas';
 
 export const extractStructuredDataAction = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: claudeAuth,
   name: 'extract-structured-data',
   displayName: 'Extract Structured Data',
   description: 'Extract structured data from provided text,image or PDF.',
+  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined, using a forced tool call so the output matches your schema. The Data Schema Type prop switches between Simple mode (a list of named fields with types and required flags) and Advanced mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text or Image/PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
   props: {
     model: modelDropdown,
     text: Property.LongText({
