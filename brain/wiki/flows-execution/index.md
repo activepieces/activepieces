@@ -20,6 +20,13 @@ One execution instance per flow version, trigger → terminal state. 12 statuses
 - `failedStep` JSONB snapshot powers filtered retries, error search, failure emails, jump-to-failed-step.
 - Paid editions emit AI usage billing (`ai_usage_per_run`) on terminal runs.
 
+### Subflows
+A flow called by another flow. The child is a full `flow_run` in its own right, started by dispatching to a flow whose trigger is `Callable Flow`; `flow_run.parentRunId` records the lineage. Two shapes: **fire-and-forget** (the parent continues immediately) and **fan-in** (the parent waits).
+- **Fan-in barrier** — the single waitpoint (`is_fan_in = true`) a parent pauses on while N dispatched children run. Children name their barrier via `flow_run.parentWaitpointId`, stamped from the `ap-parent-waitpoint-id` dispatch header. Release is a predicate re-derived from committed child state — `sealed ∧ no non-terminal child ∧ terminal ≥ expected` — never a counter and never a poll. See decision 000015.
+- **Seal** — the point where the dispatcher declares how many children it actually got accepted (`expectedChildren`) plus a `timeoutAt`. A barrier is unsealed and unreleasable until then; every seal gets a timeout job, and sealing is once-only so a replay can neither lower the expectation nor fail the run.
+- **Straggler** — a child still non-terminal when its barrier is released by timeout. Nothing cancels one today.
+- Gotcha: a barrier is **not** externally resumable. There are **four** external resume paths (the deprecated V0 `/requests/:requestId` pair reads no waitpoint at all) and all of them plus the confirmation page refuse `isFanIn`, so only the predicate and the timeout may release one.
+
 ### Triggers
 Defines how/when a flow starts. Registered as a `TriggerSource` (unique per projectId/flowId/simulate); dedup state in Redis.
 - 4 strategies: POLLING (BullMQ cron + Redis INCR dedup on `__DEDUPE_KEY_PROPERTY`), WEBHOOK (external push), APP_WEBHOOK (routed via `AppEventRouting` table, e.g. Slack/GitHub), MANUAL.
@@ -50,7 +57,8 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 ## Pages
 
 - **Flows** — the versioned trigger + action graph, DRAFT/LOCKED, publishing
-- **Flow Runs** — the status state machine and RunTimeline phases
+- **Flow Runs** — the status state machine, RunTimeline phases, waitpoints and the fan-in barrier
+- **Fan-in entry points** — what the first caller of the dormant barrier has to deal with
 - **Triggers** — POLLING / WEBHOOK / APP_WEBHOOK / MANUAL
 - **Human Input** — forms, approvals, the resume confirmation page
 - **Folders** — flow organization; the uncategorized sentinel

@@ -162,6 +162,7 @@ export const WebhookJobData = z.object({
     execute: z.boolean(),
     jobType: z.literal(WorkerJobType.EXECUTE_WEBHOOK),
     parentRunId: z.string().optional(),
+    parentWaitpointId: z.string().optional(),
     failParentOnFailure: z.boolean().optional(),
 })
 export type WebhookJobData = z.infer<typeof WebhookJobData>

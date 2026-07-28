@@ -15,6 +15,7 @@ export type SubmitPayloadsRequest = {
     environment: RunEnvironment
     streamStepProgress: StreamStepProgress
     parentRunId?: string
+    parentWaitpointId?: string
     failParentOnFailure?: boolean
 }
 

@@ -13,6 +13,7 @@ import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { buildRunTimeline } from './run-timeline'
+import { fanInBarrier } from './waitpoint/fan-in-barrier'
 import { resumeService } from './waitpoint/resume-service'
 import { waitpointService } from './waitpoint/waitpoint-service'
 import { WaitpointStatus } from './waitpoint/waitpoint-types'
@@ -71,6 +72,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
+                                    ...spreadIfDefined('parentWaitpointId', runMetadata.parentWaitpointId),
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
                                     ...spreadIfDefined('updated', runMetadata.updated),
@@ -101,7 +103,10 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
                             const parentRunId = savedFlowRun.parentRunId
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
-                            if (shouldMarkParentAsFailed) {
+                            if (!isNil(savedFlowRun.parentWaitpointId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
+                                await maybeResumeFanInBarrier({ parentWaitpointId: savedFlowRun.parentWaitpointId, projectId: savedFlowRun.projectId, log })
+                            }
+                            else if (shouldMarkParentAsFailed) {
                                 await markParentRunAsFailed({
                                     parentRunId,
                                     childRunId: savedFlowRun.id,
@@ -196,6 +201,7 @@ async function markParentRunAsFailed({
 }: MarkParentRunAsFailedParams): Promise<void> {
     const flowRun = await flowRunRepo().findOneBy({
         id: parentRunId,
+        projectId,
     })
 
     if (isNil(flowRun) || isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
@@ -215,7 +221,7 @@ async function markParentRunAsFailed({
         queryParams: {},
     }
 
-    const existingWaitpoint = await waitpointService(log).getByFlowRunId(parentRunId)
+    const existingWaitpoint = await waitpointService(log).findNonFanInByFlowRunId(parentRunId)
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,
@@ -232,6 +238,57 @@ async function markParentRunAsFailed({
     }
 }
 
+export async function maybeResumeFanInBarrier({ parentWaitpointId, projectId, log }: MaybeResumeFanInBarrierParams): Promise<void> {
+    const barrier = await waitpointService(log).findFanInBarrierById({ waitpointId: parentWaitpointId, projectId })
+    if (isNil(barrier)) {
+        return
+    }
+    const parentRun = await flowRunRepo().findOneBy({ id: barrier.flowRunId, projectId })
+    if (isNil(parentRun) || isFlowRunStateTerminal({ status: parentRun.status, ignoreInternalError: false })) {
+        return
+    }
+
+    if (barrier.status === WaitpointStatus.COMPLETED) {
+        if (parentRun.status !== FlowRunStatus.PAUSED) {
+            return
+        }
+        log.warn({ flowRun: { id: parentRun.id }, waitpoint: { id: barrier.id } },
+            '[maybeResumeFanInBarrier] Barrier was completed without a resume reaching the queue, recovering it')
+        await resumeService(log).resumeFromWaitpoint({
+            flowRunId: parentRun.id,
+            waitpointId: barrier.id,
+            resumePayload: barrier.resumePayload,
+        })
+        return
+    }
+
+    if (isNil(barrier.expectedChildren)) {
+        return
+    }
+    if (await fanInBarrier.hasNonTerminalChild({ parentWaitpointId: barrier.id, projectId })) {
+        return
+    }
+
+    const counts = await fanInBarrier.countChildren({ parentWaitpointId: barrier.id, projectId })
+    if (!fanInBarrier.isReleasable({ counts, barrier })) {
+        return
+    }
+    const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false })
+    const result = await waitpointService(log).complete({
+        flowRunId: parentRun.id,
+        projectId: parentRun.projectId,
+        waitpointId: barrier.id,
+        resumePayload: { body: summary, headers: {}, queryParams: {} },
+    })
+    if (result.completedExisting && !isNil(result.waitpoint)) {
+        await resumeService(log).resumeFromWaitpoint({
+            flowRunId: parentRun.id,
+            waitpointId: result.waitpoint.id,
+            resumePayload: result.waitpoint.resumePayload,
+        })
+    }
+}
+
 type BuildTimelineParams = {
     existingFlowRun: FlowRun
     runMetadata: RunsMetadataUpsertData
@@ -240,6 +297,12 @@ type BuildTimelineParams = {
 type MarkParentRunAsFailedParams = {
     parentRunId: string
     childRunId: string
+    projectId: string
+    log: FastifyBaseLogger
+}
+
+type MaybeResumeFanInBarrierParams = {
+    parentWaitpointId: string
     projectId: string
     log: FastifyBaseLogger
 }

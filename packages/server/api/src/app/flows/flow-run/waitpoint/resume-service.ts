@@ -67,6 +67,10 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         if (flowRun.status !== FlowRunStatus.PAUSED) {
             return { flowRun, stale: true }
         }
+        if (await waitpointService(log).hasPendingFanInBarrier({ flowRunId })) {
+            log.warn({ flowRun: { id: flowRunId } }, '[resumeService#legacyResume] Refused an external resume of a fan-in barrier; only the barrier predicate and its timeout may release it')
+            return { flowRun, stale: true }
+        }
         await enqueueResume({ flowRun, resumePayload, workerHandlerId }, log)
         return { flowRun, stale: false }
     },
@@ -115,6 +119,14 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             return {
                 status: StatusCodes.CONFLICT,
                 body: { message: 'Flow run is not paused', flowRunStatus: flowRun.status },
+                headers: {},
+            }
+        }
+        if (await waitpointService(log).hasPendingFanInBarrier({ flowRunId: runId })) {
+            log.warn({ flowRun: { id: runId } }, '[resumeService#legacySyncResume] Refused an external resume of a fan-in barrier; only the barrier predicate and its timeout may release it')
+            return {
+                status: StatusCodes.GONE,
+                body: { message: 'This link has expired. The action may have already been processed.' },
                 headers: {},
             }
         }

@@ -182,6 +182,7 @@ export type CreateWaitpointParams = {
   version?: 'V0' | 'V1';
   resumeDateTime?: string;
   responseToSend?: RespondResponse;
+  isFanIn?: boolean;
 };
 
 export type CreateWaitpointResult = {
@@ -190,8 +191,15 @@ export type CreateWaitpointResult = {
   buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }) => string;
 };
 
+export type SealFanInParams = {
+  expectedChildren: number;
+  failedToDispatch?: number;
+  timeoutAt: string;
+};
+
 export type CreateWaitpointHook = (params: CreateWaitpointParams) => Promise<CreateWaitpointResult>;
 export type WaitForWaitpointHook = (waitpointId: string) => void;
+export type SealFanInHook = (params: SealFanInParams) => Promise<void>;
 
 export type RunContext = {
   id: FlowRunId;
@@ -201,6 +209,7 @@ export type RunContext = {
   respond: RespondHook;
   createWaitpoint: CreateWaitpointHook;
   waitForWaitpoint: WaitForWaitpointHook;
+  sealFanIn: SealFanInHook;
 }
 
 export type OnStartContext<

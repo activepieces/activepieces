@@ -74,6 +74,7 @@ import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
+import { waitpointService } from './flows/flow-run/waitpoint/waitpoint-service'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
@@ -276,6 +277,21 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             name: SystemJobName.CHAT_STALE_SWEEP,
             data: {},
             jobId: SystemJobName.CHAT_STALE_SWEEP,
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '* * * * *',
+        },
+    })
+
+    systemJobHandlers.registerJobHandler(SystemJobName.WAITPOINT_DEADLINE_SWEEP, async () => {
+        await waitpointService(app.log).sweepOverdueDeadlines()
+    })
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.WAITPOINT_DEADLINE_SWEEP,
+            data: {},
+            jobId: SystemJobName.WAITPOINT_DEADLINE_SWEEP,
         },
         schedule: {
             type: 'repeated',

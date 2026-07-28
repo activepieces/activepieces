@@ -60,6 +60,20 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        isFanIn: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
+        expectedChildren: {
+            type: Number,
+            nullable: true,
+        },
+        failedToDispatch: {
+            type: Number,
+            nullable: false,
+            default: 0,
+        },
     },
     indices: [
         {
@@ -70,6 +84,11 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
         {
             name: 'idx_waitpoint_project_id',
             columns: ['projectId'],
+        },
+        {
+            name: 'idx_waitpoint_pending_resume_date_time',
+            columns: ['resumeDateTime'],
+            where: '"status" = \'PENDING\' AND "resumeDateTime" IS NOT NULL',
         },
     ],
     relations: {

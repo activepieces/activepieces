@@ -2,6 +2,7 @@ import { ApId, isNil } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, FlowRunStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import Mustache from 'mustache'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
@@ -83,7 +84,7 @@ async function serveConfirmationPage({ flowRunId, waitpointId, url, queryParams,
     const flowRun = await findFlowRunOrThrow(flowRunId)
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
     const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
-    const isOpen = !isNil(waitpoint) && waitpoint.status === WaitpointStatus.PENDING && flowRun.status === FlowRunStatus.PAUSED
+    const isOpen = !isNil(waitpoint) && !waitpoint.isFanIn && waitpoint.status === WaitpointStatus.PENDING && flowRun.status === FlowRunStatus.PAUSED
     if (!isOpen) {
         await replyWithHtml({ reply, html: Mustache.render(STATUS_HTML_TEMPLATE, buildThemeView({ theme, extra: { title: ALREADY_TITLE, message: ALREADY_MESSAGE, success: false } })) })
         return
@@ -105,11 +106,14 @@ function buildActionUrl({ path, queryParams, action }: { path: string, queryPara
 }
 
 async function handleConfirmResume({ flowRunId, waitpointId, action, body, headers, queryParams, log, reply }: ConfirmResumeParams): Promise<void> {
-    const { flowRun, stale } = await resumeService(log).resumeFromWaitpoint({
-        flowRunId,
-        waitpointId,
-        resumePayload: { body, headers, queryParams },
-    })
+    const barrier = await isFanInBarrier({ flowRunId, waitpointId, log })
+    const { flowRun, stale } = barrier
+        ? { flowRun: await findFlowRunOrThrow(flowRunId), stale: true }
+        : await resumeService(log).resumeFromWaitpoint({
+            flowRunId,
+            waitpointId,
+            resumePayload: { body, headers, queryParams },
+        })
     if (!acceptsHtml(headers)) {
         await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
         return
@@ -122,6 +126,10 @@ async function handleConfirmResume({ flowRunId, waitpointId, action, body, heade
 }
 
 async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply }: AsyncResumeHandlerParams): Promise<void> {
+    if (await isFanInBarrier({ flowRunId, waitpointId, log })) {
+        await reply.send({ message: EXPIRED_MESSAGE })
+        return
+    }
     const { stale } = await resumeService(log).resumeFromWaitpoint({
         flowRunId,
         waitpointId,
@@ -131,6 +139,10 @@ async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryP
 }
 
 async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: AsyncResumeHandlerParams & { correlationId: string }): Promise<void> {
+    if (await isFanInBarrier({ flowRunId, waitpointId, log })) {
+        await reply.status(StatusCodes.GONE).send({ message: EXPIRED_MESSAGE })
+        return
+    }
     const response = await resumeService(log).handleSyncResumeFlow({
         runId: flowRunId,
         waitpointId,
@@ -138,6 +150,16 @@ async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryPa
         correlationId,
     })
     await reply.status(response.status).headers(response.headers).send(response.body)
+}
+
+async function isFanInBarrier({ flowRunId, waitpointId, log }: IsFanInBarrierParams): Promise<boolean> {
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+    if (isNil(waitpoint) || !waitpoint.isFanIn) {
+        return false
+    }
+    log.warn({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } },
+        '[resumeController] Refused an external resume of a fan-in barrier; only the barrier predicate and its timeout may release it')
+    return true
 }
 
 async function handleLegacyAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: LegacyResumeHandlerParams): Promise<void> {
@@ -328,6 +350,12 @@ type ConfirmResumeParams = {
     queryParams: Record<string, string>
     log: FastifyBaseLogger
     reply: FastifyReply
+}
+
+type IsFanInBarrierParams = {
+    flowRunId: string
+    waitpointId: string
+    log: FastifyBaseLogger
 }
 
 type AsyncResumeHandlerParams = {

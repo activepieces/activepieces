@@ -4,9 +4,8 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PARENT_RUN_ID_HEADER } from '@activepieces/pieces-framework';
-import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
+import { ExecutionType, FlowStatus, isNil } from '@activepieces/pieces-framework';
+import { CallableFlowResponse, dispatchChild, findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
 
 export const callFlow = createAction({
   audience: 'human',
@@ -135,20 +134,14 @@ export const callFlow = createAction({
       context.run.waitForWaitpoint(waitpoint.id);
     }
 
-    const response = await httpClient.sendRequest<CallableFlowRequest>({
-      method: HttpMethod.POST,
-      url: `${context.server.apiUrl}v1/webhooks/${flow?.id}`,
-      headers: {
-        'Content-Type': 'application/json',
-        [PARENT_RUN_ID_HEADER]: context.run.id,
-        [FAIL_PARENT_ON_FAILURE_HEADER]: context.propsValue.waitForResponse ? 'true' : 'false',
-      },
-      body: {
-        data: payload,
-        callbackUrl,
-      },
+    return dispatchChild({
+      apiUrl: context.server.apiUrl,
+      flowId: flow.id,
+      payload,
+      parentRunId: context.run.id,
+      failParentOnFailure: context.propsValue.waitForResponse ?? false,
+      callbackUrl,
     });
-    return response.body;
   },
   errorHandlingOptions: {
     continueOnFailure: {

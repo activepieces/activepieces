@@ -1,3 +1,4 @@
+import { apId } from '@activepieces/core-utils'
 import { FileCompression, FileType, FlowRetryStrategy, FlowRunStatus, FlowTriggerType, FlowVersionState, RunEnvironment, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { fileService } from '../../../../../src/app/file/file.service'
@@ -103,6 +104,25 @@ describe('Retry flow run', () => {
         const body = response.json()
         expect(body.id).not.toBe(flowRun.id)
         expect(body.flowId).toBe(flowRun.flowId)
+    })
+
+    it('should keep parentRunId but drop parentWaitpointId when retrying on latest version', async () => {
+        const { flowRun } = await createFailedFlowRun({
+            projectId: ctx.project.id,
+        })
+        const parentRunId = apId()
+        await db.update('flow_run', flowRun.id, { parentRunId, parentWaitpointId: apId() })
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+            projectId: ctx.project.id,
+        })
+
+        expect(response.statusCode).toBe(200)
+        const retried = response.json()
+        expect(retried.id).not.toBe(flowRun.id)
+        expect(retried.parentRunId).toBe(parentRunId)
+        expect(retried.parentWaitpointId).toBeUndefined()
     })
 
     it('should return 400 for invalid flow run id', async () => {
