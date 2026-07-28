@@ -68,7 +68,7 @@ export const agentsDropdown = Property.Dropdown<string, true, typeof volubileAut
     const options: DropdownOption<string>[] = [];
     let hasMore = true;
     let page = 1;
-    const pageSize= '100';
+    const pageSize= '500';
 
     do {
       const request: HttpRequest = {
