@@ -592,12 +592,11 @@ async function assertProjectIds(projectIds: ProjectId[], platformId: string): Pr
         })
     }
 }
-// Resolves the account identifier shown for an OAuth connection (e.g. the
-// signed-in email). The generic path decodes the OIDC id_token / email claim
-// from the token response — this covers every provider that returns one
-// (Google, Microsoft, …). Anything provider-specific (Slack's workspace/user)
-// lives in the piece's own getConnectionIdentifier hook, resolved via the
-// engine. Best-effort — never throws, returns undefined on any miss.
+// The generic path decodes the OIDC id_token / email claim from the token
+// response — this covers every provider that returns one (Google, Microsoft, …).
+// Anything provider-specific (Slack's workspace/user) lives in the piece's own
+// getConnectionIdentifier hook, resolved via the engine. Best-effort — never
+// throws, returns undefined on any miss.
 const resolveConnectionAccountIdentifier = async ({
     connectionType,
     auth,
@@ -811,10 +810,9 @@ const engineValidateAuth = async (
     }
 }
 
-// Runs the piece's getConnectionIdentifier hook in the engine. Unlike
-// engineValidateAuth this is best-effort: resolving a display label must never
-// fail — or delay — the connection upsert, so any error/failure collapses to
-// undefined and the engine round-trip is capped by RESOLVE_IDENTIFIER_TIMEOUT_MS
+// Unlike engineValidateAuth this is best-effort: resolving a display label must
+// never fail — or delay — the connection upsert, so any error/failure collapses
+// to undefined and the engine round-trip is capped by RESOLVE_IDENTIFIER_TIMEOUT_MS
 // (the watcher's own safety timeout is 5 minutes, far too long to block a Save on).
 const RESOLVE_IDENTIFIER_TIMEOUT_MS = 15000
 
