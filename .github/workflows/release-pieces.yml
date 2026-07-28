@@ -75,12 +75,6 @@ jobs:
         if: steps.changed.outputs.has_changes == 'true'
         run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }} --force
 
-      - name: Prepare pieces for publish
-        if: steps.changed.outputs.has_changes == 'true'
-        run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/prepare-pieces-for-publish.ts
-        env:
-          CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
-
       - name: publish pieces packages
         if: steps.changed.outputs.has_changes == 'true'
         run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts

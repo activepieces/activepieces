@@ -60,8 +60,16 @@ const insertMetadata = async (piecesMetadata: PieceMetadata[]) => {
 const main = async () => {
   console.log('update pieces metadata: started')
 
-  const piecesMetadata = await findNewPieces()
-  await insertMetadata(piecesMetadata)
+  const { pieces, failures } = await findNewPieces()
+  await insertMetadata(pieces)
+
+  if (failures.length > 0) {
+    console.error(`update pieces metadata: ${failures.length} piece(s) failed to load:`)
+    for (const failure of failures) {
+      console.error(`  - ${failure.path}: ${failure.error}`)
+    }
+    process.exit(1)
+  }
 
   console.log('update pieces metadata: completed')
   process.exit()
