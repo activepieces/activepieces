@@ -1,8 +1,10 @@
 import {
     FlowActionType,
+    flowOperations,
     FlowOperationType,
     FlowStatus,
     FlowTriggerType,
+    FlowVersion,
     FlowVersionState,
     PackageType,
     PieceType,
@@ -706,6 +708,102 @@ describe('Flow Operations API', () => {
             const afterImport = await ctx.get(`/v1/flows/${flow.id}`)
             const persisted: PopulatedFlow = afterImport?.json()
             expect(persisted.version.trigger.nextAction).toBeUndefined()
+        })
+    })
+
+    describe('POST /v1/flows/:id draft creation rollback', () => {
+        it('should not leave an orphaned empty draft when importing into the new draft fails', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+            })
+            await db.save('flow', mockFlow)
+
+            const lockedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.LOCKED,
+                valid: true,
+            })
+            await db.save('flow_version', lockedVersion)
+
+            const applySpy = vi.spyOn(flowOperations, 'apply').mockImplementationOnce(() => {
+                throw new RangeError('Maximum call stack size exceeded')
+            })
+
+            try {
+                const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: { displayName: 'New Name' },
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+
+                const orphanedDraft = await db.findOneBy('flow_version', {
+                    flowId: mockFlow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(orphanedDraft).toBeNull()
+
+                const remainingVersion = await db.findOneByOrFail<FlowVersion>('flow_version', {
+                    flowId: mockFlow.id,
+                })
+                expect(remainingVersion.id).toBe(lockedVersion.id)
+                expect(remainingVersion.state).toBe(FlowVersionState.LOCKED)
+            }
+            finally {
+                applySpy.mockRestore()
+            }
+        })
+
+        it('should delete the newly created draft when the user operation fails after a successful import', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+            })
+            await db.save('flow', mockFlow)
+
+            const lockedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.LOCKED,
+                valid: true,
+            })
+            await db.save('flow_version', lockedVersion)
+
+            const originalApply = flowOperations.apply
+            const applySpy = vi.spyOn(flowOperations, 'apply').mockImplementation((flowVersion, operation) => {
+                if (operation.type === FlowOperationType.CHANGE_NAME && operation.request.displayName === 'Renamed by user') {
+                    throw new Error('user operation failed')
+                }
+                return originalApply(flowVersion, operation)
+            })
+
+            try {
+                const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: { displayName: 'Renamed by user' },
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+
+                const leftoverDraft = await db.findOneBy('flow_version', {
+                    flowId: mockFlow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(leftoverDraft).toBeNull()
+
+                const remainingVersion = await db.findOneByOrFail<FlowVersion>('flow_version', {
+                    flowId: mockFlow.id,
+                })
+                expect(remainingVersion.id).toBe(lockedVersion.id)
+                expect(remainingVersion.state).toBe(FlowVersionState.LOCKED)
+            }
+            finally {
+                applySpy.mockRestore()
+            }
         })
     })
 
