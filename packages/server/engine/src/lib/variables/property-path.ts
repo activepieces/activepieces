@@ -13,6 +13,9 @@ export const propertyPath = {
             }
             segments.push(segment)
         }
+        if (LITERAL_KEYWORDS.has(segments[0])) {
+            return null
+        }
         return segments
     },
 
@@ -49,6 +52,7 @@ function unescapeQuoted(segment: string): string {
 const PATH_PATTERN = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\[(?:\d+|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")\])*$/
 const SEGMENT_PATTERN = /\[(\d+)\]|\['((?:[^'\\]|\\.)*)'\]|\["((?:[^"\\]|\\.)*)"\]|[A-Za-z_$][\w$]*/g
 const BLOCKED_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
+const LITERAL_KEYWORDS = new Set(['true', 'false', 'null', 'undefined', 'NaN', 'Infinity'])
 
 type ResolveValueParams = {
     segments: string[]

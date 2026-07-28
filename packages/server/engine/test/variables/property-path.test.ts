@@ -1,12 +1,40 @@
 import { propertyPath } from '../../src/lib/variables/property-path'
 
 describe('propertyPath', () => {
-    describe('parse', () => {
+    describe('parse — valid paths', () => {
         it('parses dot paths', () => {
             expect(propertyPath.parse('step_1.output.field')).toEqual(['step_1', 'output', 'field'])
         })
 
-        it('parses bracket string paths', () => {
+        it('parses a bare identifier', () => {
+            expect(propertyPath.parse('step_1')).toEqual(['step_1'])
+        })
+
+        it('parses identifiers starting with $ and _', () => {
+            expect(propertyPath.parse('$root.value')).toEqual(['$root', 'value'])
+            expect(propertyPath.parse('_private.x')).toEqual(['_private', 'x'])
+            expect(propertyPath.parse('$')).toEqual(['$'])
+            expect(propertyPath.parse('_')).toEqual(['_'])
+        })
+
+        it('parses identifiers with digits after the first character', () => {
+            expect(propertyPath.parse('step_1.a1b2')).toEqual(['step_1', 'a1b2'])
+        })
+
+        it('parses numeric index paths', () => {
+            expect(propertyPath.parse('trigger.output.items[0]')).toEqual(['trigger', 'output', 'items', '0'])
+            expect(propertyPath.parse('a[123]')).toEqual(['a', '123'])
+        })
+
+        it('parses chained numeric indexes', () => {
+            expect(propertyPath.parse('a[0][1][2]')).toEqual(['a', '0', '1', '2'])
+        })
+
+        it('parses index followed by dot access', () => {
+            expect(propertyPath.parse('a[0].b[1].c')).toEqual(['a', '0', 'b', '1', 'c'])
+        })
+
+        it('parses single-quoted bracket paths', () => {
             expect(propertyPath.parse('step_4[\'error\'][\'message\']')).toEqual(['step_4', 'error', 'message'])
         })
 
@@ -14,32 +42,144 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('step_1["some key"]')).toEqual(['step_1', 'some key'])
         })
 
-        it('parses numeric index paths', () => {
-            expect(propertyPath.parse('trigger.output.items[0]')).toEqual(['trigger', 'output', 'items', '0'])
+        it('parses quoted keys containing spaces, dots and brackets as one segment', () => {
+            expect(propertyPath.parse('a[\'b.c\']')).toEqual(['a', 'b.c'])
+            expect(propertyPath.parse('a[\'b[0]\']')).toEqual(['a', 'b[0]'])
+            expect(propertyPath.parse('a[\'  spaced  \']')).toEqual(['a', '  spaced  '])
         })
 
-        it('parses a bare identifier', () => {
-            expect(propertyPath.parse('step_1')).toEqual(['step_1'])
+        it('parses quoted keys that look like blocked words only when not exact', () => {
+            expect(propertyPath.parse('a[\'proto\']')).toEqual(['a', 'proto'])
+            expect(propertyPath.parse('a[\'constructor_\']')).toEqual(['a', 'constructor_'])
         })
 
-        it('unescapes quoted segments', () => {
+        it('parses an empty quoted key', () => {
+            expect(propertyPath.parse('a[\'\']')).toEqual(['a', ''])
+            expect(propertyPath.parse('a[""]')).toEqual(['a', ''])
+        })
+
+        it('parses the other quote style inside quoted keys', () => {
+            expect(propertyPath.parse('a[\'say "hi"\']')).toEqual(['a', 'say "hi"'])
+            expect(propertyPath.parse('a["it\'s"]')).toEqual(['a', 'it\'s'])
+        })
+
+        it('unescapes escaped quotes inside quoted keys', () => {
             expect(propertyPath.parse('step_1[\'it\\\'s\']')).toEqual(['step_1', 'it\'s'])
+            expect(propertyPath.parse('a["say \\"hi\\""]')).toEqual(['a', 'say "hi"'])
         })
 
-        it('rejects expressions', () => {
+        it('unescapes escaped backslashes inside quoted keys', () => {
+            expect(propertyPath.parse('a[\'b\\\\c\']')).toEqual(['a', 'b\\c'])
+        })
+
+        it('parses mixed dot, index and quoted access', () => {
+            expect(propertyPath.parse('a.b[0][\'c\'].d["e"][1]')).toEqual(['a', 'b', '0', 'c', 'd', 'e', '1'])
+        })
+
+        it('parses quoted keys containing mustache-like braces', () => {
+            expect(propertyPath.parse('a[\'{{nested}}\']')).toEqual(['a', '{{nested}}'])
+        })
+
+        it('allows literal keywords as non-root segments', () => {
+            expect(propertyPath.parse('a.true')).toEqual(['a', 'true'])
+            expect(propertyPath.parse('a.null.undefined')).toEqual(['a', 'null', 'undefined'])
+            expect(propertyPath.parse('a[\'false\']')).toEqual(['a', 'false'])
+        })
+    })
+
+    describe('parse — expressions and malformed input fall back (null)', () => {
+        it('rejects arithmetic and comparisons', () => {
             expect(propertyPath.parse('trigger.output.price + 2')).toBeNull()
+            expect(propertyPath.parse('a - b')).toBeNull()
+            expect(propertyPath.parse('step_4.output === undefined')).toBeNull()
+            expect(propertyPath.parse('a || b')).toBeNull()
+            expect(propertyPath.parse('!a')).toBeNull()
+        })
+
+        it('rejects function calls and constructors', () => {
             expect(propertyPath.parse('Math.min(trigger.output.price, 2)')).toBeNull()
             expect(propertyPath.parse('flattenNestedKeys(trigger.output, [\'users\'])')).toBeNull()
-            expect(propertyPath.parse('{"where": "a"}')).toBeNull()
-            expect(propertyPath.parse('step_4.output === undefined')).toBeNull()
-            expect(propertyPath.parse('')).toBeNull()
+            expect(propertyPath.parse('a.b()')).toBeNull()
+            expect(propertyPath.parse('new Date()')).toBeNull()
         })
 
-        it('rejects prototype-polluting segments', () => {
+        it('rejects literals and structured values', () => {
+            expect(propertyPath.parse('{"where": "a"}')).toBeNull()
+            expect(propertyPath.parse('[1, 2]')).toBeNull()
+            expect(propertyPath.parse('"a string"')).toBeNull()
+            expect(propertyPath.parse('\'a string\'')).toBeNull()
+            expect(propertyPath.parse('123')).toBeNull()
+            expect(propertyPath.parse('1.5')).toBeNull()
+        })
+
+        it('rejects literal keyword roots so the sandbox keeps evaluating them', () => {
+            expect(propertyPath.parse('true')).toBeNull()
+            expect(propertyPath.parse('false')).toBeNull()
+            expect(propertyPath.parse('null')).toBeNull()
+            expect(propertyPath.parse('undefined')).toBeNull()
+            expect(propertyPath.parse('NaN')).toBeNull()
+            expect(propertyPath.parse('Infinity')).toBeNull()
+            expect(propertyPath.parse('true.b')).toBeNull()
+            expect(propertyPath.parse('undefined[0]')).toBeNull()
+        })
+
+        it('rejects empty and whitespace-containing input', () => {
+            expect(propertyPath.parse('')).toBeNull()
+            expect(propertyPath.parse(' ')).toBeNull()
+            expect(propertyPath.parse(' a')).toBeNull()
+            expect(propertyPath.parse('a ')).toBeNull()
+            expect(propertyPath.parse('a .b')).toBeNull()
+            expect(propertyPath.parse('a. b')).toBeNull()
+            expect(propertyPath.parse('a\n.b')).toBeNull()
+            expect(propertyPath.parse('a [0]')).toBeNull()
+        })
+
+        it('rejects malformed dots', () => {
+            expect(propertyPath.parse('.a')).toBeNull()
+            expect(propertyPath.parse('a.')).toBeNull()
+            expect(propertyPath.parse('a..b')).toBeNull()
+            expect(propertyPath.parse('a.b.')).toBeNull()
+        })
+
+        it('rejects malformed brackets', () => {
+            expect(propertyPath.parse('a[]')).toBeNull()
+            expect(propertyPath.parse('a[b]')).toBeNull()
+            expect(propertyPath.parse('a[b.c]')).toBeNull()
+            expect(propertyPath.parse('a[-1]')).toBeNull()
+            expect(propertyPath.parse('a[1.5]')).toBeNull()
+            expect(propertyPath.parse('a[01x]')).toBeNull()
+            expect(propertyPath.parse('a[\'b\']extra')).toBeNull()
+            expect(propertyPath.parse('a[\'b\'')).toBeNull()
+            expect(propertyPath.parse('a[\'b]')).toBeNull()
+            expect(propertyPath.parse('a["b\']')).toBeNull()
+            expect(propertyPath.parse('a[\'b"]')).toBeNull()
+            expect(propertyPath.parse('[\'a\']')).toBeNull()
+            expect(propertyPath.parse('a]0[')).toBeNull()
+        })
+
+        it('rejects identifiers with a leading digit or invalid characters', () => {
+            expect(propertyPath.parse('1a')).toBeNull()
+            expect(propertyPath.parse('a.1b')).toBeNull()
+            expect(propertyPath.parse('a-b')).toBeNull()
+            expect(propertyPath.parse('a.b-c')).toBeNull()
+            expect(propertyPath.parse('é.b')).toBeNull()
+        })
+
+        it('rejects optional chaining and other JS syntax', () => {
+            expect(propertyPath.parse('a?.b')).toBeNull()
+            expect(propertyPath.parse('a?.[0]')).toBeNull()
+            expect(propertyPath.parse('a;b')).toBeNull()
+            expect(propertyPath.parse('a, b')).toBeNull()
+            expect(propertyPath.parse('`a`')).toBeNull()
+        })
+
+        it('rejects prototype-polluting segments anywhere in the path', () => {
+            expect(propertyPath.parse('__proto__')).toBeNull()
             expect(propertyPath.parse('step_1.__proto__.x')).toBeNull()
             expect(propertyPath.parse('step_1.constructor')).toBeNull()
             expect(propertyPath.parse('step_1[\'prototype\']')).toBeNull()
-            expect(propertyPath.parse('__proto__')).toBeNull()
+            expect(propertyPath.parse('step_1["__proto__"]')).toBeNull()
+            expect(propertyPath.parse('a.b.c.constructor.d')).toBeNull()
         })
     })
 
@@ -49,6 +189,11 @@ describe('propertyPath', () => {
                 output: {
                     name: 'John',
                     items: [5, 'a'],
+                    zero: 0,
+                    emptyString: '',
+                    isFalse: false,
+                    nullValue: null,
+                    nested: { '0': 'numeric-key', 'weird key': 'found', '': 'empty-key' },
                 },
             },
         }
@@ -58,13 +203,50 @@ describe('propertyPath', () => {
             expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'items', '1'], scope })).toBe('a')
         })
 
-        it('returns undefined for missing paths', () => {
-            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'missing', 'deep'], scope })).toBeUndefined()
+        it('preserves falsy leaf values', () => {
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'zero'], scope })).toBe(0)
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'emptyString'], scope })).toBe('')
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'isFalse'], scope })).toBe(false)
+        })
+
+        it('returns null for a null leaf', () => {
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'nullValue'], scope })).toBeNull()
+        })
+
+        it('returns undefined for missing roots and missing leaves', () => {
             expect(propertyPath.resolveValue({ segments: ['step_99'], scope })).toBeUndefined()
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'missing'], scope })).toBeUndefined()
+        })
+
+        it('returns undefined when traversing through missing or null intermediates', () => {
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'missing', 'deep'], scope })).toBeUndefined()
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'nullValue', 'deep'], scope })).toBeUndefined()
+        })
+
+        it('returns undefined for out-of-bounds array access', () => {
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'items', '9'], scope })).toBeUndefined()
+        })
+
+        it('resolves numeric string keys on plain objects', () => {
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'nested', '0'], scope })).toBe('numeric-key')
+        })
+
+        it('resolves keys with spaces and the empty-string key', () => {
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'nested', 'weird key'], scope })).toBe('found')
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'nested', ''], scope })).toBe('empty-key')
         })
 
         it('reads properties of primitives via boxing', () => {
             expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'name', 'length'], scope })).toBe(4)
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'items', 'length'], scope })).toBe(2)
+        })
+
+        it('returns undefined when traversing past a primitive leaf', () => {
+            expect(propertyPath.resolveValue({ segments: ['step_1', 'output', 'zero', 'anything'], scope })).toBeUndefined()
+        })
+
+        it('resolves the whole root object', () => {
+            expect(propertyPath.resolveValue({ segments: ['step_1'], scope })).toBe(scope.step_1)
         })
     })
 })
