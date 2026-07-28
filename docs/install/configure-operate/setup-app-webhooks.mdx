@@ -31,3 +31,8 @@ Certain apps like Slack and Square only support one webhook per OAuth2 app. This
     - `message.groups`
     - `message.mpim`
     - `app_mention`
+    - `channel_created`
+
+<Warning>
+Turn **Socket Mode off** for your Slack app (under **Settings → Socket Mode**). While Socket Mode is on, Slack delivers events over a WebSocket connection and never POSTs to the Request URL (`https://YOUR_AP_INSTANCE/api/v1/app-events/slack`), so the trigger silently never fires.
+</Warning>
