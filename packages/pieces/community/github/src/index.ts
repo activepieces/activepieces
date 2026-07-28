@@ -105,7 +105,7 @@ export const github = createPiece({
   description:
     'Developer platform that allows developers to create, store, manage and share their code',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: githubAuth,
