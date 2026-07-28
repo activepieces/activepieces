@@ -29,6 +29,7 @@ import { userHooks } from '@/hooks/user-hooks';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
+import { ChatConsentRulesSetting } from './consent-rules-setting';
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 const ACTIVEPIECES_LOGO_URL =
@@ -86,6 +87,7 @@ export default function AIProvidersPage() {
         )}
 
         {allowWrite && <ChatFullAccessSetting />}
+        {allowWrite && <ChatConsentRulesSetting />}
 
         <div className="flex flex-col gap-4">
           {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
