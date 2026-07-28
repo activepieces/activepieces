@@ -9,6 +9,7 @@ import { handleResumeDelayWaitpoint } from '../../../../../src/app/flows/flow-ru
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
 import { Waitpoint, WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { resumeDelayJobId, SystemJobName } from '../../../../../src/app/helper/system-jobs/common'
+import { systemJobHandlers } from '../../../../../src/app/helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
 import { redisMetadataKey } from '../../../../../src/app/workers/job'
 import { db } from '../../../../helpers/db'
@@ -355,7 +356,7 @@ describe('sealFanInBarrier', () => {
         expect(job?.data.waitpointId).toBe(barrier.id)
     })
 
-    it('falls back to the maximum pause duration when the seal carries no timeout', async () => {
+    it('falls back to a short timeout when the seal carries none, so a forgotten timeout fails fast', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const barrier = await seedBarrier({ flowRunId: flowRun.id })
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
@@ -363,8 +364,24 @@ describe('sealFanInBarrier', () => {
         const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 1 })
 
         expect(waitpoint.resumeDateTime).not.toBeNull()
-        expect(dayjs(waitpoint.resumeDateTime).isAfter(dayjs().add(29, 'day'))).toBe(true)
+        expect(dayjs(waitpoint.resumeDateTime).isAfter(dayjs().add(55, 'minute'))).toBe(true)
+        expect(dayjs(waitpoint.resumeDateTime).isBefore(dayjs().add(65, 'minute'))).toBe(true)
         expect(await systemJobsSchedule(app.log).getJob(resumeDelayJobId({ waitpointId: barrier.id }))).toBeDefined()
+    })
+
+    it('still clamps an explicitly requested timeout to the maximum pause duration', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
+
+        const { waitpoint } = await seal({
+            flowRunId: flowRun.id,
+            expectedChildren: 1,
+            resumeDateTime: dayjs().add(400, 'day').toISOString(),
+        })
+
+        expect(dayjs(waitpoint.resumeDateTime).isAfter(dayjs().add(29, 'day'))).toBe(true)
+        expect(dayjs(waitpoint.resumeDateTime).isBefore(dayjs().add(31, 'day'))).toBe(true)
     })
 
     it('completes immediately without scheduling a timeout when every child is already terminal', async () => {
@@ -457,6 +474,31 @@ describe('sealFanInBarrier', () => {
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         expect(waitpoint.resumePayload?.body).toEqual({ expected: 2, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, timedOut: false })
         expect(await systemJobsSchedule(app.log).getJob(resumeDelayJobId({ waitpointId: barrier.id }))).toBeUndefined()
+    })
+
+    it('cannot lower the expected count on a second seal, so nine unmaterialised children cannot be released away', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
+        await seal({ flowRunId: flowRun.id, expectedChildren: 10, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+
+        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 1, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+
+        expect(waitpoint.expectedChildren).toBe(10)
+        expect(waitpoint.status).toBe(WaitpointStatus.PENDING)
+    })
+
+    it('re-evaluates the release predicate on a duplicate seal instead of failing the run', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        const [child] = await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
+        await seal({ flowRunId: flowRun.id, expectedChildren: 1, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+        await db.update('flow_run', child.id, { status: FlowRunStatus.SUCCEEDED })
+
+        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 1, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+
+        expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
+        expect(waitpoint.expectedChildren).toBe(1)
     })
 
     it('throws when the barrier row no longer exists', async () => {
@@ -563,6 +605,16 @@ describe('maybeResumeFanInBarrier', () => {
         const { flowRun } = await createParentRun(FlowRunStatus.SUCCEEDED)
         const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
+
+        await resume({ parentWaitpointId: barrier.id })
+
+        expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
+    })
+
+    it('does nothing while the barrier is unsealed, even with every child terminal', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
 
         await resume({ parentWaitpointId: barrier.id })
 
@@ -705,6 +757,38 @@ describe('external resume of a fan-in barrier', () => {
         expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
     })
 
+    it('refuses the deprecated V0 route, which resolves no waitpoint of its own', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 2 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.RUNNING] })
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/requests/${apId()}`, { approved: true })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().message).toContain('expired')
+        expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
+        expect((await db.findOneByOrFail<{ status: FlowRunStatus }>('flow_run', { id: flowRun.id })).status).toBe(FlowRunStatus.PAUSED)
+    })
+
+    it('refuses the deprecated V0 sync route with GONE', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/requests/${apId()}/sync`, {})
+
+        expect(response.statusCode).toBe(410)
+        expect((await db.findOneByOrFail<Waitpoint>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.PENDING)
+    })
+
+    it('still resumes a legacy pause that carries no barrier', async () => {
+        const { flowRun } = await createParentRun()
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/requests/${apId()}`, { approved: true })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().message).toContain('recorded')
+    })
+
     it('still resumes a non-fan-in waitpoint', async () => {
         const { flowRun } = await createParentRun()
         const waitpoint = createMockWaitpoint({
@@ -719,6 +803,34 @@ describe('external resume of a fan-in barrier', () => {
 
         expect(response.statusCode).toBe(200)
         expect(await db.findOneBy('waitpoint', { id: waitpoint.id })).toBeNull()
+    })
+})
+
+describe('a fan-in child that also carries fail-parent-on-failure', () => {
+    it('releases its barrier instead of trying to fail the parent through a waitpoint', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+        const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED })
+        await db.save('flow_version', flowVersion)
+        const child = createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status: FlowRunStatus.RUNNING,
+            parentRunId: flowRun.id,
+            parentWaitpointId: barrier.id,
+            failParentOnFailure: true,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        await db.save('flow_run', child)
+
+        await runsMetadataQueue(app.log).add({ id: child.id, projectId: ctx.project.id, status: FlowRunStatus.FAILED })
+
+        await vi.waitFor(async () => {
+            expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
+        }, { timeout: 15_000 })
     })
 })
 
@@ -808,5 +920,157 @@ describe('timeout job lifecycle', () => {
         await waitpointService(app.log).delete({ id: barrier.id })
 
         expect(await systemJobsSchedule(app.log).getJob(`resume-delay-${flowRun.id}`)).toBeDefined()
+    })
+})
+
+describe('sweepOverdueDeadlines', () => {
+    async function seedDeadline({ flowRunId, minutesFromNow, type, isFanIn, expectedChildren, stepName }: {
+        flowRunId: string
+        minutesFromNow: number
+        type?: PauseType
+        isFanIn?: boolean
+        expectedChildren?: number | null
+        stepName?: string
+    }) {
+        const waitpoint = createMockWaitpoint({
+            flowRunId,
+            projectId: ctx.project.id,
+            stepName: stepName ?? 'fan_out',
+            type: type ?? PauseType.WEBHOOK,
+            isFanIn: isFanIn ?? true,
+            expectedChildren: expectedChildren ?? null,
+            status: WaitpointStatus.PENDING,
+            resumeDateTime: dayjs().add(minutesFromNow, 'minute').toISOString(),
+        })
+        await db.save('waitpoint', waitpoint)
+        return waitpoint
+    }
+
+    it('recovers a sealed barrier whose timeout job was lost from redis, all the way to the resume', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedDeadline({ flowRunId: flowRun.id, minutesFromNow: -5, expectedChildren: 2 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING] })
+        expect(await systemJobsSchedule(app.log).getJob(resumeDelayJobId({ waitpointId: barrier.id }))).toBeUndefined()
+
+        expect(await waitpointService(app.log).sweepOverdueDeadlines()).toContain(barrier.id)
+
+        await vi.waitFor(async () => {
+            expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
+        }, { timeout: 15_000 })
+    })
+
+    it('re-arms a plain DELAY waitpoint, not only a fan-in barrier', async () => {
+        const { flowRun } = await createParentRun()
+        const waitpoint = await seedDeadline({
+            flowRunId: flowRun.id,
+            minutesFromNow: -1,
+            type: PauseType.DELAY,
+            isFanIn: false,
+            stepName: 'delay',
+        })
+
+        expect(await waitpointService(app.log).sweepOverdueDeadlines()).toContain(waitpoint.id)
+    })
+
+    it('skips a waitpoint whose run is no longer paused', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const barrier = await seedDeadline({ flowRunId: flowRun.id, minutesFromNow: -5, expectedChildren: 1 })
+
+        expect(await waitpointService(app.log).sweepOverdueDeadlines()).not.toContain(barrier.id)
+    })
+
+    it('skips a deadline that has not passed yet', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedDeadline({ flowRunId: flowRun.id, minutesFromNow: 30, expectedChildren: 1 })
+
+        expect(await waitpointService(app.log).sweepOverdueDeadlines()).not.toContain(barrier.id)
+    })
+
+    it('skips a waitpoint that carries no deadline', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
+
+        expect(await waitpointService(app.log).sweepOverdueDeadlines()).not.toContain(barrier.id)
+    })
+
+    it('skips an already completed waitpoint', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = createMockWaitpoint({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: 'fan_out',
+            isFanIn: true,
+            expectedChildren: 1,
+            status: WaitpointStatus.COMPLETED,
+            resumeDateTime: dayjs().subtract(5, 'minute').toISOString(),
+        })
+        await db.save('waitpoint', barrier)
+
+        expect(await waitpointService(app.log).sweepOverdueDeadlines()).not.toContain(barrier.id)
+    })
+
+    it('ignores a deadline overdue by more than the pause ceiling, so a first tick cannot backfill history', async () => {
+        const { flowRun } = await createParentRun()
+        const ancient = await seedDeadline({ flowRunId: flowRun.id, minutesFromNow: -60 * 24 * 40, expectedChildren: 1, stepName: 'ancient' })
+        const recent = await seedDeadline({ flowRunId: flowRun.id, minutesFromNow: -60 * 24 * 29, expectedChildren: 1, stepName: 'recent' })
+
+        const rearmed = await waitpointService(app.log).sweepOverdueDeadlines()
+
+        expect(rearmed).not.toContain(ancient.id)
+        expect(rearmed).toContain(recent.id)
+    })
+
+    it('leaves a deadline whose job already exhausted its attempts dead-lettered instead of re-arming it every tick', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedDeadline({ flowRunId: flowRun.id, minutesFromNow: -5, expectedChildren: 1, stepName: 'poison' })
+        const jobId = resumeDelayJobId({ waitpointId: barrier.id })
+        const realHandler = systemJobHandlers.getJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT)
+        systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async () => {
+            throw new Error('permanently failing resume')
+        })
+
+        try {
+            await systemJobsSchedule(app.log).upsertJob({
+                job: {
+                    name: SystemJobName.RESUME_DELAY_WAITPOINT,
+                    data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
+                    jobId,
+                },
+                schedule: { type: 'one-time', date: dayjs() },
+                customConfig: { attempts: 1 },
+            })
+            await vi.waitFor(async () => {
+                const job = await systemJobsSchedule(app.log).getJob(jobId)
+                expect(await job?.isFailed()).toBe(true)
+            }, { timeout: 15_000 })
+
+            expect(await waitpointService(app.log).sweepOverdueDeadlines()).not.toContain(barrier.id)
+        }
+        finally {
+            systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, realHandler)
+        }
+    })
+
+    it('caps the batch at the newest deadlines so a stuck prefix cannot starve them, and reaches the rest once those drain', async () => {
+        const { flowRun } = await createParentRun()
+        const total = 501
+        const waitpoints = Array.from({ length: total }, (_, index) => createMockWaitpoint({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: `delay_${index}`,
+            type: PauseType.DELAY,
+            status: WaitpointStatus.PENDING,
+            resumeDateTime: dayjs().subtract(total - index + 10_000, 'minute').toISOString(),
+        }))
+        await db.save('waitpoint', waitpoints)
+
+        const firstSweep = await waitpointService(app.log).sweepOverdueDeadlines()
+
+        expect(firstSweep).toContain(waitpoints[500].id)
+        expect(firstSweep).not.toContain(waitpoints[0].id)
+
+        await db.delete('waitpoint', firstSweep)
+
+        expect(await waitpointService(app.log).sweepOverdueDeadlines()).toContain(waitpoints[0].id)
     })
 })

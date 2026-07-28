@@ -32,6 +32,15 @@ async function countChildren({ parentWaitpointId, projectId }: CountChildrenPara
     }, EMPTY_COUNTS)
 }
 
+async function hasNonTerminalChild({ parentWaitpointId, projectId }: CountChildrenParams): Promise<boolean> {
+    return flowRunRepo()
+        .createQueryBuilder('flowRun')
+        .where('"flowRun"."parentWaitpointId" = :parentWaitpointId', { parentWaitpointId })
+        .andWhere('"flowRun"."projectId" = :projectId', { projectId })
+        .andWhere('"flowRun"."status" IN (:...statuses)', { statuses: NON_TERMINAL_STATUSES })
+        .getExists()
+}
+
 function isReleasable({ counts, barrier }: EvaluateBarrierParams): boolean {
     if (isNil(barrier.expectedChildren)) {
         return false
@@ -69,7 +78,9 @@ const EMPTY_COUNTS: FanInChildCounts = {
     terminal: 0,
 }
 
-export const fanInBarrier = { countChildren, isReleasable, toSummary, hasAnyChildren }
+const NON_TERMINAL_STATUSES = Object.values(FlowRunStatus).filter((status) => !isFlowRunStateTerminal({ status, ignoreInternalError: false }))
+
+export const fanInBarrier = { countChildren, hasNonTerminalChild, isReleasable, toSummary, hasAnyChildren }
 
 export type FanInChildCounts = {
     succeeded: number

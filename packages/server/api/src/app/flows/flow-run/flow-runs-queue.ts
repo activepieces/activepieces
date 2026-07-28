@@ -103,16 +103,16 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
                             const parentRunId = savedFlowRun.parentRunId
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
-                            if (shouldMarkParentAsFailed) {
+                            if (!isNil(savedFlowRun.parentWaitpointId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
+                                await maybeResumeFanInBarrier({ parentWaitpointId: savedFlowRun.parentWaitpointId, projectId: savedFlowRun.projectId, log })
+                            }
+                            else if (shouldMarkParentAsFailed) {
                                 await markParentRunAsFailed({
                                     parentRunId,
                                     childRunId: savedFlowRun.id,
                                     projectId: savedFlowRun.projectId,
                                     log,
                                 })
-                            }
-                            else if (!isNil(savedFlowRun.parentWaitpointId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
-                                await maybeResumeFanInBarrier({ parentWaitpointId: savedFlowRun.parentWaitpointId, projectId: savedFlowRun.projectId, log })
                             }
 
                             if (!isNil(runMetadata.requestId)) {
@@ -201,6 +201,7 @@ async function markParentRunAsFailed({
 }: MarkParentRunAsFailedParams): Promise<void> {
     const flowRun = await flowRunRepo().findOneBy({
         id: parentRunId,
+        projectId,
     })
 
     if (isNil(flowRun) || isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {
@@ -258,6 +259,13 @@ export async function maybeResumeFanInBarrier({ parentWaitpointId, projectId, lo
             waitpointId: barrier.id,
             resumePayload: barrier.resumePayload,
         })
+        return
+    }
+
+    if (isNil(barrier.expectedChildren)) {
+        return
+    }
+    if (await fanInBarrier.hasNonTerminalChild({ parentWaitpointId: barrier.id, projectId })) {
         return
     }
 

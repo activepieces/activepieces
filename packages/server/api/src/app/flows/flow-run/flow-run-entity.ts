@@ -133,7 +133,8 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
         {
             name: 'idx_run_parent_waitpoint_id',
-            columns: ['parentWaitpointId'],
+            columns: ['parentWaitpointId', 'projectId', 'status'],
+            where: '"parentWaitpointId" IS NOT NULL',
         },
         {
             name: 'idx_run_flow_version_id',

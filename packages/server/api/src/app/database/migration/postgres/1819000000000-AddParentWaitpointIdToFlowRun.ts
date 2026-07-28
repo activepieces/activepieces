@@ -17,12 +17,16 @@ export class AddParentWaitpointIdToFlowRun1819000000000 implements Migration {
         `)
         if (isPGlite()) {
             await queryRunner.query(`
-                CREATE INDEX IF NOT EXISTS "idx_run_parent_waitpoint_id" ON "flow_run" ("parentWaitpointId")
+                CREATE INDEX IF NOT EXISTS "idx_run_parent_waitpoint_id"
+                ON "flow_run" ("parentWaitpointId", "projectId", "status")
+                WHERE "parentWaitpointId" IS NOT NULL
             `)
             return
         }
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_parent_waitpoint_id" ON "flow_run" ("parentWaitpointId")
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_parent_waitpoint_id"
+            ON "flow_run" ("parentWaitpointId", "projectId", "status")
+            WHERE "parentWaitpointId" IS NOT NULL
         `)
     }
 

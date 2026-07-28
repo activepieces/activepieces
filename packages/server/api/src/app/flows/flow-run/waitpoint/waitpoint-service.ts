@@ -14,6 +14,8 @@ import { WaitpointEntity } from './waitpoint-entity'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
+const SWEEP_BATCH_SIZE = 500
+const FAN_IN_DEFAULT_TIMEOUT_HOURS = 1
 
 export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
@@ -139,11 +141,14 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             })
         }
         const timeoutAt = clampFanInTimeout({ requested: params.resumeDateTime, log })
-        await waitpointRepo().update({ id: barrier.id, status: WaitpointStatus.PENDING }, {
+        await waitpointRepo().update({ id: barrier.id, status: WaitpointStatus.PENDING, expectedChildren: IsNull() }, {
             expectedChildren: params.expectedChildren,
             failedToDispatch: params.failedToDispatch ?? 0,
             resumeDateTime: timeoutAt,
         })
+        if (!isNil(barrier.expectedChildren)) {
+            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: barrier.id }, expectedChildren: barrier.expectedChildren }, '[waitpointService#sealFanInBarrier] Barrier was already sealed; ignoring the re-seal and re-evaluating the release predicate against the original expectation')
+        }
         const sealed = await waitpointRepo().findOneByOrFail({ id: barrier.id })
         if (sealed.status !== WaitpointStatus.PENDING) {
             log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: sealed.id } }, '[waitpointService#sealFanInBarrier] Barrier was already completed, leaving it untouched')
@@ -174,6 +179,48 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             return null
         }
         return waitpoint
+    },
+
+    async sweepOverdueDeadlines(): Promise<string[]> {
+        const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+        const overdue = await waitpointRepo()
+            .createQueryBuilder('waitpoint')
+            .innerJoin('flow_run', 'flowRun', '"flowRun"."id" = "waitpoint"."flowRunId"')
+            .where('"waitpoint"."status" = :status', { status: WaitpointStatus.PENDING })
+            .andWhere('"waitpoint"."resumeDateTime" < :now', { now: dayjs().toISOString() })
+            .andWhere('"waitpoint"."resumeDateTime" > :floor', { floor: dayjs().subtract(maxDurationInDays, 'day').toISOString() })
+            .andWhere('"flowRun"."status" = :runStatus', { runStatus: FlowRunStatus.PAUSED })
+            .orderBy('"waitpoint"."resumeDateTime"', 'DESC')
+            .limit(SWEEP_BATCH_SIZE)
+            .getMany()
+
+        const rearmed: string[] = []
+        for (const waitpoint of overdue) {
+            if (isNil(waitpoint.resumeDateTime)) {
+                continue
+            }
+            const existingJob = await systemJobsSchedule(log).getJob<SystemJobName.RESUME_DELAY_WAITPOINT>(resumeDelayJobId({ waitpointId: waitpoint.id }))
+            if (!isNil(existingJob) && await existingJob.isFailed()) {
+                log.warn({ flowRun: { id: waitpoint.flowRunId }, waitpoint: { id: waitpoint.id } }, '[waitpointService#sweepOverdueDeadlines] Deadline job exhausted its attempts, leaving it dead-lettered instead of re-arming it every tick')
+                continue
+            }
+            await scheduleTimeoutJob({
+                flowRunId: waitpoint.flowRunId,
+                projectId: waitpoint.projectId,
+                waitpointId: waitpoint.id,
+                resumeDateTime: waitpoint.resumeDateTime,
+                log,
+            })
+            rearmed.push(waitpoint.id)
+        }
+
+        if (rearmed.length > 0) {
+            log.info({ overdueCount: rearmed.length }, '[waitpointService#sweepOverdueDeadlines] Re-armed overdue waitpoint deadlines')
+        }
+        if (overdue.length >= SWEEP_BATCH_SIZE) {
+            log.warn({ overdueCount: overdue.length }, '[waitpointService#sweepOverdueDeadlines] Overdue backlog filled the sweep batch, the newest deadlines go first so a stuck prefix cannot starve them and the rest follow once these drain')
+        }
+        return rearmed
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
@@ -259,6 +306,11 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return completed ?? waitpointRepo().findOneBy({ flowRunId })
     },
 
+    async hasPendingFanInBarrier({ flowRunId }: { flowRunId: string }): Promise<boolean> {
+        const barrier = await waitpointRepo().findOneBy({ flowRunId, isFanIn: true, status: WaitpointStatus.PENDING })
+        return !isNil(barrier)
+    },
+
     async findNonFanInByFlowRunId(flowRunId: string): Promise<Waitpoint | null> {
         const completed = await waitpointRepo().findOneBy({ flowRunId, status: WaitpointStatus.COMPLETED, isFanIn: false })
         return completed ?? waitpointRepo().findOneBy({ flowRunId, isFanIn: false })
@@ -309,9 +361,9 @@ async function removeTimeoutJobs({ waitpointId, flowRunId, log }: RemoveTimeoutJ
 function clampFanInTimeout({ requested, log }: ClampFanInTimeoutParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
     if (isNil(requested)) {
-        const ceiling = dayjs().add(maxDurationInDays, 'day').toISOString()
-        log.warn({ ceiling }, '[waitpointService#clampFanInTimeout] Fan-in barrier sealed without a timeout, falling back to the maximum pause duration so the barrier always has a backstop')
-        return ceiling
+        const fallback = dayjs().add(FAN_IN_DEFAULT_TIMEOUT_HOURS, 'hour').toISOString()
+        log.warn({ fallback }, '[waitpointService#clampFanInTimeout] Fan-in barrier sealed without a timeout, falling back to a short default so a caller that forgot one fails fast instead of hanging')
+        return fallback
     }
     const requestedAt = dayjs(requested)
     if (!requestedAt.isValid()) {
