@@ -455,6 +455,90 @@ describe('Record API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
+
+        it('should delete existing records when the first id does not exist', async () => {
+            const ctx = await setup()
+            const { table } = await createTableWithField(ctx)
+            const record1 = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            const record2 = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            await db.save('record', [record1, record2])
+
+            const response = await ctx.inject({
+                method: 'DELETE',
+                url: '/api/v1/records',
+                body: {
+                    tableId: table.id,
+                    ids: [apId(), record1.id, record2.id],
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const getResponse1 = await ctx.get(`/v1/records/${record1.id}`)
+            expect(getResponse1?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            const getResponse2 = await ctx.get(`/v1/records/${record2.id}`)
+            expect(getResponse2?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('should delete more records than one batch in a single request', async () => {
+            const ctx = await setup()
+            const { table } = await createTableWithField(ctx)
+            const records = Array.from({ length: 120 }, () =>
+                createMockRecord({ tableId: table.id, projectId: ctx.project.id }),
+            )
+            await db.save('record', records)
+
+            const response = await ctx.inject({
+                method: 'DELETE',
+                url: '/api/v1/records',
+                body: {
+                    tableId: table.id,
+                    ids: records.map((record) => record.id),
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const listResponse = await ctx.get(`/v1/records?tableId=${table.id}`)
+            expect(listResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(listResponse?.json().data.length).toBe(0)
+        })
+
+        it('should reject a delete request with more ids than the per-table record limit', async () => {
+            const ctx = await setup()
+            const { table } = await createTableWithField(ctx)
+
+            const response = await ctx.inject({
+                method: 'DELETE',
+                url: '/api/v1/records',
+                body: {
+                    tableId: table.id,
+                    ids: Array.from({ length: 10001 }, () => apId()),
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('should not delete records that belong to another table', async () => {
+            const ctx = await setup()
+            const { table } = await createTableWithField(ctx)
+            const otherTable = await createTableWithField(ctx)
+            const record = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            const otherRecord = createMockRecord({ tableId: otherTable.table.id, projectId: ctx.project.id })
+            await db.save('record', [record, otherRecord])
+
+            const response = await ctx.inject({
+                method: 'DELETE',
+                url: '/api/v1/records',
+                body: {
+                    tableId: table.id,
+                    ids: [record.id, otherRecord.id],
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect((await ctx.get(`/v1/records/${record.id}`))?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect((await ctx.get(`/v1/records/${otherRecord.id}`))?.statusCode).toBe(StatusCodes.OK)
+        })
     })
 })
 
