@@ -8,6 +8,8 @@ export const getWidgetStats = createAction({
   name: 'get_widget_stats',
   displayName: 'Get Widget Stats',
   description: 'Get event and unique-user statistics for a specific entity type (e.g. all changelogs, all NPS widgets).',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch event and unique-user statistics for one Produktly feature type (product tour, checklist, smart tip, announcement, changelog, NPS widget, or roadmap), either across every entity of that type or narrowed to a single entity ID, over an optional start/end date window. Pick this for per-entity engagement numbers; use Get Company Stats for the account-wide rollup across all features. Requires an entity type. Read-only and idempotent.', idempotent: true },
   props: {
     entity_type: Property.StaticDropdown({
       displayName: 'Entity Type',

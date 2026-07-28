@@ -98,17 +98,19 @@ export const AllCategoriesView = ({
 
   return (
     <div className="space-y-6">
-      {categories
-        .filter((category) => templatesByCategory[category]?.length)
-        .map((category) => (
+      {categories.map((category) => {
+        const categoryTemplates = templatesByCategory[category];
+
+        return (
           <LazyCategorySection
             key={category}
             category={category}
-            templates={templatesByCategory[category]}
+            templates={categoryTemplates}
             onCategorySelect={stableOnCategorySelect}
             onTemplateSelect={stableOnTemplateSelect}
           />
-        ))}
+        );
+      })}
     </div>
   );
 };

@@ -26,11 +26,12 @@ interface ExtractDataField {
 }
 
 export const extractDataFromText = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: grokAuth,
   name: 'extract_data_from_text',
   displayName: 'Extract Data From Text',
   description: 'Extract structured data fields from unstructured text (e.g., names, addresses, dates).',
+  aiMetadata: { description: 'Pulls a caller-defined set of typed fields (string, number, boolean, array, or object, each named, described, and individually required or optional) out of one block of unstructured text and returns them as a structured object with extraction notes and optional per-field confidence scores; a strict mode restricts it to information explicitly present instead of allowing inference from context. Choose it to turn prose into known fields; prefer categorize_text when the goal is assigning a label from a fixed set, and ask_grok for open-ended generation or free-form structured output. Non-empty text and at least one field definition are required; not idempotent: each call is a fresh model completion and the extracted values can vary between runs.', idempotent: false },
   props: {
     model: createModelProperty({
       displayName: 'Model',
