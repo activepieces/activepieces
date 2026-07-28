@@ -6,12 +6,14 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatApprovalGate } from './chat-approval-gate'
 import { chatHelpers } from './chat-helpers'
 import { chatMemoryAi } from './chat-memory-ai'
+import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
 import { chatService } from './chat-service'
 import { findConnectionsForPiece } from './tools/chat-tools'
@@ -112,9 +114,12 @@ export const chatController: FastifyPluginAsyncZod = async (app) => {
         await assertChatMessageRateLimitNotExceeded({ platformId, userId, log })
 
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
-        await chatRolloutService.recordChatted({ userId, platformId })
+        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
         // Refresh the console rollout funnel snapshot (chatted count just changed).
         chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
+        if (needsCreditDecision) {
+            rejectedPromiseHandler(chatPlanGrant.grant({ userId, platformId, log }), log)
+        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })

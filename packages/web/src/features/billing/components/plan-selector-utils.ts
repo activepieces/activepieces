@@ -181,7 +181,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
     features: [
       { metric: 'credits' },
       { metric: 'seats' },
-      { label: 'Agents / Chat' },
+      { label: 'Agents' },
       { label: '1 team project, MCPs' },
       { label: 'BYOK' },
       { label: 'Team analytics' },

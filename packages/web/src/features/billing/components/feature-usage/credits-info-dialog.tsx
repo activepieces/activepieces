@@ -17,11 +17,16 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 export const CreditsInfoDialog = () => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const faqs = buildFaqs(edition === ApEdition.CLOUD);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const faqs = buildFaqs({
+    isCloud: edition === ApEdition.CLOUD,
+    chatEnabled: platform.plan.chatEnabled,
+  });
   return (
     <Dialog>
       <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline">
@@ -69,10 +74,12 @@ export const CreditsInfoDialog = () => {
 
 function CreditsCostTable({
   includeActivepiecesModels,
+  chatEnabled,
 }: {
   includeActivepiecesModels: boolean;
+  chatEnabled: boolean;
 }) {
-  const items = buildCostItems(includeActivepiecesModels);
+  const items = buildCostItems({ includeActivepiecesModels, chatEnabled });
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-[10px] border">
       <div className="flex items-center gap-2 border-b px-3 py-2.5 text-sm font-medium text-muted-foreground">
@@ -118,7 +125,13 @@ function CreditsCostTable({
   );
 }
 
-function buildCostItems(includeActivepiecesModels: boolean): CostItem[] {
+function buildCostItems({
+  includeActivepiecesModels,
+  chatEnabled,
+}: {
+  includeActivepiecesModels: boolean;
+  chatEnabled: boolean;
+}): CostItem[] {
   const modelByActivepieces = t('Model by Activepieces');
   const execution: CostItem[] = [
     { kind: 'section', label: t('Execution') },
@@ -132,9 +145,11 @@ function buildCostItems(includeActivepiecesModels: boolean): CostItem[] {
     {
       kind: 'row',
       action: t('Tool use'),
-      sub: t(
-        'An action triggered by an Agent or Chat, not run directly in the flow',
-      ),
+      sub: chatEnabled
+        ? t(
+            'An action triggered by an Agent or Chat, not run directly in the flow',
+          )
+        : t('An action triggered by an Agent, not run directly in the flow'),
       credits: '1',
     },
     {
@@ -145,7 +160,7 @@ function buildCostItems(includeActivepiecesModels: boolean): CostItem[] {
     },
     {
       kind: 'row',
-      action: t('Agent/Chat'),
+      action: chatEnabled ? t('Agent/Chat') : t('Agent'),
       sub: t('sum of tools use + model cost per message'),
       credits: t('see below'),
     },
@@ -185,7 +200,13 @@ function buildCostItems(includeActivepiecesModels: boolean): CostItem[] {
   return [...execution, ...ai];
 }
 
-function buildFaqs(isCloud: boolean): Faq[] {
+function buildFaqs({
+  isCloud,
+  chatEnabled,
+}: {
+  isCloud: boolean;
+  chatEnabled: boolean;
+}): Faq[] {
   return [
     {
       question: t('What are credits?'),
@@ -202,7 +223,10 @@ function buildFaqs(isCloud: boolean): Faq[] {
               "Each action in Activepieces has a fixed credit cost. Here's a breakdown:",
             )}
           </span>
-          <CreditsCostTable includeActivepiecesModels={isCloud} />
+          <CreditsCostTable
+            includeActivepiecesModels={isCloud}
+            chatEnabled={chatEnabled}
+          />
         </div>
       ),
     },
