@@ -145,7 +145,7 @@ export const stripe = createPiece({
   displayName: 'Stripe',
   description: 'Online payment processing for internet businesses',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
   authors: [
     'lldiegon',
