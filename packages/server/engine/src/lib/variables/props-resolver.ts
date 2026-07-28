@@ -46,6 +46,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 projectId,
                 apiUrl,
                 currentState,
+                tokenCache: new Map<string, Promise<unknown>>(),
             }
             const resolvedInput = await applyFunctionToValues<T>(
                 unresolvedInput,
@@ -72,7 +73,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
 }
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>,
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'tokenCache'>,
     contextVersion: ContextVersion | undefined,
 ) => {
     const resolvedValues: Record<string, unknown> = {}
@@ -119,7 +120,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
     const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
 
     if (formulaEvaluator.containsWrapper(input)) {
-        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion }
+        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, contextVersion: params.contextVersion, tokenCache: params.tokenCache }
         const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
         const { result, error } = formulaEvaluator.evaluate({ expression: preResolvedExpr, sampleData: preResolvedVars })
         if (error) {
@@ -135,6 +136,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         apiUrl,
         currentState,
         censoredInput,
+        tokenCache: params.tokenCache,
     }
     const inputContainsOnlyOneTokenToResolve =
         tokensThatNeedResolving.length === 1 &&
@@ -164,14 +166,23 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
 }
 
 async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
-    const { variableName, currentState } = params
+    const { variableName, currentState, tokenCache } = params
     if (variableName.startsWith(VARIABLES)) {
         return handleVariable(params)
     }
     if (variableName.startsWith(CONNECTIONS)) {
         return handleConnection(params)
     }
-    return evalInScope(variableName, { ...currentState }, { flattenNestedKeys })
+    // Same token, same state: `resolve()` walks the input twice (resolved + censored)
+    // and only connections/variables differ between the passes, so plain path tokens
+    // are evaluated once per resolve instead of twice.
+    const cached = tokenCache.get(variableName)
+    if (!isNil(cached)) {
+        return cached
+    }
+    const resolved = evalInScope(variableName, { ...currentState }, { flattenNestedKeys })
+    tokenCache.set(variableName, resolved)
+    return resolved
 }
 
 async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown> {
@@ -284,7 +295,7 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
     return []
 }
 
-type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion'>
+type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion' | 'tokenCache'>
 
 async function preResolveFormulaVars({ expression, resolveOptions }: {
     expression: string
@@ -323,6 +334,7 @@ type ResolveSingleTokenParams = {
     apiUrl: string
     censoredInput: boolean
     contextVersion: ContextVersion | undefined
+    tokenCache: Map<string, Promise<unknown>>
 }
 
 type ResolveInputInternalParams = {
@@ -333,6 +345,7 @@ type ResolveInputInternalParams = {
     censoredInput: boolean
     currentState: Record<string, unknown>
     contextVersion: ContextVersion | undefined
+    tokenCache: Map<string, Promise<unknown>>
 }
 
 type ResolveInputParams = {
