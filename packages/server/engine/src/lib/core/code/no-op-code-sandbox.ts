@@ -104,14 +104,29 @@ export const noOpCodeSandbox: CodeSandbox = {
     },
 
     async runScript({ script, scriptContext, functions }) {
+        const session = await noOpCodeSandbox.createScriptSession({ scriptContext, functions })
+        try {
+            return await session.run(script)
+        }
+        finally {
+            session.dispose()
+        }
+    },
+
+    async createScriptSession({ scriptContext, functions }) {
         const newContext = {
             ...scriptContext,
             ...functions,
         }
         const params = Object.keys(newContext)
         const args = Object.values(newContext)
-        const body = `return (${script})`
-        const fn = Function(...params, body)
-        return fn(...args)
+        return {
+            run: async (script: string) => {
+                const body = `return (${script})`
+                const fn = Function(...params, body)
+                return fn(...args)
+            },
+            dispose: () => undefined,
+        }
     },
 }

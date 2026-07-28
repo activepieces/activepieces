@@ -68,4 +68,43 @@ describe('v8IsolateCodeSandbox', () => {
             await expect(runWithSource(source)).rejects.toThrow(/process/)
         })
     })
+
+    describe('createScriptSession', () => {
+        it('shares the script context across multiple runs', async () => {
+            const session = await v8IsolateCodeSandbox.createScriptSession({
+                scriptContext: { step_1: { output: { price: 6.4 } } },
+                functions: {},
+            })
+            try {
+                expect(await session.run('step_1.output.price')).toBe(6.4)
+                expect(await session.run('step_1.output.price + 2')).toBe(8.4)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('makes injected functions available to every run', async () => {
+            const session = await v8IsolateCodeSandbox.createScriptSession({
+                scriptContext: { value: 3 },
+                functions: { double: (n: number) => n * 2 },
+            })
+            try {
+                expect(await session.run('double(value)')).toBe(6)
+                expect(await session.run('double(double(value))')).toBe(12)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('rejects runs after dispose', async () => {
+            const session = await v8IsolateCodeSandbox.createScriptSession({
+                scriptContext: {},
+                functions: {},
+            })
+            session.dispose()
+            await expect(session.run('1 + 1')).rejects.toThrow()
+        })
+    })
 })

@@ -395,6 +395,16 @@ describe('Props resolver', () => {
         expect(resolvedInput).toEqual('a')
     })
 
+    test('resolved object is a clone, not an alias of the execution state', async () => {
+        const stepOutput = executionState.getStepOutput('trigger')
+        const { resolvedInput } = await propsResolverService.resolve<Record<string, unknown>>({ unresolvedInput: '{{trigger.output}}', executionState })
+        expect(resolvedInput).toEqual(stepOutput?.output)
+        expect(resolvedInput).not.toBe(stepOutput?.output)
+        resolvedInput.name = 'mutated'
+        const { resolvedInput: resolvedAgain } = await propsResolverService.resolve<Record<string, unknown>>({ unresolvedInput: '{{trigger.output.name}}', executionState })
+        expect(resolvedAgain).toEqual('John')
+    })
+
     test('Test resolve empty text', async () => {
         const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '', executionState })
         expect(resolvedInput).toEqual('')
