@@ -14,6 +14,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { resolveInternalTableId } from '../../mcp/tools/table-utils'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { platformService } from '../../platform/platform.service'
 import { fieldService } from '../../tables/field/field.service'
 import { recordService } from '../../tables/record/record.service'
 import { tableService } from '../../tables/table/table.service'
@@ -112,6 +113,17 @@ async function resolveConsentTargetName({ entity, ids, projectId, log }: {
 async function tableNameOf({ tableId, projectId }: { tableId: string, projectId: string }): Promise<string | undefined> {
     const { data: table } = await tryCatch(() => tableService.getOneOrThrow({ id: tableId, projectId }))
     return table?.name
+}
+
+async function resolveConsentPolicy({ conversation, platformId, log }: {
+    conversation: { autonomyMode?: string | null }
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<Record<string, string>> {
+    const { data: platform } = await tryCatch(() => platformService(log).getOneOrThrow(platformId))
+    const settings = platform?.chatConsentPolicy
+    const fullAccess = conversation.autonomyMode === 'full_access' && settings?.fullAccessEnabled !== false
+    return chatConsent.composePolicy({ fullAccess, overrides: settings?.overrides })
 }
 
 function isDeclaringPieceStep(step: Step | undefined): step is Step & { settings: { actionName: string, pieceName: string } } {
@@ -437,6 +449,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             aiTools,
             emailEnabled,
             userEmail: userMeta.email,
+            consentPolicy: await resolveConsentPolicy({ conversation, platformId, log }),
         }
     },
 

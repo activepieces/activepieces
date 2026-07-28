@@ -2249,6 +2249,16 @@
   "Run it": "Run it",
   "You said no — nothing ran": "You said no — nothing ran",
   "Waited for your answer — nothing ran": "Waited for your answer — nothing ran",
+  "Full access": "Full access",
+  "Asks first": "Asks first",
+  "Turned off by your workspace admin.": "Turned off by your workspace admin.",
+  "Give the assistant full access?": "Give the assistant full access?",
+  "In this conversation, the assistant will send real messages and change data in your connected apps without asking you first.": "In this conversation, the assistant will send real messages and change data in your connected apps without asking you first.",
+  "It will still ask before deleting data, moving money, or running anything it cannot identify.": "It will still ask before deleting data, moving money, or running anything it cannot identify.",
+  "Keep asking me": "Keep asking me",
+  "Give full access": "Give full access",
+  "Full access in chat": "Full access in chat",
+  "Let members allow the assistant to send and change connected apps without asking per action. Deleting data and moving money always ask.": "Let members allow the assistant to send and change connected apps without asking per action. Deleting data and moving money always ask.",
   "Deletes data in your workspace": "Deletes data in your workspace",
   "Deleted data can't be brought back.": "Deleted data can't be brought back.",
   "Part of this we can't predict until it runs.": "Part of this we can't predict until it runs.",
@@ -2264,5 +2274,9 @@
   "Reads data — changes nothing": "Reads data — changes nothing",
   "Changes data in your workspace": "Changes data in your workspace",
   "Also covers repeats of this exact action, to the same recipients, in this chat.": "Also covers repeats of this exact action, to the same recipients, in this chat.",
-  "This switches the automation on for real.": "This switches the automation on for real."
+  "Reply instead — nothing will run": "Reply instead — nothing will run",
+  "This switches the automation on for real.": "This switches the automation on for real.",
+  "It stays on for this chat until you switch it back.": "It stays on for this chat until you switch it back.",
+  "Asks before real actions.": "Asks before real actions.",
+  "Runs without asking.": "Runs without asking."
 }

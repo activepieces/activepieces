@@ -1,6 +1,7 @@
 import { ApId, BaseModelSchema, DateOrString, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../../core/federated-authn'
+import { ChatConsentPolicySettings } from '../../ee/chat/consent-policy-settings'
 import { SsoDomainVerification } from './sso-domain-verification'
 
 export const PlatformUsage = z.object({
@@ -173,6 +174,7 @@ export const Platform = z.object({
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    chatConsentPolicy: z.optional(Nullable(ChatConsentPolicySettings)),
 })
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
@@ -201,6 +203,7 @@ export const PlatformWithoutSensitiveData = z.object({
     emailAuthEnabled: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    chatConsentPolicy: z.optional(Nullable(ChatConsentPolicySettings)),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 

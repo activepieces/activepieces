@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
+import { platformService } from '../../platform/platform.service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
@@ -72,9 +73,22 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async updateConversation({ id, platformId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
+        if (request.autonomyMode === 'full_access') {
+            const platform = await platformService(log).getOneOrThrow(platformId)
+            if (platform.chatConsentPolicy?.fullAccessEnabled === false) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: 'Full access is turned off for this workspace' },
+                })
+            }
+        }
+        if (!isNil(request.autonomyMode) && request.autonomyMode !== conversation.autonomyMode) {
+            log.info({ conversation: { id }, user: { id: userId }, autonomyMode: request.autonomyMode }, '[chatService] Conversation autonomy mode changed')
+        }
         const updates = {
             ...spreadIfDefined('title', request.title),
             ...spreadIfDefined('modelName', request.modelName),
+            ...spreadIfDefined('autonomyMode', request.autonomyMode),
         }
 
         if (Object.keys(updates).length > 0) {

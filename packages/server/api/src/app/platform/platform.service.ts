@@ -166,6 +166,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
+            ...spreadIfNotUndefined('chatConsentPolicy', params.chatConsentPolicy),
         }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({

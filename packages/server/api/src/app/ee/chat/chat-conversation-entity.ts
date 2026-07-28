@@ -32,6 +32,10 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
             type: String,
             nullable: true,
         },
+        autonomyMode: {
+            type: String,
+            nullable: true,
+        },
         status: {
             type: String,
             nullable: false,
