@@ -1,5 +1,5 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { ChatConversation, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PlanName } from '@activepieces/shared'
+import { CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, ChatConversation, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PlanName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
 import { CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
@@ -19,8 +19,8 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
 
         const isManagedProvider = provider === AIProviderName.ACTIVEPIECES
         const tier = chatHelpers.resolveTier({ tierId: conversation.modelName ?? null })
-        const creditWeight = isManagedProvider ? tier.creditWeight : 1
-        const creditValue = creditWeight + billableToolCalls
+        const creditWeight = isManagedProvider ? tier.creditWeight : CHAT_BYOK_CREDIT_WEIGHT
+        const creditValue = creditWeight + billableToolCalls * CHAT_CREDITS_PER_TOOL_CALL
 
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
         const isAppSumoPlan = platformPlan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false

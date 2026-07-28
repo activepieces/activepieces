@@ -243,6 +243,9 @@ export const UpdateChatMemoryRequest = z.object({
 })
 export type UpdateChatMemoryRequest = z.infer<typeof UpdateChatMemoryRequest>
 
+export const CHAT_BYOK_CREDIT_WEIGHT = 1
+export const CHAT_CREDITS_PER_TOOL_CALL = 1
+
 export const ImportChatMemoryRequest = z.object({
     text: z.string(),
 })

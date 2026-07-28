@@ -55,16 +55,16 @@ function computePricing({
   if (isNil(apiPlan.price)) {
     return { amount: apiPlan.priceDisplay ?? '', suffix: t('/year') };
   }
-  const perMonth = Math.round(apiPlan.price / 12);
+  const perMonth = Math.floor(apiPlan.price / 12);
   const monthlyPrice = monthlySibling?.price;
-  const savePercent =
+  const freeMonths =
     !isNil(monthlyPrice) && monthlyPrice > 0
-      ? Math.round((1 - apiPlan.price / (monthlyPrice * 12)) * 100)
+      ? Math.round(12 - apiPlan.price / monthlyPrice)
       : null;
   return {
     amount: `$${perMonth.toLocaleString()}`,
     suffix: t('/mo'),
-    savePercent: !isNil(savePercent) && savePercent > 0 ? savePercent : null,
+    freeMonths: !isNil(freeMonths) && freeMonths >= 1 ? freeMonths : null,
     annualNote: t('billed annually ({total}/year)', {
       total: `$${apiPlan.price.toLocaleString()}`,
     }),
@@ -181,7 +181,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
       { metric: 'credits' },
       { metric: 'seats' },
       { label: 'Agents / Chat' },
-      { label: 'Projects, MCPs' },
+      { label: '1 team project, MCPs' },
       { label: 'BYOK' },
       { label: 'Team analytics' },
     ],
@@ -196,6 +196,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
     features: [
       { metric: 'credits' },
       { metric: 'seats' },
+      { label: 'Unlimited team projects' },
       { label: 'SSO' },
       { label: 'Standard roles' },
       { label: 'Global connections' },
@@ -283,7 +284,7 @@ export type CheckoutAction = 'create' | 'upgrade' | 'downgrade';
 export type PlanPricing = {
   amount: string;
   suffix?: string;
-  savePercent?: number | null;
+  freeMonths?: number | null;
   annualNote?: string;
 };
 

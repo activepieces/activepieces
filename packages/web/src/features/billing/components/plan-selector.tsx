@@ -271,9 +271,14 @@ function PlanColumn({
                   {pricing.suffix}
                 </span>
               )}
-              {!isNil(pricing.savePercent) && (
+              {!isNil(pricing.freeMonths) && (
                 <Badge variant="accent" className="rounded-sm">
-                  {t('Save {percent}%', { percent: pricing.savePercent })}
+                  {t(
+                    '{count, plural, =1 {1 free month} other {# free months}}',
+                    {
+                      count: pricing.freeMonths,
+                    },
+                  )}
                 </Badge>
               )}
             </div>

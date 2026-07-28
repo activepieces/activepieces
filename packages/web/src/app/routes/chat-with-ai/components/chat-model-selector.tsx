@@ -1,4 +1,8 @@
-import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/shared';
+import { AIProviderName } from '@activepieces/core-utils';
+import {
+  ACTIVEPIECES_CHAT_TIERS,
+  CHAT_CREDITS_PER_TOOL_CALL,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowDown,
@@ -18,6 +22,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { cn } from '@/lib/utils';
 
 const TIER_CONFIG: Record<
@@ -55,6 +60,12 @@ export function ChatModelSelector({
   const [open, setOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const listRef = useRef<HTMLDivElement>(null);
+  const { data: providers } = aiModelHooks.useListProviders();
+  const resolvedChatProvider = providers?.filter(
+    (provider) => provider.enabledForChat,
+  )[0];
+  const showCredits =
+    resolvedChatProvider?.provider === AIProviderName.ACTIVEPIECES;
 
   const selectedTierId = selectedModel ?? 'smart';
   const selectedConfig = TIER_CONFIG[selectedTierId] ?? TIER_CONFIG.smart;
@@ -143,9 +154,19 @@ export function ChatModelSelector({
                     <Icon className="size-4 text-foreground" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5">
-                    <span className="text-sm font-medium">
-                      {t(config.displayLabel)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {t(config.displayLabel)}
+                      </span>
+                      {showCredits && (
+                        <span className="text-xs text-muted-foreground">
+                          {t(
+                            '{count, plural, =1 {1 credit} other {# credits}}',
+                            { count: tier.creditWeight },
+                          )}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-muted-foreground">
                       {t(config.description)}
                     </span>
@@ -160,6 +181,14 @@ export function ChatModelSelector({
               );
             })}
           </div>
+          {showCredits && (
+            <div className="border-t px-3 py-2 text-xs text-muted-foreground">
+              {t(
+                'Per message, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
+                { count: CHAT_CREDITS_PER_TOOL_CALL },
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
