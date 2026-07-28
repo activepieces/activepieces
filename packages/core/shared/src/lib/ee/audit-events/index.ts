@@ -1,5 +1,5 @@
 import { Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
-import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
+import { BaseModelSchema, DateOrString, isNil, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
 import * as zMini from 'zod/mini'
 import { UserWithMetaInformation } from '../../core/user/user'
@@ -47,6 +47,11 @@ export enum ApplicationEventName {
     PROJECT_ROLE_UPDATED = 'project.role.updated',
     PROJECT_RELEASE_CREATED = 'project.release.created',
     PROJECT_REPLACED = 'project.replaced',
+    CHAT_FULL_ACCESS_ENABLED = 'chat.full.access.enabled',
+    CHAT_FULL_ACCESS_DISABLED = 'chat.full.access.disabled',
+    CHAT_CONSENT_GRANTED = 'chat.consent.granted',
+    CHAT_CONSENT_DECLINED = 'chat.consent.declined',
+    CHAT_CONSENT_POLICY_DENIED = 'chat.consent.policy.denied',
 }
 
 const BaseAuditEventProps = {
@@ -477,6 +482,32 @@ export const ProjectReplacedEvent = z.object({
 
 export type ProjectReplacedEvent = z.infer<typeof ProjectReplacedEvent>
 
+const ChatConsentEventData = z.object({
+    conversation: z.object({
+        id: z.string(),
+    }),
+    tool: z.object({
+        name: z.string(),
+        displayName: z.string().optional(),
+    }).optional(),
+    effectKinds: z.array(z.string()).optional(),
+    targetName: z.string().optional(),
+    remembered: z.boolean().optional(),
+})
+
+export const ChatConsentEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.CHAT_FULL_ACCESS_ENABLED),
+        z.literal(ApplicationEventName.CHAT_FULL_ACCESS_DISABLED),
+        z.literal(ApplicationEventName.CHAT_CONSENT_GRANTED),
+        z.literal(ApplicationEventName.CHAT_CONSENT_DECLINED),
+        z.literal(ApplicationEventName.CHAT_CONSENT_POLICY_DENIED),
+    ]),
+    data: ChatConsentEventData,
+})
+export type ChatConsentEvent = z.infer<typeof ChatConsentEvent>
+
 export const ApplicationEvent = z.union([
     ConnectionEvent,
     VariableEvent,
@@ -494,6 +525,7 @@ export const ApplicationEvent = z.union([
     ProjectRoleEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
+    ChatConsentEvent,
 ])
 
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
@@ -565,7 +597,23 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
                 + applied.foldersCreated + applied.foldersUpdated + applied.foldersDeleted
             return `Project replace ${outcome.toLowerCase()} in ${durationMs}ms (${totals} changes, ${failedCount} failed)`
         }
+        case ApplicationEventName.CHAT_FULL_ACCESS_ENABLED:
+            return `Full access turned on for chat conversation ${event.data.conversation.id}`
+        case ApplicationEventName.CHAT_FULL_ACCESS_DISABLED:
+            return `Full access turned off for chat conversation ${event.data.conversation.id}`
+        case ApplicationEventName.CHAT_CONSENT_GRANTED:
+            return `Approved ${describeConsentSubject(event)} in chat${event.data.remembered ? ' (remembered approval reused)' : ''}`
+        case ApplicationEventName.CHAT_CONSENT_DECLINED:
+            return `Declined ${describeConsentSubject(event)} in chat`
+        case ApplicationEventName.CHAT_CONSENT_POLICY_DENIED:
+            return `Workspace policy blocked ${describeConsentSubject(event)} in chat`
     }
+}
+
+function describeConsentSubject(event: ChatConsentEvent): string {
+    const toolName = event.data.tool?.displayName ?? event.data.tool?.name
+    const subject = isNil(toolName) ? 'an action' : `"${toolName}"`
+    return isNil(event.data.targetName) ? subject : `${subject} on "${event.data.targetName}"`
 }
 
 function convertUpdateActionToDetails(event: FlowUpdatedEvent) {

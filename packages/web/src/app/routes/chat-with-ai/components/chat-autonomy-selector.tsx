@@ -1,4 +1,8 @@
-import { ChatAutonomyMode } from '@activepieces/shared';
+import {
+  ChatAutonomyMode,
+  chatConsentPolicy,
+  PlatformRole,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ShieldAlert, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
@@ -20,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
 export function ChatAutonomySelector({
@@ -31,8 +36,17 @@ export function ChatAutonomySelector({
 }) {
   const [warningOpen, setWarningOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+  const allowedFor = chatConsentPolicy.effectiveFullAccessAllowedFor({
+    settings: platform.chatConsentPolicy,
+  });
   const fullAccessAllowed =
-    platform.chatConsentPolicy?.fullAccessEnabled !== false;
+    allowedFor === 'everyone' ||
+    (allowedFor === 'admins_only' && platformRole === PlatformRole.ADMIN);
+  const fullAccessBlockedReason =
+    allowedFor === 'admins_only'
+      ? t('Limited to workspace admins.')
+      : t('Turned off by your workspace admin.');
   const fullAccess = autonomyMode === 'full_access';
 
   const handleModeChange = (value: string) => {
@@ -98,7 +112,7 @@ export function ChatAutonomySelector({
                 <span className="text-xs text-muted-foreground">
                   {fullAccessAllowed
                     ? t(FULL_ACCESS_SUMMARY)
-                    : t('Turned off by your workspace admin.')}
+                    : fullAccessBlockedReason}
                 </span>
               </div>
             </DropdownMenuRadioItem>

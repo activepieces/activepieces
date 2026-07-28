@@ -507,6 +507,60 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         }),
 
+        it('persists who may use full access and rejects an unknown audience', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { chatConsentPolicy: { fullAccessAllowedFor: 'admins_only' } },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            // act - re-read to prove the write stuck
+            const readBack = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(readBack?.json().chatConsentPolicy).toStrictEqual({ fullAccessAllowedFor: 'admins_only' })
+
+            // act - an audience the enum does not know must 400, not silently drop
+            const invalid = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { chatConsentPolicy: { fullAccessAllowedFor: 'managers' } },
+            })
+
+            // assert
+            expect(invalid?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        }),
+
         it('rejects a misspelled chat consent override instead of dropping it', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({

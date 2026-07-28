@@ -31,6 +31,21 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.VARIABLE_VALUE_REVEALED]: {
       label: t('Variable value revealed'),
     },
+    [ApplicationEventName.CHAT_FULL_ACCESS_ENABLED]: {
+      label: t('Chat full access turned on'),
+    },
+    [ApplicationEventName.CHAT_FULL_ACCESS_DISABLED]: {
+      label: t('Chat full access turned off'),
+    },
+    [ApplicationEventName.CHAT_CONSENT_GRANTED]: {
+      label: t('Chat action approved'),
+    },
+    [ApplicationEventName.CHAT_CONSENT_DECLINED]: {
+      label: t('Chat action declined'),
+    },
+    [ApplicationEventName.CHAT_CONSENT_POLICY_DENIED]: {
+      label: t('Chat action blocked by policy'),
+    },
     [ApplicationEventName.USER_SIGNED_UP]: { label: t('User signed up') },
     [ApplicationEventName.USER_SIGNED_IN]: { label: t('User signed in') },
     [ApplicationEventName.USER_PASSWORD_RESET]: {

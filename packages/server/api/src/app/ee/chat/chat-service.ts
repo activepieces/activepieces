@@ -1,11 +1,13 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { ChatConversation, ChatConversationStatus, ChatHistoryMessage, CreateChatConversationRequest, PersistedChatMessage, PersistedChatRole, SetChatMessageFeedbackRequest, UpdateChatConversationRequest } from '@activepieces/shared'
+import { ApplicationEventName, chatConsentPolicy, ChatConversation, ChatConversationStatus, ChatHistoryMessage, CreateChatConversationRequest, PersistedChatMessage, PersistedChatRole, SetChatMessageFeedbackRequest, UpdateChatConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { applicationEvents } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { platformService } from '../../platform/platform.service'
+import { userService } from '../../user/user-service'
 import { chatApprovalGate } from './chat-approval-gate'
 import { ChatConversationEntity } from './chat-conversation-entity'
 import { chatHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './chat-helpers'
@@ -75,15 +77,32 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
         if (request.autonomyMode === 'full_access') {
             const platform = await platformService(log).getOneOrThrow(platformId)
-            if (platform.chatConsentPolicy?.fullAccessEnabled === false) {
+            const user = await userService(log).getOneOrFail({ id: userId })
+            if (!chatConsentPolicy.fullAccessPermitted({ settings: platform.chatConsentPolicy, platformRole: user.platformRole })) {
+                const allowedFor = chatConsentPolicy.effectiveFullAccessAllowedFor({ settings: platform.chatConsentPolicy })
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
-                    params: { message: 'Full access is turned off for this workspace' },
+                    params: {
+                        message: allowedFor === 'admins_only'
+                            ? 'Full access is limited to workspace admins'
+                            : 'Full access is turned off for this workspace',
+                    },
                 })
             }
         }
-        if (!isNil(request.autonomyMode) && request.autonomyMode !== conversation.autonomyMode) {
+        const autonomyModeChanged = !isNil(request.autonomyMode) && request.autonomyMode !== conversation.autonomyMode
+        if (autonomyModeChanged) {
             log.info({ conversation: { id }, user: { id: userId }, autonomyMode: request.autonomyMode }, '[chatService] Conversation autonomy mode changed')
+            applicationEvents(log).sendUserEvent({
+                platformId,
+                userId,
+                ...spreadIfDefined('projectId', conversation.projectId ?? undefined),
+            }, {
+                action: request.autonomyMode === 'full_access'
+                    ? ApplicationEventName.CHAT_FULL_ACCESS_ENABLED
+                    : ApplicationEventName.CHAT_FULL_ACCESS_DISABLED,
+                data: { conversation: { id } },
+            })
         }
         const updates = {
             ...spreadIfDefined('title', request.title),

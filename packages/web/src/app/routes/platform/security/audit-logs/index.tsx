@@ -13,6 +13,7 @@ import {
   Key,
   Link2,
   Logs,
+  MessageSquare,
   Users,
   Wand,
   Workflow,
@@ -390,6 +391,15 @@ function convertToIcon(event: ApplicationEvent) {
       return {
         icon: <Key className="size-4" />,
         tooltip: t('Signing Key'),
+      };
+    case ApplicationEventName.CHAT_FULL_ACCESS_ENABLED:
+    case ApplicationEventName.CHAT_FULL_ACCESS_DISABLED:
+    case ApplicationEventName.CHAT_CONSENT_GRANTED:
+    case ApplicationEventName.CHAT_CONSENT_DECLINED:
+    case ApplicationEventName.CHAT_CONSENT_POLICY_DENIED:
+      return {
+        icon: <MessageSquare className="size-4" />,
+        tooltip: t('Chat'),
       };
     default:
       return undefined;

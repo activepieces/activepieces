@@ -1,10 +1,14 @@
 import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderWithoutSensitiveData,
+  ChatFullAccessAllowedFor,
+  chatConsentPolicy,
   PlatformRole,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { MessageSquare, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { CenteredPage } from '@/app/components/centered-page';
@@ -15,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { SUPPORTED_AI_PROVIDERS, AiProviderInfo } from '@/features/agents';
 import {
   aiProviderQueries,
@@ -109,20 +112,30 @@ export default function AIProvidersPage() {
 
 function ChatFullAccessSetting() {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const fullAccessEnabled =
-    platform.chatConsentPolicy?.fullAccessEnabled !== false;
+  const [saving, setSaving] = useState(false);
+  const allowedFor = chatConsentPolicy.effectiveFullAccessAllowedFor({
+    settings: platform.chatConsentPolicy,
+  });
 
-  const handleToggle = async (checked: boolean) => {
-    await platformApi.update(
-      {
-        chatConsentPolicy: {
-          ...(platform.chatConsentPolicy ?? {}),
-          fullAccessEnabled: checked,
+  const handleChange = async (value: ChatFullAccessAllowedFor) => {
+    setSaving(true);
+    try {
+      await platformApi.update(
+        {
+          chatConsentPolicy: {
+            ...(platform.chatConsentPolicy ?? {}),
+            fullAccessAllowedFor: value,
+          },
         },
-      },
-      platform.id,
-    );
-    await refetch();
+        platform.id,
+      );
+      await refetch();
+      toast.success(t('Saved.'));
+    } catch {
+      toast.error(t("Couldn't save — nothing was changed."));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -131,16 +144,32 @@ function ChatFullAccessSetting() {
         <ShieldCheck className="size-4 text-muted-foreground" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium leading-none">
+        <h2
+          id="chat-full-access-title"
+          className="text-sm font-medium leading-none"
+        >
           {t('Full access in chat')}
-        </p>
+        </h2>
         <p className="text-xs text-muted-foreground mt-1">
           {t(
-            'Let members allow the assistant to send and change connected apps without asking per action. Deleting data and moving money always ask.',
+            'Who can let the assistant send and change connected apps without asking per action. Deleting data and moving money still ask, unless a workspace rule allows them.',
           )}
         </p>
       </div>
-      <Switch checked={fullAccessEnabled} onCheckedChange={handleToggle} />
+      <Select value={allowedFor} onValueChange={handleChange}>
+        <SelectTrigger
+          className="w-52 shrink-0"
+          disabled={saving}
+          aria-labelledby="chat-full-access-title"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="everyone">{t('Everyone')}</SelectItem>
+          <SelectItem value="admins_only">{t('Admins only')}</SelectItem>
+          <SelectItem value="nobody">{t('No one')}</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

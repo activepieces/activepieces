@@ -1,7 +1,7 @@
 import { FlowActionType, flowStructureUtil, Step } from '@activepieces/core-execution'
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { actionEffect, actionEffectLabelCatalog, ChatConfigResponse, chatConsent, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, StepEffect, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { actionEffect, actionEffectLabelCatalog, ApplicationEventName, ChatConfigResponse, chatConsent, chatConsentPolicy, ChatConsentPolicySettings, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, StepEffect, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -10,6 +10,7 @@ import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { applicationEvents } from '../../helper/application-events'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { resolveInternalTableId } from '../../mcp/tools/table-utils'
@@ -116,14 +117,28 @@ async function tableNameOf({ tableId, projectId }: { tableId: string, projectId:
 }
 
 async function resolveConsentPolicy({ conversation, platformId, log }: {
-    conversation: { autonomyMode?: string | null }
+    conversation: { autonomyMode?: string | null, userId: string }
     platformId: string
     log: FastifyBaseLogger
 }): Promise<Record<string, string>> {
     const { data: platform } = await tryCatch(() => platformService(log).getOneOrThrow(platformId))
     const settings = platform?.chatConsentPolicy
-    const fullAccess = conversation.autonomyMode === 'full_access' && settings?.fullAccessEnabled !== false
+    const fullAccess = conversation.autonomyMode === 'full_access'
+        ? await ownerPermittedFullAccess({ userId: conversation.userId, settings, log })
+        : false
     return chatConsent.composePolicy({ fullAccess, overrides: settings?.overrides })
+}
+
+async function ownerPermittedFullAccess({ userId, settings, log }: {
+    userId: string
+    settings: ChatConsentPolicySettings | null | undefined
+    log: FastifyBaseLogger
+}): Promise<boolean> {
+    const { data: owner } = await tryCatch(() => userService(log).getOneOrFail({ id: userId }))
+    if (isNil(owner)) {
+        return false
+    }
+    return chatConsentPolicy.fullAccessPermitted({ settings, platformRole: owner.platformRole })
 }
 
 function isDeclaringPieceStep(step: Step | undefined): step is Step & { settings: { actionName: string, pieceName: string } } {
@@ -617,13 +632,46 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (typeof signature !== 'string' || typeof input.conversationId !== 'string') {
                 return { result: { approved: false } }
             }
-            await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
             if (input.toolName === '__consent_remember') {
                 await chatApprovalGate.rememberConsent({ conversationId: input.conversationId, signature })
                 return { result: { remembered: true } }
             }
             const approved = await chatApprovalGate.hasRememberedConsent({ conversationId: input.conversationId, signature })
+            if (approved) {
+                applicationEvents(log).sendUserEvent({
+                    platformId: input.platformId,
+                    userId: input.userId,
+                    ...spreadIfDefined('projectId', conversation.projectId ?? undefined),
+                }, {
+                    action: ApplicationEventName.CHAT_CONSENT_GRANTED,
+                    data: { conversation: { id: input.conversationId }, remembered: true },
+                })
+            }
             return { result: { approved } }
+        }
+        if (input.toolName === '__consent_audit') {
+            if (typeof input.conversationId !== 'string') {
+                return { result: { recorded: false } }
+            }
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            const toolName = input.toolInput['tool']
+            const displayName = input.toolInput['displayName']
+            const rawKinds = input.toolInput['effectKinds']
+            const effectKinds = Array.isArray(rawKinds) ? rawKinds.filter((kind): kind is string => typeof kind === 'string') : []
+            applicationEvents(log).sendUserEvent({
+                platformId: input.platformId,
+                userId: input.userId,
+                ...spreadIfDefined('projectId', conversation.projectId ?? undefined),
+            }, {
+                action: ApplicationEventName.CHAT_CONSENT_POLICY_DENIED,
+                data: {
+                    conversation: { id: input.conversationId },
+                    ...(typeof toolName === 'string' ? { tool: { name: toolName, ...(typeof displayName === 'string' ? { displayName } : {}) } } : {}),
+                    ...(effectKinds.length > 0 ? { effectKinds } : {}),
+                },
+            })
+            return { result: { recorded: true } }
         }
         if (input.toolName === '__consent_target_name') {
             if (typeof input.conversationId !== 'string') {

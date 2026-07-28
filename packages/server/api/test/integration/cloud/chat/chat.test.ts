@@ -233,6 +233,42 @@ describe('Chat Conversations API', () => {
         })
     })
 
+    describe('Full access admin policy', () => {
+        it('enforces who may turn on full access, at the moment they try', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+
+            const policyResponse = await ctx.post(`/v1/platforms/${ctx.platform.id}`, {
+                chatConsentPolicy: { fullAccessAllowedFor: 'admins_only' },
+            })
+            expect(policyResponse.statusCode).toBe(StatusCodes.OK)
+
+            const memberConversation = await member.post(CONVERSATIONS_URL, { title: 'Member chat' })
+            expect(memberConversation.statusCode).toBe(StatusCodes.CREATED)
+            const memberBlocked = await member.post(`${CONVERSATIONS_URL}/${memberConversation.json().id}`, {
+                autonomyMode: 'full_access',
+            })
+            expect(memberBlocked.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const adminConversation = await ctx.post(CONVERSATIONS_URL, { title: 'Admin chat' })
+            const adminAllowed = await ctx.post(`${CONVERSATIONS_URL}/${adminConversation.json().id}`, {
+                autonomyMode: 'full_access',
+            })
+            expect(adminAllowed.statusCode).toBe(StatusCodes.OK)
+            expect(adminAllowed.json().autonomyMode).toBe('full_access')
+
+            const shutOff = await ctx.post(`/v1/platforms/${ctx.platform.id}`, {
+                chatConsentPolicy: { fullAccessAllowedFor: 'nobody' },
+            })
+            expect(shutOff.statusCode).toBe(StatusCodes.OK)
+            const secondAdminConversation = await ctx.post(CONVERSATIONS_URL, { title: 'After shutdown' })
+            const adminBlocked = await ctx.post(`${CONVERSATIONS_URL}/${secondAdminConversation.json().id}`, {
+                autonomyMode: 'full_access',
+            })
+            expect(adminBlocked.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
+
     describe('Delete conversation', () => {
         it('deletes a conversation and subsequent GET returns 404', async () => {
             const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
