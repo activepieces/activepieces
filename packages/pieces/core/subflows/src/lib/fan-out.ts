@@ -5,7 +5,7 @@ export async function fanOutBatches<T>({
   dispatch,
 }: FanOutParams<T>): Promise<FanOutResult> {
   const inFlight = new Set<Promise<void>>();
-  let firstErrorBatchIndex: number | undefined;
+  let firstError: { batchIndex: number; error: unknown } | undefined;
   let rowsProcessed = 0;
   let batchesDispatched = 0;
   let batchIndex = 0;
@@ -17,9 +17,9 @@ export async function fanOutBatches<T>({
         () => {
           batchesDispatched++;
         },
-        () => {
-          if (firstErrorBatchIndex === undefined) {
-            firstErrorBatchIndex = index;
+        (error: unknown) => {
+          if (firstError === undefined) {
+            firstError = { batchIndex: index, error };
           }
         }
       )
@@ -29,38 +29,59 @@ export async function fanOutBatches<T>({
     inFlight.add(promise);
   };
 
-  for await (const record of records) {
-    if (firstErrorBatchIndex !== undefined) {
-      break;
-    }
-    batch.push(record);
-    rowsProcessed++;
-    if (batch.length >= batchSize) {
-      start(batchIndex++, batch);
-      batch = [];
-      if (inFlight.size >= maxInFlight) {
-        await Promise.race(inFlight);
+  let readError: { error: unknown } | undefined;
+  try {
+    for await (const record of records) {
+      if (firstError !== undefined) {
+        break;
+      }
+      batch.push(record);
+      rowsProcessed++;
+      if (batch.length >= batchSize) {
+        start(batchIndex++, batch);
+        batch = [];
+        if (inFlight.size >= maxInFlight) {
+          await Promise.race(inFlight);
+        }
       }
     }
-  }
-  if (firstErrorBatchIndex === undefined && batch.length > 0) {
-    start(batchIndex++, batch);
-    batch = [];
+    if (firstError === undefined && batch.length > 0) {
+      start(batchIndex++, batch);
+      batch = [];
+    }
+  } catch (error) {
+    readError = { error };
   }
   await Promise.allSettled(inFlight);
 
-  if (firstErrorBatchIndex !== undefined) {
+  if (firstError !== undefined) {
     throw new Error(
       JSON.stringify({
         message:
           'A batch failed to dispatch; fan-out aborted. Batches before this index were already dispatched and may still be running.',
-        failedBatchIndex: firstErrorBatchIndex,
+        failedBatchIndex: firstError.batchIndex,
+        cause: describe(firstError.error),
+        rowsProcessed: rowsProcessed - batch.length,
+        batchesDispatched,
+      })
+    );
+  }
+  if (readError !== undefined) {
+    throw new Error(
+      JSON.stringify({
+        message:
+          'Failed to read the records; fan-out aborted. Batches dispatched before this point may still be running.',
+        cause: describe(readError.error),
         rowsProcessed: rowsProcessed - batch.length,
         batchesDispatched,
       })
     );
   }
   return { rowsProcessed, batchesDispatched };
+}
+
+function describe(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 export type FanOutParams<T> = {

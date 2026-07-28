@@ -1,66 +1,35 @@
-import {
-  createAction,
-  FAIL_PARENT_ON_FAILURE_HEADER,
-  FlowStatus,
-  PARENT_RUN_ID_HEADER,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { Readable } from 'node:stream';
-import { setTimeout as sleep } from 'node:timers/promises';
-import axios from 'axios';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { parse } from 'csv-parse';
-import { findFlowByExternalIdOrThrow, listFlowsWithSubflowTrigger } from '../common';
+import { dispatchToSubflow, findEnabledSubflowOrThrow, subflowDropdown } from '../common';
 import { fanOutBatches } from '../fan-out';
-
-type FlowValue = {
-  externalId: string;
-};
 
 type CsvRow = Record<string, string>;
 
 const MAX_IN_FLIGHT = 5;
-const MAX_DISPATCH_ATTEMPTS = 3;
+const MAX_BATCH_SIZE = 10_000;
 
 export const streamCsvToSubflows = createAction({
   audience: 'human',
   name: 'streamCsvToSubflows',
   displayName: 'Stream CSV to Subflows',
   description:
-    'Stream a CSV from a URL and call a subflow once per batch of rows, without loading the whole file into memory.',
+    'Stream a CSV and call a subflow once per batch of rows, without loading the whole file into memory.',
   props: {
-    fileUrl: Property.ShortText({
-      displayName: 'CSV File URL',
+    file: Property.File({
+      displayName: 'CSV File',
       description:
-        'A direct URL to the CSV file. It is streamed, not downloaded into memory.',
+        'The CSV to stream. Accepts a URL, an uploaded file, or a file from a previous step. It is streamed, not loaded into memory.',
       required: true,
+      streaming: true,
     }),
-    subflow: Property.Dropdown<FlowValue>({
-      auth: PieceAuth.None(),
+    subflow: subflowDropdown({
       displayName: 'Subflow',
       description:
         'The subflow to call for each batch. Published flows with a "Callable Flow" trigger appear here; disabled flows are marked "(inactive)".',
-      required: true,
-      refreshers: [],
-      options: async (_, context) => {
-        const flows = await listFlowsWithSubflowTrigger({
-          flowsContext: context.flows,
-        });
-        return {
-          options: flows.map((flow) => ({
-            value: { externalId: flow.externalId ?? flow.id },
-            label:
-              flow.status === FlowStatus.ENABLED
-                ? flow.version.displayName
-                : `${flow.version.displayName} (inactive)`,
-          })),
-        };
-      },
     }),
     batchSize: Property.Number({
       displayName: 'Rows per batch',
-      description: 'How many CSV rows to send in each subflow call.',
+      description: `How many CSV rows to send in each subflow call. Between 1 and ${MAX_BATCH_SIZE}.`,
       required: true,
       defaultValue: 100,
     }),
@@ -83,37 +52,30 @@ export const streamCsvToSubflows = createAction({
     }),
   },
   async run(context) {
-    const { fileUrl, batchSize, delimiter, extraData } = context.propsValue;
-    if (!Number.isInteger(batchSize) || batchSize < 1) {
-      throw new Error(
-        JSON.stringify({ message: 'Rows per batch must be a positive integer.' })
-      );
-    }
-
-    const flow = await findFlowByExternalIdOrThrow({
-      flowsContext: context.flows,
-      externalId: context.propsValue.subflow?.externalId,
-    });
-    if (flow.status !== FlowStatus.ENABLED) {
+    const { file, batchSize, delimiter, extraData } = context.propsValue;
+    if (
+      !Number.isInteger(batchSize) ||
+      batchSize < 1 ||
+      batchSize > MAX_BATCH_SIZE
+    ) {
       throw new Error(
         JSON.stringify({
-          message:
-            'The selected subflow is disabled. Enable it before streaming to it.',
-          externalId: context.propsValue.subflow?.externalId,
-          flowName: flow.version.displayName,
+          message: `Rows per batch must be an integer between 1 and ${MAX_BATCH_SIZE}.`,
         })
       );
     }
-    const webhookUrl = `${context.server.apiUrl.replace(/\/$/, '')}/v1/webhooks/${flow.id}`;
 
-    const source = await axios.get<Readable>(fileUrl, {
-      responseType: 'stream',
+    const flow = await findEnabledSubflowOrThrow({
+      flowsContext: context.flows,
+      externalId: context.propsValue.subflow,
     });
 
     let headers: string[] = [];
     let firstRow: CsvRow | undefined;
     const parser = parse({
       delimiter,
+      bom: true,
+      relax_column_count: true,
       columns: (header: string[]) => {
         headers = header;
         return header;
@@ -121,8 +83,8 @@ export const streamCsvToSubflows = createAction({
       skip_empty_lines: true,
       trim: true,
     });
-    source.data.pipe(parser);
-    source.data.on('error', (err) => parser.destroy(err));
+    file.body.pipe(parser);
+    file.body.on('error', (err) => parser.destroy(err));
 
     const dispatch = async ({
       batchIndex,
@@ -134,28 +96,14 @@ export const streamCsvToSubflows = createAction({
       if (batchIndex === 0) {
         firstRow = rows[0];
       }
-      let lastError: unknown;
-      for (let attempt = 0; attempt < MAX_DISPATCH_ATTEMPTS; attempt++) {
-        try {
-          await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: webhookUrl,
-            headers: {
-              'Content-Type': 'application/json',
-              [PARENT_RUN_ID_HEADER]: context.run.id,
-              [FAIL_PARENT_ON_FAILURE_HEADER]: 'false',
-            },
-            body: { data: { batchIndex, headers, rows, extraData } },
-          });
-          return;
-        } catch (error) {
-          lastError = error;
-          if (attempt < MAX_DISPATCH_ATTEMPTS - 1) {
-            await sleep(Math.min(1000 * 2 ** attempt, 8000));
-          }
-        }
-      }
-      throw lastError;
+      await dispatchToSubflow({
+        apiUrl: context.server.apiUrl,
+        flowId: flow.id,
+        parentRunId: context.run.id,
+        failParentOnFailure: false,
+        data: { batchIndex, headers, rows, extraData },
+        retries: 2,
+      });
     };
 
     try {
@@ -168,7 +116,7 @@ export const streamCsvToSubflows = createAction({
       return { headers, firstRow, ...result };
     } finally {
       parser.destroy();
-      source.data.destroy();
+      file.body.destroy();
     }
   },
 });

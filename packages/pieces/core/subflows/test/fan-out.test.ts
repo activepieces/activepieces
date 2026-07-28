@@ -115,4 +115,53 @@ describe('fanOutBatches', () => {
     expect(payload.failedBatchIndex).toBe(0);
     expect(payload.rowsProcessed).toBe(5);
   });
+
+  test('reports the dispatch failure cause, not just the batch index', async () => {
+    let error: Error | undefined;
+    try {
+      await fanOutBatches<number>({
+        records: gen([0, 1]),
+        batchSize: 1,
+        maxInFlight: 5,
+        dispatch: async () => {
+          throw new Error('{"response":{"status":404,"body":"not found"}}');
+        },
+      });
+    } catch (e) {
+      error = e as Error;
+    }
+
+    const payload = JSON.parse(error!.message);
+    expect(payload.cause).toContain('404');
+  });
+
+  test('awaits in-flight dispatches and keeps the counts when reading the records throws', async () => {
+    const settled: number[] = [];
+    async function* throwsAfterTwo(): AsyncGenerator<number> {
+      yield 0;
+      yield 1;
+      throw new Error('Invalid Record Length');
+    }
+
+    let error: Error | undefined;
+    try {
+      await fanOutBatches<number>({
+        records: throwsAfterTwo(),
+        batchSize: 1,
+        maxInFlight: 5,
+        dispatch: async ({ batchIndex }) => {
+          await sleep(10);
+          settled.push(batchIndex);
+        },
+      });
+    } catch (e) {
+      error = e as Error;
+    }
+
+    expect(settled).toEqual([0, 1]);
+    const payload = JSON.parse(error!.message);
+    expect(payload.cause).toContain('Invalid Record Length');
+    expect(payload.rowsProcessed).toBe(2);
+    expect(payload.batchesDispatched).toBe(2);
+  });
 });
