@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["labels"],
+  "properties": {
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "effect", "recipientProp", "confidence", "note"],
+        "properties": {
+          "action": { "type": "string" },
+          "effect": {
+            "type": "string",
+            "enum": ["read", "external_write", "outward_send", "destructive", "financial", "input_dependent"]
+          },
+          "recipientProp": { "type": ["string", "null"] },
+          "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+          "note": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

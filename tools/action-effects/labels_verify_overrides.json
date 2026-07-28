@@ -1,0 +1,32 @@
+{
+ "@activepieces/piece-alai:generatePresentation": {
+  "confidence": "medium",
+  "effect": "external_write",
+  "recipientProp": null,
+  "source": "model+verify"
+ },
+ "@activepieces/piece-hume-ai:generate_speech_from_file": {
+  "confidence": "medium",
+  "effect": "external_write",
+  "recipientProp": null,
+  "source": "model+verify"
+ },
+ "@activepieces/piece-personal-ai:create_message": {
+  "confidence": "medium",
+  "effect": "external_write",
+  "recipientProp": null,
+  "source": "model+verify"
+ },
+ "@activepieces/piece-prompthub:run_prompt": {
+  "confidence": "medium",
+  "effect": "external_write",
+  "recipientProp": null,
+  "source": "model+verify"
+ },
+ "@activepieces/piece-vtiger:query_records": {
+  "confidence": "medium",
+  "effect": "input_dependent",
+  "recipientProp": null,
+  "source": "model+verify"
+ }
+}
