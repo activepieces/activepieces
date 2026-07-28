@@ -1,6 +1,7 @@
-import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
+import { FlowActionType, flowStructureUtil, Step } from '@activepieces/core-execution'
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatConfigResponse, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { actionEffect, actionEffectLabelCatalog, ChatConfigResponse, chatConsent, ChatConversationStatus, chatToolClassification, ExecuteChatToolRequest, ExecuteChatToolResponse, FileCompression, FileType, GetChatConfigRequest, GetEnabledAiToolsResponse, HeartbeatChatConversationRequest, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, SaveChatFileRequest, SaveChatFileResponse, SaveChatMessagesRequest, SendChatEmailRequest, SendChatEmailResponse, StepEffect, UpdateChatProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -8,8 +9,14 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
+import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { resolveInternalTableId } from '../../mcp/tools/table-utils'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { fieldService } from '../../tables/field/field.service'
+import { recordService } from '../../tables/record/record.service'
+import { tableService } from '../../tables/table/table.service'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
@@ -21,6 +28,15 @@ import { chatAnalyticsTelemetry } from './chat-sync-job'
 import { chatMcp } from './mcp/chat-mcp'
 import { chatPrompt } from './prompt/chat-prompt'
 import { executeCrossProjectTool } from './tools/chat-tools'
+
+let effectCatalogLoaded = false
+
+function ensureEffectCatalog(): void {
+    if (!effectCatalogLoaded) {
+        actionEffect.setCatalog(actionEffectLabelCatalog.load())
+        effectCatalogLoaded = true
+    }
+}
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 
@@ -50,6 +66,98 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
     }
     return builder.execute()
+}
+
+async function flowIdOfRun({ flowRunId, projectId, log }: {
+    flowRunId: unknown
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<string | undefined> {
+    if (typeof flowRunId !== 'string') {
+        return undefined
+    }
+    const { data: run } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
+    return run?.flowId
+}
+
+async function resolveConsentTargetName({ entity, ids, projectId, log }: {
+    entity: string
+    ids: string[]
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<string | undefined> {
+    const [firstId] = ids
+    if (isNil(firstId)) {
+        return undefined
+    }
+    if (entity === 'flow') {
+        const { data: flow } = await tryCatch(() => flowService(log).getOnePopulated({ id: firstId, projectId }))
+        return flow?.version.displayName
+    }
+    if (entity === 'table') {
+        const { data: table } = await tryCatch(() => resolveInternalTableId({ projectId, tableId: firstId }))
+        return isNil(table) ? undefined : tableNameOf({ tableId: table, projectId })
+    }
+    if (entity === 'field') {
+        const { data: field } = await tryCatch(() => fieldService.getById({ id: firstId, projectId }))
+        return field?.name
+    }
+    if (entity !== 'records') {
+        return undefined
+    }
+    const { data: tableIds } = await tryCatch(() => recordService.tableIdsOf({ ids, projectId }))
+    return tableIds?.length === 1 ? tableNameOf({ tableId: tableIds[0], projectId }) : undefined
+}
+
+async function tableNameOf({ tableId, projectId }: { tableId: string, projectId: string }): Promise<string | undefined> {
+    const { data: table } = await tryCatch(() => tableService.getOneOrThrow({ id: tableId, projectId }))
+    return table?.name
+}
+
+function isDeclaringPieceStep(step: Step | undefined): step is Step & { settings: { actionName: string, pieceName: string } } {
+    return !isNil(step)
+        && step.type === FlowActionType.PIECE
+        && typeof step.settings.actionName === 'string'
+        && typeof step.settings.pieceName === 'string'
+}
+
+async function declaredEffectsForSteps({ effects, platformId, trigger, log }: {
+    effects: StepEffect[]
+    platformId: string
+    trigger: Step
+    log: FastifyBaseLogger
+}): Promise<StepEffect[]> {
+    const stepsByName = new Map(flowStructureUtil.getAllSteps(trigger).map((step) => [step.name, step]))
+    const pieceKeys = unique(effects
+        .map((effect) => stepsByName.get(effect.stepName))
+        .filter(isDeclaringPieceStep)
+        .map((step) => `${step.settings.pieceName}\n${step.settings.pieceVersion ?? ''}`))
+    const metadataEntries = await Promise.all(pieceKeys.map(async (key) => {
+        const [name, version] = key.split('\n')
+        const { data: metadata } = await tryCatch(() => pieceMetadataService(log).getOrThrow({
+            name,
+            platformId,
+            version: version.length > 0 ? version : undefined,
+        }))
+        return [key, metadata] as const
+    }))
+    const metadataByKey = new Map(metadataEntries)
+    return effects.map((effect) => {
+        const step = stepsByName.get(effect.stepName)
+        if (!isDeclaringPieceStep(step)) {
+            return effect
+        }
+        const action = metadataByKey.get(`${step.settings.pieceName}\n${step.settings.pieceVersion ?? ''}`)?.actions?.[step.settings.actionName]
+        const declaredEffect = action?.aiMetadata?.effect
+        if (isNil(declaredEffect)) {
+            return effect
+        }
+        return chatToolClassification.stepEffectOf({
+            step,
+            declaredEffect,
+            ...spreadIfDefined('declaredRecipientProp', action?.aiMetadata?.recipientProp),
+        })
+    })
 }
 
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
@@ -491,6 +599,42 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             }
             return { result: { success: true } }
         }
+        if (input.toolName === '__consent_check' || input.toolName === '__consent_remember') {
+            const { signature } = input.toolInput
+            if (typeof signature !== 'string' || typeof input.conversationId !== 'string') {
+                return { result: { approved: false } }
+            }
+            await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            if (input.toolName === '__consent_remember') {
+                await chatApprovalGate.rememberConsent({ conversationId: input.conversationId, signature })
+                return { result: { remembered: true } }
+            }
+            const approved = await chatApprovalGate.hasRememberedConsent({ conversationId: input.conversationId, signature })
+            return { result: { approved } }
+        }
+        if (input.toolName === '__consent_target_name') {
+            if (typeof input.conversationId !== 'string') {
+                return { result: { targetName: null } }
+            }
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            if (isNil(conversation.projectId)) {
+                return { result: { targetName: null } }
+            }
+            const entity = input.toolInput['entity']
+            const rawIds = input.toolInput['ids']
+            const ids = Array.isArray(rawIds) ? rawIds.filter((id): id is string => typeof id === 'string') : []
+            if (typeof entity !== 'string' || ids.length === 0) {
+                return { result: { targetName: null } }
+            }
+            const targetName = await resolveConsentTargetName({
+                entity,
+                ids,
+                projectId: conversation.projectId,
+                log,
+            })
+            return { result: { targetName: targetName ?? null } }
+        }
+        ensureEffectCatalog()
         if (input.toolName === '__flow_write_check') {
             const flowId = input.toolInput.flowId
             if (typeof flowId !== 'string' || typeof input.conversationId !== 'string') {
@@ -504,13 +648,42 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             if (isNil(flow)) {
                 return { result: { hasWrites: false } }
             }
-            const writeSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
-                .filter((step) => step.type === FlowActionType.PIECE
-                    && typeof step.settings.actionName === 'string'
-                    && chatToolClassification.isWriteActionName(step.settings.actionName))
+            const effects = chatToolClassification.flowStepEffects(flow.version.trigger)
+            const writeSteps = effects
+                .filter((step) => chatConsent.decide({ kind: step.effect.kind }) !== 'allow')
                 .map((step) => step.displayName)
-            log.info({ flow: { id: flowId }, hasWrites: writeSteps.length > 0, writeStepCount: writeSteps.length }, '[chatRpc#executeChatTool] Flow write check')
             return { result: { hasWrites: writeSteps.length > 0, flowName: flow.version.displayName, writeSteps } }
+        }
+        if (input.toolName === '__flow_effect_preview') {
+            const { flowId, stepName, flowRunId } = input.toolInput
+            if (typeof input.conversationId !== 'string') {
+                return { result: { resolved: false, effects: [] } }
+            }
+            const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
+            if (isNil(conversation.projectId)) {
+                return { result: { resolved: false, effects: [] } }
+            }
+            const resolvedFlowId = typeof flowId === 'string'
+                ? flowId
+                : await flowIdOfRun({ flowRunId, projectId: conversation.projectId, log })
+            if (isNil(resolvedFlowId)) {
+                return { result: { resolved: false, effects: [] } }
+            }
+            const flow = await flowService(log).getOnePopulated({ id: resolvedFlowId, projectId: conversation.projectId })
+            if (isNil(flow)) {
+                return { result: { resolved: false, effects: [] } }
+            }
+            const effects = typeof stepName === 'string'
+                ? chatToolClassification.stepEffectsForStep({ trigger: flow.version.trigger, stepName })
+                : chatToolClassification.flowStepEffects(flow.version.trigger)
+            const declared = await declaredEffectsForSteps({ effects, platformId: input.platformId, trigger: flow.version.trigger, log })
+            const gated = declared.filter((step) => chatConsent.decide({ kind: step.effect.kind }) !== 'allow')
+            log.info({
+                flow: { id: resolvedFlowId },
+                step: { name: typeof stepName === 'string' ? stepName : undefined },
+                effectKinds: chatToolClassification.effectKindsOf(gated),
+            }, '[chatRpc#executeChatTool] Flow effect preview')
+            return { result: { resolved: true, flowName: flow.version.displayName, effects: gated } }
         }
         if (input.toolName === '__get_available_connections') {
             const { pieceName } = input.toolInput

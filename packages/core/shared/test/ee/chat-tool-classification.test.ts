@@ -72,31 +72,84 @@ describe('chatToolClassification.hasFailureTextPrefix', () => {
 
 describe('chatToolClassification.requiresActionPreview — custom_api_call', () => {
     it.each(['GET', 'HEAD', 'OPTIONS', 'get', 'head'])('skips the gate for read-only method "%s"', (method) => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method } })).toBe(false)
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'custom_api_call', input: { method } })).toBe('allow')
     })
 
     it.each(['POST', 'PUT', 'PATCH', 'DELETE', 'delete'])('requires the gate for mutating method "%s"', (method) => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method } })).toBe(true)
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'custom_api_call', input: { method } })).not.toBe('allow')
     })
 
     it('requires the gate when the method is unknown or missing', () => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call' })).toBe(true)
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: {} })).toBe(true)
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'custom_api_call' })).not.toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'custom_api_call', input: {} })).not.toBe('allow')
     })
 })
 
 describe('chatToolClassification.requiresActionPreview — taint (untrusted content in turn)', () => {
     it('forces the gate for an action the model marked needsConfirmation:false once tainted', () => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing', needsConfirmation: false })).toBe(false)
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'do_thing', needsConfirmation: false, tainted: true })).toBe(true)
+        expect(chatToolClassification.actionConsentDecision({ pieceName: 'google-sheets', actionName: 'get_rows', needsConfirmation: false })).toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ pieceName: 'google-sheets', actionName: 'get_rows', needsConfirmation: false, tainted: true })).toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'do_thing', needsConfirmation: false, tainted: true })).not.toBe('allow')
+    })
+
+    it('gates an unclassifiable action even when the model says it is safe', () => {
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'do_thing', needsConfirmation: false })).not.toBe('allow')
     })
 
     it('still skips the gate for a provably read-only action when tainted', () => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'get_rows', tainted: true })).toBe(false)
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method: 'GET' }, tainted: true })).toBe(false)
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'get_rows', tainted: true })).toBe('allow')
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'custom_api_call', input: { method: 'GET' }, tainted: true })).toBe('allow')
     })
 
     it('keeps writes gated when tainted', () => {
-        expect(chatToolClassification.requiresActionPreview({ actionName: 'send_channel_message', tainted: true })).toBe(true)
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'send_channel_message', tainted: true })).not.toBe('allow')
+    })
+})
+
+describe('chatToolClassification.actionConsentDecision — an admin "deny" must not soften into "ask"', () => {
+    it('denies rather than asking, even when the model volunteered a confirmation', () => {
+        expect(chatToolClassification.actionConsentDecision({
+            actionName: 'send_channel_message',
+            needsConfirmation: true,
+            policy: { outward_send: 'deny' },
+        })).toBe('deny')
+    })
+
+    it('denies rather than asking when untrusted content is in the turn', () => {
+        expect(chatToolClassification.actionConsentDecision({
+            actionName: 'send_channel_message',
+            tainted: true,
+            policy: { outward_send: 'deny' },
+        })).toBe('deny')
+    })
+
+    it('still asks when the policy asks, and allows what the policy allows', () => {
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'send_channel_message' })).toBe('ask')
+        expect(chatToolClassification.actionConsentDecision({ actionName: 'send_channel_message', policy: { outward_send: 'allow' } })).toBe('allow')
+    })
+
+})
+
+describe('chatToolClassification.codeEffect — code is never assumed harmless', () => {
+    it('cannot be talked out of the gate by code that dodges a keyword scan', () => {
+        const evasive = 'export const code = async (i) => (()=>{}).constructor("return this")()["fet"+"ch"](i.url)'
+        expect(chatToolClassification.codeEffect({ code: evasive, stepName: 'c', displayName: 'c' }).effect.kind).toBe('input_dependent')
+    })
+
+    it('gates arithmetic too, because static reading cannot prove what code does', () => {
+        const harmless = 'export const code = async (i) => i.a + i.b'
+        const effect = chatToolClassification.codeEffect({ code: harmless, stepName: 'c', displayName: 'c' })
+        expect(effect.effect.kind).toBe('input_dependent')
+        expect(effect.opaque).toBe(true)
+    })
+
+    it('says so when the code pulls in outside packages', () => {
+        const effect = chatToolClassification.codeEffect({
+            code: 'export const code = async () => 1',
+            packageJson: '{"dependencies":{"node-fetch":"2.0.0"}}',
+            stepName: 'c',
+            displayName: 'c',
+        })
+        expect(effect.detail).toBe('custom code using outside packages')
     })
 })

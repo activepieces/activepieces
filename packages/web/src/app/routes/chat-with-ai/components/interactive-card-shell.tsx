@@ -1,22 +1,34 @@
 import { t } from 'i18next';
 import { X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function InteractiveCardShell({
   onDismiss,
   title,
   headerExtra,
   children,
+  tone = 'assistant',
+  showDismiss = true,
+  frameClassName,
 }: InteractiveCardShellProps) {
+  const reduceMotion = useReducedMotion();
+  const decision = tone === 'decision';
   return (
     <motion.div
-      className="chat-question-gradient-border rounded-2xl bg-background p-4 sm:p-5 shadow-[0_12px_40px_-12px_rgba(129,66,227,0.22)] dark:bg-neutral-900 dark:shadow-[0_12px_40px_-12px_rgba(129,66,227,0.35)] backdrop-blur-sm transition-colors"
-      initial={{ opacity: 0, y: 16, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+      className={cn(
+        'rounded-2xl bg-background p-4 sm:p-5 transition-colors dark:bg-neutral-900',
+        decision
+          ? 'border shadow-sm'
+          : 'chat-question-gradient-border shadow-[0_12px_40px_-12px_rgba(129,66,227,0.22)] dark:shadow-[0_12px_40px_-12px_rgba(129,66,227,0.35)] backdrop-blur-sm',
+        frameClassName,
+      )}
+      initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.98 }}
+      animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+      exit={reduceMotion ? undefined : { opacity: 0, y: 8, scale: 0.98 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="flex items-start justify-between gap-4">
@@ -29,18 +41,22 @@ export function InteractiveCardShell({
             title
           )}
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground shrink-0">
-          {headerExtra}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ms-1 h-7 w-7"
-            onClick={onDismiss}
-            aria-label={t('Dismiss')}
-          >
-            <X className="size-4" />
-          </Button>
-        </div>
+        {(headerExtra || showDismiss) && (
+          <div className="flex items-center gap-1 text-muted-foreground shrink-0">
+            {headerExtra}
+            {showDismiss && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="ms-1 size-9"
+                onClick={onDismiss}
+                aria-label={t('Dismiss')}
+              >
+                <X className="size-4" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="mt-4">{children}</div>
@@ -53,4 +69,7 @@ type InteractiveCardShellProps = {
   title?: ReactNode;
   headerExtra?: ReactNode;
   children: ReactNode;
+  tone?: 'assistant' | 'decision';
+  showDismiss?: boolean;
+  frameClassName?: string;
 };
