@@ -2,7 +2,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join, relative } from 'node:path'
+import { resolve, join, relative, dirname } from 'node:path'
 import { cwd } from 'node:process'
 import * as semver from 'semver'
 import { tryCatch } from '@activepieces/core-utils'
@@ -51,12 +51,6 @@ const validateMetadata = (pieceMetadata: PieceMetadata): void => {
     )
 }
 
-
-const byDisplayNameIgnoreCase = (a: PieceMetadata, b: PieceMetadata) => {
-    const aName = a.displayName.toUpperCase();
-    const bName = b.displayName.toUpperCase();
-    return aName.localeCompare(bName, 'en');
-};
 
 export function getCommunityPieceFolder(pieceName: string): string {
     return join(COMMUNITY_PIECE_FOLDER, pieceName)
@@ -153,12 +147,6 @@ function getChangedPiecesDistPaths(): string[] | null {
     })
 }
 
-export async function findAllPieces(): Promise<PieceMetadata[]> {
-    const paths = await findAllDistPaths()
-    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-    return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
-}
-
 async function findAllDistPaths(): Promise<string[]> {
     const sourcePiecesPath = resolve(cwd(), 'packages', 'pieces')
     const sourceFolders = await traverseFolder(sourcePiecesPath)
@@ -197,7 +185,8 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
 async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata> {
     const packageJson = await readPackageJson(folderPath);
     const payload = loadPieceViaChildProcess(folderPath);
-    const i18n = await pieceTranslation.initializeI18n(folderPath)
+    const pieceSourcePath = dirname(folderPath)
+    const i18n = await pieceTranslation.initializeI18n(pieceSourcePath)
     const metadata: PieceMetadata = {
         ...payload.metadata,
         name: packageJson.name,
@@ -222,12 +211,12 @@ function loadPieceViaChildProcess(folderPath: string): LoadedPieceChildPayload {
     return JSON.parse(stdout) as LoadedPieceChildPayload
 }
 
-export type PieceLoadFailure = {
+type PieceLoadFailure = {
     path: string
     error: string
 }
 
-export type FindNewPiecesResult = {
+type FindNewPiecesResult = {
     pieces: PieceMetadata[]
     failures: PieceLoadFailure[]
 }
