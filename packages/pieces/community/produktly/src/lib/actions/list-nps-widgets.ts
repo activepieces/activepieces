@@ -8,6 +8,8 @@ export const listNpsWidgets = createAction({
   name: 'list_nps_widgets',
   displayName: 'List NPS Widgets',
   description: 'List all NPS widgets configured in your Produktly account.',
+  audience: 'both',
+  aiMetadata: { description: 'List every NPS widget in the Produktly account with its name, active state, and creation date, paginated with limit and offset. Pick this to discover widget IDs before calling Get NPS Score or List NPS Responses; use List Feedback Widgets for the non-NPS feedback surveys instead. Read-only and idempotent.', idempotent: true },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

@@ -1,5 +1,5 @@
 import { isNil, LocalesEnum } from '@activepieces/core-utils'
-import { McpToolDefinition, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
+import { McpToolDefinition, PieceAudienceFilter, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -143,6 +143,7 @@ async function searchPieces({ params, projectId, platformId, log }: {
         searchQuery: params.searchQuery,
         suggestionType: params.suggestionType as SuggestionType | undefined,
         locale: params.locale as LocalesEnum | undefined,
+        audience: PieceAudienceFilter.ALL,
     })
 
     if (pieces.length === 0) {

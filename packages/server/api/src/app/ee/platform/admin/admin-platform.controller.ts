@@ -7,9 +7,12 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
+import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
+import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
 import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
 import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
 import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
@@ -40,11 +43,15 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 ) => {
 
     app.post('/pieces', CreatePieceRequest, async (req): Promise<PieceMetadataModel> => {
-        return pieceMetadataService(req.log).create({
+        const savedPiece = await pieceMetadataService(req.log).create({
             pieceMetadata: req.body as PieceMetadata,
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
         })
+        if (isToolSearchEnabled()) {
+            rejectedPromiseHandler(toolSearchReindexJob(req.log).enqueue({ type: 'all' }), req.log)
+        }
+        return savedPiece
     },
     )
 

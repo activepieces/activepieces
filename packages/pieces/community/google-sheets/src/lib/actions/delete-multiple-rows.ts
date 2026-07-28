@@ -10,6 +10,12 @@ export const deleteMultipleRowsAction = createAction({
 	displayName: 'Delete Multiple Rows',
 	description:
 		'Deletes a contiguous range of rows, or a list of specific row numbers. Row numbers are 1-based.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Permanently deletes rows from a worksheet in one batch, in either of two modes: a contiguous range given by starting and ending row, or a comma-separated list of specific 1-based row numbers. Use instead of Delete Row when several rows must go at once, and Clear Row(s) instead when the rows should stay in place with only their contents erased. Not idempotent — surviving rows renumber after each deletion, so repeating the same call removes different rows; re-resolve the targets before any retry.',
+		idempotent: false,
+	},
 	props: {
 		...commonProps,
 		mode: Property.StaticDropdown({

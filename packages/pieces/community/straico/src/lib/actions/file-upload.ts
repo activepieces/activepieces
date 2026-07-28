@@ -15,11 +15,12 @@ const SUPPORTED_FILE_TYPES = [
 ];
 
 export const fileUpload = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'file_upload',
   displayName: 'Upload File',
   description: 'Upload a file to Straico API for processing.',
+  aiMetadata: { description: 'Uploads a document, image, audio or video file to Straico storage and returns a hosted URL. Use it as the preparation step whose URL is then passed into Ask AI as a file url or image url; prefer Create RAG when the file should instead be chunked and indexed for retrieval. The extension must be one of pdf, docx, pptx, txt, xlsx, mp3, mp4, html, csv, json, py, php, js, css, cs, swift, kt, xml, ts, png, jpg, jpeg, webp or gif, otherwise the call fails before any request is sent. Not idempotent: each call stores another copy at a new URL.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

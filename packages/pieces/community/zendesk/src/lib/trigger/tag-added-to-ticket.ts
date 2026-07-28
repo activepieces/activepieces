@@ -12,12 +12,6 @@ import { zendeskAuth } from '../..';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_tag_added_webhook';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 interface ZendeskTicket {
   id: number;
   subject: string;

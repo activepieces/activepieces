@@ -3,10 +3,14 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { munaAiAuth } from '../auth';
 
 export const createPrediction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'create_prediction',
   displayName: 'Create Prediction',
   description: 'Run a predictor and get back prediction resources.',
+  aiMetadata: {
+    description: 'Creates a prediction against a named Muna predictor and returns the prediction record plus the resource URLs needed to run that predictor on-device; it provisions the run rather than returning model inference output, and it is the only purpose-built Muna action, so reach for the custom API call action for any other Muna endpoint. Requires the predictor tag (such as @org/my-model) and a client ID identifying the calling device or user; the optional configuration, device, and prior prediction IDs only steer which implementation Muna hands back. Not idempotent: each call creates a new prediction with a new ID.',
+    idempotent: false,
+  },
   auth: munaAiAuth,
   props: {
     tag: Property.ShortText({

@@ -10,6 +10,8 @@ const MAX_REASONABLE_MEMORY_BYTES = 4 * 1024 ** 4 // 4 TiB
 
 let prevCpuUsage = process.cpuUsage()
 let prevTimestamp = Date.now()
+let prevNodeCpu: CpuCounters = { steal: 0, total: 0 }
+let prevCfsThrottle: CfsCounters = { throttled: 0, periods: 0 }
 
 async function readCgroupFile(path: string): Promise<string | null> {
     const { data, error } = await tryCatch(async () => {
@@ -63,6 +65,39 @@ function getConstrainedMemoryTotal(): number | null {
     const constrained = process.constrainedMemory?.()
     if (constrained && constrained > 0 && constrained <= MAX_REASONABLE_MEMORY_BYTES) return constrained
     return null
+}
+
+// /proc/stat is NOT namespaced — a container reads the whole node's CPU counters, including
+// `steal`: time the hypervisor ran another tenant while this VM's vCPU was runnable. That is the
+// noisy-neighbor tax on shared-CPU machine types (e.g. GCE E2), invisible to plain usage%.
+async function readNodeCpuCounters(): Promise<CpuCounters | null> {
+    const content = await readCgroupFile('/proc/stat')
+    if (!content) return null
+    const cpuLine = content.split('\n').find(line => line.startsWith('cpu '))
+    if (!cpuLine) return null
+    const fields = cpuLine.trim().split(/\s+/).slice(1).map(Number)
+    if (fields.length < 8 || fields.some(isNaN)) return null
+    return { steal: fields[7], total: fields.reduce((sum, value) => sum + value, 0) }
+}
+
+// This container's own CFS throttling: the share of enforcement periods in which it hit its CPU
+// limit and was stalled until the next period — latency the k8s limit adds in ~100ms quanta.
+async function readCfsThrottleCounters(): Promise<CfsCounters | null> {
+    for (const path of ['/sys/fs/cgroup/cpu.stat', '/sys/fs/cgroup/cpu/cpu.stat']) {
+        const periods = await readCgroupStatValue(path, 'nr_periods')
+        const throttled = await readCgroupStatValue(path, 'nr_throttled')
+        if (periods !== null && throttled !== null && periods > 0) {
+            return { throttled, periods }
+        }
+    }
+    return null
+}
+
+function counterRatioPercent({ previous, current, numeratorKey, denominatorKey }: { previous: Record<string, number>, current: Record<string, number>, numeratorKey: string, denominatorKey: string }): number | null {
+    const denominatorDelta = current[denominatorKey] - previous[denominatorKey]
+    if (denominatorDelta <= 0) return null
+    const numeratorDelta = Math.max(0, current[numeratorKey] - previous[numeratorKey])
+    return Math.min(100, (numeratorDelta / denominatorDelta) * 100)
 }
 
 async function getCgroupCpuCores(): Promise<number | null> {
@@ -151,6 +186,24 @@ export const systemUsage = {
         return os.availableParallelism?.() ?? os.cpus().length
     },
 
+    // CPU pressure the usage% cannot show: hypervisor steal (neighbor contention on shared-CPU
+    // nodes) and CFS throttling (own CPU limit). Undefined when the counters are unavailable
+    // (non-Linux dev machines, no cgroup limit).
+    async getCpuPressure(): Promise<CpuPressure> {
+        const [nodeCpu, cfsThrottle] = await Promise.all([readNodeCpuCounters(), readCfsThrottleCounters()])
+        let cpuStealPercentage: number | undefined
+        if (nodeCpu) {
+            cpuStealPercentage = counterRatioPercent({ previous: prevNodeCpu, current: nodeCpu, numeratorKey: 'steal', denominatorKey: 'total' }) ?? undefined
+            prevNodeCpu = nodeCpu
+        }
+        let cpuThrottledPercentage: number | undefined
+        if (cfsThrottle) {
+            cpuThrottledPercentage = counterRatioPercent({ previous: prevCfsThrottle, current: cfsThrottle, numeratorKey: 'throttled', denominatorKey: 'periods' }) ?? undefined
+            prevCfsThrottle = cfsThrottle
+        }
+        return { cpuStealPercentage, cpuThrottledPercentage }
+    },
+
     async getProcessTreeMemoryBytesByPids(pids: number[]): Promise<Map<number, number>> {
         const result = new Map<number, number>()
         if (pids.length === 0) {
@@ -178,6 +231,10 @@ export const systemUsage = {
         return result
     },
 }
+
+type CpuCounters = { steal: number, total: number }
+type CfsCounters = { throttled: number, periods: number }
+export type CpuPressure = { cpuStealPercentage?: number, cpuThrottledPercentage?: number }
 
 function sumProcessTreeRssBytes({ rootPid, rssBytesByPid, childrenByParent }: { rootPid: number, rssBytesByPid: Map<number, number>, childrenByParent: Map<number, number[]> }): number {
     let total = 0
