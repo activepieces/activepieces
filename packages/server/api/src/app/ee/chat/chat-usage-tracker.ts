@@ -15,7 +15,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
         const turnIndex = messages.filter((message) => message.role === PersistedChatRole.USER).length
 
         const provider = await chatHelpers.resolveChatProviderName({ platformId: conversation.platformId, log })
-        const model = chatHelpers.resolveModelId({ tierId: conversation.modelName ?? null, provider })
+        const model = chatHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
 
         const isManagedProvider = provider === AIProviderName.ACTIVEPIECES
         const tier = chatHelpers.resolveTier({ tierId: conversation.modelName ?? null })

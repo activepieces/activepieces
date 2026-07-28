@@ -41,13 +41,10 @@ export function AIChatBox({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
-  const { data: providers, isLoading: isLoadingProviders } =
-    aiProviderQueries.useAiProviders();
+  const { data: chatProvider, isLoading: isLoadingProviders } =
+    aiProviderQueries.useChatProvider();
 
-  const chatProvider = providers?.find((p) => p.enabledForChat);
-  const hasChatProvider = Boolean(chatProvider);
-
-  if (!isLoadingProviders && !hasChatProvider) {
+  if (!isLoadingProviders && !chatProvider) {
     return <SetupRequiredState />;
   }
 

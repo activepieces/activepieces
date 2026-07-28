@@ -218,7 +218,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
         userId: conversation.userId,
         userEmail,
         title: conversation.title,
-        modelName: chatHelpers.resolveModelId({ tierId: conversation.modelName ?? null, provider }),
+        modelName: chatHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider }),
         provider,
         messages,
         messageCount: messages.length,
@@ -228,6 +228,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
         updatedAt: conversation.updated,
     }
 }
+
 
 function extractToolCallsSummary(messages: PersistedChatMessage[]): Array<{ name: string, successCount: number, failureCount: number }> | null {
     const usage: Record<string, { successCount: number, failureCount: number }> = {}
