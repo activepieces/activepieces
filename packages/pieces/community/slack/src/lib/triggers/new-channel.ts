@@ -1,30 +1,20 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { WebClient } from '@slack/web-api';
-import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
-
-const sampleData = {
-  type: 'channel_created',
-  channel: {
-    id: 'C024BE91L',
-    name: 'fun',
-    created: 1360782804,
-    creator: 'U024BE7LH',
-  },
-};
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
 export const channelCreated = createTrigger({
   auth: slackAuth,
   name: 'channel_created',
   displayName: 'Channel created',
-  description: 'Triggers when a channel is created',
+  description:
+    'Triggers when a new channel is created. This event only arrives after the connected Slack app is manually configured: turn on Event Subscriptions, set the Request URL to https://YOUR_AP_INSTANCE/api/v1/app-events/slack, subscribe to the channel_created event, keep Socket Mode off, and add the app Signing Secret to the AP_APP_WEBHOOK_SECRETS environment variable. Until then Slack sends no events, so testing this trigger waits for a real channel to be created.',
   aiMetadata: {
     description:
       'Fires when a new public or private channel is created in the connected Slack workspace. The event payload includes the new channel id, name, creation timestamp, and the id of the user who created it.',
   },
   props: {},
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: sampleData,
+  sampleData: undefined,
   onEnable: async (context) => {
     const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({
@@ -34,28 +24,6 @@ export const channelCreated = createTrigger({
   },
   onDisable: async (context) => {
     // Ignored
-  },
-  test: async (context) => {
-    const client = new WebClient(getBotToken(context.auth as SlackAuthValue));
-    const response = await client.conversations.list({
-      exclude_archived: true,
-      limit: 10,
-      types: 'public_channel,private_channel',
-    });
-    if (!response.channels) {
-      return [];
-    }
-    return response.channels.map((channel) => {
-      return {
-        type: 'channel_created',
-        channel: {
-          id: channel.id,
-          name: channel.name,
-          created: channel.created,
-          creator: channel.creator,
-        },
-      };
-    });
   },
 
   run: async (context) => {
