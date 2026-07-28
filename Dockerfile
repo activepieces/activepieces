@@ -37,6 +37,20 @@ RUN export ARCH=$(uname -m) && \
     rm -rf bun.zip bun-* && \
     bun --version
 
+# Download deno (the code-sandbox runtime) — pinned to match the `deno` npm dep.
+# The forked engine resolves it via AP_DENO_PATH, so no PATH lookup is needed.
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/denoland/deno/releases/download/v2.9.3/deno-x86_64-unknown-linux-gnu.zip -o deno.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/denoland/deno/releases/download/v2.9.3/deno-aarch64-unknown-linux-gnu.zip -o deno.zip; \
+    fi && \
+    unzip deno.zip -d /usr/local/bin && \
+    chmod +x /usr/local/bin/deno && \
+    rm -f deno.zip && \
+    deno --version
+ENV AP_DENO_PATH=/usr/local/bin/deno
+
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \

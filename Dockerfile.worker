@@ -21,6 +21,15 @@ RUN export ARCH=$(uname -m) && \
     fi && \
     unzip bun.zip && mv bun-*/bun /usr/local/bin/bun && chmod +x /usr/local/bin/bun && rm -rf bun.zip bun-*
 
+# Download deno (the code-sandbox runtime) — pinned to match the `deno` npm dep.
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/denoland/deno/releases/download/v2.9.3/deno-x86_64-unknown-linux-gnu.zip -o deno.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/denoland/deno/releases/download/v2.9.3/deno-aarch64-unknown-linux-gnu.zip -o deno.zip; \
+    fi && \
+    unzip deno.zip -d /usr/local/bin && chmod +x /usr/local/bin/deno && rm -f deno.zip
+
 RUN npm install -g --no-fund --no-audit node-gyp typescript@4.9.4 esbuild@0.25.0
 
 WORKDIR /usr/src/app
@@ -58,8 +67,11 @@ WORKDIR /app
 
 ENV AP_CONTAINER_TYPE=WORKER
 ENV AP_CACHE_BASE_PATH=/tmp/cache
+# The forked engine spawns the code sandbox from this exact path (no PATH lookup).
+ENV AP_DENO_PATH=/usr/local/bin/deno
 
 COPY --from=build /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=build /usr/local/bin/deno /usr/local/bin/deno
 # isolated-vm at the filesystem-root node_modules so the forked engine resolves it by ancestor walk
 # from /tmp/cache/.../main.js (Node's standard resolution, independent of cwd/NODE_PATH).
 COPY --from=build /usr/src/node_modules/isolated-vm /node_modules/isolated-vm
