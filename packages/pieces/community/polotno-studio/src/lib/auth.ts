@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth, tryCatch } from '@activepieces/pieces-framework';
 import { createClient } from './common/client';
 import type { MeResponse } from './common/types';
 
@@ -15,11 +15,10 @@ export const polotnoStudioAuth = PieceAuth.SecretText({
   description: DESCRIPTION,
   required: true,
   validate: async ({ auth }) => {
-    try {
-      await createClient(auth).request<MeResponse>({ path: '/v1/me' });
-      return { valid: true };
-    } catch (error) {
+    const { error } = await tryCatch(() => createClient(auth).request<MeResponse>({ path: '/v1/me' }));
+    if (error) {
       return { valid: false, error: error instanceof Error ? error.message : 'Could not reach Polotno Studio.' };
     }
+    return { valid: true };
   },
 });

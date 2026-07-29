@@ -1,15 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PolotnoClient } from '../client';
-import type { RenderLike } from '../types';
+import type { RenderLike, RenderStatus } from '../types';
 import { pollUntilTerminal } from '../poll';
 
-const render = (status: string): RenderLike => ({ id: 'img_1', object: 'image', status } as RenderLike);
+const render = (status: RenderStatus): RenderLike => ({ id: 'img_1', object: 'image', status });
 
 function clientReturning(sequence: RenderLike[]): { client: PolotnoClient; request: ReturnType<typeof vi.fn> } {
   const request = vi.fn();
   sequence.forEach((r) => request.mockResolvedValueOnce(r));
   request.mockResolvedValue(sequence[sequence.length - 1]);
-  return { client: { request } as unknown as PolotnoClient, request };
+  const client: PolotnoClient = { request };
+  return { client, request };
 }
 
 describe('pollUntilTerminal', () => {

@@ -36,6 +36,11 @@ export interface EventEnvelope {
   data?: { object?: RenderLike };
 }
 
+export interface RenderEventObject {
+  id: string;
+  [k: string]: unknown;
+}
+
 export interface WebhookSubscription {
   id: string;
   secret: string;

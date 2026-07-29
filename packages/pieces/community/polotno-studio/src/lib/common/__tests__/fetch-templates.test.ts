@@ -7,10 +7,14 @@ const page = (ids: string[], next: string | null) => ({
   next_cursor: next,
 });
 
+function clientOf(request: ReturnType<typeof vi.fn>): PolotnoClient {
+  return { request };
+}
+
 describe('fetchAllTemplates', () => {
   it('always omits the design blob', async () => {
     const request = vi.fn().mockResolvedValue(page(['tpl_1'], null));
-    await fetchAllTemplates({ request } as unknown as PolotnoClient);
+    await fetchAllTemplates(clientOf(request));
     expect(request.mock.calls[0][0].queryParams['omit_design']).toBe('true');
   });
 
@@ -20,7 +24,7 @@ describe('fetchAllTemplates', () => {
       .mockResolvedValueOnce(page(['tpl_1'], 'cur_1'))
       .mockResolvedValueOnce(page(['tpl_2'], null));
 
-    const result = await fetchAllTemplates({ request } as unknown as PolotnoClient);
+    const result = await fetchAllTemplates(clientOf(request));
 
     expect(result.map((t) => t.id)).toEqual(['tpl_1', 'tpl_2']);
     expect(request.mock.calls[1][0].queryParams['cursor']).toBe('cur_1');
@@ -28,19 +32,19 @@ describe('fetchAllTemplates', () => {
 
   it('stops at maxResults', async () => {
     const request = vi.fn().mockResolvedValue(page(['tpl_1', 'tpl_2', 'tpl_3'], 'cur_next'));
-    const result = await fetchAllTemplates({ request } as unknown as PolotnoClient, { maxResults: 2 });
+    const result = await fetchAllTemplates(clientOf(request), { maxResults: 2 });
     expect(result).toHaveLength(2);
   });
 
   it('omits archived rather than sending false', async () => {
     const request = vi.fn().mockResolvedValue(page([], null));
-    await fetchAllTemplates({ request } as unknown as PolotnoClient, { archived: false });
+    await fetchAllTemplates(clientOf(request), { archived: false });
     expect(request.mock.calls[0][0].queryParams['archived']).toBeUndefined();
   });
 
   it('passes a name filter through', async () => {
     const request = vi.fn().mockResolvedValue(page([], null));
-    await fetchAllTemplates({ request } as unknown as PolotnoClient, { name: 'promo' });
+    await fetchAllTemplates(clientOf(request), { name: 'promo' });
     expect(request.mock.calls[0][0].queryParams['name']).toBe('promo');
   });
 
@@ -52,7 +56,7 @@ describe('fetchAllTemplates', () => {
       .mockResolvedValueOnce(page(firstPageIds, 'cur_1'))
       .mockResolvedValueOnce(page(secondPageIds, null));
 
-    const result = await fetchAllTemplates({ request } as unknown as PolotnoClient, { maxResults: 1000 });
+    const result = await fetchAllTemplates(clientOf(request), { maxResults: 1000 });
 
     expect(result).toHaveLength(200);
     expect(request.mock.calls).toHaveLength(2);
@@ -63,7 +67,7 @@ describe('fetchAllTemplates', () => {
     const fullPageIds = Array.from({ length: 100 }, (_, i) => `tpl_${i}`);
     const request = vi.fn().mockResolvedValue(page(fullPageIds, 'cur_next'));
 
-    const result = await fetchAllTemplates({ request } as unknown as PolotnoClient, { maxResults: 1000 });
+    const result = await fetchAllTemplates(clientOf(request), { maxResults: 1000 });
 
     expect(result).toHaveLength(1000);
     expect(request.mock.calls).toHaveLength(10);

@@ -1,9 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import type { PolotnoClient } from './client';
 import { MAX_MAX_WAIT_SECONDS, isTerminal } from './constants';
+import { readEventEnvelopeObject } from './event-envelope';
 import { pollUntilTerminal } from './poll';
 import { isPubliclyReachable } from './reachability';
-import type { EventEnvelope, RenderKind, RenderLike } from './types';
+import type { RenderKind, RenderLike } from './types';
 
 export interface Waitpoint {
   id: string;
@@ -77,9 +78,8 @@ export async function executeRender(params: ExecuteRenderParams): Promise<Record
 }
 
 export function readResumedRender(resumePayload: { body: unknown }): Record<string, unknown> {
-  const body = resumePayload.body as EventEnvelope | undefined;
-  const object = body?.data?.object;
-  if (!object || typeof object !== 'object' || typeof object.id !== 'string') {
+  const object = readEventEnvelopeObject(resumePayload.body);
+  if (!object) {
     throw new Error(
       'Polotno Studio sent an unrecognised callback, so this render could not be read. Check the render in the Polotno Studio dashboard.',
     );

@@ -9,7 +9,7 @@ import {
 import { BASE_URL, MAX_RATE_LIMIT_RETRIES, RETRY_AFTER_CAP_SECONDS } from './constants';
 import { toFriendlyError } from './errors';
 
-export type SendFn = (request: HttpRequest) => Promise<HttpResponse>;
+export type SendFn = <T>(request: HttpRequest) => Promise<HttpResponse<T>>;
 
 export interface RequestOptions {
   path: string;
@@ -34,7 +34,7 @@ function backoffMs(attempt: number): number {
 }
 
 export function createClient(apiKey: string, deps: ClientDeps = {}): PolotnoClient {
-  const send: SendFn = deps.send ?? ((request) => httpClient.sendRequest(request));
+  const send: SendFn = deps.send ?? (<T>(request: HttpRequest): Promise<HttpResponse<T>> => httpClient.sendRequest(request));
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
   return {
@@ -50,8 +50,8 @@ export function createClient(apiKey: string, deps: ClientDeps = {}): PolotnoClie
 
       for (let attempt = 0; ; attempt++) {
         try {
-          const response = await send(request);
-          return response.body as T;
+          const response = await send<T>(request);
+          return response.body;
         } catch (error) {
           const isRateLimit = error instanceof HttpError && error.response.status === 429;
           if (!isRateLimit || attempt >= MAX_RATE_LIMIT_RETRIES) {

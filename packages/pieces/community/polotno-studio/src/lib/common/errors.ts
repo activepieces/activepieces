@@ -9,17 +9,19 @@ interface ErrorEnvelope {
 }
 
 function readEnvelope(body: unknown): ErrorEnvelope | undefined {
-  if (typeof body !== 'object' || body === null) return undefined;
-  const err = (body as { error?: unknown }).error;
-  if (typeof err !== 'object' || err === null) return undefined;
-  const e = err as Record<string, unknown>;
-  if (typeof e['code'] !== 'string' || typeof e['message'] !== 'string') return undefined;
+  if (typeof body !== 'object' || body === null || !('error' in body)) return undefined;
+  const err = body.error;
+  if (typeof err !== 'object' || err === null || !('code' in err) || !('message' in err)) return undefined;
+  if (typeof err.code !== 'string' || typeof err.message !== 'string') return undefined;
+  const type = 'type' in err && typeof err.type === 'string' ? err.type : 'api_error';
+  const param = 'param' in err && typeof err.param === 'string' ? err.param : undefined;
+  const requestId = 'request_id' in err && typeof err.request_id === 'string' ? err.request_id : undefined;
   return {
-    type: typeof e['type'] === 'string' ? e['type'] : 'api_error',
-    code: e['code'],
-    message: e['message'],
-    param: typeof e['param'] === 'string' ? e['param'] : undefined,
-    request_id: typeof e['request_id'] === 'string' ? e['request_id'] : undefined,
+    type,
+    code: err.code,
+    message: err.message,
+    param,
+    request_id: requestId,
   };
 }
 

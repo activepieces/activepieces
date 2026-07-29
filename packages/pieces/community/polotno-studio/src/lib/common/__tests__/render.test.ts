@@ -2,9 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import type { PolotnoClient } from '../client';
 import { executeRender, readResumedRender } from '../render';
 
-const client = (overrides: Partial<Record<string, unknown>> = {}) => {
+function clientOf(request: ReturnType<typeof vi.fn>): PolotnoClient {
+  return { request };
+}
+
+const client = () => {
   const request = vi.fn().mockResolvedValue({ id: 'img_1', object: 'image', status: 'pending' });
-  return { client: { request, ...overrides } as unknown as PolotnoClient, request };
+  return { client: clientOf(request), request };
 };
 
 const waitpoint = () => ({
@@ -52,7 +56,7 @@ describe('executeRender (BEGIN)', () => {
     const waitForWaitpoint = vi.fn();
 
     const result = await executeRender({
-      ...base, client: { request } as unknown as PolotnoClient, waitForCompletion: true,
+      ...base, client: clientOf(request), waitForCompletion: true,
       createWaitpoint: vi.fn().mockResolvedValue(waitpoint()), waitForWaitpoint,
     });
 
@@ -69,7 +73,7 @@ describe('executeRender (BEGIN)', () => {
     const privateWaitpoint = { ...waitpoint(), buildResumeUrl: () => 'https://192.168.1.5/api/v1/resume/wp_1' };
 
     const result = await executeRender({
-      ...base, client: { request } as unknown as PolotnoClient, waitForCompletion: true,
+      ...base, client: clientOf(request), waitForCompletion: true,
       createWaitpoint: vi.fn().mockResolvedValue(privateWaitpoint), waitForWaitpoint,
       sleep: vi.fn().mockResolvedValue(undefined),
     });
@@ -86,7 +90,7 @@ describe('executeRender (BEGIN)', () => {
     const privateWaitpoint = { ...waitpoint(), buildResumeUrl: () => 'http://localhost/api/v1/resume/wp_1' };
 
     await executeRender({
-      ...base, kind: 'videos', client: { request } as unknown as PolotnoClient, waitForCompletion: true,
+      ...base, kind: 'videos', client: clientOf(request), waitForCompletion: true,
       createWaitpoint: vi.fn().mockResolvedValue(privateWaitpoint), waitForWaitpoint: vi.fn(),
     });
 
@@ -99,7 +103,7 @@ describe('executeRender (BEGIN)', () => {
     const privateWaitpoint = { ...waitpoint(), buildResumeUrl: () => 'https://127.0.0.1/api/v1/resume/wp_1' };
 
     const result = await executeRender({
-      ...base, client: { request } as unknown as PolotnoClient, waitForCompletion: true, maxWaitSeconds: 1,
+      ...base, client: clientOf(request), waitForCompletion: true, maxWaitSeconds: 1,
       createWaitpoint: vi.fn().mockResolvedValue(privateWaitpoint), waitForWaitpoint: vi.fn(),
       sleep: vi.fn().mockResolvedValue(undefined), now: () => (clock += 1_000),
     });

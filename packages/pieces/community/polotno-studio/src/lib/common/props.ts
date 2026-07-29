@@ -1,4 +1,4 @@
-import { type InputPropertyMap, Property } from '@activepieces/pieces-framework';
+import { type InputPropertyMap, Property, tryCatch } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from '../auth';
 import type { PolotnoClient } from './client';
 import {
@@ -99,23 +99,24 @@ export const templateIdProp = Property.Dropdown({
     if (!auth) {
       return { disabled: true, options: [], placeholder: 'Connect your Polotno Studio account first' };
     }
-    try {
+    const { data: templates, error } = await tryCatch(() => {
       const client = createClient(auth.secret_text);
-      const templates = await fetchAllTemplates(client, {
+      return fetchAllTemplates(client, {
         maxResults: MAX_TEMPLATE_RESULTS,
         ...(ctx.searchValue ? { name: ctx.searchValue } : {}),
       });
-      if (templates.length === 0) {
-        return { options: [], placeholder: 'No templates found in this project' };
-      }
-      return { options: templates.map((t) => ({ label: t.name, value: t.id })) };
-    } catch (error) {
+    });
+    if (error) {
       return {
         disabled: true,
         options: [],
         placeholder: error instanceof Error ? error.message : 'Failed to load templates',
       };
     }
+    if (templates.length === 0) {
+      return { options: [], placeholder: 'No templates found in this project' };
+    }
+    return { options: templates.map((t) => ({ label: t.name, value: t.id })) };
   },
 });
 

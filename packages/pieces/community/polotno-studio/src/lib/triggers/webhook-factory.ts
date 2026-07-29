@@ -1,9 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger, tryCatch } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from '../auth';
 import { createClient } from '../common/client';
+import { readEventEnvelopeObject } from '../common/event-envelope';
 import { findHeader, verifyWebhookSignature } from '../common/signature';
-import type { EventEnvelope, RenderLike, WebhookSubscription } from '../common/types';
+import type { RenderEventObject, WebhookSubscription } from '../common/types';
 
 export interface DeliveryParams {
   rawBody: unknown;
@@ -14,7 +15,7 @@ export interface DeliveryParams {
   now?: number;
 }
 
-export function handleWebhookDelivery(params: DeliveryParams): RenderLike[] {
+export function handleWebhookDelivery(params: DeliveryParams): RenderEventObject[] {
   if (!params.secret) return [];
 
   const signature = findHeader(params.headers, 'x-signature');
@@ -24,9 +25,8 @@ export function handleWebhookDelivery(params: DeliveryParams): RenderLike[] {
   const eventType = findHeader(params.headers, 'x-event-type');
   if (!eventType || !params.events.includes(eventType)) return [];
 
-  const body = params.body as EventEnvelope | undefined;
-  const object = body?.data?.object;
-  if (!object || typeof object !== 'object' || typeof object.id !== 'string') return [];
+  const object = readEventEnvelopeObject(params.body);
+  if (!object) return [];
 
   return [object];
 }
@@ -74,10 +74,10 @@ export function createRenderTrigger(config: RenderTriggerConfig) {
       const key = storeKey(context.step.name);
       const stored = await context.store.get<{ id: string; secret: string }>(key);
       if (stored?.id) {
-        try {
+        await tryCatch(async () => {
           const client = createClient(context.auth.secret_text);
           await client.request({ method: HttpMethod.DELETE, path: `/v1/webhooks/${stored.id}` });
-        } catch {}
+        });
       }
       await context.store.delete(key);
     },

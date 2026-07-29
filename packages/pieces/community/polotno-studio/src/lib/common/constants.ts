@@ -1,11 +1,9 @@
-import type { RenderStatus } from './types';
-
 export const BASE_URL = (process.env['AP_POLOTNO_BASE_URL'] ?? 'https://api.studio.polotno.com').replace(/\/+$/, '');
 
-export const TERMINAL_STATUSES: ReadonlySet<RenderStatus> = new Set(['completed', 'failed', 'partial']);
+export const TERMINAL_STATUSES: ReadonlySet<string> = new Set(['completed', 'failed', 'partial']);
 
 export function isTerminal(status: string): boolean {
-  return TERMINAL_STATUSES.has(status as RenderStatus);
+  return TERMINAL_STATUSES.has(status);
 }
 
 export const IMAGE_FORMATS = ['png', 'jpeg', 'pdf'] as const;

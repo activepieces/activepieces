@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppConnectionType, createMockActionContext } from '@activepieces/pieces-framework';
 
 const { request } = vi.hoisted(() => ({ request: vi.fn() }));
 
@@ -14,11 +15,13 @@ const fullTemplate = {
   polotno_json: { pages: [] },
 };
 
-const buildContext = (propsValue: Record<string, unknown>) =>
-  ({
-    auth: { secret_text: 'key_live_x' },
-    propsValue,
-  } as unknown as Parameters<typeof getTemplate.run>[0]);
+const buildContext = (propsValue: {
+  template_id: string;
+  omit_design: boolean | undefined;
+}): Parameters<typeof getTemplate.run>[0] => ({
+  ...createMockActionContext<typeof getTemplate.props>({ propsValue }),
+  auth: { type: AppConnectionType.SECRET_TEXT, secret_text: 'key_live_x' },
+});
 
 describe('getTemplate.run', () => {
   beforeEach(() => {
@@ -36,7 +39,7 @@ describe('getTemplate.run', () => {
   it('strips the design when omit_design is undefined', async () => {
     request.mockResolvedValue(fullTemplate);
 
-    const result = await getTemplate.run(buildContext({ template_id: 'tpl_1' }));
+    const result = await getTemplate.run(buildContext({ template_id: 'tpl_1', omit_design: undefined }));
 
     expect(result).toEqual({ id: 'tpl_1', name: 'Promo' });
   });
