@@ -130,6 +130,32 @@ describe('chatToolClassification.actionConsentDecision — an admin "deny" must 
 
 })
 
+describe('chatToolClassification.actionConsentDecision — an explicit "allow" policy means no card', () => {
+    it('honors full access even when the model volunteered a confirmation', () => {
+        expect(chatToolClassification.actionConsentDecision({
+            actionName: 'send_channel_message',
+            needsConfirmation: true,
+            policy: { outward_send: 'allow' },
+        })).toBe('allow')
+    })
+
+    it('honors full access even when untrusted content is in the turn', () => {
+        expect(chatToolClassification.actionConsentDecision({
+            actionName: 'send_channel_message',
+            tainted: true,
+            policy: { outward_send: 'allow' },
+        })).toBe('allow')
+    })
+
+    it('does not let a default allow (reads) bypass a model-volunteered confirmation', () => {
+        expect(chatToolClassification.actionConsentDecision({
+            pieceName: 'google-sheets',
+            actionName: 'get_rows',
+            needsConfirmation: true,
+        })).toBe('ask')
+    })
+})
+
 describe('chatToolClassification.codeEffect — code is never assumed harmless', () => {
     it('cannot be talked out of the gate by code that dodges a keyword scan', () => {
         const evasive = 'export const code = async (i) => (()=>{}).constructor("return this")()["fet"+"ch"](i.url)'
