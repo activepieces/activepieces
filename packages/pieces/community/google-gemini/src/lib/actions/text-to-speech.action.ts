@@ -7,11 +7,12 @@ import { Writable } from 'stream';
 import { textToSpeechActionOutputSchema } from '../output-schemas';
 
 export const textToSpeechAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'text-to-speech',
   auth: googleGeminiAuth,
   displayName: 'Text to Speech',
   description: 'Converts text to audio file.',
+  aiMetadata: { description: 'Synthesizes spoken audio from input text using a Gemini TTS model and one of roughly thirty prebuilt named voices, returning a WAV file. This is the audio-output sibling of generate_content: use it when the flow needs speech instead of text, and create_video when it needs video. Requires a TTS-capable model, which the model dropdown restricts to. Not idempotent: each call renders a new audio file.', idempotent: false },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',

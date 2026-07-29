@@ -4,7 +4,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { userId } from '../common/props';
+import { appWebhookSetupInfo, userId } from '../common/props';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
 
 export const newMentionInDirectMessageTrigger = createTrigger({
@@ -18,6 +18,7 @@ export const newMentionInDirectMessageTrigger = createTrigger({
       'Fires when the configured user is @-mentioned in a direct message (im channel). Only messages in DM channels that contain the mention token for the selected user fire; bot messages and the user\'s own messages can be optionally ignored. The event payload is the Slack message event including its text, channel, and sender.',
   },
   props: {
+    info: appWebhookSetupInfo,
     user: userId(true),
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages ?',

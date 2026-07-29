@@ -25,7 +25,7 @@ Before writing code, answer:
 
 ## Step 2: Server (`packages/server/api`)
 
-Read `.agents/features/<module-name>.md` first (e.g. `.agents/features/tables.md` for the tables module).
+Read `brain/wiki/<area>/<module-name>.md` first (e.g. `brain/wiki/data-storage/tables.md` for the tables module).
 
 - **Entity**: Use `EntitySchema` + `BaseColumnSchemaPart` + `ApIdSchema`. See `tables/table/table.entity.ts`.
 - **Register entity**: Add to `getEntities()` in `database-connection.ts` (REQUIRED — TypeORM doesn't auto-discover)

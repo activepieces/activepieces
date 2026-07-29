@@ -9,11 +9,12 @@ import { baseUrlv0 } from '../common/common';
 import { agentIdDropdown } from '../common/props';
 
 export const agentPromptCompletion = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'agent_prompt_completion',
   displayName: 'Agent Prompt Completion',
   description: 'Prompt an agent with a message and get a response',
+  aiMetadata: { description: 'Runs a prompt against a saved Straico agent, which supplies its own custom system prompt, default LLM and attached RAG base, so no model has to be chosen at call time. Pick this when the persona and knowledge are already configured server-side; prefer RAG Prompt Completion to query a knowledge base directly with an explicit model, or Ask AI for a plain one-off completion with no agent or retrieval. Requires the agent id and a prompt; the retrieval controls (search type similarity, mmr or similarity score threshold, plus k, fetch k, lambda mult and score threshold) only matter when the agent has a RAG attached. Not idempotent: each call spends credits and produces a fresh answer.', idempotent: false },
   props: {
     agentId: agentIdDropdown('Agent','Select the agent to prompt.'),
     prompt: Property.LongText({

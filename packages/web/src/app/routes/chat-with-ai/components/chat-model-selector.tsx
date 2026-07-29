@@ -1,4 +1,5 @@
-import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { ACTIVEPIECES_CHAT_TIERS, aiProviderUtils } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowDown,
@@ -9,8 +10,9 @@ import {
   Equal,
   Lightbulb,
   Rocket,
+  Sparkles,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { aiProviderQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
 const TIER_CONFIG: Record<
@@ -45,6 +48,25 @@ const TIER_CONFIG: Record<
   },
 };
 
+function useModelOptions(): ModelOption[] {
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const curatedModels = isNil(chatProvider)
+    ? undefined
+    : aiProviderUtils.getCuratedChatModels({ provider: chatProvider.provider });
+  if (isNil(curatedModels)) {
+    return ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
+      id: tier.id,
+      ...TIER_CONFIG[tier.id],
+    }));
+  }
+  return curatedModels.map((model) => ({
+    id: model.id,
+    icon: Sparkles,
+    displayLabel: model.label,
+    description: null,
+  }));
+}
+
 export function ChatModelSelector({
   selectedModel,
   onModelChange,
@@ -56,45 +78,41 @@ export function ChatModelSelector({
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const selectedTierId = selectedModel ?? 'smart';
-  const selectedConfig = TIER_CONFIG[selectedTierId] ?? TIER_CONFIG.smart;
+  const options = useModelOptions();
+  const selectedOption =
+    options.find((option) => option.id === selectedModel) ?? options[0];
+
+  const focused =
+    focusedIndex === -1 ? options.indexOf(selectedOption) : focusedIndex;
 
   useEffect(() => {
     if (!open) return;
-    const idx = ACTIVEPIECES_CHAT_TIERS.findIndex(
-      (tier) => tier.id === selectedTierId,
-    );
-    setFocusedIndex(idx >= 0 ? idx : 0);
     const rafId = requestAnimationFrame(() => listRef.current?.focus());
     return () => cancelAnimationFrame(rafId);
-  }, [open, selectedTierId]);
+  }, [open]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setFocusedIndex((prev) =>
-          prev < ACTIVEPIECES_CHAT_TIERS.length - 1 ? prev + 1 : 0,
-        );
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setFocusedIndex((prev) =>
-          prev > 0 ? prev - 1 : ACTIVEPIECES_CHAT_TIERS.length - 1,
-        );
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        const tier = ACTIVEPIECES_CHAT_TIERS[focusedIndex];
-        if (tier) {
-          onModelChange(tier.id);
-          setOpen(false);
-        }
-      }
-    },
-    [focusedIndex, onModelChange],
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedIndex(focused < options.length - 1 ? focused + 1 : 0);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedIndex(focused > 0 ? focused - 1 : options.length - 1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      onModelChange(options[focused].id);
+      setOpen(false);
+    }
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        setFocusedIndex(-1);
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
@@ -103,7 +121,7 @@ export function ChatModelSelector({
           aria-expanded={open}
           className="h-7 gap-1 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground"
         >
-          <span>{t(selectedConfig.displayLabel)}</span>
+          <span>{t(selectedOption.displayLabel)}</span>
           <ChevronDown className="size-3 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -120,17 +138,15 @@ export function ChatModelSelector({
           className="outline-none"
         >
           <div className="py-1">
-            {ACTIVEPIECES_CHAT_TIERS.map((tier, index) => {
-              const config = TIER_CONFIG[tier.id];
-              if (!config) return null;
-              const Icon = config.icon;
-              const isSelected = selectedTierId === tier.id;
-              const isFocused = focusedIndex === index;
+            {options.map((option, index) => {
+              const Icon = option.icon;
+              const isSelected = selectedOption.id === option.id;
+              const isFocused = focused === index;
               return (
                 <div
-                  key={tier.id}
+                  key={option.id}
                   onClick={() => {
-                    onModelChange(tier.id);
+                    onModelChange(option.id);
                     setOpen(false);
                   }}
                   onMouseEnter={() => setFocusedIndex(index)}
@@ -144,11 +160,13 @@ export function ChatModelSelector({
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5">
                     <span className="text-sm font-medium">
-                      {t(config.displayLabel)}
+                      {t(option.displayLabel)}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      {t(config.description)}
-                    </span>
+                    {option.description && (
+                      <span className="text-xs text-muted-foreground">
+                        {t(option.description)}
+                      </span>
+                    )}
                   </div>
                   <Check
                     className={cn(
@@ -182,3 +200,10 @@ export function ChatModelSelector({
     </Popover>
   );
 }
+
+type ModelOption = {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  displayLabel: string;
+  description: string | null;
+};
