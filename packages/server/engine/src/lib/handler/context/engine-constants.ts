@@ -1,6 +1,6 @@
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, LoopBranch, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -27,6 +27,7 @@ type EngineConstantsParams = {
     runEnvironment?: RunEnvironment
     stepNameToTest?: string
     logsFileId?: string
+    branch?: LoopBranch
     timeoutInSeconds: number
     platformId: PlatformId
     stepNames: string[]
@@ -67,6 +68,7 @@ export class EngineConstants {
     public readonly runEnvironment?: RunEnvironment
     public readonly stepNameToTest?: string
     public readonly logsFileId?: string
+    public readonly branch?: LoopBranch
     public readonly stepNames: string[] = []
     private project: Project | null = null
 
@@ -111,6 +113,7 @@ export class EngineConstants {
         this.runEnvironment = params.runEnvironment
         this.stepNameToTest = params.stepNameToTest
         this.logsFileId = params.logsFileId
+        this.branch = params.branch
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
@@ -129,6 +132,7 @@ export class EngineConstants {
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
             logsFileId: input.logsFileId,
+            branch: input.branch,
         })
     }
 

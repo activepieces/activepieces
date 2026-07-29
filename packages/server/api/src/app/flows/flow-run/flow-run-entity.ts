@@ -41,6 +41,14 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             ...ApIdSchema,
             nullable: true,
         },
+        parentWaitpointId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        branch: {
+            type: 'jsonb',
+            nullable: true,
+        },
         failParentOnFailure: {
             type: Boolean,
             nullable: false,
@@ -126,6 +134,11 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_run_parent_run_id',
             columns: ['parentRunId'],
+        },
+        {
+            name: 'idx_run_parent_waitpoint_id_status',
+            columns: ['parentWaitpointId', 'status'],
+            where: '"parentWaitpointId" IS NOT NULL',
         },
         {
             name: 'idx_run_flow_version_id',

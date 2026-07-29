@@ -9,6 +9,7 @@ export enum SystemJobName {
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
     TRIAL_TRACKER = 'trial-tracker',
     RUN_TELEMETRY = 'run-telemetry',
+    SWEEP_STUCK_BRANCH_RUNS = 'sweep-stuck-branch-runs',
     DELETE_FLOW = 'delete-flow',
     AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
     HARD_DELETE_PROJECT = 'hard-delete-project',
@@ -64,6 +65,7 @@ type SystemJobDataMap = {
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
+    [SystemJobName.SWEEP_STUCK_BRANCH_RUNS]: Record<string, never>
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData

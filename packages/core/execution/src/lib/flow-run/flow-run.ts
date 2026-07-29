@@ -60,11 +60,19 @@ export const RunTimeline = z.object({
 })
 export type RunTimeline = z.infer<typeof RunTimeline>
 
+export const LoopBranch = z.object({
+    stepName: z.string(),
+    index: z.number().int().min(0),
+})
+export type LoopBranch = z.infer<typeof LoopBranch>
+
 export const FlowRun = z.object({
     ...BaseModelSchema,
     projectId: z.string(),
     flowId: z.string(),
     parentRunId: z.string().optional(),
+    parentWaitpointId: z.string().optional(),
+    branch: LoopBranch.optional(),
     failParentOnFailure: z.boolean(),
     triggeredBy: z.string().optional(),
     tags: z.array(z.string()).optional(),

@@ -10,6 +10,8 @@ import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
+import { branchFanOutController } from './branch/branch-fan-out-controller'
+import { branchFanOutService } from './branch/branch-fan-out-service'
 import { flowRunController } from './flow-run-controller'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunRepo, flowRunService } from './flow-run-service'
@@ -23,6 +25,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     await app.register(flowRunController, { prefix: '/v1/flow-runs' })
     await app.register(resumeController, { prefix: '/v1/flow-runs' })
+    await app.register(branchFanOutController, { prefix: '/v1/flow-runs' })
     await app.register(waitpointController, { prefix: '/v1/waitpoints' })
     systemJobHandlers.registerJobHandler(SystemJobName.RUN_TELEMETRY, async (_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) => {
         if (!telemetry(app.log).isEnabled()) {
@@ -73,6 +76,20 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         schedule: {
             type: 'repeated',
             cron: '50 23 * * *',
+        },
+    })
+    systemJobHandlers.registerJobHandler(SystemJobName.SWEEP_STUCK_BRANCH_RUNS, async (_job: SystemJobData<SystemJobName.SWEEP_STUCK_BRANCH_RUNS>) => {
+        await branchFanOutService(app.log).failStuckBranches()
+    })
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.SWEEP_STUCK_BRANCH_RUNS,
+            data: {},
+            jobId: SystemJobName.SWEEP_STUCK_BRANCH_RUNS,
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '*/10 * * * *',
         },
     })
     systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {

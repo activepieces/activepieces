@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
-import { RunEnvironment } from '../flow-run/flow-run'
+import { LoopBranch, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
@@ -132,6 +132,7 @@ const ExecuteFlowJobDataCommon = z.object({
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsFileId: z.string(),
+    branch: LoopBranch.optional(),
 })
 
 export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({

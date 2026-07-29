@@ -22,3 +22,17 @@ export const CreateWaitpointResponse = z.object({
     resumeUrl: z.string(),
 })
 export type CreateWaitpointResponse = z.infer<typeof CreateWaitpointResponse>
+
+export const FanOutBranchesRequest = z.object({
+    flowRunId: z.string(),
+    stepName: z.string(),
+    itemCount: z.number().int().min(1),
+    concurrency: z.number().int().min(2),
+})
+export type FanOutBranchesRequest = z.infer<typeof FanOutBranchesRequest>
+
+export const FanOutBranchesResponse = z.object({
+    waitpointId: z.string(),
+    branchCount: z.number().int(),
+})
+export type FanOutBranchesResponse = z.infer<typeof FanOutBranchesResponse>

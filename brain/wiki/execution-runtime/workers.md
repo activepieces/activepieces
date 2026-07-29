@@ -78,6 +78,20 @@ Three things that look like bugs and aren't:
 - **Removing a scheduler does not remove its already-enqueued job.** The outstanding `repeat:<oldVersionId>:<millis>` stays in `prioritized` and fires once against a soft-deleted `trigger_source`.
 - **Priority-6 sludge.** `RATE_LIMIT_PRIORITY` is `lowest` = 6, so rate-limited `EXECUTE_FLOW` jobs re-enter *behind* the polling lane and never drain while polling is chronically backed up. The 2026-07-27 pile held jobs going back 19 days. Anything demoted to priority 6 on a queue with a standing priority-5 backlog is silently dropped.
 
+#### The per-platform concurrency limit reads the plan name from Redis, not Postgres
+
+`rate-limiter-interceptor.ts` looks the plan up with `distributedStore.get(getPlatformPlanNameKey(platformId))` — key `platform_plan:plan:<platformId>` — and indexes `PLAN_CONCURRENT_JOBS_LIMITS` with whatever string comes back. **`platform_plan.plan` in Postgres is not that value.** All ~5,160 AppSumo platforms store `internal` in the column while Redis carries the real `appsumo_activepieces_tier1..6`; query only the DB and you will conclude the AppSumo tier limits are dead code, which is wrong. Redis is also the only place the `free` / `plus` / `payg` / `business` plan names exist. Values are inconsistently encoded — some JSON-quoted (`"standard"`), some raw (`appsumo_activepieces_tier1`) — because two different writers populate the key; `parseToJsonIfPossible` makes both work, so don't "fix" one side in isolation.
+
+Anything not in the map (including `internal`) silently falls back to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT` (default `5`). An explicit `project.poolId` → `concurrency_pool.maxConcurrentJobs` overrides the plan entirely, and with worker groups enabled the plan limit is further capped by the routed pool's live slot count.
+
+To audit the real limits, scan Redis (`platform_plan:plan:*`), not the table. Current in-flight per pool is `ZCARD active_jobs_set:pool:<poolId>`, where `poolId` defaults to the *project* id.
+
+#### Analytics on prod Postgres: use port 25060, not the pool
+
+The DevOps box's `/root/queue/.env` points at `dbname=ap-pool port=25061` — that is DigitalOcean's **PgBouncer** pool, which enforces a 60s `statement_timeout` that `SET statement_timeout = 0` cannot raise (the SET succeeds and is then ignored). Any run-history query over `flow_run` dies at exactly 60s. The direct connection is `port=25060 dbname=activepieces`, where `SET statement_timeout = 0` works.
+
+`flow_run` is ~270M rows / 356 GB. Joining a set of project ids against it, the planner defaults to a hash join that scans `idx_run_created` for *all* runs in the window (~173s/day of history). Forcing the nested loop (`SET enable_hashjoin = off; SET enable_mergejoin = off;`) makes it memoize against the small side and drops it to ~31s/day. Budget ~1h for a 4-month pass, and run it detached (`setsid nohup`) — a plain `nohup` inside an SSH command dies when the SSH channel closes.
+
 ### Key files
 Entry point: `worker`, the exported lifecycle object in `worker.ts`; `worker.start(...)` is wired up in the worker process main.
 

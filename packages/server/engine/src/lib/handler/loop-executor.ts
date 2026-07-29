@@ -1,8 +1,10 @@
 import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { FlowRunStatus, LoopOnItemsAction, LoopStepOutput } from '@activepieces/shared'
+import { branchClient } from '../piece-context/branch-client'
 import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
+import { EngineConstants } from './context/engine-constants'
 import { flowExecutor } from './flow-executor'
 
 type LoopOnActionResolvedSettings = {
@@ -51,15 +53,42 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         }
 
         const firstLoopAction = action.firstLoopAction
+        const testSingleStepMode = !isNil(constants.stepNameToTest)
+        const concurrency = action.settings.concurrency ?? 1
 
+        if (shouldFanOut({ action, constants, concurrency, itemCount: resolvedInput.items.length, testSingleStepMode })) {
+            const { error: fanOutError } = await utils.tryCatchAndThrowOnEngineError(() => branchClient.fanOut({
+                apiUrl: constants.internalApiUrl,
+                engineToken: constants.engineToken,
+                flowRunId: constants.flowRunId,
+                stepName: action.name,
+                itemCount: resolvedInput.items.length,
+                concurrency,
+            }))
+            if (fanOutError) {
+                return failStep({
+                    action,
+                    executionState: newExecutionContext,
+                    stepOutput,
+                    error: fanOutError,
+                    durationMs: performance.now() - stepStartTime,
+                })
+            }
+            return (await newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime)))
+                .setVerdict({ status: FlowRunStatus.PAUSED })
+        }
 
-        for (let i = 0; i < resolvedInput.items.length; ++i) {
+        const iterations = isNil(constants.branch) || constants.branch.stepName !== action.name
+            ? resolvedInput.items.map((_, index) => index)
+            : [constants.branch.index]
+
+        for (const i of iterations) {
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })
 
-            const testSingleStepMode = !isNil(constants.stepNameToTest)
             stepOutput = stepOutput.setItemAndIndex({ item: resolvedInput.items[i], index: i + 1 })
-            const addEmptyIteration = !stepOutput.hasIteration(i)
-            if (addEmptyIteration) {
+            // ponytail: pad rather than append — a branch run starts at its own index,
+            // so a single addIteration() would land iteration 500 at position 0.
+            while (!stepOutput.hasIteration(i)) {
                 stepOutput = stepOutput.addIteration()
             }
             newExecutionContext = (await newExecutionContext.upsertStep(action.name, stepOutput)).setCurrentPath(newCurrentPath)
@@ -83,4 +112,17 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         }
         return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
     },
+}
+
+function shouldFanOut({ action, constants, concurrency, itemCount, testSingleStepMode }: ShouldFanOutParams): boolean {
+    const alreadyABranch = constants.branch?.stepName === action.name
+    return concurrency > 1 && itemCount > 0 && !testSingleStepMode && !alreadyABranch && !isNil(action.firstLoopAction)
+}
+
+type ShouldFanOutParams = {
+    action: LoopOnItemsAction
+    constants: EngineConstants
+    concurrency: number
+    itemCount: number
+    testSingleStepMode: boolean
 }

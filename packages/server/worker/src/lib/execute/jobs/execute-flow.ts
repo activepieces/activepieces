@@ -124,6 +124,7 @@ function buildFlowOperation(
         streamStepProgress: data.streamStepProgress,
         stepNameToTest: data.stepNameToTest ?? null,
         logsFileId: data.logsFileId,
+        branch: data.branch,
         timeoutInSeconds,
         platformId: data.platformId,
         engineToken: ctx.engineToken,

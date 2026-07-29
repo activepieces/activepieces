@@ -110,6 +110,17 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 })
                             }
 
+                            const parentWaitpointId = savedFlowRun.parentWaitpointId
+                            const branchFinished = !isNil(parentRunId) && !isNil(parentWaitpointId)
+                                && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })
+                            if (branchFinished) {
+                                await resumeService(log).resumeFromWaitpoint({
+                                    flowRunId: parentRunId,
+                                    waitpointId: parentWaitpointId,
+                                    resumePayload: null,
+                                })
+                            }
+
                             if (!isNil(runMetadata.requestId)) {
                                 await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
                             }

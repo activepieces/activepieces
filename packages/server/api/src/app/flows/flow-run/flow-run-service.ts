@@ -1,6 +1,7 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, isFlowRunStateTerminal,
+    JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, LogSliceRef, LoopBranch, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -195,6 +196,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     projectId: oldFlowRun.projectId,
                     failParentOnFailure: oldFlowRun.failParentOnFailure,
                     parentRunId: oldFlowRun.parentRunId,
+                    parentWaitpointId: oldFlowRun.parentWaitpointId,
+                    branch: oldFlowRun.branch,
                 })
             }
         }
@@ -270,6 +273,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         projectId,
         flowVersionId,
         parentRunId,
+        parentWaitpointId,
+        branch,
         failParentOnFailure,
         platformId,
         stepNameToTest,
@@ -279,6 +284,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowVersionId,
             parentRunId,
+            parentWaitpointId,
+            branch,
             flowId,
             failParentOnFailure,
             stepNameToTest,
@@ -581,6 +588,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
         sampleData: params.sampleData,
         logsFileId,
+        branch: params.branch ?? params.flowRun.branch,
     }
     const data: ExecuteFlowJobData = params.executionType === ExecutionType.RESUME
         ? {
@@ -669,6 +677,8 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
         flowVersionId: params.flowVersionId,
         environment: params.environment,
         parentRunId: params.parentRunId,
+        parentWaitpointId: params.parentWaitpointId,
+        branch: params.branch,
         failParentOnFailure: params.failParentOnFailure ?? true,
         status: FlowRunStatus.QUEUED,
         stepNameToTest: params.stepNameToTest,
@@ -697,6 +707,8 @@ type CreateParams = {
     flowVersionId: FlowVersionId
     triggeredBy?: string
     parentRunId?: FlowRunId
+    parentWaitpointId?: string
+    branch?: LoopBranch
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     flowId: FlowId
@@ -739,6 +751,7 @@ type AddToQueueParamsCommon = {
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
     jobId?: string
+    branch?: LoopBranch
 }
 
 export type AddToQueueParams = AddToQueueParamsCommon & (
@@ -755,6 +768,8 @@ type StartParams = {
     flowVersionId: FlowVersionId
     projectId: ProjectId
     parentRunId?: FlowRunId
+    parentWaitpointId?: string
+    branch?: LoopBranch
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     executeTrigger: boolean

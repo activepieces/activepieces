@@ -1,15 +1,20 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, PauseType } from '@activepieces/shared'
+import { FlowRunStatus, isFlowRunStateTerminal, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
+import { FlowRunEntity } from '../flow-run-entity'
 import { WaitpointEntity } from './waitpoint-entity'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
+const flowRunRepo = repoFactory(FlowRunEntity)
+
+const LIVE_RUN_STATUSES = Object.values(FlowRunStatus).filter((status) => !isFlowRunStateTerminal({ status, ignoreInternalError: false }))
 
 export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
@@ -99,6 +104,11 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     async handleResumeSignal(params: HandleResumeSignalParams): Promise<boolean> {
         const { flowRunId, waitpointId, flowRunStatus, projectId, resumePayload, workerHandlerId, onReady } = params
 
+        if (await hasLiveBranches(waitpointId)) {
+            log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Branches still live, holding the barrier')
+            return false
+        }
+
         if (flowRunStatus === FlowRunStatus.PAUSED) {
             const waitpoint = await transaction(async (entityManager) => {
                 const repo = waitpointRepo(entityManager)
@@ -161,3 +171,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })
+
+async function hasLiveBranches(waitpointId: string): Promise<boolean> {
+    return flowRunRepo().existsBy({ parentWaitpointId: waitpointId, status: In(LIVE_RUN_STATUSES) })
+}

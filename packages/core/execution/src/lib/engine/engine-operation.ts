@@ -7,6 +7,7 @@ import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '@activepieces/core-piece-types'
 import { ScheduleOptions } from '@activepieces/core-piece-types'
+import { LoopBranch } from '../flow-run/flow-run'
 import { JobPayload } from '../workers/job-data'
 
 export enum EngineOperationType {
@@ -103,6 +104,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     stepNameToTest: string | null
     sampleData?: Record<string, unknown>
     logsFileId?: string
+    branch?: LoopBranch
 }
 
 export enum StreamStepProgress {
