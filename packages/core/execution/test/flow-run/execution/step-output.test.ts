@@ -70,12 +70,12 @@ describe('LoopStepOutput', () => {
         expect(loop.output?.item).toBeUndefined()
     })
 
-    it('addIteration should append an empty iteration', () => {
+    it('addIteration should append an empty iteration onto the shared iterations array', () => {
         const loop = LoopStepOutput.init({ input: null })
         const withIteration = loop.addIteration()
         expect(withIteration.output?.iterations).toHaveLength(1)
         expect(withIteration.output?.iterations[0]).toEqual({})
-        expect(loop.output?.iterations).toHaveLength(0)
+        expect(withIteration.output?.iterations).toBe(loop.output?.iterations)
     })
 
     it('hasIteration should check if iteration exists', () => {

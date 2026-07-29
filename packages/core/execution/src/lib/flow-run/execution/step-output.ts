@@ -199,12 +199,14 @@ LoopStepResult
     }
 
     addIteration(): LoopStepOutput {
+        const iterations = this.output?.iterations ?? []
+        iterations.push({})
         return new LoopStepOutput({
             ...this,
             output: {
                 item: this.output?.item,
                 index: this.output?.index,
-                iterations: [...(this.output?.iterations ?? []), {}],
+                iterations,
             },
         })
     }
