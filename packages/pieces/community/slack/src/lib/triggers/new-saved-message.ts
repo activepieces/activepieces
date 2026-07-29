@@ -2,6 +2,7 @@ import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { appWebhookSetupInfo } from '../common/props';
+import { newSavedMessageTriggerOutputSchema } from '../output-schemas';
 
 export const newSavedMessageTrigger = createTrigger({
 	auth: slackAuth,
@@ -17,6 +18,7 @@ export const newSavedMessageTrigger = createTrigger({
 	},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: undefined,
+	outputSchema: newSavedMessageTriggerOutputSchema,
 	onEnable: async (context) => {
 		const teamId = await getTeamId(context.auth as SlackAuthValue);
 		context.app.createListeners({

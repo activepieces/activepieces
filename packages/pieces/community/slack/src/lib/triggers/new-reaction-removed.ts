@@ -6,6 +6,7 @@ import {
 import { slackAuth } from '../auth';
 import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { newReactionRemovedTriggerOutputSchema } from '../output-schemas';
 
 export const newReactionRemoved = createTrigger({
   auth: slackAuth,
@@ -52,6 +53,7 @@ export const newReactionRemoved = createTrigger({
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
+  outputSchema: newReactionRemovedTriggerOutputSchema,
   onEnable: async (context) => {
     const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({
