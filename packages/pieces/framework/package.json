@@ -12,6 +12,7 @@
   "dependencies": {
     "@activepieces/core-utils": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
+    "@ai-sdk/provider": "^3.0.0",
     "zod": "4.3.6",
     "ai": "^6.0.0",
     "semver": "7.6.0"

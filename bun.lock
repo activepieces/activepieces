@@ -10577,6 +10577,7 @@
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
+        "@ai-sdk/provider": "^3.0.0",
         "ai": "^6.0.0",
         "semver": "7.6.0",
         "zod": "4.3.6",
@@ -10727,6 +10728,7 @@
       "name": "@activepieces/engine",
       "version": "0.7.0",
       "dependencies": {
+        "@activepieces/core-agent-runtime": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",

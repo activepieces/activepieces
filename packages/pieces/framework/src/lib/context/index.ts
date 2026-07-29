@@ -11,9 +11,11 @@ import {
   PauseMetadata,
   WebhookPauseMetadata,
 } from '@activepieces/core-piece-types';
+import type { AIProviderName } from '@activepieces/core-utils';
 import type { SeekPage } from '@activepieces/core-utils';
 import type { FlowRunId, ProjectId } from '@activepieces/core-utils';
-import { LanguageModel, Tool } from 'ai'
+import type { SharedV3ProviderOptions } from '@ai-sdk/provider'
+import { LanguageModel, TextStreamPart, Tool, ToolSet } from 'ai'
 import type { Readable } from 'node:stream'
 
 import {
@@ -266,8 +268,30 @@ export type ConstructToolParams = {
   model: LanguageModel,
 }
 
+export type RunAgentParams = {
+  model: LanguageModel;
+  provider: AIProviderName;
+  system: string;
+  prompt: string;
+  tools: Record<string, Tool>;
+  maxSteps: number;
+  providerOptions?: SharedV3ProviderOptions;
+  stopOnToolName?: string;
+  onChunk: (chunk: AgentStreamChunk) => Promise<void> | void;
+};
+
+export type AgentStreamChunk = TextStreamPart<ToolSet>;
+
+export type RunAgentResult = {
+  streamError: Error | null;
+  truncatedAfterRetries: boolean;
+  budgetExceeded: boolean;
+  continuations: number;
+};
+
 export interface AgentContext {
   tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
+  run: (params: RunAgentParams) => Promise<RunAgentResult>;
 }
 
 export interface FilesService {

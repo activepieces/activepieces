@@ -45,6 +45,12 @@ export function createMockActionContext<
     },
     agent: {
       tools: async () => ({}),
+      run: async () => ({
+        streamError: null,
+        truncatedAfterRetries: false,
+        budgetExceeded: false,
+        continuations: 0,
+      }),
     },
     run: {
       id: 'test-run-id' as string,

@@ -1,8 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
+import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, RunAgentParams, RunAgentResult, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
+import { agentRunner } from '../agent/run'
 import { engineRunApi } from '../api/engine-run-api'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
@@ -121,6 +122,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     tools: params.tools,
                     model: params.model,
                 }),
+                run: async (params: RunAgentParams): Promise<RunAgentResult> => agentRunner.run(params),
             },
             propsValue: processedInput,
             tags: createTagsManager(params),

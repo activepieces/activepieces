@@ -7,7 +7,6 @@ import {
 import { isNil } from '@activepieces/pieces-framework';
 import { AgentToolType } from '@activepieces/pieces-framework';
 import { AgentOutputField, AgentPieceProps, AgentTaskStatus, AgentTool, TASK_COMPLETION_TOOL_NAME, AIProviderName, AgentProviderModel, ExecutionToolStatus, AgentKnowledgeBaseTool, KnowledgeBaseSourceType, normalizeToolOutputToExecuteResponse, spreadIfDefined, getEffectiveProviderAndModel } from '@activepieces/pieces-framework';
-import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel, createEmbeddingModel } from '../../common/ai-sdk';
 import { inspect } from 'util';
@@ -199,19 +198,16 @@ export const runAgent = createAction({
 
     try {
       const prompts = agentUtils.getPrompts(prompt, { hasKnowledgeBaseTools });
-      const stream = streamText({
-        model: model,
+      const runResult = await context.agent.run({
+        model,
+        provider,
         system: prompts.system,
         prompt: prompts.prompt,
         tools: allTools,
-        stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
+        maxSteps,
         providerOptions,
-        onFinish: async () => {
-          await Promise.all(mcpClients.map(async (client) => client.close()));
-        },
-      });
-
-      for await (const chunk of stream.fullStream) {
+        stopOnToolName: TASK_COMPLETION_TOOL_NAME,
+        onChunk: async (chunk) => {
         try {
           switch (chunk.type) {
             case 'text-delta': {
@@ -228,7 +224,7 @@ export const runAgent = createAction({
             }
             case 'tool-call': {
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
-                continue;
+                return;
               }
               outputBuilder.startToolCall({
                 toolName: chunk.toolName,
@@ -239,7 +235,7 @@ export const runAgent = createAction({
             }
             case 'tool-result': {
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
-                continue;
+                return;
               }
               const rawOutput = chunk.output;
               const toolOutput = normalizeToolOutputToExecuteResponse(rawOutput);
@@ -302,18 +298,29 @@ export const runAgent = createAction({
             details: detailsStr,
           });
         }
-      }
+        },
+      });
 
-      if (!outputBuilder.hasTextContent()) {
-        try {
-          const accumulatedText = await stream.text;
-          if (accumulatedText?.trim()) {
-            outputBuilder.addMarkdown(accumulatedText);
-            await context.output.update({ data: outputBuilder.build() });
-          }
-        } catch {
-          // ignore
-        }
+      await Promise.all(mcpClients.map(async (client) => client.close()));
+
+      if (runResult.streamError) {
+        errors.push({
+          type: 'stream-error',
+          message: 'Error during streaming',
+          details: inspect(runResult.streamError),
+        });
+      }
+      if (runResult.truncatedAfterRetries) {
+        errors.push({
+          type: 'truncated',
+          message: `Response was still cut off by the output token limit after ${runResult.continuations} auto-continuations`,
+        });
+      }
+      if (runResult.budgetExceeded) {
+        errors.push({
+          type: 'budget-exceeded',
+          message: 'Stopped early after hitting the per-run token budget',
+        });
       }
 
       if (errors.length > 0) {
