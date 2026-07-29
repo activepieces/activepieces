@@ -142,6 +142,7 @@ export type ChatConfigResponse = {
     emailEnabled: boolean
     userEmail: string
     consentPolicy?: Record<string, string>
+    autoConsentEnabled?: boolean
 }
 
 export type SaveChatMessagesRequest = {

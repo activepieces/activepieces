@@ -2311,5 +2311,10 @@
   "Allow \"{action}\" without asking?": "Allow \"{action}\" without asking?",
   "The assistant will do this without asking anyone, in every conversation in this workspace — including conversations that otherwise ask first.": "The assistant will do this without asking anyone, in every conversation in this workspace — including conversations that otherwise ask first.",
   "Keep asking": "Keep asking",
-  "Allow without asking": "Allow without asking"
+  "Allow without asking": "Allow without asking",
+  "Auto": "Auto",
+  "Runs routine actions, asks when it matters.": "Runs routine actions, asks when it matters.",
+  "Ran on auto": "Ran on auto",
+  "Ran on auto — {reason}": "Ran on auto — {reason}",
+  "Chat action approved by auto mode": "Chat action approved by auto mode"
 }

@@ -397,6 +397,7 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.CHAT_CONSENT_GRANTED:
     case ApplicationEventName.CHAT_CONSENT_DECLINED:
     case ApplicationEventName.CHAT_CONSENT_POLICY_DENIED:
+    case ApplicationEventName.CHAT_CONSENT_AUTO_APPROVED:
       return {
         icon: <MessageSquare className="size-4" />,
         tooltip: t('Chat'),

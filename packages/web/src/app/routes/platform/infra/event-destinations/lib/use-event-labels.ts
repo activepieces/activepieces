@@ -46,6 +46,9 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.CHAT_CONSENT_POLICY_DENIED]: {
       label: t('Chat action blocked by policy'),
     },
+    [ApplicationEventName.CHAT_CONSENT_AUTO_APPROVED]: {
+      label: t('Chat action approved by auto mode'),
+    },
     [ApplicationEventName.USER_SIGNED_UP]: { label: t('User signed up') },
     [ApplicationEventName.USER_SIGNED_IN]: { label: t('User signed in') },
     [ApplicationEventName.USER_PASSWORD_RESET]: {

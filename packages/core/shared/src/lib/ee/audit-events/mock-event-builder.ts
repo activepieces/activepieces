@@ -288,7 +288,8 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         case ApplicationEventName.CHAT_FULL_ACCESS_DISABLED:
         case ApplicationEventName.CHAT_CONSENT_GRANTED:
         case ApplicationEventName.CHAT_CONSENT_DECLINED:
-        case ApplicationEventName.CHAT_CONSENT_POLICY_DENIED: {
+        case ApplicationEventName.CHAT_CONSENT_POLICY_DENIED:
+        case ApplicationEventName.CHAT_CONSENT_AUTO_APPROVED: {
             const mock: ChatConsentEvent = {
                 ...baseEnvelope,
                 action: event,

@@ -1,4 +1,4 @@
-import { ActionPreviewEvent, ActionReceiptEvent, chatConsent, SendChatEmailResponse, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AutoConsentJudge, chatConsent, SendChatEmailResponse, ToolProgressEvent } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
 import { ChatEventEmitter, chatWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
 
@@ -641,7 +641,7 @@ type FakeGate = { gateId: string, displayName: string }
 
 const CONSENT_GATED_TOOL_NAMES = ['ap_test_flow', 'ap_test_step', 'ap_retry_run', 'ap_run_code', 'ap_delete_flow', 'ap_delete_table', 'ap_delete_records', 'ap_lock_and_publish', 'ap_change_flow_status', 'ap_manage_fields', 'mcp__attio__create_record', 'mcp__stripe__create_refund', 'mcp__attio__delete_record', 'ap_brand_new_tool', 'ap_list_flows', 'ap_flow_structure', 'ap_insert_records', 'ap_add_step']
 
-function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true, disabled = false, policy, serverTargetName }: {
+function makeConsentHarness({ effects, decision = 'approved', remembered = false, resolved = true, disabled = false, policy, serverTargetName, autoJudge, tainted = false }: {
     effects: { stepName: string, displayName: string, kind: string, detail: string, recipient?: string, inputDigest?: string }[]
     decision?: 'approved' | 'declined' | 'timeout'
     remembered?: boolean
@@ -649,6 +649,8 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
     disabled?: boolean
     policy?: ReturnType<typeof chatConsent.composePolicy>
     serverTargetName?: string
+    autoJudge?: AutoConsentJudge
+    tainted?: boolean
 }) {
     const ran: unknown[] = []
     const previews: ActionPreviewEvent[] = []
@@ -711,6 +713,8 @@ function makeConsentHarness({ effects, decision = 'approved', remembered = false
         auditPolicyDenied: async (params) => {
             auditCalls.push(params)
         },
+        autoJudge,
+        taintState: { tainted },
     })
 
     return { wrapped, ran, previews, gates, remembers, checked, previewCalls, targetNameCalls, auditCalls }
@@ -1222,6 +1226,249 @@ describe('chatWorkerTools self-gated tools honour an admin deny', () => {
         }, { toolCallId: 'allow-1', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
         expect(waitForApproval).toHaveBeenCalledOnce()
+        expect(sendEmail).toHaveBeenCalledOnce()
+    })
+})
+
+describe('auto mode judge — wrapWithConsent', () => {
+    const runJudge = (decision: 'run' | 'ask') => {
+        const judgeCalls: unknown[] = []
+        const autoJudge: AutoConsentJudge = async (params) => {
+            judgeCalls.push(params)
+            return { decision, reason: decision === 'run' ? 'Matches your request' : 'Not sure this is what you asked' }
+        }
+        return { autoJudge, judgeCalls }
+    }
+
+    it('runs a judgeable send without opening a gate when the judge says run', async () => {
+        const { autoJudge, judgeCalls } = runJudge('run')
+        const h = makeConsentHarness({ effects: [SEND_STEP], autoJudge })
+        await runTestFlow(h.wrapped)
+        expect(judgeCalls).toHaveLength(1)
+        expect(h.gates).toHaveLength(0)
+        expect(h.previews).toHaveLength(0)
+        expect(h.ran).toHaveLength(1)
+    })
+
+    it('opens the normal gate when the judge says ask', async () => {
+        const { autoJudge, judgeCalls } = runJudge('ask')
+        const h = makeConsentHarness({ effects: [SEND_STEP], autoJudge })
+        await runTestFlow(h.wrapped)
+        expect(judgeCalls).toHaveLength(1)
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(1)
+    })
+
+    it('never consults the judge about money or deletions — the human gate stays', async () => {
+        const { autoJudge, judgeCalls } = runJudge('run')
+        for (const step of [REFUND_STEP, DELETE_STEP]) {
+            const h = makeConsentHarness({ effects: [step], autoJudge })
+            await runTestFlow(h.wrapped)
+            expect(h.gates).toHaveLength(1)
+        }
+        expect(judgeCalls).toHaveLength(0)
+    })
+
+    it('one financial step poisons a bundle the judge could otherwise rule on', async () => {
+        const { autoJudge, judgeCalls } = runJudge('run')
+        const h = makeConsentHarness({ effects: [SEND_STEP, REFUND_STEP], autoJudge })
+        await runTestFlow(h.wrapped)
+        expect(judgeCalls).toHaveLength(0)
+        expect(h.gates).toHaveLength(1)
+    })
+
+    it('never consults the judge when the effects did not resolve', async () => {
+        const { autoJudge, judgeCalls } = runJudge('run')
+        const h = makeConsentHarness({ effects: [SEND_STEP], resolved: false, autoJudge })
+        await runTestFlow(h.wrapped)
+        expect(judgeCalls).toHaveLength(0)
+        expect(h.gates).toHaveLength(1)
+    })
+
+    it('never consults the judge once the turn read untrusted content', async () => {
+        const { autoJudge, judgeCalls } = runJudge('run')
+        const h = makeConsentHarness({ effects: [SEND_STEP], tainted: true, autoJudge })
+        await runTestFlow(h.wrapped)
+        expect(judgeCalls).toHaveLength(0)
+        expect(h.gates).toHaveLength(1)
+    })
+
+    it('falls back to the human gate when the judge itself blows up', async () => {
+        const autoJudge: AutoConsentJudge = async () => {
+            throw new Error('judge model unavailable')
+        }
+        const h = makeConsentHarness({ effects: [SEND_STEP], autoJudge })
+        await runTestFlow(h.wrapped)
+        expect(h.gates).toHaveLength(1)
+        expect(h.ran).toHaveLength(1)
+    })
+
+    it('an admin deny still wins over a run-happy judge', async () => {
+        const { autoJudge, judgeCalls } = runJudge('run')
+        const h = makeConsentHarness({
+            effects: [SEND_STEP],
+            autoJudge,
+            policy: chatConsent.composePolicy({ fullAccess: false, overrides: { outward_send: 'deny' } }),
+        })
+        const result = await runTestFlow(h.wrapped) as { content: { text: string }[] }
+        expect(judgeCalls).toHaveLength(0)
+        expect(h.ran).toHaveLength(0)
+        expect(result.content[0].text).toContain('Not allowed here')
+    })
+})
+
+describe('auto mode judge — ap_execute_action', () => {
+    const callOptions = { messages: [], abortSignal: undefined as unknown as AbortSignal }
+
+    function setup({ decision, tainted = false }: { decision: 'run' | 'ask', tainted?: boolean }) {
+        const judgeCalls: unknown[] = []
+        const receipts: ActionReceiptEvent[] = []
+        const autoJudge: AutoConsentJudge = async (params) => {
+            judgeCalls.push(params)
+            return { decision, reason: 'Sends the message you asked for' }
+        }
+        const eventEmitter: ChatEventEmitter = {
+            emitToolProgress: () => {},
+            emitActionPreview: () => {},
+            emitActionReceipt: (data: ActionReceiptEvent) => {
+                receipts.push(data)
+            },
+        }
+        const executeTool = vi.fn().mockResolvedValue(mcpSuccess('sent'))
+        const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+        const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, guides: {}, taintState: { tainted }, autoJudge })
+        return { tools, judgeCalls, receipts, executeTool, waitForApproval }
+    }
+
+    it('skips the gate on a run verdict and stamps the receipt as auto-approved', async () => {
+        const { tools, judgeCalls, receipts, executeTool, waitForApproval } = setup({ decision: 'run' })
+        await tools.ap_execute_action.execute({
+            pieceName: 'slack', actionName: 'send_message', input: { channel: 'C1', text: 'hi' },
+        }, { ...callOptions, toolCallId: 'tc-auto-run' })
+        expect(judgeCalls).toHaveLength(1)
+        expect(waitForApproval).not.toHaveBeenCalled()
+        expect(executeTool).toHaveBeenCalledOnce()
+        expect(receipts).toHaveLength(1)
+        expect(receipts[0].autoApproved).toBe(true)
+        expect(receipts[0].autoReason).toBe('Sends the message you asked for')
+    })
+
+    it('opens the gate on an ask verdict, and the receipt carries no auto stamp', async () => {
+        const { tools, receipts, waitForApproval } = setup({ decision: 'ask' })
+        await tools.ap_execute_action.execute({
+            pieceName: 'slack', actionName: 'send_message', input: { channel: 'C1', text: 'hi' },
+        }, { ...callOptions, toolCallId: 'tc-auto-ask' })
+        expect(waitForApproval).toHaveBeenCalledWith({ gateId: 'tc-auto-ask' })
+        expect(receipts[0].autoApproved).toBeUndefined()
+    })
+
+    it('never consults the judge when the model itself asked for confirmation', async () => {
+        const { tools, judgeCalls, waitForApproval } = setup({ decision: 'run' })
+        await tools.ap_execute_action.execute({
+            pieceName: 'slack', actionName: 'send_message', needsConfirmation: true, input: { channel: 'C1' },
+        }, { ...callOptions, toolCallId: 'tc-auto-conf' })
+        expect(judgeCalls).toHaveLength(0)
+        expect(waitForApproval).toHaveBeenCalledOnce()
+    })
+
+    it('never consults the judge once the turn is tainted', async () => {
+        const { tools, judgeCalls, waitForApproval } = setup({ decision: 'run', tainted: true })
+        await tools.ap_execute_action.execute({
+            pieceName: 'slack', actionName: 'send_message', input: { channel: 'C1' },
+        }, { ...callOptions, toolCallId: 'tc-auto-taint' })
+        expect(judgeCalls).toHaveLength(0)
+        expect(waitForApproval).toHaveBeenCalledOnce()
+    })
+
+    it('never consults the judge about an action nothing can classify', async () => {
+        const { tools, judgeCalls, waitForApproval } = setup({ decision: 'run' })
+        await tools.ap_execute_action.execute({
+            pieceName: 'slack', actionName: 'do_thing', input: {},
+        }, { ...callOptions, toolCallId: 'tc-auto-unknown' })
+        expect(judgeCalls).toHaveLength(0)
+        expect(waitForApproval).toHaveBeenCalledOnce()
+    })
+
+    it('hands the judge the batch size so scale is part of the ruling', async () => {
+        const { tools, judgeCalls } = setup({ decision: 'run' })
+        await tools.ap_execute_action.execute({
+            pieceName: 'slack', actionName: 'send_message', items: [{ text: 'a' }, { text: 'b' }, { text: 'c' }, { text: 'd' }],
+        }, { ...callOptions, toolCallId: 'tc-auto-batch' })
+        expect(judgeCalls).toHaveLength(1)
+        expect(judgeCalls[0]).toMatchObject({ batchCount: 4 })
+    })
+})
+
+describe('auto mode judge — ap_send_email', () => {
+    const callOptions = { messages: [], abortSignal: undefined as unknown as AbortSignal }
+    const SELF_EMAIL = 'me@acme.com'
+
+    function setup({ decision, tainted = false }: { decision: 'run' | 'ask', tainted?: boolean }) {
+        const judgeCalls: unknown[] = []
+        const receipts: ActionReceiptEvent[] = []
+        const previews: ActionPreviewEvent[] = []
+        const autoJudge: AutoConsentJudge = async (params) => {
+            judgeCalls.push(params)
+            return { decision, reason: 'Emails the person you named' }
+        }
+        const eventEmitter: ChatEventEmitter = {
+            emitToolProgress: () => {},
+            emitActionPreview: (data: ActionPreviewEvent) => {
+                previews.push(data)
+            },
+            emitActionReceipt: (data: ActionReceiptEvent) => {
+                receipts.push(data)
+            },
+        }
+        const sendEmail = vi.fn(async () => ({ sent: true, message: 'Email sent.' }))
+        const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+        const tools = chatWorkerTools.createEmailTools({ sendEmail, eventEmitter, userEmail: SELF_EMAIL, waitForApproval, autoJudge, taintState: { tainted } })
+        return { tools, judgeCalls, receipts, previews, sendEmail, waitForApproval }
+    }
+
+    it('sends an external email without the card on a run verdict, and stamps the receipt', async () => {
+        const { tools, judgeCalls, receipts, previews, sendEmail, waitForApproval } = setup({ decision: 'run' })
+        await tools.ap_send_email.execute(
+            { to: ['farah@example.com'], subject: 'Recap', body: 'hi' },
+            { ...callOptions, toolCallId: 'em-auto-run' },
+        )
+        expect(judgeCalls).toHaveLength(1)
+        expect(previews).toHaveLength(0)
+        expect(waitForApproval).not.toHaveBeenCalled()
+        expect(sendEmail).toHaveBeenCalledOnce()
+        expect(receipts[0].autoApproved).toBe(true)
+    })
+
+    it('keeps the confirmation card on an ask verdict', async () => {
+        const { tools, previews, waitForApproval, sendEmail } = setup({ decision: 'ask' })
+        await tools.ap_send_email.execute(
+            { to: ['farah@example.com'], subject: 'Recap', body: 'hi' },
+            { ...callOptions, toolCallId: 'em-auto-ask' },
+        )
+        expect(previews).toHaveLength(1)
+        expect(waitForApproval).toHaveBeenCalledOnce()
+        expect(sendEmail).toHaveBeenCalledOnce()
+    })
+
+    it('never consults the judge for a tainted turn — the card always shows', async () => {
+        const { tools, judgeCalls, previews, waitForApproval } = setup({ decision: 'run', tainted: true })
+        await tools.ap_send_email.execute(
+            { to: ['farah@example.com'], subject: 'Recap', body: 'hi' },
+            { ...callOptions, toolCallId: 'em-auto-taint' },
+        )
+        expect(judgeCalls).toHaveLength(0)
+        expect(previews).toHaveLength(1)
+        expect(waitForApproval).toHaveBeenCalledOnce()
+    })
+
+    it('never consults the judge for a self-send — that path never asked anyway', async () => {
+        const { tools, judgeCalls, sendEmail, waitForApproval } = setup({ decision: 'ask' })
+        await tools.ap_send_email.execute(
+            { to: [SELF_EMAIL], subject: 'FYI', body: 'hi' },
+            { ...callOptions, toolCallId: 'em-auto-self' },
+        )
+        expect(judgeCalls).toHaveLength(0)
+        expect(waitForApproval).not.toHaveBeenCalled()
         expect(sendEmail).toHaveBeenCalledOnce()
     })
 })

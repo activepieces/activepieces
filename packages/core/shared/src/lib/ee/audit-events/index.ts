@@ -52,6 +52,7 @@ export enum ApplicationEventName {
     CHAT_CONSENT_GRANTED = 'chat.consent.granted',
     CHAT_CONSENT_DECLINED = 'chat.consent.declined',
     CHAT_CONSENT_POLICY_DENIED = 'chat.consent.policy.denied',
+    CHAT_CONSENT_AUTO_APPROVED = 'chat.consent.auto.approved',
 }
 
 const BaseAuditEventProps = {
@@ -493,6 +494,7 @@ const ChatConsentEventData = z.object({
     effectKinds: z.array(z.string()).optional(),
     targetName: z.string().optional(),
     remembered: z.boolean().optional(),
+    reason: z.string().optional(),
 })
 
 export const ChatConsentEvent = z.object({
@@ -503,6 +505,7 @@ export const ChatConsentEvent = z.object({
         z.literal(ApplicationEventName.CHAT_CONSENT_GRANTED),
         z.literal(ApplicationEventName.CHAT_CONSENT_DECLINED),
         z.literal(ApplicationEventName.CHAT_CONSENT_POLICY_DENIED),
+        z.literal(ApplicationEventName.CHAT_CONSENT_AUTO_APPROVED),
     ]),
     data: ChatConsentEventData,
 })
@@ -607,6 +610,8 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Declined ${describeConsentSubject(event)} in chat`
         case ApplicationEventName.CHAT_CONSENT_POLICY_DENIED:
             return `Workspace policy blocked ${describeConsentSubject(event)} in chat`
+        case ApplicationEventName.CHAT_CONSENT_AUTO_APPROVED:
+            return `Auto mode approved ${describeConsentSubject(event)} in chat${isNil(event.data.reason) ? '' : ` — ${event.data.reason}`}`
     }
 }
 

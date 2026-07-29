@@ -81,6 +81,8 @@ export type ActionReceiptEvent = {
     output: unknown
     errorMessage?: string
     timestamp: string
+    autoApproved?: boolean
+    autoReason?: string
 }
 
 export type ImageGeneratedEvent = {
