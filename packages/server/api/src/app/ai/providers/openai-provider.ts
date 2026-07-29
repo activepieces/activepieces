@@ -3,6 +3,16 @@ import { AIProviderModel, AIProviderModelType, OpenAIProviderAuthConfig, OpenAIP
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
+/**
+ * Returns true for any OpenAI model whose primary capability is image
+ * generation. We match on well-established OpenAI naming prefixes rather
+ * than a hardcoded allowlist so that future variants (e.g. gpt-image-2,
+ * dall-e-4) are classified correctly without a code change.
+ */
+function isOpenAIImageModel(modelId: string): boolean {
+    return modelId.startsWith('gpt-image-') || modelId.startsWith('dall-e-')
+}
+
 export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAIProviderConfig> = {
     name: 'OpenAI',
     async validateConnection(authConfig: OpenAIProviderAuthConfig, config: OpenAIProviderConfig, _log: FastifyBaseLogger): Promise<void> {
@@ -20,16 +30,10 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAI
 
         const { data } = res.body
 
-        const openaiImageModels = [
-            'gpt-image-1',
-            'dall-e-3',
-            'dall-e-2',
-        ]
-
         return data.map((model: OpenAIModel) => ({
             id: model.id,
             name: model.id,
-            type: openaiImageModels.includes(model.id) ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
+            type: isOpenAIImageModel(model.id) ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
         }))
     },
 }
