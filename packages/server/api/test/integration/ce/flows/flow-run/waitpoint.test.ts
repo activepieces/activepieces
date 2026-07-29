@@ -2,6 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
+import * as systemJobModule from '../../../../../src/app/helper/system-jobs/system-job'
 import { WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -10,6 +11,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpe
 
 let app: FastifyInstance
 let ctx: TestContext
+const originalSystemJobsSchedule = systemJobModule.systemJobsSchedule
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -21,6 +23,10 @@ afterAll(async () => {
 
 beforeEach(async () => {
     ctx = await createTestContext(app)
+})
+
+afterEach(() => {
+    vi.restoreAllMocks()
 })
 
 async function createFlowRun(params?: { status?: FlowRunStatus }) {
@@ -142,6 +148,31 @@ describe('Waitpoint service', () => {
             expect(new Date(result.waitpoint.resumeDateTime!).toISOString()).toBe(resumeAt)
             expect(result.waitpoint.workerHandlerId).toBe('server-1')
             expect(result.waitpoint.httpRequestId).toBe('reply-1')
+        })
+
+        it('should reschedule the resume job when a DELAY pause is retried after the row exists', async () => {
+            const { flowRun } = await createFlowRun()
+            const pauseParams = {
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'delay_step',
+                type: PauseType.DELAY,
+                resumeDateTime: new Date(Date.now() + 60000).toISOString(),
+            }
+            const upsertJobSpy = vi.fn()
+            vi.spyOn(systemJobModule, 'systemJobsSchedule').mockImplementation((log) => ({
+                ...originalSystemJobsSchedule(log),
+                upsertJob: upsertJobSpy,
+            }))
+
+            const first = await waitpointService(app.log).createForPause(pauseParams)
+            const retried = await waitpointService(app.log).createForPause(pauseParams)
+
+            expect(first.inserted).toBe(true)
+            expect(retried.inserted).toBe(false)
+            expect(retried.waitpoint.id).toBe(first.waitpoint.id)
+            expect(upsertJobSpy).toHaveBeenCalledTimes(2)
+            expect(upsertJobSpy.mock.calls[1][0].job.data.waitpointId).toBe(first.waitpoint.id)
         })
 
         it('should correctly map WEBHOOK pause fields', async () => {
