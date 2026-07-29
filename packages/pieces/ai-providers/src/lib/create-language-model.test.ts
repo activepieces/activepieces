@@ -96,3 +96,43 @@ describe('buildOpenAICompatibleHeaders', () => {
         expect(headers['authorization']).toBe('secret')
     })
 })
+
+describe('resolved endpoint, credentials and headers', () => {
+    type ResolvedConfig = {
+        url: (opts: { path: string, modelId: string }) => string
+        headers: (() => Record<string, string>) | Record<string, string>
+    }
+
+    const configOf = (model: unknown): ResolvedConfig => (model as { config: ResolvedConfig }).config
+    const headersOf = (cfg: ResolvedConfig): Record<string, string> => (typeof cfg.headers === 'function' ? cfg.headers() : cfg.headers)
+    const urlOf = (cfg: ResolvedConfig): string => cfg.url({ path: '/chat/completions', modelId: 'm' })
+
+    it('sends OpenAI to the OpenAI endpoint with a bearer credential', () => {
+        const cfg = configOf(createLanguageModel({ provider: AIProviderName.OPENAI, auth: { apiKey: 'SECRET' }, config: {}, modelId: 'm' }))
+        expect(urlOf(cfg)).toContain('https://api.openai.com')
+        expect(headersOf(cfg)['authorization']).toBe('Bearer SECRET')
+    })
+
+    it('encodes the Azure resource name and api version into the URL', () => {
+        const cfg = configOf(createLanguageModel({ provider: AIProviderName.AZURE, auth: { apiKey: 'SECRET' }, config: { resourceName: 'myres', apiVersion: '2024-08-01' }, modelId: 'm' }))
+        const url = urlOf(cfg)
+        expect(url).toContain('myres')
+        expect(url).toContain('api-version=2024-08-01')
+        expect(headersOf(cfg)['api-key']).toBe('SECRET')
+    })
+
+    it('points Custom at its base URL and applies header precedence end to end', () => {
+        const cfg = configOf(createLanguageModel({
+            provider: AIProviderName.CUSTOM,
+            auth: { apiKey: 'SECRET' },
+            config: { apiKeyHeader: 'x-api-key', baseUrl: 'https://custom.test/v1', defaultHeaders: { 'x-shared': 'from-default' }, models: [] },
+            modelId: 'm',
+            options: { extraHeaders: { 'x-ap-project-id': 'proj', 'x-shared': 'from-extra' } },
+        }))
+        expect(urlOf(cfg)).toBe('https://custom.test/v1/chat/completions')
+        const headers = headersOf(cfg)
+        expect(headers['x-api-key']).toBe('SECRET')
+        expect(headers['x-ap-project-id']).toBe('proj')
+        expect(headers['x-shared']).toBe('from-default')
+    })
+})
