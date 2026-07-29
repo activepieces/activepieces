@@ -17,6 +17,7 @@ Flows that already contain an agent step keep their configuration — the step i
 ### Do you need to take action?
 - Only if you run Community or standard Cloud **and** have flows that use the Run Agent step. Those steps stop executing on upgrade. Either move the platform to a plan that includes agents, or replace the step — the **Ask AI** / **Extract Structured Data** actions in the same AI piece cover many single-shot use cases and are not gated.
 - To check before upgrading, search your flows for the `run_agent` action of the `@activepieces/piece-ai` piece.
+- **Cloud platforms with an already-persisted plan row keep agent access until their plan is next reconciled.** Changing the default only affects platforms that fall back to it; an existing `platform_plan` row with `agentsEnabled: true` is returned as stored. Self-hosted Community platforms are affected immediately.
 
 ## 0.86.0
 
