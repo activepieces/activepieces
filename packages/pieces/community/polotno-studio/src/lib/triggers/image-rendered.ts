@@ -1,4 +1,4 @@
-import { SAMPLE_IMAGE_RENDER } from '../common/sample-data';
+import { sampleRenders } from '../common/sample-data';
 import { createRenderTrigger } from './webhook-factory';
 
 export const imageRendered = createRenderTrigger({
@@ -8,5 +8,5 @@ export const imageRendered = createRenderTrigger({
   aiDescription:
     'Fires when a Polotno Studio image render completes successfully, providing the finished render including its download URL. Use it to react to images rendered anywhere in the project, including renders started outside this flow.',
   events: ['image.completed'],
-  sampleData: SAMPLE_IMAGE_RENDER,
+  sampleData: sampleRenders.SAMPLE_IMAGE_RENDER,
 });

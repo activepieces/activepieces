@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { FieldDef } from '../types';
-import { toFlatFields } from '../flat-fields';
+import type { FieldDef } from './types';
+import { toFlatFields } from './flat-fields';
 
 const def = ({ key, type }: { key: string; type: FieldDef['type'] }): FieldDef => ({
   key,

@@ -1,4 +1,4 @@
-export const SAMPLE_IMAGE_RENDER = {
+const SAMPLE_IMAGE_RENDER = {
   id: 'img_9k2j3h4g5f6d7s8a',
   object: 'image',
   status: 'completed',
@@ -26,7 +26,7 @@ export const SAMPLE_IMAGE_RENDER = {
   expires_at: '2026-08-03T10:00:04.000Z',
 };
 
-export const SAMPLE_VIDEO_RENDER = {
+const SAMPLE_VIDEO_RENDER = {
   id: 'vid_1a2b3c4d5e6f7g8h',
   object: 'video',
   status: 'completed',
@@ -57,7 +57,7 @@ export const SAMPLE_VIDEO_RENDER = {
   expires_at: '2026-08-03T10:00:41.000Z',
 };
 
-export const SAMPLE_FAILED_RENDER = {
+const SAMPLE_FAILED_RENDER = {
   ...SAMPLE_IMAGE_RENDER,
   id: 'img_0f9e8d7c6b5a4321',
   status: 'failed',
@@ -71,3 +71,5 @@ export const SAMPLE_FAILED_RENDER = {
   submitted_at: '2026-07-27T10:00:00.150Z',
   completed_at: '2026-07-27T10:00:03.000Z',
 };
+
+export const sampleRenders = { SAMPLE_IMAGE_RENDER, SAMPLE_VIDEO_RENDER, SAMPLE_FAILED_RENDER };

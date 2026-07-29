@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { PolotnoClient } from '../client';
-import type { RenderLike, RenderStatus } from '../types';
-import { pollUntilTerminal } from '../poll';
+import type { PolotnoClient } from './client';
+import type { RenderLike, RenderStatus } from './types';
+import { pollUntilTerminal } from './poll';
 
 const render = (status: RenderStatus): RenderLike => ({ id: 'img_1', object: 'image', status });
 

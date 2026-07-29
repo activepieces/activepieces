@@ -3,23 +3,14 @@ import { TriggerStrategy, createTrigger, tryCatch } from '@activepieces/pieces-f
 import { polotnoStudioAuth } from '../auth';
 import { createClient } from '../common/client';
 import { readEventEnvelopeObject } from '../common/event-envelope';
-import { findHeader, verifyWebhookSignature } from '../common/signature';
+import { signatureUtils } from '../common/signature';
 import type { RenderEventObject, WebhookSubscription } from '../common/types';
-
-export interface DeliveryParams {
-  rawBody: unknown;
-  body: unknown;
-  headers: Record<string, string>;
-  secret: string | undefined;
-  events: string[];
-  now?: number;
-}
 
 export function handleWebhookDelivery(params: DeliveryParams): RenderEventObject[] {
   if (!params.secret) return [];
 
-  const signature = findHeader({ headers: params.headers, name: 'x-signature' });
-  const verification = verifyWebhookSignature({
+  const signature = signatureUtils.findHeader({ headers: params.headers, name: 'x-signature' });
+  const verification = signatureUtils.verifyWebhookSignature({
     header: signature,
     rawBody: params.rawBody,
     secret: params.secret,
@@ -27,22 +18,13 @@ export function handleWebhookDelivery(params: DeliveryParams): RenderEventObject
   });
   if (!verification.ok) return [];
 
-  const eventType = findHeader({ headers: params.headers, name: 'x-event-type' });
+  const eventType = signatureUtils.findHeader({ headers: params.headers, name: 'x-event-type' });
   if (!eventType || !params.events.includes(eventType)) return [];
 
   const object = readEventEnvelopeObject(params.body);
   if (!object) return [];
 
   return [object];
-}
-
-interface RenderTriggerConfig {
-  name: string;
-  displayName: string;
-  description: string;
-  aiDescription: string;
-  events: string[];
-  sampleData: unknown;
 }
 
 export function createRenderTrigger(config: RenderTriggerConfig) {
@@ -98,4 +80,22 @@ export function createRenderTrigger(config: RenderTriggerConfig) {
       });
     },
   });
+}
+
+export interface DeliveryParams {
+  rawBody: unknown;
+  body: unknown;
+  headers: Record<string, string>;
+  secret: string | undefined;
+  events: string[];
+  now?: number;
+}
+
+interface RenderTriggerConfig {
+  name: string;
+  displayName: string;
+  description: string;
+  aiDescription: string;
+  events: string[];
+  sampleData: unknown;
 }

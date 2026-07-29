@@ -1,4 +1,4 @@
-import { SAMPLE_VIDEO_RENDER } from '../common/sample-data';
+import { sampleRenders } from '../common/sample-data';
 import { createRenderTrigger } from './webhook-factory';
 
 export const videoRendered = createRenderTrigger({
@@ -8,5 +8,5 @@ export const videoRendered = createRenderTrigger({
   aiDescription:
     'Fires when a Polotno Studio video render completes successfully, providing the finished render including its video and thumbnail URLs. Use it to react to videos rendered anywhere in the project, including renders started outside this flow.',
   events: ['video.completed'],
-  sampleData: SAMPLE_VIDEO_RENDER,
+  sampleData: sampleRenders.SAMPLE_VIDEO_RENDER,
 });

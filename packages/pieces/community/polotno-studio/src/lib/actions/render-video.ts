@@ -1,17 +1,10 @@
 import { ExecutionType, Property, createAction } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from '../auth';
 import { createClient } from '../common/client';
-import { DEFAULT_MAX_WAIT_SECONDS, VIDEO_FORMATS } from '../common/constants';
+import { polotnoConstants } from '../common/constants';
 import { toFlatFields } from '../common/flat-fields';
-import {
-  dynamicFieldsProp,
-  maxWaitSecondsProp,
-  metadataProp,
-  templateIdProp,
-  textOverflowProp,
-  waitForCompletionProp,
-} from '../common/props';
-import { executeRender, readResumedRender } from '../common/render';
+import { sharedProps } from '../common/props';
+import { renderFlow } from '../common/render';
 import type { FieldDef } from '../common/types';
 
 export const renderVideo = createAction({
@@ -26,13 +19,13 @@ export const renderVideo = createAction({
     idempotent: false,
   },
   props: {
-    template_id: templateIdProp,
-    dynamic_fields: dynamicFieldsProp,
+    template_id: sharedProps.templateIdProp,
+    dynamic_fields: sharedProps.dynamicFieldsProp,
     format: Property.StaticDropdown<string>({
       displayName: 'Format',
       required: false,
       defaultValue: 'mp4',
-      options: { options: VIDEO_FORMATS.map((f) => ({ label: f.toUpperCase(), value: f })) },
+      options: { options: polotnoConstants.VIDEO_FORMATS.map((f) => ({ label: f.toUpperCase(), value: f })) },
     }),
     fps: Property.Number({
       displayName: 'Frames Per Second',
@@ -44,14 +37,14 @@ export const renderVideo = createAction({
       description: '1 to 600. Each second costs one credit.',
       required: false,
     }),
-    text_overflow: textOverflowProp,
-    metadata: metadataProp,
-    wait_for_completion: waitForCompletionProp,
-    max_wait_seconds: maxWaitSecondsProp,
+    text_overflow: sharedProps.textOverflowProp,
+    metadata: sharedProps.metadataProp,
+    wait_for_completion: sharedProps.waitForCompletionProp,
+    max_wait_seconds: sharedProps.maxWaitSecondsProp,
   },
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
-      return readResumedRender(context.resumePayload);
+      return renderFlow.readResumedRender(context.resumePayload);
     }
 
     const client = createClient({ apiKey: context.auth.secret_text });
@@ -70,13 +63,13 @@ export const renderVideo = createAction({
     if (props.text_overflow) body['text_overflow'] = props.text_overflow;
     if (props.metadata && Object.keys(props.metadata).length > 0) body['metadata'] = props.metadata;
 
-    return executeRender({
+    return renderFlow.executeRender({
       client,
       kind: 'videos',
       body,
       idempotencyKey: `${context.run.id}:${context.step.name}`,
       waitForCompletion: props.wait_for_completion !== false,
-      maxWaitSeconds: props.max_wait_seconds ?? DEFAULT_MAX_WAIT_SECONDS,
+      maxWaitSeconds: props.max_wait_seconds ?? polotnoConstants.DEFAULT_MAX_WAIT_SECONDS,
       createWaitpoint: (waitpointParams) => context.run.createWaitpoint(waitpointParams),
       waitForWaitpoint: (waitpointId) => context.run.waitForWaitpoint(waitpointId),
     });

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { PolotnoClient } from '../client';
-import { executeRender, readResumedRender } from '../render';
+import type { PolotnoClient } from './client';
+import { renderFlow } from './render';
 
 function clientOf(request: ReturnType<typeof vi.fn>): PolotnoClient {
   return { request };
@@ -29,7 +29,7 @@ describe('executeRender (BEGIN)', () => {
     const { client: c, request } = client();
     const createWaitpoint = vi.fn();
 
-    const result = await executeRender({
+    const result = await renderFlow.executeRender({
       ...base, client: c, waitForCompletion: false, createWaitpoint, waitForWaitpoint: vi.fn(),
     });
 
@@ -42,7 +42,7 @@ describe('executeRender (BEGIN)', () => {
     const { client: c, request } = client();
     const waitForWaitpoint = vi.fn();
 
-    await executeRender({
+    await renderFlow.executeRender({
       ...base, client: c, waitForCompletion: true,
       createWaitpoint: vi.fn().mockResolvedValue(waitpoint()), waitForWaitpoint,
     });
@@ -55,7 +55,7 @@ describe('executeRender (BEGIN)', () => {
     const request = vi.fn().mockResolvedValue({ id: 'img_1', object: 'image', status: 'completed' });
     const waitForWaitpoint = vi.fn();
 
-    const result = await executeRender({
+    const result = await renderFlow.executeRender({
       ...base, client: clientOf(request), waitForCompletion: true,
       createWaitpoint: vi.fn().mockResolvedValue(waitpoint()), waitForWaitpoint,
     });
@@ -72,7 +72,7 @@ describe('executeRender (BEGIN)', () => {
     const waitForWaitpoint = vi.fn();
     const privateWaitpoint = { ...waitpoint(), buildResumeUrl: () => 'https://192.168.1.5/api/v1/resume/wp_1' };
 
-    const result = await executeRender({
+    const result = await renderFlow.executeRender({
       ...base, client: clientOf(request), waitForCompletion: true,
       createWaitpoint: vi.fn().mockResolvedValue(privateWaitpoint), waitForWaitpoint,
       sleep: vi.fn().mockResolvedValue(undefined),
@@ -89,7 +89,7 @@ describe('executeRender (BEGIN)', () => {
     const request = vi.fn().mockResolvedValue({ id: 'vid_1', object: 'video', status: 'completed' });
     const privateWaitpoint = { ...waitpoint(), buildResumeUrl: () => 'http://localhost/api/v1/resume/wp_1' };
 
-    await executeRender({
+    await renderFlow.executeRender({
       ...base, kind: 'videos', client: clientOf(request), waitForCompletion: true,
       createWaitpoint: vi.fn().mockResolvedValue(privateWaitpoint), waitForWaitpoint: vi.fn(),
     });
@@ -102,7 +102,7 @@ describe('executeRender (BEGIN)', () => {
     let clock = 0;
     const privateWaitpoint = { ...waitpoint(), buildResumeUrl: () => 'https://127.0.0.1/api/v1/resume/wp_1' };
 
-    const result = await executeRender({
+    const result = await renderFlow.executeRender({
       ...base, client: clientOf(request), waitForCompletion: true, maxWaitSeconds: 1,
       createWaitpoint: vi.fn().mockResolvedValue(privateWaitpoint), waitForWaitpoint: vi.fn(),
       sleep: vi.fn().mockResolvedValue(undefined), now: () => (clock += 1_000),
@@ -114,20 +114,20 @@ describe('executeRender (BEGIN)', () => {
 
   it('sends the idempotency key', async () => {
     const { client: c, request } = client();
-    await executeRender({ ...base, client: c, waitForCompletion: false, createWaitpoint: vi.fn(), waitForWaitpoint: vi.fn() });
+    await renderFlow.executeRender({ ...base, client: c, waitForCompletion: false, createWaitpoint: vi.fn(), waitForWaitpoint: vi.fn() });
     expect(request.mock.calls[0][0].headers).toEqual({ 'Idempotency-Key': 'run_1:step_1' });
   });
 });
 
 describe('readResumedRender', () => {
   it('extracts the render from the callback envelope', () => {
-    const result = readResumedRender({
+    const result = renderFlow.readResumedRender({
       body: { id: 'evt_1', type: 'image.completed', data: { object: { id: 'img_1', status: 'completed' } } },
     });
     expect(result).toEqual({ id: 'img_1', status: 'completed', timed_out: false });
   });
 
   it('throws on an unrecognised callback', () => {
-    expect(() => readResumedRender({ body: { hello: 'world' } })).toThrow(/unrecognised callback/i);
+    expect(() => renderFlow.readResumedRender({ body: { hello: 'world' } })).toThrow(/unrecognised callback/i);
   });
 });

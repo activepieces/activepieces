@@ -1,8 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from '../auth';
 import { createClient } from '../common/client';
-import { DEFAULT_MAX_TEMPLATE_RESULTS, MAX_TEMPLATE_RESULTS } from '../common/constants';
-import { fetchAllTemplates } from '../common/props';
+import { polotnoConstants } from '../common/constants';
+import { sharedProps } from '../common/props';
 
 export const findTemplates = createAction({
   auth: polotnoStudioAuth,
@@ -31,21 +31,21 @@ export const findTemplates = createAction({
     }),
     max_results: Property.Number({
       displayName: 'Max Results',
-      description: `Stop after this many templates. Maximum ${MAX_TEMPLATE_RESULTS}.`,
+      description: `Stop after this many templates. Maximum ${polotnoConstants.MAX_TEMPLATE_RESULTS}.`,
       required: false,
-      defaultValue: DEFAULT_MAX_TEMPLATE_RESULTS,
+      defaultValue: polotnoConstants.DEFAULT_MAX_TEMPLATE_RESULTS,
     }),
   },
   async run(context) {
     const client = createClient({ apiKey: context.auth.secret_text });
     const props = context.propsValue;
-    return fetchAllTemplates({
+    return sharedProps.fetchAllTemplates({
       client,
       filters: {
         ...(props.name ? { name: props.name } : {}),
         ...(props.tag ? { tag: props.tag } : {}),
         ...(props.archived === true ? { archived: true } : {}),
-        maxResults: props.max_results ?? DEFAULT_MAX_TEMPLATE_RESULTS,
+        maxResults: props.max_results ?? polotnoConstants.DEFAULT_MAX_TEMPLATE_RESULTS,
       },
     });
   },

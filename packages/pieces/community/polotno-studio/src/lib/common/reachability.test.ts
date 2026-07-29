@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isPubliclyReachable } from '../reachability';
+import { isPubliclyReachable } from './reachability';
 
 describe('isPubliclyReachable', () => {
   it.each([

@@ -1,17 +1,11 @@
 import { type InputPropertyMap, Property, tryCatch } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from '../auth';
-import type { PolotnoClient } from './client';
-import {
-  DEFAULT_MAX_TEMPLATE_RESULTS,
-  DEFAULT_MAX_WAIT_SECONDS,
-  MAX_TEMPLATE_RESULTS,
-  TEMPLATE_PAGE_SIZE,
-  TEXT_OVERFLOW_MODES,
-} from './constants';
 import { createClient } from './client';
+import type { PolotnoClient } from './client';
+import { polotnoConstants } from './constants';
 import type { FieldDef, TemplateSummary } from './types';
 
-export function fieldsToProps(fields: FieldDef[]): InputPropertyMap {
+function fieldsToProps(fields: FieldDef[]): InputPropertyMap {
   const props: InputPropertyMap = {};
   for (const field of fields) {
     const base = {
@@ -49,25 +43,10 @@ export function fieldsToProps(fields: FieldDef[]): InputPropertyMap {
   return props;
 }
 
-export interface TemplateFilters {
-  name?: string;
-  tag?: string;
-  archived?: boolean;
-  maxResults?: number;
-}
-
-export interface FetchAllTemplatesParams {
-  client: PolotnoClient;
-  filters?: TemplateFilters;
-}
-
-export async function fetchAllTemplates({
-  client,
-  filters = {},
-}: FetchAllTemplatesParams): Promise<TemplateSummary[]> {
+async function fetchAllTemplates({ client, filters = {} }: FetchAllTemplatesParams): Promise<TemplateSummary[]> {
   const limit = Math.max(
     1,
-    Math.min(filters.maxResults ?? DEFAULT_MAX_TEMPLATE_RESULTS, MAX_TEMPLATE_RESULTS),
+    Math.min(filters.maxResults ?? polotnoConstants.DEFAULT_MAX_TEMPLATE_RESULTS, polotnoConstants.MAX_TEMPLATE_RESULTS),
   );
   const items: TemplateSummary[] = [];
   let cursor: string | undefined;
@@ -75,7 +54,7 @@ export async function fetchAllTemplates({
   do {
     const queryParams: Record<string, string> = {
       omit_design: 'true',
-      limit: String(Math.min(TEMPLATE_PAGE_SIZE, limit - items.length)),
+      limit: String(Math.min(polotnoConstants.TEMPLATE_PAGE_SIZE, limit - items.length)),
     };
     if (filters.name) queryParams['name'] = filters.name;
     if (filters.tag) queryParams['tag'] = filters.tag;
@@ -93,7 +72,7 @@ export async function fetchAllTemplates({
   return items.slice(0, limit);
 }
 
-export const templateIdProp = Property.Dropdown({
+const templateIdProp = Property.Dropdown({
   auth: polotnoStudioAuth,
   displayName: 'Template',
   description: 'The Polotno Studio template to render.',
@@ -109,7 +88,7 @@ export const templateIdProp = Property.Dropdown({
       return fetchAllTemplates({
         client,
         filters: {
-          maxResults: MAX_TEMPLATE_RESULTS,
+          maxResults: polotnoConstants.MAX_TEMPLATE_RESULTS,
           ...(ctx.searchValue ? { name: ctx.searchValue } : {}),
         },
       });
@@ -128,7 +107,7 @@ export const templateIdProp = Property.Dropdown({
   },
 });
 
-export const dynamicFieldsProp = Property.DynamicProperties({
+const dynamicFieldsProp = Property.DynamicProperties({
   auth: polotnoStudioAuth,
   displayName: 'Template Fields',
   description: 'Values for the editable fields defined on the selected template.',
@@ -144,7 +123,7 @@ export const dynamicFieldsProp = Property.DynamicProperties({
   },
 });
 
-export const waitForCompletionProp = Property.Checkbox({
+const waitForCompletionProp = Property.Checkbox({
   displayName: 'Wait for Completion',
   description:
     'Pause the flow until the render finishes, then continue with the finished render. Turn this off to continue immediately with a pending render.',
@@ -152,28 +131,51 @@ export const waitForCompletionProp = Property.Checkbox({
   defaultValue: true,
 });
 
-export const maxWaitSecondsProp = Property.Number({
+const maxWaitSecondsProp = Property.Number({
   displayName: 'Max Wait (seconds)',
   description:
     'Only used when this Activepieces instance is not reachable at a public https address, in which case the render is polled instead of waited on. Keep it well below your instance flow timeout.',
   required: false,
-  defaultValue: DEFAULT_MAX_WAIT_SECONDS,
+  defaultValue: polotnoConstants.DEFAULT_MAX_WAIT_SECONDS,
 });
 
-export const metadataProp = Property.Object({
+const metadataProp = Property.Object({
   displayName: 'Metadata',
   description: 'Arbitrary key/value data stored on the render and echoed back in webhooks.',
   required: false,
 });
 
-export const textOverflowProp = Property.StaticDropdown<string>({
+const textOverflowProp = Property.StaticDropdown<string>({
   displayName: 'Text Overflow',
   description: 'How text that does not fit its box is handled.',
   required: false,
   options: {
-    options: TEXT_OVERFLOW_MODES.map((mode) => ({
+    options: polotnoConstants.TEXT_OVERFLOW_MODES.map((mode) => ({
       label: mode.charAt(0).toUpperCase() + mode.slice(1),
       value: mode,
     })),
   },
 });
+
+export const sharedProps = {
+  fieldsToProps,
+  fetchAllTemplates,
+  templateIdProp,
+  dynamicFieldsProp,
+  waitForCompletionProp,
+  maxWaitSecondsProp,
+  metadataProp,
+  textOverflowProp,
+};
+
+export interface TemplateFilters {
+  name?: string;
+  tag?: string;
+  archived?: boolean;
+  maxResults?: number;
+}
+
+export interface FetchAllTemplatesParams {
+  client: PolotnoClient;
+  filters?: TemplateFilters;
+}

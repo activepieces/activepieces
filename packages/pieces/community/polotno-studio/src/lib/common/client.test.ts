@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
-import { createClient } from '../client';
-import { RETRY_AFTER_CAP_SECONDS } from '../constants';
+import { createClient } from './client';
+import { polotnoConstants } from './constants';
 
 const ok = (body: unknown) => ({ status: 200, body, headers: {} });
 
@@ -50,7 +50,7 @@ describe('createClient', () => {
     expect(delays).toHaveLength(2);
     expect(delays[1]).toBeGreaterThan(delays[0]);
     for (const delay of delays) {
-      expect(delay).toBeLessThanOrEqual(RETRY_AFTER_CAP_SECONDS * 1_000);
+      expect(delay).toBeLessThanOrEqual(polotnoConstants.RETRY_AFTER_CAP_SECONDS * 1_000);
     }
   });
 

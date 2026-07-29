@@ -1,16 +1,19 @@
 import { HttpError } from '@activepieces/pieces-common';
 
-interface ErrorEnvelope {
-  type: string;
-  code: string;
-  message: string;
-  param?: string;
-  request_id?: string;
+function toFriendlyMessage({ status, body }: ToFriendlyMessageParams): string {
+  const env = readEnvelope(body);
+  if (!env) return `Polotno Studio API error (HTTP ${status}).`;
+  const base = FRIENDLY[env.code] ?? env.message;
+  const param = env.param ? ` (field: ${env.param})` : '';
+  const rid = env.request_id ? ` [request ${env.request_id}]` : '';
+  return `${base}${param}${rid}`;
 }
 
-interface ToFriendlyMessageParams {
-  status: number;
-  body: unknown;
+function toFriendlyError(err: unknown): Error {
+  if (err instanceof HttpError) {
+    return new Error(toFriendlyMessage({ status: err.response.status, body: err.response.body }));
+  }
+  return err instanceof Error ? err : new Error(String(err));
 }
 
 function readEnvelope(body: unknown): ErrorEnvelope | undefined {
@@ -43,18 +46,17 @@ const FRIENDLY: Record<string, string> = {
   unknown_dynamic_field: 'The template has no dynamic field with that name.',
 };
 
-export function toFriendlyMessage({ status, body }: ToFriendlyMessageParams): string {
-  const env = readEnvelope(body);
-  if (!env) return `Polotno Studio API error (HTTP ${status}).`;
-  const base = FRIENDLY[env.code] ?? env.message;
-  const param = env.param ? ` (field: ${env.param})` : '';
-  const rid = env.request_id ? ` [request ${env.request_id}]` : '';
-  return `${base}${param}${rid}`;
+export const errorUtils = { toFriendlyMessage, toFriendlyError };
+
+interface ErrorEnvelope {
+  type: string;
+  code: string;
+  message: string;
+  param?: string;
+  request_id?: string;
 }
 
-export function toFriendlyError(err: unknown): Error {
-  if (err instanceof HttpError) {
-    return new Error(toFriendlyMessage({ status: err.response.status, body: err.response.body }));
-  }
-  return err instanceof Error ? err : new Error(String(err));
+interface ToFriendlyMessageParams {
+  status: number;
+  body: unknown;
 }

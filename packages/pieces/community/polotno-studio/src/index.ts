@@ -7,7 +7,7 @@ import { getTemplate } from './lib/actions/get-template';
 import { getVideo } from './lib/actions/get-video';
 import { renderImage } from './lib/actions/render-image';
 import { renderVideo } from './lib/actions/render-video';
-import { BASE_URL } from './lib/common/constants';
+import { polotnoConstants } from './lib/common/constants';
 import { imageRendered } from './lib/triggers/image-rendered';
 import { renderFailed } from './lib/triggers/render-failed';
 import { videoRendered } from './lib/triggers/video-rendered';
@@ -29,7 +29,7 @@ export const polotnoStudio = createPiece({
     getTemplate,
     createCustomApiCallAction({
       auth: polotnoStudioAuth,
-      baseUrl: () => BASE_URL,
+      baseUrl: () => polotnoConstants.BASE_URL,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),

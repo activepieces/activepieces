@@ -3,11 +3,11 @@ import { AppConnectionType, createMockActionContext } from '@activepieces/pieces
 
 const { request } = vi.hoisted(() => ({ request: vi.fn() }));
 
-vi.mock('../../common/client', () => ({
+vi.mock('../common/client', () => ({
   createClient: () => ({ request }),
 }));
 
-import { getTemplate } from '../get-template';
+import { getTemplate } from './get-template';
 
 const fullTemplate = {
   id: 'tpl_1',

@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { polotnoStudioAuth } from '../auth';
 import { createClient } from '../common/client';
-import { templateIdProp } from '../common/props';
+import { sharedProps } from '../common/props';
 import type { Template } from '../common/types';
 
 export const getTemplate = createAction({
@@ -16,7 +16,7 @@ export const getTemplate = createAction({
     idempotent: true,
   },
   props: {
-    template_id: { ...templateIdProp, description: 'The template to look up.' },
+    template_id: { ...sharedProps.templateIdProp, description: 'The template to look up.' },
     omit_design: Property.Checkbox({
       displayName: 'Omit Design',
       description: 'Leave on to exclude the full design JSON, which can be several megabytes.',

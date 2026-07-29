@@ -1,22 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-export const REPLAY_TOLERANCE_SECONDS = 300;
-
-export type VerifyResult =
-  | { ok: true }
-  | {
-      ok: false;
-      reason: 'missing_header' | 'malformed_header' | 'bad_signature' | 'stale_timestamp' | 'unusable_raw_body';
-    };
-
-export interface VerifyWebhookSignatureParams {
-  header: string | undefined;
-  rawBody: unknown;
-  secret: string;
-  nowSeconds?: number;
-}
-
-export function verifyWebhookSignature({
+function verifyWebhookSignature({
   header,
   rawBody,
   secret,
@@ -54,15 +38,33 @@ export function verifyWebhookSignature({
   return { ok: true };
 }
 
-export interface FindHeaderParams {
-  headers: Record<string, string>;
-  name: string;
-}
-
-export function findHeader({ headers, name }: FindHeaderParams): string | undefined {
+function findHeader({ headers, name }: FindHeaderParams): string | undefined {
   const target = name.toLowerCase();
   for (const [key, value] of Object.entries(headers)) {
     if (key.toLowerCase() === target) return value;
   }
   return undefined;
+}
+
+const REPLAY_TOLERANCE_SECONDS = 300;
+
+export const signatureUtils = { verifyWebhookSignature, findHeader, REPLAY_TOLERANCE_SECONDS };
+
+export type VerifyResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason: 'missing_header' | 'malformed_header' | 'bad_signature' | 'stale_timestamp' | 'unusable_raw_body';
+    };
+
+export interface VerifyWebhookSignatureParams {
+  header: string | undefined;
+  rawBody: unknown;
+  secret: string;
+  nowSeconds?: number;
+}
+
+export interface FindHeaderParams {
+  headers: Record<string, string>;
+  name: string;
 }

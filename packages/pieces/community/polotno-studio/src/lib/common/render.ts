@@ -1,30 +1,12 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import type { PolotnoClient } from './client';
-import { MAX_MAX_WAIT_SECONDS, isTerminal } from './constants';
+import { polotnoConstants } from './constants';
 import { readEventEnvelopeObject } from './event-envelope';
 import { pollUntilTerminal } from './poll';
 import { isPubliclyReachable } from './reachability';
 import type { RenderKind, RenderLike } from './types';
 
-export interface Waitpoint {
-  id: string;
-  buildResumeUrl: (params: { queryParams: Record<string, string>; sync?: boolean }) => string;
-}
-
-export interface ExecuteRenderParams {
-  client: PolotnoClient;
-  kind: RenderKind;
-  body: Record<string, unknown>;
-  idempotencyKey: string;
-  waitForCompletion: boolean;
-  maxWaitSeconds: number;
-  createWaitpoint: (params: { type: 'WEBHOOK' }) => Promise<Waitpoint>;
-  waitForWaitpoint: (waitpointId: string) => void;
-  sleep?: (ms: number) => Promise<void>;
-  now?: () => number;
-}
-
-export async function executeRender(params: ExecuteRenderParams): Promise<Record<string, unknown>> {
+async function executeRender(params: ExecuteRenderParams): Promise<Record<string, unknown>> {
   const headers = { 'Idempotency-Key': params.idempotencyKey };
 
   if (!params.waitForCompletion) {
@@ -47,7 +29,7 @@ export async function executeRender(params: ExecuteRenderParams): Promise<Record
       body: { ...params.body, webhook_url: resumeUrl },
       headers,
     });
-    if (!isTerminal(render.status)) {
+    if (!polotnoConstants.isTerminal(render.status)) {
       params.waitForWaitpoint(waitpoint.id);
     }
     return { ...render, timed_out: false };
@@ -62,7 +44,7 @@ export async function executeRender(params: ExecuteRenderParams): Promise<Record
     ...(queryParams === undefined ? {} : { queryParams }),
   });
 
-  if (isTerminal(render.status)) {
+  if (polotnoConstants.isTerminal(render.status)) {
     return { ...render, timed_out: false };
   }
 
@@ -70,14 +52,14 @@ export async function executeRender(params: ExecuteRenderParams): Promise<Record
     client: params.client,
     kind: params.kind,
     id: render.id,
-    maxWaitMs: Math.min(params.maxWaitSeconds, MAX_MAX_WAIT_SECONDS) * 1_000,
+    maxWaitMs: Math.min(params.maxWaitSeconds, polotnoConstants.MAX_MAX_WAIT_SECONDS) * 1_000,
     ...(params.sleep === undefined ? {} : { sleep: params.sleep }),
     ...(params.now === undefined ? {} : { now: params.now }),
   });
   return { ...result.render, timed_out: result.timedOut };
 }
 
-export function readResumedRender(resumePayload: { body: unknown }): Record<string, unknown> {
+function readResumedRender(resumePayload: { body: unknown }): Record<string, unknown> {
   const object = readEventEnvelopeObject(resumePayload.body);
   if (!object) {
     throw new Error(
@@ -85,4 +67,24 @@ export function readResumedRender(resumePayload: { body: unknown }): Record<stri
     );
   }
   return { ...object, timed_out: false };
+}
+
+export const renderFlow = { executeRender, readResumedRender };
+
+export interface Waitpoint {
+  id: string;
+  buildResumeUrl: (params: { queryParams: Record<string, string>; sync?: boolean }) => string;
+}
+
+export interface ExecuteRenderParams {
+  client: PolotnoClient;
+  kind: RenderKind;
+  body: Record<string, unknown>;
+  idempotencyKey: string;
+  waitForCompletion: boolean;
+  maxWaitSeconds: number;
+  createWaitpoint: (params: { type: 'WEBHOOK' }) => Promise<Waitpoint>;
+  waitForWaitpoint: (waitpointId: string) => void;
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
 }

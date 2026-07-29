@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { handleWebhookDelivery } from '../../triggers/webhook-factory';
+import { handleWebhookDelivery } from './webhook-factory';
 
 const SECRET = 'whsec_test';
 const OBJECT = { id: 'img_1', object: 'image', status: 'completed' };
