@@ -5,6 +5,19 @@ icon: "hammer"
 ---
 
 
+## 0.87.0
+
+### What has changed?
+
+#### The AI Agent step is now an enterprise feature
+The **Run Agent** step is now gated behind the `agentsEnabled` plan entitlement, alongside the rest of the AI agent surface. It was previously available on Community and on the standard Cloud plan; on both, `agentsEnabled` now defaults to off. Platforms with an enterprise license or a Cloud plan that includes agents are unaffected.
+
+Flows that already contain an agent step keep their configuration — the step is not removed or rewritten — but on a platform without the entitlement it will no longer execute, and the step is hidden from the piece selector when adding new steps.
+
+### Do you need to take action?
+- Only if you run Community or standard Cloud **and** have flows that use the Run Agent step. Those steps stop executing on upgrade. Either move the platform to a plan that includes agents, or replace the step — the **Ask AI** / **Extract Structured Data** actions in the same AI piece cover many single-shot use cases and are not gated.
+- To check before upgrading, search your flows for the `run_agent` action of the `@activepieces/piece-ai` piece.
+
 ## 0.86.0
 
 ### What has changed?

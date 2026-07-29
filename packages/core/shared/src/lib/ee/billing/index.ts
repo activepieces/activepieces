@@ -80,7 +80,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 1,
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     embeddingEnabled: false,
-    agentsEnabled: true,
+    agentsEnabled: false,
     aiProvidersEnabled: false,
     chatEnabled: false,
     workerGroupsEnabled: false,
@@ -107,7 +107,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     embeddingEnabled: false,
-    agentsEnabled: true,
+    agentsEnabled: false,
     aiProvidersEnabled: true,
     chatEnabled: false,
     workerGroupsEnabled: false,
