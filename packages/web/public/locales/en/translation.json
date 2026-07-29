@@ -2299,5 +2299,11 @@
   "Runs routine actions, asks when it matters.": "Runs routine actions, asks when it matters.",
   "Ran on auto": "Ran on auto",
   "Ran on auto — {reason}": "Ran on auto — {reason}",
-  "Chat action approved by auto mode": "Chat action approved by auto mode"
+  "Chat action approved by auto mode": "Chat action approved by auto mode",
+  "Conversation": "Conversation",
+  "Target": "Target",
+  "What it does": "What it does",
+  "Reason": "Reason",
+  "Approval": "Approval",
+  "Reused an earlier approval": "Reused an earlier approval"
 }
