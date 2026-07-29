@@ -1,20 +1,20 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
+import jsep from 'jsep'
 
 export const propertyPath = {
-    // for now we do parsing manually with regex, if we need to make the parsing more rich in the future we can use 'jsep' 
     parse(expression: string): string[] | null {
-        if (!PATH_PATTERN.test(expression)) {
+        const { data: ast } = tryCatchSync(() => jsep(expression))
+        if (isNil(ast)) {
             return null
         }
-        const segments: string[] = []
-        for (const match of expression.matchAll(SEGMENT_PATTERN)) {
-            const segment = extractSegment(match)
-            if (BLOCKED_SEGMENTS.has(segment)) {
-                return null
-            }
-            segments.push(segment)
+        const segments = collectSegments(ast)
+        if (isNil(segments)) {
+            return null
         }
         if (LITERAL_KEYWORDS.has(segments[0])) {
+            return null
+        }
+        if (segments.some((segment) => BLOCKED_SEGMENTS.has(segment))) {
             return null
         }
         return segments
@@ -32,28 +32,56 @@ export const propertyPath = {
     },
 }
 
-function extractSegment(match: RegExpMatchArray): string {
-    const [full, index, singleQuoted, doubleQuoted] = match
-    if (!isNil(index)) {
-        return index
+function collectSegments(node: jsep.Expression): string[] | null {
+    if (isIdentifier(node)) {
+        return [node.name]
     }
-    if (!isNil(singleQuoted)) {
-        return unescapeQuoted(singleQuoted)
+    if (!isMemberExpression(node)) {
+        return null
     }
-    if (!isNil(doubleQuoted)) {
-        return unescapeQuoted(doubleQuoted)
+    const objectSegments = collectSegments(node.object)
+    if (isNil(objectSegments)) {
+        return null
     }
-    return full
+    const key = extractKey(node)
+    if (isNil(key)) {
+        return null
+    }
+    return [...objectSegments, key]
 }
 
-function unescapeQuoted(segment: string): string {
-    return segment.replace(/\\(.)/g, '$1')
+function extractKey(member: jsep.MemberExpression): string | null {
+    if (!member.computed) {
+        return isIdentifier(member.property) ? member.property.name : null
+    }
+    if (!isLiteral(member.property)) {
+        return null
+    }
+    const { value, raw } = member.property
+    if (typeof value === 'number') {
+        return String(value)
+    }
+    if (typeof value !== 'string') {
+        return null
+    }
+    return UNDECODED_ESCAPE.test(raw) ? null : value
 }
 
-const PATH_PATTERN = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\[(?:\d+|'(?:[^'\\]|\\['"\\])*'|"(?:[^"\\]|\\['"\\])*")\])*$/
-const SEGMENT_PATTERN = /\[(\d+)\]|\['((?:[^'\\]|\\['"\\])*)'\]|\["((?:[^"\\]|\\['"\\])*)"\]|[A-Za-z_$][\w$]*/g
+function isIdentifier(node: jsep.Expression): node is jsep.Identifier {
+    return node.type === 'Identifier'
+}
+
+function isMemberExpression(node: jsep.Expression): node is jsep.MemberExpression {
+    return node.type === 'MemberExpression'
+}
+
+function isLiteral(node: jsep.Expression): node is jsep.Literal {
+    return node.type === 'Literal'
+}
+
+const UNDECODED_ESCAPE = /\\[ux0-9\r\n\u2028\u2029]/
 const BLOCKED_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
-const LITERAL_KEYWORDS = new Set(['true', 'false', 'null', 'undefined', 'NaN', 'Infinity'])
+const LITERAL_KEYWORDS = new Set(['undefined', 'NaN', 'Infinity'])
 
 type ResolveValueParams = {
     segments: string[]

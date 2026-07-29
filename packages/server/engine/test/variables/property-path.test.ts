@@ -21,9 +21,17 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('step_1.a1b2')).toEqual(['step_1', 'a1b2'])
         })
 
+        it('parses non-ascii identifiers like real JS', () => {
+            expect(propertyPath.parse('é.b')).toEqual(['é', 'b'])
+        })
+
         it('parses numeric index paths', () => {
             expect(propertyPath.parse('trigger.output.items[0]')).toEqual(['trigger', 'output', 'items', '0'])
             expect(propertyPath.parse('a[123]')).toEqual(['a', '123'])
+        })
+
+        it('parses float indexes to their JS property-key form', () => {
+            expect(propertyPath.parse('a[1.5]')).toEqual(['a', '1.5'])
         })
 
         it('parses chained numeric indexes', () => {
@@ -48,7 +56,7 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('a[\'  spaced  \']')).toEqual(['a', '  spaced  '])
         })
 
-        it('parses quoted keys that look like blocked words only when not exact', () => {
+        it('parses quoted keys that resemble blocked words only when not exact', () => {
             expect(propertyPath.parse('a[\'proto\']')).toEqual(['a', 'proto'])
             expect(propertyPath.parse('a[\'constructor_\']')).toEqual(['a', 'constructor_'])
         })
@@ -63,18 +71,35 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('a["it\'s"]')).toEqual(['a', 'it\'s'])
         })
 
-        it('unescapes escaped quotes inside quoted keys', () => {
+        it('decodes escaped quotes and backslashes inside quoted keys', () => {
             expect(propertyPath.parse('step_1[\'it\\\'s\']')).toEqual(['step_1', 'it\'s'])
             expect(propertyPath.parse('a["say \\"hi\\""]')).toEqual(['a', 'say "hi"'])
+            expect(propertyPath.parse('a[\'b\\\\c\']')).toEqual(['a', 'b\\c'])
         })
 
-        it('unescapes escaped backslashes inside quoted keys', () => {
-            expect(propertyPath.parse('a[\'b\\\\c\']')).toEqual(['a', 'b\\c'])
+        it('decodes single-character escapes like real JS', () => {
+            expect(propertyPath.parse('a[\'line\\nbreak\']')).toEqual(['a', 'line\nbreak'])
+            expect(propertyPath.parse('a[\'tab\\there\']')).toEqual(['a', 'tab\there'])
+            expect(propertyPath.parse('a[\'\\a\']')).toEqual(['a', 'a'])
         })
 
         it('accepts raw control characters inside quoted keys as literals', () => {
             expect(propertyPath.parse('a[\'line\nbreak\']')).toEqual(['a', 'line\nbreak'])
             expect(propertyPath.parse('a[\'tab\there\']')).toEqual(['a', 'tab\there'])
+        })
+
+        it('tolerates whitespace around accessors like real JS', () => {
+            expect(propertyPath.parse(' a')).toEqual(['a'])
+            expect(propertyPath.parse('a ')).toEqual(['a'])
+            expect(propertyPath.parse('a .b')).toEqual(['a', 'b'])
+            expect(propertyPath.parse('a. b')).toEqual(['a', 'b'])
+            expect(propertyPath.parse('a\n.b')).toEqual(['a', 'b'])
+            expect(propertyPath.parse('a [0]')).toEqual(['a', '0'])
+        })
+
+        it('parses optional chaining with plain traversal semantics', () => {
+            expect(propertyPath.parse('a?.b')).toEqual(['a', 'b'])
+            expect(propertyPath.parse('a?.[0]')).toEqual(['a', '0'])
         })
 
         it('parses mixed dot, index and quoted access', () => {
@@ -87,8 +112,8 @@ describe('propertyPath', () => {
 
         it('allows literal keywords as non-root segments', () => {
             expect(propertyPath.parse('a.true')).toEqual(['a', 'true'])
-            expect(propertyPath.parse('a.null.undefined')).toEqual(['a', 'null', 'undefined'])
             expect(propertyPath.parse('a[\'false\']')).toEqual(['a', 'false'])
+            expect(propertyPath.parse('a.undefined')).toEqual(['a', 'undefined'])
         })
     })
 
@@ -128,15 +153,9 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('undefined[0]')).toBeNull()
         })
 
-        it('rejects empty and whitespace-containing input', () => {
+        it('rejects empty input', () => {
             expect(propertyPath.parse('')).toBeNull()
             expect(propertyPath.parse(' ')).toBeNull()
-            expect(propertyPath.parse(' a')).toBeNull()
-            expect(propertyPath.parse('a ')).toBeNull()
-            expect(propertyPath.parse('a .b')).toBeNull()
-            expect(propertyPath.parse('a. b')).toBeNull()
-            expect(propertyPath.parse('a\n.b')).toBeNull()
-            expect(propertyPath.parse('a [0]')).toBeNull()
         })
 
         it('rejects malformed dots', () => {
@@ -151,7 +170,6 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('a[b]')).toBeNull()
             expect(propertyPath.parse('a[b.c]')).toBeNull()
             expect(propertyPath.parse('a[-1]')).toBeNull()
-            expect(propertyPath.parse('a[1.5]')).toBeNull()
             expect(propertyPath.parse('a[01x]')).toBeNull()
             expect(propertyPath.parse('a[\'b\']extra')).toBeNull()
             expect(propertyPath.parse('a[\'b\'')).toBeNull()
@@ -162,29 +180,23 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('a]0[')).toBeNull()
         })
 
-        it('rejects identifiers with a leading digit or invalid characters', () => {
+        it('rejects identifiers with a leading digit or operator characters', () => {
             expect(propertyPath.parse('1a')).toBeNull()
             expect(propertyPath.parse('a.1b')).toBeNull()
             expect(propertyPath.parse('a-b')).toBeNull()
             expect(propertyPath.parse('a.b-c')).toBeNull()
-            expect(propertyPath.parse('é.b')).toBeNull()
         })
 
-        it('rejects optional chaining and other JS syntax', () => {
-            expect(propertyPath.parse('a?.b')).toBeNull()
-            expect(propertyPath.parse('a?.[0]')).toBeNull()
+        it('rejects statement-like input', () => {
             expect(propertyPath.parse('a;b')).toBeNull()
             expect(propertyPath.parse('a, b')).toBeNull()
             expect(propertyPath.parse('`a`')).toBeNull()
         })
 
-        it('rejects escape sequences the fast path cannot interpret faithfully', () => {
+        it('rejects escape sequences jsep does not decode faithfully', () => {
             expect(propertyPath.parse('a[\'\\u0061\']')).toBeNull()
             expect(propertyPath.parse('a[\'\\x61\']')).toBeNull()
-            expect(propertyPath.parse('a[\'\\n\']')).toBeNull()
-            expect(propertyPath.parse('a[\'\\t\']')).toBeNull()
             expect(propertyPath.parse('a[\'\\0\']')).toBeNull()
-            expect(propertyPath.parse('a[\'\\a\']')).toBeNull()
             expect(propertyPath.parse('a["\\u{61}"]')).toBeNull()
         })
 
