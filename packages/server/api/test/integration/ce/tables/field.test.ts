@@ -176,6 +176,32 @@ describe('Field API', () => {
         })
     })
 
+    describeWithAuth('POST /v1/fields (Create) — position', () => app!, (setup) => {
+        it('should append created fields with increasing positions', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+
+            const fields = await createFieldsInOrder(ctx, table.id, ['First', 'Second', 'Third'])
+
+            expect(fields.map((f) => f.position)).toEqual([0, 1, 2])
+        })
+
+        it('should respect an explicit position on create', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+
+            const response = await ctx.post('/v1/fields', {
+                name: 'Explicit',
+                type: FieldType.TEXT,
+                tableId: table.id,
+                position: 7,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            expect(response?.json().position).toBe(7)
+        })
+    })
+
     describeWithAuth('POST /v1/fields/:id (Update)', () => app!, (setup) => {
         it('should update field name', async () => {
             const ctx = await setup()
@@ -191,6 +217,50 @@ describe('Field API', () => {
             const body = response?.json()
             expect(body.name).toBe('Updated Field Name')
             expect(body.id).toBe(field.id)
+        })
+
+    })
+
+    describeWithAuth('POST /v1/fields/reorder (Reorder)', () => app!, (setup) => {
+        it('should reorder fields to the given order and resequence positions', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const fields = await createFieldsInOrder(ctx, table.id, ['A', 'B', 'C', 'D'])
+
+            const response = await ctx.post('/v1/fields/reorder', {
+                tableId: table.id,
+                fieldIds: [fields[0].id, fields[3].id, fields[1].id, fields[2].id],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const listResponse = await ctx.get('/v1/fields', { tableId: table.id })
+            const listed = listResponse?.json()
+            expect(listed.map((f: { name: string }) => f.name)).toEqual(['A', 'D', 'B', 'C'])
+            expect(listed.map((f: { position: number }) => f.position)).toEqual([0, 1, 2, 3])
+        })
+
+        it('should not touch fields of another table when a foreign id is passed', async () => {
+            const ctx = await setup()
+            const tableA = await createAndSaveTable(ctx)
+            const fieldsA = await createFieldsInOrder(ctx, tableA.id, ['A', 'B'])
+            const tableB = await createAndSaveTable(ctx)
+            await createFieldsInOrder(ctx, tableB.id, ['X', 'Y'])
+            const fieldsB = (await ctx.get('/v1/fields', { tableId: tableB.id }))?.json()
+
+            const response = await ctx.post('/v1/fields/reorder', {
+                tableId: tableA.id,
+                fieldIds: [fieldsA[1].id, fieldsB[0].id, fieldsA[0].id],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const listedA = (await ctx.get('/v1/fields', { tableId: tableA.id }))?.json()
+            expect(listedA.map((f: { name: string }) => f.name)).toEqual(['B', 'A'])
+
+            const listedB = (await ctx.get('/v1/fields', { tableId: tableB.id }))?.json()
+            expect(listedB.map((f: { name: string }) => f.name)).toEqual(['X', 'Y'])
+            expect(listedB.map((f: { position: number }) => f.position)).toEqual([0, 1])
         })
     })
 
@@ -231,4 +301,17 @@ async function createAndSaveTable(ctx: TestContext) {
     const table = createMockTable({ projectId: ctx.project.id })
     await db.save('table', table)
     return table
+}
+
+async function createFieldsInOrder(ctx: TestContext, tableId: string, names: string[]) {
+    const fields = []
+    for (const name of names) {
+        const response = await ctx.post('/v1/fields', {
+            name,
+            type: FieldType.TEXT,
+            tableId,
+        })
+        fields.push(response?.json())
+    }
+    return fields
 }

@@ -31,3 +31,20 @@ Certain apps like Slack and Square only support one webhook per OAuth2 app. This
     - `message.groups`
     - `message.mpim`
     - `app_mention`
+    - `channel_created`
+    - `reaction_removed`
+    - `star_added`
+    - `team_join`
+    - `emoji_changed`
+
+<Warning>
+Turn **Socket Mode off** for your Slack app (under **Settings → Socket Mode**). While Socket Mode is on, Slack delivers events over a WebSocket connection and never POSTs to the Request URL (`https://YOUR_AP_INSTANCE/api/v1/app-events/slack`), so the trigger silently never fires.
+</Warning>
+
+**Configure Interactivity & Shortcuts**
+
+Needed for the "New Modal Interaction" trigger and the "Request Approval"/"Request Action" actions (their buttons resume the flow via this URL).
+
+1. Go to the "Interactivity & Shortcuts" settings in the Slack OAuth2 developer platform.
+2. Turn interactivity on.
+3. Set the Request URL to the same URL used above: `https://YOUR_AP_INSTANCE/api/v1/app-events/slack`.

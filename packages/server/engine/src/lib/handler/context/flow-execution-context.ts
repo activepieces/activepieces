@@ -2,7 +2,6 @@ import { apId, assertEqual, isNil } from '@activepieces/core-utils'
 import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { engineFileApi } from '../../api/engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
-import { utils } from '../../utils'
 import { StepExecutionPath } from './step-execution-path'
 
 const DEFAULT_THRESHOLD_KB = 32
@@ -206,11 +205,15 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
     if (isNil(value) || isNil(engineApi)) {
         return undefined
     }
-    const size = utils.sizeof(value)
+    const serialized = JSON.stringify(value)
+    if (isNil(serialized)) {
+        return undefined
+    }
+    const size = Buffer.byteLength(serialized)
     if (size <= SLICE_THRESHOLD_BYTES) {
         return undefined
     }
-    const data = new TextEncoder().encode(JSON.stringify(value))
+    const data = new TextEncoder().encode(serialized)
     const { fileId, readUrl } = await engineFileApi.upload({
         apiUrl: engineApi.internalApiUrl,
         engineToken: engineApi.engineToken,

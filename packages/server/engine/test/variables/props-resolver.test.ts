@@ -395,6 +395,55 @@ describe('Props resolver', () => {
         expect(resolvedInput).toEqual('a')
     })
 
+    test('literal keyword tokens keep their sandbox-evaluated values', async () => {
+        const { resolvedInput: trueValue } = await propsResolverService.resolve({ unresolvedInput: '{{true}}', executionState })
+        expect(trueValue).toEqual(true)
+        const { resolvedInput: falseValue } = await propsResolverService.resolve({ unresolvedInput: '{{false}}', executionState })
+        expect(falseValue).toEqual(false)
+        const { resolvedInput: nullValue } = await propsResolverService.resolve({ unresolvedInput: '{{null}}', executionState })
+        expect(nullValue).toEqual('')
+        const { resolvedInput: undefinedValue } = await propsResolverService.resolve({ unresolvedInput: '{{undefined}}', executionState })
+        expect(undefinedValue).toEqual('')
+    })
+
+    test('unicode-escaped bracket key falls back to the sandbox and reads the decoded key', async () => {
+        const stateWithShortKey = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { a: 'decoded' },
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_1.output[\'\\u0061\']}}',
+            executionState: stateWithShortKey,
+        })
+        expect(resolvedInput).toEqual('decoded')
+    })
+
+    test('bracket path with special-character key resolves through the fast path', async () => {
+        const stateWithWeirdKeys = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { 'weird key': { 'a.b': 42 } },
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_1.output[\'weird key\'][\'a.b\']}}',
+            executionState: stateWithWeirdKeys,
+        })
+        expect(resolvedInput).toEqual(42)
+    })
+
+    test('resolved object is a clone, not an alias of the execution state', async () => {
+        const stepOutput = executionState.getStepOutput('trigger')
+        const { resolvedInput } = await propsResolverService.resolve<Record<string, unknown>>({ unresolvedInput: '{{trigger.output}}', executionState })
+        expect(resolvedInput).toEqual(stepOutput?.output)
+        expect(resolvedInput).not.toBe(stepOutput?.output)
+        resolvedInput.name = 'mutated'
+        const { resolvedInput: resolvedAgain } = await propsResolverService.resolve<Record<string, unknown>>({ unresolvedInput: '{{trigger.output.name}}', executionState })
+        expect(resolvedAgain).toEqual('John')
+    })
+
     test('Test resolve empty text', async () => {
         const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '', executionState })
         expect(resolvedInput).toEqual('')
