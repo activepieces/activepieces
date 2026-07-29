@@ -15,6 +15,7 @@ export const Field = z.union([z.object({
     type: z.literal(FieldType.STATIC_DROPDOWN),
     tableId: z.string(),
     projectId: z.string(),
+    position: z.number(),
     data: z.object({
         options: z.array(z.object({
             value: z.string(),
@@ -27,6 +28,7 @@ export const Field = z.union([z.object({
     type: z.union([z.literal(FieldType.TEXT), z.literal(FieldType.NUMBER), z.literal(FieldType.DATE)]),
     tableId: z.string(),
     projectId: z.string(),
+    position: z.number(),
 })])
 
 export type Field = z.infer<typeof Field>

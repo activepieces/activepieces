@@ -2,13 +2,15 @@ import { apId, assertEqual, isNil } from '@activepieces/core-utils'
 import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { engineFileApi } from '../../api/engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
-import { utils } from '../../utils'
+import { sizeofUtils } from '../../helper/sizeof'
 import { StepExecutionPath } from './step-execution-path'
 
 const DEFAULT_THRESHOLD_KB = 32
 const SLICE_THRESHOLD_BYTES = Number(
     process.env.AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB ?? DEFAULT_THRESHOLD_KB,
 ) * 1024
+
+const EMPTY_STEPS_SIZE_BYTES = sizeofUtils.recursiveSizeof({})
 
 export class FlowExecutorContext {
     tags: readonly string[]
@@ -20,6 +22,7 @@ export class FlowExecutorContext {
     engineApi?: EngineApiConfig
     resolvedStepOutputCache: Map<string, Promise<unknown>>
     slicingEnabled: boolean
+    logSizeBytes: number
 
     /**
      * Execution time in milliseconds
@@ -37,6 +40,7 @@ export class FlowExecutorContext {
         this.engineApi = copyFrom?.engineApi
         this.resolvedStepOutputCache  = copyFrom?.resolvedStepOutputCache  ?? new Map()
         this.slicingEnabled = copyFrom?.slicingEnabled ?? true
+        this.logSizeBytes = copyFrom?.logSizeBytes ?? EMPTY_STEPS_SIZE_BYTES
     }
 
     static empty(params?: FlowExecutorContextInit): FlowExecutorContext {
@@ -126,10 +130,12 @@ export class FlowExecutorContext {
                 errorMessage: truncated.errorMessage,
             })
         }
+        const previousStep = executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps })
         const steps = executionJournal.upsertStep({ stepName, stepOutput: finalized, path: this.currentPath.path, steps: this.steps })
         return new FlowExecutorContext({
             ...this,
             steps,
+            logSizeBytes: this.logSizeBytes + sizeofUtils.upsertStepDelta({ stepName, previousStep, nextStep: finalized }),
         })
     }
 
@@ -206,11 +212,15 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
     if (isNil(value) || isNil(engineApi)) {
         return undefined
     }
-    const size = utils.sizeof(value)
+    const serialized = JSON.stringify(value)
+    if (isNil(serialized)) {
+        return undefined
+    }
+    const size = Buffer.byteLength(serialized)
     if (size <= SLICE_THRESHOLD_BYTES) {
         return undefined
     }
-    const data = new TextEncoder().encode(JSON.stringify(value))
+    const data = new TextEncoder().encode(serialized)
     const { fileId, readUrl } = await engineFileApi.upload({
         apiUrl: engineApi.internalApiUrl,
         engineToken: engineApi.engineToken,

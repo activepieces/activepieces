@@ -3,14 +3,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { channelResponseOutputSchema } from '../output-schemas';
 
 export const setChannelTopicAction = createAction({
 	auth: slackAuth,
 	name: 'set-channel-topic',
 	displayName: 'Set Channel Topic',
 	description: 'Sets the topic on a selected channel.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Set (overwrite) the topic of a selected channel. Idempotent: re-running with the same topic leaves the channel in the same state. The bot must be a member of the channel.', idempotent: true },
+	outputSchema: channelResponseOutputSchema,
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
