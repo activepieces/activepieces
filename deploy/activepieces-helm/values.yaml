@@ -5,7 +5,7 @@
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
 
-# Pod termination grace period in seconds. Keep it above the image's PM2 kill_timeout (35s by default, PM2_KILL_TIMEOUT env) so the app and worker can finish draining in-flight runs before the pod is killed.
+# Pod termination grace period in seconds. Keep it above the image's PM2 kill timeout (worker: 35s; app: AP_WEBHOOK_TIMEOUT_SECONDS + 5s, minimum 35s; PM2_KILL_TIMEOUT overrides both) so the app and worker can finish draining in-flight work before the pod is killed.
 terminationGracePeriodSeconds: 40
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/

@@ -28,8 +28,22 @@ fi
 # Build PM2 ecosystem config
 KILL_TIMEOUT_MS="$PM2_KILL_TIMEOUT"
 case "$KILL_TIMEOUT_MS" in
-    ''|0*|*[!0-9]*) KILL_TIMEOUT_MS=35000 ;;
+    ''|0*|*[!0-9]*) KILL_TIMEOUT_MS="" ;;
 esac
+
+if [ -n "$KILL_TIMEOUT_MS" ]; then
+    APP_KILL_TIMEOUT_MS="$KILL_TIMEOUT_MS"
+else
+    WEBHOOK_TIMEOUT_S="$AP_WEBHOOK_TIMEOUT_SECONDS"
+    case "$WEBHOOK_TIMEOUT_S" in
+        ''|0*|*[!0-9]*) WEBHOOK_TIMEOUT_S=30 ;;
+    esac
+    APP_KILL_TIMEOUT_MS=$(( (WEBHOOK_TIMEOUT_S + 5) * 1000 ))
+    if [ "$APP_KILL_TIMEOUT_MS" -lt 35000 ]; then
+        APP_KILL_TIMEOUT_MS=35000
+    fi
+fi
+WORKER_KILL_TIMEOUT_MS="${KILL_TIMEOUT_MS:-35000}"
 
 APPS=""
 
@@ -41,7 +55,7 @@ if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP"
         node_args: '--enable-source-maps',
         instances: 1,
         exec_mode: 'fork',
-        kill_timeout: ${KILL_TIMEOUT_MS},
+        kill_timeout: ${APP_KILL_TIMEOUT_MS},
         env: { AP_CONTAINER_TYPE: 'APP' }
     },"
 fi
@@ -54,7 +68,7 @@ if [ "$AP_CONTAINER_TYPE" = "WORKER" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_A
         node_args: '--enable-source-maps',
         instances: 1,
         exec_mode: 'fork',
-        kill_timeout: ${KILL_TIMEOUT_MS}
+        kill_timeout: ${WORKER_KILL_TIMEOUT_MS}
     },"
 fi
 
