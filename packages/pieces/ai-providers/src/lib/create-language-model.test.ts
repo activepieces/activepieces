@@ -1,6 +1,12 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { describe, expect, it } from 'vitest'
-import { createLanguageModel } from './create-language-model'
+import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-language-model'
+
+type ModelIdentity = { provider: string, modelId: string, settings?: { plugins?: unknown[] } }
+
+function identify(model: unknown): ModelIdentity {
+    return model as ModelIdentity
+}
 
 const authFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.BEDROCK]: { accessKeyId: 'a', secretAccessKey: 'b' },
@@ -12,28 +18,50 @@ const configFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.CUSTOM]: { apiKeyHeader: 'x-api-key', baseUrl: 'https://example.test/v1', models: [] },
 }
 
+const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) => createLanguageModel({
+    provider,
+    auth: authFor[provider] ?? { apiKey: 'test-key' },
+    config: configFor[provider] ?? {},
+    modelId: 'some-model-id',
+    options,
+})
+
 const supportedProviders = Object.values(AIProviderName).filter((p) => p !== AIProviderName.CLOUDFLARE_GATEWAY)
 
 describe('createLanguageModel', () => {
-    it.each(supportedProviders)('builds a language model for %s', (provider) => {
-        const model = createLanguageModel({
-            provider,
-            auth: authFor[provider] ?? { apiKey: 'test-key' },
-            config: configFor[provider] ?? {},
-            modelId: 'some-model',
-        })
-        expect(model).toBeDefined()
+    it.each(supportedProviders)('passes the model id straight through for %s', (provider) => {
+        expect(identify(buildFor(provider)).modelId).toBe('some-model-id')
     })
 
-    it('routes Mistral through OpenRouter when requested', () => {
+    it('picks the right SDK client per provider', () => {
+        expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
+        expect(identify(buildFor(AIProviderName.ANTHROPIC)).provider).toBe('anthropic.messages')
+        expect(identify(buildFor(AIProviderName.AZURE)).provider).toBe('azure.chat')
+        expect(identify(buildFor(AIProviderName.BEDROCK)).provider).toBe('amazon-bedrock')
+        expect(identify(buildFor(AIProviderName.CUSTOM)).provider).toBe('openai-compatible.chat')
+        expect(identify(buildFor(AIProviderName.OPENROUTER)).provider).toBe('openrouter')
+    })
+
+    it('uses the OpenAI Chat API by default and the Responses API when asked', () => {
+        expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
+        expect(identify(buildFor(AIProviderName.OPENAI, { openaiResponsesModel: true })).provider).toBe('openai.responses')
+    })
+
+    it('sends Mistral to its own API by default and via OpenRouter when requested', () => {
+        expect(identify(buildFor(AIProviderName.MISTRAL)).provider).toBe('mistral.chat')
+        expect(identify(buildFor(AIProviderName.MISTRAL, { mistralViaOpenRouter: true })).provider).toBe('openrouter')
+    })
+
+    it('forwards OpenRouter web-search plugin settings onto the model', () => {
+        const openRouterSettings = { plugins: [{ id: 'web', max_results: 5 }] }
         const model = createLanguageModel({
-            provider: AIProviderName.MISTRAL,
+            provider: AIProviderName.OPENROUTER,
             auth: { apiKey: 'test-key' },
             config: {},
-            modelId: 'mistral-large',
-            options: { mistralViaOpenRouter: true },
+            modelId: 'anthropic/claude',
+            options: { openRouterSettings },
         })
-        expect(model).toBeDefined()
+        expect(identify(model).settings).toEqual(openRouterSettings)
     })
 
     it('refuses to build Cloudflare Gateway (caller-specific)', () => {
@@ -43,5 +71,28 @@ describe('createLanguageModel', () => {
             config: { accountId: 'a', gatewayId: 'g', models: [] },
             modelId: 'openai/gpt-4',
         })).toThrow()
+    })
+})
+
+describe('buildOpenAICompatibleHeaders', () => {
+    it('layers provider default headers over caller extra headers, api key last', () => {
+        const headers = buildOpenAICompatibleHeaders({
+            apiKeyHeader: 'authorization',
+            apiKey: 'secret',
+            extraHeaders: { 'x-ap-project-id': 'p', 'x-shared': 'from-extra' },
+            defaultHeaders: { 'x-shared': 'from-default' },
+        })
+        expect(headers['x-ap-project-id']).toBe('p')
+        expect(headers['x-shared']).toBe('from-default')
+        expect(headers['authorization']).toBe('secret')
+    })
+
+    it('never lets a default header clobber the api key', () => {
+        const headers = buildOpenAICompatibleHeaders({
+            apiKeyHeader: 'authorization',
+            apiKey: 'secret',
+            defaultHeaders: { authorization: 'attacker' },
+        })
+        expect(headers['authorization']).toBe('secret')
     })
 })

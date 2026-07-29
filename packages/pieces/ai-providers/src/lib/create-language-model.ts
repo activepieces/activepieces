@@ -42,11 +42,7 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
             return createOpenAICompatible({
                 name: 'openai-compatible',
                 baseURL: baseUrl,
-                headers: {
-                    ...(options.extraHeaders ?? {}),
-                    ...(defaultHeaders ?? {}),
-                    [apiKeyHeader]: apiKey,
-                },
+                headers: buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders: options.extraHeaders }),
             }).chatModel(modelId)
         }
         case AIProviderName.MISTRAL: {
@@ -67,6 +63,19 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
             const exhaustiveCheck: never = provider
             throw new Error(`Unsupported provider: ${exhaustiveCheck}`)
         }
+    }
+}
+
+export function buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders }: {
+    apiKeyHeader: string
+    apiKey: string
+    defaultHeaders?: Record<string, string>
+    extraHeaders?: Record<string, string>
+}): Record<string, string> {
+    return {
+        ...(extraHeaders ?? {}),
+        ...(defaultHeaders ?? {}),
+        [apiKeyHeader]: apiKey,
     }
 }
 
