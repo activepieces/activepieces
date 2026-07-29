@@ -72,6 +72,11 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('a[\'b\\\\c\']')).toEqual(['a', 'b\\c'])
         })
 
+        it('accepts raw control characters inside quoted keys as literals', () => {
+            expect(propertyPath.parse('a[\'line\nbreak\']')).toEqual(['a', 'line\nbreak'])
+            expect(propertyPath.parse('a[\'tab\there\']')).toEqual(['a', 'tab\there'])
+        })
+
         it('parses mixed dot, index and quoted access', () => {
             expect(propertyPath.parse('a.b[0][\'c\'].d["e"][1]')).toEqual(['a', 'b', '0', 'c', 'd', 'e', '1'])
         })
@@ -171,6 +176,16 @@ describe('propertyPath', () => {
             expect(propertyPath.parse('a;b')).toBeNull()
             expect(propertyPath.parse('a, b')).toBeNull()
             expect(propertyPath.parse('`a`')).toBeNull()
+        })
+
+        it('rejects escape sequences the fast path cannot interpret faithfully', () => {
+            expect(propertyPath.parse('a[\'\\u0061\']')).toBeNull()
+            expect(propertyPath.parse('a[\'\\x61\']')).toBeNull()
+            expect(propertyPath.parse('a[\'\\n\']')).toBeNull()
+            expect(propertyPath.parse('a[\'\\t\']')).toBeNull()
+            expect(propertyPath.parse('a[\'\\0\']')).toBeNull()
+            expect(propertyPath.parse('a[\'\\a\']')).toBeNull()
+            expect(propertyPath.parse('a["\\u{61}"]')).toBeNull()
         })
 
         it('rejects prototype-polluting segments anywhere in the path', () => {

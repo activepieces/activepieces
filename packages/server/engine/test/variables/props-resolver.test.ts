@@ -406,6 +406,20 @@ describe('Props resolver', () => {
         expect(undefinedValue).toEqual('')
     })
 
+    test('unicode-escaped bracket key falls back to the sandbox and reads the decoded key', async () => {
+        const stateWithShortKey = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { a: 'decoded' },
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: '{{step_1.output[\'\\u0061\']}}',
+            executionState: stateWithShortKey,
+        })
+        expect(resolvedInput).toEqual('decoded')
+    })
+
     test('bracket path with special-character key resolves through the fast path', async () => {
         const stateWithWeirdKeys = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
             type: FlowActionType.PIECE,

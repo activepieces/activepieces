@@ -49,8 +49,8 @@ function unescapeQuoted(segment: string): string {
     return segment.replace(/\\(.)/g, '$1')
 }
 
-const PATH_PATTERN = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\[(?:\d+|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")\])*$/
-const SEGMENT_PATTERN = /\[(\d+)\]|\['((?:[^'\\]|\\.)*)'\]|\["((?:[^"\\]|\\.)*)"\]|[A-Za-z_$][\w$]*/g
+const PATH_PATTERN = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\[(?:\d+|'(?:[^'\\]|\\['"\\])*'|"(?:[^"\\]|\\['"\\])*")\])*$/
+const SEGMENT_PATTERN = /\[(\d+)\]|\['((?:[^'\\]|\\['"\\])*)'\]|\["((?:[^"\\]|\\['"\\])*)"\]|[A-Za-z_$][\w$]*/g
 const BLOCKED_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
 const LITERAL_KEYWORDS = new Set(['true', 'false', 'null', 'undefined', 'NaN', 'Infinity'])
 
