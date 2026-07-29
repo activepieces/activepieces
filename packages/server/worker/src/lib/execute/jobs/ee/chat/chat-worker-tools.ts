@@ -652,7 +652,6 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                     const canJudge = autoConsent.judgeable({
                         kinds: [effect.kind],
                         tainted: taintState.tainted,
-                        needsConfirmation: toolInput.needsConfirmation,
                     })
                     if (canJudge) {
                         const { data: verdict } = await tryCatch(() => autoJudge({

@@ -1362,13 +1362,13 @@ describe('auto mode judge — ap_execute_action', () => {
         expect(receipts[0].autoApproved).toBeUndefined()
     })
 
-    it('never consults the judge when the model itself asked for confirmation', async () => {
+    it('still consults the judge when the model flagged the call for confirmation — the judge IS the confirmation layer', async () => {
         const { tools, judgeCalls, waitForApproval } = setup({ decision: 'run' })
         await tools.ap_execute_action.execute({
             pieceName: 'slack', actionName: 'send_message', needsConfirmation: true, input: { channel: 'C1' },
         }, { ...callOptions, toolCallId: 'tc-auto-conf' })
-        expect(judgeCalls).toHaveLength(0)
-        expect(waitForApproval).toHaveBeenCalledOnce()
+        expect(judgeCalls).toHaveLength(1)
+        expect(waitForApproval).not.toHaveBeenCalled()
     })
 
     it('never consults the judge once the turn is tainted', async () => {

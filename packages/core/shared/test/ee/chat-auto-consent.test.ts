@@ -21,11 +21,10 @@ describe('autoConsent.judgeable', () => {
         expect(autoConsent.judgeable({ kinds: ['external_write', 'destructive'] })).toBe(false)
     })
 
-    it('refuses when nothing resolved, the turn is tainted, or the model itself flagged the call', () => {
+    it('refuses when nothing resolved or the turn is tainted', () => {
         expect(autoConsent.judgeable({ kinds: [] })).toBe(false)
         expect(autoConsent.judgeable({ kinds: ['outward_send'], resolved: false })).toBe(false)
         expect(autoConsent.judgeable({ kinds: ['outward_send'], tainted: true })).toBe(false)
-        expect(autoConsent.judgeable({ kinds: ['outward_send'], needsConfirmation: true })).toBe(false)
     })
 })
 
@@ -55,6 +54,15 @@ describe('autoConsent.parseJudgeVerdict', () => {
         const verdict = autoConsent.parseJudgeVerdict(`{"decision":"run","reason":"${long}"}`)
         expect(verdict.reason.length).toBeLessThanOrEqual(140)
         expect(autoConsent.parseJudgeVerdict('{"decision":"run"}').reason).toBe(autoConsent.FALLBACK_ASK_REASON)
+    })
+
+    it('clamps the user-facing reason at a word boundary and never leaks a debug marker', () => {
+        const wordy = 'User explicitly requested to send a message to the chat-testing channel now and the channel, message content and intent all match the request exactly'
+        const { reason } = autoConsent.parseJudgeVerdict(`{"decision":"run","reason":"${wordy}"}`)
+        expect(reason).not.toContain('[truncated]')
+        expect(reason.endsWith('…')).toBe(true)
+        expect(reason).not.toMatch(/\s…$/)
+        expect(wordy.startsWith(reason.slice(0, -1))).toBe(true)
     })
 })
 

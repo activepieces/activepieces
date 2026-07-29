@@ -60,7 +60,7 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
             provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
         })
 
-        log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeChatAgent] Chat config loaded')
+        log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive, autoConsentEnabled: config.autoConsentEnabled ?? false }, '[executeChatAgent] Chat config loaded')
 
         const eventEmitter = chatWorkerTools.createEventEmitter({
             sendEvent: (input) => ctx.apiClient.sendChatEvent({ ...input, runId }),
@@ -383,6 +383,9 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         await sendConsentAudit({ outcome: 'policy_denied', toolName, displayName, effectKinds })
     }
 
+    if (!isNil(autoConsentConfig)) {
+        log.info({ conversation: { id: conversationId } }, '[buildToolSet] Auto-consent judge active for this turn')
+    }
     const autoJudge = isNil(autoConsentConfig) ? undefined : autoConsentJudge.createAutoConsentJudge({
         model: autoConsentConfig.model,
         userRequest: autoConsentConfig.userRequest,

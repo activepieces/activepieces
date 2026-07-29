@@ -12,13 +12,12 @@ const MAX_INPUT_CHARS = 4_000
 const MAX_REASON_CHARS = 120
 const FALLBACK_ASK_REASON = 'Could not verify this automatically'
 
-function judgeable({ kinds, resolved, tainted, needsConfirmation }: {
+function judgeable({ kinds, resolved, tainted }: {
     kinds: ActionEffectKind[]
     resolved?: boolean
     tainted?: boolean
-    needsConfirmation?: boolean
 }): boolean {
-    if (kinds.length === 0 || resolved === false || tainted === true || needsConfirmation === true) {
+    if (kinds.length === 0 || resolved === false || tainted === true) {
         return false
     }
     return kinds.every((kind) => JUDGEABLE_EFFECT_KINDS.has(kind))
@@ -26,6 +25,15 @@ function judgeable({ kinds, resolved, tainted, needsConfirmation }: {
 
 function truncate({ value, maxChars }: { value: string, maxChars: number }): string {
     return value.length <= maxChars ? value : `${value.slice(0, maxChars)}…[truncated]`
+}
+
+function clampReason(value: string): string {
+    if (value.length <= MAX_REASON_CHARS) {
+        return value
+    }
+    const cut = value.slice(0, MAX_REASON_CHARS)
+    const lastSpace = cut.lastIndexOf(' ')
+    return `${(lastSpace > MAX_REASON_CHARS / 2 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`
 }
 
 function buildJudgePrompt({ userRequest, toolName, actionLabel, kinds, input, batchCount }: {
@@ -82,7 +90,7 @@ function parseJudgeVerdict(text: string): AutoConsentVerdict {
         return askFallback
     }
     const rawReason = typeof parsed['reason'] === 'string' ? parsed['reason'].trim() : ''
-    const reason = rawReason.length > 0 ? truncate({ value: rawReason, maxChars: MAX_REASON_CHARS }) : FALLBACK_ASK_REASON
+    const reason = rawReason.length > 0 ? clampReason(rawReason) : FALLBACK_ASK_REASON
     return { decision, reason }
 }
 
