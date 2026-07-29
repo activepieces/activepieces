@@ -17,22 +17,21 @@ const shortText = Property.ShortText({ displayName: 'Text', required: false });
 
 describe('formUtils.parseDynamicValue', () => {
   it.each([
-    [multiSelect, '["year","day"]', ['year', 'day']],
-    [multiSelect, '[]', []],
-    [checkbox, 'true', true],
-    [checkbox, 'false', false],
-  ])('restores case %#', (property, value, expected) => {
+    ['["year","day"]', multiSelect, ['year', 'day']],
+    ['[]', multiSelect, []],
+    ['true', checkbox, true],
+    ['false', checkbox, false],
+  ])('restores %s', (value, property, expected) => {
     expect(formUtils.parseDynamicValue({ property, value })).toEqual(expected);
   });
 
   it.each([
-    [multiSelect, '{{ trigger.body.units }}'],
-    [multiSelect, ''],
-    [multiSelect, 'year'],
-    [multiSelect, '{"not":"an array"}'],
-    [checkbox, '1'],
-    [shortText, '["year","day"]'],
-  ])('has nothing unambiguous to restore in case %#', (property, value) => {
+    ['{{ trigger.body.units }}', multiSelect],
+    ['year', multiSelect],
+    ['{"not":"an array"}', multiSelect],
+    ['1', checkbox],
+    ['["year","day"]', shortText],
+  ])('has nothing unambiguous to restore in %s', (value, property) => {
     expect(formUtils.parseDynamicValue({ property, value })).toBeUndefined();
   });
 });

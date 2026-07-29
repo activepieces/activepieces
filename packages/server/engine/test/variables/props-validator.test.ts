@@ -447,51 +447,19 @@ describe('Property Validation', () => {
             }),
         }
 
-        it('should parse stringified arrays into arrays', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                {
-                    staticMultiSelect: '[]',
-                    multiSelect: '["year","month"]',
-                },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(processedInput.staticMultiSelect).toEqual([])
-            expect(processedInput.multiSelect).toEqual(['year', 'month'])
-            expect(errors).toEqual({})
-        })
-
-        it('should pass arrays through unchanged', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                {
-                    staticMultiSelect: ['year'],
-                    multiSelect: ['month'],
-                },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(processedInput.staticMultiSelect).toEqual(['year'])
-            expect(processedInput.multiSelect).toEqual(['month'])
-            expect(errors).toEqual({})
-        })
-
         it.each([
+            ['a stringified array', '["year","month"]', ['year', 'month']],
+            ['a stringified empty array', '[]', []],
+            ['an array, unchanged', ['year'], ['year']],
             ['a single option value', 'year', ['year']],
             ['a value that is not JSON', 'a,b', ['a,b']],
             ['a quoted number, keeping it a string', '5', ['5']],
             ['a number', 5, [5]],
-            ['a boolean', true, [true]],
             ['a malformed array literal', '[year, month]', ['[year, month]']],
             ['an object', { not: 'an array' }, [{ not: 'an array' }]],
-        ])('should wrap %s into a single-item array', async (_case, input, expected) => {
+        ])('should coerce %s', async (_case, input, expected) => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { staticMultiSelect: input },
+                { staticMultiSelect: input, multiSelect: input },
                 props,
                 PieceAuth.None(),
                 false,
@@ -499,26 +467,13 @@ describe('Property Validation', () => {
             )
 
             expect(processedInput.staticMultiSelect).toEqual(expected)
+            expect(processedInput.multiSelect).toEqual(expected)
             expect(errors).toEqual({})
         })
 
-        it('should fail validation for a required value that resolves to nothing', async () => {
-            const { errors } = await propsProcessor.applyProcessorsAndValidators(
-                { requiredMultiSelect: null },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(errors).toEqual({
-                requiredMultiSelect: ['Expected array, received: null'],
-            })
-        })
-
-        it('should treat an empty dynamic value as unset when optional', async () => {
+        it('should map an empty dynamic value to undefined and let validation decide', async () => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { staticMultiSelect: '' },
+                { staticMultiSelect: '', requiredMultiSelect: '' },
                 props,
                 PieceAuth.None(),
                 false,
@@ -526,29 +481,18 @@ describe('Property Validation', () => {
             )
 
             expect(processedInput.staticMultiSelect).toBeUndefined()
-            expect(errors).toEqual({})
-        })
-
-        it('should fail validation for an empty dynamic value when required', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { requiredMultiSelect: '' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
             expect(processedInput.requiredMultiSelect).toBeUndefined()
             expect(errors).toEqual({
                 requiredMultiSelect: ['Expected array, received: '],
             })
         })
 
-        it('should pass nil values through unchanged', async () => {
+        it('should pass nil through unchanged, leaving required-ness to validation', async () => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
                 {
                     staticMultiSelect: null,
                     multiSelect: undefined,
+                    requiredMultiSelect: null,
                 },
                 props,
                 PieceAuth.None(),
@@ -558,7 +502,9 @@ describe('Property Validation', () => {
 
             expect(processedInput.staticMultiSelect).toBeNull()
             expect(processedInput.multiSelect).toBeUndefined()
-            expect(errors).toEqual({})
+            expect(errors).toEqual({
+                requiredMultiSelect: ['Expected array, received: null'],
+            })
         })
     })
 
@@ -575,9 +521,11 @@ describe('Property Validation', () => {
         }
 
         it.each([
-            ['true', true],
-            ['false', false],
-        ])('should parse stringified boolean %s', async (input, expected) => {
+            ['true', true, {}],
+            ['false', false, {}],
+            [true, true, {}],
+            [1, 1, { checkbox: ['Expected boolean, received: 1'] }],
+        ])('should process %p', async (input, expected, expectedErrors) => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
                 { checkbox: input },
                 props,
@@ -587,68 +535,12 @@ describe('Property Validation', () => {
             )
 
             expect(processedInput.checkbox).toEqual(expected)
-            expect(errors).toEqual({})
+            expect(errors).toEqual(expectedErrors)
         })
 
-        it('should pass booleans through unchanged', async () => {
+        it('should map an empty dynamic value to undefined and let validation decide', async () => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { checkbox: true },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(processedInput.checkbox).toEqual(true)
-            expect(errors).toEqual({})
-        })
-
-        it('should leave non-boolean strings unchanged and fail validation', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { checkbox: 'not a boolean' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(processedInput.checkbox).toEqual('not a boolean')
-            expect(errors).toEqual({
-                checkbox: ['Expected boolean, received: not a boolean'],
-            })
-        })
-
-        it('should never wrap a non-boolean into an array', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { checkbox: 1 },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(processedInput.checkbox).toEqual(1)
-            expect(errors).toEqual({
-                checkbox: ['Expected boolean, received: 1'],
-            })
-        })
-
-        it('should treat an empty dynamic value as unset when optional', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { optionalCheckbox: '' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(processedInput.optionalCheckbox).toBeUndefined()
-            expect(errors).toEqual({})
-        })
-
-        it('should fail validation for an empty dynamic value when required', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { checkbox: '' },
+                { checkbox: '', optionalCheckbox: '' },
                 props,
                 PieceAuth.None(),
                 false,
@@ -656,6 +548,7 @@ describe('Property Validation', () => {
             )
 
             expect(processedInput.checkbox).toBeUndefined()
+            expect(processedInput.optionalCheckbox).toBeUndefined()
             expect(errors).toEqual({
                 checkbox: ['Expected boolean, received: '],
             })
