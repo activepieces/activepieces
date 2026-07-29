@@ -6,7 +6,7 @@ export const engineRunApi = {
         await post({ apiUrl, engineToken, path: 'run-progress', body: request })
     },
     async updateStepProgress({ apiUrl, engineToken, request }: StepProgressParams): Promise<void> {
-        await post({ apiUrl, engineToken, path: 'step-progress', body: request })
+        await post({ apiUrl, engineToken, path: 'step-progress', body: request, fetcher: global.fetch })
     },
     async uploadRunLog({ apiUrl, engineToken, request }: RunLogParams): Promise<void> {
         await post({ apiUrl, engineToken, path: 'run-logs', body: request })
@@ -16,8 +16,8 @@ export const engineRunApi = {
     },
 }
 
-async function post({ apiUrl, engineToken, path, body }: PostParams): Promise<void> {
-    const response = await retryFetch(`${apiUrl}v1/engine/${path}`, {
+async function post({ apiUrl, engineToken, path, body, fetcher = retryFetch }: PostParams): Promise<void> {
+    const response = await fetcher(`${apiUrl}v1/engine/${path}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -46,4 +46,5 @@ type FlowResponseParams = BaseParams & { request: SendFlowResponseRequest }
 type PostParams = BaseParams & {
     path: string
     body: unknown
+    fetcher?: typeof retryFetch
 }
