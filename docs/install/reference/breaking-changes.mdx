@@ -5,23 +5,6 @@ icon: "hammer"
 ---
 
 
-## 0.87.0
-
-### What has changed?
-
-#### Multi-select and checkbox fields set to a dynamic value are now checked before the step runs
-Switching a field to a dynamic value turns it into a text box, so whatever it holds is text. A multi-select or checkbox holding text used to be handed to the step exactly as typed. The step then ran with a value of the wrong shape and usually failed later inside the integration, with a message that gave no hint of the real cause.
-
-Text that spells out a list (`["year","month"]`, `[]`) or a checkbox value (`true`, `false`) is now turned back into a real list or true/false, so fields that were quietly broken work again without being edited. A multi-select holding one plain value is now read as a list containing that one value, whether it was typed in or arrived from a reference such as `{{ trigger.body.tag }}` that carried a single value.
-
-What still stops the step, with `Expected array, received: <your value>` naming the field and the value, is text that is trying to be a list or an object without being valid, such as `[year, month]` or `{year: 1}`, and a reference that arrives carrying a whole object rather than a list. Those are almost always a mistyped list or the wrong reference, so the step now says so instead of passing the value on. An optional field left empty counts as not filled in, so an untouched optional checkbox no longer fails its step.
-
-Flows already saved in the broken state repair themselves. The first time each one is loaded after the upgrade, a migration puts the real list or true/false back into the field and returns it to being a picker, so your selections show up as chips again instead of as text. The previous copy of every migrated flow is kept as a backup, and a field whose value cannot be interpreted is left exactly as it was.
-
-**Action:** only if a flow has a multi-select set to a dynamic value that is a mistyped list or object, or a reference that arrives carrying an object. Those steps used to run and now fail with the message above, so edit the field until it produces a proper list (`["a","b"]`), or switch it back to picking options. The reference case does not show up in the flow itself, it depends on the incoming data, so the error message is what will point you at it.
-
-One thing to check even where nothing fails: a comma-separated line like `a,b` is read as **one** value called `a,b`, not as two. It was never two values, but if that is what you meant, write it as `["a","b"]`. Checkboxes need no action: they already failed in these cases and now fail in fewer of them.
-
 ## 0.86.0
 
 ### What has changed?

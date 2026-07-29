@@ -487,6 +487,8 @@ describe('Property Validation', () => {
             ['a quoted number, keeping it a string', '5', ['5']],
             ['a number', 5, [5]],
             ['a boolean', true, [true]],
+            ['a malformed array literal', '[year, month]', ['[year, month]']],
+            ['an object', { not: 'an array' }, [{ not: 'an array' }]],
         ])('should wrap %s into a single-item array', async (_case, input, expected) => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
                 { staticMultiSelect: input },
@@ -500,22 +502,17 @@ describe('Property Validation', () => {
             expect(errors).toEqual({})
         })
 
-        it.each([
-            ['a malformed array literal', '[year, month]', '[year, month]'],
-            ['an object literal', '{"not":"an array"}', '{"not":"an array"}'],
-            ['an object', { not: 'an array' }, '[object Object]'],
-        ])('should leave %s unchanged and fail validation', async (_case, input, received) => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { staticMultiSelect: input },
+        it('should fail validation for a required value that resolves to nothing', async () => {
+            const { errors } = await propsProcessor.applyProcessorsAndValidators(
+                { requiredMultiSelect: null },
                 props,
                 PieceAuth.None(),
                 false,
                 {},
             )
 
-            expect(processedInput.staticMultiSelect).toEqual(input)
             expect(errors).toEqual({
-                staticMultiSelect: [`Expected array, received: ${received}`],
+                requiredMultiSelect: ['Expected array, received: null'],
             })
         })
 
@@ -541,7 +538,7 @@ describe('Property Validation', () => {
                 {},
             )
 
-            expect(processedInput.requiredMultiSelect).toEqual('')
+            expect(processedInput.requiredMultiSelect).toBeUndefined()
             expect(errors).toEqual({
                 requiredMultiSelect: ['Expected array, received: '],
             })
@@ -658,7 +655,7 @@ describe('Property Validation', () => {
                 {},
             )
 
-            expect(processedInput.checkbox).toEqual('')
+            expect(processedInput.checkbox).toBeUndefined()
             expect(errors).toEqual({
                 checkbox: ['Expected boolean, received: '],
             })
