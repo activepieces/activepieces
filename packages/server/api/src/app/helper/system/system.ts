@@ -34,6 +34,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
+    [AppSystemProp.MAX_FAN_IN_CHILDREN]: '10000',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '50',
     [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: '25',

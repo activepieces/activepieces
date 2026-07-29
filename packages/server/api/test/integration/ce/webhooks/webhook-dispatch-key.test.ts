@@ -33,7 +33,7 @@ async function createEnabledFlow() {
         platform: { id: mockPlatform.id },
         id: mockOwner.id,
     })
-    return { mockFlow, mockToken }
+    return { mockFlow, mockToken, mockProject }
 }
 
 async function dispatch({ flowId, token, dispatchKey, parentWaitpointId, body }: DispatchParams) {
@@ -62,7 +62,7 @@ async function findQueuedJobsForFlow(flowId: string): Promise<Job[]> {
 
 describe('Webhook dispatch key', () => {
     it('should enqueue only one job when the same dispatch key is sent twice', async () => {
-        const { mockFlow, mockToken } = await createEnabledFlow()
+        const { mockFlow, mockToken, mockProject } = await createEnabledFlow()
         const dispatchKey = `${apId()}-0`
 
         const first = await dispatch({ flowId: mockFlow.id, token: mockToken, dispatchKey, body: { item: 1 } })
@@ -73,18 +73,30 @@ describe('Webhook dispatch key', () => {
 
         const jobs = await findQueuedJobsForFlow(mockFlow.id)
         expect(jobs).toHaveLength(1)
-        expect(jobs[0].id).toBe(dispatchKey)
+        expect(jobs[0].id).toBe(`${mockProject.id}-${dispatchKey}`)
     })
 
     it('should enqueue one job per item when dispatch keys differ', async () => {
-        const { mockFlow, mockToken } = await createEnabledFlow()
+        const { mockFlow, mockToken, mockProject } = await createEnabledFlow()
         const prefix = apId()
 
         await dispatch({ flowId: mockFlow.id, token: mockToken, dispatchKey: `${prefix}-0`, body: { item: 0 } })
         await dispatch({ flowId: mockFlow.id, token: mockToken, dispatchKey: `${prefix}-1`, body: { item: 1 } })
 
         const jobs = await findQueuedJobsForFlow(mockFlow.id)
-        expect(jobs.map((job) => job.id).sort()).toEqual([`${prefix}-0`, `${prefix}-1`])
+        expect(jobs.map((job) => job.id).sort()).toEqual([`${mockProject.id}-${prefix}-0`, `${mockProject.id}-${prefix}-1`])
+    })
+
+    it('should not collide when two projects send the same dispatch key', async () => {
+        const dispatchKey = `${apId()}-0`
+        const projectA = await createEnabledFlow()
+        const projectB = await createEnabledFlow()
+
+        await dispatch({ flowId: projectA.mockFlow.id, token: projectA.mockToken, dispatchKey, body: { item: 1 } })
+        await dispatch({ flowId: projectB.mockFlow.id, token: projectB.mockToken, dispatchKey, body: { item: 1 } })
+
+        expect(await findQueuedJobsForFlow(projectA.mockFlow.id)).toHaveLength(1)
+        expect(await findQueuedJobsForFlow(projectB.mockFlow.id)).toHaveLength(1)
     })
 
     it('should enqueue both jobs when no dispatch key is sent', async () => {

@@ -133,6 +133,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async sealFanInBarrier({ params }: SealFanInBarrierParams): Promise<Waitpoint> {
+        assertFanInChildrenWithinLimit(params)
         const barrier = await waitpointRepo().findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
         if (isNil(barrier) || !barrier.isFanIn) {
             throw new ActivepiecesError({
@@ -355,6 +356,17 @@ async function removeTimeoutJobs({ waitpointId, flowRunId, log }: RemoveTimeoutJ
     const legacyJob = await systemJobsSchedule(log).getJob<SystemJobName.RESUME_DELAY_WAITPOINT>(legacyJobId)
     if (!isNil(legacyJob) && legacyJob.data.waitpointId === waitpointId) {
         await systemJobsSchedule(log).removeJob({ jobId: legacyJobId })
+    }
+}
+
+function assertFanInChildrenWithinLimit(params: CreateForPauseParams): void {
+    const maxChildren = system.getNumberOrThrow(AppSystemProp.MAX_FAN_IN_CHILDREN)
+    const dispatched = (params.expectedChildren ?? 0) + (params.failedToDispatch ?? 0)
+    if (dispatched > maxChildren) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `This fan-in step dispatched ${dispatched} subflows, which exceeds the maximum of ${maxChildren}. Dispatch fewer children or raise AP_MAX_FAN_IN_CHILDREN.` },
+        })
     }
 }
 

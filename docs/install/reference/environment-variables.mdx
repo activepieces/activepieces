@@ -171,6 +171,7 @@ run data is kept. The **Cloud** values and how these interact are covered in
 | `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` | Maximum incoming webhook payload size (MB). Larger payloads are rejected with HTTP 413. | `25` |
 | `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | Webhook payloads below this (KB) are stored inline in Redis; larger ones are offloaded to file storage to protect Redis memory. | `512` |
 | `AP_WEBHOOK_TIMEOUT_SECONDS` | Default timeout for synchronous webhooks. Maximum 15 minutes; note Cloudflare caps it at 30 seconds. | `30` |
+| `AP_MAX_FAN_IN_CHILDREN` | Maximum number of subflows a single fan-in step may dispatch. Sealing a barrier above this is rejected. | `10000` |
 | `AP_MAX_RECORDS_PER_TABLE` | Maximum number of records per table. | `10000` |
 | `AP_MAX_FIELDS_PER_TABLE` | Maximum number of fields per table. | `100` |
 

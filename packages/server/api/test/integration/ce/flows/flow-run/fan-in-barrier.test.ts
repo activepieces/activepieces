@@ -340,6 +340,21 @@ describe('sealFanInBarrier', () => {
         })
     }
 
+    it('rejects a seal that dispatched more children than AP_MAX_FAN_IN_CHILDREN allows', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        await seedBarrier({ flowRunId: flowRun.id })
+        process.env.AP_MAX_FAN_IN_CHILDREN = '3'
+
+        try {
+            await expect(seal({ flowRunId: flowRun.id, expectedChildren: 3, failedToDispatch: 1 })).rejects.toThrow()
+            const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, failedToDispatch: 1 })
+            expect(waitpoint.expectedChildren).toBe(2)
+        }
+        finally {
+            delete process.env.AP_MAX_FAN_IN_CHILDREN
+        }
+    })
+
     it('records the expected count and schedules a timeout job keyed on the waitpoint', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const barrier = await seedBarrier({ flowRunId: flowRun.id })

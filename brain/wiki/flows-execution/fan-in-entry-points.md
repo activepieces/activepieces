@@ -48,8 +48,11 @@ whose nested body is a *section* of steps, batched out to child runs.
   **before** creating the barrier or dispatching anything is the targeted alternative. **Does not apply
   to `BULK_PROCESS`** — a core executor ships with the engine, so there is no piece-registry skew.
 - **Bounded dispatch concurrency** — reuse `fan-out.ts` (`maxInFlight: 5`) from the CSV branch.
-- **`MAX_FAN_IN_CHILDREN` is 1000**, which a batched fan-out can exceed (1M rows at 100/batch = 10k
-  batches). Decide whether to raise it or cap batches.
+- **The child cap is `AP_MAX_FAN_IN_CHILDREN`, default 10000** (was a hardcoded 1000 in the zod schema;
+  now an app system prop enforced in `waitpointService.sealFanInBarrier` against
+  `expectedChildren + failedToDispatch`). A 1M-row batched fan-out at 100/batch still lands exactly on
+  the default, so a self-hoster running wider has to raise it — and past ~10k the runs-metadata lock
+  becomes the real bottleneck (see below).
 - **Operability.** Nothing can answer "how many barriers are open right now", "how many released on
   timeout this week", or "which have stragglers". For a primitive whose failure mode is a multi-day
   silent hang, that is the gap to close before an entry point ships:
@@ -60,11 +63,13 @@ whose nested body is a *section* of steps, batched out to child runs.
   `isFanIn`, is PENDING, or belongs to the flow's project. Cross-tenant is blocked by `countChildren`'s
   `projectId` filter (deliberate — keep it); intra-project injection into a known barrier id is not.
   Validate at run creation and drop the attribution if it does not resolve.
-- **`ap-dispatch-key` becomes a caller-controlled BullMQ job id in a globally shared queue.**
-  `webhook.service.ts` (`id: dispatchKey ?? webhookRequestId`) → `job-queue.ts` (`jobId: params.id`), and
-  the default queue is `QueueName.WORKER_JOBS`, shared across platforms unless worker groups are enabled.
-  Practical collision risk is near zero (keys carry an unguessable 21-char barrier id) but the shape is
-  wrong; namespace it per project.
+- **`ap-dispatch-key` is namespaced per project before it becomes a BullMQ job id.** The default queue is
+  `QueueName.WORKER_JOBS`, shared across platforms unless worker groups are enabled, so a caller-controlled
+  key alone would be a cross-tenant id. `webhook.service.ts` enqueues
+  `` `${flow.projectId}-${dispatchKey}` `` → `job-queue.ts` (`jobId: params.id`). The separator is `-`, not
+  `:`, because BullMQ rejects a custom job id containing `:` (`Custom Id cannot contain :`); `projectId` is
+  a fixed-length 21-char `ApId`, so the prefix is still unambiguous and dedup keeps working within a
+  project.
 - **Create and seal are one endpoint discriminated by the absence of a field.** In `waitpoint-service.ts`,
   `isFanIn` plus a nil `expectedChildren` means create and a present one means seal. A caller that
   sensibly tries create+seal in one call gets "The fan-in barrier for this step no longer exists" — an
@@ -80,17 +85,65 @@ children plus either an unsealed barrier or a failed run. The dispatch key
 (`ap-dispatch-key: <barrierId>-<index>` → BullMQ jobId) only dedupes while a child job is still queued or
 active; once it completes a replay would create duplicates, so `createFanInBarrier` throws instead.
 
-`parentWaitpointId` makes the real fix possible: **count this barrier's existing children and dispatch
-only the remainder.**
+`parentWaitpointId` makes the real fix possible: **skip the indices this barrier already dispatched and
+send only the rest.** Two clauses have to hold, and neither of them separates CSV from `BULK_PROCESS`.
 
-- **Solvable for `BULK_PROCESS`** — an items array is indexable, so re-entry resumes at index *k* where
-  *k* is the barrier's current child count.
-- **Not solvable for streamed CSV** — a stream cannot cheaply seek to row *k*. State that as the finding
-  rather than engineering around it.
+**1. The resume index must come from the set of dispatched indices, never from the child count.**
+Dispatch is concurrent (`maxInFlight: 5`) so completions land out of order, and child rows materialise
+two BullMQ hops after acceptance anyway — so the count is not a watermark. Die with batches 900–904 in
+flight where only 902 and 903 landed and the count reads 902: resuming there re-dispatches 902–903 *and
+permanently drops 900, 901, 904*. Silent data loss, worse than the duplicate it was avoiding.
+
+The index already exists in `ap-dispatch-key: <barrierId>-<index>`, but `webhook.service.ts` only feeds
+it to a BullMQ `jobId` and jobs are removed on completion — nothing persists it. Store it beside
+`parentWaitpointId` on `flow_run` and dispatch the complement of the present set. The dedup key then
+covers exactly the window the rows do not: index present → skip; index absent but job queued/active →
+dispatch and the key swallows it; index absent and job gone → genuinely needs dispatching.
+
+**2. The source must be stable bytes.** Batching is *deterministic* — `fanOutBatches` derives
+`batchIndex` from position alone and `createCsvParser` is pure given the same `delimiter`, so the same
+bytes and the same `batchSize` always yield the same batch *k*. Re-entry therefore never seeks: it
+re-parses from row 0 and discards the first *k* batches undispatched, at ~µs/row against ~2ms/batch of
+dispatch. **A stream being unseekable is not the blocker** — the earlier finding here had the wrong
+reason. What does break is an unstable *source*: `Property.File({ streaming: true })` also accepts a URL,
+and a pre-signed link expires, `latest.csv` changes, an export endpoint regenerates in another row order.
+Uploads and previous-step files are stored bytes and resume exactly as well as an items array, so the
+CSV caveat shrinks to rejecting (or warning on) non-stored sources.
 
 Open: what `POST /v1/waitpoints` returns, so the dispatcher can tell "fresh" from "sealed, N expected"
-from "partially dispatched, resume at k". (Re-entry into an already-sealed barrier no longer hard-fails
-the run — the once-only seal made that a logged no-op.)
+from "partially dispatched, these indices already went". (Re-entry into an already-sealed barrier no
+longer hard-fails the run — the once-only seal made that a logged no-op.)
+
+### Retry and resume both re-enter the dispatch loop, and the barrier is gone by then
+
+Three ways back into a dispatching step — normal release, crash mid-dispatch, user retry — and the
+persisted dispatch index above is what makes all three one code path: dispatch the complement of the
+present indices, skip the re-seal when already sealed. Normal release yields an empty complement, so
+"emit the summary, dispatch nothing" needs no separate branch. Constraints that path has to respect:
+
+- **The barrier row does not survive to retry time.** Resume deletes it (`handleResumeSignal`, PAUSED
+  branch), `retry` with `FROM_FAILED_STEP` calls `waitpointService.deleteByFlowRunId` before
+  re-queueing, and re-entry discards a leftover COMPLETED barrier for the step. So "reuse the previous
+  barrier" means keeping `isFanIn` rows COMPLETED instead of deleting them, exempting them from retry's
+  wipe, and path-keying the discard. Resume also needs the row for its `resumePayload` summary.
+- **`flow_run.parentWaitpointId` has no FK** — a plain `varchar(21)`. The id keeps grouping children
+  after the row is deleted, so attribution is durable even though the barrier is not.
+- **Path-keyed identity separates a retry from a new attempt.** Loop iteration N+1 is a different path
+  and must get a fresh barrier; a retry re-runs the same path and must reuse it. Step name alone cannot
+  tell them apart — a second reason for path-keying beyond nesting.
+- **Retrying one failed child adds a second row for the same index**, and `fanInBarrier.countChildren`
+  counts rows. `terminal >= expectedChildren` then double-counts that index and the summary reports the
+  superseded failure. Roll up latest-attempt-per-index instead of `COUNT(*)`. The once-only seal keeping
+  the original `expectedChildren` is then correct rather than a bug.
+- **A reused sealed barrier keeps its original `resumeDateTime`**, now in the past, so the sweep releases
+  it immediately with stragglers. Retry has to re-arm the deadline.
+- **`FROM_FAILED_STEP` is not "start at step X".** It restores outputs and walks from the trigger, so a
+  child that started mid-graph re-executes its whole prefix — every step before the section entry has no
+  restored output. It does retry in place on the same row and the same `flowVersionId`, so attribution
+  survives; `ON_LATEST_VERSION` starts a fresh row and forwards `parentRunId` and `failParentOnFailure`
+  but not `parentWaitpointId`. Either way a child needs its entry step and seeded prior-step state
+  persisted on its own row before any retry can reconstruct its input — free while
+  `POST /v1/flow-runs/dispatch` is unbuilt, a migration after.
 
 ### `expectedChildren` exists only because child rows appear late
 
@@ -149,4 +202,4 @@ Every child's terminal transition enters the shared `runs_metadata_<runId>` dist
 runs-metadata worker, a critical path used by every run on the instance. Neither the partial index, the
 existence probe, nor a join table touches this. The fix is to coalesce evaluation per barrier — a child
 enqueues a deduplicated job keyed on the barrier id instead of evaluating inline (BullMQ deduplication is
-already used in that worker). Only needed if `MAX_FAN_IN_CHILDREN` is raised past 1000.
+already used in that worker). Only needed at or above the `AP_MAX_FAN_IN_CHILDREN` default of 10000.

@@ -217,7 +217,7 @@ async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpRespon
     await wideEvent.timed({
         name: 'webhookQueueAdd',
         fn: () => jobQueue(logger).add({
-            id: dispatchKey ?? webhookRequestId,
+            id: isNil(dispatchKey) ? webhookRequestId : `${flow.projectId}-${dispatchKey}`,
             type: JobType.ONE_TIME,
             data: {
                 platformId,
