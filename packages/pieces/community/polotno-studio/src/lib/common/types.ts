@@ -16,6 +16,10 @@ export interface TemplateSummary {
   [k: string]: unknown;
 }
 
+export interface Template extends TemplateSummary {
+  polotno_json: unknown;
+}
+
 export interface FieldDef {
   key: string;
   label: string;

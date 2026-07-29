@@ -34,6 +34,8 @@
   "Get Template": "Get Template",
   "Look up a single template by id.": "Look up a single template by id.",
   "The template to look up.": "The template to look up.",
+  "Omit Design": "Omit Design",
+  "Leave on to exclude the full design JSON, which can be several megabytes.": "Leave on to exclude the full design JSON, which can be several megabytes.",
   "Image Rendered": "Image Rendered",
   "Fires when an image render finishes successfully.": "Fires when an image render finishes successfully.",
   "Video Rendered": "Video Rendered",
