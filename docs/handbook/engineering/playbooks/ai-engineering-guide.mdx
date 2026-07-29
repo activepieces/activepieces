@@ -17,7 +17,9 @@ Our repo has a layered AI assistance system:
 |---|---|---|---|
 | `CLAUDE.md` (root) | ~55 lines | Every session | Non-obvious architecture rules |
 | `packages/*/CLAUDE.md` | ~30-55 lines each | When working in that package | Package-specific patterns |
-| `.agents/features/*.md` | ~60 lines each | When Claude explores the feature | Entity schemas, services, data flows |
+| `brain/wiki/<area>/index.md` | 9 areas | First stop for an unfamiliar subsystem | Area glossary + list of its pages |
+| `brain/wiki/<area>/*.md` | one page per subsystem | When Claude explores that subsystem | Entity schemas, services, data flows, gotchas |
+| `brain/decisions/*.md` | numbered, flat | When Claude needs the *why* behind a design | One hard-to-reverse call each |
 | `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety) |
 | `.agents/skills/` | 30-65 lines each | When invoked | Step-by-step workflows (`/add-feature`, `/add-entity`, `/add-endpoint`) |
 
@@ -44,7 +46,7 @@ Press `Shift+Tab` twice to enter Plan Mode, then paste your brief.
 
 Claude will:
 
-- Read relevant feature files in `.agents/features/` for the modules you'll touch
+- Read the relevant subsystem pages in `brain/wiki/<area>/` (and that area's `index.md`) for the modules you'll touch
 - Explore existing patterns in the codebase
 - Ask you clarifying questions
 - Propose which files to create/modify
@@ -158,7 +160,7 @@ Planning on Day N, implementing on Day N+1 produces better code than doing both 
 
 3. **Use the skills.** `/add-feature` exists for a reason — it encodes every step we've learned from past mistakes.
 
-4. **Read the feature docs yourself.** Before starting a feature in a module, spend 2 minutes reading its `.agents/features/*.md`. You'll ask better questions.
+4. **Read the wiki page yourself.** Before starting a feature in a module, spend 2 minutes reading its page under `brain/wiki/`. You'll ask better questions.
 
 5. **Don't babysit.** Start Claude on a task, switch to another tab, come back when it's done. Check notifications.
 

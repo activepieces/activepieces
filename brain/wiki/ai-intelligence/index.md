@@ -28,4 +28,4 @@ The per-project endpoint that exposes Activepieces tools to an external AI assis
 
 ## Related
 
-Knowledge Base lives in [Data & Storage](../data-storage/index.md) — it is a document store first, an AI tool second.
+Knowledge Base lives in [Data, Storage & Observability](../data-storage-observability/index.md) — it is a document store first, an AI tool second.

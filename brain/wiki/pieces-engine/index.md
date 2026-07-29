@@ -27,6 +27,13 @@ User-facing data transforms (81+ functions) inside any builder text input via a 
 - **Where**: shared lib `packages/core/shared/src/lib/formula/` (`AP_FUNCTIONS` registry is the single source of truth; `formulaEvaluator.evaluate`, type checker). Editor is the TipTap `text-input-with-mentions`. Runtime hooks in the engine's `props-resolver.ts` pre-pass.
 - **Gotchas**: no HTTP endpoints, no DB tables, no worker job — evaluation is synchronous in the engine. Runs on **every** edition, unconditionally (even if the editor flag is off, saved formulas still evaluate). Uses `expr-eval`; preprocess normalizes `;`→`,`, `and/or/not`, and rewrites `if()` to lazy ternary. Changing a function = bump `@activepieces/shared` minor; never hard-remove a function (mark `deprecated`).
 
+### Nothing typechecks the engine
+
+`@activepieces/engine`'s `build` is esbuild (`esbuild.config.mjs`, types stripped, never checked) and its `lint` is eslint only — no `tsc --noEmit` in `turbo.json` or any CI workflow. So type errors ship silently: as of Jul 2026 `npx tsc -p tsconfig.lib.json --noEmit` reports errors in `api/engine-file-api.ts`, `api/engine-run-api.ts`, `network/dns-lookup-guard.ts`, `piece-context/flows.ts`, `variables/props-processor.ts` on a clean `main`.
+
+- Run tsc yourself before/after an engine change and **diff the file list** rather than expecting zero — a green run is not the baseline.
+- Engine tests only run correctly from the package dir (`cd packages/server/engine && npx vitest run`); from the repo root the root config applies and every file fails collection with `describe is not defined`.
+
 ### The engine gets only 64 file descriptors
 
 Under `AP_EXECUTION_MODE=SANDBOX_PROCESS` / `SANDBOX_CODE_AND_PROCESS` the engine runs inside the `isolate` binary (`create-sandbox-for-job.ts` → `isolateProcess`). **The bundled isolate is 1.8.1, which hardcodes `RLIMIT_NOFILE` to 64 — soft *and* hard — with no flag to change it.** Verified: `ulimit -n` inside is `64`, outside `1048576`; upstream added `--open-files` only after 1.8.1, so our binary rejects it.
