@@ -571,6 +571,52 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Failed'), value: String(failedCount) },
       ];
     }
+    case ApplicationEventName.CHAT_FULL_ACCESS_ENABLED:
+    case ApplicationEventName.CHAT_FULL_ACCESS_DISABLED:
+    case ApplicationEventName.CHAT_CONSENT_GRANTED:
+    case ApplicationEventName.CHAT_CONSENT_DECLINED:
+    case ApplicationEventName.CHAT_CONSENT_POLICY_DENIED:
+    case ApplicationEventName.CHAT_CONSENT_AUTO_APPROVED: {
+      const {
+        conversation,
+        tool,
+        effectKinds,
+        targetName,
+        remembered,
+        reason,
+      } = event.data;
+      return [
+        { label: t('Conversation'), value: conversation.id },
+        ...(tool
+          ? [
+              {
+                label: t('Action'),
+                value: tool.displayName ?? tool.name,
+              },
+            ]
+          : []),
+        ...(targetName ? [{ label: t('Target'), value: targetName }] : []),
+        ...(effectKinds && effectKinds.length > 0
+          ? [
+              {
+                label: t('What it does'),
+                value: effectKinds
+                  .map((kind) => formatUtils.convertEnumToHumanReadable(kind))
+                  .join(', '),
+              },
+            ]
+          : []),
+        ...(reason ? [{ label: t('Reason'), value: reason }] : []),
+        ...(remembered
+          ? [
+              {
+                label: t('Approval'),
+                value: t('Reused an earlier approval'),
+              },
+            ]
+          : []),
+      ];
+    }
   }
 }
 
