@@ -2,13 +2,14 @@ import { githubAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { addLabelsToIssueActionOutputSchema } from '../output-schemas';
 
 export const githubAddLabelsToIssueAction = createAction({
   auth: githubAuth,
   name: 'add_labels_to_issue',
   displayName: 'Add Labels to Issue',
   description: 'Adds labels to an existing issue.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Adds one or more labels to an existing issue (by number) in a repository, leaving any labels already on the issue in place. Use to tag or categorize an issue. Idempotent in effect: re-adding a label the issue already has does not duplicate it.',
@@ -19,6 +20,7 @@ export const githubAddLabelsToIssueAction = createAction({
     issue_number: githubCommon.issueDropdown(true),
     labels: githubCommon.labelDropDown(true),
   },
+  outputSchema: addLabelsToIssueActionOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
     const issue_number = propsValue.issue_number;
