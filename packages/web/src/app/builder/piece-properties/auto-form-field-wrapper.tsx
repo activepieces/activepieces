@@ -1,5 +1,4 @@
 import {
-  piecePropertiesUtils,
   PieceAuthProperty,
   PieceProperty,
   PropertyType,
@@ -182,7 +181,7 @@ function getValueForInputOnDynamicToggleChange(
         return '';
       }
       return (
-        piecePropertiesUtils.parseDynamicValue({
+        formUtils.parseDynamicValue({
           property,
           value: currentValue,
         }) ??

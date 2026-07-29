@@ -11,6 +11,6 @@ export const multiSelectProcessor: ProcessorFn = (_property, value) => {
     if (typeof value === 'string' && value.trim().length === 0) {
         return undefined
     }
-    const parsed = typeof value === 'string' ? parseToJsonIfPossible(value) : value
+    const parsed = parseToJsonIfPossible(value)
     return Array.isArray(parsed) ? parsed : [value]
 }

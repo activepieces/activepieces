@@ -1,5 +1,7 @@
-import { piecePropertiesUtils, Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { describe, expect, it } from 'vitest';
+
+import { formUtils } from '@/features/pieces/utils/form-utils';
 
 const multiSelect = Property.StaticMultiSelectDropdown({
   displayName: 'Unit to Extract',
@@ -13,16 +15,14 @@ const checkbox = Property.Checkbox({
 });
 const shortText = Property.ShortText({ displayName: 'Text', required: false });
 
-describe('piecePropertiesUtils.parseDynamicValue', () => {
+describe('formUtils.parseDynamicValue', () => {
   it.each([
     [multiSelect, '["year","day"]', ['year', 'day']],
     [multiSelect, '[]', []],
     [checkbox, 'true', true],
     [checkbox, 'false', false],
   ])('restores case %#', (property, value, expected) => {
-    expect(piecePropertiesUtils.parseDynamicValue({ property, value })).toEqual(
-      expected,
-    );
+    expect(formUtils.parseDynamicValue({ property, value })).toEqual(expected);
   });
 
   it.each([
@@ -33,8 +33,6 @@ describe('piecePropertiesUtils.parseDynamicValue', () => {
     [checkbox, '1'],
     [shortText, '["year","day"]'],
   ])('has nothing unambiguous to restore in case %#', (property, value) => {
-    expect(
-      piecePropertiesUtils.parseDynamicValue({ property, value }),
-    ).toBeUndefined();
+    expect(formUtils.parseDynamicValue({ property, value })).toBeUndefined();
   });
 });

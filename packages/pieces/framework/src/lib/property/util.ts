@@ -1,8 +1,8 @@
-import { PieceProperty, PiecePropertyMap } from ".";
+import { PiecePropertyMap } from ".";
 import { PieceAuthProperty } from "./authentication";
 import { PropertyType } from "./input/property-type";
 import * as z from "zod/mini";
-import { isEmpty, isNil, parseToJsonIfPossible } from "@activepieces/core-utils";
+import { isEmpty, isNil } from "@activepieces/core-utils";
 import { AUTHENTICATION_PROPERTY_NAME } from "@activepieces/core-piece-types";
 
 function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAuthProperty[] | undefined, requireAuth: boolean | undefined = true) {
@@ -111,20 +111,6 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
     return z.object(propsSchema);
   }
 
-function parseDynamicValue({ property, value }: { property: PieceProperty, value: unknown }): unknown[] | boolean | undefined {
-    const parsed = parseToJsonIfPossible(value);
-    switch (property.type) {
-      case PropertyType.MULTI_SELECT_DROPDOWN:
-      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        return Array.isArray(parsed) ? parsed : undefined;
-      case PropertyType.CHECKBOX:
-        return typeof parsed === 'boolean' ? parsed : undefined;
-      default:
-        return undefined;
-    }
-  }
-
   export const piecePropertiesUtils = {
-    buildSchema,
-    parseDynamicValue
+    buildSchema
   }
