@@ -34,9 +34,19 @@ proactively at invite time.
   `"updated" = DEFAULT` to the `ON CONFLICT DO UPDATE SET` for `isUpdateDate` columns, so the resend
   already moves `updated` with no extra write. `updated` therefore means "when was the currently-valid
   link issued", which is what the reservation window is actually about.
-- **Enforced at invite creation and at reactivation** (INACTIVE→ACTIVE), skipping the check for
-  seat-neutral invites (to an existing member). `entitled_seats` is read from the projected
-  `platform_plan.usersLimit` — never a live Autumn call (the billing projection is pull-based).
+- **Enforced at invite creation and at reactivation** (INACTIVE→ACTIVE). `entitled_seats` is read from the
+  projected `platform_plan.usersLimit` — never a live Autumn call (the billing projection is pull-based).
+- **A seat-neutral operation skips the cap check entirely** — `checkUsersExceededLimit` returns early on
+  `additionalSeatsNeeded === 0` rather than evaluating `usedSeats + 0 > usersLimit`. `countAdditionalSeatsNeeded`
+  returns 0 in exactly two cases, and in both the seat is *already* inside `usedSeats`:
+  (1) the email resolves to an existing platform user (`wouldAddNewUser` false) — e.g. adding a current
+  member to a second project; (2) a non-expired `PENDING`/`ACCEPTED` invitation for that email already
+  holds the seat — i.e. a resend.
+  Comparing instead of skipping made both operations fail with 402 whenever `usedSeats >= usersLimit`, even
+  though neither adds a person. Being at or over cap is a legitimate steady state (decision 000017:
+  a scheduled downgrade caps seats immediately while existing users stay), so an admin could not re-send
+  an invitation email for a seat they were already paying for. Only the invite endpoint passes a computed
+  value; the reactivation path uses the default of 1 and is unaffected.
 - **Concurrency: a Postgres row lock.** The seat check + the write run in one transaction that takes
   `SELECT … FOR UPDATE` (`.setLock('pessimistic_write')`) on the platform's `platform_plan` row, so all
   seat-consuming writes for a platform serialize. Accepted alternatives were rejected: **reject-at-accept**

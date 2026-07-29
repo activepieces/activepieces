@@ -152,6 +152,9 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (ApEdition.COMMUNITY === edition) {
             return
         }
+        if (additionalSeatsNeeded === 0) {
+            return
+        }
         if (!await billingProvider.get(log).isBillingEnforced(platformId)) {
             return
         }
