@@ -43,4 +43,29 @@ describe('fetchAllTemplates', () => {
     await fetchAllTemplates({ request } as unknown as PolotnoClient, { name: 'promo' });
     expect(request.mock.calls[0][0].queryParams['name']).toBe('promo');
   });
+
+  it('follows next_cursor past the default page size when given a higher maxResults', async () => {
+    const firstPageIds = Array.from({ length: 100 }, (_, i) => `tpl_${i}`);
+    const secondPageIds = Array.from({ length: 100 }, (_, i) => `tpl_${100 + i}`);
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce(page(firstPageIds, 'cur_1'))
+      .mockResolvedValueOnce(page(secondPageIds, null));
+
+    const result = await fetchAllTemplates({ request } as unknown as PolotnoClient, { maxResults: 1000 });
+
+    expect(result).toHaveLength(200);
+    expect(request.mock.calls).toHaveLength(2);
+    expect(request.mock.calls[1][0].queryParams['cursor']).toBe('cur_1');
+  });
+
+  it('stops at the 1000 cap when the server keeps returning a next_cursor', async () => {
+    const fullPageIds = Array.from({ length: 100 }, (_, i) => `tpl_${i}`);
+    const request = vi.fn().mockResolvedValue(page(fullPageIds, 'cur_next'));
+
+    const result = await fetchAllTemplates({ request } as unknown as PolotnoClient, { maxResults: 1000 });
+
+    expect(result).toHaveLength(1000);
+    expect(request.mock.calls).toHaveLength(10);
+  });
 });

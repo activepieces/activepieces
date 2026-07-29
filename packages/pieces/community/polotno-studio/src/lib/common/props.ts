@@ -110,6 +110,7 @@ export const templateIdProp = Property.Dropdown({
     try {
       const client = createClient(auth.secret_text);
       const templates = await fetchAllTemplates(client, {
+        maxResults: MAX_TEMPLATE_RESULTS,
         ...(ctx.searchValue ? { name: ctx.searchValue } : {}),
       });
       if (templates.length === 0) {
