@@ -37,13 +37,16 @@ export const findTemplates = createAction({
     }),
   },
   async run(context) {
-    const client = createClient(context.auth.secret_text);
+    const client = createClient({ apiKey: context.auth.secret_text });
     const props = context.propsValue;
-    return fetchAllTemplates(client, {
-      ...(props.name ? { name: props.name } : {}),
-      ...(props.tag ? { tag: props.tag } : {}),
-      ...(props.archived === true ? { archived: true } : {}),
-      maxResults: props.max_results ?? DEFAULT_MAX_TEMPLATE_RESULTS,
+    return fetchAllTemplates({
+      client,
+      filters: {
+        ...(props.name ? { name: props.name } : {}),
+        ...(props.tag ? { tag: props.tag } : {}),
+        ...(props.archived === true ? { archived: true } : {}),
+        maxResults: props.max_results ?? DEFAULT_MAX_TEMPLATE_RESULTS,
+      },
     });
   },
 });

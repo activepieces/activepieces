@@ -22,7 +22,7 @@ export const getVideo = createAction({
     }),
   },
   async run(context) {
-    const client = createClient(context.auth.secret_text);
+    const client = createClient({ apiKey: context.auth.secret_text });
     return client.request<RenderLike>({
       path: `/v1/videos/${encodeURIComponent(context.propsValue.render_id)}`,
     });

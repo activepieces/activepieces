@@ -8,6 +8,11 @@ interface ErrorEnvelope {
   request_id?: string;
 }
 
+interface ToFriendlyMessageParams {
+  status: number;
+  body: unknown;
+}
+
 function readEnvelope(body: unknown): ErrorEnvelope | undefined {
   if (typeof body !== 'object' || body === null || !('error' in body)) return undefined;
   const err = body.error;
@@ -38,7 +43,7 @@ const FRIENDLY: Record<string, string> = {
   unknown_dynamic_field: 'The template has no dynamic field with that name.',
 };
 
-export function toFriendlyMessage(status: number, body: unknown): string {
+export function toFriendlyMessage({ status, body }: ToFriendlyMessageParams): string {
   const env = readEnvelope(body);
   if (!env) return `Polotno Studio API error (HTTP ${status}).`;
   const base = FRIENDLY[env.code] ?? env.message;
@@ -49,7 +54,7 @@ export function toFriendlyMessage(status: number, body: unknown): string {
 
 export function toFriendlyError(err: unknown): Error {
   if (err instanceof HttpError) {
-    return new Error(toFriendlyMessage(err.response.status, err.response.body));
+    return new Error(toFriendlyMessage({ status: err.response.status, body: err.response.body }));
   }
   return err instanceof Error ? err : new Error(String(err));
 }

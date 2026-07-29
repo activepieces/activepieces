@@ -28,12 +28,17 @@ export interface ClientDeps {
   sleep?: (ms: number) => Promise<void>;
 }
 
+export interface CreateClientParams {
+  apiKey: string;
+  deps?: ClientDeps;
+}
+
 function backoffMs(attempt: number): number {
   const base = Math.min(2 ** attempt, RETRY_AFTER_CAP_SECONDS) * 1_000;
   return base + Math.floor(Math.random() * 500);
 }
 
-export function createClient(apiKey: string, deps: ClientDeps = {}): PolotnoClient {
+export function createClient({ apiKey, deps = {} }: CreateClientParams): PolotnoClient {
   const send: SendFn = deps.send ?? (<T>(request: HttpRequest): Promise<HttpResponse<T>> => httpClient.sendRequest(request));
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 

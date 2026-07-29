@@ -18,11 +18,16 @@ export interface DeliveryParams {
 export function handleWebhookDelivery(params: DeliveryParams): RenderEventObject[] {
   if (!params.secret) return [];
 
-  const signature = findHeader(params.headers, 'x-signature');
-  const verification = verifyWebhookSignature(signature, params.rawBody, params.secret, params.now);
+  const signature = findHeader({ headers: params.headers, name: 'x-signature' });
+  const verification = verifyWebhookSignature({
+    header: signature,
+    rawBody: params.rawBody,
+    secret: params.secret,
+    nowSeconds: params.now,
+  });
   if (!verification.ok) return [];
 
-  const eventType = findHeader(params.headers, 'x-event-type');
+  const eventType = findHeader({ headers: params.headers, name: 'x-event-type' });
   if (!eventType || !params.events.includes(eventType)) return [];
 
   const object = readEventEnvelopeObject(params.body);
@@ -54,7 +59,7 @@ export function createRenderTrigger(config: RenderTriggerConfig) {
     sampleData: config.sampleData,
 
     async onEnable(context) {
-      const client = createClient(context.auth.secret_text);
+      const client = createClient({ apiKey: context.auth.secret_text });
       const subscription = await client.request<WebhookSubscription>({
         method: HttpMethod.POST,
         path: '/v1/webhooks',
@@ -75,7 +80,7 @@ export function createRenderTrigger(config: RenderTriggerConfig) {
       const stored = await context.store.get<{ id: string; secret: string }>(key);
       if (stored?.id) {
         await tryCatch(async () => {
-          const client = createClient(context.auth.secret_text);
+          const client = createClient({ apiKey: context.auth.secret_text });
           await client.request({ method: HttpMethod.DELETE, path: `/v1/webhooks/${stored.id}` });
         });
       }

@@ -8,7 +8,7 @@ const ok = (body: unknown) => ({ status: 200, body, headers: {} });
 describe('createClient', () => {
   it('sends the bearer token and returns the parsed body', async () => {
     const send = vi.fn().mockResolvedValue(ok({ object: 'me' }));
-    const client = createClient('key_live_x', { send });
+    const client = createClient({ apiKey: 'key_live_x', deps: { send } });
 
     const result = await client.request<{ object: string }>({ path: '/v1/me' });
 
@@ -25,7 +25,7 @@ describe('createClient', () => {
       .fn()
       .mockRejectedValueOnce(new HttpError({}, { status: 429, responseBody: {} }))
       .mockResolvedValueOnce(ok({ id: 'img_1' }));
-    const client = createClient('key_live_x', { send, sleep });
+    const client = createClient({ apiKey: 'key_live_x', deps: { send, sleep } });
 
     await expect(client.request({ path: '/v1/images', method: HttpMethod.POST })).resolves.toEqual({ id: 'img_1' });
     expect(send).toHaveBeenCalledTimes(2);
@@ -43,7 +43,7 @@ describe('createClient', () => {
       .mockRejectedValueOnce(new HttpError({}, { status: 429, responseBody: {} }))
       .mockRejectedValueOnce(new HttpError({}, { status: 429, responseBody: {} }))
       .mockResolvedValueOnce(ok({ id: 'img_1' }));
-    const client = createClient('key_live_x', { send, sleep });
+    const client = createClient({ apiKey: 'key_live_x', deps: { send, sleep } });
 
     await client.request({ path: '/v1/images', method: HttpMethod.POST });
 
@@ -59,7 +59,7 @@ describe('createClient', () => {
     const send = vi.fn().mockRejectedValue(
       new HttpError({}, { status: 429, responseBody: { error: { type: 't', code: 'rate_limit_exceeded', message: 'slow down' } } }),
     );
-    const client = createClient('key_live_x', { send, sleep });
+    const client = createClient({ apiKey: 'key_live_x', deps: { send, sleep } });
 
     await expect(client.request({ path: '/v1/images' })).rejects.toThrow('Rate limit exceeded');
     expect(send).toHaveBeenCalledTimes(4);
@@ -69,7 +69,7 @@ describe('createClient', () => {
     const send = vi.fn().mockRejectedValue(
       new HttpError({}, { status: 401, responseBody: { error: { type: 't', code: 'invalid_api_key', message: 'nope' } } }),
     );
-    const client = createClient('key_live_x', { send });
+    const client = createClient({ apiKey: 'key_live_x', deps: { send } });
 
     await expect(client.request({ path: '/v1/me' })).rejects.toThrow('Invalid API key');
     expect(send).toHaveBeenCalledTimes(1);

@@ -56,10 +56,15 @@ export interface TemplateFilters {
   maxResults?: number;
 }
 
-export async function fetchAllTemplates(
-  client: PolotnoClient,
-  filters: TemplateFilters = {},
-): Promise<TemplateSummary[]> {
+export interface FetchAllTemplatesParams {
+  client: PolotnoClient;
+  filters?: TemplateFilters;
+}
+
+export async function fetchAllTemplates({
+  client,
+  filters = {},
+}: FetchAllTemplatesParams): Promise<TemplateSummary[]> {
   const limit = Math.max(
     1,
     Math.min(filters.maxResults ?? DEFAULT_MAX_TEMPLATE_RESULTS, MAX_TEMPLATE_RESULTS),
@@ -100,10 +105,13 @@ export const templateIdProp = Property.Dropdown({
       return { disabled: true, options: [], placeholder: 'Connect your Polotno Studio account first' };
     }
     const { data: templates, error } = await tryCatch(() => {
-      const client = createClient(auth.secret_text);
-      return fetchAllTemplates(client, {
-        maxResults: MAX_TEMPLATE_RESULTS,
-        ...(ctx.searchValue ? { name: ctx.searchValue } : {}),
+      const client = createClient({ apiKey: auth.secret_text });
+      return fetchAllTemplates({
+        client,
+        filters: {
+          maxResults: MAX_TEMPLATE_RESULTS,
+          ...(ctx.searchValue ? { name: ctx.searchValue } : {}),
+        },
       });
     });
     if (error) {
@@ -128,7 +136,7 @@ export const dynamicFieldsProp = Property.DynamicProperties({
   refreshers: ['template_id'],
   props: async ({ auth, template_id }) => {
     if (!auth || !template_id) return {};
-    const client = createClient(auth.secret_text);
+    const client = createClient({ apiKey: auth.secret_text });
     const response = await client.request<{ fields: FieldDef[] }>({
       path: `/v1/templates/${encodeURIComponent(String(template_id))}/dynamic-fields`,
     });

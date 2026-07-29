@@ -15,7 +15,7 @@ export const polotnoStudioAuth = PieceAuth.SecretText({
   description: DESCRIPTION,
   required: true,
   validate: async ({ auth }) => {
-    const { error } = await tryCatch(() => createClient(auth).request<MeResponse>({ path: '/v1/me' }));
+    const { error } = await tryCatch(() => createClient({ apiKey: auth }).request<MeResponse>({ path: '/v1/me' }));
     if (error) {
       return { valid: false, error: error instanceof Error ? error.message : 'Could not reach Polotno Studio.' };
     }

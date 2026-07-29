@@ -9,12 +9,19 @@ export type VerifyResult =
       reason: 'missing_header' | 'malformed_header' | 'bad_signature' | 'stale_timestamp' | 'unusable_raw_body';
     };
 
-export function verifyWebhookSignature(
-  header: string | undefined,
-  rawBody: unknown,
-  secret: string,
-  nowSeconds: number = Math.floor(Date.now() / 1000),
-): VerifyResult {
+export interface VerifyWebhookSignatureParams {
+  header: string | undefined;
+  rawBody: unknown;
+  secret: string;
+  nowSeconds?: number;
+}
+
+export function verifyWebhookSignature({
+  header,
+  rawBody,
+  secret,
+  nowSeconds = Math.floor(Date.now() / 1000),
+}: VerifyWebhookSignatureParams): VerifyResult {
   if (!header) return { ok: false, reason: 'missing_header' };
   if (!Buffer.isBuffer(rawBody) && typeof rawBody !== 'string') {
     return { ok: false, reason: 'unusable_raw_body' };
@@ -47,7 +54,12 @@ export function verifyWebhookSignature(
   return { ok: true };
 }
 
-export function findHeader(headers: Record<string, string>, name: string): string | undefined {
+export interface FindHeaderParams {
+  headers: Record<string, string>;
+  name: string;
+}
+
+export function findHeader({ headers, name }: FindHeaderParams): string | undefined {
   const target = name.toLowerCase();
   for (const [key, value] of Object.entries(headers)) {
     if (key.toLowerCase() === target) return value;

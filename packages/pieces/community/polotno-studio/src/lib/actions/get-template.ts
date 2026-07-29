@@ -25,7 +25,7 @@ export const getTemplate = createAction({
     }),
   },
   async run(context) {
-    const client = createClient(context.auth.secret_text);
+    const client = createClient({ apiKey: context.auth.secret_text });
     const template = await client.request<Template>({
       path: `/v1/templates/${encodeURIComponent(context.propsValue.template_id)}`,
     });

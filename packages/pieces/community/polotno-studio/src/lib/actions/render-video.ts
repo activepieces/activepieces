@@ -54,13 +54,13 @@ export const renderVideo = createAction({
       return readResumedRender(context.resumePayload);
     }
 
-    const client = createClient(context.auth.secret_text);
+    const client = createClient({ apiKey: context.auth.secret_text });
     const props = context.propsValue;
 
     const fields = await client.request<{ fields: FieldDef[] }>({
       path: `/v1/templates/${encodeURIComponent(props.template_id)}/dynamic-fields`,
     });
-    const dynamicFieldsFlat = toFlatFields(fields.fields ?? [], props.dynamic_fields ?? {});
+    const dynamicFieldsFlat = toFlatFields({ defs: fields.fields ?? [], values: props.dynamic_fields ?? {} });
 
     const body: Record<string, unknown> = { template_id: props.template_id };
     if (Object.keys(dynamicFieldsFlat).length > 0) body['dynamic_fields_flat'] = dynamicFieldsFlat;

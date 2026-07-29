@@ -7,9 +7,9 @@ const OBJECT = { id: 'img_1', object: 'image', status: 'completed' };
 const ENVELOPE = { id: 'evt_1', type: 'image.completed', created_at: 'now', api_version: 'v1', data: { object: OBJECT } };
 const RAW = JSON.stringify(ENVELOPE);
 const NOW = 1_800_000_000;
-const signAt = (t: number, body: string) =>
+const signAt = ({ t, body }: { t: number; body: string }) =>
   `t=${t},v1=${createHmac('sha256', SECRET).update(`${t}.${body}`).digest('hex')}`;
-const sign = (body: string) => signAt(NOW, body);
+const sign = (body: string) => signAt({ t: NOW, body });
 
 const delivery = (over: Record<string, unknown> = {}) => ({
   rawBody: RAW,
@@ -41,7 +41,7 @@ describe('handleWebhookDelivery', () => {
 
   it('drops a delivery whose timestamp is stale', () => {
     const headers = {
-      'x-signature': signAt(NOW - 301, RAW),
+      'x-signature': signAt({ t: NOW - 301, body: RAW }),
       'x-event-type': 'image.completed',
     };
     expect(handleWebhookDelivery(delivery({ headers }))).toEqual([]);
