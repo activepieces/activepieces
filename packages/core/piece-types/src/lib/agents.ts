@@ -77,6 +77,15 @@ export enum AgentPieceProps {
     AI_PROVIDER_MODEL = 'aiProviderModel',
     WEB_SEARCH = 'webSearch',
     WEB_SEARCH_OPTIONS = 'webSearchOptions',
+    PROFILE = 'profile',
+}
+
+// Absence means LEGACY. Every agent step written before profiles existed has no `profile` in its
+// settings, and those steps must keep their original prompt and output verbatim — so the default
+// can never become UNIFIED without changing how already-published flows behave.
+export enum AgentProfile {
+    LEGACY = 'legacy',
+    UNIFIED = 'unified',
 }
 
 export const PredefinedInputField = z.object({

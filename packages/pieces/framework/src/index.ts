@@ -37,6 +37,7 @@ export {
   AgentOutputField,
   AgentOutputFieldType,
   AgentPieceProps,
+  AgentProfile,
   AgentStepBlock,
   AgentTaskStatus,
   ContentBlockType,

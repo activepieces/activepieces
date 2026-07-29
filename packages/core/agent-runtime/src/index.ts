@@ -5,4 +5,5 @@
 // '@activepieces/core-agent-runtime/model' explicitly.
 export * from './lib/context'
 export * from './lib/loop'
+export * from './lib/prompt'
 export * from './lib/resilience'

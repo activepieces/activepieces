@@ -29,6 +29,7 @@ import {
 } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 import type { PopulatedFlowSummary } from '@activepieces/core-piece-types';
+import { AgentProfile } from '@activepieces/core-piece-types';
 
 export type BaseContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
@@ -271,6 +272,7 @@ export type ConstructToolParams = {
 export type RunAgentParams = {
   model: LanguageModel;
   provider: AIProviderName;
+  profile?: AgentProfile;
   system: string;
   prompt: string;
   tools: Record<string, Tool>;

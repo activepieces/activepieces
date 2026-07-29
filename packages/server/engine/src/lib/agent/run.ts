@@ -1,14 +1,14 @@
-import { runAgentTurn } from '@activepieces/core-agent-runtime'
+import { OPERATING_PRINCIPLES_BLOCK, runAgentTurn } from '@activepieces/core-agent-runtime'
 import { tryCatchSync } from '@activepieces/core-utils'
-import { RunAgentParams, RunAgentResult } from '@activepieces/pieces-framework'
+import { AgentProfile, RunAgentParams, RunAgentResult } from '@activepieces/pieces-framework'
 import { hasToolCall } from 'ai'
 
 export const agentRunner = {
-    async run({ model, provider, system, prompt, tools, maxSteps, providerOptions, stopOnToolName, onChunk }: RunAgentParams): Promise<RunAgentResult> {
+    async run({ model, provider, profile, system, prompt, tools, maxSteps, providerOptions, stopOnToolName, onChunk }: RunAgentParams): Promise<RunAgentResult> {
         const result = await runAgentTurn({
             model,
             provider,
-            systemPrompt: system,
+            systemPrompt: composeSystemPrompt({ system, profile }),
             messages: [{ role: 'user', content: prompt }],
             tools,
             ...(providerOptions ? { providerOptions } : {}),
@@ -37,6 +37,11 @@ export const agentRunner = {
     },
 }
 
+// A step written before profiles existed carries no `profile`, and must keep the exact system
+// prompt it has always run with — so only an explicit UNIFIED opts into the shared principles.
+function composeSystemPrompt({ system, profile }: { system: string, profile?: AgentProfile }): string {
+    return profile === AgentProfile.UNIFIED ? `${system}\n\n${OPERATING_PRINCIPLES_BLOCK}` : system
+}
 
 // `console` IS the engine's logger — `worker-socket.ts` patches it to forward to the worker as run
 // stdout/stderr, joining its args with a space. Fields therefore have to be serialized here or

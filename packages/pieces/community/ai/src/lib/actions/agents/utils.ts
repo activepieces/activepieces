@@ -1,5 +1,5 @@
 import { isNil, SeekPage, PopulatedFlowSummary } from '@activepieces/pieces-framework';
-import { AgentOutputField, AgentOutputFieldType, TASK_COMPLETION_TOOL_NAME, PopulatedFlow, McpTrigger, ExecuteToolResponse, ExecutionToolStatus, McpProperty, McpPropertyType, AgentFlowTool, mcpToolNameUtils, RAW_PAYLOAD_HEADER } from '@activepieces/pieces-framework';
+import { AgentOutputField, AgentOutputFieldType, AgentProfile, TASK_COMPLETION_TOOL_NAME, PopulatedFlow, McpTrigger, ExecuteToolResponse, ExecutionToolStatus, McpProperty, McpPropertyType, AgentFlowTool, mcpToolNameUtils, RAW_PAYLOAD_HEADER } from '@activepieces/pieces-framework';
 import { z, ZodObject } from 'zod';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Tool } from 'ai';
@@ -26,7 +26,31 @@ export const agentUtils = {
     }
     return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
   },
-  getPrompts(userPrompt: string, options?: { hasKnowledgeBaseTools?: boolean }) {
+  getPrompts(userPrompt: string, options?: { hasKnowledgeBaseTools?: boolean, profile?: AgentProfile }) {
+    const completionNote = `
+        <important_note>
+        As your FINAL ACTION, you must call the \`${TASK_COMPLETION_TOOL_NAME}\` tool to indicate if the task is complete or not.
+        Call this tool only once you have done everything you can to achieve the user's goal, or if you are unable to continue (e.g., after handling errors appropriately and exhausting alternatives).
+        If you do not make this final call, your work will be considered unsuccessful.
+        </important_note>
+      `;
+    // The unified profile drops the long-form reasoning/tool/error sections below, because the
+    // engine appends the shared operating principles which cover the same ground — keeping both
+    // would ship two overlapping, differently-worded instruction sets in one system prompt.
+    if (options?.profile === AgentProfile.UNIFIED) {
+      return {
+        prompt: `${userPrompt}${completionNote}`,
+        system: `
+        You are a proactive AI assistant running as a step inside an automation. There is no human
+        watching this run, so decide and act rather than asking.
+        Today's date is ${new Date().toISOString().split('T')[0]}.
+
+        **Completion**: once the goal is achieved or genuinely unachievable, summarize what you did,
+        then call the \`${TASK_COMPLETION_TOOL_NAME}\` tool as your last action. Do not call it prematurely.
+        ${knowledgeBaseGuidelines(options)}
+      `.trim(),
+      };
+    }
     return {
        prompt: `
         ${userPrompt}
@@ -71,13 +95,7 @@ export const agentUtils = {
         **Final Response and Completion**:
         - Once the goal is achieved or unachievable, summarize findings clearly in a final response if needed, then call the \`${TASK_COMPLETION_TOOL_NAME}\` tool as your last action.
         - Do not call the completion tool prematurely—ensure all reasonable steps are taken.
-        ${options?.hasKnowledgeBaseTools ? `
-        **Knowledge Base Guidelines**:
-        - ALWAYS search the knowledge base before answering any question. Do not answer from your own knowledge — use the search tool first.
-        - You may refine your search query ONCE if initial results aren't relevant. If the second search returns similar results, stop searching — the information is not in the knowledge base. Do not keep retrying with different phrasings.
-        - If the knowledge base does not contain the answer, say so clearly and move on.
-        - Cite the source document or table when presenting information from the knowledge base.
-        ` : ''}
+        ${knowledgeBaseGuidelines(options)}
       `.trim(),
     }
   },
@@ -125,6 +143,19 @@ export const agentUtils = {
     }
   }
 
+}
+
+function knowledgeBaseGuidelines(options?: { hasKnowledgeBaseTools?: boolean }): string {
+  if (!options?.hasKnowledgeBaseTools) {
+    return '';
+  }
+  return `
+        **Knowledge Base Guidelines**:
+        - ALWAYS search the knowledge base before answering any question. Do not answer from your own knowledge — use the search tool first.
+        - You may refine your search query ONCE if initial results aren't relevant. If the second search returns similar results, stop searching — the information is not in the knowledge base. Do not keep retrying with different phrasings.
+        - If the knowledge base does not contain the answer, say so clearly and move on.
+        - Cite the source document or table when presenting information from the knowledge base.
+        `;
 }
 
 function isOkSuccess(status: number) {

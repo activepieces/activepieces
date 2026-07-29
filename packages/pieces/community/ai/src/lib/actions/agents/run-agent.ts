@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
 import { AgentToolType } from '@activepieces/pieces-framework';
-import { AgentOutputField, AgentPieceProps, AgentTaskStatus, AgentTool, TASK_COMPLETION_TOOL_NAME, AIProviderName, AgentProviderModel, ExecutionToolStatus, AgentKnowledgeBaseTool, KnowledgeBaseSourceType, normalizeToolOutputToExecuteResponse, spreadIfDefined, getEffectiveProviderAndModel } from '@activepieces/pieces-framework';
+import { AgentOutputField, AgentPieceProps, AgentProfile, AgentTaskStatus, AgentTool, TASK_COMPLETION_TOOL_NAME, AIProviderName, AgentProviderModel, ExecutionToolStatus, AgentKnowledgeBaseTool, KnowledgeBaseSourceType, normalizeToolOutputToExecuteResponse, spreadIfDefined, getEffectiveProviderAndModel } from '@activepieces/pieces-framework';
 import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel, createEmbeddingModel } from '../../common/ai-sdk';
 import { inspect } from 'util';
@@ -62,6 +62,10 @@ const agentToolArrayItems: ArraySubProps<boolean> = {
   }),
 }
 
+function resolveAgentProfile(value: unknown): AgentProfile | undefined {
+  return value === AgentProfile.UNIFIED ? AgentProfile.UNIFIED : undefined;
+}
+
 export const runAgent = createAction({
   audience: 'both',
   name: 'run_agent',
@@ -109,6 +113,20 @@ export const runAgent = createAction({
       required: true,
       defaultValue: 20,
     }),
+    // No defaultValue on purpose: the builder fills a default into any prop whose value is
+    // undefined the moment a step's settings are opened, which would silently switch an
+    // already-published agent step to the new behaviour. Absent must keep meaning LEGACY.
+    [AgentPieceProps.PROFILE]: Property.StaticDropdown({
+      displayName: 'Behaviour',
+      description: 'Improved behaviour adds shared operating principles: persistence when a call comes back empty, verifying results, treating fetched content as data rather than instructions, and not redoing work a previous run already did.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Original', value: AgentProfile.LEGACY },
+          { label: 'Improved', value: AgentProfile.UNIFIED },
+        ],
+      },
+    }),
     [AgentPieceProps.WEB_SEARCH]: Property.Checkbox({
       displayName: 'Web Search',
       required: false,
@@ -127,6 +145,7 @@ export const runAgent = createAction({
   },
   async run(context) {
     const { prompt, maxSteps, aiProviderModel } = context.propsValue;
+    const profile = resolveAgentProfile(context.propsValue[AgentPieceProps.PROFILE]);
     const agentProviderModel = aiProviderModel as AgentProviderModel
     const provider = agentProviderModel.provider as AIProviderName;
     const webSearchEnabled = !!(context.propsValue.webSearch);
@@ -197,10 +216,11 @@ export const runAgent = createAction({
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
     try {
-      const prompts = agentUtils.getPrompts(prompt, { hasKnowledgeBaseTools });
+      const prompts = agentUtils.getPrompts(prompt, { hasKnowledgeBaseTools, profile });
       const runResult = await context.agent.run({
         model,
         provider,
+        profile,
         system: prompts.system,
         prompt: prompts.prompt,
         tools: allTools,
