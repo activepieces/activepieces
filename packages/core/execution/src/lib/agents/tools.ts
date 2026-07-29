@@ -74,7 +74,7 @@ export const AgentMcpTool = z.object({
     type: z.literal(AgentToolType.MCP),
     ...AgentToolBase,
     serverUrl: z.string().url(),
-    protocol: z.enum(McpProtocol),
+    protocol: z.nativeEnum(McpProtocol),
     auth: McpAuthConfig,
 })
 export type AgentMcpTool = z.infer<typeof AgentMcpTool>
@@ -82,7 +82,7 @@ export type AgentMcpTool = z.infer<typeof AgentMcpTool>
 export const AgentKnowledgeBaseTool = z.object({
     type: z.literal(AgentToolType.KNOWLEDGE_BASE),
     ...AgentToolBase,
-    sourceType: z.enum(KnowledgeBaseSourceType),
+    sourceType: z.nativeEnum(KnowledgeBaseSourceType),
     sourceId: z.string(),
     sourceName: z.string(),
 })

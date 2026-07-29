@@ -19,7 +19,7 @@ export type { AgentProviderModel } from '@activepieces/core-piece-types'
 export const AgentOutputField = z.object({
     displayName: z.string(),
     description: z.string().optional(),
-    type: z.enum(AgentOutputFieldType),
+    type: z.nativeEnum(AgentOutputFieldType),
 })
 export type AgentOutputField = z.infer<typeof AgentOutputField>
 
@@ -41,7 +41,7 @@ const ToolCallBaseSchema = z.object({
     input: Nullable(z.record(z.string(), z.unknown())),
     output: z.unknown().optional(),
     toolName: z.string(),
-    status: z.enum(ToolCallStatus),
+    status: z.nativeEnum(ToolCallStatus),
     toolCallId: z.string(),
     startTime: z.string(),
     endTime: z.string().optional(),
