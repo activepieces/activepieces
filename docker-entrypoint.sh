@@ -26,6 +26,11 @@ if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then
 fi
 
 # Build PM2 ecosystem config
+KILL_TIMEOUT_MS="$PM2_KILL_TIMEOUT"
+case "$KILL_TIMEOUT_MS" in
+    ''|*[!0-9]*) KILL_TIMEOUT_MS=35000 ;;
+esac
+
 APPS=""
 
 if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
@@ -36,6 +41,7 @@ if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP"
         node_args: '--enable-source-maps',
         instances: 1,
         exec_mode: 'fork',
+        kill_timeout: ${KILL_TIMEOUT_MS},
         env: { AP_CONTAINER_TYPE: 'APP' }
     },"
 fi
@@ -47,7 +53,8 @@ if [ "$AP_CONTAINER_TYPE" = "WORKER" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_A
         script: 'packages/server/worker/dist/src/bootstrap.js',
         node_args: '--enable-source-maps',
         instances: 1,
-        exec_mode: 'fork'
+        exec_mode: 'fork',
+        kill_timeout: ${KILL_TIMEOUT_MS}
     },"
 fi
 

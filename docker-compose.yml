@@ -3,6 +3,7 @@ services:
     image: ghcr.io/activepieces/activepieces:0.86.3
     container_name: activepieces-app
     restart: unless-stopped
+    stop_grace_period: 40s
     ports:
       - '8080:80'
     depends_on:
@@ -18,6 +19,7 @@ services:
   worker:
     image: ghcr.io/activepieces/activepieces:0.86.3
     restart: unless-stopped
+    stop_grace_period: 40s
     depends_on:
       - app
     env_file: .env
