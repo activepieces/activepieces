@@ -1,49 +1,25 @@
-import { AIProviderName } from '@activepieces/core-utils'
-import { z } from 'zod'
+import { AgentOutputFieldType, AgentTaskStatus, ContentBlockType, ToolCallStatus, ToolCallType } from '@activepieces/core-piece-types'
 import { Nullable } from '@activepieces/core-utils'
+import { z } from 'zod'
 export * from './tools'
 export * from './mcp'
 export * from './mcp-tool-name-util'
 
-export enum AgentOutputFieldType {
-    TEXT = 'text',
-    NUMBER = 'number',
-    BOOLEAN = 'boolean',
-}
-
-export enum AgentTaskStatus {
-    COMPLETED = 'COMPLETED',
-    FAILED = 'FAILED',
-    IN_PROGRESS = 'IN_PROGRESS',
-}
-
-export enum ContentBlockType {
-    MARKDOWN = 'MARKDOWN',
-    TOOL_CALL = 'TOOL_CALL',
-}
-
-export enum ToolCallStatus {
-    IN_PROGRESS = 'in-progress',
-    COMPLETED = 'completed',
-}
-
-export enum ExecutionToolStatus {
-    SUCCESS = 'SUCCESS',
-    FAILED = 'FAILED',
-}
-
-export enum ToolCallType {
-    PIECE = 'PIECE',
-    FLOW = 'FLOW',
-    MCP = 'MCP',
-    KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
-    UNKNOWN = 'UNKNOWN',
-}
+export {
+    AgentOutputFieldType,
+    AgentPieceProps,
+    AgentTaskStatus,
+    ContentBlockType,
+    ExecutionToolStatus,
+    ToolCallStatus,
+    ToolCallType,
+} from '@activepieces/core-piece-types'
+export type { AgentProviderModel } from '@activepieces/core-piece-types'
 
 export const AgentOutputField = z.object({
     displayName: z.string(),
     description: z.string().optional(),
-    type: z.nativeEnum(AgentOutputFieldType),
+    type: z.enum(AgentOutputFieldType),
 })
 export type AgentOutputField = z.infer<typeof AgentOutputField>
 
@@ -52,21 +28,6 @@ export type AgentResult = {
     steps: AgentStepBlock[]
     status: AgentTaskStatus
     structuredOutput?: unknown
-}
-
-export enum AgentPieceProps {
-    AGENT_TOOLS = 'agentTools',
-    STRUCTURED_OUTPUT = 'structuredOutput',
-    PROMPT = 'prompt',
-    MAX_STEPS = 'maxSteps',
-    AI_PROVIDER_MODEL = 'aiProviderModel',
-    WEB_SEARCH = 'webSearch',
-    WEB_SEARCH_OPTIONS = 'webSearchOptions',
-}
-
-export type AgentProviderModel = {
-    provider: AIProviderName
-    model: string
 }
 
 export const MarkdownContentBlock = z.object({
@@ -80,7 +41,7 @@ const ToolCallBaseSchema = z.object({
     input: Nullable(z.record(z.string(), z.unknown())),
     output: z.unknown().optional(),
     toolName: z.string(),
-    status: z.nativeEnum(ToolCallStatus),
+    status: z.enum(ToolCallStatus),
     toolCallId: z.string(),
     startTime: z.string(),
     endTime: z.string().optional(),

@@ -1,6 +1,13 @@
+import { mcpToolNameUtils as pieceTypesUtils } from '@activepieces/core-piece-types'
 import { mcpToolNameUtils } from '../../../src/lib/agents/mcp-tool-name-util'
 
 const { createToolName, createPieceToolName } = mcpToolNameUtils
+
+describe('mcpToolNameUtils canonicalization', () => {
+    it('resolves to the same implementation from both entry points', () => {
+        expect(mcpToolNameUtils).toBe(pieceTypesUtils)
+    })
+})
 
 describe('createToolName', () => {
     it('replaces special characters with underscores', () => {
