@@ -481,24 +481,70 @@ describe('Property Validation', () => {
             expect(errors).toEqual({})
         })
 
-        it('should leave strings that are not arrays unchanged and fail validation', async () => {
+        it.each([
+            ['a single option value', 'year', ['year']],
+            ['a value that is not JSON', 'a,b', ['a,b']],
+            ['a quoted number, keeping it a string', '5', ['5']],
+            ['a number', 5, [5]],
+            ['a boolean', true, [true]],
+        ])('should wrap %s into a single-item array', async (_case, input, expected) => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                {
-                    staticMultiSelect: 'year',
-                    multiSelect: '{"not":"an array"}',
-                },
+                { staticMultiSelect: input },
                 props,
                 PieceAuth.None(),
                 false,
                 {},
             )
 
-            expect(processedInput.staticMultiSelect).toEqual('year')
-            expect(processedInput.multiSelect).toEqual('{"not":"an array"}')
+            expect(processedInput.staticMultiSelect).toEqual(expected)
+            expect(errors).toEqual({})
+        })
+
+        it.each([
+            ['a malformed array literal', '[year, month]'],
+            ['an object literal', '{"not":"an array"}'],
+            ['a malformed object literal', '{year: 1}'],
+        ])('should leave %s unchanged and fail validation', async (_case, input) => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { staticMultiSelect: input },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticMultiSelect).toEqual(input)
             expect(errors).toEqual({
-                staticMultiSelect: ['Expected array, received: year'],
-                multiSelect: ['Expected array, received: {"not":"an array"}'],
+                staticMultiSelect: [`Expected array, received: ${input}`],
             })
+        })
+
+        it('should leave objects unchanged and fail validation', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { multiSelect: { not: 'an array' } },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.multiSelect).toEqual({ not: 'an array' })
+            expect(errors).toEqual({
+                multiSelect: ['Expected array, received: [object Object]'],
+            })
+        })
+
+        it('should treat a whitespace-only dynamic value as unset when optional', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { staticMultiSelect: '   ' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticMultiSelect).toBeUndefined()
+            expect(errors).toEqual({})
         })
 
         it('should treat an empty dynamic value as unset when optional', async () => {
@@ -600,6 +646,21 @@ describe('Property Validation', () => {
             expect(processedInput.checkbox).toEqual('not a boolean')
             expect(errors).toEqual({
                 checkbox: ['Expected boolean, received: not a boolean'],
+            })
+        })
+
+        it('should never wrap a non-boolean into an array', async () => {
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { checkbox: 1 },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.checkbox).toEqual(1)
+            expect(errors).toEqual({
+                checkbox: ['Expected boolean, received: 1'],
             })
         })
 
