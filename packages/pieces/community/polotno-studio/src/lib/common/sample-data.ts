@@ -72,4 +72,4 @@ const SAMPLE_FAILED_RENDER = {
   completed_at: '2026-07-27T10:00:03.000Z',
 };
 
-export const sampleRenders = { SAMPLE_IMAGE_RENDER, SAMPLE_VIDEO_RENDER, SAMPLE_FAILED_RENDER };
+export const sampleRenders = { SAMPLE_IMAGE_RENDER, SAMPLE_VIDEO_RENDER, SAMPLE_FAILED_RENDER } as const;

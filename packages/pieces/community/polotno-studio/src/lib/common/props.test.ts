@@ -114,4 +114,13 @@ describe('fetchAllTemplates', () => {
     expect(result).toHaveLength(1000);
     expect(request.mock.calls).toHaveLength(10);
   });
+
+  it('stops when the server returns an empty page with a next_cursor', async () => {
+    const request = vi.fn().mockResolvedValue(page({ ids: [], next: 'cur_next' }));
+
+    const result = await sharedProps.fetchAllTemplates({ client: clientOf(request) });
+
+    expect(result).toEqual([]);
+    expect(request.mock.calls).toHaveLength(1);
+  });
 });

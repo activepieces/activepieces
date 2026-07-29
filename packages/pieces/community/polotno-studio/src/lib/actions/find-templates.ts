@@ -8,7 +8,8 @@ export const findTemplates = createAction({
   auth: polotnoStudioAuth,
   name: 'find_templates',
   displayName: 'Find Templates',
-  description: 'List templates in the project, optionally filtered by name or tag.',
+  description:
+    'List templates in the project, optionally filtered by name or tag. Results beyond Max Results are truncated silently.',
   audience: 'both',
   aiMetadata: {
     description:

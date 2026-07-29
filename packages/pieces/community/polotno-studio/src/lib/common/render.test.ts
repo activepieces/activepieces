@@ -112,6 +112,21 @@ describe('executeRender (BEGIN)', () => {
     expect(result['status']).toBe('pending');
   });
 
+  it('clamps maxWaitSeconds to the configured maximum before polling', async () => {
+    const request = vi.fn().mockResolvedValue({ id: 'img_1', object: 'image', status: 'pending' });
+    let clock = 0;
+    const privateWaitpoint = { ...waitpoint(), buildResumeUrl: () => 'https://10.0.0.1/api/v1/resume/wp_1' };
+
+    const result = await renderFlow.executeRender({
+      ...base, client: clientOf(request), waitForCompletion: true, maxWaitSeconds: 100_000,
+      createWaitpoint: vi.fn().mockResolvedValue(privateWaitpoint), waitForWaitpoint: vi.fn(),
+      sleep: vi.fn().mockResolvedValue(undefined), now: () => (clock += 601_000),
+    });
+
+    expect(result['timed_out']).toBe(true);
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+
   it('sends the idempotency key', async () => {
     const { client: c, request } = client();
     await renderFlow.executeRender({ ...base, client: c, waitForCompletion: false, createWaitpoint: vi.fn(), waitForWaitpoint: vi.fn() });

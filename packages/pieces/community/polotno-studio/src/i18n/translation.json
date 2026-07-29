@@ -24,7 +24,7 @@
   "Video Render ID": "Video Render ID",
   "The id returned by Render Video, starting with vid_.": "The id returned by Render Video, starting with vid_.",
   "Find Templates": "Find Templates",
-  "List templates in the project, optionally filtered by name or tag.": "List templates in the project, optionally filtered by name or tag.",
+  "List templates in the project, optionally filtered by name or tag. Results beyond Max Results are truncated silently.": "List templates in the project, optionally filtered by name or tag. Results beyond Max Results are truncated silently.",
   "Name Contains": "Name Contains",
   "Tag": "Tag",
   "Include Archived": "Include Archived",

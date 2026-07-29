@@ -28,14 +28,6 @@ export interface FieldDef {
   default?: string | number | boolean;
 }
 
-export interface EventEnvelope {
-  id: string;
-  type: string;
-  created_at: string;
-  api_version: string;
-  data?: { object?: RenderLike };
-}
-
 export interface RenderEventObject {
   id: string;
   [k: string]: unknown;

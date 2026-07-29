@@ -50,6 +50,7 @@ async function fetchAllTemplates({ client, filters = {} }: FetchAllTemplatesPara
   );
   const items: TemplateSummary[] = [];
   let cursor: string | undefined;
+  let lastPageSize = 0;
 
   do {
     const queryParams: Record<string, string> = {
@@ -66,8 +67,9 @@ async function fetchAllTemplates({ client, filters = {} }: FetchAllTemplatesPara
       queryParams,
     });
     items.push(...page.items);
+    lastPageSize = page.items.length;
     cursor = page.next_cursor ?? undefined;
-  } while (cursor && items.length < limit);
+  } while (cursor && lastPageSize > 0 && items.length < limit);
 
   return items.slice(0, limit);
 }
