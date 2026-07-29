@@ -1,5 +1,5 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { appWebhookSetupInfo, singleSelectChannelInfo, slackChannel } from '../common/props';
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
@@ -15,6 +15,7 @@ export const newMessageInChannelTrigger = createTrigger({
 			'Fires when a new message is posted to the specific channel selected in the trigger configuration. Only channel or group messages in the chosen channel fire; bot messages can be optionally ignored. The event payload is the Slack message event, including its channel, text, and sender.',
 	},
 	props: {
+		webhookInfo: appWebhookSetupInfo,
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
 		ignoreBots: Property.Checkbox({
