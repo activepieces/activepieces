@@ -392,8 +392,9 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const saveResult = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
-        if (saveResult.affected === 0) {
-            log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveChatMessages: no row updated — conversation deleted or superseded by a newer run')
+        const saveLanded = saveResult.affected !== 0
+        if (!saveLanded) {
+            log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveChatMessages: no row updated — conversation deleted or superseded by a newer run; skipping analytics and usage tracking')
         }
         log.info({
             conversation: { id: input.conversationId },
@@ -404,11 +405,11 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             titlePresent: !isNil(input.title),
         }, '[chatRpc#saveChatMessages] Conversation persisted')
 
-        if (input.messages.length > 0) {
+        if (saveLanded && input.messages.length > 0) {
             const conversation = await chatHelpers.conversationRepo().findOneBy({ id: input.conversationId })
             if (conversation) {
                 chatAnalyticsTelemetry(log).sendConversationUpdate({ conversation })
-                rejectedPromiseHandler(chatUsageTracker(log).track({ conversation }), log)
+                rejectedPromiseHandler(chatUsageTracker(log).track({ conversation, runId: input.runId }), log)
             }
         }
     },

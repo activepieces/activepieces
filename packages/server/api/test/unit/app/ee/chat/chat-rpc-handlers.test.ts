@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy } = vi.hoisted(() => ({
+const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
     mockExecute: vi.fn().mockResolvedValue({ affected: 1 }),
     mockFindOneBy: vi.fn().mockResolvedValue(null),
+    mockTrack: vi.fn().mockResolvedValue(undefined),
+    mockSendConversationUpdate: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/ee/chat/chat-approval-gate', () => ({
@@ -39,11 +41,11 @@ vi.mock('../../../../../src/app/ee/chat/chat-helpers', () => ({
 }))
 
 vi.mock('../../../../../src/app/ee/chat/chat-analytics-sync', () => ({
-    chatAnalyticsTelemetry: () => ({ sendConversationUpdate: vi.fn() }),
+    chatAnalyticsTelemetry: () => ({ sendConversationUpdate: mockSendConversationUpdate }),
 }))
 
 vi.mock('../../../../../src/app/ee/chat/chat-usage-tracker', () => ({
-    chatUsageTracker: () => ({ track: vi.fn().mockResolvedValue(undefined) }),
+    chatUsageTracker: () => ({ track: mockTrack }),
 }))
 
 const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
@@ -133,5 +135,44 @@ describe('chatRpcHandlers.saveChatMessages — no-shrink guard against context l
         expect(updates).not.toHaveProperty('messages')
         expect(updates).not.toHaveProperty('uiMessages')
         expect(updates.status).toBe('ERROR')
+    })
+})
+
+describe('chatRpcHandlers.saveChatMessages — billing a row the run no longer owns', () => {
+    beforeEach(() => {
+        mockSet.mockClear()
+        mockFindOneBy.mockReset()
+        mockExecute.mockReset()
+        mockTrack.mockClear()
+        mockSendConversationUpdate.mockClear()
+    })
+
+    it('does not bill when the fenced save was rejected (preempted by a newer run)', async () => {
+        mockExecute.mockResolvedValue({ affected: 0 })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
+
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
+
+        expect(mockTrack).not.toHaveBeenCalled()
+        expect(mockSendConversationUpdate).not.toHaveBeenCalled()
+    })
+
+    it('bills under the owning run id when the save landed', async () => {
+        mockExecute.mockResolvedValue({ affected: 1 })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
+
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
+
+        expect(mockTrack).toHaveBeenCalledTimes(1)
+        expect(mockTrack.mock.calls[0][0]).toMatchObject({ runId: 'run-1' })
+    })
+
+    it('still bills when affected is undefined (driver reports no row count)', async () => {
+        mockExecute.mockResolvedValue({})
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
+
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
+
+        expect(mockTrack).toHaveBeenCalledTimes(1)
     })
 })

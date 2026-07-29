@@ -9,10 +9,11 @@ import { chatToolBilling } from './chat-tool-billing'
 import { chatHistory } from './history/chat-history'
 
 export const chatUsageTracker = (log: FastifyBaseLogger) => ({
-    async track({ conversation }: TrackParams): Promise<void> {
+    async track({ conversation, runId }: TrackParams): Promise<void> {
         const messages = chatHistory.resolveMessages({ conversation, log })
         const billableToolCalls = chatToolBilling.countBillableToolCallsInLatestTurn({ messages })
         const turnIndex = messages.filter((message) => message.role === PersistedChatRole.USER).length
+        const idempotencyScope = runId ?? turnIndex
 
         const provider = await chatHelpers.resolveChatProviderName({ platformId: conversation.platformId, log })
         const model = chatHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
@@ -31,7 +32,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                 platformId: conversation.platformId,
                 value: creditValue,
                 source: CreditUsageSource.CHAT,
-                idempotencyKey: `${conversation.id}:chat:${turnIndex}`,
+                idempotencyKey: `${conversation.id}:chat:${idempotencyScope}`,
                 properties: {
                     platformId: conversation.platformId,
                     projectId: conversation.projectId ?? 'chat',
@@ -49,7 +50,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                 platformId: conversation.platformId,
                 value: creditValue,
 
-                idempotencyKey: `${conversation.id}:appSumoAi:${turnIndex}`,
+                idempotencyKey: `${conversation.id}:appSumoAi:${idempotencyScope}`,
                 properties: {
                     platformId: conversation.platformId,
                     projectId: conversation.projectId ?? 'chat',
@@ -78,4 +79,5 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
 
 type TrackParams = {
     conversation: ChatConversation
+    runId?: string
 }
