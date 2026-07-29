@@ -3,6 +3,7 @@ import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileT
 import { engineFileApi } from '../../api/engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
 import { utils } from '../../utils'
+import { createSliceCache, SliceCache } from './slice-cache'
 import { StepExecutionPath } from './step-execution-path'
 
 const DEFAULT_THRESHOLD_KB = 32
@@ -18,7 +19,7 @@ export class FlowExecutorContext {
     stepNameToTest?: boolean
     stepsCount: number
     engineApi?: EngineApiConfig
-    resolvedStepOutputCache: Map<string, Promise<unknown>>
+    resolvedStepOutputCache: SliceCache
     slicingEnabled: boolean
 
     /**
@@ -35,7 +36,7 @@ export class FlowExecutorContext {
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
         this.stepsCount = copyFrom?.stepsCount ?? 0
         this.engineApi = copyFrom?.engineApi
-        this.resolvedStepOutputCache  = copyFrom?.resolvedStepOutputCache  ?? new Map()
+        this.resolvedStepOutputCache = copyFrom?.resolvedStepOutputCache ?? createSliceCache()
         this.slicingEnabled = copyFrom?.slicingEnabled ?? true
     }
 
@@ -190,7 +191,7 @@ export class FlowExecutorContext {
     }
 }
 
-async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<Record<string, unknown>> {
+async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {}
     for (const [stepName, step] of Object.entries(steps)) {
         const output = await resolveStepOutput(step, engineApi, cache)
@@ -221,7 +222,7 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
     return { ref: { fileId, size, url: readUrl } }
 }
 
-async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
+async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<unknown> {
     if (step.outputType !== StepOutputType.SLICE) {
         return step.output
     }
@@ -235,7 +236,7 @@ async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | 
     }
     const promise = engineFileApi.download({ apiUrl: engineApi.internalApiUrl, engineToken: engineApi.engineToken, fileId: ref.fileId })
         .then((bytes) => JSON.parse(new TextDecoder('utf-8').decode(bytes)))
-    cache.set(ref.fileId, promise)
+    cache.set({ fileId: ref.fileId, promise, sizeBytes: ref.size })
     return promise
 }
 
