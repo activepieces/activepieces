@@ -656,7 +656,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                             toolName: 'ap_execute_action',
                             actionLabel: toolInput.title ?? toolInput.actionName,
                             kinds,
-                            input: isBatch ? { firstItems: toolInput.items!.slice(0, 3) } : (toolInput.input ?? {}),
+                            input: isBatch ? { firstItems: toolInput.items!.slice(0, autoConsent.MAX_BATCH_CONTENT_SAMPLES) } : (toolInput.input ?? {}),
                             ...spreadIfDefined('batchSummary', isBatch ? autoConsent.summarizeBatch({ items: toolInput.items! }) : undefined),
                             tainted: taintState.tainted,
                         }))

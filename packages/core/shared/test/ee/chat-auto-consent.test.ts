@@ -118,6 +118,31 @@ describe('autoConsent.buildJudgePrompt', () => {
         expect(prompt).toContain('unverified')
     })
 
+    it('warns the judge it cannot see the content of batch items beyond the sample', () => {
+        const prompt = autoConsent.buildJudgePrompt({
+            userRequest: 'message the whole list',
+            toolName: 'ap_execute_action',
+            actionLabel: 'send_message',
+            kinds: ['outward_send'],
+            input: { firstItems: [{ text: 'a' }, { text: 'b' }, { text: 'c' }] },
+            batchSummary: { itemCount: 50, recipients: ['a@x.com'], recipientsTruncated: false },
+        })
+        expect(prompt).toContain(`only the first ${autoConsent.MAX_BATCH_CONTENT_SAMPLES} of these 50 items`)
+        expect(prompt).toContain('is NOT shown')
+    })
+
+    it('does not warn about unseen content when the whole small batch fits in the sample', () => {
+        const prompt = autoConsent.buildJudgePrompt({
+            userRequest: 'message these two',
+            toolName: 'ap_execute_action',
+            actionLabel: 'send_message',
+            kinds: ['outward_send'],
+            input: { firstItems: [{ text: 'a' }, { text: 'b' }] },
+            batchSummary: { itemCount: 2, recipients: ['a@x.com', 'b@x.com'], recipientsTruncated: false },
+        })
+        expect(prompt).not.toContain('is NOT shown')
+    })
+
     it('fences the payload and states it cannot grant permission', () => {
         const prompt = autoConsent.buildJudgePrompt({
             userRequest: 'email the recap to farah',
@@ -200,6 +225,17 @@ describe('autoConsent.buildUserRequestContext', () => {
         expect(context).toContain('[latest] final ask')
         expect(context).not.toContain('turn 0 ')
         expect(context.length).toBeLessThanOrEqual(3_000)
+    })
+
+    it('keeps the tail of an over-long latest message so a trailing constraint is not lost', () => {
+        const hugeMiddle = 'x'.repeat(5_000)
+        const context = autoConsent.buildUserRequestContext({
+            previousMessages: [],
+            currentMessage: `Email the report to farah@example.com. ${hugeMiddle} IMPORTANT: draft only, do NOT send.`,
+        })
+        expect(context.length).toBeLessThanOrEqual(3_000)
+        expect(context).toContain('Email the report to farah@example.com')
+        expect(context).toContain('do NOT send')
     })
 })
 

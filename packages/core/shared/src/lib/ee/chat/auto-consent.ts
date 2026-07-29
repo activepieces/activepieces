@@ -28,6 +28,7 @@ const MAX_USER_TURNS = 8
 const MAX_INPUT_CHARS = 4_000
 const MAX_REASON_CHARS = 120
 const MAX_SUMMARY_RECIPIENTS = 25
+const MAX_BATCH_CONTENT_SAMPLES = 3
 const FALLBACK_ASK_REASON = 'Could not verify this automatically'
 
 function judgeable({ kinds, resolved }: {
@@ -42,6 +43,16 @@ function judgeable({ kinds, resolved }: {
 
 function truncate({ value, maxChars }: { value: string, maxChars: number }): string {
     return value.length <= maxChars ? value : `${value.slice(0, maxChars)}…[truncated]`
+}
+
+function truncateEnds({ value, maxChars }: { value: string, maxChars: number }): string {
+    if (value.length <= maxChars) {
+        return value
+    }
+    const marker = '…[middle omitted]…'
+    const head = Math.ceil((maxChars - marker.length) * 0.6)
+    const tail = maxChars - marker.length - head
+    return `${value.slice(0, head)}${marker}${value.slice(value.length - tail)}`
 }
 
 function clampReason(value: string): string {
@@ -77,14 +88,17 @@ function buildUserRequestContext({ previousMessages, currentMessage }: {
         .map(userTextOf)
         .filter((text): text is string => !isNil(text))
         .slice(-MAX_USER_TURNS)
+    const latestPrefix = '[latest] '
     const lines = [
         ...earlier.map((text) => `[earlier] ${text}`),
-        `[latest] ${currentMessage}`,
+        `${latestPrefix}${truncateEnds({ value: currentMessage, maxChars: MAX_USER_REQUEST_CHARS - latestPrefix.length })}`,
     ]
     while (lines.length > 1 && lines.join('\n').length > MAX_USER_REQUEST_CHARS) {
         lines.shift()
     }
-    return truncate({ value: lines.join('\n'), maxChars: MAX_USER_REQUEST_CHARS })
+    return lines.length === 1
+        ? lines[0]
+        : truncate({ value: lines.join('\n'), maxChars: MAX_USER_REQUEST_CHARS })
 }
 
 function partReadsUntrustedContent(part: unknown): boolean {
@@ -141,12 +155,16 @@ function buildJudgePrompt({ userRequest, toolName, actionLabel, kinds, input, ba
 }): string {
     const effectLines = kinds.map((kind) => `- ${chatConsent.describeEffect(kind)}`).join('\n')
     const { data: serializedInput } = tryCatchSync(() => JSON.stringify(input ?? {}, null, 2))
+    const shownContentCount = isNil(batchSummary) ? 0 : Math.min(MAX_BATCH_CONTENT_SAMPLES, batchSummary.itemCount)
     const batchLines = isNil(batchSummary)
         ? []
         : [
             '',
             `This runs ${batchSummary.itemCount} times, once per item.`,
             `Every target across ALL ${batchSummary.itemCount} items: ${batchSummary.recipients.length > 0 ? batchSummary.recipients.join(', ') : '(none could be identified — treat that as unverified)'}${batchSummary.recipientsTruncated ? ', …and more' : ''}`,
+            ...(batchSummary.itemCount > shownContentCount
+                ? [`You can see the full content of only the first ${shownContentCount} of these ${batchSummary.itemCount} items (in the payload below). The other ${batchSummary.itemCount - shownContentCount} items' content is NOT shown. If what each item sends could vary in kind — not just in name or value — you cannot confirm the unseen ones match the request, so answer "ask".`]
+                : []),
         ]
     return [
         'You are a safety reviewer for an AI assistant that operates business tools on a user\'s behalf.',
@@ -231,6 +249,7 @@ export const autoConsent = {
     TAINTING_TOOL_NAMES,
     TAINTING_PART_TYPES,
     FALLBACK_ASK_REASON,
+    MAX_BATCH_CONTENT_SAMPLES,
 }
 
 export type BatchSummary = {
