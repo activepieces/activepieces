@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
-import { ChatAgentEvent, ChatAgentEventType, chatConsent, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
+import { autoConsent, ChatAgentEvent, ChatAgentEventType, chatConsent, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, LanguageModel, ModelMessage, streamText, ToolSet } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { autoConsentJudge } from './auto-consent-judge'
@@ -119,7 +119,14 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
 
         try {
             const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
-            const taintState: TaintState = { tainted: false }
+            // Outside content read in an EARLIER turn is still in this conversation's history and
+            // still reachable by the model, so the taint has to carry across turns — a per-turn
+            // flag lets "fetch a page" / "now send it" walk around the guard in two messages.
+            const inheritedTaint = autoConsent.conversationReadUntrustedContent({ previousMessages: config.previousUiMessages })
+            const taintState: TaintState = { tainted: inheritedTaint }
+            if (inheritedTaint) {
+                log.info({ conversation: { id: conversationId } }, '[executeChatAgent] Turn starts tainted — this conversation already read outside content')
+            }
 
             const webTools: ToolSet = dryRun ? {} : {
                 ...chatWorkerTools.createWebTools({ taintState }),
@@ -140,7 +147,15 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 emailEnabled: config.emailEnabled,
                 consentPolicy: config.consentPolicy,
                 autoConsentConfig: config.autoConsentEnabled === true && dryRun !== true && discoveryOnly !== true
-                    ? { model: fastModel, userRequest: userMessage }
+                    ? {
+                        model: chatAiUtils.createChatModel({
+                            provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
+                        }),
+                        userRequest: autoConsent.buildUserRequestContext({
+                            previousMessages: config.previousUiMessages,
+                            currentMessage: userMessage,
+                        }),
+                    }
                     : undefined,
                 abortSignal: abortController.signal,
             })
@@ -164,6 +179,12 @@ export const executeChatAgentJob: JobHandler<ExecuteChatAgentJobData, FireAndFor
                 allToolNames,
                 tier: config.tier,
                 phaseState,
+                onUntrustedContent: () => {
+                    if (!taintState.tainted) {
+                        log.info({ conversation: { id: conversationId } }, '[executeChatAgent] Turn tainted by a cited source — outside content entered this turn')
+                    }
+                    taintState.tainted = true
+                },
                 abortSignal: abortController.signal,
                 log,
                 sinks: {

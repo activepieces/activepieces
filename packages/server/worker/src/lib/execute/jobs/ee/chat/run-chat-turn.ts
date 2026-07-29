@@ -1,6 +1,6 @@
-import { AIProviderName, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { chatAiUtils, ContentPartLike } from '@activepieces/server-utils'
-import { aiProviderUtils, ChatPhase, chatToolClassification, chatToolPhases, PersistedChatPart } from '@activepieces/shared'
+import { aiProviderUtils, autoConsent, ChatPhase, chatToolClassification, chatToolPhases, PersistedChatPart } from '@activepieces/shared'
 import { generateText, isLoopFinished, LanguageModel, LanguageModelUsage, ModelMessage, stepCountIs, StopCondition, streamText, ToolCallOptions, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
@@ -37,7 +37,7 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runChatTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen }: RunChatTurnParams): Promise<ChatTurnResult> {
+export async function runChatTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, onUntrustedContent }: RunChatTurnParams): Promise<ChatTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -138,7 +138,15 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
             }
         },
         onStepFinish: ({ content, response }) => {
-            uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
+            const stepParts = chatAiUtils.buildStepParts({ content: content as ContentPartLike[] })
+            // Native provider web search never reaches our tool wrappers — OpenRouter's web plugin
+            // is not even a tool call — but it does surface citations as source parts. Those parts
+            // are the only observable evidence that outside content entered the turn, so they are
+            // what marks it tainted.
+            if (!isNil(onUntrustedContent) && stepParts.some(autoConsent.partReadsUntrustedContent)) {
+                onUntrustedContent()
+            }
+            uiParts.push(...stepParts)
             // Persist the LLM history incrementally (not just UI parts): a turn preempted or
             // cancelled mid-flight must leave its assistant + tool messages behind so the next
             // run inherits them instead of re-discovering from scratch. accumulatedResponseMessages
@@ -382,6 +390,7 @@ export type ChatTurnSinks = {
 export type RunChatTurnParams = {
     model: LanguageModel
     fastModel?: LanguageModel
+    onUntrustedContent?: () => void
     provider: AIProviderName
     systemPrompt: string
     messages: ModelMessage[]

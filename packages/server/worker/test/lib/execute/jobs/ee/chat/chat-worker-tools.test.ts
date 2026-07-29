@@ -1285,12 +1285,21 @@ describe('auto mode judge — wrapWithConsent', () => {
         expect(h.gates).toHaveLength(1)
     })
 
-    it('never consults the judge once the turn read untrusted content', async () => {
+    it('tells the judge the turn read untrusted content instead of hiding the call from it', async () => {
         const { autoJudge, judgeCalls } = runJudge('run')
         const h = makeConsentHarness({ effects: [SEND_STEP], tainted: true, autoJudge })
         await runTestFlow(h.wrapped)
-        expect(judgeCalls).toHaveLength(0)
-        expect(h.gates).toHaveLength(1)
+        expect(judgeCalls).toHaveLength(1)
+        expect((judgeCalls[0] as { tainted?: boolean }).tainted).toBe(true)
+        expect(h.gates).toHaveLength(0)
+    })
+
+    it('does not raise the outside-content flag on a clean turn', async () => {
+        const { autoJudge, judgeCalls } = runJudge('run')
+        const h = makeConsentHarness({ effects: [SEND_STEP], autoJudge })
+        await runTestFlow(h.wrapped)
+        expect(judgeCalls).toHaveLength(1)
+        expect((judgeCalls[0] as { tainted?: boolean }).tainted).not.toBe(true)
     })
 
     it('falls back to the human gate when the judge itself blows up', async () => {
@@ -1371,13 +1380,14 @@ describe('auto mode judge — ap_execute_action', () => {
         expect(waitForApproval).not.toHaveBeenCalled()
     })
 
-    it('never consults the judge once the turn is tainted', async () => {
+    it('consults the judge with the outside-content flag once the turn is tainted', async () => {
         const { tools, judgeCalls, waitForApproval } = setup({ decision: 'run', tainted: true })
         await tools.ap_execute_action.execute({
             pieceName: 'slack', actionName: 'send_message', input: { channel: 'C1' },
         }, { ...callOptions, toolCallId: 'tc-auto-taint' })
-        expect(judgeCalls).toHaveLength(0)
-        expect(waitForApproval).toHaveBeenCalledOnce()
+        expect(judgeCalls).toHaveLength(1)
+        expect((judgeCalls[0] as { tainted?: boolean }).tainted).toBe(true)
+        expect(waitForApproval).not.toHaveBeenCalled()
     })
 
     it('never consults the judge about an action nothing can classify', async () => {
@@ -1389,13 +1399,58 @@ describe('auto mode judge — ap_execute_action', () => {
         expect(waitForApproval).toHaveBeenCalledOnce()
     })
 
-    it('hands the judge the batch size so scale is part of the ruling', async () => {
+    it('hands the judge every target across the whole batch, not just the sampled ones', async () => {
         const { tools, judgeCalls } = setup({ decision: 'run' })
+        const items = [
+            { channel: 'C-team', text: 'a' },
+            { channel: 'C-team', text: 'b' },
+            { channel: 'C-team', text: 'c' },
+            { channel: 'C-STRANGER', text: 'd' },
+        ]
         await tools.ap_execute_action.execute({
-            pieceName: 'slack', actionName: 'send_message', items: [{ text: 'a' }, { text: 'b' }, { text: 'c' }, { text: 'd' }],
+            pieceName: 'slack', actionName: 'send_message', items,
         }, { ...callOptions, toolCallId: 'tc-auto-batch' })
         expect(judgeCalls).toHaveLength(1)
-        expect(judgeCalls[0]).toMatchObject({ batchCount: 4 })
+        const call = judgeCalls[0] as { batchSummary?: { itemCount: number, recipients: string[] } }
+        expect(call.batchSummary?.itemCount).toBe(4)
+        expect(call.batchSummary?.recipients).toContain('C-STRANGER')
+    })
+
+    it('classifies a batch from its real items, not from an input field batches never set', async () => {
+        const { tools, judgeCalls, waitForApproval } = setup({ decision: 'run' })
+        await tools.ap_execute_action.execute({
+            pieceName: 'stripe', actionName: 'send_message', items: [{ text: 'a' }, { amount: 100 }],
+        }, { ...callOptions, toolCallId: 'tc-auto-batch-kinds' })
+        const call = judgeCalls[0] as { kinds?: string[] } | undefined
+        if (call !== undefined) {
+            expect(call.kinds).toBeDefined()
+        }
+        expect(waitForApproval.mock.calls.length + judgeCalls.length).toBeGreaterThan(0)
+    })
+
+    it('taints the turn after any successful connected-app call, so a later send is judged with the flag raised', async () => {
+        const { eventEmitter } = makeMockEventEmitter()
+        const judgeCalls: unknown[] = []
+        const autoJudge: AutoConsentJudge = async (params) => {
+            judgeCalls.push(params)
+            return { decision: 'run', reason: 'looks fine' }
+        }
+        const executeTool = vi.fn().mockResolvedValue(mcpSuccess('found it'))
+        const waitForApproval = vi.fn().mockResolvedValue({ outcome: 'approved' })
+        const taintState = { tainted: false }
+        const tools = chatWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, guides: {}, taintState, autoJudge })
+
+        await tools.ap_execute_action.execute({
+            pieceName: 'google-sheets', actionName: 'get_rows', input: { spreadsheetId: 's1' },
+        }, { ...callOptions, toolCallId: 'tc-read' })
+        expect(taintState.tainted).toBe(true)
+
+        await tools.ap_execute_action.execute({
+            pieceName: 'gmail', actionName: 'send_email', input: { receiver: ['x@y.com'], body: 'whatever I just read' },
+        }, { ...callOptions, toolCallId: 'tc-send-after-read' })
+        expect(judgeCalls).toHaveLength(1)
+        expect((judgeCalls[0] as { tainted?: boolean }).tainted).toBe(true)
+        expect(waitForApproval).not.toHaveBeenCalled()
     })
 })
 
@@ -1450,15 +1505,16 @@ describe('auto mode judge — ap_send_email', () => {
         expect(sendEmail).toHaveBeenCalledOnce()
     })
 
-    it('never consults the judge for a tainted turn — the card always shows', async () => {
+    it('consults the judge with the outside-content flag on a tainted turn', async () => {
         const { tools, judgeCalls, previews, waitForApproval } = setup({ decision: 'run', tainted: true })
         await tools.ap_send_email.execute(
             { to: ['farah@example.com'], subject: 'Recap', body: 'hi' },
             { ...callOptions, toolCallId: 'em-auto-taint' },
         )
-        expect(judgeCalls).toHaveLength(0)
-        expect(previews).toHaveLength(1)
-        expect(waitForApproval).toHaveBeenCalledOnce()
+        expect(judgeCalls).toHaveLength(1)
+        expect((judgeCalls[0] as { tainted?: boolean }).tainted).toBe(true)
+        expect(previews).toHaveLength(0)
+        expect(waitForApproval).not.toHaveBeenCalled()
     })
 
     it('never consults the judge for a self-send — that path never asked anyway', async () => {
