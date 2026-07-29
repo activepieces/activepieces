@@ -4,7 +4,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
 
@@ -18,6 +18,7 @@ export const newReactionAdded = createTrigger({
       'Fires when an emoji reaction is added to a message in the Slack workspace. Can be optionally filtered to specific emojis, a specific user, or specific channels. The event payload identifies the user who added the reaction, the emoji name, and the message item it was added to.',
   },
   props: {
+    webhookInfo: appWebhookSetupInfo,
     info: multiSelectChannelInfo,
     emojis: Property.Array({
       displayName: 'Emojis (E.g fire, smile)',
