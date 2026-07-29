@@ -1,3 +1,4 @@
+import { delayWithJitter, isTransientFailureText } from '@activepieces/core-agent-runtime'
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { chatAiUtils } from '@activepieces/server-utils'
 import { ChatAgentEvent, ChatAgentEventType, ChatPhase, EngineResponseStatus, ExecuteChatAgentJobData, PersistedChatMessage, PersistedChatRole, WorkerJobType } from '@activepieces/shared'
@@ -5,7 +6,7 @@ import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet 
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { chatMcpClient } from './chat-mcp-client'
 import { chatWorkerTools, GateDecision, TaintState } from './chat-worker-tools'
-import { delayWithJitter, isTransientFailureText, runChatTurn } from './run-chat-turn'
+import { runChatTurn } from './run-chat-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50

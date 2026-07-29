@@ -14,6 +14,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/sandbox": "workspace:*",
     "@activepieces/server-utils": "workspace:*",
+    "@activepieces/core-agent-runtime": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@ai-sdk/amazon-bedrock": "3.0.97",
     "@ai-sdk/mcp": "1.0.11",

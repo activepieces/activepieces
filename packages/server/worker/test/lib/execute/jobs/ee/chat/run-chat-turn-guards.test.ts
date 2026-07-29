@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isTransientFailureText, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { isTransientFailureText, looksEmptyResultText } from '@activepieces/core-agent-runtime'
 
 describe('isTransientFailureText', () => {
     it('flags retryable errors (rate limit, 5xx, timeout, dropped socket)', () => {

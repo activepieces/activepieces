@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { decideLoopAction, shouldRetryStream } from '@activepieces/core-agent-runtime'
 
 describe('decideLoopAction', () => {
     it('finishes when a normal step produced visible output', () => {
