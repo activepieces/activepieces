@@ -75,17 +75,18 @@ export const chatService = (log: FastifyBaseLogger) => ({
 
     async updateConversation({ id, platformId, userId, request }: UpdateConversationParams): Promise<ChatConversation> {
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
-        if (request.autonomyMode === 'full_access') {
+        if (request.autonomyMode === 'full_access' || request.autonomyMode === 'auto') {
             const platform = await platformService(log).getOneOrThrow(platformId)
             const user = await userService(log).getOneOrFail({ id: userId })
             if (!chatConsentPolicy.fullAccessPermitted({ settings: platform.chatConsentPolicy, platformRole: user.platformRole })) {
                 const allowedFor = chatConsentPolicy.effectiveFullAccessAllowedFor({ settings: platform.chatConsentPolicy })
+                const modeLabel = request.autonomyMode === 'auto' ? 'Auto mode' : 'Full access'
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: allowedFor === 'admins_only'
-                            ? 'Full access is limited to workspace admins'
-                            : 'Full access is turned off for this workspace',
+                            ? `${modeLabel} is limited to workspace admins`
+                            : `${modeLabel} is turned off for this workspace`,
                     },
                 })
             }
@@ -93,16 +94,20 @@ export const chatService = (log: FastifyBaseLogger) => ({
         const autonomyModeChanged = !isNil(request.autonomyMode) && request.autonomyMode !== conversation.autonomyMode
         if (autonomyModeChanged) {
             log.info({ conversation: { id }, user: { id: userId }, autonomyMode: request.autonomyMode }, '[chatService] Conversation autonomy mode changed')
-            applicationEvents(log).sendUserEvent({
-                platformId,
-                userId,
-                ...spreadIfDefined('projectId', conversation.projectId ?? undefined),
-            }, {
-                action: request.autonomyMode === 'full_access'
-                    ? ApplicationEventName.CHAT_FULL_ACCESS_ENABLED
-                    : ApplicationEventName.CHAT_FULL_ACCESS_DISABLED,
-                data: { conversation: { id } },
-            })
+            const fullAccessTurnedOn = request.autonomyMode === 'full_access'
+            const fullAccessTurnedOff = conversation.autonomyMode === 'full_access' && request.autonomyMode !== 'full_access'
+            if (fullAccessTurnedOn || fullAccessTurnedOff) {
+                applicationEvents(log).sendUserEvent({
+                    platformId,
+                    userId,
+                    ...spreadIfDefined('projectId', conversation.projectId ?? undefined),
+                }, {
+                    action: fullAccessTurnedOn
+                        ? ApplicationEventName.CHAT_FULL_ACCESS_ENABLED
+                        : ApplicationEventName.CHAT_FULL_ACCESS_DISABLED,
+                    data: { conversation: { id } },
+                })
+            }
         }
         const updates = {
             ...spreadIfDefined('title', request.title),

@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  ShieldHalf,
   TriangleAlert,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -59,6 +60,16 @@ export function ActionReceiptCard({
               <span className="text-xs text-muted-foreground">
                 {formattedTimestamp}
               </span>
+              {receipt.autoApproved && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <ShieldHalf className="size-3" aria-hidden={true} />
+                  {receipt.autoReason
+                    ? t('Ran on auto — {reason}', {
+                        reason: receipt.autoReason,
+                      })
+                    : t('Ran on auto')}
+                </span>
+              )}
             </div>
           </div>
         </div>

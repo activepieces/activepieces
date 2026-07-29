@@ -267,6 +267,45 @@ describe('Chat Conversations API', () => {
             })
             expect(adminBlocked.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
+
+        it('gates auto mode behind the same admin audience as full access', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+
+            const policyResponse = await ctx.post(`/v1/platforms/${ctx.platform.id}`, {
+                chatConsentPolicy: { fullAccessAllowedFor: 'admins_only' },
+            })
+            expect(policyResponse.statusCode).toBe(StatusCodes.OK)
+
+            const memberConversation = await member.post(CONVERSATIONS_URL, { title: 'Member auto chat' })
+            const memberBlocked = await member.post(`${CONVERSATIONS_URL}/${memberConversation.json().id}`, {
+                autonomyMode: 'auto',
+            })
+            expect(memberBlocked.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const adminConversation = await ctx.post(CONVERSATIONS_URL, { title: 'Admin auto chat' })
+            const adminAllowed = await ctx.post(`${CONVERSATIONS_URL}/${adminConversation.json().id}`, {
+                autonomyMode: 'auto',
+            })
+            expect(adminAllowed.statusCode).toBe(StatusCodes.OK)
+            expect(adminAllowed.json().autonomyMode).toBe('auto')
+
+            const backToAsk = await ctx.post(`${CONVERSATIONS_URL}/${adminConversation.json().id}`, {
+                autonomyMode: 'ask_first',
+            })
+            expect(backToAsk.statusCode).toBe(StatusCodes.OK)
+            expect(backToAsk.json().autonomyMode).toBe('ask_first')
+
+            const shutOff = await ctx.post(`/v1/platforms/${ctx.platform.id}`, {
+                chatConsentPolicy: { fullAccessAllowedFor: 'nobody' },
+            })
+            expect(shutOff.statusCode).toBe(StatusCodes.OK)
+            const secondAdminConversation = await ctx.post(CONVERSATIONS_URL, { title: 'Auto after shutdown' })
+            const adminBlocked = await ctx.post(`${CONVERSATIONS_URL}/${secondAdminConversation.json().id}`, {
+                autonomyMode: 'auto',
+            })
+            expect(adminBlocked.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
     })
 
     describe('Delete conversation', () => {

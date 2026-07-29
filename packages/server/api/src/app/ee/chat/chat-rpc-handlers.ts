@@ -129,6 +129,18 @@ async function resolveConsentPolicy({ conversation, platformId, log }: {
     return chatConsent.composePolicy({ fullAccess, overrides: settings?.overrides })
 }
 
+async function resolveAutoConsentEnabled({ conversation, platformId, log }: {
+    conversation: { autonomyMode?: string | null, userId: string }
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<boolean> {
+    if (conversation.autonomyMode !== 'auto') {
+        return false
+    }
+    const { data: platform } = await tryCatch(() => platformService(log).getOneOrThrow(platformId))
+    return ownerPermittedFullAccess({ userId: conversation.userId, settings: platform?.chatConsentPolicy, log })
+}
+
 async function ownerPermittedFullAccess({ userId, settings, log }: {
     userId: string
     settings: ChatConsentPolicySettings | null | undefined
@@ -465,6 +477,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             emailEnabled,
             userEmail: userMeta.email,
             consentPolicy: await resolveConsentPolicy({ conversation, platformId, log }),
+            autoConsentEnabled: await resolveAutoConsentEnabled({ conversation, platformId, log }),
         }
     },
 
@@ -657,6 +670,7 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             const conversation = await chatHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
             const toolName = input.toolInput['tool']
             const displayName = input.toolInput['displayName']
+            const reason = input.toolInput['reason']
             const rawKinds = input.toolInput['effectKinds']
             const effectKinds = Array.isArray(rawKinds) ? rawKinds.filter((kind): kind is string => typeof kind === 'string') : []
             applicationEvents(log).sendUserEvent({
@@ -664,11 +678,14 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
                 userId: input.userId,
                 ...spreadIfDefined('projectId', conversation.projectId ?? undefined),
             }, {
-                action: ApplicationEventName.CHAT_CONSENT_POLICY_DENIED,
+                action: input.toolInput['outcome'] === 'auto_approved'
+                    ? ApplicationEventName.CHAT_CONSENT_AUTO_APPROVED
+                    : ApplicationEventName.CHAT_CONSENT_POLICY_DENIED,
                 data: {
                     conversation: { id: input.conversationId },
                     ...(typeof toolName === 'string' ? { tool: { name: toolName, ...(typeof displayName === 'string' ? { displayName } : {}) } } : {}),
                     ...(effectKinds.length > 0 ? { effectKinds } : {}),
+                    ...(typeof reason === 'string' && reason.length > 0 ? { reason } : {}),
                 },
             })
             return { result: { recorded: true } }

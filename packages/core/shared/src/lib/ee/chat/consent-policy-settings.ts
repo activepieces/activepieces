@@ -25,7 +25,7 @@ export const chatConsentPolicy = {
     fullAccessPermitted,
 }
 
-export const ChatAutonomyMode = z.enum(['ask_first', 'full_access'])
+export const ChatAutonomyMode = z.enum(['ask_first', 'auto', 'full_access'])
 export type ChatAutonomyMode = z.infer<typeof ChatAutonomyMode>
 
 export const ChatConsentDecision = z.enum(['allow', 'ask', 'deny'])

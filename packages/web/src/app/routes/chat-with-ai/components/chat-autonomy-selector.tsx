@@ -4,7 +4,12 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ShieldAlert, ShieldCheck, TriangleAlert } from 'lucide-react';
+import {
+  ShieldAlert,
+  ShieldCheck,
+  ShieldHalf,
+  TriangleAlert,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -48,10 +53,15 @@ export function ChatAutonomySelector({
       ? t('Limited to workspace admins.')
       : t('Turned off by your workspace admin.');
   const fullAccess = autonomyMode === 'full_access';
+  const auto = autonomyMode === 'auto';
 
   const handleModeChange = (value: string) => {
     if (value === 'full_access') {
       setWarningOpen(true);
+      return;
+    }
+    if (value === 'auto') {
+      onAutonomyChange('auto');
       return;
     }
     onAutonomyChange('ask_first');
@@ -74,10 +84,12 @@ export function ChatAutonomySelector({
           >
             {fullAccess ? (
               <ShieldAlert className="size-3.5" />
+            ) : auto ? (
+              <ShieldHalf className="size-3.5" />
             ) : (
               <ShieldCheck className="size-3.5" />
             )}
-            {fullAccess ? t('Full access') : t('Asks first')}
+            {fullAccess ? t('Full access') : auto ? t('Auto') : t('Asks first')}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
@@ -96,6 +108,23 @@ export function ChatAutonomySelector({
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {t(ASK_FIRST_SUMMARY)}
+                </span>
+              </div>
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem
+              value="auto"
+              disabled={!fullAccessAllowed}
+              className="items-start gap-2 py-2"
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  <ShieldHalf className="size-4 shrink-0" />
+                  {t('Auto')}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {fullAccessAllowed
+                    ? t(AUTO_SUMMARY)
+                    : fullAccessBlockedReason}
                 </span>
               </div>
             </DropdownMenuRadioItem>
@@ -164,6 +193,7 @@ export function ChatAutonomySelector({
 }
 
 const ASK_FIRST_SUMMARY = 'Asks before real actions.';
+const AUTO_SUMMARY = 'Runs routine actions, asks when it matters.';
 const FULL_ACCESS_SUMMARY = 'Runs without asking.';
 const FULL_ACCESS_CARVE_OUT =
   'It will still ask before deleting data, moving money, or running anything it cannot identify.';
