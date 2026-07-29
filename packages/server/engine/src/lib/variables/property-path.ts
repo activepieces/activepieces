@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
 
 export const propertyPath = {
+    // for now we do parsing manually with regex, if we need to make the parsing more rich in the future we can use 'jsep' 
     parse(expression: string): string[] | null {
         if (!PATH_PATTERN.test(expression)) {
             return null
