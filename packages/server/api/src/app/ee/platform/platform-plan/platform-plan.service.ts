@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, PlatformUsageMetric, SeekPage, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isEmpty, isNil, PlatformUsageMetric, SeekPage, tryCatch } from '@activepieces/core-utils'
 import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowStatus, InvitationStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
@@ -59,15 +59,15 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         const { platformId, ...update } = params
         log.info({ platform: { id: platformId } }, 'updating platform billing')
 
-        const platformPlan = await platformPlanRepo().findOneByOrFail({
-            platformId,
-        })
-
         const normalizedUpdate = Object.fromEntries(
             Object.entries(update).map(([key, value]) => [key, value === undefined ? null : value]),
         )
 
-        const updatedPlatformPlan = await platformPlanRepo().save({ ...platformPlan, ...normalizedUpdate })
+        if (!isEmpty(normalizedUpdate)) {
+            await platformPlanRepo().update({ platformId }, normalizedUpdate)
+        }
+
+        const updatedPlatformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
         if (!isNil(updatedPlatformPlan.plan)) {
             await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan, PLATFORM_PLAN_NAME_TTL_SECONDS)
         }
@@ -186,8 +186,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     },
     async setAutumnCredentials(params: SetAutumnCredentialsParams): Promise<void> {
         const { platformId, autumnCustomerId, autumnApiKey } = params
-        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
-        await platformPlanRepo().save({ ...platformPlan, autumnCustomerId, autumnApiKey })
+        await platformPlanRepo().update({ platformId }, { autumnCustomerId, autumnApiKey })
     },
 })
 
