@@ -1,5 +1,5 @@
 import { AIProviderName, chunk, isNil, tryCatch } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, ApEdition, ChatConversation, ChatHistoryMessage, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus } from '@activepieces/shared'
+import { ApEdition, ChatConversation, ChatHistoryMessage, PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -226,7 +226,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
         userId: conversation.userId,
         userEmail,
         title: conversation.title,
-        modelName: resolveModelId({ tierId: conversation.modelName ?? null, provider }),
+        modelName: chatHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider }),
         provider,
         messages,
         messageCount: messages.length,
@@ -281,20 +281,6 @@ function convertToPersistedFormat(messages: ChatHistoryMessage[]): PersistedChat
 }
 
 
-function resolveModelId({ tierId, provider }: { tierId: string | null, provider: AIProviderName | null }): string | null {
-    if (isNil(tierId)) {
-        return null
-    }
-    const tier = ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
-    if (isNil(tier)) {
-        return tierId
-    }
-    if (isNil(provider)) {
-        return tier.modelId
-    }
-    return chatHelpers.resolveModelIdForProvider({ tier, provider })
-}
-
 async function emitMessageBillingEvent({ conversation, log }: {
     conversation: ChatConversation
     log: FastifyBaseLogger
@@ -306,7 +292,7 @@ async function emitMessageBillingEvent({ conversation, log }: {
     }
 
     const provider = await resolveChatProviderName({ platformId: conversation.platformId, log })
-    const model = resolveModelId({ tierId: conversation.modelName ?? null, provider })
+    const model = chatHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
     const toolsUsed = countToolCallsInLatestTurn(resolveMessages(conversation))
 
     captureBillingEvent({
