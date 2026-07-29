@@ -1,3 +1,4 @@
+import { PersistedChatMessage, PersistedChatPart, PersistedChatPartType, PersistedChatRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { chatToolBilling } from '../../../../../src/app/ee/chat/chat-tool-billing'
 import { ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from '../../../../../src/app/mcp/tools'
@@ -32,5 +33,68 @@ describe('chatToolBilling.isBillableChatToolCall', () => {
 
     it('does not bill an unknown tool (fail-safe default)', () => {
         expect(chatToolBilling.isBillableChatToolCall('ap_some_tool_added_later')).toBe(false)
+    })
+})
+
+function toolCallPart({ toolName, status }: { toolName: string, status: PersistedToolCallStatus }): PersistedChatPart {
+    return {
+        type: PersistedChatPartType.TOOL_CALL,
+        toolCallId: `${toolName}-${status}`,
+        toolName,
+        input: {},
+        status,
+    }
+}
+
+function assistant(parts: PersistedChatPart[]): PersistedChatMessage {
+    return { role: PersistedChatRole.ASSISTANT, parts }
+}
+
+function user(text: string): PersistedChatMessage {
+    return { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text }] }
+}
+
+describe('chatToolBilling.countBillableToolCallsInLatestTurn', () => {
+    it('does not bill a tool call that never returned a result', () => {
+        const messages = [
+            user('do it'),
+            assistant([
+                toolCallPart({ toolName: 'ap_web_search', status: PersistedToolCallStatus.COMPLETED }),
+                toolCallPart({ toolName: 'ap_scrape_url', status: PersistedToolCallStatus.ERROR }),
+            ]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
+    })
+
+    it('bills nothing when every billable call errored', () => {
+        const messages = [
+            user('do it'),
+            assistant([
+                toolCallPart({ toolName: 'mcp__attio__list_records', status: PersistedToolCallStatus.ERROR }),
+                toolCallPart({ toolName: 'ap_execute_action', status: PersistedToolCallStatus.ERROR }),
+            ]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(0)
+    })
+
+    it('counts only the latest turn', () => {
+        const messages = [
+            user('first'),
+            assistant([toolCallPart({ toolName: 'ap_web_search', status: PersistedToolCallStatus.COMPLETED })]),
+            user('second'),
+            assistant([toolCallPart({ toolName: 'ap_run_code', status: PersistedToolCallStatus.COMPLETED })]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
+    })
+
+    it('ignores non-billable tools regardless of status', () => {
+        const messages = [
+            user('do it'),
+            assistant([
+                toolCallPart({ toolName: 'ap_update_flow', status: PersistedToolCallStatus.COMPLETED }),
+                toolCallPart({ toolName: 'ap_update_flow', status: PersistedToolCallStatus.ERROR }),
+            ]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(0)
     })
 })

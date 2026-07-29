@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AutoTopUpConfig, BillableFeature, ConsumableProductAutoTopupParams, PurchasablePlan } from '@activepieces/shared'
+import { AutoTopUpConfig, BillableFeature, ConsumableProductAutoTopupParams, PurchasablePlan, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
 
@@ -90,6 +90,24 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
     }
 }
 
+export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {
+    if (environment !== RunEnvironment.PRODUCTION) {
+        return false
+    }
+    return billingProvider.get(log).shouldBlockOnCredits(platformId)
+}
+
+export async function assertRunCreditsNotExceeded({ platformId, environment, log }: RunCreditsGateParams): Promise<void> {
+    const blocked = await shouldBlockRunOnCredits({ platformId, environment, log })
+    if (!blocked) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: { metric: PlatformUsageMetric.CREDITS },
+    })
+}
+
 export async function trackCreditsWithAppSumo({ log, credits, appSumo }: {
     log: FastifyBaseLogger
     credits: TrackCreditsParams
@@ -122,6 +140,12 @@ export enum CreditUsageSource {
     FLOW_RUN = 'flow_run',
     AI = 'ai',
     CHAT = 'chat',
+}
+
+type RunCreditsGateParams = {
+    platformId: string
+    environment: RunEnvironment
+    log: FastifyBaseLogger
 }
 
 export type CreditEventBreakdownEntry = {

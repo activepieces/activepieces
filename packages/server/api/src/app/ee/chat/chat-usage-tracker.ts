@@ -1,5 +1,5 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, ChatConversation, PersistedChatMessage, PersistedChatPartType, PersistedChatRole, PlanName } from '@activepieces/shared'
+import { CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, ChatConversation, PersistedChatRole, PlanName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
 import { CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
@@ -11,7 +11,7 @@ import { chatHistory } from './history/chat-history'
 export const chatUsageTracker = (log: FastifyBaseLogger) => ({
     async track({ conversation }: TrackParams): Promise<void> {
         const messages = chatHistory.resolveMessages({ conversation, log })
-        const billableToolCalls = countBillableToolCallsInLatestTurn(messages)
+        const billableToolCalls = chatToolBilling.countBillableToolCallsInLatestTurn({ messages })
         const turnIndex = messages.filter((message) => message.role === PersistedChatRole.USER).length
 
         const provider = await chatHelpers.resolveChatProviderName({ platformId: conversation.platformId, log })
@@ -75,14 +75,6 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
         })
     },
 })
-
-function countBillableToolCallsInLatestTurn(messages: PersistedChatMessage[]): number {
-    const lastUserIndex = messages.map((message) => message.role).lastIndexOf(PersistedChatRole.USER)
-    const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
-    return turn.reduce((sum, message) => sum + message.parts.filter((part) =>
-        part.type === PersistedChatPartType.TOOL_CALL && chatToolBilling.isBillableChatToolCall(part.toolName),
-    ).length, 0)
-}
 
 type TrackParams = {
     conversation: ChatConversation

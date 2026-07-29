@@ -10,7 +10,7 @@ import { pinoLogging } from '../helper/logger'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { billingProvider } from '../platform/billing-provider'
+import { shouldBlockRunOnCredits } from '../platform/billing-provider'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
@@ -271,8 +271,11 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         }
     }
 
-    const creditsExhausted = runEnvironment === RunEnvironment.PRODUCTION
-        && await billingProvider.get(logger).shouldBlockOnCredits(platformId)
+    const creditsExhausted = await shouldBlockRunOnCredits({
+        platformId,
+        environment: runEnvironment,
+        log: logger,
+    })
 
     if (creditsExhausted) {
         const flowVersion = await flowVersionRepo().findOneBy({ id: flowVersionIdToRun })
@@ -284,6 +287,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
             environment: runEnvironment,
             parentRunId,
             failParentOnFailure,
+            shouldExecuteTriggerOnRetry: true,
         })
         wideEvent.set({ flowRun: { id: quotaExceededRun.id }, webhook: { quotaExceeded: true } })
         return {

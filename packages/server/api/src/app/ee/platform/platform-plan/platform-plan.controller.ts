@@ -105,10 +105,13 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/consumable-product-topups/auto-topup', ConsumableProductAutoTopupRequest, async (request) => {
-        await billingProvider.get(request.log).configureAutoTopUp({
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        await provider.configureAutoTopUp({
             ...request.body,
-            platformId: request.principal.platform.id,
+            platformId,
         })
+        await provider.refreshEntitlements(platformId)
         return {}
     })
 

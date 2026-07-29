@@ -3,7 +3,7 @@ import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, BillableFeature, isConsumableAutumnFeature, PlanName } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsExhaustedReverifyKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
@@ -12,6 +12,7 @@ import { autumnConsole, autumnUtils, BalanceCacheSnapshot, CreditsBalanceCache }
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
 const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 60
+const EXHAUSTED_REVERIFY_DEBOUNCE_SECONDS = 15
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 
@@ -314,14 +315,49 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
         distributedStore.get<boolean>(getBillingEnforcedKey(platformId)),
         resolveCreditsCache(log, platformId),
     ])
-    return {
-        credits: toCreditsGateState(credits, billingEnforced ?? false),
+    const enforced = billingEnforced ?? false
+    const cachedState = {
+        credits: toCreditsGateState(credits, enforced),
         appSumo: toAppSumoGateState(appSumo),
+    }
+    if (!cachedState.credits.blocked) {
+        return cachedState
+    }
+    const reverified = await reverifyExhaustedCredits(log, platformId)
+    if (isNil(reverified)) {
+        return cachedState
+    }
+    return {
+        credits: toCreditsGateState(reverified.credits, enforced),
+        appSumo: toAppSumoGateState(reverified.appSumo),
     }
 }
 
+async function reverifyExhaustedCredits(log: FastifyBaseLogger, platformId: string): Promise<BalanceCacheSnapshot | null> {
+    const { data, error } = await tryCatch(() => distributedLock(log).runExclusive({
+        key: `credits_exhausted_reverify_${platformId}`,
+        timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
+        fn: async (): Promise<BalanceCacheSnapshot | null> => {
+            const cached = await readCachedCredits(platformId)
+            if (!isNil(cached.credits) && !isCreditsExhausted(cached.credits)) {
+                return cached
+            }
+            const dueForReverification = await distributedStore.putIfAbsent(getCreditsExhaustedReverifyKey(platformId), '1', EXHAUSTED_REVERIFY_DEBOUNCE_SECONDS)
+            if (!dueForReverification) {
+                return null
+            }
+            return fetchCredits(log, platformId)
+        },
+    }))
+    if (!isNil(error)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to re-verify an exhausted credits balance before gating; using the cached value')
+        return null
+    }
+    return data
+}
+
 export function toCreditsGateState(balance: CreditsBalanceCache | null, billingEnforced: boolean): CreditsGateState {
-    const exhausted = !isNil(balance) && !balance.unlimited && balance.remaining <= 0
+    const exhausted = !isNil(balance) && isCreditsExhausted(balance)
     return {
         blocked: billingEnforced && exhausted,
         usage: balance?.usage ?? 0,
@@ -332,7 +368,7 @@ export function toCreditsGateState(balance: CreditsBalanceCache | null, billingE
 }
 
 export function toAppSumoGateState(balance: CreditsBalanceCache | null): CreditsGateState {
-    const exhausted = !isNil(balance) && !balance.unlimited && balance.remaining <= 0
+    const exhausted = !isNil(balance) && isCreditsExhausted(balance)
     return {
         blocked: exhausted,
         usage: balance?.usage ?? 0,
@@ -367,6 +403,10 @@ async function readCachedCredits(platformId: string): Promise<BalanceCacheSnapsh
 
 function isCreditsStale(credits: CreditsBalanceCache): boolean {
     return Date.now() - credits.syncedAt > CREDITS_REFETCH_PERIOD_MS
+}
+
+function isCreditsExhausted(credits: CreditsBalanceCache): boolean {
+    return !credits.unlimited && credits.remaining <= 0
 }
 
 async function fetchCreditsDeduped(log: FastifyBaseLogger, platformId: string): Promise<BalanceCacheSnapshot | null> {

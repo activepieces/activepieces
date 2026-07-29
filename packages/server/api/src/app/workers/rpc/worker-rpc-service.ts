@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, RunEnvironment, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
@@ -17,7 +17,7 @@ import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { billingProvider } from '../../platform/billing-provider'
+import { shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -103,8 +103,11 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const platformId = await projectService(log).getPlatformId(projectId)
             const filterPayloads = await dedupeService.filterUniquePayloads(flowVersionId, payloads)
 
-            const creditsExhausted = environment === RunEnvironment.PRODUCTION
-                && await billingProvider.get(log).shouldBlockOnCredits(platformId)
+            const creditsExhausted = await shouldBlockRunOnCredits({
+                platformId,
+                environment,
+                log,
+            })
 
             const flowRuns = await Promise.all(
                 filterPayloads.map((payload) =>
@@ -116,6 +119,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                             environment,
                             parentRunId,
                             failParentOnFailure,
+                            shouldExecuteTriggerOnRetry: false,
                         })
                         : flowRunService(log).start({
                             flowId: flowVersion.flowId,
