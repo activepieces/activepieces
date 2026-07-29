@@ -42,6 +42,16 @@ value**, and neither one lets Autumn latency reach the request:
   winner calls Autumn once and writes the cache; every waiter finds the cache populated and returns
   without its own call. N concurrent misses on a busy platform collapse to one `getCustomer` across
   all API instances, instead of one per queued run.
+- **A confirmed absence is cached too** (`platform_plan:customer-state-miss:<platformId>`, 60s).
+  Single-flighting only helps when the fetch *produces* a cacheable balance. A platform with no Autumn
+  credentials, or a customer with no `apCredits` balance, writes nothing — so before the marker every
+  admission re-took the lock and re-asked, forever, for exactly the platforms where the gate is a no-op
+  (self-hosted EE that never enrolled). The marker is written **after** the fetch confirms the absence,
+  never before the call: a thrown error (Autumn down, timeout) leaves no marker, so the next admission
+  retries instead of remembering an outage as "this platform has no customer".
+- **`getCustomer` carries an explicit 5s `timeoutMs`.** `check`/`track` inherit the SDK default, but the
+  customer read did not, so an unbounded call sat inside the distributed lock above — the one place where
+  a hang blocks other runs rather than just the caller.
 - **Stale hit (older than `CREDITS_REFETCH_PERIOD_MS`, 180s) → serve immediately.** No lock, no
   waiting: the cached value is returned and a background refresh is fired through
   `rejectedPromiseHandler` + a `runOnceWithin` debounce (60s). Callers that already hold a value never

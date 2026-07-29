@@ -26,6 +26,7 @@ import { platformPlanService } from '../platform-plan.service'
 
 const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).replace(/\/+$/, '')
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
+const AUTUMN_GET_CUSTOMER_TIMEOUT_MS = 5000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 
 const PROJECT_ID_PROPERTY = 'projectId'
@@ -67,7 +68,10 @@ export const autumnUtils = {
                 )
             },
             getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
-                return client.customers.get({ customerId, expand: params?.expand })
+                return client.customers.get(
+                    { customerId, expand: params?.expand },
+                    { timeoutMs: AUTUMN_GET_CUSTOMER_TIMEOUT_MS },
+                )
             },
             listPlans(params?: ListPlansParams) {
                 return client.plans.list(params)

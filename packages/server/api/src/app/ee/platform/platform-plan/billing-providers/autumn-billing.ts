@@ -3,7 +3,7 @@ import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, BillableFeature, isConsumableAutumnFeature, PlanName } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsExhaustedReverifyKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsExhaustedReverifyKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
@@ -12,6 +12,7 @@ import { autumnConsole, autumnUtils, BalanceCacheSnapshot, CreditsBalanceCache }
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
 const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 60
+const CUSTOMER_STATE_MISS_DEBOUNCE_SECONDS = 60
 const EXHAUSTED_REVERIFY_DEBOUNCE_SECONDS = 15
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
@@ -418,7 +419,15 @@ async function fetchCreditsDeduped(log: FastifyBaseLogger, platformId: string): 
             if (!isNil(cached.credits)) {
                 return cached
             }
-            return fetchCredits(log, platformId)
+            const recentlyMissed = await distributedStore.get<string>(getCustomerStateMissKey(platformId))
+            if (!isNil(recentlyMissed)) {
+                return null
+            }
+            const fetched = await fetchCredits(log, platformId)
+            if (isNil(fetched?.credits)) {
+                await distributedStore.put(getCustomerStateMissKey(platformId), '1', CUSTOMER_STATE_MISS_DEBOUNCE_SECONDS)
+            }
+            return fetched
         },
     }))
     if (!isNil(error)) {
