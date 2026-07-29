@@ -6,7 +6,7 @@ const JUDGE_TIMEOUT_MS = 12_000
 const JUDGE_MAX_OUTPUT_TOKENS = 300
 
 function memoKeyOf(request: AutoConsentJudgeRequest): string {
-    return JSON.stringify([request.toolName, request.actionLabel, request.kinds, request.input, request.batchCount ?? null])
+    return JSON.stringify([request.toolName, request.actionLabel, request.kinds, request.input, request.batchSummary ?? null, request.tainted === true])
 }
 
 function createAutoConsentJudge({ model, userRequest, onVerdict, log }: {
@@ -28,7 +28,8 @@ function createAutoConsentJudge({ model, userRequest, onVerdict, log }: {
             actionLabel: request.actionLabel,
             kinds: request.kinds,
             input: request.input,
-            batchCount: request.batchCount,
+            batchSummary: request.batchSummary,
+            tainted: request.tainted,
         })
         const startedAt = Date.now()
         const abortController = new AbortController()
