@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { getProjectActionOutputSchema } from '../output-schemas';
 
 export const todoistGetProjectAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistGetProjectAction = createAction({
       'Fetches the full record of one Todoist project by its project_id. Use when you already have a project ID (e.g. from a task or List Projects) and need its current details; to find a project by name use Search Projects or List Projects instead. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getProjectActionOutputSchema,
   props: {
     project_id: Property.ShortText({
       displayName: 'Project ID',

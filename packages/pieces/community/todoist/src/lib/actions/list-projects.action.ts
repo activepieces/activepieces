@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistRestClient } from '../common/client/rest-client';
 import { todoistAuth } from '../..';
+import { listProjectsActionOutputSchema } from '../output-schemas';
 
 export const todoistListProjectsAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistListProjectsAction = createAction({
       'Lists every Todoist project (active, not archived) with id and name. Use this to resolve a project name to its ID before any project-scoped operation, or to enumerate available projects; to match by a name fragment use Search Projects, for archived ones use List Archived Projects. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listProjectsActionOutputSchema,
   props: {},
   async run(context) {
     const token = context.auth.access_token;

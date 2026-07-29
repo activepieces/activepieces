@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
 import { todoistRestClient } from '../common/client/rest-client';
+import { getTaskActionOutputSchema } from '../output-schemas';
 
 export const todoistGetTaskAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistGetTaskAction = createAction({
       'Fetches the full current record of one Todoist task by its task_id. Use when you already have an ID (e.g. from a trigger or webhook payload) and need the task\'s up-to-date state. To find a task whose ID you do not yet know, use Find Task or Filter Tasks. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getTaskActionOutputSchema,
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

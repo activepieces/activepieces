@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { createSectionActionOutputSchema } from '../output-schemas';
 
 export const todoistCreateSectionAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistCreateSectionAction = createAction({
       'Creates a new section with the given name inside a specific project, identified by project_id. Use to add a column/grouping to a project; resolve the project ID via List Projects first. Not idempotent: each call creates a separate section even with an identical name.',
     idempotent: false,
   },
+  outputSchema: createSectionActionOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Name',

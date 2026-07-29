@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { assertNotNullOrUndefined, createAction, Property } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
+import { createTaskCommentActionOutputSchema } from '../output-schemas';
 
 const API = 'https://api.todoist.com/api/v1';
 
@@ -20,6 +21,7 @@ export const todoistCreateTaskCommentAction = createAction({
       'Adds a comment to a specific Todoist task identified by task_id (resolve the ID via Find Task or List Tasks). Use for task-level comments; to comment on a project instead use Create Project Comment. Each call appends a new comment, so retries create duplicates.',
     idempotent: false,
   },
+  outputSchema: createTaskCommentActionOutputSchema,
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

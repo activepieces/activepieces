@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistRestClient } from '../common/client/rest-client';
 import { todoistAuth } from '../..';
+import { listSectionsActionOutputSchema } from '../output-schemas';
 
 export const todoistListSectionsAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistListSectionsAction = createAction({
       'Lists Todoist sections with id, name and project_id, optionally restricted to a single project via project_id (all sections across all projects if left blank). Use to resolve a section name to its ID before a section-scoped operation; to match by a name fragment use Search Sections, for archived ones use List Archived Sections. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listSectionsActionOutputSchema,
   props: {
     project_id: Property.ShortText({
       displayName: 'Project ID',

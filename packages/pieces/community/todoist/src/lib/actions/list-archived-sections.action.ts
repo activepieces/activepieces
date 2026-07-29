@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { listArchivedSectionsActionOutputSchema } from '../output-schemas';
 
 export const todoistListArchivedSectionsAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistListArchivedSectionsAction = createAction({
       'Lists the archived sections inside one specific project, identified by project_id (required). Use to inspect a project\'s archived sections; for active sections use List Sections instead. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listArchivedSectionsActionOutputSchema,
   props: {
     project_id: Property.ShortText({
       displayName: 'Project ID',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistRestClient } from '../common/client/rest-client';
 import { todoistAuth } from '../..';
+import { searchProjectsActionOutputSchema } from '../output-schemas';
 
 export const todoistSearchProjectsAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistSearchProjectsAction = createAction({
       'Finds Todoist projects whose name contains the given query (case-insensitive substring match over all active projects). Use to resolve a project by a partial or remembered name to its ID; to list every project use List Projects, to fetch one known ID use Get Project. Read-only and idempotent; matches client-side, so a blank query returns all projects.',
     idempotent: true,
   },
+  outputSchema: searchProjectsActionOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Query',

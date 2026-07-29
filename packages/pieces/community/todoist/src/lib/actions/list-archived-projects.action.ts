@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { listArchivedProjectsActionOutputSchema } from '../output-schemas';
 
 export const todoistListArchivedProjectsAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistListArchivedProjectsAction = createAction({
       'Lists the archived (personal) Todoist projects with id and name. Use to find an archived project so you can restore it with Unarchive Project; for active projects use List Projects instead. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listArchivedProjectsActionOutputSchema,
   props: {},
   async run(context) {
     const token = context.auth.access_token;

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
 import { todoistRestClient } from '../common/client/rest-client';
+import { listCompletedTasksByDueDateActionOutputSchema } from '../output-schemas';
 
 export const todoistListCompletedTasksByDueDateAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistListCompletedTasksByDueDateAction = createAction({
       'Lists completed tasks whose original DUE date falls between since and until. Use this for "what was scheduled for this period and got done" reports; use List Completed Tasks (by Completion Date) instead to key on when each task was actually finished. The window is bounded (roughly 6 weeks max). Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listCompletedTasksByDueDateActionOutputSchema,
   props: {
     since: Property.ShortText({
       displayName: 'Since',

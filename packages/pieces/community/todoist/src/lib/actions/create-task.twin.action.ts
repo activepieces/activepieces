@@ -7,6 +7,7 @@ import {
 } from '../common/props';
 import { TodoistCreateTaskRequest } from '../common/models';
 import { todoistAuth } from '../..';
+import { createTaskActionOutputSchema } from '../output-schemas';
 
 export const todoistCreateTaskAiAction = createAction({
   auth: todoistAuth,
@@ -19,6 +20,7 @@ export const todoistCreateTaskAiAction = createAction({
       'Creates a new Todoist task from explicit structured fields (content, project, section, labels, priority 1-4, due date). Use this when you already have the individual field values; if you only have a free-text sentence like "buy milk tomorrow #Shopping p1", prefer Quick Add Task which parses inline syntax. Without a project it lands in the Inbox. Not idempotent: each call appends a separate task even with identical content.',
     idempotent: false,
   },
+  outputSchema: createTaskActionOutputSchema,
   props: {
     project_id: todoistProjectIdDropdown(
       "Task project ID. If not set, task is put to user's Inbox."

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistRestClient } from '../common/client/rest-client';
 import { todoistAuth } from '../..';
+import { searchSectionsActionOutputSchema } from '../output-schemas';
 
 export const todoistSearchSectionsAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistSearchSectionsAction = createAction({
       'Finds Todoist sections whose name contains the given query (case-insensitive substring match), optionally scoped to one project via project_id. Use to resolve a section by a partial or remembered name to its ID; to list every section use List Sections, to fetch one known ID use Get Section. Read-only and idempotent; matches client-side, so a blank query returns all sections in scope.',
     idempotent: true,
   },
+  outputSchema: searchSectionsActionOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Query',

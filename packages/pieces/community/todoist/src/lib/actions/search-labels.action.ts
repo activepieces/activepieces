@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistLabelsClient } from '../common/client/labels-client';
 import { todoistAuth } from '../..';
+import { searchLabelsActionOutputSchema } from '../output-schemas';
 
 export const todoistSearchLabelsAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistSearchLabelsAction = createAction({
       "Finds the user's personal Todoist labels whose name contains the given query (case-insensitive substring match), evaluated client-side over all labels. Use to resolve a partial or fuzzy name to label records when you do not know the exact name; use List Labels to fetch every label, or Get Label when you already have an ID. Read-only and idempotent.",
     idempotent: true,
   },
+  outputSchema: searchLabelsActionOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Query',

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { assertNotNullOrUndefined, createAction, Property } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
+import { getCommentActionOutputSchema } from '../output-schemas';
 
 const API = 'https://api.todoist.com/api/v1';
 
@@ -20,6 +21,7 @@ export const todoistGetCommentAction = createAction({
       'Fetches one Todoist comment by its comment_id (resolve the ID via List Comments). Use when you already have a comment ID and want its full record; to read every comment on a task or project use List Comments instead. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getCommentActionOutputSchema,
   props: {
     comment_id: Property.ShortText({
       displayName: 'Comment ID',

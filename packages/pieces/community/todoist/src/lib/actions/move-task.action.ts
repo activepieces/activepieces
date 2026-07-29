@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
 import { todoistRestClient } from '../common/client/rest-client';
+import { moveTaskActionOutputSchema } from '../output-schemas';
 
 export const todoistMoveTaskAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistMoveTaskAction = createAction({
       'Reparents a Todoist task to a different project, section, or parent task. Provide task_id plus at least one destination (project, section, or parent). Use this to relocate a task — Update Task cannot change a task\'s project or section. All IDs must be the 16-character base32 form returned by Find Task / Filter Tasks. Idempotent: moving to the same destination is a no-op.',
     idempotent: true,
   },
+  outputSchema: moveTaskActionOutputSchema,
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

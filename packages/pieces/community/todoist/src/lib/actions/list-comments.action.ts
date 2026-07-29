@@ -12,6 +12,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
+import { listCommentsActionOutputSchema } from '../output-schemas';
 
 const API = 'https://api.todoist.com/api/v1';
 
@@ -31,6 +32,7 @@ export const todoistListCommentsAction = createAction({
       'Lists every comment on one Todoist task OR one project. Provide exactly one of task_id (resolve via Find Task) or project_id (resolve via List Projects) — not both. Use to read a comment thread or to resolve a comment_id before Get Comment. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listCommentsActionOutputSchema,
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

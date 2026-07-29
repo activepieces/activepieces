@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
 import { todoistRestClient } from '../common/client/rest-client';
+import { filterTasksActionOutputSchema } from '../output-schemas';
 
 export const todoistFilterTasksAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistFilterTasksAction = createAction({
       'Returns active tasks matching a Todoist filter query (e.g. "today | overdue", "p1 & !#Work", "search: meeting", "no due date"). Use this to find tasks by date, priority, label, or project rather than by exact name; for a single task whose exact title you already know use Find Task instead. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: filterTasksActionOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Query',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistLabelsClient } from '../common/client/labels-client';
 import { todoistAuth } from '../..';
+import { updateLabelActionOutputSchema } from '../output-schemas';
 
 export const todoistUpdateLabelAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistUpdateLabelAction = createAction({
       'Updates fields (name, color, order, favorite flag) on an existing personal Todoist label identified by label_id; only the fields you pass are changed. Resolve label_id first via List Labels or Search Labels. To rename a shared (workspace) label across all tasks use Rename Shared Label instead. Idempotent: re-sending the same values yields the same end state.',
     idempotent: true,
   },
+  outputSchema: updateLabelActionOutputSchema,
   props: {
     label_id: Property.ShortText({
       displayName: 'Label ID',

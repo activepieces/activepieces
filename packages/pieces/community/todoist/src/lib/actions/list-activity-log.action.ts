@@ -12,6 +12,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
+import { listActivityLogActionOutputSchema } from '../output-schemas';
 
 const API = 'https://api.todoist.com/api/v1';
 
@@ -31,6 +32,7 @@ export const todoistListActivityLogAction = createAction({
       'Retrieves the Todoist activity log — the history of events (added, updated, completed, deleted) across projects, tasks, and comments. Use for audit or reporting; narrow with object_type, event_type, a project/task scope, or a date range. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listActivityLogActionOutputSchema,
   props: {
     object_type: Property.StaticDropdown({
       displayName: 'Object Type',

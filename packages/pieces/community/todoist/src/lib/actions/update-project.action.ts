@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { updateProjectActionOutputSchema } from '../output-schemas';
 
 export const todoistUpdateProjectAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistUpdateProjectAction = createAction({
       'Updates fields (name, color, view style, description, favorite flag) on an existing Todoist project identified by project_id. Use to edit a project once you have its ID (resolve via List Projects or Search Projects); only the fields you pass change. Idempotent: re-sending the same values overwrites to the same end state. Cannot reparent a project — use Move Task for tasks, not this.',
     idempotent: true,
   },
+  outputSchema: updateProjectActionOutputSchema,
   props: {
     project_id: Property.ShortText({
       displayName: 'Project ID',

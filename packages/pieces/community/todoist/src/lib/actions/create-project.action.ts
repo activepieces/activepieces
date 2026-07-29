@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { createProjectActionOutputSchema } from '../output-schemas';
 
 export const todoistCreateProjectAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistCreateProjectAction = createAction({
       'Creates a new Todoist project with the given name and optional color, parent project, view style, description and favorite flag. Use to add a fresh project; to nest it under another project pass that project\'s ID as parent_id (resolve via List Projects). Not idempotent: each call creates a separate project even with an identical name.',
     idempotent: false,
   },
+  outputSchema: createProjectActionOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Name',

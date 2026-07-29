@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
 import { todoistRestClient } from '../common/client/rest-client';
+import { quickAddTaskActionOutputSchema } from '../output-schemas';
 
 export const todoistQuickAddTaskAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistQuickAddTaskAction = createAction({
       'Creates a Todoist task by parsing a natural-language sentence with inline syntax — e.g. "Buy milk tomorrow #Shopping @errands p1" sets the due date, project, label, and priority. Prefer this when you have a free-text instruction; use Create Task when you already have the fields broken out separately. Not idempotent: each call creates a new task.',
     idempotent: false,
   },
+  outputSchema: quickAddTaskActionOutputSchema,
   props: {
     text: Property.LongText({
       displayName: 'Text',

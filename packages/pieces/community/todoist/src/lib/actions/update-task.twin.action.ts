@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistRestClient } from '../common/client/rest-client';
 import { todoistAuth } from '../..';
+import { updateTaskActionOutputSchema } from '../output-schemas';
 
 export const todoistUpdateTaskAiAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistUpdateTaskAiAction = createAction({
       'Updates content, description, labels, priority, or due date on an existing Todoist task identified by task_id. Use to edit a task you already have the ID for (resolve a name via Find Task first); only the fields you pass are changed. This endpoint cannot change a task\'s project or section — use Move Task for that. Idempotent: re-sending the same values yields the same end state.',
     idempotent: true,
   },
+  outputSchema: updateTaskActionOutputSchema,
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { assertNotNullOrUndefined, createAction } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
+import { getProductivityStatsActionOutputSchema } from '../output-schemas';
 
 const API = 'https://api.todoist.com/api/v1';
 
@@ -20,6 +21,7 @@ export const todoistGetProductivityStatsAction = createAction({
       'Retrieves the authenticated user\'s Todoist productivity statistics: karma score and trend, completed-task counts, and daily and weekly goals. Use for reporting or progress summaries; for the raw list of completed tasks use List Completed Tasks instead. Takes no input; read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getProductivityStatsActionOutputSchema,
   props: {},
   async run(context) {
     const token = context.auth.access_token;

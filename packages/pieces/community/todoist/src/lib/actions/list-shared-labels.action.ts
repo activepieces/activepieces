@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistLabelsClient } from '../common/client/labels-client';
 import { todoistAuth } from '../..';
+import { listSharedLabelsActionOutputSchema } from '../output-schemas';
 
 export const todoistListSharedLabelsAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistListSharedLabelsAction = createAction({
       'Lists the names of shared (workspace) labels — labels applied to tasks but not saved in the personal label list. Use this to resolve the exact name before renaming or removing a shared label; for the user\'s own saved labels use List Labels instead. Shared labels are identified by name, not ID. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listSharedLabelsActionOutputSchema,
   props: {
     omit_personal: Property.Checkbox({
       displayName: 'Omit Personal',

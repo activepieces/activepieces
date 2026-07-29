@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { updateSectionActionOutputSchema } from '../output-schemas';
 
 export const todoistUpdateSectionAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistUpdateSectionAction = createAction({
       'Renames an existing Todoist section identified by section_id (rename is the only field the section update endpoint supports). Use once you have the section ID (resolve via List Sections or Search Sections); to move a section to a different project this endpoint cannot help. Idempotent: re-sending the same name leaves the section at the same end state.',
     idempotent: true,
   },
+  outputSchema: updateSectionActionOutputSchema,
   props: {
     section_id: Property.ShortText({
       displayName: 'Section ID',

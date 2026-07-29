@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistProjectsSectionsClient } from '../common/client/projects-sections-client';
 import { todoistAuth } from '../..';
+import { getSectionActionOutputSchema } from '../output-schemas';
 
 export const todoistGetSectionAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistGetSectionAction = createAction({
       'Fetches the full record of one Todoist section by its section_id (including its name and parent project_id). Use when you already have a section ID and need its current details; to find a section by name use Search Sections or List Sections instead. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getSectionActionOutputSchema,
   props: {
     section_id: Property.ShortText({
       displayName: 'Section ID',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistLabelsClient } from '../common/client/labels-client';
 import { todoistAuth } from '../..';
+import { createLabelActionOutputSchema } from '../output-schemas';
 
 export const todoistCreateLabelAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistCreateLabelAction = createAction({
       'Creates a new personal Todoist label by name (1-128 chars), with optional color, order, and favorite flag. Use to add a label before tagging tasks with it; to change an existing label use Update Label instead. Not idempotent: a duplicate name returns an error, so call List Labels first to check whether the label already exists.',
     idempotent: false,
   },
+  outputSchema: createLabelActionOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Name',

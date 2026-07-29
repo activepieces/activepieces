@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { assertNotNullOrUndefined, createAction } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
+import { getCurrentUserActionOutputSchema } from '../output-schemas';
 
 const API = 'https://api.todoist.com/api/v1';
 
@@ -20,6 +21,7 @@ export const todoistGetCurrentUserAction = createAction({
       'Retrieves the profile of the currently authenticated Todoist user (id, email, full name, timezone, etc.). Use to resolve the connected account\'s own user ID for assignee or collaborator workflows, or to read the user timezone before scheduling. Takes no input; read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getCurrentUserActionOutputSchema,
   props: {},
   async run(context) {
     const token = context.auth.access_token;

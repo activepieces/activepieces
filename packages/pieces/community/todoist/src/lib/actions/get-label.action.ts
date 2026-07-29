@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistLabelsClient } from '../common/client/labels-client';
 import { todoistAuth } from '../..';
+import { getLabelActionOutputSchema } from '../output-schemas';
 
 export const todoistGetLabelAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistGetLabelAction = createAction({
       'Fetches a single personal Todoist label by label_id (full record: name, color, order, favorite). Use when you already have the ID and want its current state; to discover IDs from names list everything with List Labels or filter with Search Labels. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getLabelActionOutputSchema,
   props: {
     label_id: Property.ShortText({
       displayName: 'Label ID',

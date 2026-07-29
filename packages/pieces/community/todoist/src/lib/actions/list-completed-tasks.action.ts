@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { todoistAuth } from '../..';
 import { todoistRestClient } from '../common/client/rest-client';
+import { listCompletedTasksActionOutputSchema } from '../output-schemas';
 
 export const todoistListCompletedTasksAction = createAction({
   auth: todoistAuth,
@@ -14,6 +15,7 @@ export const todoistListCompletedTasksAction = createAction({
       'Lists tasks that were completed (checked off) between the since and until timestamps. Use this for "what got done in this period" reports keyed on when work was finished; use List Completed Tasks by Due Date instead to key on when tasks were originally due. The window is bounded (roughly 3 months max). Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listCompletedTasksActionOutputSchema,
   props: {
     since: Property.ShortText({
       displayName: 'Since',
