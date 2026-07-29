@@ -294,6 +294,33 @@ describe('migrateV22MultiSelectDynamicValues', () => {
         expect(twice).toEqual({ ...once, schemaVersion: '23' })
     })
 
+    it('fetches piece metadata once for steps sharing the same piece version', async () => {
+        const flowVersion = flowVersionWith({
+            input: { unitExtract: '["year"]' },
+            propertySettings: { unitExtract: { type: PropertyExecutionType.DYNAMIC } },
+        })
+        flowVersion.trigger.nextAction!.nextAction = {
+            type: FlowActionType.PIECE,
+            name: 'step_2',
+            displayName: 'Extract Date Units Again',
+            valid: true,
+            lastUpdatedDate: new Date().toISOString(),
+            settings: {
+                pieceName: '@activepieces/piece-date-helper',
+                pieceVersion: '0.3.0',
+                actionName: 'extract_date_parts',
+                input: { unitExtract: '["day"]' },
+                propertySettings: { unitExtract: { type: PropertyExecutionType.DYNAMIC } },
+            },
+        }
+
+        const migrated = await migrateV22MultiSelectDynamicValues.migrate(flowVersion)
+        const secondStep = flowStructureUtil.getStepOrThrow('step_2', migrated.trigger)
+
+        expect(secondStep.settings.input.unitExtract).toEqual(['day'])
+        expect(mockGet).toHaveBeenCalledTimes(1)
+    })
+
     it('preserves the rest of the flow version and other steps', async () => {
         const flowVersion = flowVersionWith({
             input: { unitExtract: '["year"]' },

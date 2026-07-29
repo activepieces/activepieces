@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { piecePropertiesUtils } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, piecePropertiesUtils } from '@activepieces/pieces-framework'
 import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PropertyExecutionType, PropertySettings } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
@@ -16,6 +16,7 @@ export const migrateV22MultiSelectDynamicValues: Migration = {
             ? undefined
             : await projectService(log).getPlatformId(flow.projectId)
 
+        const pieceMetadataCache = new Map<string, PieceMetadataModel | undefined>()
         const recoveredValuesByStepName: Record<string, Record<string, unknown>> = {}
         for (const step of flowStructureUtil.getAllSteps(flowVersion.trigger)) {
             if (step.type !== FlowActionType.PIECE && step.type !== FlowTriggerType.PIECE) {
@@ -28,11 +29,15 @@ export const migrateV22MultiSelectDynamicValues: Migration = {
             if (dynamicStringKeys.length === 0) {
                 continue
             }
-            const pieceMetadata = await pieceMetadataService(log).get({
-                platformId,
-                name: step.settings.pieceName,
-                version: step.settings.pieceVersion,
-            })
+            const pieceCacheKey = `${step.settings.pieceName}:${step.settings.pieceVersion}`
+            if (!pieceMetadataCache.has(pieceCacheKey)) {
+                pieceMetadataCache.set(pieceCacheKey, await pieceMetadataService(log).get({
+                    platformId,
+                    name: step.settings.pieceName,
+                    version: step.settings.pieceVersion,
+                }))
+            }
+            const pieceMetadata = pieceMetadataCache.get(pieceCacheKey)
             const components = step.type === FlowActionType.PIECE ? pieceMetadata?.actions : pieceMetadata?.triggers
             const componentName = step.type === FlowActionType.PIECE ? step.settings.actionName : step.settings.triggerName
             if (isNil(components) || isNil(componentName)) {
