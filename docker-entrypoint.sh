@@ -28,7 +28,7 @@ fi
 # Build PM2 ecosystem config
 KILL_TIMEOUT_MS="$PM2_KILL_TIMEOUT"
 case "$KILL_TIMEOUT_MS" in
-    ''|*[!0-9]*) KILL_TIMEOUT_MS=35000 ;;
+    ''|0*|*[!0-9]*) KILL_TIMEOUT_MS=35000 ;;
 esac
 
 APPS=""
