@@ -16,7 +16,7 @@ import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-in
 const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 
 const FREE_CONCURRENT_JOBS_LIMIT = 5
-const APPSUMO_CONCURRENT_JOBS_LIMIT = 15
+const SELF_SERVE_CONCURRENT_JOBS_LIMIT = 15
 const ENTERPRISE_CONCURRENT_JOBS_LIMIT = 30
 
 function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
@@ -51,13 +51,19 @@ async function getMaxConcurrentJobsForPlatformPlan({ platformId, log }: { platfo
 }
 
 function concurrencyLimitForCloudPlan(planName: string | null): number {
-    if (isNil(planName) || planName === PlanName.FREE) {
-        return FREE_CONCURRENT_JOBS_LIMIT
+    switch (planName ?? PlanName.FREE) {
+        case PlanName.FREE:
+            return FREE_CONCURRENT_JOBS_LIMIT
+        case PlanName.APPSUMO:
+        case PlanName.PLUS:
+        case PlanName.PLUS_ANNUAL:
+        case PlanName.PLUS_CHAT:
+        case PlanName.TEAM:
+        case PlanName.TEAM_ANNUAL:
+            return SELF_SERVE_CONCURRENT_JOBS_LIMIT
+        default:
+            return ENTERPRISE_CONCURRENT_JOBS_LIMIT
     }
-    if (planName === PlanName.APPSUMO) {
-        return APPSUMO_CONCURRENT_JOBS_LIMIT
-    }
-    return ENTERPRISE_CONCURRENT_JOBS_LIMIT
 }
 
 async function getMaxConcurrentJobs({ poolId, platformId, projectId, log }: { poolId: string | null, platformId: PlatformId, projectId: string, log: FastifyBaseLogger }): Promise<number> {

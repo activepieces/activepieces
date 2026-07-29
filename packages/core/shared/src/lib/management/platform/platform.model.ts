@@ -20,6 +20,11 @@ export type PlatformUsage = z.infer<typeof PlatformUsage>
 
 export enum PlanName {
     FREE = 'free',
+    PLUS = 'plus',
+    PLUS_ANNUAL = 'plus_annual',
+    PLUS_CHAT = 'plus_chat',
+    TEAM = 'team',
+    TEAM_ANNUAL = 'team_annual',
     ENTERPRISE = 'enterprise',
     APPSUMO = 'appsumo',
 }
