@@ -249,9 +249,10 @@ async function seedInvitation({ platformId, status, email, createdDaysAgo = 0 }:
     })
     await db.save('user_invitation', invitation)
     if (createdDaysAgo > 0) {
+        const backdatedAt = dayjs().subtract(createdDaysAgo, 'day').toISOString()
         await databaseConnection().query(
-            'UPDATE user_invitation SET created = $1 WHERE id = $2',
-            [dayjs().subtract(createdDaysAgo, 'day').toISOString(), invitation.id],
+            'UPDATE user_invitation SET created = $1, updated = $1 WHERE id = $2',
+            [backdatedAt, invitation.id],
         )
     }
 }

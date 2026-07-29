@@ -222,7 +222,7 @@ async function countReservedInvites({ platformId, entityManager }: { platformId:
         .select('COUNT(DISTINCT LOWER(invitation.email))', 'count')
         .where('invitation.platformId = :platformId', { platformId })
         .andWhere('invitation.status IN (:...statuses)', { statuses: [InvitationStatus.PENDING, InvitationStatus.ACCEPTED] })
-        .andWhere('invitation.created > :expiryCutoff', { expiryCutoff: getInvitationExpiryCutoff() })
+        .andWhere('invitation.updated > :expiryCutoff', { expiryCutoff: getInvitationExpiryCutoff() })
         .andWhere(`NOT EXISTS (
             SELECT 1
             FROM user_identity identity

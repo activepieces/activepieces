@@ -25,7 +25,15 @@ proactively at invite time.
   provisioned (and the row deleted) — this covers both the invitee-has-no-identity-yet case and the
   auto-accept path (see the API-key bypass consequence below). Expiry uses the single
   `INVITATION_EXPIRY_SECONDS` constant that also signs the invitation link, so link-expiry and
-  count-expiry cannot drift; expired rows are excluded by `created > cutoff` (they are never deleted).
+  count-expiry cannot drift; expired rows are excluded by `updated > cutoff` (they are never deleted).
+- **The expiry filter is `updated`, not `created`.** A resend goes through `createInvitationRecord`'s
+  upsert, which reissues the link with a fresh 7-day JWT but leaves `created` on the original date.
+  Filtering on `created` let the reservation lapse while the emailed link still worked — the exact drift
+  this decision forbids — so a resend at the seat boundary passed its check, immediately stopped
+  reserving, let another invite take the last seat, and still provisioned an ACTIVE user. TypeORM appends
+  `"updated" = DEFAULT` to the `ON CONFLICT DO UPDATE SET` for `isUpdateDate` columns, so the resend
+  already moves `updated` with no extra write. `updated` therefore means "when was the currently-valid
+  link issued", which is what the reservation window is actually about.
 - **Enforced at invite creation and at reactivation** (INACTIVE→ACTIVE), skipping the check for
   seat-neutral invites (to an existing member). `entitled_seats` is read from the projected
   `platform_plan.usersLimit` — never a live Autumn call (the billing projection is pull-based).
@@ -64,4 +72,15 @@ proactively at invite time.
 - **Billing is never overcharged by an overshoot:** Autumn is metered on active Users via a separate
   ACTIVE-only query (`billing-usage-report-service.ts`), independent of `usedSeats`.
 - Stale (expired, never-accepted) `PENDING` rows linger (not deleted) and appear in the now seat-relevant
-  invitations list; they stop counting after expiry via the `created > cutoff` filter.
+  invitations list; they stop counting after expiry via the `updated > cutoff` filter.
+- **Accepting an invitation extends its reservation window** — `accept()` writes `status = ACCEPTED`, which
+  bumps `updated`, so the seat is held for another `INVITATION_EXPIRY_SECONDS` from the accept without a new
+  link being issued. This drifts the other way (reservation outlives the JWT), which is the safe direction:
+  it over-reserves (blocks an invite) rather than over-provisioning past a paid cap, and holding a seat for
+  someone who has accepted is the intended behaviour anyway.
+- **Tests that age an invitation must backdate `updated`, not just `created`.** A raw
+  `UPDATE user_invitation SET created = …` bumps `updated` to now as a side effect, so it makes the row look
+  *fresh* to the reservation queries. `seedInvitation` in `seat-reservation.test.ts` sets both.
+- Still open: provisioning an accepted invitation performs no seat check of its own, so an accept followed by
+  a much later signup can still land past the cap once the window lapses. The reservation and provisioning
+  predicates disagree; tracked separately.

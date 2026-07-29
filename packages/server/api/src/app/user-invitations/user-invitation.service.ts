@@ -170,7 +170,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             .where('invitation.platformId = :platformId', { platformId })
             .andWhere('LOWER(invitation.email) = :email', { email: email.toLowerCase().trim() })
             .andWhere('invitation.status IN (:...statuses)', { statuses: [InvitationStatus.PENDING, InvitationStatus.ACCEPTED] })
-            .andWhere('invitation.created > :expiryCutoff', { expiryCutoff: getInvitationExpiryCutoff() })
+            .andWhere('invitation.updated > :expiryCutoff', { expiryCutoff: getInvitationExpiryCutoff() })
             .getExists()
         return alreadyReserved ? 0 : 1
     },
