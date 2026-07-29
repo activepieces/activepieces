@@ -733,6 +733,64 @@ describe('createSandbox', () => {
             }
         })
 
+        // We SIGKILL the sandbox ourselves on shutdown, and isolate prints the same "Caught fatal
+        // signal 9" it prints for an OOM kill — so a deploy-time abort must not be reported as the
+        // user's flow exhausting memory.
+        it('does NOT classify a shutdown-initiated SIGKILL as SANDBOX_MEMORY_ISSUE', async () => {
+            const { sandbox } = await startSandbox()
+            const client = testPM.getClient()
+            const child = testPM.getChild()
+
+            client.on('rpc', () => {
+                void sandbox.shutdown()
+                ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from('Caught fatal signal 9\n'))
+                setTimeout(() => child.emit('close', 1, null), 20)
+            })
+
+            const executePromise = sandbox.execute(
+                'EXECUTE_FLOW' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+
+            await expect(executePromise).rejects.toThrow()
+            try {
+                await executePromise
+            }
+            catch (err) {
+                expect((err as ActivepiecesError).error.code).not.toBe(ErrorCode.SANDBOX_MEMORY_ISSUE)
+                expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+            }
+        })
+
+        // A V8 heap-OOM message can only come from the engine actually exhausting memory — we never
+        // produce it — so a concurrent shutdown must not strip the memory classification off it.
+        it('still classifies a V8 heap-OOM as SANDBOX_MEMORY_ISSUE even during shutdown', async () => {
+            const { sandbox } = await startSandbox()
+            const client = testPM.getClient()
+            const child = testPM.getChild()
+
+            client.on('rpc', () => {
+                void sandbox.shutdown()
+                ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from('FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\n'))
+                setTimeout(() => child.emit('close', 1, null), 20)
+            })
+
+            const executePromise = sandbox.execute(
+                'EXECUTE_FLOW' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+
+            await expect(executePromise).rejects.toThrow()
+            try {
+                await executePromise
+            }
+            catch (err) {
+                expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_MEMORY_ISSUE)
+            }
+        })
+
         it('cleans up listener, timeout, and event handlers in finally block', async () => {
             const { sandbox } = await startSandbox()
             const client = testPM.getClient()

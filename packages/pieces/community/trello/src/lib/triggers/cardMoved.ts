@@ -4,12 +4,14 @@ import { getCardDetail, getCardsInList, trelloCommon } from '../common';
 import { TrelloCardMoved } from '../common/props/card';
 import { isNil } from '@activepieces/pieces-framework';
 import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
+import { cardMovedTriggerOutputSchema } from '../output-schemas';
 
 export const cardMovedTrigger = createTrigger({
 	auth: trelloAuth,
 	name: 'card_moved_to_list',
 	displayName: 'Card Moved to list',
 	description: 'Trigger when a card is moved to the list specified',
+	outputSchema: cardMovedTriggerOutputSchema,
 	aiMetadata: {
 		description: 'Fires when a card is moved into the specified list on a board (from a different list). Represents a card transitioning to a new stage; emits the moved card with its full details.',
 	},
