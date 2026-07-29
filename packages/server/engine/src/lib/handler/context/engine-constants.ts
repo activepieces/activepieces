@@ -1,6 +1,7 @@
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { retryFetch } from '../../api/retry-fetch'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -173,7 +174,7 @@ export class EngineConstants {
 
         const getWorkerProjectEndpoint = `${this.internalApiUrl}v1/worker/project`
 
-        const response = await fetch(getWorkerProjectEndpoint, {
+        const response = await retryFetch(getWorkerProjectEndpoint, {
             headers: {
                 Authorization: `Bearer ${this.engineToken}`,
             },

@@ -1,5 +1,6 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '@activepieces/shared'
+import { retryFetch } from '../api/retry-fetch'
 import { utils } from '../utils'
 
 export const createConnectionResolver = ({ projectId, engineToken, apiUrl, contextVersion }: CreateConnectionResolverParams): ConnectionResolver => {
@@ -8,7 +9,7 @@ export const createConnectionResolver = ({ projectId, engineToken, apiUrl, conte
             const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
             const { data: connectionValue, error: connectionValueError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                const response = await fetch(url, {
+                const response = await retryFetch(url, {
                     method: 'GET',
                     headers: {
                         Authorization: `Bearer ${engineToken}`,
