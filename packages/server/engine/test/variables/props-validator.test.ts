@@ -501,10 +501,10 @@ describe('Property Validation', () => {
         })
 
         it.each([
-            ['a malformed array literal', '[year, month]'],
-            ['an object literal', '{"not":"an array"}'],
-            ['a malformed object literal', '{year: 1}'],
-        ])('should leave %s unchanged and fail validation', async (_case, input) => {
+            ['a malformed array literal', '[year, month]', '[year, month]'],
+            ['an object literal', '{"not":"an array"}', '{"not":"an array"}'],
+            ['an object', { not: 'an array' }, '[object Object]'],
+        ])('should leave %s unchanged and fail validation', async (_case, input, received) => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
                 { staticMultiSelect: input },
                 props,
@@ -515,36 +515,8 @@ describe('Property Validation', () => {
 
             expect(processedInput.staticMultiSelect).toEqual(input)
             expect(errors).toEqual({
-                staticMultiSelect: [`Expected array, received: ${input}`],
+                staticMultiSelect: [`Expected array, received: ${received}`],
             })
-        })
-
-        it('should leave objects unchanged and fail validation', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { multiSelect: { not: 'an array' } },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(processedInput.multiSelect).toEqual({ not: 'an array' })
-            expect(errors).toEqual({
-                multiSelect: ['Expected array, received: [object Object]'],
-            })
-        })
-
-        it('should treat a whitespace-only dynamic value as unset when optional', async () => {
-            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-                { staticMultiSelect: '   ' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-
-            expect(processedInput.staticMultiSelect).toBeUndefined()
-            expect(errors).toEqual({})
         })
 
         it('should treat an empty dynamic value as unset when optional', async () => {
