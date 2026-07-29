@@ -33,6 +33,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
             return
         }
         const creditValue = usage.breakdown.reduce((sum, entry) => sum + entry.messages * resolveAiCreditWeight({ provider: entry.provider, model: entry.model }) + entry.toolCalls, 0)
+        const attempt = flowRun.startTime ?? flowRun.created
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const isAppSumoPlan = platformPlan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false
         await trackCreditsWithAppSumo({
@@ -41,7 +42,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
                 platformId: project.platformId,
                 value: creditValue,
                 source: CreditUsageSource.AI,
-                idempotencyKey: `${flowRun.id}:ai`,
+                idempotencyKey: `${flowRun.id}:ai:${attempt}`,
                 properties: {
                     platformId: project.platformId,
                     projectId: flowRun.projectId,
@@ -56,7 +57,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
             appSumo: creditValue > 0 && isAppSumoPlan ? {
                 platformId: project.platformId,
                 value: creditValue,
-                idempotencyKey: `${flowRun.id}:appSumoAi`,
+                idempotencyKey: `${flowRun.id}:appSumoAi:${attempt}`,
                 properties: {
                     platformId: project.platformId,
                     projectId: flowRun.projectId,
