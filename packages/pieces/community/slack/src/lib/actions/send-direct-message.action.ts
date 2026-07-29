@@ -4,6 +4,7 @@ import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { Block, KnownBlock } from '@slack/web-api';
 import { slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { chatPostMessageOutputSchema } from '../output-schemas';
 
 export const slackSendDirectMessageAiAction = createAction({
   auth: slackAuth,
@@ -16,6 +17,7 @@ export const slackSendDirectMessageAiAction = createAction({
       'Open a DM with one user (by user ID, e.g. U0123ABCD) and post a message to them privately, optionally with Block Kit blocks. Resolve a handle or email to a user ID first with Find User by Email or Find User by Handle. Use Post Message to send to a channel instead. Each call posts a new DM, so it is not idempotent.',
     idempotent: false,
   },
+  outputSchema: chatPostMessageOutputSchema,
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

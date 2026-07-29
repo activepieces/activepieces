@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { listUserReactionsActionOutputSchema } from '../output-schemas';
 
 export const slackListUserReactions = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const slackListUserReactions = createAction({
       'Lists all items (messages and files) a user has reacted to, paging through every result; defaults to the authenticated user when no user is given. Use this to enumerate everything a user reacted to; use Get Reactions to inspect the reactions on one specific message or file. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listUserReactionsActionOutputSchema,
   props: {
     user: Property.ShortText({
       displayName: 'User ID',

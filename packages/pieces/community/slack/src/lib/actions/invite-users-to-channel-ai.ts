@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { channelResponseOutputSchema } from '../output-schemas';
 
 export const inviteUsersToChannelAiAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const inviteUsersToChannelAiAction = createAction({
       'Add one or more existing workspace users to an existing channel as members. Not idempotent: Slack returns an error if a user is already in the channel (the end state is the same, but a retry is not silent). Use Remove User from Channel to reverse. The bot must be a member of the channel.',
     idempotent: false,
   },
+  outputSchema: channelResponseOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

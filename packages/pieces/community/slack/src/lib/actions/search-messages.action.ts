@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
+import { searchMessagesActionOutputSchema } from '../output-schemas';
 
 export const slackSearchMessagesAiAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const slackSearchMessagesAiAction = createAction({
       'Search across the workspace for messages matching a query string, paging through every match; read-only and repeatable. Requires a user token (search is unavailable to bot tokens). Use this to find messages anywhere by content; use Get Channel History when you already know the channel, or Search All to also include files.',
     idempotent: true,
   },
+  outputSchema: searchMessagesActionOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

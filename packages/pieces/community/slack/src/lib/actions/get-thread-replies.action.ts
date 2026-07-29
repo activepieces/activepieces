@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { threadRepliesActionOutputSchema } from '../output-schemas';
 
 export const slackGetThreadRepliesAiAction = createAction({
   auth: slackAuth,
@@ -15,6 +16,7 @@ export const slackGetThreadRepliesAiAction = createAction({
       'Retrieve all replies in a thread given the channel ID and the parent message timestamp; read-only and repeatable. The timestamp must be the parent message ts, not a reply ts. Use Get Channel History for top-level channel messages, or Search Messages to find a message by content.',
     idempotent: true,
   },
+  outputSchema: threadRepliesActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

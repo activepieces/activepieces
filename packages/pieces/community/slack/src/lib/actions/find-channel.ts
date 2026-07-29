@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ConversationsListResponse, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { findChannelActionOutputSchema } from '../output-schemas';
 
 export const findChannelAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const findChannelAction = createAction({
       'Resolve a channel #name to its channel ID by scanning public and private channels. This is the channel name-to-ID resolver every other channel action needs, since they take a channel ID. Use List Channels to enumerate all channels instead of matching one. Only public and private channels have names; direct messages cannot be matched here. Read-only and repeatable.',
     idempotent: true,
   },
+  outputSchema: findChannelActionOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Channel Name',

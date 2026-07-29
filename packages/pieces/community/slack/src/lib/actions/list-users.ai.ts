@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { listUsers } from './list-users';
+import { listUsersActionOutputSchema } from '../output-schemas';
 
 export const slackListUsers = createAction({
   auth: slackAuth,
@@ -13,6 +14,7 @@ export const slackListUsers = createAction({
       'Enumerates every member of the workspace, paging through all results, with toggles to include bots and disabled/deactivated users. Pick this to scan or enumerate users; use Get User, Find User by Email, or Find User by Handle when you already know the single user you want. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listUsersActionOutputSchema,
   props: listUsers.props,
   run: listUsers.run,
 });

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { listFilesActionOutputSchema } from '../output-schemas';
 
 export const slackListFiles = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const slackListFiles = createAction({
       'Lists files in the workspace, optionally filtered by channel, uploading user, file type, or a created-time window. Use this to discover file IDs to then pass to Get File, Make File Public, or Revoke File Public URL; use Get File when you already have a specific file ID. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listFilesActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel ID',

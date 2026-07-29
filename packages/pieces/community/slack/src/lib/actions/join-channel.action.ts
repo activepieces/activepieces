@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { joinChannelActionOutputSchema } from '../output-schemas';
 
 export const joinChannelAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const joinChannelAction = createAction({
       'Join an existing public channel so the bot becomes a member, which many channel and message actions require. Idempotent: joining a channel the bot is already in succeeds without changing anything. Only works for public channels; to join a private channel the bot must be invited.',
     idempotent: true,
   },
+  outputSchema: joinChannelActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

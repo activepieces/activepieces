@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
+import { searchAllActionOutputSchema } from '../output-schemas';
 
 export const slackSearchAllAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const slackSearchAllAction = createAction({
       'Search across the workspace for both messages and files matching a query string; read-only and repeatable. Requires a user token (search is unavailable to bot tokens). Use this when results may be either messages or files; use Search Messages when you only want messages.',
     idempotent: true,
   },
+  outputSchema: searchAllActionOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

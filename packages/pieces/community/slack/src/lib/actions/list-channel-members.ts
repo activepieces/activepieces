@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ConversationsMembersResponse, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { listChannelMembersActionOutputSchema } from '../output-schemas';
 
 export const listChannelMembersAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const listChannelMembersAction = createAction({
       'List the user IDs of every member of a channel, paging through all results. Use this to enumerate who is in a channel; resolve each returned ID to a user with Get User. Use Get Channel Info for channel metadata instead. Read-only and repeatable.',
     idempotent: true,
   },
+  outputSchema: listChannelMembersActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

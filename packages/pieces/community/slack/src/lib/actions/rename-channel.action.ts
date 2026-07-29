@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { channelResponseOutputSchema } from '../output-schemas';
 
 export const renameChannelAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const renameChannelAction = createAction({
       'Rename a channel to a new name. Idempotent: re-running with the same name leaves the channel in the same final state. Slack normalizes the name (lowercased, spaces become hyphens). The bot must have permission to manage the channel.',
     idempotent: true,
   },
+  outputSchema: channelResponseOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

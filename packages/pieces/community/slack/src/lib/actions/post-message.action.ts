@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { Block, KnownBlock } from '@slack/web-api';
+import { chatPostMessageOutputSchema } from '../output-schemas';
 import {
   processMessageTimestamp,
   slackSendMessage,
@@ -23,6 +24,7 @@ export const slackPostMessageAction = createAction({
       'Post a message to a channel, optionally as a threaded reply or with Block Kit blocks. Pass a channel ID (e.g. C0123ABCD); resolve a #name first with Find Channel. Use Send Direct Message to message one person privately, or Schedule Message to send at a future time. Each call posts a new message, so it is not idempotent; provide either text or blocks.',
     idempotent: false,
   },
+  outputSchema: chatPostMessageOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

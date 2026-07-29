@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { permalinkActionOutputSchema } from '../output-schemas';
 
 export const slackGetMessagePermalinkAction = createAction({
   auth: slackAuth,
@@ -15,6 +16,7 @@ export const slackGetMessagePermalinkAction = createAction({
       'Return a stable, shareable permalink URL for one message identified by channel ID and message timestamp (ts); read-only and repeatable. Obtain the ts from Post Message, Search Messages, or Get Channel History. Use this when you need a link to reference a message elsewhere.',
     idempotent: true,
   },
+  outputSchema: permalinkActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

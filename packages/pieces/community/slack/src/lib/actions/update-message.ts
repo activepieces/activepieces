@@ -4,6 +4,7 @@ import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from
 import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { chatUpdateOutputSchema } from '../output-schemas';
 
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -17,6 +18,7 @@ export const updateMessage = createAction({
     idempotent: true,
   },
   auth: slackAuth,
+  outputSchema: chatUpdateOutputSchema,
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),

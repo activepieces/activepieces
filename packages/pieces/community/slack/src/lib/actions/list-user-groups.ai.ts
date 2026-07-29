@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { listUserGroupsActionOutputSchema } from '../output-schemas';
 
 export const slackListUserGroups = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const slackListUserGroups = createAction({
       'Lists all user groups (subteams) in the workspace, with optional toggles to include disabled groups and each group\'s member user IDs. Use this to enumerate groups or to discover a group ID; use Find User Group by Handle when you already know the handle of a single group. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listUserGroupsActionOutputSchema,
   props: {
     includeDisabled: Property.Checkbox({
       displayName: 'Include disabled groups?',

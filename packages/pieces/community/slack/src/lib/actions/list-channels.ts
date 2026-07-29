@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ConversationsListResponse, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { listChannelsActionOutputSchema } from '../output-schemas';
 
 export const listChannelsAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const listChannelsAction = createAction({
       'Enumerate the channels in the workspace, paging through all results and returning each id, name, privacy and archived state. Use this to browse or list channels; use Find Channel when you already know the name and just need its ID, or List User Conversations to list only the channels a specific user belongs to. Read-only and repeatable.',
     idempotent: true,
   },
+  outputSchema: listChannelsActionOutputSchema,
   props: {
     types: Property.ShortText({
       displayName: 'Types',

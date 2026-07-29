@@ -13,6 +13,7 @@ import {
 } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { chatPostMessageOutputSchema } from '../output-schemas';
 
 
 export const slackSendDirectMessageAction = createAction({
@@ -22,6 +23,7 @@ export const slackSendDirectMessageAction = createAction({
   description: 'Send message to a user',
   audience: 'human',
   aiMetadata: { description: 'Send a direct message to a single user by user ID, with optional Block Kit blocks, custom username/icon, and link unfurling. Each call posts a new DM, so it is not idempotent. Use this to message one person privately; use Send Message To A Channel to post in a channel.', idempotent: false },
+  outputSchema: chatPostMessageOutputSchema,
   props: {
     userId: userId(true),
     text,

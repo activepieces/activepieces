@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { channelResponseOutputSchema } from '../output-schemas';
 
 export const getChannelInfoAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const getChannelInfoAction = createAction({
       'Get the full detail of one channel by its ID — topic, purpose, privacy, archived state, creator and optionally the member count. Use this when you already have a channel ID and need its metadata; use Find Channel to resolve a name to an ID first, or List Channel Members to get the member list. Read-only and repeatable.',
     idempotent: true,
   },
+  outputSchema: channelResponseOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

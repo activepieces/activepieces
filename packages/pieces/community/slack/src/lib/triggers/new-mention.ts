@@ -6,6 +6,7 @@ import {
 import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userIds, usergroupIds } from '../common/props';
 import { slackAuth } from '../auth';
 import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { newMentionTriggerOutputSchema } from '../output-schemas';
 
 export const newMention = createTrigger({
   auth: slackAuth,
@@ -59,6 +60,7 @@ export const newMention = createTrigger({
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
+  outputSchema: newMentionTriggerOutputSchema,
   onEnable: async (context) => {
     const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({

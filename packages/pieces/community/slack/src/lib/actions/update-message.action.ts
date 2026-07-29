@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { Block, KnownBlock, WebClient } from '@slack/web-api';
 import { processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { chatUpdateOutputSchema } from '../output-schemas';
 
 export const slackUpdateMessageAiAction = createAction({
   auth: slackAuth,
@@ -15,6 +16,7 @@ export const slackUpdateMessageAiAction = createAction({
       'Edit a previously posted message in place, replacing its text (and optionally blocks), identified by channel ID and message timestamp (ts). Obtain the ts from the result of Post Message, Search Messages, or Get Channel History. Use Delete Message to remove it instead. Idempotent: re-running with the same inputs leaves the message in the same final state.',
     idempotent: true,
   },
+  outputSchema: chatUpdateOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

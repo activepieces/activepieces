@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { UsersConversationsResponse, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { listUserConversationsActionOutputSchema } from '../output-schemas';
 
 export const listUserConversationsAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const listUserConversationsAction = createAction({
       'List the channels and conversations a specific user (or the authenticated user if none is given) is a member of, paging through all results. Use this instead of List Channels when you only want the conversations one user belongs to. Read-only and repeatable.',
     idempotent: true,
   },
+  outputSchema: listUserConversationsActionOutputSchema,
   props: {
     user: Property.ShortText({
       displayName: 'User ID',

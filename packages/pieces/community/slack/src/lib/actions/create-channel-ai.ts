@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { channelResponseOutputSchema } from '../output-schemas';
 
 export const createChannelAiAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const createChannelAiAction = createAction({
       'Create a new public or private Slack channel with the given name. Not idempotent: if a channel with that name already exists Slack returns a name-taken error rather than reusing it, so do not retry blindly. Slack normalizes names (lowercased, spaces become hyphens).',
     idempotent: false,
   },
+  outputSchema: channelResponseOutputSchema,
   props: {
     channelName: Property.ShortText({
       displayName: 'Channel Name',

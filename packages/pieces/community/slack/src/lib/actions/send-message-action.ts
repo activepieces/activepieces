@@ -13,6 +13,7 @@ import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage,
 import { slackAuth } from '../auth';
 import { Block,KnownBlock } from '@slack/web-api';
 import { getBotToken, requireUserToken, SlackAuthValue } from '../common/auth-helpers';
+import { chatPostMessageOutputSchema } from '../output-schemas';
 
 
 export const slackSendMessageAction = createAction({
@@ -22,6 +23,7 @@ export const slackSendMessageAction = createAction({
   description: 'Send message to a channel',
   audience: 'human',
   aiMetadata: { description: 'Post a message to a channel, with optional Block Kit blocks, file attachment, custom username/icon, and link unfurling; can post as the bot or as the authenticated user. Provide a thread timestamp to reply within a thread (and optionally broadcast that reply to the channel). Each call posts a new message, so it is not idempotent; requires either message text or blocks. Use Send Message To A User for a private DM.', idempotent: false },
+  outputSchema: chatPostMessageOutputSchema,
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),

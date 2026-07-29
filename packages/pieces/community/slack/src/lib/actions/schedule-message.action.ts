@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { Block, KnownBlock, WebClient } from '@slack/web-api';
 import { textToSectionBlocks } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { scheduleMessageActionOutputSchema } from '../output-schemas';
 
 export const slackScheduleMessageAction = createAction({
   auth: slackAuth,
@@ -15,6 +16,7 @@ export const slackScheduleMessageAction = createAction({
       'Queue a message to be posted to a channel at a future Unix timestamp (post_at, in seconds, must be in the future and within 120 days). Pass a channel ID (e.g. C0123ABCD); resolve a #name with Find Channel. Returns a scheduled_message_id you can later cancel with Delete Scheduled Message or review with List Scheduled Messages. Use Post Message to send immediately. Each call queues a new send, so it is not idempotent.',
     idempotent: false,
   },
+  outputSchema: scheduleMessageActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

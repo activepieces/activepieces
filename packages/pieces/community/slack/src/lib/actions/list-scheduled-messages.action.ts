@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { listScheduledMessagesActionOutputSchema } from '../output-schemas';
 
 export const slackListScheduledMessagesAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const slackListScheduledMessagesAction = createAction({
       'List messages that have been scheduled but not yet sent, optionally filtered by channel and a time window; read-only and repeatable. Use this to obtain a scheduled_message_id before cancelling one with Delete Scheduled Message.',
     idempotent: true,
   },
+  outputSchema: listScheduledMessagesActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

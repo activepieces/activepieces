@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { getFileAction } from './get-file';
+import { getFileActionOutputSchema } from '../output-schemas';
 
 export const slackGetFile = createAction({
   auth: slackAuth,
@@ -13,6 +14,7 @@ export const slackGetFile = createAction({
       'Looks up metadata for a single Slack file by its file ID and downloads its contents. Pick this when you have a file ID (e.g. from a message trigger or List Files) and need the file details or bytes. Use List Files to discover file IDs. Read-only and idempotent; fails if the file has no accessible download URL.',
     idempotent: true,
   },
+  outputSchema: getFileActionOutputSchema,
   props: getFileAction.props,
   run: getFileAction.run,
 });

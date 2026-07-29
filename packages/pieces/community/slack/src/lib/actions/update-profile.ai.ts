@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { updateProfileAction } from './update-profile';
+import { updateProfileActionOutputSchema } from '../output-schemas';
 
 export const slackUpdateProfile = createAction({
   auth: slackAuth,
@@ -13,6 +14,7 @@ export const slackUpdateProfile = createAction({
       'Updates basic profile fields (first name, last name, email) for the authenticated user, or for another user when an admin supplies a user ID. Use Set User Status instead to change only the custom status text/emoji. Requires a user token; setting the same values again is idempotent. Changing the email sends Slack notification emails to both addresses, and editing another user is admin-only on paid teams.',
     idempotent: true,
   },
+  outputSchema: updateProfileActionOutputSchema,
   props: updateProfileAction.props,
   run: updateProfileAction.run,
 });

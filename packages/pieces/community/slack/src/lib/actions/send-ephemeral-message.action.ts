@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { Block, KnownBlock, WebClient } from '@slack/web-api';
 import { textToSectionBlocks } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { ephemeralMessageActionOutputSchema } from '../output-schemas';
 
 export const slackSendEphemeralMessageAction = createAction({
   auth: slackAuth,
@@ -16,6 +17,7 @@ export const slackSendEphemeralMessageAction = createAction({
       'Post an ephemeral message that is visible only to one specified user inside a channel and is not stored in the channel history. Pass a channel ID and the target user ID; the user must be a member of that channel and the bot must be in it. Use Post Message for a normal message everyone sees, or Send Direct Message for a private DM. Each call posts a new ephemeral message, so it is not idempotent.',
     idempotent: false,
   },
+  outputSchema: ephemeralMessageActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

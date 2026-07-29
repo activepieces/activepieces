@@ -3,6 +3,7 @@ import { slackAuth } from '../auth';
 import { ReactionsGetArguments, WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { getReactionsActionOutputSchema } from '../output-schemas';
 
 export const slackGetReactions = createAction({
   auth: slackAuth,
@@ -15,6 +16,7 @@ export const slackGetReactions = createAction({
       'Fetches all emoji reactions on a single message (by channel and message timestamp) or file (by file ID). Use this to inspect who reacted with what to one specific item; use List User Reactions to enumerate everything a user reacted to. Pass a channel ID, or resolve a #name first with Find Channel; obtain the message timestamp from a posted message, search, or channel history. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getReactionsActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel ID',

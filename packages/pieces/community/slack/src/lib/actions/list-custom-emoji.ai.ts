@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { listCustomEmojiActionOutputSchema } from '../output-schemas';
 
 export const slackListCustomEmoji = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const slackListCustomEmoji = createAction({
       "Lists the workspace's custom emoji as a name-to-image-URL map (aliases point to their target with an 'alias:' value). Use this to discover available custom emoji names, e.g. before adding a reaction. Read-only and idempotent.",
     idempotent: true,
   },
+  outputSchema: listCustomEmojiActionOutputSchema,
   props: {},
   async run(context) {
     const token = getBotToken(context.auth as SlackAuthValue);

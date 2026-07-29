@@ -2,6 +2,7 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { channelResponseOutputSchema } from '../output-schemas';
 
 export const setChannelPurposeAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const setChannelPurposeAction = createAction({
       'Set (overwrite) the purpose of a channel, the longer "what this channel is for" description. Idempotent: re-running with the same purpose leaves the channel in the same state. Use Set Channel Topic for the short topic shown in the channel header instead. The bot must be a member of the channel.',
     idempotent: true,
   },
+  outputSchema: channelResponseOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',

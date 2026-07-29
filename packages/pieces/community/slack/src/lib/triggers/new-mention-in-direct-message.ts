@@ -6,6 +6,7 @@ import {
 import { slackAuth } from '../auth';
 import { appWebhookSetupInfo, userId } from '../common/props';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
+import { newMentionInDirectMessageTriggerOutputSchema } from '../output-schemas';
 
 export const newMentionInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
@@ -33,6 +34,7 @@ export const newMentionInDirectMessageTrigger = createTrigger({
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
+  outputSchema: newMentionInDirectMessageTriggerOutputSchema,
   onEnable: async (context) => {
     // Older OAuth2 has team_id, newer has team.id
   		const teamId = await getTeamId(context.auth as SlackAuthValue);

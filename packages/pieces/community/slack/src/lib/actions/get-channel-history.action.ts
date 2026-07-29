@@ -2,6 +2,7 @@ import { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { channelHistoryActionOutputSchema } from '../output-schemas';
 
 export const slackGetChannelHistoryAiAction = createAction({
   auth: slackAuth,
@@ -15,6 +16,7 @@ export const slackGetChannelHistoryAiAction = createAction({
       'Retrieve top-level (non-thread) messages from a channel you already have the ID for, paging through the full range and optionally bounded by oldest/latest timestamps; read-only and repeatable. Pass a channel ID (e.g. C0123ABCD); resolve a #name with Find Channel. Use Search Messages to find messages by content across the workspace, or Get Thread Replies to read replies within a thread.',
     idempotent: true,
   },
+  outputSchema: channelHistoryActionOutputSchema,
   props: {
     channel: Property.ShortText({
       displayName: 'Channel',
