@@ -1,0 +1,49 @@
+{
+  "name": "@activepieces/core-agent-runtime",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
+    "@ai-sdk/amazon-bedrock": "3.0.97",
+    "@ai-sdk/anthropic": "^3.0.0",
+    "@ai-sdk/azure": "^3.0.0",
+    "@ai-sdk/google": "^3.0.0",
+    "@ai-sdk/openai": "^3.0.0",
+    "@ai-sdk/openai-compatible": "2.0.16",
+    "@ai-sdk/provider": "^3.0.0",
+    "@openrouter/ai-sdk-provider": "2.1.1",
+    "ai": "^6.0.0",
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.11.0",
+    "typescript": "5.5.4",
+    "vitest": "3.2.6"
+  },
+  "typings": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./model": {
+      "types": "./dist/src/lib/model.d.ts",
+      "default": "./dist/src/lib/model.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "model": [
+        "./dist/src/lib/model.d.ts"
+      ]
+    }
+  }
+}

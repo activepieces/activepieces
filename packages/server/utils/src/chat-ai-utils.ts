@@ -1,271 +1,37 @@
-import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils';
-import { AI_PROVIDER_CAPABILITIES, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, chatPersistenceUtils, chatToolClassification, CloudflareGatewayProviderConfig, OpenAICompatibleProviderConfig, PersistedChatPart, PersistedChatPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
-import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
-import { createAnthropic } from '@ai-sdk/anthropic'
-import { createAzure } from '@ai-sdk/azure'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { createOpenAI } from '@ai-sdk/openai'
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { LanguageModel, ModelMessage, SystemModelMessage, ToolSet } from 'ai'
+import {
+    buildSystemPromptWithCaching,
+    collapseStaleToolOutputs,
+    collectStepMessages,
+    ContentPartLike,
+    estimateTokenCount,
+    sanitizeTruncatedAssistantTail,
+    stripThinkingBlocks,
+} from '@activepieces/core-agent-runtime';
+import { buildProviderOptions, buildWebSearchTools, createChatModel, supportsWebSearch } from '@activepieces/core-agent-runtime/model';
+import { spreadIfDefined } from '@activepieces/core-utils';
+import { chatPersistenceUtils, chatToolClassification, PersistedChatPart, PersistedChatPartType, PersistedToolCallStatus } from '@activepieces/shared';
+import { ModelMessage } from 'ai'
 
-const MAX_WEB_SEARCH_RESULTS = 5
-
-const KEEP_RECENT_TOOL_RESULTS = 6
-const COLLAPSE_OUTPUT_OVER_CHARS = 600
-// Tool results that are the agent's working memory of an action's input schema — never collapsed,
-// so it doesn't re-discover or guess a schema it already fetched (A5 pin-discovered-schemas).
-const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action'])
-const CHARS_PER_TOKEN_ESTIMATE = 4
-
-// OpenAI is absent on purpose: its web search needs the Responses API, which breaks legacy BYOK models.
-// Which providers support web search (and how) is declared in AI_PROVIDER_CAPABILITIES; the native
-// tool builders below stay here because they need the provider SDKs.
-const NATIVE_WEB_SEARCH_TOOLS: Partial<Record<AIProviderName, (auth: BaseAIProviderAuthConfig) => ToolSet>> = {
-    [AIProviderName.ANTHROPIC]: ({ apiKey }) => ({ web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }),
-    [AIProviderName.GOOGLE]: ({ apiKey }) => ({ google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }),
+function collapseStaleChatToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
+    return collapseStaleToolOutputs({ messages, neverCollapseToolNames: CHAT_SCHEMA_TOOL_NAMES })
 }
 
-function supportsWebSearch(provider: AIProviderName): boolean {
-    return AI_PROVIDER_CAPABILITIES[provider].webSearch !== undefined
+// The runtime takes a generic `extraLength` so a caller can account for anything outside the
+// messages; chat only ever passes the system prompt. Kept under the original name so the facade
+// stays a drop-in for every existing call site.
+function estimateChatTokenCount({ messages, systemPromptLength }: {
+    messages: ModelMessage[]
+    systemPromptLength: number
+}): number {
+    return estimateTokenCount({ messages, extraLength: systemPromptLength })
 }
 
-function buildWebSearchTools({ provider, auth }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-}): ToolSet {
-    return NATIVE_WEB_SEARCH_TOOLS[provider]?.(auth as BaseAIProviderAuthConfig) ?? {}
-}
-
-function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
-    if (!webSearchEnabled || AI_PROVIDER_CAPABILITIES[provider].webSearch !== 'plugin') {
-        return undefined
-    }
-    return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
-}
-
-function createChatModel({ provider, auth, config, modelId, webSearchEnabled = false }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
-    modelId: string
-    webSearchEnabled?: boolean
-}): LanguageModel {
-    switch (provider) {
-        case AIProviderName.OPENAI: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenAI({ apiKey }).chat(modelId)
-        }
-        case AIProviderName.ANTHROPIC: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createAnthropic({ apiKey })(modelId)
-        }
-        case AIProviderName.GOOGLE: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createGoogleGenerativeAI({ apiKey })(modelId)
-        }
-        case AIProviderName.AZURE: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { resourceName } = config as AzureProviderConfig
-            return createAzure({ resourceName, apiKey }).chat(modelId)
-        }
-        case AIProviderName.BEDROCK: {
-            const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
-            const { region } = config as BedrockProviderConfig
-            return createAmazonBedrock({ region, accessKeyId, secretAccessKey })(modelId)
-        }
-        case AIProviderName.CLOUDFLARE_GATEWAY: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
-            const { model: actualModelId } = splitCloudflareGatewayModelId(modelId)
-            return createOpenAICompatible({
-                name: 'cloudflare',
-                baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
-                headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
-            }).chatModel(actualModelId)
-        }
-        case AIProviderName.CUSTOM: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
-            return createOpenAICompatible({
-                name: 'openai-compatible',
-                baseURL: baseUrl,
-                headers: {
-                    ...(defaultHeaders ?? {}),
-                    [apiKeyHeader]: apiKey,
-                },
-            }).chatModel(modelId)
-        }
-        case AIProviderName.MISTRAL:
-        case AIProviderName.ACTIVEPIECES:
-        case AIProviderName.OPENROUTER: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenRouter({ apiKey }).chat(modelId, openRouterModelSettings(provider, webSearchEnabled)) as LanguageModel
-        }
-        default: {
-            const exhaustiveCheck: never = provider
-            throw new Error(`Unsupported chat provider: ${exhaustiveCheck}`)
-        }
-    }
-}
-
-/**
- * Strips for ALL providers (not just non-thinking ones) because Anthropic rejects
- * a re-sent `thinking` block whose `signature` didn't survive our DB round-trip /
- * compaction / truncation reshaping ("Invalid `signature` in `thinking` block"),
- * and prior-turn reasoning adds nothing the text + tool results don't already carry.
- * In-flight thinking within one streamText call keeps its intact signature and is
- * untouched — this only touches the cross-turn history we assemble.
- */
-function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName): ModelMessage[] {
-    const hasThinking = messages.some(
-        (msg) => msg.role === 'assistant' && Array.isArray(msg.content)
-            && (msg.content as Array<Record<string, unknown>>).some(
-                (part) => part['type'] === 'reasoning' || part['type'] === 'thinking',
-            ),
-    )
-    if (!hasThinking) return messages
-
-    return messages
-        .map((msg) => {
-            if (msg.role !== 'assistant' || !Array.isArray(msg.content)) return msg
-            const filtered = (msg.content as Array<Record<string, unknown>>).filter(
-                (part) => part['type'] !== 'reasoning' && part['type'] !== 'thinking',
-            )
-            if (filtered.length === msg.content.length) return msg
-            if (filtered.length === 0) return null
-            return { ...msg, content: filtered }
-        })
-        .filter((msg): msg is ModelMessage => msg !== null)
-}
-
-function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[] {
-    const last = messages[messages.length - 1]
-    if (!last || last.role !== 'assistant' || !Array.isArray(last.content)) {
-        return messages
-    }
-
-    const resolvedToolCallIds = new Set(
-        messages
-            .flatMap((msg) => (msg.role === 'tool' && Array.isArray(msg.content) ? msg.content : []))
-            .flatMap((part) => (part.type === 'tool-result' ? [part.toolCallId] : [])),
-    )
-
-    const sanitizedParts = last.content.filter((part) => {
-        if (part.type === 'reasoning') {
-            return false
-        }
-        if (part.type === 'tool-call') {
-            return resolvedToolCallIds.has(part.toolCallId)
-        }
-        return true
-    })
-
-    const head = messages.slice(0, -1)
-    if (sanitizedParts.length === 0) {
-        return head
-    }
-    if (sanitizedParts.length === last.content.length) {
-        return messages
-    }
-    return [...head, { ...last, content: sanitizedParts }]
-}
-
-/**
- * The response messages of a streamText turn. Each step's `response.messages` is
- * CUMULATIVE — it already contains every prior step's assistant/tool messages — so the
- * last step holds the complete set. Flat-mapping all steps instead would re-emit earlier
- * steps in a 4,3,2,1 staircase, persisting (and re-sending to the model) the same tool
- * call and reasoning block multiple times. Take the last step only.
- */
-function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
-    return steps[steps.length - 1]?.response.messages ?? []
-}
-
-function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {
-    return Math.ceil((JSON.stringify(messages).length + systemPromptLength) / CHARS_PER_TOKEN_ESTIMATE)
-}
-
-/**
- * A tool result's full payload is only needed while the model is acting on it;
- * older oversized results just dilute the context and can overflow the window.
- * Keeps the most recent results intact and replaces older oversized ones with a
- * short marker. Never removes a message (keeps tool_use/tool_result pairing
- * valid) and never mutates the input. Pure.
- */
-function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
-    const totalToolResults = messages.reduce((count, message) => {
-        if (message.role !== 'tool' || !Array.isArray(message.content)) return count
-        return count + message.content.filter((part) => part.type === 'tool-result').length
-    }, 0)
-
-    const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS
-    if (staleCount <= 0) return messages
-
-    let seen = 0
-    return messages.map((message) => {
-        if (message.role !== 'tool' || !Array.isArray(message.content)) return message
-        const content = message.content.map((part) => {
-            if (part.type !== 'tool-result') return part
-            // Pin discovered schemas: never collapse a piece-props/prepare result. These are the
-            // agent's memory of an action's inputs — collapsing them makes it re-discover (or guess)
-            // a schema it already fetched. They don't consume a stale slot either.
-            if (SCHEMA_TOOL_NAMES.has(part.toolName)) return part
-            const isStale = seen++ < staleCount
-            if (!isStale) return part
-            const serialized = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
-            if (serialized.length <= COLLAPSE_OUTPUT_OVER_CHARS) return part
-            return {
-                ...part,
-                output: { type: 'text' as const, value: `[earlier ${part.toolName} result omitted to save context — it was used at the time]` },
-            }
-        })
-        return { ...message, content }
-    })
-}
-
-function buildProviderOptions({ provider, tier, disableThinking = false }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number }, disableThinking?: boolean }): SharedV3ProviderOptions {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { anthropic: { thinking: disableThinking ? { type: 'disabled' } : { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
-        case AIProviderName.ACTIVEPIECES:
-        case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: disableThinking ? { enabled: false } : { max_tokens: tier.thinkingBudget } } }
-        default:
-            return {}
-    }
-}
-
-function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt: string, provider: AIProviderName }): string | SystemModelMessage {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { role: 'system', content: systemPrompt, providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } } }
-        default:
-            return systemPrompt
-    }
-}
+// Tool results that are the agent's working memory of an action's input schema — never
+// collapsed, so it doesn't re-discover or guess a schema it already fetched.
+export const CHAT_SCHEMA_TOOL_NAMES: ReadonlySet<string> = new Set(['ap_get_piece_props', 'ap_prepare_action'])
 
 function toRecord(value: unknown): Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {}
-}
-
-type ContentPartLike = {
-    type: string
-    text?: string
-    toolCallId?: string
-    toolName?: string
-    input?: unknown
-    args?: unknown
-    output?: unknown
-    sourceType?: string
-    id?: string
-    url?: string
-    title?: string
-    mediaType?: string
-    filename?: string
 }
 
 function buildStepParts({ content }: {
@@ -495,8 +261,8 @@ export const chatAiUtils = {
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
-    estimateTokenCount,
-    collapseStaleToolOutputs,
+    estimateTokenCount: estimateChatTokenCount,
+    collapseStaleToolOutputs: collapseStaleChatToolOutputs,
     buildProviderOptions,
     buildSystemPromptWithCaching,
     buildStepParts,
