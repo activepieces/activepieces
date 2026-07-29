@@ -37,6 +37,9 @@ function actionConsentDecision({ pieceName, actionName, input, needsConfirmation
     if (decision === 'deny') {
         return 'deny'
     }
+    if (policy?.[effect.kind] === 'allow') {
+        return 'allow'
+    }
     if (needsConfirmation === true) {
         return 'ask'
     }
