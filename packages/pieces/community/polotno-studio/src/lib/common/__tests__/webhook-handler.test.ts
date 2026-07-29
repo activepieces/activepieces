@@ -32,8 +32,6 @@ describe('handleWebhookDelivery', () => {
   });
 
   it('drops a delivery whose digest is wrong', () => {
-    // Fresh timestamp, wrong digest — isolates bad_signature from stale_timestamp,
-    // which is checked first and would otherwise mask this branch.
     const headers = {
       'x-signature': `t=${NOW},v1=${'0'.repeat(64)}`,
       'x-event-type': 'image.completed',

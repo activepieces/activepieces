@@ -2,7 +2,6 @@ export type RenderKind = 'images' | 'videos';
 
 export type RenderStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'partial';
 
-/** Only the fields this piece reads. Renders are returned to the user verbatim. */
 export interface RenderLike {
   id: string;
   object: 'image' | 'video';
@@ -29,11 +28,6 @@ export interface FieldDef {
   default?: string | number | boolean;
 }
 
-/**
- * `data` and `data.object` are typed optional even though the API always sends both:
- * this shape is cast onto unauthenticated webhook input and untrusted resume payloads,
- * which callers must treat as possibly malformed until they have checked it.
- */
 export interface EventEnvelope {
   id: string;
   type: string;
@@ -44,7 +38,6 @@ export interface EventEnvelope {
 
 export interface WebhookSubscription {
   id: string;
-  /** Returned only at creation — persist it or it is lost. */
   secret: string;
 }
 

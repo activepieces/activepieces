@@ -16,13 +16,6 @@ export interface PollResult {
   timedOut: boolean;
 }
 
-/**
- * Poll a render until it reaches a terminal status or the wait budget expires.
- *
- * Always builds the URL from kind + id: the API's `self_url` is nullable. On
- * timeout this returns the last observed render with `timedOut: true` rather
- * than throwing, so the caller can surface it distinctly from success.
- */
 export async function pollUntilTerminal(options: PollOptions): Promise<PollResult> {
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const now = options.now ?? (() => Date.now());

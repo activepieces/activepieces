@@ -23,14 +23,6 @@ export interface ExecuteRenderParams {
   now?: () => number;
 }
 
-/**
- * Start a render and decide how to wait for it.
- *
- * Preferred path: park the run on a WEBHOOK waitpoint and let the API's per-render
- * callback resume it. When the resume URL is not publicly reachable the API would
- * refuse to deliver and the run would sit paused until AP_PAUSED_FLOW_TIMEOUT_DAYS,
- * so we poll inline instead.
- */
 export async function executeRender(params: ExecuteRenderParams): Promise<Record<string, unknown>> {
   const headers = { 'Idempotency-Key': params.idempotencyKey };
 
@@ -54,17 +46,12 @@ export async function executeRender(params: ExecuteRenderParams): Promise<Record
       body: { ...params.body, webhook_url: resumeUrl },
       headers,
     });
-    // A fresh render always responds `pending`, so a terminal status here means
-    // an Idempotency-Key replay of a render that already finished. That fires no
-    // new event, so parking would wait forever for a callback that already
-    // happened. Return instead — the created waitpoint is simply never used.
     if (!isTerminal(render.status)) {
       params.waitForWaitpoint(waitpoint.id);
     }
     return { ...render, timed_out: false };
   }
 
-  // Images can be waited on server-side for up to 30 s; videos have no sync mode.
   const queryParams = params.kind === 'images' ? { sync: 'true' } : undefined;
   const render = await params.client.request<RenderLike>({
     method: HttpMethod.POST,
@@ -89,13 +76,6 @@ export async function executeRender(params: ExecuteRenderParams): Promise<Record
   return { ...result.render, timed_out: result.timedOut };
 }
 
-/**
- * Read the render out of the per-render webhook envelope that resumed this run.
- *
- * Must read from the RESUME callback envelope, never from `context.store`: the store is
- * FLOW-scoped, so two concurrent runs of the same flow would clobber each other's render id.
- * The envelope already carries the whole render object for exactly this run.
- */
 export function readResumedRender(resumePayload: { body: unknown }): Record<string, unknown> {
   const body = resumePayload.body as EventEnvelope | undefined;
   const object = body?.data?.object;

@@ -28,28 +28,11 @@ export interface ClientDeps {
   sleep?: (ms: number) => Promise<void>;
 }
 
-/**
- * Delay before retrying a rate-limited request.
- *
- * The API sends `Retry-After`, but it is unreadable here: the platform's
- * `fetch-http-client` constructs `HttpError` with only `{ status, responseBody }`
- * and discards the response headers before throwing, so no header survives to
- * this point. We therefore back off exponentially with jitter, bounded by
- * `RETRY_AFTER_CAP_SECONDS`. Not reading the header also removes any chance of a
- * forged one stalling a flow.
- */
 function backoffMs(attempt: number): number {
   const base = Math.min(2 ** attempt, RETRY_AFTER_CAP_SECONDS) * 1_000;
   return base + Math.floor(Math.random() * 500);
 }
 
-/**
- * Thin wrapper over the platform HTTP client.
- *
- * Activepieces gives pieces no rate-limit layer and its own retry logic covers
- * 5xx only, so 429 handling lives here. Retries stay small so a retrying request
- * cannot outlive AP_FLOW_TIMEOUT_SECONDS.
- */
 export function createClient(apiKey: string, deps: ClientDeps = {}): PolotnoClient {
   const send: SendFn = deps.send ?? ((request) => httpClient.sendRequest(request));
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));

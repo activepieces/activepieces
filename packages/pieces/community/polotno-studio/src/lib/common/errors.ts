@@ -45,7 +45,6 @@ export function toFriendlyMessage(status: number, body: unknown): string {
   return `${base}${param}${rid}`;
 }
 
-/** Non-HTTP failures (DNS, socket) are returned untouched — their own message is better. */
 export function toFriendlyError(err: unknown): Error {
   if (err instanceof HttpError) {
     return new Error(toFriendlyMessage(err.response.status, err.response.body));

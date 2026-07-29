@@ -9,8 +9,6 @@ function coerce(type: FieldDef['type'], value: unknown): unknown {
   }
   if (type === 'integer') {
     if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
-    // Number('') is 0, and font_size rejects 0 outright, so a cleared box must
-    // mean "unset" — matching the string branch below.
     const raw = String(value).trim();
     if (raw === '') return undefined;
     const n = Number(raw);
@@ -20,14 +18,6 @@ function coerce(type: FieldDef['type'], value: unknown): unknown {
   return s === '' ? undefined : s;
 }
 
-/**
- * Build the `dynamic_fields_flat` payload.
- *
- * Keys come straight from GET /v1/templates/{id}/dynamic-fields and are sent
- * verbatim; the backend reassembles them. A key with no matching def is passed
- * through untouched so the server's unknown_dynamic_field error decides, rather
- * than this piece silently dropping a value the user typed.
- */
 export function toFlatFields(defs: FieldDef[], values: Record<string, unknown>): Record<string, unknown> {
   const byKey = new Map(defs.map((d) => [d.key, d]));
   const out: Record<string, unknown> = {};

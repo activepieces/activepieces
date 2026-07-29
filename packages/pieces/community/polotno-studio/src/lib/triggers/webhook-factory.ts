@@ -14,13 +14,6 @@ export interface DeliveryParams {
   now?: number;
 }
 
-/**
- * Turn one webhook delivery into the array a trigger must return.
- *
- * Fails closed: any verification failure yields an empty array, which produces
- * no flow run at all. Returning the envelope's `data.object` (not the envelope)
- * matches every other Polotno Studio integration.
- */
 export function handleWebhookDelivery(params: DeliveryParams): RenderLike[] {
   if (!params.secret) return [];
 
@@ -28,8 +21,6 @@ export function handleWebhookDelivery(params: DeliveryParams): RenderLike[] {
   const verification = verifyWebhookSignature(signature, params.rawBody, params.secret, params.now);
   if (!verification.ok) return [];
 
-  // Fail closed: an absent x-event-type is not a subscribed type either, so it
-  // is rejected rather than waved through.
   const eventType = findHeader(params.headers, 'x-event-type');
   if (!eventType || !params.events.includes(eventType)) return [];
 
@@ -50,8 +41,6 @@ interface RenderTriggerConfig {
 }
 
 export function createRenderTrigger(config: RenderTriggerConfig) {
-  // Keyed per step: two Polotno triggers can share one flow, and the store is
-  // flow-scoped, so a fixed key would let one overwrite the other's secret.
   const storeKey = (stepName: string) => `_polotno_webhook_${stepName}`;
 
   return createTrigger({
@@ -75,8 +64,6 @@ export function createRenderTrigger(config: RenderTriggerConfig) {
           description: `Activepieces: ${config.displayName}`,
         },
       });
-      // `secret` is returned only at creation — losing it means every later
-      // delivery fails verification.
       await context.store.put(storeKey(context.step.name), {
         id: subscription.id,
         secret: subscription.secret,
@@ -90,10 +77,7 @@ export function createRenderTrigger(config: RenderTriggerConfig) {
         try {
           const client = createClient(context.auth.secret_text);
           await client.request({ method: HttpMethod.DELETE, path: `/v1/webhooks/${stored.id}` });
-        } catch {
-          // Disabling a flow must succeed even when the API is unreachable; the
-          // subscription is replaced on the next enable.
-        }
+        } catch {}
       }
       await context.store.delete(key);
     },

@@ -57,8 +57,6 @@ export const SAMPLE_VIDEO_RENDER = {
   expires_at: '2026-08-03T10:00:41.000Z',
 };
 
-// Image-shaped: a sample can only be one shape, and this trigger fires for both
-// images and videos (see the trigger's own description).
 export const SAMPLE_FAILED_RENDER = {
   ...SAMPLE_IMAGE_RENDER,
   id: 'img_0f9e8d7c6b5a4321',
@@ -66,7 +64,6 @@ export const SAMPLE_FAILED_RENDER = {
   image_url: null,
   self_url: 'https://api.studio.polotno.com/v1/images/img_0f9e8d7c6b5a4321',
   error: { code: 'render_failed', message: 'An image referenced by a dynamic field could not be downloaded.' },
-  // Nothing was produced: no cost was incurred and nothing was charged.
   cost_credits: 0,
   estimated_cost_credits: 0,
   credits_charged: false,

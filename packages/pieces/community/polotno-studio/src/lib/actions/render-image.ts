@@ -77,8 +77,6 @@ export const renderImage = createAction({
       idempotencyKey: `${context.run.id}:${context.step.name}`,
       waitForCompletion: props.wait_for_completion !== false,
       maxWaitSeconds: props.max_wait_seconds ?? DEFAULT_MAX_WAIT_SECONDS,
-      // Wrapped, not passed by reference: these are engine-provided hooks and
-      // must keep their `this`.
       createWaitpoint: (waitpointParams) => context.run.createWaitpoint(waitpointParams),
       waitForWaitpoint: (waitpointId) => context.run.waitForWaitpoint(waitpointId),
     });

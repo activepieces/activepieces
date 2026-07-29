@@ -11,7 +11,6 @@ import {
 import { createClient } from './client';
 import type { FieldDef, TemplateSummary } from './types';
 
-/** Build one native property per template dynamic field, keyed by its flat key. */
 export function fieldsToProps(fields: FieldDef[]): InputPropertyMap {
   const props: InputPropertyMap = {};
   for (const field of fields) {
@@ -57,13 +56,10 @@ export interface TemplateFilters {
   maxResults?: number;
 }
 
-/** Page through /v1/templates, always omitting the design blob. */
 export async function fetchAllTemplates(
   client: PolotnoClient,
   filters: TemplateFilters = {},
 ): Promise<TemplateSummary[]> {
-  // Default to 100, cap at 1000, and never let a caller-supplied 0 or negative
-  // through — Task 12 passes a user-entered value straight in.
   const limit = Math.max(
     1,
     Math.min(filters.maxResults ?? DEFAULT_MAX_TEMPLATE_RESULTS, MAX_TEMPLATE_RESULTS),
@@ -78,8 +74,6 @@ export async function fetchAllTemplates(
     };
     if (filters.name) queryParams['name'] = filters.name;
     if (filters.tag) queryParams['tag'] = filters.tag;
-    // Booleans are omitted rather than sent false: the API treats any present
-    // value as truthy.
     if (filters.archived === true) queryParams['archived'] = 'true';
     if (cursor) queryParams['cursor'] = cursor;
 
@@ -94,8 +88,6 @@ export async function fetchAllTemplates(
   return items.slice(0, limit);
 }
 
-// `auth` is a dummy field the framework uses to infer the connection type for
-// the options/props callbacks. Omitting it types `auth` as undefined there.
 export const templateIdProp = Property.Dropdown({
   auth: polotnoStudioAuth,
   displayName: 'Template',
@@ -169,8 +161,6 @@ export const textOverflowProp = Property.StaticDropdown<string>({
   displayName: 'Text Overflow',
   description: 'How text that does not fit its box is handled.',
   required: false,
-  // Labels are title-cased for consistency with the piece's other dropdowns; the
-  // values themselves stay exactly as the API expects (shrink | grow | truncate).
   options: {
     options: TEXT_OVERFLOW_MODES.map((mode) => ({
       label: mode.charAt(0).toUpperCase() + mode.slice(1),

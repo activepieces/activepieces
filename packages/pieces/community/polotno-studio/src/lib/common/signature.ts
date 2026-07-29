@@ -1,6 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-/** The backend documents a 5-minute tolerance for receivers. */
 export const REPLAY_TOLERANCE_SECONDS = 300;
 
 export type VerifyResult =
@@ -10,16 +9,6 @@ export type VerifyResult =
       reason: 'missing_header' | 'malformed_header' | 'bad_signature' | 'stale_timestamp' | 'unusable_raw_body';
     };
 
-/**
- * Verify a Polotno Studio webhook signature.
- *
- * Header: `t={unixSeconds},v1={hex}` where hex = HMAC-SHA256(secret, `${t}.${rawBody}`).
- *
- * Fails closed on every failure mode. `rawBody` is typed `unknown` because that
- * is what TriggerPayload carries; a value that is neither Buffer nor string is
- * rejected rather than reconstructed from the parsed body — re-serialising would
- * verify bytes the sender never sent.
- */
 export function verifyWebhookSignature(
   header: string | undefined,
   rawBody: unknown,
@@ -58,7 +47,6 @@ export function verifyWebhookSignature(
   return { ok: true };
 }
 
-/** Header lookup that tolerates whatever casing the platform hands us. */
 export function findHeader(headers: Record<string, string>, name: string): string | undefined {
   const target = name.toLowerCase();
   for (const [key, value] of Object.entries(headers)) {

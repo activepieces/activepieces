@@ -62,7 +62,7 @@ describe('createClient', () => {
     const client = createClient('key_live_x', { send, sleep });
 
     await expect(client.request({ path: '/v1/images' })).rejects.toThrow('Rate limit exceeded');
-    expect(send).toHaveBeenCalledTimes(4); // 1 initial + 3 retries
+    expect(send).toHaveBeenCalledTimes(4);
   });
 
   it('does not retry a 401 and surfaces the friendly message', async () => {

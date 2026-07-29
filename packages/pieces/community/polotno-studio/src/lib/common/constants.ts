@@ -1,6 +1,5 @@
 import type { RenderStatus } from './types';
 
-/** Overridable only for maintainer testing against a dev backend; undocumented. */
 export const BASE_URL = (process.env['AP_POLOTNO_BASE_URL'] ?? 'https://api.studio.polotno.com').replace(/\/+$/, '');
 
 export const TERMINAL_STATUSES: ReadonlySet<RenderStatus> = new Set(['completed', 'failed', 'partial']);
@@ -14,15 +13,12 @@ export const VIDEO_FORMATS = ['mp4', 'gif'] as const;
 export const TEXT_OVERFLOW_MODES = ['shrink', 'grow', 'truncate'] as const;
 
 export const DEFAULT_MAX_WAIT_SECONDS = 120;
-/** Matches the default AP_FLOW_TIMEOUT_SECONDS; the flow dies at the same moment. */
 export const MAX_MAX_WAIT_SECONDS = 600;
 
 export const POLL_INITIAL_DELAY_MS = 2_000;
 export const POLL_MAX_DELAY_MS = 10_000;
 export const POLL_BACKOFF_FACTOR = 1.5;
 
-/** Upper bound on rate-limit backoff. The API's Retry-After header is unreadable here:
- *  the platform discards response headers before throwing, so we bound our own backoff. */
 export const RETRY_AFTER_CAP_SECONDS = 60;
 export const MAX_RATE_LIMIT_RETRIES = 3;
 
