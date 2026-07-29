@@ -40,7 +40,7 @@ import { PieceComponentVisibilitySheet } from '../piece-component-visibility-she
 function setPieceVisible(
   pieces: PieceSelection,
   name: string,
-  visible: boolean,
+  visible: boolean
 ): PieceSelection {
   const isException = pieces.exceptions.includes(name);
   const shouldBeException =
@@ -59,11 +59,11 @@ function setPieceVisible(
 function setPiecesVisible(
   pieces: PieceSelection,
   names: string[],
-  visible: boolean,
+  visible: boolean
 ): PieceSelection {
   return names.reduce(
     (acc, name) => setPieceVisible(acc, name, visible),
-    pieces,
+    pieces
   );
 }
 
@@ -88,10 +88,10 @@ const BulkPieceSetActions = ({
 
   const selectedNames = selectedPieces.map((p) => p.name);
   const allIncluded = selectedPieces.every((p) =>
-    isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }),
+    isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name })
   );
   const allExcluded = selectedPieces.every(
-    (p) => !isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name }),
+    (p) => !isPieceVisible({ pieces: pieceSet.config.pieces, name: p.name })
   );
 
   const pendingRequest = (variables as { request: UpdatePieceSetRequestBody })
@@ -112,11 +112,11 @@ const BulkPieceSetActions = ({
                 pieces: setPiecesVisible(
                   pieceSet.config.pieces,
                   selectedNames,
-                  true,
+                  true
                 ),
               },
             },
-            { onSuccess: resetSelection },
+            { onSuccess: resetSelection }
           )
         }
       >
@@ -136,11 +136,11 @@ const BulkPieceSetActions = ({
                 pieces: setPiecesVisible(
                   pieceSet.config.pieces,
                   selectedNames,
-                  false,
+                  false
                 ),
               },
             },
-            { onSuccess: resetSelection },
+            { onSuccess: resetSelection }
           )
         }
       >
@@ -148,6 +148,23 @@ const BulkPieceSetActions = ({
         {t('Exclude')}
       </Button>
     </>
+  );
+};
+
+/**
+ * The pieces page can be searched by package name, so the piece set
+ * configuration table matches either the display name ("Human Input") or the
+ * package name ("@activepieces/piece-forms").
+ */
+export const matchesPieceSearch = (
+  piece: Pick<PieceMetadataModelSummary, 'displayName' | 'name'>,
+  search: string
+): boolean => {
+  const query = search.trim().toLowerCase();
+  if (query === '') return true;
+  return (
+    (piece.displayName ?? '').toLowerCase().includes(query) ||
+    (piece.name ?? '').toLowerCase().includes(query)
   );
 };
 
@@ -172,12 +189,12 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           pieces: setPieceVisible(
             pieceSet.config.pieces,
             pieceName,
-            !currentlyIncluded,
+            !currentlyIncluded
           ),
         },
       });
     },
-    [updateSet, pieceSet.id, pieceSet.config.pieces],
+    [updateSet, pieceSet.id, pieceSet.config.pieces]
   );
 
   const filteredPieces = useMemo(() => {
@@ -198,6 +215,10 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
         {
           accessorKey: 'displayName',
           size: 300,
+          filterFn: (row, _columnId, filterValue) =>
+            typeof filterValue === 'string'
+              ? matchesPieceSearch(row.original, filterValue)
+              : true,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
@@ -221,7 +242,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           ),
         },
         {
-          accessorKey: 'packageName',
+          accessorKey: 'name',
           size: 250,
           header: ({ column }) => (
             <DataTableColumnHeader
@@ -284,7 +305,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                       setManagingComponentsPiece(row.original.name)
                     }
                     className={cn(
-                      'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
+                      'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
                     )}
                   >
                     <Badge variant={curated ? 'default' : 'accent'}>
@@ -326,7 +347,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           },
         },
       ],
-      [pieceSet, togglePiece, isPending],
+      [pieceSet, togglePiece, isPending]
     );
 
   const managingPieceDisplayName = useMemo(
@@ -334,7 +355,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
       pieces?.find((p) => p.name === managingComponentsPiece)?.displayName ??
       managingComponentsPiece ??
       '',
-    [pieces, managingComponentsPiece],
+    [pieces, managingComponentsPiece]
   );
 
   return (
@@ -342,7 +363,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
       <DataTable
         emptyStateTextTitle={t('No pieces found')}
         emptyStateTextDescription={t(
-          'Start by installing pieces that you want to use in your automations',
+          'Start by installing pieces that you want to use in your automations'
         )}
         emptyStateIcon={<Package className="size-14" />}
         columns={columns}
