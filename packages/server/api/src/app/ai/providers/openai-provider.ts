@@ -29,8 +29,10 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAI
 }
 
 function isImageModel({ modelId }: { modelId: string }): boolean {
-    return modelId.startsWith('gpt-image') || modelId.startsWith('dall-e')
+    return modelId.startsWith('gpt-image') || DALL_E_MODELS.includes(modelId)
 }
+
+const DALL_E_MODELS = ['dall-e-3', 'dall-e-2']
 
 type OpenAIModel = {
     id: string

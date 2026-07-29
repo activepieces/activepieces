@@ -25,13 +25,19 @@ describe('openaiProvider.listModels', () => {
         mockSendRequest.mockReset()
     })
 
-    it('classifies image models the allow-list never knew about', async () => {
-        const models = await listModels(['gpt-image-2', 'gpt-image-1-mini', 'dall-e-4'])
+    it('classifies gpt-image models the allow-list never knew about', async () => {
+        const models = await listModels(['gpt-image-2', 'gpt-image-1-mini', 'gpt-image-0721-mini-alpha'])
 
         expect(models).toHaveLength(3)
-        expect(typeOf({ models, id: 'gpt-image-2' })).toBe(AIProviderModelType.IMAGE)
-        expect(typeOf({ models, id: 'gpt-image-1-mini' })).toBe(AIProviderModelType.IMAGE)
-        expect(typeOf({ models, id: 'dall-e-4' })).toBe(AIProviderModelType.IMAGE)
+        for (const model of models) {
+            expect(model.type, model.id).toBe(AIProviderModelType.IMAGE)
+        }
+    })
+
+    it('does not promote an unreleased dall-e id, whose option contract the piece cannot know', async () => {
+        const models = await listModels(['dall-e-4'])
+
+        expect(typeOf({ models, id: 'dall-e-4' })).toBe(AIProviderModelType.TEXT)
     })
 
     it('still classifies the originally allow-listed image models', async () => {
