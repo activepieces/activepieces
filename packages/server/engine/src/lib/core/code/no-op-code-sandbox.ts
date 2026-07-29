@@ -120,13 +120,19 @@ export const noOpCodeSandbox: CodeSandbox = {
         }
         const params = Object.keys(newContext)
         const args = Object.values(newContext)
+        let disposed = false
         return {
             run: async (script: string) => {
+                if (disposed) {
+                    throw new Error('Script session has been disposed')
+                }
                 const body = `return (${script})`
                 const fn = Function(...params, body)
                 return fn(...args)
             },
-            dispose: () => undefined,
+            dispose: () => {
+                disposed = true
+            },
         }
     },
 }
