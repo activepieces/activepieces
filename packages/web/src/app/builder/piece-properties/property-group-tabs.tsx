@@ -1,4 +1,8 @@
-import { PieceProperty, PropertyGroup } from '@activepieces/pieces-framework';
+import {
+  PieceProperty,
+  PropertyGroup,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import { PropertyExecutionType, PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Info, SquareFunction } from 'lucide-react';
@@ -227,6 +231,8 @@ function PropertyGroupTabs({
           {tabKeys.map((key) => {
             const inputName = inputNameFor(key);
             const dynamic = isDynamicKey(key);
+            const useChips =
+              !dynamic && properties[key].type === PropertyType.ARRAY;
             return (
               <TabsContent
                 key={key}
@@ -234,10 +240,10 @@ function PropertyGroupTabs({
                 className="mt-0 border-t border-input p-2 duration-150 animate-in fade-in-0 motion-reduce:animate-none"
               >
                 <div className="min-w-0 py-0.5">
-                  {dynamic ? (
-                    <TextInputWithMentions
+                  {useChips ? (
+                    <MentionChipsInput
+                      value={valueByKey[key]}
                       disabled={disabled}
-                      initialValue={form.getValues(inputName) ?? ''}
                       onChange={(newValue) =>
                         form.setValue(inputName, newValue, {
                           shouldValidate: true,
@@ -245,9 +251,9 @@ function PropertyGroupTabs({
                       }
                     />
                   ) : (
-                    <MentionChipsInput
-                      value={valueByKey[key]}
+                    <TextInputWithMentions
                       disabled={disabled}
+                      initialValue={form.getValues(inputName) ?? ''}
                       onChange={(newValue) =>
                         form.setValue(inputName, newValue, {
                           shouldValidate: true,
