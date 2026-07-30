@@ -1,6 +1,6 @@
-import { ensureTrailingSlash, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -118,19 +118,13 @@ export class EngineConstants {
         this.stepNames = params.stepNames
         this.actionRunMode = params.actionRunMode ?? false
     }
-  
+
     public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
         return new EngineConstants({
-            flowId: input.flowVersion.flowId,
-            flowVersionId: input.flowVersion.id,
-            flowVersionState: input.flowVersion.state,
-            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
+            ...sharedFields(input),
+            ...flowFields(input.flowVersion),
             flowRunId: input.flowRunId,
-            publicApiUrl: input.publicApiUrl,
             internalApiUrl: input.internalApiUrl,
-            retryConstants: DEFAULT_RETRY_CONSTANTS,
-            engineToken: input.engineToken,
-            projectId: input.projectId,
             streamStepProgress: input.streamStepProgress,
             workerHandlerId: input.workerHandlerId ?? null,
             httpRequestId: input.httpRequestId ?? null,
@@ -138,82 +132,34 @@ export class EngineConstants {
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
             logsFileId: input.logsFileId,
-            timeoutInSeconds: input.timeoutInSeconds,
-            platformId: input.platformId,
-            stepNames: flowStructureUtil.getAllSteps(input.flowVersion.trigger).map((step) => step.name),
         })
     }
 
     public static fromExecuteActionInput(input: BaseEngineOperation & { flowVersionId?: string }): EngineConstants {
         return new EngineConstants({
-            flowId: DEFAULT_MCP_DATA.flowId,
+            ...sharedFields(input),
+            ...flowFields(undefined),
             flowVersionId: input.flowVersionId ?? DEFAULT_MCP_DATA.flowVersionId,
-            flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
-            triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_MCP_DATA.flowRunId,
-            publicApiUrl: input.publicApiUrl,
-            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
-            retryConstants: DEFAULT_RETRY_CONSTANTS,
-            engineToken: input.engineToken,
-            projectId: input.projectId,
-            streamStepProgress: StreamStepProgress.NONE,
-            workerHandlerId: null,
-            httpRequestId: null,
-            resumePayload: undefined,
-            runEnvironment: undefined,
-            stepNameToTest: undefined,
-            timeoutInSeconds: input.timeoutInSeconds,
-            platformId: input.platformId,
-            stepNames: [],
             actionRunMode: true,
         })
     }
 
     public static fromExecutePropertyInput(input: Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }): EngineConstants {
+        const flow = flowFields(input.flowVersion)
         return new EngineConstants({
-            flowId: input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
-            flowVersionId: input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
-            flowVersionState: input.flowVersion?.state ?? DEFAULT_MCP_DATA.flowVersionState,
-            triggerPieceName: input.flowVersion?.trigger?.settings.pieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
+            ...sharedFields(input),
+            ...flow,
+            triggerPieceName: flow.triggerPieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_EXECUTE_PROPERTY,
-            publicApiUrl: input.publicApiUrl,
-            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
-            retryConstants: DEFAULT_RETRY_CONSTANTS,
-            engineToken: input.engineToken,
-            projectId: input.projectId,
-            streamStepProgress: StreamStepProgress.NONE,
-            workerHandlerId: null,
-            httpRequestId: null,
-            resumePayload: undefined,
-            runEnvironment: undefined,
-            stepNameToTest: undefined,
-            timeoutInSeconds: input.timeoutInSeconds,
-            platformId: input.platformId,
-            stepNames: input.flowVersion?.trigger ? flowStructureUtil.getAllSteps(input.flowVersion.trigger).map((step) => step.name) : [],
         })
     }
 
     public static fromExecuteTriggerInput(input: ResolvedExecuteTriggerOperation<TriggerHookType>): EngineConstants {
         return new EngineConstants({
-            flowId: input.flowVersion.flowId,
-            flowVersionId: input.flowVersion.id,
-            flowVersionState: input.flowVersion.state,
-            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
+            ...sharedFields(input),
+            ...flowFields(input.flowVersion),
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
-            publicApiUrl: input.publicApiUrl,
-            internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
-            retryConstants: DEFAULT_RETRY_CONSTANTS,
-            engineToken: input.engineToken,
-            projectId: input.projectId,
-            streamStepProgress: StreamStepProgress.NONE,
-            workerHandlerId: null,
-            httpRequestId: null,
-            resumePayload: undefined,
-            runEnvironment: undefined,
-            stepNameToTest: undefined,
-            timeoutInSeconds: input.timeoutInSeconds,
-            platformId: input.platformId,
-            stepNames: flowStructureUtil.getAllSteps(input.flowVersion.trigger).map((step) => step.name),
         })
     }
     public getPropsResolver(contextVersion: ContextVersion | undefined): PropsResolver {
@@ -246,6 +192,56 @@ export class EngineConstants {
         const project = await this.getProject()
         return project.externalId ?? undefined
     }
+}
+
+function sharedFields(input: SharedFieldsSource) {
+    return {
+        publicApiUrl: input.publicApiUrl,
+        internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
+        engineToken: input.engineToken,
+        projectId: input.projectId,
+        timeoutInSeconds: input.timeoutInSeconds,
+        platformId: input.platformId,
+        retryConstants: DEFAULT_RETRY_CONSTANTS,
+        streamStepProgress: StreamStepProgress.NONE,
+        workerHandlerId: null,
+        httpRequestId: null,
+    }
+}
+
+function flowFields(flowVersion: FlowFieldsSource | undefined) {
+    if (isNil(flowVersion)) {
+        return {
+            flowId: DEFAULT_MCP_DATA.flowId,
+            flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
+            flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
+            triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
+            stepNames: [],
+        }
+    }
+    return {
+        flowId: flowVersion.flowId,
+        flowVersionId: flowVersion.id,
+        flowVersionState: flowVersion.state,
+        triggerPieceName: flowVersion.trigger?.settings.pieceName,
+        stepNames: isNil(flowVersion.trigger) ? [] : flowStructureUtil.getAllSteps(flowVersion.trigger).map((step) => step.name),
+    }
+}
+
+type SharedFieldsSource = {
+    publicApiUrl: string
+    internalApiUrl: string
+    engineToken: string
+    projectId: ProjectId
+    timeoutInSeconds: number
+    platformId: PlatformId
+}
+
+type FlowFieldsSource = {
+    flowId: string
+    id: string
+    state: FlowVersionState
+    trigger?: FlowTrigger
 }
 
 export type ResolvedBeginExecuteFlowOperation = Omit<BeginExecuteFlowOperation, 'triggerPayload'> & {
