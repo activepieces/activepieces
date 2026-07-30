@@ -1,7 +1,7 @@
 {
   "Render images and videos from Polotno Studio templates.": "Render images and videos from Polotno Studio templates.",
   "API Key": "API Key",
-  "Your Polotno Studio project API key.\n\n1. Open [Polotno Studio](https://polotno.com/studio).\n2. Go to **API Keys**.\n3. Create or copy a key — it starts with `key_live_` or `key_test_`.\n\nKeys are scoped to a single project.": "Your Polotno Studio project API key.\n\n1. Open [Polotno Studio](https://polotno.com/studio).\n2. Go to **API Keys**.\n3. Create or copy a key — it starts with `key_live_` or `key_test_`.\n\nKeys are scoped to a single project.",
+  "Your Polotno Studio project API key.\n\n1. Open [Polotno Studio](https://polotno.com/studio).\n2. Open the project selector and choose **Manage projects**.\n3. Turn on **Automation** for the project, then copy the key it reveals — it starts with `key_live_` and is shown only once.\n\nLost it? Use **Re-generate API key** in the same panel. Each key is bound to a single project.": "Your Polotno Studio project API key.\n\n1. Open [Polotno Studio](https://polotno.com/studio).\n2. Open the project selector and choose **Manage projects**.\n3. Turn on **Automation** for the project, then copy the key it reveals — it starts with `key_live_` and is shown only once.\n\nLost it? Use **Re-generate API key** in the same panel. Each key is bound to a single project.",
   "Render Image": "Render Image",
   "Render an image from a Polotno Studio template.": "Render an image from a Polotno Studio template.",
   "Format": "Format",

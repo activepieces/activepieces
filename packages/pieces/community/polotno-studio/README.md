@@ -4,9 +4,13 @@ Render images and videos from [Polotno Studio](https://polotno.com/studio) templ
 
 ## Connect
 
-1. Open Polotno Studio and go to **API Keys**.
-2. Create a key — it starts with `key_live_` or `key_test_`.
-3. Paste it into the connection. Keys are scoped to one project.
+1. Open Polotno Studio, open the project selector and choose **Manage projects**.
+2. Turn on **Automation** for the project, then copy the key it reveals — it
+   starts with `key_live_` and is shown only once.
+3. Paste it into the connection.
+
+Lost the key? Use **Re-generate API key** in the same panel. Each key is bound to
+a single project.
 
 ## Actions
 
