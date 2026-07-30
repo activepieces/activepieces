@@ -232,7 +232,10 @@ function PropertyGroupTabs({
           {tabKeys.map((key) => {
             const inputName = inputNameFor(key);
             const dynamic = isDynamicKey(key);
-            const isArrayProp = properties[key].type === PropertyType.ARRAY;
+            const tabProperty = properties[key];
+            const isPlainArray =
+              tabProperty.type === PropertyType.ARRAY &&
+              !('properties' in tabProperty && tabProperty.properties);
             return (
               <TabsContent
                 key={key}
@@ -250,7 +253,7 @@ function PropertyGroupTabs({
                         })
                       }
                     />
-                  ) : isArrayProp ? (
+                  ) : isPlainArray ? (
                     <MentionChipsInput
                       value={valueByKey[key]}
                       disabled={disabled}
