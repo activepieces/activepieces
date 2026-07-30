@@ -1,6 +1,8 @@
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 
+import { formatUtils } from '@/lib/format-utils';
+
 function inputNameFor(prefixValue: string, name: string): string {
   return prefixValue.length > 0 ? `${prefixValue}.${name}` : name;
 }
@@ -75,11 +77,39 @@ const DATE_RANGE_PRESET_LABELS: Record<string, string> = {
   custom: 'Custom',
 };
 
+function formatDateChip(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  if (!year || !month || !day) {
+    return isoDate;
+  }
+  return formatUtils.formatDateOnly(new Date(year, month - 1, day));
+}
+
 function chipLabel(property: PieceProperty, value: unknown): string {
   const name = 'displayName' in property ? property.displayName : '';
   if (property.type === PropertyType.DATE_RANGE) {
-    const preset = (value as { preset?: string })?.preset;
-    const label = preset ? DATE_RANGE_PRESET_LABELS[preset] : undefined;
+    const range = value as {
+      preset?: string;
+      after?: string;
+      before?: string;
+    };
+    if (range.preset === 'custom') {
+      const after = range.after ? formatDateChip(range.after) : undefined;
+      const before = range.before ? formatDateChip(range.before) : undefined;
+      if (after && before) {
+        return `${name}: ${after} – ${before}`;
+      }
+      if (after) {
+        return `${name}: ${t('After')} ${after}`;
+      }
+      if (before) {
+        return `${name}: ${t('Before')} ${before}`;
+      }
+      return name;
+    }
+    const label = range.preset
+      ? DATE_RANGE_PRESET_LABELS[range.preset]
+      : undefined;
     return label ? `${name}: ${t(label)}` : name;
   }
   if (

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { filterPropertyUtils } from '@/app/builder/piece-properties/filter-property-utils';
 
-const { isFilterActive, emptyValueFor } = filterPropertyUtils;
+const { isFilterActive, emptyValueFor, chipLabel } = filterPropertyUtils;
 
 const shortText = Property.ShortText({ displayName: 'Text', required: false });
 const checkbox = Property.Checkbox({
@@ -72,5 +72,23 @@ describe('filterPropertyUtils.emptyValueFor', () => {
     for (const property of [shortText, checkbox, number, dropdown, dateRange]) {
       expect(isFilterActive(property, emptyValueFor(property))).toBe(false);
     }
+  });
+});
+
+describe('filterPropertyUtils.chipLabel', () => {
+  it('shows both selected bounds for a custom date range', () => {
+    const label = chipLabel(dateRange, {
+      preset: 'custom',
+      after: '2023-01-01',
+      before: '2024-12-31',
+    });
+    expect(label).toContain('2023');
+    expect(label).toContain('2024');
+  });
+
+  it('shows a single bound when only one end of a custom range is set', () => {
+    expect(
+      chipLabel(dateRange, { preset: 'custom', after: '2024-06-15' }),
+    ).toContain('2024');
   });
 });
