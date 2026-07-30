@@ -23,8 +23,15 @@ function isFilterActive(
     case PropertyType.NUMBER:
       return value !== property.defaultValue;
     case PropertyType.DATE_RANGE: {
-      const preset = (value as { preset?: string })?.preset;
-      return !!preset && preset !== 'any_time';
+      const range = value as {
+        preset?: string;
+        after?: string;
+        before?: string;
+      };
+      if (range.preset === 'custom') {
+        return !!range.after || !!range.before;
+      }
+      return !!range.preset && range.preset !== 'any_time';
     }
     case PropertyType.ARRAY:
     case PropertyType.MULTI_SELECT_DROPDOWN:
