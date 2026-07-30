@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -74,9 +74,10 @@ const BranchSingleCondition = ({
 }: BranchSingleConditionProps) => {
   const form = useFormContext<RouterAction>();
 
-  const condition = form.getValues(
-    `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
-  );
+  const condition = useWatch({
+    control: form.control,
+    name: `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
+  });
 
   const isTextCondition =
     condition.operator && textConditions.includes(condition?.operator);

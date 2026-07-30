@@ -7,6 +7,9 @@
     "isolated-vm",
     "redis-memory-server"
   ],
+  "redisMemoryServer": {
+    "version": "7.4.6"
+  },
   "scripts": {
     "prepare": "husky install || true",
     "prebuild": "node tools/scripts/install-bun.js",
