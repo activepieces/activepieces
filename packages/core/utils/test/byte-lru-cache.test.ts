@@ -1,4 +1,4 @@
-import { createByteLruCache } from '@activepieces/core-utils'
+import { createByteLruCache } from '../src/lib/byte-lru-cache'
 
 const promiseOf = (value: string) => Promise.resolve(value)
 
