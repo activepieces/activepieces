@@ -1,6 +1,7 @@
 export enum PropertyType {
     SHORT_TEXT = 'SHORT_TEXT',
     LONG_TEXT = 'LONG_TEXT',
+    RICH_TEXT = 'RICH_TEXT',
     MARKDOWN = 'MARKDOWN',
     DROPDOWN = 'DROPDOWN',
     STATIC_DROPDOWN = 'STATIC_DROPDOWN',
@@ -18,6 +19,7 @@ export enum PropertyType {
     CUSTOM_AUTH = 'CUSTOM_AUTH',
     OIDC = 'OIDC',
     DATE_TIME = 'DATE_TIME',
+    DATE_RANGE = 'DATE_RANGE',
     FILE = 'FILE',
     CUSTOM = 'CUSTOM',
     COLOR = 'COLOR',

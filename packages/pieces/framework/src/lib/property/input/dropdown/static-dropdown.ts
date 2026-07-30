@@ -3,9 +3,13 @@ import { BasePropertySchema, TPropertyValue } from "../common";
 import { DropdownState } from "./common";
 import { PropertyType } from "../property-type";
 
+export const StaticDropdownDisplay = z.enum(['cards'])
+export type StaticDropdownDisplay = z.infer<typeof StaticDropdownDisplay>
+
 export const StaticDropdownProperty = z.object({
     ...BasePropertySchema.shape,
     options: DropdownState,
+    display: z.optional(StaticDropdownDisplay),
     ...TPropertyValue(z.unknown(), PropertyType.STATIC_DROPDOWN).shape,
 })
 
@@ -14,6 +18,7 @@ export type StaticDropdownProperty<
     R extends boolean
 > = BasePropertySchema & {
     options: DropdownState<T>;
+    display?: StaticDropdownDisplay;
 } & TPropertyValue<T, PropertyType.STATIC_DROPDOWN, R>;
 
 
