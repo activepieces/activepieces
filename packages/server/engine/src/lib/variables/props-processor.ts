@@ -165,6 +165,8 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
         case PropertyType.DATE_TIME:
             return typeof value === 'string' ? [] : [`Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`]
         case PropertyType.ARRAY:
+        case PropertyType.MULTI_SELECT_DROPDOWN:
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
             return Array.isArray(value) ? [] : [`Expected array, received: ${originalValue}`]
         case PropertyType.OBJECT:
             return isObject(value) ? [] : [`Expected object, received: ${originalValue}`]
