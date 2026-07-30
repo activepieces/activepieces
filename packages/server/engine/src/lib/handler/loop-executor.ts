@@ -80,6 +80,8 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             if (testSingleStepMode) {
                 break
             }
+
+            newExecutionContext = await newExecutionContext.spillClosedIteration({ loopName: action.name, iteration: i })
         }
         return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
     },

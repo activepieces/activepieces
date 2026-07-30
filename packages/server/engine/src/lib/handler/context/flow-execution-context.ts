@@ -1,4 +1,4 @@
-import { apId, assertEqual, isNil } from '@activepieces/core-utils'
+import { apId, assertEqual, isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { engineFileApi } from '../../api/engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
@@ -10,6 +10,7 @@ const DEFAULT_THRESHOLD_KB = 32
 const SLICE_THRESHOLD_BYTES = Number(
     process.env.AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB ?? DEFAULT_THRESHOLD_KB,
 ) * 1024
+const CLOSED_ITERATION_SPILL_THRESHOLD_BYTES = 1024 // Used as slice threshold for loop iterations, if a loop iteration's output is below the SLICE_THRESHOLD_BYTES it won't be sliced, so if there are too many iterations they will accumulate in memory and cause OOM. This threshold is set to a lower value to ensure that even small outputs are sliced.
 
 export class FlowExecutorContext {
     tags: readonly string[]
@@ -115,7 +116,7 @@ export class FlowExecutorContext {
         }
         else {
             const sliced = this.slicingEnabled
-                ? await maybeSliceOutput(truncated.output, this.engineApi)
+                ? await maybeSliceOutput({ value: truncated.output, engineApi: this.engineApi })
                 : undefined
             finalized = new GenericStepOutput({
                 type: truncated.type,
@@ -132,6 +133,41 @@ export class FlowExecutorContext {
             ...this,
             steps,
         })
+    }
+
+    public async spillClosedIteration({ loopName, iteration }: SpillClosedIterationParams): Promise<FlowExecutorContext> {
+        const engineApi = this.engineApi
+        if (!this.slicingEnabled || isNil(engineApi)) {
+            return this
+        }
+        const path = this.currentPath.loopIteration({ loopName, iteration }).path
+        const { data: iterationSteps } = tryCatchSync(() => executionJournal.getStateAtPath({ path, steps: this.steps }))
+        if (isNil(iterationSteps)) {
+            return this
+        }
+        for (const [stepName, step] of Object.entries(iterationSteps)) {
+            if (step.type === FlowActionType.LOOP_ON_ITEMS || step.outputType === StepOutputType.SLICE) {
+                continue
+            }
+            const { data: sliced } = await tryCatch(() => maybeSliceOutput({
+                value: step.output,
+                engineApi,
+                thresholdBytes: CLOSED_ITERATION_SPILL_THRESHOLD_BYTES,
+            }))
+            if (isNil(sliced)) {
+                continue
+            }
+            iterationSteps[stepName] = new GenericStepOutput({
+                type: step.type,
+                status: step.status,
+                input: step.input,
+                output: sliced.ref,
+                outputType: StepOutputType.SLICE,
+                duration: step.duration,
+                errorMessage: step.errorMessage,
+            })
+        }
+        return this
     }
 
     public getStepOutput(stepName: string, path?: StepExecutionPath['path']): StepOutput | undefined {
@@ -203,12 +239,12 @@ async function extractStepView(steps: Record<string, StepOutput>, engineApi: Eng
     return result
 }
 
-async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Promise<{ ref: LogSliceRef } | undefined> {
+async function maybeSliceOutput({ value, engineApi, thresholdBytes = SLICE_THRESHOLD_BYTES }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
     if (isNil(value) || isNil(engineApi)) {
         return undefined
     }
     const size = utils.sizeof(value)
-    if (size <= SLICE_THRESHOLD_BYTES) {
+    if (size <= thresholdBytes) {
         return undefined
     }
     const data = new TextEncoder().encode(JSON.stringify(value))
@@ -272,4 +308,15 @@ export type EngineApiConfig = {
 export type FlowExecutorContextInit = {
     engineApi?: EngineApiConfig
     slicingEnabled?: boolean
+}
+
+type SpillClosedIterationParams = {
+    loopName: string
+    iteration: number
+}
+
+type MaybeSliceOutputParams = {
+    value: unknown
+    engineApi?: EngineApiConfig
+    thresholdBytes?: number
 }
