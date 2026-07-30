@@ -1,8 +1,9 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AutoTopUpConfig, BillableFeature, ConsumableProductAutoTopupParams, PurchasablePlan, RunEnvironment } from '@activepieces/shared'
+import { ApEdition, AutoTopUpConfig, BillableFeature, ConsumableProductAutoTopupParams, PurchasablePlan, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
+import { system } from '../helper/system/system'
 
 function defaultBillingInfo(): BillingInfo {
     return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
@@ -91,6 +92,9 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
 }
 
 export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {
+    if (system.getEdition() === ApEdition.ENTERPRISE) {
+        return false
+    }
     if (environment !== RunEnvironment.PRODUCTION) {
         return false
     }

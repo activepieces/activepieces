@@ -64,6 +64,25 @@ Two deliberate exceptions, both of which still fail open on an *unknown* balance
 - Chat and managed-AI hard-block (402) on known exhaustion, where flow runs would only be
   `QUOTA_EXCEEDED`-marked.
 
+### Self-hosted EE skips the run gate entirely (temporary)
+
+`shouldBlockRunOnCredits` returns `false` immediately when `AP_EDITION=ee`, before any provider call.
+That one branch covers every flow-run credit gate — run admission from the worker RPC
+(`submitPayloads`), the webhook path, `startManualTrigger`, and the retry assert all funnel through it.
+Cloud is unaffected; CE already resolved to the no-op default provider.
+
+The reason is **latency, not policy**. On a self-hosted EE box the gate is a no-op in outcome but not in
+cost: every production run admission pays three Redis round-trips (`billingEnforced` plus the two
+balance keys) and, whenever the balance cache is cold, takes a distributed lock and waits on an Autumn
+`getCustomer` (5s timeout) — repeated every 60s for exactly the platforms that never enrolled, because
+the confirmed-absence marker expires. Self-hosters run Redis next to a single API box, so that cost
+lands on the critical path of every trigger with nothing to show for it.
+
+This is a stopgap. Remove the edition branch once the gate can answer from in-process state (an
+in-memory TTL cache in front of Redis, or an enrollment flag resolved once at platform load) so an
+unenrolled platform costs nothing per run. Until then, an enrolled self-hosted EE platform is not
+credit-gated on flow runs — usage is still tracked, only enforcement is off.
+
 ## Consequences
 
 - During an Autumn outage, an enforced platform with an exhausted balance keeps running flows and
@@ -71,6 +90,8 @@ Two deliberate exceptions, both of which still fail open on an *unknown* balance
   monthly cap (decision 000016), and enforcement resumes on the next successful refresh.
 - Redis, not Autumn, is the gate's hard dependency — and if Redis is down the queues are down anyway,
   so the gate is never the weakest link.
+- Self-hosted EE run admission does no billing I/O at all, so an EE box needs neither Redis credit keys
+  nor Autumn reachability to start a flow. Chat and managed-AI keep their gates on every edition.
 - `packages/server/api/test/unit/app/ee/platform-plan/credits-gate.test.ts` pins the invariant
   (`toCreditsGateState(null, true).blocked === false`, and the AppSumo equivalent). Keep those cases:
   they are what stops a future "unknown means unpaid" change from passing review, since nothing else
