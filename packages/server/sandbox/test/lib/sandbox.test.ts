@@ -1,9 +1,11 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { EngineResponseStatus } from '@activepieces/shared'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const acquiredBoxIds: number[] = []
 const runTimeouts: number[] = []
+const managerCalls = { release: 0, invalidate: 0 }
+let bootAdvanceMs = 0
 
 vi.mock('@activepieces/server-utils', async (importActual) => {
     const actual = await importActual<typeof import('@activepieces/server-utils')>()
@@ -25,15 +27,26 @@ vi.mock('../../src/lib/sandbox-manager', () => ({
         acquire: vi.fn(() => {
             acquiredBoxIds.push(boxId)
             return {
-                start: vi.fn().mockResolvedValue(undefined),
+                start: vi.fn(() => {
+                    if (bootAdvanceMs > 0) {
+                        vi.setSystemTime(Date.now() + bootAdvanceMs)
+                    }
+                    return Promise.resolve()
+                }),
                 execute: vi.fn((_operationType: unknown, _operation: unknown, options: { timeoutInSeconds: number }) => {
                     runTimeouts.push(options.timeoutInSeconds)
                     return Promise.resolve({ status: EngineResponseStatus.OK, response: {}, logs: undefined })
                 }),
             }
         }),
-        release: vi.fn().mockResolvedValue(undefined),
-        invalidate: vi.fn().mockResolvedValue(undefined),
+        release: vi.fn(() => {
+            managerCalls.release++
+            return Promise.resolve()
+        }),
+        invalidate: vi.fn(() => {
+            managerCalls.invalidate++
+            return Promise.resolve()
+        }),
         shutdown: vi.fn().mockResolvedValue(undefined),
         getActiveSandbox: vi.fn(() => ({ sandboxId: `sb-${boxId}`, boxId, pid: 1000 + boxId, busy: false })),
     })),
@@ -66,6 +79,9 @@ describe('createSandboxRuntime concurrency', () => {
     beforeEach(() => {
         acquiredBoxIds.length = 0
         runTimeouts.length = 0
+        managerCalls.release = 0
+        managerCalls.invalidate = 0
+        bootAdvanceMs = 0
         vi.clearAllMocks()
     })
 
@@ -121,5 +137,40 @@ describe('createSandboxRuntime concurrency', () => {
         const { createSandboxManager } = await import('../../src/lib/sandbox-manager')
         createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
         expect(createSandboxManager).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('createSandboxRuntime caller deadline vs sandbox boot', () => {
+    beforeEach(() => {
+        acquiredBoxIds.length = 0
+        runTimeouts.length = 0
+        managerCalls.release = 0
+        managerCalls.invalidate = 0
+        bootAdvanceMs = 0
+        vi.clearAllMocks()
+        vi.useFakeTimers({ shouldAdvanceTime: true })
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('subtracts the sandbox boot time from the run budget', async () => {
+        bootAdvanceMs = 40 * 1000
+        const runtime = createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
+        await runtime.execute(buildExecuteParams(0, Date.now() + 60 * 1000))
+        expect(runTimeouts[0]).toBeGreaterThan(15)
+        expect(runTimeouts[0]).toBeLessThanOrEqual(20)
+    })
+
+    it('never sends the operation when boot consumed the whole deadline', async () => {
+        bootAdvanceMs = 70 * 1000
+        const runtime = createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
+        const error = await runtime.execute(buildExecuteParams(0, Date.now() + 60 * 1000)).catch((e: unknown) => e)
+        expect((error as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_EXECUTION_TIMEOUT)
+        expect((error as ActivepiecesError).error.params).toMatchObject({ neverStarted: true })
+        expect(runTimeouts).toEqual([])
+        expect(managerCalls.invalidate).toBe(1)
+        expect(managerCalls.release).toBe(0)
     })
 })

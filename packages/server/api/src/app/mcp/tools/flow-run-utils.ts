@@ -231,9 +231,9 @@ export async function executeActionRunAction({
         return {
             content: [{
                 type: 'text',
-                text: `⏳ ${action.displayName} never started — no worker picked it up within the time limit, so nothing ran and nothing was written. Run ID: ${actionRun.id}. Safe to retry as-is.`,
+                text: `⏳ ${action.displayName} never started — nothing ran and nothing was written. Run ID: ${actionRun.id}. Safe to retry as-is.`,
             }],
-            structuredContent: { errorSummary: 'No worker was available in time, so the action never ran.' },
+            structuredContent: { errorSummary: 'The action never started, so nothing ran.' },
         }
     }
 
@@ -338,7 +338,7 @@ function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknow
                 status: 'timeout',
                 runId: run.id,
                 errorMessage: run.neverStarted
-                    ? 'No worker was available in time, so the code never ran. Safe to retry as-is.'
+                    ? 'The code never started, so nothing ran. Safe to retry as-is.'
                     : 'Code is still running after the time limit.',
             }
         case FlowRunStatus.FAILED:
