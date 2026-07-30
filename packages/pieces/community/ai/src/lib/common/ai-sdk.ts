@@ -8,7 +8,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
+import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
@@ -50,6 +50,10 @@ export async function createAIModel({
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModel> {
     const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl });
 
+    if (isImage && !AI_PROVIDER_CAPABILITIES[provider].supportsImageGeneration) {
+        throw new Error(`Provider ${provider} does not support image models`)
+    }
+
     switch (provider) {
         case AIProviderName.OPENAI: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -62,9 +66,6 @@ export async function createAIModel({
         case AIProviderName.ANTHROPIC: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             const provider = createAnthropic({ apiKey })
-            if (isImage) {
-                throw new Error(`Provider ${provider} does not support image models`)
-            }
             return provider(modelId)
         }
         case AIProviderName.GOOGLE: {
@@ -192,9 +193,6 @@ export async function createAIModel({
         }
         case AIProviderName.MISTRAL: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            if (isImage) {
-                throw new Error(`Provider ${AIProviderName.MISTRAL} does not support image models`)
-            }
             const provider = createOpenAICompatible({
                 name: 'mistral',
                 baseURL: 'https://api.mistral.ai/v1',
@@ -221,14 +219,6 @@ export const googleSearchTool = google.tools.googleSearch;
 
 const EMBEDDING_DIMENSIONS = 768
 
-const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
-    [AIProviderName.OPENAI]: 'text-embedding-3-small',
-    [AIProviderName.GOOGLE]: 'text-embedding-004',
-    [AIProviderName.AZURE]: 'text-embedding-3-small',
-    [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
-    [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
-}
-
 const OPENAI_EMBEDDING_PROVIDER_OPTIONS = {
     openai: { dimensions: EMBEDDING_DIMENSIONS },
 }
@@ -246,7 +236,7 @@ export async function createEmbeddingModel({
 }: CreateEmbeddingModelParams): Promise<CreateEmbeddingModelResult> {
     const { config, auth } = await fetchProviderConfig({ provider, engineToken, apiUrl })
 
-    const embeddingModelId = DEFAULT_EMBEDDING_MODELS[provider]
+    const embeddingModelId = AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel
     if (!embeddingModelId) {
         throw new Error(`Provider ${provider} does not have a default embedding model configured`)
     }

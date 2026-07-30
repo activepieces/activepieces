@@ -5,7 +5,7 @@ import { generateText } from 'ai';
 import { aiProps } from '../../common/props';
 
 export const summarizeText = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'summarizeText',
   displayName: 'Summarize Text',
   description: 'Summarize long emails, articles, or documents into what matters.',

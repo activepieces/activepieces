@@ -3,6 +3,7 @@ import { mkdir } from 'fs/promises'
 import path from 'path'
 import { arch } from 'process'
 import { execPromise } from '../utils/exec'
+import { engineNodeArgs } from './node-args'
 import { CreateSandboxProcessParams, SandboxLogger, SandboxMount, SandboxProcessMaker } from './types'
 
 export function getIsolateExecutableName(nodeArch: NodeJS.Architecture = arch): string {
@@ -58,7 +59,7 @@ const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
-            const { sandboxId, mounts, env } = params
+            const { sandboxId, mounts, env, resourceLimits } = params
 
             for (const mount of mounts) {
                 assertMountInsideRoot(mount)
@@ -118,6 +119,7 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--run',
                 '--',
                 process.execPath,
+                ...engineNodeArgs(resourceLimits),
                 engineSandboxPath,
             ]
 

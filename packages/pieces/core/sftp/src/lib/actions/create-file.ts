@@ -28,7 +28,7 @@ async function createFileWithFTP(client: FTPClient, fileName: string, fileConten
 }
 
 export const createFile = createAction({
-  audience: 'both',
+  audience: 'human',
     auth: sftpAuth,
     name: 'create_file',
     displayName: 'Create File from Text',

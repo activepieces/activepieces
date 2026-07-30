@@ -23,7 +23,7 @@ A backend-only RAG chat assistant that answers questions about the Activepieces 
 - If no embedding model is configured (`createCopilotEmbeddingModel`), vector search is skipped and it falls back to full-text only.
 
 ### Key files
-None. This feature has no code in the repo. Every path listed for it pointed into `packages/server/api/dist/src/app/platform-copilot/`, a build-output directory that does not exist, and no `platform-copilot` file, route, or symbol (`platformCopilotService`, `platformCopilotIndexer`, `copilotSearchService`, `copilot_code_chunks`, `createCopilotEmbeddingModel`) appears anywhere in the tree outside `.agents/features/*.md`. The only live trace is the pair of migrations that retire it:
+None. This feature has no code in the repo. Every path listed for it pointed into `packages/server/api/dist/src/app/platform-copilot/`, a build-output directory that does not exist, and no `platform-copilot` file, route, or symbol (`platformCopilotService`, `platformCopilotIndexer`, `copilotSearchService`, `copilot_code_chunks`, `createCopilotEmbeddingModel`) appears anywhere in the tree outside this page. The only live trace is the pair of migrations that retire it:
 
 - `packages/server/api/src/app/database/migration/postgres/1761221158764-DeprecateCopilot.ts` — drops the `platform.copilotSettings` column (SQLite twin: `migration/sqlite/1761223879376-DeprecateCopilotSQLITE.ts`)
 

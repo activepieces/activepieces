@@ -9,7 +9,7 @@ import {
 } from '../common';
 
 export const formatDateAction = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'format_date',
   displayName: 'Format Date',
   description: 'Converts a date from one format to another',

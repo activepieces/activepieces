@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.121.2",
+  "version": "0.123.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -8,6 +8,7 @@
   "dependencies": {
     "@activepieces/core-execution": "workspace:*",
     "@activepieces/core-formula": "workspace:*",
+    "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
     "dayjs": "1.11.9",
     "deepmerge-ts": "7.1.0",

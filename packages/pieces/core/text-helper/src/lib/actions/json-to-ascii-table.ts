@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const jsonToAsciiTable = createAction({
-  audience: 'both',
+  audience: 'human',
   description: 'Convert a list of items to a text table',
   displayName: 'List to Text Table',
   name: 'json_to_ascii_table',
