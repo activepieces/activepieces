@@ -249,9 +249,12 @@ so `sandbox run` is essentially the whole worker-busy time.
 
 - **Throughput keeps rising but sub-linearly**: 3.6× for 4× the fleet. Per-worker rate peaks at 80
   workers (6.1) and falls ~20% by 160 (4.9).
-- **Postgres is the tier that runs out.** 529m → 2738m, i.e. 5.2× CPU for 4× workers, ending at **91%
-  of its 3-core reservation**. Cost per unit work is near-constant (~2.5m per req/s), so it scales with
-  *throughput* and no configuration makes it stop. Redis tracks the same curve further from its cap.
+- **Database CPU scales with throughput**: 529m → 2738m, i.e. 5.2× CPU for 4× workers. Cost per unit
+  work is near-constant (~2.5m per req/s), so it grows with *throughput*, not fleet size. Redis behaves
+  the same way. **Caveat**: only the worker has a CPU *limit* here; PG/Redis/app declare *requests* they
+  may burst past, so these are consumption figures, not saturation. This run shows the workers are NOT
+  the limit (≤0.1 of a hard 0.5-core cap); it does not prove the database is. Confirming that needs a
+  hard-limited PG + wait-event analysis.
 - **Workers and apps are not the constraint**: workers ≤0.1 of their 0.5-core cap at every tier; apps
   flat at ~0.52–0.61 of a core because 1:10 adds app capacity in step. The 1:10 ratio holds up.
 - The PG singleton here is *over*-provisioned (fsync off, tmpfs). A managed 2 vCPU / 4 GB Postgres with

@@ -50,7 +50,7 @@ apps    = ceil(workers / 10)
 At 50 concurrent flows: **50 workers** (25 vCPU / 50 GB) + **5 apps** (5 vCPU / 5 GB). Overflow queues in Redis and drains as slots free.
 
 <Warning>
-**Postgres does not stay still while you add workers.** Its CPU tracks *throughput*, at roughly 2.5 millicores per req/s in the [benchmark](../architecture/benchmark) — so a fleet doing 500 req/s wants well over a core of database on its own, and the run above put a 3-vCPU Postgres at 91% while the workers idled at a fifth of their cap. The 2 vCPU above is a starting point for modest fleets; watch database CPU as you grow and scale it with the fleet, or it — not the workers — becomes your ceiling.
+**Postgres does not stay still while you add workers.** Its CPU tracks *throughput*, at roughly 2.5 millicores per req/s in the [benchmark](../architecture/benchmark) — so a fleet doing 500 req/s wants well over a core of database on its own, and at 777 req/s that run's database was consuming 2.7 cores while every worker idled at a fifth of its cap. The 2 vCPU above is a starting point for modest fleets: watch database CPU as you grow and scale it alongside the fleet, rather than assuming worker count is the only dial.
 </Warning>
 
 <Tip>

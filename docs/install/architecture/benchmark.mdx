@@ -6,7 +6,7 @@ icon: "gauge-high"
 
 This benchmark answers one question for the recommended production shape: **at the 1:10 app-to-worker ratio, how does throughput scale as you grow the fleet from 40 to 160 workers?** It runs the [worker-is-the-sandbox](/install/architecture/workers) model on a real GKE cluster, against a same-region object store with signed URLs and official piece tarballs served from the CDN.
 
-Short answer: throughput keeps climbing to 777 req/s at 160 workers, but not proportionally — the per-worker rate peaks at 80 workers and the shared database, not the worker fleet, is what limits it after that.
+Short answer: throughput keeps climbing to 777 req/s at 160 workers, but not proportionally — the per-worker rate peaks at 80 workers and falls about 20% by 160. The workers are not what limits it: they stay under a fifth of their CPU cap throughout, while database CPU grows in step with throughput.
 
 <img src="/resources/diagrams/activepieces-architecture.png" alt="Activepieces production architecture: client, app, Redis job queue, Postgres, S3, and one-flow-per-worker execution tier" />
 
@@ -59,19 +59,25 @@ Each worker is one sandbox at concurrency 1, hard-capped at 0.5 vCPU / 1 GB. App
 
 Only the **app** and **worker** counts scale (1:10). **Postgres and Redis are a single fixed-size pod each — the same for every row below.** CPU is sampled every 3 s throughout the measured pass; the singletons' figures are the whole pod, app/worker are per pod.
 
-| Apps · Workers | Warm req/s | Postgres `used / cap` | Redis `used / cap` | App `used / cap` (per pod) | Worker `used / cap` (per pod) |
+Read the two right-hand columns differently from the two on the left. **Only the worker has a CPU _limit_** (requests == limits == 500m, a hard cap). Postgres, Redis and the app declare CPU *requests* — a scheduling reservation they may burst above on a node with spare cores — so their numbers show what each tier **consumed**, not how close it came to a ceiling.
+
+| Apps · Workers | Warm req/s | Postgres `used` (req 3000m) | Redis `used` (req 2000m) | App `used` (req 1000m, per pod) | Worker `used / cap` (per pod) |
 |---|---|---|---|---|---|
-| 4 · 40   | 213 | 529m / 3000m | 123m / 2000m | 537m / 1000m | 81m / 500m |
-| 8 · 80   | 484 | 1096m / 3000m | 256m / 2000m | 523m / 1000m | 82m / 500m |
-| 12 · 120 | 641 | 1689m / 3000m | 337m / 2000m | 599m / 1000m | 92m / 500m |
-| 16 · 160 | 777 | 2738m / 3000m | 781m / 2000m | 611m / 1000m | 91m / 500m |
+| 4 · 40   | 213 | 529m | 123m | 537m | 81m / 500m |
+| 8 · 80   | 484 | 1096m | 256m | 523m | 82m / 500m |
+| 12 · 120 | 641 | 1689m | 337m | 599m | 92m / 500m |
+| 16 · 160 | 777 | 2738m | 781m | 611m | 91m / 500m |
 
-**Postgres is the tier that runs out first.** It climbs 529m → 2738m as the fleet quadruples — 5.2× the CPU for 4× the workers, ending at **91% of its 3-core reservation**. Its cost per unit of work is near-constant (~2.5m of CPU per req/s at every tier), so it grows with *throughput*, not with fleet size, and there is no setting that makes it stop growing. Redis follows the same curve further from its ceiling (123m → 781m of 2000m).
+**Postgres is by far the fastest-growing tier.** It climbs 529m → 2738m as the fleet quadruples — 5.2× the CPU for 4× the workers — and ends up the single largest CPU consumer in the deployment, above the entire 160-worker fleet combined (~14.6 cores across workers vs 2.7 in one database process, but spread over 160 pods versus one). Its cost per unit of work is near-constant (**~2.5 millicores per req/s** at every tier), so it grows with *throughput*, not with fleet size, and no configuration makes it stop growing. Redis behaves the same way (123m → 781m).
 
-The other two tiers are nowhere near saturation and stay flat: workers sit at ≤0.1 of their 0.5-core cap at every fleet size, and apps hold ~0.52–0.61 of a core per pod because the 1:10 ratio adds app capacity in step with the load. So when the curve bends (see below), neither the workers nor the app tier is the reason — the shared database is.
+By contrast the workers — the only hard-capped tier — sit at **≤0.1 of their 0.5-core cap** at every fleet size, and apps hold steady at ~0.52–0.61 of a core per pod because the 1:10 ratio adds app capacity in step with the load.
+
+<Warning>
+**What this run does and does not establish.** It shows *consumption*: database CPU scales linearly with throughput while the worker fleet stays far below its cap, so the workers are demonstrably **not** what limits the curve. It does **not** prove the database is the bottleneck — Postgres here has no CPU limit and the nodes had spare cores, so 2738m is what it used, not a ceiling it hit. Pinning down the actual constraint (database CPU, lock contention, connection pool, or round-trip count per run) needs a follow-up with a hard-limited database and wait-event analysis. Treat "scale the database alongside the fleet" as the prudent reading of a linear growth trend, not as a measured saturation point.
+</Warning>
 
 <Note>
-The singletons here are deliberately over-provisioned (3 vCPU Postgres, `max_connections=2000`, durability off, data dir on tmpfs) to push their limit as far out as possible. A **managed** Postgres at the 2 vCPU / 4 GB this documentation recommends, with fsync on and real disks, will reach its own ceiling **earlier** than this one did. Size the database against your peak throughput, not against your worker count.
+The singletons here are deliberately generous (3 vCPU request, `max_connections=2000`, durability off, data dir on tmpfs). A **managed** Postgres at the 2 vCPU / 4 GB this documentation recommends, with fsync on and real disks, does less work per commit than this one and will feel the same load **sooner**. Size the database against your peak throughput, not against your worker count.
 </Note>
 
 ## How throughput scales
@@ -81,11 +87,11 @@ The singletons here are deliberately over-provisioned (3 vCPU Postgres, `max_con
 Two things are happening at once:
 
 - **Below ~80 workers the fleet is still filling out.** 40 workers cannot push enough concurrent work to use the tiers behind them, so the per-worker rate is not yet at its best. This is why the 40→80 step is *super*-linear (2.27× throughput for 2× the fleet).
-- **Past ~80 workers the shared database becomes the constraint.** Postgres CPU tracks throughput almost exactly and reaches 91% of its reservation at 160 workers. Each additional worker still contributes, but it queues a little longer behind the same single database, so per-flow time stretches (the measured `sandbox run` phase goes 146 ms at 80 workers to 181 ms at 160) and the per-worker rate drops.
+- **Past ~80 workers, per-flow time stretches.** The measured `sandbox run` phase goes 146 ms at 80 workers to 181 ms at 160, so each worker completes fewer flows per second even though it is nowhere near its CPU cap. Something shared is absorbing the extra concurrency, and database CPU is the tier visibly growing with it (see the caveat above — growth is measured, causation is not).
 
-The **concurrency-1 worker model** sets the shape: each worker is busy for the *whole* per-flow time — engine run plus the end-of-run run-log persistence it finishes before taking the next job — so fleet throughput is `workers ÷ per-flow-time`. That is linear in the fleet only while per-flow time holds constant, which it does until the database starts absorbing the load. (The synchronous response reaches the client sooner than that — it is sent at the response step, before the worker wraps up the log write — so client-perceived latency is lower than the worker-busy time that sets throughput.)
+The **concurrency-1 worker model** sets the shape: each worker is busy for the *whole* per-flow time — engine run plus the end-of-run run-log persistence it finishes before taking the next job — so fleet throughput is `workers ÷ per-flow-time`. That is linear in the fleet only while per-flow time holds constant, and past ~80 workers it does not. (The synchronous response reaches the client sooner than that — it is sent at the response step, before the worker wraps up the log write — so client-perceived latency is lower than the worker-busy time that sets throughput.)
 
-**What this means for sizing:** worker count is the right lever up to roughly this scale, and past it the database is what you scale next. Do not read the worker fleet as the only dial.
+**What this means for sizing:** worker count is the right lever up to roughly this scale, but do not read the worker fleet as the only dial — the shared tiers behind it grow with throughput and need to grow with you.
 
 <Note>
 **Why Production Setup recommends 1:10.** Apps at 1 vCPU are cheap relative to the worker fleet, and 1:10 is the warm-headroom margin that keeps the app tier from becoming the wall during bursts — it holds here, with apps steady at ~0.6 of a core per pod at every tier. See [Production Setup](/install/configure-operate/production-setup).
@@ -113,7 +119,7 @@ This is the time the **worker** is occupied per job — and at concurrency 1 it 
 - **App**: 1 vCPU / 1 GB
 - **Object store**: same-region GCS bucket (`europe-west1`) over the S3-interop endpoint, path-style SigV4 presigned URLs (`AP_S3_USE_SIGNED_URLS=true`)
 - **Piece bundles**: official tarballs served from the Activepieces CDN (`AP_USE_CDN_FOR_BUNDLES=true`)
-- **Postgres + Redis**: in-cluster singletons, deliberately over-provisioned to push their limit as far out as possible — Postgres at 3 vCPU / 3 GB with `max_connections=2000` (the default 100 would starve the app pools past ~10 apps), durability off, and its data dir on tmpfs; Redis at 2 vCPU / 2 GB with `io-threads`. Even so, Postgres reaches 91% of its 3 cores at the top tier and is what bends the curve
+- **Postgres + Redis**: in-cluster singletons, deliberately generous — Postgres requesting 3 vCPU / 3 GB with `max_connections=2000` (the default 100 would starve the app pools past ~10 apps), durability off, and its data dir on tmpfs; Redis requesting 2 vCPU / 2 GB with `io-threads`. Neither has a CPU *limit*, so both may burst above their request; Postgres consumed 2738m at the top tier
 - **Load**: `hey` **run inside the cluster**, against the app Service, concurrency matched to worker count (40/80/120/160) so requests don't queue behind the concurrency-1 workers — latency reflects real service time, not backlog. 400 requests per worker per tier (16k/32k/48k/64k), preceded by an unmeasured warmup pass
 
 <Warning>

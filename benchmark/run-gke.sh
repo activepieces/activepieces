@@ -123,6 +123,13 @@ JSON
     case "$phase" in Succeeded|Failed) break;; esac
     sleep 3
   done
+  # A Failed or still-Running generator produces partial/empty output that parses into a plausible-looking
+  # throughput number. Refuse it loudly and leave the pod up to diagnose, rather than publishing a fiction.
+  if [ "$phase" != "Succeeded" ]; then
+    echo "ERROR: load pod '$name' did not succeed (phase='${phase:-unknown}'). Pod left in place for triage:" >&2
+    kubectl logs "$name" --tail=20 >&2 2>/dev/null || true
+    return 1
+  fi
   kubectl logs "$name" 2>/dev/null
   kubectl delete pod "$name" --ignore-not-found --now >/dev/null 2>&1
 }
@@ -166,10 +173,13 @@ echo "=== PER-RUN BREAKDOWN (avg ms across the measured pass only, from worker p
 # with the pretty renderer (`timings: sandboxRunMs=125 ...`), but a JSON drain writes the same keys as
 # `"sandboxRunMs":125`. Strip ANSI, then harvest every `<name>Ms` number off the timings line either way —
 # parsing the keys rather than the container makes this survive the next renderer change.
-kubectl logs -l app=worker --tail=-1 --prefix=false --since-time="$LOAD_START" 2>/dev/null \
+# The `|| true` on both greps matters under `set -euo pipefail`: a measured window with no timing events
+# makes grep exit 1, which would kill the script before awk can report it — taking the summary and the
+# teardown instructions with it. Let the empty stream reach awk and say "no timing samples found".
+{ kubectl logs -l app=worker --tail=-1 --prefix=false --since-time="$LOAD_START" 2>/dev/null || true; } \
   | sed 's/\x1b\[[0-9;]*m//g' \
-  | grep -E 'timings' \
-  | grep -oE '[a-zA-Z]+Ms"?[:=][0-9]+' \
+  | { grep -E 'timings' || true; } \
+  | { grep -oE '[a-zA-Z]+Ms"?[:=][0-9]+' || true; } \
   | tr -d '"' | tr ':' '=' \
   | awk -F= '{s[$1]+=$2; n[$1]++}
          END{
