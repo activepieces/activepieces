@@ -103,26 +103,10 @@ function DeactivateUsersForm({
   });
 
   const toggleUser = (userId: string) =>
-    setSelectedUserIds((previous) => {
-      const next = new Set(previous);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
-      return next;
-    });
+    setSelectedUserIds((previous) => toggled(previous, userId));
 
   const toggleInvitation = (invitationId: string) =>
-    setSelectedInvitationIds((previous) => {
-      const next = new Set(previous);
-      if (next.has(invitationId)) {
-        next.delete(invitationId);
-      } else {
-        next.add(invitationId);
-      }
-      return next;
-    });
+    setSelectedInvitationIds((previous) => toggled(previous, invitationId));
 
   return (
     <>
@@ -141,64 +125,28 @@ function DeactivateUsersForm({
         </DialogDescription>
       </DialogHeader>
 
-      {deactivatableUsers.length > 0 && (
-        <ScrollArea className="max-h-[220px] rounded-md border">
-          <div className="flex flex-col p-1">
-            {deactivatableUsers.map((user) => (
-              <label
-                key={user.id}
-                className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-muted"
-              >
-                <Checkbox
-                  checked={selectedUserIds.has(user.id)}
-                  onCheckedChange={() => toggleUser(user.id)}
-                />
-                <div className="min-w-0 flex-1">
-                  <TextWithTooltip tooltipMessage={user.email}>
-                    <p className="text-sm text-foreground">{user.email}</p>
-                  </TextWithTooltip>
-                </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {roleLabel(user.platformRole)}
-                </span>
-              </label>
-            ))}
-          </div>
-        </ScrollArea>
-      )}
+      <SelectableEmailList
+        items={deactivatableUsers.map((user) => ({
+          id: user.id,
+          email: user.email,
+          trailingLabel: roleLabel(user.platformRole),
+        }))}
+        selectedIds={selectedUserIds}
+        onToggle={toggleUser}
+        maxHeightClass="max-h-[220px]"
+      />
 
-      {pendingInvitations.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t('Pending invitations')}
-          </span>
-          <ScrollArea className="max-h-[160px] rounded-md border">
-            <div className="flex flex-col p-1">
-              {pendingInvitations.map((invitation) => (
-                <label
-                  key={invitation.id}
-                  className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-muted"
-                >
-                  <Checkbox
-                    checked={selectedInvitationIds.has(invitation.id)}
-                    onCheckedChange={() => toggleInvitation(invitation.id)}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <TextWithTooltip tooltipMessage={invitation.email}>
-                      <p className="text-sm text-foreground">
-                        {invitation.email}
-                      </p>
-                    </TextWithTooltip>
-                  </div>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {t('Invited')}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-      )}
+      <SelectableEmailList
+        heading={t('Pending invitations')}
+        items={pendingInvitations.map((invitation) => ({
+          id: invitation.id,
+          email: invitation.email,
+          trailingLabel: t('Invited'),
+        }))}
+        selectedIds={selectedInvitationIds}
+        onToggle={toggleInvitation}
+        maxHeightClass="max-h-[160px]"
+      />
 
       <span
         className={cn(
@@ -240,6 +188,67 @@ function DeactivateUsersForm({
   );
 }
 
+function SelectableEmailList({
+  items,
+  selectedIds,
+  onToggle,
+  maxHeightClass,
+  heading,
+}: SelectableEmailListProps) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  const list = (
+    <ScrollArea className={cn('rounded-md border', maxHeightClass)}>
+      <div className="flex flex-col p-1">
+        {items.map((item) => (
+          <label
+            key={item.id}
+            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-muted"
+          >
+            <Checkbox
+              checked={selectedIds.has(item.id)}
+              onCheckedChange={() => onToggle(item.id)}
+            />
+            <div className="min-w-0 flex-1">
+              <TextWithTooltip tooltipMessage={item.email}>
+                <p className="text-sm text-foreground">{item.email}</p>
+              </TextWithTooltip>
+            </div>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {item.trailingLabel}
+            </span>
+          </label>
+        ))}
+      </div>
+    </ScrollArea>
+  );
+
+  if (isNil(heading)) {
+    return list;
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-muted-foreground">
+        {heading}
+      </span>
+      {list}
+    </div>
+  );
+}
+
+function toggled(selectedIds: Set<string>, id: string): Set<string> {
+  const next = new Set(selectedIds);
+  if (next.has(id)) {
+    next.delete(id);
+  } else {
+    next.add(id);
+  }
+  return next;
+}
+
 function roleLabel(role: PlatformRole): string {
   switch (role) {
     case PlatformRole.ADMIN:
@@ -261,11 +270,18 @@ type DeactivateUsersDialogProps = {
   onConfirmed: () => void;
 };
 
-type DeactivateUsersFormProps = {
-  targetSeats: number;
-  currentUsers: number;
-  planName?: string;
-  warning?: string;
-  onConfirmed: () => void;
-  onOpenChange: (open: boolean) => void;
+type DeactivateUsersFormProps = Omit<DeactivateUsersDialogProps, 'open'>;
+
+type SelectableEmailItem = {
+  id: string;
+  email: string;
+  trailingLabel: string;
+};
+
+type SelectableEmailListProps = {
+  items: SelectableEmailItem[];
+  selectedIds: Set<string>;
+  onToggle: (id: string) => void;
+  maxHeightClass: string;
+  heading?: string;
 };

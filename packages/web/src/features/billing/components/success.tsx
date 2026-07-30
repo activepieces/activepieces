@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-import { billingMutations } from '../hooks/billing-hooks';
+import { billingMutations, refreshBillingCaches } from '../hooks/billing-hooks';
 
 const REDIRECT_DELAY_MS = 5000;
 
@@ -32,8 +32,7 @@ export const Success = () => {
   }, []);
 
   function leave(path: string) {
-    queryClient.invalidateQueries({ queryKey: ['platform'] });
-    queryClient.invalidateQueries({ queryKey: ['flags'] });
+    refreshBillingCaches(queryClient);
     navigate(path);
   }
 

@@ -48,15 +48,12 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/checkout', CheckoutRequest, async (request) => {
         const platformId = request.principal.platform.id
-        const provider = billingProvider.get(request.log)
-        const result = await provider.createCheckoutSession({
+        const result = await billingProvider.get(request.log).createCheckoutSession({
             platformId,
             planId: request.body.planId,
             successUrl: request.body.successUrl,
         })
-        if (isNil(result.checkoutUrl)) {
-            await provider.refreshEntitlements(platformId)
-        }
+        await refreshWhenAppliedImmediately({ log: request.log, platformId, checkoutUrl: result.checkoutUrl })
         return result
     })
 
@@ -74,11 +71,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         await provider.refreshEntitlements(platformId)
     })
 
-    app.post('/portal', {
-        config: {
-            security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-        },
-    }, async (request) => {
+    app.post('/portal', { config: PLATFORM_ADMIN_ONLY }, async (request) => {
         const { url } = await billingProvider.get(request.log).getBillingPortalUrl({ platformId: request.principal.platform.id })
         return url
     })
@@ -98,9 +91,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
             featureId: request.body.featureId,
             quantity: request.body.quantity,
         })
-        if (isNil(checkoutUrl)) {
-            await provider.refreshEntitlements(platformId)
-        }
+        await refreshWhenAppliedImmediately({ log: request.log, platformId, checkoutUrl })
         return { paymentUrl: checkoutUrl }
     })
 
@@ -158,6 +149,13 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
     }
 }
 
+async function refreshWhenAppliedImmediately({ log, platformId, checkoutUrl }: RefreshWhenAppliedImmediatelyParams): Promise<void> {
+    if (!isNil(checkoutUrl)) {
+        return
+    }
+    await billingProvider.get(log).refreshEntitlements(platformId)
+}
+
 async function fetchUnlimitedCreditsUsed({ log, platformId, startDate, endDate, fallback }: { log: FastifyBaseLogger, platformId: string, startDate: string, endDate: string, fallback: number }): Promise<number> {
     const { data: creditUsage, error } = await tryCatch(() => billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate }))
     if (!isNil(error) || isNil(creditUsage)) {
@@ -167,10 +165,12 @@ async function fetchUnlimitedCreditsUsed({ log, platformId, startDate, endDate, 
     return creditUsage.total
 }
 
+const PLATFORM_ADMIN_ONLY = {
+    security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+}
+
 const InfoRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
     schema: {
         response: {
             [StatusCodes.OK]: PlatformBillingInformation,
@@ -179,9 +179,7 @@ const InfoRequest = {
 }
 
 const RefreshRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
     schema: {
         response: {
             [StatusCodes.OK]: PlatformBillingInformation,
@@ -201,9 +199,7 @@ const ProjectsUsageRequest = {
             [StatusCodes.OK]: SeekPage(ProjectCreditUsage),
         },
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
 const ListPlansRequest = {
@@ -212,9 +208,7 @@ const ListPlansRequest = {
             [StatusCodes.OK]: z.array(PurchasablePlan),
         },
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
 const CheckoutRequest = {
@@ -224,21 +218,15 @@ const CheckoutRequest = {
             [StatusCodes.OK]: CheckoutSessionResponse,
         },
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
 const CancelRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
 const ReactivateRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
 
@@ -251,9 +239,7 @@ const AdjustUnconsumableFeatureQuantityRequest = {
             }),
         },
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
 const ActivateLicenseRequest = {
@@ -262,9 +248,7 @@ const ActivateLicenseRequest = {
             licenseKey: z.string(),
         }),
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
 const ConsumableProductAutoTopupRequest = {
@@ -274,9 +258,7 @@ const ConsumableProductAutoTopupRequest = {
             [StatusCodes.OK]: z.object({}),
         },
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
 const SetupPaymentRequest = {
@@ -288,7 +270,11 @@ const SetupPaymentRequest = {
             }),
         },
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+type RefreshWhenAppliedImmediatelyParams = {
+    log: FastifyBaseLogger
+    platformId: string
+    checkoutUrl: string | null
 }

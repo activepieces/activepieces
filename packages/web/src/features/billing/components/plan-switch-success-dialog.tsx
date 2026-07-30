@@ -22,7 +22,7 @@ function resolveEntry(planId: string): PlanCatalogEntry | undefined {
 }
 
 export function PlanSwitchSuccessDialog() {
-  const { planId, closeDialog } = usePlanSwitchSuccessDialogStore();
+  const { payload: planId, closeDialog } = usePlanSwitchSuccessDialogStore();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: plans } = billingQueries.useListPlans(
     platform.id,

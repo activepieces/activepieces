@@ -3,7 +3,7 @@ import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, BillableFeature, isConsumableAutumnFeature, PlanName } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsExhaustedReverifyKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCreditsExhaustedReverifyKey, getCreditsExhaustedReverifyLockKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
@@ -27,7 +27,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             return cached
         }
         return distributedLock(log).runExclusive({
-            key: `billing_overview_fetch_${platformId}`,
+            key: getBillingOverviewFetchLockKey(platformId),
             timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
             fn: async () => {
                 const again = await distributedStore.get<BillingOverview>(getBillingOverviewKey(platformId))
@@ -336,7 +336,7 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
 
 async function reverifyExhaustedCredits(log: FastifyBaseLogger, platformId: string): Promise<BalanceCacheSnapshot | null> {
     const { data, error } = await tryCatch(() => distributedLock(log).runExclusive({
-        key: `credits_exhausted_reverify_${platformId}`,
+        key: getCreditsExhaustedReverifyLockKey(platformId),
         timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
         fn: async (): Promise<BalanceCacheSnapshot | null> => {
             const cached = await readCachedCredits(platformId)
@@ -412,7 +412,7 @@ function isCreditsExhausted(credits: CreditsBalanceCache): boolean {
 
 async function fetchCreditsDeduped(log: FastifyBaseLogger, platformId: string): Promise<BalanceCacheSnapshot | null> {
     const { data, error } = await tryCatch(() => distributedLock(log).runExclusive({
-        key: `customer_state_fetch_${platformId}`,
+        key: getCustomerStateFetchLockKey(platformId),
         timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
         fn: async () => {
             const cached = await readCachedCredits(platformId)

@@ -26,6 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 import { billingMutations } from '../../hooks/billing-hooks';
+import { PriceSummary } from '../price-summary';
 
 import { DeactivateUsersDialog } from './deactivate-users-dialog';
 
@@ -144,21 +145,15 @@ function ManageSeatsForm({
           )}
         />
 
-        <div className="rounded-lg border p-4 bg-primary/5 border-primary/30">
-          <div className="flex justify-between items-baseline">
-            <span className="text-sm font-semibold">
-              {isYearly ? t('Total yearly cost') : t('Total monthly cost')}
-            </span>
-            <span className="text-2xl font-bold text-primary">
-              {t('${amount}', { amount: totalCost.toFixed(2) })}
-            </span>
-          </div>
-          <div className="text-xs text-muted-foreground text-right">
-            {isYearly
+        <PriceSummary
+          label={isYearly ? t('Total yearly cost') : t('Total monthly cost')}
+          amount={t('${amount}', { amount: totalCost.toFixed(2) })}
+          note={
+            isYearly
               ? t('${price}/year per seat', { price: perSeat.toFixed(2) })
-              : t('${price}/month per seat', { price: perSeat.toFixed(2) })}
-          </div>
-        </div>
+              : t('${price}/month per seat', { price: perSeat.toFixed(2) })
+          }
+        />
 
         <div className="flex items-start gap-2 text-xs text-muted-foreground">
           <Info className="size-3.5 mt-0.5 shrink-0" />
@@ -222,12 +217,6 @@ type ManageSeatsDialogProps = {
   additionalSeats: number | null | undefined;
 };
 
-type ManageSeatsFormProps = {
-  feature: BillableFeature;
-  currentUsers: number;
-  includedSeats: number | null | undefined;
-  additionalSeats: number | null | undefined;
-  onOpenChange: (open: boolean) => void;
-};
+type ManageSeatsFormProps = Omit<ManageSeatsDialogProps, 'open'>;
 
 type ManageSeatsFormValues = z.infer<typeof manageSeatsFormSchema>;

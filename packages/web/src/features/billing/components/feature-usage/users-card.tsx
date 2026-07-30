@@ -10,6 +10,8 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
+import { DetailRow } from '../detail-row';
+
 import { ManageSeatsDialog } from './manage-seats-dialog';
 
 export const UsersCard = ({ info, feature }: UsersCardProps) => {
@@ -41,11 +43,11 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
 
       {hasInvitedSeats && (
         <div className="flex flex-col gap-1.5 text-sm">
-          <SeatsBreakdownRow
+          <DetailRow
             label={t('Active')}
             value={usage.activeUsers.toLocaleString()}
           />
-          <SeatsBreakdownRow
+          <DetailRow
             label={t('Invited')}
             value={usage.invitedSeats.toLocaleString()}
           />
@@ -54,11 +56,11 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
 
       {hasAdditionalSeats && !capBinds && (
         <div className="flex flex-col gap-1.5 text-sm">
-          <SeatsBreakdownRow
+          <DetailRow
             label={t('Plan seats')}
             value={included.toLocaleString()}
           />
-          <SeatsBreakdownRow
+          <DetailRow
             label={t('Additional seats')}
             value={additionalSeats.toLocaleString()}
           />
@@ -114,19 +116,6 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
     </div>
   );
 };
-
-const SeatsBreakdownRow = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) => (
-  <div className="flex items-center justify-between gap-2">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium text-foreground">{value}</span>
-  </div>
-);
 
 type UsersCardProps = {
   info: PlatformBillingInformation;

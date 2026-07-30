@@ -266,7 +266,7 @@ export const billingQueries = {
   },
 };
 
-function refreshBillingCaches(queryClient: QueryClient) {
+export function refreshBillingCaches(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: ['platform'] });
   queryClient.invalidateQueries({ queryKey: ['flags'] });
   queryClient.invalidateQueries({

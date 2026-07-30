@@ -1,20 +1,9 @@
-import { create } from 'zustand';
-
 import type { BillingCycle } from '../components/plan-selector-utils';
 
-interface ConfirmPurchaseDialogStore {
-  payload: ConfirmPurchasePayload | null;
-  openDialog: (payload: ConfirmPurchasePayload) => void;
-  closeDialog: () => void;
-}
+import { createPayloadDialogStore } from './create-dialog-store';
 
-export const useConfirmPurchaseDialogStore = create<ConfirmPurchaseDialogStore>(
-  (set) => ({
-    payload: null,
-    openDialog: (payload) => set({ payload }),
-    closeDialog: () => set({ payload: null }),
-  }),
-);
+export const useConfirmPurchaseDialogStore =
+  createPayloadDialogStore<ConfirmPurchasePayload>();
 
 export type ConfirmPurchasePayload = {
   planId: string;

@@ -1,14 +1,4 @@
-import { create } from 'zustand';
-
-interface PlanSwitchSuccessDialogStore {
-  planId: string | null;
-  openDialog: (planId: string) => void;
-  closeDialog: () => void;
-}
+import { createPayloadDialogStore } from './create-dialog-store';
 
 export const usePlanSwitchSuccessDialogStore =
-  create<PlanSwitchSuccessDialogStore>((set) => ({
-    planId: null,
-    openDialog: (planId) => set({ planId }),
-    closeDialog: () => set({ planId: null }),
-  }));
+  createPayloadDialogStore<string>();

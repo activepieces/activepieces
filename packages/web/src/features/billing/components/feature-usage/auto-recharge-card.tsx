@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 
 import { billingMutations } from '../../hooks/billing-hooks';
+import { DetailRow } from '../detail-row';
 
 import { AutoRechargeConfigDialog } from './auto-recharge-config-dialog';
 
@@ -85,15 +86,15 @@ export const AutoRechargeCard = ({
       {enabled && (
         <>
           <div className="flex flex-col gap-2 text-sm">
-            <AutoRechargeRow
+            <DetailRow
               label={t('When credits below')}
               value={autoTopUp.threshold.toLocaleString()}
             />
-            <AutoRechargeRow
+            <DetailRow
               label={t('Add')}
               value={autoTopUp.quantity.toLocaleString()}
             />
-            <AutoRechargeRow
+            <DetailRow
               label={t('Monthly limit')}
               value={
                 isNil(autoTopUp.maxMonthlyTopUps)
@@ -130,19 +131,6 @@ export const AutoRechargeCard = ({
     </div>
   );
 };
-
-const AutoRechargeRow = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) => (
-  <div className="flex items-center justify-between gap-2">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium text-foreground">{value}</span>
-  </div>
-);
 
 type AutoRechargeCardProps = {
   feature: BillableFeature;

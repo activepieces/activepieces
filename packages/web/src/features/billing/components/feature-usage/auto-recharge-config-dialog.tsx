@@ -43,6 +43,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
+import { PriceSummary } from '../price-summary';
 
 export function AutoRechargeConfigDialog({
   isOpen,
@@ -191,24 +192,14 @@ export function AutoRechargeConfigDialog({
               />
             </div>
 
-            <div className="rounded-lg border p-4 bg-primary/5 border-primary/30">
-              <div className="space-y-3 animate-in fade-in duration-300">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-semibold">
-                    {t('Payment per auto recharge')}
-                  </span>
-                  <span className="text-2xl font-bold text-primary">
-                    {t('${totalCost}', { totalCost: costPerTopUp.toFixed(2) })}
-                  </span>
-                </div>
-                <div className="text-xs text-muted-foreground text-right">
-                  {t('${cost} per {units} credits', {
-                    cost: feature.pricePerUnit,
-                    units: feature.billingUnits.toLocaleString(),
-                  })}
-                </div>
-              </div>
-            </div>
+            <PriceSummary
+              label={t('Payment per auto recharge')}
+              amount={t('${amount}', { amount: costPerTopUp.toFixed(2) })}
+              note={t('${cost} per {units} credits', {
+                cost: feature.pricePerUnit,
+                units: feature.billingUnits.toLocaleString(),
+              })}
+            />
 
             <div className="flex items-start gap-2 text-xs text-muted-foreground">
               <Info className="size-3.5 mt-0.5 shrink-0" />

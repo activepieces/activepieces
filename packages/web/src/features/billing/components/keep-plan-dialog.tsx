@@ -16,6 +16,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
 
+import { DetailRow } from './detail-row';
 import { planSelectorUtils } from './plan-selector-utils';
 
 export function KeepPlanDialog({
@@ -108,13 +109,6 @@ export function KeepPlanDialog({
     </Dialog>
   );
 }
-
-const DetailRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center justify-between gap-2">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium text-foreground">{value}</span>
-  </div>
-);
 
 type KeepPlanDialogProps = {
   open: boolean;
