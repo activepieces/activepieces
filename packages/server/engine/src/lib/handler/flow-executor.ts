@@ -166,7 +166,7 @@ const applyLogSizeLimitIfExceeded = async (
     flowExecutionContext: FlowExecutorContext,
     action: FlowAction | FlowTrigger,
 ): Promise<FlowExecutorContext> => {
-    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps)) {
+    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.logSizeBytes)) {
         return flowExecutionContext
     }
     const failed = await flowExecutionContext
