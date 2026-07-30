@@ -20,7 +20,7 @@ export class FlowExecutorContext {
     stepNameToTest?: boolean
     stepsCount: number
     engineApi?: EngineApiConfig
-    resolvedStepOutputCache: ByteLruCache<Promise<unknown>>
+    resolvedStepOutputCache: SliceCache
     slicingEnabled: boolean
 
     /**
@@ -227,7 +227,7 @@ export class FlowExecutorContext {
     }
 }
 
-async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: ByteLruCache<Promise<unknown>>): Promise<Record<string, unknown>> {
+async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {}
     for (const [stepName, step] of Object.entries(steps)) {
         const output = await resolveStepOutput(step, engineApi, cache)
@@ -258,7 +258,7 @@ async function maybeSliceOutput({ value, engineApi, thresholdBytes = SLICE_THRES
     return { ref: { fileId, size, url: readUrl } }
 }
 
-async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: ByteLruCache<Promise<unknown>>): Promise<unknown> {
+async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<unknown> {
     if (step.outputType !== StepOutputType.SLICE) {
         return step.output
     }
@@ -320,3 +320,5 @@ type MaybeSliceOutputParams = {
     engineApi?: EngineApiConfig
     thresholdBytes?: number
 }
+
+export type SliceCache = ByteLruCache<Promise<unknown>>
