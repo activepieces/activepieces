@@ -14,7 +14,7 @@ export const postcards = createPiece({
   description:
     'Email Builder by Designmodo. List projects and folders, check export quota, and export email designs as hosted HTML or a ZIP bundle.',
   auth: postcardsAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/postcards.png',
   categories: [PieceCategory.MARKETING],
   authors: ['designmodo'],
