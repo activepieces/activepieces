@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -141,7 +142,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.123.0",
+      "version": "0.125.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
