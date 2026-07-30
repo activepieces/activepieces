@@ -14,7 +14,7 @@ import { waitpointClient } from '../piece-context/waitpoint-client'
 import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
-import { ActionHandler, BaseExecutor } from './base-executor'
+import { ActionHandler, BaseExecutor, failStep } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
@@ -194,20 +194,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
     }))
 
     if (executionStateError) {
-        const failedStepOutput = stepOutput
-            .setStatus(StepOutputStatus.FAILED)
-            .setErrorMessage(utils.formatError(executionStateError))
-            .setDuration(performance.now() - stepStartTime)
-
-        return (await executionState
-            .upsertStep(action.name, failedStepOutput))
-            .setVerdict({
-                status: FlowRunStatus.FAILED, failedStep: {
-                    name: action.name,
-                    displayName: action.displayName,
-                    message: utils.formatError(executionStateError),
-                },
-            })
+        return failStep({
+            action,
+            executionState,
+            stepOutput,
+            error: executionStateError,
+            durationMs: performance.now() - stepStartTime,
+        })
     }
 
     return executionStateResult

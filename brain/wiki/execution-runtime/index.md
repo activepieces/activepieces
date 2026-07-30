@@ -40,6 +40,11 @@ The four calls a run emits to the app during execution: `updateRunProgress`, `up
 - **Queued Job** — accepted onto Redis, not yet started; exists only in Redis (an async-webhook Queued Job has no FlowRun row) → as durable as the Redis dataset. See the decision *Async webhook ACK is Redis-durable, not Postgres-durable*.
 - **In-flight Run** — a worker is actively executing it; has a FlowRun row + checkpointed log in Postgres/S3, survives worker or Redis loss.
 
+### ⚠️ Gotchas
+- **An agent tool's piece can go un-provisioned → `PieceNotFoundError` at runtime.** `extractAgentToolPieceRefs` (`flow-provisioning.ts`) strict-`safeParse`s each `agentTools` entry against `AgentPieceTool` and silently `return []`s on failure. `PredefinedInputsStructure` *requires* `fields`, but flow versions still carry the legacy flat `predefinedInput` (`{ auth, model, … }`) — those all fail to parse, so their pieces never get installed. The engine's `agentTools.tools()` does **no** validation and tolerates the legacy shape, so it happily tries to load the missing piece and the run dies `INTERNAL_ERROR` with an empty `failedStep`. Provisioning must not be stricter than the engine.
+- **A wrong Flow Bundle is sticky forever.** `parseManifest` only invalidates on `schemaVersion !== LATEST_FLOW_SCHEMA_VERSION`. A bundle published by buggy/older worker code stays "valid", keeps being served for that locked flow version, and short-circuits `resolvePieces` — so fixing the resolver code does **not** heal affected flows. Recovery is deleting the `FLOW_BUNDLE` file row (its id **is** the `flowVersionId`) + S3 object, or republishing the flow. Worth a bundle-format/generation field in the manifest.
+- **`extractConnectionIds` misses agent-tool connections.** It only reads step/trigger `settings.input.auth`, never `agentTools[].pieceMetadata.predefinedInput.auth`, so `flowVersion.connectionIds` under-reports and "which flows use this connection" lies.
+
 ---
 
 📁 **Decisions nested under this page:** *Worker is the Sandbox* · *Transitional multi-box concurrency* · *Engine posts run-time callbacks directly* · *Sandbox pool is a pure execute() (superseded)* · *Freeze piece versions in the Flow Bundle manifest*.

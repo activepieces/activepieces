@@ -125,10 +125,18 @@ memory; smaller payloads stay inline for the fastest path.
 ### Key / value storage
 
 Used by the built-in **Store** piece and any piece that calls `context.store`.
+Values are stored directly in Postgres (`jsonb`), so unlike files and run logs
+they are **not** offloaded to object storage. Every stored value counts toward
+your database size and is read and written in full on each access.
 
-| Limit | Value |
-|---|---|
-| Maximum key length | 128 characters |
-| Maximum value size | 512 KB |
+| Limit | Cloud | Env var | Self-hosted default |
+|---|---|---|---|
+| Maximum key length | 128 characters | not configurable | `128` |
+| Maximum value size | 512 KB | `AP_MAX_STORE_ENTRY_VALUE_SIZE_KB` | `512` |
 
-These limits are not configurable.
+<Tip>
+Raising the value size lets a flow stash bigger payloads (for example, data
+gathered inside router branches and re-read after the branches join). But large
+values live in the database with no object-storage offload. For payloads in the
+MB range, prefer the **Tables** piece or pass data as files between steps.
+</Tip>

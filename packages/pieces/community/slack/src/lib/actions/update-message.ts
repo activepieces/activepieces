@@ -4,19 +4,21 @@ import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from
 import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { chatUpdateOutputSchema } from '../output-schemas';
 
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'updateMessage',
   displayName: 'Update message',
   description: 'Update an existing message',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Edit an already-posted Slack message in place, replacing its text and blocks, identified by channel and message timestamp (ts). Pick this to revise content the flow previously sent rather than posting a new one; use Delete Message to remove it instead. Idempotent: re-running with the same inputs leaves the message in the same final state.',
     idempotent: true,
   },
   auth: slackAuth,
+  outputSchema: chatUpdateOutputSchema,
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
