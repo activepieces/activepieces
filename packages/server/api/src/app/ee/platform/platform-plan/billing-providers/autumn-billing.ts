@@ -214,8 +214,8 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
 })
 
 function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthEnd: string): BillingInfo {
-    const baseSubscriptions = toBaseSubscriptions(customer)
-    const baseSubscription = selectCurrentBaseSubscription(baseSubscriptions)
+    const baseSubscriptions = autumnUtils.toBaseSubscriptions(customer)
+    const baseSubscription = autumnUtils.selectCurrentBaseSubscription(baseSubscriptions)
     const purchasedPlan = (customer.purchases ?? []).find((purchase) =>
         !isNil(purchase.plan) && !purchase.plan.addOn && purchase.planId !== PlanName.FREE)
     const currentPlan = purchasedPlan ?? baseSubscription
@@ -232,24 +232,13 @@ function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthE
     }
 }
 
-function toBaseSubscriptions(customer: GetCustomerResponse) {
-    return customer.subscriptions.filter((subscription) => !subscription.addOn)
-}
-
-function selectCurrentBaseSubscription(baseSubscriptions: ReturnType<typeof toBaseSubscriptions>) {
-    const activeBaseSubscriptions = baseSubscriptions.filter((subscription) => subscription.status === 'active')
-    return activeBaseSubscriptions.find((subscription) => subscription.planId !== PlanName.FREE)
-        ?? activeBaseSubscriptions[0]
-        ?? baseSubscriptions[0]
-}
-
 function toBillableFeatures(customer: GetCustomerResponse): BillableFeature[] {
-    const baseSubscriptions = toBaseSubscriptions(customer)
+    const baseSubscriptions = autumnUtils.toBaseSubscriptions(customer)
     const trialing = baseSubscriptions.some((subscription) => !isNil(subscription.trialEndsAt) && subscription.trialEndsAt > apDayjs().valueOf())
     if (trialing) {
         return []
     }
-    const current = selectCurrentBaseSubscription(baseSubscriptions)
+    const current = autumnUtils.selectCurrentBaseSubscription(baseSubscriptions)
     return (current?.plan?.items ?? []).flatMap((item) => {
         if (!autumnUtils.isAutumnFeatureId(item.featureId) || item.price?.billingMethod !== 'prepaid' || isNil(item.price.amount)) {
             return []

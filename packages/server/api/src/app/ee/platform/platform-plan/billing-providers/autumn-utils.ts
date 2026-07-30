@@ -233,6 +233,15 @@ export const autumnUtils = {
     isAutumnFeatureId(value: string): value is AutumnFeatureId {
         return Object.values(AutumnFeatureId).some((id) => id === value)
     },
+    toBaseSubscriptions(customer: GetCustomerResponse): GetCustomerResponse['subscriptions'] {
+        return customer.subscriptions.filter((subscription) => !subscription.addOn)
+    },
+    selectCurrentBaseSubscription(baseSubscriptions: GetCustomerResponse['subscriptions']): GetCustomerResponse['subscriptions'][number] | undefined {
+        const activeBaseSubscriptions = baseSubscriptions.filter((subscription) => subscription.status === 'active')
+        return activeBaseSubscriptions.find((subscription) => subscription.planId !== PlanName.FREE)
+            ?? activeBaseSubscriptions[0]
+            ?? baseSubscriptions[0]
+    },
     async getPlatformOwnerEmail(log: FastifyBaseLogger, platformId: string): Promise<string> {
         const platform = await platformService(log).getOneOrThrow(platformId)
         const owner = await userService(log).getMetaInformation({ id: platform.ownerId })
@@ -434,13 +443,8 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
     // Resolve from the ACTIVE base subscription (mirroring toBillingInfo): a scheduled future plan (e.g. a
     // pending end-of-cycle downgrade) also lives in `subscriptions`, and picking it here would mislabel the
     // customer as already on the plan they only switch to later.
-    const baseSubscriptions = customer.subscriptions.filter((subscription) => !subscription.addOn)
-    const activeBaseSubscriptions = baseSubscriptions.filter((subscription) => subscription.status === 'active')
-    const baseSubscriptionPlanId =
-        activeBaseSubscriptions.find((subscription) => subscription.planId !== PlanName.FREE)?.planId
-        ?? activeBaseSubscriptions[0]?.planId
-        ?? baseSubscriptions[0]?.planId
-        ?? null
+    const baseSubscriptions = autumnUtils.toBaseSubscriptions(customer)
+    const baseSubscriptionPlanId = autumnUtils.selectCurrentBaseSubscription(baseSubscriptions)?.planId ?? null
     const purchasedPlanId = (customer.purchases ?? [])
         .find((purchase) => !isNil(purchase.planId) && purchase.planId !== PlanName.FREE)?.planId ?? null
     const planId = baseSubscriptionPlanId != null && baseSubscriptionPlanId !== PlanName.FREE
