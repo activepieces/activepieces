@@ -160,7 +160,18 @@ function ToggleRevealCard({
             <Switch
               checked={field.value === true}
               disabled={disabled}
-              onCheckedChange={field.onChange}
+              onCheckedChange={(next) => {
+                field.onChange(next);
+                if (!next) {
+                  reveals.forEach((name) =>
+                    form.setValue(
+                      inputNameFor(prefixValue, name),
+                      emptyValueFor(props[name]),
+                      { shouldValidate: true },
+                    ),
+                  );
+                }
+              }}
             />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold text-foreground">
@@ -208,6 +219,17 @@ function FilterSummary({
     form.setValue(inputNameFor(prefixValue, name), emptyValueFor(property), {
       shouldValidate: true,
     });
+    if (property.type === PropertyType.CHECKBOX) {
+      (property.reveals ?? []).forEach((revealName) => {
+        if (props[revealName]) {
+          form.setValue(
+            inputNameFor(prefixValue, revealName),
+            emptyValueFor(props[revealName]),
+            { shouldValidate: true },
+          );
+        }
+      });
+    }
   };
 
   return (
