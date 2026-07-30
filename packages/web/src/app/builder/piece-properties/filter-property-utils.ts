@@ -1,4 +1,5 @@
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
+import { t } from 'i18next';
 
 function inputNameFor(prefixValue: string, name: string): string {
   return prefixValue.length > 0 ? `${prefixValue}.${name}` : name;
@@ -65,11 +66,24 @@ function emptyValueFor(property: PieceProperty): unknown {
   }
 }
 
+const DATE_RANGE_PRESET_LABELS: Record<string, string> = {
+  last_24_hours: 'Last 24 hours',
+  last_7_days: 'Last 7 days',
+  last_30_days: 'Last 30 days',
+  last_90_days: 'Last 90 days',
+  this_month: 'This month',
+  custom: 'Custom',
+};
+
 function chipLabel(property: PieceProperty, value: unknown): string {
   const name = 'displayName' in property ? property.displayName : '';
+  if (property.type === PropertyType.DATE_RANGE) {
+    const preset = (value as { preset?: string })?.preset;
+    const label = preset ? DATE_RANGE_PRESET_LABELS[preset] : undefined;
+    return label ? `${name}: ${t(label)}` : name;
+  }
   if (
     property.type === PropertyType.CHECKBOX ||
-    property.type === PropertyType.DATE_RANGE ||
     property.type === PropertyType.STATIC_DROPDOWN ||
     property.type === PropertyType.DROPDOWN
   ) {

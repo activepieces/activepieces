@@ -47,6 +47,12 @@ describe('filterPropertyUtils.isFilterActive', () => {
     expect(isFilterActive(dateRange, { preset: 'last_7_days' })).toBe(true);
   });
 
+  it('treats a custom date range as active only once a bound is set', () => {
+    expect(isFilterActive(dateRange, { preset: 'custom' })).toBe(false);
+    expect(isFilterActive(dateRange, { preset: 'custom', after: '2024-01-01' })).toBe(true);
+    expect(isFilterActive(dateRange, { preset: 'custom', before: '2024-12-31' })).toBe(true);
+  });
+
   it('treats a null dropdown as inactive and a selected value as active', () => {
     expect(isFilterActive(dropdown, null)).toBe(false);
     expect(isFilterActive(dropdown, 'primary')).toBe(true);
