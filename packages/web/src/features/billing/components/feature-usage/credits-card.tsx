@@ -6,6 +6,10 @@ import { Clock } from 'lucide-react';
 
 import { Progress } from '@/components/ui/progress';
 
+import { billingUtils, CreditsResetLine } from '../../utils/billing-utils';
+
+const CARD_DATE_FORMAT = 'D MMM YYYY, h:mm A';
+
 export const CreditsCard = ({ info }: CreditsCardProps) => {
   const { plan, usage } = info;
   const isPaid = !isNil(plan.plan) && plan.plan !== PlanName.FREE;
@@ -17,8 +21,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
     isUnlimited || total <= 0
       ? 0
       : Math.min(100, Math.round((used / total) * 100));
-  const resetAt = resolveResetAt({ info, isPaid });
-  const footerDate = info.trialEndsAt ?? resetAt;
+  const footer = resolveFooter({ info, isPaid });
   const switchesToPlanName =
     info.scheduledPlanName ??
     (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
@@ -48,14 +51,14 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
           </>
         )}
       </div>
-      {!isNil(footerDate) && (
+      {!isNil(footer) && (
         <div className="flex flex-col gap-1 border-t p-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Clock className="size-4 shrink-0" />
             <span>
-              {info.trialEndsAt ? t('Trial ends') : t('Resets in')}{' '}
+              {footer.label}{' '}
               <span className="font-semibold text-foreground">
-                {dayjs(footerDate).format('D MMM YYYY, h:mm A')}
+                {footer.value}
               </span>
             </span>
           </div>
@@ -72,20 +75,26 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
   );
 };
 
-function resolveResetAt({
+function resolveFooter({
   info,
   isPaid,
 }: {
   info: PlatformBillingInformation;
   isPaid: boolean;
-}): string | null {
-  if (!isNil(info.usage.creditsNextResetAt)) {
-    return info.usage.creditsNextResetAt;
+}): CreditsResetLine | null {
+  if (!isNil(info.trialEndsAt)) {
+    return {
+      label: t('Trial ends'),
+      value: dayjs(info.trialEndsAt).format(CARD_DATE_FORMAT),
+    };
   }
-  if (isPaid) {
-    return info.nextBillingDate ?? null;
-  }
-  return dayjs().add(1, 'day').startOf('day').toISOString();
+  return billingUtils.resolveCreditsReset({
+    creditsNextResetAt: info.usage.creditsNextResetAt,
+    creditsResetInterval: info.creditsResetInterval,
+    nextBillingDate: info.nextBillingDate,
+    isPaid,
+    dateFormat: CARD_DATE_FORMAT,
+  });
 }
 
 type CreditsCardProps = {

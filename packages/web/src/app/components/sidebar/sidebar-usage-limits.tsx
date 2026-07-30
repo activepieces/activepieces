@@ -6,7 +6,6 @@ import {
   PlanName,
   PlatformRole,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpCircle, Coins, SquareArrowOutUpRight } from 'lucide-react';
 import React, { useState } from 'react';
@@ -18,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   AutoRechargeConfigDialog,
   billingQueries,
+  billingUtils,
   useManagePlanDialogStore,
 } from '@/features/billing';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 
 const AMBER_THRESHOLD = 70;
 const RED_THRESHOLD = 90;
+const SIDEBAR_DATE_FORMAT = 'MMM D, YYYY';
 
 const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -97,15 +98,13 @@ const SidebarUsageLimits = React.memo(() => {
       ? formatUtils.formatNumberCompact(displayedCredits)
       : formatUtils.formatNumber(displayedCredits);
 
-  const resetAt =
-    usage.creditsNextResetAt ??
-    (isPaid ? null : dayjs().add(1, 'day').startOf('day').toISOString());
-  const resetDays = isNil(resetAt)
-    ? null
-    : Math.max(
-        0,
-        dayjs(resetAt).startOf('day').diff(dayjs().startOf('day'), 'day'),
-      );
+  const resetLine = billingUtils.resolveCreditsReset({
+    creditsNextResetAt: usage.creditsNextResetAt,
+    creditsResetInterval: info?.creditsResetInterval,
+    nextBillingDate: info?.nextBillingDate,
+    isPaid,
+    dateFormat: SIDEBAR_DATE_FORMAT,
+  });
   const showUpgradeButton = canManage && (!isPaid || isTrial);
   const showAutoRechargeButton =
     canManage && isPaid && !isTrial && !isNil(creditsFeature);
@@ -123,9 +122,9 @@ const SidebarUsageLimits = React.memo(() => {
         </Badge>
       </div>
       <div className="flex items-center gap-2">
-        {!isNil(resetDays) && (
-          <span className="text-xs text-muted-foreground">
-            {t('creditsResetRelative', { count: resetDays })}
+        {!isNil(resetLine) && (
+          <span className="min-w-0 truncate text-xs text-muted-foreground">
+            {resetLine.label} {resetLine.value}
           </span>
         )}
         <span className="grow"></span>

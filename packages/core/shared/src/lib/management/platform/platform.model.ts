@@ -259,6 +259,7 @@ export type ProjectCreditUsage = z.infer<typeof ProjectCreditUsage>
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
+    creditsResetInterval: Nullable(z.string()),
     autumnPlanName: Nullable(z.string()),
     scheduledPlanName: Nullable(z.string()),
     nextBillingDate: z.string(),

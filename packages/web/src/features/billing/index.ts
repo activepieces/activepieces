@@ -15,6 +15,7 @@ export { Error } from './components/error';
 export { LicenseKey } from './components/license-key';
 export { Success } from './components/success';
 export { billingMutations, billingQueries } from './hooks/billing-hooks';
+export { billingUtils } from './utils/billing-utils';
 export { useSeatLimitGuard } from './hooks/use-seat-limit-guard';
 export { useTeamProjectLimitGuard } from './hooks/use-team-project-limit-guard';
 export { useCancelSubscriptionGuard } from './hooks/use-cancel-subscription-guard';

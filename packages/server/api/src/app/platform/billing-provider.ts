@@ -6,7 +6,7 @@ import { hooksFactory } from '../helper/hooks-factory'
 import { system } from '../helper/system/system'
 
 function defaultBillingInfo(): BillingInfo {
-    return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false }
+    return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, creditsResetInterval: null }
 }
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
@@ -276,6 +276,7 @@ export type BillingInfo = {
     planName: string | null
     scheduledPlanName: string | null
     billingPortalAvailable: boolean
+    creditsResetInterval: string | null
 }
 
 export type BillingOverview = BillingInfo & {

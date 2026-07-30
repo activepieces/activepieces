@@ -222,6 +222,7 @@ function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthE
     const scheduledPlan = baseSubscriptions.find((subscription) => subscription.status === 'scheduled')
     return {
         planName: currentPlan?.plan?.name ?? null,
+        creditsResetInterval: toCreditsResetInterval(currentPlan?.plan?.items ?? []),
         startDate: msToIso(baseSubscription?.currentPeriodStart) ?? monthStart,
         endDate: msToIso(baseSubscription?.currentPeriodEnd) ?? monthEnd,
         nextBillingAmount: baseSubscription?.plan?.price?.amount ?? 0,
@@ -245,6 +246,11 @@ function toBillableFeatures(customer: GetCustomerResponse): BillableFeature[] {
         }
         return [{ featureId: item.featureId, pricePerUnit: item.price.amount, billingUnits: item.price.billingUnits ?? 1, interval: item.price.interval ?? null }]
     })
+}
+
+function toCreditsResetInterval(items: AutumnPlanItems): string | null {
+    const creditsItem = items.find((item) => item.featureId === AutumnFeatureId.AP_CREDITS && isNil(item.price))
+    return creditsItem?.reset?.interval ?? null
 }
 
 function toSeatBreakdown(customer: GetCustomerResponse): { includedSeats: number | null, additionalSeats: number | null } {
@@ -442,7 +448,7 @@ async function fetchCredits(log: FastifyBaseLogger, platformId: string): Promise
 }
 
 function emptyBillingOverview({ monthStart, monthEnd, unavailable }: { monthStart: string, monthEnd: string, unavailable: boolean }): BillingOverview {
-    return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null, unavailable }
+    return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, creditsResetInterval: null, autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null, unavailable }
 }
 
 async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string): Promise<BillingOverview> {
@@ -469,3 +475,5 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
     await distributedStore.put(getBillingOverviewKey(platformId), overview, BILLING_OVERVIEW_TTL_SECONDS)
     return overview
 }
+
+type AutumnPlanItems = NonNullable<GetCustomerResponse['subscriptions'][number]['plan']>['items']
