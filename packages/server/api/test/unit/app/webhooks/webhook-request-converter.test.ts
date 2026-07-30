@@ -1,5 +1,5 @@
 import { FAIL_PARENT_ON_FAILURE_HEADER, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
-import { extractHeaderFromRequest, isBinaryContentType } from '../../../../src/app/webhooks/webhook-request-converter'
+import { convertRequest, extractHeaderFromRequest, isBinaryContentType } from '../../../../src/app/webhooks/webhook-request-converter'
 
 describe('isBinaryContentType', () => {
     it.each([
@@ -56,5 +56,22 @@ describe('extractHeaderFromRequest', () => {
         const result = extractHeaderFromRequest(request)
         expect(result.parentRunId).toBeUndefined()
         expect(result.failParentOnFailure).toBe(false)
+    })
+})
+
+describe('convertRequest rawBody', () => {
+    it('forwards rawBody for string-parsed (signed) content types', async () => {
+        const request = {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            query: {},
+            body: { ok: true },
+            rawBody: '{"ok":true}',
+            isMultipart: () => false,
+        } as never
+
+        const result = await convertRequest(request, 'project-1', 'flow-1')
+        expect(result.rawBody).toBe('{"ok":true}')
+        expect(result.body).toEqual({ ok: true })
     })
 })

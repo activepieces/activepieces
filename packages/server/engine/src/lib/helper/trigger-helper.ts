@@ -1,6 +1,6 @@
 import { assertEqual, isNil } from '@activepieces/core-utils'
-import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
+import { PiecePropertyMap, SetScheduleRequest, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, InvalidScheduleIntervalError, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -111,7 +111,18 @@ export const triggerHelper = {
                     appListeners.push({ events, identifierValue, identifierKey })
                 },
             },
-            setSchedule(request: ScheduleOptions) {
+            setSchedule(request: SetScheduleRequest) {
+                if ('intervalMs' in request) {
+                    const parsed = ScheduleOptions.safeParse({
+                        type: TriggerSourceScheduleType.INTERVAL,
+                        intervalMs: request.intervalMs,
+                    })
+                    if (!parsed.success) {
+                        throw new InvalidScheduleIntervalError(request.intervalMs)
+                    }
+                    scheduleOptions = parsed.data
+                    return
+                }
                 if (!isValidCron(request.cronExpression)) {
                     throw new InvalidCronExpressionError(request.cronExpression)
                 }

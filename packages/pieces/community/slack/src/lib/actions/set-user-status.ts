@@ -4,14 +4,16 @@ import { WebClient } from '@slack/web-api';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
+import { updateProfileActionOutputSchema } from '../output-schemas';
 
 export const setUserStatusAction = createAction({
   auth: slackAuth,
   name: 'slack-set-user-status',
   displayName: 'Set User Status',
   description: "Sets a user's custom status",
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: "Set the authenticated user's custom status text and optional emoji, optionally with a Unix-timestamp expiration; requires a user token, not a bot token. This overwrites any existing status, so re-running with the same input is idempotent. Status text is capped at 100 characters.", idempotent: true },
+  outputSchema: updateProfileActionOutputSchema,
   props: {
     text: Property.ShortText({
       displayName: 'Text',

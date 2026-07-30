@@ -9,12 +9,13 @@ import {
 } from '../common';
 
 export const generateImage = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'generate_image',
   displayName: 'Generate Image',
   description:
     'Generate an image from a text prompt using Amazon Titan Image Generator or Stability AI models.',
+  aiMetadata: { description: 'Generates one image from a text prompt using a Bedrock image model (Amazon Titan Image Generator, Nova Canvas, or Stability AI) and stores it as a file reference; supports a negative prompt, width and height, and a seed for reproducible output. Pick this to create new imagery from a description - use Generate Content from Image to interpret an existing image, and Ask Bedrock for text output. Requires an image-output model enabled in the connected AWS region, at a resolution that model supports. Not idempotent: each call invokes the model and writes a new file, though a fixed seed with the same prompt reproduces the same picture.', idempotent: false },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',

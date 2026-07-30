@@ -1,0 +1,28 @@
+{
+    "id": "memory-saves-when-asked",
+    "description": "The user explicitly asks the assistant to remember a durable personal fact ('Could you remember that I love cheese?'). The assistant must persist it to cross-session memory via ap_remember, not just reply conversationally. Regression gate: an explicit remember request must always trigger a memory save.",
+    "kind": "regression",
+    "initialMessages": [],
+    "userTurns": [
+        "Could you remember that I love cheese?"
+    ],
+    "recordedToolCalls": [
+        { "order": 0, "toolName": "ap_remember", "output": { "remembered": true } }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "reachedToolWithin", "toolName": "ap_remember", "n": 5 },
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "saves_requested_memory",
+            "rubric": "The user explicitly asked the assistant to remember that they love cheese. PASS when the assistant saves it to memory (it calls the ap_remember tool) and confirms it will remember going forward. FAIL when the assistant only acknowledges conversationally without saving anything, refuses, or tells the user it cannot remember across chats.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

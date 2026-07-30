@@ -28,12 +28,12 @@ data:
   # Real same-region object store: a GCS bucket in europe-west1 reached over the S3-interop endpoint
   # with HMAC keys. The app generates SigV4 presigned URLs (forcePathStyle on, since endpoint is set);
   # the engine fetches flow bundle + piece archives directly from GCS via those links.
-  AP_S3_BUCKET: ap-bench-eu-b3803
+  AP_S3_BUCKET: ap-bench-usc-b3803
   # HMAC access key + secret are NOT here — they live in the `ap-s3-secret` Kubernetes Secret,
   # created out-of-band (kubectl create secret) and injected via secretRef on app + worker, so the
   # live credential never sits in this plaintext manifest.
   AP_S3_ENDPOINT: https://storage.googleapis.com
-  AP_S3_REGION: europe-west1
+  AP_S3_REGION: us-central1
   AP_S3_USE_SIGNED_URLS: "true"
   # AWS SDK >=3.729 defaults to CRC32 checksums + aws-chunked payloads on PutObject; GCS's
   # S3-interop endpoint rejects those with SignatureDoesNotMatch. WHEN_REQUIRED restores the old behavior.

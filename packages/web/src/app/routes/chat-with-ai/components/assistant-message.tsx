@@ -1,8 +1,9 @@
 import { t } from 'i18next';
-import { ChevronDown, Volume2, VolumeOff } from 'lucide-react';
+import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
   Message,
@@ -40,6 +41,7 @@ import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
+import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
@@ -64,6 +66,8 @@ export const AssistantMessage = memo(function AssistantMessage({
   onSendPrompt,
   claimedBuildIds = EMPTY_BUILD_IDS,
   isResumed = false,
+  conversationId,
+  messageIndex,
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
@@ -71,6 +75,8 @@ export const AssistantMessage = memo(function AssistantMessage({
   onSendPrompt?: (text: string) => void;
   claimedBuildIds?: ReadonlySet<string>;
   isResumed?: boolean;
+  conversationId?: string | null;
+  messageIndex: number;
 }) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
@@ -107,6 +113,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   }
 
   const isFromHistory = message.id.startsWith('hist-');
+  const feedbackRating = message.feedback?.rating;
 
   return (
     <motion.div
@@ -194,6 +201,13 @@ export const AssistantMessage = memo(function AssistantMessage({
                       )}
                     </button>
                   </MessageAction>
+                )}
+                {conversationId && (
+                  <FeedbackButtons
+                    conversationId={conversationId}
+                    messageIndex={messageIndex}
+                    initialRating={feedbackRating}
+                  />
                 )}
               </>
             )}
@@ -383,6 +397,20 @@ function MessageBlocks({
             return (
               <div key={`batch-${i}`} className="py-2">
                 <BatchProgressCard progress={block.data} />
+              </div>
+            );
+          case 'memory-saved':
+            return (
+              <div
+                key={`memory-${i}`}
+                className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground"
+              >
+                <Brain className="h-3.5 w-3.5 shrink-0" />
+                <span className="shrink-0">{t('Memory updated')}</span>
+                <span className="shrink-0 opacity-50">·</span>
+                <TextWithTooltip tooltipMessage={block.memory}>
+                  <span className="min-w-0 flex-1">{block.memory}</span>
+                </TextWithTooltip>
               </div>
             );
           case 'action-receipt':

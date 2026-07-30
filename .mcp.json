@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "craftspace-activepieces": {
+      "type": "http",
+      "url": "https://craftspace.app/mcp/activepieces"
+    }
+  }
+}

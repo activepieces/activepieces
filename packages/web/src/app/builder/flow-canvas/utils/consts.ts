@@ -25,6 +25,8 @@ import { ApEdgeType, ApNodeType } from './types';
 const ARC_LENGTH = flowCanvasLayoutConsts.ARC_LENGTH;
 const ORIENTATION_LAYOUT = flowCanvasLayoutConsts.ORIENTATION_LAYOUT;
 const STEP_NODE_SIZE = flowCanvasLayoutConsts.STEP_NODE_SIZE;
+const HORIZONTAL_STEP_LABEL_WIDTH =
+  flowCanvasLayoutConsts.HORIZONTAL_STEP_LABEL_WIDTH;
 const ARC_LEFT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 -${ARC_LENGTH},${ARC_LENGTH}`;
 const ARC_RIGHT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 ${ARC_LENGTH},${ARC_LENGTH}`;
 const ARC_LEFT_DOWN = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},${ARC_LENGTH}`;
@@ -76,6 +78,7 @@ export const flowCanvasConsts = {
   ARC_LENGTH,
   ORIENTATION_LAYOUT,
   STEP_NODE_SIZE,
+  HORIZONTAL_STEP_LABEL_WIDTH,
   ARC_LEFT,
   ARC_RIGHT,
   ARC_LEFT_DOWN,

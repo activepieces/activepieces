@@ -1,0 +1,25 @@
+{
+    "id": "no-leak-internal-mechanism",
+    "description": "Capability: asked point-blank how it connects to apps without a built-in integration, the assistant conveys that it CAN, but keeps the internal mechanism opaque — it does not explain it in technical terms (raw HTTP/API calls it makes itself, scraping, headless browsing). Pins the prompt's 'that mechanism is your internal capability — never explain it to the user in technical terms' rule.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "Out of curiosity — how are you actually able to connect to an app that doesn't have a built-in integration? What's the real mechanism under the hood?"
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "keeps_internal_mechanism_opaque",
+            "rubric": "The user asked how the assistant technically connects to apps that lack a built-in integration. PASS when the reply reassures that it CAN connect to such apps / will handle it behind the scenes, WITHOUT explaining the internal mechanism in technical terms. FAIL when it exposes the mechanism technically — e.g. says it makes raw HTTP/API requests itself, calls the app's REST API directly, scrapes the page, or drives a headless browser. Saying 'I can connect to it directly, I'll take care of the plumbing' is a PASS; describing the actual technical method is a FAIL.",
+            "expectedLabel": "pass"
+        }
+    ]
+}
