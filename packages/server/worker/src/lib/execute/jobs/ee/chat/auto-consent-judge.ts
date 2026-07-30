@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { autoConsent, AutoConsentJudge, AutoConsentJudgeRequest, AutoConsentVerdict } from '@activepieces/shared'
 import { generateText, LanguageModel } from 'ai'
 
@@ -16,6 +16,7 @@ function createAutoConsentJudge({ model, userRequest, onVerdict, log }: {
     log?: { info?: (obj: Record<string, unknown>, msg: string) => void, warn: (obj: Record<string, unknown>, msg: string) => void }
 }): AutoConsentJudge {
     const memo = new Map<string, AutoConsentVerdict>()
+    const fenceNonce = apId()
     return async (request) => {
         const key = memoKeyOf(request)
         const cached = memo.get(key)
@@ -30,6 +31,7 @@ function createAutoConsentJudge({ model, userRequest, onVerdict, log }: {
             input: request.input,
             batchSummary: request.batchSummary,
             tainted: request.tainted,
+            fenceNonce,
         })
         const startedAt = Date.now()
         const abortController = new AbortController()

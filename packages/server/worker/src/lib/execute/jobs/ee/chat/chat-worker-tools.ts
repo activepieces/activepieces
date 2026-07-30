@@ -1685,7 +1685,14 @@ function wrapWithConsent<T extends Record<string, unknown>>({ tools, disabled, p
         if (!isObject(tool) || !toolHasExecute(tool)) {
             continue
         }
-        const originalExecute = tool.execute.bind(tool)
+        const rawExecute = tool.execute.bind(tool)
+        const originalExecute = async (args: unknown, options?: ToolExecutionOptions) => {
+            const result = await rawExecute(args, options)
+            if (!isNil(taintState) && autoConsent.toolReadsUntrustedContent(toolName)) {
+                taintState.tainted = true
+            }
+            return result
+        }
         Object.assign(wrapped, { [toolName]: Object.assign({}, tool, {
             execute: async (args: unknown, options?: ToolExecutionOptions) => {
                 const gateId = options?.toolCallId
