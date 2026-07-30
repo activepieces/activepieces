@@ -1,9 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 
-const DEFAULT_CACHE_BUDGET_MB = 64
-const CACHE_BUDGET_BYTES = Number(
-    process.env.AP_FLOW_RUN_LOG_SLICE_CACHE_MB ?? DEFAULT_CACHE_BUDGET_MB,
-) * 1024 * 1024
+const CACHE_BUDGET_BYTES = 64 * 1024 * 1024
 
 export function createSliceCache(budgetBytes: number = CACHE_BUDGET_BYTES): SliceCache {
     const entries = new Map<string, SliceCacheEntry>()
