@@ -1,10 +1,10 @@
-import { ActivepiecesError, ErrorCode, isNil, PlatformId, STEP_NAME_REGEX, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, isObject, PlatformId, STEP_NAME_REGEX, UserId } from '@activepieces/core-utils'
 import {
     PieceAuthProperty,
     piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
-import { CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
+import { AgentPieceProps, AgentPieceTool, AgentToolType, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -163,7 +163,21 @@ async function validateAction({ settings, platformId, log }: ValidateActionParam
 
     const props = { ...action.props }
 
-    return validateProps(props, settings.input, piece.auth, action.requireAuth)
+    const propsResult = validateProps(props, settings.input, piece.auth, action.requireAuth)
+    return {
+        ...propsResult,
+        valid: propsResult.valid && agentPieceToolsAreValid(propsResult.cleanInput),
+    }
+}
+
+function agentPieceToolsAreValid(input: Record<string, unknown> | undefined): boolean {
+    const agentTools = input?.[AgentPieceProps.AGENT_TOOLS]
+    if (!Array.isArray(agentTools)) {
+        return true
+    }
+    return agentTools
+        .filter((tool: unknown): tool is Record<string, unknown> => isObject(tool) && tool['type'] === AgentToolType.PIECE)
+        .every((tool) => AgentPieceTool.safeParse(tool).success)
 }
 
 async function validateTrigger({ settings, platformId, log }: ValidateTriggerParams): Promise<ValidationResult> {

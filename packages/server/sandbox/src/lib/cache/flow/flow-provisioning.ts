@@ -1,6 +1,6 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, isString, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
-import { AgentPieceTool, FailedStep, FlowActionType, flowStructureUtil, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, Step, WorkerToApiContract } from '@activepieces/shared'
+import { AgentPieceTool, AgentToolType, FailedStep, FlowActionType, flowStructureUtil, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, Step, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../types'
 import { pieceCache, PieceNotFoundError } from '../pieces/piece-cache'
 import { flowBundleStore } from './flow-bundle-store'
@@ -70,8 +70,16 @@ async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath
         pieceName: step.settings.pieceName,
         pieceVersion: step.settings.pieceVersion,
     }))
-    const agentToolPieceRefs = flowStructureUtil.getAllSteps(flowVersion.trigger).flatMap(extractAgentToolPieceRefs)
-    const uniquePieceRefs = dedupePieceRefs([...stepPieceRefs, ...agentToolPieceRefs])
+    const agentToolRefs = flowStructureUtil.getAllSteps(flowVersion.trigger).map(extractAgentToolPieceRefs)
+    for (const invalidTool of agentToolRefs.flatMap((result) => result.invalid)) {
+        log.warn({
+            flowVersion: { id: flowVersion.id },
+            step: { name: invalidTool.stepName },
+            tool: { name: invalidTool.toolName },
+            error: invalidTool.error,
+        }, 'Skipping malformed agent piece tool — its piece will not be installed and the run will fail when the agent loads it')
+    }
+    const uniquePieceRefs = dedupePieceRefs([...stepPieceRefs, ...agentToolRefs.flatMap((result) => result.refs)])
     return Promise.all(uniquePieceRefs.map((ref) =>
         pieceCache(log, apiClient, basePath, getSettings).getPiece({
             pieceName: ref.pieceName,
@@ -84,7 +92,7 @@ async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath
 function buildMissingPieceFailedStep({ flowVersion, missingPiece }: BuildMissingPieceFailedStepParams): FailedStep {
     const pieceSteps = flowSteps.piece(flowVersion)
     const stepMatch = pieceSteps.find((step) => step.settings.pieceName === missingPiece.pieceName && step.settings.pieceVersion === missingPiece.pieceVersion)
-    const agentToolMatch = pieceSteps.find((step) => extractAgentToolPieceRefs(step).some((ref) => ref.pieceName === missingPiece.pieceName && ref.pieceVersion === missingPiece.pieceVersion))
+    const agentToolMatch = pieceSteps.find((step) => extractAgentToolPieceRefs(step).refs.some((ref) => ref.pieceName === missingPiece.pieceName && ref.pieceVersion === missingPiece.pieceVersion))
     const step = stepMatch ?? agentToolMatch ?? flowVersion.trigger
     return {
         name: step.name,
@@ -95,24 +103,27 @@ function buildMissingPieceFailedStep({ flowVersion, missingPiece }: BuildMissing
 
 // Pieces used as agent tools live in a PIECE step's `agentTools` input, not as their own flow steps, so the
 // step-based scan above misses them and the engine would fail at runtime with the tool's piece uninstalled.
-function extractAgentToolPieceRefs(step: Step): PieceRef[] {
+function extractAgentToolPieceRefs(step: Step): AgentToolPieceRefs {
     if (step.type !== FlowActionType.PIECE) {
-        return []
+        return { refs: [], invalid: [] }
     }
     const agentTools = step.settings.input['agentTools']
     if (!Array.isArray(agentTools)) {
-        return []
+        return { refs: [], invalid: [] }
     }
-    return agentTools.flatMap((tool: unknown) => {
-        const parsed = AgentPieceTool.safeParse(tool)
-        if (!parsed.success) {
-            return []
-        }
-        return [{
+    const pieceTools = agentTools.filter((tool: unknown): tool is Record<string, unknown> => isObject(tool) && tool['type'] === AgentToolType.PIECE)
+    const parsedTools = pieceTools.map((tool) => ({ tool, parsed: AgentPieceTool.safeParse(tool) }))
+    return {
+        refs: parsedTools.flatMap(({ parsed }) => parsed.success ? [{
             pieceName: parsed.data.pieceMetadata.pieceName,
             pieceVersion: parsed.data.pieceMetadata.pieceVersion,
-        }]
-    })
+        }] : []),
+        invalid: parsedTools.flatMap(({ tool, parsed }) => parsed.success ? [] : [{
+            stepName: step.name,
+            toolName: isString(tool['toolName']) ? tool['toolName'] : 'unknown',
+            error: parsed.error.message,
+        }]),
+    }
 }
 
 function dedupePieceRefs(refs: PieceRef[]): PieceRef[] {
@@ -159,6 +170,17 @@ type BuildPublishBundleParams = {
 type PieceRef = {
     pieceName: string
     pieceVersion: string
+}
+
+type InvalidAgentTool = {
+    stepName: string
+    toolName: string
+    error: string
+}
+
+type AgentToolPieceRefs = {
+    refs: PieceRef[]
+    invalid: InvalidAgentTool[]
 }
 
 type BuildMissingPieceFailedStepParams = {
