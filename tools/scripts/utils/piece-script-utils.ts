@@ -100,15 +100,17 @@ export async function findNewPieces(): Promise<FindNewPiecesResult> {
     for (let i = 0; i < paths.length; i += batchSize) {
         const batch = paths.slice(i, i + batchSize)
         const batchResults = await Promise.all(batch.map(async (folderPath) => {
-            const packageJson = await readPackageJson(folderPath);
-            if (NON_PIECES_PACKAGES.includes(packageJson.name)) {
-                return null;
-            }
-            const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
-            if (exists) {
-                return null;
-            }
-            const { data, error } = await tryCatch(() => loadPieceFromFolder(folderPath))
+            const { data, error } = await tryCatch(async () => {
+                const packageJson = await readPackageJson(folderPath);
+                if (NON_PIECES_PACKAGES.includes(packageJson.name)) {
+                    return null;
+                }
+                const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
+                if (exists) {
+                    return null;
+                }
+                return loadPieceFromFolder(folderPath)
+            })
             if (error !== null) {
                 return { path: folderPath, error: error.message } satisfies PieceLoadFailure
             }
