@@ -130,7 +130,7 @@ export const autumnUtils = {
                 }
                 const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
                 const credentials = isNil(platformPlan.licenseKey) || isEmpty(platformPlan.licenseKey)
-                    ? await autumnConsole.enrollFree({ email: await getPlatformOwnerEmail(log, platformId) })
+                    ? await autumnConsole.enrollFree({ email: await autumnUtils.getPlatformOwnerEmail(log, platformId) })
                     : await autumnConsole.activate({ licenseKey: platformPlan.licenseKey })
                 await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
                 await autumnUtils.refreshEntitlements(log, platformId)
@@ -232,6 +232,11 @@ export const autumnUtils = {
     },
     isAutumnFeatureId(value: string): value is AutumnFeatureId {
         return Object.values(AutumnFeatureId).some((id) => id === value)
+    },
+    async getPlatformOwnerEmail(log: FastifyBaseLogger, platformId: string): Promise<string> {
+        const platform = await platformService(log).getOneOrThrow(platformId)
+        const owner = await userService(log).getMetaInformation({ id: platform.ownerId })
+        return owner.email
     },
 }
 
@@ -337,6 +342,23 @@ export const autumnConsole = {
             },
         )
     },
+    async grantChatPlan({ email, log }: { email: string, log: FastifyBaseLogger }): Promise<string> {
+        const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
+        if (isNil(secret) || isEmpty(secret)) {
+            throw new Error('CONSOLE_API_SECRET_KEY is not configured')
+        }
+        const response = await consolePost<ConsoleGrantChatPlanEnvelope>(
+            `${AUTUMN_CONSOLE_URL}/api/external/grant-chat-plan`,
+            { email },
+            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${secret}` } },
+        )
+        const licenseKey = response.data.data?.licenseKey
+        if (isNil(licenseKey) || isEmpty(licenseKey)) {
+            log.error({ status: response.status }, 'Console returned no license key for the chat plan grant')
+            throw new Error('Console returned no license key for the chat plan grant')
+        }
+        return licenseKey
+    },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
         return autumnUtils.loadAutumnCreds(log, platformId)
     },
@@ -391,12 +413,6 @@ function toCreditUsage(response: AggregateEventsResponse): CreditUsage {
         total: response.total?.[featureId]?.sum ?? 0,
         byProject: [...byProjectMap].map(([projectId, creditsUsed]) => ({ projectId, creditsUsed })),
     }
-}
-
-async function getPlatformOwnerEmail(log: FastifyBaseLogger, platformId: string): Promise<string> {
-    const platform = await platformService(log).getOneOrThrow(platformId)
-    const owner = await userService(log).getMetaInformation({ id: platform.ownerId })
-    return owner.email
 }
 
 function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements {
@@ -524,6 +540,13 @@ type ConsolePlansEnvelope = {
     success: boolean
     data: {
         plans: ConsoleAutumnPlan[]
+    }
+}
+
+type ConsoleGrantChatPlanEnvelope = {
+    success: boolean
+    data: {
+        licenseKey: string | null
     }
 }
 
