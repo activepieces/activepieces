@@ -31,23 +31,19 @@ const TIER_CONFIG: Record<
   string,
   {
     icon: React.ComponentType<{ className?: string }>;
-    displayLabel: string;
     description: string;
   }
 > = {
   fast: {
     icon: Equal,
-    displayLabel: 'Fast',
     description: 'Quick replies for simple tasks',
   },
   smart: {
     icon: Lightbulb,
-    displayLabel: 'Expert',
     description: 'Best for everyday use',
   },
   premium: {
     icon: Rocket,
-    displayLabel: 'Heavy',
     description: 'Highest quality, a bit slower',
   },
 };
@@ -61,6 +57,7 @@ function useModelOptions(): ModelOption[] {
     return ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
       id: tier.id,
       ...TIER_CONFIG[tier.id],
+      displayLabel: tier.label,
       creditWeight: tier.creditWeight,
     }));
   }

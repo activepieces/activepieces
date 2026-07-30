@@ -1,4 +1,8 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  ACTIVEPIECES_CHAT_TIERS,
+  ApEdition,
+  ApFlagId,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, Coins } from 'lucide-react';
 import React from 'react';
@@ -166,26 +170,12 @@ function buildCostItems({
     },
   ];
   const activepiecesModels: CostItem[] = includeActivepiecesModels
-    ? [
-        {
-          kind: 'row',
-          action: t('Fast'),
-          sub: modelByActivepieces,
-          credits: '2',
-        },
-        {
-          kind: 'row',
-          action: t('Smart'),
-          sub: modelByActivepieces,
-          credits: '10',
-        },
-        {
-          kind: 'row',
-          action: t('Premium'),
-          sub: modelByActivepieces,
-          credits: '20',
-        },
-      ]
+    ? ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
+        kind: 'row',
+        action: t(tier.label),
+        sub: modelByActivepieces,
+        credits: String(tier.creditWeight),
+      }))
     : [];
   const ai: CostItem[] = [
     { kind: 'section', label: t('AI Steps (per call)') },

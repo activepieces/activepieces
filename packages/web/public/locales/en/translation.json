@@ -2366,6 +2366,8 @@
   "sum of tools use + model cost per message": "sum of tools use + model cost per message",
   "AI Steps (per call)": "AI Steps (per call)",
   "Fast": "Fast",
+  "Expert": "Expert",
+  "Heavy": "Heavy",
   "Smart": "Smart",
   "Premium": "Premium",
   "Model by Activepieces": "Model by Activepieces",
