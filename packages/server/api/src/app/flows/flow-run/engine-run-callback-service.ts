@@ -1,4 +1,4 @@
-import { apId, isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { ApEdition, ExecutioOutputFile, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunInternalError, RunInternalErrorSource, SendFlowResponseRequest, StreamStepProgress, truncateFailedStepMessage, UpdateStepProgressRequest, UploadRunLogsRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
@@ -8,7 +8,6 @@ import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { RunsMetadataUpsertData } from '../../workers/job'
-import { flowRunRepo } from './flow-run-service'
 import { runsMetadataQueue } from './flow-runs-queue'
 
 export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
@@ -31,14 +30,11 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
         const internalErrorEnabled = request.internalError?.source === RunInternalErrorSource.ENGINE || system.getEdition() !== ApEdition.CLOUD
         const internalError = internalErrorEnabled ? request.internalError : undefined
         const isTerminal = !isNil(request.status) && isFlowRunStateTerminal({ status: request.status, ignoreInternalError: false })
-        const logsFileId = isTerminal && !isNil(internalError) && isNil(request.logsFileId)
-            ? await resolveLogsFileIdForRun(request.runId)
-            : request.logsFileId
-        if (isTerminal && !isNil(logsFileId)) {
+        if (isTerminal && !isNil(request.logsFileId)) {
             await ensureLogsFileExists({
                 log,
                 projectId,
-                logsFileId,
+                logsFileId: request.logsFileId,
                 internalError,
             })
         }
@@ -47,7 +43,7 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
             projectId,
             status: request.status,
             tags: request.tags,
-            logsFileId,
+            logsFileId: request.logsFileId,
             failedStep: truncateFailedStepMessage(request.failedStep),
             startTime: request.startTime,
             finishTime: request.finishTime,
@@ -70,11 +66,6 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
         }
     },
 })
-
-async function resolveLogsFileIdForRun(runId: string): Promise<string> {
-    const existing = await flowRunRepo().findOne({ where: { id: runId }, select: ['logsFileId'] })
-    return existing?.logsFileId ?? apId()
-}
 
 async function ensureLogsFileExists({ log, projectId, logsFileId, internalError }: EnsureLogsFileParams): Promise<void> {
     const { error } = await tryCatch(async () => {
