@@ -1,14 +1,21 @@
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import { inspect } from 'node:util'
 import {
     createNotifyClient,
     createRpcServer,
     EngineContract,
+    EngineOperationType,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
+    ExecuteFlowOperation,
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
 import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
+import { memBench } from './helper/mem-bench'
+import { runStateStore } from './helper/run-state-store'
 import { execute } from './operations'
 
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
@@ -84,13 +91,21 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
+                cleanupStaleSqliteFiles()
+                if (operationType === EngineOperationType.EXECUTE_FLOW) {
+                    const flowOp = operation as ExecuteFlowOperation
+                    runStateStore.init({ runId: flowOp.flowRunId })
+                }
                 flowRunProgressReporter.init()
+                memBench.runStart(operationType)
                 try {
                     const response = await execute(operationType, operation)
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
                 }
                 finally {
+                    memBench.runEnd(operationType)
                     await flowRunProgressReporter.shutdown()
+                    runStateStore.dispose()
                 }
             },
         })
@@ -116,6 +131,25 @@ export const workerSocket = {
         socket = undefined
         notifyClient = undefined
     },
+}
+
+function cleanupStaleSqliteFiles(): void {
+    try {
+        const tmpDir = os.tmpdir()
+        for (const f of fs.readdirSync(tmpDir)) {
+            if (f.endsWith('.sqlite')) {
+                try {
+                    fs.unlinkSync(path.join(tmpDir, f))
+                }
+                catch {
+                    // ignore
+                }
+            }
+        }
+    }
+    catch {
+        // best-effort — do not block execution on cleanup failure
+    }
 }
 
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {

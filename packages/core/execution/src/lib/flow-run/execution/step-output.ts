@@ -103,6 +103,7 @@ export type LogSliceRef = {
 }
 
 export const FLOW_RUN_LOG_MANIFEST_V2 = 2
+export const FLOW_RUN_LOG_MANIFEST_V3 = 3
 
 export type BaseStepOutput = GenericStepOutput<FlowActionType | FlowTriggerType, unknown>
 

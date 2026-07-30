@@ -44,7 +44,9 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
             const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
             const currentState = await executionState.currentState(Array.from(referencedStepNames))
             const scriptSession = createSharedScriptSession(() => ({
-                scriptContext: { ...currentState },
+                scriptContext: Object.fromEntries(
+                    Array.from(referencedStepNames).map(n => [n, currentState[n]]).filter(([, v]) => v !== undefined),
+                ),
                 functions: { flattenNestedKeys },
             }))
             try {
