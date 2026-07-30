@@ -14,16 +14,22 @@ import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { FormControl } from '@/components/ui/form';
+import { RequiredFieldAsterisk } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
 import CustomProperty from './custom-property';
+import { DateRangeProperty } from './date-range-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
+import { NumberStepper } from './number-stepper';
+import { RichTextProperty } from './rich-text-property';
+import { StaticDropdownCards } from './static-dropdown-cards';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 export const selectGenericFormComponentForProperty = ({
@@ -40,6 +46,7 @@ export const selectGenericFormComponentForProperty = ({
   dynamicPropsInfo,
   propertySettings,
   hideLabel,
+  hideDescription,
   enableMarkdownForInputWithMention,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
@@ -125,6 +132,16 @@ export const selectGenericFormComponentForProperty = ({
           variant={property.variant}
         />
       );
+    case PropertyType.RICH_TEXT:
+      return (
+        <RichTextProperty
+          property={property}
+          inputName={inputName}
+          value={field.value}
+          onChange={field.onChange}
+          disabled={disabled}
+        ></RichTextProperty>
+      );
     case PropertyType.STATIC_DROPDOWN:
       return (
         <AutoFormFieldWrapper
@@ -133,18 +150,30 @@ export const selectGenericFormComponentForProperty = ({
           inputName={inputName}
           field={field}
           hideLabel={hideLabel}
+          hideDescription={hideDescription}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
         >
-          <SearchableSelect
-            options={property.options.options}
-            onChange={field.onChange}
-            value={field.value}
-            disabled={disabled}
-            placeholder={property.options.placeholder ?? t('Select an option')}
-            showDeselect={!property.required}
-          ></SearchableSelect>
+          {property.display === 'cards' ? (
+            <StaticDropdownCards
+              options={property.options.options}
+              value={field.value}
+              onChange={field.onChange}
+              disabled={disabled}
+            ></StaticDropdownCards>
+          ) : (
+            <SearchableSelect
+              options={property.options.options}
+              onChange={field.onChange}
+              value={field.value}
+              disabled={disabled}
+              placeholder={
+                property.options.placeholder ?? t('Select an option')
+              }
+              showDeselect={!property.required}
+            ></SearchableSelect>
+          )}
         </AutoFormFieldWrapper>
       );
     case PropertyType.JSON:
@@ -204,6 +233,7 @@ export const selectGenericFormComponentForProperty = ({
           propertyName={propertyName}
           field={field}
           hideLabel={hideLabel}
+          hideDescription={hideDescription}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
@@ -229,13 +259,28 @@ export const selectGenericFormComponentForProperty = ({
           )}
         </AutoFormFieldWrapper>
       );
-    case PropertyType.DATE_TIME:
-    case PropertyType.SHORT_TEXT:
-    case PropertyType.LONG_TEXT:
-    case PropertyType.FILE:
     case PropertyType.NUMBER:
-    case PropertyType.SECRET_TEXT:
-      return (
+      return property.display === 'stepper' ? (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1 text-sm leading-none font-medium">
+              {property.displayName}
+              {property.required && <RequiredFieldAsterisk />}
+            </span>
+            <NumberStepper
+              value={field.value}
+              onChange={field.onChange}
+              min={property.min}
+              max={property.max}
+              step={property.step}
+              disabled={disabled}
+            />
+          </div>
+          {property.description && (
+            <ReadMoreDescription text={property.description} />
+          )}
+        </div>
+      ) : (
         <AutoFormFieldWrapper
           property={property}
           inputName={inputName}
@@ -259,6 +304,68 @@ export const selectGenericFormComponentForProperty = ({
               value={field.value}
               onChange={field.onChange}
               disabled={disabled}
+              type="text"
+            ></SecretInput>
+          )}
+        </AutoFormFieldWrapper>
+      );
+    case PropertyType.DATE_RANGE:
+      return (
+        <AutoFormFieldWrapper
+          property={property}
+          inputName={inputName}
+          field={field}
+          hideLabel={hideLabel}
+          hideDescription={hideDescription}
+          propertyName={propertyName}
+          disabled={disabled}
+          allowDynamicValues={false}
+          dynamicInputModeToggled={dynamicInputModeToggled}
+        >
+          <DateRangeProperty
+            value={field.value}
+            onChange={field.onChange}
+            disabled={disabled}
+            display={property.display}
+          ></DateRangeProperty>
+        </AutoFormFieldWrapper>
+      );
+    case PropertyType.DATE_TIME:
+    case PropertyType.SHORT_TEXT:
+    case PropertyType.LONG_TEXT:
+    case PropertyType.FILE:
+    case PropertyType.SECRET_TEXT:
+      return (
+        <AutoFormFieldWrapper
+          property={property}
+          inputName={inputName}
+          field={field}
+          hideLabel={hideLabel}
+          hideDescription={hideDescription}
+          propertyName={propertyName}
+          disabled={disabled}
+          allowDynamicValues={false}
+          dynamicInputModeToggled={dynamicInputModeToggled}
+        >
+          {useMentionTextInput ? (
+            <TextInputWithMentions
+              disabled={disabled}
+              initialValue={field.value}
+              onChange={field.onChange}
+              placeholder={
+                'placeholder' in property ? property.placeholder : undefined
+              }
+              enableMarkdown={enableMarkdownForInputWithMention}
+            ></TextInputWithMentions>
+          ) : (
+            <SecretInput
+              ref={field.ref}
+              value={field.value}
+              onChange={field.onChange}
+              disabled={disabled}
+              placeholder={
+                'placeholder' in property ? property.placeholder : undefined
+              }
               type={
                 property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
               }
@@ -321,6 +428,7 @@ export const selectGenericFormComponentForProperty = ({
 export type SelectGenericFormComponentForPropertyParams = {
   field: ControllerRenderProps<Record<string, any>, string>;
   hideLabel?: boolean;
+  hideDescription?: boolean;
   propertyName: string;
   inputName: string;
   property: PieceProperty;
