@@ -20,6 +20,7 @@ Lets platform owners (and project members with `WRITE_INVITATION`) invite users 
 - Project invitations require `projectMustBeTeamType` + `WRITE_INVITATION` + `projectRolesEnabled` plan flag; platform invitations require platform ownership.
 - If SMTP unconfigured, the `link` field is included in the response for the caller to surface manually; if configured, `link` is omitted and email is sent. Auto-accept + SMTP sends a "project member added" notification instead.
 - Seat enforcement only bites when billing is enforced for the platform (`isBillingEnforced`, OBSERVE otherwise) and is skipped in CE; the seat limit applied is `min(usersLimit, scheduledUsersLimit)`. Only invites whose email is not yet a platform member reserve a seat, and a repeat invite to the same reserved email needs no extra seat.
+- **The "does this invite reserve a seat" rule has three implementations — change them together.** `countReservedInvites` (`platform-plan.service.ts`) expresses it as raw SQL (`status IN (PENDING, ACCEPTED)` + expiry cutoff + `NOT EXISTS` on an existing platform user); `wouldAddNewUser` re-checks the same membership condition in TypeScript; `countAdditionalSeatsNeeded` restates the same predicate in a third query builder. Editing one alone makes the counter and the guard disagree, which silently over- or under-counts seats.
 
 ### Key files
 Entry point: `userInvitationsService`, defined in `user-invitation.service.ts` and called from the routes in `user-invitation.module.ts` (which exports `invitationModule`).
