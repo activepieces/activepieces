@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { createFooterActionOutputSchema } from '../output-schemas';
 
 export const createFooter = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const createFooter = createAction({
       'Creates a footer section in a Google Docs document and returns the new footerId. Use this when you need to add a footer to a document before inserting footer text — the footerId returned here is required by any subsequent Insert Text call targeting the footer segment. Each call creates a new footer; not idempotent.',
     idempotent: false,
   },
+  outputSchema: createFooterActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

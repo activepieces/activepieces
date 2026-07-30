@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { updateTableRowStyleActionOutputSchema } from '../output-schemas';
 
 export const updateTableRowStyle = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const updateTableRowStyle = createAction({
       'Updates the minimum height of one or more rows in a Google Docs table. Requires the table start index from Read Document — cannot be guessed. (Google Docs does not support toggling a header row via this request.) Idempotent: applying the same height again is a no-op.',
     idempotent: true,
   },
+  outputSchema: updateTableRowStyleActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

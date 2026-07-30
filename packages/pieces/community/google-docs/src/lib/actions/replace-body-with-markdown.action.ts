@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { replaceBodyWithMarkdownActionOutputSchema } from '../output-schemas';
 
 export const replaceBodyWithMarkdown = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const replaceBodyWithMarkdown = createAction({
       'Clears the entire body of an existing Google Docs document and repopulates it from Markdown text, converting headings (#, ##, ###), bullet lists (-, *, +), and paragraphs into native Google Docs formatting. Use when an agent wants to overwrite a document wholesale with freshly generated Markdown (the format LLMs produce natively) in one call. Inline styling such as bold/italic is inserted as plain text. Not supported when the body contains a table or table of contents — the action errors clearly instead of partially failing. Destructive and not idempotent: the previous body content is deleted.',
     idempotent: false,
   },
+  outputSchema: replaceBodyWithMarkdownActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

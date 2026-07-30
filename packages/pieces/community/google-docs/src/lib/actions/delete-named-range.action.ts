@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { deleteNamedRangeActionOutputSchema } from '../output-schemas';
 
 export const deleteNamedRange = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const deleteNamedRange = createAction({
       'Deletes a named range from a Google Docs document. Provide either namedRangeId (targets one specific range — obtain from Read Document gdocs_get_document, cannot be guessed) or name (deletes all named ranges with that name). Re-deleting an already-gone range or name is a no-op, so this call is idempotent.',
     idempotent: true,
   },
+  outputSchema: deleteNamedRangeActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

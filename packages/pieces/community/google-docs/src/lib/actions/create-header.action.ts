@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { createHeaderActionOutputSchema } from '../output-schemas';
 
 export const createHeader = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const createHeader = createAction({
       'Creates a header section in a Google Docs document and returns the new headerId. Use this when you need to add a header to a document before inserting header text — the headerId returned here is required by any subsequent Insert Text call targeting the header segment. Each call creates a new header; not idempotent.',
     idempotent: false,
   },
+  outputSchema: createHeaderActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

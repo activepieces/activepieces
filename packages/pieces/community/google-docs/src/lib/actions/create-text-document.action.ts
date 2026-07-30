@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { docsCommon } from '../common';
 import { googleDocsAuth, getAccessToken } from '../auth';
+import { appendTextActionOutputSchema } from '../output-schemas';
 
 export const createTextDocument = createAction({
   auth: googleDocsAuth,
@@ -13,6 +14,7 @@ export const createTextDocument = createAction({
       'Creates a new Google Docs document with the given title and writes the provided plain text into it, returning the new document metadata (including its ID). Use when an agent has plain text to put in a fresh document; for Markdown-formatted content use Create Document from Markdown instead. Not idempotent: each call creates a separate new document.',
     idempotent: false,
   },
+  outputSchema: appendTextActionOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

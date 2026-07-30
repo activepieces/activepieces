@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { deleteContentRangeActionOutputSchema } from '../output-schemas';
 
 export const deleteContentRange = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const deleteContentRange = createAction({
       'Deletes all content between a start and end character index in a Google Docs document body. Obtain valid indices from Get Document End Index / Read Document first — indices cannot be guessed. Note that every Google Docs segment ends in a newline that cannot be deleted, so the end index must not exceed the body end index minus one. Destructive and not idempotent.',
     idempotent: false,
   },
+  outputSchema: deleteContentRangeActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

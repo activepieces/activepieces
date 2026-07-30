@@ -1,6 +1,7 @@
 import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { getDocumentPlaintextActionOutputSchema } from '../output-schemas';
 
 // Minimal prose projection: only top-level body paragraph text runs are
 // flattened. Content inside tables, headers, footers, footnotes, and tabs is
@@ -30,6 +31,7 @@ export const getDocumentPlaintext = createAction({
 			'Returns just the body prose of a Google Docs document as a plain string, flattened from the document.get response. Pick this over Read Document when you only need the text to summarize/extract/classify and want to avoid the large nested structural JSON. Only top-level paragraph text is included — tables, headers, footers, footnotes, and tabs are omitted. Read-only and idempotent.',
 		idempotent: true,
 	},
+	outputSchema: getDocumentPlaintextActionOutputSchema,
 	props: {
 		documentId: Property.ShortText({
 			displayName: 'Document ID',

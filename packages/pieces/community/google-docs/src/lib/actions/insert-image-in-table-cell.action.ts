@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { insertImageInTableCellActionOutputSchema } from '../output-schemas';
 
 export const insertImageInTableCell = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const insertImageInTableCell = createAction({
       'Inserts an inline image at the start of a specific table cell in a Google Docs document. The action reads the document to resolve the correct character index for the target cell, then inserts the image from the given URI. Optionally accepts width and height in points. Requires the table start index (from Read Document — cannot be guessed). Not idempotent: each call inserts another image.',
     idempotent: false,
   },
+  outputSchema: insertImageInTableCellActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

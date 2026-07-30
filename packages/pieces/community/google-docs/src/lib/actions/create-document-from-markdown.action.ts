@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs } from '@googleapis/docs';
+import { createDocumentFromMarkdownActionOutputSchema } from '../output-schemas';
 
 export const createDocumentFromMarkdown = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const createDocumentFromMarkdown = createAction({
       'Creates a new Google Docs document and populates it from Markdown text, converting headings (#, ##, ###), bullet lists (-, *, +), and paragraphs into native Google Docs formatting. Use when an agent has Markdown content (the format LLMs produce natively) and wants a formatted document in one call. Inline styling such as bold/italic is inserted as plain text. Not idempotent: each call creates a new document.',
     idempotent: false,
   },
+  outputSchema: createDocumentFromMarkdownActionOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

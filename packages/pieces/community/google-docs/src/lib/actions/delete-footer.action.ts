@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { deleteFooterActionOutputSchema } from '../output-schemas';
 
 export const deleteFooter = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const deleteFooter = createAction({
       'Permanently deletes a footer section from a Google Docs document by its footer ID. The footer ID is a hidden identifier — obtain it from the Read Document (gdocs_get_document) response under the document\'s named styles or sections; it cannot be guessed. Destructive and not idempotent: the footer content is unrecoverable once deleted.',
     idempotent: false,
   },
+  outputSchema: deleteFooterActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

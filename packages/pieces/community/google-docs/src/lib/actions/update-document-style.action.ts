@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { updateDocumentStyleActionOutputSchema } from '../output-schemas';
 
 export const updateDocumentStyle = createAction({
 	auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const updateDocumentStyle = createAction({
 			'Updates document-level style properties such as page margins. Only the properties you provide are changed — leave any margin empty to leave it unchanged. Re-applying the same values leaves the document in the same state, so it is idempotent. Use this to set consistent page margins before exporting or sharing a document.',
 		idempotent: true,
 	},
+	outputSchema: updateDocumentStyleActionOutputSchema,
 	props: {
 		documentId: Property.ShortText({
 			displayName: 'Document ID',

@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { insertInlineImageActionOutputSchema } from '../output-schemas';
 
 export const insertInlineImage = createAction({
 	auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const insertInlineImage = createAction({
 			'Inserts an inline image from a publicly fetchable URI into a Google Docs document. If "index" is omitted the image is placed at the end of the document body; if "index" is provided it is inserted at that character index — obtain a valid index from Get Document End Index first (indices cannot be guessed). The URI must be publicly accessible by Google at call time. Not idempotent: each call inserts another copy of the image.',
 		idempotent: false,
 	},
+	outputSchema: insertInlineImageActionOutputSchema,
 	props: {
 		documentId: Property.ShortText({
 			displayName: 'Document ID',

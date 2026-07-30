@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { insertTableColumnActionOutputSchema } from '../output-schemas';
 
 export const insertTableColumn = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const insertTableColumn = createAction({
       'Inserts a new column into an existing table in a Google Docs document. The column is inserted to the left or right of the cell identified by rowIndex and columnIndex. Use "insertRight" to control the insertion side. Not idempotent: each call inserts another column.',
     idempotent: false,
   },
+  outputSchema: insertTableColumnActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

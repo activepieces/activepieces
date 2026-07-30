@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { createParagraphBulletsActionOutputSchema } from '../output-schemas';
 
 export const createParagraphBullets = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const createParagraphBullets = createAction({
       'Applies a bullet list style (e.g. BULLET_DISC_CIRCLE_SQUARE) to all paragraphs within a character range in a Google Docs document. Use this to convert existing paragraphs into a bulleted or numbered list. The startIndex and endIndex must span the paragraphs to bullet — obtain valid indices from Get Document End Index or Read Document (cannot be guessed). Not idempotent (re-running with a different preset changes the glyph style).',
     idempotent: false,
   },
+  outputSchema: createParagraphBulletsActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { unmergeTableCellsActionOutputSchema } from '../output-schemas';
 
 export const unmergeTableCells = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const unmergeTableCells = createAction({
       'Unmerges a range of previously merged table cells in a Google Docs document. The range is specified by the anchor cell (rowIndex, columnIndex) and the span (rowSpan, columnSpan) to unmerge. Requires the table start index from Read Document — cannot be guessed. Idempotent: unmerging already-unmerged cells is a no-op.',
     idempotent: true,
   },
+  outputSchema: unmergeTableCellsActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

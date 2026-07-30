@@ -1,6 +1,7 @@
 import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
+import { searchDocumentsActionOutputSchema } from '../output-schemas';
 
 export const searchDocuments = createAction({
 	auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const searchDocuments = createAction({
 			"Searches Drive for Google Docs documents by name and/or full-text content, returning multiple ordered results with their IDs. Pick this over Find Document to discover documents by their content (not just an exact name) or to get more than one match; Find Document returns only the first name match and can also create-if-missing. Read-only and idempotent. At least one of name/content text is required.",
 		idempotent: true,
 	},
+	outputSchema: searchDocumentsActionOutputSchema,
 	props: {
 		name_contains: Property.ShortText({
 			displayName: 'Name Contains',

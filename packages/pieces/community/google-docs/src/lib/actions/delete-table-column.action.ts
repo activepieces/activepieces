@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { deleteTableColumnActionOutputSchema } from '../output-schemas';
 
 export const deleteTableColumn = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const deleteTableColumn = createAction({
       'Permanently deletes a column from a table in a Google Docs document. The column to delete is addressed by the table\'s start index plus the row and column coordinates of any cell in that column. All three index values (tableStartIndex, rowIndex, columnIndex) must be obtained from Read Document (gdocs_get_document) — they cannot be guessed. Destructive and not idempotent: all content in the column is permanently removed.',
     idempotent: false,
   },
+  outputSchema: deleteTableColumnActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

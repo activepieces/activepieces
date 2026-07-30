@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { insertTextActionOutputSchema } from '../output-schemas';
 
 export const insertText = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const insertText = createAction({
       'Inserts text into a Google Docs document. If "index" is omitted the text is appended to the end of the document body; if "index" is provided the text is inserted at that character index — obtain a valid index from Get Document End Index first (indices cannot be guessed, must fall inside an existing paragraph, and must be below the body end index). Not idempotent: each call inserts the text again.',
     idempotent: false,
   },
+  outputSchema: insertTextActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

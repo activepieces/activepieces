@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { insertPageBreakActionOutputSchema } from '../output-schemas';
 
 export const insertPageBreak = createAction({
 	auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const insertPageBreak = createAction({
 			'Inserts a page break into a Google Docs document. If "index" is omitted the page break is appended at the end of the document body; if "index" is provided it is inserted at that character index — obtain a valid index from Get Document End Index first (indices cannot be guessed and must fall inside an existing paragraph). Not idempotent: each call inserts another page break.',
 		idempotent: false,
 	},
+	outputSchema: insertPageBreakActionOutputSchema,
 	props: {
 		documentId: Property.ShortText({
 			displayName: 'Document ID',

@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { replaceSectionWithMarkdownActionOutputSchema } from '../output-schemas';
 
 export const replaceSectionWithMarkdown = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const replaceSectionWithMarkdown = createAction({
       'Deletes the content between a start and end character index and replaces it with text rendered from Markdown (headings #/##/###, bullet lists -/*/+, paragraphs converted to native Google Docs formatting). Use when an agent wants to overwrite one section of a document — not the whole body — with freshly generated Markdown. Obtain start and end indices from Read Document first; indices cannot be guessed. If the end index reaches the document end it is clamped to exclude the undeletable terminal newline. Inline styling such as bold/italic is inserted as plain text. Destructive and not idempotent.',
     idempotent: false,
   },
+  outputSchema: replaceSectionWithMarkdownActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

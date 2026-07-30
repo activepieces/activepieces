@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs } from '@googleapis/docs';
+import { readDocumentActionOutputSchema } from '../output-schemas';
 
 export const getDocument = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const getDocument = createAction({
       'Fetches the full content and structure of a Google Docs document by its ID — the raw document JSON including body elements and their character indices. Use when an agent needs the complete structure, e.g. to locate element indices before editing. For only the readable text use Get Document Plaintext; for just the body end index use Get Document End Index. Requires the document ID; read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: readDocumentActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { createFootnoteActionOutputSchema } from '../output-schemas';
 
 export const createFootnote = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const createFootnote = createAction({
       'Inserts a footnote at a specific character index inside an existing paragraph in a Google Docs document, or at the end of the body segment if no index is provided. Returns the new footnoteId, which can then be used to insert text into the footnote segment via Insert Text. The index must fall inside an existing paragraph — obtain a valid index from Get Document End Index or Read Document (cannot be guessed). Not idempotent.',
     idempotent: false,
   },
+  outputSchema: createFootnoteActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

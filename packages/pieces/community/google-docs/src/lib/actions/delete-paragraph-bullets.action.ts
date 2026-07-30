@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { deleteParagraphBulletsActionOutputSchema } from '../output-schemas';
 
 export const deleteParagraphBullets = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const deleteParagraphBullets = createAction({
       'Removes bullet or numbered list formatting from all paragraphs within the given character index range in a Google Docs document. The paragraphs\' text content is preserved; only the list nesting and bullet glyphs are removed. Obtain valid startIndex and endIndex from Get Document End Index (gdocs_get_document_end_index) — indices cannot be guessed. Idempotent: re-running on already plain paragraphs is a no-op.',
     idempotent: true,
   },
+  outputSchema: deleteParagraphBulletsActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

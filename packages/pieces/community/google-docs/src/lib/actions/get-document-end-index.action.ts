@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs } from '@googleapis/docs';
+import { getDocumentEndIndexActionOutputSchema } from '../output-schemas';
 
 export const getDocumentEndIndex = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const getDocumentEndIndex = createAction({
       'Returns the end index of a Google Docs document body (the highest character position) so an agent can compute where to insert, delete, or style content. Call this FIRST before any index-based editing atomic (Insert Text with an explicit index, Delete Content Range, etc.) — Google Docs edits are addressed by an integer character index that cannot be guessed. Requires the document ID; read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: getDocumentEndIndexActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

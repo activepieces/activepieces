@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { insertTableActionOutputSchema } from '../output-schemas';
 
 export const insertTable = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const insertTable = createAction({
       'Inserts a new table with the specified number of rows and columns into a Google Docs document. If "index" is omitted the table is inserted at the end of the document body; if provided the table is inserted at that character index — obtain a valid index from Get Document End Index first. Not idempotent: each call inserts another table.',
     idempotent: false,
   },
+  outputSchema: insertTableActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

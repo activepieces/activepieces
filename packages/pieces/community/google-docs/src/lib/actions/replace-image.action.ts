@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { replaceImageActionOutputSchema } from '../output-schemas';
 
 export const replaceImage = createAction({
 	auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const replaceImage = createAction({
 			'Swaps an existing inline image (identified by its object ID) for a new image at the given URI. Use this to update a specific image in a document without altering surrounding content. The imageObjectId must come from the document\'s inlineObjects map — obtain it by calling Read Document first. Re-running with the same URI leaves the document in the same visual state, so it is idempotent.',
 		idempotent: true,
 	},
+	outputSchema: replaceImageActionOutputSchema,
 	props: {
 		documentId: Property.ShortText({
 			displayName: 'Document ID',

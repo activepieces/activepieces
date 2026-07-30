@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { folderIdProp } from '../common/props';
+import { copyDocumentActionOutputSchema } from '../output-schemas';
 
 export const copyDocument = createAction({
 	auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const copyDocument = createAction({
 			'Duplicates an existing Google Docs document into a new file with the given title. Pick this to spin a working copy off a template or snapshot a version before editing; it is distinct from Edit Template File, which merges data in place. Each call creates a new file, so it is not idempotent (retries produce duplicates).',
 		idempotent: false,
 	},
+	outputSchema: copyDocumentActionOutputSchema,
 	props: {
 		fileId: Property.ShortText({
 			displayName: 'Source Document ID',

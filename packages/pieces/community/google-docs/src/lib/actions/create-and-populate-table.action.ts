@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { createAndPopulateTableActionOutputSchema } from '../output-schemas';
 
 export const createAndPopulateTable = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const createAndPopulateTable = createAction({
       'Inserts a new table at the end of a Google Docs document, sized to the supplied 2D array of strings, and writes each value into its cell in one operation — so an agent can drop a fully-populated table without computing cell indices. The column count is the width of the widest row; shorter rows leave their trailing cells empty. Not idempotent: each call adds another table.',
     idempotent: false,
   },
+  outputSchema: createAndPopulateTableActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

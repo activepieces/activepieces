@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { insertTextInTableCellActionOutputSchema } from '../output-schemas';
 
 export const insertTextInTableCell = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const insertTextInTableCell = createAction({
       'Inserts text at the start of a specific table cell in a Google Docs document. The action reads the document to resolve the correct character index for the target cell, then inserts text there. Requires the table start index (from Read Document — cannot be guessed), plus the zero-based row and column index of the target cell. Not idempotent: each call inserts the text again.',
     idempotent: false,
   },
+  outputSchema: insertTextInTableCellActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

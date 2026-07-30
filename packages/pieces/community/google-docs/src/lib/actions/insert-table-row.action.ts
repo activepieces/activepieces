@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { insertTableRowActionOutputSchema } from '../output-schemas';
 
 export const insertTableRow = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const insertTableRow = createAction({
       'Inserts a new row into an existing table in a Google Docs document. The row is inserted above or below the cell identified by rowIndex and columnIndex. Use "insertBelow" to control the insertion side. Not idempotent: each call inserts another row.',
     idempotent: false,
   },
+  outputSchema: insertTableRowActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

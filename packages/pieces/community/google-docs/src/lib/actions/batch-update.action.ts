@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { batchUpdateActionOutputSchema } from '../output-schemas';
 
 export const batchUpdate = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const batchUpdate = createAction({
       'Advanced escape hatch that sends a raw array of Google Docs API batchUpdate request objects directly to documents.batchUpdate. Only for callers who know the Google Docs API and need a request kind not covered by a dedicated atomic — prefer the specific atomics (Insert Text, Create Header, Insert Table, Delete Content Range, etc.) for common operations, as they validate inputs and resolve indices for you. Each request is a Docs API Request object, e.g. {"insertText":{"text":"hi","location":{"index":1}}}; requests run in order and indices must already account for prior edits in the same call. Not idempotent in general (depends on the requests supplied).',
     idempotent: false,
   },
+  outputSchema: batchUpdateActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

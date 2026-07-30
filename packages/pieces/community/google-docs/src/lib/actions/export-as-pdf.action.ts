@@ -3,6 +3,7 @@ import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { docs as googleDocs } from '@googleapis/docs';
+import { exportAsPdfActionOutputSchema } from '../output-schemas';
 
 export const exportAsPdf = createAction({
 	auth: googleDocsAuth,
@@ -15,6 +16,7 @@ export const exportAsPdf = createAction({
 			'Exports a Google Docs document as a PDF and returns the file for use in later steps (e.g. sending via email or uploading to storage). Uses the Drive export endpoint, so the document must not exceed the Drive 10 MB export limit. Read-only and idempotent — it never modifies the document.',
 		idempotent: true,
 	},
+	outputSchema: exportAsPdfActionOutputSchema,
 	props: {
 		documentId: Property.ShortText({
 			displayName: 'Document ID',

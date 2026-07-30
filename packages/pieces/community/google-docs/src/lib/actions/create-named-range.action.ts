@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { docsCommon } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs, docs_v1 } from '@googleapis/docs';
+import { createNamedRangeActionOutputSchema } from '../output-schemas';
 
 export const createNamedRange = createAction({
   auth: googleDocsAuth,
@@ -14,6 +15,7 @@ export const createNamedRange = createAction({
       'Creates a named range over a specified character range in a Google Docs document body and returns the new namedRangeId. Named ranges let you bookmark a region for later operations (e.g. deletion, styling) by ID or by name. The startIndex and endIndex must be valid character positions inside the document body — obtain them from Get Document End Index or Read Document (cannot be guessed). Not idempotent.',
     idempotent: false,
   },
+  outputSchema: createNamedRangeActionOutputSchema,
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

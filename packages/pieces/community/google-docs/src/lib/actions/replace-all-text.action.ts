@@ -1,6 +1,7 @@
 import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs } from '@googleapis/docs';
+import { replaceAllTextActionOutputSchema } from '../output-schemas';
 
 export const replaceAllText = createAction({
 	auth: googleDocsAuth,
@@ -19,6 +20,7 @@ export const replaceAllText = createAction({
 			'Find-and-replaces every occurrence of a literal string across a whole Google Docs document. Pick this for a bare ad-hoc text edit; use Edit Template File instead for placeholder-token merges or image swaps. Idempotent for normal use (a repeat run matches nothing and leaves the same end state); the exception is overlapping find/replace literals (e.g. replacing "a" with "ab"), which can re-match on a second run.',
 		idempotent: true,
 	},
+	outputSchema: replaceAllTextActionOutputSchema,
 	props: {
 		documentId: Property.ShortText({
 			displayName: 'Document ID',
