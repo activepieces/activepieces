@@ -28,12 +28,12 @@ data:
   # Real same-region object store: a GCS bucket in europe-west1 reached over the S3-interop endpoint
   # with HMAC keys. The app generates SigV4 presigned URLs (forcePathStyle on, since endpoint is set);
   # the engine fetches flow bundle + piece archives directly from GCS via those links.
-  AP_S3_BUCKET: ap-bench-usc-b3803
+  AP_S3_BUCKET: ap-bench-eu-b3803
   # HMAC access key + secret are NOT here — they live in the `ap-s3-secret` Kubernetes Secret,
   # created out-of-band (kubectl create secret) and injected via secretRef on app + worker, so the
   # live credential never sits in this plaintext manifest.
   AP_S3_ENDPOINT: https://storage.googleapis.com
-  AP_S3_REGION: us-central1
+  AP_S3_REGION: europe-west1
   AP_S3_USE_SIGNED_URLS: "true"
   # AWS SDK >=3.729 defaults to CRC32 checksums + aws-chunked payloads on PutObject; GCS's
   # S3-interop endpoint rejects those with SignatureDoesNotMatch. WHEN_REQUIRED restores the old behavior.
@@ -54,15 +54,20 @@ spec:
       containers:
         - name: postgres
           image: postgres:14.4
-          # The shared singleton the whole fleet's callback traffic lands on. Two walls were capping
-          # warm throughput before the fleet's workers were ever busy, making the curve sub-linear:
+          # The shared singleton the whole fleet's callback traffic lands on, and — per Experiment 3 — the
+          # tier that actually runs out: 2738m of these 3 cores at the 160-worker row, while workers idle
+          # at a fifth of their cap. Two settings push that limit as far out as possible:
           #   1. Connections. Default max_connections=100, but each app pod opens a node-postgres pool
-          #      (~10). At 1:10 the 12-app row alone wants ~120 > 100 — the exact point the old curve
-          #      cracked (80 fine, 120 collapsed). Raised to 2000 so apps×pool never starves.
+          #      (~10), so at 1:10 the 12-app row alone wants ~120 > 100. Raised to 2000 so apps×pool
+          #      never starves. NOTE: this was once credited with fixing a "120 cliff" in the published
+          #      curve. That cliff reproduces with max_connections=2000 and is a LOAD-GENERATOR artifact —
+          #      a workstation driving 120 concurrent webhooks runs out of ephemeral ports. Generate load
+          #      in-cluster (run-gke.sh does) before blaming any tier here.
           #   2. Commit throughput. Every run still does a few commits; default fsync+WAL on the node
           #      disk caps a single PG at a few hundred fsync/s. This DB is ephemeral (emptyDir, torn
           #      down with the run) so durability buys nothing here — fsync/synchronous_commit/
           #      full_page_writes off turns commits into pure CPU, and the data dir is tmpfs (RAM).
+          #      Consequence: a real managed PG will hit its ceiling EARLIER than this rig does.
           args:
             - postgres
             - "-c"
@@ -132,8 +137,7 @@ spec:
     spec:
       containers:
         - name: app
-          # App image lives in the EU AR repo (built by the team); GKE pulls it cross-region once at
-          # provisioning. The runtime data path (webhook -> app -> redis -> worker -> MinIO) stays in US.
+          # App image lives in the EU AR repo (built by the team), same region as the cluster.
           image: __APP_IMAGE__
           envFrom: [{ configMapRef: { name: ap-config } }, { secretRef: { name: ap-s3-secret } }]
           env:
@@ -176,6 +180,12 @@ spec:
           envFrom: [{ configMapRef: { name: ap-config } }, { secretRef: { name: ap-s3-secret } }]
           env:
             - { name: AP_CONTAINER_TYPE, value: WORKER }
+            # Workers log at info so the per-run `job.execute` wide event (the provision/boot/run split
+            # this benchmark reports) is emitted; the app stays at the configmap's `error` so webhook
+            # logging never shows up as app CPU in the app-vs-worker ratio.
+            - { name: AP_LOG_LEVEL, value: info }
+            # ...and as JSON, not the pretty renderer — the breakdown is parsed with `jq` from the pod logs.
+            - { name: AP_LOG_PRETTY, value: "false" }
             - { name: AP_WORKER_CONCURRENCY, value: "1" }
             - { name: AP_REUSE_SANDBOX, value: "__REUSE_SANDBOX__" }
             - { name: AP_CACHE_BASE_PATH, value: /tmp/cache }
