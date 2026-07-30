@@ -9,12 +9,13 @@
  * component read the condition with a non-subscribing form.getValues()
  * snapshot, so isSingleValueCondition never recomputed on operator change.
  *
- * The component is rendered for real with a real react-hook-form. Only the
- * leaf UI components (SearchableSelect, TextInputWithMentions, icons, tooltip)
- * are stubbed; the stubbed SearchableSelect captures the component's real
- * onChange and invokes it, exactly as picking an option would. This file uses
- * raw react-dom + React's act rather than @testing-library/react (not a
- * dependency of this package).
+ * The component is rendered for real with a real react-hook-form. Only
+ * SearchableSelect and TextInputWithMentions are stubbed, the first so the
+ * test can invoke the component's real onChange exactly as picking an option
+ * would, the second because the mentions editor is a tiptap instance. Every
+ * other child renders for real, including the InvalidStepIcon whose visibility
+ * is one of the flags this bug affected. This file uses raw react-dom + React's
+ * act rather than @testing-library/react (not a dependency of this package).
  */
 /* eslint-disable testing-library/no-unnecessary-act */
 import { BranchOperator } from '@activepieces/shared';
@@ -29,8 +30,6 @@ const selectMock = vi.hoisted(() => ({
 }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
-
-vi.mock('lucide-react', () => ({ Trash: () => null }));
 
 vi.mock('@/components/custom/searchable-select', () => ({
   SearchableSelect: ({
@@ -47,26 +46,6 @@ vi.mock('@/components/custom/searchable-select', () => ({
 
 vi.mock('@/app/builder/piece-properties/text-input-with-mentions', () => ({
   TextInputWithMentions: () => <input data-testid="mentions-input" />,
-}));
-
-vi.mock('@/components/custom/alert-icon', () => ({
-  InvalidStepIcon: () => null,
-}));
-
-vi.mock('@/components/ui/tooltip', () => ({
-  Tooltip: ({ children }: React.PropsWithChildren) => <>{children}</>,
-  TooltipTrigger: ({ children }: React.PropsWithChildren) => <>{children}</>,
-  TooltipContent: ({ children }: React.PropsWithChildren) => <>{children}</>,
-}));
-
-vi.mock('@/components/ui/switch', () => ({
-  Switch: () => null,
-}));
-
-vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, ...props }: React.ComponentProps<'button'>) => (
-    <button {...props}>{children}</button>
-  ),
 }));
 
 // eslint-disable-next-line import/first
@@ -95,12 +74,18 @@ let container: HTMLDivElement;
 let root: Root;
 let formApi: UseFormReturn<ConditionFormShape> | undefined;
 
-function Harness({ operator }: { operator: BranchOperator }) {
+function Harness({
+  operator,
+  secondValue = '',
+}: {
+  operator: BranchOperator;
+  secondValue?: string;
+}) {
   const form = useForm<ConditionFormShape>({
     defaultValues: {
       settings: {
         branches: [
-          { conditions: [[{ operator, firstValue: '', secondValue: '' }]] },
+          { conditions: [[{ operator, firstValue: '', secondValue }]] },
         ],
       },
     },
@@ -121,12 +106,12 @@ function Harness({ operator }: { operator: BranchOperator }) {
   );
 }
 
-function setup(operator: BranchOperator) {
+function setup(operator: BranchOperator, secondValue?: string) {
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => {
-    root.render(<Harness operator={operator} />);
+    root.render(<Harness operator={operator} secondValue={secondValue} />);
   });
 }
 
@@ -165,17 +150,17 @@ describe('BranchSingleCondition (issue 13900)', () => {
     selectOperator(BranchOperator.EXISTS);
 
     expect(hasSecondValueField()).toBe(false);
-    expect(
-      formApi?.getValues('settings.branches.0.conditions.0.0.secondValue'),
-    ).toBe('');
   });
 
-  it('restores the Second value field when switching back to a two-value operator', () => {
-    setup(BranchOperator.EXISTS);
+  it('restores the Second value field when switching back to a two-value operator, and clears the value it was hiding', () => {
+    setup(BranchOperator.EXISTS, 'stale');
     expect(hasSecondValueField()).toBe(false);
 
     selectOperator(BranchOperator.TEXT_EXACTLY_MATCHES);
 
     expect(hasSecondValueField()).toBe(true);
+    expect(
+      formApi?.getValues('settings.branches.0.conditions.0.0.secondValue'),
+    ).toBe('');
   });
 });
