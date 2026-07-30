@@ -1,9 +1,7 @@
-import { isNil } from '@activepieces/core-utils';
 import {
   PlatformBillingInformation,
   BillableFeature,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Users } from 'lucide-react';
 import { useState } from 'react';
@@ -20,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { billingMutations } from '../../hooks/billing-hooks';
+import { billingUtils } from '../../utils/billing-utils';
 
 import { ManageSeatsDialog } from './manage-seats-dialog';
 
@@ -33,10 +32,8 @@ export const OutOfSeatsDialog = ({
   const { mutate: reactivate, isPending: isReactivating } =
     billingMutations.useReactivateSubscription(() => onOpenChange(false));
   const total = info.plan.usersLimit ?? info.usage.users;
-  const scheduledCap = info.plan.scheduledUsersLimit;
-  const capBinds =
-    !isNil(scheduledCap) &&
-    (isNil(info.plan.usersLimit) || scheduledCap < info.plan.usersLimit);
+  const { capBinds, scheduledCap, scheduledPlanName, switchDate } =
+    billingUtils.resolveSeatCap(info);
 
   return (
     <>
@@ -53,8 +50,8 @@ export const OutOfSeatsDialog = ({
                     'Seats are capped at {cap, plural, =1 {1 seat} other {# seats}} until your plan switches to {plan} on {date}. Keep your current plan to lift the cap.',
                     {
                       cap: scheduledCap,
-                      plan: info.scheduledPlanName ?? t('Free'),
-                      date: dayjs(info.cancelAt).format('MMM D, YYYY'),
+                      plan: scheduledPlanName,
+                      date: switchDate,
                     },
                   )
                 : t(

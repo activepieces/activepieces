@@ -1,5 +1,4 @@
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 
@@ -9,6 +8,8 @@ import {
   usageIndicatorClass,
   usageTrackClass,
 } from '@/components/ui/progress';
+
+import { billingUtils } from '../../utils/billing-utils';
 
 const HIDE_WHEN_UNLIMITED = ['active-flows', 'team-projects'];
 
@@ -90,10 +91,8 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
 
 function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
   const { plan, usage } = info;
-  const scheduledCap = plan.scheduledUsersLimit;
-  const usersCapBinds =
-    !isNil(scheduledCap) &&
-    (isNil(plan.usersLimit) || scheduledCap < plan.usersLimit);
+  const { capBinds: usersCapBinds, effectiveLimit: usersLimit } =
+    billingUtils.resolveSeatCap(info);
   const metrics: UsageMetric[] = [
     {
       key: 'credits',
@@ -107,16 +106,8 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
       label: 'Users',
       icon: Users,
       used: usage.users,
-      included: usersCapBinds ? scheduledCap : plan.usersLimit ?? null,
-      note: usersCapBinds
-        ? t(
-            "You're downgrading to the {plan} plan on {date} — the seat limit shown comes from your scheduled plan.",
-            {
-              plan: info.scheduledPlanName ?? t('Free'),
-              date: dayjs(info.cancelAt).format('MMM D, YYYY'),
-            },
-          )
-        : undefined,
+      included: usersLimit,
+      note: usersCapBinds ? billingUtils.scheduledCapNotice(info) : undefined,
     },
     {
       key: 'active-flows',

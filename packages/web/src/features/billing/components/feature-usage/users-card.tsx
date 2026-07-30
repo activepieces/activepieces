@@ -3,31 +3,27 @@ import {
   PlatformBillingInformation,
   BillableFeature,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
+import { billingUtils } from '../../utils/billing-utils';
 import { DetailRow } from '../detail-row';
 
 import { ManageSeatsDialog } from './manage-seats-dialog';
 
 export const UsersCard = ({ info, feature }: UsersCardProps) => {
-  const { plan, usage, includedSeats, additionalSeats } = info;
+  const { usage, includedSeats, additionalSeats } = info;
   const used = usage.users;
-  const total = plan.usersLimit;
-  const isUnlimited = isNil(total);
   const hasAdditionalSeats = !isNil(additionalSeats) && additionalSeats > 0;
   const hasInvitedSeats = usage.invitedSeats > 0;
   const included = includedSeats ?? 0;
   const hasScheduledChange =
     !isNil(info.cancelAt) || !isNil(info.scheduledPlanName);
-  const scheduledCap = plan.scheduledUsersLimit;
-  const capBinds =
-    !isNil(scheduledCap) && (isUnlimited || scheduledCap < total);
-  const effectiveTotal = capBinds ? scheduledCap : total;
+  const { capBinds, effectiveLimit: effectiveTotal } =
+    billingUtils.resolveSeatCap(info);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
@@ -69,13 +65,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
 
       {capBinds ? (
         <span className="text-sm text-muted-foreground">
-          {t(
-            "You're downgrading to the {plan} plan on {date} — the seat limit shown comes from your scheduled plan.",
-            {
-              plan: info.scheduledPlanName ?? t('Free'),
-              date: dayjs(info.cancelAt).format('MMM D, YYYY'),
-            },
-          )}
+          {billingUtils.scheduledCapNotice(info)}
         </span>
       ) : hasScheduledChange ? (
         <span className="text-sm text-muted-foreground">
