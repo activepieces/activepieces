@@ -142,6 +142,7 @@ export const GenericPropertiesForm = React.memo(
                 prefixValue={prefixValue}
                 propertySettings={propertySettings}
                 disabled={disabled ?? false}
+                renderField={renderField}
               />
             );
           }
