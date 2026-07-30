@@ -1,4 +1,8 @@
-import { Metadata, isNil } from '@activepieces/core-utils';
+import {
+  Metadata,
+  isNil,
+  parseToJsonIfPossible,
+} from '@activepieces/core-utils';
 import {
   piecePropertiesUtils,
   OAuth2Props,
@@ -92,6 +96,25 @@ function buildInputSchemaForStep(
     }
     default:
       throw new Error('Unsupported type: ' + type);
+  }
+}
+
+function parseDynamicValue({
+  property,
+  value,
+}: {
+  property: PieceProperty;
+  value: unknown;
+}): unknown[] | boolean | undefined {
+  const parsed = parseToJsonIfPossible(value);
+  switch (property.type) {
+    case PropertyType.MULTI_SELECT_DROPDOWN:
+    case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+      return Array.isArray(parsed) ? parsed : undefined;
+    case PropertyType.CHECKBOX:
+      return typeof parsed === 'boolean' ? parsed : undefined;
+    default:
+      return undefined;
   }
 }
 
@@ -594,6 +617,7 @@ export const formUtils = {
   getDefaultValueForProperties,
   buildConnectionSchema,
   getDefaultPropertyValue,
+  parseDynamicValue,
 };
 
 export type BuildConnectionSchemaOptions = {

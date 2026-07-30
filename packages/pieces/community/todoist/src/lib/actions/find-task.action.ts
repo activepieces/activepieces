@@ -3,14 +3,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { todoistProjectIdDropdown } from '../common/props';
 import { todoistRestClient } from '../common/client/rest-client';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { findTaskActionOutputSchema } from '../output-schemas';
 
 export const todoistFindTaskAction = createAction({
 	auth: todoistAuth,
 	name: 'find_task',
 	displayName: 'Find Task',
 	description: 'Finds a task by name.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Looks up an active Todoist task by exact content match, optionally scoped to one project (all projects if left blank). Use to resolve a task name to its full record (including its ID) before updating or completing it. Read-only and idempotent; errors if no task matches the name exactly.', idempotent: true },
+	outputSchema: findTaskActionOutputSchema,
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',

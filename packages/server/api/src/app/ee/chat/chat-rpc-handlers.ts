@@ -199,8 +199,9 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             await chatHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
 
-        const tier = chatHelpers.resolveTier({ tierId: modelName ?? conversation.modelName ?? null })
-        const resolvedModelId = chatHelpers.resolveModelIdForProvider({ tier, provider: providerConfig.provider })
+        const selectedModel = modelName ?? conversation.modelName ?? null
+        const tier = chatHelpers.resolveTier({ tierId: selectedModel })
+        const resolvedModelId = chatHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
