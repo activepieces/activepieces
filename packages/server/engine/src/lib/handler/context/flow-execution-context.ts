@@ -1,4 +1,4 @@
-import { apId, assertEqual, ByteLruCache, createByteLruCache, isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { apId, assertEqual, createByteLruCache, isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { engineFileApi } from '../../api/engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
@@ -321,4 +321,7 @@ type MaybeSliceOutputParams = {
     thresholdBytes?: number
 }
 
-export type SliceCache = ByteLruCache<Promise<unknown>>
+type SliceCache = {
+    get(key: string): Promise<unknown> | undefined
+    set(params: { key: string, value: Promise<unknown>, sizeBytes: number }): void
+}
