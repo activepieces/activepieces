@@ -30,6 +30,7 @@ function PropertyGroupTabs({
   prefixValue,
   propertySettings,
   disabled,
+  renderField,
 }: PropertyGroupTabsProps) {
   const form = useFormContext();
   const tabKeys = group.props.filter((key) => !!properties[key]);
@@ -231,8 +232,7 @@ function PropertyGroupTabs({
           {tabKeys.map((key) => {
             const inputName = inputNameFor(key);
             const dynamic = isDynamicKey(key);
-            const useChips =
-              !dynamic && properties[key].type === PropertyType.ARRAY;
+            const isArrayProp = properties[key].type === PropertyType.ARRAY;
             return (
               <TabsContent
                 key={key}
@@ -240,7 +240,17 @@ function PropertyGroupTabs({
                 className="mt-0 border-t border-input p-2 duration-150 animate-in fade-in-0 motion-reduce:animate-none"
               >
                 <div className="min-w-0 py-0.5">
-                  {useChips ? (
+                  {dynamic ? (
+                    <TextInputWithMentions
+                      disabled={disabled}
+                      initialValue={form.getValues(inputName) ?? ''}
+                      onChange={(newValue) =>
+                        form.setValue(inputName, newValue, {
+                          shouldValidate: true,
+                        })
+                      }
+                    />
+                  ) : isArrayProp ? (
                     <MentionChipsInput
                       value={valueByKey[key]}
                       disabled={disabled}
@@ -251,15 +261,7 @@ function PropertyGroupTabs({
                       }
                     />
                   ) : (
-                    <TextInputWithMentions
-                      disabled={disabled}
-                      initialValue={form.getValues(inputName) ?? ''}
-                      onChange={(newValue) =>
-                        form.setValue(inputName, newValue, {
-                          shouldValidate: true,
-                        })
-                      }
-                    />
+                    renderField(key, { hideLabel: true })
                   )}
                 </div>
               </TabsContent>
@@ -296,6 +298,10 @@ type PropertyGroupTabsProps = {
   prefixValue: string;
   propertySettings: Record<string, PropertySettings> | null;
   disabled: boolean;
+  renderField: (
+    propertyName: string,
+    options?: { hideLabel?: boolean; hideDescription?: boolean },
+  ) => React.ReactNode;
 };
 
 type IndicatorRect = {
