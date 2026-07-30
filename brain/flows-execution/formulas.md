@@ -13,7 +13,7 @@ In-builder data transformation: users transform any text input using ~104 functi
 
 ### Entities & files
 - `core/shared/src/lib/formula/` — `formula-evaluator.ts`, `function-registry.ts` (`AP_FUNCTIONS`, the single source of truth), `function-implementations.ts`, `function-type-checker.ts`.
-- Editor: `web/.../text-input-with-mentions/tiptap-editor.tsx` (always registers `FunctionSlashExtension` + the three inline atom badge nodes — no plan flag), search/hover popovers, `text-input-utils.ts` (doc ⇄ wrapped-string serializer).
+- Editor: `web/.../text-input-with-mentions/tiptap-editor.tsx` (always registers `FunctionSlashExtension` + the three inline atom badge nodes — no plan flag), search/hover popovers, `text-input-utils.ts` (doc ⇄ wrapped-string serializer). An `outputFormat: 'text' | 'html'` prop (default `'text'`) switches it into a rich-text WYSIWYG (StarterKit + toolbar) that serializes to/from HTML with mentions kept as `{{...}}` tokens; consumed by the `RICH_TEXT` property widget.
 
 ### Gotchas
 - On **every** edition, unconditionally on — no plan flag or license toggle. The pre-pass runs regardless of any editor flag, so saved formulas keep evaluating even where the editor is off. Only embed difference: the search popover hides the external "See All" docs link.
