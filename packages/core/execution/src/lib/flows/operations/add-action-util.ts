@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { applyFunctionToValuesSync } from '@activepieces/core-utils'
+import { applyFunctionToValuesSync, isNil } from '@activepieces/core-utils'
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
@@ -18,32 +18,14 @@ function mapToNewNames(flowVersion: FlowVersion, clonedActions: FlowAction[]): R
     }, {} as Record<string, string>)
 }
 
-type ReplaceOldStepNameWithNewOneProps = {
-    input: string
-    oldStepName: string
-    newStepName: string
-}
-
-function replaceOldStepNameWithNewOne({
-    input,
-    oldStepName,
-    newStepName,
-}: ReplaceOldStepNameWithNewOneProps): string {
+function remapStepReferences({ text, oldNameToNewName }: RemapStepReferencesProps): string {
     // TODO: replace this naive /{{(.*?)}}/g tokenizer with `extractMustacheTokens`
-    // from @activepieces/shared. The lazy regex stops at the first `}}`, so a token
+    // from @activepieces/core-utils. The lazy regex stops at the first `}}`, so a token
     // whose content contains `}}` (e.g. a string literal) is truncated and the
     // trailing step name is not renamed on duplicate/paste. Swap deferred — needs
     // duplicate/paste re-testing in the builder before landing.
-    const regex = /{{(.*?)}}/g // Regular expression to match strings inside {{ }}
-    return input.replace(regex, (match, content) => {
-        // Replace the content inside {{ }} using the provided function
-        const replacedContent = content.replaceAll(
-            new RegExp(`\\b${oldStepName}\\b`, 'g'),
-            `${newStepName}`,
-        )
-        // Reconstruct the {{ }} with the replaced content
-        return `{{${replacedContent}}}`
-    })
+    return text.replace(/{{(.*?)}}/g, (_token, expression: string) =>
+        `{{${expression.replace(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g, (identifier) => oldNameToNewName[identifier] ?? identifier)}}}`)
 }
 
 
@@ -56,17 +38,14 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
             sampleData: {},
         }
     }
+    const sourceCode = 'sourceCode' in step.settings ? step.settings.sourceCode : undefined
     step.settings = applyFunctionToValuesSync(
         step.settings,
-        (value) => Object.keys(oldNameToNewName).reduce(
-            (renamed, oldName) => replaceOldStepNameWithNewOne({
-                input: renamed,
-                oldStepName: oldName,
-                newStepName: oldNameToNewName[oldName],
-            }),
-            value,
-        ),
+        (value) => remapStepReferences({ text: value, oldNameToNewName }),
     )
+    if (!isNil(sourceCode) && 'sourceCode' in step.settings) {
+        step.settings.sourceCode = sourceCode
+    }
     step.lastUpdatedDate = dayjs().toISOString()
     return step
 }
@@ -74,4 +53,9 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
 export const addActionUtils = {
     mapToNewNames,
     clone,
+}
+
+type RemapStepReferencesProps = {
+    text: string
+    oldNameToNewName: Record<string, string>
 }
