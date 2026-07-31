@@ -597,10 +597,6 @@ export const findFreeSlotsActionOutputSchema: OutputSchema = {
       "key": "count",
       "label": "Count",
       "format": "number"
-    },
-    {
-      "key": "warning",
-      "label": "Warning"
     }
   ]
 };

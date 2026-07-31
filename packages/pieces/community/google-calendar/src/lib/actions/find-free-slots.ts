@@ -210,14 +210,12 @@ export const findFreeSlots = createAction({
       calendarId: string;
       errors: { domain: string; reason: string }[];
     }[] = [];
-    let calendarsWithData = 0;
     for (const calendarId of Object.keys(response.body.calendars)) {
       const calendarResult = response.body.calendars[calendarId];
       if (calendarResult.errors?.length) {
         calendarErrors.push({ calendarId, errors: calendarResult.errors });
         continue;
       }
-      calendarsWithData++;
       const blocks = calendarResult.busy ?? [];
       for (const block of blocks) {
         allBusy.push({
@@ -227,16 +225,18 @@ export const findFreeSlots = createAction({
       }
     }
 
-    if (calendarErrors.length > 0 && calendarsWithData === 0) {
+    if (calendarErrors.length > 0) {
       throw new Error(
-        `Could not read availability for any requested calendar: ${calendarErrors
+        `Could not read availability for calendar(s): ${calendarErrors
           .map(
             (entry) =>
               `${entry.calendarId} (${entry.errors
                 .map((error) => error.reason)
                 .join(', ')})`
           )
-          .join('; ')}. Verify the calendar IDs with List Calendars.`
+          .join(
+            '; '
+          )}. A slot can only be marked free if every selected calendar is free, so free slots cannot be computed while any of them are unreadable. Verify the calendar IDs with List Calendars.`
       );
     }
 
@@ -271,13 +271,6 @@ export const findFreeSlots = createAction({
     return {
       free_slots: freeSlots,
       count: freeSlots.length,
-      ...(calendarErrors.length > 0
-        ? {
-            incomplete_calendars: calendarErrors,
-            warning:
-              'Some requested calendars could not be read (see incomplete_calendars); the returned slots do not account for busy time on those calendars.',
-          }
-        : {}),
     };
   },
 });

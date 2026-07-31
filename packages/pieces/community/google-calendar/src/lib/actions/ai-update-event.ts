@@ -3,8 +3,32 @@ import { googleCalendarAuth } from '../common';
 import { updateEventProps, runUpdateEvent } from './update-event.action';
 import { eventOutputSchema } from '../output-schemas';
 
-const { eventId: _omitEventId, calendar_id: _omitCalendarId, ...otherUpdateProps } =
-  updateEventProps;
+const {
+  eventId: _omitEventId,
+  calendar_id: _omitCalendarId,
+  guests_can_modify: _omitGuestsCanModify,
+  guests_can_invite_others: _omitGuestsCanInviteOthers,
+  guests_can_see_other_guests: _omitGuestsCanSeeOtherGuests,
+  ...otherUpdateProps
+} = updateEventProps;
+
+function guestPermissionProp(displayName: string) {
+  return Property.StaticDropdown({
+    displayName,
+    description: 'Leave unset to keep the event\'s current value.',
+    required: false,
+    options: {
+      options: [
+        { label: 'True', value: 'true' },
+        { label: 'False', value: 'false' },
+      ],
+    },
+  });
+}
+
+function toOptionalBoolean(value: string | undefined): boolean | undefined {
+  return value === undefined ? undefined : value === 'true';
+}
 
 const props = {
   calendar_id: updateEventProps.calendar_id,
@@ -15,6 +39,11 @@ const props = {
     required: true,
   }),
   ...otherUpdateProps,
+  guests_can_modify: guestPermissionProp('Guests can modify'),
+  guests_can_invite_others: guestPermissionProp('Guests can invite others'),
+  guests_can_see_other_guests: guestPermissionProp(
+    'Guests can see other guests'
+  ),
 };
 
 export const aiUpdateEvent = createAction({
@@ -37,6 +66,15 @@ export const aiUpdateEvent = createAction({
       propsValue: {
         ...context.propsValue,
         eventId: context.propsValue.event_id,
+        guests_can_modify: toOptionalBoolean(
+          context.propsValue.guests_can_modify
+        ),
+        guests_can_invite_others: toOptionalBoolean(
+          context.propsValue.guests_can_invite_others
+        ),
+        guests_can_see_other_guests: toOptionalBoolean(
+          context.propsValue.guests_can_see_other_guests
+        ),
       },
     }),
 });

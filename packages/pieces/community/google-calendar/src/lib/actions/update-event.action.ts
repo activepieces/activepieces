@@ -114,9 +114,11 @@ export async function runUpdateEvent(
             dateTime: dayjs(end_date_time).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
           }
         : currentEvent.data.end,
-      guestsCanInviteOthers: guests_can_invite_others,
-      guestsCanModify: guests_can_modify,
-      guestsCanSeeOtherGuests: guests_can_see_other_guests,
+      guestsCanInviteOthers:
+        guests_can_invite_others ?? currentEvent.data.guestsCanInviteOthers,
+      guestsCanModify: guests_can_modify ?? currentEvent.data.guestsCanModify,
+      guestsCanSeeOtherGuests:
+        guests_can_see_other_guests ?? currentEvent.data.guestsCanSeeOtherGuests,
     },
   });
 
