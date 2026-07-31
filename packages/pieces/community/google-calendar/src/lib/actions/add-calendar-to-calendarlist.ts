@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { calendar as googleCalendar } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
+import { calendarListEntryOutputSchema } from '../output-schemas';
 
 export const addCalendarToCalendarlist = createAction({
   auth: googleCalendarAuth,
@@ -14,6 +15,7 @@ export const addCalendarToCalendarlist = createAction({
       required: true
     })
   },
+  outputSchema: calendarListEntryOutputSchema,
   async run(context) {
     
     const id = context.propsValue.id;
