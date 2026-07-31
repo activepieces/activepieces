@@ -6,6 +6,10 @@ export const convertJsonToXml = createAction({
   name: 'convert-json-to-xml',
   displayName: 'Convert JSON to XML',
   description: 'Convert JSON to XML',
+  aiMetadata: {
+    description: 'Serializes a JSON object or array into an XML string, optionally prepending an XML declaration header and rendering the values under one designated key as tag attributes instead of child elements. Use it when a downstream system expects XML (SOAP endpoint, legacy API, RSS/sitemap body); for the opposite direction use Convert XML to JSON. Requires valid JSON input, and attributes are only emitted for the nested key named by the attribute field (defaults to "attr"); deterministic and idempotent.',
+    idempotent: true,
+  },
   props: {
     json: Property.Json({
       displayName: 'JSON',
