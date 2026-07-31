@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const getFileName = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'get_file_name',
   displayName: 'Get File Name',
   description: 'Get the name of a file',

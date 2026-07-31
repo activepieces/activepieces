@@ -3,7 +3,7 @@ import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 
 export const deleteTable = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'tables-delete-table',
   displayName: 'Delete Table',
   description: 'Delete a table and all of its records.',

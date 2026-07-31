@@ -5,7 +5,7 @@ import { aiProps } from '../../common/props';
 import { AIProviderName } from '@activepieces/pieces-framework';
 
 export const classifyText = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'classifyText',
   displayName: 'Classify Text',
   description: 'Categorize any text input using custom labels, so your flow knows what to do next.',

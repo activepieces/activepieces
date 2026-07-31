@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const find = createAction({
-  audience: 'human',
+  audience: 'both',
   description: 'Find substring (Regex or Text).',
   displayName: 'Find',
   name: 'find',

@@ -6,7 +6,7 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const generatePassword = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'generate-password',
   description: 'Generates a random password with the specified length',
   displayName: 'Generate Password',
