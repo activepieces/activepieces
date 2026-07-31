@@ -6,6 +6,7 @@ export const imageToPdf = createAction({
 	name: 'imageToPdf',
 	displayName: 'Image to PDF',
 	description: 'Convert image to PDF',
+	aiMetadata: { description: 'Wraps a single PNG or JPEG image into a new one-page A4 PDF, scaling it to fit inside the margins and correcting the EXIF orientation. Use it to make an image attachable or printable as a document; use Add Image to PDF to stamp an image onto an existing PDF, and Merge PDFs to combine several single-image results. Accepts one image per call and only the png/jpg/jpeg extensions; layout and page size are fixed and repeating the call produces the same document content, so idempotent.', idempotent: true },
 	props: {
 		image: Property.File({
 			displayName: 'image',

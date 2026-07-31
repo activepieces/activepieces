@@ -13,6 +13,7 @@ export const askAI = createAction({
   name: 'askAi',
   displayName: 'Ask AI',
   description: 'A flexible AI step. ask it to analyze data, explain, draft, or decide based on your flow\'s data.',
+  aiMetadata: { description: 'Sends a free-form prompt to a text model and returns its answer, optionally continuing a multi-turn thread via a Conversation Key or grounding the reply with web search. Pick it for open-ended reasoning, drafting, or judgement over flow data; prefer summarizeText to condense text, classifyText for a fixed label set, extractStructuredData for typed fields, or run_agent when the task needs tools and multiple steps. Requires a provider/model plus a prompt; not idempotent, since each call generates a fresh answer and a Conversation Key appends the exchange to stored history.', idempotent: false },
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,

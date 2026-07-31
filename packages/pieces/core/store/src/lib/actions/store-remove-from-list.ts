@@ -59,6 +59,7 @@ export const storageRemoveFromList = createAction({
   name: 'remove_from_list',
   displayName: 'Remove from List',
   description: 'Remove Item from a list',
+  aiMetadata: { description: 'Removes a matching item from the array stored under a key and writes the shortened list back; the value is matched as text, so items stored as objects cannot be targeted. Use it to drop one element while keeping the rest; use Remove to delete the whole key, or Put to overwrite the array. Requires the key (max 128 characters), the value, and the Store Scope; fails if the stored value is not an array, removes only the first match per call, and is idempotent.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

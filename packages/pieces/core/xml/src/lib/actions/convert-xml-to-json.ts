@@ -6,6 +6,10 @@ export const convertXmlToJson = createAction({
   name: 'convert-xml-to-json',
   displayName: 'Convert XML to JSON',
   description: 'Convert XML to JSON',
+  aiMetadata: {
+    description: 'Parses an XML string into a JSON structure, in either of two modes: keep tag attributes (surfaced as "@_"-prefixed keys) or ignore attributes and keep element text only. Use it to make an XML payload from an HTTP response, webhook body, or RSS/SOAP feed addressable by later steps; for the opposite direction use Convert JSON to XML. Requires a well-formed XML string passed as text, and the XML declaration is always dropped; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     xml: Property.LongText({
       displayName: 'XML',

@@ -23,6 +23,7 @@ export const deleteFolderAction = createAction({
   name: 'deleteFolder',
   displayName: 'Delete Folder',
   description: 'Deletes an existing folder at given path.',
+  aiMetadata: { description: 'Deletes a directory at a given remote path on the connected FTP, FTPS or SFTP server, either only when it is empty or, with the recursive option enabled, together with every nested subfolder and file. Use this for directories; use Delete File to remove a single file. Recursive deletion is permanent and unrecoverable, so verify the path first; idempotent in that it converges on the folder being absent, and a repeat call on an already-missing path just reports an error.', idempotent: true },
   props: {
     folderPath: Property.ShortText({
       displayName: 'Folder Path',
