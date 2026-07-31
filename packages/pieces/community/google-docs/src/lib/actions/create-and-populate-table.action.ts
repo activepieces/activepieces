@@ -102,7 +102,14 @@ export const createAndPopulateTable = createAction({
       try {
         await docs.documents.batchUpdate({
           documentId,
-          requestBody: { requests: cellInserts },
+          requestBody: {
+            requests: cellInserts,
+            // Fail loudly instead of misplacing text if the document changed
+            // between the read-back above and this write.
+            writeControl: reloaded.revisionId
+              ? { requiredRevisionId: reloaded.revisionId }
+              : undefined,
+          },
         });
       } catch (error) {
         throw new Error(docsCommon.formatError(error, 'populate the new table in'));

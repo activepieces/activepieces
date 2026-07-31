@@ -52,18 +52,32 @@ export const replaceSectionWithMarkdown = createAction({
     // The body's terminal newline cannot be deleted, so if the caller passed an
     // end index at/after the body end (e.g. the value from Get Document End Index)
     // clamp it to one before the end — otherwise deleteContentRange 400s.
+    let content: docs_v1.Schema$StructuralElement[];
     try {
       const response = await docs.documents.get({ documentId });
-      const content = response.data.body?.content ?? [];
-      const bodyEnd = content[content.length - 1]?.endIndex ?? endIndex;
-      if (endIndex > bodyEnd - 1) {
-        endIndex = bodyEnd - 1;
-      }
+      content = response.data.body?.content ?? [];
     } catch (error) {
       throw new Error(docsCommon.formatError(error, 'read'));
     }
+    const bodyEnd = content[content.length - 1]?.endIndex ?? endIndex;
+    if (endIndex > bodyEnd - 1) {
+      endIndex = bodyEnd - 1;
+    }
     if (endIndex <= startIndex) {
       throw new Error('The section to replace is empty after clamping the end index to the document end.');
+    }
+    // A single deleteContentRange cannot remove a table or table of contents
+    // that the range crosses, so a section replace over one is unsupported.
+    const crossesStructuralElement = content.some(
+      (element) =>
+        (element.table || element.tableOfContents) &&
+        (element.startIndex ?? 0) < endIndex &&
+        (element.endIndex ?? 0) > startIndex
+    );
+    if (crossesStructuralElement) {
+      throw new Error(
+        'Cannot replace this section because it contains or overlaps a table or table of contents, which deleteContentRange cannot remove. Choose a range that excludes it, or edit it with the targeted table atomics.'
+      );
     }
 
     // Delete the section first, then insert the markdown at the now-empty

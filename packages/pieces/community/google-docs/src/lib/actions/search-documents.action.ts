@@ -72,11 +72,13 @@ export const searchDocuments = createAction({
 
 		const matchClauses: string[] = [];
 		if (name_contains) {
-			matchClauses.push(`name contains '${name_contains.replace(/'/g, "\\'")}'`);
+			matchClauses.push(
+				`name contains '${name_contains.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+			);
 		}
 		if (full_text_contains) {
 			matchClauses.push(
-				`fullText contains '${full_text_contains.replace(/'/g, "\\'")}'`
+				`fullText contains '${full_text_contains.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
 			);
 		}
 
