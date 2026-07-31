@@ -26,7 +26,7 @@ import { pieceSetMutations } from '@/features/piece-sets';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: formErrors.required }),
-  externalId: z.string().optional(),
+  key: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -36,25 +36,25 @@ type EditPieceSetDialogProps = {
   onOpenChange: (open: boolean) => void;
   id: string;
   currentName: string;
-  currentExternalId: string | null;
+  currentKey: string | null;
 };
 
 const EditPieceSetForm = ({
   onOpenChange,
   id,
   currentName,
-  currentExternalId,
+  currentKey,
 }: {
   onOpenChange: (open: boolean) => void;
   id: string;
   currentName: string;
-  currentExternalId: string | null;
+  currentKey: string | null;
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: currentName,
-      externalId: currentExternalId ?? '',
+      key: currentKey ?? '',
     },
     mode: 'onChange',
   });
@@ -62,13 +62,13 @@ const EditPieceSetForm = ({
   const { mutate: updateSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
 
-  const handleSubmit = ({ name, externalId }: FormValues) => {
+  const handleSubmit = ({ name, key }: FormValues) => {
     updateSet(
       {
         id,
         request: {
           name,
-          externalId: externalId || null,
+          key: key || undefined,
         },
       },
       { onSuccess: () => onOpenChange(false) },
@@ -96,10 +96,10 @@ const EditPieceSetForm = ({
         />
         <FormField
           control={form.control}
-          name="externalId"
+          name="key"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('External ID')}</FormLabel>
+              <FormLabel>{t('Key')}</FormLabel>
               <FormControl>
                 <Input placeholder={t('e.g. my-set')} {...field} />
               </FormControl>
@@ -132,7 +132,7 @@ export const EditPieceSetDialog = ({
   onOpenChange,
   id,
   currentName,
-  currentExternalId,
+  currentKey,
 }: EditPieceSetDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -145,7 +145,7 @@ export const EditPieceSetDialog = ({
           onOpenChange={onOpenChange}
           id={id}
           currentName={currentName}
-          currentExternalId={currentExternalId}
+          currentKey={currentKey}
         />
       </DialogContent>
     </Dialog>

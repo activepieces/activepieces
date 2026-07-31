@@ -4,6 +4,7 @@ import {
   Boxes,
   Cpu,
   ExternalLink,
+  GitCompareArrows,
   HardDrive,
   Info,
   MemoryStick,
@@ -28,6 +29,10 @@ const HARDWARE_DOCS_LINK =
 const PRODUCTION_SETUP_LINK =
   'https://www.activepieces.com/docs/install/configure-operate/production-setup#what-it-looks-like';
 
+// Matches UNKNOWN_VERSION in @activepieces/server-utils: the sentinel the backend reports when
+// it could not read its release from package.json. Not importable here (server-only package).
+const UNREADABLE_RELEASE_VERSION = '0.0.0';
+
 type SystemHealthTabProps = {
   onSeeRuns: () => void;
 };
@@ -43,6 +48,36 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     if (!currentVersion || !latestVersion) return false;
     return semver.gte(currentVersion, latestVersion);
   }, [currentVersion, latestVersion]);
+
+  const release = systemHealth?.release;
+  const releaseIntegrityOk =
+    !!release &&
+    release.current !== UNREADABLE_RELEASE_VERSION &&
+    release.workers.versionMismatched === 0;
+  const releaseIntegrityMessage = (() => {
+    if (!release) {
+      return null;
+    }
+    if (release.current === UNREADABLE_RELEASE_VERSION) {
+      return t(
+        'The release version could not be read from package.json (reported as 0.0.0). Worker job dispatch is gated and will not recover until the deployment is fixed.',
+      );
+    }
+    if (release.workers.versionMismatched > 0) {
+      return t(
+        '{count, plural, =1 {# connected worker is running an incompatible version ({versions}). Job dispatch is paused for it until it is upgraded to {current}.} other {# connected workers are running incompatible versions ({versions}). Job dispatch is paused for them until they are upgraded to {current}.}}',
+        {
+          count: release.workers.versionMismatched,
+          versions: release.workers.mismatchedVersions.join(', '),
+          current: release.current,
+        },
+      );
+    }
+    return t(
+      'All {total, plural, =1 {# connected worker matches} other {# connected workers match}} the app release {current}.',
+      { total: release.workers.total, current: release.current },
+    );
+  })();
 
   const appRows: HealthRow[] = [
     {
@@ -62,6 +97,14 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           </span>
         </span>
       ),
+    },
+    {
+      id: 'release-integrity',
+      title: t('Release Integrity'),
+      icon: <GitCompareArrows className="size-4" />,
+      status: releaseIntegrityOk ? 'passed' : 'failed',
+      link: 'https://www.activepieces.com/docs/install/configuration/overview',
+      message: releaseIntegrityMessage,
     },
     {
       id: 'app-disk',

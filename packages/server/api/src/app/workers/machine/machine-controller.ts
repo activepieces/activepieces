@@ -1,9 +1,12 @@
-import { createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ApEdition, createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { websocketService } from '../../core/websockets.service'
-import { parseWorkerGroupValue } from '../job'
+import { system } from '../../helper/system/system'
+import { parseWorkerGroupValue, QueueName } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { jobQueue } from '../job-queue/job-queue'
 import { createHandlers } from '../rpc/worker-rpc-service'
@@ -48,12 +51,22 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
         )
         return { queues: counts }
     })
+
+    if (system.getEdition() !== ApEdition.CLOUD) {
+        app.get('/queue-metrics/prometheus/:queueName?', PrometheusQueueMetricsParams, async (request, reply) => {
+            const queue = jobQueue(app.log).getAllQueues().find((q) => q.name === request.params.queueName)
+            if (isNil(queue)) {
+                return reply.status(StatusCodes.NOT_FOUND).send({ message: 'Queue not found' })
+            }
+            return reply.type('text/plain').send(await queue.exportPrometheusMetrics())
+        })
+    }
 }
 
 
 const ListWorkersParams = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
@@ -72,5 +85,16 @@ const QueueMetricsParams = {
                 })),
             }),
         },
+    },
+}
+
+const PrometheusQueueMetricsParams = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        params: z.object({
+            queueName: z.string().default(QueueName.WORKER_JOBS),
+        }),
     },
 }

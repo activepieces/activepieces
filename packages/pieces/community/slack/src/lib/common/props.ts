@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
 import { slackAuth } from '../auth';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
@@ -20,6 +20,18 @@ export const singleSelectChannelInfo = Property.MarkDown({
     slackChannelBotInstruction +
     `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly.
   `,
+});
+
+export const appWebhookSetupInfo = Property.MarkDown({
+  value:
+    "This trigger needs Slack's App Webhook manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).",
+  variant: MarkdownVariant.INFO,
+});
+
+export const interactivitySetupInfo = Property.MarkDown({
+  value:
+    "This trigger needs Slack's Interactivity & Shortcuts Request URL manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).",
+  variant: MarkdownVariant.INFO,
 });
 
 export const slackChannel = <R extends boolean>(required: R) =>

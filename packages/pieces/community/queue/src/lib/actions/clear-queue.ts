@@ -11,9 +11,10 @@ const notes = `**Note:**
 - The testing step work in isolation and doesn't affect the actual queue after publishing.
 `
 export const clearQueue = createAction({
-  audience: 'human',
+  audience: 'both',
     name: 'clear-queue',
     description: 'Clears all items inside a queue',
+    aiMetadata: { description: 'Permanently deletes a named project-scoped queue and every item stored in it, keyed by the exact queue name. Use it to reset a queue wholesale; prefer Pull items from queue when the buffered items still need to be read and processed. Idempotent: the queue ends up empty however many times it runs, and clearing an already-empty or never-created queue still succeeds.', idempotent: true },
     displayName: 'Clear queue',
     props: {
         info: Property.MarkDown({

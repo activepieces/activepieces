@@ -1,0 +1,92 @@
+---
+title: "Disaster Recovery"
+description: "What each backing store holds, what a failure of it costs you, and how to recover. RPO/RTO per component."
+icon: "life-ring"
+---
+
+Activepieces runs on three backing stores. Two are systems of record; one is rebuildable state:
+
+- **Postgres** — flows, runs, trigger schedules, waitpoints, connections. System of record.
+- **S3** — run logs (step checkpoints), large webhook payloads, flow bundles. System of record for execution history.
+- **Redis** — the BullMQ job queue and caches. Everything in Redis except the queue itself can be rebuilt from Postgres.
+
+This page describes what happens when each one fails, how to recover, and how to compute your RPO/RTO from your own infrastructure choices. Recovery targets are stated as formulas because on a self-hosted deployment they are properties of *your* Postgres, Redis, and S3 setup, not of Activepieces.
+
+## Summary
+
+| Store | Holds | RPO | RTO | Recovery action |
+|-------|-------|-----|-----|-----------------|
+| Redis | Job queue, schedules, caches | Your Redis persistence window (≤1s with AOF `everysec`; entire queue with no persistence) | Redis failover + app restart | Restart app, then bulk-retry stranded runs |
+| Postgres | Flows, runs, schedules, connections | Your Postgres HA/backup config (≈0 with a synchronous replica) | Provider failover + app/worker restart | Restart app and workers after failover |
+| S3 | Run logs, large payloads, bundles | Your bucket versioning/replication config | Provider-dependent | None (runs retry automatically) |
+
+## Redis loss
+
+Redis is the only store where data can be lost that Postgres doesn't also have. The exposure is precisely scoped:
+
+**Lost permanently — queued jobs that no worker had picked up.** The critical case is async webhooks: Activepieces returns `200` with an `x-webhook-id` header after the job is enqueued to Redis, *before* any Postgres record exists. If Redis loses its dataset in that window, those requests vanish without a trace, and the sender — having received a `200` — will not retry. Your async-webhook RPO **is** your Redis persistence window:
+
+- Managed Redis with replication or AOF `everysec`: **≤1 second** of accepted webhooks.
+- No persistence: **the entire queue** at the moment of loss.
+
+Sync webhooks are not exposed this way — the run is recorded in Postgres before execution, and on failure the caller receives an error it can retry.
+
+**Not lost — everything else.** Schedules, renewals, resume timers, and in-flight runs all have their source of truth in Postgres:
+
+1. **Polling trigger schedules and webhook renewals** are rebuilt from Postgres trigger sources automatically: the queue's migration marker lives in Redis itself, so a fresh Redis triggers a full refill on the next app start.
+2. **Paused runs waiting on a timer** (Delay steps) are re-registered from Postgres waitpoints on app start. Runs paused on webhooks or human input never needed a Redis timer — their resume arrives over HTTP.
+3. **Runs that were queued or executing** keep their run record and step checkpoints in Postgres/S3. Their queue job is gone, so they stay in a non-terminal state (`QUEUED`/`RUNNING`) until you retry them — the retry resumes from the last checkpoint and never re-runs completed steps (see [Crash Recovery](/install/guarantees/crash-recovery)).
+
+### Runbook
+
+1. Restore or replace Redis (an empty Redis is fine).
+2. Restart the app containers. The refill machinery rebuilds schedules, renewals, and paused-run timers from Postgres.
+3. In the runs view, filter for runs still in `QUEUED` or `RUNNING` that started before the incident and bulk-retry them. They resume from their last checkpoint.
+4. Accept the loss of async webhooks inside your persistence window; if the upstream system supports replay, replay from just before the incident.
+
+**Do not bother backing up Redis.** Enable persistence (AOF `everysec` or a managed offering) to shrink the queue-loss window, but treat the rest of Redis as a rebuildable cache. A stale Redis backup is strictly worse than an empty Redis plus the refill on restart.
+
+## Postgres failover
+
+During a managed-Postgres failover (typically 1–5 minutes on Azure/AWS/GCP), the control plane is down but the data plane degrades gracefully:
+
+- **The API and UI are unavailable or erratic.** Expected for the duration of the failover.
+- **Async webhooks for recently-active flows keep being accepted.** Flow resolution for the webhook ingest path is served from a Redis cache, and the enqueue itself is Redis-only — so most production webhook traffic continues to be accepted and queues up. Webhooks for flows not in the cache, and all sync webhooks, fail with a `5xx` the sender can see and retry.
+- **Runs executing during the outage fail and retry automatically.** Queue jobs retry once with an exponential backoff that starts at 8 minutes — longer than a typical failover — so the retry lands after recovery, and completed steps are not re-run.
+
+### Runbook
+
+1. Wait for the provider failover to complete.
+2. **Restart the app and worker containers.** Database connection pools are not guaranteed to re-establish cleanly through a failover's DNS flip; a restart is cheap and always correct.
+3. Queued work drains on its own; runs that exhausted their retry appear as failed and can be bulk-retried.
+
+- **RPO** = your Postgres HA configuration (≈0 with a synchronous standby; your backup cadence otherwise).
+- **RTO** = provider failover time + container restart time.
+
+Protect Postgres with your provider's point-in-time recovery. It is the system of record for everything except execution history.
+
+## S3 outage
+
+S3 (or R2/GCS/MinIO) holds run logs — the step checkpoints that make [crash recovery](/install/guarantees/crash-recovery) work — plus webhook payloads over the inline threshold and flow bundles.
+
+- **During an outage**, runs that need to read or write files fail and retry on the same 8-minute backoff. Run history is unavailable in the UI.
+- **After recovery**, retries drain automatically. No operator action is needed.
+- **Permanent object loss** is the one scenario without a recovery path: a run whose checkpoint log is gone cannot resume from its last checkpoint (it can still be retried from the start), and its history is gone. Your RPO for execution history is your bucket's versioning/replication configuration.
+
+S3 providers publish eleven-nines durability, which is why this is the lowest-risk component — but durability claims don't cover accidental deletion or misconfiguration. Enable bucket versioning; add cross-region replication if execution history is compliance-relevant.
+
+## Worked example
+
+A typical managed deployment — Azure Database for PostgreSQL (zone-redundant HA), managed Redis with AOF `everysec`, S3 with versioning:
+
+| Scenario | RPO | RTO |
+|----------|-----|-----|
+| Redis node loss | ≤1s of accepted async webhooks; nothing else | Minutes: Redis failover + app restart + bulk-retry |
+| Postgres failover | ≈0 | ~5 min failover + container restart |
+| S3 outage | 0 (retries drain) | Provider recovery time |
+
+## What to back up
+
+- **Postgres**: provider point-in-time recovery. This is the backup that matters.
+- **S3**: bucket versioning, plus replication if execution history must survive a regional loss.
+- **Redis**: persistence, not backups. Everything a backup would restore is either rebuilt from Postgres or stale queue state you'd have to reconcile anyway.

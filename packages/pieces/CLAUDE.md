@@ -33,7 +33,7 @@ Three types: `PieceAuth.SecretText()` with validate callback, `PieceAuth.OAuth2(
 - `context.auth` — resolved credentials
 - `context.propsValue` — resolved input properties
 - `context.store` — key-value persistence (put/get/delete, persists across executions)
-- `context.files` — file upload/download
+- `context.files` — file upload/download. `files.write({ fileName, data })` accepts a `Readable` as well as a `Buffer`; pass a source stream (e.g. an S3 `getObject().Body`) to stream large files to storage without buffering them in the sandbox.
 - `context.connections` — manage OAuth connections
 - `context.server` — API access (token, apiUrl, publicUrl)
 - `context.run.stop({ response })` — stop flow, return HTTP response

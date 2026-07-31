@@ -8,13 +8,15 @@ import {
   listRecords,
   listStores
 } from '../common';
+import { getKeyValueStoreRecordActionOutputSchema } from '../output-schemas';
 
 export const getKeyValueStoreRecord = createAction({
   name: 'getKeyValueStoreRecord',
   auth: apifyAuth,
   displayName: 'Get Key-Value Store Record',
   description: 'Retrieves a value stored in the key-value store under a specific key',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: getKeyValueStoreRecordActionOutputSchema,
   aiMetadata: { description: 'Fetches a single record from an Apify key-value store by store ID and record key, returning JSON/text values inline or binary values as a file reference. Use this to read named outputs an actor saved (e.g. screenshots, structured results, or status keys) rather than dataset rows. Read-only and idempotent; errors if the key does not exist.', idempotent: true },
   props: {
     store: Property.Dropdown({

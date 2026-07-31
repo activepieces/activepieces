@@ -17,7 +17,7 @@ export const apSearchActionsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
                 const projectId = mcpUtils.isProjectScoped(mcp) ? mcp.projectId : undefined
 
-                const { results, mode } = await toolSearchService(log).searchActions(query, {
+                const { results, mode, degradeReason } = await toolSearchService(log).searchActions(query, {
                     platformId,
                     projectId,
                     limit,
@@ -27,8 +27,13 @@ export const apSearchActionsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     audiences: ['ai', 'both'],
                 })
 
+                // Distinguish the two degrade causes so the note never claims "no model configured"
+                // when a model IS configured but its embed call failed (a transient outage, not config).
+                const degradeCause = degradeReason === 'embed-failed'
+                    ? 'the embedding service call failed'
+                    : 'no embedding model configured'
                 const modeNote = mode === 'keyword'
-                    ? ' (keyword fallback — no embedding model configured, so matches are lexical, not semantic)'
+                    ? ` (keyword fallback — ${degradeCause}, so matches are lexical, not semantic)`
                     : ''
                 const text = results.length === 0
                     ? `🔍 No matching actions found for "${query}".`
@@ -46,7 +51,7 @@ export const apSearchActionsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
 }
 
 const searchActionsInput = z.object({
-    query: z.string().describe('Natural-language description of the task to accomplish (e.g. "send a message to a Slack channel", "create a Google Calendar event").'),
+    query: z.string().trim().min(1, 'query must be a non-empty task description').describe('Natural-language description of the task to accomplish (e.g. "send a message to a Slack channel", "create a Google Calendar event").'),
     limit: z.number().int().min(1).max(20).optional().describe('Maximum number of action matches to return. Defaults to 5.'),
     pieceName: z.string().optional().describe('Restrict results to a single piece (e.g. "slack" or "@activepieces/piece-slack"). Omit to search the whole catalog.'),
 })

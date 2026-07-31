@@ -44,6 +44,15 @@ export const workerGroupService = (log: FastifyBaseLogger) => ({
         return groupId
     },
 
+    async getWorkerGroupPlatformId({ workerGroupId }: { workerGroupId: string }): Promise<string | null> {
+        const plan = await platformPlanRepo().findOne({
+            select: ['platformId'],
+            where: { workerGroupId },
+        })
+
+        return plan?.platformId ?? null
+    },
+
     async isCanaryPlatform({ platformId }: { platformId: string }): Promise<boolean> {
         const groupId = await this.getWorkerGroupId({ platformId })
         return groupId === CANARY_WORKER_GROUP_ID
