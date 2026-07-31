@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
 import { extension } from 'mime-types';
+import { driveExportWorkspaceFileOutputSchema } from '../output-schemas';
 
 export const driveExportWorkspaceFile = createAction({
   auth: googleDriveAuth,
@@ -15,6 +16,7 @@ export const driveExportWorkspaceFile = createAction({
       'Exports a native Google Workspace file (Doc/Sheet/Slides) to a caller-chosen format and returns the bytes. Use when you need a specific format such as PDF, HTML, CSV, or Markdown; for the default rendition or for ordinary binary files use `drive_download_file`. The chosen format must match the source type (Doc formats for a Doc, Sheet formats for a Sheet, etc.). Read-only. Export size is capped at ~10 MB by Drive.',
     idempotent: true,
   },
+  outputSchema: driveExportWorkspaceFileOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

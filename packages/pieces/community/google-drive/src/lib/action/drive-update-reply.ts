@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveUpdateReplyOutputSchema } from '../output-schemas';
 
 export const driveUpdateReply = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveUpdateReply = createAction({
       'Edits the text of an existing reply by ID (resolve via drive_list_replies). Use to correct or revise a reply you control; to add a new reply instead use drive_create_reply. Safe to retry — re-applying the same content is a no-op.',
     idempotent: true,
   },
+  outputSchema: driveUpdateReplyOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

@@ -1,6 +1,7 @@
 import { googleDriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { downloadFileFromDrive } from '../common/get-file-content';
+import { driveDownloadFileOutputSchema } from '../output-schemas';
 
 export const driveDownloadFile = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveDownloadFile = createAction({
       "Downloads a Drive file's bytes by ID and returns a file reference; native Google files (Docs/Sheets/Slides) are auto-exported to their default Office format. Use to retrieve content of a file you have the ID for (obtain it from `drive_search_files` or `drive_get_file`). Read-only.",
     idempotent: true,
   },
+  outputSchema: driveDownloadFileOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

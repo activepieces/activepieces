@@ -2,6 +2,7 @@ import { googleDriveAuth, createGoogleClient } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveMoveFileOutputSchema } from '../output-schemas';
 
 export const driveMoveFile = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,7 @@ export const driveMoveFile = createAction({
       'Relocates a file to a target folder, detaching it from its current parents and attaching the new one. Use to reorganize a file by ID; to copy instead of move use drive_copy_file, and to rename without moving use drive_update_file_metadata. Safe to retry — repeating leaves the file in the same destination.',
     idempotent: true,
   },
+  outputSchema: driveMoveFileOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveTrashFileOutputSchema } from '../output-schemas';
 
 export const driveTrashFile = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,7 @@ export const driveTrashFile = createAction({
       'Moves a file to the trash by ID — a reversible deletion restorable from Drive. Use for safe removal; for irreversible removal use drive_delete_file, and to restore use drive_untrash_file. Safe to retry — re-trashing leaves it trashed.',
     idempotent: true,
   },
+  outputSchema: driveTrashFileOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

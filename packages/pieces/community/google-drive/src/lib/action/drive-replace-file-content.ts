@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleDriveAuth, getAccessToken } from '../auth';
 import mime from 'mime-types';
+import { driveReplaceFileContentOutputSchema } from '../output-schemas';
 
 export const driveReplaceFileContent = createAction({
   auth: googleDriveAuth,
@@ -18,6 +19,7 @@ export const driveReplaceFileContent = createAction({
       "Replaces the contents of an existing Drive file with new bytes, keeping the same file ID, name, and location. Use to update a file in place (e.g. overwrite a report); to create a brand-new file use `drive_upload_file`, and to rename without changing content use `drive_update_file_metadata`. Each call overwrites the previous content.",
     idempotent: false,
   },
+  outputSchema: driveReplaceFileContentOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

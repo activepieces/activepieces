@@ -1,6 +1,7 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveSearchFilesOutputSchema } from '../output-schemas';
 
 export const driveSearchFiles = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveSearchFiles = createAction({
       'Searches Drive for files or folders matching a name, full-text, or MIME-type query, optionally scoped to a parent folder. Use this to resolve a human-readable name into a file/folder ID before acting on it; to list a known folder\'s children use `drive_list_files` instead. Read-only.',
     idempotent: true,
   },
+  outputSchema: driveSearchFilesOutputSchema,
   props: {
     query_term: Property.StaticDropdown({
       displayName: 'Query Term',

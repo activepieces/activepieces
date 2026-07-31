@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveUpdateFileMetadataOutputSchema } from '../output-schemas';
 
 export const driveUpdateFileMetadata = createAction({
   auth: googleDriveAuth,
@@ -15,6 +16,7 @@ export const driveUpdateFileMetadata = createAction({
       "Renames a file/folder or updates its description or starred flag via a metadata-only PATCH. Use to rename or annotate a resource; this never changes the file's location — to re-parent use `drive_move_file`, and to replace the file's bytes use `drive_replace_file_content`. Safe to retry — re-applying the same values is a no-op.",
     idempotent: true,
   },
+  outputSchema: driveUpdateFileMetadataOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File or Folder ID',

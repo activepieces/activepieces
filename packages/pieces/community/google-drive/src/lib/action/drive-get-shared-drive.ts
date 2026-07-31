@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveGetSharedDriveOutputSchema } from '../output-schemas';
 
 export const driveGetSharedDrive = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveGetSharedDrive = createAction({
       'Fetches metadata and capabilities for one shared drive by ID (resolve the ID via drive_list_shared_drives). Use to inspect a shared drive\'s settings before modifying it. Read-only.',
     idempotent: true,
   },
+  outputSchema: driveGetSharedDriveOutputSchema,
   props: {
     drive_id: Property.ShortText({
       displayName: 'Shared Drive ID',

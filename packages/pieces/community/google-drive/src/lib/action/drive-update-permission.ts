@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
 import { common } from '../common';
+import { driveUpdatePermissionOutputSchema } from '../output-schemas';
 
 export const driveUpdatePermission = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,7 @@ export const driveUpdatePermission = createAction({
       'Changes an existing collaborator\'s role in place (e.g. reader to writer), resolving the permission by their email internally. Use to upgrade or downgrade access without unsharing; to grant net-new access use drive_share_file. If the user has no existing grant it is a no-op (it never silently creates one). Safe to retry.',
     idempotent: true,
   },
+  outputSchema: driveUpdatePermissionOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File or Folder ID',

@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveGetReplyOutputSchema } from '../output-schemas';
 
 export const driveGetReply = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveGetReply = createAction({
       'Fetches a single reply by ID, including its author, content, and action. Use when you already have a replyId (resolve it via drive_list_replies) and need that one reply\'s details. Read-only.',
     idempotent: true,
   },
+  outputSchema: driveGetReplyOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

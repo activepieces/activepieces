@@ -1,6 +1,7 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveGetFileOutputSchema } from '../output-schemas';
 
 export const driveGetFile = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveGetFile = createAction({
       'Fetches metadata for a single file or folder by its exact ID (name, MIME type, parents, owners, links). Use when you already have an ID (e.g. from a trigger or `drive_search_files`) and need its details, including its parent folder IDs. Read-only and safe to retry.',
     idempotent: true,
   },
+  outputSchema: driveGetFileOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File / Folder ID',

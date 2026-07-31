@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveUpdateSharedDriveOutputSchema } from '../output-schemas';
 
 export const driveUpdateSharedDrive = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveUpdateSharedDrive = createAction({
       'Renames or updates a shared drive\'s settings by ID (resolve via drive_list_shared_drives). Use to rename a shared drive; to remove it entirely use drive_delete_shared_drive. Safe to retry — re-applying the same values is a no-op.',
     idempotent: true,
   },
+  outputSchema: driveUpdateSharedDriveOutputSchema,
   props: {
     drive_id: Property.ShortText({
       displayName: 'Shared Drive ID',

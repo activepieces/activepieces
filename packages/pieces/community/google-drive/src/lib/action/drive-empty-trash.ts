@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveEmptyTrashOutputSchema } from '../output-schemas';
 
 export const driveEmptyTrash = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveEmptyTrash = createAction({
       'DESTRUCTIVE: permanently deletes EVERY file currently in the trash — this is an irreversible, account-wide purge (not a single file), or scoped to one shared drive if `drive_id` is given. The entire trash is emptied, so any file the user trashed is gone for good. Use only as a deliberate cleanup step; to remove a single file reversibly use `drive_trash_file`, and to permanently remove one specific file use `drive_delete_file`. Not safe to retry casually — it purges whatever is in the trash at call time.',
     idempotent: false,
   },
+  outputSchema: driveEmptyTrashOutputSchema,
   props: {
     drive_id: Property.ShortText({
       displayName: 'Shared Drive ID',

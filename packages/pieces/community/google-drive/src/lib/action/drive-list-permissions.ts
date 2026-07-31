@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
 import { common } from '../common';
+import { driveListPermissionsOutputSchema } from '../output-schemas';
 
 export const driveListPermissions = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,7 @@ export const driveListPermissions = createAction({
       'Lists every permission (who has access and at what role) on a file or folder, with each permission\'s id, type, role, and email/domain. Use to audit sharing before granting or revoking; it is the resolver for the permissionId other sharing atomics need. Read-only.',
     idempotent: true,
   },
+  outputSchema: driveListPermissionsOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File or Folder ID',

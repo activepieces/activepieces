@@ -4,6 +4,7 @@ import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { Stream } from 'stream';
+import { driveSaveFileAsPdfOutputSchema } from '../output-schemas';
 
 export const driveSaveFileAsPdf = createAction({
   auth: googleDriveAuth,
@@ -16,6 +17,7 @@ export const driveSaveFileAsPdf = createAction({
       'Exports a native Google document to PDF and saves it as a new file in a target Drive folder. Use to produce a PDF rendition of a Google Doc/Sheet/Slides for sharing or archival (resolve the source and folder IDs via `drive_search_files`). Each call creates a new PDF file.',
     idempotent: false,
   },
+  outputSchema: driveSaveFileAsPdfOutputSchema,
   props: {
     document_id: Property.ShortText({
       displayName: 'Document ID',

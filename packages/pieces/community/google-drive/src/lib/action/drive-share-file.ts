@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
 import { common } from '../common';
+import { driveShareFileOutputSchema } from '../output-schemas';
 
 export const driveShareFile = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,7 @@ export const driveShareFile = createAction({
       'Grants a role to a user (by email) on a file or folder, optionally emailing them. Use to share with a specific person; to share with anyone-with-the-link use drive_set_public_access, and to change an existing collaborator\'s role use drive_update_permission. Each call creates a new permission grant.',
     idempotent: false,
   },
+  outputSchema: driveShareFileOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File or Folder ID',

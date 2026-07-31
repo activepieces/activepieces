@@ -7,6 +7,7 @@ import {
 import FormData from 'form-data';
 import { googleDriveAuth, getAccessToken } from '../auth';
 import mime from 'mime-types';
+import { driveUploadFromUrlOutputSchema } from '../output-schemas';
 
 export const driveUploadFromUrl = createAction({
   auth: googleDriveAuth,
@@ -19,6 +20,7 @@ export const driveUploadFromUrl = createAction({
       'Fetches a file from a public URL and uploads it into Drive in one step (server-side fetch, no base64 round-trip). Use when the agent has a downloadable link rather than file bytes; for bytes already in hand use `drive_upload_file`, and for plain generated text use `drive_create_file_from_text`. Each call creates a new file.',
     idempotent: false,
   },
+  outputSchema: driveUploadFromUrlOutputSchema,
   props: {
     source_url: Property.ShortText({
       displayName: 'Source URL',

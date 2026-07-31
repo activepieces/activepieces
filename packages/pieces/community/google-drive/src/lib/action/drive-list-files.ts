@@ -3,6 +3,7 @@ import { googleDriveAuth, getAccessToken } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import querystring from 'querystring';
 import { downloadFileFromDrive } from '../common/get-file-content';
+import { driveListFilesOutputSchema } from '../output-schemas';
 
 interface ListFilesResult {
   type: string;
@@ -117,6 +118,7 @@ export const driveListFiles = createAction({
       'Lists files and subfolders inside a given folder ID, optionally recursing to a chosen depth and downloading each file\'s content. Use to enumerate the contents of a known folder; to find a file by name across Drive use `drive_search_files`. Read-only. Requires the folder ID, not a name.',
     idempotent: true,
   },
+  outputSchema: driveListFilesOutputSchema,
   props: {
     folder_id: Property.ShortText({
       displayName: 'Folder ID',

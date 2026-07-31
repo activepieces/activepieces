@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
 import { downloadFileFromDrive } from '../common/get-file-content';
+import { driveSetPublicAccessOutputSchema } from '../output-schemas';
 
 export const driveSetPublicAccess = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,7 @@ export const driveSetPublicAccess = createAction({
       'Makes a file or folder accessible to anyone with the link at the chosen role and returns its shareable view/download URL. Use to publish a resource publicly; to share with a named person instead use drive_share_file. Each call adds a new anyone-with-link permission.',
     idempotent: false,
   },
+  outputSchema: driveSetPublicAccessOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File or Folder ID',

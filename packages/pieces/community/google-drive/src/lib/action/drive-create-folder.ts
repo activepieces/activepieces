@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveCreateFolderOutputSchema } from '../output-schemas';
 
 export const driveCreateFolder = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveCreateFolder = createAction({
       'Creates a new empty folder in Google Drive, optionally nested under a parent folder (resolve the parent ID via `drive_search_files`). Use to set up a destination before uploading or moving files. Each call creates a distinct folder even with the same name, so retries duplicate.',
     idempotent: false,
   },
+  outputSchema: driveCreateFolderOutputSchema,
   props: {
     folder_name: Property.ShortText({
       displayName: 'Folder name',

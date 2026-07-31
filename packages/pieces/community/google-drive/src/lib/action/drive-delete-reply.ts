@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveDeleteReplyOutputSchema } from '../output-schemas';
 
 export const driveDeleteReply = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveDeleteReply = createAction({
       'Permanently deletes a reply by ID (resolve via drive_list_replies). Use to remove a reply you control; to edit it instead use drive_update_reply. A repeat call fails because the reply is already gone, so it is not safe to retry blindly.',
     idempotent: false,
   },
+  outputSchema: driveDeleteReplyOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

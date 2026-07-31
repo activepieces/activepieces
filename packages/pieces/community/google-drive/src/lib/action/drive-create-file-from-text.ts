@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
 import { googleDriveAuth, getAccessToken } from '../auth';
+import { driveCreateFileFromTextOutputSchema } from '../output-schemas';
 
 export const driveCreateFileFromText = createAction({
   auth: googleDriveAuth,
@@ -18,6 +19,7 @@ export const driveCreateFileFromText = createAction({
       'Creates a new Drive file from inline text content as plain text, CSV, or XML. Use when an agent has generated text it needs to persist as a Drive file; for binary or existing files use `drive_upload_file` instead. Each call creates a new file.',
     idempotent: false,
   },
+  outputSchema: driveCreateFileFromTextOutputSchema,
   props: {
     file_name: Property.ShortText({
       displayName: 'File name',

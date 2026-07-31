@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveUntrashFileOutputSchema } from '../output-schemas';
 
 export const driveUntrashFile = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,7 @@ export const driveUntrashFile = createAction({
       'Restores a trashed file by ID back to its original location. Use to undo a `drive_trash_file`; to permanently purge instead use `drive_empty_trash` or `drive_delete_file`. Safe to retry — re-restoring an active file is a no-op.',
     idempotent: true,
   },
+  outputSchema: driveUntrashFileOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveListRepliesOutputSchema } from '../output-schemas';
 
 export const driveListReplies = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveListReplies = createAction({
       'Lists the replies under a given comment with each reply\'s id, author, content, and action. Use to read a comment thread or to resolve a replyId before fetching (drive_get_reply), editing (drive_update_reply), or deleting (drive_delete_reply) a reply. Read-only.',
     idempotent: true,
   },
+  outputSchema: driveListRepliesOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

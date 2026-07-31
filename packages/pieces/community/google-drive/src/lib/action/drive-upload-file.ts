@@ -7,6 +7,7 @@ import {
 import FormData from 'form-data';
 import { googleDriveAuth, getAccessToken } from '../auth';
 import mime from 'mime-types';
+import { driveUploadFileOutputSchema } from '../output-schemas';
 
 export const driveUploadFile = createAction({
   auth: googleDriveAuth,
@@ -19,6 +20,7 @@ export const driveUploadFile = createAction({
       'Uploads a binary file (from a URL or base64 input) into Drive; MIME type is inferred from the extension. Use to store an existing file or attachment; for plain generated text use `drive_create_file_from_text`, and to fetch a remote URL server-side use `drive_upload_from_url`. Each call creates a new file.',
     idempotent: false,
   },
+  outputSchema: driveUploadFileOutputSchema,
   props: {
     file_name: Property.ShortText({
       displayName: 'File name',

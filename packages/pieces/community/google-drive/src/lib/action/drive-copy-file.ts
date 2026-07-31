@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { googleDriveAuth, createGoogleClient } from '../auth';
+import { driveCopyFileOutputSchema } from '../output-schemas';
 
 export const driveCopyFile = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveCopyFile = createAction({
       'Copies an existing Drive file into a target folder under a new name, optionally converting it to a Google Sheet or Doc. Use to clone a file or make an editable Google-format copy; to relocate the original instead of copying use `drive_move_file`. Requires source file ID and destination folder ID. Each call creates a new copy.',
     idempotent: false,
   },
+  outputSchema: driveCopyFileOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveDeleteSharedDriveOutputSchema } from '../output-schemas';
 
 export const driveDeleteSharedDrive = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveDeleteSharedDrive = createAction({
       'Permanently deletes a shared drive by ID (it must already be empty). Irreversible. Use only to remove a no-longer-needed shared drive. A repeat call fails because the drive no longer exists.',
     idempotent: false,
   },
+  outputSchema: driveDeleteSharedDriveOutputSchema,
   props: {
     drive_id: Property.ShortText({
       displayName: 'Shared Drive ID',

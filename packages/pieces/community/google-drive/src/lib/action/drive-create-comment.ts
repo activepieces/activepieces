@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveCreateCommentOutputSchema } from '../output-schemas';
 
 export const driveCreateComment = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveCreateComment = createAction({
       'Adds a new top-level comment to a file. Use to leave feedback or a note on a file (resolve the file ID via drive_search_files); to respond to an existing comment use drive_create_reply instead. Each call creates a new comment, so retries duplicate.',
     idempotent: false,
   },
+  outputSchema: driveCreateCommentOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

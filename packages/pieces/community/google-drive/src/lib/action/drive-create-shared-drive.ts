@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { randomUUID } from 'crypto';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveCreateSharedDriveOutputSchema } from '../output-schemas';
 
 export const driveCreateSharedDrive = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,7 @@ export const driveCreateSharedDrive = createAction({
       'Creates a new shared drive (Team Drive) with the given name; the action supplies the required idempotency requestId internally. Use to set up a shared workspace. Each call creates a distinct shared drive. Your Workspace admin must have shared-drive creation enabled (a 403 here is an admin-policy issue, not a scope issue).',
     idempotent: false,
   },
+  outputSchema: driveCreateSharedDriveOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Name',

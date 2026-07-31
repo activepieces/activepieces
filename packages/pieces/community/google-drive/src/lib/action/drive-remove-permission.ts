@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
+import { driveRemovePermissionOutputSchema } from '../output-schemas';
 
 export const driveRemovePermission = createAction({
   auth: googleDriveAuth,
@@ -13,6 +14,7 @@ export const driveRemovePermission = createAction({
       'Revokes a specific role from a user (matched by email and role) on a file or folder, resolving the permission ID internally. Use to unshare or remove access; to lower a role instead of removing it use drive_update_permission. Safe to retry — if no matching permission exists it is a no-op.',
     idempotent: true,
   },
+  outputSchema: driveRemovePermissionOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File or Folder ID',
