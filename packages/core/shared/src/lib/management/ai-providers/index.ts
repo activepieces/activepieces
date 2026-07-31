@@ -1,4 +1,5 @@
-import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
+import { AZURE_RESOURCE_NAME_PATTERN } from '@activepieces/core-piece-types'
+import { AIProviderName, BaseModelSchema, formErrors } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export enum AIProviderModelType {
@@ -78,7 +79,7 @@ export const CloudflareGatewayProviderConfig = z.object({
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
 export const AzureProviderConfig = z.object({
-    resourceName: z.string(),
+    resourceName: z.string().regex(AZURE_RESOURCE_NAME_PATTERN, formErrors.invalidAzureResourceName),
     apiVersion: z.preprocess(
         (v) => (typeof v === 'string' && v.trim().length === 0 ? undefined : v),
         z.string().optional(),
@@ -347,6 +348,7 @@ export {
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,
     AI_PROVIDER_CAPABILITIES,
+    AZURE_RESOURCE_NAME_PATTERN,
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
 export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode } from '@activepieces/core-piece-types'

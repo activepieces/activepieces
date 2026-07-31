@@ -1,4 +1,4 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName, formErrors, isNil } from '@activepieces/core-utils'
 import * as z from 'zod/mini'
 
 export enum AIProviderModelType {
@@ -61,8 +61,12 @@ export const CloudflareGatewayProviderConfig = z.object({
 })
 export type CloudflareGatewayProviderConfig = z.infer<typeof CloudflareGatewayProviderConfig>
 
+// The resource name is interpolated into `https://<resourceName>.openai.azure.com`, so it has to
+// stay a single DNS label. Azure allows alphanumerics and inner hyphens, up to 64 characters.
+export const AZURE_RESOURCE_NAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}[A-Za-z0-9])?$/
+
 export const AzureProviderConfig = z.object({
-    resourceName: z.string(),
+    resourceName: z.string().check(z.regex(AZURE_RESOURCE_NAME_PATTERN, formErrors.invalidAzureResourceName)),
     apiVersion: z.pipe(
         z.transform((v) => (typeof v === 'string' && v.trim().length === 0 ? undefined : v)),
         z.optional(z.string()),

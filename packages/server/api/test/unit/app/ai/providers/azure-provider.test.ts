@@ -38,4 +38,24 @@ describe('azureProvider.listModels', () => {
         const requestUrl = mockSendRequest.mock.calls[0][0].url
         expect(requestUrl).toContain('api-version=2023-03-15-preview')
     })
+
+    it('keeps the request on the resource own azure host', async () => {
+        await azureProvider.listModels({ apiKey: 'test-key' }, { resourceName: 'my-resource' })
+
+        const requestUrl = new URL(mockSendRequest.mock.calls[0][0].url)
+        expect(requestUrl.host).toBe('my-resource.openai.azure.com')
+    })
+
+    it.each([
+        ['host swap', 'example.com/#'],
+        ['path escape', 'my-resource.openai.azure.com/x?y='],
+        ['userinfo', 'user@example.com#'],
+        ['port', 'my-resource:8080#'],
+        ['empty', ''],
+    ])('rejects a resource name that is not a single dns label (%s) without sending a request', async (_case, resourceName) => {
+        await expect(azureProvider.listModels({ apiKey: 'test-key' }, { resourceName })).rejects.toThrow(
+            'Azure resource name must be alphanumerics and hyphens only, up to 64 characters',
+        )
+        expect(mockSendRequest).not.toHaveBeenCalled()
+    })
 })

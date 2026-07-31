@@ -4,6 +4,7 @@ export const formErrors = {
     invalidGitRepoBranch: 'invalidGitRepoBranch',
     invalidGitRepoRemoteUrl: 'invalidGitRepoRemoteUrl',
     invalidExternalId: 'invalidExternalId',
+    invalidAzureResourceName: 'invalidAzureResourceName',
     invalidFileName: 'invalidFileName',
     messageRequiresContentOrFiles: 'messageRequiresContentOrFiles',
 } as const

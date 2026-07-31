@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, AzureProviderAuthConfig, AzureProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, AZURE_RESOURCE_NAME_PATTERN, AzureProviderAuthConfig, AzureProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
@@ -9,12 +9,18 @@ export const azureProvider: AIProviderStrategy<AzureProviderAuthConfig, AzurePro
         await azureProvider.listModels(authConfig, config)
     },
     async listModels(authConfig: AzureProviderAuthConfig, config: AzureProviderConfig): Promise<AIProviderModel[]> {
-        const endpoint = `https://${config.resourceName}.openai.azure.com`
         const apiKey = authConfig.apiKey
 
-        if (!endpoint || !apiKey) {
+        if (!apiKey) {
             return []
         }
+
+        const resourceName = config.resourceName ?? ''
+        if (!AZURE_RESOURCE_NAME_PATTERN.test(resourceName)) {
+            throw new Error('Azure resource name must be alphanumerics and hyphens only, up to 64 characters')
+        }
+
+        const endpoint = `https://${resourceName}.openai.azure.com`
 
         const res = await httpClient.sendRequest<{ data: AzureDeployment[] }>({
             url: `${endpoint}/openai/deployments?api-version=${AZURE_DEPLOYMENTS_API_VERSION}`,
