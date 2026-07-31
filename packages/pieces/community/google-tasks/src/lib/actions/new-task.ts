@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { createTask, googleTasksCommon, Task, TaskStatus } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksAddTaskOutputSchema } from '../output-schemas';
 
 export const googleTasksAddNewTaskAction = createAction({
   auth: googleTasksAuth,
@@ -12,6 +13,7 @@ export const googleTasksAddNewTaskAction = createAction({
     idempotent: false,
   },
   displayName: 'Add Task',
+  outputSchema: googleTasksAddTaskOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
     title: googleTasksCommon.title,

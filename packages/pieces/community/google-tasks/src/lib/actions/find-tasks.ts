@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getTasks, googleTasksCommon } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksFindTasksOutputSchema } from '../output-schemas';
 
 export const googleTasksFindTasksAction = createAction({
   auth: googleTasksAuth,
@@ -14,6 +15,7 @@ export const googleTasksFindTasksAction = createAction({
       'List tasks in a task list, filtered by due/completed/updated date ranges and status. The piece is otherwise write-only — call this first to find a task\'s id before completing, updating, or deleting it. Read-only.',
     idempotent: true,
   },
+  outputSchema: googleTasksFindTasksOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
     show_completed: Property.Checkbox({

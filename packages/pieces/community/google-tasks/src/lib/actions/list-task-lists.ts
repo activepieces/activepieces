@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleTasksCommon, TasksListResponse } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksListTaskListsOutputSchema } from '../output-schemas';
 
 export const googleTasksListTaskListsAction = createAction({
   auth: googleTasksAuth,
@@ -20,6 +21,7 @@ export const googleTasksListTaskListsAction = createAction({
       "List the authenticated user's task lists, returning each list's id and title. Use to resolve a list name to its id before operating on tasks, or to discover available lists. Read-only.",
     idempotent: true,
   },
+  outputSchema: googleTasksListTaskListsOutputSchema,
   props: {
     max_results: Property.Number({
       displayName: 'Max Results',

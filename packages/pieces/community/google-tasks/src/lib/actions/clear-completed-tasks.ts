@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleTasksCommon } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksClearCompletedTasksOutputSchema } from '../output-schemas';
 
 export const googleTasksClearCompletedTasksAction = createAction({
   auth: googleTasksAuth,
@@ -19,6 +20,7 @@ export const googleTasksClearCompletedTasksAction = createAction({
       'Hide all completed tasks in a task list (they are marked hidden and drop out of the default view, not permanently deleted). Use to tidy a list after a batch of completions. Affects every completed task at once — there is no per-task selection; to remove a single task use Delete Task. Not idempotent — operates on whatever is completed at call time.',
     idempotent: false,
   },
+  outputSchema: googleTasksClearCompletedTasksOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
   },

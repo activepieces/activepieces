@@ -11,6 +11,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { getTasks, googleTasksCommon } from '../common';
+import { googleTasksNewTaskTriggerOutputSchema } from '../output-schemas';
 
 const props = {
   tasks_list: googleTasksCommon.tasksList,
@@ -46,6 +47,7 @@ export const newTaskTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   props,
+  outputSchema: googleTasksNewTaskTriggerOutputSchema,
   sampleData: {},
   async test(context) {
     const store = context.store;

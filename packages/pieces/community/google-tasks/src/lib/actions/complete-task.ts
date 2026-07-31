@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleTasksCommon, Task } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksCompleteTaskOutputSchema } from '../output-schemas';
 
 export const googleTasksCompleteTaskAction = createAction({
   auth: googleTasksAuth,
@@ -19,6 +20,7 @@ export const googleTasksCompleteTaskAction = createAction({
       'Mark an existing task as completed (by task id). Idempotent — re-completing a done task is a no-op. Use Update Task to reopen or edit other fields.',
     idempotent: true,
   },
+  outputSchema: googleTasksCompleteTaskOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
     task_id: Property.ShortText({

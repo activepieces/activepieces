@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleTasksCommon, Task } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksUpdateTaskOutputSchema } from '../output-schemas';
 
 export const googleTasksUpdateTaskAction = createAction({
   auth: googleTasksAuth,
@@ -19,6 +20,7 @@ export const googleTasksUpdateTaskAction = createAction({
       'Edit an existing task\'s title, notes, due date, or status (e.g. rename, change due date, reopen). Partial update — only provided fields change. Not idempotent (use Mark Task Complete for the common complete case).',
     idempotent: false,
   },
+  outputSchema: googleTasksUpdateTaskOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
     task_id: Property.ShortText({

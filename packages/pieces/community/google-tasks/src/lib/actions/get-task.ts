@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleTasksCommon, Task } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksGetTaskOutputSchema } from '../output-schemas';
 
 export const googleTasksGetTaskAction = createAction({
   auth: googleTasksAuth,
@@ -19,6 +20,7 @@ export const googleTasksGetTaskAction = createAction({
       'Fetch a single task\'s full details (title, notes, due, status, parent, position, links) by its id. Use when you already have a specific task id and want its current state; to find tasks by criteria use Find Tasks instead. Read-only.',
     idempotent: true,
   },
+  outputSchema: googleTasksGetTaskOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
     task_id: Property.ShortText({

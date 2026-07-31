@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleTasksCommon, Task, TaskStatus } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksCreateTaskOutputSchema } from '../output-schemas';
 
 export const googleTasksCreateTaskAction = createAction({
   auth: googleTasksAuth,
@@ -21,6 +22,7 @@ export const googleTasksCreateTaskAction = createAction({
       'Create a new task in a task list, optionally as a subtask of a parent task (parent_task_id) and/or positioned after a sibling (previous_task_id); resolve those ids via Find Tasks. Use to add a single to-do; for marking an existing task done use Mark Task Complete. Not idempotent — each call creates a separate task.',
     idempotent: false,
   },
+  outputSchema: googleTasksCreateTaskOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
     title: googleTasksCommon.title,

@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleTasksCommon, Task } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksMoveTaskOutputSchema } from '../output-schemas';
 
 export const googleTasksMoveTaskAction = createAction({
   auth: googleTasksAuth,
@@ -21,6 +22,7 @@ export const googleTasksMoveTaskAction = createAction({
       'Move a task to a new position within its list — reparent it under another task (parent_task_id) and/or place it after a sibling (previous_task_id); omit both to move it to the top level. Optionally move it to a different list (destination_tasklist_id). All ids come from Find Tasks, and parent/previous must reference tasks in the destination list. Use this for reordering/nesting; use Update Task to change a task\'s fields. Not idempotent — position depends on current order.',
     idempotent: false,
   },
+  outputSchema: googleTasksMoveTaskOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
     task_id: Property.ShortText({

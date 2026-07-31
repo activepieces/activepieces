@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleTasksCommon } from '../common';
 import { googleTasksAuth } from '../auth';
+import { googleTasksDeleteTaskOutputSchema } from '../output-schemas';
 
 export const googleTasksDeleteTaskAction = createAction({
   auth: googleTasksAuth,
@@ -19,6 +20,7 @@ export const googleTasksDeleteTaskAction = createAction({
       'Delete a task by id. Idempotent — deleting an already-removed task succeeds (converges to absent).',
     idempotent: true,
   },
+  outputSchema: googleTasksDeleteTaskOutputSchema,
   props: {
     tasks_list: googleTasksCommon.tasksList,
     task_id: Property.ShortText({
