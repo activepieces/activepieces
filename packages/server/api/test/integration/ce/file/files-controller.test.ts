@@ -271,6 +271,39 @@ describe('Files Controller', () => {
             expect(getResponse?.rawPayload.toString('utf-8')).toBe('engine read')
         })
 
+        it('serves a named log slice as an attachment with the uploaded .json filename', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+            const engineToken = await generateMockToken({
+                type: PrincipalType.ENGINE,
+                id: apId(),
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+            const fileId = apId()
+
+            await app!.inject({
+                method: 'PUT',
+                url: `/api/v1/files/${fileId}`,
+                query: { token: engineToken },
+                headers: {
+                    'content-type': 'application/octet-stream',
+                    'x-ap-file-type': FileType.FLOW_RUN_LOG_SLICE,
+                    'x-ap-file-name': 'step_1.json',
+                },
+                payload: Buffer.from('{"rows":[]}', 'utf-8'),
+            })
+
+            const getResponse = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/files/${fileId}`,
+                query: { token: engineToken },
+            })
+
+            expect(getResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(getResponse?.headers['content-disposition']).toBe('attachment; filename="step_1.json"')
+            expect(getResponse?.headers['x-content-type-options']).toBe('nosniff')
+        })
+
         it('rejects a download with a read token bound to a different fileId', async () => {
             const otherFileReadUrl = await filesService.constructReadUrl({
                 fileId: apId(),

@@ -119,7 +119,7 @@ export class FlowExecutorContext {
         }
         else {
             const sliced = this.slicingEnabled
-                ? await maybeSliceOutput({ value: truncated.output, engineApi: this.engineApi })
+                ? await maybeSliceOutput({ value: truncated.output, engineApi: this.engineApi, stepName })
                 : undefined
             finalized = new GenericStepOutput({
                 type: truncated.type,
@@ -209,7 +209,7 @@ async function extractStepView(steps: Record<string, StepOutput>, engineApi: Eng
     return result
 }
 
-async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
+async function maybeSliceOutput({ value, engineApi, stepName }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
     if (isNil(value) || isNil(engineApi)) {
         return undefined
     }
@@ -227,6 +227,7 @@ async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): P
         engineToken: engineApi.engineToken,
         fileId: apId(),
         type: FileType.FLOW_RUN_LOG_SLICE,
+        fileName: `${stepName}.json`,
         data,
     })
     return { ref: { fileId, size, url: readUrl } }
@@ -287,6 +288,7 @@ export type FlowExecutorContextInit = {
 type MaybeSliceOutputParams = {
     value: unknown
     engineApi?: EngineApiConfig
+    stepName: string
 }
 
 type SliceCache = {
