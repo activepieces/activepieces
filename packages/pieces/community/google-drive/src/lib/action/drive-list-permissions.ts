@@ -1,7 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
-import { common } from '../common';
 import { driveListPermissionsOutputSchema } from '../output-schemas';
 
 export const driveListPermissions = createAction({
@@ -23,10 +22,9 @@ export const driveListPermissions = createAction({
         'The ID of the file or folder whose permissions to list. Resolve it via drive_search_files or drive_get_file.',
       required: true,
     }),
-    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const { file_id, include_team_drives } = context.propsValue;
+    const { file_id } = context.propsValue;
 
     const authClient = await createGoogleClient(context.auth);
 
@@ -36,7 +34,7 @@ export const driveListPermissions = createAction({
       const response = await drive.permissions.list({
         fileId: file_id,
         fields: 'permissions(id,type,role,emailAddress,domain)',
-        supportsAllDrives: include_team_drives,
+        supportsAllDrives: true,
       });
 
       const permissions = response.data.permissions ?? [];

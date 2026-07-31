@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
-import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
 
 export const driveDeleteFile = createAction({
@@ -21,7 +20,6 @@ export const driveDeleteFile = createAction({
         'The ID of the file to permanently delete. Resolve it via drive_search_files or drive_get_file.',
       required: true,
     }),
-    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
@@ -30,7 +28,7 @@ export const driveDeleteFile = createAction({
 
     const response = await drive.files.delete({
       fileId: context.propsValue.file_id,
-      supportsAllDrives: context.propsValue.include_team_drives,
+      supportsAllDrives: true,
     });
 
     return response.data;

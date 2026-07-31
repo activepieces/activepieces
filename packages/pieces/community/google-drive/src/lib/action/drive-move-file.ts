@@ -1,6 +1,5 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
 import { driveMoveFileOutputSchema } from '../output-schemas';
 
@@ -29,7 +28,6 @@ export const driveMoveFile = createAction({
         'The ID of the folder to move the file into. Resolve it via drive_search_files; leave empty for the root of My Drive.',
       required: true,
     }),
-    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
     const fileId = context.propsValue.file_id;
@@ -41,7 +39,7 @@ export const driveMoveFile = createAction({
 
     const file = await drive.files.get({
       fileId,
-      supportsAllDrives: context.propsValue.include_team_drives,
+      supportsAllDrives: true,
       fields: 'id,parents',
     });
 
@@ -50,7 +48,7 @@ export const driveMoveFile = createAction({
       fields: '*',
       removeParents: file.data.parents?.join(','),
       addParents: folderId,
-      supportsAllDrives: context.propsValue.include_team_drives,
+      supportsAllDrives: true,
     });
 
     return response.data;

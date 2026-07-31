@@ -59,13 +59,6 @@ export const driveCreateFileFromText = createAction({
         'The ID of the folder to create the file inside. Leave empty to create it in the root of My Drive. Resolve a folder ID with `drive_search_files`.',
       required: false,
     }),
-    include_team_drives: Property.Checkbox({
-      displayName: 'Include Team Drives',
-      description:
-        'Determines if folders from Team Drives should be included in the results.',
-      defaultValue: false,
-      required: false,
-    }),
   },
   async run(context) {
     const meta = {
@@ -93,7 +86,7 @@ export const driveCreateFileFromText = createAction({
         ...form.getHeaders(),
       },
       queryParams: {
-        supportsAllDrives: String(context.propsValue.include_team_drives || false),
+        supportsAllDrives: 'true',
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

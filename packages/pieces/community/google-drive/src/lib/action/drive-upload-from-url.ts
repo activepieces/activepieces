@@ -45,13 +45,6 @@ export const driveUploadFromUrl = createAction({
         'The ID of the folder to upload the file into. Leave empty to upload to the root of My Drive. Resolve a folder ID with `drive_search_files`.',
       required: false,
     }),
-    include_team_drives: Property.Checkbox({
-      displayName: 'Include Team Drives',
-      description:
-        'Determines if folders from Team Drives should be included in the results.',
-      defaultValue: false,
-      required: false,
-    }),
   },
   async run(context) {
     const { source_url, file_name, mime_type, parent_folder_id } =
@@ -97,9 +90,7 @@ export const driveUploadFromUrl = createAction({
       url: `https://www.googleapis.com/upload/drive/v3/files`,
       queryParams: {
         uploadType: 'multipart',
-        supportsAllDrives: String(
-          context.propsValue.include_team_drives || false
-        ),
+        supportsAllDrives: 'true',
       },
       body: form,
       headers: {

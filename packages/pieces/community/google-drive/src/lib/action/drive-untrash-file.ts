@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
-import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
 import { driveUntrashFileOutputSchema } from '../output-schemas';
 
@@ -23,10 +22,9 @@ export const driveUntrashFile = createAction({
         'The ID of the trashed file to restore. Resolve it via drive_search_files or drive_get_file.',
       required: true,
     }),
-    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const { file_id, include_team_drives } = context.propsValue;
+    const { file_id } = context.propsValue;
 
     const authClient = await createGoogleClient(context.auth);
     const drive = googleDrive({ version: 'v3', auth: authClient });
@@ -34,7 +32,7 @@ export const driveUntrashFile = createAction({
     try {
       const response = await drive.files.update({
         fileId: file_id,
-        supportsAllDrives: include_team_drives,
+        supportsAllDrives: true,
         requestBody: { trashed: false },
       });
 

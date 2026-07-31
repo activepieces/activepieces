@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
-import { common } from '../common';
 import { drive as googleDrive } from '@googleapis/drive';
 import { driveUpdateFileMetadataOutputSchema } from '../output-schemas';
 
@@ -39,11 +38,9 @@ export const driveUpdateFileMetadata = createAction({
       description: 'Whether to mark the file or folder as starred.',
       required: false,
     }),
-    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const { file_id, name, description, starred, include_team_drives } =
-      context.propsValue;
+    const { file_id, name, description, starred } = context.propsValue;
 
     const requestBody: { name?: string; description?: string; starred?: boolean } =
       {};
@@ -63,7 +60,7 @@ export const driveUpdateFileMetadata = createAction({
     try {
       const response = await drive.files.update({
         fileId: file_id,
-        supportsAllDrives: include_team_drives,
+        supportsAllDrives: true,
         requestBody,
       });
 

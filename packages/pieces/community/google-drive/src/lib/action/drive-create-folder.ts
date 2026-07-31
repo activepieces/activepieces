@@ -27,13 +27,6 @@ export const driveCreateFolder = createAction({
         'The ID of the folder to create the new folder inside. Leave empty to create it in the root of My Drive. Resolve a folder ID with `drive_search_files`.',
       required: false,
     }),
-    include_team_drives: Property.Checkbox({
-      displayName: 'Include Team Drives',
-      description:
-        'Determines if folders from Team Drives should be included in the results.',
-      defaultValue: false,
-      required: false,
-    }),
   },
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
@@ -48,7 +41,7 @@ export const driveCreateFolder = createAction({
           ? { parents: [context.propsValue.parent_folder_id] }
           : {}),
       },
-      supportsAllDrives: context.propsValue.include_team_drives,
+      supportsAllDrives: true,
     });
 
     return response.data;

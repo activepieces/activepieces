@@ -50,13 +50,6 @@ export const driveCopyFile = createAction({
         ],
       },
     }),
-    include_team_drives: Property.Checkbox({
-      displayName: 'Include Team Drives',
-      description:
-        'Determines if folders from Team Drives should be included in the results.',
-      defaultValue: false,
-      required: false,
-    }),
   },
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
@@ -81,7 +74,7 @@ export const driveCopyFile = createAction({
       fileId,
       auth: authClient,
       requestBody,
-      supportsAllDrives: context.propsValue.include_team_drives,
+      supportsAllDrives: true,
     });
 
     if (response.status !== 200) {

@@ -38,13 +38,6 @@ export const driveReplaceFileContent = createAction({
         'Optional MIME type for the new content (e.g. application/pdf). Provide this when the source has no file extension; otherwise the type is inferred from the extension.',
       required: false,
     }),
-    include_team_drives: Property.Checkbox({
-      displayName: 'Include Team Drives',
-      description:
-        'Determines if folders from Team Drives should be included in the results.',
-      defaultValue: false,
-      required: false,
-    }),
   },
   async run(context) {
     const { file_id, file, mime_type } = context.propsValue;
@@ -61,9 +54,7 @@ export const driveReplaceFileContent = createAction({
       url: `https://www.googleapis.com/upload/drive/v3/files/${file_id}`,
       queryParams: {
         uploadType: 'media',
-        supportsAllDrives: String(
-          context.propsValue.include_team_drives || false
-        ),
+        supportsAllDrives: 'true',
       },
       body: fileBuffer,
       headers: {

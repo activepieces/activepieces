@@ -22,20 +22,13 @@ export const driveGetFile = createAction({
         'The ID of the file/folder to fetch. Resolve it via `drive_search_files` or `drive_list_files`.',
       required: true,
     }),
-    include_team_drives: Property.Checkbox({
-      displayName: 'Include Team Drives',
-      description:
-        'Determines if folders from Team Drives should be included in the results.',
-      defaultValue: false,
-      required: false,
-    }),
   },
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const drive = googleDrive({ version: 'v3', auth: authClient });
     const response = await drive.files.get({
       fileId: context.propsValue.file_id,
-      supportsAllDrives: context.propsValue.include_team_drives,
+      supportsAllDrives: true,
     });
 
     if (response.data) {
