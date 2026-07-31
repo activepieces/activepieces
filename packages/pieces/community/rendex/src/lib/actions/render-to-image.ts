@@ -14,7 +14,7 @@ export const renderToImage = createAction({
   description:
     'Render raw HTML, a URL, or Markdown to an image (PNG, JPEG, WebP) or a PDF.',
   audience: 'both',
-  aiMetadata: { description: 'Renders source content into a downloadable image (PNG/JPEG/WebP) or PDF via the Rendex screenshot API, returning the rendered file. The Source mode determines what the content input means: raw HTML markup, a live page URL to capture, or Markdown. Use to turn HTML/Markdown or a webpage into a captured image or PDF; optionally capture the full scrollable page instead of just the viewport. Rendering is a pure transformation with no server-side state change, so repeating the same call produces the same output.', idempotent: true },
+  aiMetadata: { description: 'Renders source content into a downloadable image (PNG/JPEG/WebP) or PDF via the Rendex screenshot API, returning the rendered file. The Source mode determines what the content input means: raw HTML markup, a live page URL to capture, or Markdown. Use to turn HTML/Markdown or a webpage into a captured image or PDF; optionally capture the full scrollable page instead of just the viewport. Not idempotent: each call performs a fresh remote render that produces a new file, and in URL mode the capture reflects the live page at request time.', idempotent: false },
   props: {
     source_type: Property.StaticDropdown({
       displayName: 'Source',

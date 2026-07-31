@@ -23,8 +23,8 @@ export const convertFile = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Converts an existing document to PDF, choosing the rendering engine from the file extension (Office formats, images, HTML, Markdown, or PDF passthrough). Operates in one of two source modes: upload binary file data, or pass a public http(s) file URL the server downloads (private/internal addresses are rejected). Choose this when the agent already has a source file or its URL, rather than raw HTML/Markdown text. The conversion is deterministic with no stored side effect, so re-running on the same input is safe and idempotent.',
-    idempotent: true,
+      'Converts an existing document to PDF, choosing the rendering engine from the file extension (Office formats, images, HTML, Markdown, or PDF passthrough). Operates in one of two source modes: upload binary file data, or pass a public http(s) file URL the server downloads (private/internal addresses are rejected). Choose this when the agent already has a source file or its URL, rather than raw HTML/Markdown text. Not idempotent: each call performs a fresh conversion on the FileToPDF service that produces a new file and consumes account credits.',
+    idempotent: false,
   },
   props: {
     source: Property.StaticDropdown({
