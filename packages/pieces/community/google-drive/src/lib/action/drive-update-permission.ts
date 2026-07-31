@@ -1,7 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
-import { common } from '../common';
 import { driveUpdatePermissionOutputSchema } from '../output-schemas';
 
 export const driveUpdatePermission = createAction({
@@ -43,10 +42,9 @@ export const driveUpdatePermission = createAction({
         ],
       },
     }),
-    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const { file_id, user_email, new_role, include_team_drives } = context.propsValue;
+    const { file_id, user_email, new_role } = context.propsValue;
 
     const authClient = await createGoogleClient(context.auth);
 
@@ -56,7 +54,7 @@ export const driveUpdatePermission = createAction({
       const response_permissions_list = await drive.permissions.list({
         fileId: file_id,
         fields: 'permissions(id,emailAddress,role)',
-        supportsAllDrives: include_team_drives,
+        supportsAllDrives: true,
       });
 
       const permissions = response_permissions_list.data.permissions ?? [];
@@ -78,7 +76,7 @@ export const driveUpdatePermission = createAction({
         fileId: file_id,
         permissionId: match.id,
         requestBody: { role: new_role },
-        supportsAllDrives: include_team_drives,
+        supportsAllDrives: true,
       });
 
       return {

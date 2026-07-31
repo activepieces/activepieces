@@ -1,7 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { drive as googleDrive } from '@googleapis/drive';
-import { common } from '../common';
 import { driveShareFileOutputSchema } from '../output-schemas';
 
 export const driveShareFile = createAction({
@@ -48,11 +47,9 @@ export const driveShareFile = createAction({
       description: 'Send an email to the user to notify them of the new permission.',
       required: true,
     }),
-    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const { file_id, user_email, role, send_invitation_email, include_team_drives } =
-      context.propsValue;
+    const { file_id, user_email, role, send_invitation_email } = context.propsValue;
 
     const authClient = await createGoogleClient(context.auth);
 
@@ -64,7 +61,7 @@ export const driveShareFile = createAction({
       requestBody: permission,
       fileId: file_id,
       sendNotificationEmail: send_invitation_email,
-      supportsAllDrives: include_team_drives,
+      supportsAllDrives: true,
     });
 
     return result.data;
