@@ -1,8 +1,7 @@
 import { environmentMigrations } from '@activepieces/server-utils'
-import { from } from 'env-var'
 
-function env() {
-    return from(environmentMigrations.migrate())
+function env(prop: string) {
+    return environmentMigrations.migrate(prop)
 }
 
 function getApiUrl(): string {
@@ -67,16 +66,21 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
 
 export const system = {
     get(prop: WorkerSystemProp): string | undefined {
-        return env().get(prop).asString() ?? defaultValues[prop]
+        return env(prop) ?? defaultValues[prop]
     },
     getOrThrow(prop: WorkerSystemProp): string {
-        return env().get(prop).required().asString()
+        const value = env(prop)
+        if (!value) {
+            throw new Error(`Environment variable ${prop} is not set`)
+        }
+        return value
     },
     getBoolean(prop: WorkerSystemProp): boolean | undefined {
-        return env().get(prop).asBoolStrict()
+        const value = env(prop) ?? defaultValues[prop]
+        return value ? value === 'true' : undefined
     },
     getList(prop: WorkerSystemProp): string[] {
-        const value = env().get(prop).asString() ?? defaultValues[prop]
+        const value = env(prop) ?? defaultValues[prop]
         return value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
     },
 }

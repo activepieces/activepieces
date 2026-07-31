@@ -2,6 +2,8 @@ import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Zap } from 'lucide-react';
 
+import { impactRunsUtils } from '../lib/impact-runs-utils';
+
 import { MetricCard, MetricCardSkeleton } from './metric-card';
 
 type FlowRunsMetricProps = {
@@ -13,9 +15,9 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
     return <MetricCardSkeleton />;
   }
 
+  const runsByFlow = impactRunsUtils.sumRunsByFlow(report.runs);
   const totalFlowRuns = report.flows.reduce(
-    (acc, flow) =>
-      acc + (report?.runs.find((run) => run.flowId === flow.flowId)?.runs ?? 0),
+    (acc, flow) => acc + (runsByFlow.get(flow.flowId) ?? 0),
     0,
   );
 

@@ -13,7 +13,7 @@ Use this piece if you are unsure which connection to use beforehand, such as whe
 `;
 
 export const readConnection = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'read_connection',
   displayName: 'Read Connection',
   description: 'Fetch connection by name',

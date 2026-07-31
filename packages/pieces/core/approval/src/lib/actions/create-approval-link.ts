@@ -2,7 +2,7 @@ import { createAction, PieceAuth, Property } from '@activepieces/pieces-framewor
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const createApprovalLink = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: PieceAuth.None(),
   name: 'create_approval_links',
   displayName: 'Create Approval Links',
@@ -26,13 +26,10 @@ export const createApprovalLink = createAction({
     const waitpoint = await ctx.run.createWaitpoint({
       type: 'WEBHOOK',
     });
+    const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
     return {
-      approvalLink: waitpoint.buildResumeUrl({
-        queryParams: { action: 'approve' },
-      }),
-      disapprovalLink: waitpoint.buildResumeUrl({
-        queryParams: { action: 'disapprove' },
-      }),
+      approvalLink: confirmationLink,
+      disapprovalLink: confirmationLink,
     };
   },
 });

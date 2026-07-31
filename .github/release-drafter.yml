@@ -14,9 +14,11 @@ categories:
   - title: "✨ Exciting New Features"
     labels:
       - "🌟 feature"
+      - "feature"
   - title: "🐞 Bug Fixes"
     labels:
       - "🐛 bug"
+      - "bug"
   - title: "🎨 Enhancements & Polish"
     labels:
       - "✨ polishing"
@@ -30,6 +32,8 @@ categories:
 template: |
 
   $CHANGES
+
+  > 📌 **Upgrading a self-hosted instance?** Review the [Breaking Changes](https://www.activepieces.com/docs/install/reference/breaking-changes) page for any actions required before you upgrade.
 
   ## Thanks ❤️
   $CONTRIBUTORS

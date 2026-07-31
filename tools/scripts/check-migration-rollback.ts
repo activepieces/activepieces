@@ -1,6 +1,7 @@
 import { execSync } from 'child_process'
 import semver from 'semver'
 import { Migration } from '../../packages/server/api/src/app/database/migration'
+import { scanMigrations } from './breaking-change-scanners/migration-ddl'
 
 const MIGRATION_DIRS = [
     'packages/server/api/src/app/database/migration/postgres',
@@ -55,6 +56,11 @@ async function checkMigrationFile(filePath: string): Promise<string[]> {
         }
     }
 
+    const [scan] = scanMigrations({ files: [filePath] })
+    if (scan.destructive && instance.breaking !== true) {
+        errors.push(`Runs destructive DDL (${scan.ddl.join(', ')}) but "breaking" is not true. Destructive migrations must set breaking = true.`)
+    }
+
     return errors
 }
 
@@ -91,6 +97,7 @@ async function main(): Promise<void> {
         console.error('  1. Set breaking = true or breaking = false')
         console.error("  2. Set release = '<semver>' (e.g. '0.78.0')")
         console.error('  3. Have a down() method (unless breaking = true)')
+        console.error('  4. Set breaking = true if they run destructive DDL (DROP TABLE/COLUMN, ADD NOT NULL without DEFAULT, etc.)')
         process.exit(1)
     }
 

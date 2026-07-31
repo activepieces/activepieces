@@ -1,7 +1,10 @@
-import { DefaultProjectRole } from '@activepieces/shared'
+import { DefaultProjectRole, PersistedChatPartType, PersistedChatRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { redisConnections } from '../../../../src/app/database/redis-connections'
+import { chatHelpers } from '../../../../src/app/ee/chat/chat-helpers'
+import { executeCrossProjectTool } from '../../../../src/app/ee/chat/tools/chat-tools'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -250,6 +253,86 @@ describe('Chat Conversations API', () => {
 
             const deleteResponse = await ctx.delete(`${CONVERSATIONS_URL}/non-existent-id`)
             expect(deleteResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Message feedback', () => {
+        const seedAssistantConversation = async (ctx: Awaited<ReturnType<typeof createTestContext>>) => {
+            const conversationId = (await ctx.post(CONVERSATIONS_URL, { title: 'Feedback test' })).json().id
+            const uiMessages = [
+                { role: PersistedChatRole.USER, parts: [{ type: PersistedChatPartType.TEXT, text: 'hi' }] },
+                { role: PersistedChatRole.ASSISTANT, parts: [{ type: PersistedChatPartType.TEXT, text: 'hello' }] },
+            ]
+            await chatHelpers.conversationRepo().update(conversationId, { uiMessages: JSON.parse(JSON.stringify(uiMessages)) })
+            return conversationId
+        }
+
+        it('records a down rating with reasons and comment, then clears it', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const conversationId = await seedAssistantConversation(ctx)
+
+            const down = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/1/feedback`, {
+                rating: 'down',
+                reasons: ['incorrect_or_incomplete', 'other'],
+                comment: 'missed a step',
+            })
+            expect(down.statusCode).toBe(StatusCodes.OK)
+            let messages = (await ctx.get(`${CONVERSATIONS_URL}/${conversationId}/messages`)).json()
+            expect(messages.data[1].feedback).toMatchObject({
+                rating: 'down',
+                reasons: ['incorrect_or_incomplete', 'other'],
+                comment: 'missed a step',
+            })
+
+            const cleared = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/1/feedback`, { rating: null })
+            expect(cleared.statusCode).toBe(StatusCodes.OK)
+            messages = (await ctx.get(`${CONVERSATIONS_URL}/${conversationId}/messages`)).json()
+            expect(messages.data[1].feedback).toBeUndefined()
+        })
+
+        it('rejects feedback targeting a non-assistant message', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const conversationId = await seedAssistantConversation(ctx)
+
+            const onUser = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/0/feedback`, { rating: 'up' })
+            expect(onUser.statusCode).toBe(StatusCodes.NOT_FOUND)
+
+            const outOfRange = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/99/feedback`, { rating: 'up' })
+            expect(outOfRange.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Message rate limit', () => {
+        it('returns 429 once the per-user chat message rate limit is exceeded', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Rate limit test' })
+            const conversationId = createResponse.json().id
+
+            const redis = await redisConnections.useExisting()
+            await redis.set(`chat-message-rate:${ctx.platform.id}:${ctx.user.id}`, 40)
+
+            const response = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages`, { content: 'hello' })
+            expect(response.statusCode).toBe(StatusCodes.TOO_MANY_REQUESTS)
+        })
+    })
+
+    describe('Tool permission parity', () => {
+        it.each([
+            { toolName: 'ap_execute_action', toolInput: { pieceName: '@activepieces/piece-slack', actionName: 'send_channel_message', input: {} } },
+            { toolName: 'ap_run_code', toolInput: { code: 'export const code = async () => 1' } },
+        ])('blocks a VIEWER from $toolName (needs WRITE_RUN)', async ({ toolName, toolInput }) => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const viewerCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
+
+            const result = await executeCrossProjectTool({
+                toolName,
+                toolInput,
+                platformId: viewerCtx.platform.id,
+                userId: viewerCtx.user.id,
+                log: app.log,
+            })
+
+            expect(JSON.stringify(result)).toMatch(/permission denied/i)
         })
     })
 

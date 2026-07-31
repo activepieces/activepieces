@@ -1,21 +1,21 @@
-import { isComponentVisible, isPieceVisible } from '../../src/lib/ee/piece-set'
+import { isComponentVisible, isPieceVisible, PieceSelectionMode } from '../../src/lib/ee/piece-set'
 
 describe('piece set visibility resolvers', () => {
     describe('isPieceVisible', () => {
         it('include_all: everything visible except listed', () => {
-            const pieces = { mode: 'include_all' as const, exceptions: ['gmail'] }
+            const pieces = { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['gmail'] }
             expect(isPieceVisible({ pieces, name: 'slack' })).toBe(true)
             expect(isPieceVisible({ pieces, name: 'gmail' })).toBe(false)
         })
 
         it('exclude_all: only listed visible (future hidden)', () => {
-            const pieces = { mode: 'exclude_all' as const, exceptions: ['slack'] }
+            const pieces = { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['slack'] }
             expect(isPieceVisible({ pieces, name: 'slack' })).toBe(true)
             expect(isPieceVisible({ pieces, name: 'gmail' })).toBe(false)
         })
 
         it('exclude_all with empty exceptions hides everything', () => {
-            const pieces = { mode: 'exclude_all' as const, exceptions: [] }
+            const pieces = { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: [] }
             expect(isPieceVisible({ pieces, name: 'slack' })).toBe(false)
         })
     })

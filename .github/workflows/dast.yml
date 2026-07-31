@@ -1,0 +1,175 @@
+name: DAST (ZAP) — Staging
+
+# Dynamic Application Security Testing. Runs OWASP ZAP against the STAGING deployment
+# (https://stg.activepieces.com) — never production. Authenticated as a dedicated throwaway
+# account whose USER-scoped JWT confines any data mutation to that account's own project.
+# Non-blocking: findings surface in the GitHub Security tab, the job does not fail the build.
+#
+# Requires two repository secrets: DAST_STG_EMAIL and DAST_STG_PASSWORD (a throwaway
+# staging account). See .zap/README.md.
+
+on:
+  schedule:
+    # 03:00 UTC — inside the staging deploy freeze window (17:00–09:00 UTC), so no deploy
+    # races the scan and the target is stable. See continuous-delivery-stg.yml.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  STAGING_URL: https://stg.activepieces.com
+
+jobs:
+  zap-dast:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Acquire staging JWT
+        id: auth
+        env:
+          DAST_STG_EMAIL: ${{ secrets.DAST_STG_EMAIL }}
+          DAST_STG_PASSWORD: ${{ secrets.DAST_STG_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DAST_STG_EMAIL:-}" ] || [ -z "${DAST_STG_PASSWORD:-}" ]; then
+            echo "::error::DAST_STG_EMAIL / DAST_STG_PASSWORD secrets are not set."
+            exit 1
+          fi
+          BASE_URL="${STAGING_URL}/api/v1"
+
+          # Sign in with the throwaway account. On cloud, an already-onboarded account
+          # returns a USER token with a projectId; a fresh account returns an ONBOARDING
+          # token (projectId null) which we complete by creating a platform. Mirrors
+          # benchmark/setup.sh.
+          SIGNIN=$(curl -s "${BASE_URL}/authentication/sign-in" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${DAST_STG_EMAIL}\",\"password\":\"${DAST_STG_PASSWORD}\"}")
+          # jq made non-fatal: a non-JSON response (502 HTML, WAF, timeout) would parse-error and,
+          # under `pipefail`, abort the step before the guards below. Empty token -> guard fires.
+          TOKEN=$(echo "$SIGNIN" | jq -r '.token // empty' 2>/dev/null || true)
+          PROJECT_ID=$(echo "$SIGNIN" | jq -r '.projectId // empty' 2>/dev/null || true)
+
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Sign-in to staging failed (no token returned)."
+            exit 1
+          fi
+
+          if [ "$PROJECT_ID" = "null" ] || [ -z "$PROJECT_ID" ]; then
+            echo "Completing onboarding (creating platform + project)..."
+            PLATFORM=$(curl -s "${BASE_URL}/platforms" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $TOKEN" \
+              -d '{"name":"DAST"}')
+            TOKEN=$(echo "$PLATFORM" | jq -r '.token // empty' 2>/dev/null || true)
+            if [ -z "$TOKEN" ]; then
+              echo "::error::Failed to complete onboarding for the DAST account: ${PLATFORM}"
+              exit 1
+            fi
+          fi
+
+          echo "::add-mask::$TOKEN"
+          echo "jwt=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare reports directory
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/.zap/reports"
+          # The stable ZAP image runs as uid 1000 ("zap"); make the mounted dir writable.
+          sudo chmod -R a+rwx "${GITHUB_WORKSPACE}/.zap"
+
+      - name: Run ZAP full + API scan
+        id: zap
+        continue-on-error: true
+        env:
+          JWT: ${{ steps.auth.outputs.jwt }}
+        run: |
+          set -euo pipefail
+          # The auth bearer must NOT go on the command line: process args are world-readable
+          # via /proc/<pid>/cmdline. Write the ZAP replacer config (incl. the token) to a
+          # properties file in $RUNNER_TEMP, bind-mount it read-only, and load it with
+          # -configfile. It lives outside the mounted .zap dir so it is never uploaded as an
+          # artifact, and is deleted immediately after the run.
+          #   replacer(0): inject the auth bearer on every request.
+          #   replacer(1): tag traffic with a marker User-Agent so staging logs/monitors
+          #                (BetterStack/Checkly) can tell DAST from real users or an attacker.
+          CONF="${RUNNER_TEMP}/zap-auth.prop"
+          {
+            printf 'replacer.full_list(0).description=auth\n'
+            printf 'replacer.full_list(0).enabled=true\n'
+            printf 'replacer.full_list(0).matchtype=REQ_HEADER\n'
+            printf 'replacer.full_list(0).matchstr=Authorization\n'
+            printf 'replacer.full_list(0).regex=false\n'
+            printf 'replacer.full_list(0).replacement=Bearer %s\n' "${JWT}"
+            printf 'replacer.full_list(1).description=dast-marker\n'
+            printf 'replacer.full_list(1).enabled=true\n'
+            printf 'replacer.full_list(1).matchtype=REQ_HEADER\n'
+            printf 'replacer.full_list(1).matchstr=User-Agent\n'
+            printf 'replacer.full_list(1).regex=false\n'
+            printf 'replacer.full_list(1).replacement=Activepieces-DAST-ZAP\n'
+          } > "$CONF"
+          # Readable by the container's zap user (uid 1000); host runner is single-tenant + ephemeral.
+          chmod 644 "$CONF"
+          rc=0
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}/.zap:/zap/wrk:rw" \
+            -v "${CONF}:/zap/auth.prop:ro" \
+            ghcr.io/zaproxy/zaproxy@sha256:8d387b1a63e3425beef4846e39719f5af2a787753af2d8b6558c6257d7a577a2 \
+            zap.sh -cmd -silent -configfile /zap/auth.prop -autorun /zap/wrk/dast-plan.yaml || rc=$?
+          rm -f "$CONF"
+          exit $rc
+
+      - name: Locate SARIF report
+        id: sarif
+        if: always()
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          found=""
+          for f in "${GITHUB_WORKSPACE}"/.zap/reports/*; do
+            # SARIF files carry a top-level "$schema" key and a sarif schema URL. The literal
+            # $schema must not be shell-expanded, hence the single quotes.
+            # shellcheck disable=SC2016
+            if grep -qlF '"$schema"' "$f" 2>/dev/null && grep -qil 'sarif' "$f" 2>/dev/null; then
+              found="$f"; break
+            fi
+          done
+          if [ -n "$found" ]; then
+            cp "$found" "${GITHUB_WORKSPACE}/.zap/reports/zap-dast.sarif"
+            # Code scanning rejects https URIs (expects repo-relative paths). Strip the scheme
+            # from finding/artifact LOCATIONS only — leave tool/rule metadata URIs (helpUri,
+            # informationUri) intact so Security-tab rule-help links stay clickable.
+            SARIF="${GITHUB_WORKSPACE}/.zap/reports/zap-dast.sarif"
+            jq '(.runs[]?.results[]?.locations[]?.physicalLocation.artifactLocation.uri?) |= sub("^https?://"; "") | (.runs[]?.results[]?.relatedLocations[]?.physicalLocation.artifactLocation.uri?) |= sub("^https?://"; "") | (.runs[]?.artifacts[]?.location.uri?) |= sub("^https?://"; "")' "$SARIF" > "$SARIF.tmp" && mv "$SARIF.tmp" "$SARIF"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No SARIF report produced by ZAP; skipping Security-tab upload."
+          fi
+
+      - name: Upload SARIF to GitHub Security tab
+        if: always() && steps.sarif.outputs.found == 'true'
+        uses: github/codeql-action/upload-sarif@1521896cd211af95be3f02edf6f436e10b819c27 # v3.35.4
+        with:
+          sarif_file: .zap/reports/zap-dast.sarif
+          category: zap-dast
+
+      - name: Upload ZAP reports artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: zap-dast-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .zap/reports/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Report ZAP outcome
+        if: always()
+        run: |
+          if [ "${{ steps.zap.outcome }}" != "success" ]; then
+            echo "::warning::ZAP run reported a non-success outcome. Findings (if any) are in the Security tab / artifact. Not failing the build (non-blocking DAST)."
+          fi

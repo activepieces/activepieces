@@ -17,6 +17,7 @@ type StripeWebhookPayload = {
   };
 };
 
+import { invoiceOutputSchema } from '../output-schemas';
 export const stripeNewInvoice = createTrigger({
   auth: stripeAuth,
   name: 'new_invoice',
@@ -55,6 +56,7 @@ export const stripeNewInvoice = createTrigger({
       required: false,
     }),
   },
+  outputSchema: invoiceOutputSchema,
   sampleData: {
     id: 'in_1MtHbELkdIwHu7ixl4OzzPMv',
     object: 'invoice',
