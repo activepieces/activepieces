@@ -121,7 +121,6 @@ export const driveSearchFiles = createAction({
     if (allFiles.length > 0) {
       return allFiles;
     } else {
-      console.log('Resource not found');
       return [];
     }
   },

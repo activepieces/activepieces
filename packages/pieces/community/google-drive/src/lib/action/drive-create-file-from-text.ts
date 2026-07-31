@@ -94,7 +94,6 @@ export const driveCreateFileFromText = createAction({
       },
     });
 
-    console.debug('File creation response', result);
     return result.body;
   },
 });

@@ -31,7 +31,6 @@ export const googleDriveGetResourceById = createAction({
     if (response.data) {
       return response.data;
     } else {
-      console.log('The specified ID corresponds to a folder. Returning null.');
       return null;
     }
   },

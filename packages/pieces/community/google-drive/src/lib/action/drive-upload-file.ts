@@ -75,7 +75,6 @@ export const driveUploadFile = createAction({
       },
     });
 
-    console.debug('File upload response', result);
     return result.body;
   },
 });
