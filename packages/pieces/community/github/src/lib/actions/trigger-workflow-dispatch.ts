@@ -18,8 +18,6 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GithubAuthValue } from '../common/auth-helpers';
 
-const RAW_INPUTS_KEY = '__raw_inputs_json__';
-
 const WORKFLOW_DISPATCH_NOTE = `**Requirements**
 
 - The selected workflow file must declare an \`on: workflow_dispatch\` trigger on the chosen branch/tag, or triggering it will fail.
@@ -74,40 +72,29 @@ export const githubTriggerWorkflowDispatchAction = createAction({
         const { owner, repo } = repository as RepositoryProp;
         const { path } = workflow as { id: number; path: string };
 
-        try {
-          const trigger = await getWorkflowDispatchTrigger(
+        const trigger = await getWorkflowDispatchTrigger(
+          auth as GithubAuthValue,
+          owner,
+          repo,
+          path,
+          ref as string
+        );
+
+        if (!trigger.present) {
+          return {};
+        }
+
+        const fields: DynamicPropsValue = {};
+        for (const [key, def] of Object.entries(trigger.inputs)) {
+          fields[key] = await buildInputProperty(
+            key,
+            def,
             auth as GithubAuthValue,
             owner,
-            repo,
-            path,
-            ref as string
+            repo
           );
-
-          if (!trigger.present) {
-            return {};
-          }
-
-          const fields: DynamicPropsValue = {};
-          for (const [key, def] of Object.entries(trigger.inputs)) {
-            fields[key] = await buildInputProperty(
-              key,
-              def,
-              auth as GithubAuthValue,
-              owner,
-              repo
-            );
-          }
-          return fields;
-        } catch (e) {
-          return {
-            [RAW_INPUTS_KEY]: Property.Json({
-              displayName: 'Inputs (JSON)',
-              description:
-                "Couldn't read the workflow_dispatch inputs from the workflow file on this ref. Provide them here as a JSON object instead.",
-              required: false,
-            }),
-          };
         }
+        return fields;
       },
     }),
     waitForCompletion: Property.Checkbox({
@@ -190,11 +177,7 @@ export const githubTriggerWorkflowDispatchAction = createAction({
     }
 
     const { ref } = propsValue;
-    const dynamicInputs = propsValue.inputs ?? {};
-    const inputs =
-      RAW_INPUTS_KEY in dynamicInputs
-        ? dynamicInputs[RAW_INPUTS_KEY]
-        : dynamicInputs;
+    const inputs = propsValue.inputs ?? {};
 
     const dispatchResponse = await githubApiCall<{ workflow_run_id: number }>({
       auth,
