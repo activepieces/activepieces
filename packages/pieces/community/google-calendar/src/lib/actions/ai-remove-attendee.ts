@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { calendar as googleCalendar } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
+import { removeAttendeeActionOutputSchema } from '../output-schemas';
 
 export const aiRemoveAttendee = createAction({
   auth: googleCalendarAuth,
@@ -41,6 +42,7 @@ export const aiRemoveAttendee = createAction({
       },
     }),
   },
+  outputSchema: removeAttendeeActionOutputSchema,
   async run(context) {
     const {
       calendar_id: calendarId,

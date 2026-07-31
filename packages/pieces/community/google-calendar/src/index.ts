@@ -39,7 +39,7 @@ import { newCalendar } from './lib/triggers/new-calendar';
 export { googleCalendarAuth, getAccessToken, GoogleCalendarAuthValue, createGoogleClient } from './lib/common';
 
 export const googleCalendar = createPiece({
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-calendar.png',
   categories: [PieceCategory.PRODUCTIVITY],
   displayName: 'Google Calendar',

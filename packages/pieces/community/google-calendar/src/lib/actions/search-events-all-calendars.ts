@@ -8,6 +8,7 @@ import {
 import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import { getCalendars } from '../common/helper';
 import { GoogleCalendarEvent, GoogleCalendarEventList } from '../common/types';
+import { searchEventsAllCalendarsActionOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
 
 export const searchEventsAllCalendars = createAction({
@@ -49,6 +50,7 @@ export const searchEventsAllCalendars = createAction({
       defaultValue: true,
     }),
   },
+  outputSchema: searchEventsAllCalendarsActionOutputSchema,
   async run(context) {
     const { query, start_date, end_date, single_events } = context.propsValue;
     const token = await getAccessToken(context.auth);

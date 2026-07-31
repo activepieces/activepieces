@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { calendar as googleCalendar } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
+import { eventOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
 
 export const aiImportEvent = createAction({
@@ -48,6 +49,7 @@ export const aiImportEvent = createAction({
       required: false,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run(context) {
     const {
       calendar_id: calendarId,

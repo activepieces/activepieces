@@ -12,6 +12,7 @@ import {
   GoogleCalendarAuthValue,
 } from '../common';
 import { getCalendars } from '../common/helper';
+import { findFreeSlotsActionOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
@@ -170,6 +171,7 @@ export const findFreeSlots = createAction({
       required: false,
     }),
   },
+  outputSchema: findFreeSlotsActionOutputSchema,
   async run(context) {
     const {
       calendar_ids,

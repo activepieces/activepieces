@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { googleCalendarAuth } from '../common';
 import { getColors } from '../common/helper';
+import { colorsActionOutputSchema } from '../output-schemas';
 
 export const aiGetColors = createAction({
   auth: googleCalendarAuth,
@@ -15,6 +16,7 @@ export const aiGetColors = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: colorsActionOutputSchema,
   async run(context) {
     const colors = await getColors(context.auth);
     return colors;

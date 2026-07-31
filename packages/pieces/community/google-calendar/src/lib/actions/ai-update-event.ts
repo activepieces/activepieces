@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleCalendarAuth } from '../common';
 import { updateEventProps, runUpdateEvent } from './update-event.action';
+import { eventOutputSchema } from '../output-schemas';
 
 const { eventId: _omitEventId, calendar_id: _omitCalendarId, ...otherUpdateProps } =
   updateEventProps;
@@ -29,6 +30,7 @@ export const aiUpdateEvent = createAction({
     idempotent: true,
   },
   props,
+  outputSchema: eventOutputSchema,
   run: (context) =>
     runUpdateEvent({
       ...context,

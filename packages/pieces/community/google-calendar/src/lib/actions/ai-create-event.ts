@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { googleCalendarAuth } from '../common';
 import { createEventProps, runCreateEvent } from './create-event';
+import { eventOutputSchema } from '../output-schemas';
 
 export const aiCreateEvent = createAction({
   auth: googleCalendarAuth,
@@ -15,5 +16,6 @@ export const aiCreateEvent = createAction({
     idempotent: false,
   },
   props: createEventProps,
+  outputSchema: eventOutputSchema,
   run: runCreateEvent,
 });

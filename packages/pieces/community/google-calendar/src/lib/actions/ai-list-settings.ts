@@ -6,6 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
+import { listSettingsActionOutputSchema } from '../output-schemas';
 
 interface SettingItem {
   kind: string;
@@ -35,6 +36,7 @@ export const aiListSettings = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: listSettingsActionOutputSchema,
   async run(context) {
     const token = await getAccessToken(context.auth);
 

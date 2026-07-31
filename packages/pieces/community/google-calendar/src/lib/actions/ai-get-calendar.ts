@@ -6,6 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
+import { calendarResourceOutputSchema } from '../output-schemas';
 
 interface CalendarResource {
   kind: string;
@@ -35,6 +36,7 @@ export const aiGetCalendar = createAction({
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown(),
   },
+  outputSchema: calendarResourceOutputSchema,
   async run(context) {
     const { calendar_id: calendarId } = context.propsValue;
     const token = await getAccessToken(context.auth);

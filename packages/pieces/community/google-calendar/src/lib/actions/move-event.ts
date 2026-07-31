@@ -7,6 +7,7 @@ import {
   GoogleCalendarAuthValue,
 } from '../common';
 import { getCalendars } from '../common/helper';
+import { moveEventActionOutputSchema } from '../output-schemas';
 
 export const moveEvent = createAction({
   auth: googleCalendarAuth,
@@ -67,6 +68,7 @@ export const moveEvent = createAction({
       },
     }),
   },
+  outputSchema: moveEventActionOutputSchema,
   async run(context) {
     const {
       calendar_id: sourceCalendarId,

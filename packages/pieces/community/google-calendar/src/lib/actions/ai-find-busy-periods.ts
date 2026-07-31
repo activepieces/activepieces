@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { googleCalendarAuth } from '../common';
 import { findFreeBusyProps, runFindFreeBusy } from './find-busy-free-periods';
+import { freeBusyActionOutputSchema } from '../output-schemas';
 
 export const aiFindBusyPeriods = createAction({
   auth: googleCalendarAuth,
@@ -15,5 +16,6 @@ export const aiFindBusyPeriods = createAction({
     idempotent: true,
   },
   props: findFreeBusyProps,
+  outputSchema: freeBusyActionOutputSchema,
   run: runFindFreeBusy,
 });

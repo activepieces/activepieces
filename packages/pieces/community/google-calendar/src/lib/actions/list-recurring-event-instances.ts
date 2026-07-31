@@ -5,6 +5,7 @@ import {
   googleCalendarAuth,
   createGoogleClient,
 } from '../common';
+import { listRecurringEventInstancesActionOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
 
 export const listRecurringEventInstances = createAction({
@@ -53,6 +54,7 @@ export const listRecurringEventInstances = createAction({
       required: false,
     }),
   },
+  outputSchema: listRecurringEventInstancesActionOutputSchema,
   async run(context) {
     const {
       calendar_id: calendarId,

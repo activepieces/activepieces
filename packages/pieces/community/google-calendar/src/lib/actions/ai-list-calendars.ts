@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { googleCalendarAuth, getAccessToken } from '../common';
 import { getCalendars } from '../common/helper';
+import { listCalendarsActionOutputSchema } from '../output-schemas';
 
 export const aiListCalendars = createAction({
   auth: googleCalendarAuth,
@@ -15,6 +16,7 @@ export const aiListCalendars = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: listCalendarsActionOutputSchema,
   async run(context) {
     // Touch the access token early so auth/scope errors surface clearly.
     await getAccessToken(context.auth);
