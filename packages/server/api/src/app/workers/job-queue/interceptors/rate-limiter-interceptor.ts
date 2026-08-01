@@ -55,6 +55,7 @@ function concurrencyLimitForCloudPlan(planName: string | null): number {
         case PlanName.FREE:
             return FREE_CONCURRENT_JOBS_LIMIT
         case PlanName.APPSUMO:
+        case PlanName.FREE_LEGACY:
         case PlanName.PLUS:
         case PlanName.PLUS_ANNUAL:
         case PlanName.PLUS_CHAT:

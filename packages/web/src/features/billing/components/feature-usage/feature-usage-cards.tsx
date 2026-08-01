@@ -1,4 +1,8 @@
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import {
+  isNil,
+  PlanName,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 
@@ -127,7 +131,8 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
   if (!isNil(usage.appSumoAiCreditsUsed)) {
     metrics.push({
       key: 'appsumo-ai-credits',
-      label: 'AppSumo AI Credits',
+      label:
+        plan.plan === PlanName.APPSUMO ? 'AppSumo AI Credits' : 'AI Credits',
       icon: Sparkles,
       used: usage.appSumoAiCreditsUsed,
       included:

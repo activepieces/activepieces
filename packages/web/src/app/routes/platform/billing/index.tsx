@@ -133,7 +133,9 @@ function BillingPageDetails() {
     : undefined;
   const hasBillingPortal = info.billingPortalAvailable;
   const isComped = isPaid && isNil(info.trialEndsAt) && !hasBillingPortal;
-  const isAppSumo = info.plan.plan === PlanName.APPSUMO;
+  const isCompedLifetimePlan =
+    info.plan.plan === PlanName.APPSUMO ||
+    info.plan.plan === PlanName.FREE_LEGACY;
   const hasLicenseKey = !isNil(platform.plan.licenseKey);
   const showLicenseKeySection = !isCloud || licenseKeyRevealed;
 
@@ -264,7 +266,7 @@ function BillingPageDetails() {
                     <ExternalLink className="size-3.5 ml-2" />
                   </Button>
                 )}
-                {!isAppSumo &&
+                {!isCompedLifetimePlan &&
                   (isNil(info.cancelAt) ? (
                     <ConfirmationDeleteDialog
                       title={t('Cancel subscription')}

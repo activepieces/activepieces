@@ -1,5 +1,5 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, FileType, FlowRun, FlowVersion, LogSliceRef, PlanName } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
@@ -35,7 +35,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
         const creditValue = usage.breakdown.reduce((sum, entry) => sum + entry.messages * resolveAiCreditWeight({ provider: entry.provider, model: entry.model }) + entry.toolCalls, 0)
         const attempt = flowRun.startTime ?? flowRun.created
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-        const isAppSumoPlan = platformPlan.plan?.toLowerCase().includes(PlanName.APPSUMO) ?? false
+        const isAppSumoPlan = isAppSumoCreditedPlan(platformPlan.plan)
         await trackCreditsWithAppSumo({
             log,
             credits: {

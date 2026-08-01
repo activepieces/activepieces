@@ -27,6 +27,7 @@ export enum PlanName {
     TEAM_ANNUAL = 'team_annual',
     ENTERPRISE = 'enterprise',
     APPSUMO = 'appsumo',
+    FREE_LEGACY = 'free_legacy',
 }
 
 export enum AiCreditsAutoTopUpState {

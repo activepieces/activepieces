@@ -185,6 +185,8 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return {
             autumnCustomerId: platformPlan.autumnCustomerId,
             autumnApiKey: platformPlan.autumnApiKey,
+            plan: platformPlan.plan ?? null,
+            created: platformPlan.created,
         }
     },
     async setAutumnCredentials(params: SetAutumnCredentialsParams): Promise<void> {
@@ -280,6 +282,8 @@ async function createInitialBilling(platformId: string): Promise<PlatformPlan> {
 type AutumnCredentials = {
     autumnCustomerId: string | null
     autumnApiKey: string | null
+    plan: string | null
+    created: string
 }
 
 type TriggerLazyBillingProviderSyncParams = {

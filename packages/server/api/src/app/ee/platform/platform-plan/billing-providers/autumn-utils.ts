@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { AutumnFeatureId, PlanName, PlatformPlanLimits, PurchasablePlan } from '@activepieces/shared'
+import { ApEdition, AutumnFeatureId, FREE_LEGACY_CUTOFF_ISO, LEGACY_FREE_PLANS, PlanName, PlatformPlanLimits, PurchasablePlan } from '@activepieces/shared'
 import {
     type AggregateEventsResponse,
     Autumn,
@@ -14,6 +14,7 @@ import {
     type TrackParams,
 } from 'autumn-js'
 import { type AxiosRequestConfig, type AxiosResponse } from 'axios'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
@@ -25,6 +26,7 @@ import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
 
 const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).replace(/\/+$/, '')
+const edition = system.getEdition()
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const AUTUMN_GET_CUSTOMER_TIMEOUT_MS = 5000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
@@ -116,23 +118,48 @@ export const autumnUtils = {
         return toCreditUsage(result)
     },
     async ensureEnrolled(log: FastifyBaseLogger, platformId: string): Promise<void> {
-        const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
-        if (!isNil(autumnCustomerId)) {
+        const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
+        if (isNil(credentials.autumnCustomerId)) {
+            await distributedLock(log).runExclusive({
+                key: getAutumnEnrollLockKey(platformId),
+                timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
+                fn: async () => {
+                    const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
+                    if (!isNil(autumnCustomerId)) {
+                        return
+                    }
+                    const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+                    const enrolled = isNil(platformPlan.licenseKey) || isEmpty(platformPlan.licenseKey)
+                        ? await autumnConsole.enrollFree({ email: await autumnUtils.getPlatformOwnerEmail(log, platformId) })
+                        : await autumnConsole.activate({ licenseKey: platformPlan.licenseKey })
+                    await platformPlanService(log).setAutumnCredentials({ platformId, ...enrolled })
+                    await autumnUtils.refreshEntitlements(log, platformId)
+                },
+            })
+        }
+        await autumnUtils.ensureFreeLegacyComped(log, platformId)
+    },
+    async ensureFreeLegacyComped(log: FastifyBaseLogger, platformId: string): Promise<void> {
+        if (edition !== ApEdition.CLOUD) {
+            return
+        }
+        if (!isEligibleForFreeLegacy(await platformPlanService(log).getAutumnCredentials(platformId))) {
             return
         }
         await distributedLock(log).runExclusive({
             key: getAutumnEnrollLockKey(platformId),
             timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
             fn: async () => {
-                const { autumnCustomerId } = await platformPlanService(log).getAutumnCredentials(platformId)
-                if (!isNil(autumnCustomerId)) {
+                const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
+                const autumnCustomerId = credentials.autumnCustomerId
+                if (!isEligibleForFreeLegacy(credentials) || isNil(autumnCustomerId)) {
                     return
                 }
-                const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-                const credentials = isNil(platformPlan.licenseKey) || isEmpty(platformPlan.licenseKey)
-                    ? await autumnConsole.enrollFree({ email: await autumnUtils.getPlatformOwnerEmail(log, platformId) })
-                    : await autumnConsole.activate({ licenseKey: platformPlan.licenseKey })
-                await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
+                const { error } = await tryCatch(() => autumnConsole.compFreeLegacy({ autumnCustomerId }))
+                if (!isNil(error)) {
+                    log.warn({ error, platform: { id: platformId } }, 'Failed to comp the free legacy plan')
+                    return
+                }
                 await autumnUtils.refreshEntitlements(log, platformId)
             },
         })
@@ -150,7 +177,7 @@ export const autumnUtils = {
         await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
     },
     async provisionLicenseKeyIfPaid(log: FastifyBaseLogger, platformId: string, planId: string | null): Promise<void> {
-        if (isNil(planId) || planId === PlanName.FREE || planId === PlanName.APPSUMO) {
+        if (isNil(planId) || planId === PlanName.FREE || planId === PlanName.APPSUMO || planId === PlanName.FREE_LEGACY) {
             return
         }
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
@@ -351,6 +378,17 @@ export const autumnConsole = {
             },
         )
     },
+    async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
+        const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
+        if (isNil(secret) || isEmpty(secret)) {
+            throw new Error('CONSOLE_API_SECRET_KEY is not configured')
+        }
+        await consolePost<ConsoleBillingEnvelope>(
+            `${AUTUMN_CONSOLE_URL}/api/v1/billing/free-legacy`,
+            { autumnCustomerId },
+            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${secret}` } },
+        )
+    },
     async grantChatPlan({ email, log }: { email: string, log: FastifyBaseLogger }): Promise<string> {
         const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
         if (isNil(secret) || isEmpty(secret)) {
@@ -391,6 +429,10 @@ async function consoleGet<T>(url: string, config: AxiosRequestConfig): Promise<A
     }
     assertNotNullOrUndefined(response, 'response')
     return response
+}
+
+function isEligibleForFreeLegacy({ plan, created }: { plan: string | null, created: string }): boolean {
+    return LEGACY_FREE_PLANS.includes(plan ?? '') && dayjs(created).isBefore(FREE_LEGACY_CUTOFF_ISO)
 }
 
 function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
