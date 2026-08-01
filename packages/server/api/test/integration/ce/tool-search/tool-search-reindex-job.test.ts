@@ -69,7 +69,8 @@ describe('Tool Search recurring reconcile (safety net)', () => {
 
         const scheduled = await reindexSchedulers()
         expect(scheduled).toHaveLength(1)
-        expect(scheduled[0].pattern).toBe('*/30 * * * *')
+        // Minute 30 — staggered against PIECES_SYNC (minutes 0–4), which enqueues its own reconcile.
+        expect(scheduled[0].pattern).toBe('30 * * * *')
     })
 
     it('is idempotent across replica boots — a second call does not add a second schedule', async () => {

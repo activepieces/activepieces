@@ -25,10 +25,15 @@ const REINDEX_LOCK_TIMEOUT_SECONDS = 300
  * anything stranded is picked up within one interval, whatever stranded it.
  *
  * Cheap by construction: the reconcile is hash-gated, so an unchanged catalog embeds nothing, deletes
- * nothing and writes no rows — the steady-state cost is one catalog read. Fixed pattern rather than a
- * per-replica random one so repeated boots re-upsert the same schedule instead of rewriting it.
+ * nothing and writes no rows — the steady-state cost is one catalog read (measured at ~0.4 s against a
+ * 700-piece / 7 000-object catalog). Hourly is well inside the window that matters, since the failure it
+ * covers is rare and only costs stale search text while it lasts.
+ *
+ * Runs at minute 30 for two reasons: it staggers against `PIECES_SYNC` (minutes 0–4), whose own delta
+ * already enqueues a reconcile, and a fixed pattern rather than a per-replica random one means repeated
+ * boots re-upsert the same schedule instead of rewriting it.
  */
-const REINDEX_CRON_PATTERN = '*/30 * * * *'
+const REINDEX_CRON_PATTERN = '30 * * * *'
 
 /**
  * Stable BullMQ jobId per scope. The global reconcile always enqueues under one id so a burst of
