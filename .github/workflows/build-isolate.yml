@@ -6,9 +6,7 @@ name: Build isolate sandbox binaries
 # v1.10.1 is a lightweight tag and cannot be signature-verified.
 
 on:
-  push:
-    branches:
-      - fix/isolate-open-files
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -36,7 +34,7 @@ jobs:
             runner: ubuntu-24.04-arm
             asset: isolate-arm
             elf_machine: aarch64
-            expected_sha256: ''
+            expected_sha256: 621d7653e56243eb3750662454a4adf926d8a8af116b7f679500086be0639689
     steps:
       - name: Build isolate inside the runtime base image
         run: |
