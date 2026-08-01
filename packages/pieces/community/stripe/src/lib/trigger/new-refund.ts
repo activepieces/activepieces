@@ -17,6 +17,7 @@ type StripeWebhookPayload = {
   };
 };
 
+import { refundOutputSchema } from '../output-schemas';
 export const stripeNewRefund = createTrigger({
   auth: stripeAuth,
   name: 'new_refund',
@@ -40,6 +41,7 @@ export const stripeNewRefund = createTrigger({
       required: false,
     }),
   },
+  outputSchema: refundOutputSchema,
   sampleData: {
     id: 're_1Nispe2eZvKYlo2Cd31jOCgZ',
     object: 'refund',

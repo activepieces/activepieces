@@ -4,11 +4,12 @@ import dayjs from 'dayjs';
 import { markdownDescription } from '../common';
 
 export const delayUntilAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'delay_until',
   displayName: 'Delay Until',
   description:
     'Delays the execution of the next action until a given timestamp',
+  aiMetadata: { description: 'Suspends the flow until one absolute date/time (ISO and other parseable formats) and then continues with the next step; a timestamp already in the past resumes immediately, and waits longer than a minute suspend the run rather than sleeping in-process. Choose this when the resume point is a known calendar instant, and prefer Delay For when you only know a relative duration. Requires the target timestamp, and the wait cannot exceed the instance paused-flow timeout; idempotent, it changes no data.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

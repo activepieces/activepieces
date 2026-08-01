@@ -115,6 +115,16 @@ export const calendarOutputSchema: OutputSchema = {
       "label": "Access Role"
     },
     {
+      "key": "primary",
+      "label": "Primary",
+      "format": "boolean"
+    },
+    {
+      "key": "isOwned",
+      "label": "Is Owned",
+      "format": "boolean"
+    },
+    {
       "key": "selected",
       "label": "Selected",
       "format": "boolean"
@@ -340,6 +350,390 @@ export const quickEventActionOutputSchema: OutputSchema = {
       "key": "iCalUID",
       "label": "iCal UID",
       "value": "body.iCalUID"
+    }
+  ]
+};
+
+export const calendarResourceOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "summary",
+      "label": "Name"
+    },
+    {
+      "key": "id",
+      "label": "Calendar ID"
+    },
+    {
+      "key": "description",
+      "label": "Description"
+    },
+    {
+      "key": "location",
+      "label": "Location"
+    },
+    {
+      "key": "timeZone",
+      "label": "Time Zone"
+    }
+  ]
+};
+
+export const calendarListEntryOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "summary",
+      "label": "Name"
+    },
+    {
+      "key": "id",
+      "label": "Calendar ID"
+    },
+    {
+      "key": "description",
+      "label": "Description"
+    },
+    {
+      "key": "timeZone",
+      "label": "Time Zone"
+    },
+    {
+      "key": "accessRole",
+      "label": "Access Role"
+    },
+    {
+      "key": "primary",
+      "label": "Primary",
+      "format": "boolean"
+    },
+    {
+      "key": "selected",
+      "label": "Selected",
+      "format": "boolean"
+    },
+    {
+      "key": "colorId",
+      "label": "Color ID"
+    },
+    {
+      "key": "backgroundColor",
+      "label": "Background Color"
+    },
+    {
+      "key": "foregroundColor",
+      "label": "Foreground Color"
+    }
+  ]
+};
+
+export const colorsActionOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "calendar",
+      "label": "Calendar Colors",
+      "dynamicKey": true,
+      "children": [
+        {
+          "key": "background",
+          "label": "Background Color"
+        },
+        {
+          "key": "foreground",
+          "label": "Foreground Color"
+        }
+      ]
+    },
+    {
+      "key": "event",
+      "label": "Event Colors",
+      "dynamicKey": true,
+      "children": [
+        {
+          "key": "background",
+          "label": "Background Color"
+        },
+        {
+          "key": "foreground",
+          "label": "Foreground Color"
+        }
+      ]
+    }
+  ]
+};
+
+export const listCalendarsActionOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "calendars",
+      "label": "Calendars",
+      "labelKey": "summary",
+      "listItems": [
+        {
+          "key": "id",
+          "label": "Calendar ID"
+        },
+        {
+          "key": "summary",
+          "label": "Name"
+        },
+        {
+          "key": "description",
+          "label": "Description"
+        },
+        {
+          "key": "location",
+          "label": "Location"
+        },
+        {
+          "key": "timeZone",
+          "label": "Time Zone"
+        },
+        {
+          "key": "accessRole",
+          "label": "Access Role"
+        },
+        {
+          "key": "primary",
+          "label": "Primary",
+          "format": "boolean"
+        },
+        {
+          "key": "selected",
+          "label": "Selected",
+          "format": "boolean"
+        },
+        {
+          "key": "backgroundColor",
+          "label": "Background Color"
+        },
+        {
+          "key": "foregroundColor",
+          "label": "Foreground Color"
+        }
+      ]
+    },
+    {
+      "key": "count",
+      "label": "Count",
+      "format": "number"
+    }
+  ]
+};
+
+export const listSettingsActionOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "items",
+      "label": "Settings",
+      "labelKey": "id",
+      "listItems": [
+        {
+          "key": "id",
+          "label": "Setting ID"
+        },
+        {
+          "key": "value",
+          "label": "Value"
+        }
+      ]
+    },
+    {
+      "key": "count",
+      "label": "Count",
+      "format": "number"
+    }
+  ]
+};
+
+export const removeAttendeeActionOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "removed",
+      "label": "Removed",
+      "format": "boolean"
+    },
+    {
+      "key": "attendee_email",
+      "label": "Attendee Email",
+      "format": "email"
+    },
+    {
+      "key": "message",
+      "label": "Message"
+    },
+    {
+      "key": "event",
+      "label": "Event",
+      "children": eventOutputSchema.fields
+    }
+  ]
+};
+
+export const findFreeSlotsActionOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "free_slots",
+      "label": "Free Slots",
+      "labelKey": "start",
+      "listItems": [
+        {
+          "key": "start",
+          "label": "Start",
+          "format": "datetime"
+        },
+        {
+          "key": "end",
+          "label": "End",
+          "format": "datetime"
+        },
+        {
+          "key": "duration_minutes",
+          "label": "Duration (Minutes)",
+          "format": "number"
+        }
+      ]
+    },
+    {
+      "key": "count",
+      "label": "Count",
+      "format": "number"
+    }
+  ]
+};
+
+const recurringEventInstanceFields: OutputSchema['fields'] = [
+  {
+    "key": "summary",
+    "label": "Title"
+  },
+  {
+    "key": "status",
+    "label": "Status"
+  },
+  {
+    "key": "id",
+    "label": "Instance Event ID"
+  },
+  {
+    "key": "htmlLink",
+    "label": "Event Link",
+    "format": "url"
+  },
+  {
+    "key": "startDateTime",
+    "label": "Start",
+    "value": "start.dateTime",
+    "format": "datetime"
+  },
+  {
+    "key": "endDateTime",
+    "label": "End",
+    "value": "end.dateTime",
+    "format": "datetime"
+  },
+  {
+    "key": "originalStartDateTime",
+    "label": "Original Start",
+    "value": "originalStartTime.dateTime",
+    "format": "datetime"
+  }
+];
+
+export const listRecurringEventInstancesActionOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "instances",
+      "label": "Instances",
+      "labelKey": "summary",
+      "listItems": recurringEventInstanceFields
+    },
+    {
+      "key": "count",
+      "label": "Count",
+      "format": "number"
+    },
+    {
+      "key": "nextPageToken",
+      "label": "Next Page Token"
+    }
+  ]
+};
+
+export const moveEventActionOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "moved",
+      "label": "Moved",
+      "format": "boolean"
+    },
+    {
+      "key": "already_in_destination",
+      "label": "Already in Destination",
+      "format": "boolean"
+    },
+    {
+      "key": "event",
+      "label": "Event",
+      "children": eventOutputSchema.fields
+    }
+  ]
+};
+
+export const searchEventsAllCalendarsActionOutputSchema: OutputSchema = {
+  "fields": [
+    {
+      "key": "events",
+      "label": "Events",
+      "labelKey": "summary",
+      "listItems": [
+        {
+          "key": "calendarId",
+          "label": "Calendar ID"
+        },
+        {
+          "key": "summary",
+          "label": "Title"
+        },
+        {
+          "key": "status",
+          "label": "Status"
+        },
+        {
+          "key": "id",
+          "label": "Event ID"
+        },
+        {
+          "key": "htmlLink",
+          "label": "Event Link",
+          "format": "url"
+        },
+        {
+          "key": "startDateTime",
+          "label": "Start",
+          "value": "start.dateTime",
+          "format": "datetime"
+        },
+        {
+          "key": "endDateTime",
+          "label": "End",
+          "value": "end.dateTime",
+          "format": "datetime"
+        }
+      ]
+    },
+    {
+      "key": "count",
+      "label": "Count",
+      "format": "number"
+    },
+    {
+      "key": "calendars_searched",
+      "label": "Calendars Searched",
+      "format": "number"
+    },
+    {
+      "key": "warning",
+      "label": "Warning"
     }
   ]
 };

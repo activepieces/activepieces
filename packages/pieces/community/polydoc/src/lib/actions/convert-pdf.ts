@@ -29,8 +29,8 @@ export const convertToPdf = createAction({
   description: 'Convert HTML, a URL, or a saved template to a PDF.',
   aiMetadata: {
     description:
-      'Converts a URL, an inline HTML string, or a saved PolyDoc template into a PDF and returns the file (or delivers it to cloud storage / a webhook). Use it to render documents like invoices, reports, or contracts. Idempotent: the same input yields the same PDF.',
-    idempotent: true,
+      'Converts a URL, an inline HTML string, or a saved PolyDoc template into a PDF and returns the file (or delivers it to cloud storage / a webhook). Use it to render documents like invoices, reports, or contracts. Not idempotent: each call performs a fresh conversion on PolyDoc that produces a new file and consumes account credits, and the cloud-storage and webhook delivery modes send the file to an external destination.',
+    idempotent: false,
   },
   props: {
     sourceType: sourceTypeProp('url'),
