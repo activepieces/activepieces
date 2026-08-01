@@ -31,14 +31,22 @@ const insertPieceMetadata = async (
   }
 };
 
-const isServableOnCurrentRelease = ({ pieceMetadata, currentRelease }: { pieceMetadata: PieceMetadata, currentRelease: string }): boolean => {
-  const minimumSupportedRelease = pieceMetadata.minimumSupportedRelease
+const findUnsupportedReason = ({ pieceMetadata, currentRelease }: { pieceMetadata: PieceMetadata, currentRelease: string }): string | null => {
+  const { minimumSupportedRelease, maximumSupportedRelease } = pieceMetadata
 
-  if (!minimumSupportedRelease || !semver.valid(minimumSupportedRelease)) {
-    return true
+  if (!semver.valid(currentRelease)) {
+    return null
   }
 
-  return !semver.gt(minimumSupportedRelease, currentRelease)
+  if (maximumSupportedRelease && semver.valid(maximumSupportedRelease) && semver.gt(currentRelease, maximumSupportedRelease)) {
+    return `maximumSupportedRelease ${maximumSupportedRelease} is below it`
+  }
+
+  if (minimumSupportedRelease && semver.valid(minimumSupportedRelease) && semver.gt(minimumSupportedRelease, currentRelease)) {
+    return `minimumSupportedRelease ${minimumSupportedRelease} is above it`
+  }
+
+  return null
 };
 
 
@@ -86,16 +94,21 @@ const main = async () => {
   const piecesMetadata = await findNewPieces()
   const currentRelease = (await readPackageJson('.')).version
 
-  const servable = piecesMetadata.filter((pieceMetadata) => isServableOnCurrentRelease({ pieceMetadata, currentRelease }))
-  const unservable = piecesMetadata.filter((pieceMetadata) => !isServableOnCurrentRelease({ pieceMetadata, currentRelease }))
+  const evaluated = piecesMetadata.map((pieceMetadata) => ({
+    pieceMetadata,
+    unsupportedReason: findUnsupportedReason({ pieceMetadata, currentRelease }),
+  }))
+
+  const servable = evaluated.filter((entry) => entry.unsupportedReason === null).map((entry) => entry.pieceMetadata)
+  const unservable = evaluated.filter((entry) => entry.unsupportedReason !== null)
 
   await insertMetadata(servable)
 
   if (unservable.length > 0) {
     const details = unservable
-      .map((pieceMetadata) => `  ${pieceMetadata.name}@${pieceMetadata.version} requires ${pieceMetadata.minimumSupportedRelease}`)
+      .map((entry) => `  ${entry.pieceMetadata.name}@${entry.pieceMetadata.version}: ${entry.unsupportedReason}`)
       .join('\n')
-    throw new Error(`[updatePiecesMetadata] ${unservable.length} piece(s) declare a minimumSupportedRelease above the current release ${currentRelease} and were skipped. The catalog would store them but never serve them, so the previous version stays live:\n${details}\nEither bump the root package.json version to the required release, or lower minimumSupportedRelease on these pieces.`)
+    throw new Error(`[updatePiecesMetadata] ${unservable.length} piece(s) are not compatible with the current release ${currentRelease} and were skipped. The catalog would store them but never serve them, so the previous compatible version stays live:\n${details}\nEither align the root package.json version with the range these pieces declare, or widen minimumSupportedRelease/maximumSupportedRelease on them.`)
   }
 
   console.log('update pieces metadata: completed')
