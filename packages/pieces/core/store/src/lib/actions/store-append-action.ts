@@ -43,10 +43,11 @@ async function executeStorageAppend(context: ActionContext<PieceAuthProperty | u
 }
 
 export const storageAppendAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'append',
   displayName: 'Append',
   description: 'Append to a value in storage',
+  aiMetadata: { description: 'Concatenates text onto the string already stored under a key, optionally inserting a separator between the old and new text. Use it to accumulate a growing log across runs; prefer Put to replace the value outright, or Add To List when the stored value is an array rather than a string. Requires the key (max 128 characters), the value, and the Store Scope, fails if the existing value is not a string, caps the stored value at 512 KB, and is not idempotent since each call appends again.', idempotent: false },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,
