@@ -113,6 +113,10 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--share-net',
                 `--box-id=${boxId}`,
                 '--processes',
+                // isolate defaults RLIMIT_NOFILE to 64 (soft and hard), which a flow with a few
+                // dozen concurrent sockets exhausts — spawn then fails EMFILE mid-run. Still bounded
+                // so a runaway flow cannot exhaust the host.
+                `--open-files=${SANDBOX_OPEN_FILE_LIMIT}`,
                 '--chdir=/root',
                 ...envArgs,
                 '--run',
@@ -131,3 +135,5 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
         },
     }
 }
+
+const SANDBOX_OPEN_FILE_LIMIT = 1024
