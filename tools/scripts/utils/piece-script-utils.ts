@@ -110,12 +110,11 @@ export async function findNewPieces(): Promise<PieceMetadata[]> {
             }
             const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
             if (!exists) {
-                try {
-                    return loadPieceFromFolder(folderPath);
-                } catch (ex) {
-                    console.error(`[findNewPieces] failed to load ${packageJson.name}@${packageJson.version} from ${folderPath}, it will not be inserted: ${ex}`);
-                    return null;
+                const pieceMetadata = await loadPieceFromFolder(folderPath);
+                if (pieceMetadata === null) {
+                    console.error(`[findNewPieces] failed to load ${packageJson.name}@${packageJson.version} from ${folderPath}, it will not be inserted`);
                 }
+                return pieceMetadata;
             }
             return null;
         }))
