@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.86.3",
+  "version": "0.87.0",
   "packageManager": "bun@1.3.3",
   "trustedDependencies": [
     "sqlite3",
