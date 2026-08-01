@@ -48,7 +48,7 @@ jobs:
             bash -eux -c '
               apt-get update
               apt-get install -y --no-install-recommends \
-                gcc make libcap-dev git ca-certificates binutils file
+                gcc libc6-dev make libcap-dev git ca-certificates binutils file
               git clone https://github.com/ioi/isolate /src
               cd /src
               git checkout "$ISOLATE_COMMIT"
