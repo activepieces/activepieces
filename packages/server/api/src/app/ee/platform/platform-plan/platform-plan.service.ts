@@ -1,9 +1,9 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isEmpty, isNil, PlatformUsageMetric, SeekPage, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowStatus, isCloudPlanButNotEnterprise, isFreeLegacyEligible, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey, PLATFORM_PLAN_NAME_TTL_SECONDS } from '../../../database/redis/keys'
+import { getEnrollAttemptKey, getEntitlementsRefreshKey, getFreeLegacyCompAttemptKey, getPlatformPlanNameKey, PLATFORM_PLAN_NAME_TTL_SECONDS } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -27,13 +27,19 @@ const environment = system.get(AppSystemProp.ENVIRONMENT)
 const ENROLL_ATTEMPT_TTL_SECONDS = 300
 const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
 const REFRESH_CLAIM_TTL_SECONDS = 60
+const FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS = 5 * 60
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
 
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const existingPlatformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(existingPlatformPlan)) {
-            triggerLazyBillingProviderSync({ platformId, autumnCustomerId: existingPlatformPlan.autumnCustomerId }, log)
+            triggerLazyBillingProviderSync({
+                platformId,
+                autumnCustomerId: existingPlatformPlan.autumnCustomerId,
+                plan: existingPlatformPlan.plan,
+                created: existingPlatformPlan.created,
+            }, log)
             return existingPlatformPlan
         }
 
@@ -221,7 +227,7 @@ export async function countUsedSeats({ platformId, log, entityManager }: CountUs
     return { activeUsers, invitedSeats, usedSeats: activeUsers + invitedSeats }
 }
 
-function triggerLazyBillingProviderSync({ platformId, autumnCustomerId }: TriggerLazyBillingProviderSyncParams, log: FastifyBaseLogger): void {
+function triggerLazyBillingProviderSync({ platformId, autumnCustomerId, plan, created }: TriggerLazyBillingProviderSyncParams, log: FastifyBaseLogger): void {
     if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
         return
     }
@@ -230,6 +236,15 @@ function triggerLazyBillingProviderSync({ platformId, autumnCustomerId }: Trigge
         return
     }
     rejectedPromiseHandler(throttledBillingProviderRefresh(platformId, log), log)
+    if (edition === ApEdition.CLOUD && isFreeLegacyEligible({ plan, created })) {
+        rejectedPromiseHandler(throttledFreeLegacyComp(platformId, log), log)
+    }
+}
+
+async function throttledFreeLegacyComp(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    await distributedStore.runOnceWithin(getFreeLegacyCompAttemptKey(platformId), FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS, () =>
+        billingProvider.get(log).compFreeLegacy(platformId),
+    )
 }
 
 async function enrollBillingProviderOnCreate(platformId: string, log: FastifyBaseLogger): Promise<void> {
@@ -289,6 +304,8 @@ type AutumnCredentials = {
 type TriggerLazyBillingProviderSyncParams = {
     platformId: string
     autumnCustomerId: string | null | undefined
+    plan?: string | null
+    created?: string | null
 }
 
 type SetAutumnCredentialsParams = {

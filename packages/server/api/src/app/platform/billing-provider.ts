@@ -46,6 +46,9 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     ensureEnrolled: async () => {
         return
     },
+    compFreeLegacy: async () => {
+        return
+    },
     refreshEntitlements: async () => {
         return
     },
@@ -339,6 +342,7 @@ export type BillingProvider = {
     trackCredits(params: TrackCreditsParams): Promise<void>
     trackAppSumoAiUsage(params: TrackAppSumoAiUsageParams): Promise<void>
     ensureEnrolled(platformId: string): Promise<void>
+    compFreeLegacy(platformId: string): Promise<void>
     refreshEntitlements(platformId: string): Promise<void>
     applyAppSumoPlan(params: ApplyAppSumoPlanParams): Promise<void>
     activateLicense(params: ActivateLicenseParams): Promise<void>

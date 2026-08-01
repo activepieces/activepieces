@@ -144,3 +144,11 @@ export const LEGACY_STANDARD_PLAN = 'standard'
 export const LEGACY_FREE_PLANS: readonly string[] = [PlanName.FREE, LEGACY_STANDARD_PLAN]
 
 export const FREE_LEGACY_CUTOFF_ISO = '2026-07-30T00:00:00.000Z'
+
+export const isFreeLegacyEligible = ({ plan, created }: { plan?: string | null, created?: string | null }): boolean => {
+    if (isNil(plan) || isNil(created) || !LEGACY_FREE_PLANS.includes(plan)) {
+        return false
+    }
+    const createdAt = Date.parse(created)
+    return !Number.isNaN(createdAt) && createdAt < Date.parse(FREE_LEGACY_CUTOFF_ISO)
+}

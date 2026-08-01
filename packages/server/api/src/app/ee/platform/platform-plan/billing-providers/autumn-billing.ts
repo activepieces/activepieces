@@ -168,6 +168,9 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     ensureEnrolled: async (platformId: string) => {
         await autumnUtils.ensureEnrolled(log, platformId)
     },
+    compFreeLegacy: async (platformId: string) => {
+        await autumnUtils.ensureFreeLegacyComped(log, platformId)
+    },
     refreshEntitlements: async (platformId: string) => {
         await autumnUtils.refreshEntitlements(log, platformId)
     },

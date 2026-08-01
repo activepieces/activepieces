@@ -43,6 +43,34 @@ and `created` alongside the credentials. The flow is enrol-first, then check:
 The check runs **even when credentials already exist**, so the early return on a non-nil
 `autumnCustomerId` no longer short-circuits it.
 
+**`ensureEnrolled` alone does not reach the cohort, so the comp also hangs off the lazy sync.**
+`triggerLazyBillingProviderSync` only calls `ensureEnrolled` when `autumnCustomerId` is nil; an
+already-enrolled platform takes the `refreshEntitlements` branch, and `POST /platform-billing/refresh`
+goes straight to `refreshEntitlements` too. So on `ensureEnrolled` alone the comp would fire only for
+the six billing *mutations* (checkout, seat change, auto top-up, setup payment, cancel, reactivate),
+which inverts the intent: the cohort is passive free users, and the ones who would get comped are the
+ones actively transacting.
+
+The enrolled branch therefore also fires the comp, gated so it costs nothing when it cannot apply:
+
+- **The predicate runs in memory on the row the caller already loaded.** `getOrCreateForPlatform`
+  reads the `platform_plan` row and previously passed only `autumnCustomerId` along; it now passes
+  `plan` and `created` too, so `isFreeLegacyEligible` is one string comparison and one date
+  comparison. An ineligible platform costs **no DB read and no Redis read**, which matters because
+  this runs on every plan read.
+- **An eligible platform gets at most one attempt per `FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS`**
+  (5 min) via `runOnceWithin` on `getFreeLegacyCompAttemptKey`. Without that claim a console outage
+  would mean a distributed lock plus a 30s console call on every page load for every eligible
+  platform. The claim bounds the retry cadence; it is not what makes the comp once-only.
+- **Once-only comes from the projection**, not the claim: a successful comp writes
+  `plan = 'free_legacy'`, so the in-memory predicate is false from then on, permanently.
+
+`isFreeLegacyEligible` lives in `@activepieces/shared` rather than beside the comp because both the
+in-memory gate in `platform-plan.service.ts` and the re-check inside the lock in `autumn-utils.ts`
+need it, and `autumn-utils` already imports `platformPlanService` (importing back would be circular).
+It uses `Date.parse` rather than dayjs so the shared bundle, which every web consumer pulls, does not
+gain a dayjs import for one comparison.
+
 **The comp is Cloud only**, gated on `edition === ApEdition.CLOUD`. `ensureEnrolled` runs on
 Enterprise as well as Cloud (only Community and Testing are skipped) and `getInitialPlanByEdition`
 returns `plan: 'free'` for both, so a self-hosted EE box that never activated a license key would

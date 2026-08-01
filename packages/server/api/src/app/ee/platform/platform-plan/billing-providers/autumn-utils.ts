@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { ApEdition, AutumnFeatureId, FREE_LEGACY_CUTOFF_ISO, LEGACY_FREE_PLANS, PlanName, PlatformPlanLimits, PurchasablePlan } from '@activepieces/shared'
+import { ApEdition, AutumnFeatureId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan } from '@activepieces/shared'
 import {
     type AggregateEventsResponse,
     Autumn,
@@ -14,7 +14,6 @@ import {
     type TrackParams,
 } from 'autumn-js'
 import { type AxiosRequestConfig, type AxiosResponse } from 'axios'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
@@ -143,7 +142,7 @@ export const autumnUtils = {
         if (edition !== ApEdition.CLOUD) {
             return
         }
-        if (!isEligibleForFreeLegacy(await platformPlanService(log).getAutumnCredentials(platformId))) {
+        if (!isFreeLegacyEligible(await platformPlanService(log).getAutumnCredentials(platformId))) {
             return
         }
         await distributedLock(log).runExclusive({
@@ -152,7 +151,7 @@ export const autumnUtils = {
             fn: async () => {
                 const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
                 const autumnCustomerId = credentials.autumnCustomerId
-                if (!isEligibleForFreeLegacy(credentials) || isNil(autumnCustomerId)) {
+                if (!isFreeLegacyEligible(credentials) || isNil(autumnCustomerId)) {
                     return
                 }
                 const { error } = await tryCatch(() => autumnConsole.compFreeLegacy({ autumnCustomerId }))
@@ -429,10 +428,6 @@ async function consoleGet<T>(url: string, config: AxiosRequestConfig): Promise<A
     }
     assertNotNullOrUndefined(response, 'response')
     return response
-}
-
-function isEligibleForFreeLegacy({ plan, created }: { plan: string | null, created: string }): boolean {
-    return LEGACY_FREE_PLANS.includes(plan ?? '') && dayjs(created).isBefore(FREE_LEGACY_CUTOFF_ISO)
 }
 
 function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
