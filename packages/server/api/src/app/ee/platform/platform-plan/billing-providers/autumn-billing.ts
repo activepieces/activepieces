@@ -216,34 +216,37 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
 })
 
-function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthEnd: string): BillingInfo {
+function selectCurrentPlan(customer: GetCustomerResponse): CurrentPlanSelection {
     const baseSubscriptions = autumnUtils.toBaseSubscriptions(customer)
-    const baseSubscription = autumnUtils.selectCurrentBaseSubscription(baseSubscriptions)
-    const purchasedPlan = (customer.purchases ?? []).find((purchase) =>
-        !isNil(purchase.plan) && !purchase.plan.addOn && purchase.planId !== PlanName.FREE)
-    const currentPlan = purchasedPlan ?? baseSubscription
-    const scheduledPlan = baseSubscriptions.find((subscription) => subscription.status === 'scheduled')
+    const subscription = autumnUtils.selectCurrentBaseSubscription(baseSubscriptions)
+    const purchase = (customer.purchases ?? []).find((entry) =>
+        !isNil(entry.plan) && !entry.plan.addOn && entry.planId !== PlanName.FREE)
+    return { baseSubscriptions, subscription, plan: purchase?.plan ?? subscription?.plan ?? null }
+}
+
+function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthEnd: string): BillingInfo {
+    const { baseSubscriptions, subscription, plan } = selectCurrentPlan(customer)
+    const scheduledPlan = baseSubscriptions.find((entry) => entry.status === 'scheduled')
     return {
-        planName: currentPlan?.plan?.name ?? null,
-        creditsResetInterval: toCreditsResetInterval(currentPlan?.plan?.items ?? []),
-        startDate: msToIso(baseSubscription?.currentPeriodStart) ?? monthStart,
-        endDate: msToIso(baseSubscription?.currentPeriodEnd) ?? monthEnd,
-        nextBillingAmount: baseSubscription?.plan?.price?.amount ?? 0,
-        cancelAt: msToIso(baseSubscription?.expiresAt) ?? null,
-        trialEndsAt: msToIso(baseSubscription?.trialEndsAt) ?? null,
+        planName: plan?.name ?? null,
+        creditsResetInterval: toCreditsResetInterval(plan?.items ?? []),
+        startDate: msToIso(subscription?.currentPeriodStart) ?? monthStart,
+        endDate: msToIso(subscription?.currentPeriodEnd) ?? monthEnd,
+        nextBillingAmount: subscription?.plan?.price?.amount ?? 0,
+        cancelAt: msToIso(subscription?.expiresAt) ?? null,
+        trialEndsAt: msToIso(subscription?.trialEndsAt) ?? null,
         scheduledPlanName: scheduledPlan?.plan?.name ?? null,
         billingPortalAvailable: !isNil(customer.paymentMethod),
     }
 }
 
 function toBillableFeatures(customer: GetCustomerResponse): BillableFeature[] {
-    const baseSubscriptions = autumnUtils.toBaseSubscriptions(customer)
+    const { baseSubscriptions, plan } = selectCurrentPlan(customer)
     const trialing = baseSubscriptions.some((subscription) => !isNil(subscription.trialEndsAt) && subscription.trialEndsAt > apDayjs().valueOf())
     if (trialing) {
         return []
     }
-    const current = autumnUtils.selectCurrentBaseSubscription(baseSubscriptions)
-    return (current?.plan?.items ?? []).flatMap((item) => {
+    return (plan?.items ?? []).flatMap((item) => {
         if (!autumnUtils.isAutumnFeatureId(item.featureId) || item.price?.billingMethod !== 'prepaid' || isNil(item.price.amount)) {
             return []
         }
@@ -479,4 +482,12 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
     return overview
 }
 
-type AutumnPlanItems = NonNullable<GetCustomerResponse['subscriptions'][number]['plan']>['items']
+type AutumnPlan = NonNullable<GetCustomerResponse['subscriptions'][number]['plan']>
+
+type AutumnPlanItems = AutumnPlan['items']
+
+type CurrentPlanSelection = {
+    baseSubscriptions: GetCustomerResponse['subscriptions']
+    subscription: GetCustomerResponse['subscriptions'][number] | undefined
+    plan: AutumnPlan | null
+}
