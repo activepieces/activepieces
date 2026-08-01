@@ -28,11 +28,12 @@ async function createFileWithFTP(client: FTPClient, fileName: string, fileConten
 }
 
 export const createFile = createAction({
-  audience: 'human',
+  audience: 'both',
     auth: sftpAuth,
     name: 'create_file',
     displayName: 'Create File from Text',
     description: 'Create a new file in the given path',
+    aiMetadata: { description: 'Writes a text string to a file at a given path on the connected FTP, FTPS or SFTP server, creating missing parent directories and overwriting any existing file at that path. Choose this when the content is plain text you already hold as a string; prefer Upload File when the content is a binary or file object produced by an earlier step. Requires the full remote path (e.g. ./myfolder/notes.txt); idempotent, since the same path and content always converge on the same stored file, but note it clobbers whatever was there before.', idempotent: true },
     props: {
         fileName: Property.ShortText({
             displayName: 'File Path',

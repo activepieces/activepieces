@@ -6,6 +6,9 @@ export const updatedRecordTrigger = createTrigger({
     name: 'updatedRecord',
     displayName: 'Record Updated',
     description: 'Triggers when a record is updated in the selected table.',
+    aiMetadata: {
+        description: 'Fires when cell values on a row that already exists in the selected Activepieces Table are changed, whether the edit came from a flow, the table UI, or the API, and represents that record in its post-update state. Use it to react to edits of stored data; inserts and removals raise the separate New Record Created and Record Deleted triggers instead. Backed by a webhook registered on one specific table, so a table must be selected.',
+    },
     auth: PieceAuth.None(),
     props: {
         table_id: tablesCommon.table_id,

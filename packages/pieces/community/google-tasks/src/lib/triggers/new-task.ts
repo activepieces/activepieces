@@ -1,7 +1,5 @@
 import {
   AppConnectionValueForAuthProperty,
-  OAuth2PropertyValue,
-  OAuth2Props,
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
@@ -13,6 +11,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { getTasks, googleTasksCommon } from '../common';
+import { googleTasksNewTaskTriggerOutputSchema } from '../output-schemas';
 
 const props = {
   tasks_list: googleTasksCommon.tasksList,
@@ -27,12 +26,12 @@ const polling: Polling<
     const records = await getTasks(auth, propsValue.tasks_list!);
 
     const filtered_records = records.filter((record) => {
-      const updated = Date.parse(record.updated);
+      const updated = Date.parse(record.updated ?? '0');
       return updated > lastFetchEpochMS;
     });
 
     return filtered_records.map((record) => ({
-      epochMilliSeconds: Date.parse(record.updated),
+      epochMilliSeconds: Date.parse(record.updated ?? '0'),
       data: record,
     }));
   },
@@ -48,6 +47,7 @@ export const newTaskTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   props,
+  outputSchema: googleTasksNewTaskTriggerOutputSchema,
   sampleData: {},
   async test(context) {
     const store = context.store;
