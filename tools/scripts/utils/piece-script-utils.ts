@@ -113,6 +113,7 @@ export async function findNewPieces(): Promise<PieceMetadata[]> {
                 try {
                     return loadPieceFromFolder(folderPath);
                 } catch (ex) {
+                    console.error(`[findNewPieces] failed to load ${packageJson.name}@${packageJson.version} from ${folderPath}, it will not be inserted: ${ex}`);
                     return null;
                 }
             }
@@ -131,15 +132,16 @@ function getChangedPiecesDistPaths(): string[] | null {
     if (!changedPieces || changedPieces.trim() === '') {
         return null
     }
-    return changedPieces.split('\n').filter(Boolean).map(p => {
+    const distPaths = changedPieces.split('\n').filter(Boolean).map(p => {
         return resolve(cwd(), p, 'dist')
-    }).filter(p => {
-        const exists = existsSync(join(p, 'package.json'))
-        if (!exists) {
-            console.info(`[getChangedPiecesDistPaths] skipping, no build output at ${p}`)
-        }
-        return exists
     })
+
+    const missingBuildOutput = distPaths.filter(p => !existsSync(join(p, 'package.json')))
+    if (missingBuildOutput.length > 0) {
+        throw new Error(`[getChangedPiecesDistPaths] ${missingBuildOutput.length} changed piece(s) have no build output, they would be silently skipped:\n${missingBuildOutput.join('\n')}`)
+    }
+
+    return distPaths
 }
 
 export async function findAllPieces(): Promise<PieceMetadata[]> {
