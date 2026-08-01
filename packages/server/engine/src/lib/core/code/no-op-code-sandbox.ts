@@ -83,9 +83,6 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
             reject(buildError({ message: error.message, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
-        // Node only attaches `send` in setupChannel(), which it skips entirely when spawn
-        // fails with EMFILE/ENFILE. Calling it then throws a TypeError that settles this
-        // promise first and discards the real errno, which arrives on 'error' a tick later.
         if (typeof child.send !== 'function') {
             return
         }
