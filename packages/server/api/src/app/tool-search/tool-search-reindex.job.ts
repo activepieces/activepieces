@@ -17,6 +17,20 @@ import { ReindexScope, toolSearchIndexCoverage, toolSearchReindexService, toolSe
 const REINDEX_LOCK_TIMEOUT_SECONDS = 300
 
 /**
+ * Cadence of the safety-net reconcile. Every trigger the index has otherwise is a catalog *event*, and
+ * an event that arrives while a reconcile is running can still be missed at the edges: the reindex
+ * service's trailing pass covers a write that lands mid-run, but a bounded pass count still defers the
+ * write its last pass detects, and a stale-but-fully-embedded index reports nothing to do at boot
+ * (`backfillIfNeeded` counts NULL embeddings, not staleness). This is the out-of-band guarantee that
+ * anything stranded is picked up within one interval, whatever stranded it.
+ *
+ * Cheap by construction: the reconcile is hash-gated, so an unchanged catalog embeds nothing, deletes
+ * nothing and writes no rows — the steady-state cost is one catalog read. Fixed pattern rather than a
+ * per-replica random one so repeated boots re-upsert the same schedule instead of rewriting it.
+ */
+const REINDEX_CRON_PATTERN = '*/30 * * * *'
+
+/**
  * Stable BullMQ jobId per scope. The global reconcile always enqueues under one id so a burst of
  * catalog changes collapses to a single pending job (dedup); each platform gets its own id so a
  * tenant install isn't starved by — and doesn't cancel — the global job.
@@ -54,9 +68,19 @@ export function shouldSkipReindexOnCloud(): boolean {
 }
 
 export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
-    /** Register the worker handler. Called once at boot; the job only ever runs via {@link enqueue}. */
+    /**
+     * Register the worker handler. Called once at boot; the job runs via {@link enqueue} or the repeated
+     * schedule from {@link scheduleRecurringReconcile}.
+     */
     register(): void {
         systemJobHandlers.registerJobHandler(SystemJobName.TOOL_SEARCH_REINDEX, async (data) => {
+            // The enqueue sites all gate on the flag, but a repeated schedule is persisted in the queue
+            // and outlives a flag flip — so the flag has to be honoured here too, or turning tool-search
+            // off would leave the index (and its embedding spend) being maintained anyway.
+            if (!isToolSearchEnabled()) {
+                log.info('[toolSearchReindexJob] Tool-search is disabled — skipping the reconcile.')
+                return
+            }
             await distributedLock(log).runExclusive({
                 key: reindexLockKey(data.scope),
                 timeoutInSeconds: REINDEX_LOCK_TIMEOUT_SECONDS,
@@ -93,6 +117,31 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
             schedule: {
                 type: 'one-time',
                 date: apDayjs(),
+            },
+        })
+    },
+
+    /**
+     * Register the periodic safety-net reconcile (see {@link REINDEX_CRON_PATTERN}). Called at boot
+     * alongside {@link backfillIfNeeded}; `upsertJobScheduler` is keyed on the job name, so every replica
+     * converges on one schedule rather than each adding its own.
+     *
+     * Only the *registration* is flag-gated — a schedule already in the queue survives the flag being
+     * turned off, which is why the handler re-checks the flag as well.
+     */
+    async scheduleRecurringReconcile(): Promise<void> {
+        if (!isToolSearchEnabled()) {
+            return
+        }
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.TOOL_SEARCH_REINDEX,
+                data: { scope: { type: 'all' } },
+                jobId: reindexJobId({ type: 'all' }),
+            },
+            schedule: {
+                type: 'repeated',
+                cron: REINDEX_CRON_PATTERN,
             },
         })
     },

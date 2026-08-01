@@ -224,6 +224,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
     // unembedded). Fire-and-forget — a no-op once fully built, and must never block or fail boot.
     rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfNeeded(), app.log)
+    // Safety net: a periodic reconcile, so a catalog change stranded at the edge of a running reconcile —
+    // or a stale index the boot backfill cannot detect — is repaired within one interval instead of
+    // waiting for the next publish. A no-op against an unchanged catalog.
+    rejectedPromiseHandler(toolSearchReindexJob(app.log).scheduleRecurringReconcile(), app.log)
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
