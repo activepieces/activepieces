@@ -4,15 +4,16 @@ import { COUNTRY_OPTIONS } from '../constants/countries';
 import { LANGUAGE_OPTIONS } from '../constants/languages';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleNewsSearchConfig, SerpApiEngine } from '../types';
+import { googleNewsSearchOutputSchema } from '../output-schemas';
 
 export const googleNewsSearch = createAction({
   auth: serpApiAuth,
   name: 'google_news_search',
   displayName: 'Google News Search',
   description: 'Track recent news articles for keywords or brands to monitor media mentions and trending topics.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Searches Google News via SerpApi for recent articles matching a query. Use to monitor brand or topic mentions in the news, surface breaking coverage, or gather current headlines, scoped by language and country. Read-only and idempotent; requires the query and a SerpApi API key.', idempotent: true },
-
+  outputSchema: googleNewsSearchOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

@@ -8,6 +8,10 @@ export const everyXMinutesTrigger = createTrigger({
   name: 'every_x_minutes',
   displayName: 'Every X Minutes',
   description: 'Triggers the current flow every X minutes',
+  aiMetadata: {
+    description:
+      'Fires repeatedly on a fixed minute interval (a whole number of minutes, 1-59), so each event simply represents "the interval elapsed" rather than any external change. Pick this for sub-hourly recurrence; use Every Hour / Every Day / Every Week / Every Month for coarser fixed schedules, or Cron Expression when the cadence needs specific minutes, weekdays or a timezone. Runs on a plain interval with no timezone or weekday awareness, so it also fires on weekends and overnight.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {},
   props: {

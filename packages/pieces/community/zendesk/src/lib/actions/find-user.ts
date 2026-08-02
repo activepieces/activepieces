@@ -6,12 +6,6 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const findUserAction = createAction({
   auth: zendeskAuth,
   name: 'find-user',

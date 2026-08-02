@@ -68,7 +68,7 @@ describe('Table API', () => {
             expect(fields.map((f: { name: string }) => f.name).sort()).toEqual(['Age', 'Name'])
         })
 
-        it('should preserve field order from the request', async () => {
+        it('should assign field positions from the fields array order', async () => {
             const ctx = await setup()
             const fieldNames = Array.from({ length: 10 }, (_, i) => `Field ${String.fromCharCode(65 + i)}`)
 
@@ -91,6 +91,7 @@ describe('Table API', () => {
             })
             const fields = fieldsResponse?.json()
             expect(fields.map((f: { name: string }) => f.name)).toEqual(fieldNames)
+            expect(fields.map((f: { position: number }) => f.position)).toEqual(fieldNames.map((_, i) => i))
         })
 
         it('should create a table with externalId', async () => {

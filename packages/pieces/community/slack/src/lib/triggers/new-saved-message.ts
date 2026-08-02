@@ -1,6 +1,8 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { appWebhookSetupInfo } from '../common/props';
+import { newSavedMessageTriggerOutputSchema } from '../output-schemas';
 
 export const newSavedMessageTrigger = createTrigger({
 	auth: slackAuth,
@@ -11,9 +13,12 @@ export const newSavedMessageTrigger = createTrigger({
 		description:
 			'Fires when the connected Slack user saves (stars) a message. Only star_added events whose saved item is a message fire; saving other item types does not trigger. The event payload is the saved item, including its channel and message reference.',
 	},
-	props: {},
+	props: {
+		info: appWebhookSetupInfo,
+	},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: undefined,
+	outputSchema: newSavedMessageTriggerOutputSchema,
 	onEnable: async (context) => {
 		const teamId = await getTeamId(context.auth as SlackAuthValue);
 		context.app.createListeners({

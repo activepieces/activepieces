@@ -3,18 +3,20 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { getFileActionOutputSchema } from '../output-schemas';
 
 export const getFileAction = createAction({
 	auth: slackAuth,
 	name: 'get-file',
 	displayName: 'Get File',
 	description: 'Return information about a given file ID.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Look up metadata for a single Slack file by its file ID and download its contents. Pick this when you have a file ID (e.g. from a message trigger payload) and need the file details or bytes. Read-only and idempotent; fails if the file has no accessible download URL.',
 		idempotent: true,
 	},
+	outputSchema: getFileActionOutputSchema,
 	props: {
 		fileId: Property.ShortText({
 			displayName: 'File ID',

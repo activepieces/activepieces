@@ -24,32 +24,30 @@ vi.mock('../../src/lib/execute/job-registry', () => ({
 
 // APP_VERSION must match the worker's own AP_VERSION (apVersionUtil.getCurrentRelease, read from the
 // same cwd package.json) or the worker↔app version gate fail-closes and pauses polling forever.
+// These are plain functions, not vi.fn().mockReturnValue(...) — afterEach calls vi.restoreAllMocks(),
+// which strips a mock's return value and would make getSettings() return undefined from the second
+// test onward, crashing every poll loop before it reaches poll().
 vi.mock('../../src/lib/config/worker-settings', async () => {
     const { apVersionUtil } = await vi.importActual<typeof import('@activepieces/server-utils')>('@activepieces/server-utils')
-    const appVersion = apVersionUtil.getCurrentRelease()
+    const settings = { PUBLIC_URL: 'http://localhost:3000', APP_VERSION: apVersionUtil.getCurrentRelease() }
     return {
         workerSettings: {
-            set: vi.fn(),
-            waitForSettings: vi.fn().mockResolvedValue({ PUBLIC_URL: 'http://localhost:3000', APP_VERSION: appVersion }),
-            getSettings: vi.fn().mockReturnValue({ PUBLIC_URL: 'http://localhost:3000', APP_VERSION: appVersion }),
+            set: () => undefined,
+            waitForSettings: () => Promise.resolve(settings),
+            getSettings: () => settings,
         },
     }
 })
 
-vi.mock('../../src/lib/config/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-        child: vi.fn().mockReturnValue({
-            info: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
-            debug: vi.fn(),
-        }),
-    },
-}))
+vi.mock('../../src/lib/config/logger', () => {
+    const noopLogger = {
+        info: () => undefined,
+        warn: () => undefined,
+        error: () => undefined,
+        debug: () => undefined,
+    }
+    return { logger: { ...noopLogger, child: () => noopLogger } }
+})
 
 type StubRuntime = {
     execute: ReturnType<typeof vi.fn>
@@ -74,7 +72,7 @@ vi.mock('@activepieces/sandbox', () => ({
     }),
 }))
 
-import { worker } from '../../src/lib/worker'
+import { findStalledLoopIndex, worker } from '../../src/lib/worker'
 
 function buildExtractPieceJob(): ExecuteExtractPieceMetadataJobData {
     return {
@@ -112,7 +110,10 @@ describe('worker integration', () => {
     let port: number
 
     beforeEach(async () => {
-        httpServer = createServer()
+        httpServer = createServer((_req, res) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end('{}')
+        })
         ioServer = new IOServer(httpServer, { transports: ['websocket'], path: '/api/socket.io' })
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
@@ -132,6 +133,7 @@ describe('worker integration', () => {
     afterEach(async () => {
         await worker.stop()
         mockGetHandler.mockReset()
+        vi.restoreAllMocks()
         delete process.env.AP_WORKER_CONCURRENCY
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
@@ -145,67 +147,51 @@ describe('worker integration', () => {
         let pollIndex = 0
 
         return new Promise((resolve) => {
-            ioServer.on('connection', (serverSocket) => {
-                // Handle the FETCH_WORKER_SETTINGS event that the worker emits on connect
-                serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
-                    const callback = args[args.length - 1]
-                    if (typeof callback === 'function') {
-                        callback({
-                            PUBLIC_URL: 'http://localhost:3000',
-                            ENVIRONMENT: 'test',
-                            EXECUTION_MODE: 'SANDBOX_CODE_AND_PROCESS',
-                            TRIGGER_TIMEOUT_SECONDS: 60,
-                            TRIGGER_HOOKS_TIMEOUT_SECONDS: 60,
-                            PAUSED_FLOW_TIMEOUT_DAYS: 30,
-                            FLOW_TIMEOUT_SECONDS: 600,
-                            LOG_LEVEL: 'info',
-                            LOG_PRETTY: 'false',
-                            APP_WEBHOOK_SECRETS: '{}',
-                            MAX_FLOW_RUN_LOG_SIZE_MB: 10,
-                            MAX_FILE_SIZE_MB: 10,
-                            SANDBOX_MEMORY_LIMIT: '1024',
-                            SANDBOX_PROPAGATED_ENV_VARS: [],
-                            DEV_PIECES: [],
-                            OTEL_ENABLED: false,
-                            FILE_STORAGE_LOCATION: '/tmp',
-                            S3_USE_SIGNED_URLS: 'false',
-                            EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
-                            EDITION: 'community',
-                        })
+            registerRpcServer({
+                poll: vi.fn(async () => {
+                    const response = pollIndex < pollResponses.length ? pollResponses[pollIndex] : null
+                    pollIndex++
+                    if (pollIndex >= pollResponses.length) {
+                        setTimeout(() => resolve({ completeJobCalls }), 200)
                     }
-                })
-
-                const handlers: WorkerToApiContract = {
-                    poll: vi.fn(async () => {
-                        const response = pollIndex < pollResponses.length ? pollResponses[pollIndex] : null
-                        pollIndex++
-                        if (pollIndex >= pollResponses.length) {
-                            setTimeout(() => resolve({ completeJobCalls }), 200)
-                        }
-                        return response
-                    }),
-                    completeJob: vi.fn(async (input) => {
-                        completeJobCalls.push(input)
-                    }),
-                    updateRunProgress: vi.fn(),
-                    uploadRunLog: vi.fn(),
-                    sendFlowResponse: vi.fn(),
-                    updateStepProgress: vi.fn(),
-                    submitPayloads: vi.fn(),
-                    savePayloads: vi.fn(),
-                    getFlowVersion: vi.fn(),
-                    getPiece: vi.fn(),
-                    getPieceArchive: vi.fn(),
-                    extendLock: vi.fn(),
-                    recordTriggerRun: vi.fn(),
-                    disableFlow: vi.fn(),
-                }
-                createRpcServer<WorkerToApiContract>(serverSocket, handlers)
+                    return response
+                }),
+                completeJob: vi.fn(async (input) => {
+                    completeJobCalls.push(input)
+                }),
             })
             worker.start({
                 apiUrl: `http://127.0.0.1:${port}/api/`,
                 socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
                 workerToken: 'test-token',
+            })
+        })
+    }
+
+    function registerRpcServer(overrides: Partial<WorkerToApiContract>): void {
+        ioServer.on('connection', (serverSocket) => {
+            serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
+                const callback = args[args.length - 1]
+                if (typeof callback === 'function') {
+                    callback(WORKER_SETTINGS)
+                }
+            })
+            createRpcServer<WorkerToApiContract>(serverSocket, {
+                poll: vi.fn(async () => null),
+                completeJob: vi.fn(),
+                updateRunProgress: vi.fn(),
+                uploadRunLog: vi.fn(),
+                sendFlowResponse: vi.fn(),
+                updateStepProgress: vi.fn(),
+                submitPayloads: vi.fn(),
+                savePayloads: vi.fn(),
+                getFlowVersion: vi.fn(),
+                getPiece: vi.fn(),
+                getPieceArchive: vi.fn(),
+                extendLock: vi.fn(),
+                recordTriggerRun: vi.fn(),
+                disableFlow: vi.fn(),
+                ...overrides,
             })
         })
     }
@@ -227,6 +213,33 @@ describe('worker integration', () => {
         expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
         expect(mockGetHandler).toHaveBeenCalledWith(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION)
     }, 15_000)
+
+    it('keeps polling when the server-ping probe never settles', async () => {
+        const realFetch = globalThis.fetch
+        let healthProbes = 0
+        vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+            const url = typeof input === 'string' ? input : input.toString()
+            if (!url.endsWith('/v1/health')) {
+                return realFetch(input, init)
+            }
+            healthProbes++
+            return healthProbes <= 2
+                ? Promise.resolve(new Response('{}', { status: 200 }))
+                : new Promise(() => {})
+        })
+
+        mockGetHandler.mockReturnValue({
+            jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+            execute: vi.fn().mockResolvedValue({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }),
+        })
+
+        const job = buildConsumeJobRequest({ jobId: 'job-hung-ping' })
+        const { completeJobCalls } = await connectWorkerWithPoll([job, null])
+
+        expect(completeJobCalls.length).toBe(1)
+        expect(completeJobCalls[0].jobId).toBe('job-hung-ping')
+        expect(healthProbes).toBeGreaterThan(2)
+    }, 45_000)
 
     it('reports error when job execution fails', async () => {
         mockGetHandler.mockReturnValue({
@@ -505,43 +518,12 @@ describe('worker integration', () => {
     })
 
     describe('runtime lifecycle on reconnect', () => {
-        async function waitFor(predicate: () => boolean, timeoutMs = 5_000): Promise<void> {
-            const start = Date.now()
-            while (!predicate()) {
-                if (Date.now() - start > timeoutMs) {
-                    throw new Error('waitFor timed out')
-                }
-                await new Promise<void>((resolve) => setTimeout(resolve, 20))
-            }
-        }
-
         function acceptConnections(serverSockets: Socket[]): void {
             ioServer.on('connection', (serverSocket) => {
                 serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
                     const callback = args[args.length - 1]
                     if (typeof callback === 'function') {
-                        callback({
-                            PUBLIC_URL: 'http://localhost:3000',
-                            ENVIRONMENT: 'test',
-                            EXECUTION_MODE: 'SANDBOX_CODE_AND_PROCESS',
-                            TRIGGER_TIMEOUT_SECONDS: 60,
-                            TRIGGER_HOOKS_TIMEOUT_SECONDS: 60,
-                            PAUSED_FLOW_TIMEOUT_DAYS: 30,
-                            FLOW_TIMEOUT_SECONDS: 600,
-                            LOG_LEVEL: 'info',
-                            LOG_PRETTY: 'false',
-                            APP_WEBHOOK_SECRETS: '{}',
-                            MAX_FLOW_RUN_LOG_SIZE_MB: 10,
-                            MAX_FILE_SIZE_MB: 10,
-                            SANDBOX_MEMORY_LIMIT: '1024',
-                            SANDBOX_PROPAGATED_ENV_VARS: [],
-                            DEV_PIECES: [],
-                            OTEL_ENABLED: false,
-                            FILE_STORAGE_LOCATION: '/tmp',
-                            S3_USE_SIGNED_URLS: 'false',
-                            EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
-                            EDITION: 'community',
-                        })
+                        callback(WORKER_SETTINGS)
                     }
                 })
                 // Park the worker idle: never ack poll so it neither hot-loops nor consumes jobs.
@@ -647,6 +629,77 @@ describe('worker integration', () => {
     })
 })
 
+describe('findStalledLoopIndex', () => {
+    const NOW = 1_000_000
+    const TIMEOUT_MS = 180_000
+
+    it('flags a wedged loop even while a sibling keeps iterating', () => {
+        const index = findStalledLoopIndex({
+            loops: [
+                { iteratedAt: NOW, busy: false },
+                { iteratedAt: NOW - TIMEOUT_MS - 1, busy: false },
+            ],
+            now: NOW,
+            timeoutMs: TIMEOUT_MS,
+        })
+
+        expect(index).toBe(1)
+    })
+
+    it('flags a wedged loop even while a sibling is executing a job', () => {
+        const index = findStalledLoopIndex({
+            loops: [
+                { iteratedAt: NOW - TIMEOUT_MS - 1, busy: true },
+                { iteratedAt: NOW - TIMEOUT_MS - 1, busy: false },
+            ],
+            now: NOW,
+            timeoutMs: TIMEOUT_MS,
+        })
+
+        expect(index).toBe(1)
+    })
+
+    it('reports nothing while every loop is executing a job', () => {
+        const index = findStalledLoopIndex({
+            loops: [
+                { iteratedAt: NOW - TIMEOUT_MS - 1, busy: true },
+                { iteratedAt: NOW - TIMEOUT_MS - 1, busy: true },
+            ],
+            now: NOW,
+            timeoutMs: TIMEOUT_MS,
+        })
+
+        expect(index).toBe(-1)
+    })
+
+    it('reports nothing while every loop is iterating', () => {
+        const index = findStalledLoopIndex({
+            loops: [
+                { iteratedAt: NOW, busy: false },
+                { iteratedAt: NOW - TIMEOUT_MS, busy: false },
+            ],
+            now: NOW,
+            timeoutMs: TIMEOUT_MS,
+        })
+
+        expect(index).toBe(-1)
+    })
+
+    it('reports nothing before any loop has registered', () => {
+        expect(findStalledLoopIndex({ loops: [], now: NOW, timeoutMs: TIMEOUT_MS })).toBe(-1)
+    })
+})
+
+async function waitFor(predicate: () => boolean): Promise<void> {
+    for (let i = 0; i < WAIT_ATTEMPTS; i++) {
+        if (predicate()) {
+            return
+        }
+        await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
+    }
+    throw new Error('waitFor timed out')
+}
+
 function getFreePort(): Promise<number> {
     return new Promise((resolve) => {
         const srv = createServer()
@@ -655,6 +708,33 @@ function getFreePort(): Promise<number> {
             srv.close(() => resolve(port))
         })
     })
+}
+
+const POLL_INTERVAL_MS = 20
+
+const WAIT_ATTEMPTS = 250
+
+const WORKER_SETTINGS = {
+    PUBLIC_URL: 'http://localhost:3000',
+    ENVIRONMENT: 'test',
+    EXECUTION_MODE: 'SANDBOX_CODE_AND_PROCESS',
+    TRIGGER_TIMEOUT_SECONDS: 60,
+    TRIGGER_HOOKS_TIMEOUT_SECONDS: 60,
+    PAUSED_FLOW_TIMEOUT_DAYS: 30,
+    FLOW_TIMEOUT_SECONDS: 600,
+    LOG_LEVEL: 'info',
+    LOG_PRETTY: 'false',
+    APP_WEBHOOK_SECRETS: '{}',
+    MAX_FLOW_RUN_LOG_SIZE_MB: 10,
+    MAX_FILE_SIZE_MB: 10,
+    SANDBOX_MEMORY_LIMIT: '1024',
+    SANDBOX_PROPAGATED_ENV_VARS: [],
+    DEV_PIECES: [],
+    OTEL_ENABLED: false,
+    FILE_STORAGE_LOCATION: '/tmp',
+    S3_USE_SIGNED_URLS: 'false',
+    EVENT_DESTINATION_TIMEOUT_SECONDS: 30,
+    EDITION: 'community',
 }
 
 type CompleteJobCall = {

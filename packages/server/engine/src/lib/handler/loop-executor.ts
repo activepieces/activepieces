@@ -1,8 +1,8 @@
 import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { FlowRunStatus, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { FlowRunStatus, LoopOnItemsAction, LoopStepOutput } from '@activepieces/shared'
 import { utils } from '../utils'
-import { BaseExecutor } from './base-executor'
+import { BaseExecutor, failStep } from './base-executor'
 import { flowExecutor } from './flow-executor'
 
 type LoopOnActionResolvedSettings = {
@@ -25,18 +25,12 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             }),
         )
         if (resolveError) {
-            const errorMessage = utils.formatError(resolveError)
-            const failedStepOutput = LoopStepOutput.init({ input: {} })
-                .setStatus(StepOutputStatus.FAILED)
-                .setErrorMessage(errorMessage)
-                .setDuration(performance.now() - stepStartTime)
-            return (await executionState.upsertStep(action.name, failedStepOutput)).setVerdict({
-                status: FlowRunStatus.FAILED,
-                failedStep: {
-                    name: action.name,
-                    displayName: action.displayName,
-                    message: errorMessage,
-                },
+            return failStep({
+                action,
+                executionState,
+                stepOutput: LoopStepOutput.init({ input: {} }),
+                error: resolveError,
+                durationMs: performance.now() - stepStartTime,
             })
         }
         const { resolvedInput, censoredInput } = resolved
@@ -47,18 +41,13 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         let newExecutionContext = await executionState.upsertStep(action.name, stepOutput)
 
         if (!Array.isArray(resolvedInput.items)) {
-            const errorMessage = JSON.stringify({
-                message: 'The items you have selected must be a list.',
+            return failStep({
+                action,
+                executionState: newExecutionContext,
+                stepOutput,
+                error: JSON.stringify({ message: 'The items you have selected must be a list.' }),
+                durationMs: performance.now() - stepStartTime,
             })
-            const failedStepOutput = stepOutput
-                .setStatus(StepOutputStatus.FAILED)
-                .setErrorMessage(errorMessage)
-                .setDuration( performance.now() - stepStartTime)
-            return (await newExecutionContext.upsertStep(action.name, failedStepOutput)).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: errorMessage,
-            } })
         }
 
         const firstLoopAction = action.firstLoopAction
