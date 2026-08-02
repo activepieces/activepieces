@@ -13,7 +13,6 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ import {
   CreditsCard,
   CreditsInfoDialog,
   AutoRechargeCard,
+  CancelSubscriptionDialog,
   KeepPlanDialog,
   DROP_TO_FREE_MESSAGE,
   planSelectorUtils,
@@ -69,6 +69,7 @@ function BillingPageDetails() {
   const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
     billingMutations.usePortalLink();
   const [isKeepPlanOpen, setIsKeepPlanOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
   const { cancelWithSeatCheck, deactivateUsersDialog } =
     useCancelSubscriptionGuard();
   const { mutate: refreshBilling, isPending: isRefreshing } =
@@ -268,23 +269,13 @@ function BillingPageDetails() {
                 )}
                 {!isCompedLifetimePlan &&
                   (isNil(info.cancelAt) ? (
-                    <ConfirmationDeleteDialog
-                      title={t('Cancel subscription')}
-                      message={t(DROP_TO_FREE_MESSAGE)}
-                      warning={planSelectorUtils.dropToFreeWarning(
-                        info.additionalSeats,
-                      )}
-                      buttonText={t('Cancel subscription')}
-                      entityName={t('subscription')}
-                      mutationFn={cancelWithSeatCheck}
+                    <Button
+                      variant="link"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setIsCancelOpen(true)}
                     >
-                      <Button
-                        variant="link"
-                        className="text-destructive hover:text-destructive"
-                      >
-                        {t('Cancel subscription')}
-                      </Button>
-                    </ConfirmationDeleteDialog>
+                      {t('Cancel subscription')}
+                    </Button>
                   ) : (
                     <Button
                       variant="default"
@@ -325,6 +316,21 @@ function BillingPageDetails() {
         )}
       </div>
       {deactivateUsersDialog}
+      <CancelSubscriptionDialog
+        open={isCancelOpen}
+        onOpenChange={setIsCancelOpen}
+        title={t('We are sorry to see you go')}
+        confirmText={t('Cancel subscription')}
+        warning={
+          <div className="flex flex-col gap-1">
+            <span>
+              {planSelectorUtils.dropToFreeWarning(info.additionalSeats)}
+            </span>
+            <span>{t(DROP_TO_FREE_MESSAGE)}</span>
+          </div>
+        }
+        onConfirm={cancelWithSeatCheck}
+      />
       <KeepPlanDialog
         open={isKeepPlanOpen}
         onOpenChange={setIsKeepPlanOpen}

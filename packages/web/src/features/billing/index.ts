@@ -11,6 +11,7 @@ export { ManageSeatsDialog } from './components/feature-usage/manage-seats-dialo
 export { OutOfSeatsDialog } from './components/feature-usage/out-of-seats-dialog';
 export { CurrentSubscriptionCard } from './components/current-subscription-card';
 export { KeepPlanDialog } from './components/keep-plan-dialog';
+export { CancelSubscriptionDialog } from './components/cancel-subscription-dialog';
 export { Error } from './components/error';
 export { LicenseKey } from './components/license-key';
 export { Success } from './components/success';

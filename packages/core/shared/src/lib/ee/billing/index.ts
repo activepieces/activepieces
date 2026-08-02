@@ -64,6 +64,23 @@ export const SetupPaymentParams = z.object({
 })
 export type SetupPaymentParams = z.infer<typeof SetupPaymentParams>
 
+export enum CancellationReason {
+    SWITCHING_TO_ANOTHER_TOOL = 'switching_to_another_tool',
+    MISSING_INTEGRATIONS = 'missing_integrations',
+    NO_NEED_RIGHT_NOW = 'no_need_right_now',
+    FREE_PLAN_IS_ENOUGH = 'free_plan_is_enough',
+    BUGS_OR_TECHNICAL_ISSUES = 'bugs_or_technical_issues',
+    TOO_EXPENSIVE = 'too_expensive',
+}
+
+export const CANCELLATION_COMMENT_MAX_LENGTH = 2000
+
+export const CancelSubscriptionRequest = z.object({
+    reasons: z.array(z.enum(CancellationReason)).default([]),
+    comment: z.string().max(CANCELLATION_COMMENT_MAX_LENGTH).optional(),
+})
+export type CancelSubscriptionRequest = z.infer<typeof CancelSubscriptionRequest>
+
 export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tablesEnabled: true,

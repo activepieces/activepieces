@@ -4,7 +4,6 @@ import { t } from 'i18next';
 import { Check, Info } from 'lucide-react';
 import { useState } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,6 +21,7 @@ import { useCancelSubscriptionGuard } from '../hooks/use-cancel-subscription-gua
 import { usePlanSeatFloorGuard } from '../hooks/use-plan-seat-floor-guard';
 import { useConfirmPurchaseDialogStore } from '../stores/confirm-purchase-dialog-state';
 
+import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
 import { KeepPlanDialog } from './keep-plan-dialog';
 import {
   DROP_TO_FREE_MESSAGE,
@@ -54,9 +54,10 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
       });
     },
   });
-  const { cancelWithSeatCheck, exceedsFreeSeats, deactivateUsersDialog } =
+  const { cancelWithSeatCheck, deactivateUsersDialog } =
     useCancelSubscriptionGuard({ onCanceled: onSelected });
   const [isKeepPlanOpen, setIsKeepPlanOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
   const { data: subscription } = billingQueries.usePlatformSubscription(
     platform.id,
     enabled,
@@ -164,12 +165,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
               checkoutPlanId={isPending ? checkoutVariables?.planId : undefined}
               onCheckout={handleCheckout}
               onKeepPlan={() => setIsKeepPlanOpen(true)}
-              downgradeWarning={downgradeWarning}
-              freeNeedsDeactivation={exceedsFreeSeats}
-              onFreeDowngradeWithSeats={() => {
-                void cancelWithSeatCheck();
-              }}
-              onDowngrade={cancelWithSeatCheck}
+              onDowngrade={() => setIsCancelOpen(true)}
             />
           );
         })}
@@ -177,6 +173,19 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
 
       {deactivateUsersDialog}
       {seatFloorDialog}
+      <CancelSubscriptionDialog
+        open={isCancelOpen}
+        onOpenChange={setIsCancelOpen}
+        title={t('We are sorry to see you go')}
+        confirmText={t('Downgrade to Free')}
+        warning={
+          <div className="flex flex-col gap-1">
+            <span>{downgradeWarning}</span>
+            <span>{t(DROP_TO_FREE_MESSAGE)}</span>
+          </div>
+        }
+        onConfirm={cancelWithSeatCheck}
+      />
       {!isNil(subscription) && (
         <KeepPlanDialog
           open={isKeepPlanOpen}
@@ -219,9 +228,6 @@ function PlanColumn({
   onCheckout,
   onKeepPlan,
   onDowngrade,
-  downgradeWarning,
-  freeNeedsDeactivation,
-  onFreeDowngradeWithSeats,
 }: PlanColumnProps) {
   const isFree = entry.key === 'free';
   const isEnterprise = entry.key === 'enterprise';
@@ -305,9 +311,6 @@ function PlanColumn({
         onCheckout={handleCtaCheckout}
         onKeepPlan={onKeepPlan}
         onDowngrade={onDowngrade}
-        downgradeWarning={downgradeWarning}
-        freeNeedsDeactivation={freeNeedsDeactivation}
-        onFreeDowngradeWithSeats={onFreeDowngradeWithSeats}
       />
 
       <div className="flex flex-col gap-3">
@@ -352,9 +355,6 @@ function PlanCta({
   onCheckout,
   onKeepPlan,
   onDowngrade,
-  downgradeWarning,
-  freeNeedsDeactivation,
-  onFreeDowngradeWithSeats,
 }: PlanCtaProps) {
   if (isEnterprise) {
     return (
@@ -393,30 +393,10 @@ function PlanCta({
         </Button>
       );
     }
-    if (freeNeedsDeactivation) {
-      return (
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={onFreeDowngradeWithSeats}
-        >
-          {t('Downgrade')}
-        </Button>
-      );
-    }
     return (
-      <ConfirmationDeleteDialog
-        title={t('Downgrade to the Free plan')}
-        message={t(DROP_TO_FREE_MESSAGE)}
-        warning={downgradeWarning}
-        buttonText={t('Downgrade to Free')}
-        entityName={t('subscription')}
-        mutationFn={onDowngrade}
-      >
-        <Button variant="outline" className="w-full">
-          {t('Downgrade')}
-        </Button>
-      </ConfirmationDeleteDialog>
+      <Button variant="outline" className="w-full" onClick={onDowngrade}>
+        {t('Downgrade')}
+      </Button>
     );
   }
 
@@ -452,10 +432,7 @@ type PlanColumnProps = {
   checkoutPlanId: string | undefined;
   onCheckout: (intent: CheckoutIntent) => void;
   onKeepPlan: () => void;
-  onDowngrade: () => Promise<void>;
-  downgradeWarning: string;
-  freeNeedsDeactivation: boolean;
-  onFreeDowngradeWithSeats: () => void;
+  onDowngrade: () => void;
 };
 
 type PlanCtaProps = {
@@ -471,10 +448,7 @@ type PlanCtaProps = {
   checkoutPlanId: string | undefined;
   onCheckout: (planId: string, action: CheckoutAction) => void;
   onKeepPlan: () => void;
-  onDowngrade: () => Promise<void>;
-  downgradeWarning: string;
-  freeNeedsDeactivation: boolean;
-  onFreeDowngradeWithSeats: () => void;
+  onDowngrade: () => void;
 };
 
 type CheckoutIntent = {

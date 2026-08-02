@@ -8,6 +8,7 @@ import {
   CheckoutSessionResponse,
   SetupPaymentParams,
   AdjustUnconsumableFeatureQuantityParams,
+  CancelSubscriptionRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -34,8 +35,8 @@ export const platformBillingApi = {
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
   },
-  cancel() {
-    return api.post<void>('/v1/platform-billing/cancel', {});
+  cancel(request: CancelSubscriptionRequest) {
+    return api.post<void>('/v1/platform-billing/cancel', request);
   },
   reactivate() {
     return api.post<void>('/v1/platform-billing/reactivate', {});

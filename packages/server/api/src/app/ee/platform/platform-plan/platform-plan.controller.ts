@@ -1,5 +1,5 @@
 import { SeekPage, tryCatch } from '@activepieces/core-utils'
-import { AdjustUnconsumableFeatureQuantityParams, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
+import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -9,6 +9,7 @@ import { getEntitlementsForceRefreshKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
+import { userService } from '../../../user/user-service'
 import { platformPlanService } from './platform-plan.service'
 
 const FORCE_REFRESH_DEDUP_SECONDS = 60
@@ -60,7 +61,14 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
     app.post('/cancel', CancelRequest, async (request) => {
         const platformId = request.principal.platform.id
         const provider = billingProvider.get(request.log)
-        await provider.cancelSubscription({ platformId })
+        await provider.cancelSubscription({
+            platformId,
+            feedback: {
+                reasons: request.body.reasons,
+                comment: request.body.comment ?? null,
+                canceledByEmail: await resolveActorEmail(request.log, request.principal.id),
+            },
+        })
         await provider.refreshEntitlements(platformId)
     })
 
@@ -157,6 +165,15 @@ async function refreshWhenAppliedImmediately({ log, platformId, checkoutUrl }: R
     await billingProvider.get(log).refreshEntitlements(platformId)
 }
 
+async function resolveActorEmail(log: FastifyBaseLogger, userId: string): Promise<string | null> {
+    const { data: user, error } = await tryCatch(() => userService(log).getMetaInformation({ id: userId }))
+    if (!isNil(error) || isNil(user)) {
+        log.warn({ error, user: { id: userId } }, 'Failed to resolve the cancelling user email; recording the cancellation without it')
+        return null
+    }
+    return user.email
+}
+
 async function fetchUnlimitedCreditsUsed({ log, platformId, startDate, endDate, fallback }: { log: FastifyBaseLogger, platformId: string, startDate: string, endDate: string, fallback: number }): Promise<number> {
     const { data: creditUsage, error } = await tryCatch(() => billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate }))
     if (!isNil(error) || isNil(creditUsage)) {
@@ -224,6 +241,9 @@ const CheckoutRequest = {
 
 const CancelRequest = {
     config: PLATFORM_ADMIN_ONLY,
+    schema: {
+        body: CancelSubscriptionRequest,
+    },
 }
 
 const ReactivateRequest = {

@@ -20,7 +20,7 @@ import { distributedLock, distributedStore } from '../../../../database/redis-co
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
-import { AppSumoAction, CreditUsage } from '../../../../platform/billing-provider'
+import { AppSumoAction, CancellationFeedback, CreditUsage } from '../../../../platform/billing-provider'
 import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
@@ -358,10 +358,10 @@ export const autumnConsole = {
         )
         return response.data.data
     },
-    async cancel({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<void> {
+    async cancel({ autumnCustomerId, autumnApiKey, feedback }: ConsoleCustomerCall & { feedback: CancellationFeedback }): Promise<void> {
         await consolePost<ConsoleBillingEnvelope>(
             `${AUTUMN_CONSOLE_URL}/api/v1/billing/cancel`,
-            { autumnCustomerId },
+            { autumnCustomerId, reasons: feedback.reasons, comment: feedback.comment, canceledByEmail: feedback.canceledByEmail },
             { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
         )
     },

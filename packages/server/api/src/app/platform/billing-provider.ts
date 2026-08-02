@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AutoTopUpConfig, BillableFeature, ConsumableProductAutoTopupParams, PurchasablePlan, RunEnvironment } from '@activepieces/shared'
+import { ApEdition, AutoTopUpConfig, BillableFeature, CancellationReason, ConsumableProductAutoTopupParams, PurchasablePlan, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
 import { system } from '../helper/system/system'
@@ -308,6 +308,13 @@ export type SetupPaymentParams = {
 
 export type CancelSubscriptionParams = {
     platformId: string
+    feedback: CancellationFeedback
+}
+
+export type CancellationFeedback = {
+    reasons: CancellationReason[]
+    comment: string | null
+    canceledByEmail: string | null
 }
 
 export type ReactivateSubscriptionParams = {

@@ -1,4 +1,5 @@
 import { ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
+import { CancelSubscriptionRequest } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -22,7 +23,7 @@ export const useCancelSubscriptionGuard = ({
   const { mutateAsync: cancelSubscription } =
     billingMutations.useCancelSubscription({
       onDone: onCanceled,
-      onSeatLimitExceeded: () => openFreeSeatFloor(),
+      onSeatLimitExceeded: (request) => openFreeSeatFloor(request),
     });
 
   const freePlan = plans?.find(
@@ -31,29 +32,31 @@ export const useCancelSubscriptionGuard = ({
   const targetSeats = freePlan?.includedSeats ?? FREE_PLAN_SEATS_FALLBACK;
   const exceedsFreeSeats = activeUsers > targetSeats;
 
-  const proceedCancel = async () => {
-    const { error } = await tryCatch(() => cancelSubscription());
+  const proceedCancel = async (request: CancelSubscriptionRequest) => {
+    const { error } = await tryCatch(() => cancelSubscription(request));
     if (!isNil(error) && !api.isApError(error, ErrorCode.QUOTA_EXCEEDED)) {
       throw error;
     }
   };
 
-  const openFreeSeatFloor = () =>
+  const openFreeSeatFloor = (request: CancelSubscriptionRequest) =>
     openSeatFloor({
       targetSeats,
       planName: t('Free'),
       warning: planSelectorUtils.dropToFreeWarning(
         subscription?.additionalSeats,
       ),
-      proceed: proceedCancel,
+      proceed: () => proceedCancel(request),
     });
 
-  const cancelWithSeatCheck = async (): Promise<void> => {
+  const cancelWithSeatCheck = async (
+    request: CancelSubscriptionRequest,
+  ): Promise<void> => {
     if (exceedsFreeSeats) {
-      openFreeSeatFloor();
+      openFreeSeatFloor(request);
       return;
     }
-    await proceedCancel();
+    await proceedCancel(request);
   };
 
   return {

@@ -99,7 +99,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         }
         return autumnConsole.setupPayment({ ...creds, redirectUrl })
     },
-    cancelSubscription: async ({ platformId }) => {
+    cancelSubscription: async ({ platformId, feedback }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
         const creds = await autumnConsole.getCreds(log, platformId)
         if (isNil(creds)) {
@@ -109,7 +109,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (!isNil(freePlan) && !isNil(freePlan.includedSeats)) {
             await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: freePlan.includedSeats, log })
         }
-        await autumnConsole.cancel({ ...creds })
+        await autumnConsole.cancel({ ...creds, feedback })
     },
     reactivateSubscription: async ({ platformId }) => {
         await autumnUtils.ensureEnrolled(log, platformId)

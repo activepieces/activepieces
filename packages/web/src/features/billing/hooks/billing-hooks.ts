@@ -7,6 +7,7 @@ import {
   PlatformBillingInformation,
   PurchasablePlan,
   AdjustUnconsumableFeatureQuantityParams,
+  CancelSubscriptionRequest,
 } from '@activepieces/shared';
 import {
   QueryClient,
@@ -99,7 +100,8 @@ export const billingMutations = {
   }: CancelSubscriptionOptions = {}) => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: () => platformBillingApi.cancel(),
+      mutationFn: (request: CancelSubscriptionRequest) =>
+        platformBillingApi.cancel(request),
       onSuccess: () => {
         refreshBillingCaches(queryClient);
         toast.success(
@@ -107,7 +109,7 @@ export const billingMutations = {
         );
         onDone?.();
       },
-      onError: (error) => {
+      onError: (error, request) => {
         if (
           !isNil(onSeatLimitExceeded) &&
           api.isApError(error, ErrorCode.QUOTA_EXCEEDED)
@@ -115,7 +117,7 @@ export const billingMutations = {
           queryClient.invalidateQueries({
             queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
           });
-          onSeatLimitExceeded();
+          onSeatLimitExceeded(request);
           return;
         }
         toast.error(t('Failed to cancel subscription'));
@@ -330,5 +332,5 @@ type CheckoutOptions = {
 
 type CancelSubscriptionOptions = {
   onDone?: () => void;
-  onSeatLimitExceeded?: () => void;
+  onSeatLimitExceeded?: (request: CancelSubscriptionRequest) => void;
 };
