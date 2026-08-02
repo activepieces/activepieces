@@ -10,12 +10,7 @@ import { pieceCacheUtils } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { pieceSetsApi } from '../api/piece-sets-api';
-
-export const pieceSetKeys = {
-  all: ['piece-sets'] as const,
-  one: (id: string) => ['piece-sets', id] as const,
-};
+import { pieceSetKeys, pieceSetsApi } from '../api/piece-sets-api';
 
 export const pieceSetQueries = {
   usePieceSets: () => {

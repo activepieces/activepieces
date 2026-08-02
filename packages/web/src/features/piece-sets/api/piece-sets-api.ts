@@ -4,6 +4,7 @@ import {
   CreatePieceSetRequestBody,
   DuplicatePieceSetRequestBody,
   PieceSet,
+  PieceSetConfig,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
 
@@ -15,6 +16,9 @@ export const pieceSetsApi = {
   },
   get(id: string) {
     return api.get<PieceSet>(`/v1/piece-sets/${id}`);
+  },
+  getCurrent(projectId: string) {
+    return api.get<PieceSetConfig>('/v1/piece-sets/current', { projectId });
   },
   create(request: CreatePieceSetRequestBody) {
     return api.post<PieceSet>('/v1/piece-sets', request);
@@ -34,4 +38,10 @@ export const pieceSetsApi = {
   removeProject(id: string, projectId: string) {
     return api.delete<void>(`/v1/piece-sets/${id}/projects/${projectId}`);
   },
+};
+
+export const pieceSetKeys = {
+  all: ['piece-sets'] as const,
+  one: (id: string) => ['piece-sets', id] as const,
+  current: (projectId: string) => ['piece-sets', 'current', projectId] as const,
 };

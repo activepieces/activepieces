@@ -1,12 +1,24 @@
-import { PieceSelection, PieceSelectionMode } from '@activepieces/shared';
+import {
+  FlowActionType,
+  isCoreStepVisible,
+  PieceSelection,
+  PieceSelectionMode,
+  PieceSetConfig,
+} from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
+import { ArrowLeft, Info, Layers, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
@@ -32,6 +44,19 @@ function flipSelectionMode({
   };
 }
 
+function setCoreStepVisible({
+  config,
+  type,
+  visible,
+}: {
+  config: PieceSetConfig;
+  type: FlowActionType;
+  visible: boolean;
+}): FlowActionType[] {
+  const hidden = config.hiddenCoreSteps ?? [];
+  return visible ? hidden.filter((step) => step !== type) : [...hidden, type];
+}
+
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -53,6 +78,20 @@ const PieceSetDetailsPage = () => {
           current: pieceSet.config.pieces,
           include: value,
           knownPieceNames: pieces.map((p) => p.name),
+        }),
+      },
+    });
+  };
+
+  const handleCodeToggle = (visible: boolean) => {
+    if (!pieceSet) return;
+    updateSet({
+      id: pieceSet.id,
+      request: {
+        hiddenCoreSteps: setCoreStepVisible({
+          config: pieceSet.config,
+          type: FlowActionType.CODE,
+          visible,
         }),
       },
     });
@@ -92,36 +131,33 @@ const PieceSetDetailsPage = () => {
       />
 
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
-        <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('Assigned')}
-              </span>
-              <PieceSetProjectsDialog pieceSet={pieceSet} />
-            </div>
+        <div className="px-4 pt-3 pb-6 shrink-0">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-2.5">
+            <PieceSetProjectsDialog pieceSet={pieceSet} />
 
-            <div className="self-stretch w-px bg-border" />
+            <Separator orientation="vertical" className="h-5" />
 
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('Auto-include')}
-              </span>
-              <AutoIncludePill
-                label={t('New pieces')}
-                checked={
-                  pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
-                }
-                disabled={isPending || piecesLoading}
-                onCheckedChange={handleToggle}
-              />
-            </div>
-
-            <span className="text-xs text-muted-foreground">
-              {t(
+            <SettingToggle
+              label={t('Auto-include new pieces')}
+              hint={t(
                 'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
               )}
-            </span>
+              checked={
+                pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
+              }
+              disabled={isPending || piecesLoading}
+              onCheckedChange={handleToggle}
+            />
+
+            <SettingToggle
+              label={t('Code step')}
+              checked={isCoreStepVisible({
+                config: pieceSet.config,
+                type: FlowActionType.CODE,
+              })}
+              disabled={isPending}
+              onCheckedChange={handleCodeToggle}
+            />
           </div>
         </div>
 
@@ -133,33 +169,44 @@ const PieceSetDetailsPage = () => {
   );
 };
 
-function AutoIncludePill({
+function SettingToggle({
   label,
+  hint,
   checked,
   disabled,
   onCheckedChange,
 }: {
   label: string;
+  hint?: string;
   checked: boolean;
   disabled: boolean;
   onCheckedChange: (value: boolean) => void;
 }) {
   return (
-    <label
-      className={cn(
-        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border bg-background px-3 text-sm font-medium transition-colors',
-        checked && 'border-primary/50 bg-primary/[0.07] text-primary',
-        disabled && 'cursor-not-allowed opacity-60',
+    <div className="flex items-center gap-1.5">
+      <label
+        className={cn(
+          'flex cursor-pointer select-none items-center gap-2 text-sm',
+          disabled && 'pointer-events-none opacity-50',
+        )}
+      >
+        <Switch
+          size="sm"
+          checked={checked}
+          disabled={disabled}
+          onCheckedChange={onCheckedChange}
+        />
+        {label}
+      </label>
+      {hint && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="size-4 text-muted-foreground cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">{hint}</TooltipContent>
+        </Tooltip>
       )}
-    >
-      <Switch
-        size="sm"
-        checked={checked}
-        disabled={disabled}
-        onCheckedChange={onCheckedChange}
-      />
-      {label}
-    </label>
+    </div>
   );
 }
 

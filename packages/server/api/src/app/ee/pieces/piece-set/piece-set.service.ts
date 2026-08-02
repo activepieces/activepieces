@@ -5,6 +5,7 @@ import { EntityManager, In, QueryFailedError } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { distributedLock } from '../../../database/redis-connections'
+import { projectRepo } from '../../../project/project-repo'
 import { pieceSetConfig } from './piece-set-config'
 import { PieceSetEntity } from './piece-set.entity'
 
@@ -20,6 +21,11 @@ type ListParams = {
 
 type GetOneParams = {
     id: string
+    platformId: string
+}
+
+type GetForProjectParams = {
+    projectId: string
     platformId: string
 }
 
@@ -71,6 +77,15 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 return pieceSetRepo().findOneByOrFail({ platformId, isDefault: true })
             },
         })
+    },
+
+    async getForProject({ projectId, platformId }: GetForProjectParams): Promise<PieceSet> {
+        const project = await projectRepo().findOneBy({ id: projectId })
+        if (isNil(project?.pieceSetId)) {
+            return this.getOrCreateDefaultPieceSet(platformId)
+        }
+        return await pieceSetRepo().findOneBy({ id: project.pieceSetId, platformId })
+            ?? this.getOrCreateDefaultPieceSet(platformId)
     },
 
     async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {

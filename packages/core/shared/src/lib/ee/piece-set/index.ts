@@ -1,3 +1,4 @@
+import { FlowActionType } from '@activepieces/core-execution'
 import { ApId, BaseModelSchema, isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -12,6 +13,10 @@ export function isComponentVisible({ selected, name }: { selected: string[] | un
         return true
     }
     return selected.includes(name)
+}
+
+export function isCoreStepVisible({ config, type }: { config: PieceSetConfig, type: FlowActionType }): boolean {
+    return !config.hiddenCoreSteps?.includes(type)
 }
 
 export enum PieceSelectionMode {
@@ -29,6 +34,7 @@ export const PieceSetConfig = z.object({
     pieces: PieceSelection.default({ mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }),
     selectedActions: z.record(z.string(), z.array(z.string())).default({}),
     selectedTriggers: z.record(z.string(), z.array(z.string())).default({}),
+    hiddenCoreSteps: z.array(z.enum(FlowActionType)).optional(),
 })
 export type PieceSetConfig = z.infer<typeof PieceSetConfig>
 
@@ -61,6 +67,7 @@ export const UpdatePieceSetRequestBody = z.object({
     pieces: PieceSelection.optional(),
     actions: z.record(z.string(), ComponentIntent).optional(),
     triggers: z.record(z.string(), ComponentIntent).optional(),
+    hiddenCoreSteps: z.array(z.enum(FlowActionType)).optional(),
 })
 export type UpdatePieceSetRequestBody = z.infer<typeof UpdatePieceSetRequestBody>
 

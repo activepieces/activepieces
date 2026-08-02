@@ -21,6 +21,7 @@ export const pieceSetConfig = {
             pieces: request.pieces ?? current.pieces,
             selectedActions: applyComponentIntents({ current: current.selectedActions, intents: request.actions }),
             selectedTriggers: applyComponentIntents({ current: current.selectedTriggers, intents: request.triggers }),
+            hiddenCoreSteps: request.hiddenCoreSteps ?? current.hiddenCoreSteps,
         }
     },
 }

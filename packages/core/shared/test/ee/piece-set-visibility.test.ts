@@ -1,4 +1,12 @@
-import { isComponentVisible, isPieceVisible, PieceSelectionMode } from '../../src/lib/ee/piece-set'
+import { FlowActionType } from '@activepieces/core-execution'
+import { isComponentVisible, isCoreStepVisible, isPieceVisible, PieceSelectionMode, PieceSetConfig } from '../../src/lib/ee/piece-set'
+
+const configWith = (hiddenCoreSteps: FlowActionType[] | undefined): PieceSetConfig => ({
+    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
+    selectedActions: {},
+    selectedTriggers: {},
+    hiddenCoreSteps,
+})
 
 describe('piece set visibility resolvers', () => {
     describe('isPieceVisible', () => {
@@ -32,6 +40,19 @@ describe('piece set visibility resolvers', () => {
 
         it('empty selection hides everything for that piece', () => {
             expect(isComponentVisible({ selected: [], name: 'send_message' })).toBe(false)
+        })
+    })
+
+    describe('isCoreStepVisible', () => {
+        it('absent and empty both mean nothing is hidden', () => {
+            expect(isCoreStepVisible({ config: configWith(undefined), type: FlowActionType.CODE })).toBe(true)
+            expect(isCoreStepVisible({ config: configWith([]), type: FlowActionType.CODE })).toBe(true)
+        })
+
+        it('only listed core steps are hidden', () => {
+            const config = configWith([FlowActionType.CODE])
+            expect(isCoreStepVisible({ config, type: FlowActionType.CODE })).toBe(false)
+            expect(isCoreStepVisible({ config, type: FlowActionType.ROUTER })).toBe(true)
         })
     })
 })

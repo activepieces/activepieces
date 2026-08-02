@@ -1,10 +1,10 @@
 import { apId } from '@activepieces/core-utils'
-import { PieceSelectionMode, PieceSet, PrincipalType } from '@activepieces/shared'
+import { FlowActionType, PieceSelectionMode, PieceSet, PieceSetConfig, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
-import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockUser, createMockUserIdentity, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -30,7 +30,7 @@ async function setupPlatformWithPieceSets() {
 }
 
 async function setupPlatformWithoutPieceSets() {
-    const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+    const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
         plan: { managePiecesEnabled: false },
     })
     const token = await generateMockToken({
@@ -38,7 +38,15 @@ async function setupPlatformWithoutPieceSets() {
         id: mockOwner.id,
         platform: { id: mockPlatform.id },
     })
-    return { mockOwner, mockPlatform, token }
+    return { mockOwner, mockPlatform, mockProject, token }
+}
+
+async function createMemberToken(platformId: string) {
+    const identity = createMockUserIdentity({ verified: true })
+    await databaseConnection().getRepository('user_identity').save(identity)
+    const member = createMockUser({ identityId: identity.id, platformId, platformRole: PlatformRole.MEMBER })
+    await databaseConnection().getRepository('user').save(member)
+    return generateMockToken({ type: PrincipalType.USER, id: member.id, platform: { id: platformId } })
 }
 
 const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
@@ -158,6 +166,96 @@ describe('Piece Sets API', () => {
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             expect(response.json<PieceSet>().id).toBe(id)
+        })
+
+        it('is admin-only, so a platform member cannot read a set by id', async () => {
+            const { mockPlatform, token } = await setupPlatformWithPieceSets()
+            const created = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Finance' },
+            })
+            const id = created.json<PieceSet>().id
+            const memberToken = await createMemberToken(mockPlatform.id)
+            const headers = { authorization: `Bearer ${memberToken}` }
+
+            const read = await app!.inject({ method: 'GET', url: `/api/v1/piece-sets/${id}`, headers })
+            expect(read.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const list = await app!.inject({ method: 'GET', url: '/api/v1/piece-sets', headers })
+            expect(list.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const update = await app!.inject({ method: 'POST', url: `/api/v1/piece-sets/${id}`, headers, body: { hiddenCoreSteps: [FlowActionType.CODE] } })
+            expect(update.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const remove = await app!.inject({ method: 'DELETE', url: `/api/v1/piece-sets/${id}`, headers })
+            expect(remove.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
+
+    describe('Get Current', () => {
+        it('resolves an unassigned project to the platform default set', async () => {
+            const { mockProject, token } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets/current?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json<PieceSetConfig>()).toEqual(emptyConfig)
+        })
+
+        it('returns the assigned set config, including hidden core steps', async () => {
+            const { mockProject, token } = await setupPlatformWithPieceSets()
+            const created = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Finance' },
+            })
+            const id = created.json<PieceSet>().id
+            await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { hiddenCoreSteps: [FlowActionType.CODE] },
+            })
+            await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}/projects`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { projectIds: [mockProject.id] },
+            })
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets/current?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json<PieceSetConfig>().hiddenCoreSteps).toEqual([FlowActionType.CODE])
+        })
+
+        it('denies reading a project the principal has no access to', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const { mockProject: otherProject } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets/current?projectId=${otherProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('stays reachable when managePiecesEnabled is off, matching server-side piece filtering', async () => {
+            const { mockProject, token } = await setupPlatformWithoutPieceSets()
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets/current?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
         })
     })
 

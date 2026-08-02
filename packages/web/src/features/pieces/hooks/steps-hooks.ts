@@ -1,14 +1,24 @@
 import { LocalesEnum, isNil } from '@activepieces/core-utils';
 import {
+  ApEdition,
+  ApFlagId,
   FlowAction,
   FlowActionType,
   FlowTriggerType,
   SuggestionType,
   FlowTrigger,
+  isCoreStepVisible,
+  PieceSetConfig,
 } from '@activepieces/shared';
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  pieceSetKeys,
+  pieceSetsApi,
+} from '@/features/piece-sets/api/piece-sets-api';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
@@ -57,6 +67,7 @@ export const stepsHooks = {
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
     const { i18n } = useTranslation();
     const projectId = authenticationSession.getProjectId()!;
+    const pieceSetConfig = useProjectPieceSetConfig();
     const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: [
         'pieces-metadata',
@@ -106,13 +117,52 @@ export const stepsHooks = {
       enabled,
       staleTime: searchQuery ? 0 : Infinity,
     });
+    const metadata = useMemo(
+      () =>
+        query.data?.filter((step) =>
+          isStepVisible({ config: pieceSetConfig.config, step }),
+        ),
+      [query.data, pieceSetConfig.config],
+    );
     return {
       refetch: query.refetch,
-      metadata: query.data,
-      isLoading: query.isLoading,
+      metadata,
+      isLoading: query.isLoading || pieceSetConfig.isLoading,
     };
   },
 };
+
+function useProjectPieceSetConfig() {
+  const projectId = authenticationSession.getProjectId()!;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const enabled = !isNil(edition) && edition !== ApEdition.COMMUNITY;
+  const { data: config, isLoading } = useQuery({
+    queryKey: pieceSetKeys.current(projectId),
+    queryFn: () => pieceSetsApi.getCurrent(projectId),
+    enabled,
+    staleTime: Infinity,
+  });
+  return { config, isLoading: enabled && isLoading };
+}
+
+function isStepVisible({
+  config,
+  step,
+}: {
+  config: PieceSetConfig | undefined;
+  step: StepMetadataWithSuggestions;
+}): boolean {
+  if (
+    isNil(config) ||
+    step.type === FlowActionType.PIECE ||
+    step.type === FlowTriggerType.PIECE ||
+    step.type === FlowTriggerType.EMPTY
+  ) {
+    return true;
+  }
+  return isCoreStepVisible({ config, type: step.type });
+}
+
 function passSearch(
   searchQuery: string | undefined,
   data: (typeof CORE_STEP_METADATA)[keyof typeof CORE_STEP_METADATA],

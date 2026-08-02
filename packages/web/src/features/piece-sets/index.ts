@@ -1,6 +1,2 @@
-export { pieceSetsApi } from './api/piece-sets-api';
-export {
-  pieceSetKeys,
-  pieceSetMutations,
-  pieceSetQueries,
-} from './hooks/piece-sets-hooks';
+export { pieceSetKeys, pieceSetsApi } from './api/piece-sets-api';
+export { pieceSetMutations, pieceSetQueries } from './hooks/piece-sets-hooks';

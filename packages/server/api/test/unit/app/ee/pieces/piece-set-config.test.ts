@@ -1,4 +1,4 @@
-import { PieceSelectionMode, PieceSetConfig } from '@activepieces/shared'
+import { FlowActionType, PieceSelectionMode, PieceSetConfig } from '@activepieces/shared'
 import { pieceSetConfig } from '../../../../../src/app/ee/pieces/piece-set/piece-set-config'
 
 const base: PieceSetConfig = {
@@ -62,6 +62,14 @@ describe('pieceSetConfig.applyUpdate', () => {
             request: { triggers: { slack: { mode: 'selected', selected: ['new_message'] } } },
         })
         expect(result.selectedTriggers).toEqual({ slack: ['new_message'] })
+    })
+
+    it('sets hiddenCoreSteps and leaves it untouched when the request omits it', () => {
+        const hidden = pieceSetConfig.applyUpdate({ current: base, request: { hiddenCoreSteps: [FlowActionType.CODE] } })
+        expect(hidden.hiddenCoreSteps).toEqual([FlowActionType.CODE])
+
+        const unrelated = pieceSetConfig.applyUpdate({ current: hidden, request: { name: 'renamed' } })
+        expect(unrelated.hiddenCoreSteps).toEqual([FlowActionType.CODE])
     })
 })
 

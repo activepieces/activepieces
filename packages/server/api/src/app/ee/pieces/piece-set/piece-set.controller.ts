@@ -1,11 +1,23 @@
-import { AssignProjectsRequestBody, CreatePieceSetRequestBody, DuplicatePieceSetRequestBody, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePieceSetRequestBody } from '@activepieces/shared'
+import { ApId } from '@activepieces/core-utils'
+import { AssignProjectsRequestBody, CreatePieceSetRequestBody, DuplicatePieceSetRequestBody, PieceSetConfig, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../../core/security/authorization/common'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { pieceSetService } from './piece-set.service'
 
 const platformAdminSecurity = securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE])
+
+export const pieceSetProjectController: FastifyPluginAsyncZod = async (app) => {
+    app.get('/current', GetCurrentPieceSet, async (req) => {
+        const pieceSet = await pieceSetService(app.log).getForProject({
+            projectId: req.query.projectId,
+            platformId: req.principal.platform.id,
+        })
+        return pieceSet.config
+    })
+}
 
 export const pieceSetController: FastifyPluginAsyncZod = async (app) => {
     const service = pieceSetService(app.log)
@@ -100,6 +112,19 @@ const GetPieceSet = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         summary: 'Get a piece set by id',
         params: idParam,
+    },
+}
+
+const GetCurrentPieceSet = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], undefined, { type: ProjectResourceType.QUERY }),
+    },
+    schema: {
+        tags: ['piece-sets'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        summary: 'Get the piece set config applied to a project',
+        querystring: z.object({ projectId: ApId }),
+        response: { [StatusCodes.OK]: PieceSetConfig },
     },
 }
 
