@@ -33,6 +33,7 @@ User-facing data transforms (81+ functions) inside any builder text input via a 
 
 - Run tsc yourself before/after an engine change and **diff the file list** rather than expecting zero — a green run is not the baseline.
 - Engine tests only run correctly from the package dir (`cd packages/server/engine && npx vitest run`); from the repo root the root config applies and every file fails collection with `describe is not defined`.
+- Engine code importing `node:sqlite` (e.g. `run-state-store.ts`) needs Node ≥22.5 — on Node 20 the whole test file fails with `No such built-in module: node:sqlite`. Use the `.nvmrc` Node (24.x) before running engine tests.
 
 ### The engine gets only 64 file descriptors
 

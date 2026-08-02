@@ -131,17 +131,24 @@ export class FlowExecutorContext {
                 errorMessage: truncated.errorMessage,
             })
         }
-        if (runStateStore.isInitialized() && finalized.type !== FlowActionType.LOOP_ON_ITEMS) {
-            const stepPath = JSON.stringify(this.currentPath.path)
-            runStateStore.put({
-                name: stepName,
-                stepPath,
-                scopeEntry: {
-                    output: truncated.output,
-                    error: truncated.status === StepOutputStatus.FAILED
-                        ? { message: truncated.errorMessage }
-                        : undefined,
-                },
+        const stepPath = JSON.stringify(this.currentPath.path)
+        if (finalized.type !== FlowActionType.LOOP_ON_ITEMS) {
+            const previousSizeBytes = runStateStore.getStepSize({ name: stepName, stepPath })
+            const nextSizeBytes = sizeofUtils.recursiveSizeof(finalized)
+            runStateStore.put({ name: stepName, stepPath, stepOutput: finalized, sizeBytes: nextSizeBytes })
+            const stripped = new GenericStepOutput({
+                type: finalized.type,
+                status: finalized.status,
+                input: finalized.input,
+                outputType: finalized.outputType,
+                duration: finalized.duration,
+                errorMessage: finalized.errorMessage,
+            })
+            const steps = executionJournal.upsertStep({ stepName, stepOutput: stripped, path: this.currentPath.path, steps: this.steps })
+            return new FlowExecutorContext({
+                ...this,
+                steps,
+                logSizeBytes: this.logSizeBytes + sizeofUtils.upsertStepDeltaFromSize({ stepName, previousSizeBytes, nextSizeBytes }),
             })
         }
         const previousStep = executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps })
@@ -154,7 +161,12 @@ export class FlowExecutorContext {
     }
 
     public getStepOutput(stepName: string, path?: StepExecutionPath['path']): StepOutput | undefined {
-        return executionJournal.getStep({ stepName, path: path ?? this.currentPath.path, steps: this.steps })
+        const step = executionJournal.getStep({ stepName, path: path ?? this.currentPath.path, steps: this.steps })
+        if (isNil(step) || step.type === FlowActionType.LOOP_ON_ITEMS) {
+            return step
+        }
+        const stored = runStateStore.getStepOutput({ name: stepName, stepPath: JSON.stringify(path ?? this.currentPath.path) }) as StepOutput | undefined
+        return stored ?? step
     }
 
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
@@ -225,7 +237,7 @@ async function buildStateFromStore(params: {
     let result: Record<string, unknown> = {}
     let targetMap = steps as Record<string, StepOutput>
 
-    result = { ...result, ...runStateStore.getAtPath({ stepPath: '[]' }) }
+    result = { ...result, ...await extractStepView(runStateStore.getAtPath({ stepPath: '[]' }), engineApi, cache) }
     result = { ...result, ...await extractLoopStepView(targetMap, engineApi, cache) }
 
     for (let level = 0; level < currentPath.path.length; level++) {
@@ -237,7 +249,7 @@ async function buildStateFromStore(params: {
         targetMap = stepOutput.output.iterations[iteration] as Record<string, StepOutput>
 
         const pathAtLevel = currentPath.path.slice(0, level + 1)
-        result = { ...result, ...runStateStore.getAtPath({ stepPath: JSON.stringify(pathAtLevel) }) }
+        result = { ...result, ...await extractStepView(runStateStore.getAtPath({ stepPath: JSON.stringify(pathAtLevel) }), engineApi, cache) }
         result = { ...result, ...await extractLoopStepView(targetMap, engineApi, cache) }
     }
 

@@ -3,7 +3,7 @@ import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FLOW_RUN_LOG_MANIFEST_V3, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FLOW_RUN_LOG_MANIFEST_V3, FlowActionType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
@@ -106,10 +106,10 @@ export const flowRunProgressReporter = {
 
             const serialized = await logSerializer.serialize({
                 executionState: {
-                    steps: flowExecutorContext.steps,
+                    steps: fillOutputsFromStore(flowExecutorContext.steps, []),
                     tags: Array.from(flowExecutorContext.tags),
                 },
-                version: runStateStore.isInitialized() ? FLOW_RUN_LOG_MANIFEST_V3 : undefined,
+                version: FLOW_RUN_LOG_MANIFEST_V3,
             })
             const executionState = await zstdCompress(serialized)
 
@@ -226,6 +226,24 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
         standardError: isSuccess ? '' : (stepOutput.errorMessage ?? ''),
         standardOutput: '',
     }
+}
+
+function fillOutputsFromStore(steps: Readonly<Record<string, StepOutput>>, pathPrefix: Array<[string, number]>): Record<string, StepOutput> {
+    const result: Record<string, StepOutput> = {}
+    for (const [name, step] of Object.entries(steps)) {
+        if (step.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
+            const loopOutput = step.output as { iterations: Array<Record<string, StepOutput>> }
+            const rebuiltIterations = loopOutput.iterations.map((iterSteps, idx) =>
+                fillOutputsFromStore(iterSteps, [...pathPrefix, [name, idx]]),
+            )
+            result[name] = { ...step, output: { ...loopOutput, iterations: rebuiltIterations } } as StepOutput
+        }
+        else {
+            const stored = runStateStore.getStepOutput({ name, stepPath: JSON.stringify(pathPrefix) }) as StepOutput | undefined
+            result[name] = stored ?? step
+        }
+    }
+    return result
 }
 
 type SendUpdateProgressParams = {

@@ -47,20 +47,30 @@ function isSliceRefShape(value: unknown): value is { size: number } {
 }
 
 function upsertStepDelta({ stepName, previousStep, nextStep }: UpsertStepDeltaParams): number {
-    const nextSize = recursiveSizeof(nextStep)
-    if (isNil(previousStep)) {
-        return utils.sizeof(stepName) + 2 + nextSize
+    return upsertStepDeltaFromSize({ stepName, previousSizeBytes: isNil(previousStep) ? undefined : recursiveSizeof(previousStep), nextSizeBytes: recursiveSizeof(nextStep) })
+}
+
+function upsertStepDeltaFromSize({ stepName, previousSizeBytes, nextSizeBytes }: UpsertStepDeltaFromSizeParams): number {
+    if (isNil(previousSizeBytes)) {
+        return utils.sizeof(stepName) + 2 + nextSizeBytes
     }
-    return nextSize - recursiveSizeof(previousStep)
+    return nextSizeBytes - previousSizeBytes
 }
 
 export const sizeofUtils = {
     recursiveSizeof,
     upsertStepDelta,
+    upsertStepDeltaFromSize,
 }
 
 type UpsertStepDeltaParams = {
     stepName: string
     previousStep: unknown
     nextStep: unknown
+}
+
+type UpsertStepDeltaFromSizeParams = {
+    stepName: string
+    previousSizeBytes: number | undefined
+    nextSizeBytes: number
 }

@@ -2,15 +2,14 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { isNil } from '@activepieces/core-utils'
-import { ExecutionMode } from '@activepieces/shared'
+import { ExecutionMode, StepOutput } from '@activepieces/shared'
 import { DatabaseSync, StatementSync } from 'node:sqlite'
 
 type PreparedStatements = {
     put: StatementSync
-    select: StatementSync
-    materialize: StatementSync
     getAtPath: StatementSync
-    allRows: StatementSync
+    getStepOutput: StatementSync
+    getStepSize: StatementSync
 }
 
 let db: DatabaseSync | null = null
@@ -30,66 +29,54 @@ export const runStateStore = {
         }
         db.exec(`
             CREATE TABLE steps (
-                name TEXT    NOT NULL,
-                path TEXT    NOT NULL,
-                output BLOB  NOT NULL,
+                name       TEXT    NOT NULL,
+                path       TEXT    NOT NULL,
+                output     BLOB    NOT NULL,
+                size_bytes INTEGER NOT NULL,
                 PRIMARY KEY (name, path)
             )
         `)
         statements = {
-            put: db.prepare('INSERT OR REPLACE INTO steps (name, path, output) VALUES (?, ?, jsonb(?))'),
-            select: db.prepare('SELECT output ->> ? FROM steps WHERE name = ? AND path = ?'),
-            materialize: db.prepare('SELECT json(output) AS output FROM steps WHERE name = ? AND path = ?'),
+            put: db.prepare('INSERT OR REPLACE INTO steps (name, path, output, size_bytes) VALUES (?, ?, jsonb(?), ?)'),
             getAtPath: db.prepare('SELECT name, json(output) AS output FROM steps WHERE path = ?'),
-            allRows: db.prepare('SELECT name, path, json(output) AS output FROM steps ORDER BY rowid'),
+            getStepOutput: db.prepare('SELECT json(output) AS output FROM steps WHERE name = ? AND path = ?'),
+            getStepSize: db.prepare('SELECT size_bytes FROM steps WHERE name = ? AND path = ?'),
         }
     },
 
-    put({ name, stepPath, scopeEntry }: { name: string, stepPath: string, scopeEntry: unknown }): void {
+    put({ name, stepPath, stepOutput, sizeBytes }: { name: string, stepPath: string, stepOutput: unknown, sizeBytes: number }): void {
         if (isNil(statements)) {
             return
         }
-        statements.put.run(name, stepPath, JSON.stringify(scopeEntry))
+        statements.put.run(name, stepPath, JSON.stringify(stepOutput), sizeBytes)
     },
 
-    select({ name, stepPath, jsonPath }: { name: string, stepPath: string, jsonPath: string }): unknown {
-        if (isNil(statements)) {
-            return undefined
-        }
-        const row = statements.select.get(jsonPath, name, stepPath) as Record<string, unknown> | undefined
-        return row ? Object.values(row)[0] : undefined
-    },
-
-    materialize({ name, stepPath }: { name: string, stepPath: string }): unknown {
-        if (isNil(statements)) {
-            return undefined
-        }
-        const row = statements.materialize.get(name, stepPath) as { output: string } | undefined
-        return row ? JSON.parse(row.output) : undefined
-    },
-
-    getAtPath({ stepPath }: { stepPath: string }): Record<string, unknown> {
+    getAtPath({ stepPath }: { stepPath: string }): Record<string, StepOutput> {
         if (isNil(statements)) {
             return {}
         }
         const rows = statements.getAtPath.all(stepPath) as Array<{ name: string, output: string }>
-        const result: Record<string, unknown> = {}
+        const result: Record<string, StepOutput> = {}
         for (const row of rows) {
-            result[row.name] = JSON.parse(row.output)
+            result[row.name] = JSON.parse(row.output) as StepOutput
         }
         return result
     },
 
-    allRows(): Array<{ name: string, stepPath: string, output: unknown }> {
+    getStepOutput({ name, stepPath }: { name: string, stepPath: string }): unknown {
         if (isNil(statements)) {
-            return []
+            return undefined
         }
-        const rows = statements.allRows.all() as Array<{ name: string, path: string, output: string }>
-        return rows.map(r => ({
-            name: r.name,
-            stepPath: r.path,
-            output: JSON.parse(r.output),
-        }))
+        const row = statements.getStepOutput.get(name, stepPath) as { output: string } | undefined
+        return row ? JSON.parse(row.output) : undefined
+    },
+
+    getStepSize({ name, stepPath }: { name: string, stepPath: string }): number | undefined {
+        if (isNil(statements)) {
+            return undefined
+        }
+        const row = statements.getStepSize.get(name, stepPath) as { size_bytes: number } | undefined
+        return row?.size_bytes
     },
 
     isInitialized(): boolean {
