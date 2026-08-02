@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ChatConversationStatus, CreateChatConversationRequest, ImportChatMemoryRequest, InstructChatMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetChatMessageFeedbackRequest, UpdateChatConversationRequest, UpdateChatMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentRunSource, ChatConversationStatus, CreateChatConversationRequest, ImportChatMemoryRequest, InstructChatMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendChatMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetChatMessageFeedbackRequest, UpdateChatConversationRequest, UpdateChatMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -157,6 +157,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             data: {
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 jobType: WorkerJobType.EXECUTE_AGENT_RUN,
+                source: AgentRunSource.CHAT,
                 conversationId,
                 runId,
                 projectId: conversation.projectId ?? null,

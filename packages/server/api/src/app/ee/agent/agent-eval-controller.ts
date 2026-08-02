@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { ChatConversationStatus, ChatPromptOverride, LATEST_JOB_DATA_SCHEMA_VERSION, PersistedChatRole, SimulateChatRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentRunSource, ChatConversationStatus, ChatPromptOverride, LATEST_JOB_DATA_SCHEMA_VERSION, PersistedChatRole, SimulateChatRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -78,6 +78,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
                 data: {
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
+                    source: AgentRunSource.CHAT,
                     conversationId: conversation.id,
                     runId: lastRunId,
                     projectId: null,
@@ -154,6 +155,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
             data: {
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 jobType: WorkerJobType.EXECUTE_AGENT_RUN,
+                source: AgentRunSource.CHAT,
                 conversationId: convId,
                 runId,
                 projectId: null,

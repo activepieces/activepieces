@@ -1,4 +1,4 @@
-import { ChatPromptOverride } from '@activepieces/core-execution'
+import { AgentRunSource, ChatPromptOverride } from '@activepieces/core-execution'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -192,11 +192,6 @@ export enum ChatConversationStatus {
     IDLE = 'IDLE',
     STREAMING = 'STREAMING',
     ERROR = 'ERROR',
-}
-
-export enum AgentRunSource {
-    CHAT = 'CHAT',
-    FLOW_STEP = 'FLOW_STEP',
 }
 
 export const ChatConversation = z.object({

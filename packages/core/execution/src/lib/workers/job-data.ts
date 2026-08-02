@@ -1,6 +1,7 @@
 
 import { z } from 'zod'
 import { isNil } from '@activepieces/core-utils'
+import { AgentOutputField, AgentRunSource, AgentTool } from '../agents'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -262,9 +263,25 @@ export const ChatPromptOverride = z.object({
 })
 export type ChatPromptOverride = z.infer<typeof ChatPromptOverride>
 
+export const AgentFlowStepRun = z.object({
+    flowRunId: z.string(),
+    stepName: z.string(),
+    resumeUrl: z.string(),
+    tools: z.array(AgentTool).default([]),
+    structuredOutput: z.array(AgentOutputField).optional(),
+    maxSteps: z.number(),
+    aiProviderModel: z.object({ provider: z.string(), model: z.string() }),
+    webSearch: z.boolean().optional(),
+})
+export type AgentFlowStepRun = z.infer<typeof AgentFlowStepRun>
+
 export const ExecuteAgentRunJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_AGENT_RUN),
+    // Defaulted rather than required: jobs already queued when this shipped carry no source,
+    // and every one of them is a chat turn.
+    source: z.enum(AgentRunSource).default(AgentRunSource.CHAT),
+    flowStep: AgentFlowStepRun.optional(),
     conversationId: z.string(),
     runId: z.string().optional(),
     projectId: z.string().nullable(),

@@ -5,6 +5,11 @@ export * from './tools'
 export * from './mcp'
 export * from './mcp-tool-name-util'
 
+export enum AgentRunSource {
+    CHAT = 'CHAT',
+    FLOW_STEP = 'FLOW_STEP',
+}
+
 export enum AgentOutputFieldType {
     TEXT = 'text',
     NUMBER = 'number',
