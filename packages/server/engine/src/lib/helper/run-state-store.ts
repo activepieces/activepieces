@@ -7,7 +7,6 @@ import { DatabaseSync, StatementSync } from 'node:sqlite'
 
 type PreparedStatements = {
     put: StatementSync
-    getAtPath: StatementSync
     getStepOutput: StatementSync
     getStepSize: StatementSync
 }
@@ -36,7 +35,6 @@ export const runStateStore = {
             `)
             statements = {
                 put: db.prepare('INSERT OR REPLACE INTO steps (name, path, output, size_bytes) VALUES (?, ?, jsonb(?), ?)'),
-                getAtPath: db.prepare('SELECT name, json(output) AS output FROM steps WHERE path = ?'),
                 getStepOutput: db.prepare('SELECT json(output) AS output FROM steps WHERE name = ? AND path = ?'),
                 getStepSize: db.prepare('SELECT size_bytes FROM steps WHERE name = ? AND path = ?'),
             }
@@ -60,18 +58,6 @@ export const runStateStore = {
             return
         }
         statements.put.run(name, stepPath, JSON.stringify(stepOutput), sizeBytes)
-    },
-
-    getAtPath({ stepPath }: { stepPath: string }): Record<string, StepOutput> {
-        if (isNil(statements)) {
-            return {}
-        }
-        const rows = statements.getAtPath.all(stepPath) as Array<{ name: string, output: string }>
-        const result: Record<string, StepOutput> = {}
-        for (const row of rows) {
-            result[row.name] = JSON.parse(row.output)
-        }
-        return result
     },
 
     getStepOutput({ name, stepPath }: { name: string, stepPath: string }): StepOutput | undefined {

@@ -57,10 +57,6 @@ describe('runStateStore', () => {
             expect(runStateStore.getStepSize({ name: 'step_1', stepPath: ROOT_PATH })).toBeUndefined()
         })
 
-        test('getAtPath returns an empty object', () => {
-            expect(runStateStore.getAtPath({ stepPath: ROOT_PATH })).toEqual({})
-        })
-
         test('dispose is idempotent', () => {
             expect(() => runStateStore.dispose()).not.toThrow()
         })
@@ -137,20 +133,6 @@ describe('runStateStore', () => {
             const loopOutput = putStep({ name: 'step_1', stepPath: '[["loop_1",0]]', output: { scope: 'loop' } })
             expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toEqual(rootOutput)
             expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: '[["loop_1",0]]' })).toEqual(loopOutput)
-        })
-    })
-
-    describe('getAtPath', () => {
-        test('returns all steps at the given path keyed by name', () => {
-            const step1 = putStep({ name: 'step_1', output: { a: 1 } })
-            const step2 = putStep({ name: 'step_2', output: { b: 2 } })
-            putStep({ name: 'step_3', stepPath: '[["loop_1",0]]', output: { c: 3 } })
-            expect(runStateStore.getAtPath({ stepPath: ROOT_PATH })).toEqual({ step_1: step1, step_2: step2 })
-        })
-
-        test('returns an empty object when no steps exist at the path', () => {
-            putStep({ name: 'step_1', output: { a: 1 } })
-            expect(runStateStore.getAtPath({ stepPath: '[["loop_1",0]]' })).toEqual({})
         })
     })
 

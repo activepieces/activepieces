@@ -40,17 +40,28 @@ describe('FlowExecutorContext with runStateStore', () => {
         expect(ctx.getStepOutput('step_1')?.output).toEqual({ big: 'value' })
     })
 
-    test('currentState returns only referenced step outputs, read from the store', async () => {
+    test('getStepView reads the step view from the store and returns undefined for missing steps', async () => {
         let ctx = FlowExecutorContext.empty()
         ctx = await ctx.upsertStep('step_1', makePieceStep({ value: 1 }))
         ctx = await ctx.upsertStep('step_2', makePieceStep({ value: 2 }))
 
-        const state = await ctx.currentState(['step_2'])
-
-        expect(state).toEqual({ step_2: { output: { value: 2 }, error: undefined } })
+        expect(await ctx.getStepView('step_2')).toEqual({ output: { value: 2 }, error: undefined })
+        expect(await ctx.getStepView('missing')).toBeUndefined()
     })
 
-    test('currentState inside a loop iteration exposes the loop view and iteration steps', async () => {
+    test('getStepView exposes the failed step error message', async () => {
+        const failed = GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.FAILED,
+            input: {},
+            output: undefined,
+        }).setErrorMessage('something broke')
+        const ctx = await FlowExecutorContext.empty().upsertStep('step_1', failed)
+
+        expect(await ctx.getStepView('step_1')).toEqual({ output: undefined, error: { message: 'something broke' } })
+    })
+
+    test('getStepView inside a loop iteration exposes the loop view and iteration steps', async () => {
         let ctx = FlowExecutorContext.empty()
         const loop = LoopStepOutput.init({ input: {} }).setItemAndIndex({ item: 'a', index: 1 }).addIteration()
         ctx = await ctx.upsertStep('loop_1', loop)
@@ -58,11 +69,8 @@ describe('FlowExecutorContext with runStateStore', () => {
         ctx = await ctx.upsertStep('inner_1', makePieceStep({ inner: true }))
 
         expect(ctx.getStepOutput('inner_1')?.output).toEqual({ inner: true })
-
-        const state = await ctx.currentState(['loop_1', 'inner_1'])
-
-        expect(state.inner_1).toEqual({ output: { inner: true }, error: undefined })
-        expect(state.loop_1).toMatchObject({ output: { item: 'a', index: 1 } })
+        expect(await ctx.getStepView('inner_1')).toEqual({ output: { inner: true }, error: undefined })
+        expect(await ctx.getStepView('loop_1')).toMatchObject({ output: { item: 'a', index: 1 } })
     })
 
     test('the same step name is isolated per loop iteration path', async () => {
@@ -75,5 +83,6 @@ describe('FlowExecutorContext with runStateStore', () => {
 
         expect(ctx.getStepOutput('step_1')?.output).toEqual({ scope: 'loop' })
         expect(ctx.getStepOutput('step_1', [])?.output).toEqual({ scope: 'root' })
+        expect(await ctx.getStepView('step_1')).toEqual({ output: { scope: 'loop' }, error: undefined })
     })
 })

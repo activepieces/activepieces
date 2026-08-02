@@ -168,8 +168,8 @@ describe('flow with pause', () => {
         expect(pauseResult.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
         })
-        const currentState = await pauseResult.currentState()
-        expect(Object.keys(currentState).length).toBe(1)
+        expect(await pauseResult.getStepView('approval')).toBeDefined()
+        expect(await pauseResult.getStepView('echo_step')).toBeUndefined()
 
         const resumeResult = await flowExecutor.execute({
             action: simplePauseFlow,
@@ -187,15 +187,13 @@ describe('flow with pause', () => {
         expect(resumeResult.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
         })
-        expect(await resumeResult.currentState()).toEqual({
-            'approval': {
-                output: { approved: true },
-                error: undefined,
-            },
-            echo_step: {
-                output: {},
-                error: undefined,
-            },
+        expect(await resumeResult.getStepView('approval')).toEqual({
+            output: { approved: true },
+            error: undefined,
+        })
+        expect(await resumeResult.getStepView('echo_step')).toEqual({
+            output: {},
+            error: undefined,
         })
     })
 
