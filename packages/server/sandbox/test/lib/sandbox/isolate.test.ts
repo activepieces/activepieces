@@ -141,6 +141,12 @@ describe('isolateProcess', () => {
             ])
         })
 
+        it('raises the open-file limit off isolate\'s default of 64', async () => {
+            await callCreate()
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args).toContain('--open-files=1024')
+        })
+
         it('never drops the /etc mount (binds to the bundled etcDir)', async () => {
             await callCreate()
             const args: string[] = spawnMock.mock.calls[0][1]
