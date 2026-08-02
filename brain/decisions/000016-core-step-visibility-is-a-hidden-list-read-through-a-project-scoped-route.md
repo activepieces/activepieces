@@ -21,3 +21,5 @@ The first cut of Code-hiding added a `codeEnabled` boolean and let the builder r
 On an EE platform that turns `managePiecesEnabled` off, a saved set keeps hiding core steps with no admin UI to undo it. That is deliberate parity with pieces, which already behave that way. Making the whole set go inert would mean adding the flag check to `resolveVisibility`, which would un-hide pieces for any platform currently running with the flag off.
 
 Hiding remains a builder-UI affordance, not a policy: `ap_add_step` still accepts `FlowActionType.CODE` and hidden piece names unchecked. Enforcement is a separate change.
+
+A `/current` fetch that fails every retry leaves `config` undefined and every core step visible — the client **fails open**, deliberately. It reveals nothing the write path does not already accept unchecked, and the only fail-closed option is to hold the step selector in its loading state, which trades a cosmetic degradation for a builder outage where nobody can add any step at all.

@@ -80,7 +80,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
     },
 
     async getForProject({ projectId, platformId }: GetForProjectParams): Promise<PieceSet> {
-        const project = await projectRepo().findOneBy({ id: projectId })
+        const project = await projectRepo().findOneBy({ id: projectId, platformId })
         if (isNil(project?.pieceSetId)) {
             return this.getOrCreateDefaultPieceSet(platformId)
         }

@@ -21,6 +21,7 @@ Enterprise auth layer extending CE with SAML 2.0 SSO, Google/GitHub federated OA
 - CE gets OTP flows + RBAC base types; **SSO, managed auth, federated OAuth are EE/Cloud only**.
 - SSO settings page wrapped in `LockedFeatureGuard` keyed on `ssoEnabled`.
 - Managed auth gated separately by `embeddingEnabled` (signing keys). See the Managed Auth page.
+- **`assertPrinicpalAccessToProject` checks platform ownership for `SERVICE` and `ENGINE`, but not for `USER`.** `SERVICE` compares `project.platformId` to `principal.platform.id`; `ENGINE` compares `principal.projectId` to the requested one; `USER` only resolves a project role via `projectMemberService.getRole`, so it proves *membership* and nothing about which platform the project belongs to. A `securityAccess.project` route therefore does **not** guarantee that a handler's `req.principal.platform.id` and its `projectId` describe the same tenant. Any service that takes both as a pair must scope its own queries by `platformId` rather than trusting the route guard — see the piece-sets page for a worked example.
 
 ### Key files
 Entry point: `assertPrinicpalAccessToProject` (yes, misspelled in the source), exported from `project-role/rbac-service.ts` and called from `core/security/v2/authz/authorize.ts` on every project-scoped request.
