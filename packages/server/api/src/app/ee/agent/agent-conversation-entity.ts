@@ -12,6 +12,10 @@ export const ChatConversationEntity = new EntitySchema<ChatConversationWithRelat
     name: 'chat_conversation',
     columns: {
         ...BaseColumnSchemaPart,
+        source: {
+            type: String,
+            nullable: false,
+        },
         platformId: {
             ...ApIdSchema,
             nullable: false,

@@ -194,8 +194,14 @@ export enum ChatConversationStatus {
     ERROR = 'ERROR',
 }
 
+export enum AgentRunSource {
+    CHAT = 'CHAT',
+    FLOW_STEP = 'FLOW_STEP',
+}
+
 export const ChatConversation = z.object({
     ...BaseModelSchema,
+    source: z.enum(AgentRunSource),
     platformId: z.string(),
     projectId: Nullable(z.string()),
     userId: z.string(),
