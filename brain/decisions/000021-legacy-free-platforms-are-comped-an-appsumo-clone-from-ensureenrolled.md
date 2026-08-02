@@ -65,6 +65,29 @@ The enrolled branch therefore also fires the comp, gated so it costs nothing whe
 - **Once-only comes from the projection**, not the claim: a successful comp writes
   `plan = 'free_legacy'`, so the in-memory predicate is false from then on, permanently.
 
+**The lazy sync is still not enough on its own, so there are deliberately two trigger points.**
+`triggerLazyBillingProviderSync` hangs off `getOrCreateForPlatform`, which the billing page, the
+dashboard and both AI usage trackers reach, but the per-production-run credit does not:
+`flow-run-hooks` goes `trackProductionRunCredit` to `trackCredits` to `resolveClientForPlatform` to
+`loadAutumnCreds`, never touching `getOrCreateForPlatform`. A platform running only non-AI flows on a
+schedule, with nobody logging in, was therefore never comped. The check is now also on
+`loadAutumnCreds`, the choke point every EE billing path funnels through, so one production run is
+enough. It is free there for the same reason as at the other site: `getAutumnCredentials` already
+reads the row and was discarding `plan` and `created`.
+
+Both sites share the `runOnceWithin` claim, which lives inside `ensureFreeLegacyComped` rather than at
+either call site, so every caller is bounded by construction instead of by remembering. The cost of
+keeping both is one redundant row read per eligible platform per claim window.
+
+Two consolidations were considered and rejected. Making `getAutumnCredentials` delegate to
+`getOrCreateForPlatform` would give a single trigger point and delete most of this wiring, but it puts
+a `runOnceWithin` Redis round-trip on every production run's credit track, which is the cost the
+`AP_EDITION=ee` run-gate short-circuit already exists to avoid, and it makes `ensureEnrolled` re-enter
+itself through `getAutumnCredentials`, terminating only because the enrol claim is set before the body
+runs. Dropping the lazy-sync trigger and keeping only `loadAutumnCreds` also works, since a plan read
+reaches it through `throttledBillingProviderRefresh`, but a plan-read-only platform would then wait
+for its next entitlements refresh (up to 15 min) instead of being checked on the spot.
+
 `isFreeLegacyEligible` lives in `@activepieces/shared` rather than beside the comp because both the
 in-memory gate in `platform-plan.service.ts` and the re-check inside the lock in `autumn-utils.ts`
 need it, and `autumn-utils` already imports `platformPlanService` (importing back would be circular).
