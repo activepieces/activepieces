@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 import { isNil, isObject } from '@activepieces/core-utils'
-import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { DateRangeValue, getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
 import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, PropertySettings } from '@activepieces/shared'
 import { dynamicPropKeys } from '../helper/dynamic-prop-keys'
 import { processors } from './processors'
@@ -166,7 +166,7 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
         case PropertyType.DATE_TIME:
             return typeof value === 'string' ? [] : [`Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`]
         case PropertyType.DATE_RANGE:
-            return isObject(value) ? [] : [`Expected date range, received: ${originalValue}`]
+            return DateRangeValue.safeParse(value).success ? [] : [`Expected date range, received: ${originalValue}`]
         case PropertyType.ARRAY:
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
