@@ -18,29 +18,40 @@ let statements: PreparedStatements | null = null
 
 export const runStateStore = {
     init({ runId, flowVersionId }: { runId: string, flowVersionId: string }): void {
-        const base = getBasePath(flowVersionId)
+        runStateStore.dispose()
         try {
+            const base = getBasePath(flowVersionId)
             fs.mkdirSync(base, { recursive: true })
-            dbPath = path.join(base, `${runId}.sqlite`)
-            db = new DatabaseSync(dbPath)
+            const filePath = path.join(base, `${runId}.sqlite`)
+            fs.rmSync(filePath, { force: true })
+            db = new DatabaseSync(filePath)
+            db.exec(`
+                CREATE TABLE steps (
+                    name       TEXT    NOT NULL,
+                    path       TEXT    NOT NULL,
+                    output     BLOB    NOT NULL,
+                    size_bytes INTEGER NOT NULL,
+                    PRIMARY KEY (name, path)
+                )
+            `)
+            statements = {
+                put: db.prepare('INSERT OR REPLACE INTO steps (name, path, output, size_bytes) VALUES (?, ?, jsonb(?), ?)'),
+                getAtPath: db.prepare('SELECT name, json(output) AS output FROM steps WHERE path = ?'),
+                getStepOutput: db.prepare('SELECT json(output) AS output FROM steps WHERE name = ? AND path = ?'),
+                getStepSize: db.prepare('SELECT size_bytes FROM steps WHERE name = ? AND path = ?'),
+            }
+            dbPath = filePath
         }
         catch {
-            return
-        }
-        db.exec(`
-            CREATE TABLE steps (
-                name       TEXT    NOT NULL,
-                path       TEXT    NOT NULL,
-                output     BLOB    NOT NULL,
-                size_bytes INTEGER NOT NULL,
-                PRIMARY KEY (name, path)
-            )
-        `)
-        statements = {
-            put: db.prepare('INSERT OR REPLACE INTO steps (name, path, output, size_bytes) VALUES (?, ?, jsonb(?), ?)'),
-            getAtPath: db.prepare('SELECT name, json(output) AS output FROM steps WHERE path = ?'),
-            getStepOutput: db.prepare('SELECT json(output) AS output FROM steps WHERE name = ? AND path = ?'),
-            getStepSize: db.prepare('SELECT size_bytes FROM steps WHERE name = ? AND path = ?'),
+            try {
+                db?.close()
+            }
+            catch {
+                // ignore close errors
+            }
+            db = null
+            statements = null
+            dbPath = null
         }
     },
 
@@ -58,12 +69,12 @@ export const runStateStore = {
         const rows = statements.getAtPath.all(stepPath) as Array<{ name: string, output: string }>
         const result: Record<string, StepOutput> = {}
         for (const row of rows) {
-            result[row.name] = JSON.parse(row.output) as StepOutput
+            result[row.name] = JSON.parse(row.output)
         }
         return result
     },
 
-    getStepOutput({ name, stepPath }: { name: string, stepPath: string }): unknown {
+    getStepOutput({ name, stepPath }: { name: string, stepPath: string }): StepOutput | undefined {
         if (isNil(statements)) {
             return undefined
         }

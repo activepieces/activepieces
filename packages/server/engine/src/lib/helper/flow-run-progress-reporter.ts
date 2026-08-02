@@ -3,7 +3,7 @@ import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FLOW_RUN_LOG_MANIFEST_V3, FlowActionType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FlowActionType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
@@ -109,7 +109,6 @@ export const flowRunProgressReporter = {
                     steps: fillOutputsFromStore(flowExecutorContext.steps, []),
                     tags: Array.from(flowExecutorContext.tags),
                 },
-                version: FLOW_RUN_LOG_MANIFEST_V3,
             })
             const executionState = await zstdCompress(serialized)
 
@@ -232,15 +231,15 @@ function fillOutputsFromStore(steps: Readonly<Record<string, StepOutput>>, pathP
     const result: Record<string, StepOutput> = {}
     for (const [name, step] of Object.entries(steps)) {
         if (step.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
-            const loopOutput = step.output as { iterations: Array<Record<string, StepOutput>> }
-            const rebuiltIterations = loopOutput.iterations.map((iterSteps, idx) =>
-                fillOutputsFromStore(iterSteps, [...pathPrefix, [name, idx]]),
-            )
-            result[name] = { ...step, output: { ...loopOutput, iterations: rebuiltIterations } } as StepOutput
+            result[name] = step.setOutput({
+                ...step.output,
+                iterations: step.output.iterations.map((iterSteps, idx) =>
+                    fillOutputsFromStore(iterSteps, [...pathPrefix, [name, idx]]),
+                ),
+            })
         }
         else {
-            const stored = runStateStore.getStepOutput({ name, stepPath: JSON.stringify(pathPrefix) }) as StepOutput | undefined
-            result[name] = stored ?? step
+            result[name] = runStateStore.getStepOutput({ name, stepPath: JSON.stringify(pathPrefix) }) ?? step
         }
     }
     return result
@@ -272,4 +271,3 @@ type ExtractStepResponse = {
     runId: string
     stepName?: string
 }
-

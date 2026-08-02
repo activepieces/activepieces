@@ -75,6 +75,40 @@ describe('runStateStore', () => {
             const expectedPath = path.join(process.env.AP_FLOWS_CACHE_PATH!, FLOW_VERSION_ID, `${RUN_ID}.sqlite`)
             expect(fs.existsSync(expectedPath)).toBe(true)
         })
+
+        test('re-init with the same run id without dispose succeeds and starts empty', () => {
+            putStep({ name: 'step_1', output: { a: 1 } })
+            runStateStore.init({ runId: RUN_ID, flowVersionId: FLOW_VERSION_ID })
+            expect(runStateStore.isInitialized()).toBe(true)
+            expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeUndefined()
+            putStep({ name: 'step_2', output: { b: 2 } })
+            expect(runStateStore.getStepOutput({ name: 'step_2', stepPath: ROOT_PATH })).toBeDefined()
+        })
+
+        test('init succeeds over a leftover stale file from a killed run', () => {
+            runStateStore.dispose()
+            const filePath = path.join(process.env.AP_FLOWS_CACHE_PATH!, FLOW_VERSION_ID, `${RUN_ID}.sqlite`)
+            fs.writeFileSync(filePath, 'not a sqlite database')
+            runStateStore.init({ runId: RUN_ID, flowVersionId: FLOW_VERSION_ID })
+            expect(runStateStore.isInitialized()).toBe(true)
+            putStep({ name: 'step_1', output: { a: 1 } })
+            expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeDefined()
+        })
+
+        test('init failure leaves the store uninitialized and all operations safe', () => {
+            runStateStore.dispose()
+            const savedCachePath = process.env.AP_FLOWS_CACHE_PATH
+            delete process.env.AP_FLOWS_CACHE_PATH
+            try {
+                expect(() => runStateStore.init({ runId: RUN_ID, flowVersionId: FLOW_VERSION_ID })).not.toThrow()
+                expect(runStateStore.isInitialized()).toBe(false)
+                expect(() => putStep({ name: 'step_1', output: { a: 1 } })).not.toThrow()
+                expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeUndefined()
+            }
+            finally {
+                process.env.AP_FLOWS_CACHE_PATH = savedCachePath
+            }
+        })
     })
 
     describe('put and getStepOutput', () => {

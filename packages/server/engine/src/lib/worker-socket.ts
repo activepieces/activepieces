@@ -6,7 +6,6 @@ import {
     EngineOperationType,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
-    ExecuteFlowOperation,
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
@@ -88,9 +87,8 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
-                if (operationType === EngineOperationType.EXECUTE_FLOW) {
-                    const flowOp = operation as ExecuteFlowOperation
-                    runStateStore.init({ runId: flowOp.flowRunId, flowVersionId: flowOp.flowVersion.id })
+                if (operationType === EngineOperationType.EXECUTE_FLOW && 'flowRunId' in operation && 'flowVersion' in operation) {
+                    runStateStore.init({ runId: operation.flowRunId, flowVersionId: operation.flowVersion.id })
                 }
                 flowRunProgressReporter.init()
                 memBench.runStart(operationType)
@@ -128,7 +126,6 @@ export const workerSocket = {
         notifyClient = undefined
     },
 }
-
 
 function buildSocketOptions(sandboxId: string): Partial<ManagerOptions & SocketOptions> {
     const base: Partial<ManagerOptions & SocketOptions> = {

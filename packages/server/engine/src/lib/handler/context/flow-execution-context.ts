@@ -132,7 +132,7 @@ export class FlowExecutorContext {
             })
         }
         const stepPath = JSON.stringify(this.currentPath.path)
-        if (finalized.type !== FlowActionType.LOOP_ON_ITEMS) {
+        if (runStateStore.isInitialized() && finalized.type !== FlowActionType.LOOP_ON_ITEMS) {
             const previousSizeBytes = runStateStore.getStepSize({ name: stepName, stepPath })
             const nextSizeBytes = sizeofUtils.recursiveSizeof(finalized)
             runStateStore.put({ name: stepName, stepPath, stepOutput: finalized, sizeBytes: nextSizeBytes })
@@ -165,7 +165,7 @@ export class FlowExecutorContext {
         if (isNil(step) || step.type === FlowActionType.LOOP_ON_ITEMS) {
             return step
         }
-        const stored = runStateStore.getStepOutput({ name: stepName, stepPath: JSON.stringify(path ?? this.currentPath.path) }) as StepOutput | undefined
+        const stored = runStateStore.getStepOutput({ name: stepName, stepPath: JSON.stringify(path ?? this.currentPath.path) })
         return stored ?? step
     }
 
@@ -235,9 +235,9 @@ async function buildStateFromStore(params: {
     const { currentPath, referencedStepNames, steps, engineApi, cache } = params
 
     let result: Record<string, unknown> = {}
-    let targetMap = steps as Record<string, StepOutput>
+    let targetMap: Readonly<Record<string, StepOutput>> = steps
 
-    result = { ...result, ...await extractStepView(runStateStore.getAtPath({ stepPath: '[]' }), engineApi, cache) }
+    result = { ...result, ...await extractStepView(getStoredStepsAtPath({ stepPath: '[]', referencedStepNames }), engineApi, cache) }
     result = { ...result, ...await extractLoopStepView(targetMap, engineApi, cache) }
 
     for (let level = 0; level < currentPath.path.length; level++) {
@@ -246,10 +246,10 @@ async function buildStateFromStore(params: {
         if (!stepOutput?.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
             throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
         }
-        targetMap = stepOutput.output.iterations[iteration] as Record<string, StepOutput>
+        targetMap = stepOutput.output.iterations[iteration]
 
         const pathAtLevel = currentPath.path.slice(0, level + 1)
-        result = { ...result, ...await extractStepView(runStateStore.getAtPath({ stepPath: JSON.stringify(pathAtLevel) }), engineApi, cache) }
+        result = { ...result, ...await extractStepView(getStoredStepsAtPath({ stepPath: JSON.stringify(pathAtLevel), referencedStepNames }), engineApi, cache) }
         result = { ...result, ...await extractLoopStepView(targetMap, engineApi, cache) }
     }
 
@@ -259,7 +259,21 @@ async function buildStateFromStore(params: {
     return result
 }
 
-async function extractLoopStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<Record<string, unknown>> {
+function getStoredStepsAtPath({ stepPath, referencedStepNames }: { stepPath: string, referencedStepNames: string[] | undefined }): Record<string, StepOutput> {
+    if (isNil(referencedStepNames)) {
+        return runStateStore.getAtPath({ stepPath })
+    }
+    const result: Record<string, StepOutput> = {}
+    for (const name of referencedStepNames) {
+        const stored = runStateStore.getStepOutput({ name, stepPath })
+        if (!isNil(stored)) {
+            result[name] = stored
+        }
+    }
+    return result
+}
+
+async function extractLoopStepView(steps: Readonly<Record<string, StepOutput>>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {}
     for (const [stepName, step] of Object.entries(steps)) {
         if (step.type === FlowActionType.LOOP_ON_ITEMS) {
