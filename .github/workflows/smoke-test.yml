@@ -7,19 +7,29 @@ on:
 jobs:
   smoke-test:
     concurrency:
-      group: smoke-test-${{ matrix.arch }}
+      group: smoke-test-${{ matrix.arch }}-${{ matrix.executionMode }}
       cancel-in-progress: true
     strategy:
       matrix:
         include:
           - runner: depot-ubuntu-24.04
             arch: amd64
+            executionMode: SANDBOX_CODE_ONLY
           - runner: depot-ubuntu-24.04-arm
             arch: arm64
+            executionMode: SANDBOX_CODE_ONLY
+          # SANDBOX_PROCESS is the only mode that exercises the isolate binary,
+          # which is a committed prebuilt artifact and differs per architecture.
+          - runner: depot-ubuntu-24.04
+            arch: amd64
+            executionMode: SANDBOX_PROCESS
+          - runner: depot-ubuntu-24.04-arm
+            arch: arm64
+            executionMode: SANDBOX_PROCESS
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 35
     env:
-      AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
+      AP_EXECUTION_MODE: ${{ matrix.executionMode }}
       AP_WORKER_CONCURRENCY: 1
 
     steps:
