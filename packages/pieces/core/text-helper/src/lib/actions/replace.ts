@@ -1,9 +1,14 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const replace = createAction({
-  audience: 'human',
+  audience: 'both',
   description:
     'Replaces all instances of any word, character or phrase in text, with another.',
+  aiMetadata: {
+    description:
+      'Substitutes matches of a search pattern inside a text with a replacement value, either every occurrence (default) or only the first match. Use it to rewrite or delete substrings - prefer Find or Find All when you only need to locate matches, and Split when you want the surrounding segments. The search value is always compiled as a regular expression, so regex metacharacters must be escaped, and an empty replacement deletes the matches; deterministic and idempotent.',
+    idempotent: true,
+  },
   displayName: 'Replace',
   name: 'replace',
   errorHandlingOptions: {
