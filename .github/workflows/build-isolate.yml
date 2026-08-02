@@ -7,6 +7,9 @@ name: Build isolate sandbox binaries
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - fix/isolate-open-files
 
 permissions:
   contents: read
@@ -36,6 +39,8 @@ jobs:
             elf_machine: aarch64
             expected_sha256: 621d7653e56243eb3750662454a4adf926d8a8af116b7f679500086be0639689
     steps:
+      - uses: actions/checkout@v5
+
       - name: Build isolate inside the runtime base image
         run: |
           mkdir -p out
@@ -99,6 +104,35 @@ jobs:
                   || { echo "FAIL: build is not reproducible against the pinned hash"; exit 1; }
               fi
             '
+
+      - name: Functionally verify the sandbox applies the limit
+        run: |
+          cp packages/server/api/src/assets/default.cf out/default.cf
+          docker run --rm --privileged \
+            -e ASSET='${{ matrix.asset }}' \
+            -v "$PWD/out:/out" \
+            "$BUILDER_IMAGE" \
+            bash -euo pipefail -c '
+              apt-get update >/dev/null
+              apt-get install -y --no-install-recommends libcap2 >/dev/null
+              install -D /out/default.cf /usr/local/etc/isolate
+              mkdir -p /var/local/lib/isolate
+
+              /out/$ASSET --box-id=0 --cleanup >/dev/null 2>&1 || true
+              /out/$ASSET --box-id=0 --init >/dev/null
+
+              # Differential: parsing the flag is not the same as applying it.
+              fallback=$(/out/$ASSET --box-id=0 --processes --run -- /bin/sh -c "ulimit -Sn" | head -1)
+              raised=$(/out/$ASSET --box-id=0 --processes --open-files=1024 --run -- /bin/sh -c "ulimit -Sn" | head -1)
+              /out/$ASSET --box-id=0 --cleanup >/dev/null 2>&1 || true
+
+              echo "isolate default: $fallback   with --open-files=1024: $raised"
+              [ "$fallback" = "64" ] \
+                || { echo "FAIL: expected isolate default of 64, got $fallback"; exit 1; }
+              [ "$raised" = "1024" ] \
+                || { echo "FAIL: --open-files parsed but not applied, got $raised"; exit 1; }
+            '
+          rm -f out/default.cf
 
       - uses: actions/upload-artifact@v4
         with:
