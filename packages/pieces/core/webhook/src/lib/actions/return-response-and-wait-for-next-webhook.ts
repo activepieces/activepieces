@@ -18,10 +18,11 @@ import {
 
   const RESUME_WEBHOOK_HEADER = 'x-activepieces-resume-webhook-url';
   export const returnResponseAndWaitForNextWebhook = createAction({
-    audience: 'human',
+    audience: 'both',
     name: 'return_response_and_wait_for_next_webhook',
     displayName: 'Respond and Wait for Next Webhook',
     description: 'return a response and wait for the next webhook to resume the flow',
+    aiMetadata: { description: 'Replies to a webhook caller with a JSON, Raw, or Redirect body and attaches an x-activepieces-resume-webhook-url header holding a freshly minted callback URL, then suspends the run until that URL is called. Pick it for a multi-request handshake inside one flow; prefer plain Return Response when no follow-up call is needed, or Wait for Approval or the Delay piece when a human or a timer resumes the flow. Not idempotent: each execution creates a new waitpoint with a different resume URL and suspends the run again.', idempotent: false },
     props: {
         markdown: Property.MarkDown({
             value: `**Respond and Wait for Next Webhook**<br> 

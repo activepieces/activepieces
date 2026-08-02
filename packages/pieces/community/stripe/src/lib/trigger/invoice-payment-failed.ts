@@ -17,6 +17,7 @@ type StripeWebhookPayload = {
   };
 };
 
+import { invoiceOutputSchema } from '../output-schemas';
 export const stripeInvoicePaymentFailed = createTrigger({
   auth: stripeAuth,
   name: 'invoice_payment_failed',
@@ -35,6 +36,7 @@ export const stripeInvoicePaymentFailed = createTrigger({
     }),
   },
 
+  outputSchema: invoiceOutputSchema,
   sampleData: {
     id: 'in_1MtHbELkdIwHu7ixl4OzzPMv',
     object: 'invoice',

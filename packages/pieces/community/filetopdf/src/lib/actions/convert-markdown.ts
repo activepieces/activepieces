@@ -18,8 +18,8 @@ export const convertMarkdown = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Renders a raw Markdown string to PDF, applying a default stylesheet when no CSS is supplied (custom CSS overrides it). Choose this when the agent holds Markdown text it generated or assembled in memory, rather than a file, URL, or HTML. Requires the Markdown content as input; rendering is deterministic with no stored side effect, so re-running on the same input is safe and idempotent.',
-    idempotent: true,
+      'Renders a raw Markdown string to PDF, applying a default stylesheet when no CSS is supplied (custom CSS overrides it). Choose this when the agent holds Markdown text it generated or assembled in memory, rather than a file, URL, or HTML. Requires the Markdown content as input. Not idempotent: each call performs a fresh remote render on the FileToPDF service that produces a new file and consumes account credits.',
+    idempotent: false,
   },
   props: {
     markdown: Property.LongText({

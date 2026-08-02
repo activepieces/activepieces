@@ -4,10 +4,15 @@ import { propsValidation } from '@activepieces/pieces-common';
 import { z, type ZodTypeAny } from 'zod';
 
 export const markdownToHTML = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'markdown_to_html',
   displayName: 'Markdown to HTML',
   description: 'Convert markdown to HTML',
+  aiMetadata: {
+    description:
+      'Renders a Markdown string as HTML, with a selectable Markdown flavor (GitHub, original, or vanilla). Use it when producing HTML for an email body or web output; use HTML to Markdown for the reverse direction. Minimum header level must be between 1 and 6 or the action fails input validation; deterministic and idempotent.',
+    idempotent: true,
+  },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,
