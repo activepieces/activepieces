@@ -2,9 +2,10 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import jimp from 'jimp';
 
 export const compressImage = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'compress_image',
   description: 'Compresses an image',
+  aiMetadata: { description: 'Re-encodes an image file at a chosen quality level (high ~90 or lossy ~60), keeping the original pixel dimensions and the source file format, so pick it to shrink file size only - use resize_image to change dimensions or convert_image_format to change format. Requires an image file plus a quality and format choice, but the format choice only sets the output file extension while the pixels are re-encoded in the source format, and quality applies only to lossy JPEG-style encoding; deterministic and idempotent.', idempotent: true },
   displayName: 'Compresses an image',
   props: {
     image: Property.File({
