@@ -2,9 +2,11 @@ import { unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { PiecePackage } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../types'
+import { actionRunCache } from './action-run-cache'
 import { cacheUtils } from './cache-paths'
 import { engineInstaller } from './engine/engine-installer'
 import { codeBuilder } from './flow/code/code-builder'
+import { codeCache } from './flow/code/code-cache'
 import { pieceInstaller } from './pieces/piece-installer'
 
 export const localExecutionCache = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
@@ -33,6 +35,7 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                                 artifact,
                                 codesFolderPath: codeCachePath,
                             })
+                            await actionRunCache.touch(codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId))
                         }
                         log.info({ path: codeCachePath }, 'Installed code in sandbox')
                     },

@@ -50,12 +50,15 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         log.debug({ sourceCode, name, codePath }, 'Processing code step')
 
         const currentHash = await cryptoUtils.hashObject(sourceCode)
+        const compiledArtifactPresent = await fileSystemUtils.fileExists(
+            codeCache(codesFolderPath).compiledStepPath({ flowVersionId, stepName: name }),
+        )
         const cache = cacheState(codePath)
         let buildStatus: CodeBuildStatus = 'success'
         const { cacheHit } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
-                return value !== currentHash
+                return !compiledArtifactPresent || value !== currentHash
             },
             installFn: async () => {
                 const { code, packageJson } = sourceCode

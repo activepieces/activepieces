@@ -59,6 +59,9 @@ type StubRuntime = {
 const createdRuntimes: StubRuntime[] = []
 
 vi.mock('@activepieces/sandbox', () => ({
+    actionRunCache: { sweep: vi.fn().mockResolvedValue(undefined) },
+    ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS: 60_000,
+    ACTION_RUN_CACHE_SWEEP_INTERVAL_MS: 1_800_000,
     createResolver: vi.fn(() => ({})),
     createSandboxRuntime: vi.fn(() => {
         const rt: StubRuntime = {

@@ -1,5 +1,5 @@
 import { spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { CodeArtifact } from '@activepieces/sandbox'
+import { actionRunCache, CodeArtifact } from '@activepieces/sandbox'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { DEFAULT_MCP_DATA, EngineOperationType, EngineResponseStatus, ExecuteActionJobData, FlowActionType, WorkerJobType } from '@activepieces/shared'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
@@ -10,7 +10,7 @@ const ACTION_RUN_ACTION_TIMEOUT_SECONDS = 120
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_ACTION,
     async execute(ctx: JobContext, data: ExecuteActionJobData): Promise<SynchronousJobResult> {
-        const { codes, namespace: codeNamespace } = await resolveCodeStep(data.step)
+        const { codes, namespace: codeNamespace } = await resolveCodeStep({ step: data.step, platformId: data.platformId })
         const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, pieces: data.piece ? [data.piece] : [], codes })
         if (resolved.kind !== 'ready') {
             throw new Error(`Unexpected resolve outcome "${resolved.kind}" for action-run action job`)
@@ -58,11 +58,12 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
     },
 }
 
-async function resolveCodeStep(step: ExecuteActionJobData['step']): Promise<{ codes: CodeArtifact[], namespace?: string }> {
+async function resolveCodeStep({ step, platformId }: ResolveCodeStepParams): Promise<{ codes: CodeArtifact[], namespace?: string }> {
     if (step.type !== FlowActionType.CODE) {
         return { codes: [] }
     }
-    const namespace = await cryptoUtils.hashObject(step.settings.sourceCode)
+    const sourceHash = await cryptoUtils.hashObject(step.settings.sourceCode)
+    const namespace = actionRunCache.namespace({ platformId, sourceHash })
     return {
         namespace,
         codes: [{
@@ -72,4 +73,9 @@ async function resolveCodeStep(step: ExecuteActionJobData['step']): Promise<{ co
             flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
         }],
     }
+}
+
+type ResolveCodeStepParams = {
+    step: ExecuteActionJobData['step']
+    platformId: string
 }
