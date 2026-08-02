@@ -38,13 +38,17 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
             }
 
             const platformIds = [...licenseKeysByPlatform.keys()]
-            const dayStart = utcMidnight(1)
-            const dayEnd = utcMidnight(0)
+            const previousDayStartInclusive = utcMidnight(1)
+            const previousDayEndExclusive = utcMidnight(0)
 
             const activeFlowsByPlatform = await queryActiveFlowsByPlatform(platformIds)
             const usersByPlatform = await queryUsersByPlatform(platformIds)
             const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)
-            const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform(platformIds, dayStart, dayEnd)
+            const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform({
+                platformIds,
+                dayStartInclusive: previousDayStartInclusive,
+                dayEndExclusive: previousDayEndExclusive,
+            })
             const reportedAt = new Date().toISOString()
 
             for (const platformBatch of chunk([...licenseKeysByPlatform], BILLING_EVENTS_FLUSH_BATCH_SIZE)) {
@@ -79,7 +83,7 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
 })
 
 async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
-    const rows = await flowRepo()
+    const enabledFlowCountPerPlatform = await flowRepo()
         .createQueryBuilder('flow')
         .innerJoin('flow.project', 'project')
         .select('project.platformId', 'platformId')
@@ -88,26 +92,26 @@ async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<st
         .andWhere('project.platformId IN (:...platformIds)', { platformIds })
         .andWhere('project.deleted IS NULL')
         .groupBy('project.platformId')
-        .getRawMany<{ platformId: string, count: string }>()
+        .getRawMany<PlatformCountRow>()
 
-    return toCountMap(rows)
+    return toCountByPlatformId(enabledFlowCountPerPlatform)
 }
 
 async function queryUsersByPlatform(platformIds: string[]): Promise<Map<string, number>> {
-    const rows = await userRepo()
+    const activeUserCountPerPlatform = await userRepo()
         .createQueryBuilder('user')
         .select('user.platformId', 'platformId')
         .addSelect('COUNT(*)', 'count')
         .where('user.platformId IN (:...platformIds)', { platformIds })
         .andWhere('user.status = :status', { status: UserStatus.ACTIVE })
         .groupBy('user.platformId')
-        .getRawMany<{ platformId: string, count: string }>()
+        .getRawMany<PlatformCountRow>()
 
-    return toCountMap(rows)
+    return toCountByPlatformId(activeUserCountPerPlatform)
 }
 
 async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
-    const rows = await projectRepo()
+    const teamProjectCountPerPlatform = await projectRepo()
         .createQueryBuilder('project')
         .select('project.platformId', 'platformId')
         .addSelect('COUNT(*)', 'count')
@@ -115,9 +119,9 @@ async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<s
         .andWhere('project.platformId IN (:...platformIds)', { platformIds })
         .andWhere('project.deleted IS NULL')
         .groupBy('project.platformId')
-        .getRawMany<{ platformId: string, count: string }>()
+        .getRawMany<PlatformCountRow>()
 
-    return toCountMap(rows)
+    return toCountByPlatformId(teamProjectCountPerPlatform)
 }
 
 /**
@@ -128,8 +132,12 @@ async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<s
  * cloud-wide; both trip the DB statement timeout. The projectIds are chunked so each aggregate stays
  * small and bounded. Projects are mapped back to platforms in app code.
  */
-async function queryDailyExecutionsByPlatform(platformIds: string[], dayStart: string, dayEnd: string): Promise<Map<string, DailyExecutionCount[]>> {
-    const projects = await projectRepo()
+async function queryDailyExecutionsByPlatform({ platformIds, dayStartInclusive, dayEndExclusive }: {
+    platformIds: string[]
+    dayStartInclusive: string
+    dayEndExclusive: string
+}): Promise<Map<string, DailyExecutionCount[]>> {
+    const licensedProjects = await projectRepo()
         .createQueryBuilder('project')
         .select('project.id', 'projectId')
         .addSelect('project.platformId', 'platformId')
@@ -137,58 +145,60 @@ async function queryDailyExecutionsByPlatform(platformIds: string[], dayStart: s
         .andWhere('project.deleted IS NULL')
         .getRawMany<{ projectId: string, platformId: string }>()
 
-    const platformByProject = new Map(projects.map((project): [string, string] => [project.projectId, project.platformId]))
-    const countsByPlatformDay = new Map<string, Map<string, number>>()
+    const platformIdByProjectId = new Map(licensedProjects.map((project): [string, string] => [project.projectId, project.platformId]))
+    const runCountByPlatformIdAndRunDay = new Map<string, Map<string, number>>()
 
-    for (const projectIds of chunk(projects.map((project) => project.projectId), EXECUTIONS_PROJECT_CHUNK_SIZE)) {
+    for (const projectIdChunk of chunk(licensedProjects.map((project) => project.projectId), EXECUTIONS_PROJECT_CHUNK_SIZE)) {
         // Throttle before every chunk so a large report doesn't monopolise the DB connection pool /
         // Postgres, leaving capacity for live request traffic while the (background) report runs.
         await sleep(EXECUTIONS_CHUNK_DELAY_MS)
 
-        const rows = await flowRunRepo()
+        const runCountsPerProjectPerRunDay = await flowRunRepo()
             .createQueryBuilder('flow_run')
             .select('flow_run.projectId', 'projectId')
-            .addSelect('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')', 'day')
-            .addSelect('COUNT(*)', 'count')
-            .where('flow_run.projectId IN (:...projectIds)', { projectIds })
+            .addSelect('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')', 'runDay')
+            .addSelect('COUNT(*)', 'runCount')
+            .where('flow_run.projectId IN (:...projectIdChunk)', { projectIdChunk })
             .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
-            .andWhere('flow_run.created >= :dayStart', { dayStart })
-            .andWhere('flow_run.created < :dayEnd', { dayEnd })
+            .andWhere('flow_run.created >= :dayStartInclusive', { dayStartInclusive })
+            .andWhere('flow_run.created < :dayEndExclusive', { dayEndExclusive })
             .groupBy('flow_run.projectId')
             .addGroupBy('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')')
-            .getRawMany<{ projectId: string, day: string, count: string }>()
+            .getRawMany<{ projectId: string, runDay: string, runCount: string }>()
 
-        for (const row of rows) {
-            const platformId = platformByProject.get(row.projectId)
+        for (const projectRunCount of runCountsPerProjectPerRunDay) {
+            const platformId = platformIdByProjectId.get(projectRunCount.projectId)
             if (!platformId) {
                 continue
             }
-            const dayCounts = countsByPlatformDay.get(platformId) ?? new Map<string, number>()
-            dayCounts.set(row.day, (dayCounts.get(row.day) ?? 0) + Number(row.count))
-            countsByPlatformDay.set(platformId, dayCounts)
+            const runCountByRunDay = runCountByPlatformIdAndRunDay.get(platformId) ?? new Map<string, number>()
+            const runCountSoFar = runCountByRunDay.get(projectRunCount.runDay) ?? 0
+            runCountByRunDay.set(projectRunCount.runDay, runCountSoFar + Number(projectRunCount.runCount))
+            runCountByPlatformIdAndRunDay.set(platformId, runCountByRunDay)
         }
     }
 
-    const map = new Map<string, DailyExecutionCount[]>()
-    for (const [platformId, dayCounts] of countsByPlatformDay) {
-        map.set(platformId, [...dayCounts.entries()].map(([date, count]): DailyExecutionCount => ({ date, count })))
+    const dailyExecutionsByPlatformId = new Map<string, DailyExecutionCount[]>()
+    for (const [platformId, runCountByRunDay] of runCountByPlatformIdAndRunDay) {
+        const dailyExecutions = [...runCountByRunDay.entries()].map(([date, count]): DailyExecutionCount => ({ date, count }))
+        dailyExecutionsByPlatformId.set(platformId, dailyExecutions)
     }
-    return map
+    return dailyExecutionsByPlatformId
 }
 
 async function queryLicenseKeysByPlatform(): Promise<Map<string, string>> {
-    const rows = await platformPlanRepo()
+    const licensedPlatforms = await platformPlanRepo()
         .createQueryBuilder('platform_plan')
         .select('platform_plan.platformId', 'platformId')
         .addSelect('platform_plan.licenseKey', 'licenseKey')
         .where('platform_plan.licenseKey IS NOT NULL')
         .getRawMany<{ platformId: string, licenseKey: string }>()
 
-    return new Map(rows.map((row): [string, string] => [row.platformId, row.licenseKey]))
+    return new Map(licensedPlatforms.map((licensedPlatform): [string, string] => [licensedPlatform.platformId, licensedPlatform.licenseKey]))
 }
 
-function toCountMap(rows: { platformId: string, count: string }[]): Map<string, number> {
-    return new Map(rows.map((row): [string, number] => [row.platformId, Number(row.count)]))
+function toCountByPlatformId(countPerPlatform: PlatformCountRow[]): Map<string, number> {
+    return new Map(countPerPlatform.map((platformCount): [string, number] => [platformCount.platformId, Number(platformCount.count)]))
 }
 
 function buildSnapshotBody({
@@ -218,6 +228,11 @@ function buildSnapshotBody({
 
 function utcMidnight(daysAgo: number): string {
     return dayjs.utc().startOf('day').subtract(daysAgo, 'day').toISOString()
+}
+
+type PlatformCountRow = {
+    platformId: string
+    count: string
 }
 
 type DailyExecutionCount = {
