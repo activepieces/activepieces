@@ -8,8 +8,8 @@ import { evalPrompts } from './prompts'
 import { replayExecutor, ReplayExecutor } from './replay-executor'
 import { EvalReportEntry } from './report'
 import { transcriptAssertions } from './transcript-assertions'
-import { chatWorkerTools } from '../../../../src/lib/execute/jobs/ee/chat/chat-worker-tools'
-import { ChatTurnResult, runChatTurn } from '../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { agentWorkerTools } from '../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
+import { AgentTurnResult, runAgentTurn } from '../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 const EVAL_PROJECTS = [{ id: 'eval-project', displayName: 'Eval Project', type: 'TEAM' }]
 
@@ -103,7 +103,7 @@ async function evaluateFixture({ fixture, systemPrompt, guides }: { fixture: Cha
     }
 }
 
-async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown> }): Promise<{ result: ChatTurnResult, text: string }> {
+async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown> }): Promise<{ result: AgentTurnResult, text: string }> {
     const replay = replayExecutor.create({ recordedToolCalls: fixture.recordedToolCalls })
     const phaseState: { phase: ChatPhase } = { phase: 'discovery' }
     const tools = buildEvalToolSet({ replay, guides: guides ?? evalPrompts.loadGuides(), phaseState })
@@ -114,7 +114,7 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
     ]
 
     const capturedErrors: unknown[] = []
-    const { data: result, error: turnError } = await tryCatch(() => runChatTurn({
+    const { data: result, error: turnError } = await tryCatch(() => runAgentTurn({
         model,
         provider: fixture.model.provider,
         systemPrompt: systemPrompt ?? evalPrompts.loadSystemPrompt(),
@@ -146,22 +146,22 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
 }
 
 function buildEvalToolSet({ replay, guides, phaseState }: { replay: ReplayExecutor, guides: Record<string, string>, phaseState: { phase: ChatPhase } }): ToolSet {
-    const eventEmitter = chatWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: 'eval-user', conversationId: 'eval-conversation', log: silentLog })
+    const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: 'eval-user', conversationId: 'eval-conversation', log: silentLog })
     const waitForApproval = async () => ({ approved: true })
     const noopGate = async () => {}
 
     return {
-        ...chatWorkerTools.createLocalTools({ onSetProjectContext: async () => {}, projects: EVAL_PROJECTS }),
-        ...chatWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: 1_000, onConnectionSelected: async () => {}, onGateOpened: noopGate, log: silentLog }),
-        ...chatWorkerTools.createCrossProjectTools({ executeTool: replay.executeTool, eventEmitter, waitForApproval, onGateOpened: noopGate, guides }),
-        ...chatWorkerTools.createThinkingTools(),
-        ...chatWorkerTools.createPhaseTools({ onPhaseChange: (phase) => { phaseState.phase = phase } }),
+        ...agentWorkerTools.createLocalTools({ onSetProjectContext: async () => {}, projects: EVAL_PROJECTS }),
+        ...agentWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: 1_000, onConnectionSelected: async () => {}, onGateOpened: noopGate, log: silentLog }),
+        ...agentWorkerTools.createCrossProjectTools({ executeTool: replay.executeTool, eventEmitter, waitForApproval, onGateOpened: noopGate, guides }),
+        ...agentWorkerTools.createThinkingTools(),
+        ...agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => { phaseState.phase = phase } }),
     }
 }
 
 // Render parts in the order the model produced them — text and tool calls interleaved —
 // so the judge sees the real sequence, not all text then all tools.
-function renderTranscript(result: ChatTurnResult): string {
+function renderTranscript(result: AgentTurnResult): string {
     return result.uiParts
         .map((part) => {
             if (part.type === PersistedChatPartType.TEXT) {

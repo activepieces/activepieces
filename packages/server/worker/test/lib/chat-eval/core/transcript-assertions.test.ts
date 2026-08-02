@@ -1,17 +1,17 @@
 import { PersistedChatPart, PersistedChatPartType } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { transcriptAssertions } from './transcript-assertions'
-import { ChatTurnResult, ChatTurnToolCall } from '../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { AgentTurnResult, AgentTurnToolCall } from '../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 function textPart(text: string): PersistedChatPart {
     return { type: PersistedChatPartType.TEXT, text }
 }
 
-function toolCall({ toolName, order, phase = 'discovery' }: { toolName: string, order: number, phase?: 'discovery' | 'build' }): ChatTurnToolCall {
+function toolCall({ toolName, order, phase = 'discovery' }: { toolName: string, order: number, phase?: 'discovery' | 'build' }): AgentTurnToolCall {
     return { toolName, toolCallId: `id-${order}`, input: {}, order, phase }
 }
 
-function makeResult(overrides: Partial<ChatTurnResult> = {}): ChatTurnResult {
+function makeResult(overrides: Partial<AgentTurnResult> = {}): AgentTurnResult {
     return {
         accumulatedResponseMessages: [],
         abortedStepMessages: [],

@@ -4,7 +4,7 @@ import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationTy
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
-import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
+import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
@@ -283,37 +283,37 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async getChatConfig(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).getChatConfig(input)
+            return agentRpcHandlers(chatRpcLog(log, input)).getChatConfig(input)
         },
 
         async saveChatMessages(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).saveChatMessages(input)
+            return agentRpcHandlers(chatRpcLog(log, input)).saveChatMessages(input)
         },
 
         async saveChatFile(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).saveChatFile(input)
+            return agentRpcHandlers(chatRpcLog(log, input)).saveChatFile(input)
         },
 
         async updateChatProgress(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).updateChatProgress(input)
+            return agentRpcHandlers(chatRpcLog(log, input)).updateChatProgress(input)
         },
 
         async heartbeatChatConversation(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).heartbeatChatConversation(input)
+            return agentRpcHandlers(chatRpcLog(log, input)).heartbeatChatConversation(input)
         },
 
         async updateProjectContext(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).updateProjectContext(input)
+            return agentRpcHandlers(chatRpcLog(log, input)).updateProjectContext(input)
         },
 
         async executeChatTool(input) {
             const runId = typeof input.toolInput.runId === 'string' ? input.toolInput.runId : undefined
             const conversationId = input.conversationId ?? (typeof input.toolInput.conversationId === 'string' ? input.toolInput.conversationId : undefined)
-            return chatRpcHandlers(chatRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeChatTool(input)
+            return agentRpcHandlers(chatRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeChatTool(input)
         },
 
         async sendChatEmail(input) {
-            return chatRpcHandlers(chatRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendChatEmail(input)
+            return agentRpcHandlers(chatRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendChatEmail(input)
         },
     }
 }

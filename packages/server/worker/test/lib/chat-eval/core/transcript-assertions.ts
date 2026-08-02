@@ -1,6 +1,6 @@
 import { chatToolPhases, PersistedChatPart, PersistedChatPartType } from '@activepieces/shared'
 import { ChatEvalAssertion } from './fixture'
-import { ChatTurnResult } from '../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { AgentTurnResult } from '../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 const ASKED_HOW_PATTERNS = [
     /\bhow (do|would|should|will|might) (you|we|i)\b/i,
@@ -10,19 +10,19 @@ const ASKED_HOW_PATTERNS = [
 
 const DEFAULT_QUESTION_CARD_PATTERN = /question|quick_repl/i
 
-function assistantText(result: ChatTurnResult): string {
+function assistantText(result: AgentTurnResult): string {
     return result.uiParts
         .filter((part): part is Extract<PersistedChatPart, { type: PersistedChatPartType.TEXT }> => part.type === PersistedChatPartType.TEXT)
         .map((part) => part.text)
         .join('\n')
 }
 
-function firstOrder(result: ChatTurnResult, toolName: string): number {
+function firstOrder(result: AgentTurnResult, toolName: string): number {
     const match = result.toolCalls.find((call) => call.toolName === toolName)
     return match?.order ?? -1
 }
 
-function neverAskedHow(result: ChatTurnResult): AssertionOutcome {
+function neverAskedHow(result: AgentTurnResult): AssertionOutcome {
     const text = assistantText(result)
     const matched = ASKED_HOW_PATTERNS.find((pattern) => pattern.test(text))
     return matched
@@ -30,21 +30,21 @@ function neverAskedHow(result: ChatTurnResult): AssertionOutcome {
         : { pass: true, reason: 'no how/technical clarifying questions found' }
 }
 
-function neverCutOff(result: ChatTurnResult): AssertionOutcome {
+function neverCutOff(result: AgentTurnResult): AssertionOutcome {
     const cutOff = result.truncatedAfterRetries || result.finishReason === 'length'
     return cutOff
         ? { pass: false, reason: `response was cut off (truncatedAfterRetries=${result.truncatedAfterRetries}, finishReason=${result.finishReason})` }
         : { pass: true, reason: 'response completed without truncation' }
 }
 
-function noBuildToolBeforePhaseSet(result: ChatTurnResult): AssertionOutcome {
+function noBuildToolBeforePhaseSet(result: AgentTurnResult): AssertionOutcome {
     const violation = result.toolCalls.find((call) => chatToolPhases.isBuildOnlyTool(call.toolName) && call.phase !== 'build')
     return violation
         ? { pass: false, reason: `build-only tool "${violation.toolName}" ran while phase was "${violation.phase}"` }
         : { pass: true, reason: 'all build-only tools ran in the build phase' }
 }
 
-function calledBefore(result: ChatTurnResult, a: string, b: string): AssertionOutcome {
+function calledBefore(result: AgentTurnResult, a: string, b: string): AssertionOutcome {
     const orderA = firstOrder(result, a)
     const orderB = firstOrder(result, b)
     if (orderA === -1) {
@@ -59,7 +59,7 @@ function calledBefore(result: ChatTurnResult, a: string, b: string): AssertionOu
     return { pass: false, reason: `"${a}" (order ${orderA}) was not called before "${b}" (order ${orderB})` }
 }
 
-function reachedToolWithin(result: ChatTurnResult, toolName: string, n: number): AssertionOutcome {
+function reachedToolWithin(result: AgentTurnResult, toolName: string, n: number): AssertionOutcome {
     const order = firstOrder(result, toolName)
     if (order === -1) {
         return { pass: false, reason: `"${toolName}" was never called` }
@@ -69,7 +69,7 @@ function reachedToolWithin(result: ChatTurnResult, toolName: string, n: number):
         : { pass: false, reason: `"${toolName}" first reached at order ${order} (> ${n})` }
 }
 
-function maxQuestionCards(result: ChatTurnResult, n: number, toolNames?: string[]): AssertionOutcome {
+function maxQuestionCards(result: AgentTurnResult, n: number, toolNames?: string[]): AssertionOutcome {
     const count = result.toolCalls.filter((call) =>
         toolNames ? toolNames.includes(call.toolName) : DEFAULT_QUESTION_CARD_PATTERN.test(call.toolName),
     ).length
@@ -78,7 +78,7 @@ function maxQuestionCards(result: ChatTurnResult, n: number, toolNames?: string[
         : { pass: false, reason: `${count} question card(s) shown (> ${n})` }
 }
 
-function runAssertion(result: ChatTurnResult, assertion: ChatEvalAssertion): AssertionResult {
+function runAssertion(result: AgentTurnResult, assertion: ChatEvalAssertion): AssertionResult {
     switch (assertion.type) {
         case 'neverAskedHow':
             return { type: assertion.type, ...neverAskedHow(result) }

@@ -332,7 +332,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     const jobData = JobData.parse(rawData)
     // Chat jobs reuse `runId` as the per-message chat run id (NOT a flow run);
     // map it to the `run`/`conversation` groups so chat logs correlate correctly.
-    const isChatJob = jobData.jobType === WorkerJobType.EXECUTE_CHAT_AGENT
+    const isChatJob = jobData.jobType === WorkerJobType.EXECUTE_AGENT_RUN
     const jobLogger = createLogger({
         event: 'job.execute',
         job: { id: job.jobId, type: jobData.jobType },
