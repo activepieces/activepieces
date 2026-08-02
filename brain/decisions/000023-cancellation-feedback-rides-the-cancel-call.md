@@ -7,7 +7,7 @@ status: accepted
 ## Context
 
 Self-serve cancellation had no churn survey. The dialog was a generic `ConfirmationDeleteDialog` carrying
-only the "what happens next" copy (`DROP_TO_FREE_MESSAGE` plus `dropToFreeWarning`), rendered from two
+only the "what happens next" copy (`dropToFreeWarning`), rendered from two
 entry points that both call `cancelWithSeatCheck` in `useCancelSubscriptionGuard`.
 
 Sales had no way to see why anyone left. Autumn records that a subscription was cancelled, not the reason.

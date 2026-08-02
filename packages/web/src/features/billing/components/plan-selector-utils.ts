@@ -274,8 +274,6 @@ export const planSelectorUtils = {
   SALES_URL,
 };
 
-export const DROP_TO_FREE_MESSAGE =
-  'This takes effect at the end of your current billing period.';
 export const DROP_TO_FREE_WARNING =
   'Your workspace will move to the Free plan and lose its current limits and paid features. You keep your current plan until the period ends.';
 

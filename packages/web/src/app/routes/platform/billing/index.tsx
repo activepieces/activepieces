@@ -24,7 +24,6 @@ import {
   AutoRechargeCard,
   CancelSubscriptionDialog,
   KeepPlanDialog,
-  DROP_TO_FREE_MESSAGE,
   planSelectorUtils,
   LicenseKey,
   UsersCard,
@@ -321,14 +320,7 @@ function BillingPageDetails() {
         onOpenChange={setIsCancelOpen}
         title={t('We are sorry to see you go')}
         confirmText={t('Cancel subscription')}
-        warning={
-          <div className="flex flex-col gap-1">
-            <span>
-              {planSelectorUtils.dropToFreeWarning(info.additionalSeats)}
-            </span>
-            <span>{t(DROP_TO_FREE_MESSAGE)}</span>
-          </div>
-        }
+        warning={planSelectorUtils.dropToFreeWarning(info.additionalSeats)}
         onConfirm={cancelWithSeatCheck}
       />
       <KeepPlanDialog

@@ -21,7 +21,6 @@ export { useSeatLimitGuard } from './hooks/use-seat-limit-guard';
 export { useTeamProjectLimitGuard } from './hooks/use-team-project-limit-guard';
 export { useCancelSubscriptionGuard } from './hooks/use-cancel-subscription-guard';
 export {
-  DROP_TO_FREE_MESSAGE,
   DROP_TO_FREE_WARNING,
   planSelectorUtils,
 } from './components/plan-selector-utils';

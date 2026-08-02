@@ -24,7 +24,6 @@ import { useConfirmPurchaseDialogStore } from '../stores/confirm-purchase-dialog
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
 import { KeepPlanDialog } from './keep-plan-dialog';
 import {
-  DROP_TO_FREE_MESSAGE,
   planSelectorUtils,
   type BillingCycle,
   type CheckoutAction,
@@ -178,12 +177,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
         onOpenChange={setIsCancelOpen}
         title={t('We are sorry to see you go')}
         confirmText={t('Downgrade to Free')}
-        warning={
-          <div className="flex flex-col gap-1">
-            <span>{downgradeWarning}</span>
-            <span>{t(DROP_TO_FREE_MESSAGE)}</span>
-          </div>
-        }
+        warning={downgradeWarning}
         onConfirm={cancelWithSeatCheck}
       />
       {!isNil(subscription) && (
