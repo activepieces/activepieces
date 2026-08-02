@@ -3,7 +3,7 @@ import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowSt
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getEnrollAttemptKey, getEntitlementsRefreshKey, getFreeLegacyCompAttemptKey, getPlatformPlanNameKey, PLATFORM_PLAN_NAME_TTL_SECONDS } from '../../../database/redis/keys'
+import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey, PLATFORM_PLAN_NAME_TTL_SECONDS } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -27,7 +27,6 @@ const environment = system.get(AppSystemProp.ENVIRONMENT)
 const ENROLL_ATTEMPT_TTL_SECONDS = 300
 const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
 const REFRESH_CLAIM_TTL_SECONDS = 60
-const FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS = 5 * 60
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
 
@@ -237,14 +236,8 @@ function triggerLazyBillingProviderSync({ platformId, autumnCustomerId, plan, cr
     }
     rejectedPromiseHandler(throttledBillingProviderRefresh(platformId, log), log)
     if (edition === ApEdition.CLOUD && isFreeLegacyEligible({ plan, created })) {
-        rejectedPromiseHandler(throttledFreeLegacyComp(platformId, log), log)
+        rejectedPromiseHandler(billingProvider.get(log).compFreeLegacy(platformId), log)
     }
-}
-
-async function throttledFreeLegacyComp(platformId: string, log: FastifyBaseLogger): Promise<void> {
-    await distributedStore.runOnceWithin(getFreeLegacyCompAttemptKey(platformId), FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS, () =>
-        billingProvider.get(log).compFreeLegacy(platformId),
-    )
 }
 
 async function enrollBillingProviderOnCreate(platformId: string, log: FastifyBaseLogger): Promise<void> {

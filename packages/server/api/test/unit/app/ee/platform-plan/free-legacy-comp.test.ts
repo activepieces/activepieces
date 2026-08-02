@@ -38,6 +38,10 @@ vi.mock('../../../../../src/app/database/redis-connections', () => ({
         get: vi.fn(),
         put: vi.fn(),
         delete: vi.fn(),
+        runOnceWithin: async (_key: string, _ttl: number, fn: () => Promise<unknown>) => {
+            await fn()
+            return true
+        },
     },
 }))
 
@@ -66,6 +70,7 @@ const credentials = (params: { autumnCustomerId?: string | null, plan: string | 
 describe('free legacy comp', () => {
     beforeEach(async () => {
         vi.clearAllMocks()
+        vi.resetModules()
         mockGetEdition.mockReturnValue('cloud')
         mockEnrollFree.mockResolvedValue({ autumnCustomerId: CUSTOMER_ID, autumnApiKey: 'am_sk_test' })
         mockRefreshEntitlements.mockResolvedValue(undefined)
@@ -146,6 +151,28 @@ describe('free legacy comp', () => {
         vi.spyOn(autumnUtils, 'refreshEntitlements').mockImplementation(mockRefreshEntitlements)
         const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() }
         await autumnUtils.ensureEnrolled(log as never, PLATFORM_ID)
+
+        expect(mockCompFreeLegacy).not.toHaveBeenCalled()
+    })
+
+    it('comps from a credit track alone, with no plan read and nobody logged in', async () => {
+        mockGetAutumnCredentials.mockResolvedValue(credentials({ plan: 'free', created: BEFORE_CUTOFF }))
+
+        const { autumnUtils } = await import('../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils')
+        const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() }
+        await autumnUtils.loadAutumnCreds(log as never, PLATFORM_ID)
+        await new Promise((resolve) => setImmediate(resolve))
+
+        expect(mockCompFreeLegacy).toHaveBeenCalledWith({ autumnCustomerId: CUSTOMER_ID })
+    })
+
+    it('does not comp from a credit track when the platform is ineligible', async () => {
+        mockGetAutumnCredentials.mockResolvedValue(credentials({ plan: 'plus', created: BEFORE_CUTOFF }))
+
+        const { autumnUtils } = await import('../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils')
+        const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() }
+        await autumnUtils.loadAutumnCreds(log as never, PLATFORM_ID)
+        await new Promise((resolve) => setImmediate(resolve))
 
         expect(mockCompFreeLegacy).not.toHaveBeenCalled()
     })

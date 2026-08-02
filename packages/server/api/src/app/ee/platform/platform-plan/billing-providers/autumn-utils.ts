@@ -15,8 +15,9 @@ import {
 } from 'autumn-js'
 import { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey, getFreeLegacyCompAttemptKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
+import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
 import { AppSumoAction, CreditUsage } from '../../../../platform/billing-provider'
@@ -29,6 +30,7 @@ const edition = system.getEdition()
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const AUTUMN_GET_CUSTOMER_TIMEOUT_MS = 5000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
+const FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS = 5 * 60
 
 const PROJECT_ID_PROPERTY = 'projectId'
 const CREDIT_USAGE_MAX_GROUPS = 250
@@ -83,7 +85,11 @@ export const autumnUtils = {
         }
     },
     async loadAutumnCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
-        const { autumnCustomerId, autumnApiKey } = await platformPlanService(log).getAutumnCredentials(platformId)
+        const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
+        const { autumnCustomerId, autumnApiKey } = credentials
+        if (edition === ApEdition.CLOUD && isFreeLegacyEligible(credentials)) {
+            rejectedPromiseHandler(autumnUtils.ensureFreeLegacyComped(log, platformId), log)
+        }
         if (isNil(autumnCustomerId) && isNil(autumnApiKey)) {
             return null
         }
@@ -145,23 +151,25 @@ export const autumnUtils = {
         if (!isFreeLegacyEligible(await platformPlanService(log).getAutumnCredentials(platformId))) {
             return
         }
-        await distributedLock(log).runExclusive({
-            key: getAutumnEnrollLockKey(platformId),
-            timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
-            fn: async () => {
-                const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
-                const autumnCustomerId = credentials.autumnCustomerId
-                if (!isFreeLegacyEligible(credentials) || isNil(autumnCustomerId)) {
-                    return
-                }
-                const { error } = await tryCatch(() => autumnConsole.compFreeLegacy({ autumnCustomerId }))
-                if (!isNil(error)) {
-                    log.warn({ error, platform: { id: platformId } }, 'Failed to comp the free legacy plan')
-                    return
-                }
-                await autumnUtils.refreshEntitlements(log, platformId)
-            },
-        })
+        await distributedStore.runOnceWithin(getFreeLegacyCompAttemptKey(platformId), FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS, () =>
+            distributedLock(log).runExclusive({
+                key: getAutumnEnrollLockKey(platformId),
+                timeoutInSeconds: AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS,
+                fn: async () => {
+                    const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
+                    const autumnCustomerId = credentials.autumnCustomerId
+                    if (!isFreeLegacyEligible(credentials) || isNil(autumnCustomerId)) {
+                        return
+                    }
+                    const { error } = await tryCatch(() => autumnConsole.compFreeLegacy({ autumnCustomerId }))
+                    if (!isNil(error)) {
+                        log.warn({ error, platform: { id: platformId } }, 'Failed to comp the free legacy plan')
+                        return
+                    }
+                    await autumnUtils.refreshEntitlements(log, platformId)
+                },
+            }),
+        )
     },
     async refreshEntitlements(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
