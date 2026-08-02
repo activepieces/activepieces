@@ -155,7 +155,7 @@ function AutoFormFielWrapperErrorBoundary({
   );
 }
 
-function getValueForInputOnDynamicToggleChange(
+export function getValueForInputOnDynamicToggleChange(
   property: PieceProperty | PieceAuthProperty[],
   newMode: PropertyExecutionType,
   currentValue: unknown,

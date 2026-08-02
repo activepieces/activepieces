@@ -17,9 +17,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { formUtils } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
+import { getValueForInputOnDynamicToggleChange } from './auto-form-field-wrapper';
 import { DynamicValueToggleButton } from './dynamic-value-toggle-button';
 import { MentionChipsInput } from './mention-chips-input';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -81,23 +81,24 @@ function PropertyGroupTabs({
 
   const toggleDynamic = (key: string) => {
     const inputName = inputNameFor(key);
-    const nextDynamic = !isDynamicKey(key);
+    const nextMode = isDynamicKey(key)
+      ? PropertyExecutionType.MANUAL
+      : PropertyExecutionType.DYNAMIC;
     form.setValue(
       `settings.propertySettings.${key}`,
       {
         ...form.getValues().settings?.propertySettings?.[key],
-        type: nextDynamic
-          ? PropertyExecutionType.DYNAMIC
-          : PropertyExecutionType.MANUAL,
+        type: nextMode,
       },
       { shouldValidate: true },
     );
     form.setValue(
       inputName,
-      formUtils.getDefaultPropertyValue({
-        property: properties[key],
-        dynamicInputModeToggled: nextDynamic,
-      }),
+      getValueForInputOnDynamicToggleChange(
+        properties[key],
+        nextMode,
+        form.getValues(inputName),
+      ),
       { shouldValidate: true },
     );
   };
