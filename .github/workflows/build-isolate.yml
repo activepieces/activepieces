@@ -7,9 +7,6 @@ name: Build isolate sandbox binaries
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - fix/isolate-open-files
 
 permissions:
   contents: read
