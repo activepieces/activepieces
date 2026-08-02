@@ -1,0 +1,361 @@
+import { DefaultProjectRole, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { redisConnections } from '../../../../src/app/database/redis-connections'
+import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
+import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agent-tools'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+let app: FastifyInstance
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+const CONVERSATIONS_URL = '/v1/agents/conversations'
+
+describe('Chat Conversations API', () => {
+    describe('Create conversation', () => {
+        it('creates a conversation with title and returns platformId and userId, projectId is null', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const response = await ctx.post(CONVERSATIONS_URL, { title: 'My First Chat', modelName: 'gpt-4o' })
+
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            const body = response.json()
+            expect(body.title).toBe('My First Chat')
+            expect(body.modelName).toBe('gpt-4o')
+            expect(body.platformId).toBe(ctx.platform.id)
+            expect(body.userId).toBe(ctx.user.id)
+            expect(body.projectId).toBeNull()
+            expect(body.id).toBeDefined()
+        })
+
+        it('creates a conversation with no body and returns defaults', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const response = await ctx.post(CONVERSATIONS_URL, {})
+
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            const body = response.json()
+            expect(body.title).toBeNull()
+            expect(body.modelName).toBeNull()
+            expect(body.projectId).toBeNull()
+        })
+    })
+
+    describe('List conversations', () => {
+        it('returns only conversations belonging to the current user on their platform', async () => {
+            const ctxA = await createTestContext(app, { plan: { chatEnabled: true } })
+            const ctxB = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            await ctxA.post(CONVERSATIONS_URL, { title: 'User A Chat 1' })
+            await ctxA.post(CONVERSATIONS_URL, { title: 'User A Chat 2' })
+            await ctxB.post(CONVERSATIONS_URL, { title: 'User B Chat' })
+
+            const response = await ctxA.get(CONVERSATIONS_URL)
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(body.data).toHaveLength(2)
+            expect(body.data.every((c: { userId: string }) => c.userId === ctxA.user.id)).toBe(true)
+            expect(body.data.every((c: { platformId: string }) => c.platformId === ctxA.platform.id)).toBe(true)
+        })
+
+        it('does not return conversations from another user on the same platform', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
+
+            await ctx.post(CONVERSATIONS_URL, { title: 'Owner Chat' })
+            await memberCtx.post(CONVERSATIONS_URL, { title: 'Member Chat' })
+
+            const ownerResponse = await ctx.get(CONVERSATIONS_URL)
+            expect(ownerResponse.statusCode).toBe(StatusCodes.OK)
+            const ownerBody = ownerResponse.json()
+            expect(ownerBody.data.every((c: { userId: string }) => c.userId === ctx.user.id)).toBe(true)
+
+            const memberResponse = await memberCtx.get(CONVERSATIONS_URL)
+            expect(memberResponse.statusCode).toBe(StatusCodes.OK)
+            const memberBody = memberResponse.json()
+            expect(memberBody.data.every((c: { userId: string }) => c.userId === memberCtx.user.id)).toBe(true)
+        })
+    })
+
+    describe('List conversations performance', () => {
+        it('does not return messages or uiMessages in list response', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            await ctx.post(CONVERSATIONS_URL, { title: 'Lightweight List Test' })
+
+            const response = await ctx.get(CONVERSATIONS_URL)
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(body.data).toHaveLength(1)
+
+            const conv = body.data[0]
+            expect(conv.id).toBeDefined()
+            expect(conv.title).toBe('Lightweight List Test')
+            expect(conv.status).toBeDefined()
+            expect(conv.created).toBeDefined()
+            expect(conv.messages).toBeUndefined()
+            expect(conv.uiMessages).toBeUndefined()
+            expect(conv.summary).toBeUndefined()
+        })
+    })
+
+    describe('Cross-user isolation', () => {
+        it('user B cannot GET a conversation created by user A on the same platform', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
+
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Private Chat' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const getResponse = await memberCtx.get(`${CONVERSATIONS_URL}/${conversationId}`)
+            expect(getResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('user B cannot UPDATE a conversation created by user A on the same platform', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Owner Chat' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const updateResponse = await memberCtx.post(`${CONVERSATIONS_URL}/${conversationId}`, { title: 'Hijacked Title' })
+            expect(updateResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('user B cannot DELETE a conversation created by user A on the same platform', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const memberCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
+
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Protected Chat' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const deleteResponse = await memberCtx.delete(`${CONVERSATIONS_URL}/${conversationId}`)
+            expect(deleteResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Cross-platform isolation', () => {
+        it('user on platform B cannot GET a conversation created by user on platform A', async () => {
+            const ctxA = await createTestContext(app, { plan: { chatEnabled: true } })
+            const ctxB = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const createResponse = await ctxA.post(CONVERSATIONS_URL, { title: 'Platform A Chat' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const getResponse = await ctxB.get(`${CONVERSATIONS_URL}/${conversationId}`)
+            expect(getResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('user on platform B cannot UPDATE a conversation from platform A', async () => {
+            const ctxA = await createTestContext(app, { plan: { chatEnabled: true } })
+            const ctxB = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const createResponse = await ctxA.post(CONVERSATIONS_URL, { title: 'Platform A Chat' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const updateResponse = await ctxB.post(`${CONVERSATIONS_URL}/${conversationId}`, { title: 'Cross-platform hijack' })
+            expect(updateResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('user on platform B cannot DELETE a conversation from platform A', async () => {
+            const ctxA = await createTestContext(app, { plan: { chatEnabled: true } })
+            const ctxB = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const createResponse = await ctxA.post(CONVERSATIONS_URL, { title: 'Platform A Chat' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const deleteResponse = await ctxB.delete(`${CONVERSATIONS_URL}/${conversationId}`)
+            expect(deleteResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Get conversation', () => {
+        it('returns 404 for a non-existent conversation', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const response = await ctx.get(`${CONVERSATIONS_URL}/non-existent-id`)
+            expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('returns the conversation for its owner', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Retrievable Chat' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const getResponse = await ctx.get(`${CONVERSATIONS_URL}/${conversationId}`)
+            expect(getResponse.statusCode).toBe(StatusCodes.OK)
+            const body = getResponse.json()
+            expect(body.id).toBe(conversationId)
+            expect(body.title).toBe('Retrievable Chat')
+        })
+    })
+
+    describe('Update conversation', () => {
+        it('updates title and modelName and verifies the changes persist', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Original Title' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const updateResponse = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}`, {
+                title: 'Updated Title',
+                modelName: 'claude-3-5-sonnet',
+            })
+            expect(updateResponse.statusCode).toBe(StatusCodes.OK)
+            const updated = updateResponse.json()
+            expect(updated.title).toBe('Updated Title')
+            expect(updated.modelName).toBe('claude-3-5-sonnet')
+
+            const getResponse = await ctx.get(`${CONVERSATIONS_URL}/${conversationId}`)
+            expect(getResponse.statusCode).toBe(StatusCodes.OK)
+            const fetched = getResponse.json()
+            expect(fetched.title).toBe('Updated Title')
+            expect(fetched.modelName).toBe('claude-3-5-sonnet')
+        })
+    })
+
+    describe('Delete conversation', () => {
+        it('deletes a conversation and subsequent GET returns 404', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'To Be Deleted' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const deleteResponse = await ctx.delete(`${CONVERSATIONS_URL}/${conversationId}`)
+            expect(deleteResponse.statusCode).toBe(StatusCodes.NO_CONTENT)
+
+            const getResponse = await ctx.get(`${CONVERSATIONS_URL}/${conversationId}`)
+            expect(getResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('returns 404 when deleting a non-existent conversation', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const deleteResponse = await ctx.delete(`${CONVERSATIONS_URL}/non-existent-id`)
+            expect(deleteResponse.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Message feedback', () => {
+        const seedAssistantConversation = async (ctx: Awaited<ReturnType<typeof createTestContext>>) => {
+            const conversationId = (await ctx.post(CONVERSATIONS_URL, { title: 'Feedback test' })).json().id
+            const uiMessages = [
+                { role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: 'hi' }] },
+                { role: PersistedAgentRole.ASSISTANT, parts: [{ type: PersistedAgentPartType.TEXT, text: 'hello' }] },
+            ]
+            await agentHelpers.conversationRepo().update(conversationId, { uiMessages: JSON.parse(JSON.stringify(uiMessages)) })
+            return conversationId
+        }
+
+        it('records a down rating with reasons and comment, then clears it', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const conversationId = await seedAssistantConversation(ctx)
+
+            const down = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/1/feedback`, {
+                rating: 'down',
+                reasons: ['incorrect_or_incomplete', 'other'],
+                comment: 'missed a step',
+            })
+            expect(down.statusCode).toBe(StatusCodes.OK)
+            let messages = (await ctx.get(`${CONVERSATIONS_URL}/${conversationId}/messages`)).json()
+            expect(messages.data[1].feedback).toMatchObject({
+                rating: 'down',
+                reasons: ['incorrect_or_incomplete', 'other'],
+                comment: 'missed a step',
+            })
+
+            const cleared = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/1/feedback`, { rating: null })
+            expect(cleared.statusCode).toBe(StatusCodes.OK)
+            messages = (await ctx.get(`${CONVERSATIONS_URL}/${conversationId}/messages`)).json()
+            expect(messages.data[1].feedback).toBeUndefined()
+        })
+
+        it('rejects feedback targeting a non-assistant message', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const conversationId = await seedAssistantConversation(ctx)
+
+            const onUser = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/0/feedback`, { rating: 'up' })
+            expect(onUser.statusCode).toBe(StatusCodes.NOT_FOUND)
+
+            const outOfRange = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages/99/feedback`, { rating: 'up' })
+            expect(outOfRange.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Message rate limit', () => {
+        it('returns 429 once the per-user chat message rate limit is exceeded', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Rate limit test' })
+            const conversationId = createResponse.json().id
+
+            const redis = await redisConnections.useExisting()
+            await redis.set(`chat-message-rate:${ctx.platform.id}:${ctx.user.id}`, 40)
+
+            const response = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages`, { content: 'hello' })
+            expect(response.statusCode).toBe(StatusCodes.TOO_MANY_REQUESTS)
+        })
+    })
+
+    describe('Tool permission parity', () => {
+        it.each([
+            { toolName: 'ap_execute_action', toolInput: { pieceName: '@activepieces/piece-slack', actionName: 'send_channel_message', input: {} } },
+            { toolName: 'ap_run_code', toolInput: { code: 'export const code = async () => 1' } },
+        ])('blocks a VIEWER from $toolName (needs WRITE_RUN)', async ({ toolName, toolInput }) => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const viewerCtx = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.VIEWER })
+
+            const result = await executeCrossProjectTool({
+                toolName,
+                toolInput,
+                platformId: viewerCtx.platform.id,
+                userId: viewerCtx.user.id,
+                log: app.log,
+            })
+
+            expect(JSON.stringify(result)).toMatch(/permission denied/i)
+        })
+    })
+
+    describe('Get messages', () => {
+        it('returns empty messages for a new conversation', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const createResponse = await ctx.post(CONVERSATIONS_URL, { title: 'Empty Chat' })
+            expect(createResponse.statusCode).toBe(StatusCodes.CREATED)
+            const conversationId = createResponse.json().id
+
+            const messagesResponse = await ctx.get(`${CONVERSATIONS_URL}/${conversationId}/messages`)
+            expect(messagesResponse.statusCode).toBe(StatusCodes.OK)
+            const body = messagesResponse.json()
+            expect(body.data).toEqual([])
+        })
+
+        it('returns 404 for messages of a non-existent conversation', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+
+            const response = await ctx.get(`${CONVERSATIONS_URL}/non-existent-id/messages`)
+            expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+})

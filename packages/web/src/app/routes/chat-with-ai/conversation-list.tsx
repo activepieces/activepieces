@@ -1,4 +1,4 @@
-import { ChatConversation } from '@activepieces/shared';
+import { AgentConversation } from '@activepieces/shared';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -99,9 +99,9 @@ export function ConversationList({
     const yesterdayStr = y.toDateString();
 
     const groups: {
-      today: ChatConversation[];
-      yesterday: ChatConversation[];
-      older: ChatConversation[];
+      today: AgentConversation[];
+      yesterday: AgentConversation[];
+      older: AgentConversation[];
     } = {
       today: [],
       yesterday: [],
@@ -116,7 +116,7 @@ export function ConversationList({
     return groups;
   }, [conversations]);
 
-  const handleClick = (conv: ChatConversation) => {
+  const handleClick = (conv: AgentConversation) => {
     markRead(conv.id);
     onSelect?.(conv.id);
   };
@@ -130,7 +130,7 @@ export function ConversationList({
     setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const renderGroup = (label: string, items: ChatConversation[]) => {
+  const renderGroup = (label: string, items: AgentConversation[]) => {
     if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
     return (

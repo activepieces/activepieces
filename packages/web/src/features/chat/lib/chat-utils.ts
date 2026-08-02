@@ -3,12 +3,12 @@ import {
   ActionReceiptEvent,
   BuildPlanEvent,
   BuildPlanStep,
-  ChatHistoryMessage,
+  AgentHistoryMessage,
   FileProducedEvent,
   ImageGeneratedEvent,
-  PersistedChatMessage,
-  PersistedChatPart,
-  PersistedChatPartType,
+  PersistedAgentMessage,
+  PersistedAgentPart,
+  PersistedAgentPartType,
   PersistedToolCallStatus,
 } from '@activepieces/shared';
 
@@ -164,7 +164,7 @@ function extractToolContext({
   return parts.length > 0 ? parts.join(' ') : null;
 }
 
-function historyMsgToParts(msg: ChatHistoryMessage): ChatUIMessage['parts'] {
+function historyMsgToParts(msg: AgentHistoryMessage): ChatUIMessage['parts'] {
   const parts: ChatUIMessage['parts'] = [];
   if (msg.thoughts) {
     parts.push({ type: 'reasoning', text: msg.thoughts });
@@ -201,22 +201,22 @@ function historyMsgToParts(msg: ChatHistoryMessage): ChatUIMessage['parts'] {
   return parts;
 }
 
-function isPersistedFormat(data: unknown[]): data is PersistedChatMessage[] {
+function isPersistedFormat(data: unknown[]): data is PersistedAgentMessage[] {
   if (data.length === 0) return false;
   const first = data[0] as Record<string, unknown>;
   return Array.isArray(first.parts) && !('content' in first);
 }
 
 function persistedPartToUIPart(
-  part: PersistedChatPart,
+  part: PersistedAgentPart,
   idx: number,
 ): ChatUIMessage['parts'][number] {
   switch (part.type) {
-    case PersistedChatPartType.TEXT:
+    case PersistedAgentPartType.TEXT:
       return { type: 'text', text: part.text };
-    case PersistedChatPartType.REASONING:
+    case PersistedAgentPartType.REASONING:
       return { type: 'reasoning', text: part.text };
-    case PersistedChatPartType.THINKING_STATUS:
+    case PersistedAgentPartType.THINKING_STATUS:
       return {
         type: 'dynamic-tool',
         toolCallId: `thinking-status-${idx}`,
@@ -226,7 +226,7 @@ function persistedPartToUIPart(
         input: { status: part.text },
         output: JSON.stringify({ success: true }),
       };
-    case PersistedChatPartType.TOOL_CALL: {
+    case PersistedAgentPartType.TOOL_CALL: {
       const toolTitle = part.title ?? part.toolName;
       if (part.status === PersistedToolCallStatus.COMPLETED) {
         return {
@@ -252,14 +252,14 @@ function persistedPartToUIPart(
         errorText: part.errorText ?? 'Tool call failed',
       };
     }
-    case PersistedChatPartType.SOURCE_URL:
+    case PersistedAgentPartType.SOURCE_URL:
       return {
         type: 'source-url',
         sourceId: part.sourceId,
         url: part.url,
         title: part.title,
       };
-    case PersistedChatPartType.SOURCE_DOCUMENT:
+    case PersistedAgentPartType.SOURCE_DOCUMENT:
       return {
         type: 'source-document',
         sourceId: part.sourceId,
@@ -267,7 +267,7 @@ function persistedPartToUIPart(
         title: part.title,
         filename: part.filename,
       };
-    case PersistedChatPartType.BUILD_PLAN:
+    case PersistedAgentPartType.BUILD_PLAN:
       return {
         type: 'dynamic-tool',
         toolCallId: `build-plan-${part.buildId}-${idx}`,
@@ -280,10 +280,10 @@ function persistedPartToUIPart(
             : {},
         output: JSON.stringify({ ok: true, buildId: part.buildId }),
       };
-    case PersistedChatPartType.BATCH_PROGRESS:
-    case PersistedChatPartType.ACTION_RECEIPT:
-    case PersistedChatPartType.IMAGE:
-    case PersistedChatPartType.FILE:
+    case PersistedAgentPartType.BATCH_PROGRESS:
+    case PersistedAgentPartType.ACTION_RECEIPT:
+    case PersistedAgentPartType.IMAGE:
+    case PersistedAgentPartType.FILE:
       return { type: 'text', text: '' } as ChatUIMessage['parts'][number];
     default: {
       const _exhaustive: never = part;
@@ -295,7 +295,7 @@ function persistedPartToUIPart(
 }
 
 function mapPersistedToUIMessages(
-  data: PersistedChatMessage[],
+  data: PersistedAgentMessage[],
 ): ChatUIMessage[] {
   return data.map((msg, idx) => ({
     id: `hist-${idx}`,
@@ -309,14 +309,14 @@ function mapPersistedToUIMessages(
 }
 
 function mapHistoryToUIMessages(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): ChatUIMessage[] {
   if (data.length === 0) return [];
   if (isPersistedFormat(data)) {
     return mapPersistedToUIMessages(data);
   }
 
-  const legacyData = data as ChatHistoryMessage[];
+  const legacyData = data as AgentHistoryMessage[];
   const result: ChatUIMessage[] = [];
   for (let i = 0; i < legacyData.length; i++) {
     const msg = legacyData[i];
@@ -382,13 +382,13 @@ function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
 }
 
 function extractReceiptsFromHistory(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): Record<string, ActionReceiptEvent> {
   const receipts: Record<string, ActionReceiptEvent> = {};
   if (data.length === 0 || !isPersistedFormat(data)) return receipts;
   for (const msg of data) {
     for (const part of msg.parts) {
-      if (part.type === PersistedChatPartType.ACTION_RECEIPT) {
+      if (part.type === PersistedAgentPartType.ACTION_RECEIPT) {
         const { type: _, output, ...rest } = part;
         receipts[part.toolCallId] = { ...rest, output: output ?? null };
       }
@@ -398,13 +398,13 @@ function extractReceiptsFromHistory(
 }
 
 function extractImagesFromHistory(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): Record<string, ImageGeneratedEvent> {
   const images: Record<string, ImageGeneratedEvent> = {};
   if (data.length === 0 || !isPersistedFormat(data)) return images;
   for (const msg of data) {
     for (const part of msg.parts) {
-      if (part.type === PersistedChatPartType.IMAGE) {
+      if (part.type === PersistedAgentPartType.IMAGE) {
         const { type: _type, ...rest } = part;
         images[part.toolCallId] = rest;
       }
@@ -414,13 +414,13 @@ function extractImagesFromHistory(
 }
 
 function extractFilesFromHistory(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): Record<string, FileProducedEvent[]> {
   const files: Record<string, FileProducedEvent[]> = {};
   if (data.length === 0 || !isPersistedFormat(data)) return files;
   for (const msg of data) {
     for (const part of msg.parts) {
-      if (part.type === PersistedChatPartType.FILE) {
+      if (part.type === PersistedAgentPartType.FILE) {
         const { type: _type, ...rest } = part;
         const existing = files[part.toolCallId] ?? [];
         existing.push(rest);
@@ -432,7 +432,7 @@ function extractFilesFromHistory(
 }
 
 function extractBuildsFromHistory(
-  data: PersistedChatMessage[] | ChatHistoryMessage[],
+  data: PersistedAgentMessage[] | AgentHistoryMessage[],
 ): Record<string, BuildPlanEvent> {
   const builds: Record<string, BuildPlanEvent> = {};
   if (data.length === 0) return builds;
@@ -440,7 +440,7 @@ function extractBuildsFromHistory(
   if (isPersistedFormat(data)) {
     for (const msg of data) {
       for (const part of msg.parts) {
-        if (part.type !== PersistedChatPartType.BUILD_PLAN) continue;
+        if (part.type !== PersistedAgentPartType.BUILD_PLAN) continue;
         const event = toBuildPlanEvent({
           buildId: part.buildId,
           data: part.data,

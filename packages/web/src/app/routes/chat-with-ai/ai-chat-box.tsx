@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation } from '@activepieces/shared';
+import { AgentConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
@@ -167,7 +167,7 @@ function ChatBoxContent({
     !hasSentMessage;
 
   const cachedConversations = queryClient.getQueryData<
-    SeekPage<ChatConversation>
+    SeekPage<AgentConversation>
   >(['chat-conversations']);
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 

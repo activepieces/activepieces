@@ -1,24 +1,24 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
-  type ChatFeedbackReason,
-  type ChatHistoryMessage,
-  type PersistedChatMessage,
-  ChatConversation,
+  type AgentFeedbackReason,
+  type AgentHistoryMessage,
+  type PersistedAgentMessage,
+  AgentConversation,
   ConnectionOption,
-  CreateChatConversationRequest,
-  GetChatMemoryResponse,
-  ImportChatMemoryRequest,
-  InstructChatMemoryRequest,
-  UpdateChatConversationRequest,
-  UpdateChatMemoryRequest,
+  CreateAgentConversationRequest,
+  GetAgentMemoryResponse,
+  ImportAgentMemoryRequest,
+  InstructAgentMemoryRequest,
+  UpdateAgentConversationRequest,
+  UpdateAgentMemoryRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
 async function createConversation(
-  request: CreateChatConversationRequest,
-): Promise<ChatConversation> {
-  return api.post<ChatConversation>('/v1/chat/conversations', request);
+  request: CreateAgentConversationRequest,
+): Promise<AgentConversation> {
+  return api.post<AgentConversation>('/v1/agents/conversations', request);
 }
 
 async function listConversations({
@@ -27,34 +27,34 @@ async function listConversations({
 }: {
   cursor?: string;
   limit?: number;
-}): Promise<SeekPage<ChatConversation>> {
-  return api.get<SeekPage<ChatConversation>>('/v1/chat/conversations', {
+}): Promise<SeekPage<AgentConversation>> {
+  return api.get<SeekPage<AgentConversation>>('/v1/agents/conversations', {
     limit,
     cursor,
   });
 }
 
-async function getConversation(id: string): Promise<ChatConversation> {
-  return api.get<ChatConversation>(`/v1/chat/conversations/${id}`);
+async function getConversation(id: string): Promise<AgentConversation> {
+  return api.get<AgentConversation>(`/v1/agents/conversations/${id}`);
 }
 
 async function getMessages(
   conversationId: string,
-): Promise<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }> {
-  return api.get<{ data: PersistedChatMessage[] | ChatHistoryMessage[] }>(
-    `/v1/chat/conversations/${conversationId}/messages`,
+): Promise<{ data: PersistedAgentMessage[] | AgentHistoryMessage[] }> {
+  return api.get<{ data: PersistedAgentMessage[] | AgentHistoryMessage[] }>(
+    `/v1/agents/conversations/${conversationId}/messages`,
   );
 }
 
 async function updateConversation(
   id: string,
-  request: UpdateChatConversationRequest,
-): Promise<ChatConversation> {
-  return api.post<ChatConversation>(`/v1/chat/conversations/${id}`, request);
+  request: UpdateAgentConversationRequest,
+): Promise<AgentConversation> {
+  return api.post<AgentConversation>(`/v1/agents/conversations/${id}`, request);
 }
 
 async function deleteConversation(id: string): Promise<void> {
-  return api.delete<void>(`/v1/chat/conversations/${id}`);
+  return api.delete<void>(`/v1/agents/conversations/${id}`);
 }
 
 async function sendMessage({
@@ -69,7 +69,7 @@ async function sendMessage({
   files?: Array<{ name: string; mimeType: string; data: string }>;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
-    `/v1/chat/conversations/${conversationId}/messages`,
+    `/v1/agents/conversations/${conversationId}/messages`,
     { content, runId, files },
   );
 }
@@ -83,14 +83,14 @@ async function approveToolCall({
   approved: boolean;
   payload?: Record<string, unknown>;
 }): Promise<void> {
-  return api.post<void>(`/v1/chat/tool-approvals/${gateId}`, {
+  return api.post<void>(`/v1/agents/tool-approvals/${gateId}`, {
     approved,
     payload,
   });
 }
 
 async function cancelConversation(conversationId: string): Promise<void> {
-  return api.post<void>(`/v1/chat/conversations/${conversationId}/cancel`);
+  return api.post<void>(`/v1/agents/conversations/${conversationId}/cancel`);
 }
 
 async function submitMessageFeedback({
@@ -103,11 +103,11 @@ async function submitMessageFeedback({
   conversationId: string;
   messageIndex: number;
   rating: 'up' | 'down' | null;
-  reasons?: ChatFeedbackReason[];
+  reasons?: AgentFeedbackReason[];
   comment?: string;
 }): Promise<void> {
   return api.post<void>(
-    `/v1/chat/conversations/${conversationId}/messages/${messageIndex}/feedback`,
+    `/v1/agents/conversations/${conversationId}/messages/${messageIndex}/feedback`,
     { rating, reasons, comment },
   );
 }
@@ -119,7 +119,7 @@ async function getPickerConnections({
   conversationId: string;
   pieceName: string;
 }): Promise<ConnectionOption[]> {
-  return api.get(`/v1/chat/conversations/${conversationId}/connections`, {
+  return api.get(`/v1/agents/conversations/${conversationId}/connections`, {
     pieceName,
   });
 }
@@ -127,33 +127,36 @@ async function getPickerConnections({
 async function getPendingGate(
   conversationId: string,
 ): Promise<PendingGate | null> {
-  return api.get(`/v1/chat/conversations/${conversationId}/pending-gate`);
+  return api.get(`/v1/agents/conversations/${conversationId}/pending-gate`);
 }
 
 async function recordLanding(): Promise<void> {
-  return api.post<void>('/v1/chat/funnel/landing');
+  return api.post<void>('/v1/agents/funnel/landing');
 }
 
-async function getMemory(): Promise<GetChatMemoryResponse> {
-  return api.get<GetChatMemoryResponse>('/v1/chat/memory');
+async function getMemory(): Promise<GetAgentMemoryResponse> {
+  return api.get<GetAgentMemoryResponse>('/v1/agents/memory');
 }
 
 async function saveMemory(
-  request: UpdateChatMemoryRequest,
-): Promise<GetChatMemoryResponse> {
-  return api.post<GetChatMemoryResponse>('/v1/chat/memory', request);
+  request: UpdateAgentMemoryRequest,
+): Promise<GetAgentMemoryResponse> {
+  return api.post<GetAgentMemoryResponse>('/v1/agents/memory', request);
 }
 
 async function importMemory(
-  request: ImportChatMemoryRequest,
-): Promise<GetChatMemoryResponse> {
-  return api.post<GetChatMemoryResponse>('/v1/chat/memory/import', request);
+  request: ImportAgentMemoryRequest,
+): Promise<GetAgentMemoryResponse> {
+  return api.post<GetAgentMemoryResponse>('/v1/agents/memory/import', request);
 }
 
 async function instructMemory(
-  request: InstructChatMemoryRequest,
-): Promise<GetChatMemoryResponse> {
-  return api.post<GetChatMemoryResponse>('/v1/chat/memory/instruct', request);
+  request: InstructAgentMemoryRequest,
+): Promise<GetAgentMemoryResponse> {
+  return api.post<GetAgentMemoryResponse>(
+    '/v1/agents/memory/instruct',
+    request,
+  );
 }
 
 export const chatApi = {

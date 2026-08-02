@@ -1,8 +1,8 @@
 import {
-  ChatHistoryMessage,
-  PersistedChatMessage,
-  PersistedChatPartType,
-  PersistedChatRole,
+  AgentHistoryMessage,
+  PersistedAgentMessage,
+  PersistedAgentPartType,
+  PersistedAgentRole,
 } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
@@ -12,17 +12,17 @@ import { chatUtils } from '@/features/chat/lib/chat-utils';
 function buildPlanMessage(
   data: Record<string, unknown>,
   buildId = 'build_1',
-): PersistedChatMessage {
+): PersistedAgentMessage {
   return {
-    role: PersistedChatRole.ASSISTANT,
-    parts: [{ type: PersistedChatPartType.BUILD_PLAN, buildId, data }],
+    role: PersistedAgentRole.ASSISTANT,
+    parts: [{ type: PersistedAgentPartType.BUILD_PLAN, buildId, data }],
   };
 }
 
 function legacyBuildPlanMessage(
   input: Record<string, unknown>,
   buildId = 'build_1',
-): ChatHistoryMessage {
+): AgentHistoryMessage {
   return {
     role: 'assistant',
     content: '',
@@ -40,12 +40,12 @@ function legacyBuildPlanMessage(
 
 describe('chatUtils.extractFilesFromHistory', () => {
   it('groups produced file parts by toolCallId', () => {
-    const data: PersistedChatMessage[] = [
+    const data: PersistedAgentMessage[] = [
       {
-        role: PersistedChatRole.ASSISTANT,
+        role: PersistedAgentRole.ASSISTANT,
         parts: [
           {
-            type: PersistedChatPartType.FILE,
+            type: PersistedAgentPartType.FILE,
             toolCallId: 'call_code',
             fileId: 'file_1',
             url: 'https://example.com/file_1',
@@ -55,7 +55,7 @@ describe('chatUtils.extractFilesFromHistory', () => {
             timestamp: '2026-01-01T00:00:00.000Z',
           },
           {
-            type: PersistedChatPartType.FILE,
+            type: PersistedAgentPartType.FILE,
             toolCallId: 'call_code',
             fileId: 'file_2',
             url: 'https://example.com/file_2',
@@ -83,8 +83,8 @@ describe('chatUtils.extractFilesFromHistory', () => {
     expect(
       chatUtils.extractFilesFromHistory([
         {
-          role: PersistedChatRole.ASSISTANT,
-          parts: [{ type: PersistedChatPartType.TEXT, text: 'hi' }],
+          role: PersistedAgentRole.ASSISTANT,
+          parts: [{ type: PersistedAgentPartType.TEXT, text: 'hi' }],
         },
       ]),
     ).toEqual({});
