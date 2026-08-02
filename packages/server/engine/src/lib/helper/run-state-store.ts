@@ -1,11 +1,11 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { isNil } from '@activepieces/core-utils'
+import { ExecutionMode } from '@activepieces/shared'
+import { DatabaseSync, StatementSync } from 'node:sqlite'
 
-type DatabaseSync = import('node:sqlite').DatabaseSync
-type StatementSync = ReturnType<DatabaseSync['prepare']>
-
-type Stmts = {
+type PreparedStatements = {
     put: StatementSync
     select: StatementSync
     materialize: StatementSync
@@ -15,20 +15,19 @@ type Stmts = {
 
 let db: DatabaseSync | null = null
 let dbPath: string | null = null
-let stmts: Stmts | null = null
+let statements: PreparedStatements | null = null
 
 export const runStateStore = {
-    init({ runId }: { runId: string }): void {
-        let DatabaseSync: typeof import('node:sqlite').DatabaseSync
+    init({ runId, flowVersionId }: { runId: string, flowVersionId: string }): void {
+        const base = getBasePath(flowVersionId)
         try {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-            DatabaseSync = (require('node:sqlite') as typeof import('node:sqlite')).DatabaseSync
+            fs.mkdirSync(base, { recursive: true })
+            dbPath = path.join(base, `${runId}.sqlite`)
+            db = new DatabaseSync(dbPath)
         }
         catch {
             return
         }
-        dbPath = path.join(os.tmpdir(), `${runId}.sqlite`)
-        db = new DatabaseSync(dbPath)
         db.exec(`
             CREATE TABLE steps (
                 name TEXT    NOT NULL,
@@ -37,7 +36,7 @@ export const runStateStore = {
                 PRIMARY KEY (name, path)
             )
         `)
-        stmts = {
+        statements = {
             put: db.prepare('INSERT OR REPLACE INTO steps (name, path, output) VALUES (?, ?, jsonb(?))'),
             select: db.prepare('SELECT output ->> ? FROM steps WHERE name = ? AND path = ?'),
             materialize: db.prepare('SELECT json(output) AS output FROM steps WHERE name = ? AND path = ?'),
@@ -47,33 +46,33 @@ export const runStateStore = {
     },
 
     put({ name, stepPath, scopeEntry }: { name: string, stepPath: string, scopeEntry: unknown }): void {
-        if (!stmts) {
+        if (isNil(statements)) {
             return
         }
-        stmts.put.run(name, stepPath, JSON.stringify(scopeEntry))
+        statements.put.run(name, stepPath, JSON.stringify(scopeEntry))
     },
 
     select({ name, stepPath, jsonPath }: { name: string, stepPath: string, jsonPath: string }): unknown {
-        if (!stmts) {
+        if (isNil(statements)) {
             return undefined
         }
-        const row = stmts.select.get(jsonPath, name, stepPath) as Record<string, unknown> | undefined
+        const row = statements.select.get(jsonPath, name, stepPath) as Record<string, unknown> | undefined
         return row ? Object.values(row)[0] : undefined
     },
 
     materialize({ name, stepPath }: { name: string, stepPath: string }): unknown {
-        if (!stmts) {
+        if (isNil(statements)) {
             return undefined
         }
-        const row = stmts.materialize.get(name, stepPath) as { output: string } | undefined
+        const row = statements.materialize.get(name, stepPath) as { output: string } | undefined
         return row ? JSON.parse(row.output) : undefined
     },
 
     getAtPath({ stepPath }: { stepPath: string }): Record<string, unknown> {
-        if (!stmts) {
+        if (isNil(statements)) {
             return {}
         }
-        const rows = stmts.getAtPath.all(stepPath) as Array<{ name: string, output: string }>
+        const rows = statements.getAtPath.all(stepPath) as Array<{ name: string, output: string }>
         const result: Record<string, unknown> = {}
         for (const row of rows) {
             result[row.name] = JSON.parse(row.output)
@@ -82,10 +81,10 @@ export const runStateStore = {
     },
 
     allRows(): Array<{ name: string, stepPath: string, output: unknown }> {
-        if (!stmts) {
+        if (isNil(statements)) {
             return []
         }
-        const rows = stmts.allRows.all() as Array<{ name: string, path: string, output: string }>
+        const rows = statements.allRows.all() as Array<{ name: string, path: string, output: string }>
         return rows.map(r => ({
             name: r.name,
             stepPath: r.path,
@@ -94,11 +93,11 @@ export const runStateStore = {
     },
 
     isInitialized(): boolean {
-        return !!(db && stmts)
+        return !isNil(db) && !isNil(statements)
     },
 
     dispose(): void {
-        if (!db || !dbPath) {
+        if (isNil(db) || isNil(dbPath)) {
             return
         }
         try {
@@ -108,13 +107,20 @@ export const runStateStore = {
             // ignore close errors
         }
         db = null
-        stmts = null
+        statements = null
         try {
             fs.unlinkSync(dbPath)
         }
         catch {
-            // ignore unlink errors — file may already be gone
+            // ignore — file may already be gone
         }
         dbPath = null
     },
+}
+
+function getBasePath(flowVersionId: string): string {
+    const executionMode = process.env.AP_EXECUTION_MODE as ExecutionMode | undefined
+    const isSandboxed = executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
+    const base = isSandboxed ? os.tmpdir() : process.env.AP_FLOWS_CACHE_PATH!
+    return path.join(base, flowVersionId)
 }

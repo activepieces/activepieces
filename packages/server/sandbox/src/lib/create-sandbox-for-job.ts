@@ -34,7 +34,7 @@ export function createSandboxForJob(params: {
         log,
         sandboxId,
         {
-            env: buildSandboxEnv({ settings }),
+            env: buildSandboxEnv({ settings, basePath }),
             memoryLimitMb,
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
@@ -70,8 +70,9 @@ function parseMemoryLimit(memoryLimitKb: string): number {
     return Math.floor(kb / 1024)
 }
 
-function buildSandboxEnv({ settings }: {
+function buildSandboxEnv({ settings, basePath }: {
     settings: SandboxSettings
+    basePath: string
 }): Record<string, string> {
     // STRICT enables the engine's in-process ssrfGuard (best-effort dns + socket
     // guards only — there is no longer an egress proxy or kernel firewall). The hard
@@ -81,6 +82,7 @@ function buildSandboxEnv({ settings }: {
         ...baseEnv({ settings, networkMode }),
         ...ssrfEnv(settings),
         ...propagatedEnv(settings),
+        AP_FLOWS_CACHE_PATH: cacheUtils(basePath).getGlobalCacheFlowsPath(),
     }
 }
 
