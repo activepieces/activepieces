@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { codyAuth } from '../..';
 import { codyClient } from '../common/client';
+import { findBotOutputSchema } from '../output-schemas';
 
 export const findBotAction = createAction({
     auth: codyAuth,
     name: 'find_bot',
     displayName: 'Find Bot',
     description: 'Finds a bot based on its name.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Searches Cody bots by name (case-insensitive partial match) and returns the matches. Use to resolve a bot name to its ID before creating a conversation. This is a read-only lookup and is idempotent.', idempotent: true },
+    outputSchema: findBotOutputSchema,
     props: {
         name: Property.ShortText({
             displayName: 'Bot Name',

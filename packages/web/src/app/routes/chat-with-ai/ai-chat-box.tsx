@@ -41,13 +41,10 @@ export function AIChatBox({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
-  const { data: providers, isLoading: isLoadingProviders } =
-    aiProviderQueries.useAiProviders();
+  const { data: chatProvider, isLoading: isLoadingProviders } =
+    aiProviderQueries.useChatProvider();
 
-  const chatProvider = providers?.find((p) => p.enabledForChat);
-  const hasChatProvider = Boolean(chatProvider);
-
-  if (!isLoadingProviders && !hasChatProvider) {
+  if (!isLoadingProviders && !chatProvider) {
     return <SetupRequiredState />;
   }
 
@@ -97,17 +94,11 @@ function ChatBoxContent({
     (s) => s.offerRecurringAutomation,
   );
 
-  // Load history only when pointed at a *different* conversation (deep link,
-  // switching conversations). When this hook just created the conversation
-  // itself, the new id round-trips back through the parent as
-  // `initialConversationId` — reloading then would call setConversationId(),
-  // tearing down the in-flight first turn (stops the stream, clears the
-  // optimistic user message) so nothing paints until the next send reconciles.
   useEffect(() => {
-    if (initialConversationId && initialConversationId !== conversationId) {
+    if (initialConversationId) {
       void setConversationId(initialConversationId);
     }
-  }, [initialConversationId, conversationId, setConversationId]);
+  }, [initialConversationId, setConversationId]);
 
   useEffect(() => {
     if (!isStreaming) return;

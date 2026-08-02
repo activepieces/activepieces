@@ -12,6 +12,9 @@ export const newMessageReceived = createTrigger({
   displayName: 'New Message Received',
   description:
     'Fires in real time when the connected LinkedIn account receives a new message. Registers a LinkupAPI webhook (≈10 credits/day per monitored account while active).',
+  aiMetadata: {
+    description: 'Fires once for every inbound direct message received by one connected LinkedIn account, in real time via a LinkupAPI webhook. Use it to start reply, triage, or CRM-logging automations on incoming LinkedIn conversations; it covers only messages received, not messages the account sends, and not invitation activity (use Invitation Accepted for that). Each enabled instance registers a webhook against a single account ID and bills credits daily while the flow stays on.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     accountId: accountIdProp,

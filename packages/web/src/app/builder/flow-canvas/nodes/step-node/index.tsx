@@ -1,7 +1,7 @@
 import {
   FlowOperationType,
-  Step,
   FlowTriggerType,
+  Step,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
@@ -62,6 +62,10 @@ const ApStepCanvasNode = React.memo(
     );
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
+    const chevronClickOverride =
+      step.type === FlowTriggerType.EMPTY
+        ? () => setOpenedPieceSelectorStepNameOrAddButtonId(step.name)
+        : undefined;
 
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: step.name,
@@ -73,23 +77,20 @@ const ApStepCanvasNode = React.memo(
 
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-      preventDefault = true,
+      stopPropagation = true,
     ) => {
       selectStepByName(step.name);
       setSelectedBranchIndex(null);
-      if (step.type === FlowTriggerType.EMPTY) {
-        setOpenedPieceSelectorStepNameOrAddButtonId(step.name);
-      }
-      if (preventDefault) {
+      if (stopPropagation) {
         e.stopPropagation();
-        e.preventDefault();
       }
     };
     const handleContextMenu = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
       handleStepClick(e, false);
-      if (isRightSidebarOpen) {
+      setOpenedPieceSelectorStepNameOrAddButtonId(null);
+      if (isRightSidebarOpen || !e.nativeEvent.isTrusted) {
         return;
       }
       e.preventDefault();
@@ -172,11 +173,7 @@ const ApStepCanvasNode = React.memo(
               {isHorizontal ? (
                 <div
                   className="flex items-center justify-center h-full w-full"
-                  onClick={(e) => {
-                    if (!isPieceSelectorOpened) {
-                      handleStepClick(e);
-                    }
-                  }}
+                  onClick={(e) => handleStepClick(e)}
                 >
                   <StepNodeLogo
                     isSkipped={isSkipped}
@@ -187,11 +184,7 @@ const ApStepCanvasNode = React.memo(
               ) : (
                 <div
                   className="flex items-center justify-center h-full w-full gap-[10px]"
-                  onClick={(e) => {
-                    if (!isPieceSelectorOpened) {
-                      handleStepClick(e);
-                    }
-                  }}
+                  onClick={(e) => handleStepClick(e)}
                 >
                   <StepNodeLogo
                     isSkipped={isSkipped}
@@ -205,7 +198,9 @@ const ApStepCanvasNode = React.memo(
                     pieceDisplayName={stepMetadata?.displayName ?? ''}
                     stepName={step.name}
                   />
-                  {!readonly && <StepNodeChevron />}
+                  {!readonly && (
+                    <StepNodeChevron onClickOverride={chevronClickOverride} />
+                  )}
                 </div>
               )}
             </PieceSelector>
@@ -230,7 +225,7 @@ const ApStepCanvasNode = React.memo(
           )}
           {isHorizontal && !readonly && !isDragging && (
             <div className="absolute top-0 right-0  translate-x-[30px] z-10">
-              <StepNodeChevron />
+              <StepNodeChevron onClickOverride={chevronClickOverride} />
             </div>
           )}
 
