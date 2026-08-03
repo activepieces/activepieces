@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionUpdateDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const notionUpdateDatabaseItem = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionUpdateDatabaseItem = createAction({
       "Overwrites property fields on an existing database row identified by its page id. Supply the changed values as a raw Notion properties object (only the properties you include are changed); call notion_get_database to learn names/types. Resolve the row's page id via notion_query_database or notion_find_database_item. Safe to retry — re-applying the same values converges.",
     idempotent: true,
   },
+  outputSchema: notionUpdateDatabaseItemActionOutputSchema,
   props: {
     item_id: Property.ShortText({
       displayName: 'Item ID',

@@ -7,6 +7,7 @@ import {
   NotionDatabase,
   NotionDatabaseProperty,
 } from '../common/types';
+import { notionGetDatabaseActionOutputSchema } from '../output-schemas';
 
 export const notionGetDatabase = createAction({
   auth: notionAuth,
@@ -20,6 +21,7 @@ export const notionGetDatabase = createAction({
       "Retrieves a Notion database's schema: its property names, field types, and select/status/relation options. Use to discover what fields exist and their valid values before creating, updating, or filtering rows. Resolve database_id via notion_search. Read-only and safe to retry.",
     idempotent: true,
   },
+  outputSchema: notionGetDatabaseActionOutputSchema,
   props: {
     database_id: Property.ShortText({
       displayName: 'Database ID',

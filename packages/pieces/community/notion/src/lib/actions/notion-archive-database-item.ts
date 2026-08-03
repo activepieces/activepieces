@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionArchiveDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const notionArchiveDatabaseItem = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionArchiveDatabaseItem = createAction({
       "Soft-deletes a database row by setting its archived flag, keeping it recoverable via notion_restore_database_item. Use to remove a record from active views without permanent deletion; resolve the row's page id via notion_query_database or notion_find_database_item. Safe to retry — re-archiving an already-archived item is a no-op.",
     idempotent: true,
   },
+  outputSchema: notionArchiveDatabaseItemActionOutputSchema,
   props: {
     item_id: Property.ShortText({
       displayName: 'Item ID',

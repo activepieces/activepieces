@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionGetPageActionOutputSchema } from '../output-schemas';
 
 export const notionGetPage = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionGetPage = createAction({
       "Fetches a single page's metadata and property values by id (a database row is a page — use this for either). Use when you have a page id (from notion_search) and need its current properties; to read the body blocks use notion_get_block_children. Read-only and safe to retry.",
     idempotent: true,
   },
+  outputSchema: notionGetPageActionOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',

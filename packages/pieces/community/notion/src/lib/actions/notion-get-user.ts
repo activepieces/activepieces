@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionGetUserActionOutputSchema } from '../output-schemas';
 
 export const notionGetUser = createAction({
   auth: notionAuth,
@@ -14,6 +15,7 @@ export const notionGetUser = createAction({
       'Fetches a single workspace user\'s details by id (resolve via notion_list_users). Use to confirm a user\'s name/type/email before referencing them. Requires the "Read user information" capability. Read-only.',
     idempotent: true,
   },
+  outputSchema: notionGetUserActionOutputSchema,
   props: {
     user_id: Property.ShortText({
       displayName: 'User ID',

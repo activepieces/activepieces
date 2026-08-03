@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionGetPageCommentsActionOutputSchema } from '../output-schemas';
 
 export const notionGetPageComments = createAction({
   auth: notionAuth,
@@ -14,6 +15,7 @@ export const notionGetPageComments = createAction({
       'Lists all comments on a page, grouped into discussion threads. Use to read existing feedback or review discussions. Requires the "Read comments" capability and the page shared with the integration. Read-only.',
     idempotent: true,
   },
+  outputSchema: notionGetPageCommentsActionOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',

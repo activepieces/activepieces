@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionMovePageActionOutputSchema } from '../output-schemas';
 
 export const notionMovePage = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionMovePage = createAction({
       "Moves a page under a different parent page (or into a database as a row). Use to reorganize a page by id; supply exactly one of the two parent ids (resolve via notion_search). Safe to retry — re-moving to the same parent is a no-op. Note: the API may reject re-parenting some workspace-level pages, and moving into a database requires the page's properties to match the database schema.",
     idempotent: true,
   },
+  outputSchema: notionMovePageActionOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionQueryDatabaseActionOutputSchema } from '../output-schemas';
 
 export const notionQueryDatabase = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionQueryDatabase = createAction({
       "Queries a database using Notion's native filter and sort JSON (compound AND/OR, ranges, dates, contains — the full query surface). Use when the match is more than simple field-equals (for which use notion_find_database_item). Call notion_get_database FIRST to learn the property names and types the filter must reference. Read-only and safe to retry.",
     idempotent: true,
   },
+  outputSchema: notionQueryDatabaseActionOutputSchema,
   props: {
     database_id: Property.ShortText({
       displayName: 'Database ID',

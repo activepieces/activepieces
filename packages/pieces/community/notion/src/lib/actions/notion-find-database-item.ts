@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionFindDatabaseItemsActionOutputSchema } from '../output-schemas';
 
 export const notionFindDatabaseItem = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionFindDatabaseItem = createAction({
       'Finds rows in a database matching a Notion filter object and returns the matches (plus the first match for convenience). Use to look up existing records by field value before reading or updating them; for large result sets or pure listing use notion_query_database. Call notion_get_database FIRST to learn property names and types the filter must reference. Read-only and safe to retry.',
     idempotent: true,
   },
+  outputSchema: notionFindDatabaseItemsActionOutputSchema,
   props: {
     database_id: Property.ShortText({
       displayName: 'Database ID',

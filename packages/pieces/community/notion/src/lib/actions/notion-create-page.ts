@@ -5,6 +5,7 @@ import { BlockObjectRequest } from '@notionhq/client/build/src/api-endpoints';
 
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionCreatePageActionOutputSchema } from '../output-schemas';
 
 export const notionCreatePage = createAction({
   auth: notionAuth,
@@ -18,6 +19,7 @@ export const notionCreatePage = createAction({
       'Creates a new sub-page under an existing Notion page, with a title and optional markdown body. Use to add a free-form document page; to add a row to a database use notion_create_database_item instead. Resolve parent_page_id via notion_search. Each call creates a new page even with the same title.',
     idempotent: false,
   },
+  outputSchema: notionCreatePageActionOutputSchema,
   props: {
     parent_page_id: Property.ShortText({
       displayName: 'Parent Page ID',

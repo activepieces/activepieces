@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionUpdateDatabaseSchemaActionOutputSchema } from '../output-schemas';
 
 export const notionUpdateDatabaseSchema = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionUpdateDatabaseSchema = createAction({
       "Updates a database's title or column schema (add/rename/retype/remove properties) by id. Use to edit a database's STRUCTURE; to add a ROW use notion_create_database_item instead. Resolve database_id via notion_search. WARNING: removing or renaming a column is destructive to its existing row data. Safe to retry — re-applying the same schema converges.",
     idempotent: true,
   },
+  outputSchema: notionUpdateDatabaseSchemaActionOutputSchema,
   props: {
     database_id: Property.ShortText({
       displayName: 'Database ID',

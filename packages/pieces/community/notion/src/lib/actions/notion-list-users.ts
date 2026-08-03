@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionListUsersActionOutputSchema } from '../output-schemas';
 
 export const notionListUsers = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionListUsers = createAction({
       'Lists the people and bots in the workspace, returning each user\'s id, name, and type. Use to resolve a person\'s name into a user id before assigning them to a People property. Requires the "Read user information" capability. Read-only.',
     idempotent: true,
   },
+  outputSchema: notionListUsersActionOutputSchema,
   props: {
     page_size: Property.Number({
       displayName: 'Page Size',

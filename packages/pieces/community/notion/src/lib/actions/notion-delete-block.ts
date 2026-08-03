@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionDeleteBlockActionOutputSchema } from '../output-schemas';
 
 export const notionDeleteBlock = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionDeleteBlock = createAction({
       'Deletes (archives) a single block by id, removing it from its page (recoverable from Notion trash). Use to remove one block resolved via notion_get_block_children; to trash a whole page use notion_archive_page. A repeat call on an already-deleted block 404s.',
     idempotent: false,
   },
+  outputSchema: notionDeleteBlockActionOutputSchema,
   props: {
     block_id: Property.ShortText({
       displayName: 'Block ID',

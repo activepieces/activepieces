@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionRestoreDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const notionRestoreDatabaseItem = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionRestoreDatabaseItem = createAction({
       "Un-archives a previously archived database row, returning it to active status. Use to recover a record archived via notion_archive_database_item; supply the archived row's page id. Safe to retry — restoring an already-active item is a no-op.",
     idempotent: true,
   },
+  outputSchema: notionRestoreDatabaseItemActionOutputSchema,
   props: {
     item_id: Property.ShortText({
       displayName: 'Item ID',

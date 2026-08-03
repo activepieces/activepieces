@@ -5,6 +5,7 @@ import { BlockObjectRequest } from '@notionhq/client/build/src/api-endpoints';
 
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionAppendToPageActionOutputSchema } from '../output-schemas';
 
 export const notionAppendToPage = createAction({
   auth: notionAuth,
@@ -18,6 +19,7 @@ export const notionAppendToPage = createAction({
       "Appends new block content (parsed from markdown) to the end of a page or block. Use to add to a page without altering existing content; to replace a specific block's text use notion_update_block. Each call appends again, so retries duplicate the content. Notion caps each text block at 2000 chars.",
     idempotent: false,
   },
+  outputSchema: notionAppendToPageActionOutputSchema,
   props: {
     block_id: Property.ShortText({
       displayName: 'Page or Block ID',

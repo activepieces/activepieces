@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionSearchActionOutputSchema } from '../output-schemas';
 
 export const notionSearch = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionSearch = createAction({
       'Searches the workspace by title for pages and/or databases shared with the integration, with exact or partial matching. Use this FIRST to resolve a human-readable name into a page or database id before acting on it. Only returns items shared with the integration. Read-only.',
     idempotent: true,
   },
+  outputSchema: notionSearchActionOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Query',

@@ -4,6 +4,7 @@ import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
 import { Client, collectPaginatedAPI, isFullBlock } from '@notionhq/client';
 import { PartialBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import { notionGetBlockChildrenActionOutputSchema } from '../output-schemas';
 
 export const notionGetBlockChildren = createAction({
   auth: notionAuth,
@@ -17,6 +18,7 @@ export const notionGetBlockChildren = createAction({
       'Reads the body content of a page or block by recursively listing its child blocks, optionally rendered as markdown. Use to read what is actually written inside a page (text, nested blocks) rather than its metadata. The block_id is a page id or parent-block id (from notion_search / notion_get_page). Read-only.',
     idempotent: true,
   },
+  outputSchema: notionGetBlockChildrenActionOutputSchema,
   props: {
     block_id: Property.ShortText({
       displayName: 'Page or Block ID',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionUpdateBlockActionOutputSchema } from '../output-schemas';
 
 const RICH_TEXT_LIMIT = 2000;
 
@@ -42,6 +43,7 @@ export const notionUpdateBlock = createAction({
       "Replaces the text content of a single existing block by id (resolve via notion_get_block_children). Use to edit one block's text in place; to add new blocks use notion_append_to_page. Safe to retry — re-applying the same content converges. The block_type must match the actual block's type; text is split at Notion's 2000-char-per-object cap. For to_do blocks also set checked; for code blocks set language.",
     idempotent: true,
   },
+  outputSchema: notionUpdateBlockActionOutputSchema,
   props: {
     block_id: Property.ShortText({
       displayName: 'Block ID',

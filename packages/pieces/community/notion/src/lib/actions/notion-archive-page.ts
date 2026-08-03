@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionArchivePageActionOutputSchema } from '../output-schemas';
 
 export const notionArchivePage = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionArchivePage = createAction({
       'Archives (trashes) or restores any page or database row by id via its archived flag — set archived=true to trash, false to restore. Use for the generic "move this page to trash" verb on a raw page id; for database items selected from a dropdown use the human Archive/Restore Database Item actions. Safe to retry — re-applying the same state is a no-op.',
     idempotent: true,
   },
+  outputSchema: notionArchivePageActionOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',

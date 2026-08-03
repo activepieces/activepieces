@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionAddCommentActionOutputSchema } from '../output-schemas';
 
 export const notionAddComment = createAction({
   auth: notionAuth,
@@ -14,6 +15,7 @@ export const notionAddComment = createAction({
       'Posts a new comment thread on a Notion page. Use to leave feedback or a note on a page for collaborators; resolve page_id via notion_search. The integration token must have the "Insert comments" capability and the page must be shared with it. Each call posts a separate comment.',
     idempotent: false,
   },
+  outputSchema: notionAddCommentActionOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',

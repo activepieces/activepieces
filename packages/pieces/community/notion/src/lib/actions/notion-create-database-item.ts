@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionCreateDatabaseItemActionOutputSchema } from '../output-schemas';
 
 export const notionCreateDatabaseItem = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionCreateDatabaseItem = createAction({
       'Creates a new row (page) in a database. Supply property values as a raw Notion properties object (the same shape the API expects); call notion_get_database FIRST to learn the property names and types. Resolve database_id via notion_search. Not idempotent — each call creates a separate row, so guard against duplicates.',
     idempotent: false,
   },
+  outputSchema: notionCreateDatabaseItemActionOutputSchema,
   props: {
     database_id: Property.ShortText({
       displayName: 'Database ID',

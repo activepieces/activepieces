@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken } from '../common';
+import { notionCreateDatabaseActionOutputSchema } from '../output-schemas';
 
 export const notionCreateDatabase = createAction({
   auth: notionAuth,
@@ -15,6 +16,7 @@ export const notionCreateDatabase = createAction({
       'Creates a new inline database under a parent PAGE (not a database), with a title and a property-schema object defining its columns. Use to set up a new structured table; resolve parent_page_id via notion_search. Exactly one property must be of the title type. Not idempotent — each call creates a distinct database.',
     idempotent: false,
   },
+  outputSchema: notionCreateDatabaseActionOutputSchema,
   props: {
     parent_page_id: Property.ShortText({
       displayName: 'Parent Page ID',
