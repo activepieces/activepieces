@@ -1,4 +1,4 @@
-import { AgentConversation, AgentConversationStatus, Platform, Project, User } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
@@ -23,6 +23,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
         userId: {
             ...ApIdSchema,
             nullable: false,
+        },
+        source: {
+            type: String,
+            nullable: false,
+            default: AgentRunSource.CHAT,
         },
         title: {
             type: String,
