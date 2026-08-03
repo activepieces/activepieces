@@ -25,11 +25,12 @@ async function readSFTP(client: Client, filePath: string) {
 }
 
 export const readFileContent = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: sftpAuth,
   name: 'read_file_content',
   displayName: 'Read File Content',
   description: 'Read the content of a file.',
+  aiMetadata: { description: 'Downloads one file from the connected FTP, FTPS or SFTP server by remote path and returns it as a file reference that later steps can consume. Use it to fetch the content of a file whose path you know; run List Folder Contents first when you still need to discover which paths exist. Requires an exact remote file path - it does not glob, search or recurse; read-only and idempotent.', idempotent: true },
   props: {
     filePath: Property.ShortText({
       displayName: 'File Path',

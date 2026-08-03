@@ -1,7 +1,7 @@
 import os from 'os'
 import { monitorEventLoopDelay } from 'perf_hooks'
+import { createLogger } from '@activepieces/server-utils'
 import { ApEdition } from '@activepieces/shared'
-import { createLogger } from 'evlog'
 import { FastifyBaseLogger } from 'fastify'
 import { jobQueue } from '../workers/job-queue/job-queue'
 import { appMachineCache } from './app-machine-cache'

@@ -101,6 +101,7 @@ export const mcpOAuthTokenService = {
             access_token: accessToken,
             token_type: 'Bearer',
             expires_in: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
+            refresh_token: params.refreshToken,
         }
     },
 

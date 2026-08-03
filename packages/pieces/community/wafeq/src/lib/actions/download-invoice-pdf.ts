@@ -12,7 +12,7 @@ export const downloadInvoicePdf = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Fetches an existing Wafeq invoice as a PDF file for downstream use (email attachment, cloud storage, upload). Choose this when a flow needs the rendered invoice document rather than its data fields. Requires the invoice ID; the file name is optional. Read-only and idempotent — re-running returns the same PDF.',
+      'Fetches an existing Wafeq invoice as a PDF file for downstream use (email attachment, cloud storage, upload). Choose this when a flow needs the rendered invoice document rather than its data fields. Requires the invoice ID; the file name is optional. Read-only and idempotent — re-running downloads the invoice document again without changing anything in Wafeq (the PDF reflects the invoice as it stands at call time).',
     idempotent: true,
   },
   props: {
