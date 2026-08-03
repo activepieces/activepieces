@@ -74,7 +74,7 @@ export const generateImageAction = createAction({
                       { label: 'Standard', value: 'standard' },
                       { label: 'HD', value: 'hd' },
                     ]
-                    : modelId === 'gpt-image-1'
+                    : isGptImageModel({ modelId })
                       ? [
                         { label: 'High', value: 'high' },
                         { label: 'Medium', value: 'medium' },
@@ -96,7 +96,7 @@ export const generateImageAction = createAction({
                       { label: '1792x1024', value: '1792x1024' },
                       { label: '1024x1792', value: '1024x1792' },
                     ]
-                    : modelId === 'gpt-image-1'
+                    : isGptImageModel({ modelId })
                       ? [
                         { label: '1024x1024', value: '1024x1024' },
                         { label: '1536x1024', value: '1536x1024' },
@@ -113,7 +113,7 @@ export const generateImageAction = createAction({
             }),
           };
 
-          if (modelId === 'gpt-image-1') {
+          if (isGptImageModel({ modelId })) {
             options = {
               ...options,
               background: Property.StaticDropdown({
@@ -380,3 +380,7 @@ const assertImageGenerationSuccess = (
     throw new Error('No image generated');
   }
 };
+
+function isGptImageModel({ modelId }: { modelId: string }): boolean {
+  return modelId.startsWith('gpt-image');
+}
