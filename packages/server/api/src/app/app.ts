@@ -25,6 +25,9 @@ import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
 import { distributedLock, redisConnections } from './database/redis-connections'
+import { agentEvalModule } from './ee/agent/agent-eval-controller'
+import { agentHelpers } from './ee/agent/agent-helpers'
+import { agentModule } from './ee/agent/agent.module'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
@@ -37,9 +40,6 @@ import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { billingUsageReportModule } from './ee/billing-usage-report/billing-usage-report-module'
-import { chatEvalModule } from './ee/chat/chat-eval-controller'
-import { chatHelpers } from './ee/chat/chat-helpers'
-import { chatModule } from './ee/chat/chat.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
@@ -268,7 +268,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
     systemJobHandlers.registerJobHandler(SystemJobName.CHAT_STALE_SWEEP, async () => {
-        await chatHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
     })
     await systemJobsSchedule(app.log).upsertJob({
         job: {
@@ -336,8 +336,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(secretManagersModule)
             await app.register(scimModule)
             await app.register(embedSubdomainModule)
-            await app.register(chatModule)
-            await app.register(chatEvalModule)
+            await app.register(agentModule)
+            await app.register(agentEvalModule)
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
@@ -371,8 +371,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(secretManagersModule)
             await app.register(scimModule)
             await app.register(embedSubdomainModule)
-            await app.register(chatModule)
-            await app.register(chatEvalModule)
+            await app.register(agentModule)
+            await app.register(agentEvalModule)
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
