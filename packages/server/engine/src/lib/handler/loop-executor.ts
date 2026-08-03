@@ -72,6 +72,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             }
 
             newExecutionContext = newExecutionContext.setCurrentPath(newExecutionContext.currentPath.removeLast())
+            stepOutput = newExecutionContext.getLoopStepOutput({ stepName: action.name }) ?? stepOutput
 
             if (newExecutionContext.verdict.status !== FlowRunStatus.RUNNING) {
                 return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
