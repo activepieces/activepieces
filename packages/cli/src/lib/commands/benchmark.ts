@@ -269,7 +269,9 @@ async function collectHealth(client: AxiosInstance): Promise<HealthInfo> {
 }
 
 async function collectDiagnostics(client: AxiosInstance): Promise<DiagnosticsInfo> {
-    const res = await client.get('/api/v1/health/diagnostics');
+    // recentFailures is opt-in server-side: only this one-shot end-of-benchmark call pays the
+    // failure scan; the 5s sampler polls the bare endpoint and stays cheap.
+    const res = await client.get('/api/v1/health/diagnostics', { params: { recentFailures: 'true' } });
     if (res.status !== 200 || typeof res.data !== 'object') {
         return { available: false, reason: `health/diagnostics returned HTTP ${res.status} (needs platform-admin; server may predate this endpoint)` };
     }
