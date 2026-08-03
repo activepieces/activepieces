@@ -1,0 +1,178 @@
+=== Getting cluster credentials (ap-sandbox-bench / us-central1-a) ===
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for ap-sandbox-bench.
+=== Minting worker token + injecting into manifest ===
+Worker: 20x @ 100m | App: 2x @ 1500m | REUSE=true
+=== Applying manifest ===
+configmap/ap-config unchanged
+deployment.apps/postgres unchanged
+service/postgres unchanged
+deployment.apps/redis unchanged
+service/redis unchanged
+deployment.apps/app unchanged
+service/app unchanged
+deployment.apps/worker configured
+=== Forcing fresh worker rollout (re-pull image) ===
+deployment.apps/worker restarted
+=== Waiting for app + worker rollouts ===
+deployment "app" successfully rolled out
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 0 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 15 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 15 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 15 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 15 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 15 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 15 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 16 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 16 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 16 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 17 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 17 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 18 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 18 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 18 out of 20 new replicas have been updated...
+Waiting for deployment "worker" rollout to finish: 18 of 20 updated replicas are available...
+Waiting for deployment "worker" rollout to finish: 19 of 20 updated replicas are available...
+deployment "worker" successfully rolled out
+=== Waiting for app LoadBalancer IP ===
+App LB: http://35.255.171.242
+=== Cluster snapshot ===
+NAME                       READY   STATUS        RESTARTS   AGE     IP           NODE                                              NOMINATED NODE   READINESS GATES
+app-85c6bf99fb-4sxfh       1/1     Running       0          4m38s   10.72.3.12   gke-ap-sandbox-bench-default-pool-fa4e12ba-xltd   <none>           <none>
+app-85c6bf99fb-hlp4d       1/1     Running       0          4m38s   10.72.0.3    gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+postgres-bdc689447-6lrbt   1/1     Running       0          4m40s   10.72.1.2    gke-ap-sandbox-bench-default-pool-fa4e12ba-mt51   <none>           <none>
+redis-54bdc56c6b-rw96c     1/1     Running       0          4m39s   10.72.2.3    gke-ap-sandbox-bench-default-pool-fa4e12ba-gq2m   <none>           <none>
+worker-6d8f4485cf-46zkc    1/1     Running       0          12s     10.72.3.29   gke-ap-sandbox-bench-default-pool-fa4e12ba-xltd   <none>           <none>
+worker-6d8f4485cf-54td6    1/1     Running       0          9s      10.72.2.27   gke-ap-sandbox-bench-default-pool-fa4e12ba-gq2m   <none>           <none>
+worker-6d8f4485cf-5nrlq    1/1     Running       0          12s     10.72.0.26   gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+worker-6d8f4485cf-5v2sh    1/1     Running       0          12s     10.72.2.26   gke-ap-sandbox-bench-default-pool-fa4e12ba-gq2m   <none>           <none>
+worker-6d8f4485cf-798km    1/1     Running       0          13s     10.72.0.21   gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+worker-6d8f4485cf-7d8hd    1/1     Running       0          14s     10.72.3.28   gke-ap-sandbox-bench-default-pool-fa4e12ba-xltd   <none>           <none>
+worker-6d8f4485cf-882dn    1/1     Running       0          12s     10.72.0.22   gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+worker-6d8f4485cf-8kv5l    1/1     Running       0          13s     10.72.2.22   gke-ap-sandbox-bench-default-pool-fa4e12ba-gq2m   <none>           <none>
+worker-6d8f4485cf-9zn9l    1/1     Running       0          12s     10.72.0.24   gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+worker-6d8f4485cf-f2w5k    1/1     Running       0          12s     10.72.2.25   gke-ap-sandbox-bench-default-pool-fa4e12ba-gq2m   <none>           <none>
+worker-6d8f4485cf-fw5qx    1/1     Running       0          12s     10.72.2.24   gke-ap-sandbox-bench-default-pool-fa4e12ba-gq2m   <none>           <none>
+worker-6d8f4485cf-j2gtf    1/1     Running       0          8s      10.72.3.31   gke-ap-sandbox-bench-default-pool-fa4e12ba-xltd   <none>           <none>
+worker-6d8f4485cf-jm2q8    1/1     Running       0          12s     10.72.0.25   gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+worker-6d8f4485cf-ls6pg    1/1     Running       0          4s      10.72.1.16   gke-ap-sandbox-bench-default-pool-fa4e12ba-mt51   <none>           <none>
+worker-6d8f4485cf-n6bqt    1/1     Running       0          12s     10.72.0.27   gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+worker-6d8f4485cf-qdxfh    1/1     Running       0          4s      10.72.1.15   gke-ap-sandbox-bench-default-pool-fa4e12ba-mt51   <none>           <none>
+worker-6d8f4485cf-t6d2s    1/1     Running       0          12s     10.72.2.23   gke-ap-sandbox-bench-default-pool-fa4e12ba-gq2m   <none>           <none>
+worker-6d8f4485cf-x5j44    1/1     Running       0          12s     10.72.3.30   gke-ap-sandbox-bench-default-pool-fa4e12ba-xltd   <none>           <none>
+worker-6d8f4485cf-x7b5w    1/1     Running       0          12s     10.72.0.23   gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+worker-6d8f4485cf-xt66p    1/1     Running       0          7s      10.72.2.28   gke-ap-sandbox-bench-default-pool-fa4e12ba-gq2m   <none>           <none>
+worker-8684f997b9-28v6j    1/1     Terminating   0          15s     10.72.1.12   gke-ap-sandbox-bench-default-pool-fa4e12ba-mt51   <none>           <none>
+worker-8684f997b9-2kqmt    1/1     Terminating   0          15s     10.72.3.27   gke-ap-sandbox-bench-default-pool-fa4e12ba-xltd   <none>           <none>
+worker-8684f997b9-4p57j    1/1     Terminating   0          16s     10.72.0.18   gke-ap-sandbox-bench-default-pool-fa4e12ba-jgtb   <none>           <none>
+worker-8684f997b9-4z6pq    1/1     Terminating   0          16s     10.72.3.25   gke-ap-sandbox-bench-default-pool-fa4e12ba-xltd   <none>           <none>
+worker-8684f997b9-7pkv2    1/1     Terminating   0          16s     10.72.3.24   gke-ap-sandbox-bench-default-pool-fa4e12ba-xltd   <none>           <none>
+Workers ready: 20
+=== IDLE WORKER RAM (connected, before any flow runs) ===
+  idle RSS per worker: avg 134 Mi | min 110 Mi | max 150 Mi  (across 20 workers, no flow running)
+=== Setting up flow ===
+Waiting for app to be ready...
+App is ready after 5s
+Waiting for webhook piece to be available...
+Webhook piece is available (took 1s)
+Authenticating...
+Sign-up unavailable (platform exists); signing in...
+Signed up. Project: GsrOjg9F53k6rGZb1T7Si
+Creating flow...
+Flow created: l1YUYAvEFYL8hqtti0u1A
+Importing flow definition...
+Publishing flow...
+Enabling flow...
+Waiting for flow to become ENABLED (timeout: 60s)...
+Flow is ENABLED
+Setup complete. Flow ID: l1YUYAvEFYL8hqtti0u1A
+Flow ID: l1YUYAvEFYL8hqtti0u1A
+=== COLD BOOT: first request (cold process + cold cache) ===
+Cold boot latency: 16771 ms
+=== WARMUP: 40 requests @ concurrency 20 (not measured) ===
+  warmup   Requests/sec:	1.5811
+=== WARM THROUGHPUT: 1000 requests @ concurrency 20 ===
+
+Summary:
+  Total:	288.1254 secs
+  Slowest:	7.3997 secs
+  Fastest:	5.4694 secs
+  Average:	5.7226 secs
+  Requests/sec:	3.4707
+  
+  Total data:	17000 bytes
+  Size/request:	17 bytes
+
+Response time histogram:
+  5.469 [1]	|
+  5.662 [454]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  5.855 [426]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  6.048 [57]	|■■■■■
+  6.242 [26]	|■■
+  6.435 [20]	|■■
+  6.628 [9]	|■
+  6.821 [3]	|
+  7.014 [1]	|
+  7.207 [1]	|
+  7.400 [2]	|
+
+
+Latency distribution:
+  10%% in 5.5980 secs
+  25%% in 5.6053 secs
+  50%% in 5.6813 secs
+  75%% in 5.7346 secs
+  90%% in 5.9015 secs
+  95%% in 6.1303 secs
+  99%% in 6.5949 secs
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0027 secs, 0.0000 secs, 0.1427 secs
+  DNS-lookup:	0.0000 secs, 0.0000 secs, 0.0000 secs
+  req write:	0.0001 secs, 0.0000 secs, 0.0023 secs
+  resp wait:	5.7197 secs, 5.4691 secs, 7.3994 secs
+  resp read:	0.0001 secs, 0.0000 secs, 0.0007 secs
+
+Status code distribution:
+  [200]	1000 responses
+
+
+
+
+=== RESOURCE USAGE during load (app vs worker) — for the ratio ===
+  app      : 80 samples, avg 307 m/pod (limit 1500m)
+  worker   : 800 samples, avg 23 m/pod (limit 100m)
+  postgres : 40 samples, avg 199 m   (single pod, the shared singleton)
+  redis    : 40 samples, avg 21 m   (single pod, the shared singleton)
+
+=== PER-RUN BREAKDOWN (avg ms across all flow runs, from worker pod logs) ===
+  samples              : 1042 runs
+  -- provisioning --
+  flow bundle download : 6.2 ms
+  pieces install       : 0.8 ms
+  engine install       : 0.2 ms  (V8-cached)
+  provision (total)    : 12.5 ms
+  -- engine execution timeline --
+  sandbox start (boot) : 124.4 ms  (fork + Node + parse + isolated-vm init + connect)
+  sandbox run (flow)   : 5666.8 ms  (webhook -> math -> code -> response)
+  execution (total)    : 5791.4 ms
+
+=== SUMMARY ===
+Model: worker-is-the-sandbox on GKE | ap-sandbox-bench | workers=20 @ 100m/1G | concurrency=1 | REUSE_SANDBOX=true | SANDBOX_CODE_ONLY | S3=GCS-europe-west1+signed-urls
+Cold boot latency : 16771 ms
+Warm throughput   : 3.4707 req/s
+    Total:	288.1254 secs
+    Slowest:	7.3997 secs
+    Fastest:	5.4694 secs
+    Average:	5.7226 secs
+
+Teardown when done:  kubectl delete -f benchmark/k8s-sandbox.yaml   (workload)
+                     gcloud container clusters delete ap-sandbox-bench --zone us-central1-a   (cluster)

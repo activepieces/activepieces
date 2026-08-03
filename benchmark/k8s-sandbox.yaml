@@ -28,7 +28,7 @@ data:
   # Real same-region object store: a GCS bucket in europe-west1 reached over the S3-interop endpoint
   # with HMAC keys. The app generates SigV4 presigned URLs (forcePathStyle on, since endpoint is set);
   # the engine fetches flow bundle + piece archives directly from GCS via those links.
-  AP_S3_BUCKET: ap-bench-usc-b3803
+  AP_S3_BUCKET: __S3_BUCKET__
   # HMAC access key + secret are NOT here — they live in the `ap-s3-secret` Kubernetes Secret,
   # created out-of-band (kubectl create secret) and injected via secretRef on app + worker, so the
   # live credential never sits in this plaintext manifest.
@@ -171,7 +171,7 @@ spec:
     spec:
       containers:
         - name: worker
-          image: us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench
+          image: __WORKER_IMAGE__
           imagePullPolicy: Always
           envFrom: [{ configMapRef: { name: ap-config } }, { secretRef: { name: ap-s3-secret } }]
           env:

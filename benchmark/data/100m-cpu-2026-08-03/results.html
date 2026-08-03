@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100m-CPU worker benchmark — 2 apps / 20 workers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --primary: hsl(257 74% 57%);
+    --primary-100: hsl(257 75% 85%);
+    --primary-300: hsl(257 74% 25%);
+    --n50: #fafafa; --n100: #f5f5f5; --n200: #e5e5e5; --n400: #a3a3a3;
+    --n600: #525252; --n700: #404040; --n900: #171717; --n950: #0a0a0a;
+    --success: hsl(160 84% 39%);
+    --destructive: hsl(350 89% 60%);
+    --warning: hsl(38 92% 50%);
+    --radius-md: 8px; --radius-lg: 10px; --radius-xl: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 14px; line-height: 1.55; color: var(--n950);
+    background: var(--n50); padding: 8px;
+  }
+  .shell {
+    max-width: 980px; margin: 0 auto; background: #fff;
+    border: 1px solid var(--n200); border-radius: var(--radius-xl);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden;
+  }
+  .masthead { padding: 40px 48px 32px; border-bottom: 1px solid var(--n200); }
+  .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
+  .brand svg { color: var(--primary); }
+  .brand span { font-size: 12px; font-weight: 600; color: var(--n600); letter-spacing: 0.02em; }
+  .masthead h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+  .masthead .sub { margin-top: 10px; font-size: 14px; color: var(--n600); max-width: 640px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; color: var(--n700);
+    background: var(--n100); border: 1px solid var(--n200);
+    border-radius: 999px; padding: 4px 10px;
+  }
+  .chip svg { width: 13px; height: 13px; color: var(--n600); }
+  section { padding: 32px 48px; border-bottom: 1px solid var(--n200); }
+  section:last-of-type { border-bottom: none; }
+  .kicker {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--primary); margin-bottom: 8px;
+  }
+  h2 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+  h2 svg { width: 18px; height: 18px; color: var(--primary); }
+  .section-sub { margin-top: 6px; font-size: 13px; color: var(--n600); max-width: 680px; }
+  h3.block-title { font-size: 14px; font-weight: 600; margin-top: 28px; display: flex; align-items: center; gap: 7px; }
+  h3.block-title svg { width: 15px; height: 15px; color: var(--n600); }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; }
+  .stat {
+    border: 1px solid var(--n200); border-radius: var(--radius-lg);
+    padding: 16px; background: #fff;
+  }
+  .stat .label { font-size: 12px; color: var(--n600); display: flex; align-items: center; gap: 6px; }
+  .stat .label svg { width: 13px; height: 13px; }
+  .stat .value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-top: 6px; }
+  .stat .value small { font-size: 14px; font-weight: 500; }
+  .stat .hint { font-size: 12px; color: var(--n400); margin-top: 2px; }
+  .stat.accent { background: hsl(257 75% 97%); border-color: var(--primary-100); }
+  .stat.accent .value { color: var(--primary-300); }
+  .flow-strip {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-top: 16px; padding: 14px 16px;
+    background: #FBFBFB;
+    background-image: radial-gradient(#b2b2b2 1px, transparent 1px);
+    background-size: 16px 16px;
+    border: 1px solid var(--n200); border-radius: var(--radius-lg);
+  }
+  .step {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: #fff; border: 1px solid var(--n200); border-radius: var(--radius-md);
+    padding: 7px 12px; font-size: 13px; font-weight: 500;
+  }
+  .step svg { width: 14px; height: 14px; color: var(--n600); }
+  .step.added { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-100); }
+  .step.added svg { color: var(--primary); }
+  .step-arrow { color: var(--n400); display: flex; }
+  .step-arrow svg { width: 14px; height: 14px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+  th {
+    text-align: left; font-size: 12px; font-weight: 600; color: var(--n600);
+    padding: 8px 12px; border-bottom: 1px solid var(--n200); white-space: nowrap;
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--n100); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.metric { color: var(--n600); }
+  td strong { font-weight: 600; }
+  .num { font-variant-numeric: tabular-nums; }
+  .bar-block { margin-top: 16px; }
+  .bar-row { display: grid; grid-template-columns: 190px 1fr 110px; align-items: center; gap: 12px; margin-top: 10px; }
+  .bar-row .bar-label { font-size: 13px; color: var(--n700); }
+  .bar-track { height: 22px; background: var(--n100); border-radius: 6px; overflow: hidden; display: flex; }
+  .bar-fill { height: 100%; }
+  .bar-fill.wait { background: var(--n200); }
+  .bar-fill.overhead { background: var(--primary); }
+  .bar-value { font-size: 12px; color: var(--n600); font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--n600); }
+  .legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .cpu-row { display: grid; grid-template-columns: 190px 1fr 150px; align-items: center; gap: 12px; margin-top: 10px; }
+  .cpu-track { height: 22px; background: var(--n100); border-radius: 6px; overflow: hidden; position: relative; }
+  .cpu-fill { height: 100%; border-radius: 6px 0 0 6px; }
+  .cpu-fill.busy { background: var(--warning); }
+  .cpu-fill.idle-heavy { background: var(--success); }
+  .alert {
+    display: flex; gap: 12px; margin-top: 20px; padding: 14px 16px;
+    border: 1px solid var(--n200); border-radius: var(--radius-lg); font-size: 13px;
+  }
+  .alert svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert.warn { background: hsl(38 92% 97%); border-color: hsl(38 92% 82%); }
+  .alert.warn svg { color: var(--warning); }
+  .alert.ok { background: hsl(160 60% 97%); border-color: hsl(160 50% 80%); }
+  .alert.ok svg { color: var(--success); }
+  .alert .alert-title { font-weight: 600; margin-bottom: 2px; }
+  .alert code { font-size: 12px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 4px; }
+  .takeaways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+  .takeaway { border: 1px solid var(--n200); border-radius: var(--radius-lg); padding: 18px; }
+  .takeaway .t-icon {
+    width: 32px; height: 32px; border-radius: var(--radius-md);
+    background: hsl(257 75% 95%); display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+  }
+  .takeaway .t-icon svg { width: 16px; height: 16px; color: var(--primary); }
+  .takeaway h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .takeaway p { font-size: 13px; color: var(--n600); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 8px;
+  }
+  .badge.pass { background: hsl(160 60% 95%); color: hsl(160 84% 28%); }
+  .badge.fail { background: hsl(350 89% 96%); color: hsl(350 70% 40%); }
+  .badge .dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+  .compare-table td:nth-child(2), .compare-table td:nth-child(3),
+  .compare-table th:nth-child(2), .compare-table th:nth-child(3) { text-align: right; }
+  footer { padding: 20px 48px; font-size: 12px; color: var(--n400); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  footer code { font-size: 11px; }
+  @media (max-width: 760px) {
+    section, .masthead, footer { padding-left: 24px; padding-right: 24px; }
+    .stat-grid, .takeaways { grid-template-columns: 1fr 1fr; }
+    .bar-row, .cpu-row { grid-template-columns: 130px 1fr 90px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="masthead">
+    <div class="brand">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span>Activepieces &middot; engineering benchmark</span>
+    </div>
+    <h1>What 100m-CPU workers can and can't do</h1>
+    <p class="sub">
+      A customer running 100m workers saw 1–2 s medians and frequent errors, and asked whether our
+      benchmark reflects real flows — theirs mostly wait on external APIs. We ran two benchmarks on
+      the same fleet: the standard CPU-bound flow, and an I/O-bound variant with a 5-second external
+      call.
+    </p>
+    <div class="meta-row">
+      <span class="chip"><i data-lucide="server"></i>2 apps &middot; 20 workers @ 100m / 1 GB</span>
+      <span class="chip"><i data-lucide="cloud"></i>GKE e2-standard-4 &times; 4, us-central1-a</span>
+      <span class="chip"><i data-lucide="flame"></i>Warm (sandbox reuse on), concurrency 1</span>
+      <span class="chip"><i data-lucide="activity"></i>1000 requests @ 20 concurrent</span>
+      <span class="chip"><i data-lucide="calendar"></i>2026-08-03</span>
+    </div>
+  </div>
+
+  <!-- ============ BENCHMARK 1 ============ -->
+  <section>
+    <div class="kicker"><i data-lucide="zap" style="width:12px;height:12px"></i>Benchmark 1</div>
+    <h2>CPU-bound flow — the standard benchmark</h2>
+    <p class="section-sub">
+      The default benchmark flow. It makes no external calls, so every millisecond is
+      serialization + orchestration priced in worker CPU. Sub-millisecond actual compute.
+    </p>
+    <div class="flow-strip">
+      <span class="step"><i data-lucide="webhook"></i>Catch webhook</span>
+      <span class="step-arrow"><i data-lucide="arrow-right"></i></span>
+      <span class="step"><i data-lucide="calculator"></i>Math</span>
+      <span class="step-arrow"><i data-lucide="arrow-right"></i></span>
+      <span class="step"><i data-lucide="code"></i>Code</span>
+      <span class="step-arrow"><i data-lucide="arrow-right"></i></span>
+      <span class="step"><i data-lucide="reply"></i>Return response</span>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat accent">
+        <div class="label"><i data-lucide="gauge"></i>Throughput</div>
+        <div class="value">31.0 <small>req/s</small></div>
+        <div class="hint">1.55 req/s per worker</div>
+      </div>
+      <div class="stat">
+        <div class="label"><i data-lucide="timer"></i>Median latency</div>
+        <div class="value">618 <small>ms</small></div>
+        <div class="hint">avg 632 ms</div>
+      </div>
+      <div class="stat">
+        <div class="label"><i data-lucide="trending-up"></i>p95 / p99</div>
+        <div class="value">799 / 962 <small>ms</small></div>
+        <div class="hint">slowest 1.11 s</div>
+      </div>
+      <div class="stat">
+        <div class="label"><i data-lucide="check-circle-2"></i>Errors</div>
+        <div class="value">0 <small>/ 1000</small></div>
+        <div class="hint">all HTTP 200</div>
+      </div>
+    </div>
+
+    <h3 class="block-title"><i data-lucide="list"></i>Detail</h3>
+    <table>
+      <tbody>
+        <tr><td class="metric">Worker CPU during load</td><td class="num"><strong>68m / 100m</strong> (68% of cap)</td></tr>
+        <tr><td class="metric">App CPU during load</td><td class="num">430m / 1500m per pod</td></tr>
+        <tr><td class="metric">Cold boot — first request, fresh engine fork</td><td class="num"><strong>9.3 s</strong> (~2 s at 500m)</td></tr>
+        <tr><td class="metric">Per-run engine timeline (warm)</td><td class="num">provision 15 ms &middot; sandbox boot 84 ms &middot; flow run 543 ms</td></tr>
+        <tr><td class="metric">Idle worker RSS</td><td class="num">137 Mi avg (127–151)</td></tr>
+      </tbody>
+    </table>
+    <div class="alert ok">
+      <i data-lucide="info"></i>
+      <div>
+        <div class="alert-title">Per-worker throughput matches the 500m reference</div>
+        1.55 req/s per worker at 100m vs 1.48 at 500m — warm runs wait on app callbacks, not worker
+        CPU. Latency was even better than the 40-worker pass (p50 618 vs 720 ms): fewer workers,
+        less callback contention on the 2 apps.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BENCHMARK 2 ============ -->
+  <section>
+    <div class="kicker"><i data-lucide="globe" style="width:12px;height:12px"></i>Benchmark 2</div>
+    <h2>I/O-bound flow — with a 5 s external call</h2>
+    <p class="section-sub">
+      Same flow plus one HTTP piece step calling an in-cluster endpoint that answers after exactly
+      5 seconds — a stand-in for a slow external API, the customer's dominant flow shape.
+    </p>
+    <div class="flow-strip">
+      <span class="step"><i data-lucide="webhook"></i>Catch webhook</span>
+      <span class="step-arrow"><i data-lucide="arrow-right"></i></span>
+      <span class="step"><i data-lucide="calculator"></i>Math</span>
+      <span class="step-arrow"><i data-lucide="arrow-right"></i></span>
+      <span class="step"><i data-lucide="code"></i>Code</span>
+      <span class="step-arrow"><i data-lucide="arrow-right"></i></span>
+      <span class="step added"><i data-lucide="globe"></i>HTTP &middot; waits 5 s</span>
+      <span class="step-arrow"><i data-lucide="arrow-right"></i></span>
+      <span class="step"><i data-lucide="reply"></i>Return response</span>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat accent">
+        <div class="label"><i data-lucide="gauge"></i>Throughput</div>
+        <div class="value">3.47 <small>req/s</small></div>
+        <div class="hint">slot cap is 3.5 — fully saturated</div>
+      </div>
+      <div class="stat">
+        <div class="label"><i data-lucide="timer"></i>Median latency</div>
+        <div class="value">5.68 <small>s</small></div>
+        <div class="hint">only 0.68 s above the call itself</div>
+      </div>
+      <div class="stat">
+        <div class="label"><i data-lucide="trending-up"></i>p95 / p99</div>
+        <div class="value">6.13 / 6.59 <small>s</small></div>
+        <div class="hint">slowest 7.40 s</div>
+      </div>
+      <div class="stat">
+        <div class="label"><i data-lucide="check-circle-2"></i>Errors</div>
+        <div class="value">0 <small>/ 1000</small></div>
+        <div class="hint">all HTTP 200</div>
+      </div>
+    </div>
+
+    <h3 class="block-title"><i data-lucide="list"></i>Detail</h3>
+    <table>
+      <tbody>
+        <tr><td class="metric">Worker CPU during load</td><td class="num"><strong>23m / 100m</strong> (23% of cap — mostly waiting)</td></tr>
+        <tr><td class="metric">App CPU during load</td><td class="num">307m / 1500m per pod</td></tr>
+        <tr><td class="metric">Cold boot — first request, cold caches</td><td class="num"><strong>16.8 s</strong> (fork + piece install + the 5 s call)</td></tr>
+        <tr><td class="metric">Per-run engine timeline (warm)</td><td class="num">provision 13 ms &middot; sandbox boot 124 ms &middot; flow run 5667 ms (5000 ms of it external wait)</td></tr>
+        <tr><td class="metric">Whole-fleet CPU to serve 3.5 req/s</td><td class="num">~0.5 vCPU across all 20 workers</td></tr>
+      </tbody>
+    </table>
+    <div class="alert ok">
+      <i data-lucide="info"></i>
+      <div>
+        <div class="alert-title">The fleet is slot-limited, not CPU-limited</div>
+        Throughput sat exactly at the concurrency-1 slot cap (20 workers &divide; 5.7 s &asymp; 3.5 req/s)
+        while CPU idled at 23%. Adding CPU per worker would change nothing here; adding in-flight
+        capacity would.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARISON ============ -->
+  <section>
+    <div class="kicker"><i data-lucide="git-compare" style="width:12px;height:12px"></i>Comparison</div>
+    <h2>Side by side</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr><th>Metric</th><th>Benchmark 1 — CPU-bound</th><th>Benchmark 2 — + 5 s call</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="metric">Throughput</td><td class="num"><strong>31.0 req/s</strong></td><td class="num"><strong>3.47 req/s</strong> (slot cap)</td></tr>
+        <tr><td class="metric">Median / p95 / p99</td><td class="num">618 / 799 / 962 ms</td><td class="num">5.68 / 6.13 / 6.59 s</td></tr>
+        <tr><td class="metric">Orchestration overhead (p50)</td><td class="num">618 ms (all of it)</td><td class="num">~680 ms (on top of the 5 s wait)</td></tr>
+        <tr><td class="metric">Worker CPU vs 100m cap</td><td class="num">68%</td><td class="num">23%</td></tr>
+        <tr><td class="metric">Cold boot (first request)</td><td class="num">9.3 s</td><td class="num">16.8 s</td></tr>
+        <tr><td class="metric">Errors</td><td class="num">0 / 1000</td><td class="num">0 / 1000</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="block-title"><i data-lucide="clock"></i>Where the median goes</h3>
+    <div class="bar-block">
+      <div class="bar-row">
+        <span class="bar-label">Benchmark 1</span>
+        <div class="bar-track">
+          <div class="bar-fill overhead" style="width: 10.9%"></div>
+        </div>
+        <span class="bar-value num">0.62 s total</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Benchmark 2</span>
+        <div class="bar-track">
+          <div class="bar-fill wait" style="width: 88%"></div>
+          <div class="bar-fill overhead" style="width: 12%"></div>
+        </div>
+        <span class="bar-value num">5.68 s total</span>
+      </div>
+      <div class="legend">
+        <span class="key"><span class="swatch" style="background: var(--n200)"></span>External API wait (5.0 s)</span>
+        <span class="key"><span class="swatch" style="background: var(--primary)"></span>Orchestration overhead (~0.6–0.7 s)</span>
+      </div>
+    </div>
+
+    <h3 class="block-title"><i data-lucide="cpu"></i>Worker CPU against the 100m cap</h3>
+    <div class="bar-block">
+      <div class="cpu-row">
+        <span class="bar-label">Benchmark 1</span>
+        <div class="cpu-track"><div class="cpu-fill busy" style="width: 68%"></div></div>
+        <span class="bar-value num">68m / 100m (68%)</span>
+      </div>
+      <div class="cpu-row">
+        <span class="bar-label">Benchmark 2</span>
+        <div class="cpu-track"><div class="cpu-fill idle-heavy" style="width: 23%"></div></div>
+        <span class="bar-value num">23m / 100m (23%)</span>
+      </div>
+    </div>
+
+    <p class="section-sub" style="margin-top: 20px">
+      The orchestration overhead is a roughly constant ~0.6–0.7 s — it does not scale with the
+      flow's external latency. The benchmark flow is that overhead and nothing else, which is why
+      it reads as "high CPU impact": it is a CPU stress test by construction.
+    </p>
+  </section>
+
+  <!-- ============ SUMMARY ============ -->
+  <section>
+    <div class="kicker"><i data-lucide="lightbulb" style="width:12px;height:12px"></i>Summary</div>
+    <h2>What this means for running at 100m</h2>
+
+    <h3 class="block-title"><i data-lucide="snowflake"></i>The cold path is where 100m hurts</h3>
+    <table>
+      <thead>
+        <tr><th>Cold operation</th><th>@ 500m (reference)</th><th>@ 100m (measured)</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="metric">First request — engine fork + boot, CPU-bound flow</td>
+          <td class="num">~2.0 s</td>
+          <td class="num"><strong>9.3 s</strong></td>
+          <td><span class="badge pass"><span class="dot"></span>completed</span></td>
+        </tr>
+        <tr>
+          <td class="metric">First request — cold cache, flow with HTTP piece</td>
+          <td class="num">—</td>
+          <td class="num"><strong>16.8 s</strong></td>
+          <td><span class="badge pass"><span class="dot"></span>completed</span></td>
+        </tr>
+        <tr>
+          <td class="metric">Flow publish with a cold, heavier piece (40-worker pass)</td>
+          <td class="num">never observed</td>
+          <td class="num"><strong>exceeded safety timeout</strong></td>
+          <td><span class="badge fail"><span class="dot"></span>failed, retry ok</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="alert warn">
+      <i data-lucide="alert-triangle"></i>
+      <div>
+        <div class="alert-title">This is the likely source of the customer's instability</div>
+        Control-plane engine operations (publish, enable, test step) and fresh engine forks share
+        the worker's CPU cap. At 100m they take 5&times; longer, so under churn — deploys, scale-up,
+        cache eviction, <code>AP_REUSE_SANDBOX=false</code> — they collide with sync-webhook budgets
+        and safety timeouts and surface as errors. Steady-state traffic was error-free.
+      </div>
+    </div>
+
+    <div class="takeaways">
+      <div class="takeaway">
+        <div class="t-icon"><i data-lucide="scale"></i></div>
+        <h3>Benchmark ≠ real workload</h3>
+        <p>The standard flow is pure serialization + orchestration — a CPU stress test. For API-waiting
+        flows, read it as the fixed overhead (~0.6–0.7 s warm at 100m), not the total.</p>
+      </div>
+      <div class="takeaway">
+        <div class="t-icon"><i data-lucide="shield-check"></i></div>
+        <h3>100m holds — if it stays warm</h3>
+        <p>Zero errors across 2000 measured requests. The risk at 100m is entirely in cold work:
+        9–17 s first-request boots and control-plane ops that can hit safety timeouts.</p>
+      </div>
+      <div class="takeaway">
+        <div class="t-icon"><i data-lucide="layers"></i></div>
+        <h3>Slots, not CPU, set the cost</h3>
+        <p>With concurrency-1 workers, an I/O-bound fleet is limited by slot count while CPU idles at
+        ~23%. Raising in-flight flows per worker is the lever behind a 5&times; cost reduction.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Raw data: <code>benchmark/data/100m-cpu-2026-08-03/</code> — RESULTS.md + hey logs for all passes.</span>
+    <span>Rig: worker-is-the-sandbox, SANDBOX_CODE_ONLY, GCS + signed URLs</span>
+  </footer>
+
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

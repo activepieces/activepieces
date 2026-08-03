@@ -1,0 +1,28 @@
+# A stand-in for a slow external API: responds 200 {"ok":true} after 5 seconds. Lives in-cluster so
+# the benchmark isn't rate-limited by a public delay service; the engine still spends the full 5 s
+# blocked on network I/O, which is what the measurement needs.
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: delay }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: delay } }
+  template:
+    metadata: { labels: { app: delay } }
+    spec:
+      containers:
+        - name: delay
+          image: node:22-alpine
+          command:
+            - node
+            - -e
+            - "require('http').createServer((q,s)=>setTimeout(()=>{s.setHeader('content-type','application/json');s.end('{\"ok\":true}')},5000)).listen(8080)"
+          ports: [{ containerPort: 8080 }]
+          resources: { requests: { cpu: 100m, memory: 128Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: delay }
+spec:
+  selector: { app: delay }
+  ports: [{ port: 80, targetPort: 8080 }]

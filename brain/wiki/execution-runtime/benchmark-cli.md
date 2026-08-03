@@ -22,6 +22,9 @@ icon: ⏱️
 - **App Instance Registry** (`app-machine-cache.ts`): apps have no inbound healthcheck, so each self-registers into a Redis hash `appMachines` on its `systemSnapshot` tick; `list()` drops rows untouched >120s. Kept separate from `workerMachines` so an app is never counted as an execution slot. Write gated off on Cloud.
 
 ### Gotchas
+- The default benchmark flow (webhook → math → code → response) makes **no external calls — it is ~100% CPU/orchestration**, so results overstate CPU pressure for I/O-heavy real-world flows (a customer at 100m-CPU workers hit p50 1–2 s and read it as instability). To benchmark the I/O-bound shape, `benchmark/setup.sh` takes `HTTP_DELAY_URL=<url>` to insert an HTTP piece step, and `benchmark/k8s-delay.yaml` deploys an in-cluster endpoint that responds after 5 s.
+- Re-running `benchmark/run-gke.sh` against a **live** cluster silently breaks worker auth: each run mints a fresh random `AP_JWT_SECRET` and restarts only the workers, so the app keeps the old secret, rejects every worker, and jobs pile up in `prioritized` with 0 active. Pin `AP_JWT_SECRET` across runs or `kubectl rollout restart deployment/app` too.
+- At 100m worker CPU, control-plane engine ops (flow publish/enable, first piece install) can exceed the worker safety timeout on cold caches (`ENGINE_OPERATION_FAILURE: Worker did not respond within the safety timeout`); measured 100m results (CPU-bound + 5 s-HTTP flows): `benchmark/data/100m-cpu-2026-08-03/RESULTS.md`.
 - Auth is **platform API key only** (`AP_API_KEY`/`--api-key` + `--project-id`) — email/password login was removed; SERVICE principal gets the full diagnostic bundle.
 - The infra round-trip block is **self-hosted only** — `/v1/health/diagnostics` returns `FEATURE_DISABLED` on `AP_EDITION=cloud` (a Cloud admin is a tenant, not the infra operator); the CLI degrades gracefully.
 

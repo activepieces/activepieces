@@ -17,6 +17,8 @@ REUSE_SANDBOX=${REUSE_SANDBOX:-false}
 APP_REPLICAS=${APP_REPLICAS:-2}
 APP_CPU=${APP_CPU:-1500m}
 APP_IMAGE=${APP_IMAGE:-europe-west1-docker.pkg.dev/activepieces-b3803/poolserver/ap-app:latest}
+WORKER_IMAGE=${WORKER_IMAGE:-us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench}
+S3_BUCKET=${S3_BUCKET:-ap-bench-usc-b3803}
 CLUSTER=${CLUSTER:-ap-sandbox-bench}
 ZONE=${ZONE:-us-central1-a}
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -36,7 +38,7 @@ sed -e "s|__AP_WORKER_TOKEN__|${TOKEN}|" -e "s|__WORKER_CPU__|${WORKER_CPU}|g" -
     -e "s|__AP_JWT_SECRET__|${JWT_SECRET}|" \
     -e "s|__REUSE_SANDBOX__|${REUSE_SANDBOX}|" \
     -e "s|__APP_REPLICAS__|${APP_REPLICAS}|" -e "s|__APP_CPU__|${APP_CPU}|" \
-    -e "s|__APP_IMAGE__|${APP_IMAGE}|" "$ROOT/benchmark/k8s-sandbox.yaml" > "$MANIFEST"
+    -e "s|__APP_IMAGE__|${APP_IMAGE}|" -e "s|__WORKER_IMAGE__|${WORKER_IMAGE}|" -e "s|__S3_BUCKET__|${S3_BUCKET}|" "$ROOT/benchmark/k8s-sandbox.yaml" > "$MANIFEST"
 echo "Worker: ${WORKER_REPLICAS}x @ ${WORKER_CPU} | App: ${APP_REPLICAS}x @ ${APP_CPU} | REUSE=${REUSE_SANDBOX}"
 
 echo "=== Applying manifest ==="

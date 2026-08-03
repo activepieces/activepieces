@@ -117,15 +117,98 @@ else
 fi
 
 # Flow: webhook (latest) -> math-helper addition (latest) -> small CODE step -> return response (latest).
+# Set HTTP_DELAY_URL to insert an HTTP piece step (GET $HTTP_DELAY_URL) between the code step and the
+# response — simulates a flow that waits on a slow external API.
 WEBHOOK_VERSION="${WEBHOOK_VERSION:-~0.1.36}"
 MATH_VERSION="${MATH_VERSION:-~0.0.24}"
+HTTP_VERSION="${HTTP_VERSION:-~0.11.13}"
+HTTP_DELAY_URL="${HTTP_DELAY_URL:-}"
 IMPORT_PAYLOAD=$(jq -n \
   --arg code "$CODE_STEP_SRC" \
   --arg webhookV "$WEBHOOK_VERSION" \
   --arg mathV "$MATH_VERSION" \
+  --arg httpV "$HTTP_VERSION" \
+  --arg httpUrl "$HTTP_DELAY_URL" \
   --arg sumInput "$CODE_INPUT_SUM" \
   --argjson body "$RESPONSE_BODY_JSON" \
-  '{
+  '
+  def responseAction: {
+    name: "step_1",
+    skip: false,
+    type: "PIECE",
+    valid: true,
+    settings: {
+      input: {
+        fields: { body: $body, status: 200, headers: {} },
+        respond: "stop",
+        responseType: "json"
+      },
+      pieceName: "@activepieces/piece-webhook",
+      actionName: "return_response",
+      sampleData: {},
+      pieceVersion: $webhookV,
+      propertySettings: {
+        fields: {
+          type: "MANUAL",
+          schema: {
+            body: { type: "JSON", required: true, displayName: "JSON Body" },
+            status: { type: "NUMBER", required: false, displayName: "Status", defaultValue: 200 },
+            headers: { type: "OBJECT", required: false, displayName: "Headers" }
+          }
+        },
+        respond: { type: "MANUAL" },
+        responseType: { type: "MANUAL" }
+      },
+      errorHandlingOptions: {
+        retryOnFailure: { value: false },
+        continueOnFailure: { value: false }
+      }
+    },
+    displayName: "Return Response"
+  };
+  def httpAction: {
+    name: "step_4",
+    skip: false,
+    type: "PIECE",
+    valid: true,
+    settings: {
+      input: {
+        url: $httpUrl,
+        method: "GET",
+        headers: {},
+        queryParams: {},
+        authType: "NONE",
+        authFields: {},
+        body_type: "none",
+        body: {},
+        timeout: 60,
+        failureMode: "retry_none"
+      },
+      pieceName: "@activepieces/piece-http",
+      actionName: "send_request",
+      sampleData: {},
+      pieceVersion: $httpV,
+      propertySettings: {
+        url: { type: "MANUAL" },
+        method: { type: "MANUAL" },
+        headers: { type: "MANUAL" },
+        queryParams: { type: "MANUAL" },
+        authType: { type: "MANUAL" },
+        authFields: { type: "MANUAL", schema: {} },
+        body_type: { type: "MANUAL" },
+        body: { type: "MANUAL", schema: {} },
+        timeout: { type: "MANUAL" },
+        failureMode: { type: "MANUAL" }
+      },
+      errorHandlingOptions: {
+        retryOnFailure: { value: false },
+        continueOnFailure: { value: false }
+      }
+    },
+    displayName: "HTTP Delay",
+    nextAction: responseAction
+  };
+  {
     type: "IMPORT_FLOW",
     request: {
       displayName: "Benchmark Flow",
@@ -186,40 +269,7 @@ IMPORT_PAYLOAD=$(jq -n \
               }
             },
             displayName: "Code",
-            nextAction: {
-              name: "step_1",
-              skip: false,
-              type: "PIECE",
-              valid: true,
-              settings: {
-                input: {
-                  fields: { body: $body, status: 200, headers: {} },
-                  respond: "stop",
-                  responseType: "json"
-                },
-                pieceName: "@activepieces/piece-webhook",
-                actionName: "return_response",
-                sampleData: {},
-                pieceVersion: $webhookV,
-                propertySettings: {
-                  fields: {
-                    type: "MANUAL",
-                    schema: {
-                      body: { type: "JSON", required: true, displayName: "JSON Body" },
-                      status: { type: "NUMBER", required: false, displayName: "Status", defaultValue: 200 },
-                      headers: { type: "OBJECT", required: false, displayName: "Headers" }
-                    }
-                  },
-                  respond: { type: "MANUAL" },
-                  responseType: { type: "MANUAL" }
-                },
-                errorHandlingOptions: {
-                  retryOnFailure: { value: false },
-                  continueOnFailure: { value: false }
-                }
-              },
-              displayName: "Return Response"
-            }
+            nextAction: (if $httpUrl == "" then responseAction else httpAction end)
           }
         }
       }
