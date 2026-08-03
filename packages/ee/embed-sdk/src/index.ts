@@ -137,6 +137,7 @@ export interface ActivepiecesVendorInit {
     hidePageHeader?: boolean;
     hideActiveUsers?: boolean;
     hideGlobalSearch?: boolean;
+    formulasDocsUrl?: string;
   };
 }
 
@@ -176,6 +177,7 @@ type EmbeddingParam = {
   hideTables?: boolean;
   hideActiveUsers?: boolean;
   hideGlobalSearch?: boolean;
+  formulasDocsUrl?: string;
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -198,7 +200,7 @@ export type McpCredentials = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.14.0";
+  readonly _sdkVersion = "0.15.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -346,6 +348,7 @@ class ActivepiecesEmbedded {
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
                 hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
                 hideGlobalSearch: this._embeddingState?.hideGlobalSearch ?? false,
+                formulasDocsUrl: this._embeddingState?.formulasDocsUrl,
               },
             };
             targetWindow.postMessage(apEvent, '*');
