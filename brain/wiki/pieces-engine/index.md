@@ -34,6 +34,7 @@ User-facing data transforms (81+ functions) inside any builder text input via a 
 - Run tsc yourself before/after an engine change and **diff the file list** rather than expecting zero — a green run is not the baseline.
 - Engine tests only run correctly from the package dir (`cd packages/server/engine && npx vitest run`); from the repo root the root config applies and every file fails collection with `describe is not defined`.
 - Engine code importing `node:sqlite` (e.g. `run-state-store.ts`) needs Node ≥22.5 — on Node 20 the whole test file fails with `No such built-in module: node:sqlite`. Use the `.nvmrc` Node (24.x) before running engine tests.
+- **Registry-piece installs can hoist to the wrong node_modules in local dev → `PieceNotFoundError`.** The piece installer stages each piece at `cache/v12/common/pieces/@activepieces/<name>-<version>/` and expects the package nested under that folder's `node_modules/`, but bun can hoist it to the workspace root `cache/v12/common/node_modules/` instead — `traverseAllParentFoldersToFindPiece` misses it and the run dies `INTERNAL_ERROR` (`Piece not found for package: …`). Same root cause as the perma-failing `flow-with-delay` engine unit tests. Workaround: copy the hoisted package into `pieces/<alias>/node_modules/@activepieces/<name>/`.
 
 ### The engine gets only 64 file descriptors
 

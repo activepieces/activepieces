@@ -3,7 +3,7 @@ import { createZstdCompress } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FLOW_RUN_LOG_MANIFEST_V2, FlowActionType, isFlowRunStateTerminal, LoopStepResult, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, isFlowRunStateTerminal, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
@@ -11,7 +11,7 @@ import { engineRunApi } from '../api/engine-run-api'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
-import { runStateStore } from './run-state-store'
+import { stateJsonStreamer } from './state-json-streamer'
 
 
 const stateLock = new Mutex()
@@ -215,7 +215,7 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
 async function uploadLogsFromStore({ engineConstants, flowExecutorContext, logsFileId }: UploadLogsFromStoreParams): Promise<void> {
     let lastError: unknown
     for (let attempt = 0; attempt < LOG_UPLOAD_ATTEMPTS; attempt++) {
-        const compressed = Readable.from(streamExecutionOutputFile(flowExecutorContext)).pipe(createZstdCompress())
+        const compressed = Readable.from(stateJsonStreamer.stream(flowExecutorContext)).pipe(createZstdCompress())
         const { error } = await tryCatch(() => engineFileApi.upload({
             engineToken: engineConstants.engineToken,
             apiUrl: engineConstants.internalApiUrl,
@@ -232,53 +232,10 @@ async function uploadLogsFromStore({ engineConstants, flowExecutorContext, logsF
     throw lastError
 }
 
-function* streamExecutionOutputFile(flowExecutorContext: FlowExecutorContext): Generator<string> {
-    yield `{"version":${FLOW_RUN_LOG_MANIFEST_V2},"executionState":{"steps":`
-    yield* streamSteps(flowExecutorContext.steps, [])
-    yield `,"tags":${JSON.stringify(Array.from(flowExecutorContext.tags))}}}`
-}
-
-function* streamSteps(steps: Readonly<Record<string, StepOutput>>, pathPrefix: Array<[string, number]>): Generator<string> {
-    yield '{'
-    let first = true
-    for (const [name, step] of Object.entries(steps)) {
-        yield `${first ? '' : ','}${JSON.stringify(name)}:`
-        first = false
-        if (step.type === FlowActionType.LOOP_ON_ITEMS && !isNil(step.output)) {
-            yield* streamLoopStep({ step, output: step.output, name, pathPrefix })
-        }
-        else {
-            yield runStateStore.getStepOutputJson({ name, stepPath: JSON.stringify(pathPrefix) }) ?? JSON.stringify(step)
-        }
-    }
-    yield '}'
-}
-
-function* streamLoopStep({ step, output, name, pathPrefix }: StreamLoopStepParams): Generator<string> {
-    const { output: _omitted, ...shell } = step
-    yield `${JSON.stringify(shell).slice(0, -1)},"output":`
-    const scalars = JSON.stringify({ item: output.item, index: output.index }).slice(1, -1)
-    yield scalars.length > 0 ? `{${scalars},"iterations":[` : '{"iterations":['
-    for (let iteration = 0; iteration < output.iterations.length; iteration++) {
-        if (iteration > 0) {
-            yield ','
-        }
-        yield* streamSteps(output.iterations[iteration], [...pathPrefix, [name, iteration]])
-    }
-    yield ']}}'
-}
-
 type UploadLogsFromStoreParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     logsFileId: string
-}
-
-type StreamLoopStepParams = {
-    step: StepOutput
-    output: LoopStepResult
-    name: string
-    pathPrefix: Array<[string, number]>
 }
 
 type SendUpdateProgressParams = {
