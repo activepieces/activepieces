@@ -139,7 +139,7 @@ export class FlowExecutorContext {
             const stripped = new GenericStepOutput({
                 type: finalized.type,
                 status: finalized.status,
-                input: finalized.input,
+                input: undefined,
                 outputType: finalized.outputType,
                 duration: finalized.duration,
                 errorMessage: finalized.errorMessage,

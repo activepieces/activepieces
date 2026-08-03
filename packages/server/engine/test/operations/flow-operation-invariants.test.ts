@@ -58,6 +58,11 @@ vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
     },
 }))
 
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
+import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
+import { runStateStore } from '../../src/lib/helper/run-state-store'
 import { flowOperation } from '../../src/lib/operations/flow.operation'
 
 function makeFlowVersion(): FlowVersion {
@@ -468,6 +473,91 @@ describe('flow operation invariants', () => {
             await flowOperation.execute(operation)
 
             expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('RESUME step restoration with runStateStore active', () => {
+        beforeAll(() => {
+            process.env.AP_FLOWS_CACHE_PATH = fs.mkdtempSync(path.join(os.tmpdir(), 'flow-operation-store-test-'))
+        })
+
+        beforeEach(() => {
+            runStateStore.init({ runId: 'run-1', flowVersionId: 'fv-1' })
+        })
+
+        afterEach(() => {
+            runStateStore.dispose()
+        })
+
+        it('offloads restored loop iteration outputs to the store and keeps only stripped copies in memory', async () => {
+            mockDownload.mockReset()
+            mockSendUpdate.mockClear()
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            trigger_1: {
+                                type: FlowTriggerType.EMPTY,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: { items: [5, 10] },
+                            },
+                            loop_1: {
+                                type: FlowActionType.LOOP_ON_ITEMS,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: {
+                                    item: 10,
+                                    index: 2,
+                                    iterations: [
+                                        {
+                                            math: {
+                                                type: FlowActionType.PIECE,
+                                                status: StepOutputStatus.SUCCEEDED,
+                                                input: { first: 5 },
+                                                output: { result: 10 },
+                                            },
+                                        },
+                                        {
+                                            math: {
+                                                type: FlowActionType.PIECE,
+                                                status: StepOutputStatus.SUCCEEDED,
+                                                input: { first: 10 },
+                                                output: { result: 20 },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                        tags: [],
+                    },
+                })),
+            )
+
+            const response = await flowOperation.execute(makeResumeOperation())
+            expect(response.status).toBe(EngineResponseStatus.OK)
+
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+
+            expect(finalCtx.steps.trigger_1.output).toBeUndefined()
+            const restoredLoop = finalCtx.steps.loop_1
+            expect(restoredLoop.output.item).toBe(10)
+            expect(restoredLoop.output.index).toBe(2)
+            expect(restoredLoop.output.iterations).toHaveLength(2)
+            for (const iteration of restoredLoop.output.iterations) {
+                expect(iteration.math.output).toBeUndefined()
+                expect(iteration.math.input).toBeUndefined()
+            }
+
+            expect(runStateStore.getStepOutput({ name: 'trigger_1', stepPath: '[]' })?.output).toEqual({ items: [5, 10] })
+            expect(runStateStore.getStepOutput({ name: 'math', stepPath: '[["loop_1",0]]' })?.output).toEqual({ result: 10 })
+            expect(runStateStore.getStepOutput({ name: 'math', stepPath: '[["loop_1",1]]' })?.output).toEqual({ result: 20 })
+            expect(runStateStore.getStepOutput({ name: 'math', stepPath: '[["loop_1",1]]' })?.input).toEqual({ first: 10 })
+
+            const insideIteration = finalCtx.setCurrentPath(StepExecutionPath.empty().loopIteration({ loopName: 'loop_1', iteration: 1 }))
+            expect(insideIteration.getStepOutput('math')?.output).toEqual({ result: 20 })
+            expect(await insideIteration.getStepView('math')).toEqual({ output: { result: 20 }, error: undefined })
         })
     })
 

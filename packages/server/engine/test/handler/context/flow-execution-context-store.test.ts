@@ -33,6 +33,18 @@ describe('FlowExecutorContext with runStateStore', () => {
         expect(ctx.getStepOutput('step_1')?.output).toEqual({ big: 'value' })
     })
 
+    test('upsertStep strips the input from in-memory steps and getStepOutput reads it back from the store', async () => {
+        const step = GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: { first: 5, second: 2 },
+            output: { result: 10 },
+        })
+        const ctx = await FlowExecutorContext.empty().upsertStep('step_1', step)
+        expect(ctx.steps.step_1.input).toBeUndefined()
+        expect(ctx.getStepOutput('step_1')?.input).toEqual({ first: 5, second: 2 })
+    })
+
     test('upsertStep keeps the output in memory when the store is not initialized', async () => {
         runStateStore.dispose()
         const ctx = await FlowExecutorContext.empty().upsertStep('step_1', makePieceStep({ big: 'value' }))
