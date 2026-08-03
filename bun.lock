@@ -336,7 +336,6 @@
       "name": "@activepieces/piece-ai",
       "version": "0.5.0",
       "dependencies": {
-        "@activepieces/ai-providers": "workspace:*",
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
