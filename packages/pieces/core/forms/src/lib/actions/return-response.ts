@@ -8,6 +8,7 @@ export const returnResponse = createAction({
   name: 'return_response',
   displayName: 'Respond on UI',
   description: 'Return a file or text (markdown) as a response.',
+  aiMetadata: { description: 'Sends markdown text and/or one file attachment back to the person waiting on the Web Form or Chat UI trigger that started the flow. Pick it as the replying step when that trigger has "Wait for Response" enabled; it produces nothing visible in flows started any other way. Not idempotent: each call emits a response to the waiting caller and stores a new file for any attachment.', idempotent: false },
   props: {
     markdown: Property.LongText({
       displayName: 'Text (Markdown)',

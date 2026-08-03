@@ -21,6 +21,10 @@ export const query = createAction({
   name: 'send_request',
   displayName: 'Send Request',
   description: 'Makes a GraphQL request.',
+  aiMetadata: {
+    description: 'Sends an arbitrary GraphQL query or mutation to any GraphQL endpoint, optionally through an HTTP proxy, with a failsafe mode that returns the error message instead of throwing. Use it for GraphQL APIs that have no dedicated Activepieces piece, and prefer the HTTP piece for plain REST endpoints. The piece carries no auth, so any token must be passed manually in Headers; not idempotent, since the query field can carry a mutation.',
+    idempotent: false,
+  },
   props: {
     method: httpMethodDropdown,
     url: Property.ShortText({

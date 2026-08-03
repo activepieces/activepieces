@@ -10,6 +10,7 @@ export const sendEmail = createAction({
   name: 'send-email',
   displayName: 'Send Email',
   description: 'Send an email using a custom SMTP server.',
+  aiMetadata: { description: 'Sends an email through an arbitrary SMTP relay, delivering the body as either plain text or HTML depending on the chosen body type. Use this when the only mail credentials available are raw SMTP host/port/login details; prefer a provider-specific piece (Gmail, Microsoft Outlook, SendGrid) when the mailbox lives on one of those services. Requires a reachable SMTP connection, a from address, at least one recipient, a subject and a body; not idempotent, since each call sends another copy.', idempotent: false },
   props: {
     from: Property.ShortText({
       displayName: 'From Email',

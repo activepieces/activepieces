@@ -6,6 +6,11 @@ export const extractFromHtml = createAction({
   name: 'extract_from_html',
   displayName: 'Extract from HTML',
   description: 'Extract specific elements or data from an HTML document.',
+  aiMetadata: {
+    description:
+      'Parses an HTML string and extracts elements selected either by a preset target (page title, links, images, headings, paragraphs) or by a custom CSS selector, returning text content, inner HTML, outer HTML, or a named attribute for just the first match or for all matches. Use it to scrape specific values out of fetched HTML; prefer Remove HTML Tags or HTML to Markdown when you want the whole document as text. A custom target requires the selector and attribute extraction requires an attribute name, otherwise it throws; parsing runs with scripts disabled, and it is deterministic and idempotent.',
+    idempotent: true,
+  },
   props: {
     html: Property.LongText({
       displayName: 'HTML Content',

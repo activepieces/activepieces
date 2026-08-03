@@ -16,6 +16,7 @@ function buildFacade(): FastifyBaseLogger {
         params: {
             serviceName: 'activepieces-api',
             version: apVersionUtil.getCurrentRelease(),
+            environment: environmentVariables.getEnvironment(AppSystemProp.ENVIRONMENT),
             logLevel,
             logPretty,
             sampleRateInfo,
