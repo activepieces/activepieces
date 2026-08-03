@@ -268,7 +268,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
     }) {
-        return async (input: Record<string, unknown>, options: ToolExecutionOptions) => {
+        return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
             if (onGateOpened) {
                 const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
                 await tryCatch(() => onGateOpened({
@@ -723,7 +723,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 inputFileIds: z.array(z.string()).optional().describe('fileIds of user attachments to load; each is provided to your code as inputs.files[i] = { name, mimeType, base64 }'),
                 input: z.record(z.string(), z.unknown()).optional().describe('Optional extra values merged into `inputs`'),
             }),
-            execute: async (toolInput, { toolCallId }: ToolExecutionOptions) => {
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
                 const rawResult = await executeWithTimeout('ap_run_code', toolInput)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const producedFiles = Array.isArray(resultObj['producedFiles']) ? resultObj['producedFiles'] : []
@@ -938,7 +938,7 @@ function createImageTools({ imageGeneration, saveFile, emitImage }: {
                 style: z.enum(['realistic', 'graphic_text', 'brand_vector', 'abstract']).describe('The kind of image to produce'),
                 aspectRatio: z.enum(['square', 'landscape', 'portrait']).optional().describe('Image orientation (default square)'),
             }),
-            execute: async (toolInput, { toolCallId }: ToolExecutionOptions) => withToolTimeout({
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => withToolTimeout({
                 toolName: 'ap_generate_image',
                 timeoutMs: IMAGE_TIMEOUT_MS + 5_000,
                 fn: async (signal) => {
@@ -1287,7 +1287,7 @@ function isReadableTextContentType(contentType: string): boolean {
     return contentType === '' || READABLE_TEXT_CONTENT_TYPE.test(contentType)
 }
 
-function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, unknown> & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
+function toolHasExecute(tool: Record<string, unknown>): tool is Record<string, unknown> & { execute: (args: unknown, options?: ToolExecutionOptions<undefined>) => Promise<unknown> } {
     return typeof tool['execute'] === 'function'
 }
 
@@ -1305,7 +1305,7 @@ function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, storePen
     }
     const originalExecute = testFlow.execute.bind(testFlow)
     const wrapped = Object.assign({}, testFlow, {
-        execute: async (args: unknown, options?: ToolExecutionOptions) => {
+        execute: async (args: unknown, options?: ToolExecutionOptions<undefined>) => {
             const flowId = isObject(args) && typeof args['flowId'] === 'string' ? args['flowId'] : undefined
             const gateId = options?.toolCallId
             if (flowId && gateId) {
