@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
+import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -99,7 +100,8 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
 
     const { text: summary } = await generateText({
         model,
-        system: COMPACTION_SYSTEM_PROMPT,
+        instructions: COMPACTION_SYSTEM_PROMPT,
+        telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-compaction' }),
         prompt: contentToSummarize,
     })
 
