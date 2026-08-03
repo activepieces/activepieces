@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordCreateChannelActionOutputSchema } from '../output-schemas';
 
 export const discordCreateChannelAi = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordCreateChannelAi = createAction({
       'Creates a new channel in a guild by guild ID (POST /guilds/{guild_id}/channels). Each call creates a separate channel even with the same name, so it is not idempotent. Requires the bot to have Manage Channels permission in the guild.',
     idempotent: false,
   },
+  outputSchema: discordCreateChannelActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

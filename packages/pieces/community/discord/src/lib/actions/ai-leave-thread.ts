@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-schemas';
 
 export const discordLeaveThread = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordLeaveThread = createAction({
       'Removes the bot itself from a thread by channel (thread) ID (DELETE /channels/{channel_id}/thread-members/@me). Idempotent: leaving a thread the bot is not in returns success (alreadyAbsent).',
     idempotent: true,
   },
+  outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Thread ID',

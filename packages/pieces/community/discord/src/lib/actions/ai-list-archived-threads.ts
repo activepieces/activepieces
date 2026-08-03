@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListArchivedThreadsActionOutputSchema } from '../output-schemas';
 
 interface ThreadChannel {
   id: string;
@@ -25,6 +26,7 @@ export const discordListArchivedThreads = createAction({
       'Lists PUBLIC archived threads in a channel by channel ID (GET /channels/{channel_id}/threads/archived/public). Read-only and idempotent. Requires Read Message History access to the channel.',
     idempotent: true,
   },
+  outputSchema: discordListArchivedThreadsActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

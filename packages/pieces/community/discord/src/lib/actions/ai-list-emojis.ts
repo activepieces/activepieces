@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListEmojisActionOutputSchema } from '../output-schemas';
 
 interface Emoji {
   id: string | null;
@@ -23,6 +24,7 @@ export const discordListEmojis = createAction({
       "Lists a guild's custom emojis by guild ID (GET /guilds/{guild_id}/emojis), returning each emoji's id and name. Use this to build the name:id string required by Add Reaction / Remove Reaction for custom emojis. Read-only and idempotent.",
     idempotent: true,
   },
+  outputSchema: discordListEmojisActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

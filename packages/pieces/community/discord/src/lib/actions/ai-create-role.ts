@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordRoleActionOutputSchema } from '../output-schemas';
 
 export const discordCreateRoleAi = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordCreateRoleAi = createAction({
       'Creates a new role in a guild by guild ID (POST /guilds/{guild_id}/roles) with name and optional color, hoist, and mentionable settings. Each call creates a separate role even with the same name, so it is not idempotent. Requires the bot to have Manage Roles permission.',
     idempotent: false,
   },
+  outputSchema: discordRoleActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

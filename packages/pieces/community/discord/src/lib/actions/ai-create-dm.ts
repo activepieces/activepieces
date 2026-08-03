@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessWithChannelIdActionOutputSchema } from '../output-schemas';
 
 export const discordCreateDm = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordCreateDm = createAction({
       'Opens a direct-message channel with a user by user ID (POST /users/@me/channels) and returns the DM channel ID. Discord returns the existing DM channel if one is already open, so this is idempotent. Pair the returned channel_id with Send Message to DM the user.',
     idempotent: true,
   },
+  outputSchema: discordSuccessWithChannelIdActionOutputSchema,
   props: {
     user_id: Property.ShortText({
       displayName: 'User ID',

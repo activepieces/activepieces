@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordEditMessageActionOutputSchema } from '../output-schemas';
 
 export const discordEditMessage = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordEditMessage = createAction({
       "Edits the text content of an existing message by channel ID and message ID (PATCH /channels/{channel_id}/messages/{message_id}). Only the bot's OWN messages can be edited (editing another author's message returns 403). Idempotent: re-applying the same content yields the same state.",
     idempotent: true,
   },
+  outputSchema: discordEditMessageActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
 import { Channel } from '../common/models';
+import { discordFindChannelActionOutputSchema } from '../output-schemas';
 
 export const discordFindChannelAi = createAction({
   auth: discordAuth,
@@ -18,6 +19,7 @@ export const discordFindChannelAi = createAction({
       'Looks up a channel in a guild by exact name and returns its channel ID (GET /guilds/{guild_id}/channels, client-side match). Use this resolver before any channel-scoped action (Send Message, Rename Channel, Delete Channel). Read-only and idempotent; returns the first exact-name match.',
     idempotent: true,
   },
+  outputSchema: discordFindChannelActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

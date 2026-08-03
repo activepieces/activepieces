@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordRenameChannelAi = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordRenameChannelAi = createAction({
       'Renames a channel by channel ID (PATCH /channels/{channel_id} with the name field only). Idempotent: setting the same name repeatedly yields the same result. Requires the bot to have Manage Channels permission.',
     idempotent: true,
   },
+  outputSchema: discordSuccessActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

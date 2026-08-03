@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordGetMemberActionOutputSchema } from '../output-schemas';
 
 export const discordGetMember = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordGetMember = createAction({
       'Fetches a single guild member by guild ID and user ID (GET /guilds/{guild_id}/members/{user_id}), returning their nickname, roles, and join date. A single-member GET does NOT require the privileged Server Members intent. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordGetMemberActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

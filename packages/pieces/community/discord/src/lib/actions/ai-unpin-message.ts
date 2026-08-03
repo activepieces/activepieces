@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-schemas';
 
 export const discordUnpinMessage = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordUnpinMessage = createAction({
       'Unpins a message in a channel by channel ID and message ID (DELETE /channels/{channel_id}/pins/{message_id}). Idempotent: unpinning a message that is not pinned returns success (alreadyAbsent). Requires the bot to have Manage Messages permission.',
     idempotent: true,
   },
+  outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-schemas';
 
 export const discordRemoveRoleAi = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordRemoveRoleAi = createAction({
       'Removes a role from a guild member by guild ID, user ID, and role ID (DELETE /guilds/{guild_id}/members/{user_id}/roles/{role_id}). Resolve role IDs with List Roles and user IDs with Find Member. Idempotent: removing a role the member does not have is a no-op. Requires Manage Roles and the bot role above the target role.',
     idempotent: true,
   },
+  outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { discordAuth } from '../auth';
+import { discordGetChannelActionOutputSchema } from '../output-schemas';
 
 export const discordDeleteChannelAi = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordDeleteChannelAi = createAction({
       'Permanently deletes a channel by channel ID (DELETE /channels/{channel_id}). This is destructive and removes the channel and its messages. Idempotent: deleting an already-removed channel returns success (alreadyAbsent). Requires the bot to have Manage Channels permission.',
     idempotent: true,
   },
+  outputSchema: discordGetChannelActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordClearReactions = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordClearReactions = createAction({
       'Removes ALL reactions from a message by channel ID and message ID (DELETE /channels/{channel_id}/messages/{message_id}/reactions). This is a destructive bulk operation. Not idempotent: it is not a stable single-target set-by-key. Requires the bot to have Manage Messages permission.',
     idempotent: false,
   },
+  outputSchema: discordSuccessActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

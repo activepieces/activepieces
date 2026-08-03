@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-schemas';
 
 export const discordDeleteScheduledEvent = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordDeleteScheduledEvent = createAction({
       'Deletes a scheduled event by guild ID and event ID (DELETE /guilds/{guild_id}/scheduled-events/{event_id}). Idempotent: deleting an already-removed event returns success (alreadyAbsent). Requires the bot to have Manage Events permission.',
     idempotent: true,
   },
+  outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordCreateScheduledEventActionOutputSchema } from '../output-schemas';
 
 export const discordCreateScheduledEvent = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordCreateScheduledEvent = createAction({
       'Creates a scheduled event in a guild by guild ID (POST /guilds/{guild_id}/scheduled-events). Required fields depend on Entity Type: EXTERNAL needs both a Location and a Scheduled End Time; STAGE_INSTANCE and VOICE need a Channel ID. Each call creates a new event, so it is not idempotent. Requires the bot to have Manage Events permission.',
     idempotent: false,
   },
+  outputSchema: discordCreateScheduledEventActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListScheduledEventsActionOutputSchema } from '../output-schemas';
 
 interface ScheduledEvent {
   id: string;
@@ -27,6 +28,7 @@ export const discordListScheduledEvents = createAction({
       'Lists the scheduled events of a guild by guild ID (GET /guilds/{guild_id}/scheduled-events?with_user_count=). Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordListScheduledEventsActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

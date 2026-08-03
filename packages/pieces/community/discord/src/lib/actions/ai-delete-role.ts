@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-schemas';
 
 export const discordDeleteRoleAi = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordDeleteRoleAi = createAction({
       'Permanently deletes a role from a guild by guild ID and role ID (DELETE /guilds/{guild_id}/roles/{role_id}); the role is removed from all members. Resolve role IDs with List Roles. Idempotent: deleting an already-removed role returns success (alreadyAbsent). Requires Manage Roles permission.',
     idempotent: true,
   },
+  outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

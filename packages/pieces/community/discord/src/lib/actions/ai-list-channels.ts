@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListChannelsActionOutputSchema } from '../output-schemas';
 
 interface ChannelFull {
   id: string;
@@ -26,6 +27,7 @@ export const discordListChannels = createAction({
       'Lists all channels in a guild by guild ID (GET /guilds/{guild_id}/channels), returning IDs, names, and types. Use to enumerate channels or to resolve a name to an ID (use Find Channel for a single exact-name lookup). Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordListChannelsActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

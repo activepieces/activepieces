@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordFindMemberActionOutputSchema } from '../output-schemas';
 
 interface GuildMember {
   user?: { id: string; username: string; global_name?: string | null };
@@ -24,6 +25,7 @@ export const discordFindMember = createAction({
       'Searches guild members by a username or nickname prefix (GET /guilds/{guild_id}/members/search?query=&limit=) and returns matching user IDs. Use to resolve a name into the user ID needed by role, kick, ban, or timeout actions. This server-side prefix search does NOT require the privileged Server Members intent. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordFindMemberActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

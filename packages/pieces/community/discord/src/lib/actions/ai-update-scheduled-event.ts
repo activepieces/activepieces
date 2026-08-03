@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordUpdateScheduledEventActionOutputSchema } from '../output-schemas';
 
 export const discordUpdateScheduledEvent = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordUpdateScheduledEvent = createAction({
       'Updates a scheduled event by guild ID and event ID (PATCH /guilds/{guild_id}/scheduled-events/{event_id}) — edit fields or change status to start (ACTIVE) or cancel (CANCELED) it. Idempotent: setting the same values yields the same state. Requires the bot to have Manage Events permission.',
     idempotent: true,
   },
+  outputSchema: discordUpdateScheduledEventActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

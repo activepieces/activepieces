@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListActiveThreadsActionOutputSchema } from '../output-schemas';
 
 interface ThreadChannel {
   id: string;
@@ -25,6 +26,7 @@ export const discordListActiveThreads = createAction({
       'Lists all active (non-archived) threads in a guild by guild ID (GET /guilds/{guild_id}/threads/active). Read-only and idempotent. Requires the bot to be able to view the parent channels.',
     idempotent: true,
   },
+  outputSchema: discordListActiveThreadsActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

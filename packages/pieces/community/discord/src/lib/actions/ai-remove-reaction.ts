@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-schemas';
 
 export const discordRemoveReaction = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordRemoveReaction = createAction({
       "Removes the bot's OWN reaction from a message by channel ID, message ID, and emoji (DELETE /channels/{channel_id}/messages/{message_id}/reactions/{emoji}/@me). Emoji format: unicode char for standard, name:id for custom (resolve via List Emojis). Idempotent: removing a reaction that is not present returns success (alreadyAbsent).",
     idempotent: true,
   },
+  outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

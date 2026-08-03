@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordAddRoleAi = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordAddRoleAi = createAction({
       'Assigns a role to a guild member by guild ID, user ID, and role ID (PUT /guilds/{guild_id}/members/{user_id}/roles/{role_id}). Resolve role IDs with List Roles and user IDs with Find Member. Idempotent: re-adding an already-assigned role is a no-op. Requires Manage Roles and the bot role positioned above the target role.',
     idempotent: true,
   },
+  outputSchema: discordSuccessActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

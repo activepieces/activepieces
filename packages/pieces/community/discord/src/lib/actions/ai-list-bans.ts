@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListBansActionOutputSchema } from '../output-schemas';
 
 interface Ban {
   reason?: string | null;
@@ -22,6 +23,7 @@ export const discordListBans = createAction({
       'Lists the banned users of a guild by guild ID (GET /guilds/{guild_id}/bans?limit=&before=&after=), returning user IDs and ban reasons. Paginated. Read-only and idempotent. Requires the bot to have Ban Members permission.',
     idempotent: true,
   },
+  outputSchema: discordListBansActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

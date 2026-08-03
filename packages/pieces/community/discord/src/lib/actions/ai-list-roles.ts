@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListRolesActionOutputSchema } from '../output-schemas';
 
 interface Role {
   id: string;
@@ -26,6 +27,7 @@ export const discordListRoles = createAction({
       'Lists the roles of a guild by guild ID (GET /guilds/{guild_id}/roles), returning role IDs and names. Use this resolver to turn a role name into the ID needed by Add Role, Remove Role, Update Role, or Delete Role. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordListRolesActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

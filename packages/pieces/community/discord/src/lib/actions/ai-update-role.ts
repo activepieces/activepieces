@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordRoleActionOutputSchema } from '../output-schemas';
 
 export const discordUpdateRole = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordUpdateRole = createAction({
       'Updates a role by guild ID and role ID (PATCH /guilds/{guild_id}/roles/{role_id}) — name, color, hoist, and mentionable only; it deliberately does NOT touch the permissions bitfield. Resolve role IDs with List Roles. Idempotent: setting the same values yields the same state. Requires Manage Roles permission.',
     idempotent: true,
   },
+  outputSchema: discordRoleActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

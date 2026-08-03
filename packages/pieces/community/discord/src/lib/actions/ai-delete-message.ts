@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-schemas';
 
 export const discordDeleteMessage = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordDeleteMessage = createAction({
       'Deletes a single message by channel ID and message ID (DELETE /channels/{channel_id}/messages/{message_id}). Idempotent: deleting an already-removed message returns success (alreadyAbsent). Deleting another author\'s message requires the bot to have Manage Messages permission.',
     idempotent: true,
   },
+  outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

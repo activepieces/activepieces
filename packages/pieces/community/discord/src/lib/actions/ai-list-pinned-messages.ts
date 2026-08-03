@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
 import { Message } from '../common/models';
+import { discordListPinnedMessagesActionOutputSchema } from '../output-schemas';
 
 export const discordListPinnedMessages = createAction({
   auth: discordAuth,
@@ -18,6 +19,7 @@ export const discordListPinnedMessages = createAction({
       'Lists the pinned messages in a channel by channel ID (GET /channels/{channel_id}/pins). Read-only and idempotent. Requires Read Message History access to the channel.',
     idempotent: true,
   },
+  outputSchema: discordListPinnedMessagesActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordAddThreadMember = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordAddThreadMember = createAction({
       'Adds a user to a thread by thread (channel) ID and user ID (PUT /channels/{channel_id}/thread-members/{user_id}). Idempotent: re-adding a user already in the thread is a no-op. Requires the bot to be in the thread and have Send Messages in it.',
     idempotent: true,
   },
+  outputSchema: discordSuccessActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Thread ID',

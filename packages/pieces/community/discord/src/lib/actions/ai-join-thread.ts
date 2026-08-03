@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordJoinThread = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordJoinThread = createAction({
       'Adds the bot itself to a thread by channel (thread) ID (PUT /channels/{channel_id}/thread-members/@me). Idempotent: re-joining a thread the bot is already in is a no-op.',
     idempotent: true,
   },
+  outputSchema: discordSuccessActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Thread ID',

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
 import { Message } from '../common/models';
+import { discordListMessagesActionOutputSchema } from '../output-schemas';
 
 export const discordListMessages = createAction({
   auth: discordAuth,
@@ -18,6 +19,7 @@ export const discordListMessages = createAction({
       'Reads messages from a channel by channel ID (GET /channels/{channel_id}/messages?limit=&before=&after=&around=). The before, after, and around cursors are MUTUALLY EXCLUSIVE — supply at most one. Read-only and idempotent. Requires Read Message History access to the channel.',
     idempotent: true,
   },
+  outputSchema: discordListMessagesActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

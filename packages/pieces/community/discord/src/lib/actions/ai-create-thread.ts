@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordCreateThreadActionOutputSchema } from '../output-schemas';
 
 export const discordCreateThread = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordCreateThread = createAction({
       'Creates a standalone thread or forum post in a channel by channel ID (POST /channels/{channel_id}/threads). Use Create Thread from Message instead to anchor a thread to a specific message. Each call creates a new thread, so it is not idempotent. Requires Create Threads permission.',
     idempotent: false,
   },
+  outputSchema: discordCreateThreadActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

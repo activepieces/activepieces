@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListReactionsActionOutputSchema } from '../output-schemas';
 
 interface ReactionUser {
   id: string;
@@ -23,6 +24,7 @@ export const discordListReactions = createAction({
       'Lists the users who reacted to a message with a given emoji by channel ID, message ID, and emoji (GET /channels/{channel_id}/messages/{message_id}/reactions/{emoji}). Emoji format: unicode char for standard, name:id for custom (resolve via List Emojis). Paginated by after/limit. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordListReactionsActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

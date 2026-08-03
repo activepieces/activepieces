@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordListInvitesActionOutputSchema } from '../output-schemas';
 
 interface Invite {
   code: string;
@@ -26,6 +27,7 @@ export const discordListInvites = createAction({
       'Lists the active invites of a guild by guild ID (GET /guilds/{guild_id}/invites), returning invite codes and their usage. Read-only and idempotent. Requires the bot to have Manage Guild permission.',
     idempotent: true,
   },
+  outputSchema: discordListInvitesActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

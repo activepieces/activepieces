@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordBulkDeleteMessagesActionOutputSchema } from '../output-schemas';
 
 export const discordBulkDeleteMessages = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordBulkDeleteMessages = createAction({
       'Deletes 2-100 messages in one batch by channel ID (POST /channels/{channel_id}/messages/bulk-delete). All target messages must be newer than 14 days. Not idempotent: a re-run with the same IDs fails because the messages are already gone. Requires the bot to have Manage Messages permission.',
     idempotent: false,
   },
+  outputSchema: discordBulkDeleteMessagesActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

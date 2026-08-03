@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordRevokeInviteActionOutputSchema } from '../output-schemas';
 
 export const discordRevokeInvite = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordRevokeInvite = createAction({
       'Revokes an invite by its code (DELETE /invites/{invite_code}). Obtain codes from List Invites. Revoking a live invite is a state change, so this is not idempotent (a missing invite returns success, but the meaningful effect happens once). Requires Manage Channels or Manage Guild permission.',
     idempotent: false,
   },
+  outputSchema: discordRevokeInviteActionOutputSchema,
   props: {
     invite_code: Property.ShortText({
       displayName: 'Invite Code',

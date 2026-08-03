@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordMessageOutputSchema } from '../output-schemas';
 import FormData from 'form-data';
 
 interface FileObject {
@@ -22,6 +23,7 @@ export const discordSendMessage = createAction({
       'Posts a message to a Discord channel or thread by channel ID (POST /channels/{channel_id}/messages). Resolve a channel name to its ID with Find Channel or List Channels first. Each call creates a new message, so it is not idempotent. Requires the bot to have Send Messages access to the channel.',
     idempotent: false,
   },
+  outputSchema: discordMessageOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

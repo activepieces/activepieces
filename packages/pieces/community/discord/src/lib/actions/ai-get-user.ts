@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordGetUserActionOutputSchema } from '../output-schemas';
 
 export const discordGetUser = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordGetUser = createAction({
       'Fetches a global Discord user by user ID (GET /users/{user_id}), returning username, global name, and avatar. This is the account-wide user object, distinct from the guild-scoped Get Member. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordGetUserActionOutputSchema,
   props: {
     user_id: Property.ShortText({
       displayName: 'User ID',

@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordGetChannelActionOutputSchema } from '../output-schemas';
 
 export const discordGetChannel = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordGetChannel = createAction({
       'Fetches a single channel by channel ID (GET /channels/{channel_id}), returning its name, type, topic, and parent. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordGetChannelActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordGetGuildActionOutputSchema } from '../output-schemas';
 
 export const discordGetGuild = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordGetGuild = createAction({
       'Fetches metadata about a guild by guild ID (GET /guilds/{guild_id}?with_counts=), returning its name, owner, and optional member counts. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: discordGetGuildActionOutputSchema,
   props: {
     guild_id: Property.ShortText({
       displayName: 'Guild ID',

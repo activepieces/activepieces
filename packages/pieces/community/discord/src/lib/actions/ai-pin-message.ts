@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordPinMessage = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordPinMessage = createAction({
       'Pins a message in a channel by channel ID and message ID (PUT /channels/{channel_id}/pins/{message_id}). Idempotent: re-pinning an already-pinned message is a no-op. A channel holds at most 50 pins. Requires the bot to have Manage Messages permission.',
     idempotent: true,
   },
+  outputSchema: discordSuccessActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

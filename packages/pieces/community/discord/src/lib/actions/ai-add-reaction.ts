@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordAddReaction = createAction({
   auth: discordAuth,
@@ -17,6 +18,7 @@ export const discordAddReaction = createAction({
       "Adds the bot's reaction to a message by channel ID, message ID, and emoji (PUT /channels/{channel_id}/messages/{message_id}/reactions/{emoji}/@me). For a standard emoji pass the unicode character (e.g. \"👍\"); for a custom emoji pass name:id (e.g. \"partyblob:12345\"), resolved via List Emojis. Idempotent: re-adding the same reaction is a no-op.",
     idempotent: true,
   },
+  outputSchema: discordSuccessActionOutputSchema,
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',
