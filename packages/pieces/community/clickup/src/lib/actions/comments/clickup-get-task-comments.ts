@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { getTaskCommentsOutputSchema } from '../../output-schemas';
 
 export const clickupGetTaskComments = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupGetTaskComments = createAction({
     idempotent: true,
   },
   displayName: 'Get Task Comments',
+  outputSchema: getTaskCommentsOutputSchema,
   props: {
     task_id: Property.ShortText({
       description: 'The ID of the task to get',

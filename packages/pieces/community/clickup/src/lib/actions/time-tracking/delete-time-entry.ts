@@ -2,6 +2,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
+import { listTimeEntriesOutputSchema } from '../../output-schemas';
 
 export const clickupDeleteTimeEntry = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupDeleteTimeEntry = createAction({
       'Permanently delete a tracked time entry by its time entry ID within a workspace. This is destructive and cannot be undone; a repeated call on an already-deleted entry errors (not idempotent). Use List Time Entries to confirm the entry ID before deleting.',
     idempotent: false,
   },
+  outputSchema: listTimeEntriesOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     timer_id: Property.ShortText({

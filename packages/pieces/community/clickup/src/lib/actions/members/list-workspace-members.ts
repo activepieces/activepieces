@@ -3,6 +3,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { ClickupWorkspace } from '../../common/models';
+import { workspaceMembersOutputSchema } from '../../output-schemas';
 
 export const clickupListWorkspaceMembers = createAction({
   auth: clickupAuth,
@@ -15,6 +16,7 @@ export const clickupListWorkspaceMembers = createAction({
       'List every member of a ClickUp workspace, returning each member ID, username, and email. Pick this to resolve a person name or email to the numeric member ID needed for assigning tasks anywhere in the workspace; use Get List Members or Get Task Members to scope the result to a single list or task. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: workspaceMembersOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
   },

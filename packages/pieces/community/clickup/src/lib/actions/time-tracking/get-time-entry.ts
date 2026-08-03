@@ -2,6 +2,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
+import { timeEntryOutputSchema } from '../../output-schemas';
 
 export const clickupGetTimeEntry = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupGetTimeEntry = createAction({
       'Retrieve one tracked time entry by its time entry (timer) ID within a workspace. Pick this when you already know the entry ID; use List Time Entries to find entries by date or scope, or Get Running Time Entry for the timer currently in progress. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: timeEntryOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     timer_id: Property.ShortText({

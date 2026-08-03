@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, listAccessibleCustomFields } from '../../common';
 import { clickupAuth } from '../../auth';
+import { accessibleCustomFieldsArrayOutputSchema } from '../../output-schemas';
 
 export const clickupGetAccessibleCustomFields = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupGetAccessibleCustomFields = createAction({
       'Read-only: list the custom fields defined for tasks in a given ClickUp list, including each field ID, type, and configuration. Use this to discover valid field IDs and their expected value formats before calling Set Custom Field Value or Remove Custom Field Value on a task. Safe to call repeatedly (idempotent).',
     idempotent: true,
   },
+  outputSchema: accessibleCustomFieldsArrayOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     space_id: clickupCommon.space_id(true),

@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { getListsOutputSchema } from '../../output-schemas';
 
 export const clickupGetFolderLists = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupGetFolderLists = createAction({
     idempotent: true,
   },
   displayName: 'Get Folder Lists',
+  outputSchema: getListsOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),

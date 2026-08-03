@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { listOutputSchema } from '../../output-schemas';
 
 export const clickupGetList = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupGetList = createAction({
     idempotent: true,
   },
   displayName: 'Get List',
+  outputSchema: listOutputSchema,
   props: {
     list_id: Property.ShortText({
       description: 'The ID of the list to get',

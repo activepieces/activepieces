@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { createTaskCommentOutputSchema } from '../../output-schemas';
 
 export const clickupCreateTaskComment = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupCreateTaskComment = createAction({
     idempotent: false,
   },
   displayName: 'Create Task Comment',
+  outputSchema: createTaskCommentOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),

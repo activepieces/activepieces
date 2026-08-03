@@ -3,6 +3,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { taskOutputSchema } from '../../output-schemas';
 
 export const clickupUpdateTaskAi = createAction({
   auth: clickupAuth,
@@ -15,6 +16,7 @@ export const clickupUpdateTaskAi = createAction({
     idempotent: true,
   },
   displayName: 'Update Task',
+  outputSchema: taskOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),

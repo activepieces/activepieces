@@ -4,6 +4,7 @@ import qs from 'qs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { ClickupTask } from '../../common/models';
+import { filterWorkspaceTasksOutputSchema } from '../../output-schemas';
 
 export const clickupListListTasksAi = createAction({
   auth: clickupAuth,
@@ -16,6 +17,7 @@ export const clickupListListTasksAi = createAction({
       'List the tasks of one specific ClickUp list (resolve the list ID via Get List or the List dropdown), with paging and ordering. Pick this when you know the target list and want only its tasks; to search tasks across the whole workspace use List Tasks. Read-only and idempotent; results are paginated (page starts at 0).',
     idempotent: true,
   },
+  outputSchema: filterWorkspaceTasksOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),

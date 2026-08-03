@@ -3,6 +3,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
+import { timeEntryOutputSchema } from '../../output-schemas';
 
 export const clickupUpdateTimeEntry = createAction({
   auth: clickupAuth,
@@ -15,6 +16,7 @@ export const clickupUpdateTimeEntry = createAction({
       'Update fields on an existing tracked time entry (description, start, duration, billable flag) by its time entry ID. This sets the entry to the supplied values, so repeating with the same values leaves it unchanged (idempotent). Use Get Time Entry or List Time Entries first to obtain the entry ID.',
     idempotent: true,
   },
+  outputSchema: timeEntryOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     timer_id: Property.ShortText({

@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { checklistOutputSchema } from '../../output-schemas';
 
 export const clickupUpdateChecklistItem = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupUpdateChecklistItem = createAction({
     idempotent: true,
   },
   displayName: 'Update Checklist Item',
+  outputSchema: checklistOutputSchema,
   props: {
     checklist_id: Property.ShortText({
       description: 'The ID of the parent checklist (from Create Checklist)',

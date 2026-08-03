@@ -12,6 +12,7 @@ import {
   listAccessibleCustomFields,
 } from '../../common';
 import { clickupAuth } from '../../auth';
+import { taskOutputSchema } from '../../output-schemas';
 
 export const clickupCreateTaskAi = createAction({
   auth: clickupAuth,
@@ -24,6 +25,7 @@ export const clickupCreateTaskAi = createAction({
     idempotent: false,
   },
   displayName: 'Create Task',
+  outputSchema: taskOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),

@@ -2,6 +2,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
+import { timeEntryOutputSchema } from '../../output-schemas';
 
 export const clickupStartTimeEntry = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupStartTimeEntry = createAction({
       'Start a live running timer in a ClickUp workspace, optionally attached to a task. Pick this to begin tracking time now and later call Stop Time Entry; use Create Time Entry instead to log a completed block with a known duration. Starting a timer is stateful and fails if one is already running, so it is not idempotent.',
     idempotent: false,
   },
+  outputSchema: timeEntryOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     description: Property.LongText({

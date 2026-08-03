@@ -3,6 +3,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { clickupCommon, callClickUpApi3 } from '../../common';
 import { clickupAuth } from '../../auth';
+import { moveTaskOutputSchema } from '../../output-schemas';
 
 export const clickupMoveTaskToListAi = createAction({
   auth: clickupAuth,
@@ -15,6 +16,7 @@ export const clickupMoveTaskToListAi = createAction({
     idempotent: true,
   },
   displayName: 'Move Task To List',
+  outputSchema: moveTaskOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),

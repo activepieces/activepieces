@@ -5,6 +5,7 @@ import qs from 'qs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { ClickupTask } from '../../common/models';
+import { listTimeEntriesOutputSchema } from '../../output-schemas';
 
 export const clickupListTimeEntries = createAction({
   auth: clickupAuth,
@@ -17,6 +18,7 @@ export const clickupListTimeEntries = createAction({
       'List tracked time entries across a ClickUp workspace, optionally narrowed by date range, assignee, and a single scope (task, list, folder, or space). Pick this to report on or audit logged time over a period; use Get Time Entry for one known entry ID or Get Running Time Entry for the timer in progress. Read-only and idempotent; scope filters are mutually exclusive (task takes precedence over list, folder, then space).',
     idempotent: true,
   },
+  outputSchema: listTimeEntriesOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
 

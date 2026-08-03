@@ -3,6 +3,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
+import { timeEntryOutputSchema } from '../../output-schemas';
 
 export const clickupCreateTimeEntry = createAction({
   auth: clickupAuth,
@@ -15,6 +16,7 @@ export const clickupCreateTimeEntry = createAction({
       'Log a completed (historical) block of tracked time in a ClickUp workspace, given a start time and a duration in milliseconds. Pick this to record time already spent; use Start Time Entry / Stop Time Entry instead to run a live timer. Each call creates a new entry, so retries duplicate (not idempotent). Optionally attach it to a task via its task ID.',
     idempotent: false,
   },
+  outputSchema: timeEntryOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     start: Property.DateTime({

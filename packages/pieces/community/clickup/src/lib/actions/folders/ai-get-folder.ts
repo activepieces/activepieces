@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { folderOutputSchema } from '../../output-schemas';
 
 export const clickupGetFolder = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupGetFolder = createAction({
     idempotent: true,
   },
   displayName: 'Get Folder',
+  outputSchema: folderOutputSchema,
   props: {
     folder_id: Property.ShortText({
       description: 'The ID of the folder to get',

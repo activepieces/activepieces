@@ -3,6 +3,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { taskWrapperOutputSchema } from '../../output-schemas';
 
 export const clickupLinkTasksAi = createAction({
   auth: clickupAuth,
@@ -15,6 +16,7 @@ export const clickupLinkTasksAi = createAction({
     idempotent: true,
   },
   displayName: 'Link Tasks',
+  outputSchema: taskWrapperOutputSchema,
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',

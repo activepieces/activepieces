@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { checklistOutputSchema } from '../../output-schemas';
 
 export const clickupCreateChecklist = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupCreateChecklist = createAction({
     idempotent: false,
   },
   displayName: 'Create Checklist',
+  outputSchema: checklistOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),

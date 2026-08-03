@@ -2,6 +2,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon } from '../../common';
+import { timeEntryOutputSchema } from '../../output-schemas';
 
 export const clickupStopTimeEntry = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupStopTimeEntry = createAction({
       'Stop the timer that is currently running for the authenticated user in a workspace, finalizing it into a completed time entry. Pick this to end a timer previously begun with Start Time Entry; call Get Running Time Entry first to confirm a timer is active, since stopping when none is running errors (not idempotent).',
     idempotent: false,
   },
+  outputSchema: timeEntryOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(true),
   },

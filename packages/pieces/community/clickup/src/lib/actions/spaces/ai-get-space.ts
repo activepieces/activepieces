@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
+import { spaceOutputSchema } from '../../output-schemas';
 
 export const clickupGetSpace = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupGetSpace = createAction({
     idempotent: true,
   },
   displayName: 'Get Space',
+  outputSchema: spaceOutputSchema,
   props: {
     space_id: clickupCommon.space_id(),
   },

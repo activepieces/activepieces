@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, listTags } from '../../common';
 import { clickupAuth } from '../../auth';
+import { spaceTagsOutputSchema } from '../../output-schemas';
 
 export const clickupGetSpaceTags = createAction({
   auth: clickupAuth,
@@ -14,6 +15,7 @@ export const clickupGetSpaceTags = createAction({
     idempotent: true,
   },
   displayName: 'List Space Tags',
+  outputSchema: spaceTagsOutputSchema,
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),

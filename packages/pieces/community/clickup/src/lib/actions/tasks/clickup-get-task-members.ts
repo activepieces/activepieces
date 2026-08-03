@@ -3,6 +3,7 @@ import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { membersOutputSchema } from '../../output-schemas';
 
 export const clickupGetTaskMembersAi = createAction({
   auth: clickupAuth,
@@ -15,6 +16,7 @@ export const clickupGetTaskMembersAi = createAction({
     idempotent: true,
   },
   displayName: 'Get Task Members',
+  outputSchema: membersOutputSchema,
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',
