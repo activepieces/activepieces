@@ -1227,6 +1227,160 @@ export const accessibleCustomFieldsOutputSchema: OutputSchema = {
   ],
 };
 
+const folderFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Folder ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'task_count', label: 'Task Count', format: 'number' },
+  { key: 'archived', label: 'Archived', format: 'boolean' },
+  { key: 'hidden', label: 'Hidden', format: 'boolean' },
+  {
+    key: 'space',
+    label: 'Space',
+    children: [
+      { key: 'id', label: 'Space ID' },
+      { key: 'name', label: 'Name' },
+    ],
+  },
+];
+
+export const folderOutputSchema: OutputSchema = { fields: folderFields };
+
+export const getFoldersOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'folders', label: 'Folders', labelKey: 'name', listItems: folderFields },
+  ],
+};
+
+const listSummaryFields: OutputSchemaField[] = [
+  { key: 'id', label: 'List ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'content', label: 'Content' },
+  { key: 'task_count', label: 'Task Count', format: 'number' },
+  { key: 'archived', label: 'Archived', format: 'boolean' },
+];
+
+export const getListsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'lists', label: 'Lists', labelKey: 'name', listItems: listSummaryFields },
+  ],
+};
+
+export const membersOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'members', label: 'Members', labelKey: 'username', listItems: userFields },
+  ],
+};
+
+export const workspaceMembersOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'members',
+      label: 'Members',
+      labelKey: 'user.username',
+      listItems: [{ key: 'user', label: 'User', children: userFields }],
+    },
+  ],
+};
+
+const checklistItemFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Item ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'resolved', label: 'Resolved', format: 'boolean' },
+  { key: 'assignee', label: 'Assignee' },
+  { key: 'parent', label: 'Parent Item ID' },
+];
+
+const checklistFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Checklist ID' },
+  { key: 'task_id', label: 'Task ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'resolved', label: 'Resolved Count', format: 'number' },
+  { key: 'unresolved', label: 'Unresolved Count', format: 'number' },
+  { key: 'items', label: 'Items', labelKey: 'name', listItems: checklistItemFields },
+];
+
+export const checklistOutputSchema: OutputSchema = {
+  fields: [{ key: 'checklist', label: 'Checklist', children: checklistFields }],
+};
+
+const customFieldFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Field ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'type', label: 'Type' },
+  { key: 'date_created', label: 'Date Created' },
+  { key: 'hide_from_guests', label: 'Hide From Guests', format: 'boolean' },
+];
+
+export const accessibleCustomFieldsArrayOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'fields',
+      label: 'Custom Fields',
+      value: '',
+      labelKey: 'name',
+      listItems: customFieldFields,
+    },
+  ],
+};
+
+const tagFields: OutputSchemaField[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'tag_fg', label: 'Foreground Color' },
+  { key: 'tag_bg', label: 'Background Color' },
+  { key: 'creator', label: 'Creator ID' },
+];
+
+export const spaceTagsOutputSchema: OutputSchema = {
+  fields: [{ key: 'tags', label: 'Tags', labelKey: 'name', listItems: tagFields }],
+};
+
+export const taskWrapperOutputSchema: OutputSchema = {
+  fields: [{ key: 'task', label: 'Task', children: taskFields }],
+};
+
+export const moveTaskOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'data',
+      label: 'Move Result',
+      children: [
+        { key: 'task_id', label: 'Task ID' },
+        { key: 'new_list_id', label: 'New List ID' },
+      ],
+    },
+  ],
+};
+
+const timeEntryFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Time Entry ID' },
+  {
+    key: 'task',
+    label: 'Task',
+    children: [
+      { key: 'id', label: 'Task ID' },
+      { key: 'name', label: 'Task Name' },
+    ],
+  },
+  { key: 'wid', label: 'Workspace ID' },
+  { key: 'user', label: 'User', children: userFields },
+  { key: 'billable', label: 'Billable', format: 'boolean' },
+  { key: 'start', label: 'Start', format: 'datetime' },
+  { key: 'end', label: 'End', format: 'datetime' },
+  { key: 'duration', label: 'Duration', format: 'duration' },
+  { key: 'description', label: 'Description' },
+  { key: 'at', label: 'Last Updated At', format: 'datetime' },
+];
+
+export const timeEntryOutputSchema: OutputSchema = {
+  fields: [{ key: 'data', label: 'Time Entry', children: timeEntryFields }],
+};
+
+export const listTimeEntriesOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'data', label: 'Time Entries', labelKey: 'description', listItems: timeEntryFields },
+  ],
+};
+
 const triggerEventField: OutputSchemaField = { key: 'event', label: 'Event', value: 'event' };
 
 const triggerTeamWebhookFields: OutputSchemaField[] = [

@@ -7,11 +7,12 @@ const MAX_IN_FLIGHT = 5;
 const MAX_BATCH_SIZE = 10_000;
 
 export const streamCsvToSubflows = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'streamCsvToSubflows',
   displayName: 'Stream CSV to Subflows',
   description:
     'Stream a CSV and call a subflow once per batch of rows, without loading the whole file into memory.',
+  aiMetadata: { description: 'Streams a CSV (a URL, an uploaded file, or a file from a previous step) and dispatches one subflow run per batch of rows. Pick it over Call Flow when the CSV is too large to hold in memory, since it is parsed as a stream and batches are fanned out with bounded concurrency. Rows per batch must be an integer between 1 and 10000 and the target subflow must be published with a "Callable Flow" trigger; not idempotent, since every batch dispatches a new subflow run.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'CSV File',

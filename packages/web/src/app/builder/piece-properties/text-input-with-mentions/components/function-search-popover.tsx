@@ -25,7 +25,7 @@ type FunctionSearchPopoverProps = {
   editorRef: RefObject<HTMLDivElement | null>;
   onSelect: (fn: ApFunction) => void;
   onClose: () => void;
-  hideDocsLink?: boolean;
+  docsUrl?: string;
 };
 
 export function FunctionSearchPopover({
@@ -34,7 +34,7 @@ export function FunctionSearchPopover({
   editorRef,
   onSelect,
   onClose,
-  hideDocsLink,
+  docsUrl,
 }: FunctionSearchPopoverProps) {
   const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
@@ -107,9 +107,9 @@ export function FunctionSearchPopover({
         </kbd>
         {t('to apply')}
       </div>
-      {!hideDocsLink && (
+      {docsUrl && (
         <a
-          href="https://www.activepieces.com/docs/flows/using-formulas"
+          href={docsUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={cn(buttonVariants({ variant: 'link', size: 'xs' }))}
@@ -239,3 +239,6 @@ export function FunctionSearchPopover({
     document.body,
   );
 }
+
+export const DEFAULT_FORMULAS_DOCS_URL =
+  'https://www.activepieces.com/docs/flows/using-formulas';

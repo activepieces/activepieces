@@ -14,10 +14,11 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const addSubtractDateAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'add_subtract_date',
   displayName: 'Add/Subtract Time',
   description: 'Add or subtract time from a date',
+  aiMetadata: { description: 'Shifts an input date by a signed year/month/day/hour/minute/second expression, and can pin the resulting clock time to a fixed 24h value or the current time. Use Date Difference to compare two dates, Format Date for a format or zone change only, and Next Day of Week or Next Day of Year for the next calendar occurrence. The Set Time To (HH:mm) and Use Current Time options apply only when a Time Zone is also selected; idempotent except when Use Current Time ties the result to the clock.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,
