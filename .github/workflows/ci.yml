@@ -149,7 +149,7 @@ jobs:
           set -euo pipefail
           pids=()
 
-          npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared &
+          npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared --filter=@activepieces/ai-providers &
           pids+=($!)
 
           npx turbo run test-ce test-ee test-cloud check-migrations --filter=api &

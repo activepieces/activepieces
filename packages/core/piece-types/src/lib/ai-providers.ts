@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import * as z from 'zod/mini'
 
 export enum AIProviderModelType {
@@ -219,6 +219,36 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     ],
 }
 
+const CHAT_MODEL_LABELS: Record<string, string> = {
+    'gpt-5.5': 'GPT-5.5',
+    'gpt-5.4-mini': 'GPT-5.4 mini',
+    'gpt-5.4-nano': 'GPT-5.4 nano',
+    'gpt-4.1': 'GPT-4.1',
+    'gpt-4.1-mini': 'GPT-4.1 mini',
+    'claude-sonnet-4-6': 'Claude Sonnet 4.6',
+    'claude-opus-4-7': 'Claude Opus 4.7',
+    'claude-haiku-4-5': 'Claude Haiku 4.5',
+    'gemini-2.5-pro': 'Gemini 2.5 Pro',
+    'gemini-2.5-flash': 'Gemini 2.5 Flash',
+    'gemini-3.1-pro-preview': 'Gemini 3.1 Pro Preview',
+    'gemini-3-flash-preview': 'Gemini 3 Flash Preview',
+}
+
+function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id: string, label: string }[] | undefined {
+    const curatedIds = provider === AIProviderName.ACTIVEPIECES ? undefined : ALLOWED_CHAT_MODELS_BY_PROVIDER[provider]
+    if (isNil(curatedIds) || curatedIds.length === 0) {
+        return undefined
+    }
+    return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
+}
+
+function isKnownChatModelId({ modelId }: { modelId: string }): boolean {
+    if (ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === modelId)) {
+        return true
+    }
+    return Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).some((curatedIds) => curatedIds.includes(modelId))
+}
+
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
 
 const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
@@ -293,6 +323,8 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
 
 export const aiProviderUtils = {
     getMaxContextTokens,
+    getCuratedChatModels,
+    isKnownChatModelId,
 }
 
 export type AIWebSearchMode = 'native' | 'plugin'

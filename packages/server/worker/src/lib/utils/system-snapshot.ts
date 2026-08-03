@@ -1,6 +1,6 @@
 import os from 'os'
 import { monitorEventLoopDelay } from 'perf_hooks'
-import { createLogger } from 'evlog'
+import { createLogger } from '@activepieces/server-utils'
 import { system, WorkerSystemProp } from '../config/configs'
 
 const SNAPSHOT_INTERVAL_MS = 60_000

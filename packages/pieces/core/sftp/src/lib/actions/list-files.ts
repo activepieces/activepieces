@@ -31,11 +31,12 @@ async function listFTP(client: FTPClient, directoryPath: string) {
 }
 
 export const listFolderContentsAction = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: sftpAuth,
   name: 'listFolderContents',
   displayName: 'List Folder Contents',
   description: 'Lists the contents of a given folder.',
+  aiMetadata: { description: 'Lists the immediate entries of one directory on the connected FTP, FTPS or SFTP server. Use it to discover paths before reading, renaming or deleting, and to walk a tree one level at a time; it is not recursive and offers no filtering or search. Requires the directory path (e.g. ./myfolder); read-only and idempotent.', idempotent: true },
   props: {
     directoryPath: Property.ShortText({
       displayName: 'Directory Path',

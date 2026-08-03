@@ -39,6 +39,7 @@ export type TasksList = {
  */
 export type Task = {
   kind: 'tasks#task';
+  id?: string;
   title: string;
   status: TaskStatus;
   notes?: string;
@@ -53,6 +54,21 @@ export type Task = {
    * Filled automatically if `status === 'completed'`
    */
   completed?: string;
+
+  /**
+   * RFC 3339 timestamp when the task was last updated (server-set, always present on API responses)
+   */
+  updated?: string;
+};
+
+/**
+ * @see https://developers.google.com/tasks/reference/rest/v1/tasks/list#response-body
+ */
+export type TasksResponse = {
+  kind: string;
+  etag: string;
+  nextPageToken?: string;
+  items: Task[];
 };
 
 export const googleTasksCommon = {
@@ -127,9 +143,10 @@ export async function getLists(
 
 export async function getTasks(
   authProp: OAuth2PropertyValue,
-  tasklist: string
-): Promise<TasksList[]> {
-  // docs: https://developers.google.com/tasks/reference/rest/v1/tasklists/list
+  tasklist: string,
+  params?: Record<string, string | number | boolean>
+): Promise<Task[]> {
+  // docs: https://developers.google.com/tasks/reference/rest/v1/tasks/list
   const request: HttpRequest = {
     method: HttpMethod.GET,
     url: `${googleTasksCommon.baseUrl}/tasks/v1/lists/${tasklist}/tasks`,
@@ -137,9 +154,10 @@ export async function getTasks(
       type: AuthenticationType.BEARER_TOKEN,
       token: authProp.access_token,
     },
+    queryParams: params as Record<string, string>,
   };
-  const response = await httpClient.sendRequest<TasksListResponse>(request);
-  return response.body.items;
+  const response = await httpClient.sendRequest<TasksResponse>(request);
+  return response.body.items ?? [];
 }
 
 export async function createTask(

@@ -81,7 +81,7 @@ export const ConfirmationDeleteDialog = ({
       <DialogContent onClick={(e) => e.stopPropagation()}>
         <DialogHeader className="min-w-0">
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="pt-2 truncate">
+          <DialogDescription className="pt-2 break-words">
             {message}
           </DialogDescription>
         </DialogHeader>

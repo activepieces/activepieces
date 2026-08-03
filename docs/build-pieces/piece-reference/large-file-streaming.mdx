@@ -59,9 +59,15 @@ Streaming is enabled per action. "In" means the action reads its **input** file 
 | Microsoft OneDrive | Upload file | Get File |
 | Microsoft SharePoint | Upload File | — |
 | FTP/SFTP | Upload File | Read File Content |
+| Subflows | Stream CSV to Subflows | — |
 
 More pieces are being enabled over time. Actions not listed here still work — they buffer
 the file in memory, which is fine within the [size limit](/install/reference/limits).
+
+<Note>
+Stream CSV to Subflows streams a CSV straight from the URL you give it and never writes the
+file into storage, so it is the one entry above that does **not** need S3 file storage.
+</Note>
 
 ### Per-service upload ceilings
 
