@@ -209,8 +209,16 @@ async function discoverSetup(client: AxiosInstance): Promise<SetupDiscovery> {
         return { available: false, reason: `worker-machines returned HTTP ${res.status} (platform-admin token required)`, machines: [], executionSlots: undefined, checks: validateSetup([]) };
     }
     const machines: WorkerMachineWithStatus[] = res.data;
-    const executionSlots = machines.reduce((sum, m) => sum + parseSlot(m.information.workerProps.WORKER_CONCURRENCY), 0);
-    return { available: true, machines, executionSlots: executionSlots > 0 ? executionSlots : undefined, checks: validateSetup(machines) };
+    const usable = machines.filter((m) => m.status === 'ONLINE' && typeof m.information?.workerProps?.WORKER_CONCURRENCY === 'string');
+    const skipped = machines.length - usable.length;
+    const executionSlots = usable.reduce((sum, m) => sum + parseSlot(m.information.workerProps.WORKER_CONCURRENCY), 0);
+    const checks = validateSetup(usable);
+    if (skipped > 0) {
+        checks.unshift({ dimension: 'worker registry', status: 'WARN', detail: `${skipped}/${machines.length} registry entries loo
+k stale or incomplete (non-ONLINE or missing worker props) and were excluded from the slot count — if a worker rollout just happen
+ed, wait ~60s and re-run.` });
+    }
+    return { available: true, machines: usable, executionSlots: executionSlots > 0 ? executionSlots : undefined, checks };
 }
 
 async function measureNetwork(client: AxiosInstance): Promise<NetworkBaseline> {
@@ -673,7 +681,7 @@ function renderReport(report: BenchmarkReport): void {
 
     console.log(chalk.bold('\nProject'));
     console.log(`  throwaway project (auto-created, deleted after) : ${report.project.id}`);
-    if (report.project.limits.available) {
+    if (report.project.limits.available === true) {
         const cap = report.project.limits.maxConcurrentJobs;
         const capLabel = cap === null ? 'unset (platform default)' : `${cap} concurrent jobs`;
         // The benchmark project is uncapped on purpose, so these numbers can't throttle THIS run — they are

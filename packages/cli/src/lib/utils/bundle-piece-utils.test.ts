@@ -36,6 +36,31 @@ describe('bundlePiece — external dependency capture', () => {
         expect(result.external).not.toContain('fake-sdk')
     })
 
+    it('keeps wasm/native asset packages (tiktoken, sharp) external so their runtime-loaded assets resolve', async () => {
+        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+
+        for (const [name, version] of [['tiktoken', '1.0.11'], ['sharp', '0.35.2']]) {
+            const depDir = join(root, 'node_modules', name)
+            mkdirSync(depDir, { recursive: true })
+            writeFileSync(join(depDir, 'package.json'), JSON.stringify({ name, version, main: 'index.js' }))
+            writeFileSync(join(depDir, 'index.js'), 'module.exports = {};\n')
+        }
+
+        const piecePath = join(root, 'piece')
+        mkdirSync(join(piecePath, 'src'), { recursive: true })
+        writeFileSync(join(piecePath, 'package.json'), JSON.stringify({ name: 'piece-z', version: '0.0.1', dependencies: { tiktoken: '1.0.11', sharp: '0.35.2' } }))
+        writeFileSync(join(piecePath, 'src', 'index.ts'), 'import * as tiktoken from \'tiktoken\'\nimport * as sharp from \'sharp\'\nexport const piece = { tiktoken, sharp }\n')
+        const distPath = join(piecePath, 'dist')
+        mkdirSync(distPath, { recursive: true })
+
+        const result = await bundlePieceUtils.bundlePiece({ piecePath, distPath, repoRoot: root })
+
+        expect(result.external).toContain('tiktoken')
+        expect(result.external).toContain('sharp')
+        expect(result.inlined).not.toContain('tiktoken')
+        expect(result.inlined).not.toContain('sharp')
+    })
+
     it('externalizes an inlined package that relies on import.meta', async () => {
         root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
 

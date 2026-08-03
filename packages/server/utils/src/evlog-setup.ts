@@ -125,7 +125,7 @@ function init({ params }: { params: EvlogSetupParams }): ApLogger {
     activeFlusher = resolved.flush
 
     initLogger({
-        env: { service: params.drainConfig.serviceName, version: params.version },
+        env: { service: params.drainConfig.serviceName, version: params.version, environment: params.environment },
         pretty: params.logPretty ?? false,
         minLevel: mappedLevel as 'debug' | 'info' | 'warn' | 'error',
         sampling: {
@@ -163,6 +163,7 @@ export const evlogSetup = {
 export type EvlogSetupParams = {
     serviceName: string
     version?: string
+    environment?: string
     logLevel?: string
     logPretty?: boolean
     sampleRateInfo?: number

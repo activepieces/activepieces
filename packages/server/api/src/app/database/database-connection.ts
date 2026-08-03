@@ -16,6 +16,7 @@ import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ChatConversationEntity } from '../ee/chat/chat-conversation-entity'
 import { ChatRolloutUserEntity } from '../ee/chat/chat-rollout-user-entity'
+import { UserChatMemoryEntity } from '../ee/chat/user-chat-memory-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
@@ -107,6 +108,7 @@ function getEntities(): EntitySchema<unknown>[] {
         ToolSearchIndexEntity,
         ChatConversationEntity,
         ChatRolloutUserEntity,
+        UserChatMemoryEntity,
         TriggerSourceEntity,
         WaitpointEntity,
         TeamsBotInstallationEntity,

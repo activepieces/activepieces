@@ -9,7 +9,7 @@ export const getClickupList = createAction({
 
   name: 'get_list',
   description: 'Gets a list in a ClickUp',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Read-only: fetch the details of a single ClickUp list by its list ID. Use when you already know the list ID; does not modify anything and is safe to call repeatedly.', idempotent: true },
   displayName: 'Get List',
   props: {

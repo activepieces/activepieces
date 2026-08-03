@@ -72,7 +72,7 @@ Four-step flow (webhook, math, code in `isolated-vm`, response), single warm cal
 | 163 ms | 176 ms | 260 ms | 343 ms |
 
 <Note>
-The same setup measures ~165 ms unloaded but ~505 ms under sustained peak: the app tier saturating, not the flow slowing. Always ask which load a figure was measured under. Throughput view: [Benchmark](/install/architecture/benchmark).
+The same setup measures ~165 ms unloaded and ~200 ms average under sustained peak (160 workers, p50 180 ms / p99 652 ms): the shared database absorbing load, not the flow slowing. Always ask which load a figure was measured under. Throughput view: [Benchmark](/install/architecture/benchmark).
 </Note>
 
 ## Reduce it

@@ -405,6 +405,8 @@ import { AddProjectExecutionDataRetentionDays1812000000000 } from './migration/p
 import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postgres/1814000000000-AddActiveFlowsLimitToProjectPlan'
 import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgres/1815000000000-AddSampleDataFlowIdIndexToFile'
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
+import { AddUserChatMemory1817000000000 } from './migration/postgres/1817000000000-AddUserChatMemory'
+import { AddFieldPosition1818000000000 } from './migration/postgres/1818000000000-AddFieldPosition'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -825,6 +827,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddActiveFlowsLimitToProjectPlan1814000000000,
         AddSampleDataFlowIdIndexToFile1815000000000,
         AddTeamsBotInstallation1816000000000,
+        AddUserChatMemory1817000000000,
+        AddFieldPosition1818000000000,
     ]
     return migrations
 }

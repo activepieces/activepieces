@@ -7,14 +7,16 @@ import {
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
 import { Channel } from '../common/models';
+import { discordSuccessWithChannelIdActionOutputSchema } from '../output-schemas';
 
 export const discordFindChannel = createAction({
   auth: discordAuth,
   name: 'find_channel',
   description: 'find a channel by name',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Looks up a channel in a guild by its exact name and returns its channel ID, given the guild ID. Use to resolve a channel name into the ID required by message, rename, or delete actions. Read-only and idempotent; matching is exact and returns the first match.', idempotent: true },
   displayName: 'Find channel',
+  outputSchema: discordSuccessWithChannelIdActionOutputSchema,
   props: {
     guild_id: discordCommon.guilds,
     name: Property.ShortText({

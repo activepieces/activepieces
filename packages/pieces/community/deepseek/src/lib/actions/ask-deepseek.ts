@@ -6,11 +6,12 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askDeepseek = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: deepseekAuth,
   name: 'ask_deepseek',
   displayName: 'Ask Deepseek',
   description: 'Ask Deepseek anything you want!',
+  aiMetadata: { description: 'Sends a question to a DeepSeek chat model and returns the generated text, with optional sampling controls and a text-or-JSON response format (JSON mode also requires instructing the model to emit JSON in the prompt); it runs stateless by default, or keeps conversation history across runs and flows when a memory key is set. It is the only action this piece exposes, so use it for any DeepSeek completion and pick a different vendor piece when the model must not be DeepSeek. Requires a model, a question, and a maximum token count; not idempotent: each call produces a fresh completion and, when a memory key is set, appends to the stored history.', idempotent: false },
   props: {
     model: Property.Dropdown({
       auth: deepseekAuth,

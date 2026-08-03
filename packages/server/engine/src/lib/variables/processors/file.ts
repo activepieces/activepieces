@@ -1,12 +1,17 @@
+import { Readable } from 'node:stream'
 import { isBase64, isNil, isString } from '@activepieces/core-utils'
-import { ApFile } from '@activepieces/pieces-framework'
+import { ApFile, ApStreamingFile, PropertyType } from '@activepieces/pieces-framework'
 import { ProcessorFn } from './types'
 
-export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
+export const fileProcessor: ProcessorFn = async (property, urlOrBase64) => {
     if (isNil(urlOrBase64) || !isString(urlOrBase64)) {
         return null
     }
+    const streaming = property.type === PropertyType.FILE && property.streaming === true
     try {
+        if (streaming) {
+            return await handleStreamingFile(urlOrBase64)
+        }
         const file = handleBase64File(urlOrBase64)
         if (!isNil(file)) {
             return file
@@ -19,7 +24,7 @@ export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
     }
 }
 
-function handleBase64File(propertyValue: string): ApFile | null {
+function parseBase64File(propertyValue: string): { extension: string, buffer: Buffer } | null {
     if (!isBase64(propertyValue, { allowMime: true })) {
         return null
     }
@@ -27,12 +32,21 @@ function handleBase64File(propertyValue: string): ApFile | null {
     if (!matches || matches?.length !== 3) {
         return null
     }
-    const base64 = matches[2]
-    const extension = mimeExtension(matches[1]) || 'bin'
+    return {
+        extension: mimeExtension(matches[1]) || 'bin',
+        buffer: Buffer.from(matches[2], 'base64'),
+    }
+}
+
+function handleBase64File(propertyValue: string): ApFile | null {
+    const parsed = parseBase64File(propertyValue)
+    if (isNil(parsed)) {
+        return null
+    }
     return new ApFile(
-        `unknown.${extension}`,
-        Buffer.from(base64, 'base64'),
-        extension,
+        `unknown.${parsed.extension}`,
+        parsed.buffer,
+        parsed.extension,
     )
 }
 
@@ -40,7 +54,7 @@ async function handleUrlFile(path: string): Promise<ApFile | null> {
     const fileResponse = await fetch(path)
 
     const filename = getFileName(path, fileResponse.headers.get('content-disposition'), fileResponse.headers.get('content-type') ?? undefined) ?? 'unknown'
-    const extension = filename.split('.').length > 1 ? filename.split('.').pop() : undefined
+    const extension = extensionFromFilename(filename)
 
     return new ApFile(
         filename,
@@ -49,6 +63,47 @@ async function handleUrlFile(path: string): Promise<ApFile | null> {
     )
 }
 
+async function handleStreamingFile(propertyValue: string): Promise<ApStreamingFile | null> {
+    const parsed = parseBase64File(propertyValue)
+    if (!isNil(parsed)) {
+        return {
+            filename: `unknown.${parsed.extension}`,
+            extension: parsed.extension,
+            size: parsed.buffer.length,
+            body: Readable.from(parsed.buffer),
+        }
+    }
+
+    const fileResponse = await fetch(propertyValue)
+    if (!fileResponse.ok || isNil(fileResponse.body)) {
+        await fileResponse.body?.cancel()
+        return null
+    }
+    const filename = getFileName(propertyValue, fileResponse.headers.get('content-disposition'), fileResponse.headers.get('content-type') ?? undefined) ?? 'unknown'
+    const extension = extensionFromFilename(filename)
+    const contentEncoding = fileResponse.headers.get('content-encoding')
+    const contentLength = Number(fileResponse.headers.get('content-length'))
+    // undici transparently decompresses gzip/br/deflate but leaves the compressed
+    // Content-Length in place, so it would understate the streamed byte count and
+    // truncate the destination. Only trust the size when the body is not encoded.
+    const sizeIsTrustworthy = (isNil(contentEncoding) || contentEncoding.toLowerCase() === 'identity')
+        && Number.isInteger(contentLength) && contentLength > 0
+
+    return {
+        filename,
+        extension,
+        size: sizeIsTrustworthy ? contentLength : undefined,
+        // @ts-expect-error -- undici streams a Node web ReadableStream body; the DOM fetch types omit the fromWeb overload
+        body: Readable.fromWeb(fileResponse.body),
+    }
+}
+
+
+function extensionFromFilename(filename: string): string | undefined {
+    const parts = filename.split('.')
+    const last = parts.length > 1 ? parts.pop() : undefined
+    return last ? last : undefined
+}
 
 function getFileName(path: string, disposition: string | null, mimeType: string | undefined): string | null {
     const url = new URL(path)

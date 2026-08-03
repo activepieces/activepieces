@@ -9,6 +9,8 @@ export const listFeedbackResponses = createAction({
   name: 'list_feedback_responses',
   displayName: 'List Feedback Responses',
   description: 'List the user responses submitted through a feedback widget.',
+  audience: 'both',
+  aiMetadata: { description: 'List the responses submitted to one Produktly feedback widget, each with its reaction type, chosen option, free-text message, and submitter name, email, and originating page; paginated with limit and offset and optionally narrowed to a submission-date range. Pick this to pull collected feedback on demand; use the New Feedback Response trigger to act as submissions arrive. Requires a feedback widget ID (discover one with List Feedback Widgets). Read-only and idempotent.', idempotent: true },
   props: {
     widget: produktlyProps.feedbackWidget,
     limit: Property.Number({

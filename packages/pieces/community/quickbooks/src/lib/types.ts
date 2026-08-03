@@ -243,6 +243,54 @@ export interface QuickbooksPurchaseLine {
     // Add other detail types if needed
 }
 
+export interface QuickbooksBill {
+    Id?: string;
+    SyncToken?: string;
+    MetaData?: QuickbooksMetaData;
+    DocNumber?: string;
+    TxnDate?: string;
+    DueDate?: string;
+    CurrencyRef?: QuickbooksCurrencyRef;
+    PrivateNote?: string;
+    Line: QuickbooksPurchaseLine[];
+    VendorRef: QuickbooksRef;
+    APAccountRef?: QuickbooksRef;
+    SalesTermRef?: QuickbooksRef;
+    TotalAmt?: number;
+    Balance?: number;
+    domain?: string;
+    sparse?: boolean;
+}
+
+export interface QuickbooksPaymentLine {
+    Amount: number;
+    LinkedTxn?: { TxnId: string; TxnType: string }[];
+}
+
+export interface QuickbooksPayment {
+    Id?: string;
+    SyncToken?: string;
+    MetaData?: QuickbooksMetaData;
+    TxnDate?: string;
+    CurrencyRef?: QuickbooksCurrencyRef;
+    CustomerRef: QuickbooksRef;
+    DepositToAccountRef?: QuickbooksRef;
+    PaymentMethodRef?: QuickbooksRef;
+    PaymentRefNum?: string;
+    TotalAmt: number;
+    UnappliedAmt?: number;
+    PrivateNote?: string;
+    Line?: QuickbooksPaymentLine[];
+    domain?: string;
+    sparse?: boolean;
+}
+
+export interface QuickbooksReport {
+    Header?: Record<string, unknown>;
+    Columns?: Record<string, unknown>;
+    Rows?: Record<string, unknown>;
+}
+
 export interface QuickbooksEstimate {
     Id: string;
     SyncToken?: string;

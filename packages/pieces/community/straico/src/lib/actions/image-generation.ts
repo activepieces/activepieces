@@ -9,11 +9,12 @@ import {
 import { baseUrlv0, baseUrlv1 } from '../common/common';
 
 export const imageGeneration = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'image_generation',
   displayName: 'Image Generation',
   description: 'Enables users to generate high-quality images based on textual descriptions.',
+  aiMetadata: { description: 'Generates one to four new images from a text description using a Straico image model such as DALL-E 3, in square, landscape or portrait shape, and returns their hosted URLs plus a zip. This is the only image-producing action in the piece; use Ask AI instead when the goal is text, including describing or reasoning about an image that has already been uploaded. Requires a model, a size, an image count and a detailed description; each generated image is billed separately. Not idempotent: every call renders fresh images even for an identical prompt.', idempotent: false },
   props: {
     variations: Property.StaticDropdown({
       displayName: 'Number of Images',

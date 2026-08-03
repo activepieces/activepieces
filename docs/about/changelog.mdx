@@ -26,7 +26,7 @@ A ground-up overhaul of how Activepieces runs in production. The new shape is si
 **Scaling**
 
 - **Arithmetic scaling**: for every 10 workers, add 1 app (a **1:10** app-to-worker ratio).
-- **Measured, near-linear**: throughput scales near-linearly through 80 workers / 8 apps (148.9 req/s warm) on a real GKE cluster. Full methodology in the [Benchmark](/install/architecture/benchmark).
+- **Measured**: throughput scales near-linearly through 80 workers / 8 apps (484 req/s warm) and keeps climbing to 777 req/s at 160 workers, though the per-worker rate tapers as the database takes more of the load. Full methodology in the [Benchmark](/install/architecture/benchmark).
 
 **Worker Groups**
 
