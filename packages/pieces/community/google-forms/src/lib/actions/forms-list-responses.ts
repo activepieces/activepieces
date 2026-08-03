@@ -5,6 +5,7 @@ import {
   getAccessToken,
   GoogleFormsAuthValue,
 } from '../common/common';
+import { formsListResponsesActionOutputSchema } from '../output-schemas';
 
 export const formsListResponses = createAction({
   auth: googleFormsAuth,
@@ -18,6 +19,7 @@ export const formsListResponses = createAction({
       'Lists submitted responses for a form, with each response\'s responseId, timestamps, and answers keyed by questionId. Answers are keyed by opaque questionId — call forms_get_form to map them to prompts. Supports a "timestamp > / <" filter and pagination via page_token; an empty list is valid (no submissions yet). Read-only.',
     idempotent: true,
   },
+  outputSchema: formsListResponsesActionOutputSchema,
   props: {
     form_id: Property.ShortText({
       displayName: 'Form ID',

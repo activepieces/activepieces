@@ -5,6 +5,7 @@ import {
   getAccessToken,
   GoogleFormsAuthValue,
 } from '../common/common';
+import { formsGetResponseActionOutputSchema } from '../output-schemas';
 
 export const formsGetResponse = createAction({
   auth: googleFormsAuth,
@@ -18,6 +19,7 @@ export const formsGetResponse = createAction({
       'Fetches one full submission by its responseId (resolve via forms_list_responses or the New Response trigger), including all answers keyed by questionId and submission timestamps. Use when you need one submission in detail; to enumerate submissions use forms_list_responses. Answers are keyed by questionId — use forms_get_form to interpret them. Read-only.',
     idempotent: true,
   },
+  outputSchema: formsGetResponseActionOutputSchema,
   props: {
     form_id: Property.ShortText({
       displayName: 'Form ID',

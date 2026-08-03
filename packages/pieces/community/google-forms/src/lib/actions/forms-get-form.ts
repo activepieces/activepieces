@@ -5,6 +5,7 @@ import {
   getAccessToken,
   GoogleFormsAuthValue,
 } from '../common/common';
+import { formsGetFormActionOutputSchema } from '../output-schemas';
 
 export const formsGetForm = createAction({
   auth: googleFormsAuth,
@@ -18,6 +19,7 @@ export const formsGetForm = createAction({
       'Fetches a form\'s full structure: its title/description, settings, the ordered list of items with their itemId and index, the questionId of each question, and the current revisionId. Use this before any edit (to get item indices and the revision) and before reading responses (to map answer questionIds to prompts). Read-only and safe to retry.',
     idempotent: true,
   },
+  outputSchema: formsGetFormActionOutputSchema,
   props: {
     form_id: Property.ShortText({
       displayName: 'Form ID',
