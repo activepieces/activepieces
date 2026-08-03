@@ -95,7 +95,7 @@ const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects 
     users?: { platformId: string, count: string }[]
     projects?: { platformId: string, count: string }[]
     executionProjects?: { projectId: string, platformId: string }[]
-    executionRuns?: { projectId: string, day: string, count: string }[]
+    executionRuns?: { projectId: string, runDay: string, runCount: string }[]
 }): void => {
     mockGetRawMany
         .mockResolvedValueOnce(licenseKeys)
@@ -143,8 +143,8 @@ describe('billingUsageReportService', () => {
                 projects: [{ platformId: 'platform-1', count: '3' }],
                 executionProjects: [{ projectId: 'project-1', platformId: 'platform-1' }],
                 executionRuns: [
-                    { projectId: 'project-1', day: '2026-06-13', count: '40' },
-                    { projectId: 'project-1', day: '2026-06-14', count: '60' },
+                    { projectId: 'project-1', runDay: '2026-06-13', runCount: '40' },
+                    { projectId: 'project-1', runDay: '2026-06-14', runCount: '60' },
                 ],
                 licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }],
             })
@@ -179,9 +179,9 @@ describe('billingUsageReportService', () => {
                     { projectId: 'p2a', platformId: 'platform-2' },
                 ],
                 executionRuns: [
-                    { projectId: 'p1a', day: '2026-06-13', count: '10' },
-                    { projectId: 'p1b', day: '2026-06-13', count: '15' },
-                    { projectId: 'p2a', day: '2026-06-13', count: '7' },
+                    { projectId: 'p1a', runDay: '2026-06-13', runCount: '10' },
+                    { projectId: 'p1b', runDay: '2026-06-13', runCount: '15' },
+                    { projectId: 'p2a', runDay: '2026-06-13', runCount: '7' },
                 ],
             })
 
