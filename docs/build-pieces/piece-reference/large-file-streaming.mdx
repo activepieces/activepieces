@@ -71,19 +71,20 @@ file into storage, so it is the one entry above that does **not** need S3 file s
 
 ### Per-service upload ceilings
 
-Streaming removes the *memory* ceiling, not the destination API's own limit. Two services cap
-what a single request can carry, and the pieces below upload in one request:
+Streaming removes the *memory* ceiling, not the destination API's own limit. Where a service caps
+what a single request can carry, the action switches to a chunked upload session above that cap:
 
-- **Dropbox** — `Upload file` uses `/2/files/upload`, which
-  [Dropbox documents as being for files under 150 MB](https://developers.dropbox.com/dbx-performance-guide);
-  larger files need the chunked `upload_session` endpoints, which the piece does not use yet.
-- **Microsoft SharePoint** — `Upload File` uses Graph's simple `PUT …/content`, which
-  [supports files up to 250 MB](https://learn.microsoft.com/en-us/graph/api/driveitem-put-content).
-  Its Microsoft OneDrive sibling is not affected: `Upload file` there switches to a chunked
-  upload session above 4 MiB.
+| Piece | One-request cap | Above it |
+|---|---|---|
+| Dropbox | [150 MB](https://developers.dropbox.com/dbx-performance-guide) (`/2/files/upload` answers `409 payload_too_large`) | `/2/files/upload_session/*`, 8 MiB chunks |
+| Microsoft SharePoint | [250 MB](https://learn.microsoft.com/en-us/graph/api/driveitem-put-content) (Graph's simple `PUT …/content`) | Graph upload session, 10 MiB chunks |
+| Microsoft OneDrive | 4 MiB | Graph upload session, 10 MiB chunks |
 
-Both are pre-existing API limits rather than streaming limits, but they bound how large a file
-these two actions can actually move.
+These are pre-existing API limits rather than streaming limits, and each action now handles its own.
+One difference matters if your source doesn't report a size: Dropbox's session is offset-based, so it
+just streams the chunks as they arrive, while Graph wants the file's total length in every fragment's
+`Content-Range` header — so the two Microsoft actions buffer once to learn the length before they can
+chunk. Give those a source that reports `Content-Length` when you can.
 
 ## Building streaming actions
 

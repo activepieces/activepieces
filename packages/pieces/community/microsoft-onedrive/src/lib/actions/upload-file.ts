@@ -5,6 +5,7 @@ import {
   httpClient,
   HttpMethod,
   AuthenticationType,
+  streamUtils,
 } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import mime from 'mime-types';
@@ -98,7 +99,7 @@ export const uploadFile = createAction({
       const uploadUrl = session.body.uploadUrl;
       let start = 0;
       let result;
-      for await (const chunk of readChunks(body, CHUNK_SIZE)) {
+      for await (const chunk of streamUtils.readChunks({ readable: body, chunkSize: CHUNK_SIZE })) {
         const end = start + chunk.length - 1;
 
         result = await httpClient.sendRequest({
@@ -118,22 +119,3 @@ export const uploadFile = createAction({
     }
   },
 });
-
-async function* readChunks(readable: Readable, chunkSize: number): AsyncGenerator<Buffer> {
-  let pending: Buffer[] = [];
-  let pendingLength = 0;
-  for await (const data of readable) {
-    pending.push(Buffer.isBuffer(data) ? data : Buffer.from(data));
-    pendingLength += pending[pending.length - 1].length;
-    while (pendingLength >= chunkSize) {
-      const combined = Buffer.concat(pending);
-      yield combined.subarray(0, chunkSize);
-      const rest = combined.subarray(chunkSize);
-      pending = rest.length > 0 ? [rest] : [];
-      pendingLength = rest.length;
-    }
-  }
-  if (pendingLength > 0) {
-    yield Buffer.concat(pending);
-  }
-}
