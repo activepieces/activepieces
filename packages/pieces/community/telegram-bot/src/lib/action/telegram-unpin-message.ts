@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramUnpinMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramUnpinMessage = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramUnpinMessage = createAction({
       'Unpins a message in a chat addressed by chat_id (a numeric id or @channelusername the bot can reach) — supply message_id to unpin a specific message, or omit it to unpin the most recent pinned message; the bot must be an administrator with pin rights. Use to clear a pin set by telegram_pin_message. Idempotent: an already-unpinned message stays unpinned.',
     idempotent: true,
   },
+  outputSchema: telegramUnpinMessageActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     message_id: Property.ShortText({

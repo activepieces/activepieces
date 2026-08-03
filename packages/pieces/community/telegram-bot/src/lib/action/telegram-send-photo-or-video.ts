@@ -13,6 +13,7 @@ import {
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
 import FormData from 'form-data';
+import { telegramSendPhotoOrVideoActionOutputSchema } from '../output-schemas';
 
 export const telegramSendPhotoOrVideo = createAction({
   auth: telegramBotAuth,
@@ -26,6 +27,7 @@ export const telegramSendPhotoOrVideo = createAction({
       'Sends a single photo, video, sticker, or animated GIF to a chat (chat_id is a numeric id or @channelusername the bot can reach), supplied as an uploaded file OR a previously uploaded Telegram file_id, with an optional caption. Pick the media_type, then provide either the file or its file_id for that type. Use for one inline media item; for several in one album use telegram_send_media_group, for an arbitrary attachment use telegram_send_document. Caption format defaults to plain text. Not idempotent: each call posts a new message.',
     idempotent: false,
   },
+  outputSchema: telegramSendPhotoOrVideoActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     media_type: Property.StaticDropdown({

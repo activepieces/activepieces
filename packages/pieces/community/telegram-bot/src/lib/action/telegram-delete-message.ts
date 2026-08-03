@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramDeleteMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramDeleteMessage = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramDeleteMessage = createAction({
       'Permanently removes a message from a chat, targeted by chat_id (a numeric id or @channelusername the bot can reach) and message_id (from a prior send action\'s return or the New Message trigger payload). Use to clean up or retract content; the bot can delete only its own messages, or any message in groups where it is an administrator. Idempotent in effect: the message ends up gone regardless of how many times this runs.',
     idempotent: true,
   },
+  outputSchema: telegramDeleteMessageActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     message_id: Property.ShortText({

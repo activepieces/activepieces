@@ -2,6 +2,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { telegramBotAuth } from '../..';
 import { telegramCommons } from '../common';
+import { telegramCreateInviteLinkActionOutputSchema } from '../output-schemas';
 
 export const telegramCreateInviteLink = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramCreateInviteLink = createAction({
       'Creates a new invite link for a chat by chat_id (a numeric id or @channelusername the bot can reach), optionally with a name, expiry, member limit, or join-request approval. Use to generate a shareable join link; the bot must be an administrator with invite rights. Not idempotent: each call mints a distinct new link (it does not reuse or revoke prior links).',
     idempotent: false,
   },
+  outputSchema: telegramCreateInviteLinkActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     name: Property.ShortText({

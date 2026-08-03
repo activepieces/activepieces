@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramSendMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramSendMessage = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramSendMessage = createAction({
       'Posts a text message to a Telegram chat, group, or channel addressed by chat_id (a numeric id or @channelusername the bot can reach — resolve via the New Message trigger payload\'s chat.id or telegram_get_chat). Use to deliver a notification, reply, or alert; for an attachment use telegram_send_document, for a photo/video use telegram_send_photo_or_video. Text is sent as plain text unless format is set; if you set MarkdownV2 or HTML the text must be correctly escaped or Telegram rejects it. reply_markup is an advanced raw inline-keyboard JSON object. Not idempotent: each call sends a new message.',
     idempotent: false,
   },
+  outputSchema: telegramSendMessageActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     message: Property.LongText({

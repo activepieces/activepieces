@@ -2,6 +2,7 @@ import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramGetBotInfoActionOutputSchema } from '../output-schemas';
 
 export const telegramGetBotInfo = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramGetBotInfo = createAction({
       "Returns the authenticated bot's own identity and capabilities (id, username, name, and which features such as inline mode or group joins are enabled). Use to confirm which bot the connection points at or to read the bot's @username before building an invite or mention. Read-only and takes no input.",
     idempotent: true,
   },
+  outputSchema: telegramGetBotInfoActionOutputSchema,
   props: {},
   async run(ctx) {
     try {

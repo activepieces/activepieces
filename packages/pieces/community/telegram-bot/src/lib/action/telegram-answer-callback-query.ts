@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramAnswerCallbackQueryActionOutputSchema } from '../output-schemas';
 
 export const telegramAnswerCallbackQuery = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramAnswerCallbackQuery = createAction({
       'Acknowledges a callback query raised when a user taps an inline keyboard button, identified by callback_query_id (from the callback-query trigger payload), optionally showing a toast or alert. Use to stop the button spinner and give feedback; a given query can be answered only once. Not idempotent: it is a one-time response to that query.',
     idempotent: false,
   },
+  outputSchema: telegramAnswerCallbackQueryActionOutputSchema,
   props: {
     callback_query_id: Property.ShortText({
       displayName: 'Callback Query Id',

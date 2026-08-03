@@ -2,6 +2,7 @@ import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramGetChatAdministratorsActionOutputSchema } from '../output-schemas';
 
 export const telegramGetChatAdministrators = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramGetChatAdministrators = createAction({
       "Lists the administrators of a chat by chat_id (a numeric id or @channelusername) — each admin's user, status (creator/administrator), and granted rights. Use to discover who can moderate a chat, or to find a user_id before checking one member with telegram_get_chat_member. Returns an empty list for private chats. Read-only.",
     idempotent: true,
   },
+  outputSchema: telegramGetChatAdministratorsActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
   },

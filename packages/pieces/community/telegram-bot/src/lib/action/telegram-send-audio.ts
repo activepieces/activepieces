@@ -11,6 +11,7 @@ import {
 import FormData from 'form-data';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramSendAudioActionOutputSchema } from '../output-schemas';
 
 export const telegramSendAudio = createAction({
   auth: telegramBotAuth,
@@ -24,6 +25,7 @@ export const telegramSendAudio = createAction({
       'Sends an audio file (.MP3/.M4A) that appears in the chat\'s music player (chat_id is a numeric id or @channelusername the bot can reach), supplied as an uploaded file OR a previously uploaded file_id, with optional performer and track title. Provide exactly one of audio or audio_id. Use for music or audio tracks; for a raw file attachment use telegram_send_document. Caption format defaults to plain text. Not idempotent: each call sends a new message.',
     idempotent: false,
   },
+  outputSchema: telegramSendAudioActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     audio: Property.File({

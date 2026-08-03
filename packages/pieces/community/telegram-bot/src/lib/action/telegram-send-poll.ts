@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramSendPollActionOutputSchema } from '../output-schemas';
 
 export const telegramSendPoll = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramSendPoll = createAction({
       'Posts a native poll (regular or quiz) to a chat addressed by chat_id (a numeric id or @channelusername the bot can reach) with 2–10 answer options. Use to collect votes or run a quiz; quiz polls require correct_option_id (a 0-based index) and cannot allow multiple answers, and open_period and close_date are mutually exclusive. Not idempotent: each call creates a new poll.',
     idempotent: false,
   },
+  outputSchema: telegramSendPollActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     question: Property.ShortText({

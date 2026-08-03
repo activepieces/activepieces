@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramEditMessageTextActionOutputSchema } from '../output-schemas';
 
 export const telegramEditMessageText = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramEditMessageText = createAction({
       'Replaces the text of a message the bot already sent, targeted by chat_id + message_id OR by inline_message_id (the two modes are mutually exclusive — resolve message_id from the send action\'s return or the New Message trigger payload). Use to update a status or correct a message in place instead of sending a new one. Text is sent as plain text unless format is set; if you set MarkdownV2 or HTML the text must be correctly escaped or Telegram rejects it. Idempotent in effect (the message ends at the given text), but Telegram rejects an edit whose new text matches the current content.',
     idempotent: true,
   },
+  outputSchema: telegramEditMessageTextActionOutputSchema,
   props: {
     chat_id: Property.ShortText({
       displayName: 'Chat Id',

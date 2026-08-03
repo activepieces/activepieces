@@ -11,6 +11,7 @@ import {
 import FormData from 'form-data';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramSendDocumentActionOutputSchema } from '../output-schemas';
 
 export const telegramSendDocument = createAction({
   auth: telegramBotAuth,
@@ -23,6 +24,7 @@ export const telegramSendDocument = createAction({
       'Uploads and sends a generic file (up to 50 MB) as a document to a chat (chat_id is a numeric id or @channelusername the bot can reach), supplied as an uploaded file OR a previously uploaded file_id. Provide exactly one of document or document_id. Use for arbitrary attachments (PDF, archive, spreadsheet); for media shown inline use telegram_send_photo_or_video, for music use telegram_send_audio. Caption format defaults to plain text. Not idempotent: each call sends a new document.',
     idempotent: false,
   },
+  outputSchema: telegramSendDocumentActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     document: Property.File({

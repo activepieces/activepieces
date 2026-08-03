@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramSendMediaGroupActionOutputSchema } from '../output-schemas';
 
 const MEDIA_GROUP_LIMIT = 10;
 
@@ -24,6 +25,7 @@ export const telegramSendMediaGroup = createAction({
       'Sends 2–10 media items (each a public URL or a Telegram file_id) as one grouped album to a chat addressed by chat_id (a numeric id or @channelusername the bot can reach). Use to post several photos/videos together; photo and video may be mixed, but audio-only and document-only groups cannot be combined with other types. Item captions default to plain text. For a single item use telegram_send_photo_or_video. Not idempotent: each call posts a new album.',
     idempotent: false,
   },
+  outputSchema: telegramSendMediaGroupActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     media: Property.Array({

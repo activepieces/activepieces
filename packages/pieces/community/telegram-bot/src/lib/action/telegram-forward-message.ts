@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramForwardMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramForwardMessage = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramForwardMessage = createAction({
       'Forwards an existing message from a source chat (from_chat_id) to a target chat (chat_id), preserving original sender attribution. chat_id and from_chat_id are each a numeric id or @channelusername the bot can reach; message_id comes from the New Message trigger or a prior send action. Use to relay content the bot can access between chats; the bot must be able to read the source and post to the target. Not idempotent: each call creates a new forwarded message.',
     idempotent: false,
   },
+  outputSchema: telegramForwardMessageActionOutputSchema,
   props: {
     chat_id: Property.ShortText({
       displayName: 'Target Chat Id',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramGetFileActionOutputSchema } from '../output-schemas';
 
 type TelegramFileInfo = {
   file_id: string;
@@ -26,6 +27,7 @@ export const telegramGetFile = createAction({
       'Resolves a Telegram file_id (from a message the bot received) to its file metadata and download URL, and optionally downloads the content as base64 when download is enabled. Use to retrieve a file attached to an incoming message; the download URL Telegram returns is time-limited. Read-only and safe to retry.',
     idempotent: true,
   },
+  outputSchema: telegramGetFileActionOutputSchema,
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',

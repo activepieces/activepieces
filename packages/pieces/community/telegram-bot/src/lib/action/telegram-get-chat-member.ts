@@ -2,6 +2,7 @@ import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { telegramBotAuth } from '../..';
 import { telegramCommons } from '../common';
+import { telegramGetChatMemberActionOutputSchema } from '../output-schemas';
 
 export const telegramGetChatMember = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramGetChatMember = createAction({
       "Looks up one user's membership in a chat by chat_id (a numeric id or @channelusername) and user_id, returning their status (member, administrator, creator, restricted, left, kicked) and permissions. Use to check whether a user belongs to a chat or what rights they hold before acting; to list all admins use telegram_get_chat_administrators. Read-only.",
     idempotent: true,
   },
+  outputSchema: telegramGetChatMemberActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     user_id: Property.ShortText({

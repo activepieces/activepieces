@@ -2,6 +2,7 @@ import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramGetChatMemberCountActionOutputSchema } from '../output-schemas';
 
 export const telegramGetChatMemberCount = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramGetChatMemberCount = createAction({
       'Returns the number of members in a chat by chat_id (a numeric id or @channelusername). Use to size a group or channel before posting or to monitor membership; for per-user details use telegram_get_chat_member. Read-only.',
     idempotent: true,
   },
+  outputSchema: telegramGetChatMemberCountActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
   },

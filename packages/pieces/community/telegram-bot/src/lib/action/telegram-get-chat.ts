@@ -2,6 +2,7 @@ import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramGetChatActionOutputSchema } from '../output-schemas';
 
 export const telegramGetChat = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramGetChat = createAction({
       'Looks up current details about a chat (title, description, type, photo, member count) by chat_id (a numeric id or @channelusername). Use to resolve or inspect a chat before acting on it, or to confirm the bot can reach it; the bot must be a member of or have access to the chat. Read-only and safe to retry.',
     idempotent: true,
   },
+  outputSchema: telegramGetChatActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
   },

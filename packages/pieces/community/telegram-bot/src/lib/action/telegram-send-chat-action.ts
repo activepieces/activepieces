@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramSendChatActionActionOutputSchema } from '../output-schemas';
 
 export const telegramSendChatAction = createAction({
   auth: telegramBotAuth,
@@ -15,6 +16,7 @@ export const telegramSendChatAction = createAction({
       'Broadcasts a transient activity status (such as typing or uploading photo) in a chat addressed by chat_id (a numeric id or @channelusername the bot can reach), shown for up to 5 seconds. Use just before a slower action to signal the bot is working; it sends no message and produces no persistent content. Not idempotent: each call re-broadcasts the status.',
     idempotent: false,
   },
+  outputSchema: telegramSendChatActionActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     action: Property.StaticDropdown({

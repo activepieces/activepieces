@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { telegramPinMessageActionOutputSchema } from '../output-schemas';
 
 export const telegramPinMessage = createAction({
   auth: telegramBotAuth,
@@ -14,6 +15,7 @@ export const telegramPinMessage = createAction({
       'Pins an existing message in a chat, targeted by chat_id (a numeric id or @channelusername the bot can reach) and message_id (from a prior send action or the New Message trigger); the bot must be an administrator with pin rights. Use to highlight an announcement or important message; to remove the pin use telegram_unpin_message. Idempotent: pinning an already-pinned message leaves it pinned.',
     idempotent: true,
   },
+  outputSchema: telegramPinMessageActionOutputSchema,
   props: {
     chat_id: telegramCommons.chatIdProp(),
     message_id: Property.ShortText({
