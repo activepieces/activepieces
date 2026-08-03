@@ -5,7 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { system } from '../../helper/system/system'
-import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
+import { billingProvider, CreditUsageSource, toFlowRunCreditProperties } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowRunAiUsageTracker } from './flow-run-ai-usage-tracker'
@@ -71,12 +71,6 @@ async function trackProductionRunCredit(log: FastifyBaseLogger, flowRun: FlowRun
         value: 1,
         source: CreditUsageSource.FLOW_RUN,
         idempotencyKey: `${flowRun.id}:run`,
-        properties: {
-            platformId: project.platformId,
-            projectId: flowRun.projectId,
-            flowId: flowRun.flowId,
-            flowRunId: flowRun.id,
-            environment: flowRun.environment,
-        },
+        properties: toFlowRunCreditProperties({ platformId: project.platformId, flowRun }),
     })
 }

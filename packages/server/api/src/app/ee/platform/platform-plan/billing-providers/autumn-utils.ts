@@ -515,7 +515,7 @@ type AutumnEnrollmentCredentials = {
     autumnApiKey: string
 }
 
-type ConsoleCustomerCall = {
+export type ConsoleCustomerCall = {
     autumnCustomerId: string
     autumnApiKey: string
 }

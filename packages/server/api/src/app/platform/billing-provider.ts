@@ -1,20 +1,16 @@
 import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, PurchasablePlan, RunEnvironment, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PurchasablePlan, RunEnvironment, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
 import { system } from '../helper/system/system'
-
-function defaultBillingInfo(): BillingInfo {
-    return { startDate: apDayjs().startOf('month').toISOString(), endDate: apDayjs().endOf('month').toISOString(), nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, creditsResetInterval: null }
-}
 
 export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     listPlans: async () => {
         return []
     },
     getBillingOverview: async () => {
-        return { ...defaultBillingInfo(), creditsFeature: null, appSumoCreditsFeature: null, seatsFeature: null, includedSeats: null, additionalSeats: null, unavailable: false }
+        return emptyBillingOverview({})
     },
     createCheckoutSession: async () => {
         return { checkoutUrl: null }
@@ -112,10 +108,51 @@ export async function assertRunCreditsNotExceeded({ platformId, environment, log
     })
 }
 
+export function toFlowRunCreditProperties({ platformId, flowRun }: ToFlowRunCreditPropertiesParams): FlowRunCreditConsumptionProperties {
+    return {
+        platformId,
+        projectId: flowRun.projectId,
+        flowId: flowRun.flowId,
+        flowRunId: flowRun.id,
+        environment: flowRun.environment,
+    }
+}
+
+export function emptyBillingOverview({ startDate, endDate, unavailable = false }: EmptyBillingOverviewParams): BillingOverview {
+    return {
+        startDate: startDate ?? apDayjs().startOf('month').toISOString(),
+        endDate: endDate ?? apDayjs().endOf('month').toISOString(),
+        nextBillingAmount: 0,
+        cancelAt: null,
+        trialEndsAt: null,
+        planName: null,
+        scheduledPlanName: null,
+        billingPortalAvailable: false,
+        creditsResetInterval: null,
+        creditsFeature: null,
+        appSumoCreditsFeature: null,
+        seatsFeature: null,
+        includedSeats: null,
+        additionalSeats: null,
+        unavailable,
+    }
+}
+
 export enum CreditUsageSource {
     FLOW_RUN = 'flow_run',
     AI = 'ai',
     CHAT = 'chat',
+}
+
+type ToFlowRunCreditPropertiesParams = {
+    platformId: string
+    flowRun: FlowRun
+}
+
+type EmptyBillingOverviewParams = {
+    startDate?: string
+    endDate?: string
+    unavailable?: boolean
 }
 
 type RunCreditsGateParams = {
@@ -171,12 +208,12 @@ type TrackUsageParamsBase = {
     idempotencyKey: string
 }
 
-type TrackCreditsParams =
+export type TrackCreditsParams =
     | (TrackUsageParamsBase & { source: CreditUsageSource.FLOW_RUN, properties: FlowRunCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
 
-type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
+export type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
     { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties } |
     { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties }
 )

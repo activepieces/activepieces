@@ -1,8 +1,9 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, ChatConversation, ConsumableFeatureId, isAppSumoCreditedPlan, PersistedChatRole } from '@activepieces/shared'
+import { AIProviderName } from '@activepieces/core-utils'
+import { CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, ChatConversation, isAppSumoCreditedPlan, PersistedChatRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
-import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
+import { BillingEvents } from '../../helper/telemetry.utils'
+import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
+import { CreditUsageSource } from '../../platform/billing-provider'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatHelpers } from './chat-helpers'
 import { chatToolBilling } from './chat-tool-billing'
@@ -26,10 +27,10 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
         const isAppSumoPlan = isAppSumoCreditedPlan(platformPlan.plan)
 
-        const billing = billingProvider.get(log)
-        await Promise.all([
-            billing.trackFeature({
-                featureId: ConsumableFeatureId.AP_CREDITS,
+        await trackBillingAndSendTelemetry({
+            log,
+            licenseKey: platformPlan.licenseKey,
+            credits: {
                 platformId: conversation.platformId,
                 value: creditValue,
                 source: CreditUsageSource.CHAT,
@@ -46,9 +47,8 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                     model,
                     tier: tier.id,
                 },
-            }),
-            ...(isAppSumoPlan ? [billing.trackFeature({
-                featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS,
+            },
+            appSumo: isAppSumoPlan ? {
                 platformId: conversation.platformId,
                 value: creditValue,
                 source: CreditUsageSource.CHAT,
@@ -60,20 +60,14 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                     turnIndex,
                     tier: tier.id,
                 },
-            })] : []),
-        ])
-
-        const licenseKey = platformPlan.licenseKey
-        if (isNil(licenseKey) || licenseKey.length === 0) {
-            return
-        }
-        captureBillingEvent({
-            licenseKey,
-            event: BillingEvents.CHAT_MESSAGE,
-            properties: {
-                provider,
-                model,
-                toolsUsed: billableToolCalls,
+            } : undefined,
+            telemetry: {
+                event: BillingEvents.CHAT_MESSAGE,
+                properties: {
+                    provider,
+                    model,
+                    toolsUsed: billableToolCalls,
+                },
             },
         })
     },

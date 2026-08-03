@@ -6,9 +6,9 @@ import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCreditsExhaustedReverifyKey, getCreditsExhaustedReverifyLockKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
-import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, TrackFeatureParams } from '../../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
-import { autumnConsole, autumnUtils, BalanceCacheSnapshot, CreditsBalanceCache } from './autumn-utils'
+import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
 const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 60
@@ -38,19 +38,19 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             },
         })
     },
-    createCheckoutSession: async ({ platformId, planId, successUrl }) => {
-        await autumnUtils.ensureEnrolled(log, platformId)
-        const creds = await autumnConsole.getCreds(log, platformId)
-        if (isNil(creds)) {
-            return { checkoutUrl: null }
-        }
-        const targetPlan = (await autumnConsole.listPlans({ platformId })).find((plan) => plan.id === planId)
-        if (!isNil(targetPlan) && !isNil(targetPlan.includedSeats)) {
-            await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: targetPlan.includedSeats, log })
-        }
-        const { paymentUrl } = await autumnConsole.checkout({ ...creds, planId, successUrl })
-        return { checkoutUrl: paymentUrl }
-    },
+    createCheckoutSession: async ({ platformId, planId, successUrl }) => withEnrolledCreds({
+        log,
+        platformId,
+        fallback: { checkoutUrl: null },
+        fn: async (creds) => {
+            const targetPlan = (await autumnConsole.listPlans({ platformId })).find((plan) => plan.id === planId)
+            if (!isNil(targetPlan) && !isNil(targetPlan.includedSeats)) {
+                await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: targetPlan.includedSeats, log })
+            }
+            const { paymentUrl } = await autumnConsole.checkout({ ...creds, planId, successUrl })
+            return { checkoutUrl: paymentUrl }
+        },
+    }),
     getBillingPortalUrl: async ({ platformId, returnUrl }) => {
         const creds = await autumnConsole.getCreds(log, platformId)
         if (isNil(creds)) {
@@ -60,65 +60,63 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return { url: url ?? '' }
     },
     adjustUnconsumableFeatureQuantity: async ({ platformId, featureId, quantity }) => {
-        await autumnUtils.ensureEnrolled(log, platformId)
         if (featureId === UnconsumableFeatureId.USERS_LIMIT) {
             await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: quantity, log })
         }
-        const creds = await autumnConsole.getCreds(log, platformId)
-        if (isNil(creds)) {
-            return { checkoutUrl: null }
-        }
-        const { paymentUrl } = await autumnConsole.setUnconsumableQuantity({ ...creds, featureId, quantity })
-        return { checkoutUrl: paymentUrl }
+        return withEnrolledCreds({
+            log,
+            platformId,
+            fallback: { checkoutUrl: null },
+            fn: async (creds) => {
+                const { paymentUrl } = await autumnConsole.setUnconsumableQuantity({ ...creds, featureId, quantity })
+                return { checkoutUrl: paymentUrl }
+            },
+        })
     },
-    configureAutoTopUp: async (params) => {
-        await autumnUtils.ensureEnrolled(log, params.platformId)
-        const creds = await autumnConsole.getCreds(log, params.platformId)
-        if (isNil(creds)) {
-            return
-        }
-        await autumnConsole.configureAutoTopUp(
-            params.state === AiCreditsAutoTopUpState.DISABLED
-                ? { ...creds, featureId: params.featureId, enabled: false }
-                : {
-                    ...creds,
-                    featureId: params.featureId,
-                    enabled: true,
-                    threshold: params.minThreshold,
-                    quantity: params.creditsToAdd,
-                    maxMonthlyTopUps: params.maxMonthlyTopUps,
-                },
-        )
-        await autumnUtils.invalidateBillingOverview(params.platformId)
-    },
-    setupPayment: async ({ platformId, redirectUrl }) => {
-        await autumnUtils.ensureEnrolled(log, platformId)
-        const creds = await autumnConsole.getCreds(log, platformId)
-        if (isNil(creds)) {
-            return { url: null }
-        }
-        return autumnConsole.setupPayment({ ...creds, redirectUrl })
-    },
-    cancelSubscription: async ({ platformId, feedback }) => {
-        await autumnUtils.ensureEnrolled(log, platformId)
-        const creds = await autumnConsole.getCreds(log, platformId)
-        if (isNil(creds)) {
-            return
-        }
-        const freePlan = (await autumnConsole.listPlans({ platformId })).find((plan) => plan.id === PlanName.FREE)
-        if (!isNil(freePlan) && !isNil(freePlan.includedSeats)) {
-            await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: freePlan.includedSeats, log })
-        }
-        await autumnConsole.cancel({ ...creds, feedback })
-    },
-    reactivateSubscription: async ({ platformId }) => {
-        await autumnUtils.ensureEnrolled(log, platformId)
-        const creds = await autumnConsole.getCreds(log, platformId)
-        if (isNil(creds)) {
-            return
-        }
-        await autumnConsole.reactivate({ ...creds })
-    },
+    configureAutoTopUp: async (params) => withEnrolledCreds({
+        log,
+        platformId: params.platformId,
+        fallback: undefined,
+        fn: async (creds) => {
+            await autumnConsole.configureAutoTopUp(
+                params.state === AiCreditsAutoTopUpState.DISABLED
+                    ? { ...creds, featureId: params.featureId, enabled: false }
+                    : {
+                        ...creds,
+                        featureId: params.featureId,
+                        enabled: true,
+                        threshold: params.minThreshold,
+                        quantity: params.creditsToAdd,
+                        maxMonthlyTopUps: params.maxMonthlyTopUps,
+                    },
+            )
+            await autumnUtils.invalidateBillingOverview(params.platformId)
+        },
+    }),
+    setupPayment: async ({ platformId, redirectUrl }) => withEnrolledCreds({
+        log,
+        platformId,
+        fallback: { url: null },
+        fn: (creds) => autumnConsole.setupPayment({ ...creds, redirectUrl }),
+    }),
+    cancelSubscription: async ({ platformId, feedback }) => withEnrolledCreds({
+        log,
+        platformId,
+        fallback: undefined,
+        fn: async (creds) => {
+            const freePlan = (await autumnConsole.listPlans({ platformId })).find((plan) => plan.id === PlanName.FREE)
+            if (!isNil(freePlan) && !isNil(freePlan.includedSeats)) {
+                await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: freePlan.includedSeats, log })
+            }
+            await autumnConsole.cancel({ ...creds, feedback })
+        },
+    }),
+    reactivateSubscription: async ({ platformId }) => withEnrolledCreds({
+        log,
+        platformId,
+        fallback: undefined,
+        fn: (creds) => autumnConsole.reactivate({ ...creds }),
+    }),
     trackFeature: async (params: TrackFeatureParams) => {
         await sendTrackEvent({ ...params, log })
     },
@@ -172,6 +170,15 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return autumnUtils.getCreditUsage(log, platformId, startDate, endDate)
     },
 })
+
+async function withEnrolledCreds<T>({ log, platformId, fallback, fn }: WithEnrolledCredsParams<T>): Promise<T> {
+    await autumnUtils.ensureEnrolled(log, platformId)
+    const creds = await autumnConsole.getCreds(log, platformId)
+    if (isNil(creds)) {
+        return fallback
+    }
+    return fn(creds)
+}
 
 function selectCurrentPlan(customer: GetCustomerResponse): CurrentPlanSelection {
     const baseSubscriptions = autumnUtils.toBaseSubscriptions(customer)
@@ -432,21 +439,17 @@ async function fetchCredits(log: FastifyBaseLogger, platformId: string): Promise
     return autumnUtils.writeCustomerStateCaches(platformId, customer)
 }
 
-function emptyBillingOverview({ monthStart, monthEnd, unavailable }: { monthStart: string, monthEnd: string, unavailable: boolean }): BillingOverview {
-    return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, creditsResetInterval: null, creditsFeature: null, appSumoCreditsFeature: null, seatsFeature: null, includedSeats: null, additionalSeats: null, unavailable }
-}
-
 async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string): Promise<BillingOverview> {
     const monthStart = apDayjs().startOf('month').toISOString()
     const monthEnd = apDayjs().endOf('month').toISOString()
     const client = await autumnUtils.resolveClientForPlatform(log, platformId)
     if (isNil(client)) {
-        return emptyBillingOverview({ monthStart, monthEnd, unavailable: false })
+        return emptyBillingOverview({ startDate: monthStart, endDate: monthEnd })
     }
     const { data: customer, error } = await tryCatch(() => client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan', 'payment_method', 'billing_controls.auto_topups.purchase_limit'] }))
     if (!isNil(error) || isNil(customer)) {
         log.warn({ error, platform: { id: platformId } }, 'Failed to fetch billing overview; serving an empty overview without caching it')
-        return emptyBillingOverview({ monthStart, monthEnd, unavailable: true })
+        return emptyBillingOverview({ startDate: monthStart, endDate: monthEnd, unavailable: true })
     }
     const overview: BillingOverview = {
         ...toBillingInfo(customer, monthStart, monthEnd),
@@ -471,6 +474,13 @@ type CurrentPlanSelection = {
 type ToGateStateParams = {
     balance: CreditsBalanceCache | null
     enforced: boolean
+}
+
+type WithEnrolledCredsParams<T> = {
+    log: FastifyBaseLogger
+    platformId: string
+    fallback: T
+    fn: (creds: ConsoleCustomerCall) => Promise<T>
 }
 
 type SendTrackEventParams = TrackFeatureParams & {

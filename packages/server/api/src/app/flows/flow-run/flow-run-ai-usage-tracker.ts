@@ -1,11 +1,12 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, ConsumableFeatureId, FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
-import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
-import { AiCreditConsumptionProperties, billingProvider, CreditUsageSource } from '../../platform/billing-provider'
+import { BillingEvents } from '../../helper/telemetry.utils'
+import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
+import { AiCreditConsumptionProperties, CreditUsageSource, toFlowRunCreditProperties } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { flowRunAiUsageExtractor } from './flow-run-ai-usage-extractor'
 import { flowRunService } from './flow-run-service'
@@ -37,52 +38,42 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const isAppSumoPlan = isAppSumoCreditedPlan(platformPlan.plan)
         const aiProperties: AiCreditConsumptionProperties = {
-            platformId: project.platformId,
-            projectId: flowRun.projectId,
-            flowId: flowRun.flowId,
-            flowRunId: flowRun.id,
-            environment: flowRun.environment,
+            ...toFlowRunCreditProperties({ platformId: project.platformId, flowRun }),
             messages: usage.messages,
             toolCalls: usage.toolCalls,
             breakdown: usage.breakdown,
         }
-        const provider = billingProvider.get(log)
-        await Promise.all([
-            provider.trackFeature({
-                featureId: ConsumableFeatureId.AP_CREDITS,
+        await trackBillingAndSendTelemetry({
+            log,
+            licenseKey: platformPlan.licenseKey,
+            credits: {
                 platformId: project.platformId,
                 value: creditValue,
                 source: CreditUsageSource.AI,
                 idempotencyKey: `${flowRun.id}:ai:${attempt}`,
                 properties: aiProperties,
-            }),
-            ...(creditValue > 0 && isAppSumoPlan ? [provider.trackFeature({
-                featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS,
+            },
+            appSumo: creditValue > 0 && isAppSumoPlan ? {
                 platformId: project.platformId,
                 value: creditValue,
                 source: CreditUsageSource.AI,
                 idempotencyKey: `${flowRun.id}:appSumoAi:${attempt}`,
                 properties: aiProperties,
-            })] : []),
-        ])
-        const licenseKey = platformPlan.licenseKey
-        if (isNil(licenseKey) || licenseKey.length === 0) {
-            return
-        }
-        captureBillingEvent({
-            licenseKey,
-            event: BillingEvents.AI_USAGE_PER_RUN,
-            properties: {
-                platformId: project.platformId,
-                projectId: flowRun.projectId,
-                edition: system.getEdition(),
-                flowRunId: flowRun.id,
-                flowId: flowRun.flowId,
-                status: flowRun.status,
-                environment: flowRun.environment,
-                messages: usage.messages,
-                toolCalls: usage.toolCalls,
-                breakdown: usage.breakdown,
+            } : undefined,
+            telemetry: {
+                event: BillingEvents.AI_USAGE_PER_RUN,
+                properties: {
+                    platformId: project.platformId,
+                    projectId: flowRun.projectId,
+                    edition: system.getEdition(),
+                    flowRunId: flowRun.id,
+                    flowId: flowRun.flowId,
+                    status: flowRun.status,
+                    environment: flowRun.environment,
+                    messages: usage.messages,
+                    toolCalls: usage.toolCalls,
+                    breakdown: usage.breakdown,
+                },
             },
         })
     },
