@@ -24,6 +24,15 @@ export const actionRunCache = {
         await tryCatch(() => utimes(dirPath, now, now))
     },
 
+    async settlePendingRemoval(dirPath: string): Promise<boolean> {
+        const pending = pendingRemovals.get(dirPath)
+        if (isNil(pending)) {
+            return false
+        }
+        await pending
+        return true
+    },
+
     async sweep({ basePath, log }: SweepParams): Promise<void> {
         const startedAt = Date.now()
         const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
@@ -119,7 +128,10 @@ async function removeDir({ dirPath, expectedMtimeMs }: RemoveDirParams): Promise
     if (isNil(currentMtimeMs) || currentMtimeMs !== expectedMtimeMs) {
         return 'skipped'
     }
-    const { error } = await tryCatch(() => rm(dirPath, { recursive: true, force: true }))
+    const removal = tryCatch(() => rm(dirPath, { recursive: true, force: true }))
+    pendingRemovals.set(dirPath, removal)
+    const { error } = await removal
+    pendingRemovals.delete(dirPath)
     if (isNil(error)) {
         return 'removed'
     }
@@ -127,6 +139,8 @@ async function removeDir({ dirPath, expectedMtimeMs }: RemoveDirParams): Promise
 }
 
 const MANAGED_PREFIX = 'ar_'
+
+const pendingRemovals = new Map<string, Promise<unknown>>()
 
 const ACTION_RUN_CACHE_TTL_MS = 2 * 60 * 60 * 1000
 

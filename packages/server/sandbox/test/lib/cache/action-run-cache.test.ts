@@ -58,11 +58,14 @@ function createRecordingLog(): RecordingLog {
 const SECOND_MS = 1000
 const HOUR_MS = 60 * 60 * 1000
 
-async function seedStepDir({ basePath, namespace, ageMs = 0 }: SeedParams): Promise<string> {
+async function seedStepDir({ basePath, namespace, ageMs = 0, extraFiles = 0 }: SeedParams): Promise<string> {
     const dirPath = join(cacheUtils(basePath).getGlobalCodeCachePath(), namespace)
     const stepPath = join(dirPath, 'step_1')
     await mkdir(stepPath, { recursive: true })
     await writeFile(join(stepPath, 'index.js'), 'exports.code = async () => 42', 'utf8')
+    await Promise.all(Array.from({ length: extraFiles }, (_, index) =>
+        writeFile(join(stepPath, `dep_${index}.js`), 'module.exports = {}', 'utf8'),
+    ))
     const mtime = new Date(Date.now() - ageMs)
     await utimes(dirPath, mtime, mtime)
     return dirPath
@@ -80,6 +83,17 @@ async function seedOldestFirst({ basePath, total, ageOffsetMs = ACTION_RUN_CACHE
 
 function runningAsRoot(): boolean {
     return process.getuid?.() === 0
+}
+
+async function waitForPendingRemoval(dirPath: string): Promise<boolean> {
+    const deadline = Date.now() + 10 * SECOND_MS
+    while (Date.now() < deadline) {
+        if (await actionRunCache.settlePendingRemoval(dirPath)) {
+            return true
+        }
+        await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+    return false
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -334,10 +348,35 @@ describe('actionRunCache.touch', () => {
     })
 })
 
+describe('actionRunCache.settlePendingRemoval', () => {
+    it('reports nothing pending for a directory no sweep is touching', async () => {
+        const basePath = uniqueBasePath()
+        const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: '9'.repeat(64) })
+        const dirPath = await seedStepDir({ basePath, namespace })
+
+        await expect(actionRunCache.settlePendingRemoval(dirPath)).resolves.toBe(false)
+    })
+
+    it('waits out a removal that is already past its mtime re-check, so a provision can rebuild instead of running deleted code', async () => {
+        const basePath = uniqueBasePath()
+        const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: 'b'.repeat(64) })
+        const dirPath = await seedStepDir({ basePath, namespace, ageMs: 3 * HOUR_MS, extraFiles: 1000 })
+
+        const sweeping = actionRunCache.sweep({ basePath, log: noopLog })
+        const observed = await waitForPendingRemoval(dirPath)
+        await sweeping
+
+        expect(observed).toBe(true)
+        await expect(exists(dirPath)).resolves.toBe(false)
+        await expect(actionRunCache.settlePendingRemoval(dirPath)).resolves.toBe(false)
+    })
+})
+
 type SeedParams = {
     basePath: string
     namespace: string
     ageMs?: number
+    extraFiles?: number
 }
 
 type SeedOldestFirstParams = {

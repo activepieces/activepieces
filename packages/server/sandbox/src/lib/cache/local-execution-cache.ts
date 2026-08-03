@@ -31,13 +31,7 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                     fn: async () => {
                         await fileSystemUtils.threadSafeMkdir(codeCachePath)
                         for (const artifact of codeSteps) {
-                            await codeBuilder(log, getSettings).processCodeStep({
-                                artifact,
-                                codesFolderPath: codeCachePath,
-                            })
-                            if (actionRunCache.isManagedDir(artifact.flowVersionId)) {
-                                await actionRunCache.touch(codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId))
-                            }
+                            await installCodeStep({ artifact, codeCachePath, log, getSettings })
                         }
                         log.info({ path: codeCachePath }, 'Installed code in sandbox')
                     },
@@ -76,6 +70,33 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
         })
     },
 })
+
+async function installCodeStep({ artifact, codeCachePath, log, getSettings }: InstallCodeStepParams): Promise<void> {
+    const build = async (): Promise<void> => {
+        await codeBuilder(log, getSettings).processCodeStep({
+            artifact,
+            codesFolderPath: codeCachePath,
+        })
+    }
+    await build()
+    if (!actionRunCache.isManagedDir(artifact.flowVersionId)) {
+        return
+    }
+    const dirPath = codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId)
+    await actionRunCache.touch(dirPath)
+    while (await actionRunCache.settlePendingRemoval(dirPath)) {
+        log.warn({ cache: { path: dirPath } }, 'Action-run code cache was swept while provisioning, rebuilding')
+        await build()
+        await actionRunCache.touch(dirPath)
+    }
+}
+
+type InstallCodeStepParams = {
+    artifact: CodeArtifact
+    codeCachePath: string
+    log: ApLogger
+    getSettings: () => SandboxSettings
+}
 
 type ProvisionParams = {
     pieces: PiecePackage[]

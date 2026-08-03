@@ -142,6 +142,18 @@ lose the only signal they have that a directory is in use. The touch is gated on
 `isManagedDir`, because `provision` runs on every execute and an ungated `utimes` charges every code step of
 every flow run for a directory that is never swept.
 
+**The mtime cannot close the last interleaving on its own, so removal and provision shake hands in-process.**
+A removal whose re-`stat` has already passed cannot see a touch that lands a microsecond later: `rm` proceeds
+under a sandbox that just decided the directory was a cache hit, and that run dies on a missing `index.js`.
+The window is only as wide as one `rm`, but it is reachable — a cold snippet re-requested at the instant its
+eviction starts. `removeDir` therefore records its in-flight `rm` in `pendingRemovals` in the same synchronous
+block that starts it, and `provision` calls `settlePendingRemoval` *after* the touch: a removal registered
+after the touch is impossible, because its re-`stat` sees the new mtime and skips; one registered before is
+awaited, then the step is rebuilt. Those two cases are exhaustive only because nothing can interleave between
+the re-`stat` resolving and the `Map.set` — keep the write before the first `await`, never after the `rm`
+resolves. The handshake is process-local, so two worker processes over one shared mount still fall back to the
+mtime re-check alone; that is accepted, the same way the sweep is convergent rather than locked.
+
 **`ar_` is collision-proof only because `apId`'s alphabet has no underscore.** `ALPHABET` in
 `core-utils/id-generator.ts` is `[0-9A-Za-z]`, so no `apId` can ever start with `ar_` and no flow-version
 directory can be classified as managed. Add `_` to that alphabet and the sweeper starts eating flow caches
