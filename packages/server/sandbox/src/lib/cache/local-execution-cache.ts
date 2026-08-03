@@ -35,7 +35,9 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                                 artifact,
                                 codesFolderPath: codeCachePath,
                             })
-                            await actionRunCache.touch(codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId))
+                            if (actionRunCache.isManagedDir(artifact.flowVersionId)) {
+                                await actionRunCache.touch(codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId))
+                            }
                         }
                         log.info({ path: codeCachePath }, 'Installed code in sandbox')
                     },

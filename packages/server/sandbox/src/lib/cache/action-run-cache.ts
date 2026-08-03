@@ -19,10 +19,6 @@ export const actionRunCache = {
         return dirName.startsWith(MANAGED_PREFIX)
     },
 
-    isOrphanedDir(dirName: string): boolean {
-        return dirName === LEGACY_CONSTANT_NAMESPACE || BARE_SHA256.test(dirName)
-    },
-
     async touch(dirPath: string): Promise<void> {
         const now = new Date()
         await tryCatch(() => utimes(dirPath, now, now))
@@ -33,65 +29,81 @@ export const actionRunCache = {
         const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
         const { data: entries, error } = await tryCatch(() => readdir(codesPath, { withFileTypes: true }))
         if (error) {
+            if ('code' in error && error.code === 'ENOENT') {
+                log.debug({ cache: { path: codesPath } }, 'Action-run code cache directory does not exist yet')
+                return
+            }
+            log.warn({ error, cache: { path: codesPath } }, 'Failed to read the action-run code cache directory')
             return
         }
 
-        const names = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name)
-        const orphans = names.filter((name) => actionRunCache.isOrphanedDir(name))
-        const managed = names.filter((name) => actionRunCache.isManagedDir(name))
+        const managed = entries
+            .filter((entry) => entry.isDirectory() && actionRunCache.isManagedDir(entry.name))
+            .map((entry) => path.join(codesPath, entry.name))
 
-        let reclaimedCount = 0
-        let reclaimedBytes = 0
+        const expired = await removeExpired({ dirPaths: managed, expiredAt: Date.now() - ACTION_RUN_CACHE_TTL_MS })
 
-        for (const name of orphans) {
-            const removed = await removeDir({ dirPath: path.join(codesPath, name) })
-            reclaimedCount += removed.removed ? 1 : 0
-            reclaimedBytes += removed.bytes
-        }
+        const activeAt = Date.now() - ACTION_RUN_CACHE_ACTIVE_WINDOW_MS
+        const evictable = expired.survivors.filter((entry) => entry.mtimeMs < activeAt)
+        const overBy = expired.survivors.length - ACTION_RUN_CACHE_MAX_DIRS
+        const evicted = await removeOldest(overBy > 0
+            ? [...evictable].sort((a, b) => a.mtimeMs - b.mtimeMs).slice(0, overBy)
+            : [])
 
-        const expiredAt = Date.now() - AR_CACHE_TTL_MS
-        const survivors: DirEntry[] = []
-        for (const name of managed) {
-            const dirPath = path.join(codesPath, name)
-            const mtimeMs = await readMtimeMs(dirPath)
-            if (isNil(mtimeMs)) {
-                continue
-            }
-            if (mtimeMs < expiredAt) {
-                const removed = await removeDir({ dirPath, expectedMtimeMs: mtimeMs })
-                reclaimedCount += removed.removed ? 1 : 0
-                reclaimedBytes += removed.bytes
-                continue
-            }
-            survivors.push({ dirPath, mtimeMs, bytes: await dirSizeBytes(dirPath) })
-        }
-
-        let totalBytes = survivors.reduce((sum, entry) => sum + entry.bytes, 0)
-        const oldestFirst = [...survivors].sort((a, b) => a.mtimeMs - b.mtimeMs)
-        for (const entry of oldestFirst) {
-            if (totalBytes <= AR_CACHE_MAX_BYTES) {
-                break
-            }
-            const removed = await removeDir({ dirPath: entry.dirPath, expectedMtimeMs: entry.mtimeMs })
-            if (!removed.removed) {
-                continue
-            }
-            totalBytes -= entry.bytes
-            reclaimedCount += 1
-            reclaimedBytes += removed.bytes
-        }
-
-        if (reclaimedCount === 0) {
-            return
-        }
-        log.info({
-            reclaimedCount,
-            reclaimedBytes,
-            retainedCount: survivors.length,
-            retainedBytes: totalBytes,
+        const failedCount = expired.failedCount + evicted.failedCount
+        const retainedCount = managed.length - expired.expiredCount - evicted.removedCount - expired.unreadableCount
+        const summary = {
+            expiredCount: expired.expiredCount,
+            evictedCount: evicted.removedCount,
+            retainedCount,
+            activeCount: expired.survivors.length - evictable.length,
+            failedCount,
+            unreadableCount: expired.unreadableCount,
             durationMs: Date.now() - startedAt,
-        }, 'Swept action-run code cache')
+        }
+        if (failedCount > 0) {
+            log.warn(summary, 'Action-run code cache sweep could not remove every expired directory')
+            return
+        }
+        if (expired.expiredCount === 0 && evicted.removedCount === 0 && retainedCount <= ACTION_RUN_CACHE_MAX_DIRS) {
+            log.debug(summary, 'Swept action-run code cache')
+            return
+        }
+        log.info(summary, 'Swept action-run code cache')
     },
+}
+
+async function removeExpired({ dirPaths, expiredAt }: RemoveExpiredParams): Promise<ExpiredResult> {
+    const survivors: DirEntry[] = []
+    let expiredCount = 0
+    let failedCount = 0
+    let unreadableCount = 0
+    for (const dirPath of dirPaths) {
+        const mtimeMs = await readMtimeMs(dirPath)
+        if (isNil(mtimeMs)) {
+            unreadableCount += 1
+            continue
+        }
+        if (mtimeMs >= expiredAt) {
+            survivors.push({ dirPath, mtimeMs })
+            continue
+        }
+        const outcome = await removeDir({ dirPath, expectedMtimeMs: mtimeMs })
+        expiredCount += outcome === 'removed' ? 1 : 0
+        failedCount += outcome === 'failed' ? 1 : 0
+    }
+    return { survivors, expiredCount, failedCount, unreadableCount }
+}
+
+async function removeOldest(entries: DirEntry[]): Promise<EvictedResult> {
+    let removedCount = 0
+    let failedCount = 0
+    for (const entry of entries) {
+        const outcome = await removeDir({ dirPath: entry.dirPath, expectedMtimeMs: entry.mtimeMs })
+        removedCount += outcome === 'removed' ? 1 : 0
+        failedCount += outcome === 'failed' ? 1 : 0
+    }
+    return { removedCount, failedCount }
 }
 
 async function readMtimeMs(dirPath: string): Promise<number | null> {
@@ -102,44 +114,24 @@ async function readMtimeMs(dirPath: string): Promise<number | null> {
     return stats.mtimeMs
 }
 
-async function removeDir({ dirPath, expectedMtimeMs }: RemoveDirParams): Promise<RemoveDirResult> {
-    if (!isNil(expectedMtimeMs)) {
-        const currentMtimeMs = await readMtimeMs(dirPath)
-        if (isNil(currentMtimeMs) || currentMtimeMs !== expectedMtimeMs) {
-            return { removed: false, bytes: 0 }
-        }
+async function removeDir({ dirPath, expectedMtimeMs }: RemoveDirParams): Promise<RemoveOutcome> {
+    const currentMtimeMs = await readMtimeMs(dirPath)
+    if (isNil(currentMtimeMs) || currentMtimeMs !== expectedMtimeMs) {
+        return 'skipped'
     }
-    const bytes = await dirSizeBytes(dirPath)
     const { error } = await tryCatch(() => rm(dirPath, { recursive: true, force: true }))
-    if (error) {
-        return { removed: false, bytes: 0 }
+    if (isNil(error)) {
+        return 'removed'
     }
-    return { removed: true, bytes }
-}
-
-async function dirSizeBytes(dirPath: string): Promise<number> {
-    const { data: entries, error } = await tryCatch(() => readdir(dirPath, { withFileTypes: true }))
-    if (error) {
-        return 0
-    }
-    const sizes = await Promise.all(entries.map(async (entry) => {
-        const entryPath = path.join(dirPath, entry.name)
-        if (entry.isDirectory()) {
-            return dirSizeBytes(entryPath)
-        }
-        const { data: stats, error: statError } = await tryCatch(() => stat(entryPath))
-        return statError ? 0 : stats.size
-    }))
-    return sizes.reduce((sum, size) => sum + size, 0)
+    return 'failed'
 }
 
 const MANAGED_PREFIX = 'ar_'
-const LEGACY_CONSTANT_NAMESPACE = 'mcp-flow-version-id'
-const BARE_SHA256 = /^[0-9a-f]{64}$/
 
-const AR_CACHE_TTL_MS = 24 * 60 * 60 * 1000
-const AR_CACHE_MAX_BYTES = 2 * 1024 * 1024 * 1024
+const ACTION_RUN_CACHE_TTL_MS = 2 * 60 * 60 * 1000
 
+export const ACTION_RUN_CACHE_ACTIVE_WINDOW_MS = 15 * 60 * 1000
+export const ACTION_RUN_CACHE_MAX_DIRS = 200
 export const ACTION_RUN_CACHE_SWEEP_INTERVAL_MS = 30 * 60 * 1000
 export const ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS = 60 * 1000
 
@@ -156,15 +148,28 @@ type SweepParams = {
 type DirEntry = {
     dirPath: string
     mtimeMs: number
-    bytes: number
 }
 
 type RemoveDirParams = {
     dirPath: string
-    expectedMtimeMs?: number
+    expectedMtimeMs: number
 }
 
-type RemoveDirResult = {
-    removed: boolean
-    bytes: number
+type RemoveOutcome = 'removed' | 'skipped' | 'failed'
+
+type RemoveExpiredParams = {
+    dirPaths: string[]
+    expiredAt: number
+}
+
+type ExpiredResult = {
+    survivors: DirEntry[]
+    expiredCount: number
+    failedCount: number
+    unreadableCount: number
+}
+
+type EvictedResult = {
+    removedCount: number
+    failedCount: number
 }

@@ -618,7 +618,7 @@ function stopCacheSweeper(): void {
 async function sweepActionRunCache(): Promise<void> {
     const { error } = await tryCatch(() => actionRunCache.sweep({ basePath: sandboxConfig.getCacheBasePath(), log: logger }))
     if (error) {
-        logger.warn({ error: String(error) }, 'Action-run code cache sweep failed')
+        logger.warn({ error }, 'Action-run code cache sweep failed')
     }
 }
 

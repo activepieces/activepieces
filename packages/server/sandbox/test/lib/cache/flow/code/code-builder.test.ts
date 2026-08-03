@@ -194,6 +194,31 @@ describe('codeBuilder.processCodeStep', () => {
         await expect(readFile(compiledPath, 'utf8')).resolves.toContain('exports.code')
     })
 
+    it('builds once when concurrent runs provision the same step, instead of each rebuilding over the others', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        const compiledPath = codeCache(codesFolderPath).compiledStepPath({
+            flowVersionId: artifact.flowVersionId,
+            stepName: artifact.name,
+        })
+        installMock.mockResolvedValue({ stdout: '', stderr: '' })
+        buildMock.mockImplementation(async () => {
+            await writeFile(compiledPath, 'exports.code = async () => 42', 'utf8')
+            return { stdout: '', stderr: '' }
+        })
+
+        const builder = codeBuilder(noopLog, getSettings)
+
+        const concurrentCount = 5
+        const statuses = await Promise.all(
+            Array.from({ length: concurrentCount }, () => builder.processCodeStep({ artifact, codesFolderPath })),
+        )
+
+        expect(statuses).toEqual(Array.from({ length: concurrentCount }, () => 'success'))
+        expect(buildMock).toHaveBeenCalledTimes(1)
+        await expect(readFile(compiledPath, 'utf8')).resolves.toContain('exports.code')
+    })
+
     it('caches a deterministic compile failure — install is not re-run for unchanged source', async () => {
         const codesFolderPath = uniqueFolder()
         const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')

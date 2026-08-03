@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import { mkdir, rm, stat, truncate, utimes, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, rm, stat, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { ActivepiecesError, apId, ErrorCode } from '@activepieces/core-utils'
 import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, describe, expect, it } from 'vitest'
-import { actionRunCache } from '../../../src/lib/cache/action-run-cache'
+import { actionRunCache, ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_MAX_DIRS } from '../../../src/lib/cache/action-run-cache'
 import { cacheUtils } from '../../../src/lib/cache/cache-paths'
 
 const basePaths: string[] = []
@@ -33,19 +33,53 @@ function createNoopLog(): ApLogger {
 
 const noopLog = createNoopLog()
 
+function createRecordingLog(): RecordingLog {
+    const calls: LogCall[] = []
+    const record = (level: LogLevel) => (...args: unknown[]) => {
+        calls.push({ level, payload: args[0] })
+    }
+    const log: ApLogger = {
+        level: 'debug',
+        silent: () => undefined,
+        info: record('info'),
+        warn: record('warn'),
+        error: record('error'),
+        fatal: record('fatal'),
+        debug: record('debug'),
+        trace: record('trace'),
+        child: () => log,
+    }
+    return {
+        log,
+        payloadsAt: (level: LogLevel) => calls.filter((call) => call.level === level).map((call) => call.payload),
+    }
+}
+
+const SECOND_MS = 1000
 const HOUR_MS = 60 * 60 * 1000
 
-async function seedStepDir({ basePath, namespace, ageMs = 0, sizeBytes = 0 }: SeedParams): Promise<string> {
+async function seedStepDir({ basePath, namespace, ageMs = 0 }: SeedParams): Promise<string> {
     const dirPath = join(cacheUtils(basePath).getGlobalCodeCachePath(), namespace)
     const stepPath = join(dirPath, 'step_1')
     await mkdir(stepPath, { recursive: true })
     await writeFile(join(stepPath, 'index.js'), 'exports.code = async () => 42', 'utf8')
-    if (sizeBytes > 0) {
-        await truncate(join(stepPath, 'index.js'), sizeBytes)
-    }
     const mtime = new Date(Date.now() - ageMs)
     await utimes(dirPath, mtime, mtime)
     return dirPath
+}
+
+async function seedOldestFirst({ basePath, total, ageOffsetMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, label = '0' }: SeedOldestFirstParams): Promise<string[]> {
+    return Promise.all(
+        Array.from({ length: total }, (_, index) => seedStepDir({
+            basePath,
+            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: `${label}${index.toString(16)}`.padStart(64, '0') }),
+            ageMs: ageOffsetMs + (total - index) * SECOND_MS,
+        })),
+    )
+}
+
+function runningAsRoot(): boolean {
+    return process.getuid?.() === 0
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -97,23 +131,15 @@ describe('actionRunCache.namespace', () => {
 })
 
 describe('actionRunCache directory classification', () => {
-    it('never claims a flow-version directory as managed or orphaned', () => {
-        const flowVersionId = apId()
-
-        expect(actionRunCache.isManagedDir(flowVersionId)).toBe(false)
-        expect(actionRunCache.isOrphanedDir(flowVersionId)).toBe(false)
-    })
-
-    it('recognises both pre-fix action-run shapes as orphans', () => {
-        expect(actionRunCache.isOrphanedDir('0123456789abcdef'.repeat(4))).toBe(true)
-        expect(actionRunCache.isOrphanedDir('mcp-flow-version-id')).toBe(true)
-        expect(actionRunCache.isOrphanedDir('z'.repeat(64))).toBe(false)
-        expect(actionRunCache.isOrphanedDir('0123456789abcdef'.repeat(3))).toBe(false)
+    it('never claims a flow-version directory as managed, because apId cannot contain an underscore', () => {
+        for (let attempt = 0; attempt < 100; attempt++) {
+            expect(actionRunCache.isManagedDir(apId())).toBe(false)
+        }
     })
 })
 
 describe('actionRunCache.sweep', () => {
-    it('reclaims expired managed dirs and both orphan shapes, and leaves flow versions alone', async () => {
+    it('reclaims managed dirs past the TTL and leaves flow versions alone', async () => {
         const basePath = uniqueBasePath()
         const flowVersionDir = await seedStepDir({ basePath, namespace: apId(), ageMs: 90 * 24 * HOUR_MS })
         const freshDir = await seedStepDir({
@@ -124,46 +150,58 @@ describe('actionRunCache.sweep', () => {
         const expiredDir = await seedStepDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '2'.repeat(64) }),
-            ageMs: 25 * HOUR_MS,
+            ageMs: 3 * HOUR_MS,
         })
-        const hashOrphanDir = await seedStepDir({ basePath, namespace: '3'.repeat(64) })
-        const constantOrphanDir = await seedStepDir({ basePath, namespace: 'mcp-flow-version-id' })
 
         await actionRunCache.sweep({ basePath, log: noopLog })
 
         await expect(exists(flowVersionDir)).resolves.toBe(true)
         await expect(exists(freshDir)).resolves.toBe(true)
         await expect(exists(expiredDir)).resolves.toBe(false)
-        await expect(exists(hashOrphanDir)).resolves.toBe(false)
-        await expect(exists(constantOrphanDir)).resolves.toBe(false)
     })
 
-    it('evicts oldest-first once the managed subtree exceeds the size budget', async () => {
+    it('evicts only the oldest overflow once the managed dir count exceeds the cap', async () => {
         const basePath = uniqueBasePath()
-        const oldestDir = await seedStepDir({
-            basePath,
-            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '4'.repeat(64) }),
-            ageMs: 3 * HOUR_MS,
-            sizeBytes: 1_500_000_000,
-        })
-        const middleDir = await seedStepDir({
-            basePath,
-            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '5'.repeat(64) }),
-            ageMs: 2 * HOUR_MS,
-            sizeBytes: 1_500_000_000,
-        })
-        const newestDir = await seedStepDir({
-            basePath,
-            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '6'.repeat(64) }),
-            ageMs: HOUR_MS,
-            sizeBytes: 1_500_000_000,
-        })
+        const overflow = 3
+        const dirs = await seedOldestFirst({ basePath, total: ACTION_RUN_CACHE_MAX_DIRS + overflow })
 
         await actionRunCache.sweep({ basePath, log: noopLog })
 
-        await expect(exists(oldestDir)).resolves.toBe(false)
-        await expect(exists(middleDir)).resolves.toBe(false)
-        await expect(exists(newestDir)).resolves.toBe(true)
+        for (const dirPath of dirs.slice(0, overflow)) {
+            await expect(exists(dirPath)).resolves.toBe(false)
+        }
+        for (const dirPath of dirs.slice(overflow)) {
+            await expect(exists(dirPath)).resolves.toBe(true)
+        }
+    })
+
+    it('retains exactly the newest ACTION_RUN_CACHE_MAX_DIRS however far over the cap the tree runs', async () => {
+        const basePath = uniqueBasePath()
+        const total = ACTION_RUN_CACHE_MAX_DIRS * 3
+        const dirs = await seedOldestFirst({ basePath, total })
+        const firstRetained = total - ACTION_RUN_CACHE_MAX_DIRS
+
+        await actionRunCache.sweep({ basePath, log: noopLog })
+
+        await expect(exists(dirs[0])).resolves.toBe(false)
+        await expect(exists(dirs[firstRetained - 1])).resolves.toBe(false)
+        await expect(exists(dirs[firstRetained])).resolves.toBe(true)
+        await expect(exists(dirs[total - 1])).resolves.toBe(true)
+    })
+
+    it('stops eviction at the active-execution window, leaving the tree over the cap rather than deleting a live build', async () => {
+        const basePath = uniqueBasePath()
+        const staleDirs = await seedOldestFirst({ basePath, total: 3, label: 'a' })
+        const activeDirs = await seedOldestFirst({ basePath, total: ACTION_RUN_CACHE_MAX_DIRS + 7, ageOffsetMs: 0, label: 'b' })
+
+        await actionRunCache.sweep({ basePath, log: noopLog })
+
+        for (const dirPath of staleDirs) {
+            await expect(exists(dirPath)).resolves.toBe(false)
+        }
+        for (const dirPath of activeDirs) {
+            await expect(exists(dirPath)).resolves.toBe(true)
+        }
     })
 
     it('is a no-op on a cache that was never created, and is idempotent', async () => {
@@ -183,11 +221,105 @@ describe('actionRunCache.sweep', () => {
     })
 })
 
+describe('actionRunCache.sweep observability', () => {
+    it('reports a missing cache directory at debug, because a worker that never ran code has nothing to sweep', async () => {
+        const basePath = uniqueBasePath()
+        const recording = createRecordingLog()
+
+        await actionRunCache.sweep({ basePath, log: recording.log })
+
+        expect(recording.payloadsAt('warn')).toHaveLength(0)
+        expect(recording.payloadsAt('info')).toHaveLength(0)
+        expect(recording.payloadsAt('debug')).toHaveLength(1)
+    })
+
+    it('warns with the errno when the cache directory cannot be read at all', async () => {
+        const basePath = uniqueBasePath()
+        const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
+        await mkdir(dirname(codesPath), { recursive: true })
+        await writeFile(codesPath, 'not a directory', 'utf8')
+        const recording = createRecordingLog()
+
+        await actionRunCache.sweep({ basePath, log: recording.log })
+
+        const warnings = recording.payloadsAt('warn')
+        expect(warnings).toHaveLength(1)
+        expect(warnings[0]).toMatchObject({
+            cache: { path: codesPath },
+            error: expect.objectContaining({ code: 'ENOTDIR' }),
+        })
+        expect(recording.payloadsAt('debug')).toHaveLength(0)
+    })
+
+    it('stays at debug when a sweep under the cap had nothing to reclaim', async () => {
+        const basePath = uniqueBasePath()
+        await seedStepDir({
+            basePath,
+            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '3'.repeat(64) }),
+        })
+        const recording = createRecordingLog()
+
+        await actionRunCache.sweep({ basePath, log: recording.log })
+
+        expect(recording.payloadsAt('warn')).toHaveLength(0)
+        expect(recording.payloadsAt('info')).toHaveLength(0)
+        expect(recording.payloadsAt('debug')).toMatchObject([{ expiredCount: 0, evictedCount: 0, retainedCount: 1, failedCount: 0 }])
+    })
+
+    it('reports what it reclaimed at info', async () => {
+        const basePath = uniqueBasePath()
+        await seedStepDir({
+            basePath,
+            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '4'.repeat(64) }),
+            ageMs: 3 * HOUR_MS,
+        })
+        await seedStepDir({
+            basePath,
+            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '5'.repeat(64) }),
+        })
+        const recording = createRecordingLog()
+
+        await actionRunCache.sweep({ basePath, log: recording.log })
+
+        expect(recording.payloadsAt('warn')).toHaveLength(0)
+        expect(recording.payloadsAt('info')).toMatchObject([{
+            expiredCount: 1,
+            evictedCount: 0,
+            retainedCount: 1,
+            failedCount: 0,
+            unreadableCount: 0,
+        }])
+    })
+
+    it.skipIf(runningAsRoot())('warns and counts the directory as retained when removal is denied', async () => {
+        const basePath = uniqueBasePath()
+        const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
+        const expiredDir = await seedStepDir({
+            basePath,
+            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '6'.repeat(64) }),
+            ageMs: 3 * HOUR_MS,
+        })
+        const recording = createRecordingLog()
+
+        await chmod(codesPath, 0o500)
+        await actionRunCache.sweep({ basePath, log: recording.log })
+        await chmod(codesPath, 0o700)
+
+        await expect(exists(expiredDir)).resolves.toBe(true)
+        expect(recording.payloadsAt('info')).toHaveLength(0)
+        expect(recording.payloadsAt('warn')).toMatchObject([{
+            expiredCount: 0,
+            failedCount: 1,
+            retainedCount: 1,
+        }])
+    })
+})
+
 describe('actionRunCache.touch', () => {
     it('advances the directory mtime so a reused build survives the next sweep', async () => {
         const basePath = uniqueBasePath()
         const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: '8'.repeat(64) })
-        const dirPath = await seedStepDir({ basePath, namespace, ageMs: 25 * HOUR_MS })
+        const dirPath = await seedStepDir({ basePath, namespace, ageMs: 3 * HOUR_MS })
 
         await actionRunCache.touch(dirPath)
         await actionRunCache.sweep({ basePath, log: noopLog })
@@ -206,5 +338,23 @@ type SeedParams = {
     basePath: string
     namespace: string
     ageMs?: number
-    sizeBytes?: number
+}
+
+type SeedOldestFirstParams = {
+    basePath: string
+    total: number
+    ageOffsetMs?: number
+    label?: string
+}
+
+type LogLevel = 'info' | 'warn' | 'error' | 'fatal' | 'debug' | 'trace'
+
+type LogCall = {
+    level: LogLevel
+    payload: unknown
+}
+
+type RecordingLog = {
+    log: ApLogger
+    payloadsAt: (level: LogLevel) => unknown[]
 }
