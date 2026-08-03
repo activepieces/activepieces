@@ -29,10 +29,9 @@ export const benchmarkCommand = new Command('benchmark')
                 validateStatus: () => true,
             });
 
-            const [setup, health, diagnostics, flags, network] = await Promise.all([
+            const [setup, health, flags, network] = await Promise.all([
                 discoverSetup(authed),
                 collectHealth(authed),
-                collectDiagnostics(authed),
                 collectFlags(authed),
                 measureNetwork(authed),
             ]);
@@ -73,6 +72,10 @@ export const benchmarkCommand = new Command('benchmark')
                 }
 
                 const diagnosticsTimeline = { intervalMs: DIAGNOSTICS_SAMPLE_INTERVAL_MS, samples: diagnosticsSampler.stop() };
+                // Fetched AFTER the load phases so the server-side recent-failures scan includes the
+                // runs this benchmark just produced (the scan looks back from call time).
+                log(config, 'Collecting diagnostics (incl. recent failed runs)...');
+                const diagnostics = await collectDiagnostics(authed);
                 log(config, 'Scanning other projects for flows that ran during the benchmark...');
                 const outsideFlows = await collectOutsideFlows({ client: authed, benchmarkProjectId: project.id, since: runs[0].startedAt });
                 const storage = await probeStorage({ client: authed, projectId: project.id, flowId });
@@ -696,6 +699,16 @@ function renderReport(report: BenchmarkReport): void {
                 console.log(`    - ${w.status} ${w.workerId.slice(0, 8)} | ${w.cpuCores} core | cpu ${w.cpuUsagePercentage.toFixed(1)}% | ram ${w.ramUsagePercentage.toFixed(1)}% | worker→app ${w.serverPingMs == null ? 'n/a' : w.serverPingMs + 'ms'}`);
             }
         }
+        if (d.recentFailures) {
+            const rf = d.recentFailures;
+            const headline = `${rf.total} failed production runs in the last ${rf.lookbackHours}h (platform-wide, incl. this benchmark)`;
+            console.log(`  failures : ${rf.total > 0 ? chalk.yellow(headline) : chalk.green(headline)}`);
+            for (const s of rf.samples) {
+                const step = s.failedStepName ? ` step=${s.failedStepName}` : '';
+                const message = s.errorMessage ? ` — ${s.errorMessage.slice(0, 200)}` : '';
+                console.log(chalk.yellow(`    - ${s.created} ${s.status} run=${s.runId} flow=${s.flowId}${step}${message}`));
+            }
+        }
         renderCpuPressureVerdict(d);
     } else {
         console.log(chalk.yellow(`  skipped: ${report.diagnostics.reason}`));
@@ -1138,6 +1151,11 @@ type DiagnosticsInfo = {
     workers?: {
         count: number;
         machines: Array<{ workerId: string; cpuCores: number; cpuUsagePercentage: number; ramUsagePercentage: number; serverPingMs: number | null; status: string }>;
+    };
+    recentFailures?: {
+        lookbackHours: number;
+        total: number;
+        samples: Array<{ runId: string; projectId: string; flowId: string; status: string; failedStepName: string | null; errorMessage: string | null; created: string }>;
     };
 };
 
