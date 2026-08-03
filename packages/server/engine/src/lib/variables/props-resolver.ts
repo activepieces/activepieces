@@ -1,10 +1,10 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
-import { applyFunctionToValues, extractMustacheTokens, isNil, isString, tryCatch } from '@activepieces/core-utils'
+import { applyFunctionToValues, extractMustacheTokens, isNil, isString } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { FormulaEvaluationError } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
-import { CreateScriptSessionParams, ScriptSession } from '../core/code/code-sandbox-common'
+import { createSharedScriptSession, SharedScriptSession } from '../core/code/shared-script-session'
 import { FlowExecutorContext, StepView } from '../handler/context/flow-execution-context'
 import { createConnectionResolver } from '../piece-context/connection-resolver'
 import { createVariableResolver } from '../piece-context/variable-resolver'
@@ -203,20 +203,18 @@ async function evalStepToken({ variableName, getStepView, scriptSession }: {
     getStepView: GetStepView
     scriptSession: SharedScriptSession
 }): Promise<unknown> {
-    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-        const segments = propertyPath.parse(variableName)
-        if (!isNil(segments) && segments.length > 0) {
-            const stepView = await getStepView(segments[0])
-            if (isNil(stepView)) {
-                return ''
-            }
-            const value = propertyPath.resolveValue({ segments: segments.slice(1), scope: stepView })
-            return cloneResolvedValue(value) ?? ''
+    const segments = propertyPath.parse(variableName)
+    if (isNil(segments) || segments.length === 0) {
+        return evalInScope({ script: variableName, scriptSession })
+    }
+    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError(async () => {
+        const stepView = await getStepView(segments[0])
+        if (isNil(stepView)) {
+            return ''
         }
-        const session = await scriptSession.get()
-        const scriptResult = await session.run(variableName)
-        return scriptResult ?? ''
-    }))
+        const value = propertyPath.resolveValue({ segments: segments.slice(1), scope: stepView })
+        return cloneResolvedValue(value) ?? ''
+    })
 
     if (resultError) {
         console.warn('[evalStepToken] Error evaluating variable', resultError)
@@ -262,7 +260,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
     }
-    return evalInScope(pathAfterConnectionName, { connection }, { flattenNestedKeys })
+    return evalInScope({ script: pathAfterConnectionName, scriptContext: { connection } })
 }
 
 function parsePathAfterConnectionName(variableName: string, connectionName: string): string | null {
@@ -298,24 +296,24 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
     return null
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
-    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-        const segments = propertyPath.parse(js)
-        if (!isNil(segments)) {
-            const value = propertyPath.resolveValue({ segments, scope: contextAsScope })
-            return cloneResolvedValue(value) ?? ''
+async function evalInScope({ script, scriptContext, scriptSession }: {
+    script: string
+    scriptContext?: Record<string, unknown>
+    scriptSession?: SharedScriptSession
+}): Promise<unknown> {
+    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError(async () => {
+        if (!isNil(scriptSession)) {
+            const session = await scriptSession.get()
+            return await session.run(script) ?? ''
         }
-
         const codeSandbox = await initCodeSandbox()
-
-        const result = await codeSandbox.runScript({
-            script: js,
-            scriptContext: contextAsScope,
-            functions,
+        const scriptResult = await codeSandbox.runScript({
+            script,
+            scriptContext: scriptContext ?? {},
+            functions: { flattenNestedKeys },
         })
-        return result ?? ''
-    }))
+        return scriptResult ?? ''
+    })
 
     if (resultError) {
         console.warn('[evalInScope] Error evaluating variable', resultError)
@@ -365,26 +363,6 @@ function cloneResolvedValue(value: unknown): unknown {
         }
         default:
             return undefined
-    }
-}
-
-function createSharedScriptSession(buildParams: () => Promise<CreateScriptSessionParams>): SharedScriptSession {
-    let sessionPromise: Promise<ScriptSession> | null = null
-    return {
-        get: () => {
-            if (isNil(sessionPromise)) {
-                sessionPromise = initCodeSandbox().then(async (codeSandbox) => codeSandbox.createScriptSession(await buildParams()))
-            }
-            return sessionPromise
-        },
-        dispose: async () => {
-            const pendingSession = sessionPromise
-            if (isNil(pendingSession)) {
-                return
-            }
-            const { data: session } = await tryCatch(() => pendingSession)
-            session?.dispose()
-        },
     }
 }
 
@@ -458,11 +436,6 @@ type ResolveInputInternalParams = {
     getStepView: GetStepView
     contextVersion: ContextVersion | undefined
     scriptSession: SharedScriptSession
-}
-
-type SharedScriptSession = {
-    get(): Promise<ScriptSession>
-    dispose(): Promise<void>
 }
 
 type ResolveInputParams = {
