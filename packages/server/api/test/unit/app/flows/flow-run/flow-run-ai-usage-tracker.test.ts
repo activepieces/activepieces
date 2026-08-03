@@ -1,8 +1,8 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockTrackCredits, mockExtractAiUsage, mockFlowVersionHasAiStep, mockGetOrCreateForPlatform, mockGetProject, mockGetStepsOrNull } = vi.hoisted(() => ({
-    mockTrackCredits: vi.fn().mockResolvedValue(undefined),
+const { mockTrackFeature, mockExtractAiUsage, mockFlowVersionHasAiStep, mockGetOrCreateForPlatform, mockGetProject, mockGetStepsOrNull } = vi.hoisted(() => ({
+    mockTrackFeature: vi.fn().mockResolvedValue(undefined),
     mockExtractAiUsage: vi.fn(),
     mockFlowVersionHasAiStep: vi.fn().mockReturnValue(true),
     mockGetOrCreateForPlatform: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('../../../../../src/app/helper/system/system', () => ({
 
 vi.mock('../../../../../src/app/platform/billing-provider', () => ({
     CreditUsageSource: { AI: 'ai' },
-    trackCreditsWithAppSumo: mockTrackCredits,
+    billingProvider: { get: () => ({ trackFeature: mockTrackFeature }) },
 }))
 
 vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service', () => ({
@@ -67,17 +67,21 @@ async function callTrack({ startTime }: { startTime?: string | null }): Promise<
     await flowRunAiUsageTracker(noopLogger as never).track({ flowRun: flowRun as never, flowVersion: {} as never })
 }
 
-function creditsKeyFromLastCall(): string {
-    return mockTrackCredits.mock.calls[0][0].credits.idempotencyKey
+function trackedKey(featureId: string): string | undefined {
+    return mockTrackFeature.mock.calls.map(([params]) => params).find((params) => params.featureId === featureId)?.idempotencyKey
+}
+
+function creditsKeyFromLastCall(): string | undefined {
+    return trackedKey('apCredits')
 }
 
 function appSumoKeyFromLastCall(): string | undefined {
-    return mockTrackCredits.mock.calls[0][0].appSumo?.idempotencyKey
+    return trackedKey('appSumoAiCredits')
 }
 
 describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
     beforeEach(() => {
-        mockTrackCredits.mockClear()
+        mockTrackFeature.mockClear()
         mockGetProject.mockResolvedValue({ platformId: 'plat-1' })
         mockGetStepsOrNull.mockResolvedValue({})
         mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'plus', licenseKey: null })
@@ -103,7 +107,7 @@ describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
     it('gives a retried run a different key than its first attempt', async () => {
         await callTrack({ startTime: FIRST_ATTEMPT_START })
         const firstAttemptKey = creditsKeyFromLastCall()
-        mockTrackCredits.mockClear()
+        mockTrackFeature.mockClear()
 
         await callTrack({ startTime: RETRY_ATTEMPT_START })
 
@@ -113,7 +117,7 @@ describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
     it('repeats the same key when the terminal update is redelivered for one attempt', async () => {
         await callTrack({ startTime: FIRST_ATTEMPT_START })
         const firstDeliveryKey = creditsKeyFromLastCall()
-        mockTrackCredits.mockClear()
+        mockTrackFeature.mockClear()
 
         await callTrack({ startTime: FIRST_ATTEMPT_START })
 

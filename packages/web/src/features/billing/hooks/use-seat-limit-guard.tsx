@@ -1,5 +1,4 @@
 import { ErrorCode, isNil } from '@activepieces/core-utils';
-import { AutumnFeatureId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -31,9 +30,7 @@ export const useSeatLimitGuard = () => {
     isPlatformAdmin,
   );
   const { openDialog } = useManagePlanDialogStore();
-  const seatFeature = info?.nonConsumableFeatures.find(
-    (feature) => feature.featureId === AutumnFeatureId.USERS_LIMIT,
-  );
+  const seatFeature = info?.seatsFeature;
 
   const openSeatLimit = () => {
     if (!isPlatformAdmin) {

@@ -1,8 +1,8 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, ChatConversation, isAppSumoCreditedPlan, PersistedChatRole } from '@activepieces/shared'
+import { CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, ChatConversation, ConsumableFeatureId, isAppSumoCreditedPlan, PersistedChatRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
-import { CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
+import { billingProvider, CreditUsageSource } from '../../platform/billing-provider'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { chatHelpers } from './chat-helpers'
 import { chatToolBilling } from './chat-tool-billing'
@@ -26,9 +26,10 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
         const isAppSumoPlan = isAppSumoCreditedPlan(platformPlan.plan)
 
-        await trackCreditsWithAppSumo({
-            log,
-            credits: {
+        const billing = billingProvider.get(log)
+        await Promise.all([
+            billing.trackFeature({
+                featureId: ConsumableFeatureId.AP_CREDITS,
                 platformId: conversation.platformId,
                 value: creditValue,
                 source: CreditUsageSource.CHAT,
@@ -45,11 +46,12 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                     model,
                     tier: tier.id,
                 },
-            },
-            appSumo: isAppSumoPlan ? {
+            }),
+            ...(isAppSumoPlan ? [billing.trackFeature({
+                featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS,
                 platformId: conversation.platformId,
                 value: creditValue,
-
+                source: CreditUsageSource.CHAT,
                 idempotencyKey: `${conversation.id}:appSumoAi:${idempotencyScope}`,
                 properties: {
                     platformId: conversation.platformId,
@@ -58,8 +60,8 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                     turnIndex,
                     tier: tier.id,
                 },
-            } : undefined,
-        })
+            })] : []),
+        ])
 
         const licenseKey = platformPlan.licenseKey
         if (isNil(licenseKey) || licenseKey.length === 0) {

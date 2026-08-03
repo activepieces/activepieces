@@ -2,8 +2,8 @@ import { AIProviderName } from '@activepieces/core-utils'
 import { PersistedChatRole } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockTrackCredits, mockResolveMessages, mockCountBillableToolCalls, mockGetOrCreateForPlatform } = vi.hoisted(() => ({
-    mockTrackCredits: vi.fn().mockResolvedValue(undefined),
+const { mockTrackFeature, mockResolveMessages, mockCountBillableToolCalls, mockGetOrCreateForPlatform } = vi.hoisted(() => ({
+    mockTrackFeature: vi.fn().mockResolvedValue(undefined),
     mockResolveMessages: vi.fn(),
     mockCountBillableToolCalls: vi.fn().mockReturnValue(0),
     mockGetOrCreateForPlatform: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
 
 vi.mock('../../../../../src/app/platform/billing-provider', () => ({
     CreditUsageSource: { CHAT: 'chat' },
-    trackCreditsWithAppSumo: mockTrackCredits,
+    billingProvider: { get: () => ({ trackFeature: mockTrackFeature }) },
 }))
 
 vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service', () => ({
@@ -54,17 +54,21 @@ async function callTrack({ runId }: { runId?: string }): Promise<void> {
     await chatUsageTracker(noopLogger as never).track({ conversation: conversation as never, runId })
 }
 
-function creditsKeyFromLastCall(): string {
-    return mockTrackCredits.mock.calls[0][0].credits.idempotencyKey
+function trackedKey(featureId: string): string | undefined {
+    return mockTrackFeature.mock.calls.map(([params]) => params).find((params) => params.featureId === featureId)?.idempotencyKey
+}
+
+function creditsKeyFromLastCall(): string | undefined {
+    return trackedKey('apCredits')
 }
 
 function appSumoKeyFromLastCall(): string | undefined {
-    return mockTrackCredits.mock.calls[0][0].appSumo?.idempotencyKey
+    return trackedKey('appSumoAiCredits')
 }
 
 describe('chatUsageTracker.track — idempotency key scoping', () => {
     beforeEach(() => {
-        mockTrackCredits.mockClear()
+        mockTrackFeature.mockClear()
         mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'plus', licenseKey: null })
         mockResolveMessages.mockReturnValue([
             { role: PersistedChatRole.USER },
@@ -89,7 +93,7 @@ describe('chatUsageTracker.track — idempotency key scoping', () => {
     it('a run-scoped key never equals the turn-index key it replaces', async () => {
         await callTrack({ runId: 'run-9' })
         const runScoped = creditsKeyFromLastCall()
-        mockTrackCredits.mockClear()
+        mockTrackFeature.mockClear()
         await callTrack({ runId: undefined })
 
         expect(runScoped).not.toBe(creditsKeyFromLastCall())

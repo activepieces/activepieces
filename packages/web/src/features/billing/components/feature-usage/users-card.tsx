@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   PlatformBillingInformation,
-  BillableFeature,
+  SeatsBillableFeature,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil, Plus } from 'lucide-react';
@@ -109,5 +109,5 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
 
 type UsersCardProps = {
   info: PlatformBillingInformation;
-  feature: BillableFeature;
+  feature: SeatsBillableFeature;
 };

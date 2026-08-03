@@ -1,6 +1,6 @@
 import {
   PlatformBillingInformation,
-  BillableFeature,
+  SeatsBillableFeature,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Users } from 'lucide-react';
@@ -118,5 +118,5 @@ type OutOfSeatsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   info: PlatformBillingInformation;
-  feature: BillableFeature;
+  feature: SeatsBillableFeature;
 };

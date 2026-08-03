@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { BillableFeature, formErrors } from '@activepieces/shared';
+import { SeatsBillableFeature, formErrors } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Info, Minus, Plus } from 'lucide-react';
@@ -211,7 +211,7 @@ const manageSeatsFormSchema = z.object({
 type ManageSeatsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  feature: BillableFeature;
+  feature: SeatsBillableFeature;
   currentUsers: number;
   includedSeats: number | null | undefined;
   additionalSeats: number | null | undefined;

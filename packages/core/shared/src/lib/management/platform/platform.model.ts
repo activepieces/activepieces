@@ -35,12 +35,18 @@ export enum AiCreditsAutoTopUpState {
     DISABLED = 'disabled',
 }
 
-export enum AutumnFeatureId {
+export enum ConsumableFeatureId {
     AP_CREDITS = 'apCredits',
     APP_SUMO_AI_CREDITS = 'appSumoAiCredits',
+}
+
+export enum UnconsumableFeatureId {
     TEAM_PROJECTS_LIMIT = 'teamProjectsLimit',
     USERS_LIMIT = 'usersLimit',
     ACTIVE_FLOWS_LIMIT = 'activeFlowsLimit',
+}
+
+export enum FeatureFlagId {
     BILLING_ENFORCED = 'billingEnforced',
     TABLES_ENABLED = 'tablesEnabled',
     EVENT_STREAMING_ENABLED = 'eventStreamingEnabled',
@@ -64,13 +70,10 @@ export enum AutumnFeatureId {
     SCIM_ENABLED = 'scimEnabled',
 }
 
-export const CONSUMABLE_AUTUMN_FEATURE_IDS: readonly AutumnFeatureId[] = [
-    AutumnFeatureId.AP_CREDITS,
-    AutumnFeatureId.APP_SUMO_AI_CREDITS,
-]
+export type FeatureId = ConsumableFeatureId | UnconsumableFeatureId | FeatureFlagId
 
-export function isConsumableAutumnFeature(featureId: AutumnFeatureId): boolean {
-    return CONSUMABLE_AUTUMN_FEATURE_IDS.includes(featureId)
+export function isConsumableFeatureId(value: string): value is ConsumableFeatureId {
+    return Object.values<string>(ConsumableFeatureId).includes(value)
 }
 
 
@@ -234,7 +237,7 @@ export const PlatformWithoutSensitiveData = z.object({
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 
 export const AutoTopUpConfig = z.object({
-    featureId: z.enum(AutumnFeatureId),
+    featureId: z.enum(ConsumableFeatureId),
     enabled: z.boolean(),
     threshold: z.number(),
     quantity: z.number(),
@@ -242,13 +245,36 @@ export const AutoTopUpConfig = z.object({
 })
 export type AutoTopUpConfig = z.infer<typeof AutoTopUpConfig>
 
-export const BillableFeature = z.object({
-    featureId: z.enum(AutumnFeatureId),
+const BillableFeatureShape = {
     pricePerUnit: z.number(),
     billingUnits: z.number(),
     interval: Nullable(z.string()),
+}
+
+const ConsumableBillableFeatureShape = {
+    ...BillableFeatureShape,
+    autoTopUp: Nullable(AutoTopUpConfig),
+}
+
+export const CreditsBillableFeature = z.object({
+    featureId: z.literal(ConsumableFeatureId.AP_CREDITS),
+    ...ConsumableBillableFeatureShape,
 })
-export type BillableFeature = z.infer<typeof BillableFeature>
+export type CreditsBillableFeature = z.infer<typeof CreditsBillableFeature>
+
+export const AppSumoCreditsBillableFeature = z.object({
+    featureId: z.literal(ConsumableFeatureId.APP_SUMO_AI_CREDITS),
+    ...ConsumableBillableFeatureShape,
+})
+export type AppSumoCreditsBillableFeature = z.infer<typeof AppSumoCreditsBillableFeature>
+
+export const SeatsBillableFeature = z.object({
+    featureId: z.literal(UnconsumableFeatureId.USERS_LIMIT),
+    ...BillableFeatureShape,
+})
+export type SeatsBillableFeature = z.infer<typeof SeatsBillableFeature>
+
+export type ConsumableBillableFeature = CreditsBillableFeature | AppSumoCreditsBillableFeature
 
 export const ProjectCreditUsage = z.object({
     projectId: z.string(),
@@ -267,9 +293,9 @@ export const PlatformBillingInformation = z.object({
     nextBillingAmount: z.number(),
     cancelAt: Nullable(z.string()),
     trialEndsAt: Nullable(z.string()),
-    autoTopUps: z.array(AutoTopUpConfig),
-    consumableFeatures: z.array(BillableFeature),
-    nonConsumableFeatures: z.array(BillableFeature),
+    creditsFeature: Nullable(CreditsBillableFeature),
+    appSumoCreditsFeature: Nullable(AppSumoCreditsBillableFeature),
+    seatsFeature: Nullable(SeatsBillableFeature),
     billingPortalAvailable: z.boolean(),
     billingEnforced: z.boolean(),
     billingUnavailable: z.boolean(),

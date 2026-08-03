@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AutoTopUpConfig, BillableFeature, CancellationReason, ConsumableProductAutoTopupParams, PurchasablePlan, RunEnvironment } from '@activepieces/shared'
+import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, PurchasablePlan, RunEnvironment, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { hooksFactory } from '../helper/hooks-factory'
 import { system } from '../helper/system/system'
@@ -14,7 +14,7 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
         return []
     },
     getBillingOverview: async () => {
-        return { ...defaultBillingInfo(), autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null, unavailable: false }
+        return { ...defaultBillingInfo(), creditsFeature: null, appSumoCreditsFeature: null, seatsFeature: null, includedSeats: null, additionalSeats: null, unavailable: false }
     },
     createCheckoutSession: async () => {
         return { checkoutUrl: null }
@@ -37,10 +37,7 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     reactivateSubscription: async () => {
         return
     },
-    trackCredits: async () => {
-        return
-    },
-    trackAppSumoAiUsage: async () => {
+    trackFeature: async () => {
         return
     },
     ensureEnrolled: async () => {
@@ -115,34 +112,6 @@ export async function assertRunCreditsNotExceeded({ platformId, environment, log
     })
 }
 
-export async function trackCreditsWithAppSumo({ log, credits, appSumo }: {
-    log: FastifyBaseLogger
-    credits: TrackCreditsParams
-    appSumo?: TrackAppSumoAiUsageParams
-}): Promise<void> {
-    const provider = billingProvider.get(log)
-    const [creditsTrack] = await Promise.all([
-        tryCatch(() => provider.trackCredits(credits)),
-        trackAppSumoAiUsageIndependently({ log, appSumo }),
-    ])
-    if (!isNil(creditsTrack.error)) {
-        throw creditsTrack.error
-    }
-}
-
-async function trackAppSumoAiUsageIndependently({ log, appSumo }: {
-    log: FastifyBaseLogger
-    appSumo?: TrackAppSumoAiUsageParams
-}): Promise<void> {
-    if (isNil(appSumo)) {
-        return
-    }
-    const { error } = await tryCatch(() => billingProvider.get(log).trackAppSumoAiUsage(appSumo))
-    if (!isNil(error)) {
-        log.warn({ error, platform: { id: appSumo.platformId } }, 'Failed to track AppSumo AI usage')
-    }
-}
-
 export enum CreditUsageSource {
     FLOW_RUN = 'flow_run',
     AI = 'ai',
@@ -162,24 +131,24 @@ export type CreditEventBreakdownEntry = {
     toolCalls: number
 }
 
-type CreditPropertiesBase = {
+type CreditConsumptionPropertiesBase = {
     platformId: string
     projectId: string
 }
 
-export type FlowRunCreditProperties = CreditPropertiesBase & {
+export type FlowRunCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
     flowId: string
     flowRunId: string
     environment: string
 }
 
-export type AiCreditProperties = FlowRunCreditProperties & {
+export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties & {
     messages: number
     toolCalls: number
     breakdown: CreditEventBreakdownEntry[]
 }
 
-export type ChatCreditProperties = CreditPropertiesBase & {
+export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
     userId: string
     conversationId: string
     turnIndex: number
@@ -190,29 +159,31 @@ export type ChatCreditProperties = CreditPropertiesBase & {
     tier: string
 }
 
-export type ChatAppSumoProperties = CreditPropertiesBase & {
+export type ChatAppSumoConsumptionProperties = CreditConsumptionPropertiesBase & {
     conversationId: string
     turnIndex: number
     tier: string
 }
 
-type TrackCreditsParamsBase = {
+type TrackUsageParamsBase = {
     platformId: string
     value: number
     idempotencyKey: string
 }
 
-export type TrackCreditsParams =
-    | (TrackCreditsParamsBase & { source: CreditUsageSource.FLOW_RUN, properties: FlowRunCreditProperties })
-    | (TrackCreditsParamsBase & { source: CreditUsageSource.AI, properties: AiCreditProperties })
-    | (TrackCreditsParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditProperties })
+type TrackCreditsParams =
+    | (TrackUsageParamsBase & { source: CreditUsageSource.FLOW_RUN, properties: FlowRunCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
 
-export type TrackAppSumoAiUsageParams = {
-    platformId: string
-    value: number
-    idempotencyKey: string
-    properties: FlowRunCreditProperties | ChatAppSumoProperties
-}
+type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
+    { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties } |
+    { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties }
+)
+
+export type TrackFeatureParams =
+    | ({ featureId: ConsumableFeatureId.AP_CREDITS } & TrackCreditsParams)
+    | ({ featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS } & TrackAppSumoAiUsageParams)
 
 export type CreditUsageByProjectParams = {
     platformId: string
@@ -283,9 +254,9 @@ export type BillingInfo = {
 }
 
 export type BillingOverview = BillingInfo & {
-    autoTopUps: AutoTopUpConfig[]
-    consumableFeatures: BillableFeature[]
-    nonConsumableFeatures: BillableFeature[]
+    creditsFeature: CreditsBillableFeature | null
+    appSumoCreditsFeature: AppSumoCreditsBillableFeature | null
+    seatsFeature: SeatsBillableFeature | null
     includedSeats: number | null
     additionalSeats: number | null
     unavailable: boolean
@@ -293,7 +264,7 @@ export type BillingOverview = BillingInfo & {
 
 export type AdjustUnconsumableFeatureQuantityParams = {
     platformId: string
-    featureId: string
+    featureId: UnconsumableFeatureId
     quantity: number
 }
 
@@ -346,8 +317,7 @@ export type BillingProvider = {
     setupPayment(params: SetupPaymentParams): Promise<{ url: string | null }>
     cancelSubscription(params: CancelSubscriptionParams): Promise<void>
     reactivateSubscription(params: ReactivateSubscriptionParams): Promise<void>
-    trackCredits(params: TrackCreditsParams): Promise<void>
-    trackAppSumoAiUsage(params: TrackAppSumoAiUsageParams): Promise<void>
+    trackFeature(params: TrackFeatureParams): Promise<void>
     ensureEnrolled(platformId: string): Promise<void>
     compFreeLegacy(platformId: string): Promise<void>
     refreshEntitlements(platformId: string): Promise<void>

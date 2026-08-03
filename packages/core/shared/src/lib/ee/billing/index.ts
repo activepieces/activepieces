@@ -1,6 +1,6 @@
 import { isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { AiCreditsAutoTopUpState, AutumnFeatureId, PlanName, PlatformPlanWithOnlyLimits } from '../../management/platform'
+import { AiCreditsAutoTopUpState, ConsumableFeatureId, PlanName, PlatformPlanWithOnlyLimits, UnconsumableFeatureId } from '../../management/platform'
 import { PiecesFilterType } from '../../management/project'
 
 export type ProjectPlanLimits = {
@@ -14,7 +14,7 @@ export type ProjectPlanLimits = {
 
 
 export const AdjustUnconsumableFeatureQuantityParams = z.object({
-    featureId: z.enum(AutumnFeatureId),
+    featureId: z.enum(UnconsumableFeatureId),
     quantity: z.number().int().nonnegative(),
 })
 export type AdjustUnconsumableFeatureQuantityParams = z.infer<typeof AdjustUnconsumableFeatureQuantityParams>
@@ -50,11 +50,11 @@ export const ConsumableProductAutoTopupParams = z.discriminatedUnion('state', [
         minThreshold: z.number(),
         creditsToAdd: z.number(),
         maxMonthlyTopUps: Nullable(z.number().int().positive()),
-        featureId: z.enum(AutumnFeatureId),
+        featureId: z.enum(ConsumableFeatureId),
     }),
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.DISABLED),
-        featureId: z.enum(AutumnFeatureId),
+        featureId: z.enum(ConsumableFeatureId),
     }),
 ])
 export type ConsumableProductAutoTopupParams = z.infer<typeof ConsumableProductAutoTopupParams>

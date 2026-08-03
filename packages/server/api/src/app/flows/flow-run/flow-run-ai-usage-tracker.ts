@@ -1,11 +1,11 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, ConsumableFeatureId, FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
 import { BillingEvents, captureBillingEvent } from '../../helper/telemetry.utils'
-import { CreditUsageSource, trackCreditsWithAppSumo } from '../../platform/billing-provider'
+import { AiCreditConsumptionProperties, billingProvider, CreditUsageSource } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { flowRunAiUsageExtractor } from './flow-run-ai-usage-extractor'
 import { flowRunService } from './flow-run-service'
@@ -36,37 +36,35 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
         const attempt = flowRun.startTime ?? flowRun.created
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const isAppSumoPlan = isAppSumoCreditedPlan(platformPlan.plan)
-        await trackCreditsWithAppSumo({
-            log,
-            credits: {
+        const aiProperties: AiCreditConsumptionProperties = {
+            platformId: project.platformId,
+            projectId: flowRun.projectId,
+            flowId: flowRun.flowId,
+            flowRunId: flowRun.id,
+            environment: flowRun.environment,
+            messages: usage.messages,
+            toolCalls: usage.toolCalls,
+            breakdown: usage.breakdown,
+        }
+        const provider = billingProvider.get(log)
+        await Promise.all([
+            provider.trackFeature({
+                featureId: ConsumableFeatureId.AP_CREDITS,
                 platformId: project.platformId,
                 value: creditValue,
                 source: CreditUsageSource.AI,
                 idempotencyKey: `${flowRun.id}:ai:${attempt}`,
-                properties: {
-                    platformId: project.platformId,
-                    projectId: flowRun.projectId,
-                    flowId: flowRun.flowId,
-                    flowRunId: flowRun.id,
-                    environment: flowRun.environment,
-                    messages: usage.messages,
-                    toolCalls: usage.toolCalls,
-                    breakdown: usage.breakdown,
-                },
-            },
-            appSumo: creditValue > 0 && isAppSumoPlan ? {
+                properties: aiProperties,
+            }),
+            ...(creditValue > 0 && isAppSumoPlan ? [provider.trackFeature({
+                featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS,
                 platformId: project.platformId,
                 value: creditValue,
+                source: CreditUsageSource.AI,
                 idempotencyKey: `${flowRun.id}:appSumoAi:${attempt}`,
-                properties: {
-                    platformId: project.platformId,
-                    projectId: flowRun.projectId,
-                    flowId: flowRun.flowId,
-                    flowRunId: flowRun.id,
-                    environment: flowRun.environment,
-                },
-            } : undefined,
-        })
+                properties: aiProperties,
+            })] : []),
+        ])
         const licenseKey = platformPlan.licenseKey
         if (isNil(licenseKey) || licenseKey.length === 0) {
             return

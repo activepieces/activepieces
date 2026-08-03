@@ -25,7 +25,7 @@ async function grant({ userId, platformId, log }: GrantChatPlanParams): Promise<
 
     const { error } = await tryCatch(async () => {
         const email = await autumnUtils.getPlatformOwnerEmail(log, platformId)
-        const licenseKey = await autumnConsole.grantChatPlan({ email, log })
+        const licenseKey = await autumnConsole.grantChatPlan({ email })
         await billingProvider.get(log).activateLicense({ platformId, licenseKey })
     })
 

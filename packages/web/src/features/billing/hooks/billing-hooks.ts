@@ -2,6 +2,7 @@ import { ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   AiCreditsAutoTopUpState,
   AutoTopUpConfig,
+  ConsumableFeatureId,
   ConsumableProductAutoTopupParams,
   CheckoutPlanParams,
   PlatformBillingInformation,
@@ -280,34 +281,35 @@ function applyOptimisticAutoTopUp(
   info: PlatformBillingInformation,
   params: ConsumableProductAutoTopupParams,
 ): PlatformBillingInformation {
-  if (params.state === AiCreditsAutoTopUpState.DISABLED) {
-    return {
-      ...info,
-      autoTopUps: info.autoTopUps.map((topUp) =>
-        topUp.featureId === params.featureId
-          ? { ...topUp, enabled: false }
-          : topUp,
-      ),
-    };
-  }
-  const entry: AutoTopUpConfig = {
-    featureId: params.featureId,
-    enabled: true,
-    threshold: params.minThreshold,
-    quantity: params.creditsToAdd,
-    maxMonthlyTopUps: params.maxMonthlyTopUps,
-  };
-  const exists = info.autoTopUps.some(
-    (topUp) => topUp.featureId === params.featureId,
-  );
-  return {
-    ...info,
-    autoTopUps: exists
-      ? info.autoTopUps.map((topUp) =>
-          topUp.featureId === params.featureId ? entry : topUp,
-        )
-      : [...info.autoTopUps, entry],
-  };
+  const autoTopUp: AutoTopUpConfig =
+    params.state === AiCreditsAutoTopUpState.DISABLED
+      ? {
+          featureId: params.featureId,
+          enabled: false,
+          threshold: 0,
+          quantity: 0,
+          maxMonthlyTopUps: null,
+        }
+      : {
+          featureId: params.featureId,
+          enabled: true,
+          threshold: params.minThreshold,
+          quantity: params.creditsToAdd,
+          maxMonthlyTopUps: params.maxMonthlyTopUps,
+        };
+  return params.featureId === ConsumableFeatureId.AP_CREDITS
+    ? {
+        ...info,
+        creditsFeature: isNil(info.creditsFeature)
+          ? info.creditsFeature
+          : { ...info.creditsFeature, autoTopUp },
+      }
+    : {
+        ...info,
+        appSumoCreditsFeature: isNil(info.appSumoCreditsFeature)
+          ? info.appSumoCreditsFeature
+          : { ...info.appSumoCreditsFeature, autoTopUp },
+      };
 }
 
 function restoreBillingSubscription(

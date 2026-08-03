@@ -2,7 +2,6 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
-  AutumnFeatureId,
   PlanName,
   PlatformRole,
 } from '@activepieces/shared';
@@ -62,14 +61,8 @@ const SidebarUsageLimits = React.memo(() => {
     platform.id,
     needsSubscription,
   );
-  const creditsFeature = info?.consumableFeatures.find(
-    (feature) => feature.featureId === AutumnFeatureId.AP_CREDITS,
-  );
-  const creditsAutoTopUp = info?.autoTopUps.find(
-    (config) => config.featureId === AutumnFeatureId.AP_CREDITS,
-  );
-  const autoRechargeEnabled =
-    (creditsAutoTopUp?.enabled ?? false) && !isNil(creditsAutoTopUp);
+  const creditsFeature = info?.creditsFeature;
+  const autoRechargeEnabled = creditsFeature?.autoTopUp?.enabled ?? false;
   const isTrial = !isNil(info?.trialEndsAt);
 
   if (edition === ApEdition.COMMUNITY) {
@@ -167,17 +160,6 @@ const SidebarUsageLimits = React.memo(() => {
             isOpen={autoRechargeOpen}
             onOpenChange={setAutoRechargeOpen}
             feature={creditsFeature}
-            currentThreshold={
-              autoRechargeEnabled ? creditsAutoTopUp.threshold : undefined
-            }
-            currentCreditsToAdd={
-              autoRechargeEnabled ? creditsAutoTopUp.quantity : undefined
-            }
-            currentMaxMonthlyTopUps={
-              autoRechargeEnabled
-                ? creditsAutoTopUp.maxMonthlyTopUps
-                : undefined
-            }
           />
         </>
       )}

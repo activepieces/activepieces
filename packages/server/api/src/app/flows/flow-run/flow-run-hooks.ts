@@ -1,5 +1,5 @@
 import { isManualPieceTrigger, isNil, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, FlowRun, FlowRunStatus, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, WebsocketClientEvent } from '@activepieces/shared'
+import { ApEdition, ConsumableFeatureId, FlowRun, FlowRunStatus, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
@@ -65,7 +65,8 @@ async function trackProductionRunCredit(log: FastifyBaseLogger, flowRun: FlowRun
     if (isNil(project)) {
         return
     }
-    await billingProvider.get(log).trackCredits({
+    await billingProvider.get(log).trackFeature({
+        featureId: ConsumableFeatureId.AP_CREDITS,
         platformId: project.platformId,
         value: 1,
         source: CreditUsageSource.FLOW_RUN,

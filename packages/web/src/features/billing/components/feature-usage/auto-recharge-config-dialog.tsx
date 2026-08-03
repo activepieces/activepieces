@@ -1,7 +1,7 @@
 import {
   ConsumableProductAutoTopupParams,
   AiCreditsAutoTopUpState,
-  BillableFeature,
+  ConsumableBillableFeature,
   isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,24 +49,22 @@ export function AutoRechargeConfigDialog({
   isOpen,
   onOpenChange,
   feature,
-  currentThreshold,
-  currentCreditsToAdd,
-  currentMaxMonthlyTopUps,
 }: AutoRechargeConfigDialogProps) {
   const queryClient = useQueryClient();
+  const autoTopUp = feature.autoTopUp?.enabled ? feature.autoTopUp : undefined;
 
   const form = useForm<AutoRechargeFormValues>({
     resolver: zodResolver(AutoRechargeFormSchema),
     defaultValues: {
       threshold: nearestOption(
-        currentThreshold ?? feature.billingUnits,
+        autoTopUp?.threshold ?? feature.billingUnits,
         CREDIT_OPTIONS,
       ),
       creditsToAdd: nearestOption(
-        currentCreditsToAdd ?? DEFAULT_CREDITS_TO_ADD,
+        autoTopUp?.quantity ?? DEFAULT_CREDITS_TO_ADD,
         CREDIT_OPTIONS,
       ),
-      maxMonthlyTopUps: normalizeTopUps(currentMaxMonthlyTopUps),
+      maxMonthlyTopUps: normalizeTopUps(autoTopUp?.maxMonthlyTopUps),
     },
     mode: 'onChange',
   });
@@ -366,10 +364,7 @@ const AutoRechargeFormSchema = z.object({
 interface AutoRechargeConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  feature: BillableFeature;
-  currentThreshold?: number | null;
-  currentCreditsToAdd?: number | null;
-  currentMaxMonthlyTopUps?: number | null;
+  feature: ConsumableBillableFeature;
 }
 
 type AutoRechargeFormValues = z.infer<typeof AutoRechargeFormSchema>;

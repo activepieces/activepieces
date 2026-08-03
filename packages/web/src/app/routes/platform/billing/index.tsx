@@ -2,7 +2,6 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
-  AutumnFeatureId,
   PlanName,
   PlatformBillingInformation,
 } from '@activepieces/shared';
@@ -106,25 +105,13 @@ function BillingPageDetails() {
   }
 
   const isPaid = !isNil(info.plan.plan) && info.plan.plan !== PlanName.FREE;
-  const creditsFeature =
-    info.consumableFeatures.find(
-      (feature) => feature.featureId === AutumnFeatureId.AP_CREDITS,
-    ) ??
-    info.consumableFeatures.find(
-      (feature) => feature.featureId === AutumnFeatureId.APP_SUMO_AI_CREDITS,
-    );
-  const creditsAutoTopUp = info.autoTopUps.find(
-    (config) => config.featureId === creditsFeature?.featureId,
-  );
+  const { creditsFeature, appSumoCreditsFeature, seatsFeature } = info;
   const isAppSumoCredits =
-    creditsFeature?.featureId === AutumnFeatureId.APP_SUMO_AI_CREDITS;
+    isNil(creditsFeature) && !isNil(appSumoCreditsFeature);
+  const displayedCreditsFeature = creditsFeature ?? appSumoCreditsFeature;
   const appSumoAiCreditsTotal =
     (info.usage.appSumoAiCreditsUsed ?? 0) +
     (info.usage.appSumoAiCreditsRemaining ?? 0);
-  const usersFeature = info.nonConsumableFeatures.find(
-    (feature) => feature.featureId === AutumnFeatureId.USERS_LIMIT,
-  );
-
   const autoRechargeNote = isAppSumoCredits
     ? t('Auto recharge your AI credits — {remaining} of {total} left.', {
         remaining: (info.usage.appSumoAiCreditsRemaining ?? 0).toLocaleString(),
@@ -220,18 +207,19 @@ function BillingPageDetails() {
             }
           >
             <CreditsCard info={info} />
-            {isPaid && isNil(info.trialEndsAt) && !isNil(creditsFeature) && (
-              <AutoRechargeCard
-                feature={creditsFeature}
-                autoTopUp={creditsAutoTopUp}
-                hasCard={hasBillingPortal}
-                note={autoRechargeNote}
-              />
-            )}
+            {isPaid &&
+              isNil(info.trialEndsAt) &&
+              !isNil(displayedCreditsFeature) && (
+                <AutoRechargeCard
+                  feature={displayedCreditsFeature}
+                  hasCard={hasBillingPortal}
+                  note={autoRechargeNote}
+                />
+              )}
           </BillingSection>
         )}
 
-        {!isCommunity && !isNil(usersFeature) && (
+        {!isCommunity && !isNil(seatsFeature) && (
           <>
             <Separator />
             <BillingSection
@@ -240,7 +228,7 @@ function BillingPageDetails() {
                 'Manage how many members can join your platform. New seats are available immediately.',
               )}
             >
-              <UsersCard info={info} feature={usersFeature} />
+              <UsersCard info={info} feature={seatsFeature} />
             </BillingSection>
           </>
         )}

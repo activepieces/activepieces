@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { ApEdition, AutumnFeatureId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan } from '@activepieces/shared'
+import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, UnconsumableFeatureId } from '@activepieces/shared'
 import {
     type AggregateEventsResponse,
     Autumn,
@@ -13,7 +13,7 @@ import {
     Range,
     type TrackParams,
 } from 'autumn-js'
-import { type AxiosRequestConfig, type AxiosResponse } from 'axios'
+import { type AxiosRequestConfig } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey, getFreeLegacyCompAttemptKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
@@ -34,7 +34,7 @@ const FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS = 5 * 60
 
 const PROJECT_ID_PROPERTY = 'projectId'
 const CREDIT_USAGE_MAX_GROUPS = 250
-const AUTUMN_FLAG_FEATURE_IDS = [
+const PLATFORM_PLAN_FLAG_FEATURE_IDS = [
     'tablesEnabled',
     'eventStreamingEnabled',
     'environmentsEnabled',
@@ -55,7 +55,7 @@ const AUTUMN_FLAG_FEATURE_IDS = [
     'ssoEnabled',
     'secretManagersEnabled',
     'scimEnabled',
-] as const satisfies readonly (keyof PlatformPlanLimits & `${AutumnFeatureId}`)[]
+] as const satisfies readonly (keyof PlatformPlanLimits & `${FeatureFlagId}`)[]
 
 export const autumnUtils = {
     client({ secretKey, customerId }: AutumnClientParams) {
@@ -115,7 +115,7 @@ export const autumnUtils = {
             ? { customRange: { start: new Date(startDate).getTime(), end: new Date(endDate).getTime() } }
             : { range: Range.Thirtyd }
         const result = await client.aggregateEvents({
-            featureId: AutumnFeatureId.AP_CREDITS,
+            featureId: ConsumableFeatureId.AP_CREDITS,
             groupBy: `properties.${PROJECT_ID_PROPERTY}`,
             maxGroups: CREDIT_USAGE_MAX_GROUPS,
             ...timeRange,
@@ -209,13 +209,13 @@ export const autumnUtils = {
     },
     mapAutumnFeaturesToPlatformPlan(entitlements: AutumnEntitlements): Partial<PlatformPlanLimits> {
         const flags: Partial<PlatformPlanLimits> = {}
-        for (const feature of AUTUMN_FLAG_FEATURE_IDS) {
+        for (const feature of PLATFORM_PLAN_FLAG_FEATURE_IDS) {
             flags[feature] = entitlements.flags[feature] ?? false
         }
-        const teamProjects = entitlements.balances[AutumnFeatureId.TEAM_PROJECTS_LIMIT]
-        const users = entitlements.balances[AutumnFeatureId.USERS_LIMIT]
-        const activeFlows = entitlements.balances[AutumnFeatureId.ACTIVE_FLOWS_LIMIT]
-        const credits = entitlements.balances[AutumnFeatureId.AP_CREDITS]
+        const teamProjects = entitlements.balances[UnconsumableFeatureId.TEAM_PROJECTS_LIMIT]
+        const users = entitlements.balances[UnconsumableFeatureId.USERS_LIMIT]
+        const activeFlows = entitlements.balances[UnconsumableFeatureId.ACTIVE_FLOWS_LIMIT]
+        const credits = entitlements.balances[ConsumableFeatureId.AP_CREDITS]
         return {
             ...flags,
             plan: entitlements.planId,
@@ -226,28 +226,22 @@ export const autumnUtils = {
             includedCredits: credits?.granted ?? 0,
         }
     },
-    async readCreditsBalance(platformId: string): Promise<CreditsBalanceCache | null> {
-        return distributedStore.get<CreditsBalanceCache>(getCreditsBalanceKey(platformId))
+    async readBalance({ platformId, featureId }: BalanceCacheRef): Promise<CreditsBalanceCache | null> {
+        return distributedStore.get<CreditsBalanceCache>(balanceCacheKey({ platformId, featureId }))
     },
-    async writeCreditsBalance(platformId: string, balance: Balance): Promise<void> {
-        await distributedStore.put(getCreditsBalanceKey(platformId), autumnUtils.toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
-    },
-    async readAppSumoAiCreditsBalance(platformId: string): Promise<CreditsBalanceCache | null> {
-        return distributedStore.get<CreditsBalanceCache>(getAppSumoAiCreditsBalanceKey(platformId))
-    },
-    async writeAppSumoAiCreditsBalance(platformId: string, balance: Balance): Promise<void> {
-        await distributedStore.put(getAppSumoAiCreditsBalanceKey(platformId), autumnUtils.toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
+    async writeBalance({ platformId, featureId, balance }: WriteBalanceParams): Promise<void> {
+        await distributedStore.put(balanceCacheKey({ platformId, featureId }), autumnUtils.toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
     },
     billingEnforcedFromCustomer(customer: GetCustomerResponse): boolean {
-        return !isNil(customer.flags[AutumnFeatureId.BILLING_ENFORCED])
+        return !isNil(customer.flags[FeatureFlagId.BILLING_ENFORCED])
     },
     async writeCustomerStateCaches(platformId: string, customer: GetCustomerResponse): Promise<BalanceCacheSnapshot> {
-        const creditsBalance = customer.balances[AutumnFeatureId.AP_CREDITS]
-        const appSumoBalance = customer.balances[AutumnFeatureId.APP_SUMO_AI_CREDITS]
+        const creditsBalance = customer.balances[ConsumableFeatureId.AP_CREDITS]
+        const appSumoBalance = customer.balances[ConsumableFeatureId.APP_SUMO_AI_CREDITS]
         await Promise.all([
             distributedStore.put(getBillingEnforcedKey(platformId), autumnUtils.billingEnforcedFromCustomer(customer), BILLING_ENFORCED_TTL_SECONDS),
-            isNil(creditsBalance) ? Promise.resolve() : autumnUtils.writeCreditsBalance(platformId, creditsBalance),
-            isNil(appSumoBalance) ? Promise.resolve() : autumnUtils.writeAppSumoAiCreditsBalance(platformId, appSumoBalance),
+            isNil(creditsBalance) ? Promise.resolve() : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.AP_CREDITS, balance: creditsBalance }),
+            isNil(appSumoBalance) ? Promise.resolve() : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS, balance: appSumoBalance }),
         ])
         return {
             credits: isNil(creditsBalance) ? null : autumnUtils.toBalanceCache(creditsBalance),
@@ -263,9 +257,6 @@ export const autumnUtils = {
             nextResetAt: balance.nextResetAt,
             syncedAt: Date.now(),
         }
-    },
-    isAutumnFeatureId(value: string): value is AutumnFeatureId {
-        return Object.values(AutumnFeatureId).some((id) => id === value)
     },
     toBaseSubscriptions(customer: GetCustomerResponse): GetCustomerResponse['subscriptions'] {
         return customer.subscriptions.filter((subscription) => !subscription.addOn)
@@ -285,130 +276,88 @@ export const autumnUtils = {
 
 export const autumnConsole = {
     async listPlans({ platformId }: { platformId: string }): Promise<PurchasablePlan[]> {
-        const response = await consoleGet<ConsolePlansEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/plans`,
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, params: { version: apVersionUtil.getCurrentRelease(), platformId } },
-        )
-        return response.data.data.plans.map(toPurchasablePlan)
+        const { plans } = await consoleRequest<{ plans: ConsoleAutumnPlan[] }>({
+            method: 'get',
+            path: '/api/v1/billing/plans',
+            query: { version: apVersionUtil.getCurrentRelease(), platformId },
+        })
+        return plans.map(toPurchasablePlan)
     },
     async enrollFree({ email }: { email: string }): Promise<AutumnEnrollmentCredentials> {
-        const response = await consolePost<ConsoleBillingEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/enroll`,
-            { email },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS },
-        )
-        return response.data.data
+        return consoleRequest<AutumnEnrollmentCredentials>({ path: '/api/v1/billing/enroll', body: { email } })
     },
     async activate({ licenseKey }: { licenseKey: string }): Promise<AutumnEnrollmentCredentials> {
-        const response = await consolePost<ConsoleBillingEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/activate`,
-            {},
-            {
-                timeout: CONSOLE_REQUEST_TIMEOUT_MS,
-                headers: { Authorization: `Bearer ${licenseKey}` },
-            },
-        )
-        return response.data.data
+        return consoleRequest<AutumnEnrollmentCredentials>({ path: '/api/v1/billing/activate', token: licenseKey })
     },
     async checkout({ autumnCustomerId, autumnApiKey, planId, successUrl }: ConsoleCustomerCall & { planId: string, successUrl?: string }): Promise<{ paymentUrl: string | null }> {
-        const response = await consolePost<{ data: { paymentUrl: string | null } }>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/checkout`,
-            { autumnCustomerId, planId, successUrl },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
-        return response.data.data
+        return consoleRequest<{ paymentUrl: string | null }>({
+            path: '/api/v1/billing/checkout',
+            token: autumnApiKey,
+            body: { autumnCustomerId, planId, successUrl },
+        })
     },
     async setUnconsumableQuantity({ autumnCustomerId, autumnApiKey, featureId, quantity }: ConsoleCustomerCall & { featureId: string, quantity: number }): Promise<{ paymentUrl: string | null }> {
-        const response = await consolePost<{ data: { paymentUrl: string | null } }>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/unconsumable-feature-quantity`,
-            { autumnCustomerId, featureId, quantity },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
-        return response.data.data
+        return consoleRequest<{ paymentUrl: string | null }>({
+            path: '/api/v1/billing/unconsumable-feature-quantity',
+            token: autumnApiKey,
+            body: { autumnCustomerId, featureId, quantity },
+        })
     },
     async portal({ autumnCustomerId, autumnApiKey, returnUrl }: ConsoleCustomerCall & { returnUrl?: string }): Promise<{ url: string | null }> {
-        const response = await consolePost<{ data: { url: string | null } }>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/portal`,
-            { autumnCustomerId, returnUrl },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
-        return response.data.data
+        return consoleRequest<{ url: string | null }>({
+            path: '/api/v1/billing/portal',
+            token: autumnApiKey,
+            body: { autumnCustomerId, returnUrl },
+        })
     },
     async configureAutoTopUp(params: ConsoleCustomerCall & ConfigureAutoTopUpOnConsoleParams): Promise<void> {
         const { autumnCustomerId, autumnApiKey, ...body } = params
-        await consolePost<ConsoleBillingEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/auto-topup`,
-            { autumnCustomerId, ...body },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
+        await consoleRequest({ path: '/api/v1/billing/auto-topup', token: autumnApiKey, body: { autumnCustomerId, ...body } })
     },
     async setupPayment({ autumnCustomerId, autumnApiKey, redirectUrl }: ConsoleCustomerCall & { redirectUrl?: string }): Promise<{ url: string | null }> {
-        const response = await consolePost<{ data: { url: string | null } }>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/setup-payment`,
-            { autumnCustomerId, redirectUrl },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
-        return response.data.data
+        return consoleRequest<{ url: string | null }>({
+            path: '/api/v1/billing/setup-payment',
+            token: autumnApiKey,
+            body: { autumnCustomerId, redirectUrl },
+        })
     },
     async provisionLicenseKey({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<{ licenseKey: string | null }> {
-        const response = await consolePost<{ data: { licenseKey: string | null } }>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/provision-license-key`,
-            { autumnCustomerId },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
-        return response.data.data
+        return consoleRequest<{ licenseKey: string | null }>({
+            path: '/api/v1/billing/provision-license-key',
+            token: autumnApiKey,
+            body: { autumnCustomerId },
+        })
     },
     async cancel({ autumnCustomerId, autumnApiKey, feedback }: ConsoleCustomerCall & { feedback: CancellationFeedback }): Promise<void> {
-        await consolePost<ConsoleBillingEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/cancel`,
-            { autumnCustomerId, reasons: feedback.reasons, comment: feedback.comment, canceledByEmail: feedback.canceledByEmail },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
+        await consoleRequest({
+            path: '/api/v1/billing/cancel',
+            token: autumnApiKey,
+            body: { autumnCustomerId, reasons: feedback.reasons, comment: feedback.comment, canceledByEmail: feedback.canceledByEmail },
+        })
     },
     async reactivate({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<void> {
-        await consolePost<ConsoleBillingEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/reactivate`,
-            { autumnCustomerId },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${autumnApiKey}` } },
-        )
+        await consoleRequest({ path: '/api/v1/billing/reactivate', token: autumnApiKey, body: { autumnCustomerId } })
     },
     async compAppSumo({ log, platformId, action }: { log: FastifyBaseLogger, platformId: string, action: AppSumoAction }): Promise<void> {
         const creds = await autumnConsole.getCreds(log, platformId)
         assertNotNullOrUndefined(creds, 'Autumn credentials must exist before applying an AppSumo plan')
-        const token = system.get(AppSystemProp.APPSUMO_TOKEN)
-        await consolePost<ConsoleBillingEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/appsumo`,
-            { autumnCustomerId: creds.autumnCustomerId, action },
-            {
-                timeout: CONSOLE_REQUEST_TIMEOUT_MS,
-                headers: { Authorization: `Bearer ${token}` },
-            },
-        )
+        await consoleRequest({
+            path: '/api/v1/billing/appsumo',
+            token: system.get(AppSystemProp.APPSUMO_TOKEN),
+            body: { autumnCustomerId: creds.autumnCustomerId, action },
+        })
     },
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
-        const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
-        if (isNil(secret) || isEmpty(secret)) {
-            throw new Error('CONSOLE_API_SECRET_KEY is not configured')
-        }
-        await consolePost<ConsoleBillingEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/v1/billing/free-legacy`,
-            { autumnCustomerId },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${secret}` } },
-        )
+        await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
     },
-    async grantChatPlan({ email, log }: { email: string, log: FastifyBaseLogger }): Promise<string> {
-        const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
-        if (isNil(secret) || isEmpty(secret)) {
-            throw new Error('CONSOLE_API_SECRET_KEY is not configured')
-        }
-        const response = await consolePost<ConsoleGrantChatPlanEnvelope>(
-            `${AUTUMN_CONSOLE_URL}/api/external/grant-chat-plan`,
-            { email },
-            { timeout: CONSOLE_REQUEST_TIMEOUT_MS, headers: { Authorization: `Bearer ${secret}` } },
-        )
-        const licenseKey = response.data.data?.licenseKey
+    async grantChatPlan({ email }: { email: string }): Promise<string> {
+        const grant = await consoleRequest<{ licenseKey: string | null } | null>({
+            path: '/api/external/grant-chat-plan',
+            token: consoleSecretOrThrow(),
+            body: { email },
+        })
+        const licenseKey = grant?.licenseKey
         if (isNil(licenseKey) || isEmpty(licenseKey)) {
-            log.error({ status: response.status }, 'Console returned no license key for the chat plan grant')
             throw new Error('Console returned no license key for the chat plan grant')
         }
         return licenseKey
@@ -418,28 +367,40 @@ export const autumnConsole = {
     },
 }
 
-async function consolePost<T>(url: string, body: unknown, config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    const { data: response, error } = await tryCatch(() => safeHttp.axios.post<T>(url, body, config))
+async function consoleRequest<T>({ path, method = 'post', token, body, query }: ConsoleRequestParams): Promise<T> {
+    const url = `${AUTUMN_CONSOLE_URL}${path}`
+    const config: AxiosRequestConfig = {
+        timeout: CONSOLE_REQUEST_TIMEOUT_MS,
+        params: query,
+        headers: isNil(token) ? undefined : { Authorization: `Bearer ${token}` },
+    }
+    const { data: response, error } = await tryCatch(() => method === 'get'
+        ? safeHttp.axios.get<ConsoleEnvelope<T>>(url, config)
+        : safeHttp.axios.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
     if (!isNil(error)) {
         system.globalLogger().error({ error, url }, 'Autumn console request failed')
         throw error
     }
     assertNotNullOrUndefined(response, 'response')
-    return response
+    return response.data.data
 }
 
-async function consoleGet<T>(url: string, config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    const { data: response, error } = await tryCatch(() => safeHttp.axios.get<T>(url, config))
-    if (!isNil(error)) {
-        system.globalLogger().error({ error, url }, 'Autumn console request failed')
-        throw error
+function consoleSecretOrThrow(): string {
+    const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
+    if (isNil(secret) || isEmpty(secret)) {
+        throw new Error('CONSOLE_API_SECRET_KEY is not configured')
     }
-    assertNotNullOrUndefined(response, 'response')
-    return response
+    return secret
+}
+
+function balanceCacheKey({ platformId, featureId }: BalanceCacheRef): string {
+    return featureId === ConsumableFeatureId.AP_CREDITS
+        ? getCreditsBalanceKey(platformId)
+        : getAppSumoAiCreditsBalanceKey(platformId)
 }
 
 function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
-    const creditsItem = (plan.items ?? []).find((item) => item.featureId === AutumnFeatureId.AP_CREDITS && isNil(item.price))
+    const creditsItem = (plan.items ?? []).find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && isNil(item.price))
     return {
         id: plan.id,
         name: plan.name,
@@ -448,14 +409,14 @@ function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
         interval: plan.price?.interval ?? null,
         priceDisplay: plan.price?.display?.primaryText ?? null,
         baseVariantId: plan.variantDetails?.basePlanId ?? plan.baseVariantId ?? null,
-        includedSeats: (plan.items ?? []).find((item) => item.featureId === AutumnFeatureId.USERS_LIMIT)?.included ?? null,
+        includedSeats: (plan.items ?? []).find((item) => item.featureId === UnconsumableFeatureId.USERS_LIMIT)?.included ?? null,
         includedCredits: creditsItem?.included ?? null,
         creditsResetInterval: creditsItem?.reset?.interval ?? null,
     }
 }
 
 function toCreditUsage(response: AggregateEventsResponse): CreditUsage {
-    const featureId = AutumnFeatureId.AP_CREDITS
+    const featureId = ConsumableFeatureId.AP_CREDITS
     const byProjectMap = new Map<string, number>()
     for (const bin of response.list ?? []) {
         const grouped = bin.groupedValues?.[featureId] ?? {}
@@ -472,7 +433,7 @@ function toCreditUsage(response: AggregateEventsResponse): CreditUsage {
 function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements {
     const flags: Record<string, boolean> = {}
     for (const [featureId, flag] of Object.entries(customer.flags)) {
-        flags[featureId] = featureId === AutumnFeatureId.SHOW_POWERED_BY ? !isNil(flag.planId) : true
+        flags[featureId] = featureId === FeatureFlagId.SHOW_POWERED_BY ? !isNil(flag.planId) : true
     }
     const balances: Record<string, AutumnFeatureBalance> = {}
     for (const [featureId, balance] of Object.entries(customer.balances)) {
@@ -506,7 +467,7 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
 function toScheduledUsersLimit(baseSubscriptions: GetCustomerResponse['subscriptions']): number | null {
     const scheduledSubscription = baseSubscriptions.find((subscription) => subscription.status === 'scheduled')
     const usersLimitItem = (scheduledSubscription?.plan?.items ?? [])
-        .find((item) => item.featureId === AutumnFeatureId.USERS_LIMIT)
+        .find((item) => item.featureId === UnconsumableFeatureId.USERS_LIMIT)
     if (isNil(usersLimitItem) || usersLimitItem.unlimited) {
         return null
     }
@@ -572,31 +533,28 @@ type ConfigureAutoTopUpOnConsoleParams =
         enabled: false
     }
 
-type ConsoleBillingCredentials = {
-    autumnCustomerId: string
-    autumnApiKey: string
-    paymentUrl: string | null
-}
-
-type ConsoleBillingEnvelope = {
-    success: boolean
-    data: ConsoleBillingCredentials
-}
-
 type ConsoleAutumnPlan = Awaited<ReturnType<Autumn['plans']['list']>>['list'][number]
 
-type ConsolePlansEnvelope = {
+type ConsoleEnvelope<T> = {
     success: boolean
-    data: {
-        plans: ConsoleAutumnPlan[]
-    }
+    data: T
 }
 
-type ConsoleGrantChatPlanEnvelope = {
-    success: boolean
-    data: {
-        licenseKey: string | null
-    }
+type ConsoleRequestParams = {
+    path: string
+    method?: 'get' | 'post'
+    token?: string
+    body?: unknown
+    query?: Record<string, string>
+}
+
+export type BalanceCacheRef = {
+    platformId: string
+    featureId: ConsumableFeatureId
+}
+
+export type WriteBalanceParams = BalanceCacheRef & {
+    balance: Balance
 }
 
 export type CreditsBalanceCache = {

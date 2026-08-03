@@ -1,12 +1,12 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AutoTopUpConfig, AutumnFeatureId, BillableFeature, isConsumableAutumnFeature, PlanName } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, PlanName, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCreditsExhaustedReverifyKey, getCreditsExhaustedReverifyLockKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
-import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, TrackAppSumoAiUsageParams, TrackCreditsParams } from '../../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, CreditsBalanceCache } from './autumn-utils'
 
@@ -61,7 +61,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
     adjustUnconsumableFeatureQuantity: async ({ platformId, featureId, quantity }) => {
         await autumnUtils.ensureEnrolled(log, platformId)
-        if (featureId === AutumnFeatureId.USERS_LIMIT) {
+        if (featureId === UnconsumableFeatureId.USERS_LIMIT) {
             await assertSeatsNotBelowActiveUsers({ platformId, targetLimit: quantity, log })
         }
         const creds = await autumnConsole.getCreds(log, platformId)
@@ -119,51 +119,8 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         }
         await autumnConsole.reactivate({ ...creds })
     },
-    trackCredits: async (params: TrackCreditsParams) => {
-        const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
-        if (isNil(client)) {
-            return
-        }
-        try {
-            const response = await client.track({
-                featureId: AutumnFeatureId.AP_CREDITS,
-                value: params.value,
-                idempotencyKey: params.idempotencyKey,
-                properties: { source: params.source, ...params.properties },
-            })
-            if (!isNil(response.balance)) {
-                await autumnUtils.writeCreditsBalance(params.platformId, response.balance)
-            }
-        }
-        catch (error) {
-            if (isDuplicateTrack(error)) {
-                return
-            }
-            throw error
-        }
-    },
-    trackAppSumoAiUsage: async (params: TrackAppSumoAiUsageParams) => {
-        const client = await autumnUtils.resolveClientForPlatform(log, params.platformId)
-        if (isNil(client)) {
-            return
-        }
-        try {
-            const response = await client.track({
-                featureId: AutumnFeatureId.APP_SUMO_AI_CREDITS,
-                value: params.value,
-                idempotencyKey: params.idempotencyKey,
-                properties: { ...params.properties },
-            })
-            if (!isNil(response.balance)) {
-                await autumnUtils.writeAppSumoAiCreditsBalance(params.platformId, response.balance)
-            }
-        }
-        catch (error) {
-            if (isDuplicateTrack(error)) {
-                return
-            }
-            throw error
-        }
+    trackFeature: async (params: TrackFeatureParams) => {
+        await sendTrackEvent({ ...params, log })
     },
     ensureEnrolled: async (platformId: string) => {
         await autumnUtils.ensureEnrolled(log, platformId)
@@ -240,27 +197,42 @@ function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthE
     }
 }
 
-function toBillableFeatures(customer: GetCustomerResponse): BillableFeature[] {
+function toBillableFeatures(customer: GetCustomerResponse): BillableFeatures {
     const { baseSubscriptions, plan } = selectCurrentPlan(customer)
     const trialing = baseSubscriptions.some((subscription) => !isNil(subscription.trialEndsAt) && subscription.trialEndsAt > apDayjs().valueOf())
-    if (trialing) {
-        return []
+    const items = trialing ? [] : plan?.items ?? []
+    const autoTopUps = toAutoTopUps(customer)
+    return {
+        creditsFeature: withAutoTopUp({ feature: findPricedFeature({ items, featureId: ConsumableFeatureId.AP_CREDITS }), autoTopUps }),
+        appSumoCreditsFeature: withAutoTopUp({ feature: findPricedFeature({ items, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS }), autoTopUps }),
+        seatsFeature: findPricedFeature({ items, featureId: UnconsumableFeatureId.USERS_LIMIT }),
     }
-    return (plan?.items ?? []).flatMap((item) => {
-        if (!autumnUtils.isAutumnFeatureId(item.featureId) || item.price?.billingMethod !== 'prepaid' || isNil(item.price.amount)) {
+}
+
+function withAutoTopUp<T extends ConsumableFeatureId>({ feature, autoTopUps }: WithAutoTopUpParams<T>): (PricedFeature<T> & { autoTopUp: AutoTopUpConfig | null }) | null {
+    if (isNil(feature)) {
+        return null
+    }
+    return { ...feature, autoTopUp: autoTopUps.find((config) => config.featureId === feature.featureId) ?? null }
+}
+
+function findPricedFeature<T extends FeatureId>({ items, featureId }: FindPricedFeatureParams<T>): PricedFeature<T> | null {
+    return items.flatMap((item) => {
+        const price = item.price
+        if (item.featureId !== featureId || price?.billingMethod !== 'prepaid' || isNil(price.amount)) {
             return []
         }
-        return [{ featureId: item.featureId, pricePerUnit: item.price.amount, billingUnits: item.price.billingUnits ?? 1, interval: item.price.interval ?? null }]
-    })
+        return [{ featureId, pricePerUnit: price.amount, billingUnits: price.billingUnits ?? 1, interval: price.interval ?? null }]
+    })[0] ?? null
 }
 
 function toCreditsResetInterval(items: AutumnPlanItems): string | null {
-    const creditsItem = items.find((item) => item.featureId === AutumnFeatureId.AP_CREDITS && isNil(item.price))
+    const creditsItem = items.find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && isNil(item.price))
     return creditsItem?.reset?.interval ?? null
 }
 
 function toSeatBreakdown(customer: GetCustomerResponse): { includedSeats: number | null, additionalSeats: number | null } {
-    const balance = customer.balances[AutumnFeatureId.USERS_LIMIT]
+    const balance = customer.balances[UnconsumableFeatureId.USERS_LIMIT]
     if (isNil(balance)) {
         return { includedSeats: null, additionalSeats: null }
     }
@@ -273,7 +245,7 @@ function toSeatBreakdown(customer: GetCustomerResponse): { includedSeats: number
 
 function toAutoTopUps(customer: GetCustomerResponse): AutoTopUpConfig[] {
     return (customer.billingControls?.autoTopups ?? []).flatMap((autoTopUp) => {
-        if (!autumnUtils.isAutumnFeatureId(autoTopUp.featureId)) {
+        if (!isConsumableFeatureId(autoTopUp.featureId)) {
             return []
         }
         return [{
@@ -319,8 +291,8 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
     ])
     const enforced = billingEnforced ?? false
     const cachedState = {
-        credits: toCreditsGateState(credits, enforced),
-        appSumo: toAppSumoGateState(appSumo),
+        credits: toGateState({ balance: credits, enforced }),
+        appSumo: toGateState({ balance: appSumo, enforced: true }),
     }
     if (!cachedState.credits.blocked) {
         return cachedState
@@ -330,8 +302,8 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
         return cachedState
     }
     return {
-        credits: toCreditsGateState(reverified.credits, enforced),
-        appSumo: toAppSumoGateState(reverified.appSumo),
+        credits: toGateState({ balance: reverified.credits, enforced }),
+        appSumo: toGateState({ balance: reverified.appSumo, enforced: true }),
     }
 }
 
@@ -358,10 +330,10 @@ async function reverifyExhaustedCredits(log: FastifyBaseLogger, platformId: stri
     return data
 }
 
-export function toCreditsGateState(balance: CreditsBalanceCache | null, billingEnforced: boolean): CreditsGateState {
+export function toGateState({ balance, enforced }: ToGateStateParams): CreditsGateState {
     const exhausted = !isNil(balance) && isCreditsExhausted(balance)
     return {
-        blocked: billingEnforced && exhausted,
+        blocked: enforced && exhausted,
         usage: balance?.usage ?? 0,
         limit: balance?.granted ?? 0,
         remaining: balance?.remaining ?? 0,
@@ -369,14 +341,21 @@ export function toCreditsGateState(balance: CreditsBalanceCache | null, billingE
     }
 }
 
-export function toAppSumoGateState(balance: CreditsBalanceCache | null): CreditsGateState {
-    const exhausted = !isNil(balance) && isCreditsExhausted(balance)
-    return {
-        blocked: exhausted,
-        usage: balance?.usage ?? 0,
-        limit: balance?.granted ?? 0,
-        remaining: balance?.remaining ?? 0,
-        unlimited: balance?.unlimited ?? false,
+async function sendTrackEvent(params: SendTrackEventParams): Promise<void> {
+    const { log, platformId, featureId, value, idempotencyKey } = params
+    const { error } = await tryCatch(async () => {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return
+        }
+        const properties = { source: params.source, ...params.properties }
+        const response = await client.track({ featureId, value, idempotencyKey, properties })
+        if (!isNil(response.balance)) {
+            await autumnUtils.writeBalance({ platformId, featureId, balance: response.balance })
+        }
+    })
+    if (!isNil(error) && !isDuplicateTrack(error)) {
+        log.error({ error, platform: { id: platformId }, feature: { id: featureId } }, 'Failed to track feature usage with Autumn')
     }
 }
 
@@ -397,8 +376,8 @@ async function resolveCreditsCache(log: FastifyBaseLogger, platformId: string): 
 
 async function readCachedCredits(platformId: string): Promise<BalanceCacheSnapshot> {
     const [credits, appSumo] = await Promise.all([
-        autumnUtils.readCreditsBalance(platformId),
-        autumnUtils.readAppSumoAiCreditsBalance(platformId),
+        autumnUtils.readBalance({ platformId, featureId: ConsumableFeatureId.AP_CREDITS }),
+        autumnUtils.readBalance({ platformId, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS }),
     ])
     return { credits, appSumo }
 }
@@ -454,7 +433,7 @@ async function fetchCredits(log: FastifyBaseLogger, platformId: string): Promise
 }
 
 function emptyBillingOverview({ monthStart, monthEnd, unavailable }: { monthStart: string, monthEnd: string, unavailable: boolean }): BillingOverview {
-    return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, creditsResetInterval: null, autoTopUps: [], consumableFeatures: [], nonConsumableFeatures: [], includedSeats: null, additionalSeats: null, unavailable }
+    return { startDate: monthStart, endDate: monthEnd, nextBillingAmount: 0, cancelAt: null, trialEndsAt: null, planName: null, scheduledPlanName: null, billingPortalAvailable: false, creditsResetInterval: null, creditsFeature: null, appSumoCreditsFeature: null, seatsFeature: null, includedSeats: null, additionalSeats: null, unavailable }
 }
 
 async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string): Promise<BillingOverview> {
@@ -469,13 +448,10 @@ async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string):
         log.warn({ error, platform: { id: platformId } }, 'Failed to fetch billing overview; serving an empty overview without caching it')
         return emptyBillingOverview({ monthStart, monthEnd, unavailable: true })
     }
-    const billableFeatures = toBillableFeatures(customer)
     const overview: BillingOverview = {
         ...toBillingInfo(customer, monthStart, monthEnd),
         ...toSeatBreakdown(customer),
-        autoTopUps: toAutoTopUps(customer),
-        consumableFeatures: billableFeatures.filter((feature) => isConsumableAutumnFeature(feature.featureId)),
-        nonConsumableFeatures: billableFeatures.filter((feature) => !isConsumableAutumnFeature(feature.featureId)),
+        ...toBillableFeatures(customer),
         unavailable: false,
     }
     await distributedStore.put(getBillingOverviewKey(platformId), overview, BILLING_OVERVIEW_TTL_SECONDS)
@@ -490,4 +466,36 @@ type CurrentPlanSelection = {
     baseSubscriptions: GetCustomerResponse['subscriptions']
     subscription: GetCustomerResponse['subscriptions'][number] | undefined
     plan: AutumnPlan | null
+}
+
+type ToGateStateParams = {
+    balance: CreditsBalanceCache | null
+    enforced: boolean
+}
+
+type SendTrackEventParams = TrackFeatureParams & {
+    log: FastifyBaseLogger
+}
+
+type BillableFeatures = {
+    creditsFeature: CreditsBillableFeature | null
+    appSumoCreditsFeature: AppSumoCreditsBillableFeature | null
+    seatsFeature: SeatsBillableFeature | null
+}
+
+type FindPricedFeatureParams<T extends FeatureId> = {
+    items: AutumnPlanItems
+    featureId: T
+}
+
+type PricedFeature<T extends FeatureId> = {
+    featureId: T
+    pricePerUnit: number
+    billingUnits: number
+    interval: string | null
+}
+
+type WithAutoTopUpParams<T extends ConsumableFeatureId> = {
+    feature: PricedFeature<T> | null
+    autoTopUps: AutoTopUpConfig[]
 }

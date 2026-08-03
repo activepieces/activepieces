@@ -1,8 +1,7 @@
 import {
   AiCreditsAutoTopUpState,
-  AutoTopUpConfig,
   isNil,
-  BillableFeature,
+  ConsumableBillableFeature,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -19,10 +18,10 @@ import { AutoRechargeConfigDialog } from './auto-recharge-config-dialog';
 
 export const AutoRechargeCard = ({
   feature,
-  autoTopUp,
   hasCard,
   note,
 }: AutoRechargeCardProps) => {
+  const autoTopUp = feature.autoTopUp;
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { mutate: updateAutoTopUp, isPending } =
@@ -122,19 +121,13 @@ export const AutoRechargeCard = ({
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         feature={feature}
-        currentThreshold={enabled ? autoTopUp.threshold : undefined}
-        currentCreditsToAdd={enabled ? autoTopUp.quantity : undefined}
-        currentMaxMonthlyTopUps={
-          enabled ? autoTopUp.maxMonthlyTopUps : undefined
-        }
       />
     </div>
   );
 };
 
 type AutoRechargeCardProps = {
-  feature: BillableFeature;
-  autoTopUp?: AutoTopUpConfig;
+  feature: ConsumableBillableFeature;
   hasCard: boolean;
   note?: ReactNode;
 };
