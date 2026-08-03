@@ -42,21 +42,21 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
 
         const queryBuilder = agentHelpers.conversationRepo()
-            .createQueryBuilder('chat_conversation')
+            .createQueryBuilder('agent_conversation')
             .select([
-                'chat_conversation.id',
-                'chat_conversation.created',
-                'chat_conversation.updated',
-                'chat_conversation.platformId',
-                'chat_conversation.projectId',
-                'chat_conversation.userId',
-                'chat_conversation.title',
-                'chat_conversation.modelName',
-                'chat_conversation.status',
+                'agent_conversation.id',
+                'agent_conversation.created',
+                'agent_conversation.updated',
+                'agent_conversation.platformId',
+                'agent_conversation.projectId',
+                'agent_conversation.userId',
+                'agent_conversation.title',
+                'agent_conversation.modelName',
+                'agent_conversation.status',
             ])
             .where({ platformId, userId })
             // Eval conversations are owned by the platform owner; keep them out of the regular list.
-            .andWhere('chat_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
+            .andWhere('agent_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(data, paginationCursor)
