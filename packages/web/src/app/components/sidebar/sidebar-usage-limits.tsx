@@ -1,10 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  ApEdition,
-  ApFlagId,
-  PlanName,
-  PlatformRole,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpCircle, Coins, SquareArrowOutUpRight } from 'lucide-react';
 import React, { useState } from 'react';
@@ -41,17 +36,13 @@ const SidebarUsageLimits = React.memo(() => {
 
   const usage = platform.usage;
   const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
-  const isPaid =
-    !isNil(platform.plan.plan) && platform.plan.plan !== PlanName.FREE;
+  const isPaid = billingUtils.isPaidPlan(platform.plan.plan);
 
   const creditsRemaining = usage?.creditsRemaining ?? null;
   const isUnlimited = isNil(creditsRemaining);
   const creditsUsed = Math.round(usage?.creditsUsed ?? 0);
   const total = isUnlimited ? 0 : creditsUsed + Math.round(creditsRemaining);
-  const percentUsed =
-    isUnlimited || total <= 0
-      ? 0
-      : Math.min(100, Math.round((creditsUsed / total) * 100));
+  const percentUsed = billingUtils.percentUsed({ used: creditsUsed, total });
 
   const inWarning = !isUnlimited && percentUsed >= AMBER_THRESHOLD;
   const canManage = isPlatformAdmin && inWarning;

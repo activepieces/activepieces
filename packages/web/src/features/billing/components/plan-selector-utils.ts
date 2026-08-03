@@ -6,8 +6,8 @@ const FREE_PLAN_ID = 'free';
 const ANNUAL_INTERVAL = 'year';
 const SALES_URL = 'https://activepieces.com/sales';
 
-function cleanName(plan: PurchasablePlan): string {
-  return plan.name.replace(/\s*\((annual|monthly|yearly)\)\s*/i, '').trim();
+function stripPlanInterval(name: string): string {
+  return name.replace(/\s*\((annual|monthly|yearly)\)\s*/i, '').trim();
 }
 
 function findPurchasablePlan({
@@ -21,7 +21,7 @@ function findPurchasablePlan({
 }): PurchasablePlan | undefined {
   return plans.find(
     (plan) =>
-      cleanName(plan).toLowerCase() === key &&
+      stripPlanInterval(plan.name).toLowerCase() === key &&
       (cycle === 'year'
         ? plan.interval === ANNUAL_INTERVAL
         : plan.interval !== ANNUAL_INTERVAL),
@@ -260,7 +260,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
 ];
 
 export const planSelectorUtils = {
-  cleanName,
+  stripPlanInterval,
   findPurchasablePlan,
   computePricing,
   resolveFeatures,

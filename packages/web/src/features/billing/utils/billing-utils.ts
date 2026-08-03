@@ -1,10 +1,21 @@
 import { isNil } from '@activepieces/core-utils';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { PlanName, PlatformBillingInformation } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 
 const DAILY_RESET_INTERVAL = 'day';
 const MINUTES_PER_HOUR = 60;
+
+function isPaidPlan(planName: string | null | undefined): planName is string {
+  return !isNil(planName) && planName !== PlanName.FREE;
+}
+
+function percentUsed({ used, total }: PercentUsedParams): number {
+  if (isNil(total) || total <= 0) {
+    return 0;
+  }
+  return Math.min(100, Math.round((used / total) * 100));
+}
 
 function resolveSeatCap(info: PlatformBillingInformation): SeatCap {
   const limit = info.plan.usersLimit ?? null;
@@ -94,9 +105,16 @@ function formatTimeUntil(value: string): string {
 }
 
 export const billingUtils = {
+  isPaidPlan,
+  percentUsed,
   resolveSeatCap,
   scheduledCapNotice,
   resolveCreditsReset,
+};
+
+export type PercentUsedParams = {
+  used: number;
+  total: number | null | undefined;
 };
 
 export type SeatCap = {

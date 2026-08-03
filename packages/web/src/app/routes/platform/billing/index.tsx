@@ -11,8 +11,7 @@ import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { BillingPageShell } from '@/app/components/billing-page-shell';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -27,7 +26,7 @@ import {
   LicenseKey,
   UsersCard,
   billingMutations,
-  billingQueries,
+  billingUtils,
   useCancelSubscriptionGuard,
   useManagePlanDialogStore,
 } from '@/features/billing';
@@ -35,33 +34,20 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export default function Billing() {
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-
   return (
-    <LockedFeatureGuard
-      featureKey="BILLING"
-      locked={edition === ApEdition.COMMUNITY}
+    <BillingPageShell
       lockTitle={t('Unlock Billing Page')}
-      lockDescription={t(
-        'Switch to the Enterprise edition to access billing and usage management.',
-      )}
-      lockDocumentationUrl="https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional"
-      showContactSales={false}
+      errorMessage={t('Failed to load billing information')}
     >
-      <BillingPageDetails />
-    </LockedFeatureGuard>
+      {({ platform, info }) => (
+        <BillingPageDetails platform={platform} info={info} />
+      )}
+    </BillingPageShell>
   );
 }
 
-function BillingPageDetails() {
-  const { platform } = platformHooks.useCurrentPlatform();
+function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
   const { openDialog } = useManagePlanDialogStore();
-
-  const {
-    data: info,
-    isLoading,
-    isError,
-  } = billingQueries.usePlatformSubscription(platform.id);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
@@ -88,23 +74,7 @@ function BillingPageDetails() {
     return () => window.removeEventListener('keydown', revealOnAltA);
   }, [isCloud]);
 
-  if (isLoading || isNil(info)) {
-    return (
-      <article className="h-full flex items-center justify-center w-full">
-        <LoadingSpinner />
-      </article>
-    );
-  }
-
-  if (isError) {
-    return (
-      <article className="h-full flex items-center justify-center w-full">
-        {t('Failed to load billing information')}
-      </article>
-    );
-  }
-
-  const isPaid = !isNil(info.plan.plan) && info.plan.plan !== PlanName.FREE;
+  const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const { creditsFeature, appSumoCreditsFeature, seatsFeature } = info;
   const isAppSumoCredits =
     isNil(creditsFeature) && !isNil(appSumoCreditsFeature);
@@ -379,3 +349,8 @@ const LinkButton = ({
     <ArrowUpRight className="size-3.5" />
   </button>
 );
+
+type BillingPageDetailsProps = {
+  platform: ReturnType<typeof platformHooks.useCurrentPlatform>['platform'];
+  info: PlatformBillingInformation;
+};

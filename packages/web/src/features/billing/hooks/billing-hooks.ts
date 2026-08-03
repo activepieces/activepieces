@@ -83,7 +83,7 @@ export const billingMutations = {
             onSeatLimitExceeded({
               params,
               targetSeats: targetPlan.includedSeats,
-              planName: planSelectorUtils.cleanName(targetPlan),
+              planName: planSelectorUtils.stripPlanInterval(targetPlan.name),
             });
             return;
           }

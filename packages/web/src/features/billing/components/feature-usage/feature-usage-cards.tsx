@@ -35,10 +35,10 @@ export function FeatureUsageCards({
 function UsageMetricCard({ metric }: { metric: UsageMetric }) {
   const Icon = metric.icon;
   const isUnlimited = isNil(metric.included);
-  const percent =
-    isUnlimited || metric.included! <= 0
-      ? 0
-      : Math.min(100, Math.round((metric.used / metric.included!) * 100));
+  const percent = billingUtils.percentUsed({
+    used: metric.used,
+    total: metric.included,
+  });
 
   return (
     <div className="flex flex-col gap-4 rounded-xl bg-muted/30 p-5">

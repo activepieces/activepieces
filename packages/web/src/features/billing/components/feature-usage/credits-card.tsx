@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { PlanName, PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
@@ -12,15 +12,15 @@ const CARD_DATE_FORMAT = 'D MMM YYYY, h:mm A';
 
 export const CreditsCard = ({ info }: CreditsCardProps) => {
   const { plan, usage } = info;
-  const isPaid = !isNil(plan.plan) && plan.plan !== PlanName.FREE;
+  const isPaid = billingUtils.isPaidPlan(plan.plan);
   const remaining = usage.creditsRemaining;
   const isUnlimited = isNil(remaining);
   const total = plan.includedCredits;
   const used = isUnlimited ? usage.creditsUsed : Math.max(0, total - remaining);
-  const percentUsed =
-    isUnlimited || total <= 0
-      ? 0
-      : Math.min(100, Math.round((used / total) * 100));
+  const percentUsed = billingUtils.percentUsed({
+    used,
+    total: isUnlimited ? null : total,
+  });
   const footer = resolveFooter({ info, isPaid });
   const switchesToPlanName =
     info.scheduledPlanName ??

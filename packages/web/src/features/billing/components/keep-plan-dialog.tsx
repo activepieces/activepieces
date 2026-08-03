@@ -32,7 +32,7 @@ export function KeepPlanDialog({
   const apiPlan = plans?.find((plan) => plan.id === info.plan.plan);
   const planName =
     info.autumnPlanName ??
-    (isNil(apiPlan) ? '' : planSelectorUtils.cleanName(apiPlan));
+    (isNil(apiPlan) ? '' : planSelectorUtils.stripPlanInterval(apiPlan.name));
   const priceLabel = isNil(apiPlan?.price)
     ? apiPlan?.priceDisplay ?? null
     : `$${apiPlan.price.toLocaleString()}${

@@ -1,11 +1,12 @@
-import { isNil } from '@activepieces/core-utils';
-import { PlanName, PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import nonFreePlanBg from '@/assets/img/custom/non-free-plan-bg.jpg';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+import { billingUtils } from '../utils/billing-utils';
 
 type CurrentSubscriptionCardProps = {
   info: PlatformBillingInformation;
@@ -16,7 +17,7 @@ export const CurrentSubscriptionCard = ({
   info,
   onExplorePlans,
 }: CurrentSubscriptionCardProps) => {
-  const isPaid = !isNil(info.plan.plan) && info.plan.plan !== PlanName.FREE;
+  const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = info.plan.plan?.endsWith('_annual') ?? false;
 
   if (isPaid) {
@@ -62,11 +63,8 @@ export const CurrentSubscriptionCard = ({
 };
 
 function planTitle(info: PlatformBillingInformation): string {
-  if (isNil(info.plan.plan) || info.plan.plan === PlanName.FREE) {
+  if (!billingUtils.isPaidPlan(info.plan.plan)) {
     return t('Free plan');
   }
-  const base = (info.autumnPlanName ?? info.plan.plan)
-    .replace(/\s*\((annual|monthly|yearly)\)\s*/i, '')
-    .trim();
-  return t('{plan} plan', { plan: base });
+  return t('{plan} plan', { plan: info.autumnPlanName ?? info.plan.plan });
 }
