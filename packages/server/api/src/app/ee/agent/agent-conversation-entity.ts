@@ -9,7 +9,7 @@ type AgentConversationWithRelations = AgentConversation & {
 }
 
 export const AgentConversationEntity = new EntitySchema<AgentConversationWithRelations>({
-    name: 'agent_conversation',
+    name: 'chat_conversation',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -61,11 +61,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
     },
     indices: [
         {
-            name: 'idx_agent_conversation_platform_user_created_id',
+            name: 'idx_chat_conversation_platform_user_created_id',
             columns: ['platformId', 'userId', 'created', 'id'],
         },
         {
-            name: 'idx_agent_conversation_streaming_updated',
+            name: 'idx_chat_conversation_streaming_updated',
             columns: ['updated'],
             where: `status = '${AgentConversationStatus.STREAMING}'`,
         },
@@ -78,7 +78,7 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
-                foreignKeyConstraintName: 'fk_agent_conversation_platform_id',
+                foreignKeyConstraintName: 'fk_chat_conversation_platform_id',
             },
         },
         project: {
@@ -88,7 +88,7 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             onDelete: 'SET NULL',
             joinColumn: {
                 name: 'projectId',
-                foreignKeyConstraintName: 'fk_agent_conversation_project_id',
+                foreignKeyConstraintName: 'fk_chat_conversation_project_id',
             },
         },
         user: {
@@ -98,7 +98,7 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'userId',
-                foreignKeyConstraintName: 'fk_agent_conversation_user_id',
+                foreignKeyConstraintName: 'fk_chat_conversation_user_id',
             },
         },
     },
