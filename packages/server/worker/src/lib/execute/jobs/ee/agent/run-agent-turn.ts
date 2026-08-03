@@ -1,6 +1,6 @@
 import { AIProviderName, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
-import { aiProviderUtils, AgentPhase, agentToolClassification, agentToolPhases, PersistedAgentPart } from '@activepieces/shared'
+import { AgentPhase, agentToolClassification, agentToolPhases, aiProviderUtils, PersistedAgentPart } from '@activepieces/shared'
 import { generateText, isLoopFinished, LanguageModel, LanguageModelUsage, ModelMessage, stepCountIs, StopCondition, streamText, ToolCallOptions, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
@@ -285,6 +285,7 @@ export async function runAgentTurn({ slots, systemPrompt, messages, tier, phaseS
         totalInputTokens,
         totalOutputTokens,
         toolCalls,
+        completedSlotIndex: slotIndex,
     }
 }
 
@@ -452,4 +453,5 @@ export type AgentTurnResult = {
     totalInputTokens: number
     totalOutputTokens: number
     toolCalls: AgentTurnToolCall[]
+    completedSlotIndex: number
 }

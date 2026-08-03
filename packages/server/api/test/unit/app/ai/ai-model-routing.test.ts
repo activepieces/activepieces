@@ -62,6 +62,22 @@ describe('validateTiersAgainstProviders', () => {
     })
 })
 
+describe('pairFastSlot', () => {
+    const fastSlots = [slot(AIProviderName.OPENAI, 'fast-A'), slot(AIProviderName.OPENAI, 'fast-B'), slot(AIProviderName.AZURE, 'fast-C')]
+
+    it('prefers the fast slot at the same position when providers match', () => {
+        expect(aiModelRoutingResolution.pairFastSlot({ fastSlots, provider: AIProviderName.OPENAI, slotIndex: 1 })?.modelId).toBe('fast-B')
+    })
+
+    it('falls back to the first same-provider fast slot when positions differ', () => {
+        expect(aiModelRoutingResolution.pairFastSlot({ fastSlots, provider: AIProviderName.OPENAI, slotIndex: 2 })?.modelId).toBe('fast-A')
+    })
+
+    it('returns undefined when no fast slot shares the provider', () => {
+        expect(aiModelRoutingResolution.pairFastSlot({ fastSlots, provider: AIProviderName.ANTHROPIC, slotIndex: 0 })).toBeUndefined()
+    })
+})
+
 describe('deriveDefaultTiers', () => {
     it('derives single-provider tiers matching todays per-provider resolution', () => {
         const chatProvider: GetProviderConfigResponse = {

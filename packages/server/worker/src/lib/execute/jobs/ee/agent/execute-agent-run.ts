@@ -247,7 +247,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 outputTokens: totalOutputTokens,
                 ...spreadIfDefined('cacheReadTokens', usage?.inputTokenDetails?.cacheReadTokens),
                 ...spreadIfDefined('cacheWriteTokens', usage?.inputTokenDetails?.cacheWriteTokens),
-                provider: primaryProvider,
+                provider: slots[turn.completedSlotIndex]?.provider ?? primaryProvider,
+                aiRouting: { tier: config.tier.id, slot: turn.completedSlotIndex },
                 finishReason: turn.finishReason,
                 truncatedAfterRetries,
             }, 'Chat message completed')

@@ -46,7 +46,7 @@ export const aiModelRoutingService = (log: FastifyBaseLogger) => ({
         const providerConfigs = await fetchProviderConfigs({ platformId, providers: slots.map((slot) => slot.provider), log })
         const fastSlots = [row.tiers.fast.main, row.tiers.fast.backup1, row.tiers.fast.backup2]
         const resolved: ResolvedRoutingSlot[] = []
-        for (const slot of slots) {
+        for (const [slotIndex, slot] of slots.entries()) {
             const providerConfig = providerConfigs.get(slot.provider)
             if (isNil(providerConfig)) {
                 log.warn({ aiRouting: { tier: tierId, provider: slot.provider } }, '[aiModelRouting] skipping slot, provider no longer configured')
@@ -57,12 +57,23 @@ export const aiModelRoutingService = (log: FastifyBaseLogger) => ({
                 modelId: slot.modelId,
                 auth: providerConfig.auth,
                 config: providerConfig.config,
-                fastModelId: fastSlots.find((fastSlot) => fastSlot.provider === slot.provider)?.modelId,
+                fastModelId: pairFastSlot({ fastSlots, provider: slot.provider, slotIndex })?.modelId,
             })
         }
         return resolved
     },
 })
+
+// The step-0 fast model must be same-provider as its slot (provider options and prompt caching key
+// off the slot's provider). Prefer the fast-tier slot at the SAME position — the admin's intended
+// pairing — and only then any same-provider fast slot.
+function pairFastSlot({ fastSlots, provider, slotIndex }: { fastSlots: AiRoutingSlot[], provider: AIProviderName, slotIndex: number }): AiRoutingSlot | undefined {
+    const positional = fastSlots[slotIndex]
+    if (positional?.provider === provider) {
+        return positional
+    }
+    return fastSlots.find((fastSlot) => fastSlot.provider === provider)
+}
 
 function findTier({ tierId }: { tierId: string | null }) {
     return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
@@ -153,4 +164,5 @@ export const aiModelRoutingResolution = {
     resolveModelIdForProvider,
     deriveDefaultTiers,
     validateTiersAgainstProviders,
+    pairFastSlot,
 }
