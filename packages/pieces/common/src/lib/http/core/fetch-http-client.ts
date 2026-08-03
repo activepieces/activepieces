@@ -4,6 +4,7 @@ import { DelegatingAuthenticationConverter } from './delegating-authentication-c
 import { HttpError } from './http-error';
 import { HttpHeaders } from './http-headers';
 import { HttpMessageBody } from './http-message-body';
+import { HttpMethod } from './http-method';
 import { HttpRequest } from './http-request';
 import { HttpRequestBody } from './http-request-body';
 import { HttpResponse } from './http-response';
@@ -40,7 +41,9 @@ export class FetchHttpClient extends BaseHttpClient {
     const followRedirects = request.followRedirects ?? true;
     const retries = request.retries ?? 0;
 
-    const { body, extraHeaders, isStream } = serializeBody(request.body, headers);
+    const { body, extraHeaders, isStream } = acceptsRequestBody(request.method)
+      ? serializeBody(request.body, headers)
+      : { body: undefined, extraHeaders: {}, isStream: false };
     const finalHeaders = normalizeHeaders({ ...headers, ...extraHeaders });
 
     const response = await sendWithRetries(async () => {
@@ -86,6 +89,10 @@ export class FetchHttpClient extends BaseHttpClient {
       body: responseBody as ResponseBody,
     };
   }
+}
+
+function acceptsRequestBody(method: HttpMethod): boolean {
+  return method !== HttpMethod.GET && method !== HttpMethod.HEAD;
 }
 
 function serializeBody(
