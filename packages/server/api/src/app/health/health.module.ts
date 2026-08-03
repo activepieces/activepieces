@@ -1,4 +1,4 @@
-import { GetDiagnosticsResponse, GetSystemHealthChecksResponse, PlatformMetricsHealthHistory, PlatformMetricsLive, PlatformMetricsReport, PlatformMetricsReportRequest, PrincipalType } from '@activepieces/shared'
+import { GetDiagnosticsQuery, GetDiagnosticsResponse, GetSystemHealthChecksResponse, PlatformMetricsHealthHistory, PlatformMetricsLive, PlatformMetricsReport, PlatformMetricsReportRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -48,7 +48,10 @@ const healthController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/diagnostics', GetDiagnosticsRequest, async (request) => {
-        return healthStatusService(app.log).getDiagnostics(request.principal.platform.id)
+        return healthStatusService(app.log).getDiagnostics({
+            platformId: request.principal.platform.id,
+            includeRecentFailures: request.query.recentFailures === 'true',
+        })
     })
 }
 
@@ -108,7 +111,8 @@ const GetDiagnosticsRequest = {
     },
     schema: {
         tags: ['health'],
-        description: 'Server-measured infra round-trip latency (db/redis/storage) + effective config',
+        description: 'Server-measured infra round-trip latency (db/redis/storage) + effective config. Pass recentFailures=true to include the last 24h of failed production runs with their causes (opt-in: the scan is skipped for cheap polling).',
+        querystring: GetDiagnosticsQuery,
         response: {
             200: GetDiagnosticsResponse,
         },

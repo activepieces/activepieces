@@ -98,7 +98,13 @@ export const GetDiagnosticsResponse = z.object({
         lookbackHours: z.number(),
         total: z.number(),
         samples: z.array(DiagnosticsRecentFailure),
-    }),
+    }).optional(),
+})
+
+// The failure scan is opt-in: diagnostics is polled every few seconds by benchmark samplers,
+// and the scan's queries would both load the DB mid-benchmark and skew the measured db latency.
+export const GetDiagnosticsQuery = z.object({
+    recentFailures: z.enum(['true', 'false']).optional(),
 })
 
 export type ReleaseHealth = z.infer<typeof ReleaseHealth>
@@ -107,5 +113,6 @@ export type InfraCheck = z.infer<typeof InfraCheck>
 export type DeploymentConfig = z.infer<typeof DeploymentConfig>
 export type DiagnosticsWorker = z.infer<typeof DiagnosticsWorker>
 export type DiagnosticsRecentFailure = z.infer<typeof DiagnosticsRecentFailure>
+export type GetDiagnosticsQuery = z.infer<typeof GetDiagnosticsQuery>
 export type AppInstance = z.infer<typeof AppInstance>
 export type GetDiagnosticsResponse = z.infer<typeof GetDiagnosticsResponse>
