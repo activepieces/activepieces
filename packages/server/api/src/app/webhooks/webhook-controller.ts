@@ -140,7 +140,6 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
 const WEBHOOK_PARAMS = {
     config: {
         security: securityAccess.public(),
-        rawBody: true,
     },
     schema: {
         params: WebhookUrlParams,

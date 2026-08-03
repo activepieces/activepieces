@@ -54,11 +54,11 @@ Every event is delivered as an HTTP POST with a JSON body. The top-level fields 
 - **Enterprise Edition**: Event Streaming requires an enterprise plan with Audit Logs enabled.
 - **Platform admin**: only platform admins can configure destinations.
 - **HTTPS endpoint**: webhook URLs must use HTTPS.
-- **Publicly accessible**: your endpoint must be reachable from the internet.
+- **Publicly accessible**: external endpoints must be reachable from your Activepieces server. Handler flows on this same instance are delivered internally, so they work even when the instance is not publicly reachable (for example, behind an internal load balancer).
 
 ## Troubleshooting
 
-- **Events not received**: verify your endpoint is publicly accessible and returns 2xx status codes.
+- **Events not received**: for external endpoints, verify they are reachable from your server and return 2xx status codes. For a handler flow on this instance, make sure the flow is published and enabled.
 - **Test fails**: check that your URL is valid and uses HTTPS.
 - **Missing events**: make sure the event type is selected in your destination configuration.
 

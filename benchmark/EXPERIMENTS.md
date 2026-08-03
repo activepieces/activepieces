@@ -205,3 +205,82 @@ giving up during churn; the runs themselves all succeeded.)
 - Scale-down is lossless and sub-second — aggressive scale-down policies are safe.
 - For sync webhooks (30 s budget) the new-node path cannot arrive in time: keep min replicas at
   the sync peak, autoscale the burst headroom above it (matches `production-setup.mdx`).
+
+---
+
+## Experiment 3 — GKE fleet scaling at 1:10 (40 → 160 workers)
+
+**Question.** At the recommended 1:10 app-to-worker ratio, how does warm throughput scale as the
+fleet grows from 40 to 160 workers, and which tier runs out first?
+
+### Rig
+
+| Component | Configuration |
+|---|---|
+| Cluster | GKE, `n2-standard-16` × 10 nodes, `europe-west1-b`, `pd-standard` boot disks |
+| Worker | concurrency 1, `SANDBOX_CODE_ONLY`, hard cap **0.5 vCPU / 1 GB**, `AP_REUSE_SANDBOX=true`. Idle RSS ~145 Mi |
+| App | `1 vCPU / 1 GB` per pod |
+| Object store | GCS `europe-west1` over the S3-interop endpoint, SigV4 presigned URLs |
+| Postgres / Redis | In-cluster singletons: PG 3 vCPU / 3 GB, `max_connections=2000`, fsync off, data dir on tmpfs; Redis 2 vCPU / 2 GB, `io-threads 4` |
+| Images | Built from `origin/main` @ `805cc53cf7` (v0.86.3) |
+| Load tool | [`hey`](https://github.com/rakyll/hey) **in a pod inside the cluster**, against the `app` Service. `-c` = worker count, 400 requests per worker, preceded by an unmeasured warmup |
+
+### How to reproduce
+
+```bash
+WORKER_REPLICAS=160 APP_REPLICAS=16 REUSE_SANDBOX=true APP_CPU=1000m \
+  benchmark/run-gke.sh 64000 160
+```
+
+### Results
+
+| Apps · Workers | Warm req/s | req/s per worker | PG CPU | Redis CPU | App CPU/pod | Worker CPU/pod | `sandbox run` |
+|---|---|---|---|---|---|---|---|
+| 4 · 40   | 213.0 | 5.3 | 529m  | 123m | 537m | 81m | 166.8 ms |
+| 8 · 80   | 484.4 | **6.1** | 1096m | 256m | 523m | 82m | 146.3 ms |
+| 12 · 120 | 641.0 | 5.3 | 1689m | 337m | 599m | 92m | 166.6 ms |
+| 16 · 160 | 777.0 | 4.9 | 2738m | 781m | 611m | 91m | 181.0 ms |
+
+160,000 requests total, **all 200**. Cold boot 885–998 ms at every tier (no degradation with fleet size).
+Warm provision 0.4–0.5 ms and sandbox boot ~0 ms throughout — the cache is local and the process is reused,
+so `sandbox run` is essentially the whole worker-busy time.
+
+### Findings
+
+- **Throughput keeps rising but sub-linearly**: 3.6× for 4× the fleet. Per-worker rate peaks at 80
+  workers (6.1) and falls ~20% by 160 (4.9).
+- **Database CPU scales with throughput**: 529m → 2738m, i.e. 5.2× CPU for 4× workers. Cost per unit
+  work is near-constant (~2.5m per req/s), so it grows with *throughput*, not fleet size. Redis behaves
+  the same way. **Caveat**: only the worker has a CPU *limit* here; PG/Redis/app declare *requests* they
+  may burst past, so these are consumption figures, not saturation. This run shows the workers are NOT
+  the limit (≤0.1 of a hard 0.5-core cap); it does not prove the database is. Confirming that needs a
+  hard-limited PG + wait-event analysis.
+- **Workers and apps are not the constraint**: workers ≤0.1 of their 0.5-core cap at every tier; apps
+  flat at ~0.52–0.61 of a core because 1:10 adds app capacity in step. The 1:10 ratio holds up.
+- The PG singleton here is *over*-provisioned (fsync off, tmpfs). A managed 2 vCPU / 4 GB Postgres with
+  real durability will hit its ceiling **earlier** than this rig did.
+
+### Methodology trap — generate load in-cluster
+
+Driving this from a workstation over the public LoadBalancer **fabricates a cliff at 120 workers**.
+macOS offers ~16k ephemeral ports (49152–65535); 48,000 requests at concurrency 120 exhausts them and
+`hey` fails with `can't assign requested address`, reporting 252 req/s — *lower* than the 80-worker tier —
+while the cluster sits healthy. At 160 the box could not resolve DNS at all. External and in-cluster runs
+agree at 40 workers (214.7 vs 213.0) and diverge above 80. Any "cliff" measured from a laptop should be
+assumed to be the laptop until reproduced in-cluster.
+
+### Rig bugs fixed during this run
+
+- `run-gke.sh` minted a fresh random `AP_JWT_SECRET` per run but restarted only the worker. `envFrom` is
+  read once at container start, so app pods kept the old secret and every worker socket handshake failed
+  with `Authentication error` — and workers do not recover from it. Symptom: pods `Running`, fleet
+  "ready", nothing consuming jobs, flow publish dying after 300 s. Fix: restart app, **wait for its
+  rollout**, then restart workers.
+- The per-run breakdown parsed JSON, but the worker ignores `AP_LOG_PRETTY` and always uses the pretty
+  renderer, so it silently reported "no timing samples". Now parses the `<name>Ms` keys from either shape.
+- The breakdown scraped `--since=20m`, folding cold boot and warmup into "warm" averages. Now scoped to
+  the measured pass via `--since-time`.
+- Committed manifest pointed at bucket `ap-bench-usc-b3803` / `us-central1` (deleted) while its own
+  comments and the docs said `europe-west1`; `ZONE` defaulted to `us-central1-a` and `APP_CPU` to `1500m`.
+- `SSD_TOTAL_GB` (500 GB regional) — not CPU — is what blocks a 10-node `n2-standard-16` cluster with
+  default `pd-balanced` disks. Use `--disk-type pd-standard`.

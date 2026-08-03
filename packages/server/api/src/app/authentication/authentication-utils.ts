@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, PlatformRole, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, PlatformRole, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -202,11 +202,19 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         projectId,
     }: SendTelemetryParams): Promise<void> {
         try {
-            const { email, firstName, lastName } = identity
             await telemetry(log).identify(identity, user)
             await telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.SIGNED_UP,
-                payload: { userId: user.id, email, firstName, lastName, projectId },
+                payload: {
+                    userId: user.id,
+                    projectId,
+                    ...pickTelemetryPii({
+                        edition: system.getEdition(),
+                        email: identity.email,
+                        firstName: identity.firstName,
+                        lastName: identity.lastName,
+                    }),
+                },
             })
         }
         catch (e) {

@@ -70,8 +70,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         },
                     })
 
-                    await Promise.all(operation.tableState.fields.map(async (field) => {
-                        await fieldService.createFromState({ projectId, field, tableId: table.id })
+                    await fieldService.validateCount({ projectId, tableId: table.id, insertCount: operation.tableState.fields.length })
+                    await Promise.all(operation.tableState.fields.map(async (field, position) => {
+                        await fieldService.createFromState({ projectId, field, tableId: table.id, position })
                     }))
                     break
                 }
@@ -89,7 +90,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         tableId: table.id,
                     })
 
-                    await Promise.all(operation.newTableState.fields.map(async (field) => {
+                    const newFieldsCount = operation.newTableState.fields.filter((field) => !fields.some((f) => f.externalId === field.externalId)).length
+                    await fieldService.validateCount({ projectId, tableId: table.id, insertCount: newFieldsCount })
+                    await Promise.all(operation.newTableState.fields.map(async (field, position) => {
                         const existingField = fields.find((f) => f.externalId === field.externalId)
                         if (!isNil(existingField)) {
                             await fieldService.update({
@@ -99,7 +102,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                             })
                         }
                         else {
-                            await fieldService.createFromState({ projectId, field, tableId: table.id })
+                            await fieldService.createFromState({ projectId, field, tableId: table.id, position })
                         }
                     }))
 

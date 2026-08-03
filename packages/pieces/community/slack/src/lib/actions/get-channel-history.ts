@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { channelHistoryActionOutputSchema } from '../output-schemas';
 
 export const getChannelHistory = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -11,8 +12,9 @@ export const getChannelHistory = createAction({
   displayName: 'Get channel history',
   description:
     'Retrieve all messages from a specific channel ("conversation") between specified timestamps',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieve top-level messages from a known channel, paging through the full range and optionally bounded by oldest/latest timestamps; read-only and repeatable. Use this to read a channel you already have the ID for; use Search messages to find messages by content across the workspace, or Retrieve Thread Messages to read replies within a thread.', idempotent: true },
+  outputSchema: channelHistoryActionOutputSchema,
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),

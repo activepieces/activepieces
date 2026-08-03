@@ -1,5 +1,5 @@
 import { apId, ProjectRole } from '@activepieces/core-utils'
-import { DefaultProjectRole, PiecesFilterType } from '@activepieces/shared'
+import { DefaultProjectRole, PieceSelectionMode, PiecesFilterType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Redis } from 'ioredis'
@@ -9,10 +9,8 @@ import { distributedStore, redisConnections } from '../../../../src/app/database
 import { generateMockExternalToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
-    createMockPieceTag,
     createMockProject,
     createMockSigningKey,
-    createMockTag,
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
@@ -139,17 +137,17 @@ describe('Managed Authentication API', () => {
             })
             await db.save('signing_key', mockSigningKey)
 
-            // A tag maps to a named piece set (externalId = tag name), created by the backfill migration.
+            // A tag maps to a named piece set (key = tag name), created by the backfill migration.
             const tagSet = {
                 id: apId(),
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
                 platformId: mockPlatform.id,
                 name: 'free',
-                externalId: 'free',
+                key: 'free',
                 isDefault: false,
                 generatedForProjectId: null,
-                config: { pieces: { mode: 'exclude_all', exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
             }
             await db.save('piece_set', tagSet)
 
@@ -181,7 +179,7 @@ describe('Managed Authentication API', () => {
             expect(project?.pieceSetId).toBe(tagSet.id)
         })
 
-        it('Upserts the legacy tag-based project plan when managePiecesEnabled is false', async () => {
+        it('Assigns the named piece set even when managePiecesEnabled is false (flag gates management, not enforcement)', async () => {
             // arrange — mocks default managePiecesEnabled to false
             const { mockPlatform } = await mockAndSaveBasicSetup()
 
@@ -190,14 +188,18 @@ describe('Managed Authentication API', () => {
             })
             await db.save('signing_key', mockSigningKey)
 
-            const mockTag = createMockTag({ platformId: mockPlatform.id, name: 'free' })
-            await db.save('tag', mockTag)
-            const mockPieceTag = createMockPieceTag({
+            const tagSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
                 platformId: mockPlatform.id,
-                tagId: mockTag.id,
-                pieceName: '@activepieces/piece-slack',
-            })
-            await db.save('piece_tag', mockPieceTag)
+                name: 'free',
+                key: 'free',
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await db.save('piece_set', tagSet)
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -222,12 +224,56 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const projectPlan = await db.findOneBy<{ pieces: string[], piecesFilterType: string }>('project_plan', { projectId: responseBody?.projectId })
-            expect(projectPlan?.piecesFilterType).toBe(PiecesFilterType.ALLOWED)
-            expect(projectPlan?.pieces).toEqual(['@activepieces/piece-slack'])
+            const project = await db.findOneBy<{ pieceSetId: string }>('project', { id: responseBody?.projectId })
+            expect(project?.pieceSetId).toBe(tagSet.id)
+        })
 
-            const project = await db.findOneBy<{ pieceSetId: string | null }>('project', { id: responseBody?.projectId })
-            expect(project?.pieceSetId).toBeNull()
+        it('Assigns the named piece set referenced by a v4 token pieceSet field', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+            })
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await db.save('signing_key', mockSigningKey)
+
+            const namedSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'premium',
+                key: 'premium',
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@ap/a'] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await db.save('piece_set', namedSet)
+
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+                pieceSetKey: 'premium',
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: {
+                    externalAccessToken: mockExternalToken,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const project = await db.findOneBy<{ pieceSetId: string }>('project', { id: responseBody?.projectId })
+            expect(project?.pieceSetId).toBe(namedSet.id)
         })
 
         it('Adds new user as a member in new project', async () => {

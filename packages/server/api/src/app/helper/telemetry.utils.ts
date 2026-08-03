@@ -1,6 +1,6 @@
 import { AIProviderName, ProjectId, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, FlowRunStatus, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, FlowRunStatus, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformService } from '../platform/platform.service'
@@ -15,10 +15,14 @@ function getPostHog(): PostHog {
     if (!posthogInstance) {
         posthogInstance = new PostHog('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
             host: 'https://us.i.posthog.com',
+            maxQueueSize: BILLING_EVENTS_MAX_QUEUE_SIZE,
         })
     }
     return posthogInstance
 }
+
+export const BILLING_EVENTS_FLUSH_BATCH_SIZE = 10_000
+const BILLING_EVENTS_MAX_QUEUE_SIZE = 20_000
 
 export const telemetry = (log: FastifyBaseLogger) => ({
     async identify(identity: UserIdentity, user?: User, projectId?: ProjectId): Promise<void> {
@@ -28,9 +32,12 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         getPostHog().identify({
             distinctId: user?.id ?? identity.id,
             properties: {
-                email: identity.email,
-                firstName: identity.firstName,
-                lastName: identity.lastName,
+                ...pickTelemetryPii({
+                    edition: system.getEdition(),
+                    email: identity.email,
+                    firstName: identity.firstName,
+                    lastName: identity.lastName,
+                }),
                 projectId,
                 firstSeenAt: user?.created ?? identity.created,
                 ...(await getMetadata()),
@@ -81,12 +88,34 @@ export function captureBillingEvent({ licenseKey, event, properties }: CaptureBi
         properties,
     })
 }
+export async function flushBillingEvents(): Promise<void> {
+    if (posthogInstance !== null) {
+        await posthogInstance.flush()
+    }
+}
 
 export async function shutdownTelemetry(): Promise<void> {
     if (posthogInstance) {
         await posthogInstance.shutdown()
     }
 }
+
+const DEDUPE_MAX_ENTRIES = 50_000
+const dailyEventDedupe = new Map<string, string>()
+
+function onceToday(key: string): boolean {
+    const today = new Date().toISOString().slice(0, 10)
+    if (dailyEventDedupe.get(key) === today) {
+        return false
+    }
+    if (dailyEventDedupe.size >= DEDUPE_MAX_ENTRIES) {
+        dailyEventDedupe.clear()
+    }
+    dailyEventDedupe.set(key, today)
+    return true
+}
+
+export const telemetryDedupe = { onceToday }
 
 async function getMetadata() {
     const currentVersion = apVersionUtil.getCurrentRelease()

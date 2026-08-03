@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream'
 import { EngineGenericError, FileSizeError } from '@activepieces/shared'
 import { createFileUploader } from '../../src/lib/piece-context/file-uploader'
 
@@ -17,21 +18,35 @@ describe('file-uploader service', () => {
         const files = createFileUploader(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: {} as any }),
-        ).rejects.toThrow('Expected file data to be a Buffer, but received [object Object]')
+        ).rejects.toThrow('Expected file data to be a Buffer or Readable stream, but received [object Object]')
     })
 
     it('throws when data is a string', async () => {
         const files = createFileUploader(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: 'hello' as any }),
-        ).rejects.toThrow('Expected file data to be a Buffer, but received string')
+        ).rejects.toThrow('Expected file data to be a Buffer or Readable stream, but received string')
     })
 
     it('throws when data is undefined', async () => {
         const files = createFileUploader(SERVICE_PARAMS)
         await expect(
             files.write({ fileName: 'test.txt', data: undefined as any }),
-        ).rejects.toThrow('Expected file data to be a Buffer, but received undefined')
+        ).rejects.toThrow('Expected file data to be a Buffer or Readable stream, but received undefined')
+    })
+
+    it('accepts a Readable stream and returns the read url', async () => {
+        const readUrl = 'https://api.example.com/v1/files/stream1?token=xyz'
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify({ fileId: 'stream1', readUrl }),
+            { status: 200, headers: { 'x-ap-file-read-url': readUrl } },
+        ))
+
+        const files = createFileUploader(SERVICE_PARAMS)
+        const result = await files.write({ fileName: 'stream.txt', data: Readable.from(Buffer.from('streamed')) })
+
+        expect(result).toBe(readUrl)
+        expect(global.fetch).toHaveBeenCalledTimes(1)
     })
 
     it('throws when file exceeds size limit', async () => {

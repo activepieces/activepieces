@@ -15,6 +15,7 @@ import {
 import dayjs from 'dayjs';
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
+import { discordNewMemberTriggerOutputSchema } from '../output-schemas';
 
 interface Member {
   user: {
@@ -59,6 +60,7 @@ export const newMember = createTrigger({
     description: 'Fires when a new member joins the specified Discord guild (server), emitting one event per joining member with their user details. Polls the guild member list periodically, so detection is near-real-time rather than instant.',
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: discordNewMemberTriggerOutputSchema,
   props: {
     limit: Property.Number({
       displayName: 'Limit',

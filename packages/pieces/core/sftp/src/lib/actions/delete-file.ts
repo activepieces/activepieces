@@ -14,11 +14,12 @@ async function deleteFileFromSFTP(client: Client, filePath: string) {
 }
 
 export const deleteFileAction = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: sftpAuth,
   name: 'deleteFile',
   displayName: 'Delete file',
   description: 'Deletes a file at given path.',
+  aiMetadata: { description: 'Permanently deletes a single file at a given remote path on the connected FTP, FTPS or SFTP server. Use this for one file; use Delete Folder to remove a directory, optionally with all of its contents. Requires the exact remote path (e.g. ./myfolder/test.mp3) and there is no recycle bin or undo; idempotent in that it converges on the file being absent, though a repeat call on an already-missing path reports an error.', idempotent: true },
   props: {
     filePath: Property.ShortText({
       displayName: 'File Path',

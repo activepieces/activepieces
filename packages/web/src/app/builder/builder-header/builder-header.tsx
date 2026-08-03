@@ -187,7 +187,9 @@ export const BuilderHeader = () => {
           {t('Support')}
         </Button>
       )}
-      <ActiveUsersWidget resourceId={flow.id} />
+      {!embedState.hideActiveUsers && (
+        <ActiveUsersWidget resourceId={flow.id} />
+      )}
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"

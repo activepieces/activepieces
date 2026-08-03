@@ -1,7 +1,8 @@
-import { ChatConversationStatus } from '@activepieces/shared'
+import { apId, ChatConversationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { chatHelpers } from '../../../../src/app/ee/chat/chat-helpers'
 import { db } from '../../../helpers/db'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -130,5 +131,62 @@ describe('Chat conversation stuck in STREAMING status', () => {
         const getError = await ctx.get(`${CONVERSATIONS_URL}/${errorConv.json().id}`)
         expect(getIdle.json().status).toBe(ChatConversationStatus.IDLE)
         expect(getError.json().status).toBe(ChatConversationStatus.ERROR)
+    })
+})
+
+describe('CHAT_STALE_SWEEP proactive recovery', () => {
+
+    it('sweeps a stale STREAMING conversation to IDLE without a read', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const conversationId = (await ctx.post(CONVERSATIONS_URL, { title: 'Sweep Me' })).json().id
+
+        await db.update('chat_conversation', conversationId, {
+            status: ChatConversationStatus.STREAMING,
+            updated: new Date(Date.now() - 5 * 60 * 1_000).toISOString(),
+        })
+
+        await chatHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        // Read straight from the DB (not via GET, which would itself recover) to prove the sweep did it.
+        const row = await db.findOneByOrFail<{ status: string }>('chat_conversation', { id: conversationId })
+        expect(row.status).toBe(ChatConversationStatus.IDLE)
+    })
+
+    it('leaves a fresh STREAMING conversation running', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const conversationId = (await ctx.post(CONVERSATIONS_URL, { title: 'Still Streaming' })).json().id
+
+        await db.update('chat_conversation', conversationId, {
+            status: ChatConversationStatus.STREAMING,
+            updated: new Date(Date.now() - 30 * 1_000).toISOString(),
+        })
+
+        await chatHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const row = await db.findOneByOrFail<{ status: string }>('chat_conversation', { id: conversationId })
+        expect(row.status).toBe(ChatConversationStatus.STREAMING)
+    })
+
+    it('skips eval conversations even when stale', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const seedId = (await ctx.post(CONVERSATIONS_URL, { title: 'seed' })).json().id
+        const seed = await db.findOneByOrFail<{ platformId: string, userId: string }>('chat_conversation', { id: seedId })
+
+        const evalId = `evalconv${apId()}`.slice(0, 21)
+        await db.save('chat_conversation', {
+            id: evalId,
+            platformId: seed.platformId,
+            userId: seed.userId,
+            status: ChatConversationStatus.STREAMING,
+            messages: [],
+        })
+        await db.update('chat_conversation', evalId, {
+            updated: new Date(Date.now() - 10 * 60 * 1_000).toISOString(),
+        })
+
+        await chatHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const row = await db.findOneByOrFail<{ status: string }>('chat_conversation', { id: evalId })
+        expect(row.status).toBe(ChatConversationStatus.STREAMING)
     })
 })

@@ -44,6 +44,16 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
     },
 
     async runScript({ script, scriptContext, functions }) {
+        const session = await v8IsolateCodeSandbox.createScriptSession({ scriptContext, functions })
+        try {
+            return await session.run(script)
+        }
+        finally {
+            session.dispose()
+        }
+    },
+
+    async createScriptSession({ scriptContext, functions }) {
         const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
@@ -55,16 +65,23 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
             })
 
             const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
-            const scriptWithFunctions = `${serializedFunctions}\n${script}`
+            if (serializedFunctions.length > 0) {
+                const setupScript = await isolate.compileScript(serializedFunctions)
+                await setupScript.run(isolateContext)
+            }
 
-            return await executeIsolate({
-                isolate,
-                isolateContext,
-                code: scriptWithFunctions,
-            })
+            return {
+                run: async (script: string) => executeIsolate({
+                    isolate,
+                    isolateContext,
+                    code: script,
+                }),
+                dispose: () => isolate.dispose(),
+            }
         }
-        finally {
+        catch (error) {
             isolate.dispose()
+            throw error
         }
     },
 }

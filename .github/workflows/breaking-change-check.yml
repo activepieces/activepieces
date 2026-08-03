@@ -1,0 +1,29 @@
+name: Breaking change check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  breaking-change-check:
+    name: Breaking change check
+    runs-on: ubuntu-latest
+    if: github.repository == 'activepieces/activepieces'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Check breaking-change declaration
+        env:
+          GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: bun tools/scripts/breaking-change-check.ts

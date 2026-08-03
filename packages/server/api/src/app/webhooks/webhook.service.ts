@@ -85,6 +85,12 @@ export const webhookService = {
         }
         const { flow } = flowExecutionResult
 
+        // data() consumes the request body stream (streaming any file straight to storage), which
+        // can only be read once. The handshake check and the payload resolution below both need it,
+        // so memoize — a second call would stream an empty body and hand the run a 0-byte file URL.
+        let resolvedDataPromise: Promise<EventPayload> | undefined
+        const resolveData = (): Promise<EventPayload> => (resolvedDataPromise ??= data(flow.projectId))
+
         wideEvent.set({
             webhook: {
                 flowFound: true,
@@ -100,7 +106,7 @@ export const webhookService = {
         // re-verification). Checking before the DISABLED guard handles both cases.
         if (!isNil(flowExecutionResult.handshakeConfiguration)) {
             const response = await webhookHandshake.handleHandshakeRequest({
-                payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
+                payload: (payload ?? await resolveData()) as TriggerPayload,
                 handshakeConfiguration: flowExecutionResult.handshakeConfiguration,
                 flowId: flow.id,
                 flowVersionId: flowVersionIdToRun,
@@ -136,7 +142,7 @@ export const webhookService = {
 
         pinoLogger.info('Adding webhook job to queue')
 
-        const resolvedPayload = payload ?? await data(flow.projectId)
+        const resolvedPayload = payload ?? await resolveData()
 
         const payloadSize = payloadOffloader.getPayloadSizeInBytes(resolvedPayload)
         if (payloadSize > MAX_PAYLOAD_SIZE_BYTES) {

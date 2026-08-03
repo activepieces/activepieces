@@ -60,6 +60,7 @@ export enum AppSystemProp {
     WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB = 'WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB',
     MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',
     OTEL_ENABLED = 'OTEL_ENABLED',
+    OTEL_QUEUE_METRICS_ENABLED = 'OTEL_QUEUE_METRICS_ENABLED',
     PAGE_ONCALL_WEBHOOK = 'PAGE_ONCALL_WEBHOOK',
     PAUSED_FLOW_TIMEOUT_DAYS = 'PAUSED_FLOW_TIMEOUT_DAYS',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
@@ -112,6 +113,7 @@ export enum AppSystemProp {
     SMTP_PORT = 'SMTP_PORT',
     SMTP_SENDER_EMAIL = 'SMTP_SENDER_EMAIL',
     SMTP_SENDER_NAME = 'SMTP_SENDER_NAME',
+    SMTP_TLS_REJECT_UNAUTHORIZED = 'SMTP_TLS_REJECT_UNAUTHORIZED',
     SMTP_USERNAME = 'SMTP_USERNAME',
     STRIPE_SECRET_KEY = 'STRIPE_SECRET_KEY',
     STRIPE_WEBHOOK_SECRET = 'STRIPE_WEBHOOK_SECRET',
@@ -157,8 +159,7 @@ export const environmentVariables = {
         return value ? value === 'true' : undefined
     },
     getEnvironment: (prop: AppSystemProp): string | undefined => {
-        const environmnetVariables = environmentMigrations.migrate()
-        return environmnetVariables['AP_' + prop]
+        return environmentMigrations.migrate('AP_' + prop)
     },
     getEnvironmentOrThrow: (prop: AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)
