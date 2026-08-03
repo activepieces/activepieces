@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { useState } from 'react';
 
+import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
 import {
   Tooltip,
   TooltipContent,
@@ -10,6 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { isStepFileUrl } from '@/lib/dom-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
 import { FormatValue, getValueByDotPath } from './format-value';
@@ -95,7 +97,9 @@ function SchemaListItemRow({
           {itemLabel}
         </span>
         <span className="flex-1 text-sm min-w-0 break-words whitespace-pre-wrap">
-          {isNil(item) ? (
+          {isStepFileUrl(item) ? (
+            <StepFileDownloadButton fileUrl={item} />
+          ) : isNil(item) ? (
             <span className="text-muted-foreground italic">{t('empty')}</span>
           ) : typeof item === 'object' ? (
             JSON.stringify(item)

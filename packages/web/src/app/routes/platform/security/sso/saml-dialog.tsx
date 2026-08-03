@@ -1,4 +1,3 @@
-import { ApErrorParams } from '@activepieces/core-utils';
 import {
   ApFlagId,
   PlatformWithoutSensitiveData,
@@ -218,7 +217,10 @@ const DomainStep = ({
     onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: extractServerErrorMessage(error, t("Couldn't save domain")),
+        message: api.extractServerErrorMessage(
+          error,
+          t("Couldn't save domain"),
+        ),
       });
       setShowUpdateWarning(false);
     },
@@ -245,7 +247,7 @@ const DomainStep = ({
     },
     onError: (error) => {
       toast.error(
-        extractServerErrorMessage(error, t("Couldn't verify domain")),
+        api.extractServerErrorMessage(error, t("Couldn't verify domain")),
       );
     },
   });
@@ -581,23 +583,6 @@ const VerificationRecordRow = ({
     </div>
   </div>
 );
-
-function extractServerErrorMessage(error: unknown, fallback: string): string {
-  if (api.isError(error)) {
-    const data = error.response?.data as ApErrorParams | undefined;
-    const message =
-      data?.params && 'message' in data.params
-        ? data.params.message
-        : undefined;
-    if (typeof message === 'string' && message.length > 0) {
-      return message;
-    }
-  }
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-  return fallback;
-}
 
 const SsoDomainFormValues = z.object({
   ssoDomain: z

@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-pr
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
 import { pieceInstallService } from '../../pieces/piece-install-service'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
@@ -34,6 +35,7 @@ const installPieceParams = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
+    preValidation: attachMultipartFieldsToBody,
     schema: {
         tags: ['pieces'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],

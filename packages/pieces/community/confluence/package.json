@@ -9,7 +9,8 @@
     "xml2js": "0.6.2",
     "form-data": "4.0.6",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@activepieces/core-utils": "workspace:*",
+    "zod": "4.3.6"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",

@@ -436,8 +436,9 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                         projectId,
                     },
                 })
-                await Promise.all(op.tableState.fields.map((field) =>
-                    fieldService.createFromState({ projectId, field, tableId: table.id }),
+                await fieldService.validateCount({ projectId, tableId: table.id, insertCount: op.tableState.fields.length })
+                await Promise.all(op.tableState.fields.map((field, position) =>
+                    fieldService.createFromState({ projectId, field, tableId: table.id, position }),
                 ))
                 applied.tablesCreated++
                 break
@@ -449,7 +450,9 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                     request: { name: op.newTableState.name },
                 })
                 const fields = await fieldService.getAll({ projectId, tableId: updated.id })
-                await Promise.all(op.newTableState.fields.map((field) => {
+                const newFieldsCount = op.newTableState.fields.filter((field) => !fields.some((f) => f.externalId === field.externalId)).length
+                await fieldService.validateCount({ projectId, tableId: updated.id, insertCount: newFieldsCount })
+                await Promise.all(op.newTableState.fields.map((field, position) => {
                     const existingField = fields.find((f) => f.externalId === field.externalId)
                     if (!isNil(existingField)) {
                         return fieldService.update({
@@ -458,7 +461,7 @@ async function runTableOp({ op, projectId, applied, failed }: RunTableOpParams):
                             request: field,
                         })
                     }
-                    return fieldService.createFromState({ projectId, field, tableId: updated.id })
+                    return fieldService.createFromState({ projectId, field, tableId: updated.id, position })
                 }))
                 const fieldsToDelete = fields.filter((f) =>
                     !op.newTableState.fields.some((nf) => nf.externalId === f.externalId),

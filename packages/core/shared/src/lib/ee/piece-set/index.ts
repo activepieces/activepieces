@@ -4,7 +4,7 @@ import { formErrors } from '../../form-errors'
 
 export function isPieceVisible({ pieces, name }: { pieces: PieceSelection, name: string }): boolean {
     const listed = pieces.exceptions.includes(name)
-    return pieces.mode === 'include_all' ? !listed : listed
+    return pieces.mode === PieceSelectionMode.INCLUDE_ALL ? !listed : listed
 }
 
 export function isComponentVisible({ selected, name }: { selected: string[] | undefined, name: string }): boolean {
@@ -14,17 +14,19 @@ export function isComponentVisible({ selected, name }: { selected: string[] | un
     return selected.includes(name)
 }
 
-export const PieceSelectionMode = z.enum(['include_all', 'exclude_all'])
-export type PieceSelectionMode = z.infer<typeof PieceSelectionMode>
+export enum PieceSelectionMode {
+    INCLUDE_ALL = 'include_all',
+    EXCLUDE_ALL = 'exclude_all',
+}
 
 export const PieceSelection = z.object({
-    mode: PieceSelectionMode.default('include_all'),
+    mode: z.enum([PieceSelectionMode.INCLUDE_ALL, PieceSelectionMode.EXCLUDE_ALL]).default(PieceSelectionMode.INCLUDE_ALL),
     exceptions: z.array(z.string()).default([]),
 })
 export type PieceSelection = z.infer<typeof PieceSelection>
 
 export const PieceSetConfig = z.object({
-    pieces: PieceSelection.default({ mode: 'include_all', exceptions: [] }),
+    pieces: PieceSelection.default({ mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }),
     selectedActions: z.record(z.string(), z.array(z.string())).default({}),
     selectedTriggers: z.record(z.string(), z.array(z.string())).default({}),
 })
@@ -34,7 +36,7 @@ export const PieceSet = z.object({
     ...BaseModelSchema,
     platformId: ApId,
     name: z.string(),
-    externalId: Nullable(z.string()),
+    key: Nullable(z.string()),
     isDefault: z.boolean(),
     generatedForProjectId: Nullable(ApId),
     config: PieceSetConfig,
@@ -49,13 +51,13 @@ export type ComponentIntent = z.infer<typeof ComponentIntent>
 
 export const CreatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }),
-    externalId: z.string().optional(),
+    key: z.string().optional(),
 })
 export type CreatePieceSetRequestBody = z.infer<typeof CreatePieceSetRequestBody>
 
 export const UpdatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }).optional(),
-    externalId: z.string().nullable().optional(),
+    key: z.string().optional(),
     pieces: PieceSelection.optional(),
     actions: z.record(z.string(), ComponentIntent).optional(),
     triggers: z.record(z.string(), ComponentIntent).optional(),

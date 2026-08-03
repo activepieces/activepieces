@@ -1,4 +1,4 @@
-import { PieceSet, Platform } from '@activepieces/shared'
+import { PieceSelectionMode, PieceSet, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -19,7 +19,7 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
         name: {
             type: String,
         },
-        externalId: {
+        key: {
             type: String,
             nullable: true,
         },
@@ -33,13 +33,13 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
         },
         config: {
             type: 'jsonb',
-            default: { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} },
+            default: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} },
         },
     },
     indices: [
         {
-            name: 'idx_piece_set_platform_id',
-            columns: ['platformId'],
+            name: 'idx_piece_set_platform_id_created_id',
+            columns: ['platformId', 'created', 'id'],
             unique: false,
         },
         {
@@ -49,9 +49,9 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
             unique: true,
         },
         {
-            name: 'idx_piece_set_platform_id_external_id',
-            columns: ['platformId', 'externalId'],
-            where: '"externalId" IS NOT NULL',
+            name: 'idx_piece_set_platform_id_key',
+            columns: ['platformId', 'key'],
+            where: '"key" IS NOT NULL',
             unique: true,
         },
     ],

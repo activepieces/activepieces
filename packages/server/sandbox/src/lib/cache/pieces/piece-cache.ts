@@ -1,12 +1,20 @@
 import path from 'path'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
 import { SandboxSettings } from '../../types'
 import { cacheUtils } from '../cache-paths'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
+import { isValidPackageName } from './piece-installer'
 
 export const pieceCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxSettings) => ({
     async getPiece({ pieceName, pieceVersion, platformId }: PieceCacheKey): Promise<PiecePackage> {
+        if (!isValidPackageName(pieceName)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Invalid pieceName: "${pieceName}" is not a valid package name` },
+            })
+        }
         const isExactVersion = EXACT_VERSION_REGEX.test(pieceVersion)
 
         if (!isExactVersion) {
@@ -85,7 +93,7 @@ async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContr
 }
 
 export class PieceNotFoundError extends Error {
-    constructor(pieceName: string, pieceVersion: string) {
+    constructor(readonly pieceName: string, readonly pieceVersion: string) {
         super(`Piece metadata not found for ${pieceName}@${pieceVersion}`)
         this.name = 'PieceNotFoundError'
     }

@@ -13,24 +13,26 @@ import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
 
-function getExecuteFunction(): Record<FlowActionType, BaseExecutor<FlowAction>> {
-    return {
+let executors: Record<FlowActionType, BaseExecutor<FlowAction>> | null = null
+
+// ponytail: lazy because router-executor imports this module back; a module-level
+// const would hit the circular import in TDZ depending on bundle order.
+function getExecutors(): Record<FlowActionType, BaseExecutor<FlowAction>> {
+    executors ??= {
         [FlowActionType.CODE]: codeExecutor,
         [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
         [FlowActionType.PIECE]: pieceExecutor,
         [FlowActionType.ROUTER]: routerExecuter,
     }
+    return executors
 }
 
 export const flowExecutor = {
     getExecutorForAction(type: FlowActionType): BaseExecutor<FlowAction> {
-        const executeFunction = getExecuteFunction()
-        const executor = executeFunction[type]
-
+        const executor = getExecutors()[type]
         if (isNil(executor)) {
             throw new EngineGenericError('ExecutorNotFoundError', `Executor not found for action type: ${type}`)
         }
-        
         return executor
     },
     async executeFromTrigger({ executionState, constants, input }: {
@@ -164,7 +166,7 @@ const applyLogSizeLimitIfExceeded = async (
     flowExecutionContext: FlowExecutorContext,
     action: FlowAction | FlowTrigger,
 ): Promise<FlowExecutorContext> => {
-    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps)) {
+    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.logSizeBytes)) {
         return flowExecutionContext
     }
     const failed = await flowExecutionContext

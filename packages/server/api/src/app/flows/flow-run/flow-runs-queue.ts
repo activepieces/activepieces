@@ -123,7 +123,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 const isPreCompleted = !isNil(latestWaitpoint)
                                     && latestWaitpoint.status === WaitpointStatus.COMPLETED
                                 if (isPreCompleted) {
-                                    await resumeService(log).resumeFromWaitpoint({
+                                    await resumeService(log).resumeFromWaitpointWithoutLock({
                                         flowRunId: savedFlowRun.id,
                                         waitpointId: latestWaitpoint.id,
                                         resumePayload: latestWaitpoint.resumePayload,
@@ -188,7 +188,7 @@ function buildTimeline({ existingFlowRun, runMetadata }: BuildTimelineParams): R
     })
 }
 
-async function markParentRunAsFailed({
+export async function markParentRunAsFailed({
     parentRunId,
     childRunId,
     projectId,
@@ -196,6 +196,7 @@ async function markParentRunAsFailed({
 }: MarkParentRunAsFailedParams): Promise<void> {
     const flowRun = await flowRunRepo().findOneBy({
         id: parentRunId,
+        projectId,
     })
 
     if (isNil(flowRun) || isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })) {

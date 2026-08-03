@@ -5,12 +5,13 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { chatVisibilityHelper } from '../ee/agent/chat-visibility-helper'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { chatVisibilityHelper } from '../ee/chat/chat-visibility-helper'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
 import { platformProjectService } from '../ee/projects/platform-project-service'
 import { fileService } from '../file/file.service'
+import { attachMultipartFieldsToBody } from '../helper/multipart-body'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
@@ -209,6 +210,7 @@ const UpdatePlatformRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
+    preValidation: attachMultipartFieldsToBody,
     schema: {
         body: UpdatePlatformRequestBody,
         params: z.object({

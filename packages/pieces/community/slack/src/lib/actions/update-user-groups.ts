@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, requireUserToken, SlackAuthValue } from '../common/auth-helpers';
+import { updateGroupUsersActionOutputSchema } from '../output-schemas';
 
 export const updateGroupUsersAction = createAction({
   auth: slackAuth,
@@ -14,6 +15,7 @@ export const updateGroupUsersAction = createAction({
       'Set the membership of a Slack user group, found by its handle, to a given list of user IDs. Defaults to appending the IDs to current members; with "Append" off it replaces the entire member list (clearing it if no IDs are given), which is idempotent. Append mode is not idempotent. Requires a user token and errors if the handle is not found.',
     idempotent: false,
   },
+  outputSchema: updateGroupUsersActionOutputSchema,
   props: {
     handle: Property.ShortText({
       displayName: 'Group Handle',

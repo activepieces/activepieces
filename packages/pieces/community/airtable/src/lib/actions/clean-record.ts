@@ -4,6 +4,7 @@ import {
 
 import { airtableCommon } from '../common';
 import { airtableAuth } from '../auth';
+import { cleanRecordActionOutputSchema } from '../output-schemas';
 
 export const airtableCleanRecordAction = createAction({
   auth: airtableAuth,
@@ -12,6 +13,7 @@ export const airtableCleanRecordAction = createAction({
   description:
     'Clears fields in a record. Empty values will clear the corresponding fields.',
   audience: 'both',
+  outputSchema: cleanRecordActionOutputSchema,
   aiMetadata: {
     description:
       'Clears (empties) the specified fields on an existing record identified by its record ID, leaving unspecified fields untouched. Use to blank out field values rather than set them. Idempotent: re-running with the same input leaves the same cleared state.',

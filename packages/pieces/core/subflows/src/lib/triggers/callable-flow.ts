@@ -12,6 +12,9 @@ export const callableFlow = createTrigger({
   name: 'callableFlow',
   displayName: 'Callable Flow',
   description: 'Waiting to be triggered from another flow',
+  aiMetadata: {
+    description: 'Fires when another flow invokes this one through the Sub Flows "Call Flow" or "Stream CSV to Subflows" action, making this flow a reusable subroutine; the event represents a single invocation and carries the payload the caller passed in. The Sample Data entered here (key-value in Simple mode or JSON in Advanced mode) defines the payload shape offered to callers, and adding a "Return Response" action lets a waiting caller receive a result.',
+  },
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Mode',

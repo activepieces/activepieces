@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { JsonViewer } from '@/components/custom/json-viewer';
+import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -13,6 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { isStepFileUrl } from '@/lib/dom-utils';
 
 import { OutputArrayList } from './output-array-list';
 import { OutputFieldList } from './output-field-list';
@@ -22,6 +24,14 @@ import { OutputTableView, selectArrayFriendlyView } from './output-table-view';
 import { OutputSchema } from './types';
 
 function OutputTextDisplay({ text }: { text: string }) {
+  if (isStepFileUrl(text)) {
+    return (
+      <div className="p-4">
+        <StepFileDownloadButton fileUrl={text} />
+      </div>
+    );
+  }
+
   if (text === '') {
     return (
       <div className="p-4 text-sm text-muted-foreground italic">

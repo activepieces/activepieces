@@ -12,27 +12,30 @@ Benefits of separating workers from the main application (APP):
 
 <Steps>
   <Step title="Create Worker Token">
-    To create a worker token, use the local CLI command to generate the JWT and sign it with your `AP_JWT_SECRET` used for the app server. Follow these steps:
-    1. Open your terminal and navigate to the root of the repository.
-    2. Run the command: `npm run workers token`.
-    3. When prompted, enter the JWT secret (this should be the same as the `AP_JWT_SECRET` used for the app server).
-    4. The generated token will be displayed in your terminal, copy it and use it in the next step.
-    ![Workers Token](../../resources/worker-token.png)
+    Generate a worker token with the Activepieces CLI — no repository checkout needed:
+
+    ```bash
+    npx @activepieces/cli workers token
+    ```
+
+    When prompted, enter the same `AP_JWT_SECRET` used for the app server. The generated token will be displayed in your terminal — copy it and use it in the next step.
   </Step>
   <Step title="Configure Environment Variables">
-    Define the following environment variables in the `.env` file on the worker machine:
-    - Set `AP_CONTAINER_TYPE` to `WORKER`
-    - Specify `AP_FRONTEND_URL`
-    - Provide `AP_WORKER_TOKEN`
-  </Step>
-  <Step title="(Optional) Configure Persistent Volume">
-    A persistent volume is **not required**. Each worker fills its execution cache lazily on first use and stays warm for the life of the replica, so long-lived workers reach steady-state speed on their own.
+    Copy this into the `.env` file on the worker machine — these are the recommended settings based on the [Production Setup](./production-setup#recommended-config):
 
-    A volume only helps if your workers restart frequently and you want to skip the first-run cache fill after each restart. If you want it, map one volume **per worker** (it cannot be shared across workers):
-    ```yaml
-    volumes:
-      - <your path>:/usr/src/app/cache
+    ```bash
+    AP_CONTAINER_TYPE=WORKER
+    # the public URL of your instance — the worker reaches the app at $AP_FRONTEND_URL/api
+    AP_FRONTEND_URL=https://your-instance-url
+    AP_WORKER_TOKEN=<token from the first step>
+    AP_WORKER_CONCURRENCY=1
+    AP_REUSE_SANDBOX=true
+    AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
     ```
+
+    <Warning>
+    On the **APP** machine, set `AP_CONTAINER_TYPE` to `APP`. The default is `WORKER_AND_APP`, so without it the app keeps running an embedded worker.
+    </Warning>
   </Step>
   <Step title="Launch Worker Machine">
     Launch the worker machine and supply it with the generated token.
@@ -40,8 +43,5 @@ Benefits of separating workers from the main application (APP):
   <Step title="Verify Worker Operation">
     Verify that the workers are visible in the Platform Admin Console under Infra -> Workers.
     ![Workers Infrastructure](../../resources/workers.png)
-  </Step>
-  <Step title="Configure App Container Type">
-    On the APP machine, set `AP_CONTAINER_TYPE` to `APP`.
   </Step>
 </Steps>

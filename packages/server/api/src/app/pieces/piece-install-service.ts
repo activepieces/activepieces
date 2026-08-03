@@ -54,7 +54,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,
                 params: {
-                    message: JSON.stringify(error),
+                    message: error instanceof Error ? error.message : String(error),
                 },
             })
         }

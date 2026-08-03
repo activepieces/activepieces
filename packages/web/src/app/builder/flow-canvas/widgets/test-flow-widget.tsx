@@ -1,6 +1,7 @@
 import { isNil, assertNotNullOrUndefined } from '@activepieces/core-utils';
 import {
   FlowTriggerType,
+  Permission,
   UpdateRunProgressRequest,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -12,6 +13,7 @@ import { ChatDrawerSource } from '@/app/builder/types';
 import { flowRunUtils } from '@/features/flow-runs';
 import { flowHooks } from '@/features/flows';
 import { pieceSelectorUtils } from '@/features/pieces';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { AboveTriggerButton } from './above-trigger-button';
 
@@ -35,6 +37,9 @@ const TestFlowWidget = () => {
   ]);
   const runRef = useRef(run);
   runRef.current = run;
+
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToRun = checkAccess(Permission.WRITE_RUN);
 
   const triggerHasSampleData =
     flowVersion.trigger.type === FlowTriggerType.PIECE &&
@@ -104,6 +109,12 @@ const TestFlowWidget = () => {
         loading={isTestingFlow}
       />
     );
+  }
+
+  // Starting a manual run requires WRITE_RUN (enforced server-side). Hide the action
+  // from users who lack it so they cannot fire a run the server would reject.
+  if (isManualTrigger && !userHasPermissionToRun) {
+    return null;
   }
 
   return (

@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil, unique } from '@activepieces/core-utils'
 import { AlertChannel, ApEdition, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../helper/domain-helper'
@@ -106,6 +106,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         failedStepDisplayName,
         failedStepNumber,
         failedStepMessage,
+        flowOwnerEmail,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
@@ -119,7 +120,11 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const alertEmails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = unique([
+            ...alertEmails,
+            ...(isNil(flowOwnerEmail) ? [] : [flowOwnerEmail]),
+        ].map((email) => email.toLowerCase()))
 
         if (emails.length === 0) {
             return
@@ -283,4 +288,5 @@ type IssueCreatedArgs = {
     failedStepDisplayName: string
     failedStepNumber?: number
     failedStepMessage?: string
+    flowOwnerEmail?: string
 }

@@ -20,12 +20,13 @@ import FormData from 'form-data';
 import { ProxyAgent } from 'undici';
 
 export const httpOauth2RequestAction = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
   displayName: 'Send an OAuth2 Request',
   description:
     'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
+  aiMetadata: { description: 'Calls any HTTP endpoint with an OAuth 2.0 bearer token injected from the connection, choosing the method (GET/POST/PUT/PATCH/DELETE) and body mode (none, JSON, raw, or form-data), optionally routing through an HTTP proxy or returning the error text instead of throwing when the failsafe option is on. Prefer it over the core HTTP piece Send HTTP Request action only when the target API needs a managed OAuth2 token that Activepieces refreshes; it requires an OAuth2 connection set up with the authorize URL, token URL, and scopes, plus a full request URL. Not idempotent in general: the effect depends on the chosen method, and non-GET calls can create or change data on each call.', idempotent: false },
   props: {
     url: Property.ShortText({
       displayName: 'URL',

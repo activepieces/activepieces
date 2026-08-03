@@ -159,6 +159,9 @@ const EmbedPage = React.memo(() => {
                   hideFlowsPageNavbar:
                     event.data.data.hideFlowsPageNavbar ?? false,
                   hidePageHeader: event.data.data.hidePageHeader ?? false,
+                  hideActiveUsers: event.data.data.hideActiveUsers ?? false,
+                  hideGlobalSearch: event.data.data.hideGlobalSearch ?? false,
+                  formulasDocsUrl: event.data.data.formulasDocsUrl,
                 });
               });
               memoryRouter.navigate(initialRoute);

@@ -70,7 +70,7 @@ function getStatusText({
         timeout,
       });
     case FlowRunStatus.INTERNAL_ERROR:
-      return t('Run failed for an unknown reason, contact support.');
+      return t('Run failed with an internal error, contact support.');
     case FlowRunStatus.CANCELED:
       return t('Run Cancelled');
   }

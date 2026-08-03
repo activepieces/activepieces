@@ -29,9 +29,9 @@ type FlowPublished = {
 
 type SignedUp = {
     userId: UserId
-    email: string
-    firstName: string
-    lastName: string
+    email?: string
+    firstName?: string
+    lastName?: string
     projectId: ProjectId
 }
 
@@ -153,6 +153,15 @@ type PieceSelectorSearch = {
 
 type SignUpSubmitted = {
     method: 'email'
+    utm_source?: string
+    utm_medium?: string
+    utm_campaign?: string
+    utm_term?: string
+    utm_content?: string
+    gclid?: string
+    fbclid?: string
+    ref?: string
+    ap_cta?: string
 }
 
 type SignUpFailed = {

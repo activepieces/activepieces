@@ -5,7 +5,7 @@ import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activep
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
-import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
+import { cacheState } from '../../cache-state'
 import { codeCache } from './code-cache'
 
 const TS_CONFIG_CONTENT = `
@@ -44,14 +44,15 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
     async processCodeStep({
         artifact,
         codesFolderPath,
-    }: ProcessCodeStepParams): Promise<void> {
+    }: ProcessCodeStepParams): Promise<CodeBuildStatus> {
         const { sourceCode, flowVersionId, name } = artifact
         const codePath = codeCache(codesFolderPath).stepDir({ flowVersionId, stepName: name })
         log.debug({ sourceCode, name, codePath }, 'Processing code step')
 
         const currentHash = await cryptoUtils.hashObject(sourceCode)
         const cache = cacheState(codePath)
-        await cache.getOrSetCache({
+        let buildStatus: CodeBuildStatus = 'success'
+        const { cacheHit } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
                 return value !== currentHash
@@ -86,10 +87,11 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                 if (installError) {
                     await handleInstallError({ codePath, error: installError })
                     await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
+                    buildStatus = 'install-failed'
                     return currentHash
                 }
 
-                await wideEvent.timed({
+                const compileError = await wideEvent.timed({
                     name: 'codeCompile',
                     fn: async () => {
                         const { error } = await tryCatch(() => compileCode({
@@ -103,15 +105,22 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                         else {
                             log.info({ codePath }, 'Compilation success')
                         }
+                        return error
                     },
                 })
+                if (compileError) {
+                    buildStatus = 'compile-failed'
+                }
 
                 // node_modules is no longer needed after esbuild bundles everything into index.js
                 await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },
-            skipSave: NO_SAVE_GUARD,
+            // A transient bun install failure must self-heal: never cache the throwing stub, so the
+            // next build re-runs install. Deterministic compile errors stay cached. See GIT-1608.
+            skipSave: () => buildStatus === 'install-failed',
         })
+        return cacheHit ? 'success' : buildStatus
     },
 })
 
@@ -213,3 +222,5 @@ type WriteInvalidArtifactParams = {
     codePath: string
     errorMessage: string
 }
+
+export type CodeBuildStatus = 'success' | 'install-failed' | 'compile-failed'

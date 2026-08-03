@@ -3,7 +3,8 @@ import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/ser
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
-import { chatRpcHandlers } from '../../ee/chat/chat-rpc-handlers'
+import { redisConnections } from '../../database/redis-connections'
+import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
@@ -11,6 +12,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { preWarmWorkersService } from '../../flows/pre-warm-workers'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -18,6 +20,7 @@ import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-servi
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
+import { triggerRunStats } from '../../trigger/trigger-run/trigger-run-stats'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
@@ -162,6 +165,15 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             })
         },
 
+        async recordTriggerRun(input) {
+            const redisConnection = await redisConnections.useExisting()
+            await triggerRunStats(log, redisConnection).save(input)
+        },
+
+        async getPrewarmData(input) {
+            return preWarmWorkersService(log).getPrewarmData(input)
+        },
+
         async extendLock(input) {
             await jobBroker(log).extendLock(input)
         },
@@ -261,7 +273,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             log.info({ flow: { id: flowId }, project: { id: projectId } }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
 
-        async sendChatEvent(input) {
+        async sendAgentEvent(input) {
             const { userId, conversationId, runId, event } = input
             websocketService.to(userId).emit(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, {
                 conversationId,
@@ -270,45 +282,45 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             })
         },
 
-        async getChatConfig(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).getChatConfig(input)
+        async getAgentConfig(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).getAgentConfig(input)
         },
 
-        async saveChatMessages(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).saveChatMessages(input)
+        async saveAgentMessages(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).saveAgentMessages(input)
         },
 
-        async saveChatFile(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).saveChatFile(input)
+        async saveAgentFile(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).saveAgentFile(input)
         },
 
-        async updateChatProgress(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).updateChatProgress(input)
+        async updateAgentProgress(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).updateAgentProgress(input)
         },
 
-        async heartbeatChatConversation(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).heartbeatChatConversation(input)
+        async heartbeatAgentConversation(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).heartbeatAgentConversation(input)
         },
 
         async updateProjectContext(input) {
-            return chatRpcHandlers(chatRpcLog(log, input)).updateProjectContext(input)
+            return agentRpcHandlers(agentRpcLog(log, input)).updateProjectContext(input)
         },
 
-        async executeChatTool(input) {
+        async executeAgentTool(input) {
             const runId = typeof input.toolInput.runId === 'string' ? input.toolInput.runId : undefined
             const conversationId = input.conversationId ?? (typeof input.toolInput.conversationId === 'string' ? input.toolInput.conversationId : undefined)
-            return chatRpcHandlers(chatRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeChatTool(input)
+            return agentRpcHandlers(agentRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeAgentTool(input)
         },
 
-        async sendChatEmail(input) {
-            return chatRpcHandlers(chatRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendChatEmail(input)
+        async sendAgentEmail(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendAgentEmail(input)
         },
     }
 }
 
 // Binds conversation/run/platform/user to the per-call logger so every chat RPC
 // log line correlates with the worker turn and the analyze-logs timeline.
-function chatRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runId?: string, platformId?: string, userId?: string }): FastifyBaseLogger {
+function agentRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, runId?: string, platformId?: string, userId?: string }): FastifyBaseLogger {
     return log.child({
         ...spreadIfDefined('conversation', isNil(ids.conversationId) ? undefined : { id: ids.conversationId }),
         ...spreadIfDefined('run', isNil(ids.runId) ? undefined : { id: ids.runId }),

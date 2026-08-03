@@ -80,4 +80,14 @@ describe('Queue Metrics API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
+
+    describe('GET /v1/worker-machines/queue-metrics/prometheus/:queueName?', () => {
+        it('is not registered on cloud (self-hosted only)', async () => {
+            const ctx = await createTestContext(app!)
+
+            const response = await ctx.get('/v1/worker-machines/queue-metrics/prometheus')
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
 })

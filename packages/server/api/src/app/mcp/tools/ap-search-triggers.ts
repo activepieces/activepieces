@@ -17,15 +17,20 @@ export const apSearchTriggersTool = (mcp: ProjectScopedMcpServer, log: FastifyBa
                 const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
                 const projectId = mcpUtils.isProjectScoped(mcp) ? mcp.projectId : undefined
 
-                const { results, mode } = await toolSearchService(log).searchTriggers(query, {
+                const { results, mode, degradeReason } = await toolSearchService(log).searchTriggers(query, {
                     platformId,
                     projectId,
                     limit,
                     pieceName: mcpUtils.normalizePieceName(pieceName),
                 })
 
+                // Distinguish the two degrade causes so the note never claims "no model configured"
+                // when a model IS configured but its embed call failed (a transient outage, not config).
+                const degradeCause = degradeReason === 'embed-failed'
+                    ? 'the embedding service call failed'
+                    : 'no embedding model configured'
                 const modeNote = mode === 'keyword'
-                    ? ' (keyword fallback — no embedding model configured, so matches are lexical, not semantic)'
+                    ? ` (keyword fallback — ${degradeCause}, so matches are lexical, not semantic)`
                     : ''
                 const text = results.length === 0
                     ? `🔍 No matching triggers found for "${query}".`
@@ -43,7 +48,7 @@ export const apSearchTriggersTool = (mcp: ProjectScopedMcpServer, log: FastifyBa
 }
 
 const searchTriggersInput = z.object({
-    query: z.string().describe('Natural-language description of the event that should start the flow (e.g. "when a new row is added to a Google Sheet", "when a new email arrives").'),
+    query: z.string().trim().min(1, 'query must be a non-empty event description').describe('Natural-language description of the event that should start the flow (e.g. "when a new row is added to a Google Sheet", "when a new email arrives").'),
     limit: z.number().int().min(1).max(20).optional().describe('Maximum number of trigger matches to return. Defaults to 5.'),
     pieceName: z.string().optional().describe('Restrict results to a single piece (e.g. "slack" or "@activepieces/piece-slack"). Omit to search the whole catalog.'),
 })

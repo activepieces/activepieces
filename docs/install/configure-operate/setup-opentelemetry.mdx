@@ -1,6 +1,6 @@
 ---
 title: "Observability"
-description: "Configure log export and sampling for observability"
+description: "Configure log export, queue metrics, and sampling for observability"
 icon: "chart-line"
 ---
 
@@ -10,9 +10,24 @@ Activepieces exports structured logs via evlog. Each API request and worker job 
 
 | Variable | Description | Default Value | Example |
 |----------|-------------|---------------|---------|
-| `AP_OTEL_ENABLED` | Export logs via OTLP log drain (no traces or metrics) | `false` | `true` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint for log export | None | `https://your-collector:4317` |
+| `AP_OTEL_ENABLED` | Export logs via the OTLP log drain | `false` | `true` |
+| `AP_OTEL_QUEUE_METRICS_ENABLED` | Export BullMQ queue metrics via OTLP | `false` | `true` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint for log and metric export | None | `https://your-collector:4318` |
 | `OTEL_EXPORTER_OTLP_HEADERS` | Headers for OTLP exporter (comma-separated key=value pairs) | None | `Authorization=Bearer token` |
+
+## Queue Metrics
+
+When `AP_OTEL_QUEUE_METRICS_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` is set, the app container also exports BullMQ queue metrics to `<endpoint>/v1/metrics` every 60 seconds, so your monitoring stack receives queue depth without exposing any HTTP admin surface.
+
+| Metric | Type | Attributes | Description |
+|--------|------|------------|-------------|
+| `bullmq.job.count` | Gauge | `queue`, `state` | Number of jobs per queue and state (`waiting`, `active`, `failed`, `delayed`, `paused`, and other BullMQ states) |
+
+The gauge covers all queues, including dedicated worker-group queues. Each data point carries `service.name=activepieces-api` and `host.name` resource attributes, so replicas of the app container produce distinguishable series.
+
+<Warning>
+Outbound requests from the app go through an SSRF filter that blocks private, loopback, and link-local IPs. If your OTLP collector resolves to a private IP (for example an in-cluster collector), add its IP or CIDR to the `AP_SSRF_ALLOW_LIST` environment variable.
+</Warning>
 
 ## Sampling Variables
 
@@ -23,5 +38,5 @@ Activepieces exports structured logs via evlog. Each API request and worker job 
 
 <Note>
 Events with level `warn` or `error` are always kept regardless of sampling configuration.
-`AP_OTEL_ENABLED=true` enables the OTLP **log** drain only — OpenTelemetry tracing and metrics are no longer emitted.
+`AP_OTEL_ENABLED=true` enables the OTLP log drain; `AP_OTEL_QUEUE_METRICS_ENABLED=true` enables queue metrics export. OpenTelemetry tracing is not emitted.
 </Note>

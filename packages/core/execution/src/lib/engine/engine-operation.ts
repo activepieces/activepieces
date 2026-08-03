@@ -4,7 +4,6 @@ import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
 import { AppConnectionValue } from '@activepieces/core-piece-types'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
-import { CodeAction, PieceAction } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '@activepieces/core-piece-types'
 import { ScheduleOptions } from '@activepieces/core-piece-types'
@@ -13,7 +12,6 @@ import { JobPayload } from '../workers/job-data'
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
-    EXECUTE_ACTION = 'EXECUTE_ACTION',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
@@ -31,7 +29,6 @@ export enum TriggerHookType {
 
 export type EngineOperation =
     | ExecuteToolOperation
-    | ExecuteActionOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
@@ -83,10 +80,6 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     pieceVersion: string
     predefinedInput?: PredefinedInputsStructure
     instruction: string
-}
-
-export type ExecuteActionOperation = BaseEngineOperation & {
-    step: PieceAction | CodeAction
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {

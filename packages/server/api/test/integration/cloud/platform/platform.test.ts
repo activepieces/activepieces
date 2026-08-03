@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { ApEdition, FileCompression, FileLocation, FileType, FilteredPieceBehavior, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformPieceFilterRequestBody, UpdatePlatformRequestBody, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, FileCompression, FileLocation, FileType, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformRequestBody, UserIdentityProvider } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -101,37 +101,11 @@ describe('Platform API', () => {
             expect(responseBody.emailAuthEnabled).toBe(requestBody.emailAuthEnabled)
             expect(responseBody.name).toBe('updated name')
             expect(responseBody.primaryColor).toBe('updated primary color')
-            expect(responseBody.filteredPieceNames).toBeUndefined()
-            expect(responseBody.filteredPieceBehavior).toBeUndefined()
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({
                 saml: null,
             })
             expect(responseBody.cloudAuthEnabled).toBe(false)
-        }),
-
-        it('rejects piece filter fields that moved to the dedicated piece-filter endpoint', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: {
-                    filteredPieceNames: ['@activepieces/piece-slack'],
-                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-                },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
-            expect(response?.body).toContain('pieceFilterMovedToDedicatedEndpoint')
         }),
 
         it('updates the platform logo icons', async () => {
@@ -612,10 +586,6 @@ describe('Platform API', () => {
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.themeColors).toBeNull()
             expect(responseBody.pieceSelectorConfig).toBeNull()
-            expect(responseBody.filteredPieceNames).toBeUndefined()
-            expect(responseBody.filteredPieceBehavior).toBeUndefined()
-            expect(responseBody.filteredActionNames).toBeUndefined()
-            expect(responseBody.filteredTriggerNames).toBeUndefined()
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
@@ -1119,93 +1089,6 @@ describe('Platform API', () => {
                 url: `/api/v1/platforms/assets/${apId()}`,
             })
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
-        })
-    })
-
-    describe('platform piece filter endpoint', () => {
-        it('returns the platform-wide piece/component killswitch', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    filteredPieceNames: ['blocked-piece'],
-                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-                    filteredActionNames: { 'my-piece': ['blocked_action'] },
-                    filteredTriggerNames: {},
-                },
-            })
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/platform-piece-filter',
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            const responseBody = response?.json()
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.filteredPieceNames).toStrictEqual(['blocked-piece'])
-            expect(responseBody.filteredPieceBehavior).toBe(FilteredPieceBehavior.BLOCKED)
-            expect(responseBody.filteredActionNames).toStrictEqual({ 'my-piece': ['blocked_action'] })
-            expect(responseBody.filteredTriggerNames).toStrictEqual({})
-        })
-
-        it('updates the platform-wide piece/component killswitch', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {},
-            })
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            const requestBody: UpdatePlatformPieceFilterRequestBody = {
-                filteredPieceNames: ['piece-1'],
-                filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
-                filteredActionNames: { 'piece-1': ['hidden_action'] },
-                filteredTriggerNames: { 'piece-1': ['hidden_trigger'] },
-            }
-
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/platform-piece-filter',
-                headers: { authorization: `Bearer ${token}` },
-                body: requestBody,
-            })
-
-            const responseBody = response?.json()
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.filteredPieceNames).toStrictEqual(['piece-1'])
-            expect(responseBody.filteredPieceBehavior).toBe(FilteredPieceBehavior.ALLOWED)
-            expect(responseBody.filteredActionNames).toStrictEqual({ 'piece-1': ['hidden_action'] })
-            expect(responseBody.filteredTriggerNames).toStrictEqual({ 'piece-1': ['hidden_trigger'] })
-        })
-
-        it('rejects non-admin platform members', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {},
-            })
-            const { mockUser: mockMember } = await mockBasicUser({
-                user: {
-                    platformId: mockPlatform.id,
-                    platformRole: PlatformRole.MEMBER,
-                },
-            })
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockMember.id,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/platform-piece-filter',
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })

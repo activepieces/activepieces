@@ -3,6 +3,7 @@ import { githubAuth } from '../auth';
 import { githubApiCall } from '../common';
 import { GithubAuthValue, isAppAuth } from '../common/auth-helpers';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createGistActionOutputSchema } from '../output-schemas';
 
 export const githubCreateGistAction = createAction({
   auth: githubAuth,
@@ -44,6 +45,7 @@ export const githubCreateGistAction = createAction({
     }),
   },
 
+  outputSchema: createGistActionOutputSchema,
   async run({ auth, propsValue }) {
     if (isAppAuth(auth as GithubAuthValue)) {
       throw new Error(

@@ -87,9 +87,6 @@ export const ProjectDashboardLayoutHeader = () => {
       icon: HistoryIcon,
       hasPermission: checkAccess(Permission.READ_RUN),
       show: true,
-      additionalActivePaths: [
-        authenticationSession.appendProjectRoutePrefix('/piece-runs'),
-      ],
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/connections'),
@@ -117,12 +114,6 @@ export const ProjectDashboardLayoutHeader = () => {
     },
   ];
 
-  const isTabActive = (tab: ProjectDashboardLayoutHeaderTab) =>
-    location.pathname.includes(tab.to) ||
-    (tab.additionalActivePaths ?? []).some((path) =>
-      location.pathname.includes(path),
-    );
-
   const visiblePrimaryTabs = primaryTabs.filter(
     (tab) => tab.show && tab.hasPermission,
   );
@@ -140,7 +131,7 @@ export const ProjectDashboardLayoutHeader = () => {
               <AnimatedTab
                 key={tab.to}
                 tab={tab}
-                isActive={isTabActive(tab)}
+                isActive={location.pathname.includes(tab.to)}
                 onClick={() => navigate(tab.to)}
               />
             ))}
@@ -155,7 +146,7 @@ export const ProjectDashboardLayoutHeader = () => {
               <AnimatedTab
                 key={tab.to}
                 tab={tab}
-                isActive={isTabActive(tab)}
+                isActive={location.pathname.includes(tab.to)}
                 onClick={() => navigate(tab.to)}
               />
             ))}

@@ -7,11 +7,12 @@ import { randomBytes } from 'node:crypto';
 import { kebabCase } from '@activepieces/pieces-framework';
 
 export const createImage = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: imageRouterAuth,
   name: 'createImage',
   displayName: 'Create Image',
   description: 'Generate an image from a text prompt using any available model',
+  aiMetadata: { description: 'Generates brand-new images from a text prompt alone, routing the request through ImageRouter to whichever hosted image model is named in the required Model input, then downloading each result and saving it as a flow file. Pick this when there is no source picture to work from; use Image to Image instead to edit, mask, or transform images you already have. Quality and size are advisory and are ignored by models that do not support them. Not idempotent: each call runs a fresh generation and returns different images.', idempotent: false },
   props: {
     prompt: Property.ShortText({
       displayName: 'Prompt',

@@ -28,6 +28,12 @@ export enum PieceOrderBy {
     DESC = 'DESC',
 }
 
+export enum PieceAudienceFilter {
+    HUMAN = 'human',
+    AI = 'ai',
+    ALL = 'all',
+}
+
 export const GetPieceRequestWithScopeParams = z.object({
     name: z.string(),
     scope: z.string(),
@@ -45,8 +51,8 @@ export type GetPieceRequestParams = z.infer<typeof GetPieceRequestParams>
 export const ListPiecesRequestQuery = z.object({
     projectId: z.string().optional(),
     release: ExactVersionType.optional(),
-    includeTags: OptionalBooleanFromQuery,
     includeHidden: OptionalBooleanFromQuery,
+    audience: z.nativeEnum(PieceAudienceFilter).optional(),
     edition: z.nativeEnum(ApEdition).optional(),
     searchQuery: z.string().optional(),
     sortBy: z.nativeEnum(PieceSortBy).optional(),
@@ -70,6 +76,7 @@ export const GetPieceRequestQuery = z.object({
     version: VersionType.optional(),
     projectId: z.string().optional(),
     locale: z.string().optional(),
+    audience: z.nativeEnum(PieceAudienceFilter).optional(),
 })
 
 export type GetPieceRequestQuery = z.infer<typeof GetPieceRequestQuery>

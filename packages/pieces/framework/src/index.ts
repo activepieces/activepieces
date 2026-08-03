@@ -44,6 +44,7 @@ export {
   KnowledgeBaseSourceType,
   MarkdownContentBlock,
   McpProtocol,
+  McpAuthType,
   ToolCallContentBlock,
   ToolCallStatus,
   ToolCallType,
@@ -63,6 +64,7 @@ export {
   OpenAICompatibleProviderConfig,
   getEffectiveProviderAndModel,
   splitCloudflareGatewayModelId,
+  AI_PROVIDER_CAPABILITIES,
   // mcp
   McpProperty,
   McpPropertyType,
@@ -99,6 +101,7 @@ export {
   FAIL_PARENT_ON_FAILURE_HEADER,
 } from '@activepieces/core-piece-types';
 export type {
+  McpAuthConfig,
   BasicAuthConnectionValue,
   CustomAuthConnectionValue,
   PopulatedFlowSummary,

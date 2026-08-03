@@ -166,7 +166,7 @@ describe('schemaTreeUtils.buildTreeFromSchema — primitive arrays', () => {
 
     const idNode = firstItem?.children?.[0];
     expect(idNode?.data).toMatchObject({
-      displayName: 'Id',
+      displayName: 'id',
       value: 1,
       insertable: true,
     });
@@ -242,7 +242,7 @@ describe('schemaTreeUtils.buildTreeFromSchema — primitive arrays', () => {
 
     const nameNode = senderNode?.children?.[0];
     expect(nameNode?.data).toMatchObject({
-      displayName: 'Name',
+      displayName: 'name',
       value: 'Ada',
       insertable: true,
     });
@@ -250,7 +250,7 @@ describe('schemaTreeUtils.buildTreeFromSchema — primitive arrays', () => {
     const contactNode = senderNode?.children?.[1];
     const emailNode = contactNode?.children?.[0];
     expect(emailNode?.data).toMatchObject({
-      displayName: 'Email',
+      displayName: 'email',
       value: 'ada@acme.com',
       insertable: true,
     });
@@ -522,7 +522,7 @@ describe('schemaTreeUtils.buildTreeFromArray', () => {
     });
 
     const payloadNode = tree.children?.[0]?.children?.[0];
-    expect(payloadNode?.data).toMatchObject({ displayName: 'Payload' });
+    expect(payloadNode?.data).toMatchObject({ displayName: 'payload' });
     // container nodes carry the real object so they render the {} icon, not text
     expect(
       payloadNode?.data.type === 'value' &&
@@ -531,7 +531,7 @@ describe('schemaTreeUtils.buildTreeFromArray', () => {
     ).toBe(true);
 
     const customerNode = payloadNode?.children?.[0];
-    expect(customerNode?.data).toMatchObject({ displayName: 'Customer' });
+    expect(customerNode?.data).toMatchObject({ displayName: 'customer' });
 
     const addressNode = customerNode?.children?.[0];
     expect(addressNode?.children).toHaveLength(1);
@@ -539,7 +539,7 @@ describe('schemaTreeUtils.buildTreeFromArray', () => {
     const cityNode = addressNode?.children?.[0];
     expect(cityNode?.children).toBeUndefined();
     expect(cityNode?.data).toMatchObject({
-      displayName: 'City',
+      displayName: 'city',
       value: 'Amman',
       insertable: true,
     });
@@ -557,12 +557,12 @@ describe('schemaTreeUtils.buildTreeFromArray', () => {
 
     const tagsNode = tree.children?.[0]?.children?.[0];
     expect(tagsNode?.data).toMatchObject({
-      displayName: 'Tags',
+      displayName: 'tags',
       value: ['red', 'blue'],
     });
     expect(tagsNode?.children).toHaveLength(2);
     expect(tagsNode?.children?.[0]?.data).toMatchObject({
-      displayName: 'Tags 1',
+      displayName: 'tags 1',
       value: 'red',
       insertable: true,
     });
@@ -663,7 +663,7 @@ describe('schemaTreeUtils.buildTreeFromSchema — labelKey', () => {
     // The object entry drills into host/port instead of being a flat leaf.
     expect(db1?.children).toHaveLength(2);
     const hostNode = db1?.children?.find(
-      (c) => c.data.type === 'value' && c.data.displayName === 'Host',
+      (c) => c.data.type === 'value' && c.data.displayName === 'host',
     );
     expect(hostNode?.data).toMatchObject({ value: 'localhost' });
     expect(hostNode?.data.type === 'value' && hostNode.data.propertyPath).toBe(

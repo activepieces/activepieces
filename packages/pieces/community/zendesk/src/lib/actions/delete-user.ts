@@ -10,12 +10,6 @@ import {
 import { zendeskAuth } from '../..';
 import { userIdDropdown } from '../common/props';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const deleteUserAction = createAction({
   auth: zendeskAuth,
   name: 'delete-user',

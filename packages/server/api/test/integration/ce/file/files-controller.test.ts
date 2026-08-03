@@ -57,6 +57,73 @@ describe('Files Controller', () => {
             }
         })
 
+        it('streams the body to storage and returns identical bytes on download', async () => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+            const engineToken = await generateMockToken({
+                type: PrincipalType.ENGINE,
+                id: apId(),
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+            const fileId = apId()
+            const body = Buffer.from('streamed-content-'.repeat(5000))
+
+            const putResponse = await app!.inject({
+                method: 'PUT',
+                url: `/api/v1/files/${fileId}`,
+                query: { token: engineToken },
+                headers: {
+                    'content-type': 'application/octet-stream',
+                    'x-ap-file-type': FileType.FLOW_STEP_FILE,
+                    'x-ap-file-name': 'big.txt',
+                },
+                payload: body,
+            })
+            expect(putResponse?.statusCode).toBe(StatusCodes.OK)
+
+            const readUrl = new URL(putResponse!.json().readUrl)
+            const getResponse = await app!.inject({
+                method: 'GET',
+                url: readUrl.pathname + readUrl.search,
+            })
+            expect(getResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(getResponse!.rawPayload.equals(body)).toBe(true)
+        })
+
+        it('rejects a body that exceeds the maximum file size while streaming', async () => {
+            const originalMaxFileSize = process.env.AP_MAX_FILE_SIZE_MB
+            process.env.AP_MAX_FILE_SIZE_MB = '0.000001'
+            try {
+                const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+                const engineToken = await generateMockToken({
+                    type: PrincipalType.ENGINE,
+                    id: apId(),
+                    projectId: mockProject.id,
+                    platform: { id: mockPlatform.id },
+                })
+
+                const response = await app!.inject({
+                    method: 'PUT',
+                    url: `/api/v1/files/${apId()}`,
+                    query: { token: engineToken },
+                    headers: {
+                        'content-type': 'application/octet-stream',
+                        'x-ap-file-type': FileType.FLOW_STEP_FILE,
+                    },
+                    payload: Buffer.from('x'.repeat(1024)),
+                })
+                expect(response?.statusCode).not.toBe(StatusCodes.OK)
+            }
+            finally {
+                if (originalMaxFileSize === undefined) {
+                    delete process.env.AP_MAX_FILE_SIZE_MB
+                }
+                else {
+                    process.env.AP_MAX_FILE_SIZE_MB = originalMaxFileSize
+                }
+            }
+        })
+
         it('rejects a request whose token is not an engine principal', async () => {
             const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
             const userToken = await generateMockToken({

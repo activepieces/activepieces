@@ -5,15 +5,12 @@ import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, 
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
-import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { pieceSetRepo, pieceSetService } from '../pieces/piece-set/piece-set.service'
 import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
-import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
@@ -49,7 +46,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
         await applyProjectPieceAccess({
             platformId: project.platformId,
             projectId: project.id,
-            pieceSetExternalId: externalPrincipal.pieceSetExternalId,
+            pieceSetKey: externalPrincipal.pieceSetKey,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
             log,
@@ -96,67 +93,33 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
 type ApplyProjectPieceAccessParams = {
     platformId: string
     projectId: string
-    pieceSetExternalId: string | undefined
+    pieceSetKey: string | undefined
     piecesTags: string[]
     piecesFilterType: PiecesFilterType
     log: FastifyBaseLogger
 }
 
-const applyProjectPieceAccess = async ({ platformId, projectId, pieceSetExternalId, piecesTags, piecesFilterType, log }: ApplyProjectPieceAccessParams): Promise<void> => {
-    const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    if (!platformPlan.managePiecesEnabled) {
-        await upsertLegacyProjectPiecesPlan({ platformId, projectId, piecesTags, piecesFilterType, log })
-        return
-    }
-    await assignProjectPieceSet({ platformId, projectId, pieceSetExternalId, piecesTags, piecesFilterType, log })
-}
-
-const assignProjectPieceSet = async ({ platformId, projectId, pieceSetExternalId, piecesTags, piecesFilterType, log }: ApplyProjectPieceAccessParams): Promise<void> => {
-    // Resolve which named set to assign: the explicit SDK externalId, or (legacy) the first
+const applyProjectPieceAccess = async ({ platformId, projectId, pieceSetKey, piecesTags, piecesFilterType, log }: ApplyProjectPieceAccessParams): Promise<void> => {
+    // Resolve which named set to assign: the explicit SDK piece-set key, or (legacy) the first
     // pieces tag. Multi-tag is unused, so only the first tag is honored; each tag maps to a
-    // named set (externalId = tagName) created by the backfill migration.
-    const targetExternalId = pieceSetExternalId
+    // named set (key = tagName) created by the backfill migration.
+    const targetKey = pieceSetKey
         ?? (piecesFilterType === PiecesFilterType.ALLOWED ? piecesTags[0] : undefined)
 
-    const set = isNil(targetExternalId)
+    const set = isNil(targetKey)
         ? null
-        : await pieceSetRepo().findOneBy({ platformId, externalId: targetExternalId })
+        : await pieceSetRepo().findOneBy({ platformId, key: targetKey })
 
     if (!isNil(set)) {
         await pieceSetService(log).assignProject({ pieceSet: set, projectId })
         return
     }
 
-    if (!isNil(targetExternalId)) {
-        log.warn({ platform: { id: platformId }, project: { id: projectId } }, `[managedAuthn] pieceSet externalId "${targetExternalId}" not found — falling back to default`)
+    if (!isNil(targetKey)) {
+        log.warn({ platform: { id: platformId }, project: { id: projectId } }, `[managedAuthn] pieceSet key "${targetKey}" not found — falling back to default`)
     }
     const defaultSet = await pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
     await pieceSetService(log).assignProject({ pieceSet: defaultSet, projectId })
-}
-
-/**
- * @deprecated Legacy tags-based enforcement for platforms without `managePiecesEnabled`.
- * Piece sets ({@link assignProjectPieceSet}) are the replacement; remove once all
- * platforms are migrated to piece sets.
- */
-const upsertLegacyProjectPiecesPlan = async ({ platformId, projectId, piecesTags, piecesFilterType, log }: Omit<ApplyProjectPieceAccessParams, 'pieceSetExternalId'>): Promise<void> => {
-    const pieces = await getPiecesList({ platformId, piecesTags, piecesFilterType })
-    await projectLimitsService(log).upsert({
-        nickname: 'default-embeddings-limit',
-        pieces,
-        piecesFilterType,
-    }, projectId)
-}
-
-const getPiecesList = async ({ platformId, piecesTags, piecesFilterType }: GetPiecesListParams): Promise<string[]> => {
-    switch (piecesFilterType) {
-        case PiecesFilterType.ALLOWED: {
-            return pieceTagService.findByPlatformAndTags(platformId, piecesTags)
-        }
-        case PiecesFilterType.NONE: {
-            return []
-        }
-    }
 }
 
 const getOrCreateUser = async (
@@ -252,10 +215,4 @@ type GetOrCreateUserParams = {
 type GetOrCreateProjectParams = {
     platformId: string
     externalProjectId: string
-}
-
-type GetPiecesListParams = {
-    platformId: string
-    piecesTags: string[]
-    piecesFilterType: PiecesFilterType
 }

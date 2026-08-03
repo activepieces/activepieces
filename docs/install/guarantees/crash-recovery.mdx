@@ -18,7 +18,7 @@ Once a step's output is checkpointed, no crash, deploy, pause, or retry runs it 
 
 ## A queued run always runs
 
-Once a run is on the queue it executes, even if the worker holding it dies, is evicted, or loses its lease mid-run. Work is never silently dropped.
+Once a run is on the queue it executes, even if the worker holding it dies, is evicted, or loses its lease mid-run. Work is never silently dropped by Activepieces — the queue itself inherits the durability of your Redis (see [Disaster Recovery](/install/guarantees/disaster-recovery)).
 
 ## Roll workers without draining
 
@@ -32,7 +32,7 @@ All three come from one mechanism. Every run has a **run log**, a checkpoint of 
 
 - **The in-flight step re-runs.** The single step executing when the worker died is re-run from the last checkpoint, because its output never reached the log. If it fired an external side effect before crashing, that effect can happen twice. Make external side effects idempotent where it matters; everything before the interrupted step is guaranteed not to repeat.
 - **At-least-once, not exactly-once.** That in-flight step is the one place a replay can repeat work.
-- **Redis durability is yours.** Queued runs live in Redis. A Redis that loses its dataset loses queued jobs, so use a managed Redis or enable persistence.
+- **Redis durability is yours.** Queued runs live in Redis. A Redis that loses its dataset loses queued jobs — including async webhooks already acknowledged with a `200` — so use a managed Redis or enable persistence. [Disaster Recovery](/install/guarantees/disaster-recovery) scopes the exposure and gives the recovery runbook.
 
 ## Governing configuration
 

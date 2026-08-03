@@ -29,7 +29,16 @@ function initClarifaiClient() {
   return clarifai;
 }
 
-export const clarifaiClient = initClarifaiClient();
+// Construct the gRPC client lazily on first use, not at import. Building it eagerly ran a live
+// client construction during piece-metadata extraction (which only reads declarative metadata),
+// making the piece un-loadable there.
+let cachedClient: V2Client | undefined;
+function clarifaiClient(): V2Client {
+  if (!cachedClient) {
+    cachedClient = initClarifaiClient();
+  }
+  return cachedClient;
+}
 
 export interface CallModelRequest {
   auth: string;
@@ -68,7 +77,7 @@ export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
     PostModelOutputsRequest,
     grpc.Metadata,
     MultiOutputResponse
-  >(clarifaiClient.postModelOutputs.bind(clarifaiClient));
+  >(clarifaiClient().postModelOutputs.bind(clarifaiClient()));
   return postModelOutputs(req, metadata);
 }
 
@@ -94,7 +103,7 @@ export function callClarifaiWorkflow({
     PostWorkflowResultsRequest,
     grpc.Metadata,
     PostWorkflowResultsResponse
-  >(clarifaiClient.postWorkflowResults.bind(clarifaiClient));
+  >(clarifaiClient().postWorkflowResults.bind(clarifaiClient()));
   return postWorkflowResults(req, metadata);
 }
 
@@ -115,7 +124,7 @@ export function callPostInputs({
     PostInputsRequest,
     grpc.Metadata,
     MultiInputResponse
-  >(clarifaiClient.postInputs.bind(clarifaiClient));
+  >(clarifaiClient().postInputs.bind(clarifaiClient()));
   return postInputs(req, metadata);
 }
 

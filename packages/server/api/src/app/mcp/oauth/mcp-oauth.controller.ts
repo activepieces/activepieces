@@ -5,12 +5,12 @@ import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { repoFactory } from '../../core/db/repo-factory'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { ChatConversationEntity } from '../../ee/chat/chat-conversation-entity'
-import { chatHelpers } from '../../ee/chat/chat-helpers'
-import { CONVERSATION_ID_HEADER } from '../../ee/chat/mcp/chat-mcp'
+import { AgentConversationEntity } from '../../ee/agent/agent-conversation-entity'
+import { agentHelpers } from '../../ee/agent/agent-helpers'
+import { CONVERSATION_ID_HEADER } from '../../ee/agent/mcp/agent-mcp'
 import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { telemetry } from '../../helper/telemetry.utils'
+import { telemetry, telemetryDedupe } from '../../helper/telemetry.utils'
 import { mcpServerService } from '../mcp-service'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
@@ -130,23 +130,27 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
 async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string }> {
     try {
         if (identity.type === McpServerType.PLATFORM) {
-            rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
-                name: TelemetryEventName.MCP_SERVER_CONNECTED,
-                payload: {
-                    platformId: identity.platformId,
-                    userId: identity.userId,
-                },
-            }), log)
+            if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
+                rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
+                    name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                    payload: {
+                        platformId: identity.platformId,
+                        userId: identity.userId,
+                    },
+                }), log)
+            }
             const mcp = await mcpServerService(log).getPopulatedByPlatformId(identity.platformId)
             return { mcp, userId: identity.userId }
         }
-        rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
-            name: TelemetryEventName.MCP_SERVER_CONNECTED,
-            payload: {
-                projectId: identity.projectId,
-                userId: identity.userId,
-            },
-        }), log)
+        if (telemetryDedupe.onceToday(`mcp-server-connected:project:${identity.projectId}:${identity.userId}`)) {
+            rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
+                name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                payload: {
+                    projectId: identity.projectId,
+                    userId: identity.userId,
+                },
+            }), log)
+        }
         const mcp = await mcpServerService(log).getPopulatedByProjectId(identity.projectId)
         return { mcp, userId: identity.userId }
     }
@@ -160,7 +164,7 @@ type ResolvedIdentity =
     | { type: McpServerType.PROJECT, projectId: string, userId: string }
     | { type: McpServerType.PLATFORM, platformId: string, userId: string }
 
-const chatConversationRepo = repoFactory(ChatConversationEntity)
+const chatConversationRepo = repoFactory(AgentConversationEntity)
 
 async function resolveConversationProjectId({ conversationId, identity, log }: {
     conversationId: string
@@ -188,7 +192,7 @@ async function resolveConversationProjectId({ conversationId, identity, log }: {
         log.warn({ conversation: { id: conversationId } }, 'Conversation platform does not match token platform')
         return null
     }
-    const userProjects = await chatHelpers.getUserProjects({ platformId: identity.platformId, userId: identity.userId, log })
+    const userProjects = await agentHelpers.getUserProjects({ platformId: identity.platformId, userId: identity.userId, log })
     if (!userProjects.some((project) => project.id === conversationProjectId)) {
         log.warn({ conversation: { id: conversationId }, project: { id: conversationProjectId } }, 'User no longer has access to conversation project')
         return null

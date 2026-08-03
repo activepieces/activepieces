@@ -64,10 +64,11 @@ const agentToolArrayItems: ArraySubProps<boolean> = {
 }
 
 export const runAgent = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'run_agent',
   displayName: 'Run Agent',
   description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',
+  aiMetadata: { description: 'Runs an agent loop where the model reasons over your prompt and calls the tools you attach (piece actions, sub-flows, MCP servers, knowledge bases, optional web search), iterating until the task completes or Max Steps is reached. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Requires a prompt, an AI Model and a Max Steps cap; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
     [AgentPieceProps.PROMPT]: Property.LongText({
