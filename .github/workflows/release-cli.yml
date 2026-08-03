@@ -58,6 +58,8 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+        env:
+          REDISMS_DISABLE_POSTINSTALL: '1'
 
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
