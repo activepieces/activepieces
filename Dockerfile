@@ -1,8 +1,12 @@
 FROM node:24.14.0-bullseye-slim AS base
 
-# C.UTF-8 ships with Debian, so no locale generation is needed
+# C.UTF-8 ships with Debian, so no locale generation is needed.
+# redis-memory-server is a test-only dep; its postinstall compiles Redis from
+# source (needs cmake/python3 since Redis 8 became "stable") and has no place
+# in a production image build.
 ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+    LC_ALL=C.UTF-8 \
+    REDISMS_DISABLE_POSTINSTALL=1
 
 # Install all system dependencies in a single layer with cache mounts.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
