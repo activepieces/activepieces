@@ -445,17 +445,12 @@ describe('Tool Search Engine (Phase 3 — incremental catalog sync)', () => {
         expect(second.objectsIndexed).toBe(4)
         expect(second.objectsEmbedded).toBe(0)
         expect(second.objectsDeleted).toBe(0)
-        // An unchanged catalog never triggers a trailing pass — the fingerprint check costs one pass, not two.
         expect(second.passes).toBe(1)
         expect(await indexRowCount()).toBe(4)
     })
 })
 
 describe('Tool Search Engine (Phase 3 — trailing edge: catalog changes landing mid-reconcile)', () => {
-    // A burst of publishes collapses onto one reindex job (stable jobId), so a piece published after that
-    // job read its catalog snapshot has no job of its own left to run in. These tests reproduce that by
-    // writing to piece_metadata from inside embed() — which runs after the snapshot is taken — and assert
-    // the reconcile notices and runs a trailing pass instead of silently stranding the write.
     function embedderPublishingMidRun(publish: (call: number) => Promise<unknown>, calls = 1): ToolSearchEmbedder {
         let call = 0
         return {
@@ -488,7 +483,6 @@ describe('Tool Search Engine (Phase 3 — trailing edge: catalog changes landing
 
         const result = await toolSearchReindexService(log).reindex({ embedder })
 
-        // Pass 1 indexes the 4 seeded objects; Trello lands while they embed and pass 2 picks it up.
         expect(result.passes).toBe(2)
         expect(result.objectsIndexed).toBe(5)
         expect(result.objectsEmbedded).toBe(5)
@@ -497,10 +491,6 @@ describe('Tool Search Engine (Phase 3 — trailing edge: catalog changes landing
     })
 
     it('refreshes a description republished mid-reconcile — the stale text is gone from the index', async () => {
-        // The reported failure: two publishes inside one reconcile window. The first (Trello) is what the
-        // running job is embedding; the second (Gmail, with rewritten action text) commits mid-run and
-        // must not keep serving its pre-publish description. Asserting the NEW text is present would pass
-        // trivially on the rows that did update — so assert the OLD text is absent.
         await seedCatalog()
         await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
         expect((await getIndexRow('@activepieces/piece-gmail', 'send_email'))?.retrievalDoc).toContain('Send an email via Gmail')
@@ -528,7 +518,6 @@ describe('Tool Search Engine (Phase 3 — trailing edge: catalog changes landing
 
     it('stops at the trailing-pass cap when the catalog keeps changing, rather than looping', async () => {
         await seedCatalog()
-        // Every pass finds something to embed and publishes again, so the fingerprint never settles.
         const embedder = embedderPublishingMidRun((call) => db.save('piece_metadata', createMockPieceMetadata({
             name: `@activepieces/piece-churn-${call}`,
             displayName: `Churn ${call}`,
@@ -541,8 +530,6 @@ describe('Tool Search Engine (Phase 3 — trailing edge: catalog changes landing
 
         const result = await toolSearchReindexService(log).reindex({ embedder })
 
-        // 3 passes: seeded 4 → +churn-1 → +churn-2. churn-3 is published during pass 3 and left for the
-        // next enqueued reconcile; the run terminates rather than chasing the catalog.
         expect(result.passes).toBe(3)
         expect(result.objectsIndexed).toBe(6)
         expect(await indexRowCount()).toBe(6)

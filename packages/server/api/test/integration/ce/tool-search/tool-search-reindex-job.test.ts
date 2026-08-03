@@ -58,9 +58,6 @@ describe('Tool Search reindex job (Phase 3 — async wiring)', () => {
     })
 })
 
-// The periodic safety net. Event triggers can strand a catalog change at the edge of a running
-// reconcile, and the boot backfill only detects NULL embeddings — never staleness — so without a
-// repeated schedule a stranded change waits for the next publish.
 describe('Tool Search recurring reconcile (safety net)', () => {
     it('registers one repeated reconcile when the flag is on', async () => {
         process.env.AP_TOOL_SEARCH_ENABLED = 'true'
@@ -69,7 +66,6 @@ describe('Tool Search recurring reconcile (safety net)', () => {
 
         const scheduled = await reindexSchedulers()
         expect(scheduled).toHaveLength(1)
-        // Minute 30 — staggered against PIECES_SYNC (minutes 0–4), which enqueues its own reconcile.
         expect(scheduled[0].pattern).toBe('30 * * * *')
     })
 
@@ -79,8 +75,6 @@ describe('Tool Search recurring reconcile (safety net)', () => {
         await toolSearchReindexJob(app.log).scheduleRecurringReconcile()
         await toolSearchReindexJob(app.log).scheduleRecurringReconcile()
 
-        // Keyed on the job name, so every replica converges on the one schedule instead of each adding
-        // its own — N replicas must not mean N reconciles per interval.
         expect(await reindexSchedulers()).toHaveLength(1)
     })
 

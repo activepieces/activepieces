@@ -10,12 +10,6 @@ import { buildRetrievalDoc, computeEmbeddingInputHash } from './retrieval-doc'
 
 const EMBED_BATCH_SIZE = 256
 
-/**
- * Upper bound on reconcile passes in one job run (see {@link catalogFingerprint} for why a second pass
- * exists at all). A pass after the first only touches what changed, so the cap is about refusing to
- * chase a catalog that is being written continuously — not about cost. On hitting it we stop and log:
- * the pending work is not lost, the next catalog change enqueues a fresh reconcile.
- */
 const MAX_RECONCILE_PASSES = 3
 
 export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
@@ -31,12 +25,6 @@ export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
      * `platform` reconciles only one tenant's custom pieces (the custom-piece install hook) and never
      * touches the shared base catalog. A `model_version` change rebuilds under the new version while
      * old-version rows keep serving reads until cutover.
-     *
-     * A catalog change that lands *while* this reconcile is running would otherwise be lost — the
-     * enqueue that announced it collapses onto the already-running job (stable jobId) and the snapshot
-     * was read before it committed. So the run re-checks the catalog fingerprint after each pass and
-     * runs a trailing pass when it moved: the debounce keeps collapsing a burst, but now executes on
-     * the trailing edge instead of dropping it.
      *
      * The embedder is injectable so tests can drive a deterministic fake with no key/network. In
      * production `platformId` names the platform whose OpenAI key funds the embedding; when neither
@@ -64,15 +52,11 @@ export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
         let objectsEmbedded = 0
         let objectsDeleted = 0
         let passes = 0
-        // Read BEFORE the first snapshot, and re-read after every pass: any write that lands from here
-        // on moves the fingerprint, so "changed after we read the catalog" can never be missed.
         let fingerprint = await catalogFingerprint()
 
         while (passes < MAX_RECONCILE_PASSES) {
             passes++
             const pass = await reconcileOnce(embedder, scope, log)
-            // A pass fully supersedes the previous one's view of the catalog, so the desired-state and
-            // still-pending counts are the latest pass's; the work counters accumulate across passes.
             objectsIndexed = pass.objectsIndexed
             objectsPending = pass.objectsPending
             objectsEmbedded += pass.objectsEmbedded
@@ -103,11 +87,6 @@ export const toolSearchReindexService = (log: FastifyBaseLogger) => ({
     },
 })
 
-/**
- * One reconcile pass: re-derive the desired state from the catalog as it is *now*, diff it into the
- * index, and embed what is missing. Every pass re-reads the catalog, so a trailing pass sees writes the
- * previous pass's snapshot could not.
- */
 async function reconcileOnce(embedder: ToolSearchEmbedder, scope: ReindexScope, log: FastifyBaseLogger): Promise<ReconcilePassResult> {
     const currentRelease = apVersionUtil.getCurrentRelease()
     const pieces = await fetchLatestCompatiblePiecesFromDB(currentRelease)
@@ -115,34 +94,15 @@ async function reconcileOnce(embedder: ToolSearchEmbedder, scope: ReindexScope, 
         .flatMap((piece) => explodePiece(piece, embedder.modelVersion))
         .filter((record) => scopeMatches(record, scope))
 
-    // Upsert the desired rows by unique key, batched into chunked multi-row statements rather than
-    // one round-trip per row (~6k on a cold-start backfill). A new row lands with embedding=NULL; an
-    // existing row keeps its embedding unless the retrieval text (→ hash) changed, in which case it
-    // is nulled to force a re-embed. Rows whose content is unchanged are not touched at all (idempotent).
     await upsertDesired(desired, embedder.modelVersion)
 
-    // Remove rows whose object key is no longer in the desired catalog (deleted pieces, removed
-    // actions, superseded old versions). Done before embedding so a row that is both pending and
-    // gone is never wastefully embedded.
     const objectsDeleted = await deleteRemovedRows(desired, embedder.modelVersion, scope)
 
-    // Embed only the rows still missing an embedding (the new + changed ones, plus any that failed
-    // a previous run). Embedding is batched and never blocks the upsert diff above.
     const { embedded: objectsEmbedded, pending: objectsPending } = await embedPendingRows(embedder, scope, log)
 
     return { objectsIndexed: desired.length, objectsEmbedded, objectsDeleted, objectsPending }
 }
 
-/**
- * A cheap change-detector for the piece catalog, compared across a reconcile pass rather than read for
- * its own sake. Every write to `piece_metadata` moves either the row count (insert/delete) or the newest
- * write timestamp (insert/update — TypeORM stamps `updated` on both), so an unchanged fingerprint means
- * no catalog write committed while the pass was running.
- *
- * Deliberately unfiltered: it covers rows a scoped or release-incompatible reconcile ignores, so it can
- * over-report a change. That direction is free — a spurious trailing pass is a hash-gated no-op — while
- * under-reporting would silently strand a publish, which is the bug this guards.
- */
 async function catalogFingerprint(): Promise<string> {
     const result = await databaseConnection().query(
         'SELECT count(*)::int AS count, max(GREATEST("created", "updated"))::text AS "lastWrite" FROM "piece_metadata"',
@@ -437,15 +397,10 @@ type ReindexParams = {
 
 type ReindexResult = {
     status: 'done' | 'no-embedder' | 'no-table'
-    /** reconcile passes this run took — >1 means the catalog changed mid-run and a trailing pass caught it. */
     passes: number
-    /** desired-state object count as of the LAST pass (latest version per piece, actions + triggers). */
     objectsIndexed: number
-    /** rows that were (re)embedded this run, summed over passes — 0 when nothing changed. */
     objectsEmbedded: number
-    /** rows removed because their key is no longer in the desired catalog, summed over passes. */
     objectsDeleted: number
-    /** rows still lacking an embedding after the last pass — non-zero means embedding is degraded. */
     objectsPending: number
 }
 
