@@ -1,8 +1,10 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
-import { GmailMime } from '../common/mime';
+import { GmailMime, RawMimeAttachment } from '../common/mime';
 import { gmailUpdateDraftActionOutputSchema } from '../output-schemas';
+import { parseStream } from '../common/data';
+import { AddressObject } from 'mailparser';
 
 export const gmailUpdateDraftAction = createAction({
   auth: gmailAuth,
@@ -12,7 +14,7 @@ export const gmailUpdateDraftAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates an existing draft (subject, body, recipients, attachments) by its draft ID. Subject and body are required and replace the previous values; omitted recipients (To/CC) and the thread association are preserved from the existing draft rather than cleared. Obtain the draft ID from List Drafts. Not idempotent in effect: each call rewrites the draft with the supplied content.',
+      'Updates an existing draft (subject, body, recipients, attachments) by its draft ID. Subject and body are required and replace the previous values; omitted recipients (To/CC/BCC), attachments, and the thread association are preserved from the existing draft rather than cleared. Obtain the draft ID from List Drafts. Not idempotent in effect: each call rewrites the draft with the supplied content.',
     idempotent: false,
   },
   props: {
@@ -99,36 +101,50 @@ export const gmailUpdateDraftAction = createAction({
       let cc = (context.propsValue.cc as string[] | undefined)?.filter(
         (email) => email !== ''
       );
-      const bcc = (context.propsValue.bcc as string[] | undefined)?.filter(
+      let bcc = (context.propsValue.bcc as string[] | undefined)?.filter(
         (email) => email !== ''
       );
       let threadId = context.propsValue.thread_id || undefined;
+      const newAttachments = context.propsValue.attachments as
+        | { file: ApFile; name?: string }[]
+        | undefined;
+      let preservedAttachments: RawMimeAttachment[] = [];
 
-      // A draft update replaces the whole message, so recover the recipients
-      // and thread link from the existing draft when the caller omits them —
-      // otherwise editing only the body would silently strip the To/CC list
-      // and detach the draft from its conversation.
-      if (!receiver?.length || !cc?.length || !threadId) {
+      // A draft update replaces the whole message, so recover the recipients,
+      // attachments, and thread link from the existing draft when the caller
+      // omits them — otherwise editing only the body would silently strip the
+      // BCC list or attachments and detach the draft from its conversation.
+      // BCC is stripped from `metadata`/`full` responses, so recovering it
+      // (and the attachment content) requires the raw MIME of the draft.
+      if (
+        !receiver?.length ||
+        !cc?.length ||
+        !bcc?.length ||
+        !threadId ||
+        !newAttachments?.length
+      ) {
         const existing = await gmail.users.drafts.get({
           userId: 'me',
           id: context.propsValue.draft_id,
-          format: 'metadata',
+          format: 'raw',
         });
         const message = existing.data.message;
         threadId = threadId ?? message?.threadId ?? undefined;
-        const headerValues = (name: string) =>
-          (message?.payload?.headers ?? [])
-            .filter((header) => (header.name ?? '').toLowerCase() === name)
-            .flatMap((header) => (header.value ?? '').split(','))
-            .map((value) => value.trim())
-            .filter((value) => value !== '');
-        if (!receiver?.length) {
-          const existingTo = headerValues('to');
-          if (existingTo.length) receiver = existingTo;
-        }
-        if (!cc?.length) {
-          const existingCc = headerValues('cc');
-          if (existingCc.length) cc = existingCc;
+
+        if (message?.raw) {
+          const parsed = await parseStream(
+            Buffer.from(message.raw, 'base64').toString('utf-8')
+          );
+          if (!receiver?.length) receiver = addressesOf(parsed.to);
+          if (!cc?.length) cc = addressesOf(parsed.cc);
+          if (!bcc?.length) bcc = addressesOf(parsed.bcc);
+          if (!newAttachments?.length) {
+            preservedAttachments = parsed.attachments.map((attachment) => ({
+              filename: attachment.filename,
+              content: attachment.content,
+              contentType: attachment.contentType,
+            }));
+          }
         }
       }
 
@@ -149,9 +165,9 @@ export const gmailUpdateDraftAction = createAction({
         subject: context.propsValue.subject,
         bodyType: context.propsValue.body_type as 'plain_text' | 'html',
         body: context.propsValue.body,
-        attachments: context.propsValue.attachments as
-          | { file: ApFile; name?: string }[]
-          | undefined,
+        attachments: newAttachments?.length
+          ? newAttachments
+          : preservedAttachments,
       });
 
       const response = await gmail.users.drafts.update({
@@ -184,3 +200,12 @@ export const gmailUpdateDraftAction = createAction({
     }
   },
 });
+
+function addressesOf(
+  address: AddressObject | AddressObject[] | undefined
+): string[] {
+  return (Array.isArray(address) ? address : address ? [address] : [])
+    .flatMap((addressObject) => addressObject.value)
+    .map((emailAddress) => emailAddress.address)
+    .filter((emailAddress): emailAddress is string => !!emailAddress);
+}

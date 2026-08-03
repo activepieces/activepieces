@@ -3,6 +3,12 @@ import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { ApFile } from '@activepieces/pieces-framework';
 
+export interface RawMimeAttachment {
+  filename?: string;
+  content: Buffer;
+  contentType?: string;
+}
+
 interface BuildRawMessageProps {
   to?: string[];
   cc?: string[];
@@ -12,7 +18,13 @@ interface BuildRawMessageProps {
   bodyType: 'plain_text' | 'html';
   body: string;
   headers?: { key: string; value: string }[];
-  attachments?: { file: ApFile; name?: string }[];
+  attachments?: ({ file: ApFile; name?: string } | RawMimeAttachment)[];
+}
+
+function isFileAttachment(
+  attachment: { file: ApFile; name?: string } | RawMimeAttachment
+): attachment is { file: ApFile; name?: string } {
+  return 'file' in attachment;
 }
 
 async function buildRawMessage(props: BuildRawMessageProps): Promise<string> {
@@ -31,13 +43,23 @@ async function buildRawMessage(props: BuildRawMessageProps): Promise<string> {
 
   if (props.attachments && props.attachments.length > 0) {
     const attachmentOption: Attachment[] = props.attachments.map(
-      ({ file, name }) => {
-        const lookupResult = mime.lookup(file.extension ? file.extension : '');
+      (attachment) => {
+        if (isFileAttachment(attachment)) {
+          const { file, name } = attachment;
+          const lookupResult = mime.lookup(
+            file.extension ? file.extension : ''
+          );
+          return {
+            filename: name ?? file.filename,
+            content: file?.base64,
+            contentType: lookupResult ? lookupResult : undefined,
+            encoding: 'base64',
+          };
+        }
         return {
-          filename: name ?? file.filename,
-          content: file?.base64,
-          contentType: lookupResult ? lookupResult : undefined,
-          encoding: 'base64',
+          filename: attachment.filename,
+          content: attachment.content,
+          contentType: attachment.contentType,
         };
       }
     );

@@ -41,7 +41,7 @@ export const gmailDeleteDraftAction = createAction({
         );
       } else if (error.code === 404) {
         return {
-          success: true,
+          success: false,
           deleted: false,
           draftId: context.propsValue.draft_id,
           message: `No draft with ID "${context.propsValue.draft_id}" was found — it may already be deleted, or the ID is invalid. Verify with List Drafts.`,
