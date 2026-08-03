@@ -1,3 +1,4 @@
+import { FlowRunStatus } from '@activepieces/core-execution'
 import { z } from 'zod'
 
 export * from './health-metrics-request'
@@ -67,6 +68,19 @@ export const AppInstance = z.object({
     updated: z.string(),
 })
 
+// A recent failed production run with its cause, read straight off the flow_run row
+// (failedStep carries the failing step name + truncated error message) — so a benchmark
+// or support triage gets the "why" without fetching each run's log file.
+export const DiagnosticsRecentFailure = z.object({
+    runId: z.string(),
+    projectId: z.string(),
+    flowId: z.string(),
+    status: z.enum(FlowRunStatus),
+    failedStepName: z.string().nullable(),
+    errorMessage: z.string().nullable(),
+    created: z.string(),
+})
+
 export const GetDiagnosticsResponse = z.object({
     database: InfraCheck,
     redis: InfraCheck,
@@ -80,6 +94,11 @@ export const GetDiagnosticsResponse = z.object({
         count: z.number(),
         machines: z.array(DiagnosticsWorker),
     }),
+    recentFailures: z.object({
+        lookbackHours: z.number(),
+        total: z.number(),
+        samples: z.array(DiagnosticsRecentFailure),
+    }),
 })
 
 export type ReleaseHealth = z.infer<typeof ReleaseHealth>
@@ -87,5 +106,6 @@ export type GetSystemHealthChecksResponse = z.infer<typeof GetSystemHealthChecks
 export type InfraCheck = z.infer<typeof InfraCheck>
 export type DeploymentConfig = z.infer<typeof DeploymentConfig>
 export type DiagnosticsWorker = z.infer<typeof DiagnosticsWorker>
+export type DiagnosticsRecentFailure = z.infer<typeof DiagnosticsRecentFailure>
 export type AppInstance = z.infer<typeof AppInstance>
 export type GetDiagnosticsResponse = z.infer<typeof GetDiagnosticsResponse>

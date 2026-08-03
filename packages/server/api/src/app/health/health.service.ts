@@ -1,9 +1,11 @@
 import { apVersionUtil, systemUsage, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, apId, ErrorCode, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, tryCatch, unique } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, ErrorCode, FAILED_STATES, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, RunEnvironment, tryCatch, unique } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { In, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../database/database-connection'
 import { redisConnections } from '../database/redis-connections'
 import { s3Helper } from '../file/s3-helper'
+import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { appMachineCache } from '../helper/app-machine-cache'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -71,17 +73,19 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
                 params: { message: 'Infra diagnostics are not available on the cloud edition' },
             })
         }
-        const [database, redis, storage, machines, apps] = await Promise.all([
+        const [database, redis, storage, machines, apps, recentFailures] = await Promise.all([
             measureDatabase(log),
             measureRedis(log),
             measureStorage(log),
             machineService(log).list(platformId),
             appMachineCache.list(),
+            collectRecentFailures({ log, platformId }),
         ])
         return {
             database,
             redis,
             storage,
+            recentFailures,
             apps: {
                 count: apps.length,
                 instances: apps,
@@ -156,6 +160,45 @@ async function measureStorage(log: FastifyBaseLogger): Promise<InfraCheck> {
     return { ok: true, latencyMs: Date.now() - startedAt }
 }
 
+// The "why" behind failure counts: recent failed production runs across the platform, with the
+// failing step and its (truncated) error message read off the flow_run row itself — no per-run
+// log-file fetch. Gives a benchmark or support triage the causes, not just totals.
+async function collectRecentFailures({ log, platformId }: { log: FastifyBaseLogger, platformId: string }): Promise<GetDiagnosticsResponse['recentFailures']> {
+    const since = new Date(Date.now() - RECENT_FAILURES_LOOKBACK_HOURS * 60 * 60 * 1000)
+    const { data, error } = await tryCatch(async () => {
+        const query = flowRunRepo().createQueryBuilder('flow_run')
+            .innerJoin('project', 'project', 'project.id = flow_run."projectId"')
+            .andWhere('project."platformId" = :platformId', { platformId })
+            .andWhere({
+                status: In(FAILED_STATES),
+                environment: RunEnvironment.PRODUCTION,
+                created: MoreThanOrEqual(since),
+            })
+        const [runs, total] = await Promise.all([
+            query.clone().orderBy('flow_run.created', 'DESC').take(RECENT_FAILURES_SAMPLE_LIMIT).getMany(),
+            query.getCount(),
+        ])
+        return {
+            lookbackHours: RECENT_FAILURES_LOOKBACK_HOURS,
+            total,
+            samples: runs.map((run) => ({
+                runId: run.id,
+                projectId: run.projectId,
+                flowId: run.flowId,
+                status: run.status,
+                failedStepName: run.failedStep?.name ?? null,
+                errorMessage: run.failedStep?.message ?? null,
+                created: run.created,
+            })),
+        }
+    })
+    if (error) {
+        log.warn({ error }, '[diagnostics] recent failures scan failed')
+        return { lookbackHours: RECENT_FAILURES_LOOKBACK_HOURS, total: 0, samples: [] }
+    }
+    return data
+}
+
 // Surfaces the exact "workers connected but idle" state behind version-skew: workers whose
 // release does not match the app's are silently withheld jobs by the dispatch gate
 // (worker-rpc-service.ts). A `current` of UNKNOWN_VERSION ('0.0.0') means the app itself failed
@@ -186,5 +229,7 @@ const APP_MIN_RAM_GB = 2
 const APP_MIN_DISK_GB = 30
 const WORKER_MIN_CPU_CORES = 0.5
 const WORKER_MIN_RAM_GB = 1
+const RECENT_FAILURES_LOOKBACK_HOURS = 24
+const RECENT_FAILURES_SAMPLE_LIMIT = 20
 
 const UNKNOWN_WORKER_VERSION = 'unknown'
