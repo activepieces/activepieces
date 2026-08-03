@@ -10,11 +10,11 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 export const foldersApi = {
-  async list(params?: { projectId?: string }): Promise<FolderDto[]> {
+  async list(): Promise<FolderDto[]> {
     const request: ListFolderRequest = {
       cursor: undefined,
       limit: 1000000,
-      projectId: params?.projectId ?? authenticationSession.getProjectId()!,
+      projectId: authenticationSession.getProjectId()!,
     };
 
     const response = await api.get<any>('/v1/folders', request);

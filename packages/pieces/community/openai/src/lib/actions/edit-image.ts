@@ -6,11 +6,12 @@ import mime from 'mime-types';
 import { openaiAuth } from '../auth';
 
 export const editImage = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: openaiAuth,
   name: 'edit_image',
   displayName: 'Edit Image',
   description: 'Edit an existing image using a text prompt with gpt-image-2',
+  aiMetadata: { description: 'Modifies an existing image supplied as a file, applying the changes described in a text prompt with the gpt-image-2 model, and writes the result out as a new PNG file. An optional mask image confines the edit to its transparent areas and must match the dimensions of the input image; size and quality can be left on auto. Pick generate_image instead when there is no source image to start from, and vision_prompt when the image only needs to be read rather than changed. Not idempotent: each call renders a fresh image.', idempotent: false },
   props: {
     image: Property.File({
       displayName: 'Image',

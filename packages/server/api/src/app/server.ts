@@ -1,13 +1,12 @@
 import path from 'path'
 import { apId, spreadIfDefined } from '@activepieces/core-utils'
-import { apLogger, wideEvent } from '@activepieces/server-utils'
+import { apLogger, evlogFastify, useWideEventLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, maxSocketHttpBufferSizeBytes } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyHttpProxy from '@fastify/http-proxy'
 import fastifyMultipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
-import { evlog as evlogFastify, useLogger as useWideEventLogger } from 'evlog/fastify'
 import fastify, { FastifyInstance } from 'fastify'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket'
@@ -105,16 +104,16 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         const frontendPath = path.resolve(process.cwd(), 'dist/packages/web')
         await app.register(fastifyStatic, {
             root: frontendPath,
-            setHeaders: (res, filepath) => {
+            setHeaders: (reply, filepath) => {
                 const normalized = filepath.replace(/\\/g, '/')
                 if (normalized.endsWith('.html')) {
-                    void res.setHeader('Cache-Control', 'no-cache')
+                    void reply.header('Cache-Control', 'no-cache')
                 }
                 else if (normalized.includes('/assets/')) {
-                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+                    void reply.header('Cache-Control', 'public, max-age=31536000, immutable')
                 }
                 else {
-                    void res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
+                    void reply.header('Cache-Control', 'public, max-age=0, must-revalidate')
                 }
             },
         })

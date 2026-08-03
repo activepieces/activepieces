@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, Permission, ProjectRole } from '@activepieces/core-utils'
 import { ApiToWorkerContract, createNotifyClient, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
@@ -19,6 +19,8 @@ const listener = {
     [PrincipalType.WORKER]: {} as ListenerMap<PrincipalType.WORKER>,
 }
 
+const eventPermissions: Partial<Record<WebsocketServerEvent, Permission>> = {}
+
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     notifyWorkers: () => createNotifyClient<ApiToWorkerContract>(app!.io.to(WORKERS_ROOM)),
@@ -31,9 +33,10 @@ export const websocketService = {
 
         const castedType = type as keyof typeof listener
         const projectId = socket.handshake.auth.projectId
+        let projectRole: ProjectRole | undefined
         switch (type) {
             case PrincipalType.USER: {
-                await validateProjectId({ userId: principal.id, projectId, log })
+                projectRole = await validateProjectId({ userId: principal.id, projectId, log })
                 log.info({
                     message: 'User connected',
                     user: { id: principal.id },
@@ -66,17 +69,30 @@ export const websocketService = {
             // Socket.IO emits the reserved lowercase 'disconnect' per-socket; map our DISCONNECT enum
             // onto it or the handler never fires (it never did — worker cleanup relied on the 60s sweep).
             const socketEvent = event === WebsocketServerEvent.DISCONNECT ? 'disconnect' : event
-            socket.on(socketEvent, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log))
+            socket.on(socketEvent, async (data, callback) => {
+                // Permissions are a project-role concept, so they only apply to USER principals.
+                const requiredPermission = castedType === PrincipalType.USER
+                    ? eventPermissions[event as WebsocketServerEvent]
+                    : undefined
+                if (!isNil(requiredPermission) && !hasPermission(projectRole, requiredPermission)) {
+                    log.warn({ event, userId: principal.id, projectId, requiredPermission }, 'Websocket event blocked: missing permission')
+                    return
+                }
+                return rejectedPromiseHandler(handler(socket)(data, principal, projectId, callback), log)
+            })
         }
     },
     async verifyPrincipal(socket: Socket): Promise<Principal> {
         return accessTokenManager(app!.log).verifyPrincipal(socket.handshake.auth.token)
     },
-    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
+    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>, permission?: Permission): void {
         switch (principalType) {
             case PrincipalType.USER: {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 listener[PrincipalType.USER][event] = handler as unknown as WebsocketListener<any, PrincipalType.USER>
+                if (!isNil(permission)) {
+                    eventPermissions[event] = permission
+                }
                 break
             }
             case PrincipalType.WORKER: {
@@ -91,7 +107,7 @@ export const websocketService = {
     },
 }
 
-const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<void> => {
+const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<ProjectRole> => {
     if (isNil(projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHENTICATION,
@@ -113,6 +129,11 @@ const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdAr
             },
         })
     }
+    return role
+}
+
+function hasPermission(role: ProjectRole | undefined, permission: Permission): boolean {
+    return !isNil(role) && (role.permissions ?? []).includes(permission)
 }
 
 type ValidateProjectIdArgs = {

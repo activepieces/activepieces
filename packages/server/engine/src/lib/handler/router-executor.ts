@@ -1,9 +1,9 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
 import { utils } from '../utils'
-import { BaseExecutor } from './base-executor'
+import { BaseExecutor, failStep } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
@@ -24,31 +24,63 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
             }),
         )
         if (resolveError) {
-            const errorMessage = utils.formatError(resolveError)
-            const failedStepOutput = RouterStepOutput.init({ input: {} })
-                .setStatus(StepOutputStatus.FAILED)
-                .setErrorMessage(errorMessage)
-                .setDuration(performance.now() - stepStartTime)
-            return (await executionState.upsertStep(action.name, failedStepOutput)).setVerdict({
-                status: FlowRunStatus.FAILED,
-                failedStep: {
-                    name: action.name,
-                    displayName: action.displayName,
-                    message: errorMessage,
-                },
+            return failStep({
+                action,
+                executionState,
+                stepOutput: RouterStepOutput.init({ input: {} }),
+                error: resolveError,
+                durationMs: performance.now() - stepStartTime,
             })
         }
         const { censoredInput, resolvedInput } = resolved
 
         switch (resolvedInput.executionType) {
             case RouterExecutionType.EXECUTE_ALL_MATCH:
-                return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_ALL_MATCH })
             case RouterExecutionType.EXECUTE_FIRST_MATCH:
-                return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_FIRST_MATCH })
+                return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: resolvedInput.executionType })
             default:
                 throw new EngineGenericError('RouterExecutionTypeNotSupportedError', `Router execution type ${resolvedInput.executionType} is not supported`)
         }
     },
+}
+
+export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
+    return conditionGroups.some((conditionGroup) => conditionGroup.every((condition) => {
+        if (isNil(condition.operator)) {
+            throw new EngineGenericError('OperatorNotSetError', 'The operator is required but found to be undefined')
+        }
+        const evaluate = CONDITION_EVALUATORS[condition.operator]
+        if (isNil(evaluate)) {
+            return true
+        }
+        return evaluate(toConditionValues(condition))
+    }))
+}
+
+const CONDITION_EVALUATORS: Record<BranchOperator, (condition: ConditionValues) => boolean> = {
+    [BranchOperator.TEXT_CONTAINS]: (c) => text(c.firstValue, c).includes(text(c.secondValue, c)),
+    [BranchOperator.TEXT_DOES_NOT_CONTAIN]: (c) => !text(c.firstValue, c).includes(text(c.secondValue, c)),
+    [BranchOperator.TEXT_EXACTLY_MATCHES]: (c) => text(c.firstValue, c) === text(c.secondValue, c),
+    [BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH]: (c) => text(c.firstValue, c) !== text(c.secondValue, c),
+    [BranchOperator.TEXT_STARTS_WITH]: (c) => text(c.firstValue, c).startsWith(text(c.secondValue, c)),
+    [BranchOperator.TEXT_DOES_NOT_START_WITH]: (c) => !text(c.firstValue, c).startsWith(text(c.secondValue, c)),
+    [BranchOperator.TEXT_ENDS_WITH]: (c) => text(c.firstValue, c).endsWith(text(c.secondValue, c)),
+    [BranchOperator.TEXT_DOES_NOT_END_WITH]: (c) => !text(c.firstValue, c).endsWith(text(c.secondValue, c)),
+    [BranchOperator.LIST_CONTAINS]: (c) => coerceListAsArray(c.firstValue).some((item) => text(item, c) === text(c.secondValue, c)),
+    [BranchOperator.LIST_DOES_NOT_CONTAIN]: (c) => !coerceListAsArray(c.firstValue).some((item) => text(item, c) === text(c.secondValue, c)),
+    [BranchOperator.NUMBER_IS_GREATER_THAN]: (c) => parseStringToNumber(c.firstValue) > parseStringToNumber(c.secondValue),
+    [BranchOperator.NUMBER_IS_LESS_THAN]: (c) => parseStringToNumber(c.firstValue) < parseStringToNumber(c.secondValue),
+    // eslint-disable-next-line eqeqeq
+    [BranchOperator.NUMBER_IS_EQUAL_TO]: (c) => parseStringToNumber(c.firstValue) == parseStringToNumber(c.secondValue),
+    [BranchOperator.BOOLEAN_IS_TRUE]: (c) => !!c.firstValue,
+    [BranchOperator.BOOLEAN_IS_FALSE]: (c) => !c.firstValue,
+    [BranchOperator.DATE_IS_AFTER]: (c) => compareDates(c, (first, second) => first.isAfter(second)),
+    [BranchOperator.DATE_IS_EQUAL]: (c) => compareDates(c, (first, second) => first.isSame(second)),
+    [BranchOperator.DATE_IS_BEFORE]: (c) => compareDates(c, (first, second) => first.isBefore(second)),
+    [BranchOperator.LIST_IS_EMPTY]: (c) => parseListAsArray(c.firstValue)?.length === 0,
+    [BranchOperator.LIST_IS_NOT_EMPTY]: (c) => (parseListAsArray(c.firstValue)?.length ?? 0) !== 0,
+    [BranchOperator.EXISTS]: (c) => !isNil(c.firstValue) && c.firstValue !== '',
+    [BranchOperator.DOES_NOT_EXIST]: (c) => isNil(c.firstValue) || c.firstValue === '',
 }
 
 async function handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType }: {
@@ -73,7 +105,6 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return fallback
     })
 
-    const stepEndTime = performance.now()
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
@@ -82,7 +113,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
             branchIndex: index + 1,
             evaluation: evaluatedConditions[index],
         })),
-    }).setDuration(stepEndTime - stepStartTime)
+    }).setDuration(performance.now() - stepStartTime)
     executionState = await executionState.upsertStep(action.name, routerOutput)
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(async () => {
@@ -94,13 +125,13 @@ async function handleRouterExecution({ action, executionState, constants, censor
             if (!condition) {
                 continue
             }
-    
+
             executionState = await flowExecutor.execute({
                 action: action.children[i],
                 executionState,
                 constants,
             })
-    
+
             const shouldBreakExecution = executionState.verdict.status !== FlowRunStatus.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
             if (shouldBreakExecution) {
                 break
@@ -109,196 +140,69 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return executionState
     })
     if (executionStateError) {
-        const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
-        return (await executionState.upsertStep(action.name, failedStepOutput)).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-            name: action.name,
-            displayName: action.displayName,
-            message: utils.formatError(executionStateError),
-        } })
+        return failStep({
+            action,
+            executionState,
+            stepOutput: routerOutput.setStatus(StepOutputStatus.FAILED),
+            error: executionStateError,
+        })
     }
 
     return executionStateResult
 }
 
-
-export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
-    let orOperator = false
-    for (const conditionGroup of conditionGroups) {
-        let andGroup = true
-        for (const condition of conditionGroup) {
-            const castedCondition = condition
-
-            if (isNil(castedCondition.operator)) {
-                throw new EngineGenericError('OperatorNotSetError', 'The operator is required but found to be undefined')
-            }
-
-            switch (castedCondition.operator) {
-                case BranchOperator.TEXT_CONTAINS: {
-                    const firstValueContains = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
-                    andGroup = andGroup && firstValueContains
-                    break
-                }
-                case BranchOperator.TEXT_DOES_NOT_CONTAIN: {
-                    const firstValueDoesNotContain = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
-                    andGroup = andGroup && firstValueDoesNotContain
-                    break
-                }
-                case BranchOperator.TEXT_EXACTLY_MATCHES: {
-                    const firstValueExactlyMatches = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive) ===
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
-                    andGroup = andGroup && firstValueExactlyMatches
-                    break
-                }
-                case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH: {
-                    const firstValueDoesNotExactlyMatch = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive) !==
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
-                    andGroup = andGroup && firstValueDoesNotExactlyMatch
-                    break
-                }
-                case BranchOperator.TEXT_STARTS_WITH: {
-                    const firstValueStartsWith = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).startsWith(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
-                    andGroup = andGroup && firstValueStartsWith
-                    break
-                }
-                case BranchOperator.TEXT_ENDS_WITH: {
-                    const firstValueEndsWith = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).endsWith(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
-                    andGroup = andGroup && firstValueEndsWith
-                    break
-                }
-                case BranchOperator.TEXT_DOES_NOT_START_WITH: {
-                    const firstValueDoesNotStartWith = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).startsWith(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
-                    andGroup = andGroup && firstValueDoesNotStartWith
-                    break
-                }
-                case BranchOperator.TEXT_DOES_NOT_END_WITH: {
-                    const firstValueDoesNotEndWith = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).endsWith(
-                        toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
-                    andGroup = andGroup && firstValueDoesNotEndWith
-                    break
-                }
-                case BranchOperator.LIST_CONTAINS: {
-                    const list = parseAndCoerceListAsArray(castedCondition.firstValue)
-                    andGroup = andGroup && list.some((item) =>
-                        toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) === toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
-                    break
-                }
-                case BranchOperator.LIST_DOES_NOT_CONTAIN: {
-                    const list = parseAndCoerceListAsArray(castedCondition.firstValue)
-                    andGroup = andGroup && !list.some((item) =>
-                        toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) === toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
-                    )
-                    break
-                }
-                case BranchOperator.NUMBER_IS_GREATER_THAN: {
-                    const firstValue = parseStringToNumber(castedCondition.firstValue)
-                    const secondValue = parseStringToNumber(castedCondition.secondValue)
-                    andGroup = andGroup && firstValue > secondValue
-                    break
-                }
-                case BranchOperator.NUMBER_IS_LESS_THAN: {
-                    const firstValue = parseStringToNumber(castedCondition.firstValue)
-                    const secondValue = parseStringToNumber(castedCondition.secondValue)
-                    andGroup = andGroup && firstValue < secondValue
-                    break
-                }
-                case BranchOperator.NUMBER_IS_EQUAL_TO: {
-                    const firstValue = parseStringToNumber(castedCondition.firstValue)
-                    const secondValue = parseStringToNumber(castedCondition.secondValue)
-                    andGroup = andGroup && firstValue == secondValue
-                    break
-                }
-                case BranchOperator.BOOLEAN_IS_TRUE:
-                    andGroup = andGroup && !!castedCondition.firstValue
-                    break
-                case BranchOperator.BOOLEAN_IS_FALSE:
-                    andGroup = andGroup && !castedCondition.firstValue
-                    break
-                case BranchOperator.DATE_IS_AFTER:
-                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isAfter(dayjs(castedCondition.secondValue))
-                    break
-                case BranchOperator.DATE_IS_EQUAL:
-                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isSame(dayjs(castedCondition.secondValue))
-                    break
-                case BranchOperator.DATE_IS_BEFORE:
-                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isBefore(dayjs(castedCondition.secondValue))
-                    break
-                case BranchOperator.LIST_IS_EMPTY: {
-                    const list = parseListAsArray(castedCondition.firstValue)
-                    andGroup = andGroup && Array.isArray(list) && list?.length === 0
-                    break
-                }
-                case BranchOperator.LIST_IS_NOT_EMPTY: {
-                    const list = parseListAsArray(castedCondition.firstValue)
-                    andGroup = andGroup && Array.isArray(list) && list?.length !== 0
-                    break
-                }
-                case BranchOperator.EXISTS:
-                    andGroup = andGroup && castedCondition.firstValue !== undefined && castedCondition.firstValue !== null && castedCondition.firstValue !== ''
-                    break
-                case BranchOperator.DOES_NOT_EXIST:
-                    andGroup = andGroup && (castedCondition.firstValue === undefined || castedCondition.firstValue === null || castedCondition.firstValue === '')
-                    break
-            }
-        }
-        orOperator = orOperator || andGroup
+function toConditionValues(condition: BranchCondition): ConditionValues {
+    return {
+        firstValue: condition.firstValue,
+        secondValue: 'secondValue' in condition ? condition.secondValue : undefined,
+        caseSensitive: 'caseSensitive' in condition ? condition.caseSensitive : undefined,
     }
-    return Boolean(orOperator)
 }
 
-function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | undefined): string {
-    if (typeof text === 'string') {
-        return caseSensitive ? text : text.toLowerCase()
-    }
-    const textAsString = JSON.stringify(text)
-    return caseSensitive ? textAsString : textAsString.toLowerCase()
+function text(value: unknown, { caseSensitive }: ConditionValues): string {
+    const asString = typeof value === 'string' ? value : JSON.stringify(value)
+    return caseSensitive ? asString : asString.toLowerCase()
 }
 
-function parseStringToNumber(str: string): number | string {
+function parseStringToNumber(str: string | undefined): number | string {
     const num = Number(str)
-    return isNaN(num) ? str : num
+    return isNaN(num) ? String(str) : num
 }
 
 function parseListAsArray(input: unknown): unknown[] | undefined {
     if (typeof input === 'string') {
-        try {
-            const parsed = JSON.parse(input)
-            return Array.isArray(parsed) ? parsed : undefined
-        }
-        catch (e) {
-            return undefined
-        }
+        const { data } = tryCatchSync(() => JSON.parse(input))
+        return Array.isArray(data) ? data : undefined
     }
     return Array.isArray(input) ? input : undefined
 }
 
-function parseAndCoerceListAsArray(input: unknown): unknown[] {
+function coerceListAsArray(input: unknown): unknown[] {
     if (typeof input === 'string') {
-        try {
-            const parsed = JSON.parse(input)
-            return Array.isArray(parsed) ? parsed : [parsed]
-        }
-        catch (e) {
+        const { data, error } = tryCatchSync(() => JSON.parse(input))
+        if (error) {
             return [input]
         }
+        return Array.isArray(data) ? data : [data]
     }
     return Array.isArray(input) ? input : [input]
 }
 
-function isValidDate(date: unknown): boolean {
-    if (typeof date === 'string' || typeof date === 'number' || date instanceof Date) {
-        return dayjs(date).isValid()
+function compareDates({ firstValue, secondValue }: ConditionValues, compare: (first: Dayjs, second: Dayjs) => boolean): boolean {
+    if (!isDateLike(firstValue) || !isDateLike(secondValue)) {
+        return false
     }
-    return false
+    const first = dayjs(firstValue)
+    const second = dayjs(secondValue)
+    return first.isValid() && second.isValid() && compare(first, second)
+}
+
+function isDateLike(value: unknown): value is string | number | Date {
+    return typeof value === 'string' || typeof value === 'number' || value instanceof Date
+}
+
+type ConditionValues = {
+    firstValue: string
+    secondValue?: string
+    caseSensitive?: boolean
 }

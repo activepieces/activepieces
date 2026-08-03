@@ -82,6 +82,16 @@ export const isMac = () => {
   return /(Mac)/i.test(navigator.userAgent);
 };
 
+export const isEditableTarget = (target: EventTarget | null): boolean => {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT')
+  );
+};
+
 function getBlobType(extension: 'json' | 'txt' | 'csv') {
   switch (extension) {
     case 'csv':

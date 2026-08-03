@@ -12,6 +12,12 @@ export const searchBusinessObjectBatch = createAction({
 	displayName: 'Search Business Object (Batch)',
 	description:
 		'Searches business objects with pagination and returns all matching records.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Pages through a Workday business object collection and returns every matching record, after selecting the module (Recruiting, Onboarding, or HR Services & Time Tracking) and an object type such as Job Requisition, Candidate, or Worker, or supplying a custom REST path instead. Optional JSON query parameters narrow the results; omitting them returns all records of that type. Use to find records by criteria, and Get Business Object Details (Batch) when the IDs are already known. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		...sharedModuleProps,
 		queryParams: optionalQueryParamsProperty,

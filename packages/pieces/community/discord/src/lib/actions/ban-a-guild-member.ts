@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordBanGuildMember = createAction({
   auth: discordAuth,
@@ -13,6 +14,7 @@ export const discordBanGuildMember = createAction({
   description: 'Bans a guild member',
   audience: 'both',
   aiMetadata: { description: 'Bans a user from a guild, identified by guild ID and user ID, with an optional audit-log reason; this removes them and blocks rejoining until unbanned. Use to permanently remove a disruptive user. Requires the bot to have Ban Members permission; idempotent, since re-banning an already-banned user yields the same end state.', idempotent: true },
+  outputSchema: discordSuccessActionOutputSchema,
   displayName: 'Ban guild member',
   props: {
     guild_id: discordCommon.guilds,

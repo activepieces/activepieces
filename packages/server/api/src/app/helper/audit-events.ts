@@ -1,8 +1,8 @@
+import { AuditActor, defineAuditAction, DefinedAuditAction } from '@activepieces/server-utils'
 import { Principal, PrincipalType } from '@activepieces/shared'
-import { AuditActor, defineAuditAction } from 'evlog'
 
-const connectionListed = defineAuditAction('connection.listed', { target: 'project' })
-const globalConnectionListed = defineAuditAction('global-connection.listed', { target: 'platform' })
+const connectionListed: DefinedAuditAction<'project'> = defineAuditAction('connection.listed', { target: 'project' })
+const globalConnectionListed: DefinedAuditAction<'platform'> = defineAuditAction('global-connection.listed', { target: 'platform' })
 
 export const auditEvents = {
     connectionListed,

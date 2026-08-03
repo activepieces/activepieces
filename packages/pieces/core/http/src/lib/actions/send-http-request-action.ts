@@ -25,10 +25,11 @@ enum AuthType {
 }
 
 export const httpSendRequestAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'send_request',
   displayName: 'Send HTTP request',
   description: 'Send HTTP request',
+  aiMetadata: { description: 'Sends an HTTP request to any URL with a chosen method, optional Basic or Bearer auth, an optional JSON, raw or multipart body, and can retry or continue the flow on 4xx/5xx. Use it as the generic escape hatch for an API with no dedicated piece — prefer that app\'s own piece when one exists, and Parse URL to pull a URL apart without calling it. Requires an absolute URL and a method; not idempotent, since a call\'s effect follows the method and POST/PATCH-style calls mutate remote data.', idempotent: false },
   props: {
     method: httpMethodDropdown,
     url: Property.ShortText({

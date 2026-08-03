@@ -123,7 +123,7 @@ function logChatHttp({
 }): void {
   if (!chatDebug.isEnabled()) return;
   const path = url.replace(API_URL, '');
-  if (!path.startsWith('/v1/chat') || path.startsWith('/v1/logs')) return;
+  if (!path.startsWith('/v1/agents') || path.startsWith('/v1/logs')) return;
   const conversationId = path.match(/\/v1\/chat\/conversations\/([^/?]+)/)?.[1];
   const fields = {
     http: {
@@ -173,6 +173,22 @@ export const api = {
   },
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
+  },
+  extractServerErrorMessage(error: unknown, fallback: string): string {
+    if (api.isError(error)) {
+      const data = error.response?.data as ApErrorParams | undefined;
+      const message =
+        data?.params && 'message' in data.params
+          ? data.params.message
+          : undefined;
+      if (typeof message === 'string' && message.length > 0) {
+        return message;
+      }
+    }
+    if (error instanceof Error && error.message.length > 0) {
+      return error.message;
+    }
+    return fallback;
   },
   any: <TResponse>(url: string, config?: AxiosRequestConfig) =>
     request<TResponse>(url, config),

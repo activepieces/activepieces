@@ -170,11 +170,10 @@ async function handleWebhookTrigger({ flowId, flowVersionId, projectId, pieceTri
 }
 
 async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionId, projectId, log }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
-    const pollingFrequencyCronExpression = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
+    const pollIntervalMinutes = system.getNumberOrThrow(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL)
     const defaultScheduleOptions: ScheduleOptions = {
-        cronExpression: pollingFrequencyCronExpression,
-        timezone: 'UTC',
-        type: TriggerSourceScheduleType.CRON_EXPRESSION,
+        type: TriggerSourceScheduleType.INTERVAL,
+        intervalMs: pollIntervalMinutes * 60_000,
     }
     const scheduleOptions = engineHelperResponse.response?.scheduleOptions ?? defaultScheduleOptions
     const platformId = await projectService(log).getPlatformId(projectId)

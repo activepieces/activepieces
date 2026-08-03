@@ -14,10 +14,11 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const nextDayofYear = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'next_day_of_year',
   displayName: 'Next Day of Year',
   description: 'Get the date and time of the next day of the year',
+  aiMetadata: { description: 'Returns the next occurrence of a fixed month and day of month relative to now in a chosen time zone, rolling into next year when that date has already passed, stamped with a fixed 24h time or the current time. Use it for anniversaries and renewals; prefer Next Day of Week for weekday-based recurrence. Month and day are required (a day missing from the chosen month rolls into the following month instead of erroring) and the time must be HH:mm; not idempotent, since the base is the current clock.', idempotent: false },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

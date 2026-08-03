@@ -89,7 +89,7 @@ export const mailchimpCommon = {
     },
   }),
 
-  getUserCampaigns: async (authProp: OAuth2PropertyValue) => {
+  getUserCampaigns: async (authProp: OAuth2PropertyValue, options?: { status?: string }) => {
     const access_token = authProp.access_token;
     const mailChimpServerPrefix =
       await mailchimpCommon.getMailChimpServerPrefix(access_token!);
@@ -102,8 +102,43 @@ export const mailchimpCommon = {
     return await (mailchimp as any).campaigns.list({
       fields: ['campaigns.id', 'campaigns.settings.title', 'campaigns.status', 'total_items'],
       count: 1000,
+      ...(options?.status ? { status: options.status } : {}),
     });
   },
+
+  mailChimpDraftCampaignIdDropdown: Property.Dropdown<string,true,typeof mailchimpAuth >({
+    auth: mailchimpAuth,
+    displayName: 'Campaign',
+    refreshers: [],
+    description: 'Select the draft campaign to send',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
+      }
+
+      const authProp = auth as OAuth2PropertyValue;
+      // Mailchimp only accepts the send action on campaigns in "save" (draft) status.
+      const campaignResponse = (await mailchimpCommon.getUserCampaigns(
+        authProp,
+        { status: 'save' }
+      )) as any;
+
+      const options = campaignResponse.campaigns.map((campaign: any) => ({
+        label: `${campaign.settings?.title || campaign.id}`,
+        value: campaign.id,
+      }));
+
+      return {
+        disabled: false,
+        options,
+      };
+    },
+  }),
 
   mailChimpStoreIdDropdown: Property.Dropdown<string,true,typeof mailchimpAuth >({
     auth: mailchimpAuth,

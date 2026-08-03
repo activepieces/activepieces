@@ -7,6 +7,11 @@ export const typeahead = createAction({
   displayName: 'Typeahead',
   description:
     'Resolve the exact stored value for a search filter (company, industry, category, location, school, title, skill, investor). Use it before filtering, or when a search returns few/no results.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Autocomplete a partial string against one DataForB2B reference vocabulary selected by the type prop: company (returns org_id), people industry, company industry, category, location, city, region, school, job title, skill, or investor. Use it before Search People or Search Companies to resolve a filter value to the exact stored spelling, or after a search returns few or no matches. Requires a type and a query of 1-100 characters; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     type: Property.StaticDropdown({
       displayName: 'Type',
