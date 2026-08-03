@@ -41,13 +41,10 @@ export function AIChatBox({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
-  const { data: providers, isLoading: isLoadingProviders } =
-    aiProviderQueries.useAiProviders();
+  const { data: chatProvider, isLoading: isLoadingProviders } =
+    aiProviderQueries.useChatProvider();
 
-  const chatProvider = providers?.find((p) => p.enabledForChat);
-  const hasChatProvider = Boolean(chatProvider);
-
-  if (!isLoadingProviders && !hasChatProvider) {
+  if (!isLoadingProviders && !chatProvider) {
     return <SetupRequiredState />;
   }
 
@@ -73,8 +70,9 @@ function ChatBoxContent({
   const credits = useCreditsState();
 
   const {
-    messages,
+    conversationId,
     modelName,
+    messages,
     isStreaming,
     isResumedStream,
     isAwaitingResponse,
@@ -230,6 +228,8 @@ function ChatBoxContent({
                       isLastMessage={isLastAssistant}
                       onSendPrompt={(text) => void handleSend(text)}
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
+                      conversationId={conversationId}
+                      messageIndex={idx}
                     />
                   );
                 })}

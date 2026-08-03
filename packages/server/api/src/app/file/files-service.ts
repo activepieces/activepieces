@@ -1,3 +1,5 @@
+import { Transform } from 'node:stream'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { FileReadToken, FileType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { domainHelper } from '../helper/domain-helper'
@@ -31,6 +33,27 @@ export const filesService = {
             path: `v1/files/${params.fileId}?token=${token}`,
         })
     },
+}
+
+export function fileTooLargeError(maxBytes: number): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `File exceeds the maximum allowed size of ${maxBytes} bytes` },
+    })
+}
+
+export function enforceByteLimit(maxBytes: number): Transform {
+    let total = 0
+    return new Transform({
+        transform(chunk: Buffer, _encoding, callback) {
+            total += chunk.length
+            if (total > maxBytes) {
+                callback(fileTooLargeError(maxBytes))
+                return
+            }
+            callback(null, chunk)
+        },
+    })
 }
 
 export const fileTransportHeaders = {

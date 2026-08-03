@@ -1,8 +1,8 @@
-import { PieceSetConfig } from '@activepieces/shared'
+import { PieceSelectionMode, PieceSetConfig } from '@activepieces/shared'
 import { pieceSetConfig } from '../../../../../src/app/ee/pieces/piece-set/piece-set-config'
 
 const base: PieceSetConfig = {
-    pieces: { mode: 'include_all', exceptions: [] },
+    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
     selectedActions: {},
     selectedTriggers: {},
 }
@@ -11,13 +11,13 @@ describe('pieceSetConfig.applyUpdate', () => {
     it('replaces the pieces selection wholesale when provided', () => {
         const result = pieceSetConfig.applyUpdate({
             current: base,
-            request: { pieces: { mode: 'exclude_all', exceptions: ['slack'] } },
+            request: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['slack'] } },
         })
-        expect(result.pieces).toEqual({ mode: 'exclude_all', exceptions: ['slack'] })
+        expect(result.pieces).toEqual({ mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['slack'] })
     })
 
     it('leaves the pieces selection untouched when not provided', () => {
-        const current = { ...base, pieces: { mode: 'exclude_all' as const, exceptions: ['slack'] } }
+        const current = { ...base, pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['slack'] } }
         const result = pieceSetConfig.applyUpdate({ current, request: { actions: {} } })
         expect(result.pieces).toEqual(current.pieces)
     })
@@ -68,7 +68,7 @@ describe('pieceSetConfig.applyUpdate', () => {
 describe('pieceSetConfig.emptyConfig', () => {
     it('is fully permissive (include_all, no component selections)', () => {
         expect(pieceSetConfig.emptyConfig()).toEqual({
-            pieces: { mode: 'include_all', exceptions: [] },
+            pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
             selectedActions: {},
             selectedTriggers: {},
         })

@@ -21,8 +21,13 @@ export const usersController: FastifyPluginAsyncZod = async (app) => {
         const identityId = user.identityId
         const platformId = req.principal.platform.id
 
+        const part = await req.file()
+        const profilePicture: ApMultipartFile | undefined = isNil(part)
+            ? undefined
+            : { filename: part.filename, data: await part.toBuffer(), type: 'file', mimetype: part.mimetype }
+
         const imageUrl = await fileService(app.log).uploadPublicAsset({
-            file: req.body.profilePicture,
+            file: profilePicture,
             type: FileType.USER_PROFILE_PICTURE,
             platformId,
             allowedMimeTypes: PROFILE_PICTURE_ALLOWED_TYPES,
@@ -72,9 +77,6 @@ const UpdateMeRequest = {
     },
     schema: {
         consumes: ['multipart/form-data'],
-        body: z.object({
-            profilePicture: z.optional(ApMultipartFile),
-        }),
         response: {
             [StatusCodes.OK]: UpdateMeResponse,
         },

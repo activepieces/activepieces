@@ -1,0 +1,109 @@
+name: Chat Evals
+
+# Regression gate for the AI Copilot chat prompt + agent loop.
+#   gate — every PR touching chat/prompt/eval files: deterministic replay + assertion
+#          tests, no key, hermetic. Blocks the PR.
+#   live — nightly + manual: fixtures against the real model + LLM-judge, key from secrets.
+#          Nightly runs the regression fixtures only (cheap + stable); run the full suite
+#          on demand via the workflow_dispatch "scope" input. Not a PR blocker.
+
+on:
+  pull_request:
+    paths:
+      - packages/server/worker/src/lib/execute/jobs/ee/chat/**
+      - packages/server/worker/test/lib/chat-eval/**
+      - packages/server/api/src/app/ee/chat/**
+      - packages/server/api/src/assets/prompts/**
+      - packages/core/shared/src/lib/ee/chat/**
+      - .github/workflows/chat-evals.yml
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: 'Live gate fixture scope'
+        type: choice
+        options: [regression, all]
+        default: regression
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  gate:
+    name: Deterministic gate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.4.2
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 3w
+          max-size: 20gb
+
+      # The eval tests import @activepieces/* packages by their built dist/, which
+      # bun install alone does not produce.
+      - name: Build worker dependency graph
+        run: npx turbo run build --filter=worker
+
+      - name: Run deterministic chat evals
+        run: npm run chat-evals:ci
+
+  live:
+    name: Live judge gate
+    if: github.event_name != 'pull_request' && github.repository == 'activepieces/activepieces'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      CHAT_EVAL_SCOPE: ${{ github.event.inputs.scope || 'regression' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.4.2
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 3w
+          max-size: 20gb
+
+      - name: Build worker dependency graph
+        run: npx turbo run build --filter=worker
+
+      - name: Run live chat evals (scope=${{ env.CHAT_EVAL_SCOPE }})
+        run: npm run chat-evals:ci

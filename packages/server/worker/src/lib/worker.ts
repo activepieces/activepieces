@@ -2,11 +2,11 @@ import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
-import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ConsumeJobRequest, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
-import { createLogger } from 'evlog'
+import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
+import { createApiToWorkerHandlers } from './api-notify-service'
 import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
@@ -35,6 +35,20 @@ function pageOnceForUnreadableWorkerVersion(workerLog: typeof logger): void {
     })
 }
 
+// Front-loads the release-read failure signal to worker boot so a mis-packaged worker that hasn't
+// polled yet doesn't silently look healthy in the logs. This only LOGS: the on-call page needs
+// PAGE_ONCALL_WEBHOOK, which arrives with worker settings on socket connect and is not available at
+// boot, so paging is left to the poll loop's version-compatibility check (which calls
+// pageOnceForUnreadableWorkerVersion, once-guarded, as soon as settings are loaded). A '0.0.0' read
+// pauses polling and will NOT self-heal on reconnect until the deployment is fixed.
+function assertReleaseReadable(): void {
+    if (AP_VERSION !== UNKNOWN_VERSION) {
+        logger.info({ release: { version: AP_VERSION } }, 'Release version detected from package.json')
+        return
+    }
+    logger.error({ release: { version: AP_VERSION } }, 'Worker could not read its release version from package.json (reported as 0.0.0); polling is paused and will NOT self-heal on reconnect until the deployment is fixed (check cwd/packaging)')
+}
+
 let socket: Socket | null = null
 let polling = false
 let connectionGeneration = 0
@@ -61,9 +75,17 @@ const DRAIN_TIMEOUT_MS = 25_000
 let cachedSandboxInfo: SandboxInformation[] = []
 let sandboxInfoInterval: NodeJS.Timeout | null = null
 const SANDBOX_INFO_REFRESH_MS = 15_000
+const SERVER_PING_TIMEOUT_MS = 5_000
+const MACHINE_INFO_TIMEOUT_MS = 15_000
+const POLL_LIVENESS_TIMEOUT_MS = 180_000
+const POLL_WATCHDOG_INTERVAL_MS = 30_000
+
+let pollLoopLiveness: PollLoopLiveness[] = []
+let pollWatchdogInterval: NodeJS.Timeout | null = null
 
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
+        assertReleaseReadable()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
         socket = io(socketUrl.url, {
@@ -77,6 +99,7 @@ export const worker = {
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
+            resetPollLoopLiveness({ loopCount: 1 })
             await fetchAndStoreSettings(socket!)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -107,15 +130,25 @@ export const worker = {
             logger.error({ error: error.message }, 'Socket.IO connection error')
         })
 
+        createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
+            getRuntime: () => runtime,
+            apiClient,
+            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            log: logger,
+        }))
+
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
         }
         startSandboxInfoSampling()
+        startPollWatchdog()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
     async stop(): Promise<void> {
         polling = false
+        pollLoopLiveness = []
+        stopPollWatchdog()
         stopSandboxInfoSampling()
         await drainInFlightJobs()
         if (runtime) {
@@ -164,8 +197,16 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         getSettings: () => sandboxConfig.getSandboxSettings(),
     })
 
+    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
+    void runtime.prewarm({
+        log: logger, 
+        apiClient,
+        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+    })
+
     logger.info({ concurrency }, 'Starting poll loops')
 
+    resetPollLoopLiveness({ loopCount: concurrency })
     const activeRuntime = runtime
     await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
         pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
@@ -177,6 +218,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
     workerLog.info('Polling worker started')
 
     while (polling && connectionGeneration === generation) {
+        markPollLoopIteration({ workerIndex, busy: false })
         const appVersion = workerSettings.getSettings().APP_VERSION
         if (!apVersionUtil.versionsAreCompatible({ versionA: appVersion, versionB: AP_VERSION })) {
             const versionUnreadable = appVersion === UNKNOWN_VERSION || AP_VERSION === UNKNOWN_VERSION
@@ -217,6 +259,7 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
         // Counted for the duration of execute + completeJob so a graceful shutdown can wait for
         // the report to land before tearing down the socket (otherwise the job is orphaned in active).
         inFlightJobs++
+        markPollLoopIteration({ workerIndex, busy: true })
         try {
             const lockExtensionInterval = setInterval(() => {
                 void tryCatch(() => apiClient.extendLock({ jobId: job.jobId, token: job.token, queueName: job.queueName })).then(({ error }) => {
@@ -252,8 +295,10 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
         }
         finally {
             inFlightJobs--
+            markPollLoopIteration({ workerIndex, busy: false })
         }
     }
+    workerLog.warn({ polling, generation, connectionGeneration }, 'Poll loop exited — this worker consumes no jobs until it starts again')
 }
 
 async function drainInFlightJobs(): Promise<void> {
@@ -402,9 +447,18 @@ function getWorkerProps(): WorkerProps {
 }
 
 async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
+    return withTimeout({
+        promise: collectMachineInfo(),
+        timeoutMs: MACHINE_INFO_TIMEOUT_MS,
+        message: 'Timed out collecting machine info',
+    })
+}
+
+async function collectMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const memInfo = await systemUsage.getContainerMemoryUsage()
     const diskInfo = await systemUsage.getDiskInfo()
     const cpuCores = await systemUsage.getCpuCores()
+    const serverPingMs = await probeServerPing()
     return {
         workerId,
         cpuUsagePercentage: systemUsage.getCpuUsage(),
@@ -414,8 +468,26 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: memInfo.totalRamInBytes,
         totalCpuCores: cpuCores,
         ip: workerHostname,
+        serverPingMs,
         sandboxes: cachedSandboxInfo,
     }
+}
+
+async function probeServerPing(): Promise<number | undefined> {
+    const startedAt = Date.now()
+    const probe = tryCatch(() => fetch(`${getApiUrl()}v1/health`, { signal: AbortSignal.timeout(SERVER_PING_TIMEOUT_MS) }))
+        .then(({ data: response, error }) => {
+            void response?.body?.cancel()
+            return error ? undefined : Date.now() - startedAt
+        })
+    return Promise.race([probe, sleep(SERVER_PING_TIMEOUT_MS).then(() => undefined)])
+}
+
+function withTimeout<T>({ promise, timeoutMs, message }: { promise: Promise<T>, timeoutMs: number, message: string }): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(message)), timeoutMs)
+        promise.then(resolve, reject).finally(() => clearTimeout(timer))
+    })
 }
 
 function startSandboxInfoSampling(): void {
@@ -487,14 +559,64 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function resetPollLoopLiveness({ loopCount }: { loopCount: number }): void {
+    const startedAt = Date.now()
+    pollLoopLiveness = Array.from({ length: loopCount }, () => ({ iteratedAt: startedAt, busy: false }))
+}
+
+function markPollLoopIteration({ workerIndex, busy }: { workerIndex: number, busy: boolean }): void {
+    const liveness = pollLoopLiveness[workerIndex]
+    if (isNil(liveness)) {
+        return
+    }
+    liveness.iteratedAt = Date.now()
+    liveness.busy = busy
+}
+
+function findStalledPollLoop(): StalledPollLoop | undefined {
+    const connected = socket?.connected ?? false
+    if (!connected) {
+        return undefined
+    }
+    const now = Date.now()
+    const workerIndex = findStalledLoopIndex({ loops: pollLoopLiveness, now, timeoutMs: POLL_LIVENESS_TIMEOUT_MS })
+    if (workerIndex === -1) {
+        return undefined
+    }
+    return { workerIndex, stalledForMs: now - pollLoopLiveness[workerIndex].iteratedAt }
+}
+
+function startPollWatchdog(): void {
+    if (!isNil(pollWatchdogInterval)) {
+        return
+    }
+    pollWatchdogInterval = setInterval(() => {
+        const stalled = findStalledPollLoop()
+        if (isNil(stalled)) {
+            return
+        }
+        logger.error({ ...stalled, loopCount: pollLoopLiveness.length }, 'Poll loop stalled — exiting so the process manager restarts a worker that can consume jobs')
+        process.exit(1)
+    }, POLL_WATCHDOG_INTERVAL_MS)
+    pollWatchdogInterval.unref()
+}
+
+function stopPollWatchdog(): void {
+    if (!isNil(pollWatchdogInterval)) {
+        clearInterval(pollWatchdogInterval)
+        pollWatchdogInterval = null
+    }
+}
+
 
 function startHealthServer(): ReturnType<typeof createServer> {
     const port = Number(process.env[WorkerSystemProp.PORT] ?? system.get(WorkerSystemProp.PORT))
     const healthPaths = new Set(['/worker/health', '/v1/health', '/api/v1/health'])
     const server = createServer((req, res) => {
         if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {
-            res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ status: 'ok' }))
+            const stalled = !isNil(findStalledPollLoop())
+            res.writeHead(stalled ? 503 : 200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ status: stalled ? 'poll_loop_stalled' : 'ok' }))
         }
         else {
             res.writeHead(404)
@@ -512,4 +634,18 @@ type WorkerStartParams = {
     socketUrl: { url: string, path: string }
     workerToken: string
     withHealthServer?: boolean
+}
+
+export function findStalledLoopIndex({ loops, now, timeoutMs }: { loops: PollLoopLiveness[], now: number, timeoutMs: number }): number {
+    return loops.findIndex((loop) => !loop.busy && now - loop.iteratedAt > timeoutMs)
+}
+
+export type PollLoopLiveness = {
+    iteratedAt: number
+    busy: boolean
+}
+
+type StalledPollLoop = {
+    workerIndex: number
+    stalledForMs: number
 }

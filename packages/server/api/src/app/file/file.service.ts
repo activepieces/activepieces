@@ -1,13 +1,16 @@
+import { Readable } from 'node:stream'
+import { buffer as streamToBuffer } from 'node:stream/consumers'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isMultipartFile, isNil, ProjectId } from '@activepieces/core-utils'
-import { File, FileCompression, FileId, FileLocation, FileType } from '@activepieces/shared'
+import { File, FileCompression, FileId, FileLocation, FileType, Project } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In, LessThanOrEqual } from 'typeorm'
+import { In, LessThan, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { exceptionHandler } from '../helper/exception-handler'
 import { jwtUtils } from '../helper/jwt-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { projectRepo } from '../project/project-repo'
 import { fileCompressor } from './file-compressor'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
@@ -21,7 +24,7 @@ const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXEC
 
 type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
 
-const saveFileToDb = async (baseFile: BaseFile, data: SaveParams['data']) => {
+const saveFileToDb = async (baseFile: BaseFile, data: Buffer | null) => {
     assertNotNullOrUndefined(data, 'data is required')
     return fileRepo().save({
         ...baseFile,
@@ -46,20 +49,24 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const location = getLocationForFile(params.type)
         switch (location) {
             case FileLocation.DB: {
+                if (params.data instanceof Readable) {
+                    const data = await streamToBuffer(params.data)
+                    return saveFileToDb({ ...baseFile, size: data.length }, data)
+                }
                 return saveFileToDb(baseFile, params.data)
             }
             case FileLocation.S3: {
+                const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                // A stream can be consumed once, so it has no S3-error DB fallback.
+                if (params.data instanceof Readable) {
+                    const size = await s3Helper(log).uploadStream(s3Key, params.data)
+                    return fileRepo().save({ ...baseFile, size, location: FileLocation.S3, s3Key })
+                }
                 try {
-                    const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
                     if (!isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
-                    const savedFile = await fileRepo().save({
-                        ...baseFile,
-                        location: FileLocation.S3,
-                        s3Key,
-                    })
-                    return savedFile
+                    return await fileRepo().save({ ...baseFile, location: FileLocation.S3, s3Key })
                 }
                 catch (error) {
                     exceptionHandler.handle(error, log)
@@ -150,9 +157,24 @@ export const fileService = (log: FastifyBaseLogger) => ({
         await fileRepo().delete({ id: file.id })
     },
     async deleteStaleBulk(types: FileType[]) {
-        const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
         const maximumFilesToDeletePerIteration = 4000
         const maximumFilesToDeletePerRun = 1_000_000
+        const customRetentionProjects = await projectRepo().find({
+            select: ['id', 'executionDataRetentionDays'],
+            where: {
+                executionDataRetentionDays: LessThan(EXECUTION_DATA_RETENTION_DAYS),
+            },
+        })
+        const cleanupPasses: CleanupPass[] = [
+            ...Array.from(groupProjectIdsByRetentionDays(customRetentionProjects), ([retentionDays, projectIds]) => ({
+                retentionDateBoundary: dayjs().subtract(retentionDays, 'days').toISOString(),
+                projectIds,
+            })),
+            {
+                retentionDateBoundary: dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString(),
+                projectIds: undefined,
+            },
+        ]
         let totalAffected = 0
         // Iterate one type at a time with an equality predicate so the select hits the
         // (type, created) index (idx_file_type_created_desc) as an index scan. A `type IN (...)`
@@ -161,35 +183,38 @@ export const fileService = (log: FastifyBaseLogger) => ({
         // so the cleanup never drains and the backlog grows. The delete is by primary key only.
         // Cap the work per run so a large backlog drains across the hourly schedule instead of one
         // multi-hour run (which could outlive its worker lock); the next run resumes from the oldest.
-        for (const type of types) {
-            let affected: undefined | number = undefined
-            while ((isNil(affected) || affected === maximumFilesToDeletePerIteration) && totalAffected < maximumFilesToDeletePerRun) {
-                const staleFiles = await fileRepo().find({
-                    select: ['id', 's3Key'],
-                    where: {
+        for (const pass of cleanupPasses) {
+            for (const type of types) {
+                let affected: undefined | number = undefined
+                while ((isNil(affected) || affected === maximumFilesToDeletePerIteration) && totalAffected < maximumFilesToDeletePerRun) {
+                    const staleFiles = await fileRepo().find({
+                        select: ['id', 's3Key'],
+                        where: {
+                            type,
+                            created: LessThanOrEqual(pass.retentionDateBoundary),
+                            ...(pass.projectIds ? { projectId: In(pass.projectIds) } : {}),
+                        },
+                        take: maximumFilesToDeletePerIteration,
+                    })
+
+                    if (staleFiles.length === 0) {
+                        affected = 0
+                        break
+                    }
+
+                    const s3Keys = staleFiles.filter(f => !isNil(f.s3Key)).map(f => f.s3Key!)
+                    await s3Helper(log).deleteFiles(s3Keys)
+
+                    const result = await fileRepo().delete({
+                        id: In(staleFiles.map(file => file.id)),
+                    })
+                    affected = result.affected || 0
+                    totalAffected += affected
+                    log.info({
+                        counts: affected,
                         type,
-                        created: LessThanOrEqual(retentionDateBoundary),
-                    },
-                    take: maximumFilesToDeletePerIteration,
-                })
-
-                if (staleFiles.length === 0) {
-                    affected = 0
-                    break
+                    }, '[FileService#deleteStaleBulk] iteration completed')
                 }
-
-                const s3Keys = staleFiles.filter(f => !isNil(f.s3Key)).map(f => f.s3Key!)
-                await s3Helper(log).deleteFiles(s3Keys)
-
-                const result = await fileRepo().delete({
-                    id: In(staleFiles.map(file => file.id)),
-                })
-                affected = result.affected || 0
-                totalAffected += affected
-                log.info({
-                    counts: affected,
-                    type,
-                }, '[FileService#deleteStaleBulk] iteration completed')
             }
         }
         log.info({
@@ -300,12 +325,34 @@ function normalizeTypeFilter(type: FileType | FileType[] | undefined) {
     return Array.isArray(type) ? In(type) : type
 }
 
+function groupProjectIdsByRetentionDays(projects: Pick<Project, 'id' | 'executionDataRetentionDays'>[]): Map<number, ProjectId[]> {
+    const retentionDaysToProjectIds = new Map<number, ProjectId[]>()
+    for (const project of projects) {
+        const effectiveRetentionDays = getEffectiveExecutionDataRetentionDays(project.executionDataRetentionDays)
+        if (effectiveRetentionDays >= EXECUTION_DATA_RETENTION_DAYS) {
+            continue
+        }
+        const projectIds = retentionDaysToProjectIds.get(effectiveRetentionDays) ?? []
+        projectIds.push(project.id)
+        retentionDaysToProjectIds.set(effectiveRetentionDays, projectIds)
+    }
+    return retentionDaysToProjectIds
+}
+
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
     if (type === FileType.FLOW_BUNDLE || isExecutionDataFileThatExpires(type)) {
         return FILE_LOCATION
     }
     return FileLocation.DB
+}
+
+export function getEffectiveExecutionDataRetentionDays(executionDataRetentionDays: number | null | undefined): number {
+    if (isNil(executionDataRetentionDays)) {
+        return EXECUTION_DATA_RETENTION_DAYS
+    }
+    const pausedFlowTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+    return Math.min(EXECUTION_DATA_RETENTION_DAYS, Math.max(executionDataRetentionDays, pausedFlowTimeoutDays))
 }
 
 function isExecutionDataFileThatExpires(type: FileType) {
@@ -334,8 +381,8 @@ function isExecutionDataFileThatExpires(type: FileType) {
 type SaveParams = {
     fileId?: FileId | undefined
     projectId?: ProjectId
-    data: Buffer | null
-    size: number
+    data: Buffer | Readable | null
+    size?: number
     type: FileType
     platformId?: string
     fileName?: string
@@ -352,6 +399,11 @@ type GetOneParams = {
 type FileToken = {
     fileId: string
     fileType?: FileType
+}
+
+type CleanupPass = {
+    retentionDateBoundary: string
+    projectIds: ProjectId[] | undefined
 }
 
 type UploadPublicAssetParams = {

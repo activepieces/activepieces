@@ -1,0 +1,38 @@
+---
+title: 'PR Review SLA & Code Owners'
+icon: 'user-check'
+---
+
+How pull requests get a reviewer, how long a review should take, and what happens to PRs that go stale.
+
+## Code Owners → auto-assigned reviewer
+
+Every PR gets a reviewer automatically via [`.github/CODEOWNERS`](https://github.com/activepieces/activepieces/blob/main/.github/CODEOWNERS). GitHub matches the changed paths and requests review from the owning team. Each team uses **round-robin assignment** (`Settings → Teams → <team> → Code review assignment`), so exactly **one** member is picked per PR instead of pinging the whole team.
+
+CODEOWNERS is **last-match-wins** — the most specific matching line decides the owner.
+
+| Path | Team | Members |
+|------|------|---------|
+| `*` (everything else) | `@activepieces/core` | Louai, Abdul, Hazem, Ahmad, Othman |
+| `packages/pieces/` | `@activepieces/pieces` | Ahmad, Kishan, Sanket |
+| `packages/server/engine/`, `packages/server/worker/`, `packages/core/execution/` | `@activepieces/platform` | Mohammad, Chaker, Amr |
+
+The engine/worker/execution paths are the critical execution path and are owned by the platform team regardless of the `*` fallback.
+
+### Changing ownership
+
+- **New member on a team** → add them in `Settings → Teams`. No CODEOWNERS change needed.
+- **New path with a dedicated owner** → add a line to `.github/CODEOWNERS`, more specific than `*`, pointing at a team.
+- Owners must have write access to the repo, or GitHub silently skips the assignment.
+
+## Review SLA — the expectation
+
+The auto-assigned reviewer is expected to give a **first response within 2 business days**. First response means an approval, a change request, or a substantive comment — not necessarily a full merge.
+
+If you can't review in time, **re-assign** to another team member rather than letting it sit. A requested review is a promise to the author that someone is looking.
+
+## Stale PRs — the backstop
+
+PRs with **no activity for 60 days** are closed automatically by the `stale` job in [`.github/workflows/close-external-prs.yml`](https://github.com/activepieces/activepieces/blob/main/.github/workflows/close-external-prs.yml) (built on [`actions/stale`](https://github.com/actions/stale)). Any comment, push, or reopen resets the 60-day clock. Closing is not rejection — reopen and it's back in the queue with a fresh clock.
+
+This is a backstop for abandoned work, **not** the review SLA. A healthy PR is reviewed in days, not months; the 60-day close only catches things everyone has forgotten.

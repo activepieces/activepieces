@@ -88,6 +88,27 @@ describe('Webhook multipart file', () => {
         expect(secondFile!.id).toBeTruthy()
         expect(secondFile!.type).toBe(FileType.FLOW_STEP_FILE)
     })
+
+    it('should stream a raw binary body to a step file', async () => {
+        const { mockFlow, mockProject } = await createEnabledFlow()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/webhooks/${mockFlow.id}`,
+            headers: { 'content-type': 'application/pdf' },
+            payload: Buffer.from('a raw pdf body streamed straight to storage'),
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+
+        const savedFile = await db.findOneBy<SavedFile>(
+            'file',
+            { projectId: mockProject.id, type: FileType.FLOW_STEP_FILE },
+        )
+        expect(savedFile).not.toBeNull()
+        expect(savedFile!.fileName).toBe('file.pdf')
+        expect(savedFile!.type).toBe(FileType.FLOW_STEP_FILE)
+    })
 })
 
 async function createEnabledFlow(): Promise<{ mockFlow: Flow, mockProject: Project }> {

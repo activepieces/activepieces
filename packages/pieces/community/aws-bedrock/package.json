@@ -1,0 +1,27 @@
+{
+  "name": "@activepieces/piece-aws-bedrock",
+  "version": "0.2.2",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@aws-crypto/sha256-js": "5.2.0",
+    "@aws-sdk/client-bedrock": "^3.987.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.987.0",
+    "@aws-sdk/client-sts": "3.974.0",
+    "@smithy/protocol-http": "5.3.8",
+    "@smithy/signature-v4": "5.3.8",
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tslib": "^2.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
+    "lint": "eslint 'src/**/*.ts'"
+  }
+}

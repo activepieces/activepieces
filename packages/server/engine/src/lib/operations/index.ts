@@ -1,7 +1,6 @@
 import { inspect } from 'util'
 import { formatPieceError, tryCatch } from '@activepieces/core-utils'
-import { EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, ExecuteActionOperation, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, ExecutionError, ExecutionErrorType, TriggerHookType } from '@activepieces/shared'
-import { actionOperation } from './action.operation'
+import { EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, ExecutionError, ExecutionErrorType, TriggerHookType } from '@activepieces/shared'
 import { authRefreshOperation } from './auth-refresh.operation'
 import { authValidationOperation } from './auth-validation.operation'
 import { flowOperation } from './flow.operation'
@@ -18,9 +17,6 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             }
             case EngineOperationType.EXECUTE_FLOW: {
                 return flowOperation.execute(operation as ExecuteFlowOperation)
-            }
-            case EngineOperationType.EXECUTE_ACTION: {
-                return actionOperation.execute(operation as ExecuteActionOperation)
             }
             case EngineOperationType.EXECUTE_PROPERTY: {
                 return propertyOperation.execute(operation as ExecutePropsOptions)

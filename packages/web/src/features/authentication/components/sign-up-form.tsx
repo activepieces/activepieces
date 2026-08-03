@@ -36,6 +36,7 @@ import {
   PasswordStrengthBolt,
 } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -169,7 +170,7 @@ const SignUpForm = ({
     });
     capture({
       name: TelemetryEventName.SIGN_UP_SUBMITTED,
-      payload: { method: 'email' },
+      payload: { method: 'email', ...acquisitionUtils.getAcquisitionParams() },
     });
     mutate({
       ...data,

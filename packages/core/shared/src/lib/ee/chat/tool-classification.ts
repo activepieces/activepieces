@@ -14,10 +14,11 @@ function actionNameMatchesPatterns({ actionName, patterns }: { actionName: strin
     return patterns.some((pattern) => words.includes(pattern))
 }
 
-function requiresActionPreview({ actionName, input, needsConfirmation }: {
+function requiresActionPreview({ actionName, input, needsConfirmation, tainted }: {
     actionName: string
     input?: Record<string, unknown>
     needsConfirmation?: boolean
+    tainted?: boolean
 }): boolean {
     // Raw HTTP: skip the gate only for a provably read-only method (GET/HEAD/OPTIONS). A mutating
     // method (POST/PUT/PATCH/DELETE) — or an unknown/unspecified one — must be confirmed, so chat
@@ -31,6 +32,9 @@ function requiresActionPreview({ actionName, input, needsConfirmation }: {
     const isWrite = actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
 
     if (isWrite) return true
+    // Untrusted content in the turn: gate anything not provably read-only, ignoring needsConfirmation
+    // (an injection could have set it false).
+    if (tainted) return !isReadOnlyActionCall({ actionName, input })
     if (isRead) return false
     return needsConfirmation ?? true
 }

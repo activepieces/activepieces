@@ -2,12 +2,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 
+import { customerOutputSchema } from '../output-schemas';
 export const stripeCreateCustomer = createAction({
   name: 'create_customer',
   auth: stripeAuth,
   displayName: 'Create Customer',
   description: 'Create a customer in stripe',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new customer record in Stripe from an email and name, with optional contact and address fields. Use when onboarding a new payer before charging, invoicing, or subscribing them. Not idempotent: each call creates a distinct customer even with identical input.',
@@ -52,6 +53,7 @@ export const stripeCreateCustomer = createAction({
       required: false,
     }),
   },
+  outputSchema: customerOutputSchema,
   async run(context) {
     const customer = {
       email: context.propsValue.email,
