@@ -14,6 +14,8 @@ export const benchmarkCommand = new Command('benchmark')
     .option('--concurrency <c>', 'Concurrent connections (default: auto = sum of worker execution slots)')
     .option('--api-key <key>', 'Platform API key (Bearer). Or set AP_API_KEY.')
     .option('--body <json>', 'JSON request body sent to the webhook', '{"test":true}')
+    .option('--with-http', 'Insert an HTTP piece step (external call via httpbin.org) into the benchmark flow; falls back to the standard flow if the HTTP piece is not on the server')
+    .option('--http-delay <seconds>', 'Response delay of the HTTP step\'s external call, in seconds (used with --with-http)', '1')
     .option('--json', 'Emit machine-readable JSON output')
     .action(async (opts) => {
         const config = benchmarkUtils.normalizeOptions(opts);
@@ -39,7 +41,7 @@ export const benchmarkCommand = new Command('benchmark')
             log(config, `Provisioned throwaway project ${project.id}`);
             const runsFailed = await (async () => {
                 const projectLimits = await collectProjectLimits({ client: authed, projectId: project.id, rateLimiterEnabled: flags['PROJECT_RATE_LIMITER_ENABLED'] === true });
-                const flowId = await createBenchmarkFlow({ client: authed, projectId: project.id });
+                const flowId = await createBenchmarkFlow({ client: authed, projectId: project.id, config });
                 log(config, `Flow ready: ${flowId}`);
 
                 const slots = setup.executionSlots;
@@ -108,6 +110,7 @@ function normalizeOptions(opts: Record<string, string | boolean | undefined>): B
         throw new Error(`--body must be valid JSON, got "${opts.body}"`);
     }
     const url = String(opts.url);
+    const httpDelaySeconds = optionalPositiveInt(opts.httpDelay, '--http-delay') ?? DEFAULT_HTTP_DELAY_SECONDS;
     return {
         url: url.endsWith('/') ? url.slice(0, -1) : url,
         requests,
@@ -115,6 +118,8 @@ function normalizeOptions(opts: Record<string, string | boolean | undefined>): B
         apiKey: typeof opts.apiKey === 'string' ? opts.apiKey : undefined,
         body,
         json: opts.json === true,
+        withHttp: opts.withHttp === true,
+        httpDelaySeconds,
     };
 }
 
@@ -487,11 +492,19 @@ async function collectProjectLimits({ client, projectId, rateLimiterEnabled }: C
     return { available: true, maxConcurrentJobs, rateLimiterEnabled };
 }
 
-async function createBenchmarkFlow({ client, projectId }: { client: AxiosInstance; projectId: string }): Promise<string> {
-    const [webhookVersion, mapperVersion] = await Promise.all([
+async function createBenchmarkFlow({ client, projectId, config }: { client: AxiosInstance; projectId: string; config: BenchmarkConfig }): Promise<string> {
+    const [webhookVersion, mapperVersion, httpVersion] = await Promise.all([
         resolvePieceVersion(client, WEBHOOK_PIECE),
         resolvePieceVersion(client, DATA_MAPPER_PIECE),
+        config.withHttp ? tryResolvePieceVersion(client, HTTP_PIECE) : Promise.resolve(null),
     ]);
+    if (config.withHttp && httpVersion === null) {
+        console.error(chalk.yellow(`Piece ${HTTP_PIECE} not available on server; falling back to the standard flow without an HTTP step.`));
+    }
+    const httpStep = httpVersion === null ? undefined : { version: httpVersion, delaySeconds: config.httpDelaySeconds };
+    if (httpStep) {
+        log(config, `HTTP step enabled: GET ${HTTP_DELAY_URL_BASE}${httpStep.delaySeconds} (external call, ~${httpStep.delaySeconds}s delay)`);
+    }
 
     const created = await client.post('/api/v1/flows', { displayName: 'Benchmark Flow', projectId });
     const flowId: string | undefined = created.data?.id;
@@ -501,7 +514,7 @@ async function createBenchmarkFlow({ client, projectId }: { client: AxiosInstanc
 
     await postOperation(client, flowId, {
         type: 'IMPORT_FLOW',
-        request: buildImportRequest({ webhookVersion, mapperVersion }),
+        request: buildImportRequest({ webhookVersion, mapperVersion, httpStep }),
     });
     await postOperation(client, flowId, { type: 'LOCK_AND_PUBLISH', request: { status: 'ENABLED' } });
     await waitForEnabled(client, flowId);
@@ -509,12 +522,17 @@ async function createBenchmarkFlow({ client, projectId }: { client: AxiosInstanc
 }
 
 async function resolvePieceVersion(client: AxiosInstance, name: string): Promise<string> {
+    const version = await tryResolvePieceVersion(client, name);
+    if (version === null) {
+        throw new Error(`Piece ${name} not available on server (is it synced?)`);
+    }
+    return version;
+}
+
+async function tryResolvePieceVersion(client: AxiosInstance, name: string): Promise<string | null> {
     const res = await client.get(`/api/v1/pieces/${encodeURIComponent(name)}`);
     const version: string | undefined = res.data?.version;
-    if (!version) {
-        throw new Error(`Piece ${name} not available on server (is it synced?): HTTP ${res.status}`);
-    }
-    return `~${version}`;
+    return version ? `~${version}` : null;
 }
 
 async function postOperation(client: AxiosInstance, flowId: string, operation: unknown): Promise<void> {
@@ -535,7 +553,50 @@ async function waitForEnabled(client: AxiosInstance, flowId: string): Promise<vo
 
 // schemaVersion:null makes the server migrate this payload up to its own latest schema,
 // so the same payload stays valid across server versions without CLI maintenance.
-function buildImportRequest({ webhookVersion, mapperVersion }: { webhookVersion: string; mapperVersion: string }): unknown {
+function buildImportRequest({ webhookVersion, mapperVersion, httpStep }: { webhookVersion: string; mapperVersion: string; httpStep?: HttpStepConfig }): unknown {
+    const returnResponseAction = {
+        name: 'step_2',
+        skip: false,
+        type: 'PIECE',
+        valid: true,
+        displayName: 'Return Response',
+        settings: {
+            pieceName: WEBHOOK_PIECE,
+            pieceVersion: webhookVersion,
+            actionName: 'return_response',
+            input: { fields: { body: '{{step_1}}', status: 200, headers: {} }, respond: 'stop', responseType: 'json' },
+            propertySettings: {},
+            sampleData: {},
+            errorHandlingOptions: { retryOnFailure: { value: false }, continueOnFailure: { value: false } },
+        },
+    };
+    const afterMapper = httpStep === undefined ? returnResponseAction : {
+        name: 'step_3',
+        skip: false,
+        type: 'PIECE',
+        valid: true,
+        displayName: 'HTTP Call',
+        settings: {
+            pieceName: HTTP_PIECE,
+            pieceVersion: httpStep.version,
+            actionName: 'send_request',
+            input: {
+                url: `${HTTP_DELAY_URL_BASE}${httpStep.delaySeconds}`,
+                method: 'GET',
+                headers: {},
+                queryParams: {},
+                authType: 'NONE',
+                authFields: {},
+                body_type: 'none',
+                body: {},
+                failureMode: 'retry_none',
+            },
+            propertySettings: {},
+            sampleData: {},
+            errorHandlingOptions: { retryOnFailure: { value: false }, continueOnFailure: { value: false } },
+        },
+        nextAction: returnResponseAction,
+    };
     return {
         displayName: 'Benchmark Flow',
         schemaVersion: null,
@@ -568,22 +629,7 @@ function buildImportRequest({ webhookVersion, mapperVersion }: { webhookVersion:
                     sampleData: {},
                     errorHandlingOptions: { retryOnFailure: { value: false }, continueOnFailure: { value: false } },
                 },
-                nextAction: {
-                    name: 'step_2',
-                    skip: false,
-                    type: 'PIECE',
-                    valid: true,
-                    displayName: 'Return Response',
-                    settings: {
-                        pieceName: WEBHOOK_PIECE,
-                        pieceVersion: webhookVersion,
-                        actionName: 'return_response',
-                        input: { fields: { body: '{{step_1}}', status: 200, headers: {} }, respond: 'stop', responseType: 'json' },
-                        propertySettings: {},
-                        sampleData: {},
-                        errorHandlingOptions: { retryOnFailure: { value: false }, continueOnFailure: { value: false } },
-                    },
-                },
+                nextAction: afterMapper,
             },
         },
     };
@@ -907,6 +953,11 @@ function log(config: BenchmarkConfig, message: string): void {
 
 const WEBHOOK_PIECE = '@activepieces/piece-webhook';
 const DATA_MAPPER_PIECE = '@activepieces/piece-data-mapper';
+const HTTP_PIECE = '@activepieces/piece-http';
+// httpbin.org/delay/{n} responds after n seconds (capped server-side at 10). Workers call it
+// directly, so --with-http benchmarks the I/O-bound flow shape: engine waiting on an external API.
+const HTTP_DELAY_URL_BASE = 'https://httpbin.org/delay/';
+const DEFAULT_HTTP_DELAY_SECONDS = 1;
 const DEFAULT_CONCURRENCY = 10;
 const EPHEMERAL_PROJECT_MAX_CONCURRENCY = 1000;
 const NETWORK_PROBES = 20;
@@ -947,7 +998,11 @@ type BenchmarkConfig = {
     apiKey?: string;
     body: string;
     json: boolean;
+    withHttp: boolean;
+    httpDelaySeconds: number;
 };
+
+type HttpStepConfig = { version: string; delaySeconds: number };
 
 type AuthResult = { token: string };
 
