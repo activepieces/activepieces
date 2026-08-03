@@ -10,7 +10,6 @@ import {
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
 import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
-import { memBench } from './helper/mem-bench'
 import { runStateStore } from './helper/run-state-store'
 import { execute } from './operations'
 
@@ -91,13 +90,11 @@ export const workerSocket = {
                     runStateStore.init({ runId: operation.flowRunId, flowVersionId: operation.flowVersion.id })
                 }
                 flowRunProgressReporter.init()
-                memBench.runStart(operationType)
                 try {
                     const response = await execute(operationType, operation)
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
                 }
                 finally {
-                    memBench.runEnd(operationType)
                     await flowRunProgressReporter.shutdown()
                     runStateStore.dispose()
                 }
