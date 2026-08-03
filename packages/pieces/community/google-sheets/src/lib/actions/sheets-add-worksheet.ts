@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createGoogleClient, googleSheetsAuth } from '../common/common';
 import { sheets as googleSheets } from '@googleapis/sheets';
+import { sheetsAddWorksheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsAddWorksheet = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsAddWorksheet = createAction({
 			'Adds a new worksheet (tab) to a spreadsheet, optionally seeding a header row. Use when an agent needs another tab; to find-or-reuse a tab by title use sheets_find_or_create_worksheet. Not idempotent — each call adds a separate tab even if the title already exists.',
 		idempotent: false,
 	},
+	outputSchema: sheetsAddWorksheetActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

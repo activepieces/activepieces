@@ -10,6 +10,7 @@ import {
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { isString } from '@activepieces/pieces-framework';
+import { sheetsUpdateRowActionOutputSchema } from '../output-schemas';
 
 export const sheetsUpdateRow = createAction({
 	auth: googleSheetsAuth,
@@ -22,6 +23,7 @@ export const sheetsUpdateRow = createAction({
 			'Overwrites the cells of one existing row, identified by its row number, mapping values to columns positionally or by header name. Use when you already know the target row (e.g. from sheets_find_rows); empty values skip (do not clear) cells. Safe to retry — re-running with the same row and values converges.',
 		idempotent: true,
 	},
+	outputSchema: sheetsUpdateRowActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

@@ -8,6 +8,7 @@ import {
 } from '../common/common';
 import * as z from 'zod/mini';
 import { propsValidation } from '@activepieces/pieces-common';
+import { sheetsFindRowsActionOutputSchema } from '../output-schemas';
 
 export const sheetsFindRows = createAction({
 	auth: googleSheetsAuth,
@@ -20,6 +21,7 @@ export const sheetsFindRows = createAction({
 			'Searches a worksheet for rows whose value in a chosen column matches a search value (exact or contains), returning up to a requested number of matches with their row numbers. Use to locate rows before reading, updating, or deleting them; leave the search value empty to fetch rows sequentially. This is the resolver that yields the row numbers other atomics need. Read-only.',
 		idempotent: true,
 	},
+	outputSchema: sheetsFindRowsActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

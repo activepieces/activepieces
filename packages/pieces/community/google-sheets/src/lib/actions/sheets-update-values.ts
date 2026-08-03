@@ -6,6 +6,7 @@ import {
 	googleSheetsAuth,
 	ValueInputOption,
 } from '../common/common';
+import { sheetsUpdateValuesActionOutputSchema } from '../output-schemas';
 
 export const sheetsUpdateValues = createAction({
 	auth: googleSheetsAuth,
@@ -18,6 +19,7 @@ export const sheetsUpdateValues = createAction({
 			'Writes a 2D array of values into a worksheet at a specific A1 range, overwriting whatever is there. Use when you have explicit coordinates and a rectangular block of values; to update a row by its header-mapped fields use sheets_update_row, and to append rather than overwrite use sheets_append_values. The values array shape must match the target range. Safe to retry — re-writing the same range is a no-op.',
 		idempotent: true,
 	},
+	outputSchema: sheetsUpdateValuesActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

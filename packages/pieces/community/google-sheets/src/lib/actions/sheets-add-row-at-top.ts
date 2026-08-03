@@ -11,6 +11,7 @@ import {
 	ValueInputOption,
 } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
+import { sheetsAddRowAtTopActionOutputSchema } from '../output-schemas';
 
 export const sheetsAddRowAtTop = createAction({
 	auth: googleSheetsAuth,
@@ -23,6 +24,7 @@ export const sheetsAddRowAtTop = createAction({
 			'Inserts a new row near the top of a worksheet (default: just under the header row), shifting existing rows down. Use to prepend an entry; to append at the end use sheets_add_row. Not idempotent — each call inserts another row and renumbers rows below.',
 		idempotent: false,
 	},
+	outputSchema: sheetsAddRowAtTopActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

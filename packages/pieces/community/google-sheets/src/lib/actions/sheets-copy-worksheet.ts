@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient, googleSheetsAuth } from '../common/common';
+import { sheetsCopyWorksheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsCopyWorksheet = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsCopyWorksheet = createAction({
 			'Copies a worksheet (with its data) into a destination spreadsheet as a new tab. Use to duplicate a tab within or across spreadsheets. Not idempotent — each call creates another copy (named "Copy of …").',
 		idempotent: false,
 	},
+	outputSchema: sheetsCopyWorksheetActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Source Spreadsheet ID',

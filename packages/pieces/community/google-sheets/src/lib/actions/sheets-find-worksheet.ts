@@ -2,6 +2,7 @@ import { googleSheetsAuth } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient } from '../common/common';
+import { sheetsFindWorksheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsFindWorksheet = createAction({
 	auth: googleSheetsAuth,
@@ -14,6 +15,7 @@ export const sheetsFindWorksheet = createAction({
 			'Searches the worksheets (tabs) of a spreadsheet for ones whose title matches a query (exact or contains), returning each match\'s title and numeric sheet id. Use to resolve a tab name to its sheet_id; to list all tabs at once use sheets_get_spreadsheet. Read-only.',
 		idempotent: true,
 	},
+	outputSchema: sheetsFindWorksheetActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

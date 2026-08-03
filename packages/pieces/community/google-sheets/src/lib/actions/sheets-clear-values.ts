@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
+import { sheetsClearValuesActionOutputSchema } from '../output-schemas';
 
 export const sheetsClearValues = createAction({
 	auth: googleSheetsAuth,
@@ -14,6 +15,7 @@ export const sheetsClearValues = createAction({
 			'Clears the contents of one or more rows over an A1 range without removing the rows themselves (formatting and references stay stable). Use to blank cells while keeping row structure; to remove rows entirely use sheets_delete_multiple_rows, and to drop a whole tab\'s data use the structural delete atomics. Safe to retry — re-clearing an empty range is a no-op.',
 		idempotent: true,
 	},
+	outputSchema: sheetsClearValuesActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

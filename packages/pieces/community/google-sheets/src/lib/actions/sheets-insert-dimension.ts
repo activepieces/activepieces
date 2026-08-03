@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, Dimension, googleSheetsAuth } from '../common/common';
+import { sheetsInsertDimensionActionOutputSchema } from '../output-schemas';
 
 export const sheetsInsertDimension = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsInsertDimension = createAction({
 			'Inserts blank rows or columns at a position, shifting existing data. Use to make space mid-sheet; to add a column WITH a header name use sheets_add_column, and to append at the end use sheets_append_dimension. Indices are 0-based half-open. Not idempotent — each call inserts more.',
 		idempotent: false,
 	},
+	outputSchema: sheetsInsertDimensionActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

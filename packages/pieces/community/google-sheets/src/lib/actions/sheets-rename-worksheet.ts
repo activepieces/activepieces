@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient, googleSheetsAuth } from '../common/common';
+import { sheetsRenameWorksheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsRenameWorksheet = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsRenameWorksheet = createAction({
 			'Changes the title of an existing worksheet, identified by its numeric sheet id (resolve via sheets_get_spreadsheet). Use to relabel a tab. Safe to retry — re-applying the same name is a no-op.',
 		idempotent: true,
 	},
+	outputSchema: sheetsRenameWorksheetActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

@@ -6,6 +6,7 @@ import {
 	googleSheetsCommon,
 	mapRowsToHeaderNames,
 } from '../common/common';
+import { sheetsGetRowActionOutputSchema } from '../output-schemas';
 
 export const sheetsGetRow = createAction({
 	auth: googleSheetsAuth,
@@ -18,6 +19,7 @@ export const sheetsGetRow = createAction({
 			'Reads a single row by its row number, optionally keyed by header names instead of column letters. Use when you already know the exact row number (e.g. from sheets_find_rows); to search by value use sheets_find_rows, and to read an arbitrary cell range use sheets_get_values. Returns {found:false} if the row is past the grid. Read-only.',
 		idempotent: true,
 	},
+	outputSchema: sheetsGetRowActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

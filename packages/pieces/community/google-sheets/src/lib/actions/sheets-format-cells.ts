@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { isNil } from '@activepieces/pieces-framework';
+import { sheetsFormatCellsActionOutputSchema } from '../output-schemas';
 
 export const sheetsFormatCells = createAction({
 	auth: googleSheetsAuth,
@@ -14,6 +15,7 @@ export const sheetsFormatCells = createAction({
 			'Applies cell formatting (background color, text color, bold, italic, strikethrough) to a range of rows, leaving cell values untouched. Colors are HEX codes. Use to style rows rather than change data. Safe to retry — re-applying the same formatting converges.',
 		idempotent: true,
 	},
+	outputSchema: sheetsFormatCellsActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

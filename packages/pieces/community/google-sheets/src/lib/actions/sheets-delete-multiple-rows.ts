@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
+import { sheetsDeleteMultipleRowsActionOutputSchema } from '../output-schemas';
 
 export const sheetsDeleteMultipleRows = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsDeleteMultipleRows = createAction({
 			'Deletes a contiguous range of rows or a comma-separated list of row numbers (1-based) in one batch. Use to remove several rows; the action deletes list rows in descending order so indices stay valid. Not idempotent — rows renumber after deletion.',
 		idempotent: false,
 	},
+	outputSchema: sheetsDeleteMultipleRowsActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

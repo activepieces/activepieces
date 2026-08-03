@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { createGoogleClient, googleSheetsAuth } from '../common/common';
+import { sheetsCreateSpreadsheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsCreateSpreadsheet = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsCreateSpreadsheet = createAction({
 			'Creates a new, empty Google Sheets spreadsheet with the given title, optionally inside a Drive folder (resolve the folder id via the Drive piece\'s search). Use when an agent needs a fresh spreadsheet to populate. Not idempotent — each call creates a separate spreadsheet even with the same title.',
 		idempotent: false,
 	},
+	outputSchema: sheetsCreateSpreadsheetActionOutputSchema,
 	props: {
 		spreadsheet_title: Property.ShortText({
 			displayName: 'Title',

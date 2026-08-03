@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient, googleSheetsAuth, ValueInputOption } from '../common/common';
+import { sheetsAppendValuesActionOutputSchema } from '../output-schemas';
 
 export const sheetsAppendValues = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsAppendValues = createAction({
 			'Appends rows of values after the last row with data in a worksheet, as a raw 2D array. Use when you have explicit values and don\'t need header-to-column mapping; for header-aware single-row insert use sheets_add_row. Each call adds new rows, so retries duplicate.',
 		idempotent: false,
 	},
+	outputSchema: sheetsAppendValuesActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

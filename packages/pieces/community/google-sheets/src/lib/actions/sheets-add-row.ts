@@ -17,6 +17,7 @@ import {
 	HttpMethod,
 	HttpRequest,
 } from '@activepieces/pieces-common';
+import { sheetsAddRowActionOutputSchema } from '../output-schemas';
 
 export const sheetsAddRow = createAction({
 	auth: googleSheetsAuth,
@@ -29,6 +30,7 @@ export const sheetsAddRow = createAction({
 			'Appends a single new row to the end of a worksheet, mapping values to columns positionally or by header name. Use to record one new entry; for raw A1-array appends use sheets_append_values, for many rows at once use sheets_add_multiple_rows. Not idempotent — each call appends another row.',
 		idempotent: false,
 	},
+	outputSchema: sheetsAddRowActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

@@ -14,6 +14,7 @@ import {
 	ValueInputOption,
 } from '../common/common';
 import { getWorkSheetName, mapRowsToColumnLabels } from '../triggers/helpers';
+import { sheetsFindOrCreateRowActionOutputSchema } from '../output-schemas';
 
 export const sheetsFindOrCreateRow = createAction({
 	auth: googleSheetsAuth,
@@ -27,6 +28,7 @@ export const sheetsFindOrCreateRow = createAction({
 			'Looks up a row by a column value; if none matches, appends a new row with the provided values (returns created:true/false). Use to avoid duplicating a row keyed on a stable value. Idempotent — the wrapper returns the existing row instead of inserting a duplicate when the key already exists.',
 		idempotent: true,
 	},
+	outputSchema: sheetsFindOrCreateRowActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

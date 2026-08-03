@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient, googleSheetsAuth } from '../common/common';
+import { sheetsGetSpreadsheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsGetSpreadsheet = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsGetSpreadsheet = createAction({
 			'Fetches a spreadsheet\'s metadata: its title and the list of worksheets (tabs) with each tab\'s title, numeric sheet id, and grid size. Use to resolve a tab name to its numeric sheet_id (which the structural atomics need) or to discover what tabs exist before reading them. Read-only.',
 		idempotent: true,
 	},
+	outputSchema: sheetsGetSpreadsheetActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

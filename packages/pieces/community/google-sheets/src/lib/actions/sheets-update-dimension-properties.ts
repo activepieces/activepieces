@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { isNil } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient, Dimension, googleSheetsAuth } from '../common/common';
+import { sheetsUpdateDimensionPropertiesActionOutputSchema } from '../output-schemas';
 
 export const sheetsUpdateDimensionProperties = createAction({
 	auth: googleSheetsAuth,
@@ -14,6 +15,7 @@ export const sheetsUpdateDimensionProperties = createAction({
 			'Sets a fixed pixel width/height for a range of columns/rows, or hides/unhides them. Use for an exact size (vs. content-fit via sheets_auto_resize_dimensions). Safe to retry — re-applying the same size/hidden state is a no-op.',
 		idempotent: true,
 	},
+	outputSchema: sheetsUpdateDimensionPropertiesActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

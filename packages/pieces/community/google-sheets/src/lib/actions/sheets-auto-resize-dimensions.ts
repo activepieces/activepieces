@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, Dimension, googleSheetsAuth } from '../common/common';
+import { sheetsAutoResizeDimensionsActionOutputSchema } from '../output-schemas';
 
 export const sheetsAutoResizeDimensions = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsAutoResizeDimensions = createAction({
 			'Auto-fits the width of columns (or height of rows) to their content over a range. Use after writing data to make it readable. Indices are 0-based and half-open [start,end). Safe to retry — re-fitting produces the same result.',
 		idempotent: true,
 	},
+	outputSchema: sheetsAutoResizeDimensionsActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

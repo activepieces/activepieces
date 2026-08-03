@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { areSheetIdsValid, getAccessToken, googleSheetsAuth } from '../common/common';
+import { sheetsExportWorksheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsExportWorksheet = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsExportWorksheet = createAction({
 			'Exports one worksheet as a CSV or TSV file (returned as a file reference or raw text). Use to get a tab\'s contents in a flat delimited format for downstream processing or attachment. Read-only and safe to retry.',
 		idempotent: true,
 	},
+	outputSchema: sheetsExportWorksheetActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

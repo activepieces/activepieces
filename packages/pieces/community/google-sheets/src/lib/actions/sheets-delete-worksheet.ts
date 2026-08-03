@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient, googleSheetsAuth } from '../common/common';
+import { sheetsDeleteWorksheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsDeleteWorksheet = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsDeleteWorksheet = createAction({
 			'Permanently removes one worksheet (tab) and all its data, identified by its numeric sheet id (resolve via sheets_get_spreadsheet). Destructive and not undoable. Use only when a whole tab should be dropped; to clear a tab\'s data but keep it use sheets_clear_values. A repeat call fails because the tab is gone.',
 		idempotent: false,
 	},
+	outputSchema: sheetsDeleteWorksheetActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

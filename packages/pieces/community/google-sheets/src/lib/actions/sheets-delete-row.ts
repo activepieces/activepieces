@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, googleSheetsAuth, googleSheetsCommon } from '../common/common';
+import { sheetsDeleteRowActionOutputSchema } from '../output-schemas';
 
 export const sheetsDeleteRow = createAction({
 	auth: googleSheetsAuth,
@@ -12,6 +13,7 @@ export const sheetsDeleteRow = createAction({
 			'Removes one row by its row number and shifts all rows below it up. Use to delete a single known row; for several rows use sheets_delete_multiple_rows. Not idempotent — because rows renumber after deletion, repeating the same row number deletes a different row, so re-resolve the row before any retry.',
 		idempotent: false,
 	},
+	outputSchema: sheetsDeleteRowActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

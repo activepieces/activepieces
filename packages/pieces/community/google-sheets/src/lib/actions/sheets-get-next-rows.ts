@@ -16,6 +16,7 @@ import { HttpError } from '@activepieces/pieces-common';
 import * as z from 'zod/mini';
 import { propsValidation } from '@activepieces/pieces-common';
 import { getWorkSheetGridSize } from '../triggers/helpers';
+import { sheetsGetNextRowsActionOutputSchema } from '../output-schemas';
 
 async function getRows(
 	store: Store,
@@ -104,6 +105,7 @@ export const sheetsGetNextRows = createAction({
 			'Reads the next batch of rows from a worksheet, advancing a cursor stored under a memory key so successive runs walk the sheet without reprocessing rows. Use to iterate a large sheet in chunks across flow runs; for a one-shot full read use sheets_get_all_rows. Not idempotent — each non-test call moves the stored cursor forward.',
 		idempotent: false,
 	},
+	outputSchema: sheetsGetNextRowsActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

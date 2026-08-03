@@ -6,6 +6,7 @@ import {
 	HttpRequest,
 } from '@activepieces/pieces-common';
 import { getAccessToken, googleSheetsAuth } from '../common/common';
+import { sheetsSearchSpreadsheetsActionOutputSchema } from '../output-schemas';
 
 export const sheetsSearchSpreadsheets = createAction({
 	auth: googleSheetsAuth,
@@ -18,6 +19,7 @@ export const sheetsSearchSpreadsheets = createAction({
 			'Searches Google Drive for spreadsheets whose name matches a query (exact or contains), returning id, name, and links. Use to resolve a spreadsheet id from a human-readable name before acting on it — the resolver for every other atomic\'s spreadsheet_id. Read-only.',
 		idempotent: true,
 	},
+	outputSchema: sheetsSearchSpreadsheetsActionOutputSchema,
 	props: {
 		spreadsheet_name: Property.ShortText({
 			displayName: 'Spreadsheet Name',

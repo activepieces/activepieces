@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { isNil } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient, googleSheetsAuth } from '../common/common';
+import { sheetsUpdateSheetPropertiesActionOutputSchema } from '../output-schemas';
 
 export const sheetsUpdateSheetProperties = createAction({
 	auth: googleSheetsAuth,
@@ -14,6 +15,7 @@ export const sheetsUpdateSheetProperties = createAction({
 			'Updates a worksheet\'s structural properties: frozen row/column counts, tab color, or hidden state, via a fielded PATCH (rename is handled by sheets_rename_worksheet). Use to freeze headers or color/hide a tab. Safe to retry — re-applying the same values is a no-op.',
 		idempotent: true,
 	},
+	outputSchema: sheetsUpdateSheetPropertiesActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

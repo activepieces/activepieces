@@ -5,6 +5,7 @@ import {
 	googleSheetsCommon,
 	mapRowsToHeaderNames,
 } from '../common/common';
+import { sheetsGetAllRowsActionOutputSchema } from '../output-schemas';
 
 export const sheetsGetAllRows = createAction({
 	auth: googleSheetsAuth,
@@ -17,6 +18,7 @@ export const sheetsGetAllRows = createAction({
 			'Reads every row from a worksheet in one call, optionally keying values by the header row. Use when an agent needs the full sheet contents rather than a search or a single row; be mindful of size on large sheets (prefer sheets_find_rows or sheets_get_next_rows for big sheets). Read-only.',
 		idempotent: true,
 	},
+	outputSchema: sheetsGetAllRowsActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

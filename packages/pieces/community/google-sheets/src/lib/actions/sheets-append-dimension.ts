@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, Dimension, googleSheetsAuth } from '../common/common';
+import { sheetsAppendDimensionActionOutputSchema } from '../output-schemas';
 
 export const sheetsAppendDimension = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsAppendDimension = createAction({
 			'Appends N blank rows or columns to the end of a worksheet\'s grid (grows the grid, no shifting). Use to enlarge a sheet before a big write. Not idempotent — each call grows the grid further.',
 		idempotent: false,
 	},
+	outputSchema: sheetsAppendDimensionActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

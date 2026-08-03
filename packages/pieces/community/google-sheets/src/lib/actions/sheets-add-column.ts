@@ -9,6 +9,7 @@ import {
 } from '../common/common';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { getWorkSheetName } from '../triggers/helpers';
+import { sheetsAddColumnActionOutputSchema } from '../output-schemas';
 
 export const sheetsAddColumn = createAction({
 	auth: googleSheetsAuth,
@@ -21,6 +22,7 @@ export const sheetsAddColumn = createAction({
 			'Inserts a new column into a worksheet and writes a header name into its first row, at a given 1-based column index or after the last column. Use to add a field. Not idempotent — each call inserts another column.',
 		idempotent: false,
 	},
+	outputSchema: sheetsAddColumnActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

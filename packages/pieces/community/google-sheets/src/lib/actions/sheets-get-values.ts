@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient, Dimension, googleSheetsAuth } from '../common/common';
+import { sheetsGetValuesActionOutputSchema } from '../output-schemas';
 
 export const sheetsGetValues = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsGetValues = createAction({
 			'Reads cell values from a worksheet using A1 notation (e.g. A1:D10), returning a 2D array of rows or columns. Use when you have explicit cell coordinates; to look up rows by a column value use sheets_find_rows, and to read by row number use sheets_get_row. The worksheet title must match the tab name exactly. Read-only.',
 		idempotent: true,
 	},
+	outputSchema: sheetsGetValuesActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { createGoogleClient, googleSheetsAuth } from '../common/common';
+import { sheetsFindOrCreateWorksheetActionOutputSchema } from '../output-schemas';
 
 export const sheetsFindOrCreateWorksheet = createAction({
 	auth: googleSheetsAuth,
@@ -14,6 +15,7 @@ export const sheetsFindOrCreateWorksheet = createAction({
 			'Looks up a worksheet by exact title; if not found, creates it with optional headers (returns created:true/false). Use to ensure a named tab exists without duplicating it. Idempotent — returns the existing tab when the title already matches.',
 		idempotent: true,
 	},
+	outputSchema: sheetsFindOrCreateWorksheetActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

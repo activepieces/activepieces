@@ -10,6 +10,7 @@ import {
 import { isString } from '@activepieces/pieces-framework';
 import { getWorkSheetName } from '../triggers/helpers';
 import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
+import { sheetsUpdateMultipleRowsActionOutputSchema } from '../output-schemas';
 
 export const sheetsUpdateMultipleRows = createAction({
 	auth: googleSheetsAuth,
@@ -22,6 +23,7 @@ export const sheetsUpdateMultipleRows = createAction({
 			'Overwrites several existing rows in one batch call, each targeted by its own row id. Use to edit multiple known rows efficiently rather than calling sheets_update_row repeatedly; rows without a row id are skipped. Safe to retry — same row ids and values converge.',
 		idempotent: true,
 	},
+	outputSchema: sheetsUpdateMultipleRowsActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

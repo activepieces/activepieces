@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { sheets as googleSheets } from '@googleapis/sheets';
 import { areSheetIdsValid, createGoogleClient, Dimension, googleSheetsAuth } from '../common/common';
+import { sheetsDeleteDimensionActionOutputSchema } from '../output-schemas';
 
 export const sheetsDeleteDimension = createAction({
 	auth: googleSheetsAuth,
@@ -13,6 +14,7 @@ export const sheetsDeleteDimension = createAction({
 			'Deletes a range of rows or columns, shifting the rest. Use to remove whole columns (which the row-delete atomics cannot) or a row range by 0-based index. For deleting rows by 1-based row number prefer sheets_delete_multiple_rows. Not idempotent — indices shift after deletion.',
 		idempotent: false,
 	},
+	outputSchema: sheetsDeleteDimensionActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',

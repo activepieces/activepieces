@@ -12,6 +12,7 @@ import {
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { sheets as googleSheets, sheets_v4 } from '@googleapis/sheets';
 import { parse } from 'csv-parse/sync';
+import { sheetsAddMultipleRowsActionOutputSchema } from '../output-schemas';
 
 type RowValueType = Record<string, any>;
 
@@ -26,6 +27,7 @@ export const sheetsAddMultipleRows = createAction({
 			'Bulk-appends many rows in one call from CSV, JSON, or per-column values, with optional overwrite or duplicate-skip keyed on a column. Use for batch inserts instead of repeated sheets_add_row; in default append mode it is not idempotent. Overwrite mode replaces the existing data block (assuming a header at row 1). JSON mode adds any missing columns to the header row. Duplicate matching is case-insensitive.',
 		idempotent: false,
 	},
+	outputSchema: sheetsAddMultipleRowsActionOutputSchema,
 	props: {
 		spreadsheet_id: Property.ShortText({
 			displayName: 'Spreadsheet ID',
