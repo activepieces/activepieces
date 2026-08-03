@@ -1,9 +1,9 @@
-import { promisify } from 'node:util'
-import { zstdCompress as zstdCompressCallback } from 'node:zlib'
+import { Readable } from 'node:stream'
+import { createZstdCompress } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FlowActionType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, FLOW_RUN_LOG_MANIFEST_V2, FlowActionType, isFlowRunStateTerminal, LoopStepResult, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
@@ -14,8 +14,8 @@ import { utils } from '../utils'
 import { runStateStore } from './run-state-store'
 
 
-const zstdCompress = promisify(zstdCompressCallback)
 const stateLock = new Mutex()
+const LOG_UPLOAD_ATTEMPTS = 3
 
 const SNAPSHOT_FLUSH_INTERVAL_MS = 15000
 let latestUpdateParams: UpdateStepProgressParams | null = null
@@ -104,26 +104,11 @@ export const flowRunProgressReporter = {
             const status = flowExecutorContext.verdict.status
             const isTerminal = isFlowRunStateTerminal({ status, ignoreInternalError: false })
 
-            const serialized = await logSerializer.serialize({
-                executionState: {
-                    steps: fillOutputsFromStore(flowExecutorContext.steps, []),
-                    tags: Array.from(flowExecutorContext.tags),
-                },
-            })
-            const executionState = await zstdCompress(serialized)
-
             const logsFileId = engineConstants.logsFileId
             if (isNil(logsFileId)) {
                 throw new EngineGenericError('LogsFileIdNotSetError', 'Logs file id is not set')
             }
-            await engineFileApi.upload({
-                engineToken: engineConstants.engineToken,
-                apiUrl: engineConstants.internalApiUrl,
-                fileId: logsFileId,
-                type: FileType.FLOW_RUN_LOG,
-                compression: FileCompression.ZSTD,
-                data: executionState,
-            })
+            await uploadLogsFromStore({ engineConstants, flowExecutorContext, logsFileId })
 
             const stepResponse = extractStepResponse({
                 flowExecutorContext,
@@ -227,22 +212,73 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
     }
 }
 
-function fillOutputsFromStore(steps: Readonly<Record<string, StepOutput>>, pathPrefix: Array<[string, number]>): Record<string, StepOutput> {
-    const result: Record<string, StepOutput> = {}
+async function uploadLogsFromStore({ engineConstants, flowExecutorContext, logsFileId }: UploadLogsFromStoreParams): Promise<void> {
+    let lastError: unknown
+    for (let attempt = 0; attempt < LOG_UPLOAD_ATTEMPTS; attempt++) {
+        const compressed = Readable.from(streamExecutionOutputFile(flowExecutorContext)).pipe(createZstdCompress())
+        const { error } = await tryCatch(() => engineFileApi.upload({
+            engineToken: engineConstants.engineToken,
+            apiUrl: engineConstants.internalApiUrl,
+            fileId: logsFileId,
+            type: FileType.FLOW_RUN_LOG,
+            compression: FileCompression.ZSTD,
+            data: compressed,
+        }))
+        if (isNil(error)) {
+            return
+        }
+        lastError = error
+    }
+    throw lastError
+}
+
+function* streamExecutionOutputFile(flowExecutorContext: FlowExecutorContext): Generator<string> {
+    yield `{"version":${FLOW_RUN_LOG_MANIFEST_V2},"executionState":{"steps":`
+    yield* streamSteps(flowExecutorContext.steps, [])
+    yield `,"tags":${JSON.stringify(Array.from(flowExecutorContext.tags))}}}`
+}
+
+function* streamSteps(steps: Readonly<Record<string, StepOutput>>, pathPrefix: Array<[string, number]>): Generator<string> {
+    yield '{'
+    let first = true
     for (const [name, step] of Object.entries(steps)) {
-        if (step.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
-            result[name] = step.setOutput({
-                ...step.output,
-                iterations: step.output.iterations.map((iterSteps, idx) =>
-                    fillOutputsFromStore(iterSteps, [...pathPrefix, [name, idx]]),
-                ),
-            })
+        yield `${first ? '' : ','}${JSON.stringify(name)}:`
+        first = false
+        if (step.type === FlowActionType.LOOP_ON_ITEMS && !isNil(step.output)) {
+            yield* streamLoopStep({ step, output: step.output, name, pathPrefix })
         }
         else {
-            result[name] = runStateStore.getStepOutput({ name, stepPath: JSON.stringify(pathPrefix) }) ?? step
+            yield runStateStore.getStepOutputJson({ name, stepPath: JSON.stringify(pathPrefix) }) ?? JSON.stringify(step)
         }
     }
-    return result
+    yield '}'
+}
+
+function* streamLoopStep({ step, output, name, pathPrefix }: StreamLoopStepParams): Generator<string> {
+    const { output: _omitted, ...shell } = step
+    yield `${JSON.stringify(shell).slice(0, -1)},"output":`
+    const scalars = JSON.stringify({ item: output.item, index: output.index }).slice(1, -1)
+    yield scalars.length > 0 ? `{${scalars},"iterations":[` : '{"iterations":['
+    for (let iteration = 0; iteration < output.iterations.length; iteration++) {
+        if (iteration > 0) {
+            yield ','
+        }
+        yield* streamSteps(output.iterations[iteration], [...pathPrefix, [name, iteration]])
+    }
+    yield ']}}'
+}
+
+type UploadLogsFromStoreParams = {
+    engineConstants: EngineConstants
+    flowExecutorContext: FlowExecutorContext
+    logsFileId: string
+}
+
+type StreamLoopStepParams = {
+    step: StepOutput
+    output: LoopStepResult
+    name: string
+    pathPrefix: Array<[string, number]>
 }
 
 type SendUpdateProgressParams = {

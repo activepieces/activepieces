@@ -61,11 +61,16 @@ export const runStateStore = {
     },
 
     getStepOutput({ name, stepPath }: { name: string, stepPath: string }): StepOutput | undefined {
+        const json = runStateStore.getStepOutputJson({ name, stepPath })
+        return isNil(json) ? undefined : JSON.parse(json)
+    },
+
+    getStepOutputJson({ name, stepPath }: { name: string, stepPath: string }): string | undefined {
         if (isNil(statements)) {
             return undefined
         }
         const row = statements.getStepOutput.get(name, stepPath) as { output: string } | undefined
-        return row ? JSON.parse(row.output) : undefined
+        return row?.output
     },
 
     getStepSize({ name, stepPath }: { name: string, stepPath: string }): number | undefined {

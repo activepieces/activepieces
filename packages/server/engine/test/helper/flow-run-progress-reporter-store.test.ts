@@ -1,6 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { Readable } from 'node:stream'
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
 import { FlowActionType, GenericStepOutput, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
@@ -44,6 +45,69 @@ function makePieceStep({ input, output }: { input: unknown, output: unknown }): 
     })
 }
 
+async function buildContextWithLoop(): Promise<FlowExecutorContext> {
+    let ctx = FlowExecutorContext.empty()
+    ctx = await ctx.upsertStep('trigger_1', makePieceStep({ input: { key: 'trigger-input' }, output: { items: [1, 2] } }))
+    const loop = LoopStepOutput.init({ input: { items: '{{trigger_1.items}}' } })
+        .setItemAndIndex({ item: 1, index: 1 })
+        .addIteration()
+    ctx = await ctx.upsertStep('loop_1', loop)
+    ctx = ctx.setCurrentPath(ctx.currentPath.loopIteration({ loopName: 'loop_1', iteration: 0 }))
+    ctx = await ctx.upsertStep('math', makePieceStep({ input: { first: 1 }, output: { result: 2 } }))
+    return ctx.setCurrentPath(StepExecutionPath.empty())
+}
+
+async function runBackupAndParseUploadedLog(ctx: FlowExecutorContext): Promise<Record<string, unknown>> {
+    await flowRunProgressReporter.sendUpdate({
+        engineConstants: generateMockEngineConstants({ logsFileId: 'logs-1' }),
+        flowExecutorContext: ctx,
+    })
+    await flowRunProgressReporter.backup()
+
+    expect(mockUpload).toHaveBeenCalledTimes(1)
+    const uploaded = mockUpload.mock.calls[0][0].data as Readable
+    const chunks: Buffer[] = []
+    for await (const chunk of uploaded) {
+        chunks.push(chunk)
+    }
+    const serialized = await zstdDecompress(Buffer.concat(chunks))
+    return JSON.parse(serialized.toString('utf-8'))
+}
+
+const expectedLog = {
+    version: 2,
+    executionState: {
+        steps: {
+            trigger_1: {
+                type: FlowActionType.PIECE,
+                status: StepOutputStatus.SUCCEEDED,
+                input: { key: 'trigger-input' },
+                output: { items: [1, 2] },
+            },
+            loop_1: {
+                type: FlowActionType.LOOP_ON_ITEMS,
+                status: StepOutputStatus.SUCCEEDED,
+                input: { items: '{{trigger_1.items}}' },
+                output: {
+                    item: 1,
+                    index: 1,
+                    iterations: [
+                        {
+                            math: {
+                                type: FlowActionType.PIECE,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: { first: 1 },
+                                output: { result: 2 },
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+        tags: [],
+    },
+}
+
 describe('flowRunProgressReporter backup with runStateStore', () => {
     beforeAll(() => {
         process.env.AP_FLOWS_CACHE_PATH = fs.mkdtempSync(path.join(os.tmpdir(), 'progress-reporter-store-test-'))
@@ -59,35 +123,24 @@ describe('flowRunProgressReporter backup with runStateStore', () => {
         runStateStore.dispose()
     })
 
-    test('backup logs carry full input and output rebuilt from the store, including nested loop steps', async () => {
-        let ctx = FlowExecutorContext.empty()
-        ctx = await ctx.upsertStep('trigger_1', makePieceStep({ input: { key: 'trigger-input' }, output: { items: [1, 2] } }))
-        const loop = LoopStepOutput.init({ input: { items: '{{trigger_1.items}}' } })
-            .setItemAndIndex({ item: 1, index: 1 })
-            .addIteration()
-        ctx = await ctx.upsertStep('loop_1', loop)
-        ctx = ctx.setCurrentPath(ctx.currentPath.loopIteration({ loopName: 'loop_1', iteration: 0 }))
-        ctx = await ctx.upsertStep('math', makePieceStep({ input: { first: 1 }, output: { result: 2 } }))
-        ctx = ctx.setCurrentPath(StepExecutionPath.empty())
+    test('backup streams a log with full input and output rebuilt from the store, including nested loop steps', async () => {
+        const ctx = await buildContextWithLoop()
 
         expect(ctx.steps.trigger_1.input).toBeUndefined()
         expect(ctx.steps.trigger_1.output).toBeUndefined()
 
-        await flowRunProgressReporter.sendUpdate({
-            engineConstants: generateMockEngineConstants({ logsFileId: 'logs-1' }),
-            flowExecutorContext: ctx,
-        })
-        await flowRunProgressReporter.backup()
+        const parsed = await runBackupAndParseUploadedLog(ctx)
+        expect(parsed).toEqual(expectedLog)
+    })
 
-        expect(mockUpload).toHaveBeenCalledTimes(1)
-        const serialized = await zstdDecompress(mockUpload.mock.calls[0][0].data)
-        const steps = JSON.parse(serialized.toString('utf-8')).executionState.steps
+    test('backup streams the same log from in-memory steps when the store is not initialized', async () => {
+        runStateStore.dispose()
+        const ctx = await buildContextWithLoop()
 
-        expect(steps.trigger_1.input).toEqual({ key: 'trigger-input' })
-        expect(steps.trigger_1.output).toEqual({ items: [1, 2] })
-        expect(steps.loop_1.input).toEqual({ items: '{{trigger_1.items}}' })
-        expect(steps.loop_1.output.item).toBe(1)
-        expect(steps.loop_1.output.iterations[0].math.input).toEqual({ first: 1 })
-        expect(steps.loop_1.output.iterations[0].math.output).toEqual({ result: 2 })
+        expect(ctx.steps.trigger_1.input).toEqual({ key: 'trigger-input' })
+        expect(ctx.steps.trigger_1.output).toEqual({ items: [1, 2] })
+
+        const parsed = await runBackupAndParseUploadedLog(ctx)
+        expect(parsed).toEqual(expectedLog)
     })
 })
