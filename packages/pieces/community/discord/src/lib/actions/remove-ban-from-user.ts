@@ -6,6 +6,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordRemoveBanFromUser = createAction({
   auth: discordAuth,
@@ -14,6 +15,7 @@ export const discordRemoveBanFromUser = createAction({
   description: 'Removes the guild ban from a user',
   audience: 'both',
   aiMetadata: { description: 'Lifts a guild ban for a user, identified by guild ID and user ID, with an optional audit-log reason; the user may rejoin afterward. Use to reverse a previous ban. Requires the bot to have Ban Members permission; idempotent, since unbanning a user who is not banned yields the same end state.', idempotent: true },
+  outputSchema: discordSuccessActionOutputSchema,
   props: {
     guild_id: discordCommon.guilds,
     user_id: Property.ShortText({
