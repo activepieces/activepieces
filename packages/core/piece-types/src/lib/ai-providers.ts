@@ -203,7 +203,7 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
-const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.8', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
 
@@ -307,6 +307,29 @@ export const ACTIVEPIECES_CHAT_TIERS = [
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const
 
 export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
+
+export const AI_ROUTING_TIER_IDS = ['fast', 'smart', 'premium'] as const
+export type AiRoutingTierId = typeof AI_ROUTING_TIER_IDS[number]
+
+export const AiRoutingSlot = z.object({
+    provider: z.enum(AIProviderName),
+    modelId: z.string().check(z.minLength(1)),
+})
+export type AiRoutingSlot = z.infer<typeof AiRoutingSlot>
+
+export const AiRoutingTierConfig = z.object({
+    main: AiRoutingSlot,
+    backup1: AiRoutingSlot,
+    backup2: AiRoutingSlot,
+})
+export type AiRoutingTierConfig = z.infer<typeof AiRoutingTierConfig>
+
+export const AiRoutingTiers = z.object({
+    fast: AiRoutingTierConfig,
+    smart: AiRoutingTierConfig,
+    premium: AiRoutingTierConfig,
+})
+export type AiRoutingTiers = z.infer<typeof AiRoutingTiers>
 
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),

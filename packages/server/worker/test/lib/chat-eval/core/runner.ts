@@ -115,12 +115,9 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
 
     const capturedErrors: unknown[] = []
     const { data: result, error: turnError } = await tryCatch(() => runChatTurn({
-        model,
-        provider: fixture.model.provider,
+        slots: [{ provider: fixture.model.provider, model, tools }],
         systemPrompt: systemPrompt ?? evalPrompts.loadSystemPrompt(),
         messages,
-        tools,
-        allToolNames: Object.keys(tools),
         tier: fixture.model.tier,
         phaseState,
         abortSignal: new AbortController().signal,

@@ -165,12 +165,17 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             : []
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
+        const selectedModel = modelName ?? conversation.modelName ?? null
+        const tier = chatHelpers.resolveTier({ tierId: selectedModel })
+        const chain = await chatHelpers.resolveModelChain({ platformId, chatProvider: providerConfig, selectedModel, log })
+        const primarySlot = chain[0]
+
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const emailEnabled = !dryRun && smtpEmailSender(log).isSmtpConfigured()
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
-        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || chatAiUtils.supportsWebSearch(providerConfig.provider))
+        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || chatAiUtils.supportsWebSearch(primarySlot.provider))
 
         const lockResult = await chatHelpers.conversationRepo()
             .createQueryBuilder()
@@ -198,10 +203,6 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
             await chatHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
-
-        const selectedModel = modelName ?? conversation.modelName ?? null
-        const tier = chatHelpers.resolveTier({ tierId: selectedModel })
-        const resolvedModelId = chatHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -268,20 +269,21 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
         const estimatedTokens = chatCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
-        const willCompact = chatCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })
+        const primaryProvider = primarySlot.provider
+        const willCompact = chatCompaction.shouldCompact({ estimatedTokens, provider: primaryProvider, messageCount: llmHistory.length })
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[chatRpc#getChatConfig] Compaction decision')
         if (willCompact) {
             const model = chatAiUtils.createChatModel({
-                provider: providerConfig.provider,
-                auth: providerConfig.auth as Record<string, unknown>,
-                config: providerConfig.config as Record<string, unknown>,
-                modelId: resolvedModelId,
+                provider: primaryProvider,
+                auth: primarySlot.auth as Record<string, unknown>,
+                config: primarySlot.config as Record<string, unknown>,
+                modelId: primarySlot.modelId,
             })
             compactionState = await chatCompaction.compactMessages({
                 messages: llmHistory,
                 existingSummary: compactionState.summary,
                 summarizedUpToIndex: compactionState.summarizedUpToIndex,
-                provider: providerConfig.provider,
+                provider: primaryProvider,
                 model,
                 log,
             })
@@ -296,26 +298,28 @@ export const chatRpcHandlers = (log: FastifyBaseLogger) => ({
             messages: llmHistory,
             summary: compactionState.summary,
             summarizedUpToIndex: compactionState.summarizedUpToIndex,
-            provider: providerConfig.provider,
+            provider: primaryProvider,
         })
 
         log.info({
             historyMessageCount: messagesForLlm.length,
             estimatedTokens,
-            model: { id: resolvedModelId },
-            provider: providerConfig.provider,
-            tier: { id: tier.id },
+            model: { id: primarySlot.modelId },
+            provider: primaryProvider,
+            aiRouting: { tier: tier.id, chainLength: chain.length },
             project: selectedProjectId ? { id: selectedProjectId } : undefined,
             webSearchAvailable,
         }, '[chatRpc#getChatConfig] Chat config resolved')
         log.debug({ systemPrompt: systemPromptText, guideNames: Object.keys(guides) }, '[chatRpc#getChatConfig] System prompt assembled')
 
         return {
-            provider: providerConfig.provider,
-            auth: providerConfig.auth as Record<string, unknown>,
-            providerConfig: providerConfig.config as Record<string, unknown>,
-            modelId: resolvedModelId,
-            fastModelId: chatHelpers.resolveFastModelId({ provider: providerConfig.provider }),
+            chain: chain.map((slot) => ({
+                provider: slot.provider,
+                auth: slot.auth as Record<string, unknown>,
+                providerConfig: slot.config as Record<string, unknown>,
+                modelId: slot.modelId,
+                fastModelId: slot.fastModelId,
+            })),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,

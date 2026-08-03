@@ -30,14 +30,38 @@ export function decideLoopAction({ finishReason, producedVisibleOutput, continua
     return 'finish'
 }
 
-export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
-    producedVisibleOutput: boolean
-    streamRetries: number
-}): boolean {
-    return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
+const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
+
+export function isCreditExhaustedError(message: string): boolean {
+    return CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
 }
 
-export async function runChatTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen }: RunChatTurnParams): Promise<ChatTurnResult> {
+// Failover policy for a failed stream attempt. Credit exhaustion is a billing state, never an
+// outage — it stops the chain. Transient errors get one same-slot retry (today's behavior);
+// anything else moves to the next slot (a revoked key is exactly what backups exist for). With a
+// single-slot chain this degrades to exactly the pre-routing semantics: one retry, then stop.
+export function decideStreamFailureAction({ errorMessage, producedVisibleOutput, sameSlotRetries, hasNextSlot }: {
+    errorMessage: string
+    producedVisibleOutput: boolean
+    sameSlotRetries: number
+    hasNextSlot: boolean
+}): StreamFailureAction {
+    if (producedVisibleOutput) {
+        return 'stop'
+    }
+    if (isCreditExhaustedError(errorMessage)) {
+        return 'stop'
+    }
+    if (isTransientFailureText(errorMessage) && sameSlotRetries < MAX_STREAM_RETRIES) {
+        return 'retry_slot'
+    }
+    if (hasNextSlot) {
+        return 'advance_slot'
+    }
+    return sameSlotRetries < MAX_STREAM_RETRIES ? 'retry_slot' : 'stop'
+}
+
+export async function runChatTurn({ slots, systemPrompt, messages, tier, phaseState, abortSignal, log, sinks, stopWhen }: RunChatTurnParams): Promise<ChatTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -45,8 +69,10 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
         stepCountIs(MAX_AGENT_STEPS),
     ]
-    const guardedTools = wrapToolsWithFailureGuard({ tools, log })
-    const maxTurnTokens = runawayTokenCeiling(provider)
+    const failureCounts = new Map<string, number>()
+    const guardedToolsBySlot = slots.map((slot) => wrapToolsWithFailureGuard({ tools: slot.tools, log, failureCounts }))
+    const maxTurnTokens = runawayTokenCeiling(slots[0].provider)
+    let slotIndex = 0
 
     const uiParts: PersistedChatPart[] = []
     const toolCalls: ChatTurnToolCall[] = []
@@ -56,7 +82,7 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
     // accumulatedResponseMessages on EVERY loop exit, so an abort/error break never drops the
     // steps that already happened (which previously left the saved LLM history as just [user]).
     let currentAttemptMessages: ModelMessage[] = []
-    let streamError: Error | null = null
+    const streamFailure: { error: Error | null } = { error: null }
 
     let llmMessages = messages
     const accumulatedResponseMessages: ModelMessage[] = []
@@ -70,93 +96,97 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
     let lastFinishReason = ''
     let budgetExceeded = false
 
-    const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => streamText({
-        model,
-        maxRetries: 3,
-        maxOutputTokens: tier.thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS,
-        abortSignal,
-        system: chatAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider }),
-        messages: chatAiUtils.stripThinkingBlocks(attemptMessages, provider),
-        tools: guardedTools,
-        stopWhen: loopStopCondition,
-        // providerOptions/model are supplied per-step by prepareStep (authoritative). A
-        // call-level providerOptions would deep-merge into every step and leak the enabled
-        // thinking budget back into the disabled first step.
-        prepareStep: ({ steps }) => {
-            const lastStep = steps[steps.length - 1]
-            const widened = lastStep?.toolCalls?.some((c) => chatToolPhases.isBuildOnlyTool(c.toolName))
-            if (widened) {
-                phaseState.phase = 'build'
-            }
-            // Round one of the loop runs on the fast model with native thinking OFF, so the
-            // opener ("Lead with text") + first discovery stream out in ~400ms instead of
-            // waiting behind the smart model's slower first token and silent thinking budget.
-            // From round two we switch to the smart model with thinking ON for planning depth.
-            // It's one continuous turn (no second call), so there's no double-greeting.
-            const isFirstStep = steps.length === 0
-            // Thinking stays OFF for the whole discovery phase, not just round one: extended
-            // thinking makes the model deliberate and fire ONE tool per step, serializing the
-            // read-only lookups that should run as one parallel burst. Once a build-only tool
-            // flips the phase to 'build', thinking comes back on for planning depth.
-            const disableThinking = isFirstStep || phaseState.phase === 'discovery'
-            return {
-                ...(isFirstStep && fastModel ? { model: fastModel } : {}),
-                activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }),
-                providerOptions: chatAiUtils.buildProviderOptions({ provider, tier, disableThinking }),
-                ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),
-            }
-        },
-        experimental_repairToolCall: async ({ toolCall, error }) => {
-            log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
-            const { data: repaired } = await tryCatch(async () => {
-                const { text } = await generateText({
-                    model,
-                    abortSignal,
-                    prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+    const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => {
+        const slot = slots[slotIndex]
+        const provider = slot.provider
+        return streamText({
+            model: slot.model,
+            maxRetries: 3,
+            maxOutputTokens: tier.thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS,
+            abortSignal,
+            system: chatAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider }),
+            messages: chatAiUtils.stripThinkingBlocks(attemptMessages, provider),
+            tools: guardedToolsBySlot[slotIndex],
+            stopWhen: loopStopCondition,
+            // providerOptions/model are supplied per-step by prepareStep (authoritative). A
+            // call-level providerOptions would deep-merge into every step and leak the enabled
+            // thinking budget back into the disabled first step.
+            prepareStep: ({ steps }) => {
+                const lastStep = steps[steps.length - 1]
+                const widened = lastStep?.toolCalls?.some((c) => chatToolPhases.isBuildOnlyTool(c.toolName))
+                if (widened) {
+                    phaseState.phase = 'build'
+                }
+                // Round one of the loop runs on the fast model with native thinking OFF, so the
+                // opener ("Lead with text") + first discovery stream out in ~400ms instead of
+                // waiting behind the smart model's slower first token and silent thinking budget.
+                // From round two we switch to the smart model with thinking ON for planning depth.
+                // It's one continuous turn (no second call), so there's no double-greeting.
+                const isFirstStep = steps.length === 0
+                // Thinking stays OFF for the whole discovery phase, not just round one: extended
+                // thinking makes the model deliberate and fire ONE tool per step, serializing the
+                // read-only lookups that should run as one parallel burst. Once a build-only tool
+                // flips the phase to 'build', thinking comes back on for planning depth.
+                const disableThinking = isFirstStep || phaseState.phase === 'discovery'
+                return {
+                    ...(isFirstStep && slot.fastModel ? { model: slot.fastModel } : {}),
+                    activeTools: chatToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames: Object.keys(slot.tools) }),
+                    providerOptions: chatAiUtils.buildProviderOptions({ provider, tier, disableThinking }),
+                    ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),
+                }
+            },
+            experimental_repairToolCall: async ({ toolCall, error }) => {
+                log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
+                const { data: repaired } = await tryCatch(async () => {
+                    const { text } = await generateText({
+                        model: slot.model,
+                        abortSignal,
+                        prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+                    })
+                    return { ...toolCall, input: text }
                 })
-                return { ...toolCall, input: text }
-            })
-            return repaired ?? null
-        },
-        experimental_onToolCallFinish: (result) => {
-            toolCalls.push({
-                toolName: result.toolCall.toolName,
-                toolCallId: result.toolCall.toolCallId,
-                input: result.toolCall.input,
-                order: toolCallOrder++,
-                phase: phaseState.phase,
-            })
-            log.debug({
-                tool: { name: result.toolCall.toolName, callId: result.toolCall.toolCallId, phase: phaseState.phase, durationMs: result.durationMs, input: result.toolCall.input },
-                success: result.success,
-            }, 'Tool call I/O')
-            if (result.success) {
-                log.info({ tool: { name: result.toolCall.toolName, durationMs: result.durationMs } }, 'Tool call completed')
-            }
-            else {
-                log.warn({ tool: { name: result.toolCall.toolName, durationMs: result.durationMs }, error: result.error }, 'Tool call failed')
-            }
-        },
-        onStepFinish: ({ content, response }) => {
-            uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
-            // Persist the LLM history incrementally (not just UI parts): a turn preempted or
-            // cancelled mid-flight must leave its assistant + tool messages behind so the next
-            // run inherits them instead of re-discovering from scratch. accumulatedResponseMessages
-            // holds prior continuation attempts; this step's response.messages is cumulative for
-            // the current attempt (collectStepMessages takes the last step).
-            currentAttemptMessages = chatAiUtils.collectStepMessages([{ response }])
-            const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
-            onProgress({ uiParts: [...uiParts], responseMessages })
-            log.debug({ partCount: uiParts.length, phase: phaseState.phase }, 'Chat step finished')
-        },
-        onError: ({ error }) => {
-            log.error({ error }, 'Chat streamText error')
-            streamError = error instanceof Error ? error : new Error(String(error))
-        },
-    })
+                return repaired ?? null
+            },
+            experimental_onToolCallFinish: (result) => {
+                toolCalls.push({
+                    toolName: result.toolCall.toolName,
+                    toolCallId: result.toolCall.toolCallId,
+                    input: result.toolCall.input,
+                    order: toolCallOrder++,
+                    phase: phaseState.phase,
+                })
+                log.debug({
+                    tool: { name: result.toolCall.toolName, callId: result.toolCall.toolCallId, phase: phaseState.phase, durationMs: result.durationMs, input: result.toolCall.input },
+                    success: result.success,
+                }, 'Tool call I/O')
+                if (result.success) {
+                    log.info({ tool: { name: result.toolCall.toolName, durationMs: result.durationMs } }, 'Tool call completed')
+                }
+                else {
+                    log.warn({ tool: { name: result.toolCall.toolName, durationMs: result.durationMs }, error: result.error }, 'Tool call failed')
+                }
+            },
+            onStepFinish: ({ content, response }) => {
+                uiParts.push(...chatAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
+                // Persist the LLM history incrementally (not just UI parts): a turn preempted or
+                // cancelled mid-flight must leave its assistant + tool messages behind so the next
+                // run inherits them instead of re-discovering from scratch. accumulatedResponseMessages
+                // holds prior continuation attempts; this step's response.messages is cumulative for
+                // the current attempt (collectStepMessages takes the last step).
+                currentAttemptMessages = chatAiUtils.collectStepMessages([{ response }])
+                const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
+                onProgress({ uiParts: [...uiParts], responseMessages })
+                log.debug({ partCount: uiParts.length, phase: phaseState.phase }, 'Chat step finished')
+            },
+            onError: ({ error }) => {
+                log.error({ error }, 'Chat streamText error')
+                streamFailure.error = error instanceof Error ? error : new Error(String(error))
+            },
+        })
+    }
 
     for (;;) {
-        log.debug({ phase: phaseState.phase, continuations, emptyContinuations, streamRetries }, 'Chat turn loop iteration')
+        log.debug({ phase: phaseState.phase, continuations, emptyContinuations, streamRetries, slotIndex }, 'Chat turn loop iteration')
         const uiPartsCountBefore = uiParts.length
         currentAttemptMessages = []
         const result = runStreamAttempt(llmMessages)
@@ -169,11 +199,26 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
             accumulatedResponseMessages.push(...currentAttemptMessages)
             break
         }
-        if (streamError) {
-            if (shouldRetryStream({ producedVisibleOutput, streamRetries })) {
+        const attemptError = streamFailure.error
+        if (attemptError) {
+            const action = decideStreamFailureAction({
+                errorMessage: attemptError.message,
+                producedVisibleOutput,
+                sameSlotRetries: streamRetries,
+                hasNextSlot: slotIndex < slots.length - 1,
+            })
+            if (action === 'retry_slot') {
                 streamRetries++
-                log.warn({ streamRetries, error: streamError }, 'Chat stream failed before any visible output — retrying the turn')
-                streamError = null
+                log.warn({ streamRetries, error: attemptError }, 'Chat stream failed before any visible output — retrying the turn')
+                streamFailure.error = null
+                await delayWithJitter(STREAM_RETRY_BASE_DELAY_MS)
+                continue
+            }
+            if (action === 'advance_slot') {
+                slotIndex++
+                streamRetries = 0
+                log.warn({ aiRouting: { tier: tier.id, slot: slotIndex, provider: slots[slotIndex].provider }, error: attemptError }, 'Chat stream failed — failing over to backup model')
+                streamFailure.error = null
                 await delayWithJitter(STREAM_RETRY_BASE_DELAY_MS)
                 continue
             }
@@ -235,7 +280,7 @@ export async function runChatTurn({ model, fastModel, provider, systemPrompt, me
         finishReason: lastFinishReason,
         truncatedAfterRetries,
         budgetExceeded,
-        streamError,
+        streamError: streamFailure.error,
         continuations,
         totalInputTokens,
         totalOutputTokens,
@@ -251,8 +296,7 @@ export function delayWithJitter(baseMs: number): Promise<void> {
 // Centralized loop-breaker: an identical (tool + input) call that already failed
 // MAX_IDENTICAL_TOOL_FAILURES times is short-circuited with a directive to change
 // approach, instead of letting the model re-fire the same failing call indefinitely.
-function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: ChatTurnLogger }): ToolSet {
-    const failureCounts = new Map<string, number>()
+function wrapToolsWithFailureGuard({ tools, log, failureCounts }: { tools: ToolSet, log: ChatTurnLogger, failureCounts: Map<string, number> }): ToolSet {
     const guarded: ToolSet = {}
     for (const [name, toolDef] of Object.entries(tools)) {
         const originalExecute = toolDef.execute
@@ -375,14 +419,17 @@ export type ChatTurnSinks = {
     onProgress?: (progress: { uiParts: PersistedChatPart[], responseMessages: ModelMessage[] }) => void
 }
 
-export type RunChatTurnParams = {
+export type ChatTurnSlot = {
+    provider: AIProviderName
     model: LanguageModel
     fastModel?: LanguageModel
-    provider: AIProviderName
+    tools: ToolSet
+}
+
+export type RunChatTurnParams = {
+    slots: ChatTurnSlot[]
     systemPrompt: string
     messages: ModelMessage[]
-    tools: ToolSet
-    allToolNames: string[]
     tier: { id: string, thinkingBudget: number, modelId: string }
     phaseState: { phase: ChatPhase }
     abortSignal: AbortSignal
@@ -390,6 +437,8 @@ export type RunChatTurnParams = {
     sinks?: ChatTurnSinks
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
 }
+
+type StreamFailureAction = 'retry_slot' | 'advance_slot' | 'stop'
 
 export type ChatTurnResult = {
     accumulatedResponseMessages: ModelMessage[]

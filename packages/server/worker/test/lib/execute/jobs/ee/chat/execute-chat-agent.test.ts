@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
+import { decideLoopAction, decideStreamFailureAction } from '../../../../../../src/lib/execute/jobs/ee/chat/run-chat-turn'
 
 describe('decideLoopAction', () => {
     it('finishes when a normal step produced visible output', () => {
@@ -30,16 +30,28 @@ describe('decideLoopAction', () => {
     })
 })
 
-describe('shouldRetryStream', () => {
-    it('retries once when the stream fails before any visible output', () => {
-        expect(shouldRetryStream({ producedVisibleOutput: false, streamRetries: 0 })).toBe(true)
+describe('decideStreamFailureAction', () => {
+    it('never retries or fails over once visible output was already streamed (avoids duplicate content)', () => {
+        expect(decideStreamFailureAction({ errorMessage: '429 rate limit', producedVisibleOutput: true, sameSlotRetries: 0, hasNextSlot: true })).toBe('stop')
     })
 
-    it('does not retry after the single retry has been used', () => {
-        expect(shouldRetryStream({ producedVisibleOutput: false, streamRetries: 1 })).toBe(false)
+    it('stops immediately on credit exhaustion — a billing state, never an outage', () => {
+        expect(decideStreamFailureAction({ errorMessage: 'You are out of credits', producedVisibleOutput: false, sameSlotRetries: 0, hasNextSlot: true })).toBe('stop')
+        expect(decideStreamFailureAction({ errorMessage: 'HTTP 402 payment required', producedVisibleOutput: false, sameSlotRetries: 0, hasNextSlot: true })).toBe('stop')
     })
 
-    it('never retries once visible output was already streamed (avoids duplicate content)', () => {
-        expect(shouldRetryStream({ producedVisibleOutput: true, streamRetries: 0 })).toBe(false)
+    it('retries the same slot once on a transient error, then fails over', () => {
+        expect(decideStreamFailureAction({ errorMessage: '429 rate limit exceeded', producedVisibleOutput: false, sameSlotRetries: 0, hasNextSlot: true })).toBe('retry_slot')
+        expect(decideStreamFailureAction({ errorMessage: '429 rate limit exceeded', producedVisibleOutput: false, sameSlotRetries: 1, hasNextSlot: true })).toBe('advance_slot')
+    })
+
+    it('fails over immediately on a non-transient error (e.g. revoked key) when a backup exists', () => {
+        expect(decideStreamFailureAction({ errorMessage: '401 invalid api key', producedVisibleOutput: false, sameSlotRetries: 0, hasNextSlot: true })).toBe('advance_slot')
+    })
+
+    it('degrades to the pre-routing semantics on a single-slot chain: one retry, then stop', () => {
+        expect(decideStreamFailureAction({ errorMessage: '401 invalid api key', producedVisibleOutput: false, sameSlotRetries: 0, hasNextSlot: false })).toBe('retry_slot')
+        expect(decideStreamFailureAction({ errorMessage: '401 invalid api key', producedVisibleOutput: false, sameSlotRetries: 1, hasNextSlot: false })).toBe('stop')
+        expect(decideStreamFailureAction({ errorMessage: '429 rate limit', producedVisibleOutput: false, sameSlotRetries: 1, hasNextSlot: false })).toBe('stop')
     })
 })

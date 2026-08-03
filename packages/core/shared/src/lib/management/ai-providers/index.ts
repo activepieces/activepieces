@@ -347,6 +347,54 @@ export {
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,
     AI_PROVIDER_CAPABILITIES,
+    AI_ROUTING_TIER_IDS,
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
-export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode } from '@activepieces/core-piece-types'
+export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, AiRoutingTierId } from '@activepieces/core-piece-types'
+
+export const AiRoutingSlot = z.object({
+    provider: z.enum(AIProviderName),
+    modelId: z.string().min(1),
+})
+export type AiRoutingSlot = z.infer<typeof AiRoutingSlot>
+
+export const AiRoutingTierConfig = z.object({
+    main: AiRoutingSlot,
+    backup1: AiRoutingSlot,
+    backup2: AiRoutingSlot,
+})
+export type AiRoutingTierConfig = z.infer<typeof AiRoutingTierConfig>
+
+export const AiRoutingTiers = z.object({
+    fast: AiRoutingTierConfig,
+    smart: AiRoutingTierConfig,
+    premium: AiRoutingTierConfig,
+})
+export type AiRoutingTiers = z.infer<typeof AiRoutingTiers>
+
+export const AiModelRoutingConfig = z.object({
+    ...BaseModelSchema,
+    platformId: z.string(),
+    tiers: AiRoutingTiers,
+})
+export type AiModelRoutingConfig = z.infer<typeof AiModelRoutingConfig>
+
+export const UpsertAiRoutingRequest = z.object({
+    tiers: AiRoutingTiers,
+})
+export type UpsertAiRoutingRequest = z.infer<typeof UpsertAiRoutingRequest>
+
+export const GetAiRoutingResponse = z.object({
+    tiers: AiRoutingTiers,
+    isDefault: z.boolean(),
+})
+export type GetAiRoutingResponse = z.infer<typeof GetAiRoutingResponse>
+
+export const ResolvedRoutingSlot = z.object({
+    provider: z.enum(AIProviderName),
+    modelId: z.string(),
+    auth: AIProviderAuthConfig,
+    config: AIProviderConfig,
+    fastModelId: z.string().optional(),
+})
+export type ResolvedRoutingSlot = z.infer<typeof ResolvedRoutingSlot>

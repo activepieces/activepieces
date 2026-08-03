@@ -1,15 +1,28 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AI_ROUTING_TIER_IDS, AIProviderModel, CreateAIProviderRequest, GetAiRoutingResponse, PrincipalType, UpdateAIProviderRequest, UpsertAiRoutingRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { aiModelRoutingService } from './ai-model-routing-service'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListAIProviders, async (request) => {
         const platformId = request.principal.platform.id
         return aiProviderService(app.log).listProviders(platformId)
+    })
+    app.get('/routing', GetAiRouting, async (request) => {
+        const platformId = request.principal.platform.id
+        return aiModelRoutingService(app.log).get({ platformId })
+    })
+    app.post('/routing', UpsertAiRouting, async (request) => {
+        const platformId = request.principal.platform.id
+        return aiModelRoutingService(app.log).upsert({ platformId, request: request.body })
+    })
+    app.get('/routing/:tier/chain', GetAiRoutingChain, async (request) => {
+        const platformId = request.principal.platform.id
+        return aiModelRoutingService(app.log).resolveChain({ platformId, tierId: request.params.tier })
     })
     app.get('/:provider/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
@@ -37,6 +50,40 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
 const ListAIProviders = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.ENGINE]),
+    },
+}
+
+const GetAiRouting = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: GetAiRoutingResponse,
+        },
+    },
+}
+
+const UpsertAiRouting = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        body: UpsertAiRoutingRequest,
+        response: {
+            [StatusCodes.OK]: GetAiRoutingResponse,
+        },
+    },
+}
+
+const GetAiRoutingChain = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        params: z.object({
+            tier: z.enum(AI_ROUTING_TIER_IDS),
+        }),
     },
 }
 

@@ -1,6 +1,7 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, aiProviderUtils, ChatConversationStatus, DEFAULT_CHAT_TIER_ID, GetChatMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserChatMemory } from '@activepieces/shared'
+import { aiProviderUtils, ChatConversationStatus, GetChatMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedRoutingSlot, UserChatMemory } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { aiModelRoutingResolution, aiModelRoutingService } from '../../ai/ai-model-routing-service'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -69,28 +70,38 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
     return chatProvider
 }
 
-function findTier({ tierId }: { tierId: string | null }) {
-    return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
-}
+const { findTier, resolveTier, resolveModelIdForProvider } = aiModelRoutingResolution
 
-function resolveTier({ tierId }: { tierId: string | null }) {
-    return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
-}
-
-function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }): string {
-    const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
+// Explicit curated-model picks stay a single-slot chain (no failover — the user asked for that
+// exact model); tier picks resolve through the platform's routing config (or its derived default).
+async function resolveModelChain({ platformId, chatProvider, selectedModel, log }: {
+    platformId: string
+    chatProvider: GetProviderConfigResponse
+    selectedModel: string | null
+    log: FastifyBaseLogger
+}): Promise<ResolvedRoutingSlot[]> {
+    const curatedModels = aiProviderUtils.getCuratedChatModels({ provider: chatProvider.provider })
     if (selectedModel && curatedModels?.some((model) => model.id === selectedModel)) {
-        return selectedModel
+        return [{
+            provider: chatProvider.provider,
+            modelId: selectedModel,
+            auth: chatProvider.auth,
+            config: chatProvider.config,
+            fastModelId: resolveFastModelId({ provider: chatProvider.provider }),
+        }]
     }
-    const tierModelId = resolveTier({ tierId: selectedModel }).modelId
-    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
-        return tierModelId
+    const tier = resolveTier({ tierId: selectedModel })
+    const chain = await aiModelRoutingService(log).resolveChain({ platformId, tierId: tier.id })
+    if (chain.length > 0) {
+        return chain
     }
-    const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
-    if (isNil(curatedModels)) {
-        return nativeModelId
-    }
-    return curatedModels.some((model) => model.id === nativeModelId) ? nativeModelId : curatedModels[0].id
+    return [{
+        provider: chatProvider.provider,
+        modelId: resolveModelIdForProvider({ provider: chatProvider.provider, selectedModel }),
+        auth: chatProvider.auth,
+        config: chatProvider.config,
+        fastModelId: resolveFastModelId({ provider: chatProvider.provider }),
+    }]
 }
 
 // Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
@@ -217,6 +228,7 @@ export const chatHelpers = {
     resolveModelIdForProvider,
     resolveModelIdForAnalytics,
     resolveFastModelId,
+    resolveModelChain,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,

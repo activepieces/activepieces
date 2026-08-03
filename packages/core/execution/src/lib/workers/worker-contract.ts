@@ -124,12 +124,16 @@ export type ChatAiToolsConfig = {
     imageGeneration?: ResolvedAiToolConfig
 }
 
-export type ChatConfigResponse = {
+export type ChatModelSlot = {
     provider: string
     auth: Record<string, unknown>
     providerConfig: Record<string, unknown>
     modelId: string
-    fastModelId: string
+    fastModelId?: string
+}
+
+export type ChatConfigResponse = {
+    chain: ChatModelSlot[]
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
