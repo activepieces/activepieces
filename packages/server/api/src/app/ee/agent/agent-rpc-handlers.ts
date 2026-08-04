@@ -26,6 +26,9 @@ import { executeCrossProjectTool } from './tools/agent-tools'
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
+// Writes into the person's own saved memory. A flow step runs as the project owner, so letting it
+// through would let a flow edit what the owner's chat remembers.
+const OWNER_SCOPED_TOOLS = ['ap_remember']
 
 const MAX_EMAIL_RECIPIENTS = 10
 const MAX_EMAIL_SUBJECT_LENGTH = 300
@@ -161,6 +164,11 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         ])
 
         const isFlowStep = conversation.source === AgentRunSource.FLOW_STEP
+        // Everything below belongs to the project owner, who did not start this run and may not know
+        // it happened. A flow step gets none of it: not their saved memory, not their address, and
+        // not the built-in sender that would let a flow mail people as them.
+        const runMemory = isFlowStep ? { instructions: null, memories: [] } : agentMemory
+        const runUserEmail = isFlowStep ? '' : userMeta.email
         // The MCP token is platform-wide (projectId: null), and ap_set_project_context validates
         // against every project its user can reach. A flow-step run must not get that reach.
         const scopedMcpCredentials = isFlowStep ? { mcpServerUrl: null, mcpToken: null } : mcpCredentials
@@ -178,7 +186,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
-        const emailEnabled = !dryRun && smtpEmailSender(log).isSmtpConfigured()
+        const emailEnabled = !dryRun && !isFlowStep && smtpEmailSender(log).isSmtpConfigured()
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
@@ -253,8 +261,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
-            userEmail: userMeta.email,
-        }) + inventoryNote + buildMemoryNote({ instructions: agentMemory.instructions, memories: agentMemory.memories })
+            userEmail: runUserEmail,
+        }) + inventoryNote + buildMemoryNote({ instructions: runMemory.instructions, memories: runMemory.memories })
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides
@@ -340,7 +348,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             guides,
             aiTools,
             emailEnabled,
-            userEmail: userMeta.email,
+            userEmail: runUserEmail,
             source: conversation.source,
         }
     },
@@ -465,7 +473,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {
-        if (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) && input.source !== AgentRunSource.CHAT) {
+        const chatOnlyTool = input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName)
+        if (chatOnlyTool && input.source !== AgentRunSource.CHAT) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,

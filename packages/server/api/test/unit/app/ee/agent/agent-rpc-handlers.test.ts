@@ -283,3 +283,18 @@ describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conver
         expect(mockSave).not.toHaveBeenCalled()
     })
 })
+
+describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a flow-step target', () => {
+    it('refuses ap_remember for a flow-step run', async () => {
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).executeAgentTool({
+            toolName: 'ap_remember',
+            toolInput: { memory: 'the owner likes concise replies' },
+            platformId: 'plat-1',
+            userId: 'owner-1',
+            conversationId: 'conv-1',
+            source: 'FLOW_STEP',
+        } as never)).rejects.toThrow()
+    })
+})
