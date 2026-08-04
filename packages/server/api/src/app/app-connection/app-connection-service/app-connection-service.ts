@@ -25,6 +25,7 @@ import {
     AppConnectionSchema,
 } from '../app-connection.entity'
 import { appConnectionHandler } from './app-connection.handler'
+import { mergeConnectionMetadata } from './connection-metadata'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 export const appConnectionsRepo = repoFactory(AppConnectionEntity)
@@ -80,10 +81,11 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             platformId,
             log,
         })
-        const baseMetadata = metadata ?? existingConnection?.metadata ?? undefined
-        const connectionMetadata = isNil(accountIdentifier)
-            ? metadata
-            : { ...(baseMetadata ?? {}), accountIdentifier }
+        const connectionMetadata = mergeConnectionMetadata({
+            requestMetadata: metadata,
+            existingMetadata: existingConnection?.metadata,
+            accountIdentifier,
+        })
 
         const newId = existingConnection?.id ?? apId()
         const connection = {

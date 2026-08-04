@@ -16,6 +16,7 @@ Lets platform owners register their own OAuth 2.0 app credentials (client ID + s
 ### Gotchas
 - The GET list is open to all platform members (not just admins) because the connection dialog must know which pieces have custom credentials — but only `clientId` is returned; `clientSecret` never leaves the server.
 - clientSecret encrypted with the platform's encryption key.
+- **A `CLOUD_OAUTH2` claim result reaches the engine with no `type` field.** `cloudOAuth2Service.claim` returns `{ ...value, token_url, props }` without it, even though its own `refresh` sets `type` and `credentialsOauth2Service.claim` does too — and `upsert` hands the engine the un-merged claim result, so the request's `type` is re-spread for storage only. Any engine-side dispatch keyed on `authValue.type` therefore silently misses every cloud connection: dispatch on the piece's declared `usedPieceAuth.type` (always present) and narrow the value **structurally** (`'access_token' in authValue`). Structural narrowing is also the fail-safe direction for multi-auth pieces, where `getAuthPropertyForValue` falls back to `pieceAuth.at(0)` when the type is missing.
 
 ### Key files
 Entry point: `oauthAppModule`, registered in `packages/server/api/src/app/app.ts`.
