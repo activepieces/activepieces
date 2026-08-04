@@ -22,7 +22,6 @@ export const GeneralPage = () => {
     <CenteredPage
       title={t('General')}
       description={t('Change the settings for your platform.')}
-      widthClassName="max-w-[46rem]"
     >
       <AppearanceSection />
       {canDeletePlatform && (

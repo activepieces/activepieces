@@ -2481,5 +2481,8 @@
   "Upgrade to use your own logo and colors.": "Upgrade to use your own logo and colors.",
   "Upgrade to change {name}": "Upgrade to change {name}",
   "Choose an image": "Choose an image",
-  "invalidHexColor": "Enter a valid hex color"
+  "invalidHexColor": "Enter a valid hex color",
+  "Upgrade to replace": "Upgrade to replace",
+  "Remove selected image": "Remove selected image",
+  "Contact support before {date} if this was a mistake.": "Contact support before {date} if this was a mistake."
 }

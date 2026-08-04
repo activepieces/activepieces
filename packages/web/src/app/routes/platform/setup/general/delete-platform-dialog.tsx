@@ -1,3 +1,4 @@
+import { PLATFORM_PURGE_DELAY_DAYS } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
@@ -44,10 +45,20 @@ const DeletePlatformForm = ({
   platformName,
   onCancel,
 }: DeletePlatformFormProps) => {
+  const confirmationTarget =
+    platformName.trim().length > 0
+      ? platformName.trim()
+      : FALLBACK_CONFIRMATION;
   const form = useForm<DeletePlatformFormValues>({
     resolver: zodResolver(
       z.object({
-        confirmation: z.literal(platformName, 'Platform name is incorrect'),
+        confirmation: z
+          .string()
+          .trim()
+          .refine(
+            (value) => value === confirmationTarget,
+            'Platform name is incorrect',
+          ),
       }),
     ),
     defaultValues: { confirmation: '' },
@@ -74,7 +85,10 @@ const DeletePlatformForm = ({
             )}{' '}
             <span className="text-foreground font-medium">
               {t('This cannot be undone.')}
-            </span>
+            </span>{' '}
+            {t('Contact support before {date} if this was a mistake.', {
+              date: purgeDate,
+            })}
           </DialogDescription>
         </DialogHeader>
         <FormField
@@ -83,7 +97,7 @@ const DeletePlatformForm = ({
           render={({ field }) => (
             <FormItem className="my-5 flex flex-col gap-2">
               <FormLabel>
-                {t('Type {name} to confirm', { name: platformName })}
+                {t('Type {name} to confirm', { name: confirmationTarget })}
               </FormLabel>
               <FormControl>
                 <Input {...field} autoComplete="off" />
@@ -114,7 +128,7 @@ type DeletePlatformFormValues = {
   confirmation: string;
 };
 
-const PLATFORM_PURGE_DELAY_DAYS = 7;
+const FALLBACK_CONFIRMATION = 'delete platform';
 
 type DeletePlatformFormProps = {
   platformName: string;
