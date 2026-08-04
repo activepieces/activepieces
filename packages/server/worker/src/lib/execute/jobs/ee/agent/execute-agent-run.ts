@@ -36,11 +36,13 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_c
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
     async execute(ctx: JobContext, data: ExecuteAgentRunJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly } = data
+        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
         const config = await ctx.apiClient.getAgentConfig({
             conversationId, runId, platformId, userId, userMessage, modelName, files,
+            ...spreadIfDefined('source', jobSource),
+            ...spreadIfDefined('projectId', projectId),
             ...spreadIfDefined('promptOverride', promptOverride),
             ...spreadIfDefined('dryRun', dryRun),
         })

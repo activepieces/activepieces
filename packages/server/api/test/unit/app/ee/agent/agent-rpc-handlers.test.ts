@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+    mockSave: vi.fn(),
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
+            save: mockSave,
             createQueryBuilder: (): QueryBuilderMock => {
                 const builder: QueryBuilderMock = {
                     update: () => builder,
@@ -99,6 +101,7 @@ describe('agentRpcHandlers.saveAgentMessages — no-shrink guard against context
     beforeEach(() => {
         mockSet.mockClear()
         mockFindOneBy.mockReset()
+        mockFindOneBy.mockResolvedValue(null)
     })
 
     it('refuses to overwrite messages with a SHORTER history (the aborted-turn clobber)', async () => {
@@ -236,5 +239,47 @@ describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its
         await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })
 
         expect(mockSet).toHaveBeenCalled()
+    })
+})
+
+async function callGetAgentConfigFor(input: Record<string, unknown>): Promise<unknown> {
+    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+    return agentRpcHandlers(noopLogger as never).getAgentConfig(input as never)
+}
+
+describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conversation on first use', () => {
+    beforeEach(() => {
+        mockSave.mockClear()
+        mockFindOneBy.mockReset()
+    })
+
+    it('creates the row with the owner and project the job carried', async () => {
+        mockFindOneBy.mockResolvedValue(null)
+        mockSave.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', messages: [] })
+
+        await callGetAgentConfigFor({
+            conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
+            userMessage: 'do a thing', modelName: null,
+            source: 'FLOW_STEP', projectId: 'proj-1',
+        }).catch(() => undefined)
+
+        expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({
+            id: 'conv-1',
+            source: 'FLOW_STEP',
+            projectId: 'proj-1',
+            userId: 'owner-1',
+        }))
+    })
+
+    it('does not create a second row when the run is retried', async () => {
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', messages: [] })
+
+        await callGetAgentConfigFor({
+            conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
+            userMessage: 'do a thing', modelName: null,
+            source: 'FLOW_STEP', projectId: 'proj-1',
+        }).catch(() => undefined)
+
+        expect(mockSave).not.toHaveBeenCalled()
     })
 })

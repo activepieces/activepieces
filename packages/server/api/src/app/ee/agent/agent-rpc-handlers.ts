@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -148,10 +148,10 @@ function buildMemoryNote({ instructions, memories }: {
 
 export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, source: requestedSource, projectId: requestedProjectId } = input
 
         const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta, agentMemory] = await Promise.all([
-            agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId }),
+            loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
             agentHelpers.resolveChatProvider({ platformId, log }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             agentMcp.getCredentials({ platformId, userId, log }),
@@ -680,6 +680,33 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
         : []
     const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
+}
+
+// A flow-step run has no row until its job actually runs. The controller only publishes the job, so
+// an interrupted request cannot leave a conversation behind that nothing will ever execute.
+async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {
+    conversationId: string
+    platformId: string
+    userId: string
+    source?: AgentRunSource
+    projectId?: string | null
+    modelName?: string | null
+}): Promise<AgentConversation> {
+    if (source !== AgentRunSource.FLOW_STEP) {
+        return agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+    }
+    const existing = await agentHelpers.conversationRepo().findOneBy({ id: conversationId, platformId, userId })
+    return existing ?? agentHelpers.conversationRepo().save({
+        id: conversationId,
+        platformId,
+        projectId: projectId ?? null,
+        userId,
+        source: AgentRunSource.FLOW_STEP,
+        title: null,
+        modelName: modelName ?? null,
+        messages: [],
+        status: AgentConversationStatus.IDLE,
+    })
 }
 
 async function confinedProjectFor({ conversationId }: { conversationId?: string }): Promise<string | null> {
