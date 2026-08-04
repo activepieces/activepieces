@@ -2,11 +2,11 @@ import { randomUUID } from 'node:crypto'
 import { chmod, mkdir, rm, stat, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { ActivepiecesError, apId, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, ErrorCode } from '@activepieces/core-utils'
 import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, describe, expect, it } from 'vitest'
 import { actionRunCache, ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_MAX_DIRS } from '../../../src/lib/cache/action-run-cache'
-import { cacheUtils } from '../../../src/lib/cache/cache-paths'
+import { ACTION_RUN_CODE_DIR, cacheUtils } from '../../../src/lib/cache/cache-paths'
 
 const basePaths: string[] = []
 
@@ -122,9 +122,9 @@ describe('actionRunCache.namespace', () => {
         const nameA = actionRunCache.namespace({ platformId: platformA, sourceHash })
         const nameB = actionRunCache.namespace({ platformId: platformB, sourceHash })
 
-        expect(nameA).toBe(`ar_${platformA}_${sourceHash}`)
+        expect(nameA).toBe(`${ACTION_RUN_CODE_DIR}/${platformA}_${sourceHash}`)
         expect(nameA).not.toBe(nameB)
-        expect(actionRunCache.isManagedDir(nameA)).toBe(true)
+        expect(actionRunCache.isActionRunNamespace(nameA)).toBe(true)
     })
 
     it('refuses to build a namespace without a platformId', () => {
@@ -144,11 +144,15 @@ describe('actionRunCache.namespace', () => {
     })
 })
 
-describe('actionRunCache directory classification', () => {
-    it('never claims a flow-version directory as managed, because apId cannot contain an underscore', () => {
+describe('actionRunCache namespace classification', () => {
+    it('never claims a flow-version namespace, because an apId is a single path segment', () => {
         for (let attempt = 0; attempt < 100; attempt++) {
-            expect(actionRunCache.isManagedDir(apId())).toBe(false)
+            expect(actionRunCache.isActionRunNamespace(apId())).toBe(false)
         }
+    })
+
+    it('uses a directory name no apId can produce, so a flow version can never land inside it', () => {
+        expect(ACTION_RUN_CODE_DIR.length).not.toBe(apId().length)
     })
 })
 
@@ -172,6 +176,27 @@ describe('actionRunCache.sweep', () => {
         await expect(exists(flowVersionDir)).resolves.toBe(true)
         await expect(exists(freshDir)).resolves.toBe(true)
         await expect(exists(expiredDir)).resolves.toBe(false)
+    })
+
+    it('cannot reach anything at the root of the code cache, however old, because it only reads its own directory', async () => {
+        const basePath = uniqueBasePath()
+        const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
+        const ancient = 90 * 24 * HOUR_MS
+        const flowVersionDir = await seedStepDir({ basePath, namespace: apId(), ageMs: ancient })
+        const legacyPrefixedDir = await seedStepDir({ basePath, namespace: `ar_${apId()}_${'d'.repeat(64)}`, ageMs: ancient })
+        const strayFile = join(codesPath, 'stray.txt')
+        await writeFile(strayFile, 'not a cache dir', 'utf8')
+        await seedStepDir({
+            basePath,
+            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: 'e'.repeat(64) }),
+            ageMs: ancient,
+        })
+
+        await actionRunCache.sweep({ basePath, log: noopLog })
+
+        await expect(exists(flowVersionDir)).resolves.toBe(true)
+        await expect(exists(legacyPrefixedDir)).resolves.toBe(true)
+        await expect(exists(strayFile)).resolves.toBe(true)
     })
 
     it('evicts only the oldest overflow once the managed dir count exceeds the cap', async () => {
@@ -249,9 +274,9 @@ describe('actionRunCache.sweep observability', () => {
 
     it('warns with the errno when the cache directory cannot be read at all', async () => {
         const basePath = uniqueBasePath()
-        const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
-        await mkdir(dirname(codesPath), { recursive: true })
-        await writeFile(codesPath, 'not a directory', 'utf8')
+        const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
+        await mkdir(dirname(actionRunsPath), { recursive: true })
+        await writeFile(actionRunsPath, 'not a directory', 'utf8')
         const recording = createRecordingLog()
 
         await actionRunCache.sweep({ basePath, log: recording.log })
@@ -259,7 +284,7 @@ describe('actionRunCache.sweep observability', () => {
         const warnings = recording.payloadsAt('warn')
         expect(warnings).toHaveLength(1)
         expect(warnings[0]).toMatchObject({
-            cache: { path: codesPath },
+            cache: { path: actionRunsPath },
             error: expect.objectContaining({ code: 'ENOTDIR' }),
         })
         expect(recording.payloadsAt('debug')).toHaveLength(0)
@@ -307,7 +332,7 @@ describe('actionRunCache.sweep observability', () => {
 
     it.skipIf(runningAsRoot())('warns and counts the directory as retained when removal is denied', async () => {
         const basePath = uniqueBasePath()
-        const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
+        const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
         const expiredDir = await seedStepDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '6'.repeat(64) }),
@@ -315,9 +340,9 @@ describe('actionRunCache.sweep observability', () => {
         })
         const recording = createRecordingLog()
 
-        await chmod(codesPath, 0o500)
+        await chmod(actionRunsPath, 0o500)
         await actionRunCache.sweep({ basePath, log: recording.log })
-        await chmod(codesPath, 0o700)
+        await chmod(actionRunsPath, 0o700)
 
         await expect(exists(expiredDir)).resolves.toBe(true)
         expect(recording.payloadsAt('info')).toHaveLength(0)

@@ -79,7 +79,7 @@ async function installCodeStep({ artifact, codeCachePath, log, getSettings }: In
         })
     }
     await build()
-    if (!actionRunCache.isManagedDir(artifact.flowVersionId)) {
+    if (!actionRunCache.isActionRunNamespace(artifact.flowVersionId)) {
         return
     }
     const dirPath = codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId)

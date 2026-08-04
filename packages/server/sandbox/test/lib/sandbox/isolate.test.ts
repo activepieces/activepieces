@@ -104,6 +104,17 @@ describe('isolateProcess', () => {
             expect(mkdirMock).toHaveBeenCalledTimes(2)
         })
 
+        it('pre-creates the nested mountpoint for an action-run code mount', async () => {
+            const mounts: SandboxMount[] = [
+                { hostPath: '/host/codes/action-runs/plat-xyz_deadbeef', sandboxPath: '/root/codes/action-runs/plat-xyz_deadbeef', optional: true },
+            ]
+            await callCreate({ mounts, boxId: 4 })
+
+            expect(mkdirMock).toHaveBeenCalledWith('/var/local/lib/isolate/4/root/root/codes/action-runs/plat-xyz_deadbeef', { recursive: true })
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args).toContain('--dir=/root/codes/action-runs/plat-xyz_deadbeef=/host/codes/action-runs/plat-xyz_deadbeef:maybe')
+        })
+
         it('refuses to mkdir or spawn when a mount sandboxPath escapes /root/', async () => {
             const mounts: SandboxMount[] = [{ hostPath: '/host/evil', sandboxPath: '/root/../etc' }]
 

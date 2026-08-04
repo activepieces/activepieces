@@ -2,7 +2,7 @@ import { readdir, rm, stat, utimes } from 'node:fs/promises'
 import path from 'node:path'
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { cacheUtils } from './cache-paths'
+import { ACTION_RUN_CODE_DIR, cacheUtils } from './cache-paths'
 
 export const actionRunCache = {
     namespace({ platformId, sourceHash }: NamespaceParams): string {
@@ -12,11 +12,11 @@ export const actionRunCache = {
                 params: { message: 'Cannot namespace an action-run code cache without a platformId' },
             })
         }
-        return `${MANAGED_PREFIX}${platformId}_${sourceHash}`
+        return `${ACTION_RUN_CODE_DIR}/${platformId}_${sourceHash}`
     },
 
-    isManagedDir(dirName: string): boolean {
-        return dirName.startsWith(MANAGED_PREFIX)
+    isActionRunNamespace(namespace: string): boolean {
+        return namespace.startsWith(`${ACTION_RUN_CODE_DIR}/`)
     },
 
     async touch(dirPath: string): Promise<void> {
@@ -35,20 +35,20 @@ export const actionRunCache = {
 
     async sweep({ basePath, log }: SweepParams): Promise<void> {
         const startedAt = Date.now()
-        const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
-        const { data: entries, error } = await tryCatch(() => readdir(codesPath, { withFileTypes: true }))
+        const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
+        const { data: entries, error } = await tryCatch(() => readdir(actionRunsPath, { withFileTypes: true }))
         if (error) {
             if ('code' in error && error.code === 'ENOENT') {
-                log.debug({ cache: { path: codesPath } }, 'Action-run code cache directory does not exist yet')
+                log.debug({ cache: { path: actionRunsPath } }, 'Action-run code cache directory does not exist yet')
                 return
             }
-            log.warn({ error, cache: { path: codesPath } }, 'Failed to read the action-run code cache directory')
+            log.warn({ error, cache: { path: actionRunsPath } }, 'Failed to read the action-run code cache directory')
             return
         }
 
         const managed = entries
-            .filter((entry) => entry.isDirectory() && actionRunCache.isManagedDir(entry.name))
-            .map((entry) => path.join(codesPath, entry.name))
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => path.join(actionRunsPath, entry.name))
 
         const expired = await removeExpired({ dirPaths: managed, expiredAt: Date.now() - ACTION_RUN_CACHE_TTL_MS })
 
@@ -137,8 +137,6 @@ async function removeDir({ dirPath, expectedMtimeMs }: RemoveDirParams): Promise
     }
     return 'failed'
 }
-
-const MANAGED_PREFIX = 'ar_'
 
 const pendingRemovals = new Map<string, Promise<unknown>>()
 

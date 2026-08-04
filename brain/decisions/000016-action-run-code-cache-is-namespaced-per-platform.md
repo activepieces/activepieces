@@ -2,19 +2,22 @@
 status: proposed
 ---
 
-# Action-run code caches are namespaced per platform, and swept on a TTL
+# Action-run code caches live in their own directory, namespaced per platform, and swept on a TTL
 
 ## Decision
-An action run's compiled code step lands in `<cache>/v12/codes/ar_<platformId>_<sha256(sourceCode)>/<stepName>/`,
-built by `actionRunCache.namespace`. The `ar_` prefix and the `platformId` are both load-bearing: the prefix
-is the only thing distinguishing an action-run build from a flow-version build on disk, and the `platformId`
-is what stops two customers sharing a directory.
+An action run's compiled code step lands in
+`<cache>/v12/codes/action-runs/<platformId>_<sha256(sourceCode)>/<stepName>/`, built by
+`actionRunCache.namespace`. The `action-runs/` directory level and the `platformId` are both load-bearing:
+the directory is what distinguishes an action-run build from a flow-version build on disk, and the
+`platformId` is what stops two customers sharing a directory. Flow-version caches stay at the root of
+`codes/`, unmoved.
 
 Those directories are reclaimed by `actionRunCache.sweep` — a worker-local pass every 30 minutes that
-deletes `ar_*` untouched for 2h, then evicts oldest-first while more than `AR_CACHE_MAX_DIRS` (200)
-survivors remain, never touching one whose mtime is inside `AR_CACHE_ACTIVE_WINDOW_MS` (15 min).
-Reclamation is bounded by directory **count**, never by bytes. Flow version caches are explicitly **not**
-swept. All four knobs are hardcoded constants, not env vars.
+reads **only** `codes/action-runs/`, deletes children untouched for 2h, then evicts oldest-first while more
+than `ACTION_RUN_CACHE_MAX_DIRS` (200) survivors remain, never touching one whose mtime is inside
+`ACTION_RUN_CACHE_ACTIVE_WINDOW_MS` (15 min). Reclamation is bounded by directory **count**, never by
+bytes. Flow version caches are explicitly **not** swept, and are now structurally unreachable by the sweep
+rather than merely excluded by a filter. All four knobs are hardcoded constants, not env vars.
 
 ## Context
 The code cache is keyed by `flowVersionId` + step name and nothing else, and an action run has no flow
@@ -49,15 +52,38 @@ it supplied itself, and isolate bind-mounts are read-only. Four other things wer
 **Platform, not project.** A platform is the customer boundary, matching the `custom_pieces` precedent, and
 it keeps the cache warm across a customer's own projects. Purging a customer is then one glob.
 
-**A flat segment, not a directory level.** `codes/<platformId>/<hash>/` would mean threading `platformId`
-into the process maker — in fork mode `AP_BASE_CODE_DIRECTORY` is fixed at `getProcessMaker` time, before
-`platformId` is known — and changing the engine's read path. A flat name leaves `codeCache.stepDir`,
-`buildCodeMount`, `assertSafePathSegment` and `code-executor` untouched.
+**A constant directory level, not a variable one, and not a name prefix.** The first shape of this
+decision used a flat `ar_<platformId>_<hash>` segment, on the grounds that a directory level would mean
+threading `platformId` into the process maker — in fork mode `AP_BASE_CODE_DIRECTORY` is fixed at
+`getProcessMaker` time, before `platformId` is known — and changing the engine's read path. That objection
+is real but applies only to a **variable** first level like `codes/<platformId>/<hash>/`. `action-runs/` is
+a **constant**, so the base code directory stays `/root/codes`, both process makers are untouched, and
+`code-executor`'s `${baseCodeDirectory}/${flowVersionId}/${stepName}/index.js` absorbs the extra segment by
+string interpolation with no change at all. The `platformId` stays flat *inside* that directory: a
+per-platform level would make the sweeper walk two levels and assemble its eviction list across platforms,
+which is the one place this design insists on recomputing from a single live `readdir`, and it would leave
+empty platform directories whose pruning races peer replicas creating them. Per-tenant purge stays a glob.
+
+**The nesting cannot be hidden from the engine.** The tempting version is host-side only — keep the
+directory at `codes/action-runs/<ns>` but mount it back to `/root/codes/<ns>` so the namespace the engine
+holds stays a single segment. That works in isolate mode and breaks in fork mode, where
+`AP_BASE_CODE_DIRECTORY` is the real host `codes/` path with no mount indirection and the engine reads
+`<codes>/<namespace>/<stepName>/index.js` straight off the host filesystem. The namespace string the engine
+receives must therefore literally contain `action-runs/`, which is why `assertSafePathSegment` could no
+longer gate it alone.
+
+**The guard was extended by composition, not by loosening.** `assertSafePathSegment` is unchanged and still
+rejects `.`, `..`, any `..` substring, `/`, `\`, NUL and empty. `assertSafeCodeNamespace` splits on `/`,
+rejects more than two segments, and runs every segment through that untouched guard — so a value that
+becomes a bind-mount `hostPath` gains a legal second level without the traversal rules being restated or
+weakened anywhere. Generic depth-2 rather than a whitelist of the two known shapes was chosen knowingly:
+the residual is that a future caller could park a namespace one level deep somewhere unintended, which is a
+correctness surprise rather than an escape, and every segment is still individually asserted.
 
 **A count cap, not a byte budget — a byte budget was tried and removed.** The obvious backstop is "evict
 while the subtree exceeds N bytes", and it is wrong twice. First, the premise: a burst of
 large-dependency snippets cannot fill a disk, because `code-builder` deletes `node_modules`
-unconditionally after compile *and* on install failure — an `ar_` directory is the esbuild bundle, not the
+unconditionally after compile *and* on install failure — an action-run directory is the esbuild bundle, not the
 dependency tree, so reaching gigabytes needs thousands of distinct snippets inside one TTL window. The
 2 GiB budget it shipped with was also the size of the *entire* default Helm volume (`persistence.size:
 2Gi`, which also carries the engine, `pieces-metadata`, flow caches and bundles), so it could never fire.
@@ -72,23 +98,24 @@ That is the difference between a policy that can be made safe and one that canno
 **The cap alone is not the safety mechanism, though, because mtime order is provision order, not liveness
 order.** A directory's mtime is when `provision` touched it and is never refreshed for the ≤120s the run
 lasts, so a long-running action run is outranked by every shorter one that started after it — "the newest
-200" is not "the live ones". Eviction reaching a live directory needs only `AR_CACHE_MAX_DIRS` distinct
+200" is not "the live ones". Eviction reaching a live directory needs only `ACTION_RUN_CACHE_MAX_DIRS` distinct
 snippets provisioned inside one execution window (~1.7/s sustained), which is reachable at cloud scale
 rather than exotic. What closes it is an explicit skip: **eviction ignores any directory whose mtime is
-inside `AR_CACHE_ACTIVE_WINDOW_MS`**, set at 15 minutes because provision itself can run minutes on a cold
+inside `ACTION_RUN_CACHE_ACTIVE_WINDOW_MS`**, set at 15 minutes because provision itself can run minutes on a cold
 `bun install`. The failure that trades into is the safe one — when everything is inside the window the tree
 is left above the cap until it ages out, so disk overshoots instead of a run dying. That case still logs,
 carrying `activeCount`, so a permanently blocked eviction is never silent.
 
-**`AR_CACHE_MAX_DIRS` should still exceed `AP_WORKER_CONCURRENCY` × replicas sharing the mount** — 25 on the
+**`ACTION_RUN_CACHE_MAX_DIRS` should still exceed `AP_WORKER_CONCURRENCY` × replicas sharing the mount** — 25 on the
 reference topology (`replicas: 5`, configs.ts concurrency default 5) against a cap of 200, an 8× margin. That
 is now a *utilization* invariant rather than a safety one: below it the active-window skip blocks every
 eviction and the cap stops holding. ADR 0002 pushes operators *down* on concurrency rather than up, since at
 >1 an OOM takes out all in-flight jobs, so realistic values stay far below the cap.
 
 **30 minutes and 2 hours are different knobs and must not be collapsed.** The sweep is a `readdir` and one
-`stat` per `ar_*` on an `unref`'d timer — cheaper than when the interval was chosen, since the recursive
-size walk went with the byte budget — and tighter intervals already exist in `worker.ts` (30s watchdog,
+`stat` per entry on an `unref`'d timer — cheaper than when the interval was chosen, both because the recursive
+size walk went with the byte budget and because the `readdir` now returns only action-run directories rather
+than every flow-version cache on the worker — and tighter intervals already exist in `worker.ts` (30s watchdog,
 15s sandbox sampling). What the interval buys is *residency* overshoot, not disk overshoot: at a 2h TTL a
 30-minute pass means a directory lives 2h–2.5h, where a weekly pass would leave tenant code on shared disk
 for a week. The TTL is short because action-run code is agent-generated — repeats come from within a
@@ -112,7 +139,7 @@ replica sweeps. Neither is available here, for three independent reasons:
   queue. Redis holds every queue and every lock for the whole deployment; handing that to each replica in
   order to schedule a `readdir` is not a trade worth making.
 - **A system job is the wrong shape even where Redis is present.** `systemJobsSchedule(...).startWorker()` is
-  called from `app.ts`, so handlers run in the *app* process, once cluster-wide. The `ar_` directories are
+  called from `app.ts`, so handlers run in the *app* process, once cluster-wide. Action-run directories are
   per-worker local disk: the Helm chart's default `workloadType: rollout` mounts one `ReadWriteOnce` PVC into
   every replica, but `statefulset` gives each pod its own, and the app need not mount the worker volume at
   all. A once-cluster-wide handler in the app cannot `readdir` a worker pod's filesystem. Sweeping local disk
@@ -139,7 +166,7 @@ Every sweep operation is correspondingly `force: true`, ENOENT-tolerant, and re-
 immediately before `sandbox.start()`, so a bind-mounted directory was touched under ~130s ago — far inside
 any TTL above an hour, and inside the active window that eviction skips. Remove the touch and both controls
 lose the only signal they have that a directory is in use. The touch is gated on
-`isManagedDir`, because `provision` runs on every execute and an ungated `utimes` charges every code step of
+`isActionRunNamespace`, because `provision` runs on every execute and an ungated `utimes` charges every code step of
 every flow run for a directory that is never swept.
 
 **The mtime cannot close the last interleaving on its own, so removal and provision shake hands in-process.**
@@ -154,20 +181,32 @@ the re-`stat` resolving and the `Map.set` — keep the write before the first `a
 resolves. The handshake is process-local, so two worker processes over one shared mount still fall back to the
 mtime re-check alone; that is accepted, the same way the sweep is convergent rather than locked.
 
-**`ar_` is collision-proof only because `apId`'s alphabet has no underscore.** `ALPHABET` in
-`core-utils/id-generator.ts` is `[0-9A-Za-z]`, so no `apId` can ever start with `ar_` and no flow-version
-directory can be classified as managed. Add `_` to that alphabet and the sweeper starts eating flow caches
-silently. Length cannot do this job — `platformId` and `flowVersionId` are both 21-char `apId`s.
+**The discriminator is structural, which is why the earlier `ar_` prefix was retired.** A prefix made
+classification lexical, and it was collision-proof only because `ALPHABET` in `core-utils/id-generator.ts`
+is `[0-9A-Za-z]`: no `apId` can start with `ar_`, so no flow-version directory could be classified as
+managed. Adding `_` to that alphabet would have misclassified any id beginning `ar_` — roughly one in
+238 000 per id, so effectively certain at cloud scale — and the sweeper would have started eating flow
+caches silently, from a one-character change three packages away with no test between it and data loss.
+Length could not help: `platformId` and `flowVersionId` are both 21-char `apId`s.
 
-**Pre-`ar_` builds are deliberately left to leak.** Bare-`sha256` and `mcp-flow-version-id` directories only
-ever existed on machines that ran intermediate commits of the branch that introduced this — `EXECUTE_ACTION`
-never shipped without the prefix, and nothing provisions code under `mcp-flow-version-id`. Reclaiming them
-needed a name-sniffing branch that, unlike the managed path, had no TTL and no mtime re-check, and would
-`rm -rf` `mcp-flow-version-id` every 30 minutes the day anything did provision under that still-live
-constant. Era-1 directories, named after real `apId`s, are indistinguishable from live flow-version caches
-and are likewise **not** reclaimable — better to leak them than to risk a heuristic that eats a flow's cache.
+A directory does not remove that class of coupling so much as collapse its probability. A flow-version
+directory can now only be swept if it lands *inside* `codes/action-runs/`, which requires a `flowVersionId`
+equal to the string `action-runs` — needing `ALPHABET` to gain `-`, **and** `ID_LENGTH` to go from 21 to 11,
+**and** the `ApId` regex to change, all together. The sweep also no longer filters by name at all: it reads
+only its own directory, so nothing at the root of `codes/` is a candidate however old. A test pins that a
+flow-version directory, a leftover `ar_`-prefixed directory and a stray file at the root of `codes/` all
+survive a sweep of arbitrarily aged entries, and a second pins that `ACTION_RUN_CODE_DIR` is not `apId`-shaped.
 
-Reversing this means changing an on-disk layout that the namer, the sweeper's filter, the isolate mount and
+**Pre-`action-runs/` builds are deliberately left to leak.** Bare-`sha256`, `mcp-flow-version-id` and
+`ar_`-prefixed directories only ever existed on machines that ran intermediate commits of the branch that
+introduced this — none of these layouts ever reached `main`. Reclaiming them needs a name-sniffing branch
+that, unlike the managed path, has no TTL and no mtime re-check, and would `rm -rf` `mcp-flow-version-id`
+every 30 minutes the day anything did provision under that still-live constant. Era-1 directories, named
+after real `apId`s, are indistinguishable from live flow-version caches and are likewise **not** reclaimable
+— better to leak them than to risk a heuristic that eats a flow's cache. On a dev box that ran those
+commits, `rm -rf cache/v12/codes` is the cleanup.
+
+Reversing this means changing an on-disk layout that the namer, the sweeper's root, the isolate mount and
 the engine's read path all agree on — which is what makes it expensive to undo.
 
 General rule this sets: **a cache directory on shared infrastructure carries the id of the tenant that owns
