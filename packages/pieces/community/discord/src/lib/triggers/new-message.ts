@@ -15,6 +15,7 @@ import {
 import dayjs from 'dayjs';
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
+import { discordMessageOutputSchema } from '../output-schemas';
 
 import { Message } from '../common/models';
 
@@ -55,6 +56,7 @@ export const newMessage = createTrigger({
     description: 'Fires when a new message is posted in the selected Discord channel, emitting one event per message. Polls the channel periodically, so detection is near-real-time rather than instant.',
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: discordMessageOutputSchema,
   props: {
     limit: Property.Number({
       displayName: 'Limit',

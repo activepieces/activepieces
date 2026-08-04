@@ -18,6 +18,10 @@ Change log format: MM/DD/YYYY (version)
 
 
 
+### 08/01/2026 (0.15.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.15.0.js
+- Added `embedding.formulasDocsUrl` parameter to the [configure](./embed-builder#configure-parameters) method **(value: string)**. Sets where the "See All" link in the formula editor points. When unset the link stays hidden, so embedded users are never sent to the Activepieces docs; set it to your own formula reference to show the link pointing there.
+
 ### 07/27/2026 (0.14.0)
 - SDK URL: https://cdn.activepieces.com/sdk/embed/0.14.0.js
 - `navigate()` calls made before the embedding finishes configuring are now deferred and applied once it is ready (the most recent route wins), instead of being silently dropped.
