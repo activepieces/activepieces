@@ -1,4 +1,4 @@
-import { anthropic } from '@ai-sdk/anthropic'
+import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
@@ -11,8 +11,6 @@ import { createLanguageModel } from '@activepieces/ai-providers'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
-import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
-import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 
 async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
@@ -203,14 +201,16 @@ function buildCloudflareGatewayModel({ auth, config, modelId, isImage, openaiRes
     }
     switch (providerPrefix) {
         case 'anthropic': {
-            const anthropicProvider = createAnthropicGateway({
-                headers
+            const anthropicProvider = createAnthropic({
+                apiKey: 'no-key',
+                headers,
             });
             return aigateway(anthropicProvider(actualModelId));
         }
         case 'google-ai-studio': {
-            const googleProvider = createGoogleGateway({
-                headers
+            const googleProvider = createGoogleGenerativeAI({
+                apiKey: 'no-key',
+                headers,
             });
             return aigateway(googleProvider(actualModelId));
         }

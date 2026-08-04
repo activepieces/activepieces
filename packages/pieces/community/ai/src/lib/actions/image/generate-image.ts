@@ -9,10 +9,8 @@ import {
 import {
   GeneratedFile,
   generateText,
-  GenerateTextResult,
   ImagePart,
   LanguageModel,
-  ToolSet,
 } from 'ai';
 import { generateImage } from 'ai';
 import mime from 'mime-types';
@@ -354,7 +352,7 @@ const ALLOWED_IMAGE_MIME_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 const assertImageGenerationSuccess = (
-  result: GenerateTextResult<ToolSet, never>
+  result: { response: { body?: unknown }; files: GeneratedFile[] }
 ): void => {
   const responseBody =
     result.response.body &&
