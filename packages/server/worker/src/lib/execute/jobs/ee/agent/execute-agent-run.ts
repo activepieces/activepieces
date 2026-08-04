@@ -5,7 +5,7 @@ import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet,
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
-import { delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
+import { AgentTurnSlot, delayWithJitter, isCreditExhaustedError, isTransientFailureText, runAgentTurn } from './run-agent-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -45,20 +45,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             ...spreadIfDefined('dryRun', dryRun),
         })
 
-        const provider = config.provider as AIProviderName
+        const primarySlot = config.chain[0]
+        const primaryProvider = primarySlot.provider as AIProviderName
         const aiTools = config.aiTools
         // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
         const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
-        const webSearchActive = !dryRun && !tavilySearchActive && agentAiUtils.supportsWebSearch(provider)
-        const model = agentAiUtils.createChatModel({
-            provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
-            webSearchEnabled: webSearchActive,
-        })
-        const fastModel = agentAiUtils.createChatModel({
-            provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
-        })
+        const slotWebSearchActive = (provider: AIProviderName) => !dryRun && !tavilySearchActive && agentAiUtils.supportsWebSearch(provider)
 
-        log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
+        log.info({ provider: primaryProvider, model: { id: primarySlot.modelId }, tier: { id: config.tier.id }, aiRouting: { chainLength: config.chain.length }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive: slotWebSearchActive(primaryProvider) }, '[executeAgentRun] Chat config loaded')
 
         const eventEmitter = agentWorkerTools.createEventEmitter({
             sendEvent: (input) => ctx.apiClient.sendAgentEvent({ ...input, runId }),
@@ -119,43 +113,59 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
             const taintState: TaintState = { tainted: false }
 
-            const webTools: ToolSet = dryRun ? {} : {
-                ...agentWorkerTools.createWebTools({ taintState }),
-                ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
-                ...(webSearchActive ? agentAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
-                ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
-                ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
-                    imageGeneration: aiTools.imageGeneration,
-                    saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveAgentFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
-                    emitImage: eventEmitter.emitImageGenerated,
-                }) : {}),
+            // Native LLM web-search tools are provider-executed, so each chain slot carries its own
+            // tool set — a failover to a different provider must not ship the failed provider's tools.
+            const buildSlotTools = (slot: typeof primarySlot): ToolSet => {
+                const provider = slot.provider as AIProviderName
+                const webTools: ToolSet = dryRun ? {} : {
+                    ...agentWorkerTools.createWebTools({ taintState }),
+                    ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
+                    ...(slotWebSearchActive(provider) ? agentAiUtils.buildWebSearchTools({ provider, auth: slot.auth }) : {}),
+                    ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
+                    ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
+                        imageGeneration: aiTools.imageGeneration,
+                        saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveAgentFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
+                        emitImage: eventEmitter.emitImageGenerated,
+                    }) : {}),
+                }
+                return buildToolSet({
+                    ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
+                    projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
+                    guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
+                    emailEnabled: config.emailEnabled,
+                    abortSignal: abortController.signal,
+                })
             }
 
-            const allTools = buildToolSet({
-                ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
-                projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
-                guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
-                emailEnabled: config.emailEnabled,
-                abortSignal: abortController.signal,
+            const slots: AgentTurnSlot[] = config.chain.map((slot) => {
+                const provider = slot.provider as AIProviderName
+                return {
+                    provider,
+                    model: agentAiUtils.createChatModel({
+                        provider, auth: slot.auth, config: slot.providerConfig, modelId: slot.modelId,
+                        webSearchEnabled: slotWebSearchActive(provider),
+                    }),
+                    // Fast model used for round one of the turn (opener + first discovery) — see prepareStep in runAgentTurn.
+                    fastModel: (dryRun || isNil(slot.fastModelId)) ? undefined : agentAiUtils.createChatModel({
+                        provider, auth: slot.auth, config: slot.providerConfig, modelId: slot.fastModelId,
+                    }),
+                    tools: buildSlotTools(slot),
+                }
             })
 
             const thinkingStartTime = Date.now()
-            const allToolNames = Object.keys(allTools)
+            const allToolNames = Object.keys(slots[0].tools)
             log.info({ toolCount: allToolNames.length, mcpToolCount: Object.keys(mcpToolSet).length, phase: phaseState.phase }, '[executeAgentRun] Tool set assembled')
             log.debug({ toolNames: allToolNames }, '[executeAgentRun] Tool set details')
 
             const autoTitlePromise = generateTitleIfFirstTurn({
-                model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
+                model: slots[0].model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
             })
 
             const turn = await runAgentTurn({
-                model,
-                fastModel: dryRun ? undefined : fastModel,
-                provider,
+                slots,
                 systemPrompt: config.systemPrompt,
                 messages: config.messages as ModelMessage[],
-                tools: allTools,
-                allToolNames,
                 tier: config.tier,
                 phaseState,
                 abortSignal: abortController.signal,
@@ -237,7 +247,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 outputTokens: totalOutputTokens,
                 ...spreadIfDefined('cacheReadTokens', usage?.inputTokenDetails?.cacheReadTokens),
                 ...spreadIfDefined('cacheWriteTokens', usage?.inputTokenDetails?.cacheWriteTokens),
-                provider: config.provider,
+                provider: slots[turn.completedSlotIndex]?.provider ?? primaryProvider,
+                aiRouting: { tier: config.tier.id, slot: turn.completedSlotIndex },
                 finishReason: turn.finishReason,
                 truncatedAfterRetries,
             }, 'Chat message completed')
@@ -633,11 +644,6 @@ function sanitizeGeneratedTitle(rawTitle: string): string {
         .slice(0, 100)
 }
 
-const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
-
-function isCreditExhaustedError(message: string): boolean {
-    return CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
-}
 
 function waitForAbort(signal: AbortSignal): Promise<void> {
     if (signal.aborted) {

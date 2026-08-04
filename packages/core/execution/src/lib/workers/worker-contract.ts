@@ -124,12 +124,16 @@ export type AgentAiToolsConfig = {
     imageGeneration?: ResolvedAiToolConfig
 }
 
-export type AgentConfigResponse = {
+export type AgentModelSlot = {
     provider: string
     auth: Record<string, unknown>
     providerConfig: Record<string, unknown>
     modelId: string
-    fastModelId: string
+    fastModelId?: string
+}
+
+export type AgentConfigResponse = {
+    chain: AgentModelSlot[]
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
