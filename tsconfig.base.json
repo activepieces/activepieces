@@ -220,7 +220,7 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
-      "@activepieces/piece-call-rounded": [
+      "@activepieces/piece-rounded-studio": [
         "packages/pieces/community/call-rounded/src/index.ts"
       ],
       "@activepieces/piece-camb-ai": [
