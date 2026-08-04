@@ -26,6 +26,7 @@ export function getFormulaBackspaceTransaction({
   const endPos = findFunctionEndPos({
     doc: state.doc,
     openId: nodeBefore.attrs.id,
+    after: from,
   });
 
   if (endPos < from) return state.tr.delete(startPos, from);
@@ -40,13 +41,17 @@ export function getFormulaBackspaceTransaction({
 function findFunctionEndPos({
   doc,
   openId,
+  after,
 }: {
   doc: ProseMirrorNode;
   openId: unknown;
+  after: number;
 }): number {
   let endPos = -1;
   doc.descendants((node, pos) => {
     if (
+      endPos < 0 &&
+      pos >= after &&
       node.type.name === FUNCTION_END_NODE_TYPE &&
       node.attrs.openId === openId
     ) {

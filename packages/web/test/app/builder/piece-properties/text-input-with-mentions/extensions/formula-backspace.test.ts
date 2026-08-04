@@ -79,6 +79,19 @@ function posAfterFirstFunctionStart(currentEditor: Editor): number {
   return pos;
 }
 
+function listBadgeTypes(currentEditor: Editor): string[] {
+  const types: string[] = [];
+  currentEditor.state.doc.descendants((node) => {
+    if (
+      node.type.name === FUNCTION_START_NODE_TYPE ||
+      node.type.name === FUNCTION_END_NODE_TYPE
+    ) {
+      types.push(node.type.name);
+    }
+  });
+  return types;
+}
+
 function countNodes(currentEditor: Editor, typeName: string): number {
   let count = 0;
   currentEditor.state.doc.descendants((node) => {
@@ -115,6 +128,7 @@ function backspaceJustInsideBracket(content: JSONContent[]) {
     startBadges: countNodes(editor, FUNCTION_START_NODE_TYPE),
     endBadges: countNodes(editor, FUNCTION_END_NODE_TYPE),
     mentions: countNodes(editor, 'mention'),
+    badgeOrder: listBadgeTypes(editor),
     visibleText: editor.state.doc.textContent.split(ZWS_CHAR).join(''),
   };
 }
@@ -212,6 +226,24 @@ describe('formula backspace just inside the opening bracket (GIT-1704)', () => {
     expect(result.handled).toBe(true);
     expect(result.startBadges).toBe(0);
     expect(result.visibleText).toBe('before  after');
+  });
+
+  it('unwraps only its own pair when a formula id is duplicated by a paste', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(`${ZWS_CHAR}first`),
+      functionEnd(FN_ID),
+      text(' '),
+      functionStart(FN_ID, 'uppercase'),
+      text(`${ZWS_CHAR}second`),
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.badgeOrder).toEqual([
+      FUNCTION_START_NODE_TYPE,
+      FUNCTION_END_NODE_TYPE,
+    ]);
+    expect(result.visibleText).toBe('first second');
   });
 
   it('deletes only the badge of an unclosed formula', () => {
