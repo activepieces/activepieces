@@ -16,13 +16,17 @@ import { createStepFormState, StepFormState } from './state/step-form-state';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
-export function useBuilderStateContext<T>(
-  selector: (state: BuilderState) => T,
-): T {
+export function useBuilderStore(): BuilderStore {
   const store = useContext(BuilderStateContext);
   if (!store)
     throw new Error('Missing BuilderStateContext.Provider in the tree');
-  return useStore(store, selector);
+  return store;
+}
+
+export function useBuilderStateContext<T>(
+  selector: (state: BuilderState) => T,
+): T {
+  return useStore(useBuilderStore(), selector);
 }
 
 export type BuilderState = FlowState &

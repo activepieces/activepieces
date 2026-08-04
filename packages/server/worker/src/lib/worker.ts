@@ -332,7 +332,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     const jobData = JobData.parse(rawData)
     // Chat jobs reuse `runId` as the per-message chat run id (NOT a flow run);
     // map it to the `run`/`conversation` groups so chat logs correlate correctly.
-    const isChatJob = jobData.jobType === WorkerJobType.EXECUTE_CHAT_AGENT
+    const isAgentJob = jobData.jobType === WorkerJobType.EXECUTE_AGENT_RUN
     const jobLogger = createLogger({
         event: 'job.execute',
         job: { id: job.jobId, type: jobData.jobType },
@@ -340,8 +340,8 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('project', 'projectId' in jobData && jobData.projectId != null ? { id: jobData.projectId } : undefined),
         ...spreadIfDefined('platform', 'platformId' in jobData ? { id: jobData.platformId } : undefined),
         ...spreadIfDefined('flow', 'flowId' in jobData ? { id: jobData.flowId } : undefined),
-        ...spreadIfDefined('flowRun', !isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
-        ...spreadIfDefined('run', isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('flowRun', !isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('run', isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
         ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
     })
