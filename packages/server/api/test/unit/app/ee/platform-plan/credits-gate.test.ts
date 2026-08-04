@@ -33,6 +33,13 @@ vi.mock('../../../../../src/app/database/redis-connections', () => ({
             claims.add(key)
             return true
         },
+        async runOnceWithin(key: string, _ttlInSeconds: number, fn: () => Promise<unknown>): Promise<void> {
+            if (claims.has(key)) {
+                return
+            }
+            claims.add(key)
+            await fn()
+        },
     },
     distributedLock: () => ({
         runExclusive: <T>({ fn }: { fn: () => Promise<T> }): Promise<T> => {
@@ -48,7 +55,7 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service'
     assertSeatsNotBelowActiveUsers: vi.fn(),
 }))
 
-import { autumnBillingProvider, toGateState } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
+import { autumnBillingProvider, computeCreditState } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
 
 function balance(overrides: Partial<CreditsBalanceCache>): CreditsBalanceCache {
     return { granted: 1000, usage: 0, remaining: 1000, unlimited: false, nextResetAt: null, syncedAt: 0, ...overrides }
@@ -64,47 +71,51 @@ function gateState() {
     return autumnBillingProvider(log).getCreditsAndAppSumoState('platform-1')
 }
 
-describe('toGateState — credits (enforcement-gated)', () => {
+function settleBackgroundWork(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+describe('computeCreditState — credits (enforcement-gated)', () => {
     it('blocks only when billing is enforced AND credits are exhausted', () => {
-        expect(toGateState({ balance: balance({ remaining: 0 }), enforced: true }).blocked).toBe(true)
+        expect(computeCreditState({ balance: balance({ remaining: 0 }), enforced: true }).blocked).toBe(true)
     })
 
     it('does not block exhausted credits when billing is not enforced', () => {
-        expect(toGateState({ balance: balance({ remaining: 0 }), enforced: false }).blocked).toBe(false)
+        expect(computeCreditState({ balance: balance({ remaining: 0 }), enforced: false }).blocked).toBe(false)
     })
 
     it('does not block while credits remain', () => {
-        expect(toGateState({ balance: balance({ remaining: 100 }), enforced: true }).blocked).toBe(false)
+        expect(computeCreditState({ balance: balance({ remaining: 100 }), enforced: true }).blocked).toBe(false)
     })
 
     it('never blocks an unlimited balance', () => {
-        expect(toGateState({ balance: balance({ remaining: 0, unlimited: true }), enforced: true }).blocked).toBe(false)
+        expect(computeCreditState({ balance: balance({ remaining: 0, unlimited: true }), enforced: true }).blocked).toBe(false)
     })
 
     it('fails open when no balance is cached', () => {
-        expect(toGateState({ balance: null, enforced: true }).blocked).toBe(false)
+        expect(computeCreditState({ balance: null, enforced: true }).blocked).toBe(false)
     })
 })
 
-describe('toGateState — AppSumo (always enforced)', () => {
+describe('computeCreditState — AppSumo (always enforced)', () => {
     it('blocks on exhaustion regardless of billing enforcement (hard cap)', () => {
-        expect(toGateState({ balance: balance({ remaining: 0 }), enforced: true }).blocked).toBe(true)
+        expect(computeCreditState({ balance: balance({ remaining: 0 }), enforced: true }).blocked).toBe(true)
     })
 
     it('does not block while credits remain', () => {
-        expect(toGateState({ balance: balance({ remaining: 100 }), enforced: true }).blocked).toBe(false)
+        expect(computeCreditState({ balance: balance({ remaining: 100 }), enforced: true }).blocked).toBe(false)
     })
 
     it('never blocks an unlimited balance', () => {
-        expect(toGateState({ balance: balance({ remaining: 0, unlimited: true }), enforced: true }).blocked).toBe(false)
+        expect(computeCreditState({ balance: balance({ remaining: 0, unlimited: true }), enforced: true }).blocked).toBe(false)
     })
 
     it('fails open when no balance is cached', () => {
-        expect(toGateState({ balance: null, enforced: true }).blocked).toBe(false)
+        expect(computeCreditState({ balance: null, enforced: true }).blocked).toBe(false)
     })
 })
 
-describe('credits gate re-verifies an exhausted cached balance before blocking', () => {
+describe('credits gate decides from the cache and refreshes in the background', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         claims = new Set()
@@ -115,9 +126,22 @@ describe('credits gate re-verifies an exhausted cached balance before blocking',
         mockResolveClientForPlatform.mockResolvedValue({ getCustomer: vi.fn().mockResolvedValue({ balances: {}, flags: {} }) })
     })
 
-    it('unblocks when Autumn has since granted an auto top-up the track response did not carry', async () => {
+    it('blocks on the cached balance without waiting for Autumn, even when Autumn already granted a top-up', async () => {
         storedCredits = fresh({ remaining: 0 })
         autumnCredits = fresh({ granted: 15000, remaining: 5000 })
+
+        const { credits } = await gateState()
+
+        expect(credits.blocked).toBe(true)
+        expect(credits.remaining).toBe(0)
+    })
+
+    it('unblocks the next request once the background refresh has written the top-up', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        autumnCredits = fresh({ granted: 15000, remaining: 5000 })
+
+        expect((await gateState()).credits.blocked).toBe(true)
+        await settleBackgroundWork()
 
         const { credits } = await gateState()
 
@@ -125,51 +149,55 @@ describe('credits gate re-verifies an exhausted cached balance before blocking',
         expect(credits.remaining).toBe(5000)
     })
 
-    it('unblocks every request in a concurrent burst while querying Autumn only once', async () => {
-        storedCredits = fresh({ remaining: 0 })
-        autumnCredits = fresh({ granted: 15000, remaining: 5000 })
-
-        const results = await Promise.all([gateState(), gateState(), gateState()])
-
-        expect(results.map((result) => result.credits.blocked)).toEqual([false, false, false])
-        expect(mockResolveClientForPlatform).toHaveBeenCalledTimes(1)
-    })
-
-    it('stays blocked when Autumn confirms the balance is still exhausted', async () => {
+    it('stays blocked when the refresh confirms the balance is still exhausted', async () => {
         storedCredits = fresh({ remaining: 0 })
         autumnCredits = fresh({ remaining: 0 })
 
-        const { credits } = await gateState()
+        expect((await gateState()).credits.blocked).toBe(true)
+        await settleBackgroundWork()
 
-        expect(credits.blocked).toBe(true)
+        expect((await gateState()).credits.blocked).toBe(true)
     })
 
-    it('does not re-query Autumn for a burst once a re-verification confirmed zero', async () => {
+    it('queries Autumn once for a concurrent burst', async () => {
         storedCredits = fresh({ remaining: 0 })
         autumnCredits = fresh({ remaining: 0 })
 
         const results = await Promise.all([gateState(), gateState(), gateState()])
+        await settleBackgroundWork()
 
         expect(results.map((result) => result.credits.blocked)).toEqual([true, true, true])
         expect(mockResolveClientForPlatform).toHaveBeenCalledTimes(1)
     })
 
-    it('does not re-query Autumn for sequential runs while a recent re-verification confirmed zero', async () => {
+    it('queries Autumn once across sequential runs while the debounce holds', async () => {
         storedCredits = fresh({ remaining: 0 })
         autumnCredits = fresh({ remaining: 0 })
 
-        const first = await gateState()
-        const second = await gateState()
-        const third = await gateState()
+        await gateState()
+        await settleBackgroundWork()
+        await gateState()
+        await gateState()
+        await settleBackgroundWork()
 
-        expect([first, second, third].map((result) => result.credits.blocked)).toEqual([true, true, true])
         expect(mockResolveClientForPlatform).toHaveBeenCalledTimes(1)
     })
 
-    it('does not call Autumn when the cached balance is not blocking', async () => {
+    it('refreshes a stale cache in the background even when it is not blocking', async () => {
+        storedCredits = balance({ remaining: 500, syncedAt: 0 })
+        autumnCredits = fresh({ remaining: 500 })
+
+        expect((await gateState()).credits.blocked).toBe(false)
+        await settleBackgroundWork()
+
+        expect(mockResolveClientForPlatform).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not call Autumn when the cached balance is fresh and not blocking', async () => {
         storedCredits = fresh({ remaining: 500 })
 
         const { credits } = await gateState()
+        await settleBackgroundWork()
 
         expect(credits.blocked).toBe(false)
         expect(mockResolveClientForPlatform).not.toHaveBeenCalled()
@@ -180,18 +208,32 @@ describe('credits gate re-verifies an exhausted cached balance before blocking',
         storedCredits = fresh({ remaining: 0 })
 
         const { credits } = await gateState()
+        await settleBackgroundWork()
 
         expect(credits.blocked).toBe(false)
         expect(mockResolveClientForPlatform).not.toHaveBeenCalled()
     })
 
-    it('keeps blocking when the re-verification call fails', async () => {
+    it('keeps blocking when the background refresh fails', async () => {
         storedCredits = fresh({ remaining: 0 })
         mockResolveClientForPlatform.mockRejectedValue(new Error('autumn unreachable'))
 
-        const { credits } = await gateState()
+        expect((await gateState()).credits.blocked).toBe(true)
+        await settleBackgroundWork()
 
-        expect(credits.blocked).toBe(true)
+        expect((await gateState()).credits.blocked).toBe(true)
+        expect(log.error).toHaveBeenCalled()
+    })
+
+    it('fails open without scheduling a refresh when the cache read itself fails', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockRejectedValue(new Error('redis unreachable'))
+
+        const { credits } = await gateState()
+        await settleBackgroundWork()
+
+        expect(credits.blocked).toBe(false)
+        expect(mockResolveClientForPlatform).not.toHaveBeenCalled()
         expect(log.warn).toHaveBeenCalled()
     })
 })

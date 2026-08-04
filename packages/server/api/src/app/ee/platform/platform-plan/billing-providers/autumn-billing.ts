@@ -3,7 +3,7 @@ import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, PlanName, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCreditsExhaustedReverifyKey, getCreditsExhaustedReverifyLockKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, TrackFeatureParams } from '../../../../platform/billing-provider'
@@ -11,10 +11,10 @@ import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
-const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 60
+const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 15
 const CUSTOMER_STATE_MISS_DEBOUNCE_SECONDS = 60
-const EXHAUSTED_REVERIFY_DEBOUNCE_SECONDS = 15
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
+const CREDITS_CACHE_READ_TIMEOUT_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
@@ -292,52 +292,55 @@ async function computeCreditsState(log: FastifyBaseLogger, platformId: string): 
 }
 
 async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId: string): Promise<CreditsAndAppSumoState> {
+    const { data: snapshot, error } = await tryCatch(() => withTimeout(readCreditsCaches(platformId), CREDITS_CACHE_READ_TIMEOUT_MS))
+    if (isNil(snapshot)) {
+        log.warn({ error, platform: { id: platformId } }, 'Credits gate cache read timed out or failed; failing open without gating this request')
+        return {
+            credits: computeCreditState({ balance: null, enforced: false }),
+            appSumo: computeCreditState({ balance: null, enforced: true }),
+        }
+    }
+    const state = {
+        credits: computeCreditState({ balance: snapshot.credits, enforced: snapshot.billingEnforced }),
+        appSumo: computeCreditState({ balance: snapshot.appSumo, enforced: true }),
+    }
+    scheduleCreditsCacheMaintenance({ log, platformId, snapshot, state })
+    return state
+}
+
+function scheduleCreditsCacheMaintenance({ log, platformId, snapshot, state }: CreditsCacheMaintenanceParams): void {
+    const stale = isNil(snapshot.credits) || isCreditsStale(snapshot.credits)
+    if (!stale && !state.credits.blocked && !state.appSumo.blocked) {
+        return
+    }
+    rejectedPromiseHandler(refreshCredits(log, platformId), log)
+}
+
+async function readCreditsCaches(platformId: string): Promise<CreditsCacheSnapshot> {
     const [billingEnforced, { credits, appSumo }] = await Promise.all([
         distributedStore.get<boolean>(getBillingEnforcedKey(platformId)),
-        resolveCreditsCache(log, platformId),
+        readCachedCredits(platformId),
     ])
-    const enforced = billingEnforced ?? false
-    const cachedState = {
-        credits: toGateState({ balance: credits, enforced }),
-        appSumo: toGateState({ balance: appSumo, enforced: true }),
-    }
-    if (!cachedState.credits.blocked) {
-        return cachedState
-    }
-    const reverified = await reverifyExhaustedCredits(log, platformId)
-    if (isNil(reverified)) {
-        return cachedState
-    }
-    return {
-        credits: toGateState({ balance: reverified.credits, enforced }),
-        appSumo: toGateState({ balance: reverified.appSumo, enforced: true }),
-    }
+    return { billingEnforced: billingEnforced ?? false, credits, appSumo }
 }
 
-async function reverifyExhaustedCredits(log: FastifyBaseLogger, platformId: string): Promise<BalanceCacheSnapshot | null> {
-    const { data, error } = await tryCatch(() => distributedLock(log).runExclusive({
-        key: getCreditsExhaustedReverifyLockKey(platformId),
-        timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
-        fn: async (): Promise<BalanceCacheSnapshot | null> => {
-            const cached = await readCachedCredits(platformId)
-            if (!isNil(cached.credits) && !isCreditsExhausted(cached.credits)) {
-                return cached
-            }
-            const dueForReverification = await distributedStore.putIfAbsent(getCreditsExhaustedReverifyKey(platformId), '1', EXHAUSTED_REVERIFY_DEBOUNCE_SECONDS)
-            if (!dueForReverification) {
-                return null
-            }
-            return fetchCredits(log, platformId)
-        },
-    }))
-    if (!isNil(error)) {
-        log.warn({ error, platform: { id: platformId } }, 'Failed to re-verify an exhausted credits balance before gating; using the cached value')
-        return null
-    }
-    return data
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(`Timed out after ${timeoutMs}ms`)), timeoutMs)
+        promise.then(
+            (value) => {
+                clearTimeout(timer)
+                resolve(value)
+            },
+            (rejection) => {
+                clearTimeout(timer)
+                reject(rejection)
+            },
+        )
+    })
 }
 
-export function toGateState({ balance, enforced }: ToGateStateParams): CreditsGateState {
+export function computeCreditState({ balance, enforced }: ComputeCreditStateParams): CreditsGateState {
     const exhausted = !isNil(balance) && isCreditsExhausted(balance)
     return {
         blocked: enforced && exhausted,
@@ -471,7 +474,7 @@ type CurrentPlanSelection = {
     plan: AutumnPlan | null
 }
 
-type ToGateStateParams = {
+type ComputeCreditStateParams = {
     balance: CreditsBalanceCache | null
     enforced: boolean
 }
@@ -508,4 +511,17 @@ type PricedFeature<T extends FeatureId> = {
 type WithAutoTopUpParams<T extends ConsumableFeatureId> = {
     feature: PricedFeature<T> | null
     autoTopUps: AutoTopUpConfig[]
+}
+
+type CreditsCacheSnapshot = {
+    billingEnforced: boolean
+    credits: CreditsBalanceCache | null
+    appSumo: CreditsBalanceCache | null
+}
+
+type CreditsCacheMaintenanceParams = {
+    log: FastifyBaseLogger
+    platformId: string
+    snapshot: CreditsCacheSnapshot
+    state: CreditsAndAppSumoState
 }

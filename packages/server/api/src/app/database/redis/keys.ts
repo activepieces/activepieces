@@ -8,13 +8,11 @@ export const getBillingOverviewKey = (platformId: PlatformId): string => `platfo
 export const getEntitlementsForceRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-force-refresh:${platformId}`
 export const getEntitlementsRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-refresh:${platformId}`
 export const getCustomerStateRefreshKey = (platformId: PlatformId): string => `platform_plan:customer-state-refresh:${platformId}`
-export const getCreditsExhaustedReverifyKey = (platformId: PlatformId): string => `platform_plan:credits-exhausted-reverify:${platformId}`
 export const getCustomerStateMissKey = (platformId: PlatformId): string => `platform_plan:customer-state-miss:${platformId}`
 export const getEnrollAttemptKey = (platformId: PlatformId): string => `platform_plan:autumn-enroll-attempt:${platformId}`
 export const getAutumnEnrollLockKey = (platformId: PlatformId): string => `autumn_enroll_${platformId}`
 export const getFreeLegacyCompAttemptKey = (platformId: PlatformId): string => `platform_plan:free-legacy-comp-attempt:${platformId}`
 export const getBillingOverviewFetchLockKey = (platformId: PlatformId): string => `billing_overview_fetch_${platformId}`
-export const getCreditsExhaustedReverifyLockKey = (platformId: PlatformId): string => `credits_exhausted_reverify_${platformId}`
 export const getCustomerStateFetchLockKey = (platformId: PlatformId): string => `customer_state_fetch_${platformId}`
 export const getProjectConcurrencyPoolKey = (projectId: ProjectId): string => `project:concurrency-pool:${projectId}` // gets pool id for the project
 export const getConcurrencyPoolLimitKey = (poolId: string): string => `concurrency-pool:limit:${poolId}` // gets limit value for the pool
