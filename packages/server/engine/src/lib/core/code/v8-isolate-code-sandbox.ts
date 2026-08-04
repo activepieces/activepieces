@@ -63,7 +63,9 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 isolate,
                 codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
-            const setKeys = new Set([...Object.keys(scriptContext), ...Object.keys(functions)])
+            const globalSets = new Map<string, Promise<void>>(
+                [...Object.keys(scriptContext), ...Object.keys(functions)].map((key) => [key, Promise.resolve()]),
+            )
 
             const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
             if (serializedFunctions.length > 0) {
@@ -78,11 +80,12 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                     code: script,
                 }),
                 setGlobal: async (key: string, value: unknown) => {
-                    if (setKeys.has(key)) {
-                        return
+                    let pendingSet = globalSets.get(key)
+                    if (pendingSet === undefined) {
+                        pendingSet = isolateContext.global.set(key, new ivm.ExternalCopy(JSON.parse(JSON.stringify(value))).copyInto())
+                        globalSets.set(key, pendingSet)
                     }
-                    setKeys.add(key)
-                    await isolateContext.global.set(key, new ivm.ExternalCopy(JSON.parse(JSON.stringify(value))).copyInto())
+                    await pendingSet
                 },
                 dispose: () => isolate.dispose(),
             }

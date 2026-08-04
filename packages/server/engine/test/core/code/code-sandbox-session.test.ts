@@ -34,6 +34,11 @@ describe.each(implementations)('%s createScriptSession', (_name, sandbox) => {
             expect(await session.run('step_1.output.price')).toBe(6.4)
             await session.setGlobal('existing', 2)
             expect(await session.run('existing')).toBe(1)
+            const first = session.setGlobal('concurrent', 'first')
+            const second = session.setGlobal('concurrent', 'second')
+            await second
+            expect(await session.run('concurrent')).toBe('first')
+            await first
         }
         finally {
             session.dispose()
