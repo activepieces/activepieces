@@ -28,7 +28,6 @@ import {
   FlowOperationType,
   AUTHENTICATION_PROPERTY_NAME,
 } from '@activepieces/shared';
-import { useRef } from 'react';
 
 import {
   PieceSelectorItem,
@@ -290,56 +289,10 @@ const getDefaultStepValues = ({
   }
 };
 
-// Adjusts piece list height to prevent overflow on short screens
-const useAdjustPieceListHeightToAvailableSpace = () => {
-  const listHeightRef = useRef<number>(MAX_PIECE_SELECTOR_LIST_HEIGHT);
-  const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
-
-  if (!popoverTriggerRef.current) {
-    return {
-      listHeightRef,
-      popoverTriggerRef,
-      searchInputDivHeight: SEARCH_INPUT_DIV_HEIGHT,
-    };
-  }
-
-  const popOverTriggerRect = popoverTriggerRef.current.getBoundingClientRect();
-  const viewportHeight =
-    window.innerHeight || document.documentElement.clientHeight;
-  const shouldRenderBelowPopoverTrigger =
-    popOverTriggerRect.top < viewportHeight - popOverTriggerRect.bottom;
-
-  if (shouldRenderBelowPopoverTrigger) {
-    const availableSpaceBelow =
-      viewportHeight - popOverTriggerRect.bottom - SEARCH_INPUT_DIV_HEIGHT;
-    listHeightRef.current = Math.max(
-      MIN_PIECE_SELECTOR_LIST_HEIGHT,
-      availableSpaceBelow,
-    );
-  } else {
-    const availableSpaceAbove =
-      popOverTriggerRect.top - SEARCH_INPUT_DIV_HEIGHT;
-    listHeightRef.current = Math.max(
-      MIN_PIECE_SELECTOR_LIST_HEIGHT,
-      availableSpaceAbove,
-    );
-  }
-
-  return {
-    listHeightRef,
-    popoverTriggerRef,
-  };
-};
-const MAX_PIECE_SELECTOR_LIST_HEIGHT = 300 as const;
-const MIN_PIECE_SELECTOR_LIST_HEIGHT = 100 as const;
-const SEARCH_INPUT_DIV_HEIGHT = 113 as const;
 const PIECE_ITEM_HEIGHT = 48 as const;
 const ACTION_OR_TRIGGER_ITEM_HEIGHT = 54 as const;
 const CATEGORY_ITEM_HEIGHT = 28 as const;
 export const PIECE_SELECTOR_ELEMENTS_HEIGHTS = {
-  MAX_PIECE_SELECTOR_LIST_HEIGHT,
-  MIN_PIECE_SELECTOR_LIST_HEIGHT,
-  SEARCH_INPUT_DIV_HEIGHT,
   PIECE_ITEM_HEIGHT,
   ACTION_OR_TRIGGER_ITEM_HEIGHT,
   CATEGORY_ITEM_HEIGHT,
@@ -371,7 +324,6 @@ const getStepNameFromOperationType = (
 };
 export const pieceSelectorUtils = {
   getDefaultStepValues,
-  useAdjustPieceListHeightToAvailableSpace,
   isPieceStepInputValid,
   isMcpToolTrigger,
   isChatTrigger,

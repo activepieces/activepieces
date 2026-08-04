@@ -24,7 +24,6 @@ import {
   PieceSelectorTabsProvider,
   PieceSelectorTabType,
   PieceSelectorOperation,
-  pieceSelectorUtils,
   pieceSelectorCustomization,
   PieceSearchProvider,
   usePieceSearchContext,
@@ -126,9 +125,6 @@ const PieceSelectorContent = ({
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
   const isMobile = useIsMobile();
-  const { listHeightRef, popoverTriggerRef } =
-    pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 300);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -172,7 +168,6 @@ const PieceSelectorContent = ({
       }}
     >
       <PopoverTrigger
-        ref={popoverTriggerRef}
         asChild={true}
         onClick={() => {
           if (openSelectorOnClick) {
@@ -204,14 +199,15 @@ const PieceSelectorContent = ({
               e.preventDefault();
             }
           }}
-          className="w-[340px] md:w-[600px] p-0 shadow-lg"
+          collisionPadding={PIECE_SELECTOR_COLLISION_PADDING}
+          className="w-[340px] md:w-[600px] p-0 shadow-lg flex flex-col overflow-hidden max-h-(--radix-popover-content-available-height)"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
           }}
         >
           <>
-            <div>
+            <div className="shrink-0">
               <PiecesSearchInput
                 searchInputRef={searchInputRef}
                 onSearchChange={(e) => {
@@ -224,12 +220,7 @@ const PieceSelectorContent = ({
               {!isMobile && <PieceSelectorTabs tabs={tabsList} />}
               <Separator orientation="horizontal" className="mt-1" />
             </div>
-            <div
-              className=" flex flex-row max-h-[300px]"
-              style={{
-                height: listHeight + 'px',
-              }}
-            >
+            <div className="flex flex-row h-[300px] min-h-[100px]">
               <ExploreTabContent operation={operation} />
               <AITabContent operation={operation} />
               <ApprovalsTabContent operation={operation} />
@@ -248,6 +239,15 @@ const PieceSelectorContent = ({
       </PieceSelectorTabsProvider>
     </Popover>
   );
+};
+
+const BUILDER_HEADER_HEIGHT = 60;
+const BUILDER_BANNER_BOTTOM_OFFSET = 58;
+const PIECE_SELECTOR_COLLISION_PADDING = {
+  top: BUILDER_HEADER_HEIGHT + BUILDER_BANNER_BOTTOM_OFFSET,
+  bottom: 8,
+  left: 8,
+  right: 8,
 };
 
 export { PieceSelectorWrapper as PieceSelector };
