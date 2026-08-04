@@ -7,6 +7,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { agentHelpers } from './agent-helpers'
 
 const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
@@ -20,6 +21,10 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const { projectId, platform } = request.principal
+        const { allowed, count } = await agentHelpers.incrementAndCheckLimit({ key: `flow-agent-runs:${projectId}`, limit: RUNS_PER_MINUTE, ttlSeconds: 60 })
+        if (!allowed) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
+        }
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
@@ -49,6 +54,8 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
 }
+
+const RUNS_PER_MINUTE = 60
 
 const StartAgentRunRequest = z.object({
     instruction: z.string().min(1),
