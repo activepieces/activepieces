@@ -160,6 +160,11 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             agentHelpers.getUserMemory({ platformId, userId }),
         ])
 
+        const isFlowStep = conversation.source === AgentRunSource.FLOW_STEP
+        // The MCP token is platform-wide (projectId: null), and ap_set_project_context validates
+        // against every project its user can reach. A flow-step run must not get that reach.
+        const scopedMcpCredentials = isFlowStep ? { mcpServerUrl: null, mcpToken: null } : mcpCredentials
+
         const scopedProjects = conversation.source === AgentRunSource.FLOW_STEP
             ? userProjects.filter((p) => p.id === conversation.projectId)
             : userProjects
@@ -328,8 +333,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             allMessages,
             previousUiMessages: uiMessagesWithUser,
             tier: { id: tier.id, thinkingBudget: tier.thinkingBudget, modelId: tier.modelId },
-            mcpCredentials: mcpCredentials.mcpServerUrl && mcpCredentials.mcpToken
-                ? { mcpServerUrl: mcpCredentials.mcpServerUrl, mcpToken: mcpCredentials.mcpToken }
+            mcpCredentials: scopedMcpCredentials.mcpServerUrl && scopedMcpCredentials.mcpToken
+                ? { mcpServerUrl: scopedMcpCredentials.mcpServerUrl, mcpToken: scopedMcpCredentials.mcpToken }
                 : null,
             projects: scopedProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
             guides,
