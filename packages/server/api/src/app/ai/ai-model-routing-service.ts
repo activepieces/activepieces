@@ -15,8 +15,7 @@ export const aiModelRoutingService = (log: FastifyBaseLogger) => ({
         if (!isNil(row)) {
             return { tiers: row.tiers, isDefault: false }
         }
-        const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
-        return { tiers: deriveDefaultTiers({ chatProvider }), isDefault: true }
+        return { tiers: deriveDefaultTiers({ provider: await resolveDefaultProvider({ platformId, log }) }), isDefault: true }
     },
 
     async upsert({ platformId, request }: { platformId: string, request: UpsertAiRoutingRequest }): Promise<GetAiRoutingResponse> {
@@ -28,8 +27,7 @@ export const aiModelRoutingService = (log: FastifyBaseLogger) => ({
 
     async delete({ platformId }: { platformId: string }): Promise<GetAiRoutingResponse> {
         await routingRepo().delete({ platformId })
-        const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
-        return { tiers: deriveDefaultTiers({ chatProvider }), isDefault: true }
+        return { tiers: deriveDefaultTiers({ provider: await resolveDefaultProvider({ platformId, log }) }), isDefault: true }
     },
 
     async resolveChain({ platformId, tierId }: { platformId: string, tierId: AiRoutingTierId }): Promise<ResolvedRoutingSlot[]> {
@@ -105,11 +103,24 @@ function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIPr
     return curatedModels.some((model) => model.id === nativeModelId) ? nativeModelId : curatedModels[0].id
 }
 
-function deriveDefaultTiers({ chatProvider }: { chatProvider: GetProviderConfigResponse | null }): AiRoutingTiers {
+// Prefer the chat provider, then any configured provider the platform can actually use
+// (listProviders applies edition availability, e.g. ACTIVEPIECES is absent without AI credits).
+// The ACTIVEPIECES last resort only surfaces with zero configured providers, where the UI
+// hides the routing section anyway.
+async function resolveDefaultProvider({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
+    if (!isNil(chatProvider)) {
+        return chatProvider.provider
+    }
+    const configuredProviders = await aiProviderService(log).listProviders(platformId)
+    return configuredProviders[0]?.provider ?? null
+}
+
+function deriveDefaultTiers({ provider }: { provider: AIProviderName | null }): AiRoutingTiers {
     const buildTier = (tierId: AiRoutingTierId) => {
-        const slot: AiRoutingSlot = isNil(chatProvider)
+        const slot: AiRoutingSlot = isNil(provider)
             ? { provider: AIProviderName.ACTIVEPIECES, modelId: resolveTier({ tierId }).modelId }
-            : { provider: chatProvider.provider, modelId: resolveModelIdForProvider({ provider: chatProvider.provider, selectedModel: tierId }) }
+            : { provider, modelId: resolveModelIdForProvider({ provider, selectedModel: tierId }) }
         return { main: slot, backup1: slot, backup2: slot }
     }
     return { fast: buildTier('fast'), smart: buildTier('smart'), premium: buildTier('premium') }

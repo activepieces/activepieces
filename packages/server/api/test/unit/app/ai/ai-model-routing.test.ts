@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName } from '@activepieces/core-utils'
-import { AiRoutingTiers, GetProviderConfigResponse } from '@activepieces/shared'
+import { AiRoutingTiers } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { aiModelRoutingResolution } from '../../../../src/app/ai/ai-model-routing-service'
 
@@ -80,21 +80,21 @@ describe('pairFastSlot', () => {
 
 describe('deriveDefaultTiers', () => {
     it('derives single-provider tiers matching todays per-provider resolution', () => {
-        const chatProvider: GetProviderConfigResponse = {
-            provider: AIProviderName.ANTHROPIC,
-            auth: { apiKey: 'k' },
-            config: {},
-            platformId: 'p',
-        }
-        const tiers = aiModelRoutingResolution.deriveDefaultTiers({ chatProvider })
+        const tiers = aiModelRoutingResolution.deriveDefaultTiers({ provider: AIProviderName.ANTHROPIC })
         expect(tiers.smart.main).toEqual({ provider: AIProviderName.ANTHROPIC, modelId: 'claude-sonnet-4-6' })
         expect(tiers.fast.main).toEqual({ provider: AIProviderName.ANTHROPIC, modelId: 'claude-haiku-4-5' })
         expect(tiers.smart.backup1).toEqual(tiers.smart.main)
         expect(tiers.smart.backup2).toEqual(tiers.smart.main)
     })
 
-    it('falls back to the managed provider tier models when no chat provider exists', () => {
-        const tiers = aiModelRoutingResolution.deriveDefaultTiers({ chatProvider: null })
+    it('derives from a configured BYOK provider so EE platforms never see the managed provider', () => {
+        const tiers = aiModelRoutingResolution.deriveDefaultTiers({ provider: AIProviderName.OPENAI })
+        expect(tiers.smart.main.provider).toBe(AIProviderName.OPENAI)
+        expect(tiers.fast.main.provider).toBe(AIProviderName.OPENAI)
+    })
+
+    it('falls back to the managed provider only when the platform has no providers at all', () => {
+        const tiers = aiModelRoutingResolution.deriveDefaultTiers({ provider: null })
         expect(tiers.smart.main).toEqual({ provider: AIProviderName.ACTIVEPIECES, modelId: 'anthropic/claude-sonnet-4.6' })
         expect(tiers.premium.main).toEqual({ provider: AIProviderName.ACTIVEPIECES, modelId: 'anthropic/claude-opus-4.8' })
     })
