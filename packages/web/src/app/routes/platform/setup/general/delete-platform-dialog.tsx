@@ -75,20 +75,26 @@ const DeletePlatformForm = ({
       <form onSubmit={form.handleSubmit(() => deletePlatform())}>
         <DialogHeader>
           <DialogTitle>{t('Delete platform')}</DialogTitle>
-          <DialogDescription>
-            {t(
-              'Every flow stops running and every API key is revoked immediately. Members lose access right away.',
-            )}{' '}
-            {t(
-              'All projects, flows, connections, agents and tables are permanently erased on {date}.',
-              { date: purgeDate },
-            )}{' '}
+          <DialogDescription className="flex flex-col gap-3">
             <span className="text-foreground font-medium">
-              {t('This cannot be undone.')}
-            </span>{' '}
-            {t('Contact support before {date} if this was a mistake.', {
-              date: purgeDate,
-            })}
+              {t(
+                '{name} will be deleted for everyone. This cannot be undone.',
+                {
+                  name: confirmationTarget,
+                },
+              )}
+            </span>
+            <span>
+              {t(
+                'Access ends the moment you confirm: everyone is signed out, every flow stops running, and all API keys stop working.',
+              )}
+            </span>
+            <span>
+              {t(
+                'Your projects, flows, connections, agents and tables are erased on {date}.',
+                { date: purgeDate },
+              )}
+            </span>
           </DialogDescription>
         </DialogHeader>
         <FormField

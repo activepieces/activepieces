@@ -181,7 +181,6 @@
   "Overwrite Draft": "Overwrite Draft",
   "Your current draft will be replaced with": "Your current draft will be replaced with",
   "version #{versionNumber}": "version #{versionNumber}",
-  "This cannot be undone.": "This cannot be undone.",
   "Cancel": "Cancel",
   "Overwrite": "Overwrite",
   "Error handling": "Error handling",
@@ -2476,13 +2475,13 @@
   "That image is larger than {size}MB.": "That image is larger than {size}MB.",
   "We could not save your changes. Please try again.": "We could not save your changes. Please try again.",
   "Shown in the sidebar and on sign-in. PNG, JPEG or WebP, up to {size}MB.": "Shown in the sidebar and on sign-in. PNG, JPEG or WebP, up to {size}MB.",
-  "Every flow stops running and every API key is revoked immediately. Members lose access right away.": "Every flow stops running and every API key is revoked immediately. Members lose access right away.",
-  "All projects, flows, connections, agents and tables are permanently erased on {date}.": "All projects, flows, connections, agents and tables are permanently erased on {date}.",
   "Upgrade to use your own logo and colors.": "Upgrade to use your own logo and colors.",
   "Upgrade to change {name}": "Upgrade to change {name}",
   "Choose an image": "Choose an image",
   "invalidHexColor": "Enter a valid hex color",
   "Upgrade to replace": "Upgrade to replace",
   "Remove selected image": "Remove selected image",
-  "Contact support before {date} if this was a mistake.": "Contact support before {date} if this was a mistake."
+  "{name} will be deleted for everyone. This cannot be undone.": "{name} will be deleted for everyone. This cannot be undone.",
+  "Access ends the moment you confirm: everyone is signed out, every flow stops running, and all API keys stop working.": "Access ends the moment you confirm: everyone is signed out, every flow stops running, and all API keys stop working.",
+  "Your projects, flows, connections, agents and tables are erased on {date}.": "Your projects, flows, connections, agents and tables are erased on {date}."
 }
