@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync, existsSync, copyFileSync, readdirSync, mkdirSync, statSync, rmSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { join, relative } from 'node:path'
 import { buildWorkspaceVersionMap, findRepoRoot, resolveWorkspaceDependencies, stripSemverRanges } from './workspace-utils'
 import { bundlePieceUtils } from './bundle-piece-utils'
@@ -61,9 +62,11 @@ function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: 
 
     const externalDeps: Record<string, string> = {}
     for (const dep of external) {
-        if (resolvedDeps[dep]) {
-            externalDeps[dep] = resolvedDeps[dep]
+        const version = resolvedDeps[dep] ?? resolveInstalledVersion({ dep, repoRoot })
+        if (version === undefined) {
+            throw new Error(`[preparePiece] external dependency "${dep}" has no resolvable version (not a direct dependency and not found under node_modules); publishing it would crash at runtime with a missing module`)
         }
+        externalDeps[dep] = version
     }
 
     json.main = `./${bundlePieceUtils.BUNDLE_FILENAME}`
@@ -76,6 +79,49 @@ function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: 
     json.files = [bundlePieceUtils.BUNDLE_FILENAME, 'package.json', 'src/i18n']
 
     writeFileSync(distPackageJsonPath, JSON.stringify(json, null, 2) + '\n')
+}
+
+function resolveInstalledVersion({ dep, repoRoot }: { dep: string, repoRoot: string }): string | undefined {
+    try {
+        const requireFromRoot = createRequire(join(repoRoot, 'package.json'))
+        return JSON.parse(readFileSync(requireFromRoot.resolve(`${dep}/package.json`), 'utf-8')).version
+    }
+    catch {
+        return findInstalledVersion({ nodeModulesDir: join(repoRoot, 'node_modules'), dep })
+    }
+}
+
+function findInstalledVersion({ nodeModulesDir, dep }: { nodeModulesDir: string, dep: string }): string | undefined {
+    const relPackageJson = join(...dep.split('/'), 'package.json')
+    const stack = [nodeModulesDir]
+    while (stack.length > 0) {
+        const dir = stack.pop()!
+        const candidate = join(dir, relPackageJson)
+        if (existsSync(candidate)) {
+            return JSON.parse(readFileSync(candidate, 'utf-8')).version
+        }
+        stack.push(...nestedNodeModules(dir))
+    }
+    return undefined
+}
+
+function nestedNodeModules(nodeModulesDir: string): string[] {
+    return safeReaddir(nodeModulesDir).flatMap((name) => {
+        const packageDir = join(nodeModulesDir, name)
+        const packageDirs = name.startsWith('@')
+            ? safeReaddir(packageDir).map((child) => join(packageDir, child))
+            : [packageDir]
+        return packageDirs.map((d) => join(d, 'node_modules')).filter((nested) => existsSync(nested))
+    })
+}
+
+function safeReaddir(dir: string): string[] {
+    try {
+        return readdirSync(dir)
+    }
+    catch {
+        return []
+    }
 }
 
 // After bundling, dist/ still holds the full tsc output (compiled lib/*, .d.ts, .map). Prune it
@@ -128,7 +174,7 @@ function pruneDistToPublishedFiles({ distPath }: { distPath: string }): void {
     removeUnpublished(distPath)
 }
 
-export { preparePieceDistForPublish }
+export { preparePieceDistForPublish, resolveInstalledVersion, findInstalledVersion }
 
 type PieceDistPaths = {
     piecePath: string

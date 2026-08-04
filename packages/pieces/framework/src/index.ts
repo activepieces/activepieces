@@ -64,6 +64,7 @@ export {
   OpenAICompatibleProviderConfig,
   getEffectiveProviderAndModel,
   splitCloudflareGatewayModelId,
+  AI_PROVIDER_CAPABILITIES,
   // mcp
   McpProperty,
   McpPropertyType,

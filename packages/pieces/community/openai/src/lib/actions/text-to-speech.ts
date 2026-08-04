@@ -7,11 +7,12 @@ type Voice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 type ResponseFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
 
 export const textToSpeech = createAction({
-  audience: 'human',
+  audience: 'both',
 	auth: openaiAuth,
 	name: 'text_to_speech',
 	displayName: 'Text-to-Speech',
 	description: 'Generate an audio recording from text',
+	aiMetadata: { description: 'Synthesizes spoken audio from text using an OpenAI TTS model and one of six prebuilt voices (alloy, echo, fable, onyx, nova, shimmer), writing the result as an mp3, opus, aac, or flac file at a playback speed between 0.25 and 4. This is the text-to-audio direction of this piece; transcribe and translate go the other way, turning audio into text. Requires the text, a TTS-capable model, a voice, and an output format. Not idempotent: each call renders a new audio file.', idempotent: false },
 	props: {
 		text: Property.LongText({
 			displayName: 'Text',

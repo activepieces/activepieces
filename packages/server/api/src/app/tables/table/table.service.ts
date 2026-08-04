@@ -32,9 +32,10 @@ export const tableService = {
             folderId,
         })
         if (request.fields) {
-            for (const field of request.fields) {
-                await fieldService.createFromState({ projectId, field, tableId: table.id })
-            }
+            await fieldService.validateCount({ projectId, tableId: table.id, insertCount: request.fields.length })
+            await Promise.all(request.fields.map(async (field, position) => {
+                await fieldService.createFromState({ projectId, field, tableId: table.id, position })
+            }))
         }
         return table
     },

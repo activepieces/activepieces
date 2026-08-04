@@ -1,7 +1,8 @@
-import { apId, assertEqual, isNil } from '@activepieces/core-utils'
+import { apId, assertEqual, createByteLruCache, isNil } from '@activepieces/core-utils'
 import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { engineFileApi } from '../../api/engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
+import { sizeofUtils } from '../../helper/sizeof'
 import { utils } from '../../utils'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -9,6 +10,9 @@ const DEFAULT_THRESHOLD_KB = 32
 const SLICE_THRESHOLD_BYTES = Number(
     process.env.AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB ?? DEFAULT_THRESHOLD_KB,
 ) * 1024
+const SLICE_CACHE_BUDGET_BYTES = 64 * 1024 * 1024
+
+const EMPTY_STEPS_SIZE_BYTES = sizeofUtils.recursiveSizeof({})
 
 export class FlowExecutorContext {
     tags: readonly string[]
@@ -18,8 +22,9 @@ export class FlowExecutorContext {
     stepNameToTest?: boolean
     stepsCount: number
     engineApi?: EngineApiConfig
-    resolvedStepOutputCache: Map<string, Promise<unknown>>
+    resolvedStepOutputCache: SliceCache
     slicingEnabled: boolean
+    logSizeBytes: number
 
     /**
      * Execution time in milliseconds
@@ -35,8 +40,9 @@ export class FlowExecutorContext {
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
         this.stepsCount = copyFrom?.stepsCount ?? 0
         this.engineApi = copyFrom?.engineApi
-        this.resolvedStepOutputCache  = copyFrom?.resolvedStepOutputCache  ?? new Map()
+        this.resolvedStepOutputCache = copyFrom?.resolvedStepOutputCache ?? createByteLruCache({ budgetBytes: SLICE_CACHE_BUDGET_BYTES })
         this.slicingEnabled = copyFrom?.slicingEnabled ?? true
+        this.logSizeBytes = copyFrom?.logSizeBytes ?? EMPTY_STEPS_SIZE_BYTES
     }
 
     static empty(params?: FlowExecutorContextInit): FlowExecutorContext {
@@ -118,7 +124,7 @@ export class FlowExecutorContext {
             // sit in a separate slice file that boundary redaction can't reach.
             const hasSensitiveFields = (truncated.sensitiveOutputFields?.length ?? 0) > 0
             const sliced = this.slicingEnabled && !hasSensitiveFields
-                ? await maybeSliceOutput(truncated.output, this.engineApi)
+                ? await maybeSliceOutput({ value: truncated.output, engineApi: this.engineApi })
                 : undefined
             finalized = new GenericStepOutput({
                 type: truncated.type,
@@ -131,10 +137,12 @@ export class FlowExecutorContext {
                 sensitiveOutputFields: truncated.sensitiveOutputFields,
             })
         }
+        const previousStep = executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps })
         const steps = executionJournal.upsertStep({ stepName, stepOutput: finalized, path: this.currentPath.path, steps: this.steps })
         return new FlowExecutorContext({
             ...this,
             steps,
+            logSizeBytes: this.logSizeBytes + sizeofUtils.upsertStepDelta({ stepName, previousStep, nextStep: finalized }),
         })
     }
 
@@ -196,7 +204,7 @@ export class FlowExecutorContext {
     }
 }
 
-async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>, redactSensitive: boolean): Promise<Record<string, unknown>> {
+async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: SliceCache, redactSensitive: boolean): Promise<Record<string, unknown>> {
     const result: Record<string, unknown> = {}
     for (const [stepName, step] of Object.entries(steps)) {
         const resolved = await resolveStepOutput(step, engineApi, cache)
@@ -209,15 +217,19 @@ async function extractStepView(steps: Record<string, StepOutput>, engineApi: Eng
     return result
 }
 
-async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Promise<{ ref: LogSliceRef } | undefined> {
+async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
     if (isNil(value) || isNil(engineApi)) {
         return undefined
     }
-    const size = utils.sizeof(value)
+    const serialized = JSON.stringify(value)
+    if (isNil(serialized)) {
+        return undefined
+    }
+    const size = Buffer.byteLength(serialized)
     if (size <= SLICE_THRESHOLD_BYTES) {
         return undefined
     }
-    const data = new TextEncoder().encode(JSON.stringify(value))
+    const data = new TextEncoder().encode(serialized)
     const { fileId, readUrl } = await engineFileApi.upload({
         apiUrl: engineApi.internalApiUrl,
         engineToken: engineApi.engineToken,
@@ -228,7 +240,7 @@ async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Pr
     return { ref: { fileId, size, url: readUrl } }
 }
 
-async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: Map<string, Promise<unknown>>): Promise<unknown> {
+async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<unknown> {
     if (step.outputType !== StepOutputType.SLICE) {
         return step.output
     }
@@ -242,7 +254,7 @@ async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | 
     }
     const promise = engineFileApi.download({ apiUrl: engineApi.internalApiUrl, engineToken: engineApi.engineToken, fileId: ref.fileId })
         .then((bytes) => JSON.parse(new TextDecoder('utf-8').decode(bytes)))
-    cache.set(ref.fileId, promise)
+    cache.set({ key: ref.fileId, value: promise, sizeBytes: ref.size })
     return promise
 }
 
@@ -278,4 +290,14 @@ export type EngineApiConfig = {
 export type FlowExecutorContextInit = {
     engineApi?: EngineApiConfig
     slicingEnabled?: boolean
+}
+
+type MaybeSliceOutputParams = {
+    value: unknown
+    engineApi?: EngineApiConfig
+}
+
+type SliceCache = {
+    get(key: string): Promise<unknown> | undefined
+    set(params: { key: string, value: Promise<unknown>, sizeBytes: number }): void
 }

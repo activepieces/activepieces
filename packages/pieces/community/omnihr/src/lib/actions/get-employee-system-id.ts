@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { omnihrAuth } from '../auth';
-import { getAuthHeaders, OmniHrAuth } from '../common/client';
 
 export const getEmployeeSystemId = createAction({
   auth: omnihrAuth,
@@ -36,7 +35,11 @@ export const getEmployeeSystemId = createAction({
           };
         }
 
-        const headers = await getAuthHeaders(auth);
+        const headers = {
+          Authorization: `Bearer ${auth.access_token}`,
+          'Content-Type': 'application/json',
+          Origin: auth.props.origin,
+        };
         const resp = await httpClient.sendRequest({
           method: HttpMethod.GET,
           url: 'https://api.omnihr.co/api/v1/employee/list/filters',
@@ -61,8 +64,11 @@ export const getEmployeeSystemId = createAction({
   },
   async run(context) {
     const { email, employmentStatuses } = context.propsValue;
-    const auth = context.auth as OmniHrAuth;
-    const headers = await getAuthHeaders(auth);
+    const headers = {
+      Authorization: `Bearer ${context.auth.access_token}`,
+      'Content-Type': 'application/json',
+      Origin: context.auth.props.origin,
+    };
 
     const queryParams: Record<string, string> = {
       exclude_self: 'false',

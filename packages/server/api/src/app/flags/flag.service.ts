@@ -11,6 +11,7 @@ import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { knowledgeBaseSchema } from '../knowledge-base/knowledge-base-schema'
+import { isToolSearchEnabled } from '../tool-search/tool-search-flag'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 import { webhookSecretsUtils } from './webhook-secrets-util'
@@ -207,6 +208,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.TELEMETRY_ENABLED,
                 value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TOOL_SEARCH_ENABLED,
+                value: isToolSearchEnabled(),
                 created,
                 updated,
             },

@@ -10,12 +10,6 @@ import {
 import { zendeskAuth } from '../..';
 import { organizationIdDropdown, brandIdDropdown, problemTicketIdDropdown, groupIdDropdown } from '../common/props';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const createTicketAction = createAction({
   auth: zendeskAuth,
   name: 'create-ticket',

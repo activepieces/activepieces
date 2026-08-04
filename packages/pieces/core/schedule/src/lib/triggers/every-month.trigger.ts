@@ -12,6 +12,10 @@ export const everyMonthTrigger = createTrigger({
   name: 'every_month',
   displayName: 'Every Month',
   description: 'Triggers the current flow every month',
+  aiMetadata: {
+    description:
+      'Fires once a month on one chosen day of the month, at a chosen hour in a chosen timezone; each event represents the monthly tick, not an external change. Pick this for month-boundary work such as billing or a monthly report; use Every Week or Every Day for finer cadence, or Cron Expression for "last day of the month", multiple days, or a non-zero minute. Requires a day of the month and an hour, fires at minute 0, and a day number beyond a short month (29-31) simply will not occur that month.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {},
   props: {

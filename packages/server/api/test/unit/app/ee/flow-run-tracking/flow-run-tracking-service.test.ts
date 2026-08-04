@@ -5,6 +5,7 @@ const {
     mockQueryBuilder,
     mockExceptionHandle,
     mockCaptureBillingEvent,
+    mockFlushBillingEvents,
 } = vi.hoisted(() => {
     const mockGetRawMany = vi.fn()
     const mockQueryBuilder = {
@@ -22,6 +23,7 @@ const {
         mockQueryBuilder,
         mockExceptionHandle: vi.fn(),
         mockCaptureBillingEvent: vi.fn(),
+        mockFlushBillingEvents: vi.fn().mockResolvedValue(undefined),
     }
 })
 
@@ -61,6 +63,8 @@ vi.mock('../../../../../src/app/helper/sleep', () => ({
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
     captureBillingEvent: mockCaptureBillingEvent,
+    flushBillingEvents: mockFlushBillingEvents,
+    BILLING_EVENTS_FLUSH_BATCH_SIZE: 2,
     BillingEvents: {
         AI_USAGE_PER_RUN: 'ai_usage_per_run',
         CHAT_MESSAGE: 'chat_message',
@@ -209,6 +213,42 @@ describe('flowRunTrackingService', () => {
                 projects: 0,
                 daily_executions: [],
             }))
+        })
+
+        it('should flush captured billing events after emitting so nothing is left buffered/dropped', async () => {
+            mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
+
+            await flowRunTrackingService(mockLog).reportAllPlatforms()
+
+            expect(mockFlushBillingEvents).toHaveBeenCalledTimes(1)
+            const lastCaptureOrder = Math.max(...mockCaptureBillingEvent.mock.invocationCallOrder)
+            const flushOrder = mockFlushBillingEvents.mock.invocationCallOrder[0]
+            expect(flushOrder).toBeGreaterThan(lastCaptureOrder)
+        })
+
+        it('should emit in bounded batches and flush after each, so buffering never scales with platform count', async () => {
+            mockQueries({
+                licenseKeys: [
+                    { platformId: 'platform-1', licenseKey: 'key-1' },
+                    { platformId: 'platform-2', licenseKey: 'key-2' },
+                    { platformId: 'platform-3', licenseKey: 'key-3' },
+                ],
+            })
+
+            await flowRunTrackingService(mockLog).reportAllPlatforms()
+
+            expect(mockCaptureBillingEvent).toHaveBeenCalledTimes(3)
+            expect(mockFlushBillingEvents).toHaveBeenCalledTimes(2)
+        })
+
+        it('should log and continue rather than abort when a batch flush fails', async () => {
+            mockFlushBillingEvents.mockRejectedValueOnce(new Error('posthog flush failed'))
+            mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
+
+            await flowRunTrackingService(mockLog).reportAllPlatforms()
+
+            expect(mockCaptureBillingEvent).toHaveBeenCalledTimes(1)
+            expect(mockExceptionHandle).not.toHaveBeenCalled()
         })
     })
 })

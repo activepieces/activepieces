@@ -1,10 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const parseUrl = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'parse_url',
   displayName: 'Parse URL',
   description: 'Extract the domain, path, and query parameters from a URL.',
+  aiMetadata: { description: 'Breaks an absolute URL string into its component parts locally, returning each query value as an array by default so repeated keys are preserved, or the first value only when that is switched off. Use it to read a value out of a link (e.g. a utm_source or a record id) before branching or composing a request; use Send HTTP Request when you need to call the URL. Requires a valid absolute URL including the scheme — no network call is made, so it is read-only and idempotent.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'URL',

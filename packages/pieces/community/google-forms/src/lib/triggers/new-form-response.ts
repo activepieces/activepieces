@@ -12,6 +12,7 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { googleFormsCommon, googleFormsAuth, getAccessToken, GoogleFormsAuthValue } from '../common/common';
+import { newResponseTriggerOutputSchema } from '../output-schemas';
 
 export const newResponse = createTrigger({
   auth: googleFormsAuth,
@@ -22,6 +23,7 @@ export const newResponse = createTrigger({
     description:
       'Fires when a respondent submits a new response to the specified Google Form. Each event represents a single form submission, including the response ID, submission timestamps, and the respondent\'s answers keyed by question ID.',
   },
+  outputSchema: newResponseTriggerOutputSchema,
   props: {
     form_id: googleFormsCommon.form_id,
     include_team_drives: googleFormsCommon.include_team_drives,

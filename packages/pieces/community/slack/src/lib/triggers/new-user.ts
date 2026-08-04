@@ -2,6 +2,8 @@ import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { appWebhookSetupInfo } from '../common/props';
+import { newUserTriggerOutputSchema } from '../output-schemas';
 
 const sampleData = {
 	id: 'USLACKBOT',
@@ -60,9 +62,12 @@ export const newUserTrigger = createTrigger({
 		description:
 			'Fires when a new member joins the Slack workspace (a team_join event). The event payload is the new user object, including their id, name, profile, and account flags.',
 	},
-	props: {},
+	props: {
+		info: appWebhookSetupInfo,
+	},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData,
+	outputSchema: newUserTriggerOutputSchema,
 	onEnable: async (context) => {
 		const teamId = await getTeamId(context.auth as SlackAuthValue);
 		context.app.createListeners({

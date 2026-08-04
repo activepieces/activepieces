@@ -15,8 +15,8 @@ One flow per worker. A small fleet of those. A thin tier of apps in front. Manag
 | Component | Size each | How many |
 |---|---|---|
 | **Worker** | 0.5 vCPU / 1 GB, concurrency **1** | one per concurrent flow |
-| **App** | 1 vCPU / 2 GB | one per ten workers |
-| **Postgres** | 2 vCPU / 4 GB, managed | one, grows with the fleet |
+| **App** | 1 vCPU / 1 GB | one per ten workers |
+| **Postgres** | 2 vCPU / 4 GB, managed | one — **size it against peak throughput**, see below |
 | **Redis** | 1 vCPU / 1 GB, managed | one |
 | **Object storage (S3)** | same region, signed URLs on | required |
 
@@ -24,7 +24,7 @@ S3 is a hard requirement, not a nice-to-have: without it, every flow bundle and 
 
 ## Recommended config
 
-Copy this — it's the exact configuration the benchmark below was measured on:
+Copy this — these are the execution settings the benchmark below was measured on:
 
 ```bash
 AP_WORKER_CONCURRENCY=1
@@ -49,15 +49,19 @@ apps    = ceil(workers / 10)
 
 At 50 concurrent flows: **50 workers** (25 vCPU / 50 GB) + **5 apps** (5 vCPU / 5 GB). Overflow queues in Redis and drains as slots free.
 
+<Warning>
+**Postgres does not stay still while you add workers.** Its CPU tracks *throughput*, at roughly 2.5 millicores per req/s in the [benchmark](../architecture/benchmark) — so a fleet doing 500 req/s wants well over a core of database on its own, and at 777 req/s that run's database was consuming 2.7 cores while every worker idled at a fifth of its cap. The 2 vCPU above is a starting point for modest fleets: watch database CPU as you grow and scale it alongside the fleet, rather than assuming worker count is the only dial.
+</Warning>
+
 <Tip>
 Size **statically for peak** — autoscaling's boot and scheduling lag can't defend the 30 s sync-webhook budget. A pre-sized fleet keeps a slot warm and waiting. Measured scale-up and drain numbers: [Autoscaling](../architecture/autoscaling).
 </Tip>
 
 And it scales with your fleet:
 
-<img src="/resources/diagrams/worker-scaling.png" alt="1:10 app-to-worker scaling: 4 apps / 40 workers at 93.5 req/s grows to 8 apps / 80 workers at 148.9 req/s" />
+<img src="/resources/diagrams/worker-scaling.png" alt="1:10 app-to-worker scaling: 4 apps / 40 workers at 213 req/s grows to 8 apps / 80 workers at 484 req/s" />
 
-Full methodology and the ratio comparison: [Benchmark](../architecture/benchmark).
+Past roughly 80 workers the worker fleet stops being the only dial: throughput keeps rising (641 req/s at 120, 777 at 160) but the per-worker rate falls as the shared database absorbs more of the load, so **scale Postgres alongside the fleet**. Full methodology and the measured curve: [Benchmark](../architecture/benchmark).
 
 ## Limits
 
@@ -68,6 +72,7 @@ Full methodology and the ratio comparison: [Benchmark](../architecture/benchmark
 | Max webhook payload | 25 MB | `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` |
 | Step file size | 25 MB | `AP_MAX_FILE_SIZE_MB` |
 | Flow run log size | 50 MB | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` |
+| Max store value | 512 KB | `AP_MAX_STORE_ENTRY_VALUE_SIZE_KB` |
 
 The complete table lives in [Limits](/install/reference/limits).
 
