@@ -35,7 +35,9 @@ type AIModelSelectorProps = {
   defaultProvider?: AIProviderName;
   defaultModel?: string;
   disabled?: boolean;
-  onChange: (value: { provider?: string; model?: string }) => void;
+  compact?: boolean;
+  preserveUnknownModel?: boolean;
+  onChange: (value: { provider?: AIProviderName; model?: string }) => void;
 };
 
 const ACTIVEPIECES_PROVIDER_CONFIG = {
@@ -51,6 +53,8 @@ export function AIModelSelector({
   defaultProvider,
   defaultModel,
   disabled = false,
+  compact = false,
+  preserveUnknownModel = false,
   onChange,
 }: AIModelSelectorProps) {
   const [providerOpen, setProviderOpen] = React.useState(false);
@@ -118,6 +122,7 @@ export function AIModelSelector({
 
   React.useEffect(() => {
     if (
+      !preserveUnknownModel &&
       selectedModel &&
       models.length > 0 &&
       !models.some((m) => m.id === selectedModel)
@@ -126,7 +131,7 @@ export function AIModelSelector({
       setSelectedModel(fallback);
       onChange({ provider: selectedProvider, model: fallback });
     }
-  }, [models, selectedModel, selectedProvider, onChange]);
+  }, [models, selectedModel, selectedProvider, onChange, preserveUnknownModel]);
 
   const handleProviderChange = (provider: AIProviderName) => {
     setSelectedProvider(provider);
@@ -143,7 +148,7 @@ export function AIModelSelector({
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      {!compact && <h2 className="text-sm font-medium">{t('AI Model *')}</h2>}
 
       <div className="flex items-stretch border rounded-md bg-background overflow-hidden">
         <Popover open={providerOpen} onOpenChange={setProviderOpen}>
@@ -295,7 +300,7 @@ export function AIModelSelector({
         </Popover>
       </div>
 
-      {selectedProvider && (
+      {!compact && selectedProvider && (
         <p className="text-xs text-muted-foreground">
           {PROVIDER_EMBEDDING_MODELS[selectedProvider]
             ? t('Embedding model for knowledge base: {model}', {

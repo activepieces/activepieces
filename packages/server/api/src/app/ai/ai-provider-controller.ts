@@ -20,6 +20,10 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         return aiModelRoutingService(app.log).upsert({ platformId, request: request.body })
     })
+    app.delete('/routing', DeleteAiRouting, async (request) => {
+        const platformId = request.principal.platform.id
+        return aiModelRoutingService(app.log).delete({ platformId })
+    })
     app.get('/routing/:tier/chain', GetAiRoutingChain, async (request) => {
         const platformId = request.principal.platform.id
         return aiModelRoutingService(app.log).resolveChain({ platformId, tierId: request.params.tier })
@@ -70,6 +74,17 @@ const UpsertAiRouting = {
     },
     schema: {
         body: UpsertAiRoutingRequest,
+        response: {
+            [StatusCodes.OK]: GetAiRoutingResponse,
+        },
+    },
+}
+
+const DeleteAiRouting = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
         response: {
             [StatusCodes.OK]: GetAiRoutingResponse,
         },

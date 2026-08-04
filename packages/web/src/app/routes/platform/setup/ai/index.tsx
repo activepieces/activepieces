@@ -24,6 +24,7 @@ import { userHooks } from '@/hooks/user-hooks';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
+import { ModelRoutingSection } from './routing/model-routing-section';
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 const ACTIVEPIECES_LOGO_URL =
@@ -70,14 +71,17 @@ export default function AIProvidersPage() {
         }
       >
         {allowWrite && configuredProviders.length > 0 && (
-          <ChatProviderSelector
-            providers={configuredProviders}
-            providerInfos={SUPPORTED_AI_PROVIDERS}
-            selectedProviderId={chatProvider?.id ?? null}
-            onSelect={(providerId, displayName) =>
-              toggleChatProvider({ providerId, displayName })
-            }
-          />
+          <>
+            <ChatProviderSelector
+              providers={configuredProviders}
+              providerInfos={SUPPORTED_AI_PROVIDERS}
+              selectedProviderId={chatProvider?.id ?? null}
+              onSelect={(providerId, displayName) =>
+                toggleChatProvider({ providerId, displayName })
+              }
+            />
+            <ModelRoutingSection />
+          </>
         )}
 
         <div className="flex flex-col gap-4">
