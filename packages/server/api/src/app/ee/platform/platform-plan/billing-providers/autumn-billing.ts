@@ -154,7 +154,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return (await distributedStore.get<boolean>(getBillingEnforcedKey(platformId))) ?? false
     },
     shouldBlockOnCredits: async (platformId: string) => {
-        return (await computeCreditsState(log, platformId)).blocked
+        return (await computeCreditsAndAppSumoState(log, platformId)).credits.blocked
     },
     getCreditsAndAppSumoState: async (platformId: string) => {
         return computeCreditsAndAppSumoState(log, platformId)
@@ -285,10 +285,6 @@ function isDuplicateTrack(error: unknown): boolean {
 
 function msToIso(ms: number | null | undefined): string | null {
     return isNil(ms) ? null : apDayjs(ms).toISOString()
-}
-
-async function computeCreditsState(log: FastifyBaseLogger, platformId: string): Promise<CreditsGateState> {
-    return (await computeCreditsAndAppSumoState(log, platformId)).credits
 }
 
 async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId: string): Promise<CreditsAndAppSumoState> {
