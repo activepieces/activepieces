@@ -558,7 +558,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             platformId: input.platformId,
             userId: input.userId,
             conversationId: input.conversationId,
-            confinedToProjectId: await confinedProjectFor({ conversationId: input.conversationId }),
+            confinedToProjectId: input.source === AgentRunSource.FLOW_STEP ? await confinedProjectFor({ conversationId: input.conversationId }) : null,
             log,
         })
         log.debug({ tool: { name: input.toolName, durationMs: Date.now() - startedAt, output: result }, resultBytes: byteLengthOf(result) }, '[agentRpc#executeAgentTool] Tool finished')
@@ -687,7 +687,7 @@ async function confinedProjectFor({ conversationId }: { conversationId?: string 
         return null
     }
     const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
-    return conversation?.source === AgentRunSource.FLOW_STEP ? conversation.projectId ?? null : null
+    return conversation?.projectId ?? null
 }
 
 function byteLengthOf(value: unknown): number {
