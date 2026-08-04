@@ -36,8 +36,6 @@ const variableRepo = repoFactory(VariableEntity)
 const concurrencyPoolRepo = repoFactory(ConcurrencyPoolEntity)
 const toolSearchIndexRepo = repoFactory(ToolSearchIndexEntity)
 
-const ENTITYLESS_PLATFORM_TABLES = ['piece_tag', 'tag']
-
 export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     hardDeletePlatformHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PLATFORM>) => {
         const { platformId } = data
@@ -55,9 +53,6 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
             await projectRepo().delete({ id: projectId, platformId })
         }
 
-        for (const table of ENTITYLESS_PLATFORM_TABLES) {
-            await deletePlatformRowsIfTableExists({ table, platformId })
-        }
         await signingKeyRepo().delete({ platformId })
 
         await fileRepo().delete({ platformId })
@@ -135,14 +130,6 @@ async function listProjectIdsByPlatform(platformId: string): Promise<string[]> {
     return projects.map((project) => project.id)
 }
 
-async function deletePlatformRowsIfTableExists({ table, platformId }: DeleteIfTableExistsParams): Promise<void> {
-    const [{ present }] = await platformRepo().query('SELECT to_regclass($1) IS NOT NULL AS present', [table])
-    if (!present) {
-        return
-    }
-    await platformRepo().query(`DELETE FROM "${table}" WHERE "platformId" = $1`, [platformId])
-}
-
 async function deletePlatformUsers(platformId: string): Promise<string[]> {
     const users = await userRepo().find({ where: { platformId }, withDeleted: true })
     await userRepo().delete({ platformId })
@@ -167,9 +154,4 @@ type DrainFlowsParams = {
 type CutOffPlatformAccessParams = {
     platformId: string
     log: FastifyBaseLogger
-}
-
-type DeleteIfTableExistsParams = {
-    table: string
-    platformId: string
 }
