@@ -31,6 +31,11 @@ In the AI piece, picking the Activepieces-provided AI now lists only the named t
 - Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
 - Only if a flow uses Activepieces-provided AI on a model outside the Fast/Expert/Heavy tiers. Choose a tier the next time you edit that step.
 - No database action is required. The migration only adds columns and leaves the existing ones in place.
+#### Official piece bundles are served from the Activepieces CDN by default
+`AP_USE_CDN_FOR_BUNDLES` now defaults to `true`. When an official piece bundle is not already cached in your own S3 bucket, the engine is redirected to `cdn.activepieces.com` for the tarball instead of `registry.npmjs.org`. If the CDN does not have that piece version, the download falls back to npm automatically, so installs keep working either way. Custom pieces and pieces from a private registry never use the CDN and are unaffected.
+
+### Do you need to take action?
+- Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
 
 ## 0.86.0
 
