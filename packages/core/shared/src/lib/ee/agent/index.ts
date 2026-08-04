@@ -194,11 +194,17 @@ export enum AgentConversationStatus {
     ERROR = 'ERROR',
 }
 
+export enum AgentRunSource {
+    CHAT = 'CHAT',
+    FLOW_STEP = 'FLOW_STEP',
+}
+
 export const AgentConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
     projectId: Nullable(z.string()),
     userId: z.string(),
+    source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
     status: z.nativeEnum(AgentConversationStatus).default(AgentConversationStatus.IDLE),
