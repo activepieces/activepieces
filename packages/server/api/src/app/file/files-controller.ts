@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream'
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, EnginePrincipal, FileCompression, FileTransportQueryParams, FileType, Principal, PrincipalType } from '@activepieces/shared'
+import contentDisposition from 'content-disposition'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -8,7 +9,7 @@ import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { fileService } from './file.service'
+import { fileService, getDownloadName } from './file.service'
 import { enforceByteLimit, ENGINE_WRITABLE_FILE_TYPES, filesService, fileTransportHeaders } from './files-service'
 import { signedFileTransport } from './signed-file-transport'
 
@@ -133,7 +134,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
         return reply
             .type(mimeType)
             .header('X-Content-Type-Options', 'nosniff')
-            .header('Content-Disposition', `${disposition}; filename="${encodeURI(file.fileName ?? `${file.id}.bin`)}"`)
+            .header('Content-Disposition', contentDisposition(getDownloadName(file), { type: disposition }))
             .status(StatusCodes.OK)
             .send(data)
     })

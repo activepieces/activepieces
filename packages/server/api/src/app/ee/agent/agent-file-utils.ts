@@ -90,7 +90,7 @@ async function buildUserContentWithFiles({ text, files, attachmentNote }: {
 
     return [
         { type: 'text' as const, text: userText },
-        ...imageFiles.map((f) => ({ type: 'image' as const, image: f.data, mimeType: f.mimeType })),
+        ...imageFiles.map((f) => ({ type: 'file' as const, mediaType: f.mimeType, data: f.data })),
     ]
 }
 
