@@ -1,7 +1,10 @@
 import { FieldControlMode, PredefinedInputsStructure } from '@activepieces/core-piece-types'
-import { isNil, isObject, isString } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, isObject, isString, omit, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceProperty, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { z } from 'zod'
+import { PropertyResolutionResult } from '../../../mcp/tools/mcp-utils'
+
+const MAX_DYNAMIC_DEPTH = 3
 
 const UNFILLABLE_TYPES = [
     PropertyType.BASIC_AUTH,
@@ -88,7 +91,12 @@ function plan({ properties, predefinedInput }: {
     return { pinned, waves }
 }
 
-async function schemaForWave({ properties, propertyNames, resolvedInput, resolveDynamic }: WaveSchemaParams): Promise<z.ZodObject> {
+async function schemaForWave({ properties, propertyNames, resolvedInput, resolveDynamic }: {
+    properties: PiecePropertyMap
+    propertyNames: string[]
+    resolvedInput: Record<string, unknown>
+    resolveDynamic: DynamicSchemaResolver
+}): Promise<z.ZodObject> {
     const shape = await buildShape({
         properties: Object.fromEntries(propertyNames.map((name) => [name, properties[name]])),
         resolvedInput,
@@ -162,34 +170,60 @@ async function baseSchemaFor({ propertyName, property, resolvedInput, resolveDyn
                 ? z.union([z.string(), z.number(), z.boolean(), z.object({}).loose()])
                 : await schemaForProperties({ properties: property.properties, resolvedInput, resolveDynamic }))
         case PropertyType.DYNAMIC:
-            return resolveDynamic({ propertyName, property, resolvedInput })
+            return resolveDynamic({ propertyName, resolvedInput })
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
         case PropertyType.OAUTH2:
         case PropertyType.OIDC:
         case PropertyType.SECRET_TEXT:
-            throw new Error(`The model must never be asked to fill a ${property.type} property`)
+            throw unresolvable(`The model must never be asked to fill a ${property.type} property`)
     }
+}
+
+function dynamicResolverFor({ actionName, connectionExternalId, resolveProps }: {
+    actionName: string
+    connectionExternalId?: string
+    resolveProps: PropsResolution
+}): DynamicSchemaResolver {
+    const resolveAtDepth = (depth: number): DynamicSchemaResolver => async ({ propertyName, resolvedInput }) => {
+        if (depth > MAX_DYNAMIC_DEPTH) {
+            throw unresolvable(`"${propertyName}" nests dynamic fields more than ${MAX_DYNAMIC_DEPTH} levels deep`)
+        }
+        const result = await resolveProps({
+            propertyName,
+            actionOrTriggerName: actionName,
+            input: omit(resolvedInput, ['auth']),
+            ...spreadIfDefined('auth', connectionExternalId),
+        })
+        if (result.status !== 'dynamic') {
+            throw unresolvable(`Could not resolve the sub-fields of "${propertyName}": ${result.status === 'failed' ? result.message : 'the piece returned options rather than fields'}`)
+        }
+        return schemaForProperties({ properties: result.props, resolvedInput, resolveDynamic: resolveAtDepth(depth + 1) })
+    }
+    return resolveAtDepth(1)
+}
+
+function unresolvable(message: string): ActivepiecesError {
+    return new ActivepiecesError({ code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message } })
 }
 
 export const pieceInputPlan = {
     plan,
     schemaForWave,
-    schemaForProperties,
+    dynamicResolverFor,
 }
 
 export type DynamicSchemaResolver = (params: {
     propertyName: string
-    property: PieceProperty
     resolvedInput: Record<string, unknown>
 }) => Promise<z.ZodTypeAny>
 
-export type WaveSchemaParams = {
-    properties: PiecePropertyMap
-    propertyNames: string[]
-    resolvedInput: Record<string, unknown>
-    resolveDynamic: DynamicSchemaResolver
-}
+export type PropsResolution = (params: {
+    propertyName: string
+    actionOrTriggerName: string
+    input: Record<string, unknown>
+    auth?: string
+}) => Promise<PropertyResolutionResult>
 
 export type PieceInputPlan = {
     pinned: Record<string, unknown>

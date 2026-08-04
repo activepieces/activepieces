@@ -2,7 +2,9 @@ import { FieldControlMode } from '@activepieces/core-piece-types'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
+import { ActivepiecesError, ErrorCode, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { pieceInputPlan } from '../../../../../src/app/ee/agent/tools/piece-input-plan'
+import { PropertyResolutionResult } from '../../../../../src/app/mcp/tools/mcp-utils'
 
 function prop(overrides: Record<string, unknown>): Record<string, unknown> {
     return { displayName: 'x', required: false, ...overrides }
@@ -11,6 +13,25 @@ function prop(overrides: Record<string, unknown>): Record<string, unknown> {
 const props = (map: Record<string, unknown>): PiecePropertyMap => map as never
 
 const rejectDynamic = vi.fn(() => Promise.reject(new Error('no dynamic property expected here')))
+
+async function failureMessage(run: () => Promise<unknown>): Promise<string> {
+    const { error } = await tryCatch(run)
+    if (error instanceof ActivepiecesError && error.error.code === ErrorCode.ENGINE_OPERATION_FAILURE) {
+        return error.error.params.message
+    }
+    return `expected an engine-operation failure, got: ${String(error)}`
+}
+
+function dynamicResolver(results: PropertyResolutionResult[], connectionExternalId?: string) {
+    const resolveProps = vi.fn()
+    for (const result of results) {
+        resolveProps.mockResolvedValueOnce(result)
+    }
+    return {
+        resolveProps,
+        resolve: pieceInputPlan.dynamicResolverFor({ actionName: 'create_record', resolveProps, ...spreadIfDefined('connectionExternalId', connectionExternalId) }),
+    }
+}
 
 async function schemaFor(properties: PiecePropertyMap, propertyNames: string[], resolvedInput: Record<string, unknown> = {}): Promise<z.ZodObject> {
     return pieceInputPlan.schemaForWave({ properties, propertyNames, resolvedInput, resolveDynamic: rejectDynamic })
@@ -157,7 +178,7 @@ describe('pieceInputPlan.schemaForWave', () => {
     it('refuses to build a schema for a property the model must never fill', async () => {
         const properties = props({ secret: prop({ type: PropertyType.SECRET_TEXT, required: true }) })
 
-        await expect(schemaFor(properties, ['secret'])).rejects.toThrow(/never be asked to fill/)
+        expect(await failureMessage(() => schemaFor(properties, ['secret']))).toMatch(/never be asked to fill/)
     })
 
     it('hands a dynamic property its name and the values resolved so far', async () => {
@@ -176,9 +197,70 @@ describe('pieceInputPlan.schemaForWave', () => {
 
         expect(resolveDynamic).toHaveBeenCalledWith({
             propertyName: 'fields',
-            property: properties.fields,
             resolvedInput: { workspace: 'W1' },
         })
         expect(schema.safeParse({ fields: { label: 'a' } }).success).toBe(true)
+    })
+})
+
+describe('pieceInputPlan.dynamicResolverFor', () => {
+    it('turns the piece-reported sub-fields into a loose schema, so known keys are not stripped', async () => {
+        const { resolve } = dynamicResolver([
+            { status: 'dynamic', props: props({ title: prop({ type: PropertyType.SHORT_TEXT, required: true }) }) },
+        ])
+
+        const schema = await resolve({ propertyName: 'fields', resolvedInput: {} })
+
+        expect(schema.safeParse({ title: 1 }).success).toBe(false)
+        expect(schema.safeParse({ title: 'a', unlisted: 'kept' }).data).toEqual({ title: 'a', unlisted: 'kept' })
+    })
+
+    it('forwards the values resolved so far, which is what makes the sub-fields correct', async () => {
+        const { resolve, resolveProps } = dynamicResolver([{ status: 'dynamic', props: props({}) }])
+
+        await resolve({ propertyName: 'fields', resolvedInput: { table: 'T1', auth: 'conn-1' } })
+
+        expect(resolveProps).toHaveBeenCalledWith(expect.objectContaining({
+            propertyName: 'fields',
+            actionOrTriggerName: 'create_record',
+            input: { table: 'T1' },
+        }))
+    })
+
+    it('sends the connection separately rather than as an input value', async () => {
+        const { resolve, resolveProps } = dynamicResolver([{ status: 'dynamic', props: props({}) }], 'conn-9')
+
+        await resolve({ propertyName: 'fields', resolvedInput: { auth: 'ignored' } })
+
+        expect(resolveProps).toHaveBeenCalledWith(expect.objectContaining({ auth: 'conn-9', input: {} }))
+    })
+
+    it.each([
+        [{ status: 'failed', message: 'connection expired' } as PropertyResolutionResult, /connection expired/],
+        [{ status: 'options', options: [] } as PropertyResolutionResult, /options rather than fields/],
+    ])('fails loudly when the piece cannot give sub-fields (%#)', async (result, expected) => {
+        const { resolve } = dynamicResolver([result])
+
+        expect(await failureMessage(() => resolve({ propertyName: 'fields', resolvedInput: {} }))).toMatch(expected)
+    })
+
+    it('resolves a dynamic field nested inside another dynamic field', async () => {
+        const { resolve, resolveProps } = dynamicResolver([
+            { status: 'dynamic', props: props({ inner: prop({ type: PropertyType.DYNAMIC, required: true }) }) },
+            { status: 'dynamic', props: props({ leaf: prop({ type: PropertyType.SHORT_TEXT, required: true }) }) },
+        ])
+
+        const schema = await resolve({ propertyName: 'outer', resolvedInput: {} })
+
+        expect(resolveProps).toHaveBeenCalledTimes(2)
+        expect(schema.safeParse({ inner: { leaf: 'a' } }).success).toBe(true)
+    })
+
+    it('stops a piece that nests dynamic fields without end, instead of looping on the engine', async () => {
+        const selfNesting = { status: 'dynamic', props: props({ fields: prop({ type: PropertyType.DYNAMIC, required: true }) }) } as PropertyResolutionResult
+        const { resolve, resolveProps } = dynamicResolver(Array.from({ length: 10 }, () => selfNesting))
+
+        expect(await failureMessage(() => resolve({ propertyName: 'fields', resolvedInput: {} }))).toMatch(/more than 3 levels deep/)
+        expect(resolveProps.mock.calls.length).toBeLessThanOrEqual(4)
     })
 })
