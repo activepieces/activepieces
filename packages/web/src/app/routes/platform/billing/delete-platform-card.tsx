@@ -14,11 +14,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-export const DeletePlatformCard = ({ platformName }: DeletePlatformCardProps) => {
+export const DeletePlatformCard = ({
+  platformName,
+}: DeletePlatformCardProps) => {
   const form = useForm<DeletePlatformFormValues>({
     resolver: zodResolver(
       z.object({
-        confirmation: z.literal(platformName, t('Platform name is incorrect')),
+        confirmation: z.literal(platformName, 'Platform name is incorrect'),
       }),
     ),
     defaultValues: { confirmation: '' },
