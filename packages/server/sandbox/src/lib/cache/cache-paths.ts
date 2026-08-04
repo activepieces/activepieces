@@ -52,7 +52,7 @@ export const cacheUtils = (basePath: string) => ({
     },
 })
 
-export const LATEST_CACHE_VERSION = 'v12'
+export const LATEST_CACHE_VERSION = 'v13'
 
 export const ACTION_RUN_CODE_DIR = 'action-runs'
 
