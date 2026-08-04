@@ -2,6 +2,8 @@ import { FieldControlMode } from '@activepieces/core-piece-types'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
+
+const unusedResolver = (): never => { throw new Error('no dynamic property expected in this case') }
 import { piecePropExtraction } from '../../../../../src/app/ee/agent/tools/piece-prop-extraction'
 
 function prop(overrides: Record<string, unknown>): Record<string, unknown> {
@@ -79,6 +81,7 @@ describe('piecePropExtraction.pinnedValues', () => {
 describe('piecePropExtraction.buildExtractionWaves', () => {
     it('never asks the model for a field the operator already pinned', () => {
         const waves = piecePropExtraction.buildExtractionWaves({
+            resolveDynamic: unusedResolver,
             properties: props({
                 channel: prop({ type: PropertyType.SHORT_TEXT }),
                 text: prop({ type: PropertyType.SHORT_TEXT }),
@@ -91,6 +94,7 @@ describe('piecePropExtraction.buildExtractionWaves', () => {
 
     it('skips auth and markdown properties, which the model must never fill', () => {
         const waves = piecePropExtraction.buildExtractionWaves({
+            resolveDynamic: unusedResolver,
             properties: props({
                 auth: prop({ type: PropertyType.OAUTH2 }),
                 notice: prop({ type: PropertyType.MARKDOWN }),
@@ -103,6 +107,7 @@ describe('piecePropExtraction.buildExtractionWaves', () => {
 
     it('produces a strict schema, so the model cannot invent extra keys', () => {
         const [wave] = piecePropExtraction.buildExtractionWaves({
+            resolveDynamic: unusedResolver,
             properties: props({ text: prop({ type: PropertyType.SHORT_TEXT, required: true }) }),
         })
 
@@ -112,6 +117,7 @@ describe('piecePropExtraction.buildExtractionWaves', () => {
 
     it('makes an optional property nullable and keeps a required one strict', () => {
         const [wave] = piecePropExtraction.buildExtractionWaves({
+            resolveDynamic: unusedResolver,
             properties: props({
                 required: prop({ type: PropertyType.SHORT_TEXT, required: true }),
                 optional: prop({ type: PropertyType.SHORT_TEXT, required: false }),
@@ -134,6 +140,7 @@ describe('piecePropExtraction.buildExtractionWaves', () => {
 
     it('returns no waves when every property is pinned or unfillable', () => {
         const waves = piecePropExtraction.buildExtractionWaves({
+            resolveDynamic: unusedResolver,
             properties: props({ auth: prop({ type: PropertyType.OAUTH2 }) }),
         })
 

@@ -144,10 +144,9 @@ function objectSchemaFor({ properties, resolveDynamic }: {
 function buildExtractionWaves({ properties, predefinedInput, resolveDynamic }: {
     properties: PiecePropertyMap
     predefinedInput?: PredefinedInputsStructure
-    resolveDynamic?: DynamicSchemaResolver
+    resolveDynamic: DynamicSchemaResolver
 }): ExtractionWave[] {
     const pinned = pinnedValues({ predefinedInput })
-    const resolve = resolveDynamic ?? (() => z.object({}).loose())
     const alreadyKnown = new Set(Object.keys(pinned))
 
     return sortPropertiesByDependencies(properties)
@@ -158,7 +157,7 @@ function buildExtractionWaves({ properties, predefinedInput, resolveDynamic }: {
                 if (isNilProperty(property) || UNFILLABLE_TYPES.includes(property.type) || alreadyKnown.has(name)) {
                     continue
                 }
-                shape[name] = propertyToSchema({ property, resolveDynamic: resolve })
+                shape[name] = propertyToSchema({ property, resolveDynamic })
             }
             return { propertyNames: Object.keys(shape), schema: z.object(shape).strict() }
         })
