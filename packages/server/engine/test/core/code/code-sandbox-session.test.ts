@@ -22,6 +22,24 @@ describe.each(implementations)('%s createScriptSession', (_name, sandbox) => {
         }
     })
 
+    it('setGlobal makes a value available to later runs and never overwrites an existing key', async () => {
+        const session = await sandbox.createScriptSession({
+            scriptContext: { existing: 1 },
+            functions: {},
+        })
+        try {
+            await session.setGlobal('step_1', { output: { price: 6.4 } })
+            expect(await session.run('step_1.output.price')).toBe(6.4)
+            await session.setGlobal('step_1', { output: { price: 99 } })
+            expect(await session.run('step_1.output.price')).toBe(6.4)
+            await session.setGlobal('existing', 2)
+            expect(await session.run('existing')).toBe(1)
+        }
+        finally {
+            session.dispose()
+        }
+    })
+
     it('makes injected functions available to every run', async () => {
         const session = await sandbox.createScriptSession({
             scriptContext: { value: 3 },
