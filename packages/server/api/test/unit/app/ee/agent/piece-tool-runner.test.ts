@@ -63,13 +63,23 @@ describe('pieceToolRunner.runFromInstruction', () => {
         }))
     })
 
-    it('pins the piece version it read, so extraction and execution cannot use different versions', async () => {
+    it('does not pin a version on execution, because the adhoc path validates against the latest', async () => {
         await run()
 
-        expect(mockExecuteAdhocAction).toHaveBeenCalledWith(expect.objectContaining({ pieceVersion: '1.4.0' }))
+        const call = mockExecuteAdhocAction.mock.calls[0]?.[0] ?? {}
+        expect(call).not.toHaveProperty('pieceVersion')
     })
 
-    it('resolves properties against the same version, not the latest', async () => {
+    it('reads the latest metadata, the same version the adhoc path will validate against', async () => {
+        await run()
+
+        expect(mockGetOrThrow).toHaveBeenCalledWith(expect.objectContaining({
+            name: '@activepieces/piece-slack',
+            version: undefined,
+        }))
+    })
+
+    it('resolves properties against the version it actually read', async () => {
         mockGetOrThrow.mockResolvedValue(metadataWith({ channel: { displayName: 'Channel', required: true, type: PropertyType.DROPDOWN } }))
         mockResolveProperty.mockResolvedValue({ status: 'options', options: [{ label: 'general', value: 'C1' }] })
         mockCompleter.mockResolvedValue({ channel: 'C1' })

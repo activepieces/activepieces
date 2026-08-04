@@ -25,7 +25,6 @@ async function runFromInstruction({ piece, instruction, predefinedInput, model, 
         pieceName: piece.pieceName,
         actionName: piece.actionName,
         input: resolvedInput,
-        pieceVersion,
         log,
         ...(isNil(connectionExternalId) ? {} : { connectionExternalId }),
     })
@@ -37,7 +36,7 @@ async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef
     const metadata = await pieceMetadataService(log).getOrThrow({
         platformId,
         name: piece.pieceName,
-        version: piece.pieceVersion,
+        version: undefined,
     })
     const action = metadata.actions[piece.actionName]
     if (isNil(action)) {
@@ -79,7 +78,6 @@ export const pieceToolRunner = {
 
 export type PieceActionRef = {
     pieceName: string
-    pieceVersion?: string
     actionName: string
 }
 
