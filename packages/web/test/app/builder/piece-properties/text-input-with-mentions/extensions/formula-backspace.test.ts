@@ -16,10 +16,12 @@ import {
   FUNCTION_START_NODE_TYPE,
 } from '@/app/builder/piece-properties/text-input-with-mentions/extensions/bracket-nodes';
 import { getFormulaBackspaceTransaction } from '@/app/builder/piece-properties/text-input-with-mentions/extensions/formula-backspace';
+import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 
 const ZWS_CHAR = '\u200B';
 const FN_ID = 'fn-1';
 const NESTED_FN_ID = 'fn-2';
+const ORPHAN_FN_ID = 'fn-orphan';
 
 let editor: Editor | null = null;
 
@@ -101,7 +103,7 @@ function countNodes(currentEditor: Editor, typeName: string): number {
 }
 
 function backspaceJustInsideBracket(content: JSONContent[]) {
-  editor = new Editor({
+  const currentEditor = new Editor({
     extensions: [
       Document,
       Paragraph,
@@ -113,23 +115,28 @@ function backspaceJustInsideBracket(content: JSONContent[]) {
     ],
     content: { type: 'doc', content: [{ type: 'paragraph', content }] },
   });
+  editor = currentEditor;
 
-  const cursor = posAfterFirstFunctionStart(editor);
-  editor.commands.setTextSelection(cursor);
-  expect(editor.state.selection.from).toBe(cursor);
+  const cursor = posAfterFirstFunctionStart(currentEditor);
+  currentEditor.commands.setTextSelection(cursor);
+  expect(currentEditor.state.selection.from).toBe(cursor);
 
-  const transaction = getFormulaBackspaceTransaction({ state: editor.state });
+  const transaction = getFormulaBackspaceTransaction({
+    state: currentEditor.state,
+  });
   if (transaction) {
-    editor.view.dispatch(transaction);
+    currentEditor.view.dispatch(transaction);
   }
 
   return {
     handled: transaction !== null,
-    startBadges: countNodes(editor, FUNCTION_START_NODE_TYPE),
-    endBadges: countNodes(editor, FUNCTION_END_NODE_TYPE),
-    mentions: countNodes(editor, 'mention'),
-    badges: listBadges(editor),
-    visibleText: editor.state.doc.textContent.split(ZWS_CHAR).join(''),
+    startBadges: countNodes(currentEditor, FUNCTION_START_NODE_TYPE),
+    endBadges: countNodes(currentEditor, FUNCTION_END_NODE_TYPE),
+    mentions: countNodes(currentEditor, 'mention'),
+    badges: listBadges(currentEditor),
+    visibleText: currentEditor.state.doc.textContent.split(ZWS_CHAR).join(''),
+    serialize: () =>
+      textMentionUtils.convertTiptapJsonToText(currentEditor.getJSON()),
   };
 }
 
@@ -280,6 +287,19 @@ describe('formula backspace just inside the opening bracket (GIT-1704)', () => {
       `${FUNCTION_END_NODE_TYPE}:${FN_ID}`,
     ]);
     expect(result.visibleText).toBe('inner tail');
+  });
+
+  it('pairs with the closer the serializer pairs with when an orphan closer is nested', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(`${ZWS_CHAR}arg`),
+      functionEnd(ORPHAN_FN_ID),
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.startBadges).toBe(0);
+    expect(result.endBadges).toBe(1);
+    expect(result.serialize()).toBe('arg)');
   });
 
   it('deletes only the badge of an unclosed formula', () => {
