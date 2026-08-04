@@ -11,12 +11,22 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Route, TriangleAlert } from 'lucide-react';
+import { useState } from 'react';
 import { useForm, UseFormReturn, useWatch } from 'react-hook-form';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Form, FormMessage } from '@/components/ui/form';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { AIModelSelector } from '@/features/agents/ai-model';
 import { TIER_CONFIG } from '@/features/agents/tier-config';
 import {
@@ -28,17 +38,54 @@ import { cn } from '@/lib/utils';
 
 export function ModelRoutingSection() {
   const { data, refetch } = aiRoutingQueries.useAiRouting();
+  const [open, setOpen] = useState(false);
 
   if (isNil(data)) {
     return null;
   }
 
   return (
-    <ModelRoutingForm
-      key={routingSignature(data)}
-      routing={data}
-      onSaved={() => refetch()}
-    />
+    <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted shrink-0">
+        <Route className="size-4 text-muted-foreground" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium leading-none flex items-center gap-2">
+          {t('Model Routing')}
+          {data.isDefault && (
+            <Badge variant="outline">{t('Using defaults')}</Badge>
+          )}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {t(
+            'Each tier runs its Main model and falls over to Backup 1, then Backup 2, when a provider fails. Backups must support everything the Main model supports.',
+          )}
+        </p>
+      </div>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        {t('Configure')}
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t('Model Routing')}</DialogTitle>
+            <DialogDescription>
+              {t(
+                'Each tier runs its Main model and falls over to Backup 1, then Backup 2, when a provider fails. Backups must support everything the Main model supports.',
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <ModelRoutingForm
+            key={open ? routingSignature(data) : 'closed'}
+            routing={data}
+            onSaved={() => {
+              refetch();
+              setOpen(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
@@ -87,35 +134,20 @@ function ModelRoutingForm({
           form.clearErrors('root.serverError');
           upsertRouting(request);
         })}
-        className="flex flex-col gap-4 mb-6"
+        className="flex flex-col gap-3"
       >
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted shrink-0">
-            <Route className="size-4 text-muted-foreground" />
+        <ScrollArea className="max-h-[55vh] pr-3" type="auto">
+          <div className="flex flex-col gap-4">
+            {AI_ROUTING_TIER_IDS.map((tierId) => (
+              <TierCard
+                key={tierId}
+                tierId={tierId}
+                form={form}
+                issues={issues.filter((issue) => issue.tierId === tierId)}
+              />
+            ))}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium leading-none flex items-center gap-2">
-              {t('Model Routing')}
-              {routing.isDefault && (
-                <Badge variant="outline">{t('Using defaults')}</Badge>
-              )}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t(
-                'Each tier runs its Main model and falls over to Backup 1, then Backup 2, when a provider fails. Backups must support everything the Main model supports.',
-              )}
-            </p>
-          </div>
-        </div>
-
-        {AI_ROUTING_TIER_IDS.map((tierId) => (
-          <TierCard
-            key={tierId}
-            tierId={tierId}
-            form={form}
-            issues={issues.filter((issue) => issue.tierId === tierId)}
-          />
-        ))}
+        </ScrollArea>
 
         {form.formState.errors.root?.serverError && (
           <FormMessage>
@@ -123,37 +155,41 @@ function ModelRoutingForm({
           </FormMessage>
         )}
 
-        <div className="flex items-center justify-end gap-3">
-          {saveBlocked && form.formState.isDirty && (
-            <p className="text-xs text-muted-foreground">
-              {t('Fix the highlighted slots to save')}
-            </p>
-          )}
-          {!routing.isDefault && (
-            <ConfirmationDeleteDialog
-              title={t('Reset to defaults')}
-              message={t(
-                'This removes your custom model routing and falls back to the defaults derived from your chat provider.',
-              )}
-              entityName={t('Model Routing')}
-              buttonText={t('Reset')}
-              mutationFn={async () => {
-                await resetRouting();
-              }}
+        <DialogFooter className="items-center gap-3 sm:justify-between">
+          <div>
+            {!routing.isDefault && (
+              <ConfirmationDeleteDialog
+                title={t('Reset to defaults')}
+                message={t(
+                  'This removes your custom model routing and falls back to the defaults derived from your chat provider.',
+                )}
+                entityName={t('Model Routing')}
+                buttonText={t('Reset')}
+                mutationFn={async () => {
+                  await resetRouting();
+                }}
+              >
+                <Button variant="outline" type="button">
+                  {t('Reset to defaults')}
+                </Button>
+              </ConfirmationDeleteDialog>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            {saveBlocked && form.formState.isDirty && (
+              <p className="text-xs text-muted-foreground">
+                {t('Fix the highlighted slots to save')}
+              </p>
+            )}
+            <Button
+              type="submit"
+              disabled={!form.formState.isDirty || saveBlocked}
+              loading={isPending}
             >
-              <Button variant="outline" type="button">
-                {t('Reset to defaults')}
-              </Button>
-            </ConfirmationDeleteDialog>
-          )}
-          <Button
-            type="submit"
-            disabled={!form.formState.isDirty || saveBlocked}
-            loading={isPending}
-          >
-            {t('Save')}
-          </Button>
-        </div>
+              {t('Save')}
+            </Button>
+          </div>
+        </DialogFooter>
       </form>
     </Form>
   );
