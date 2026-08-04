@@ -409,6 +409,7 @@ import { AddUserChatMemory1817000000000 } from './migration/postgres/18170000000
 import { AddAutumnBillingColumnsToPlatformPlan1818000000000 } from './migration/postgres/1818000000000-AddAutumnBillingColumnsToPlatformPlan'
 import { AddFieldPosition1818000000000 } from './migration/postgres/1818000000000-AddFieldPosition'
 import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
+import { AddAgentConversationSource1819000000000 } from './migration/postgres/1819000000000-AddAgentConversationSource'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -833,6 +834,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAutumnBillingColumnsToPlatformPlan1818000000000,
         AddFieldPosition1818000000000,
         DropPieceTags1819000000000,
+        AddAgentConversationSource1819000000000,
     ]
     return migrations
 }

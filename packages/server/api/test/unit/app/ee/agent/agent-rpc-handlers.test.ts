@@ -176,3 +176,31 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
         expect(mockTrack).toHaveBeenCalledTimes(1)
     })
 })
+
+async function callExecuteAgentTool(input: { toolName: string, source: string }): Promise<unknown> {
+    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+    return agentRpcHandlers(noopLogger as never).executeAgentTool({
+        toolName: input.toolName,
+        toolInput: {},
+        platformId: 'plat-1',
+        userId: 'user-1',
+        source: input.source as never,
+    })
+}
+
+describe('agentRpcHandlers.executeAgentTool — chat-only tools are refused off the chat surface', () => {
+    it.each(['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection', '__flow_write_check'])(
+        'refuses %s for a FLOW_STEP run',
+        async (toolName) => {
+            await expect(callExecuteAgentTool({ toolName, source: 'FLOW_STEP' })).rejects.toThrow()
+        },
+    )
+
+    it('refuses an unknown __ tool too, so a new one is never exposed by default', async () => {
+        await expect(callExecuteAgentTool({ toolName: '__some_future_tool', source: 'FLOW_STEP' })).rejects.toThrow()
+    })
+
+    it('lets a CHAT run through to the normal handler', async () => {
+        await expect(callExecuteAgentTool({ toolName: '__cancel_check', source: 'CHAT' })).resolves.toEqual({ result: false })
+    })
+})
