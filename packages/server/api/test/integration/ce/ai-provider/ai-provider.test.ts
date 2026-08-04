@@ -269,4 +269,39 @@ describe('AI Providers API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
+
+    describe('DELETE /v1/ai-providers/routing (reset)', () => {
+        const openAiSlot = { provider: AIProviderName.OPENAI, modelId: 'gpt-4.1' }
+        const openAiTier = { main: openAiSlot, backup1: openAiSlot, backup2: openAiSlot }
+        const tiers = { fast: openAiTier, smart: openAiTier, premium: openAiTier }
+
+        it('removes the saved routing so GET falls back to derived defaults', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.OPENAI,
+            })
+
+            const upsertResponse = await ctx.post('/v1/ai-providers/routing', { tiers })
+            expect(upsertResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(upsertResponse?.json().isDefault).toBe(false)
+
+            const deleteResponse = await ctx.delete('/v1/ai-providers/routing')
+            expect(deleteResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(deleteResponse?.json().isDefault).toBe(true)
+
+            const getResponse = await ctx.get('/v1/ai-providers/routing')
+            expect(getResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(getResponse?.json().isDefault).toBe(true)
+        })
+
+        it('forbids a non-admin platform member from resetting routing', async () => {
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.VIEWER,
+            })
+
+            const response = await memberCtx.delete('/v1/ai-providers/routing')
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
 })

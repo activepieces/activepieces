@@ -1,4 +1,5 @@
 export { aiProviderApi } from './api/ai-provider-api';
+export { aiRoutingApi } from './api/ai-routing-api';
 export { aiToolConfigApi } from './api/ai-tool-config-api';
 export { analyticsApi } from './api/analytics-api';
 export { apiKeyApi } from './api/api-key-api';
@@ -38,6 +39,11 @@ export {
   aiProviderKeys,
   hasAnyAuthFieldFilled,
 } from './hooks/ai-provider-hooks';
+export {
+  aiRoutingQueries,
+  aiRoutingMutations,
+  aiRoutingKeys,
+} from './hooks/ai-routing-hooks';
 export {
   aiToolConfigQueries,
   aiToolConfigMutations,

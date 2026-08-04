@@ -26,6 +26,12 @@ export const aiModelRoutingService = (log: FastifyBaseLogger) => ({
         return { tiers: request.tiers, isDefault: false }
     },
 
+    async delete({ platformId }: { platformId: string }): Promise<GetAiRoutingResponse> {
+        await routingRepo().delete({ platformId })
+        const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
+        return { tiers: deriveDefaultTiers({ chatProvider }), isDefault: true }
+    },
+
     async resolveChain({ platformId, tierId }: { platformId: string, tierId: AiRoutingTierId }): Promise<ResolvedRoutingSlot[]> {
         const row = await routingRepo().findOneBy({ platformId })
         if (isNil(row)) {
