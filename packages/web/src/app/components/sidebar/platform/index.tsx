@@ -1,5 +1,6 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
+import { TriangleAlert } from 'lucide-react';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -42,6 +43,7 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +54,7 @@ export function PlatformSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
+  const { data: user } = userHooks.useCurrentUser();
   const defaultRoute = determineDefaultRoute({
     checkAccess,
     chatEnabled: platform.plan.chatEnabled,
@@ -146,6 +149,15 @@ export function PlatformSidebar() {
           label: t('Connections'),
           icon: UnplugIcon,
         },
+        ...(edition === ApEdition.CLOUD && platform.ownerId === user?.id
+          ? [
+              {
+                to: '/platform/danger-zone',
+                label: t('Danger Zone'),
+                icon: TriangleAlert,
+              },
+            ]
+          : []),
       ],
     },
     {

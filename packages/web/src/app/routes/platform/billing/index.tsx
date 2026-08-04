@@ -32,9 +32,6 @@ import {
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { userHooks } from '@/hooks/user-hooks';
-
-import { DeletePlatformCard } from './delete-platform-card';
 
 export default function Billing() {
   return (
@@ -61,7 +58,6 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
     useCancelSubscriptionGuard();
   const { mutate: refreshBilling, isPending: isRefreshing } =
     billingMutations.useRefreshSubscription();
-  const { data: user } = userHooks.useCurrentUser();
 
   const isCloud = edition === ApEdition.CLOUD;
   const [licenseKeyRevealed, setLicenseKeyRevealed] = useState(false);
@@ -272,30 +268,6 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
                 platform={platform}
                 isSelfHosted={edition === ApEdition.ENTERPRISE}
               />
-            </BillingSection>
-          </>
-        )}
-
-        {isCloud && platform.ownerId === user?.id && (
-          <>
-            <Separator />
-            <BillingSection
-              title={t('Delete platform')}
-              description={t(
-                'Close this platform for everyone on it. Members lose access immediately and the data is erased a week later.',
-              )}
-            >
-              {isPaid ? (
-                <Alert variant="warning">
-                  <AlertDescription>
-                    {t(
-                      'Cancel your subscription before deleting this platform.',
-                    )}
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <DeletePlatformCard platformName={platform.name} />
-              )}
             </BillingSection>
           </>
         )}

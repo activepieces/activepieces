@@ -9,6 +9,7 @@ import { PlatformLayout } from '../components/platform-layout';
 
 const SettingsBilling = React.lazy(() => import('./platform/billing'));
 const SettingsUsage = React.lazy(() => import('./platform/usage'));
+const DangerZonePage = React.lazy(() => import('./platform/danger-zone'));
 const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
@@ -253,6 +254,18 @@ export const platformRoutes = [
         <PageTitle title="Usage">
           <SuspenseWrapper>
             <SettingsUsage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/danger-zone',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Danger Zone">
+          <SuspenseWrapper>
+            <DangerZonePage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

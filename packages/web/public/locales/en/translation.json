@@ -2451,9 +2451,10 @@
   "Platform name is incorrect": "Platform name is incorrect",
   "Type the platform name to delete it, including every flow, connection, agent, table and project it holds.": "Type the platform name to delete it, including every flow, connection, agent, table and project it holds.",
   "Delete Platform": "Delete Platform",
-  "Delete platform": "Delete platform",
   "Close this platform for everyone on it. Members lose access immediately and the data is erased a week later.": "Close this platform for everyone on it. Members lose access immediately and the data is erased a week later.",
   "Cancel your subscription before deleting this platform.": "Cancel your subscription before deleting this platform.",
   "Platform deleted successfully": "Platform deleted successfully",
-  "Failed to delete platform. Please try again.": "Failed to delete platform. Please try again."
+  "Failed to delete platform. Please try again.": "Failed to delete platform. Please try again.",
+  "Danger Zone": "Danger Zone",
+  "Irreversible actions that affect your whole platform.": "Irreversible actions that affect your whole platform."
 }
