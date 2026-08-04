@@ -185,6 +185,8 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
                 }
 
+                mcpUtils.emitFlowCreated({ log, mcp, userId, platformId, flow: currentFlow })
+
                 const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
                 const validCount = allSteps.filter(s => s.valid).length
                 const invalidSteps = allSteps.filter(s => !s.valid).map(s => s.name)

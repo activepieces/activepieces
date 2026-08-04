@@ -1,5 +1,5 @@
 import { ApId, Permission, PlatformUsageMetric, SeekPage } from '@activepieces/core-utils'
-import { ApplicationEventName, CountFlowsRequest, CreateFlowRequest, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
+import { CountFlowsRequest, CreateFlowRequest, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -11,9 +11,9 @@ import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-r
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { projectLimitsService } from '../../ee/projects/project-plan/project-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
-import { applicationEvents } from '../../helper/application-events'
 import { userService } from '../../user/user-service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
+import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
@@ -29,11 +29,9 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             templateId: request.body.templateId,
         })
 
-        applicationEvents(request.log).sendUserEvent(request, {
-            action: ApplicationEventName.FLOW_CREATED,
-            data: {
-                flow: newFlow,
-            },
+        flowSideEffects(request.log).onCreated({
+            source: request,
+            flow: newFlow,
         })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
@@ -103,28 +101,13 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
             operation: cleanOperation(request.body),
         })
-        applicationEvents(request.log).sendUserEvent(request, {
-            action: ApplicationEventName.FLOW_UPDATED,
-            data: {
-                flow: {
-                    id: updatedFlow.id,
-                    externalId: updatedFlow.externalId,
-                    created: updatedFlow.created,
-                    updated: updatedFlow.updated,
-                },
-                request: request.body,
-                flowVersion: flow.version,
-            },
+        flowSideEffects(request.log).onOperationApplied({
+            source: request,
+            flow: updatedFlow,
+            previousVersion: flow.version,
+            previousStatus: flow.status,
+            operation: request.body,
         })
-        for (const action of pickLifecycleActions({ operation: request.body, previousStatus: flow.status })) {
-            applicationEvents(request.log).sendUserEvent(request, {
-                action,
-                data: {
-                    flow: updatedFlow,
-                    flowVersion: updatedFlow.version,
-                },
-            })
-        }
         return updatedFlow
     })
 
@@ -186,41 +169,12 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             id: request.params.id,
             projectId: request.projectId,
         })
-        applicationEvents(request.log).sendUserEvent(request, {
-            action: ApplicationEventName.FLOW_DELETED,
-            data: {
-                flow,
-                flowVersion: flow.version,
-            },
+        flowSideEffects(request.log).onDeleted({
+            source: request,
+            flow,
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
-}
-
-function pickLifecycleActions({ operation, previousStatus }: PickLifecycleActionsParams): ApplicationEventName[] {
-    if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
-        const actions: ApplicationEventName[] = [ApplicationEventName.FLOW_PUBLISHED]
-        const newStatus = operation.request.status ?? FlowStatus.ENABLED
-        const transitionAction = pickTransitionAction({ previousStatus, newStatus })
-        if (transitionAction) {
-            actions.push(transitionAction)
-        }
-        return actions
-    }
-    if (operation.type === FlowOperationType.CHANGE_STATUS) {
-        const transitionAction = pickTransitionAction({ previousStatus, newStatus: operation.request.status })
-        return transitionAction ? [transitionAction] : []
-    }
-    return []
-}
-
-function pickTransitionAction({ previousStatus, newStatus }: PickTransitionActionParams): ApplicationEventName | undefined {
-    if (newStatus === previousStatus) {
-        return undefined
-    }
-    return newStatus === FlowStatus.ENABLED
-        ? ApplicationEventName.FLOW_ACTIVATED
-        : ApplicationEventName.FLOW_DEACTIVATED
 }
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
@@ -369,14 +323,4 @@ const DeleteFlowRequestOptions = {
             [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
-}
-
-type PickLifecycleActionsParams = {
-    operation: FlowOperationRequest
-    previousStatus: FlowStatus
-}
-
-type PickTransitionActionParams = {
-    previousStatus: FlowStatus
-    newStatus: FlowStatus
 }

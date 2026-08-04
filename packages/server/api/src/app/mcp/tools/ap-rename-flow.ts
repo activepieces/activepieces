@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowOperationRequest, FlowOperationType, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FlowOperationRequest, FlowOperationType, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -11,7 +11,7 @@ const renameFlowInput = z.object({
     displayName: z.string(),
 })
 
-export const apRenameFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apRenameFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_rename_flow',
         permission: Permission.WRITE_FLOW,
@@ -38,13 +38,14 @@ export const apRenameFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             }
 
             try {
-                await flowService(log).update({
+                const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,
                 })
+                mcpUtils.emitFlowOperation({ log, mcp, userId, platformId: project.platformId, updatedFlow, previousFlow: flow, operation })
                 return {
                     content: [{ type: 'text', text: `✅ Flow renamed to "${displayName}".` }],
                 }

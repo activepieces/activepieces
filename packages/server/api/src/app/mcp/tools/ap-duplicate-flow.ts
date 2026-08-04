@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowCreatorType, FlowOperationType, McpToolContext, McpToolDefinition } from '@activepieces/shared'
+import { FlowCreatorType, FlowOperationRequest, FlowOperationType, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -46,21 +46,23 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
                 })
 
                 try {
+                    const operation: FlowOperationRequest = {
+                        type: FlowOperationType.IMPORT_FLOW,
+                        request: {
+                            displayName,
+                            trigger: sourceFlow.version.trigger,
+                            schemaVersion: sourceFlow.version.schemaVersion ?? null,
+                            notes: sourceFlow.version.notes ?? null,
+                        },
+                    }
                     const updatedFlow = await flowService(log).update({
                         id: newFlow.id,
                         projectId: mcp.projectId,
                         userId: null,
                         platformId: project.platformId,
-                        operation: {
-                            type: FlowOperationType.IMPORT_FLOW,
-                            request: {
-                                displayName,
-                                trigger: sourceFlow.version.trigger,
-                                schemaVersion: sourceFlow.version.schemaVersion ?? null,
-                                notes: sourceFlow.version.notes ?? null,
-                            },
-                        },
+                        operation,
                     })
+                    mcpUtils.emitFlowCreated({ log, mcp, userId, platformId: project.platformId, flow: updatedFlow })
 
                     return {
                         content: [{
