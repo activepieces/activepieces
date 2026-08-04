@@ -158,9 +158,13 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             agentHelpers.getUserMemory({ platformId, userId }),
         ])
 
-        const attachmentProjectId = (conversation.projectId && userProjects.some((p) => p.id === conversation.projectId))
+        const scopedProjects = conversation.source === AgentRunSource.FLOW_STEP
+            ? userProjects.filter((p) => p.id === conversation.projectId)
+            : userProjects
+
+        const attachmentProjectId = (conversation.projectId && scopedProjects.some((p) => p.id === conversation.projectId))
             ? conversation.projectId
-            : userProjects[0]?.id
+            : scopedProjects[0]?.id
         const attachmentRefs = files && files.length > 0 && !isNil(attachmentProjectId)
             ? await persistAgentAttachments({ files, projectId: attachmentProjectId, platformId, log })
             : []
@@ -188,14 +192,14 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const candidateProjectId = conversation.projectId ?? null
-        const validCandidateProjectId = candidateProjectId && userProjects.some((p) => p.id === candidateProjectId)
+        const validCandidateProjectId = candidateProjectId && scopedProjects.some((p) => p.id === candidateProjectId)
             ? candidateProjectId
             : null
         // Default to the user's first project when none is chosen so the agent never hits a cold
         // "No project selected" on the first data tool. The chat MCP server resolves its project
         // from conversation.projectId per request, so persist it (the user can switch via the
         // dropdown / ap_select_project, which overwrites this).
-        const selectedProjectId = validCandidateProjectId ?? userProjects[0]?.id ?? null
+        const selectedProjectId = validCandidateProjectId ?? scopedProjects[0]?.id ?? null
         if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
             await agentHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
@@ -231,7 +235,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         const systemPromptText = agentPrompt.buildSystemPrompt({
-            projects: userProjects,
+            projects: scopedProjects,
             currentProjectId: selectedProjectId,
             frontendUrl,
             templates: promptOverride,
@@ -325,7 +329,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             mcpCredentials: mcpCredentials.mcpServerUrl && mcpCredentials.mcpToken
                 ? { mcpServerUrl: mcpCredentials.mcpServerUrl, mcpToken: mcpCredentials.mcpToken }
                 : null,
-            projects: userProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
+            projects: scopedProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
             guides,
             aiTools,
             emailEnabled,
@@ -440,6 +444,14 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async updateProjectContext(input: UpdateProjectContextRequest): Promise<void> {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        if (conversation?.source === AgentRunSource.FLOW_STEP && input.projectId !== conversation.projectId) {
+            log.error({ conversation: { id: input.conversationId }, project: { id: input.projectId } }, '[agentRpc#updateProjectContext] Refused a project switch on a flow-step run')
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: { message: 'A flow-step agent run cannot move to another project' },
+            })
+        }
         await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates: { projectId: input.projectId } })
         log.info({ conversation: { id: input.conversationId }, project: input.projectId ? { id: input.projectId } : undefined }, '[agentRpc#updateProjectContext] Project context updated')
     },

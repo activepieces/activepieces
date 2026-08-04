@@ -159,3 +159,37 @@ describe('agentRpcHandlers.executeAgentTool — chat-only tools are refused off 
         await expect(callExecuteAgentTool({ toolName: '__cancel_check', source: 'CHAT' })).resolves.toEqual({ result: false })
     })
 })
+
+async function callUpdateProjectContext(input: { conversationId: string, runId?: string, projectId: string | null }): Promise<void> {
+    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+    await agentRpcHandlers(noopLogger as never).updateProjectContext(input as never)
+}
+
+describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its own project', () => {
+    beforeEach(() => {
+        mockSet.mockClear()
+    })
+
+    it('refuses to move a flow-step run to another project', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        await expect(callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })).rejects.toThrow()
+        expect(mockSet).not.toHaveBeenCalled()
+    })
+
+    it('allows a flow-step run to reaffirm the project it already belongs to', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-own' })
+
+        expect(mockSet).toHaveBeenCalled()
+    })
+
+    it('leaves chat runs free to switch project, which is a feature there', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'CHAT', projectId: 'proj-own' })
+
+        await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })
+
+        expect(mockSet).toHaveBeenCalled()
+    })
+})
