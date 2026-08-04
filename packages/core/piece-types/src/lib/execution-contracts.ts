@@ -11,9 +11,9 @@ import { TriggerStrategy } from './trigger'
 export const STORE_KEY_MAX_LENGTH = 128
 
 // ── piece version patterns ─────────────────────────────────────────────────
-export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
+export const EXACT_VERSION_PATTERN = '^([0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?)$'
 export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
-const VERSION_PATTERN = '^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$'
+const VERSION_PATTERN = '^([~^])?([0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?)$'
 
 export const ExactVersionType = z.string().check(z.regex(new RegExp(EXACT_VERSION_PATTERN)))
 export const VersionType = z.string().check(z.regex(new RegExp(VERSION_PATTERN)))

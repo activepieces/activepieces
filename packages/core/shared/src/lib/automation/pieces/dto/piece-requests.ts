@@ -3,9 +3,9 @@ import { z } from 'zod'
 import { ApEdition } from '../../../core/flag/flag'
 import { PackageType, PieceCategory } from '../piece'
 
-export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
+export const EXACT_VERSION_PATTERN = '^([0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?)$'
 export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
-const VERSION_PATTERN = '^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$'
+const VERSION_PATTERN = '^([~^])?([0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?)$'
 
 export const ExactVersionType = z.string().regex(new RegExp(EXACT_VERSION_PATTERN))
 
@@ -116,4 +116,3 @@ export const AddPieceRequestBody = z.union([
 ])
 
 export type AddPieceRequestBody = z.infer<typeof AddPieceRequestBody>
-
