@@ -1,0 +1,18 @@
+{
+  "Upload files and get instant public CDN URLs on Cloudflare global edge.": "Upload files and get instant public CDN URLs on Cloudflare global edge.",
+  "Create an API key at [Drop to CDN → Settings → API keys](https://droptocdn.com/dashboard/settings). Keys start with `dtc_`.": "Create an API key at [Drop to CDN → Settings → API keys](https://droptocdn.com/dashboard/settings). Keys start with `dtc_`.",
+  "Upload File": "Upload File",
+  "Get File Information": "Get File Information",
+  "Delete File": "Delete File",
+  "Upload a file to Drop to CDN and get a public CDN URL.": "Upload a file to Drop to CDN and get a public CDN URL.",
+  "Get CDN URL and metadata for a file by ID.": "Get CDN URL and metadata for a file by ID.",
+  "Permanently delete a file by ID. This action cannot be undone.": "Permanently delete a file by ID. This action cannot be undone.",
+  "File": "File",
+  "The file to upload (upload directly or provide a URL).": "The file to upload (upload directly or provide a URL).",
+  "Retention (days)": "Retention (days)",
+  "Paid plans only. Leave empty to use your plan default (30 days on Free).": "Paid plans only. Leave empty to use your plan default (30 days on Free).",
+  "Never expire": "Never expire",
+  "Paid plans only. Skip automatic expiration for this file.": "Paid plans only. Skip automatic expiration for this file.",
+  "File ID": "File ID",
+  "The file ID from Upload File or your Drop to CDN dashboard.": "The file ID from Upload File or your Drop to CDN dashboard."
+}
