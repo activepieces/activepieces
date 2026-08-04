@@ -15,7 +15,7 @@ function createJudge({ provider, modelId, auth }: {
         const { text } = await generateText({
             model,
             temperature: 0,
-            system: JUDGE_SYSTEM,
+            instructions: JUDGE_SYSTEM,
             prompt: `Dimension: ${dimension}\nPass criterion: ${rubric}\n\n--- TRANSCRIPT START ---\n${transcript}\n--- TRANSCRIPT END ---`,
         })
         const lines = text.trim().split('\n')

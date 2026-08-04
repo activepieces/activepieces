@@ -1,4 +1,4 @@
-# pieces-call-rounded
+# pieces-rounded-studio
 
 ## Building
 

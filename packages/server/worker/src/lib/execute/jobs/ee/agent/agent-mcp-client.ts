@@ -52,7 +52,7 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     return { mcpClient: client, mcpToolSet }
 }
 
-function hasExecute(tool: object): tool is object & { execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown> } {
+function hasExecute(tool: object): tool is object & { execute: (args: unknown, options?: ToolExecutionOptions<undefined>) => Promise<unknown> } {
     return 'execute' in tool && typeof tool.execute === 'function'
 }
 
@@ -197,7 +197,7 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
         const toolConnectorUuid = parseConnectorUuid(name)
 
         result[name] = Object.assign({}, tool, {
-            execute: async (rawArgs: unknown, options?: ToolExecutionOptions) => {
+            execute: async (rawArgs: unknown, options?: ToolExecutionOptions<undefined>) => {
                 const args = injectSelectedAuth({ name, args: rawArgs, getSelectedAuth })
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
