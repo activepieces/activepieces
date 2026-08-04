@@ -79,17 +79,17 @@ function posAfterFirstFunctionStart(currentEditor: Editor): number {
   return pos;
 }
 
-function listBadgeTypes(currentEditor: Editor): string[] {
-  const types: string[] = [];
+function listBadges(currentEditor: Editor): string[] {
+  const badges: string[] = [];
   currentEditor.state.doc.descendants((node) => {
-    if (
-      node.type.name === FUNCTION_START_NODE_TYPE ||
-      node.type.name === FUNCTION_END_NODE_TYPE
-    ) {
-      types.push(node.type.name);
+    if (node.type.name === FUNCTION_START_NODE_TYPE) {
+      badges.push(`${FUNCTION_START_NODE_TYPE}:${String(node.attrs.id)}`);
+    }
+    if (node.type.name === FUNCTION_END_NODE_TYPE) {
+      badges.push(`${FUNCTION_END_NODE_TYPE}:${String(node.attrs.openId)}`);
     }
   });
-  return types;
+  return badges;
 }
 
 function countNodes(currentEditor: Editor, typeName: string): number {
@@ -128,7 +128,7 @@ function backspaceJustInsideBracket(content: JSONContent[]) {
     startBadges: countNodes(editor, FUNCTION_START_NODE_TYPE),
     endBadges: countNodes(editor, FUNCTION_END_NODE_TYPE),
     mentions: countNodes(editor, 'mention'),
-    badgeOrder: listBadgeTypes(editor),
+    badges: listBadges(editor),
     visibleText: editor.state.doc.textContent.split(ZWS_CHAR).join(''),
   };
 }
@@ -239,11 +239,47 @@ describe('formula backspace just inside the opening bracket (GIT-1704)', () => {
       functionEnd(FN_ID),
     ]);
 
-    expect(result.badgeOrder).toEqual([
-      FUNCTION_START_NODE_TYPE,
-      FUNCTION_END_NODE_TYPE,
+    expect(result.badges).toEqual([
+      `${FUNCTION_START_NODE_TYPE}:${FN_ID}`,
+      `${FUNCTION_END_NODE_TYPE}:${FN_ID}`,
     ]);
     expect(result.visibleText).toBe('first second');
+  });
+
+  it('leaves the inner pair matched when unwrapping around a nested formula', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(ZWS_CHAR),
+      functionStart(NESTED_FN_ID, 'trim'),
+      text(`${ZWS_CHAR}inner`),
+      functionEnd(NESTED_FN_ID),
+      text(' tail'),
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.badges).toEqual([
+      `${FUNCTION_START_NODE_TYPE}:${NESTED_FN_ID}`,
+      `${FUNCTION_END_NODE_TYPE}:${NESTED_FN_ID}`,
+    ]);
+    expect(result.visibleText).toBe('inner tail');
+  });
+
+  it('unwraps the outer pair when a formula is pasted inside itself', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(ZWS_CHAR),
+      functionStart(FN_ID, 'uppercase'),
+      text(`${ZWS_CHAR}inner`),
+      functionEnd(FN_ID),
+      text(' tail'),
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.badges).toEqual([
+      `${FUNCTION_START_NODE_TYPE}:${FN_ID}`,
+      `${FUNCTION_END_NODE_TYPE}:${FN_ID}`,
+    ]);
+    expect(result.visibleText).toBe('inner tail');
   });
 
   it('deletes only the badge of an unclosed formula', () => {

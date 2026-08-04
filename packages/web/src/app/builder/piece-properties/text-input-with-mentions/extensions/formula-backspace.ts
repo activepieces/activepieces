@@ -23,11 +23,7 @@ export function getFormulaBackspaceTransaction({
   }
 
   const startPos = from - nodeBefore.nodeSize;
-  const endPos = findFunctionEndPos({
-    doc: state.doc,
-    openId: nodeBefore.attrs.id,
-    after: from,
-  });
+  const endPos = findFunctionEndPos({ doc: state.doc, from });
 
   if (endPos < from) return state.tr.delete(startPos, from);
 
@@ -40,23 +36,22 @@ export function getFormulaBackspaceTransaction({
 
 function findFunctionEndPos({
   doc,
-  openId,
-  after,
+  from,
 }: {
   doc: ProseMirrorNode;
-  openId: unknown;
-  after: number;
+  from: number;
 }): number {
   let endPos = -1;
-  doc.descendants((node, pos) => {
-    if (
-      endPos < 0 &&
-      pos >= after &&
-      node.type.name === FUNCTION_END_NODE_TYPE &&
-      node.attrs.openId === openId
-    ) {
-      endPos = pos;
+  let openDepth = 0;
+  doc.nodesBetween(from, doc.resolve(from).end(), (node, pos) => {
+    if (endPos >= 0) return false;
+    if (node.type.name === FUNCTION_START_NODE_TYPE) {
+      openDepth++;
+    } else if (node.type.name === FUNCTION_END_NODE_TYPE) {
+      if (openDepth === 0) endPos = pos;
+      else openDepth--;
     }
+    return endPos < 0;
   });
   return endPos;
 }
