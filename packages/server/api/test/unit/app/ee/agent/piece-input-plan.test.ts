@@ -2,6 +2,7 @@ import { FieldControlMode } from '@activepieces/core-piece-types'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
+import { ActivepiecesError } from '@activepieces/core-utils'
 import { pieceInputPlan } from '../../../../../src/app/ee/agent/tools/piece-input-plan'
 
 function prop(overrides: Record<string, unknown>): Record<string, unknown> {
@@ -11,6 +12,8 @@ function prop(overrides: Record<string, unknown>): Record<string, unknown> {
 const props = (map: Record<string, unknown>): PiecePropertyMap => map as never
 
 const rejectDynamic = vi.fn(() => Promise.reject(new Error('no dynamic property expected here')))
+
+
 
 async function schemaFor(properties: PiecePropertyMap, propertyNames: string[], resolvedInput: Record<string, unknown> = {}): Promise<z.ZodObject> {
     return pieceInputPlan.schemaForWave({ properties, propertyNames, resolvedInput, resolveDynamic: rejectDynamic })
@@ -157,7 +160,7 @@ describe('pieceInputPlan.schemaForWave', () => {
     it('refuses to build a schema for a property the model must never fill', async () => {
         const properties = props({ secret: prop({ type: PropertyType.SECRET_TEXT, required: true }) })
 
-        await expect(schemaFor(properties, ['secret'])).rejects.toThrow(/never be asked to fill/)
+        await expect(schemaFor(properties, ['secret'])).rejects.toThrow(ActivepiecesError)
     })
 
     it('hands a dynamic property its name and the values resolved so far', async () => {
@@ -176,7 +179,6 @@ describe('pieceInputPlan.schemaForWave', () => {
 
         expect(resolveDynamic).toHaveBeenCalledWith({
             propertyName: 'fields',
-            property: properties.fields,
             resolvedInput: { workspace: 'W1' },
         })
         expect(schema.safeParse({ fields: { label: 'a' } }).success).toBe(true)
