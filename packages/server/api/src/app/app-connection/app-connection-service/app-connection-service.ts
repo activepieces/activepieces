@@ -1,4 +1,5 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
+import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
@@ -130,10 +131,19 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
         }
 
+        const storedMetadata = isNil(request.metadata)
+            ? undefined
+            : (await appConnectionsRepo().findOneByOrFail(filter)).metadata
+        const storedAccountIdentifier = storedMetadata?.['accountIdentifier']
+
         await appConnectionsRepo().update(filter, {
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
-            ...spreadIfDefined('metadata', request.metadata),
+            ...(isNil(request.metadata) ? {} : spreadIfDefined('metadata', mergeConnectionMetadata({
+                requestMetadata: request.metadata,
+                existingMetadata: storedMetadata,
+                accountIdentifier: typeof storedAccountIdentifier === 'string' ? storedAccountIdentifier : undefined,
+            }))),
             ...spreadIfDefined('preSelectForNewProjects', request.preSelectForNewProjects),
         })
 
@@ -812,6 +822,16 @@ const engineValidateAuth = async (
     }
 }
 
+// The hook is a function, so it cannot survive metadata serialization — without
+// the flag Piece.metadata() derives from it, every OAuth connect would pay a
+// sandbox round-trip to ask a piece that has nothing to answer with.
+const declaresConnectionIdentifier = (auth: PieceMetadata['auth']): boolean => {
+    if (isNil(auth)) {
+        return false
+    }
+    return (Array.isArray(auth) ? auth : [auth]).some((single) => single.hasConnectionIdentifier === true)
+}
+
 // Unlike engineValidateAuth this is best-effort: resolving a display label must
 // never fail — or delay — the connection upsert, so any error/failure collapses
 // to undefined and the engine round-trip is capped by RESOLVE_IDENTIFIER_TIMEOUT_MS
@@ -833,6 +853,10 @@ const engineResolveConnectionIdentifier = async (
             version: undefined,
             platformId,
         })
+        if (!declaresConnectionIdentifier(pieceMetadata.auth)) {
+            log.debug({ piece: { name: pieceName, version: pieceMetadata.version } }, 'Piece auth declares no getConnectionIdentifier, skipping engine round-trip')
+            return undefined
+        }
         const enginePromise = userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteResolveConnectionIdentifierResponse>>({
             piece: await getPiecePackageWithoutArchive(log, platformId, {
                 pieceName,

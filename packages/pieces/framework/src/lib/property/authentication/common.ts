@@ -3,7 +3,8 @@ import { ServerContext } from '../../context';
 
 export const BasePieceAuthSchema = z.object({
   displayName: z.string(),
-  description: z.optional(z.string())
+  description: z.optional(z.string()),
+  hasConnectionIdentifier: z.optional(z.boolean()),
 });
 
 export type BasePieceAuthSchema<AuthValueSchema> = {
@@ -20,4 +21,8 @@ export type BasePieceAuthSchema<AuthValueSchema> = {
   // (e.g. the account email, or Slack's "display-name (workspace)"), shown in
   // the UI so users can tell which account a connection belongs to. Best-effort.
   getConnectionIdentifier?: (params: { auth: AuthValueSchema; server: Omit<ServerContext, 'token'> }) => Promise<string | undefined>;
+  // Derived by Piece.metadata(), not authored: functions cannot survive metadata
+  // serialization, so the server has no other way to tell whether the hook above
+  // exists before paying for an engine round-trip.
+  hasConnectionIdentifier?: boolean;
 };

@@ -58,6 +58,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     ...isUserInteractionJob(data.jobType) ? {
                         attempts: 1,
                         removeOnComplete: { age: 300 },
+                        removeOnFail: true,
                     } : {},
                 })
             }

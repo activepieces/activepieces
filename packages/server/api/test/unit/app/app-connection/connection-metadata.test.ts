@@ -34,6 +34,16 @@ describe('mergeConnectionMetadata', () => {
             .toStrictEqual({ accountIdentifier: 'alice@corp.com' })
     })
 
+    it('carries the stored identifier through an update that supplies its own metadata', () => {
+        expect(mergeConnectionMetadata({ requestMetadata: { note: 'x' }, existingMetadata: { accountIdentifier: 'alice@corp.com' }, accountIdentifier: 'alice@corp.com' }))
+            .toStrictEqual({ note: 'x', accountIdentifier: 'alice@corp.com' })
+    })
+
+    it('drops a forged identifier from an update while keeping the stored one', () => {
+        expect(mergeConnectionMetadata({ requestMetadata: { accountIdentifier: 'ceo@corp.com' }, existingMetadata: { accountIdentifier: 'alice@corp.com' }, accountIdentifier: 'alice@corp.com' }))
+            .toStrictEqual({ accountIdentifier: 'alice@corp.com' })
+    })
+
     it('prefers caller metadata over existing metadata', () => {
         expect(mergeConnectionMetadata({ requestMetadata: { note: 'new' }, existingMetadata: { note: 'old', pinned: true }, accountIdentifier: 'alice@corp.com' }))
             .toStrictEqual({ note: 'new', accountIdentifier: 'alice@corp.com' })
