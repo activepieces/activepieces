@@ -113,6 +113,15 @@ export const FunctionSlashExtension = Extension.create({
     return {};
   },
 
+  onBlur() {
+    const handler = handlerMap.get(this.editor);
+    if (!handler) return;
+
+    if (handler.getState().open) {
+      closeHandler(handler);
+    }
+  },
+
   onUpdate() {
     const handler = handlerMap.get(this.editor);
     if (!handler) return;
