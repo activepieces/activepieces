@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { BranchCondition, BranchExecutionType, FlowActionType, FlowOperationRequest, FlowOperationType, McpToolDefinition, ProjectScopedMcpServer, RouterActionSettings } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, FlowActionType, FlowOperationRequest, FlowOperationType, McpToolContext, McpToolDefinition, RouterActionSettings } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -14,7 +14,7 @@ const updateBranchInput = z.object({
     conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional(),
 })
 
-export const apUpdateBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateBranchTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_branch',
         permission: Permission.WRITE_FLOW,
@@ -108,6 +108,7 @@ export const apUpdateBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     platformId: project.platformId,
                     operation,
                 })
+                mcpUtils.emitFlowOperation({ log, mcp, userId, platformId: project.platformId, updatedFlow, previousFlow: flow, operation })
 
                 const updatedParts: string[] = []
                 if (branchName !== undefined) updatedParts.push(`name → "${branchName}"`)

@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowOperationRequest, FlowOperationType, FlowTriggerType, McpToolDefinition, PieceTrigger, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FlowOperationRequest, FlowOperationType, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -16,7 +16,7 @@ const updateTriggerInput = z.object({
     displayName: z.string().optional(),
 })
 
-export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_trigger',
         permission: Permission.WRITE_FLOW,
@@ -111,6 +111,7 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     platformId: project.platformId,
                     operation,
                 })
+                mcpUtils.emitFlowOperation({ log, mcp, userId, platformId: project.platformId, updatedFlow, previousFlow: flow, operation })
                 const trigger = updatedFlow.version.trigger
                 const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 if (!trigger.valid) {

@@ -26,6 +26,7 @@ export const apCreateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                         projectId: mcp.projectId,
                     },
                 })
+                mcpUtils.emitFlowCreated({ log, mcp, userId, platformId: await mcpUtils.resolvePlatformId({ mcp, log }), flow })
                 return {
                     content: [{
                         type: 'text',

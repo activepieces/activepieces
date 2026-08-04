@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -11,7 +11,7 @@ const deleteStepInput = z.object({
     stepName: z.string(),
 })
 
-export const apDeleteStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDeleteStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_step',
         permission: Permission.WRITE_FLOW,
@@ -51,13 +51,14 @@ export const apDeleteStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
             }
 
             try {
-                await flowService(log).update({
+                const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,
                 })
+                mcpUtils.emitFlowOperation({ log, mcp, userId, platformId: project.platformId, updatedFlow, previousFlow: flow, operation })
                 const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 return {
                     content: [{ type: 'text', text: `✅ Successfully deleted step "${stepName}" from flow.${draftWarning}` }],

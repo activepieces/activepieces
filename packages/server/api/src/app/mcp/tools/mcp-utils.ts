@@ -1,9 +1,10 @@
 import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, Flow, FlowActionType, FlowOperationRequest, flowStructureUtil, McpServerType, McpToolResult, PopulatedFlow, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { RouterAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
@@ -768,6 +769,30 @@ function rankActionsByIntent({ actions, forIntent }: { actions: RankableAction[]
 
 const INTENT_STOP_WORDS = new Set(['the', 'all', 'any', 'and', 'for', 'with', 'get', 'from', 'into', 'out', 'list', 'show', 'find', 'see', 'view', 'fetch', 'pull'])
 
+function emitFlowOperation({ log, mcp, userId, platformId, updatedFlow, previousFlow, operation }: EmitFlowOperationParams): void {
+    flowSideEffects(log).onOperationApplied({
+        source: { platformId, projectId: mcp.projectId, userId },
+        flow: updatedFlow,
+        previousVersion: previousFlow.version,
+        previousStatus: previousFlow.status,
+        operation,
+    })
+}
+
+function emitFlowCreated({ log, mcp, userId, platformId, flow }: EmitFlowCreatedParams): void {
+    flowSideEffects(log).onCreated({
+        source: { platformId, projectId: mcp.projectId, userId },
+        flow,
+    })
+}
+
+function emitFlowDeleted({ log, mcp, userId, platformId, flow }: EmitFlowDeletedParams): void {
+    flowSideEffects(log).onDeleted({
+        source: { platformId, projectId: mcp.projectId, userId },
+        flow,
+    })
+}
+
 export const mcpUtils = {
     classifyActionCardinality,
     rankActionsByIntent,
@@ -800,12 +825,36 @@ export const mcpUtils = {
     rewriteAllReferences,
     extractOptionsArray,
     executePropertyResolution,
+    emitFlowOperation,
+    emitFlowCreated,
+    emitFlowDeleted,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
 }
 
 export type { PropSummary }
+
+type EmitFlowEventParams = {
+    log: FastifyBaseLogger
+    mcp: ProjectScopedMcpServer
+    userId: string | undefined
+    platformId: string
+}
+
+type EmitFlowOperationParams = EmitFlowEventParams & {
+    updatedFlow: PopulatedFlow
+    previousFlow: PopulatedFlow
+    operation: FlowOperationRequest
+}
+
+type EmitFlowCreatedParams = EmitFlowEventParams & {
+    flow: Flow
+}
+
+type EmitFlowDeletedParams = EmitFlowEventParams & {
+    flow: PopulatedFlow
+}
 
 export type PropertyResolutionResult =
     | { status: 'options', options: Array<{ label: string, value: unknown }> }
