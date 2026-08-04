@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
@@ -13,7 +14,11 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     })
     app.get('/:provider/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService(app.log).getConfigOrThrow({ platformId, provider: request.params.provider })
+        const provider = request.params.provider
+        if (provider === AIProviderName.ACTIVEPIECES) {
+            await assertCreditsAndAppSumoNotExceeded({ platformId, log: app.log })
+        }
+        return aiProviderService(app.log).getConfigOrThrow({ platformId, provider })
     })
     app.get('/:provider/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id

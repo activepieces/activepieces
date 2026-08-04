@@ -1,18 +1,20 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/core-utils'
-import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, ApEdition, ApEnvironment, FlowOperationStatus, FlowStatus, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN, UserWithMetaInformation } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isEmpty, isNil, PlatformUsageMetric, SeekPage, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowStatus, isFreeLegacyEligible, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { getEnrollAttemptKey, getEntitlementsRefreshKey, getPlatformPlanNameKey, PLATFORM_PLAN_NAME_TTL_SECONDS } from '../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flowRepo } from '../../../flows/flow/flow.repo'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { platformService } from '../../../platform/platform.service'
+import { billingProvider } from '../../../platform/billing-provider'
+import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
-import { platformAiCreditsService } from './platform-ai-credits.service'
+import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
+import { platformProjectService } from '../../projects/platform-project-service'
 import { PlatformPlanEntity } from './platform-plan.entity'
-import { stripeHelper } from './stripe-helper'
 
 export const platformPlanRepo = repoFactory(PlatformPlanEntity)
 
@@ -21,76 +23,63 @@ type UpdatePlatformBillingParams = {
 } & Partial<PlatformPlanLimits>
 
 const edition = system.getEdition()
-const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
-
-export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
+const environment = system.get(AppSystemProp.ENVIRONMENT)
+const ENROLL_ATTEMPT_TTL_SECONDS = 300
+const ENTITLEMENTS_REFRESH_TTL_SECONDS = 15 * 60
+const REFRESH_CLAIM_TTL_SECONDS = 60
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
 
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
-        const platformPlan = await platformPlanRepo().findOneBy({ platformId })
-        if (!isNil(platformPlan)) return platformPlan
+        const existingPlatformPlan = await platformPlanRepo().findOneBy({ platformId })
+        if (!isNil(existingPlatformPlan)) {
+            triggerLazyBillingProviderSync({
+                platformId,
+                autumnCustomerId: existingPlatformPlan.autumnCustomerId,
+                plan: existingPlatformPlan.plan,
+                created: existingPlatformPlan.created,
+            }, log)
+            return existingPlatformPlan
+        }
 
-        return distributedLock(log).runExclusive({
+        const platformPlan = await distributedLock(log).runExclusive({
             key: `platform_plan_${platformId}`,
             timeoutInSeconds: 60,
             fn: async () => {
                 const platformPlan = await platformPlanRepo().findOneBy({ platformId })
                 if (!isNil(platformPlan)) return platformPlan
-
-                return createInitialBilling(platformId, log)
+                return createInitialBilling(platformId)
             },
         })
+        triggerLazyBillingProviderSync({ platformId, autumnCustomerId: null }, log)
+        return platformPlan
     },
 
-    async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {
-        const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformPlan
-
-        if (isNil(startDate) || isNil(endDate)) {
-            return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix() }
-        }
-        return { startDate, endDate }
+    async onPlatformCreated(platformId: string): Promise<void> {
+        await createInitialBilling(platformId)
+        await enrollBillingProviderOnCreate(platformId, log)
     },
 
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
         const { platformId, ...update } = params
         log.info({ platform: { id: platformId } }, 'updating platform billing')
 
-        const platformPlan = await platformPlanRepo().findOneByOrFail({
-            platformId,
-        })
-
         const normalizedUpdate = Object.fromEntries(
             Object.entries(update).map(([key, value]) => [key, value === undefined ? null : value]),
         )
 
-        const updatedPlatformPlan = await platformPlanRepo().save({ ...platformPlan, ...normalizedUpdate })
+        if (!isEmpty(normalizedUpdate)) {
+            await platformPlanRepo().update({ platformId }, normalizedUpdate)
+        }
+
+        const updatedPlatformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
         if (!isNil(updatedPlatformPlan.plan)) {
-            await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan)
+            await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan, PLATFORM_PLAN_NAME_TTL_SECONDS)
+        }
+        else {
+            await distributedStore.delete(getPlatformPlanNameKey(platformId))
         }
         return updatedPlatformPlan
-    },
-    async getNextBillingAmount(params: GetBillingAmountParams): Promise<number> {
-        const { subscriptionId } = params
-        const stripe = stripeHelper(log).getStripe()
-        if (isNil(stripe)) {
-            return 0
-        }
-
-        try {
-            const upcomingInvoice = await stripe.invoices.createPreview({
-                subscription: subscriptionId ?? undefined,
-            })
-
-            return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
-        }
-        catch {
-            return 0
-        }
-    },
-    async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
-        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
-        return isCloudPlanButNotEnterprise(platformPlan.plan)
     },
     async getUsage(platformId: string): Promise<PlatformUsage> {
         const activeFlowsCount = await flowRepo()
@@ -100,16 +89,52 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
             .andWhere('flow.operationStatus != :deleting', { deleting: FlowOperationStatus.DELETING })
             .getCount()
-        const aiCreditsUsage = await platformAiCreditsService(log).getUsage(platformId)
+        const { data: consumables, error: consumablesError } = await tryCatch(() => billingProvider.get(log).getConsumablesUsage(platformId))
+        if (!isNil(consumablesError)) {
+            log.error({ error: consumablesError, platform: { id: platformId } }, 'Failed to fetch consumables usage; treating as unavailable')
+        }
+        const credits = consumables?.credits ?? null
+        const appSumo = consumables?.appSumo ?? null
+        const teamProjectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
+        const { activeUsers, invitedSeats, usedSeats } = await countUsedSeats({ platformId, log })
         return {
             activeFlows: activeFlowsCount,
-            aiCreditsLimit: aiCreditsUsage.limit,
-            aiCreditsRemaining: aiCreditsUsage.usageRemaining,
-            totalAiCreditsUsed: aiCreditsUsage.usage,
-            totalAiCreditsUsedThisMonth: aiCreditsUsage.usageMonthly,
+            teamProjects: teamProjectsCount,
+            users: usedSeats,
+            activeUsers,
+            invitedSeats,
+            creditsUsed: credits?.usage ?? 0,
+            creditsRemaining: isNil(credits) ? 0 : credits.remaining,
+            creditsNextResetAt: credits?.nextResetAt ?? null,
+            appSumoAiCreditsUsed: isNil(appSumo) ? null : appSumo.usage,
+            appSumoAiCreditsRemaining: isNil(appSumo) ? null : Math.max(0, appSumo.limit - appSumo.usage),
         }
     },
-    checkActiveFlowsExceededLimit: async (platformId: string, metric: PlatformUsageMetric): Promise<void> => {
+    async getCreditUsageByProject({ platformId, startDate, endDate, cursor, limit, userId, principalType }: GetCreditUsageByProjectParams): Promise<SeekPage<ProjectCreditUsage>> {
+        const user = await userService(log).getOneOrFail({ id: userId })
+        const projectsPage = await platformProjectService(log).getForPlatform({
+            platformId,
+            userId,
+            cursorRequest: cursor,
+            limit,
+            isPrivileged: userService(log).isUserPrivileged(user),
+            principalType,
+        })
+
+        const { byProject } = await billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate })
+        const creditsByProjectId = new Map(byProject.map((entry) => [entry.projectId, entry.creditsUsed]))
+
+        return {
+            data: projectsPage.data.map((project): ProjectCreditUsage => ({
+                projectId: project.id,
+                projectName: project.displayName,
+                creditsUsed: creditsByProjectId.get(project.id) ?? 0,
+            })),
+            next: projectsPage.next,
+            previous: projectsPage.previous,
+        }
+    },
+    checkActiveFlowsExceededLimit: async (platformId: string): Promise<void> => {
         if (ApEdition.COMMUNITY === edition) {
             return
         }
@@ -119,75 +144,195 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
                 params: {
-                    metric,
+                    metric: PlatformUsageMetric.ACTIVE_FLOWS,
                 },
             })
         }
     },
+    checkUsersExceededLimit: async ({ platformId, entityManager, additionalSeatsNeeded = 1 }: CheckUsersExceededLimitParams): Promise<void> => {
+        if (ApEdition.COMMUNITY === edition) {
+            return
+        }
+        if (additionalSeatsNeeded === 0) {
+            return
+        }
+        if (!await billingProvider.get(log).isBillingEnforced(platformId)) {
+            return
+        }
+        const platformPlan = await platformPlanRepo(entityManager)
+            .createQueryBuilder('platform_plan')
+            .setLock('pessimistic_write')
+            .where('platform_plan.platformId = :platformId', { platformId })
+            .getOne()
+        if (isNil(platformPlan)) {
+            return
+        }
+        const usersLimit = effectiveUsersLimit(platformPlan)
+        if (isNil(usersLimit)) {
+            return
+        }
+        const { usedSeats } = await countUsedSeats({ platformId, log, entityManager })
+        if (usedSeats + additionalSeatsNeeded > usersLimit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: PlatformUsageMetric.USERS,
+                },
+            })
+        }
+    },
+    async getAutumnCredentials(platformId: string): Promise<AutumnCredentials> {
+        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
+        return {
+            autumnCustomerId: platformPlan.autumnCustomerId,
+            autumnApiKey: platformPlan.autumnApiKey,
+            plan: platformPlan.plan ?? null,
+            created: platformPlan.created,
+        }
+    },
+    async setAutumnCredentials(params: SetAutumnCredentialsParams): Promise<void> {
+        const { platformId, autumnCustomerId, autumnApiKey } = params
+        await platformPlanRepo().update({ platformId }, { autumnCustomerId, autumnApiKey })
+    },
 })
 
-function getPriceIdFor(price: PRICE_NAMES): string {
-    const isDev = stripeSecretKey?.startsWith('sk_test')
-    const env = isDev ? 'dev' : 'prod'
-
-    const entry = PRICE_ID_MAP[price]
-
-    if (!entry) {
-        throw new Error(`No price with the given price name '${price}' is available`)
+export async function assertSeatsNotBelowActiveUsers({ platformId, targetLimit, log }: AssertSeatsNotBelowActiveUsersParams): Promise<void> {
+    const { usedSeats } = await countUsedSeats({ platformId, log })
+    if (targetLimit < usedSeats) {
+        throw new ActivepiecesError({
+            code: ErrorCode.QUOTA_EXCEEDED,
+            params: {
+                metric: PlatformUsageMetric.USERS,
+            },
+        })
     }
+}
 
-    return entry[env]
+
+function effectiveUsersLimit({ usersLimit, scheduledUsersLimit }: Pick<PlatformPlan, 'usersLimit' | 'scheduledUsersLimit'>): number | null {
+    const limits = [usersLimit, scheduledUsersLimit].filter((limit): limit is number => !isNil(limit))
+    return limits.length === 0 ? null : Math.min(...limits)
+}
+
+export async function countUsedSeats({ platformId, log, entityManager }: CountUsedSeatsParams): Promise<SeatBreakdown> {
+    const [activeUsers, invitedSeats] = await Promise.all([
+        userService(log).countActiveByPlatformId({ platformId, entityManager }),
+        userInvitationsService(log).countReservedSeats({ platformId, entityManager }),
+    ])
+    return { activeUsers, invitedSeats, usedSeats: activeUsers + invitedSeats }
+}
+
+function triggerLazyBillingProviderSync({ platformId, autumnCustomerId, plan, created }: TriggerLazyBillingProviderSyncParams, log: FastifyBaseLogger): void {
+    if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
+        return
+    }
+    if (isNil(autumnCustomerId)) {
+        rejectedPromiseHandler(throttledBillingProviderEnrollment(platformId, log), log)
+        return
+    }
+    rejectedPromiseHandler(throttledBillingProviderRefresh(platformId, log), log)
+    if (edition === ApEdition.CLOUD && isFreeLegacyEligible({ plan, created })) {
+        rejectedPromiseHandler(billingProvider.get(log).compFreeLegacy(platformId), log)
+    }
+}
+
+async function enrollBillingProviderOnCreate(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
+        return
+    }
+    await throttledBillingProviderEnrollment(platformId, log)
+        .catch((error) => log.warn({ error, platform: { id: platformId } }, 'Billing provider enrollment failed on platform creation'))
+}
+
+async function throttledBillingProviderEnrollment(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    await distributedStore.runOnceWithin(getEnrollAttemptKey(platformId), ENROLL_ATTEMPT_TTL_SECONDS, () =>
+        billingProvider.get(log).ensureEnrolled(platformId),
+    )
+}
+
+async function throttledBillingProviderRefresh(platformId: string, log: FastifyBaseLogger): Promise<void> {
+    await distributedStore.runOnceWithin(getEntitlementsRefreshKey(platformId), REFRESH_CLAIM_TTL_SECONDS, async () => {
+        await billingProvider.get(log).refreshEntitlements(platformId)
+        await distributedStore.put(getEntitlementsRefreshKey(platformId), '1', ENTITLEMENTS_REFRESH_TTL_SECONDS)
+    })
 }
 
 function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
     switch (edition) {
         case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
             return OPEN_SOURCE_PLAN
+        case ApEdition.ENTERPRISE:
         case ApEdition.CLOUD:
-            return STANDARD_CLOUD_PLAN
+            return AUTUMN_FREE_PLAN
     }
 }
 
-async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
-    const platform = await platformService(log).getOneOrThrow(platformId)
-    const user = await userService(log).getMetaInformation({ id: platform.ownerId })
-    const stripeCustomerId = await createInitialCustomer(user, platformId, log)
-
-    const defaultStartDate = apDayjs().startOf('month').unix()
-    const defaultEndDate = apDayjs().endOf('month').unix()
-
+async function createInitialBilling(platformId: string): Promise<PlatformPlan> {
     const plan = getInitialPlanByEdition()
 
     const platformPlan: Omit<PlatformPlan, 'created' | 'updated'> = {
         ...plan,
         id: apId(),
         platformId,
-        stripeCustomerId,
-        stripeSubscriptionStartDate: defaultStartDate,
-        stripeSubscriptionEndDate: defaultEndDate,
-        aiCreditsAutoTopUpState: plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED,
     }
     const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
     if (!isNil(savedPlatformPlan.plan)) {
-        await distributedStore.put(getPlatformPlanNameKey(platformId), savedPlatformPlan.plan)
+        await distributedStore.put(getPlatformPlanNameKey(platformId), savedPlatformPlan.plan, PLATFORM_PLAN_NAME_TTL_SECONDS)
     }
 
     return savedPlatformPlan
 }
 
-async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | undefined> {
-    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
-    if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING || environment === ApEnvironment.DEVELOPMENT) {
-        return undefined
-    }
-    const stripeCustomerId = await stripeHelper(log).createCustomer(
-        user,
-        platformId,
-    )
-    return stripeCustomerId
+type AutumnCredentials = {
+    autumnCustomerId: string | null
+    autumnApiKey: string | null
+    plan: string | null
+    created: string
 }
 
-type GetBillingAmountParams = {
-    subscriptionId?: string | null
+type TriggerLazyBillingProviderSyncParams = {
+    platformId: string
+    autumnCustomerId: string | null | undefined
+    plan?: string | null
+    created?: string | null
+}
+
+type SetAutumnCredentialsParams = {
+    platformId: string
+    autumnCustomerId: string | null
+    autumnApiKey: string | null
+}
+
+type GetCreditUsageByProjectParams = {
+    platformId: string
+    startDate?: string
+    endDate?: string
+    cursor: Cursor | null
+    limit: number
+    userId: string
+    principalType: PrincipalType
+}
+
+type AssertSeatsNotBelowActiveUsersParams = {
+    platformId: string
+    targetLimit: number
+    log: FastifyBaseLogger
+}
+
+export type CheckUsersExceededLimitParams = {
+    platformId: string
+    entityManager: EntityManager
+    additionalSeatsNeeded?: number
+}
+
+export type CountUsedSeatsParams = {
+    platformId: string
+    log: FastifyBaseLogger
+    entityManager?: EntityManager
+}
+
+export type SeatBreakdown = {
+    activeUsers: number
+    invitedSeats: number
+    usedSeats: number
 }
