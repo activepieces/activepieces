@@ -1,5 +1,5 @@
 import { FieldControlMode, PredefinedInputsStructure } from '@activepieces/core-piece-types'
-import { isNil, isObject, isString } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, isObject, isString } from '@activepieces/core-utils'
 import { PieceProperty, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { z } from 'zod'
 
@@ -88,13 +88,26 @@ function plan({ properties, predefinedInput }: {
     return { pinned, waves }
 }
 
-async function schemaForWave({ properties, propertyNames, resolvedInput, resolveDynamic }: WaveSchemaParams): Promise<z.ZodObject> {
+async function schemaForWave({ properties, propertyNames, resolvedInput, resolveDynamic }: {
+    properties: PiecePropertyMap
+    propertyNames: string[]
+    resolvedInput: Record<string, unknown>
+    resolveDynamic: DynamicSchemaResolver
+}): Promise<z.ZodObject> {
     const shape = await buildShape({
         properties: Object.fromEntries(propertyNames.map((name) => [name, properties[name]])),
         resolvedInput,
         resolveDynamic,
     })
     return z.object(shape).strict()
+}
+
+async function schemaForProperties({ properties, resolvedInput, resolveDynamic }: {
+    properties: Record<string, PieceProperty>
+    resolvedInput: Record<string, unknown>
+    resolveDynamic: DynamicSchemaResolver
+}): Promise<z.ZodObject> {
+    return z.object(await buildShape({ properties, resolvedInput, resolveDynamic })).loose()
 }
 
 async function buildShape({ properties, resolvedInput, resolveDynamic }: {
@@ -152,35 +165,34 @@ async function baseSchemaFor({ propertyName, property, resolvedInput, resolveDyn
         case PropertyType.ARRAY:
             return z.array(isNil(property.properties)
                 ? z.union([z.string(), z.number(), z.boolean(), z.object({}).loose()])
-                : z.object(await buildShape({ properties: property.properties, resolvedInput, resolveDynamic })).loose())
+                : await schemaForProperties({ properties: property.properties, resolvedInput, resolveDynamic }))
         case PropertyType.DYNAMIC:
-            return resolveDynamic({ propertyName, property, resolvedInput })
+            return resolveDynamic({ propertyName, resolvedInput })
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
         case PropertyType.OAUTH2:
         case PropertyType.OIDC:
         case PropertyType.SECRET_TEXT:
-            throw new Error(`The model must never be asked to fill a ${property.type} property`)
+            throw unresolvable(`The model must never be asked to fill a ${property.type} property`)
     }
+}
+
+function unresolvable(message: string): ActivepiecesError {
+    return new ActivepiecesError({ code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message } })
 }
 
 export const pieceInputPlan = {
     plan,
     schemaForWave,
+    schemaForProperties,
+    unresolvable,
 }
 
 export type DynamicSchemaResolver = (params: {
     propertyName: string
-    property: PieceProperty
     resolvedInput: Record<string, unknown>
 }) => Promise<z.ZodTypeAny>
 
-export type WaveSchemaParams = {
-    properties: PiecePropertyMap
-    propertyNames: string[]
-    resolvedInput: Record<string, unknown>
-    resolveDynamic: DynamicSchemaResolver
-}
 
 export type PieceInputPlan = {
     pinned: Record<string, unknown>
