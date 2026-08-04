@@ -11,7 +11,7 @@ export const platformApi = {
   createPlatform({ name }: { name: string }) {
     return api.post<AuthenticationResponse>('/v1/platforms', { name });
   },
-  deleteAccount() {
+  deletePlatform() {
     return api.delete<void>(
       `/v1/platforms/${authenticationSession.getPlatformId()}`,
     );

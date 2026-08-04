@@ -148,6 +148,10 @@ export const isCloudPlanButNotEnterprise = (plan?: string | null): boolean => {
     return plan === PlanName.FREE || plan === PlanName.APPSUMO || plan === PlanName.FREE_LEGACY
 }
 
+export const hasActiveSubscription = (plan?: string | null): boolean => {
+    return !isNil(plan) && !isCloudPlanButNotEnterprise(plan)
+}
+
 export const isAppSumoCreditedPlan = (plan?: string | null): boolean => {
     if (isNil(plan)) {
         return false
