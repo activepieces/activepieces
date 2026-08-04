@@ -1,8 +1,14 @@
 FROM node:24.14.0-bullseye-slim AS base
 
-# C.UTF-8 ships with Debian, so no locale generation is needed
+# C.UTF-8 ships with Debian, so no locale generation is needed.
+# REDISMS_VERSION pins the Redis that redis-memory-server (AP_REDIS_TYPE=MEMORY)
+# compiles at image build and looks up at runtime — the default "stable" drifted
+# to Redis 8, whose in-tree modules need cmake/pkg-config and break the build;
+# Redis 7.x compiles with gcc/make alone. Keep this pin in the base stage so the
+# runtime binary-cache key matches the one baked at build.
 ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+    LC_ALL=C.UTF-8 \
+    REDISMS_VERSION=7.4.2
 
 # Install all system dependencies in a single layer with cache mounts.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
