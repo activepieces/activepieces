@@ -553,6 +553,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             platformId: input.platformId,
             userId: input.userId,
             conversationId: input.conversationId,
+            confinedToProjectId: await confinedProjectFor({ conversationId: input.conversationId }),
             log,
         })
         log.debug({ tool: { name: input.toolName, durationMs: Date.now() - startedAt, output: result }, resultBytes: byteLengthOf(result) }, '[agentRpc#executeAgentTool] Tool finished')
@@ -674,6 +675,14 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
         : []
     const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
+}
+
+async function confinedProjectFor({ conversationId }: { conversationId?: string }): Promise<string | null> {
+    if (isNil(conversationId)) {
+        return null
+    }
+    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+    return conversation?.source === AgentRunSource.FLOW_STEP ? conversation.projectId ?? null : null
 }
 
 function byteLengthOf(value: unknown): number {
