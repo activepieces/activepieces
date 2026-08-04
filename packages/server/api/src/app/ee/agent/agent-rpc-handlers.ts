@@ -446,7 +446,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {
         if (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) && input.source !== AgentRunSource.CHAT) {
-            log.warn({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run')
+            log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: { message: `Tool "${input.toolName}" is only available to chat runs` },
