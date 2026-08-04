@@ -1,5 +1,5 @@
 import { apVersionUtil, systemUsage, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, apId, ErrorCode, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, tryCatch, unique } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, EgressHealth, ErrorCode, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, tryCatch, unique } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
 import { redisConnections } from '../database/redis-connections'
@@ -49,6 +49,7 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         ])
         const hasWorkers = workers.length > 0
         const release = buildReleaseHealth(log, workers.map(worker => worker.information.workerProps.version))
+        const egress = buildEgressHealth(log, workers.map(worker => worker.information.workerProps.egressStatus))
 
         return {
             latestVersion,
@@ -59,6 +60,7 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
             workerRam: hasWorkers ? workers.every(worker => worker.information.totalAvailableRamInBytes >= gigaBytes(WORKER_MIN_RAM_GB)) : null,
             database: databaseHealthy,
             release,
+            egress,
         }
     },
     getDiagnostics: async (platformId: string): Promise<GetDiagnosticsResponse> => {
@@ -176,6 +178,18 @@ function buildReleaseHealth(log: FastifyBaseLogger, workerVersions: Array<string
             versionMismatched: mismatched.length,
             mismatchedVersions,
         },
+    }
+}
+
+// buildReleaseHealth's sibling: without it the combined container shows a healthy worker running nothing.
+function buildEgressHealth(log: FastifyBaseLogger, statuses: Array<string | undefined>): EgressHealth {
+    const unavailable = statuses.filter(status => status === 'unavailable').length
+    if (unavailable > 0) {
+        log.warn({ worker: { unavailable, total: statuses.length } }, '[health] Workers are connected but taking no jobs — STRICT sandbox egress could not be prepared')
+    }
+    return {
+        total: statuses.length,
+        unavailable,
     }
 }
 

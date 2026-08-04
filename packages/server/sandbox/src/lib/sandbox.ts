@@ -21,9 +21,9 @@ import {
 // (threadSafeMkdir / cache-state), so there is no per-key provision dedup here. execute owns the slot
 // lifecycle: acquire -> provision -> run -> release on success / invalidate on throw, re-raising the
 // sandbox ActivepiecesError codes (timeout / memory / log-size) that handlers already catch. See ADR 0004.
-export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }: CreateSandboxRuntimeParams): Runtime {
+export function createSandboxRuntime({ concurrency = 1, basePath, getSettings, internalApiUrl }: CreateSandboxRuntimeParams): Runtime {
     const managers: SandboxManager[] = Array.from({ length: concurrency }, (_, index) =>
-        createSandboxManager({ boxId: index + 1, basePath, getSettings }),
+        createSandboxManager({ boxId: index + 1, basePath, getSettings, internalApiUrl }),
     )
 
     return {
@@ -35,7 +35,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     params: { message: `No sandbox manager for worker index ${workerIndex} (concurrency=${concurrency})` },
                 })
             }
-            const sandbox = manager.acquire({ log })
+            const sandbox = await manager.acquire({ log })
 
             const provisionStartedAt = Date.now()
             const { error: provisionError } = await tryCatch(() => localExecutionCache(log, basePath, getSettings).provision({
@@ -87,6 +87,9 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 await manager.invalidate(log)
                 throw error
             }
+        },
+        isExecutorPaused(workerIndex: number): boolean {
+            return managers[workerIndex]?.isEgressUnhealthy() ?? false
         },
         getActiveExecutors(): RuntimeExecutorInfo[] {
             return managers
@@ -141,5 +144,6 @@ type CreateSandboxRuntimeParams = {
     concurrency?: number
     basePath: string
     getSettings: () => SandboxSettings
-
+    // Forwarded to each box's egress setup so a loopback URL can be rewritten to the gateway veth IP.
+    internalApiUrl?: string
 }

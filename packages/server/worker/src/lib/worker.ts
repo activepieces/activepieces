@@ -1,9 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { createResolver, createSandboxRuntime, type EgressNetworkLease, isIsolateMode, prepareEgressEnvironment, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, NetworkMode, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -19,7 +19,17 @@ const AP_VERSION = apVersionUtil.getCurrentRelease()
 
 const VERSION_MISMATCH_POLL_PAUSE_MS = 10_000
 
+const BOX_EGRESS_POLL_PAUSE_MS = 30_000
+
+const EGRESS_UNAVAILABLE_REMINDER_MS = 60_000
+
+// Must stay under the app's 60s offline-prune so a parked worker keeps reporting 'unavailable' instead of vanishing.
+const EGRESS_VERDICT_HEARTBEAT_MS = 30_000
+
+const EGRESS_UNAVAILABLE_MESSAGE = 'STRICT egress preparation failed — this worker is taking NO jobs instead of failing every one. Causes: missing privileges/tooling (CAP_NET_ADMIN, iproute2, iptables, ip6tables), net.ipv4.ip_forward not enabled on the host (the worker verifies but does not set it), the egress subnet overlapping a host network (set AP_SANDBOX_EGRESS_SUBNET to a free /16), or another worker already owning this network namespace. Fix and restart the worker'
+
 let pagedForUnreadableWorkerVersion = false
+let pagedForEgressUnavailable = false
 
 function pageOnceForUnreadableWorkerVersion(workerLog: typeof logger): void {
     if (pagedForUnreadableWorkerVersion) {
@@ -32,6 +42,20 @@ function pageOnceForUnreadableWorkerVersion(workerLog: typeof logger): void {
         params: { workerVersion: AP_VERSION },
     }).catch((pageError) => {
         workerLog.error({ pageError }, 'Failed to send on-call page for unreadable worker version')
+    })
+}
+
+function pageOnceForEgressUnavailable({ error }: { error: unknown }): void {
+    if (pagedForEgressUnavailable) {
+        return
+    }
+    pagedForEgressUnavailable = true
+    onCallService(logger, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
+        code: 'WORKER_EGRESS_CAPABILITIES_UNAVAILABLE',
+        message: 'STRICT sandbox egress capabilities failed; polling is paused and will NOT self-heal on reconnect until privileges/tooling/allow-list are fixed and the worker is restarted',
+        params: { error: String(error) },
+    }).catch((pageError) => {
+        logger.error({ pageError }, 'Failed to send on-call page for unavailable STRICT egress capabilities')
     })
 }
 
@@ -60,6 +84,14 @@ const workerHostname = os.hostname()
 let healthServerInstance: ReturnType<typeof createServer> | null = null
 
 let runtime: Runtime | null = null
+let runtimeShutdownPromise: Promise<void> | null = null
+let reconnectShutdownTimeoutCount = 0
+let boxEgressPauseCount = 0
+let egressCapabilityState: 'unknown' | 'ok' | 'unavailable' = 'unknown'
+let egressUnavailableReminder: NodeJS.Timeout | null = null
+let egressReminderTick = 0
+let egressPreparationPromise: Promise<EgressNetworkLease> | null = null
+let egressNetworkLease: EgressNetworkLease | null = null
 
 // Jobs executing across all poll loops. stop() waits for these to finish + report before tearing
 // down, so a deploy doesn't orphan them in the app's BullMQ `active` list. Abrupt death (OOM/SIGKILL)
@@ -67,6 +99,9 @@ let runtime: Runtime | null = null
 let inFlightJobs = 0
 
 const DRAIN_TIMEOUT_MS = 25_000
+
+// Bounded so a wedged teardown cannot silently stall polling; createEgressNetns's pid-retry is the net.
+const RECONNECT_SHUTDOWN_TIMEOUT_MS = 10_000
 
 // Sandbox memory/state is UI-only telemetry (the workers page). Computing it needs a full
 // process-table scan (si.processes()), so it must NOT run on the poll hot path — sampling it on
@@ -115,7 +150,7 @@ export const worker = {
             // reclaims that job on disconnect, so kill the runtime now or the original keeps executing
             // to completion and double-runs the requeued copy. (The reconnect path recreates it.)
             if (reason !== 'io client disconnect') {
-                abortInFlightRuntime()
+                void abortInFlightRuntime()
             }
             // Socket.IO does NOT auto-reconnect when the server initiates the disconnect
             // (reason 'io server disconnect' — e.g. the API process restarts/hot-reloads).
@@ -151,10 +186,19 @@ export const worker = {
         stopPollWatchdog()
         stopSandboxInfoSampling()
         await drainInFlightJobs()
-        if (runtime) {
-            await runtime.shutdown(logger)
-            runtime = null
+        await abortInFlightRuntime()
+        if (egressNetworkLease) {
+            const lease = egressNetworkLease
+            egressNetworkLease = null
+            const { error } = await tryCatch(() => lease.release())
+            if (error) {
+                logger.error({ error }, 'Failed to release egress network ownership')
+            }
         }
+        egressPreparationPromise = null
+        egressCapabilityState = 'unknown'
+        stopEgressUnavailableReminder()
+        pagedForEgressUnavailable = false
         socket?.disconnect()
         socket = null
         healthServerInstance?.close()
@@ -185,20 +229,54 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     }
     // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
     // along with its box (usually already done by the disconnect handler), so it fails fast and is
-    // retried instead of lingering on a reused box. Reusing the box made the next generation's poll
-    // loop run a second operation on the same single-operation engine child (acquire() hands back a
-    // busy sandbox) and let the lingering job's lock lapse during the reconnect → BullMQ "stalled";
-    // a deploy disconnects every worker at once, so reuse turned that into mass stalls.
-    abortInFlightRuntime()
+    // retried. The old shutdown is awaited first: createEgressNetns fail-closes on a live isolate.
+    await boundedShutdownWait(abortInFlightRuntime())
 
-    runtime = createSandboxRuntime({
+    // A disconnect during that await bumps the generation, and without this bail the loser's box leaks.
+    if (connectionGeneration !== generation) {
+        return
+    }
+
+    const localRuntime = createSandboxRuntime({
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
+        internalApiUrl: getApiUrl(),
     })
+    runtime = localRuntime
+
+    // Missing capabilities pause polling so the worker idles loudly instead of failing jobs one by one.
+    if (!(await ensureEgressCapabilities(apiClient))) {
+        polling = false
+        // Deregister the loops, or the stall watchdog turns this deliberate pause into a restart loop.
+        resetPollLoopLiveness({ loopCount: 0 })
+        if (runtime === localRuntime) {
+            runtime = null
+            const { error } = await tryCatch(() => localRuntime.shutdown(logger))
+            if (error) {
+                logger.error({ error }, 'Failed to shut down runtime after STRICT egress capability failure')
+            }
+        }
+        return
+    }
+
+    // Same generation race as above, since ensureEgressCapabilities awaits: never touch a newer runtime.
+    if (connectionGeneration !== generation) {
+        if (runtime === localRuntime) {
+            runtime = null
+            const { error } = await tryCatch(() => localRuntime.shutdown(logger))
+            if (error) {
+                logger.error({ error }, 'Failed to shut down stale runtime after generation bump')
+            }
+        }
+        return
+    }
+    if (isNil(runtime) || runtime !== localRuntime) {
+        return
+    }
 
     // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
-    void runtime.prewarm({
+    void localRuntime.prewarm({
         log: logger, 
         apiClient,
         publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
@@ -207,9 +285,8 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     logger.info({ concurrency }, 'Starting poll loops')
 
     resetPollLoopLiveness({ loopCount: concurrency })
-    const activeRuntime = runtime
     await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
-        pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
+        pollAndExecute(apiClient, localRuntime, workerIndex, generation),
     ))
 }
 
@@ -232,6 +309,18 @@ async function pollAndExecute(apiClient: WorkerToApiContract, runtime: Runtime, 
                 pageOnceForUnreadableWorkerVersion(workerLog)
             }
             await sleep(VERSION_MISMATCH_POLL_PAUSE_MS)
+            continue
+        }
+
+        // The readiness gate covers only the process-wide class, so one bad box is backed off here instead.
+        if (runtime.isExecutorPaused(workerIndex)) {
+            boxEgressPauseCount++
+            workerLog.error({
+                code: 'WORKER_BOX_EGRESS_UNHEALTHY',
+                pauseMs: BOX_EGRESS_POLL_PAUSE_MS,
+                count: boxEgressPauseCount,
+            }, 'Pausing this box — its STRICT egress setup has failed repeatedly. Check the worker logs for the underlying egress error')
+            await sleep(BOX_EGRESS_POLL_PAUSE_MS)
             continue
         }
 
@@ -311,20 +400,113 @@ async function drainInFlightJobs(): Promise<void> {
     }
 }
 
-// Kill the current runtime (and the job running on it) without awaiting — awaiting the shutdown
-// while a job is in-flight deadlocks (the await never resolves, polling never restarts). Nulling
-// `runtime` lets the next (re)connect create a fresh box.
-function abortInFlightRuntime(): void {
-    if (isNil(runtime)) {
+// Cached: an 'unavailable' verdict does NOT self-heal on reconnect, matching the version-skew gate.
+async function ensureEgressCapabilities(apiClient: WorkerToApiContract): Promise<boolean> {
+    const settings = sandboxConfig.getSandboxSettings()
+    const strictIsolate = isIsolateMode(settings.EXECUTION_MODE as ExecutionMode) && settings.NETWORK_MODE === NetworkMode.STRICT
+    if (!strictIsolate) {
+        return true
+    }
+    if (egressCapabilityState === 'unavailable') {
+        return false
+    }
+    if (!isNil(egressNetworkLease)) {
+        return true
+    }
+    const pending = egressPreparationPromise ?? prepareEgressEnvironment({
+        log: logger,
+        allowList: settings.SSRF_ALLOW_LIST,
+    })
+    egressPreparationPromise = pending
+    const { data: lease, error } = await tryCatch(() => pending)
+    if (error || isNil(lease)) {
+        egressCapabilityState = 'unavailable'
+        egressPreparationPromise = null
+        logger.error({ error: String(error) }, EGRESS_UNAVAILABLE_MESSAGE)
+        startEgressUnavailableReminder(apiClient)
+        pageOnceForEgressUnavailable({ error })
+        return false
+    }
+    egressNetworkLease = lease
+    egressCapabilityState = 'ok'
+    stopEgressUnavailableReminder()
+    logger.info('STRICT egress capabilities and network-namespace ownership verified')
+    return true
+}
+
+// Heartbeat the 'unavailable' verdict (the connect-time send predated the probe and the paused poll loop
+// never re-sends) and log it (the combined container has no worker health server, so this is its only trace).
+function startEgressUnavailableReminder(apiClient: WorkerToApiContract): void {
+    if (!isNil(egressUnavailableReminder)) {
         return
+    }
+    egressReminderTick = 0
+    void pushEgressVerdict(apiClient)
+    egressUnavailableReminder = setInterval(() => {
+        void pushEgressVerdict(apiClient)
+        egressReminderTick++
+        if (egressReminderTick % (EGRESS_UNAVAILABLE_REMINDER_MS / EGRESS_VERDICT_HEARTBEAT_MS) === 0) {
+            logger.error({ code: 'WORKER_EGRESS_CAPABILITIES_UNAVAILABLE' }, EGRESS_UNAVAILABLE_MESSAGE)
+        }
+    }, EGRESS_VERDICT_HEARTBEAT_MS)
+    egressUnavailableReminder.unref()
+}
+
+// The app withholds jobs from a worker reporting egressStatus 'unavailable', so this only refreshes the
+// machine cache feeding /v1/health/system and keeps the worker from being pruned as offline — no job returns.
+async function pushEgressVerdict(apiClient: WorkerToApiContract): Promise<void> {
+    const { data: machineInfo, error } = await tryCatch(buildMachineInfo)
+    if (error) {
+        return
+    }
+    await tryCatch(() => apiClient.poll(machineInfo))
+}
+
+function stopEgressUnavailableReminder(): void {
+    if (isNil(egressUnavailableReminder)) {
+        return
+    }
+    clearInterval(egressUnavailableReminder)
+    egressUnavailableReminder = null
+}
+
+// Disconnect handlers fire-and-forget this to avoid deadlocking the socket loop; reconnect awaits it.
+function abortInFlightRuntime(): Promise<void> {
+    if (isNil(runtime)) {
+        return runtimeShutdownPromise ?? Promise.resolve()
     }
     const oldRuntime = runtime
     runtime = null
-    void tryCatch(() => oldRuntime.shutdown(logger)).then(({ error }) => {
+    const pending = (async () => {
+        const { error } = await tryCatch(() => oldRuntime.shutdown(logger))
         if (error) {
             logger.error({ error }, 'Failed to shut down runtime')
         }
+    })()
+    runtimeShutdownPromise = pending
+    void pending.finally(() => {
+        if (runtimeShutdownPromise === pending) {
+            runtimeShutdownPromise = null
+        }
     })
+    return pending
+}
+
+// A wedged teardown must not stall polling forever; on timeout createEgressNetns absorbs the dying child.
+async function boundedShutdownWait(shutdown: Promise<void>): Promise<void> {
+    let timer: NodeJS.Timeout | undefined
+    const timeout = new Promise<void>((resolve) => {
+        timer = setTimeout(() => {
+            // Countable rather than a page: jobs retry, so ops want a rate, not an incident.
+            reconnectShutdownTimeoutCount++
+            logger.warn({ code: 'WORKER_RECONNECT_SHUTDOWN_TIMEOUT', timeoutMs: RECONNECT_SHUTDOWN_TIMEOUT_MS, count: reconnectShutdownTimeoutCount }, 'Old runtime teardown exceeded the reconnect budget; proceeding (createEgressNetns will wait for the netns to free or fail just that job)')
+            resolve()
+        }, RECONNECT_SHUTDOWN_TIMEOUT_MS)
+    })
+    await Promise.race([shutdown, timeout])
+    if (timer) {
+        clearTimeout(timer)
+    }
 }
 
 async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
@@ -439,6 +621,7 @@ function getWorkerProps(): WorkerProps {
             SANDBOX_MEMORY_LIMIT: settings.SANDBOX_MEMORY_LIMIT,
             REUSE_SANDBOX: system.get(WorkerSystemProp.REUSE_SANDBOX) ?? 'false',
             version: AP_VERSION,
+            ...spreadIfDefined('egressStatus', egressCapabilityState === 'unknown' ? undefined : egressCapabilityState),
         }
     }
     catch {
@@ -614,6 +797,12 @@ function startHealthServer(): ReturnType<typeof createServer> {
     const healthPaths = new Set(['/worker/health', '/v1/health', '/api/v1/health'])
     const server = createServer((req, res) => {
         if (req.method === 'GET' && req.url && healthPaths.has(req.url)) {
+            // Egress-unavailable is a pause a restart will not clear, so report it before the stall wedge.
+            if (egressCapabilityState === 'unavailable') {
+                res.writeHead(503, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ status: 'unavailable', reason: 'egress_capabilities' }))
+                return
+            }
             const stalled = !isNil(findStalledPollLoop())
             res.writeHead(stalled ? 503 : 200, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ status: stalled ? 'poll_loop_stalled' : 'ok' }))

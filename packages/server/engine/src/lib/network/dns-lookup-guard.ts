@@ -36,6 +36,22 @@ function buildGuardedCallbackLookup({ policy, boundLookup }: BuildCallbackLookup
             ? optionsOrCallback
             : undefined
 
+        const pinned = resolvePinnedEntries({ policy, hostname, family: callerOptions?.family })
+        if (pinned) {
+            // dns.lookup always calls back asynchronously, even on an /etc/hosts hit; callers rely on it.
+            queueMicrotask(() => {
+                if (!callback) {
+                    return
+                }
+                if (callerOptions?.all) {
+                    callback(null, pinned)
+                    return
+                }
+                callback(null, pinned[0].address, pinned[0].family)
+            })
+            return
+        }
+
         const onResolved: DnsLookupCallback = (err, address, family) => {
             if (err || !callback) {
                 callback?.(err, address, family)
@@ -65,6 +81,10 @@ function buildGuardedCallbackLookup({ policy, boundLookup }: BuildCallbackLookup
 
 function buildGuardedPromiseLookup({ policy, boundPromisesLookup }: BuildPromiseLookupParams): GuardedPromiseLookup {
     return async function promiseLookup(hostname, options) {
+        const pinned = resolvePinnedEntries({ policy, hostname, family: options?.family })
+        if (pinned) {
+            return options?.all ? pinned : pinned[0]
+        }
         const allEntries = await boundPromisesLookup(hostname, { ...options, all: true })
         const blocked = findBlockedEntry({ entries: allEntries, allowList: policy.allowList })
         if (blocked) {
@@ -72,6 +92,18 @@ function buildGuardedPromiseLookup({ policy, boundPromisesLookup }: BuildPromise
         }
         return options?.all ? allEntries : allEntries[0]
     }
+}
+
+// Pinned answers skip findBlockedEntry by design; socket-connect-guard still gates the connect.
+function resolvePinnedEntries({ policy, hostname, family }: ResolvePinnedEntriesParams): dns.LookupAddress[] | null {
+    if (family === 6) {
+        return null
+    }
+    const pinned = policy.pinnedHosts.get(hostname.toLowerCase())
+    if (!pinned) {
+        return null
+    }
+    return pinned.map((address) => ({ address, family: 4 }))
 }
 
 function toAddressList({ address, family }: ToAddressListParams): dns.LookupAddress[] {
@@ -111,6 +143,12 @@ type BuildCallbackLookupParams = {
 type BuildPromiseLookupParams = {
     policy: GuardPolicy
     boundPromisesLookup: typeof dns.promises.lookup
+}
+
+type ResolvePinnedEntriesParams = {
+    policy: GuardPolicy
+    hostname: string
+    family?: number
 }
 
 type ToAddressListParams = {

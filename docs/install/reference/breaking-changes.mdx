@@ -5,6 +5,80 @@ icon: "hammer"
 ---
 
 
+## 0.87.0
+
+### What has changed?
+
+#### `STRICT` network mode with process sandboxing now needs host setup
+
+When `AP_NETWORK_MODE=STRICT` is combined with `AP_EXECUTION_MODE=SANDBOX_PROCESS` or
+`SANDBOX_CODE_AND_PROCESS`, each sandbox now runs inside its own Linux network namespace with iptables
+NAT and firewall rules, instead of sharing the worker's network. This is a real kernel boundary rather
+than the best-effort in-process guard, but it has prerequisites the previous release did not.
+
+The worker **verifies** them at startup and, if any is missing, pauses polling and takes **no jobs at
+all** rather than accepting work it would fail one request at a time. A worker in that state logs an
+error every 60 seconds and reports itself on `GET /v1/health/system`.
+
+What the worker now requires:
+
+- `net.ipv4.ip_forward=1` in the worker's network namespace. On a typical Docker host this is already the
+  case and no action is needed; it is off where the host or node disables forwarding, on some Kubernetes
+  nodes and CNIs, or with `dockerd --ip-forward=false`. Check with
+  `cat /proc/sys/net/ipv4/ip_forward` inside the worker container. The worker reads it, never writes it.
+- `iproute2`, `iptables` and `ip6tables` in the image. The official image ships all three.
+- `CAP_NET_ADMIN` and `CAP_SYS_ADMIN`, which `SANDBOX_PROCESS` already required via `privileged`.
+- An unused IPv4 `/16` for the per-sandbox addresses, `10.255.0.0/16` by default, overridable with
+  `AP_SANDBOX_EGRESS_SUBNET`.
+- One such worker per container or pod network namespace. Two workers sharing a namespace is rejected.
+
+Nothing changes for any other combination. `AP_NETWORK_MODE=UNRESTRICTED` (the default) and the
+`SANDBOX_CODE_ONLY` / `UNSANDBOXED` execution modes are unaffected.
+
+### Do you need to take action?
+
+- Only if you run `AP_NETWORK_MODE=STRICT` together with `SANDBOX_PROCESS` or
+  `SANDBOX_CODE_AND_PROCESS`, **and** `cat /proc/sys/net/ipv4/ip_forward` inside the worker container
+  prints `0`. Enable it **before** upgrading, or those workers will come back up and execute nothing.
+
+  Docker and Docker Compose:
+
+  ```bash
+  docker run --privileged --sysctl net.ipv4.ip_forward=1 ...
+  ```
+
+  ```yaml
+  services:
+    worker:
+      privileged: true
+      sysctls:
+        - net.ipv4.ip_forward=1
+  ```
+
+  Kubernetes: `net.ipv4.ip_forward` is namespaced but is **not** on the kubelet's safe-sysctl list, so
+  `securityContext.sysctls` alone is rejected. The node's kubelet must allow it first:
+
+  ```bash
+  kubelet --allowed-unsafe-sysctls 'net.ipv4.ip_forward'
+  ```
+
+  ```yaml
+  spec:
+    securityContext:
+      sysctls:
+        - name: net.ipv4.ip_forward
+          value: "1"
+  ```
+
+  If you cannot change the kubelet, set it on the node instead with a privileged init container or a
+  DaemonSet.
+
+- Only if `10.255.0.0/16` is already in use on your network. Point `AP_SANDBOX_EGRESS_SUBNET` at a free
+  `/16`. The worker refuses to start when the pool collides with an address the host already uses.
+
+- Only if you run more than one such worker process inside a single container or pod network namespace,
+  or with `hostNetwork`. Give each worker its own network namespace.
+
 ## 0.86.0
 
 ### What has changed?

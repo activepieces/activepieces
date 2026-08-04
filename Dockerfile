@@ -6,6 +6,8 @@ ENV LANG=C.UTF-8 \
 
 # Install all system dependencies in a single layer with cache mounts.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
+# iptables + iproute2 back the per-box egress network namespace (NAT + FORWARD firewall)
+# used when SANDBOX_PROCESS runs under AP_NETWORK_MODE=STRICT.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
@@ -22,6 +24,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl \
         ca-certificates \
         iptables \
+        iproute2 \
         libcap2
 
 # Download, extract, and clean up bun in a single layer so the zip never ships
