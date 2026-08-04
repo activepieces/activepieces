@@ -1,4 +1,4 @@
-import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils';
+import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
 import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -6,7 +6,9 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { LanguageModel, ModelMessage, SystemModelMessage, ToolSet } from 'ai'
+import { LanguageModel, ModelMessage, SystemModelMessage, TelemetryOptions, ToolSet } from 'ai'
+import { createEvlogIntegration } from 'evlog/ai'
+import { wideEvent } from './wide-event'
 
 const MAX_WEB_SEARCH_RESULTS = 5
 
@@ -208,6 +210,14 @@ function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt
         default:
             return systemPrompt
     }
+}
+
+function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
+    const logger = wideEvent.current()
+    if (isNil(logger)) {
+        return undefined
+    }
+    return { functionId, integrations: [createEvlogIntegration(logger)] }
 }
 
 function toRecord(value: unknown): Record<string, unknown> {
@@ -461,6 +471,7 @@ export const agentAiUtils = {
     collapseStaleToolOutputs,
     buildProviderOptions,
     buildSystemPromptWithCaching,
+    buildTelemetry,
     buildStepParts,
     findDataArray,
     buildLargeResultPreview,

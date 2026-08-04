@@ -1,7 +1,7 @@
-import { AIProviderName, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, agentToolClassification, agentToolPhases, aiProviderUtils, PersistedAgentPart } from '@activepieces/shared'
-import { generateText, isLoopFinished, LanguageModel, LanguageModelUsage, ModelMessage, stepCountIs, StopCondition, streamText, ToolCallOptions, ToolSet } from 'ai'
+import { generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
@@ -67,7 +67,7 @@ export async function runAgentTurn({ slots, systemPrompt, messages, tier, phaseS
     const baseStopCondition = stopWhen ?? isLoopFinished()
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
-        stepCountIs(MAX_AGENT_STEPS),
+        isStepCount(MAX_AGENT_STEPS),
     ]
     const failureCounts = new Map<string, number>()
     const guardedToolsBySlot = slots.map((slot) => wrapToolsWithFailureGuard({ tools: slot.tools, log, failureCounts }))
@@ -78,7 +78,7 @@ export async function runAgentTurn({ slots, systemPrompt, messages, tier, phaseS
     const toolCalls: AgentTurnToolCall[] = []
     let toolCallOrder = 0
     // The cumulative response.messages of the CURRENT streamText attempt, captured per-step in
-    // onStepFinish (the reliable source — mirrors what we stream to the UI). Folded into
+    // onStepEnd (the reliable source — mirrors what we stream to the UI). Folded into
     // accumulatedResponseMessages on EVERY loop exit, so an abort/error break never drops the
     // steps that already happened (which previously left the saved LLM history as just [user]).
     let currentAttemptMessages: ModelMessage[] = []
@@ -104,10 +104,11 @@ export async function runAgentTurn({ slots, systemPrompt, messages, tier, phaseS
             maxRetries: 3,
             maxOutputTokens: tier.thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS,
             abortSignal,
-            system: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider }),
+            instructions: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider }),
             messages: agentAiUtils.stripThinkingBlocks(attemptMessages, provider),
             tools: guardedToolsBySlot[slotIndex],
             stopWhen: loopStopCondition,
+            telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-turn' }),
             // providerOptions/model are supplied per-step by prepareStep (authoritative). A
             // call-level providerOptions would deep-merge into every step and leak the enabled
             // thinking budget back into the disabled first step.
@@ -135,38 +136,40 @@ export async function runAgentTurn({ slots, systemPrompt, messages, tier, phaseS
                     ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),
                 }
             },
-            experimental_repairToolCall: async ({ toolCall, error }) => {
+            repairToolCall: async ({ toolCall, error }) => {
                 log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
                 const { data: repaired } = await tryCatch(async () => {
                     const { text } = await generateText({
                         model: slot.model,
                         abortSignal,
+                        telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
                         prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                     })
                     return { ...toolCall, input: text }
                 })
                 return repaired ?? null
             },
-            experimental_onToolCallFinish: (result) => {
+            onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) => {
                 toolCalls.push({
-                    toolName: result.toolCall.toolName,
-                    toolCallId: result.toolCall.toolCallId,
-                    input: result.toolCall.input,
+                    toolName: toolCall.toolName,
+                    toolCallId: toolCall.toolCallId,
+                    input: toolCall.input,
                     order: toolCallOrder++,
                     phase: phaseState.phase,
                 })
+                const success = toolOutput.type === 'tool-result'
                 log.debug({
-                    tool: { name: result.toolCall.toolName, callId: result.toolCall.toolCallId, phase: phaseState.phase, durationMs: result.durationMs, input: result.toolCall.input },
-                    success: result.success,
+                    tool: { name: toolCall.toolName, callId: toolCall.toolCallId, phase: phaseState.phase, durationMs: toolExecutionMs, input: toolCall.input },
+                    success,
                 }, 'Tool call I/O')
-                if (result.success) {
-                    log.info({ tool: { name: result.toolCall.toolName, durationMs: result.durationMs } }, 'Tool call completed')
+                if (success) {
+                    log.info({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs } }, 'Tool call completed')
                 }
                 else {
-                    log.warn({ tool: { name: result.toolCall.toolName, durationMs: result.durationMs }, error: result.error }, 'Tool call failed')
+                    log.warn({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs }, error: toolOutput.error }, 'Tool call failed')
                 }
             },
-            onStepFinish: ({ content, response }) => {
+            onStepEnd: ({ content, response }) => {
                 uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
                 // Persist the LLM history incrementally (not just UI parts): a turn preempted or
                 // cancelled mid-flight must leave its assistant + tool messages behind so the next
@@ -229,16 +232,18 @@ export async function runAgentTurn({ slots, systemPrompt, messages, tier, phaseS
         // Reset on success so each turn gets its own one-shot retry, not one per job.
         streamRetries = 0
 
-        const [steps, attemptUsage, finishReason] = await Promise.all([
+        const [steps, attemptUsage, finishReason, finalStep] = await Promise.all([
             result.steps,
             result.usage,
             result.finishReason,
+            result.finalStep,
         ])
         const stepMessages = agentAiUtils.collectStepMessages(steps)
         usage = attemptUsage
         totalInputTokens += attemptUsage.inputTokens ?? 0
         totalOutputTokens += attemptUsage.outputTokens ?? 0
         lastFinishReason = finishReason
+        logTurnPerformance({ performance: finalStep.performance, modelId: tier.modelId, stepCount: steps.length, log })
 
         if (totalInputTokens + totalOutputTokens >= maxTurnTokens) {
             accumulatedResponseMessages.push(...stepMessages)
@@ -289,6 +294,26 @@ export async function runAgentTurn({ slots, systemPrompt, messages, tier, phaseS
     }
 }
 
+// timeToFirstOutputMs is the number the fast-model-first-step swap in prepareStep exists to buy;
+// without it that optimization was never measurable, only assumed.
+function logTurnPerformance({ performance, modelId, stepCount, log }: {
+    performance: StepResultPerformance
+    modelId: string
+    stepCount: number
+    log: AgentTurnLogger
+}): void {
+    log.info({
+        model: {
+            id: modelId,
+            stepCount,
+            stepTimeMs: performance.stepTimeMs,
+            responseTimeMs: performance.responseTimeMs,
+            ...spreadIfDefined('timeToFirstOutputMs', performance.timeToFirstOutputMs),
+            ...spreadIfDefined('outputTokensPerSecond', performance.outputTokensPerSecond),
+        },
+    }, 'Agent turn model performance')
+}
+
 export function delayWithJitter(baseMs: number): Promise<void> {
     const jitter = Math.random() * 0.5 + 0.75
     return new Promise((resolve) => setTimeout(resolve, baseMs * jitter))
@@ -307,7 +332,7 @@ function wrapToolsWithFailureGuard({ tools, log, failureCounts }: { tools: ToolS
         }
         guarded[name] = {
             ...toolDef,
-            execute: async (input: unknown, options: ToolCallOptions) => {
+            execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => {
                 const key = `${name}::${fingerprintInput(input)}`
                 if ((failureCounts.get(key) ?? 0) >= MAX_IDENTICAL_TOOL_FAILURES) {
                     log.warn({ tool: { name } }, 'Short-circuited repeated unproductive tool call')

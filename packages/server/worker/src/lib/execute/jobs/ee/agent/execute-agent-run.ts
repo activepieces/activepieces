@@ -1,7 +1,7 @@
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentPhase, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
-import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet } from 'ai'
+import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
@@ -534,7 +534,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
 
     const uiStream = createUIMessageStream({
         execute: ({ writer: streamWriter }) => {
-            streamWriter.merge(result.toUIMessageStream({ sendSources: true }))
+            streamWriter.merge(toUIMessageStream({ stream: result.stream, sendSources: true }))
         },
     })
 
@@ -624,6 +624,7 @@ async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages
         const { text } = await generateText({
             model,
             abortSignal,
+            telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-title' }),
             prompt: `Generate a concise 3-6 word title for this conversation. Return ONLY the title, nothing else.\n\nUser: ${userMessage}`,
         })
         return sanitizeGeneratedTitle(text)
