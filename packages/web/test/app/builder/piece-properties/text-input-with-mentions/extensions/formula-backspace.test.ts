@@ -1,0 +1,227 @@
+// @vitest-environment jsdom
+import { Editor } from '@tiptap/core';
+import { Document } from '@tiptap/extension-document';
+import { Mention } from '@tiptap/extension-mention';
+import { Paragraph } from '@tiptap/extension-paragraph';
+import { Text } from '@tiptap/extension-text';
+import { JSONContent } from '@tiptap/react';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+
+import {
+  FunctionArgSeparatorNode,
+  FunctionEndNode,
+  FunctionStartNode,
+  FUNCTION_END_NODE_TYPE,
+  FUNCTION_SEP_NODE_TYPE,
+  FUNCTION_START_NODE_TYPE,
+} from '@/app/builder/piece-properties/text-input-with-mentions/extensions/bracket-nodes';
+import { getFormulaBackspaceTransaction } from '@/app/builder/piece-properties/text-input-with-mentions/extensions/formula-backspace';
+
+const ZWS_CHAR = '\u200B';
+const FN_ID = 'fn-1';
+const NESTED_FN_ID = 'fn-2';
+
+let editor: Editor | null = null;
+
+beforeAll(() => {
+  const emptyRect = {
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+  };
+  Object.defineProperty(Range.prototype, 'getClientRects', {
+    value: () => [],
+    configurable: true,
+  });
+  Object.defineProperty(Range.prototype, 'getBoundingClientRect', {
+    value: () => emptyRect,
+    configurable: true,
+  });
+  Object.defineProperty(Element.prototype, 'scrollIntoView', {
+    value: () => undefined,
+    configurable: true,
+  });
+});
+
+afterEach(() => {
+  editor?.destroy();
+  editor = null;
+});
+
+function functionStart(id: string, functionName: string): JSONContent {
+  return { type: FUNCTION_START_NODE_TYPE, attrs: { id, functionName } };
+}
+
+function functionEnd(openId: string): JSONContent {
+  return { type: FUNCTION_END_NODE_TYPE, attrs: { openId } };
+}
+
+function functionSep(openId: string): JSONContent {
+  return { type: FUNCTION_SEP_NODE_TYPE, attrs: { openId } };
+}
+
+function text(value: string): JSONContent {
+  return { type: 'text', text: value };
+}
+
+function posAfterFirstFunctionStart(currentEditor: Editor): number {
+  let pos = -1;
+  currentEditor.state.doc.descendants((node, nodePos) => {
+    if (pos < 0 && node.type.name === FUNCTION_START_NODE_TYPE) {
+      pos = nodePos + node.nodeSize;
+    }
+  });
+  return pos;
+}
+
+function countNodes(currentEditor: Editor, typeName: string): number {
+  let count = 0;
+  currentEditor.state.doc.descendants((node) => {
+    if (node.type.name === typeName) count++;
+  });
+  return count;
+}
+
+function backspaceJustInsideBracket(content: JSONContent[]) {
+  editor = new Editor({
+    extensions: [
+      Document,
+      Paragraph,
+      Text,
+      Mention.configure({ suggestion: { char: '' } }),
+      FunctionStartNode,
+      FunctionArgSeparatorNode,
+      FunctionEndNode,
+    ],
+    content: { type: 'doc', content: [{ type: 'paragraph', content }] },
+  });
+
+  const cursor = posAfterFirstFunctionStart(editor);
+  editor.commands.setTextSelection(cursor);
+  expect(editor.state.selection.from).toBe(cursor);
+
+  const transaction = getFormulaBackspaceTransaction({ state: editor.state });
+  if (transaction) {
+    editor.view.dispatch(transaction);
+  }
+
+  return {
+    handled: transaction !== null,
+    startBadges: countNodes(editor, FUNCTION_START_NODE_TYPE),
+    endBadges: countNodes(editor, FUNCTION_END_NODE_TYPE),
+    mentions: countNodes(editor, 'mention'),
+    visibleText: editor.state.doc.textContent.split(ZWS_CHAR).join(''),
+  };
+}
+
+describe('formula backspace just inside the opening bracket (GIT-1704)', () => {
+  it('deletes the whole pair when the formula is empty', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(ZWS_CHAR),
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.handled).toBe(true);
+    expect(result.startBadges).toBe(0);
+    expect(result.endBadges).toBe(0);
+    expect(result.visibleText).toBe('');
+  });
+
+  it('deletes the whole pair when only the separator skeleton is left', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'concat'),
+      text(ZWS_CHAR),
+      functionSep(FN_ID),
+      text(ZWS_CHAR),
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.handled).toBe(true);
+    expect(result.startBadges).toBe(0);
+    expect(result.endBadges).toBe(0);
+    expect(result.visibleText).toBe('');
+  });
+
+  it('keeps a typed argument instead of discarding it with the formula', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(`${ZWS_CHAR}something`),
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.visibleText).toBe('something');
+    expect(result.startBadges).toBe(0);
+    expect(result.endBadges).toBe(0);
+  });
+
+  it('keeps a step mention argument', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(ZWS_CHAR),
+      { type: 'mention', attrs: { id: 'step_1', label: 'step_1' } },
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.mentions).toBe(1);
+    expect(result.startBadges).toBe(0);
+    expect(result.endBadges).toBe(0);
+  });
+
+  it('keeps a nested formula argument whole', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(ZWS_CHAR),
+      functionStart(NESTED_FN_ID, 'trim'),
+      text(`${ZWS_CHAR}value`),
+      functionEnd(NESTED_FN_ID),
+      functionEnd(FN_ID),
+    ]);
+
+    expect(result.startBadges).toBe(1);
+    expect(result.endBadges).toBe(1);
+    expect(result.visibleText).toBe('value');
+  });
+
+  it('keeps text typed after the formula', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(`${ZWS_CHAR}arg`),
+      functionEnd(FN_ID),
+      text(' tail'),
+    ]);
+
+    expect(result.visibleText).toBe('arg tail');
+    expect(result.endBadges).toBe(0);
+  });
+
+  it('keeps surrounding text when deleting an empty pair', () => {
+    const result = backspaceJustInsideBracket([
+      text('before '),
+      functionStart(FN_ID, 'uppercase'),
+      text(ZWS_CHAR),
+      functionEnd(FN_ID),
+      text(' after'),
+    ]);
+
+    expect(result.handled).toBe(true);
+    expect(result.startBadges).toBe(0);
+    expect(result.visibleText).toBe('before  after');
+  });
+
+  it('deletes only the badge of an unclosed formula', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(`${ZWS_CHAR}something`),
+    ]);
+
+    expect(result.handled).toBe(true);
+    expect(result.startBadges).toBe(0);
+    expect(result.visibleText).toBe('something');
+  });
+});
