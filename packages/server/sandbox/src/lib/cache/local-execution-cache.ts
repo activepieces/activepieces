@@ -78,17 +78,28 @@ async function installCodeStep({ artifact, codeCachePath, log, getSettings }: In
             codesFolderPath: codeCachePath,
         })
     }
-    await build()
     if (!actionRunCache.isActionRunNamespace(artifact.flowVersionId)) {
+        await build()
         return
     }
     const dirPath = codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId)
-    await actionRunCache.touch(dirPath)
-    while (await actionRunCache.settlePendingRemoval(dirPath)) {
-        log.warn({ cache: { path: dirPath } }, 'Action-run code cache was swept while provisioning, rebuilding')
+    do {
         await build()
         await actionRunCache.touch(dirPath)
+    } while (await sweptWhileProvisioning({ dirPath, log }))
+}
+
+async function sweptWhileProvisioning({ dirPath, log }: SweptWhileProvisioningParams): Promise<boolean> {
+    const swept = await actionRunCache.settlePendingRemoval(dirPath)
+    if (swept) {
+        log.warn({ cache: { path: dirPath } }, 'Action-run code cache was swept while provisioning, rebuilding')
     }
+    return swept
+}
+
+type SweptWhileProvisioningParams = {
+    dirPath: string
+    log: ApLogger
 }
 
 type InstallCodeStepParams = {
