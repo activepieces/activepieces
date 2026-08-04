@@ -17,6 +17,7 @@ import dayjs from 'dayjs';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { adAccountIdDropdown, boardIdDropdown } from '../common/props';
+import { newPinOnBoardTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof pinterestAuth>,
@@ -114,6 +115,7 @@ const polling: Polling<
 export const newPinOnBoard = createTrigger({
   auth: pinterestAuth,
   name: 'newPinOnBoard',
+  outputSchema: newPinOnBoardTriggerOutputSchema,
   displayName: 'New Pin on Board',
   description: 'Fires when a new Pin is added to a specific board.',
   aiMetadata: {
@@ -139,75 +141,37 @@ export const newPinOnBoard = createTrigger({
         'Filter by specific pin types. Leave empty to watch all types.',
     }),
   },
+  // One Pin per event: the polling items() returns `data: item` from
+  // GET /boards/{board_id}/pins, not the raw { items, bookmark } envelope.
   sampleData: {
-    items: [
-      {
-        id: '813744226420795884',
-        created_at: '2020-01-01T20:10:40-00:00',
-        link: 'https://www.pinterest.com/',
-        title: 'string',
-        description: 'string',
-        dominant_color: '#6E7874',
-        alt_text: 'string',
-        creative_type: 'REGULAR',
-        board_id: 'string',
-        board_section_id: 'string',
-        board_owner: {
-          username: 'string',
-        },
-        is_owner: 'false',
-        media: {
-          media_type: 'string',
-          images: {
-            '150x150': {
-              width: 150,
-              height: 150,
-              url: 'https://i.pinimg.com/150x150/0d/f6/f1/0df6f1f0bfe7aaca849c1bbc3607a34b.jpg',
-            },
-            '400x300': {
-              width: 400,
-              height: 300,
-              url: 'https://i.pinimg.com/400x300/0d/f6/f1/0df6f1f0bfe7aaca849c1bbc3607a34b.jpg',
-            },
-            '600x': {
-              width: 600,
-              height: 600,
-              url: 'https://i.pinimg.com/600x/0d/f6/f1/0df6f1f0bfe7aaca849c1bbc3607a34b.jpg',
-            },
-            '1200x': {
-              width: 1200,
-              height: 1200,
-              url: 'https://i.pinimg.com/1200x/0d/f6/f1/0df6f1f0bfe7aaca849c1bbc3607a34b.jpg',
-            },
-          },
-        },
-        parent_pin_id: 'string',
-        is_standard: 'false',
-        has_been_promoted: 'false',
-        product_tags: [
-          {
-            pin_id: '903972677830',
-          },
-        ],
-        note: 'string',
-        pin_metrics: {
-          '90d': {
-            pin_click: 7,
-            impression: 2,
-            clickthrough: 3,
-          },
-          lifetime_metrics: {
-            pin_click: 7,
-            impression: 2,
-            clickthrough: 3,
-            reaction: 10,
-            comment: 2,
-          },
-        },
-        is_removable: true,
+    id: '813744226420795884',
+    title: 'Summer Recipe',
+    description: 'A refreshing summer dish',
+    alt_text: 'Plated summer salad',
+    link: 'https://www.activepieces.com/',
+    board_id: '1145392186421331995',
+    board_section_id: null,
+    board_owner: { username: 'sample_username' },
+    media: {
+      media_type: 'image',
+      images: {
+        '150x150': { width: 150, height: 150, url: 'https://i.pinimg.com/150x150/0d/f6/f1/0df6f1f0bfe7aaca849c1bbc3607a34b.jpg' },
+        '400x300': { width: 400, height: 300, url: 'https://i.pinimg.com/400x300/0d/f6/f1/0df6f1f0bfe7aaca849c1bbc3607a34b.jpg' },
+        '600x': { width: 600, height: 600, url: 'https://i.pinimg.com/564x/0d/f6/f1/0df6f1f0bfe7aaca849c1bbc3607a34b.jpg' },
+        '1200x': { width: 1200, height: 1200, url: 'https://i.pinimg.com/1200x/0d/f6/f1/0df6f1f0bfe7aaca849c1bbc3607a34b.jpg' },
       },
-    ],
-    bookmark: 'string',
+    },
+    dominant_color: '#6E7874',
+    creative_type: 'REGULAR',
+    parent_pin_id: null,
+    product_tags: [],
+    pin_metrics: null,
+    is_owner: true,
+    is_standard: true,
+    is_product: false,
+    is_removable: false,
+    has_been_promoted: false,
+    created_at: '2020-01-01T20:10:40',
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

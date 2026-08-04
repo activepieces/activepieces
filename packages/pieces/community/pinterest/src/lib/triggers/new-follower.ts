@@ -14,6 +14,7 @@ import {
 } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
+import { newFollowerTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof pinterestAuth>,
@@ -72,6 +73,7 @@ const polling: Polling<
 export const newFollower = createTrigger({
   auth: pinterestAuth,
   name: 'newFollower',
+  outputSchema: newFollowerTriggerOutputSchema,
   displayName: 'New Follower',
   description: 'Triggers when a user gains a new follower.',
   aiMetadata: {

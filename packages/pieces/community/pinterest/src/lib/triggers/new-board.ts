@@ -17,6 +17,7 @@ import dayjs from 'dayjs';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { adAccountIdDropdown } from '../common/props';
+import { newBoardTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof pinterestAuth>,
@@ -98,6 +99,7 @@ const polling: Polling<
 export const newBoard = createTrigger({
   auth: pinterestAuth,
   name: 'newBoard',
+  outputSchema: newBoardTriggerOutputSchema,
   displayName: 'New Board',
   description: 'Fires when a new board is created in the account.',
   aiMetadata: {
