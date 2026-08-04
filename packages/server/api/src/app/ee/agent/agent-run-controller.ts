@@ -4,13 +4,14 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentHelpers } from './agent-helpers'
 
 const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
-    app.post('/', StartAgentRunRoute, async (request, reply) => {
+    app.post('/runs', StartAgentRunRoute, async (request, reply) => {
         const { instruction, modelName, resumeUrl } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
@@ -18,13 +19,14 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 params: { message: 'Only a running flow can start an agent run' },
             })
         }
-        const { projectId, platform, id: principalId } = request.principal
+        const { projectId, platform } = request.principal
+        const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
         const conversation = await agentHelpers.conversationRepo().save({
             id: apId(),
             platformId: platform.id,
             projectId,
-            userId: principalId,
+            userId: ownerId,
             source: AgentRunSource.FLOW_STEP,
             title: null,
             modelName: modelName ?? null,
@@ -45,7 +47,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 runId,
                 projectId,
                 platformId: platform.id,
-                userId: principalId,
+                userId: ownerId,
                 userMessage: instruction,
                 modelName: modelName ?? null,
                 source: AgentRunSource.FLOW_STEP,

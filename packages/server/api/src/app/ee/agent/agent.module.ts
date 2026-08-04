@@ -8,5 +8,5 @@ export const agentModule: FastifyPluginAsyncZod = async (app) => {
         chatSurface.addHook('preHandler', chatVisibilityGuard)
         await chatSurface.register(agentController, { prefix: '/v1/agents' })
     })
-    await app.register(agentRunController, { prefix: '/v1/agents/runs' })
+    await app.register(agentRunController, { prefix: '/v1/agents' })
 }
