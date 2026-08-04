@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentPhase, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentPhase, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
@@ -46,6 +46,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         })
 
         const provider = config.provider as AIProviderName
+        const source = config.source
         const aiTools = config.aiTools
         // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
         const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
@@ -90,7 +91,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
         const checkCancelled = async () => {
             const { data: response } = await tryCatch(() => ctx.apiClient.executeAgentTool({
-                toolName: '__cancel_check', toolInput: { conversationId, runId }, platformId, userId,
+                toolName: '__cancel_check', toolInput: { conversationId, runId }, platformId, userId, source,
             }))
             if (response?.result === true) {
                 abortController.abort()
@@ -137,6 +138,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
+                source,
             })
 
             const thinkingStartTime = Date.now()
@@ -331,7 +333,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     },
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -351,6 +353,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     discoveryOnly: boolean
     emailEnabled: boolean
     abortSignal: AbortSignal
+    source: AgentRunSource
 }) {
     const brokenConnectors = new Set<string>()
 
@@ -363,7 +366,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         if (discoveryOnly && DISCOVERY_ONLY_NEUTRALIZED_TOOLS.has(toolName)) {
             return { content: [{ type: 'text', text: `🧪 Discovery-only run — ${toolName} was not executed. The agent reached a runnable call.` }] }
         }
-        const response = await ctx.apiClient.executeAgentTool({ toolName, toolInput, platformId, userId, conversationId })
+        const response = await ctx.apiClient.executeAgentTool({ toolName, toolInput, platformId, userId, source, conversationId })
         return response.result
     }
 
@@ -386,7 +389,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             const blockMs = Math.min(remainingMs, APPROVAL_BLOCK_MS)
             const { data: response, error } = await tryCatch(() => Promise.race([
                 ctx.apiClient.executeAgentTool({
-                    toolName: '__approval_wait', toolInput: { gateId, timeoutMs: blockMs }, platformId, userId,
+                    toolName: '__approval_wait', toolInput: { gateId, timeoutMs: blockMs }, platformId, userId, source,
                 }),
                 waitForAbort(abortSignal).then(() => ({ result: 'aborted' as const })),
             ]))
@@ -431,7 +434,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         await tryCatch(() => ctx.apiClient.executeAgentTool({
             toolName: '__store_pending_gate',
             toolInput: { conversationId, runId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
-            platformId, userId, conversationId,
+            platformId, userId, source, conversationId,
         }))
     }
 
@@ -443,7 +446,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             await tryCatch(() => ctx.apiClient.executeAgentTool({
                 toolName: '__store_selected_connection',
                 toolInput: { pieceName, connectionExternalId, label, projectId: connProjectId },
-                platformId, userId, conversationId,
+                platformId, userId, source, conversationId,
             }))
         },
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
@@ -472,7 +475,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             },
         }),
         checkFlowWrites: async (flowId) => {
-            const response = await ctx.apiClient.executeAgentTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, conversationId })
+            const response = await ctx.apiClient.executeAgentTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, source, conversationId })
             return response.result
         },
         waitForApproval,

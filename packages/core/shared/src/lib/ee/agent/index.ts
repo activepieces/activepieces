@@ -1,4 +1,4 @@
-import { AgentPromptOverride } from '@activepieces/core-execution'
+import { AgentPromptOverride, AgentRunSource } from '@activepieces/core-execution'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -194,10 +194,7 @@ export enum AgentConversationStatus {
     ERROR = 'ERROR',
 }
 
-export enum AgentRunSource {
-    CHAT = 'CHAT',
-    FLOW_STEP = 'FLOW_STEP',
-}
+export { AgentRunSource }
 
 export const AgentConversation = z.object({
     ...BaseModelSchema,
