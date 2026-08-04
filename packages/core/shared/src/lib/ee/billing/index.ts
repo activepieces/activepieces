@@ -47,8 +47,8 @@ export type PurchasablePlan = z.infer<typeof PurchasablePlan>
 export const ConsumableProductAutoTopupParams = z.discriminatedUnion('state', [
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.ENABLED),
-        minThreshold: z.number(),
-        creditsToAdd: z.number(),
+        minThreshold: z.number().int().nonnegative(),
+        creditsToAdd: z.number().int().positive(),
         maxMonthlyTopUps: Nullable(z.number().int().positive()),
         featureId: z.enum(ConsumableFeatureId),
     }),
