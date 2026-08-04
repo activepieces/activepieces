@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -23,6 +23,7 @@ import { agentPrompt } from './prompt/agent-prompt'
 import { executeCrossProjectTool } from './tools/agent-tools'
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
+const CHAT_ONLY_TOOL_PREFIX = '__'
 
 const MAX_EMAIL_RECIPIENTS = 10
 const MAX_EMAIL_SUBJECT_LENGTH = 300
@@ -329,6 +330,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             aiTools,
             emailEnabled,
             userEmail: userMeta.email,
+            source: conversation.source,
         }
     },
 
@@ -443,6 +445,13 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {
+        if (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) && input.source !== AgentRunSource.CHAT) {
+            log.warn({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run')
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: { message: `Tool "${input.toolName}" is only available to chat runs` },
+            })
+        }
         if (input.toolName === '__cancel_check') {
             const conversationId = input.toolInput.conversationId
             if (typeof conversationId !== 'string') {
