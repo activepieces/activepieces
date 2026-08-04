@@ -13,14 +13,14 @@
   "dependencies": {
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
-    "@ai-sdk/amazon-bedrock": "3.0.97",
-    "@ai-sdk/anthropic": "3.0.72",
-    "@ai-sdk/azure": "3.0.55",
-    "@ai-sdk/google": "3.0.65",
-    "@ai-sdk/openai": "3.0.54",
-    "@ai-sdk/openai-compatible": "2.0.42",
-    "@openrouter/ai-sdk-provider": "2.1.1",
-    "ai": "6.0.170"
+    "@ai-sdk/amazon-bedrock": "5.0.38",
+    "@ai-sdk/anthropic": "4.0.25",
+    "@ai-sdk/azure": "4.0.26",
+    "@ai-sdk/google": "4.0.29",
+    "@ai-sdk/openai": "4.0.25",
+    "@ai-sdk/openai-compatible": "3.0.18",
+    "@openrouter/ai-sdk-provider": "3.0.0",
+    "ai": "7.0.44"
   },
   "devDependencies": {
     "tslib": "2.6.2",

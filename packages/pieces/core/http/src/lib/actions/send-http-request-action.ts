@@ -5,6 +5,7 @@ import {
   HttpRequest,
   QueryParams,
   AuthenticationType,
+  toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import {
   ApFile,
@@ -380,6 +381,7 @@ export const httpSendRequestAction = createAction({
         );
       } catch (error) {
         attempts++;
+        const status = error instanceof HttpError ? error.response.status : 0;
 
         switch (failureMode) {
           case 'retry_all': {
@@ -387,24 +389,18 @@ export const httpSendRequestAction = createAction({
             throw error;
           }
           case 'retry_5xx': {
-            if (
-              (error as HttpError).response.status >= 500 &&
-              (error as HttpError).response.status < 600
-            ) {
+            if (status >= 500 && status < 600) {
               if (attempts < 3) continue;
-              throw error; // after 3 tries, throw
+              throw error;
             }
-            return (error as HttpError).errorMessage(); //throw error; // non 5xxx error
+            return toFailsafeOutput({ error, requestBody: request.body });
           }
 
           case 'continue_all':
-            return (error as HttpError).errorMessage();
+            return toFailsafeOutput({ error, requestBody: request.body });
           case 'continue_4xx':
-            if (
-              (error as HttpError).response?.status >= 400 &&
-              (error as HttpError).response?.status < 500
-            ) {
-              return (error as HttpError).errorMessage();
+            if (status >= 400 && status < 500) {
+              return toFailsafeOutput({ error, requestBody: request.body });
             }
             if (attempts < 3) continue;
             throw error;

@@ -7,19 +7,29 @@ on:
 jobs:
   smoke-test:
     concurrency:
-      group: smoke-test-${{ matrix.arch }}
+      group: smoke-test-${{ matrix.arch }}-${{ matrix.executionMode }}
       cancel-in-progress: true
     strategy:
       matrix:
         include:
           - runner: depot-ubuntu-24.04
             arch: amd64
+            executionMode: SANDBOX_CODE_ONLY
           - runner: depot-ubuntu-24.04-arm
             arch: arm64
+            executionMode: SANDBOX_CODE_ONLY
+          # SANDBOX_PROCESS is the only mode that exercises the isolate binary,
+          # which is a committed prebuilt artifact and differs per architecture.
+          - runner: depot-ubuntu-24.04
+            arch: amd64
+            executionMode: SANDBOX_PROCESS
+          - runner: depot-ubuntu-24.04-arm
+            arch: arm64
+            executionMode: SANDBOX_PROCESS
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 35
     env:
-      AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
+      AP_EXECUTION_MODE: ${{ matrix.executionMode }}
       AP_WORKER_CONCURRENCY: 1
 
     steps:
@@ -52,11 +62,13 @@ jobs:
           smoke-test/verify.sh "${{ steps.setup.outputs.flow_id }}"
 
       - name: Run memory stability test
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         run: |
           chmod +x smoke-test/verify-memory.sh
           smoke-test/verify-memory.sh "${{ steps.setup.outputs.flow_id }}"
 
       - name: Run delay flow smoke test
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         run: |
           chmod +x smoke-test/verify-delay.sh
           smoke-test/verify-delay.sh
@@ -72,6 +84,7 @@ jobs:
       # gives that single sandbox the full 1G worker container. Every run must end
       # MEMORY_LIMIT_EXCEEDED — this pins the detection path for production code-only engine OOMs.
       - name: Setup OOM flow
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         id: setup-oom
         run: |
           FLOW_ID=$(CODE_INPUT_SUM="$(cat benchmark/oom-expression.txt)" benchmark/setup.sh)
@@ -79,11 +92,13 @@ jobs:
           echo "Flow ID: $FLOW_ID"
 
       - name: Run memory-limit smoke test
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         run: |
           chmod +x smoke-test/verify-memory-limit.sh
           smoke-test/verify-memory-limit.sh "${{ steps.setup-oom.outputs.flow_id }}"
 
       - name: Restart stack in S3 mode (MinIO, no signed URLs)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         run: |
           docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
           AP_EXECUTION_MODE=SANDBOX_CODE_ONLY \
@@ -102,6 +117,7 @@ jobs:
           docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml ps
 
       - name: Setup S3 flow (no signed URLs)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         id: setup-s3
         run: |
           chmod +x benchmark/setup.sh
@@ -110,12 +126,14 @@ jobs:
           echo "Flow ID: $FLOW_ID"
 
       - name: Run S3 smoke test (no signed URLs)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         run: |
           chmod +x smoke-test/verify.sh smoke-test/verify-s3.sh
           smoke-test/verify.sh "${{ steps.setup-s3.outputs.flow_id }}"
           smoke-test/verify-s3.sh "${{ steps.setup-s3.outputs.flow_id }}"
 
       - name: Restart stack in S3 mode (MinIO, signed URLs)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         run: |
           docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml down -v
           AP_EXECUTION_MODE=SANDBOX_CODE_ONLY \
@@ -134,6 +152,7 @@ jobs:
           docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.minio.yml ps
 
       - name: Setup S3 flow (signed URLs)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         id: setup-s3-signed
         run: |
           chmod +x benchmark/setup.sh
@@ -142,6 +161,7 @@ jobs:
           echo "Flow ID: $FLOW_ID"
 
       - name: Run S3 smoke test (signed URLs)
+        if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         run: |
           chmod +x smoke-test/verify.sh smoke-test/verify-s3.sh
           smoke-test/verify.sh "${{ steps.setup-s3-signed.outputs.flow_id }}"

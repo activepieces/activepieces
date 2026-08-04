@@ -1,13 +1,13 @@
 import {
   AuthenticationType,
   httpClient,
-  HttpError,
   HttpHeaders,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
   HttpResponse,
   QueryParams,
+  toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import { httpOauth2Auth } from '../..';
 import {
@@ -15,7 +15,7 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { ProxyAgent } from 'undici';
 
@@ -247,7 +247,11 @@ export const httpOauth2RequestAction = createAction({
         }
 
         let proxyBody: BodyInit | undefined;
-        if (request.body !== undefined && request.body !== null) {
+        if (
+          request.method !== HttpMethod.GET &&
+          request.method !== HttpMethod.HEAD &&
+          !isNil(request.body)
+        ) {
           if (request.body instanceof FormData) {
             proxyBody = request.body.getBuffer();
           } else if (typeof request.body === 'string') {
@@ -277,7 +281,7 @@ export const httpOauth2RequestAction = createAction({
       return handleResponse(response);
     } catch (error) {
       if (failsafe) {
-        return (error as HttpError).errorMessage();
+        return toFailsafeOutput({ error, requestBody: request.body });
       }
 
       throw error;
