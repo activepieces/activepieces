@@ -220,8 +220,8 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
-      "@activepieces/piece-call-rounded": [
-        "packages/pieces/community/call-rounded/src/index.ts"
+      "@activepieces/piece-rounded-studio": [
+        "packages/pieces/community/rounded-studio/src/index.ts"
       ],
       "@activepieces/piece-camb-ai": [
         "packages/pieces/community/camb-ai/src/index.ts"
@@ -1891,7 +1891,7 @@
       "@activepieces/piece-omnihr": [
         "packages/pieces/community/omnihr/src/index.ts"
       ],
-      "@activepieces/piece-clicdog": [
+      "@activepieces/piece-clicdata": [
         "packages/pieces/community/clicdata/src/index.ts"
       ],
       "@activepieces/piece-katana": [

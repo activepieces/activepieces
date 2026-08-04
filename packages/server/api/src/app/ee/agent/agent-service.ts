@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentHistoryMessage, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -17,6 +17,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             platformId,
             projectId: null,
             userId,
+            source: AgentRunSource.CHAT,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],

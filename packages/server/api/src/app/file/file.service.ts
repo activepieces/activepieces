@@ -347,6 +347,10 @@ export function getLocationForFile(type: FileType) {
     return FileLocation.DB
 }
 
+export function getDownloadName(file: Pick<File, 'id' | 'fileName' | 'type'>): string {
+    return file.fileName ?? `${file.id}.${file.type === FileType.FLOW_RUN_LOG_SLICE ? 'json' : 'bin'}`
+}
+
 export function getEffectiveExecutionDataRetentionDays(executionDataRetentionDays: number | null | undefined): number {
     if (isNil(executionDataRetentionDays)) {
         return EXECUTION_DATA_RETENTION_DAYS
