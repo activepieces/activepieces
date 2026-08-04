@@ -4,10 +4,11 @@ import { CreateRecordsRequest } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 
 export const createRecords = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'tables-create-records',
   displayName: 'Create Record(s)',
   description: 'Insert one or more new records to a table.',
+  aiMetadata: { description: 'Inserts one or more new rows into an Activepieces Table via either a per-field form built from the columns of the selected table, or a raw JSON array of objects keyed by column name that overrides the form, for when the table is chosen dynamically at runtime. Use Update Record instead to change a row that already exists. Requires a table ID, and any value whose key does not match a real column is silently dropped; not idempotent, since every call appends new records with new IDs.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
     table_id: tablesCommon.table_id,

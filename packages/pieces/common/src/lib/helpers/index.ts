@@ -12,12 +12,12 @@ import {
   ApFile,
 } from '@activepieces/pieces-framework';
 import {
-  HttpError,
   HttpHeaders,
   HttpMethod,
   HttpRequest,
   QueryParams,
   httpClient,
+  toFailsafeOutput,
 } from '../http';
 import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/core-utils';
 import fs from 'fs';
@@ -437,7 +437,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         );
       } catch (error) {
         if (failsafe) {
-          return (error as HttpError).errorMessage();
+          return toFailsafeOutput({ error, requestBody: request.body });
         }
         throw error;
       }

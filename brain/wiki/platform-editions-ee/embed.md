@@ -14,7 +14,7 @@ An RSA-4096 keypair generated server-side (`crypto.generateKeyPair`, PKCS#1 PEM 
 - `signingKeyService.get({ id })` deliberately has **no `platformId` filter** — token extraction knows only the `kid`, not yet which platform it belongs to.
 
 ### 🎫 External token
-The vendor's backend signs a JWT with `kid` = the signing key's id. `POST /v1/managed-authn/external-token` reads that `kid` (`external-token-extractor.ts`), fetches the public key, and verifies RS256. The token identifies a user + project; an existing pair is logged in rather than recreated. See [Managed Auth](./managed-auth.md).
+The vendor's backend signs a JWT with `kid` = the signing key's id. `POST /v1/managed-authn/external-token` reads that `kid` (`external-token-extractor.ts`), fetches the public key, and verifies RS256. The token identifies a user + project; an existing pair is logged in rather than recreated. See [Managed Auth](../connections-auth/managed-auth.md).
 
 ### 🌐 Embed Subdomain
 A Cloud-only custom hostname registered with Cloudflare so the embed is served from the customer's own domain. `cloudflareService.createCustomHostname` returns the DNS verification records the admin must publish.

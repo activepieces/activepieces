@@ -123,7 +123,7 @@ function logChatHttp({
 }): void {
   if (!chatDebug.isEnabled()) return;
   const path = url.replace(API_URL, '');
-  if (!path.startsWith('/v1/chat') || path.startsWith('/v1/logs')) return;
+  if (!path.startsWith('/v1/agents') || path.startsWith('/v1/logs')) return;
   const conversationId = path.match(/\/v1\/chat\/conversations\/([^/?]+)/)?.[1];
   const fields = {
     http: {

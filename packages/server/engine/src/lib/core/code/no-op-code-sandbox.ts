@@ -83,6 +83,10 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
             reject(buildError({ message: error.message, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
+        if (typeof child.send !== 'function') {
+            return
+        }
+
         child.send({ codeFilePath, inputs })
     })
 }

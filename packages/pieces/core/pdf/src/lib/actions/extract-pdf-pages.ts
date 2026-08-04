@@ -60,10 +60,11 @@ This action can extract or rearrange the pages in a PDF.
 `;
 
 export const extractPdfPages = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'extractPdfPages',
   displayName: 'Extract PDF Pages',
   description: 'Extract or rearrange page(s)from PDF File.',
+  aiMetadata: { description: 'Builds a new PDF from page ranges taken from a source PDF; because ranges are copied in the order given, it both extracts/trims and reorders pages. Use it to split or resequence one document — use Merge PDFs to join separate files, and PDF Page Count first if bounds are unknown. Ranges are 1-indexed and inclusive, negatives count from the end (start -5, end -1 is the last five pages), and no range may span across 0; the source file is untouched and repeating the call produces the same page content, so idempotent.', idempotent: true },
   props: {
     markdown: Property.MarkDown({
       variant: MarkdownVariant.INFO,
