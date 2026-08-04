@@ -428,8 +428,17 @@ function filterBy(
   return res;
 }
 
-function rowId(parentId: string | undefined, index: number): string {
-  return isNil(parentId) ? String(index) : `${parentId}.${index}`;
+function siblingRowIds(
+  nodes: DataSelectorTreeNode[],
+  parentId: string | undefined,
+): string[] {
+  const occurrences = new Map<string, number>();
+  return nodes.map((node) => {
+    const seen = occurrences.get(node.key) ?? 0;
+    occurrences.set(node.key, seen + 1);
+    const localId = seen === 0 ? node.key : `${node.key}#${seen}`;
+    return isNil(parentId) ? localId : `${parentId}/${localId}`;
+  });
 }
 
 function flattenVisibleRows({
@@ -445,8 +454,9 @@ function flattenVisibleRows({
   parentId?: string;
   depth?: number;
 }): DataSelectorRow[] {
+  const ids = siblingRowIds(nodes, parentId);
   return nodes.flatMap((node, index) => {
-    const id = rowId(parentId, index);
+    const id = ids[index];
     const children = node.children ?? [];
     const hasChildren = children.length > 0;
     const expandedByDefault = searchActive || depth === 0;

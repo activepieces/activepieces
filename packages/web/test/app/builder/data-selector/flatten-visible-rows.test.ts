@@ -108,6 +108,53 @@ describe('dataSelectorUtils.flattenVisibleRows', () => {
     expect(leaves.every((r) => r.expanded === false)).toBe(true);
   });
 
+  it('keeps a row id stable when a sibling is inserted before it', () => {
+    const before = flatten({
+      nodes: [branch('a', [leaf('x', '1')]), branch('b', [leaf('y', '2')])],
+      searchActive: true,
+    });
+    const after = flatten({
+      nodes: [
+        branch('a', [leaf('x', '1')]),
+        branch('inserted', [leaf('z', '3')]),
+        branch('b', [leaf('y', '2')]),
+      ],
+      searchActive: true,
+    });
+
+    const idOf = (rows: typeof before, key: string) =>
+      rows.find((r) => r.node.key === key)?.id;
+
+    expect(idOf(after, 'b')).toBe(idOf(before, 'b'));
+    expect(idOf(after, 'y')).toBe(idOf(before, 'y'));
+  });
+
+  it('keeps a user override on the same logical node when the tree gains a sibling', () => {
+    const nodesBefore = [
+      branch('a', [leaf('x', '1')]),
+      branch('b', [leaf('y', '2')]),
+    ];
+    const collapsedB = flatten({ nodes: nodesBefore, searchActive: true }).find(
+      (r) => r.node.key === 'b',
+    );
+    const overrides = new Map([[collapsedB!.id, false]]);
+
+    const after = flatten({
+      nodes: [
+        branch('a', [leaf('x', '1')]),
+        branch('inserted', [leaf('z', '3')]),
+        branch('b', [leaf('y', '2')]),
+      ],
+      searchActive: true,
+      overrides,
+    });
+
+    expect(after.find((r) => r.node.key === 'b')?.expanded).toBe(false);
+    expect(after.find((r) => r.node.key === 'inserted')?.expanded).toBe(true);
+    expect(after.some((r) => r.node.key === 'y')).toBe(false);
+    expect(after.some((r) => r.node.key === 'z')).toBe(true);
+  });
+
   it('gives distinct ids to sibling subtrees that reuse the same node key', () => {
     // The zipped array view keys nodes by bare property name
     // (convertArrayToZippedView), so node.key repeats across branches.
