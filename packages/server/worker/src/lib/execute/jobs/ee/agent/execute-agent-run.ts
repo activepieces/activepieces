@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentPhase, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
@@ -32,6 +32,8 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 // tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
 // `agent-evals` run could still execute ap_run_code against the developer's project.
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
+
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code']
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
@@ -121,7 +123,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
         try {
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
-            const taintState: TaintState = { tainted: false }
+            const taintState: TaintState = { tainted: source === AgentRunSource.FLOW_STEP }
 
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
@@ -374,6 +376,9 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     }
 
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
+        if (source !== AgentRunSource.CHAT) {
+            return { outcome: 'declined' }
+        }
         // Auto-resolve in dry-run (playground) and discovery-only (eval): there's no UI to click
         // approve, so a real wait would stall the entire turn for APPROVAL_TIMEOUT_MS.
         if (dryRun || discoveryOnly) {
@@ -496,7 +501,8 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         })
         : {}
 
-    return { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
+    return source === AgentRunSource.CHAT ? allTools : omit(allTools, UNATTENDED_FORBIDDEN_TOOLS)
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {

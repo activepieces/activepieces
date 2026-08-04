@@ -155,13 +155,14 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
             agentHelpers.resolveChatProvider({ platformId, log }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
-            requestedSource === AgentRunSource.FLOW_STEP ? Promise.resolve({ mcpServerUrl: null, mcpToken: null }) : agentMcp.getCredentials({ platformId, userId, log }),
+            agentMcp.getCredentials({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
             userService(log).getMetaInformation({ id: userId }),
             agentHelpers.getUserMemory({ platformId, userId }),
         ])
 
         const isFlowStep = conversation.source === AgentRunSource.FLOW_STEP
+        const scopedMcpCredentials = isFlowStep ? { mcpServerUrl: null, mcpToken: null } : mcpCredentials
         const runMemory = isFlowStep ? { instructions: null, memories: [] } : agentMemory
         const runUserEmail = isFlowStep ? '' : userMeta.email
 
@@ -333,8 +334,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             allMessages,
             previousUiMessages: uiMessagesWithUser,
             tier: { id: tier.id, thinkingBudget: tier.thinkingBudget, modelId: tier.modelId },
-            mcpCredentials: mcpCredentials.mcpServerUrl && mcpCredentials.mcpToken
-                ? { mcpServerUrl: mcpCredentials.mcpServerUrl, mcpToken: mcpCredentials.mcpToken }
+            mcpCredentials: scopedMcpCredentials.mcpServerUrl && scopedMcpCredentials.mcpToken
+                ? { mcpServerUrl: scopedMcpCredentials.mcpServerUrl, mcpToken: scopedMcpCredentials.mcpToken }
                 : null,
             projects: scopedProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
             guides,
@@ -694,8 +695,14 @@ async function loadOrStartConversation({ conversationId, platformId, userId, sou
     if (source !== AgentRunSource.FLOW_STEP) {
         return agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
     }
-    const existing = await agentHelpers.conversationRepo().findOneBy({ id: conversationId, platformId, userId })
-    return existing ?? agentHelpers.conversationRepo().save({
+    const existing = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+    if (!isNil(existing)) {
+        if (existing.platformId !== platformId || existing.userId !== userId) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
+        }
+        return existing
+    }
+    return agentHelpers.conversationRepo().save({
         id: conversationId,
         platformId,
         projectId: projectId ?? null,
