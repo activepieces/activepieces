@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -147,16 +147,6 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             })
             const purgeDate = apDayjs().add(PLATFORM_PURGE_DELAY_DAYS, 'day')
 
-            await userRepo().update({ platformId }, { status: UserStatus.INACTIVE })
-            await apiKeyService.deleteAllByPlatformId({ platformId })
-            await stopPlatformExecution({ platformId, log: req.log })
-
-            await emailService(req.log).sendPlatformDeleted({
-                platformId,
-                email: owner.email,
-                purgeDate: purgeDate.format('MMMM D, YYYY'),
-            })
-
             await systemJobsSchedule(req.log).upsertJob({
                 job: {
                     name: SystemJobName.HARD_DELETE_PLATFORM,
@@ -175,6 +165,19 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                     },
                 },
             })
+
+            await userRepo().update({ platformId }, { status: UserStatus.INACTIVE })
+            await apiKeyService.deleteAllByPlatformId({ platformId })
+            await stopPlatformExecution({ platformId, log: req.log })
+
+            const { error: emailError } = await tryCatch(() => emailService(req.log).sendPlatformDeleted({
+                platformId,
+                email: owner.email,
+                purgeDate: purgeDate.format('MMMM D, YYYY'),
+            }))
+            if (!isNil(emailError)) {
+                req.log.error({ error: emailError, platform: { id: platformId } }, 'Platform deleted but the confirmation email failed')
+            }
 
             return res.status(StatusCodes.NO_CONTENT).send()
         })

@@ -16,10 +16,13 @@ import { McpOAuthTokenEntity } from '../../mcp/oauth/token/mcp-oauth-token.entit
 import { PieceMetadataEntity } from '../../pieces/metadata/piece-metadata-entity'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
+import { ToolSearchIndexEntity } from '../../tool-search/tool-search-index.entity'
 import { userRepo } from '../../user/user-service'
 import { userInvitationRepo } from '../../user-invitations/user-invitation.service'
+import { VariableEntity } from '../../variable/variable.entity'
 import { ProjectRoleEntity } from '../projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../signing-key/signing-key-entity'
+import { ConcurrencyPoolEntity } from './concurrency-pool/concurrency-pool.entity'
 
 const platformRepo = repoFactory(PlatformEntity)
 const projectRepo = repoFactory(ProjectEntity)
@@ -28,6 +31,9 @@ const signingKeyRepo = repoFactory(SigningKeyEntity)
 const projectRoleRepo = repoFactory(ProjectRoleEntity)
 const mcpOAuthTokenRepo = repoFactory(McpOAuthTokenEntity)
 const mcpOAuthCodeRepo = repoFactory(McpOAuthAuthorizationCodeEntity)
+const variableRepo = repoFactory(VariableEntity)
+const concurrencyPoolRepo = repoFactory(ConcurrencyPoolEntity)
+const toolSearchIndexRepo = repoFactory(ToolSearchIndexEntity)
 
 export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     hardDeletePlatformHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PLATFORM>) => {
@@ -53,6 +59,9 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
         await userInvitationRepo().delete({ platformId })
         await mcpOAuthTokenRepo().delete({ platformId })
         await mcpOAuthCodeRepo().delete({ platformId })
+        await variableRepo().delete({ platformId })
+        await concurrencyPoolRepo().delete({ platformId })
+        await toolSearchIndexRepo().delete({ platformId })
 
         await platformRepo().delete({ id: platformId })
 
@@ -84,9 +93,6 @@ export async function stopPlatformExecution({ platformId, log }: StopPlatformExe
                 request: { status: FlowStatus.DISABLED },
             },
         })
-    }
-    for (const flow of flows) {
-        await batchDeleteByFlowId(flow.id)
     }
     await flowExecutionCache(log).invalidate(...flows.map((flow) => flow.id))
 }
