@@ -139,7 +139,7 @@ export const triggerHelper = {
                 flowVersionId: params.flowVersion.id,
             }),
             webhookUrl: params.webhookUrl,
-            isRepublish: params.isRepublish ?? false,
+            isRepublish: params.isRepublish,
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             propsValue: processedInput,
             payload: params.triggerPayload ?? {},
