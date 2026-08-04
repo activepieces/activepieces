@@ -49,6 +49,7 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
     app.addContentTypeParser('application/pdf', streamThroughBinary)
     app.addContentTypeParser('application/zip', streamThroughBinary)
     app.addContentTypeParser('application/gzip', streamThroughBinary)
+    app.addContentTypeParser('text/csv', streamThroughBinary)
     // octet-stream has a global buffering parser; override it (scoped to webhook routes) to stream.
     app.removeContentTypeParser('application/octet-stream')
     app.addContentTypeParser('application/octet-stream', streamThroughBinary)

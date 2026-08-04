@@ -121,8 +121,8 @@ export const PieceMetadataSummary = z.object({
   ...PieceBase.shape,
   actions: z.number(),
   triggers: z.number(),
-  suggestedActions: z.optional(z.array(TriggerBase)),
-  suggestedTriggers: z.optional(z.array(ActionBase)),
+  suggestedActions: z.optional(z.array(ActionBase)),
+  suggestedTriggers: z.optional(z.array(TriggerBase)),
 })
 export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
   actions: number;

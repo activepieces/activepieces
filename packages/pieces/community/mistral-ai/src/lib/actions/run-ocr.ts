@@ -10,11 +10,12 @@ const OCR_MODEL_OPTIONS = [
 ];
 
 export const runOcr = createAction({
-  audience: 'human',
+  audience: 'both',
 	auth: mistralAuth,
 	name: 'run_ocr',
 	displayName: 'Run OCR',
 	description: 'Extract text from PDFs and images using mistral-ocr-latest. To OCR a file from a previous step, run Upload File first (with purpose=ocr) and pass the returned id here.',
+	aiMetadata: { description: 'Extracts the text of a PDF or image as Markdown with a Mistral OCR model, taking the document either from a public URL or from a Mistral file id (that mode first resolves a short-lived signed URL); optional zero-based page indices narrow the run and embedded images can come back as base64. Pick this to read text out of a document that already exists, and Ask Mistral when the answer has to be generated or reasoned about rather than transcribed. The file-id mode only works for a file that Upload File stored with purpose=ocr, and the document type must be set to PDF or image to match the source. Read-only extraction that stores nothing, so repeat calls are idempotent.', idempotent: true },
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',

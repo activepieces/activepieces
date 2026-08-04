@@ -311,6 +311,8 @@ const NATIVE_EXTERNALS = new Set<string>([
     'pg-native', 'mongodb-client-encryption', 'kerberos',
     'snappy', 'aws4', 'bson-ext', '@mongodb-js/zstd',
     'playwright', 'playwright-core', 'puppeteer', 'puppeteer-core',
+    'sharp',
+    'tiktoken',
     // native-backed SDK (pulls better-sqlite3), and packages that load sibling files at runtime:
     // pg-format → require(__dirname + '/reserved.js'); clarifai-nodejs-grpc → loadSync('*.proto').
     '@actual-app/api', 'pg-format', 'clarifai-nodejs-grpc',

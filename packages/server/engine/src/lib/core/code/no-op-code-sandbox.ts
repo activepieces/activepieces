@@ -83,6 +83,10 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
             reject(buildError({ message: error.message, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
+        if (typeof child.send !== 'function') {
+            return
+        }
+
         child.send({ codeFilePath, inputs })
     })
 }
@@ -104,14 +108,35 @@ export const noOpCodeSandbox: CodeSandbox = {
     },
 
     async runScript({ script, scriptContext, functions }) {
+        const session = await noOpCodeSandbox.createScriptSession({ scriptContext, functions })
+        try {
+            return await session.run(script)
+        }
+        finally {
+            session.dispose()
+        }
+    },
+
+    async createScriptSession({ scriptContext, functions }) {
         const newContext = {
             ...scriptContext,
             ...functions,
         }
         const params = Object.keys(newContext)
         const args = Object.values(newContext)
-        const body = `return (${script})`
-        const fn = Function(...params, body)
-        return fn(...args)
+        let disposed = false
+        return {
+            run: async (script: string) => {
+                if (disposed) {
+                    throw new Error('Script session has been disposed')
+                }
+                const body = `return (${script})`
+                const fn = Function(...params, body)
+                return fn(...args)
+            },
+            dispose: () => {
+                disposed = true
+            },
+        }
     },
 }

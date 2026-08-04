@@ -1,12 +1,12 @@
 import path from 'path'
 import { isNil, STEP_NAME_REGEX } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { CodeAction, EngineGenericError, ExecutionError, ExecutionErrorType, FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { CodeAction, EngineGenericError, ExecutionError, ExecutionErrorType, FlowActionType, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { utils } from '../utils'
-import { ActionHandler, BaseExecutor } from './base-executor'
+import { ActionHandler, BaseExecutor, failStep } from './base-executor'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -66,18 +66,13 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     }))
 
     if (executionStateError) {
-        const failedStepOutput = stepOutput
-            .setStatus(StepOutputStatus.FAILED)
-            .setErrorMessage(utils.formatError(executionStateError))
-            .setDuration(performance.now() - stepStartTime)
-
-        return (await executionState
-            .upsertStep(action.name, failedStepOutput))
-            .setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: utils.formatError(executionStateError),
-            } })
+        return failStep({
+            action,
+            executionState,
+            stepOutput,
+            error: executionStateError,
+            durationMs: performance.now() - stepStartTime,
+        })
     }
 
     return executionStateResult

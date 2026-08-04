@@ -25,11 +25,12 @@ Ensure that your API key is valid. \n
 `;
 
 export const askLocalAI = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: localaiAuth,
   name: 'ask_localai',
   displayName: 'Ask LocalAI',
   description: 'Ask LocalAI anything you want!',
+  aiMetadata: { description: 'Sends a prompt to a chat model running on your own self-hosted LocalAI server, through the OpenAI-compatible completions endpoint at the server URL stored on the connection, with optional sampling controls and a roles array for system or assistant priming; unlike the hosted-vendor pieces it keeps no conversation memory, so every call is stateless. Pick it only when inference must stay on your own LocalAI instance rather than a cloud provider such as OpenAI, Groq, or DeepSeek, and use the piece\'s Custom API Call action for LocalAI endpoints other than chat completions, such as embeddings, images, or audio. Requires a question and a model id that actually exists on that instance, since the dropdown lists only what the server reports and the default gpt-3.5-turbo may not be installed; not idempotent: each call produces a fresh completion.', idempotent: false },
   props: {
     model: Property.Dropdown({
       auth: localaiAuth,

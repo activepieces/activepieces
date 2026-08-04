@@ -141,6 +141,12 @@ describe('isolateProcess', () => {
             ])
         })
 
+        it('raises the open-file limit off isolate\'s default of 64', async () => {
+            await callCreate()
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args).toContain('--open-files=1024')
+        })
+
         it('never drops the /etc mount (binds to the bundled etcDir)', async () => {
             await callCreate()
             const args: string[] = spawnMock.mock.calls[0][1]
@@ -198,10 +204,16 @@ describe('isolateProcess', () => {
         it('runs node with engine path at /root/common/<basename>', async () => {
             await callCreate({ enginePath: '/any/where/engine-main.js' })
             const args: string[] = spawnMock.mock.calls[0][1]
-            expect(args[args.length - 2]).toBe(process.execPath)
-            expect(args[args.length - 1]).toBe('/root/common/engine-main.js')
-            expect(args[args.length - 3]).toBe('--')
-            expect(args[args.length - 4]).toBe('--run')
+            const runIndex = args.indexOf('--run')
+            expect(args.slice(runIndex)).toEqual([
+                '--run',
+                '--',
+                process.execPath,
+                '--no-node-snapshot',
+                '--expose-gc',
+                '--max-old-space-size=256',
+                '/root/common/engine-main.js',
+            ])
         })
 
         it('spawns with shell: false', async () => {

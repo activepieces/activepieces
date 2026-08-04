@@ -9,6 +9,12 @@ export const createUpdateCustomObject = createAction({
 	name: 'create_update_custom_object',
 	displayName: 'Create/Update Custom Object',
 	description: 'Creates or updates a Workday custom object instance (PUT upsert).',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Writes an instance of a tenant-defined Workday custom object, chosen by its custom object definition ID, with the field values supplied as a JSON body. Leaving the Custom Object ID blank creates a new instance, while supplying an existing ID updates that instance in place. Call List Custom Object Definitions (Batch) first when the definition ID is unknown. Not idempotent: with no object ID every call creates another instance.',
+		idempotent: false,
+	},
 	props: {
 		definitionId: customObjectDefinitionProperty,
 		objectId: Property.ShortText({

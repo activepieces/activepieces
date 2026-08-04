@@ -11,10 +11,11 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const lastDayOfPreviousMonthAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'last_day_of_previous_month',
   displayName: 'Last Day of Previous Month',
   description: 'Get the date and time of the last day of the previous month',
+  aiMetadata: { description: 'Returns the last calendar day of the month before the current month, stamped with midnight, a supplied 24h time, or the current time - the time is overwritten rather than set to end of day, so 23:59 must be asked for explicitly. Use it as the closing bound of a last-month reporting window whose start comes from First Day of Previous Month. Time zone and output format are required and the time must be HH:mm; not idempotent - derived from the current clock, changing once the month rolls over.', idempotent: false },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

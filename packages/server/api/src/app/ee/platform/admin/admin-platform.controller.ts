@@ -1,17 +1,20 @@
 import { isNil } from '@activepieces/core-utils'
 import { AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ChatConversation, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, AgentConversation, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
-import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
+import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
+import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
+import { AgentConversationEntity } from '../../agent/agent-conversation-entity'
+import { chatAnalyticsBulkSync } from '../../agent/agent-sync-job'
 import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
@@ -40,11 +43,15 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 ) => {
 
     app.post('/pieces', CreatePieceRequest, async (req): Promise<PieceMetadataModel> => {
-        return pieceMetadataService(req.log).create({
+        const savedPiece = await pieceMetadataService(req.log).create({
             pieceMetadata: req.body as PieceMetadata,
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
         })
+        if (isToolSearchEnabled()) {
+            rejectedPromiseHandler(toolSearchReindexJob(req.log).enqueue({ type: 'all' }), req.log)
+        }
+        return savedPiece
     },
     )
 
@@ -79,7 +86,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
         const PAGE_SIZE = 100
-        const conversationRepo = repoFactory(ChatConversationEntity)
+        const conversationRepo = repoFactory(AgentConversationEntity)
         const totalCount = await conversationRepo().count()
         const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
@@ -89,7 +96,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         let failed = 0
 
         for (let page = 0; page < totalPages; page++) {
-            const conversations: ChatConversation[] = await conversationRepo().find({
+            const conversations: AgentConversation[] = await conversationRepo().find({
                 skip: page * PAGE_SIZE,
                 take: PAGE_SIZE,
                 order: { created: 'ASC' },

@@ -1,8 +1,3 @@
-import {
-    FlowActionType,
-    GenericStepOutput,
-    StepOutputStatus,
-} from '@activepieces/shared'
 import { loggingUtils } from '../../src/lib/helper/logging-utils'
 
 describe('loggingUtils.maybeTruncateInput', () => {
@@ -59,25 +54,11 @@ describe('loggingUtils.maybeTruncateInput', () => {
 })
 
 describe('loggingUtils.isWithinSizeLimit', () => {
-    it('returns true when steps fit under the cap', () => {
-        const steps = {
-            step1: GenericStepOutput.create({
-                type: FlowActionType.PIECE,
-                status: StepOutputStatus.SUCCEEDED,
-                input: { tiny: 'ok' },
-            }),
-        }
-        expect(loggingUtils.isWithinSizeLimit(steps, 10 * 1024)).toBe(true)
+    it('returns true when the tracked size fits under the cap', () => {
+        expect(loggingUtils.isWithinSizeLimit(1024, 10 * 1024)).toBe(true)
     })
 
-    it('returns false when steps blow the cap', () => {
-        const steps = {
-            step1: GenericStepOutput.create({
-                type: FlowActionType.PIECE,
-                status: StepOutputStatus.SUCCEEDED,
-                input: { large: 'x'.repeat(4096) },
-            }),
-        }
-        expect(loggingUtils.isWithinSizeLimit(steps, 128)).toBe(false)
+    it('returns false when the tracked size blows the cap', () => {
+        expect(loggingUtils.isWithinSizeLimit(4096, 128)).toBe(false)
     })
 })

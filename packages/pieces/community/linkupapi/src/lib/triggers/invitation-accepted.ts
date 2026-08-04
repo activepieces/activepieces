@@ -12,6 +12,9 @@ export const invitationAccepted = createTrigger({
   displayName: 'Invitation Accepted',
   description:
     'Fires in real time when a connection request sent from the connected LinkedIn account is accepted. Registers a LinkupAPI webhook (≈10 credits/day per monitored account while active).',
+  aiMetadata: {
+    description: 'Fires once each time someone accepts a connection invitation previously sent from the connected LinkedIn account, in real time via a LinkupAPI webhook. Use it to continue outreach the moment a prospect connects instead of polling Check Invitation Status; it does not fire for invitations received by the account or for new messages (use New Message Received for those). Each enabled instance registers a webhook against a single account ID and bills credits daily while the flow stays on.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     accountId: accountIdProp,

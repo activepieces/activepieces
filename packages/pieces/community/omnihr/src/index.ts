@@ -1,84 +1,37 @@
-import {
-  PieceAuth,
-  createPiece,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  createCustomApiCallAction,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { getEmployeeSystemId } from './lib/actions/get-employee-system-id';
 import { getEmployeeInfo } from './lib/actions/get-employee-info';
 import { getEmployeeOrganizationalChart } from './lib/actions/get-employee-organizational-chart';
 import { getDirectReports } from './lib/actions/get-direct-reports';
+import { generateReport } from './lib/actions/generate-report';
 import { omnihrAuth } from './lib/auth';
-
-const OMNIHR_API_BASE_URL = 'https://api.omnihr.co/api/';
-const OMNIHR_TOKEN_URL = 'https://api.omnihr.co/api/v1/auth/token/';
-const markdown = 'Enter your OmniHR credentials to authenticate:';
-
-async function getAccessToken(
-  username: string,
-  password: string,
-  origin: string
-): Promise<string> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Origin: origin,
-  };
-
-  const response = await httpClient.sendRequest<{
-    access: string;
-    refresh: string;
-    access_exp?: string;
-    refresh_exp?: string;
-  }>({
-    method: HttpMethod.POST,
-    url: OMNIHR_TOKEN_URL,
-    headers,
-    body: {
-      username,
-      password,
-    },
-  });
-
-  if (!response.body.access) {
-    throw new Error('Failed to obtain access token.');
-  }
-
-  return response.body.access;
-}
 
 export const omnihr = createPiece({
   displayName: 'Omni HR',
   description:
     'Smart, all-in-one HR platform for managing employees, time tracking, and HR workflows',
   auth: omnihrAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/omnihr.png',
-  authors: ['arinmak'],
+  authors: ['arinmak', 'danielpoonwj'],
   categories: [PieceCategory.HUMAN_RESOURCES],
   actions: [
     getEmployeeSystemId,
     getEmployeeInfo,
     getEmployeeOrganizationalChart,
     getDirectReports,
+    generateReport,
     createCustomApiCallAction({
-      baseUrl: () => OMNIHR_API_BASE_URL,
+      baseUrl: () => 'https://api.omnihr.co/api/',
       auth: omnihrAuth,
-      authMapping: async (auth: any) => {
-        const { username, password, origin } = auth.props;
-        const accessToken = await getAccessToken(username, password, origin);
+      authMapping: async (auth) => {
         const headers: Record<string, string> = {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${auth.access_token}`,
           'Content-Type': 'application/json',
+          Origin: auth.props.origin,
         };
-
-        if (origin) {
-          headers['Origin'] = origin;
-        }
 
         return headers;
       },

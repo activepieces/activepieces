@@ -1,17 +1,19 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { TriggerStrategy } from '@activepieces/pieces-framework'
-import { ApEnvironment, EngineResponseStatus } from '@activepieces/shared'
+import { ApEnvironment, EngineResponseStatus, TriggerSourceScheduleType } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockSubmitAndWaitForResponse = vi.fn()
 const mockGetPlatformId = vi.fn().mockResolvedValue('platform-1')
 const mockDeleteListeners = vi.fn()
 const mockRemoveRepeatingJob = vi.fn()
+const mockAddJob = vi.fn()
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({
     system: {
         getOrThrow: vi.fn().mockReturnValue(ApEnvironment.PRODUCTION),
         getNumber: vi.fn().mockReturnValue(5),
+        getNumberOrThrow: vi.fn().mockReturnValue(5),
     },
 }))
 
@@ -30,6 +32,7 @@ vi.mock('../../../../../src/app/workers/user-interaction-watcher', () => ({
 vi.mock('../../../../../src/app/workers/job-queue/job-queue', () => ({
     jobQueue: vi.fn(() => ({
         removeRepeatingJob: mockRemoveRepeatingJob,
+        add: mockAddJob,
     })),
     JobType: { ONE_TIME: 'ONE_TIME', REPEATING: 'REPEATING' },
 }))
@@ -40,6 +43,7 @@ vi.mock('../../../../../src/app/trigger/app-event-routing/app-event-routing.serv
     },
 }))
 
+import { system } from '../../../../../src/app/helper/system/system'
 import { flowTriggerSideEffect } from '../../../../../src/app/trigger/trigger-source/flow-trigger-side-effect'
 
 const mockLog = {
@@ -102,6 +106,61 @@ describe('flowTriggerSideEffect', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetPlatformId.mockResolvedValue('platform-1')
+    })
+
+    describe('enable', () => {
+        it('should default polling schedule to a rolling interval', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+            const expectedSchedule = {
+                type: TriggerSourceScheduleType.INTERVAL,
+                intervalMs: 5 * 60_000,
+            }
+
+            const result = await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+            })
+
+            expect(result.scheduleOptions).toEqual(expectedSchedule)
+            expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({
+                scheduleOptions: expectedSchedule,
+            }))
+        })
+
+        it('should honor poll interval overrides that do not divide 60', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+            vi.mocked(system.getNumberOrThrow).mockReturnValueOnce(45)
+
+            const result = await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+            })
+
+            expect(result.scheduleOptions).toEqual({
+                type: TriggerSourceScheduleType.INTERVAL,
+                intervalMs: 45 * 60_000,
+            })
+        })
+
+        it('should keep engine-provided schedule options untouched', async () => {
+            const engineSchedule = {
+                type: TriggerSourceScheduleType.CRON_EXPRESSION,
+                cronExpression: '0 12 * * *',
+                timezone: 'UTC',
+            }
+            mockSubmitAndWaitForResponse.mockResolvedValue({
+                status: EngineResponseStatus.OK,
+                response: { scheduleOptions: engineSchedule },
+                error: undefined,
+            })
+
+            const result = await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+            })
+
+            expect(result.scheduleOptions).toEqual(engineSchedule)
+        })
     })
 
     describe('disable', () => {
@@ -171,7 +230,7 @@ describe('flowTriggerSideEffect', () => {
             })
 
             expect(mockLog.warn).toHaveBeenCalledWith(
-                expect.objectContaining({ flowId: 'flow-1' }),
+                expect.objectContaining({ flow: { id: 'flow-1' } }),
                 expect.stringContaining('Ignored error'),
             )
         })

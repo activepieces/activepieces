@@ -380,7 +380,17 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
         killedByTimeout: String(killedByTimeout),
         killedByShutdown: String(killedByShutdown),
     }, '[Sandbox] Process exit event fired')
-    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || stdError.includes('Caught fatal signal 9') || (code === 134 || signal === 'SIGABRT' || (signal === 'SIGKILL' && !killedByShutdown))
+    // V8 saying it ran out of heap, or aborting, is unambiguous — nothing we do produces those, so
+    // they count as a RAM issue even mid-shutdown. A SIGKILL is NOT unambiguous: the kernel OOM
+    // killer sends one, but so does our own treeKill in shutdown(), and in isolate mode that makes
+    // isolate print "Caught fatal signal 9" itself. Attributing those to the flow reports every
+    // deploy-time abort as the user running out of memory, and a deploy disconnects all workers at
+    // once — enough to dominate the MEMORY_LIMIT_EXCEEDED count and bury the real OOMs in it. A real
+    // OOM racing a shutdown is indistinguishable from our own kill and is lost to the retry path;
+    // that is the safer way round, since shutdown-aborted runs are retried anyway.
+    const isUnambiguousRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || code === 134 || signal === 'SIGABRT'
+    const isAmbiguousKill = stdError.includes('Caught fatal signal 9') || signal === 'SIGKILL'
+    const isRamIssue = isUnambiguousRamIssue || (isAmbiguousKill && !killedByShutdown)
     const isLogSizeExceeded = stdError.includes('Flow run data size exceeded the maximum allowed size')
 
     if (killedByTimeout) {

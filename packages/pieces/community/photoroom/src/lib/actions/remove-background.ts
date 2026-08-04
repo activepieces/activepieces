@@ -9,8 +9,8 @@ export const removeBackground = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Removes the background from an input image using the Photoroom segmentation API and writes the cutout to a file. Choose this to isolate a subject or produce a transparent-background version of a photo. Requires the raw image as a file input plus a filename for the generated output; the call is a pure transformation, so repeating it on the same image yields the same result with no extra side effect.',
-    idempotent: true,
+      'Removes the background from an input image using the Photoroom segmentation API and writes the cutout to a file. Choose this to isolate a subject or produce a transparent-background version of a photo. Requires the raw image as a file input plus a filename for the generated output. Not idempotent: each call performs a fresh server-side segmentation that produces a new file and consumes Photoroom account credits.',
+    idempotent: false,
   },
   auth: photoroomAuth,
   props: {

@@ -4,14 +4,16 @@ import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { getMessageActionOutputSchema } from '../output-schemas';
 
 export const getMessageAction = createAction({
 	name: 'get-message',
 	displayName: 'Get Message by Timestamp',
 	description: `Retrieves a specific message from a channel history using the message's timestamp.`,
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: "Fetch a single message from a channel by its exact timestamp; read-only and repeatable. Use this when you already have the message ts and channel; use Get channel history to read a range of messages or Search messages to find one by content.", idempotent: true },
 	auth: slackAuth,
+	outputSchema: getMessageActionOutputSchema,
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
