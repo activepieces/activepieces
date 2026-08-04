@@ -1891,7 +1891,7 @@
       "@activepieces/piece-omnihr": [
         "packages/pieces/community/omnihr/src/index.ts"
       ],
-      "@activepieces/piece-clicdog": [
+      "@activepieces/piece-clicdata": [
         "packages/pieces/community/clicdata/src/index.ts"
       ],
       "@activepieces/piece-katana": [
