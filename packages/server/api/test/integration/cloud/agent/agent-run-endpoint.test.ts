@@ -64,6 +64,28 @@ describe('POST /v1/agents/runs', () => {
         expect(conversation.projectId).toBe(ctx.project.id)
     })
 
+    it('keeps flow-step runs out of the owner\'s chat list', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-3',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: { instruction: 'do a thing', resumeUrl: 'https://example.com/resume/abc' },
+        })
+
+        const list = await ctx.post('/v1/agents/conversations', { title: 'a real chat' })
+        expect([StatusCodes.OK, StatusCodes.CREATED]).toContain(list.statusCode)
+        const listed = await ctx.get('/v1/agents/conversations')
+        const sources = listed.json().data.map((c: { title: string | null }) => c.title)
+        expect(sources).toEqual(['a real chat'])
+    })
+
     it('refuses a signed-in user, because only a running flow may start one', async () => {
         const ctx = await createTestContext(app)
 

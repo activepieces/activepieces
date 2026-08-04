@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { AgentConversationStatus, AgentRunSource, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -37,7 +37,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         const runId = apId()
         const log = request.log.child({ conversation: { id: conversation.id }, run: { id: runId } })
 
-        await jobQueue(log).add({
+        const { error: enqueueError } = await tryCatch(() => jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,
             data: {
@@ -53,7 +53,12 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 source: AgentRunSource.FLOW_STEP,
                 resumeUrl,
             },
-        })
+        }))
+        if (enqueueError) {
+            await agentHelpers.conversationRepo().delete(conversation.id)
+            log.error({ error: enqueueError, project: { id: projectId } }, '[agentRunController] Could not enqueue the run, removed its conversation')
+            throw enqueueError
+        }
 
         log.info({ project: { id: projectId } }, '[agentRunController] Enqueued flow-step agent run')
         return reply.status(StatusCodes.OK).send({ conversationId: conversation.id, runId })
