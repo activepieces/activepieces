@@ -1,23 +1,22 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { chatVisibilityHelper } from '../ee/agent/chat-visibility-helper'
-import { apiKeyService } from '../ee/api-keys/api-key-service'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { emailService } from '../ee/helper/email/email-service'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { stopPlatformExecution } from '../ee/platform/platform-teardown-jobs'
+import { cutOffPlatformAccess } from '../ee/platform/platform-teardown-jobs'
 import { fileService } from '../file/file.service'
 import { attachMultipartFieldsToBody } from '../helper/multipart-body'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { userIdentityHelper } from '../helper/user-identity-helper'
-import { userRepo, userService } from '../user/user-service'
+import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
@@ -166,9 +165,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
 
-            await userRepo().update({ platformId }, { status: UserStatus.INACTIVE })
-            await apiKeyService.deleteAllByPlatformId({ platformId })
-            await stopPlatformExecution({ platformId, log: req.log })
+            await cutOffPlatformAccess({ platformId, log: req.log })
 
             const { error: emailError } = await tryCatch(() => emailService(req.log).sendPlatformDeleted({
                 platformId,

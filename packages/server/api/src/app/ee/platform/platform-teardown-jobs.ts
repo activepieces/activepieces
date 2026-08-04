@@ -1,5 +1,5 @@
 import { isNil, unique } from '@activepieces/core-utils'
-import { Flow, FlowOperationType, FlowStatus } from '@activepieces/shared'
+import { Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
@@ -20,6 +20,7 @@ import { ToolSearchIndexEntity } from '../../tool-search/tool-search-index.entit
 import { userRepo } from '../../user/user-service'
 import { userInvitationRepo } from '../../user-invitations/user-invitation.service'
 import { VariableEntity } from '../../variable/variable.entity'
+import { apiKeyService } from '../api-keys/api-key-service'
 import { ProjectRoleEntity } from '../projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../signing-key/signing-key-entity'
 import { ConcurrencyPoolEntity } from './concurrency-pool/concurrency-pool.entity'
@@ -38,6 +39,8 @@ const toolSearchIndexRepo = repoFactory(ToolSearchIndexEntity)
 export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     hardDeletePlatformHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PLATFORM>) => {
         const { platformId } = data
+
+        await cutOffPlatformAccess({ platformId, log })
 
         const flows = await listFlowsByPlatform(platformId)
         await drainFlows({ flows, log })
@@ -77,7 +80,13 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     },
 })
 
-export async function stopPlatformExecution({ platformId, log }: StopPlatformExecutionParams): Promise<void> {
+export async function cutOffPlatformAccess({ platformId, log }: CutOffPlatformAccessParams): Promise<void> {
+    await userRepo().update({ platformId }, { status: UserStatus.INACTIVE })
+    await apiKeyService.deleteAllByPlatformId({ platformId })
+    await stopPlatformExecution({ platformId, log })
+}
+
+async function stopPlatformExecution({ platformId, log }: CutOffPlatformAccessParams): Promise<void> {
     const flows = await listFlowsByPlatform(platformId)
     for (const flow of flows) {
         if (flow.status === FlowStatus.DISABLED || isNil(flow.publishedVersionId)) {
@@ -144,7 +153,7 @@ type DrainFlowsParams = {
     log: FastifyBaseLogger
 }
 
-type StopPlatformExecutionParams = {
+type CutOffPlatformAccessParams = {
     platformId: string
     log: FastifyBaseLogger
 }
