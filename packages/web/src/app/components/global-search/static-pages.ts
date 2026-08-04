@@ -73,8 +73,8 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-branding',
-    label: 'Platform Admin — Branding',
-    href: '/platform/setup/branding',
+    label: 'Platform Admin — General',
+    href: '/platform/setup/general',
     icon: PaletteIcon,
     requiresPlatformAdmin: true,
   },

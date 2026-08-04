@@ -77,6 +77,7 @@ const THEME_COLOR_FIELDS: { name: FieldPath<FromSchema>; label: string }[] = [
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
+  const brandingLocked = !platform.plan.customAppearanceEnabled;
 
   const form = useForm<FromSchema>({
     defaultValues: {
@@ -122,14 +123,16 @@ export const AppearanceSection = () => {
 
       const formdata = new FormData();
       formdata.append('name', name);
-      formdata.append('primaryColor', color);
-      formdata.append(
-        'themeColors',
-        customThemeColors ? JSON.stringify(themeColors) : 'null',
-      );
-      if (logo) formdata.append('fullLogo', logo);
-      if (icon) formdata.append('logoIcon', icon);
-      if (favicon) formdata.append('favIcon', favicon);
+      if (!brandingLocked) {
+        formdata.append('primaryColor', color);
+        formdata.append(
+          'themeColors',
+          customThemeColors ? JSON.stringify(themeColors) : 'null',
+        );
+        if (logo) formdata.append('fullLogo', logo);
+        if (icon) formdata.append('logoIcon', icon);
+        if (favicon) formdata.append('favIcon', favicon);
+      }
 
       await platformApi.updateWithFormData(formdata, platform.id);
       window.location.reload();
@@ -180,6 +183,7 @@ export const AppearanceSection = () => {
                         defaultFileName={platform?.fullLogoUrl}
                         accept="image/*"
                         id="logoFile"
+                        disabled={brandingLocked}
                         className="rounded-sm"
                       />
                     </div>
@@ -199,6 +203,7 @@ export const AppearanceSection = () => {
                         defaultFileName={platform?.logoIconUrl}
                         accept="image/*"
                         id="iconFile"
+                        disabled={brandingLocked}
                         className="rounded-sm"
                       />
                     </div>
@@ -220,6 +225,7 @@ export const AppearanceSection = () => {
                         defaultFileName={platform?.favIconUrl}
                         accept="image/*"
                         id="faviconFile"
+                        disabled={brandingLocked}
                         className="rounded-sm"
                       />
                     </div>
@@ -235,6 +241,7 @@ export const AppearanceSection = () => {
                     <FormLabel htmlFor="color">{t('Primary Color')}</FormLabel>
                     <div className="flex flex-row gap-2 items-center">
                       <ColorPicker
+                        disabled={brandingLocked}
                         value={field.value as string}
                         onChange={(color: string) => field.onChange(color)}
                         className="flex flex-row gap-2 items-center"
@@ -256,6 +263,7 @@ export const AppearanceSection = () => {
                     <div className="flex flex-row gap-2 items-center">
                       <Switch
                         id="customThemeColors"
+                        disabled={brandingLocked}
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
@@ -269,7 +277,7 @@ export const AppearanceSection = () => {
                 )}
               />
 
-              {form.watch('customThemeColors') && (
+              {form.watch('customThemeColors') && !brandingLocked && (
                 <div className="grid grid-cols-3 gap-4">
                   {THEME_COLOR_FIELDS.map(({ name, label }) => (
                     <FormField

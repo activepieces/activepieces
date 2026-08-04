@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isEmpty, isNil, PlatformUsageMetric, SeekPage, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowStatus, isCloudPlanButNotEnterprise, isFreeLegacyEligible, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUTUMN_FREE_PLAN, FlowOperationStatus, FlowStatus, isFreeLegacyEligible, OPEN_SOURCE_PLAN, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PrincipalType, ProjectCreditUsage, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -80,10 +80,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             await distributedStore.delete(getPlatformPlanNameKey(platformId))
         }
         return updatedPlatformPlan
-    },
-    async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
-        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
-        return isCloudPlanButNotEnterprise(platformPlan.plan)
     },
     async getUsage(platformId: string): Promise<PlatformUsage> {
         const activeFlowsCount = await flowRepo()
