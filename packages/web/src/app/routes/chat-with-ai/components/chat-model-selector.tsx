@@ -7,9 +7,6 @@ import {
   Check,
   ChevronDown,
   CornerDownLeft,
-  Equal,
-  Lightbulb,
-  Rocket,
   Sparkles,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -20,33 +17,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { TIER_CONFIG } from '@/features/agents/tier-config';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
-
-const TIER_CONFIG: Record<
-  string,
-  {
-    icon: React.ComponentType<{ className?: string }>;
-    displayLabel: string;
-    description: string;
-  }
-> = {
-  fast: {
-    icon: Equal,
-    displayLabel: 'Fast',
-    description: 'Quick replies for simple tasks',
-  },
-  smart: {
-    icon: Lightbulb,
-    displayLabel: 'Expert',
-    description: 'Best for everyday use',
-  },
-  premium: {
-    icon: Rocket,
-    displayLabel: 'Heavy',
-    description: 'Highest quality, a bit slower',
-  },
-};
 
 function useModelOptions(): ModelOption[] {
   const { data: chatProvider } = aiProviderQueries.useChatProvider();

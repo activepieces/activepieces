@@ -13,7 +13,6 @@ export const aiRoutingQueries = {
     useQuery({
       queryKey: aiRoutingKeys.all,
       queryFn: () => aiRoutingApi.get(),
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
 };
 

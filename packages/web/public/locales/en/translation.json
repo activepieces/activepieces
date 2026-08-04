@@ -1287,7 +1287,6 @@
   "Reset to default": "Reset to default",
   "Model Routing": "Model Routing",
   "Using defaults": "Using defaults",
-  "Pick a main model and two backups for each tier. Fast slots also warm up the other tiers, so changing them affects Expert and Heavy too.": "Pick a main model and two backups for each tier. Fast slots also warm up the other tiers, so changing them affects Expert and Heavy too.",
   "Reset to defaults": "Reset to defaults",
   "This removes your custom model routing and falls back to the defaults derived from your chat provider.": "This removes your custom model routing and falls back to the defaults derived from your chat provider.",
   "Main": "Main",
@@ -2181,5 +2180,14 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Each tier runs its Main model and falls over to Backup 1, then Backup 2, when a provider fails. Backups must support everything the Main model supports.": "Each tier runs its Main model and falls over to Backup 1, then Backup 2, when a provider fails. Backups must support everything the Main model supports.",
+  "Pick a model": "Pick a model",
+  "Fix the highlighted slots to save": "Fix the highlighted slots to save",
+  "Quick replies for simple tasks": "Quick replies for simple tasks",
+  "Best for everyday use": "Best for everyday use",
+  "Highest quality, a bit slower": "Highest quality, a bit slower",
+  "Fast": "Fast",
+  "Expert": "Expert",
+  "Heavy": "Heavy"
 }

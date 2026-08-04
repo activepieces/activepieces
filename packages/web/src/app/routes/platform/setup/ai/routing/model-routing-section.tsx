@@ -1,5 +1,4 @@
 import {
-  ACTIVEPIECES_CHAT_TIERS,
   AI_PROVIDER_CAPABILITIES,
   AI_ROUTING_TIER_IDS,
   AIProviderWithoutSensitiveData,
@@ -8,7 +7,6 @@ import {
   GetAiRoutingResponse,
   UpsertAiRoutingRequest,
   isNil,
-  unique,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
@@ -20,14 +18,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Form, FormMessage } from '@/components/ui/form';
 import { AIModelSelector } from '@/features/agents/ai-model';
+import { TIER_CONFIG } from '@/features/agents/tier-config';
 import {
   aiProviderQueries,
   aiRoutingMutations,
   aiRoutingQueries,
 } from '@/features/platform-admin';
+import { cn } from '@/lib/utils';
 
 export function ModelRoutingSection() {
-  const { data, refetch, dataUpdatedAt } = aiRoutingQueries.useAiRouting();
+  const { data, refetch } = aiRoutingQueries.useAiRouting();
 
   if (isNil(data)) {
     return null;
@@ -35,7 +35,7 @@ export function ModelRoutingSection() {
 
   return (
     <ModelRoutingForm
-      key={dataUpdatedAt}
+      key={routingSignature(data)}
       routing={data}
       onSaved={() => refetch()}
     />
@@ -77,7 +77,8 @@ function ModelRoutingForm({
   });
 
   const tiers = form.watch('tiers');
-  const warnings = unique(buildRoutingWarnings({ tiers, providers }));
+  const issues = buildSlotIssues({ tiers, providers });
+  const saveBlocked = issues.length > 0;
 
   return (
     <Form {...form}>
@@ -101,24 +102,19 @@ function ModelRoutingForm({
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {t(
-                'Pick a main model and two backups for each tier. Fast slots also warm up the other tiers, so changing them affects Expert and Heavy too.',
+                'Each tier runs its Main model and falls over to Backup 1, then Backup 2, when a provider fails. Backups must support everything the Main model supports.',
               )}
             </p>
           </div>
         </div>
 
         {AI_ROUTING_TIER_IDS.map((tierId) => (
-          <TierCard key={tierId} tierId={tierId} form={form} />
-        ))}
-
-        {warnings.map((warning) => (
-          <p
-            key={warning}
-            className="flex items-center gap-2 text-xs text-warning"
-          >
-            <TriangleAlert className="size-3.5 shrink-0" />
-            {warning}
-          </p>
+          <TierCard
+            key={tierId}
+            tierId={tierId}
+            form={form}
+            issues={issues.filter((issue) => issue.tierId === tierId)}
+          />
         ))}
 
         {form.formState.errors.root?.serverError && (
@@ -127,7 +123,12 @@ function ModelRoutingForm({
           </FormMessage>
         )}
 
-        <div className="flex justify-end gap-2">
+        <div className="flex items-center justify-end gap-3">
+          {saveBlocked && form.formState.isDirty && (
+            <p className="text-xs text-muted-foreground">
+              {t('Fix the highlighted slots to save')}
+            </p>
+          )}
           {!routing.isDefault && (
             <ConfirmationDeleteDialog
               title={t('Reset to defaults')}
@@ -147,7 +148,7 @@ function ModelRoutingForm({
           )}
           <Button
             type="submit"
-            disabled={!form.formState.isDirty}
+            disabled={!form.formState.isDirty || saveBlocked}
             loading={isPending}
           >
             {t('Save')}
@@ -161,52 +162,77 @@ function ModelRoutingForm({
 function TierCard({
   tierId,
   form,
+  issues,
 }: {
   tierId: AiRoutingTierId;
   form: UseFormReturn<UpsertAiRoutingRequest>;
+  issues: SlotIssue[];
 }) {
   const tier = useWatch({ control: form.control, name: `tiers.${tierId}` });
+  const tierConfig = TIER_CONFIG[tierId];
+  const TierIcon = tierConfig.icon;
   return (
     <div className="rounded-lg border bg-card p-4 flex flex-col gap-3">
-      <p className="text-sm font-medium leading-none">
-        {tierLabelOf({ tierId })}
-      </p>
-      {SLOT_KEYS.map((slotKey) => {
-        const slot = tier[slotKey];
-        return (
-          <div key={slotKey} className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground w-20 shrink-0">
-              {SLOT_LABELS[slotKey]()}
-            </span>
-            <div className="flex-1 min-w-0">
-              <AIModelSelector
-                compact
-                preserveUnknownModel
-                defaultProvider={slot.provider}
-                defaultModel={slot.modelId}
-                onChange={({ provider, model }) =>
-                  form.setValue(
-                    `tiers.${tierId}.${slotKey}`,
-                    {
-                      provider: provider ?? slot.provider,
-                      modelId: model ?? '',
-                    },
-                    { shouldDirty: true, shouldValidate: true },
-                  )
-                }
-              />
+      <div className="flex items-baseline gap-2">
+        <TierIcon className="size-4 text-muted-foreground self-center shrink-0" />
+        <p className="text-sm font-medium leading-none">
+          {t(tierConfig.displayLabel)}
+        </p>
+        <p className="text-xs text-muted-foreground truncate">
+          {t(tierConfig.description)}
+        </p>
+      </div>
+      <div className="flex flex-col gap-2">
+        {SLOT_KEYS.map((slotKey) => {
+          const slot = tier[slotKey];
+          const issue = issues.find((issue) => issue.slotKey === slotKey);
+          return (
+            <div key={slotKey} className="flex flex-col gap-1">
+              <div className="grid grid-cols-[5.5rem_1fr] items-center gap-3">
+                <span
+                  className={cn('text-xs', {
+                    'font-medium': slotKey === 'main',
+                    'text-muted-foreground': slotKey !== 'main',
+                  })}
+                >
+                  {SLOT_LABELS[slotKey]()}
+                </span>
+                <AIModelSelector
+                  compact
+                  preserveUnknownModel
+                  defaultProvider={slot.provider}
+                  defaultModel={slot.modelId}
+                  onChange={({ provider, model }) =>
+                    form.setValue(
+                      `tiers.${tierId}.${slotKey}`,
+                      {
+                        provider: provider ?? slot.provider,
+                        modelId: model ?? '',
+                      },
+                      { shouldDirty: true, shouldValidate: true },
+                    )
+                  }
+                />
+              </div>
+              {issue && (
+                <div className="grid grid-cols-[5.5rem_1fr] gap-3">
+                  <span />
+                  <p className="flex items-center gap-1.5 text-xs text-destructive">
+                    <TriangleAlert className="size-3 shrink-0" />
+                    {issue.message}
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function tierLabelOf({ tierId }: { tierId: string }): string {
-  return (
-    ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.id === tierId)?.label ?? tierId
-  );
+function routingSignature(routing: GetAiRoutingResponse): string {
+  return `${routing.isDefault}:${JSON.stringify(routing.tiers)}`;
 }
 
 function translateRoutingError({ message }: { message: string }): string {
@@ -217,58 +243,76 @@ function translateRoutingError({ message }: { message: string }): string {
   return message;
 }
 
-function buildRoutingWarnings({
+function tierLabelOf({ tierId }: { tierId: string }): string {
+  const config = TIER_CONFIG[tierId as AiRoutingTierId];
+  return isNil(config) ? tierId : t(config.displayLabel);
+}
+
+// Every issue mirrors a condition the server rejects on save (or zod rejects client-side), so the
+// Save button is gated on them instead of letting the user submit into a guaranteed 400.
+function buildSlotIssues({
   tiers,
   providers,
 }: {
   tiers: AiRoutingTiers;
   providers: AIProviderWithoutSensitiveData[] | undefined;
-}): string[] {
-  if (isNil(providers)) {
-    return [];
-  }
-  const configured = new Set(providers.map((provider) => provider.provider));
+}): SlotIssue[] {
+  const configured = isNil(providers)
+    ? undefined
+    : new Set(providers.map((provider) => provider.provider));
   return AI_ROUTING_TIER_IDS.flatMap((tierId) => {
     const tier = tiers[tierId];
-    const tierLabel = tierLabelOf({ tierId });
-    const notConfigured = SLOT_KEYS.filter(
-      (slotKey) => !configured.has(tier[slotKey].provider),
-    ).map((slotKey) =>
-      t('aiRouting.providerNotConfigured', {
-        tier: tierLabel,
-        provider: tier[slotKey].provider,
-      }),
-    );
     const mainCapabilities = AI_PROVIDER_CAPABILITIES[tier.main.provider];
-    const mismatches = (['backup1', 'backup2'] as const).flatMap((slotKey) => {
-      const backupCapabilities =
-        AI_PROVIDER_CAPABILITIES[tier[slotKey].provider];
-      const messages: string[] = [];
+    return SLOT_KEYS.flatMap((slotKey) => {
+      const slot = tier[slotKey];
+      if (slot.modelId.length === 0) {
+        return [{ tierId, slotKey, message: t('Pick a model') }];
+      }
+      if (!isNil(configured) && !configured.has(slot.provider)) {
+        return [
+          {
+            tierId,
+            slotKey,
+            message: t('aiRouting.providerNotConfigured', {
+              tier: tierLabelOf({ tierId }),
+              provider: slot.provider,
+            }),
+          },
+        ];
+      }
+      if (slotKey === 'main') {
+        return [];
+      }
+      const backupCapabilities = AI_PROVIDER_CAPABILITIES[slot.provider];
+      const messages: SlotIssue[] = [];
       if (
         mainCapabilities.supportsImageGeneration &&
         !backupCapabilities.supportsImageGeneration
       ) {
-        messages.push(
-          t('aiRouting.capabilityMismatch.imageGeneration', {
-            tier: tierLabel,
-            provider: tier[slotKey].provider,
+        messages.push({
+          tierId,
+          slotKey,
+          message: t('aiRouting.capabilityMismatch.imageGeneration', {
+            tier: tierLabelOf({ tierId }),
+            provider: slot.provider,
           }),
-        );
+        });
       }
       if (
         !isNil(mainCapabilities.webSearch) &&
         isNil(backupCapabilities.webSearch)
       ) {
-        messages.push(
-          t('aiRouting.capabilityMismatch.webSearch', {
-            tier: tierLabel,
-            provider: tier[slotKey].provider,
+        messages.push({
+          tierId,
+          slotKey,
+          message: t('aiRouting.capabilityMismatch.webSearch', {
+            tier: tierLabelOf({ tierId }),
+            provider: slot.provider,
           }),
-        );
+        });
       }
       return messages;
     });
-    return [...notConfigured, ...mismatches];
   });
 }
 
@@ -285,3 +329,9 @@ const ROUTING_ERROR_CODES = [
   'aiRouting.capabilityMismatch.imageGeneration',
   'aiRouting.capabilityMismatch.webSearch',
 ];
+
+type SlotIssue = {
+  tierId: AiRoutingTierId;
+  slotKey: (typeof SLOT_KEYS)[number];
+  message: string;
+};
