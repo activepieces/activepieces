@@ -97,6 +97,14 @@ async function schemaForWave({ properties, propertyNames, resolvedInput, resolve
     return z.object(shape).strict()
 }
 
+async function schemaForProperties({ properties, resolvedInput, resolveDynamic }: {
+    properties: Record<string, PieceProperty>
+    resolvedInput: Record<string, unknown>
+    resolveDynamic: DynamicSchemaResolver
+}): Promise<z.ZodObject> {
+    return z.object(await buildShape({ properties, resolvedInput, resolveDynamic })).loose()
+}
+
 async function buildShape({ properties, resolvedInput, resolveDynamic }: {
     properties: Record<string, PieceProperty>
     resolvedInput: Record<string, unknown>
@@ -152,7 +160,7 @@ async function baseSchemaFor({ propertyName, property, resolvedInput, resolveDyn
         case PropertyType.ARRAY:
             return z.array(isNil(property.properties)
                 ? z.union([z.string(), z.number(), z.boolean(), z.object({}).loose()])
-                : z.object(await buildShape({ properties: property.properties, resolvedInput, resolveDynamic })).loose())
+                : await schemaForProperties({ properties: property.properties, resolvedInput, resolveDynamic }))
         case PropertyType.DYNAMIC:
             return resolveDynamic({ propertyName, property, resolvedInput })
         case PropertyType.BASIC_AUTH:
@@ -167,6 +175,7 @@ async function baseSchemaFor({ propertyName, property, resolvedInput, resolveDyn
 export const pieceInputPlan = {
     plan,
     schemaForWave,
+    schemaForProperties,
 }
 
 export type DynamicSchemaResolver = (params: {
