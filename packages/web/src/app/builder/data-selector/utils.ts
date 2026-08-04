@@ -428,6 +428,45 @@ function filterBy(
   return res;
 }
 
+function rowId(parentId: string | undefined, index: number): string {
+  return isNil(parentId) ? String(index) : `${parentId}.${index}`;
+}
+
+function flattenVisibleRows({
+  nodes,
+  searchActive,
+  overrides,
+  parentId,
+  depth = 0,
+}: {
+  nodes: DataSelectorTreeNode[];
+  searchActive: boolean;
+  overrides: ReadonlyMap<string, boolean>;
+  parentId?: string;
+  depth?: number;
+}): DataSelectorRow[] {
+  return nodes.flatMap((node, index) => {
+    const id = rowId(parentId, index);
+    const children = node.children ?? [];
+    const hasChildren = children.length > 0;
+    const expandedByDefault = searchActive || depth === 0;
+    const expanded = hasChildren && (overrides.get(id) ?? expandedByDefault);
+    const row: DataSelectorRow = { id, node, depth, expanded };
+    return expanded
+      ? [
+          row,
+          ...flattenVisibleRows({
+            nodes: children,
+            searchActive,
+            overrides,
+            parentId: id,
+            depth: depth + 1,
+          }),
+        ]
+      : [row];
+  });
+}
+
 export const dataSelectorUtils = {
   isTestStepNode: (
     node: DataSelectorTreeNode,
@@ -435,4 +474,12 @@ export const dataSelectorUtils = {
     node.data.type === 'test',
   traverseStep,
   filterBy,
+  flattenVisibleRows,
+};
+
+export type DataSelectorRow = {
+  id: string;
+  node: DataSelectorTreeNode;
+  depth: number;
+  expanded: boolean;
 };
