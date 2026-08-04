@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
 import { issueDropdown, youtrackApiCall } from '../common';
+import { getIssueHistoryActionOutputSchema } from '../output-schemas';
 
 export const getIssueHistoryAction = createAction({
   auth: youtrackAuth,
   name: 'get_issue_history',
+  outputSchema: getIssueHistoryActionOutputSchema,
   displayName: 'Get Issue History',
   description: 'Retrieves the full change history (activity log) for a specific issue.',
   audience: 'both',

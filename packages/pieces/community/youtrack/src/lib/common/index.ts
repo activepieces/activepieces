@@ -80,6 +80,91 @@ export function flattenObject(
   return result;
 }
 
+/**
+ * YouTrack requires `customFields` to be an array. The builder's JSON editor
+ * starts out as `{}`, which is truthy, so forwarding the raw value makes the API
+ * fail with a 500 "IssueCustomFieldMegaProxy cannot be cast to java.util.List".
+ * Empty values are omitted; a non-empty non-array is a user mistake worth
+ * reporting clearly instead of letting it surface as a Java cast error.
+ */
+export function normalizeCustomFields(value: unknown): unknown[] | undefined {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value : undefined;
+  }
+  if (typeof value === 'object' && Object.keys(value).length === 0) {
+    return undefined;
+  }
+  throw new Error(
+    'Custom Fields (JSON) must be an array of field objects, for example: ' +
+      '[{ "name": "Priority", "$type": "SingleEnumIssueCustomField", "value": { "name": "Critical" } }]',
+  );
+}
+
+/**
+ * Reduces one custom field value to a scalar. YouTrack returns a different
+ * `$type` per field kind: enum/state/version/owned values carry `name`, user
+ * values `fullName`/`login`, text values `text`, period values `presentation`
+ * (with `minutes`), and simple fields (integer, float, string, date) come back
+ * as a bare primitive. Multi-value fields arrive as an array.
+ */
+function customFieldValue(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return null;
+    }
+    return value
+      .map((entry) => customFieldValue(entry))
+      .filter((entry) => entry !== null)
+      .join(', ');
+  }
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    for (const key of ['name', 'fullName', 'login', 'text', 'presentation']) {
+      const candidate = obj[key];
+      if (typeof candidate === 'string' && candidate !== '') {
+        return candidate;
+      }
+    }
+    if (typeof obj['minutes'] === 'number') {
+      return obj['minutes'];
+    }
+    return JSON.stringify(value);
+  }
+  return value;
+}
+
+/**
+ * Flattens an issue the same way as {@link flattenObject}, except `customFields`
+ * becomes a `{ fieldName: value }` map instead of being collapsed to a list of
+ * field *names* — the generic flattener discards every custom field value,
+ * which is where an issue's Priority, State and Assignee live.
+ */
+export function flattenIssue(
+  issue: Record<string, unknown>,
+): Record<string, unknown> {
+  const { customFields, ...rest } = issue;
+  const result = flattenObject(rest);
+
+  const values: Record<string, unknown> = {};
+  if (Array.isArray(customFields)) {
+    for (const field of customFields as Array<Record<string, unknown>>) {
+      const name = field['name'];
+      if (typeof name === 'string' && name !== '') {
+        values[name] = customFieldValue(field['value']);
+      }
+    }
+  }
+  result['customFields'] = values;
+
+  return result;
+}
+
 // -----------------------------------------------------------------------------
 // Shared Dropdowns
 // -----------------------------------------------------------------------------

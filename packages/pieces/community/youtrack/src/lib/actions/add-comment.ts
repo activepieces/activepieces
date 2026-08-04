@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
 import { dropdownError, issueDropdown, youtrackApiCall } from '../common';
+import { addCommentActionOutputSchema } from '../output-schemas';
 
 export const addCommentAction = createAction({
   auth: youtrackAuth,
   name: 'add_comment',
+  outputSchema: addCommentActionOutputSchema,
   displayName: 'Add Comment',
   description: 'Adds a comment to an issue. Supports Markdown formatting.',
   audience: 'both',

@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
 import { issueDropdown, tagDropdown, youtrackApiCall } from '../common';
+import { removeTagFromIssueActionOutputSchema } from '../output-schemas';
 
 export const removeTagFromIssueAction = createAction({
   auth: youtrackAuth,
   name: 'remove_tag_from_issue',
+  outputSchema: removeTagFromIssueActionOutputSchema,
   displayName: 'Remove Tag from Issue',
   description: 'Removes a tag from an issue.',
   audience: 'both',

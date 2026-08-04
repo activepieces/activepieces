@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { ISSUE_FIELDS, dropdownError, flattenObject, youtrackApiCall } from '../common';
+import { ISSUE_FIELDS, dropdownError, flattenIssue, youtrackApiCall } from '../common';
+import { searchIssuesActionOutputSchema } from '../output-schemas';
 
 export const searchIssuesAction = createAction({
   auth: youtrackAuth,
   name: 'search_issues',
+  outputSchema: searchIssuesActionOutputSchema,
   displayName: 'Search Issues',
   description: 'Searches for issues using YouTrack query syntax. Returns flat rows for spreadsheets.',
   audience: 'both',
@@ -75,6 +77,6 @@ export const searchIssuesAction = createAction({
       path: '/issues',
       queryParams,
     });
-    return (response.body || []).map((item) => flattenObject(item));
+    return (response.body || []).map((item) => flattenIssue(item));
   },
 });

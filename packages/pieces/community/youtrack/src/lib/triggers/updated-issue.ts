@@ -2,11 +2,16 @@
 import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
+import { ISSUE_FIELDS, flattenIssue, youtrackApiCall } from '../common';
+import { updatedIssueTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
+  // No date filter in the query: YouTrack search syntax has no `{after <epoch>}`
+  // form (it 400s), and pollingHelper already drops items at or below
+  // `lastFetchEpochMS`. Issues whose `updated` still equals `created` have never
+  // been modified, so they belong to the New Issue trigger only.
+  items: async ({ auth }) => {
     const response = await youtrackApiCall<Array<Record<string, unknown>>>({
       baseUrl: auth.props.baseUrl,
       token: auth.props.apiToken,
@@ -14,20 +19,23 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
       path: '/issues',
       queryParams: {
         fields: ISSUE_FIELDS,
-        query: 'updated: {after ' + lastFetchEpochMS + '} AND created: {before ' + lastFetchEpochMS + '}',
+        query: 'sort by: updated desc',
         '$top': '50',
       },
     });
-    return (response.body || []).map((issue) => ({
-      epochMilliSeconds: (issue['updated'] as number) || (issue['created'] as number) || 0,
-      data: flattenObject(issue),
-    }));
+    return (response.body || [])
+      .filter((issue) => issue['updated'] !== issue['created'])
+      .map((issue) => ({
+        epochMilliSeconds: (issue['updated'] as number) || 0,
+        data: flattenIssue(issue),
+      }));
   },
 };
 
 export const updatedIssueTrigger = createTrigger({
   auth: youtrackAuth,
   name: 'updated_issue',
+  outputSchema: updatedIssueTriggerOutputSchema,
   displayName: 'Updated Issue',
   description: 'Triggers when an existing issue is modified (summary, description, custom fields, etc.).',
   aiMetadata: {
@@ -35,9 +43,28 @@ export const updatedIssueTrigger = createTrigger({
   },
   props: {},
   sampleData: {
-    idReadable: 'SP-42', summary: 'Fixed login page crash', project_name: 'Sample Project',
-    project_shortName: 'SP', reporter_name: 'Jane Doe', commentsCount: 3,
-    created: 1644916724088, updated: 1648110830229,
+    idReadable: 'SP-42',
+    summary: 'Fixed login page crash',
+    description: 'Users cannot sign in after the latest deploy.',
+    id: '3-19',
+    project_id: '0-0',
+    project_name: 'Sample Project',
+    project_shortName: 'SP',
+    reporter_id: '2-1',
+    reporter_name: 'Jane Doe',
+    reporter_login: 'jane.doe',
+    customFields: {
+      Priority: 'Critical',
+      Type: 'Bug',
+      State: 'Done',
+      Assignee: 'John Smith',
+      Estimation: '2h',
+    },
+    created: 1644916724088,
+    updated: 1648110830229,
+    resolved: 1648110830229,
+    commentsCount: 3,
+    votes: 0,
   },
   type: TriggerStrategy.POLLING,
   async test(context) { return await pollingHelper.test(polling, context); },
