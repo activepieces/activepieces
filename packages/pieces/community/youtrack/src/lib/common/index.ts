@@ -5,7 +5,7 @@ import {
   HttpResponse,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 
 const API_PATH = '/api';
 
@@ -84,15 +84,24 @@ export function flattenObject(
 // Shared Dropdowns
 // -----------------------------------------------------------------------------
 
+/**
+ * Surfaces the real reason a dropdown could not load instead of a generic
+ * message, otherwise a wrong URL and an expired token look identical.
+ */
+export function dropdownError(prefix: string, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return { disabled: true, options: [], placeholder: prefix + ': ' + message };
+}
+
 export const projectDropdown = Property.Dropdown({
   displayName: 'Project',
   description: 'Select the YouTrack project to work with.',
   required: true,
-  auth:youtrackAuth,
+  auth: youtrackAuth,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = auth.props;
     try {
       const response = await youtrackApiCall<Array<{ id: string; name: string; shortName: string }>>({
         baseUrl, token: apiToken, method: HttpMethod.GET,
@@ -108,8 +117,8 @@ export const projectDropdown = Property.Dropdown({
           value: p.id,
         })),
       };
-    } catch {
-      return { disabled: true, options: [], placeholder: 'Failed to load projects. Check your connection.' };
+    } catch (error) {
+      return dropdownError('Failed to load projects', error);
     }
   },
 });
@@ -118,38 +127,34 @@ export const issueDropdown = Property.Dropdown({
   displayName: 'Issue',
   description: 'Select the issue to work with.',
   required: true,
-  auth:youtrackAuth,
+  auth: youtrackAuth,
   refreshers: ['project'],
   options: async ({ auth, project }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
-    if (!project) {
-      try {
-        const response = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
-          baseUrl, token: apiToken, method: HttpMethod.GET, path: '/issues',
-          queryParams: { fields: 'id,idReadable,summary', '$top': '50' },
-        });
-        if (!response.body || response.body.length === 0) {
-          return { disabled: false, options: [], placeholder: 'No issues found.' };
-        }
-        return {
-          disabled: false,
-          options: response.body.map((i) => ({
-            label: i.idReadable + ': ' + i.summary,
-            value: i.id,
-          })),
-        };
-      } catch {
-        return { disabled: true, options: [], placeholder: 'Failed to load issues. Check your connection.' };
-      }
-    }
+    const { baseUrl, apiToken } = auth.props;
     try {
+      const queryParams: Record<string, string> = {
+        fields: 'id,idReadable,summary',
+        '$top': project ? '100' : '50',
+      };
+      if (project) {
+        // The project dropdown yields an internal id (e.g. "0-5"), but YouTrack
+        // search syntax only matches a project by name/shortName.
+        const projectResponse = await youtrackApiCall<{ shortName: string }>({
+          baseUrl, token: apiToken, method: HttpMethod.GET,
+          path: '/admin/projects/' + project, queryParams: { fields: 'shortName' },
+        });
+        queryParams['query'] = 'project: {' + projectResponse.body.shortName + '}';
+      }
       const response = await youtrackApiCall<Array<{ id: string; idReadable: string; summary: string }>>({
-        baseUrl, token: apiToken, method: HttpMethod.GET, path: '/issues',
-        queryParams: { fields: 'id,idReadable,summary', query: 'project: {' + project + '}', '$top': '100' },
+        baseUrl, token: apiToken, method: HttpMethod.GET, path: '/issues', queryParams,
       });
       if (!response.body || response.body.length === 0) {
-        return { disabled: false, options: [], placeholder: 'No issues found in this project.' };
+        return {
+          disabled: false,
+          options: [],
+          placeholder: project ? 'No issues found in this project.' : 'No issues found.',
+        };
       }
       return {
         disabled: false,
@@ -158,8 +163,8 @@ export const issueDropdown = Property.Dropdown({
           value: i.id,
         })),
       };
-    } catch {
-      return { disabled: true, options: [], placeholder: 'Failed to load issues. Check your connection.' };
+    } catch (error) {
+      return dropdownError('Failed to load issues', error);
     }
   },
 });
@@ -169,10 +174,10 @@ export const tagDropdown = Property.Dropdown({
   description: 'Select a tag to apply to the issue.',
   required: true,
   refreshers: [],
-  auth:youtrackAuth,
+  auth: youtrackAuth,
   options: async ({ auth }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = auth.props;
     try {
       const response = await youtrackApiCall<Array<{ id: string; name: string }>>({
         baseUrl, token: apiToken, method: HttpMethod.GET,
@@ -182,8 +187,8 @@ export const tagDropdown = Property.Dropdown({
         return { disabled: false, options: [], placeholder: 'No tags found. Create one in YouTrack first.' };
       }
       return { disabled: false, options: response.body.map((t) => ({ label: t.name, value: t.id })) };
-    } catch {
-      return { disabled: true, options: [], placeholder: 'Failed to load tags. Check your connection.' };
+    } catch (error) {
+      return dropdownError('Failed to load tags', error);
     }
   },
 });
@@ -193,10 +198,10 @@ export const userDropdown = Property.Dropdown({
   description: 'Select a YouTrack user.',
   required: true,
   refreshers: [],
-  auth:youtrackAuth,
+  auth: youtrackAuth,
   options: async ({ auth }) => {
     if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
+    const { baseUrl, apiToken } = auth.props;
     try {
       const response = await youtrackApiCall<Array<{ id: string; name: string; login: string }>>({
         baseUrl, token: apiToken, method: HttpMethod.GET,
@@ -212,8 +217,8 @@ export const userDropdown = Property.Dropdown({
           value: u.id,
         })),
       };
-    } catch {
-      return { disabled: true, options: [], placeholder: 'Failed to load users. Check your connection.' };
+    } catch (error) {
+      return dropdownError('Failed to load users', error);
     }
   },
 });

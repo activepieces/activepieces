@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { issueDropdown, ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
 
 export const getIssueAction = createAction({

@@ -1,7 +1,7 @@
 // Action: Remove Tag from Issue
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { issueDropdown, tagDropdown, youtrackApiCall } from '../common';
 
 export const removeTagFromIssueAction = createAction({

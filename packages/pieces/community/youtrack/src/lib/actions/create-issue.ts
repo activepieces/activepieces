@@ -1,7 +1,7 @@
 // Action: Create Issue
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { projectDropdown, ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
 
 export const createIssueAction = createAction({

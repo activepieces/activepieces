@@ -1,7 +1,7 @@
 // Action: List Tags
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { youtrackApiCall } from '../common';
 
 export const listTagsAction = createAction({
