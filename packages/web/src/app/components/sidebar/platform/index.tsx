@@ -1,6 +1,5 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -18,10 +17,10 @@ import { KeyRoundIcon } from '@/components/icons/key-round';
 import { LayoutGridIcon } from '@/components/icons/layout-grid';
 import { LogInIcon } from '@/components/icons/log-in';
 import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
-import { PaletteIcon } from '@/components/icons/palette';
 import { PuzzleIcon } from '@/components/icons/puzzle';
 import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
+import { SettingsIcon } from '@/components/icons/settings';
 import { Settings2Icon } from '@/components/icons/settings2';
 import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
@@ -43,7 +42,6 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { userHooks } from '@/hooks/user-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
@@ -54,7 +52,6 @@ export function PlatformSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
-  const { data: user } = userHooks.useCurrentUser();
   const defaultRoute = determineDefaultRoute({
     checkAccess,
     chatEnabled: platform.plan.chatEnabled,
@@ -62,6 +59,11 @@ export function PlatformSidebar() {
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
 
   const setupItems = [
+    {
+      to: '/platform/setup/general',
+      label: t('General'),
+      icon: SettingsIcon,
+    },
     {
       to: '/platform/setup/ai',
       label: t('AI Providers'),
@@ -76,12 +78,6 @@ export function PlatformSidebar() {
       to: '/platform/setup/mcp',
       label: t('MCP Server'),
       icon: McpSvg,
-    },
-    {
-      to: '/platform/setup/branding',
-      label: t('Branding'),
-      icon: PaletteIcon,
-      locked: !platform.plan.customAppearanceEnabled,
     },
     {
       to: '/platform/setup/connections',
@@ -149,15 +145,6 @@ export function PlatformSidebar() {
           label: t('Connections'),
           icon: UnplugIcon,
         },
-        ...(edition === ApEdition.CLOUD && platform.ownerId === user?.id
-          ? [
-              {
-                to: '/platform/danger-zone',
-                label: t('Danger Zone'),
-                icon: TriangleAlert,
-              },
-            ]
-          : []),
       ],
     },
     {
