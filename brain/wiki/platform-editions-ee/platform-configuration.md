@@ -13,7 +13,7 @@ A **Platform** is the top-level tenant namespace in Activepieces. Every install 
 ### Endpoints
 - `GET /v1/platforms/:id` — plan + usage; sensitive SSO data stripped (`PlatformWithoutSensitiveData`).
 - `POST /v1/platforms/:id` — platformAdminOnly; update branding, auth, piece pinning.
-- `DELETE /v1/platforms/:id` — Cloud only, owner only; marks projects for deletion + schedules `HARD_DELETE_PLATFORM` job. Being reworked, see [000024](../../decisions/000024-delete-platform-is-a-cloud-owner-action-purged-by-one-cascading-job.md).
+- `DELETE /v1/platforms/:id` — Cloud only, owner only, refused while a subscription is active. Cuts the platform off (every member `INACTIVE`, every flow disabled and drained, API keys deleted), emails the owner, and schedules one `HARD_DELETE_PLATFORM` job ~7 days out. See [000024](../../decisions/000024-delete-platform-is-a-cloud-owner-action-purged-by-one-cascading-job.md).
 - `GET /v1/platforms/assets/:id` — public asset download.
 
 ### Gotchas
@@ -31,7 +31,8 @@ A **Platform** is the top-level tenant namespace in Activepieces. Every install 
 ### Key files
 Entry point: `platformModule`, registered on the Fastify app in `packages/server/api/src/app/app.ts`.
 
-- `packages/server/api/src/app/platform/` — the whole server slice: module, controller, service, TypeORM entity, utils (`getPlatformIdForRequest`), and the `HARD_DELETE_PLATFORM` job handler
+- `packages/server/api/src/app/platform/` — the whole server slice: module, controller, service, TypeORM entity, utils (`getPlatformIdForRequest`)
+- `packages/server/api/src/app/ee/platform/platform-teardown-jobs.ts` — the `HARD_DELETE_PLATFORM` handler and the `stopPlatformExecution` cut-off the controller calls
 - `packages/core/shared/src/lib/management/platform/` — shared zod models (`Platform`, `PlatformWithoutSensitiveData`, `PlatformPlan`, `PieceSelectorConfig`) and `UpdatePlatformRequestBody`
 - `packages/web/src/hooks/platform-hooks.ts` — `useCurrentPlatform()` React Query hook
 - `packages/web/src/features/platform-admin/hooks/branding-hooks.ts` — branding mutation hooks (sibling hooks in that dir cover other platform-admin areas)
