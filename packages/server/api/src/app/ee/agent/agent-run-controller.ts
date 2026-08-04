@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 
@@ -19,6 +20,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const { projectId, platform } = request.principal
+        await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
         const conversationId = apId()

@@ -26,8 +26,6 @@ import { executeCrossProjectTool } from './tools/agent-tools'
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
-// Writes into the person's own saved memory. A flow step runs as the project owner, so letting it
-// through would let a flow edit what the owner's chat remembers.
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 
 const MAX_EMAIL_RECIPIENTS = 10
@@ -157,21 +155,15 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
             agentHelpers.resolveChatProvider({ platformId, log }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
-            agentMcp.getCredentials({ platformId, userId, log }),
+            requestedSource === AgentRunSource.FLOW_STEP ? Promise.resolve({ mcpServerUrl: null, mcpToken: null }) : agentMcp.getCredentials({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
             userService(log).getMetaInformation({ id: userId }),
             agentHelpers.getUserMemory({ platformId, userId }),
         ])
 
         const isFlowStep = conversation.source === AgentRunSource.FLOW_STEP
-        // Everything below belongs to the project owner, who did not start this run and may not know
-        // it happened. A flow step gets none of it: not their saved memory, not their address, and
-        // not the built-in sender that would let a flow mail people as them.
         const runMemory = isFlowStep ? { instructions: null, memories: [] } : agentMemory
         const runUserEmail = isFlowStep ? '' : userMeta.email
-        // The MCP token is platform-wide (projectId: null), and ap_set_project_context validates
-        // against every project its user can reach. A flow-step run must not get that reach.
-        const scopedMcpCredentials = isFlowStep ? { mcpServerUrl: null, mcpToken: null } : mcpCredentials
 
         const scopedProjects = conversation.source === AgentRunSource.FLOW_STEP
             ? userProjects.filter((p) => p.id === conversation.projectId)
@@ -341,8 +333,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             allMessages,
             previousUiMessages: uiMessagesWithUser,
             tier: { id: tier.id, thinkingBudget: tier.thinkingBudget, modelId: tier.modelId },
-            mcpCredentials: scopedMcpCredentials.mcpServerUrl && scopedMcpCredentials.mcpToken
-                ? { mcpServerUrl: scopedMcpCredentials.mcpServerUrl, mcpToken: scopedMcpCredentials.mcpToken }
+            mcpCredentials: mcpCredentials.mcpServerUrl && mcpCredentials.mcpToken
+                ? { mcpServerUrl: mcpCredentials.mcpServerUrl, mcpToken: mcpCredentials.mcpToken }
                 : null,
             projects: scopedProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
             guides,
@@ -691,8 +683,6 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
 }
 
-// A flow-step run has no row until its job actually runs. The controller only publishes the job, so
-// an interrupted request cannot leave a conversation behind that nothing will ever execute.
 async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {
     conversationId: string
     platformId: string

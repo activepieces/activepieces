@@ -57,7 +57,6 @@ export const agentService = (log: FastifyBaseLogger) => ({
             .where({ platformId, userId })
             // Eval conversations are owned by the platform owner; keep them out of the regular list.
             .andWhere('chat_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
-            // Flow-step runs are owned by the project owner, who never started them by hand.
             .andWhere('chat_conversation.source = :chatSource', { chatSource: AgentRunSource.CHAT })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
