@@ -436,7 +436,8 @@ function siblingRowIds(
   return nodes.map((node) => {
     const seen = occurrences.get(node.key) ?? 0;
     occurrences.set(node.key, seen + 1);
-    const localId = seen === 0 ? node.key : `${node.key}#${seen}`;
+    const segment = encodeURIComponent(node.key);
+    const localId = seen === 0 ? segment : `${segment}#${seen}`;
     return isNil(parentId) ? localId : `${parentId}/${localId}`;
   });
 }

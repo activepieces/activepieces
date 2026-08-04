@@ -155,6 +155,23 @@ describe('dataSelectorUtils.flattenVisibleRows', () => {
     expect(after.some((r) => r.node.key === 'z')).toBe(true);
   });
 
+  it('keeps ids distinct when property names contain the id delimiters', () => {
+    // Output keys are arbitrary JSON property names, so they can contain the
+    // "/" separator and the "#N" occurrence marker used to build row ids.
+    const delimiterKeys = [
+      branch('a/b', [leaf('deep', '1')]),
+      branch('a', [branch('b', [leaf('deep', '2')])]),
+      leaf('c', '3'),
+      leaf('c', '4'),
+      leaf('c#1', '5'),
+    ];
+
+    const rows = flatten({ nodes: delimiterKeys, searchActive: true });
+    const ids = rows.map((r) => r.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
   it('gives distinct ids to sibling subtrees that reuse the same node key', () => {
     // The zipped array view keys nodes by bare property name
     // (convertArrayToZippedView), so node.key repeats across branches.
