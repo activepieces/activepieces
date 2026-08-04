@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { formulaEvaluator } from '@activepieces/core-formula';
 import { Editor } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
 import { Mention } from '@tiptap/extension-mention';
@@ -121,6 +122,7 @@ function backspaceJustInsideBracket(content: JSONContent[]) {
   currentEditor.commands.setTextSelection(cursor);
   expect(currentEditor.state.selection.from).toBe(cursor);
 
+  const jsonBeforeKeypress = currentEditor.getJSON();
   const transaction = getFormulaBackspaceTransaction({
     state: currentEditor.state,
   });
@@ -137,6 +139,8 @@ function backspaceJustInsideBracket(content: JSONContent[]) {
     visibleText: currentEditor.state.doc.textContent.split(ZWS_CHAR).join(''),
     serialize: () =>
       textMentionUtils.convertTiptapJsonToText(currentEditor.getJSON()),
+    serializeBeforeKeypress: () =>
+      textMentionUtils.convertTiptapJsonToText(jsonBeforeKeypress),
   };
 }
 
@@ -300,6 +304,26 @@ describe('formula backspace just inside the opening bracket (GIT-1704)', () => {
     expect(result.startBadges).toBe(0);
     expect(result.endBadges).toBe(1);
     expect(result.serialize()).toBe('arg)');
+  });
+
+  it('does not introduce the wrapper loss an orphan closer already causes', () => {
+    const result = backspaceJustInsideBracket([
+      functionStart(FN_ID, 'uppercase'),
+      text(`${ZWS_CHAR}arg`),
+      functionEnd(ORPHAN_FN_ID),
+      functionEnd(FN_ID),
+      text(' '),
+      functionStart(NESTED_FN_ID, 'trim'),
+      text(`${ZWS_CHAR}later`),
+      functionEnd(NESTED_FN_ID),
+    ]);
+
+    expect(result.serializeBeforeKeypress()).toContain('trim(later)');
+    expect(result.serializeBeforeKeypress()).not.toContain(
+      `${formulaEvaluator.PREFIX}trim(`,
+    );
+    expect(result.serialize()).toContain('trim(later)');
+    expect(result.serialize()).not.toContain(`${formulaEvaluator.PREFIX}trim(`);
   });
 
   it('deletes only the badge of an unclosed formula', () => {
