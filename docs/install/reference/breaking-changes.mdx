@@ -10,7 +10,6 @@ icon: "hammer"
 ### What has changed?
 
 #### Plans and credits are now managed by our billing service
-A platform's plan, limits, and credit balance are no longer derived from the contents of a license key. They are resolved from our billing service and cached on the platform, and a license key is activated through it rather than being read locally. The key itself is now only a handle — Activepieces never inspects it.
 
 Two license-key endpoints are removed: `GET /v1/license-keys/:licenseKey` and `POST /v1/license-keys/verify`. Applying a key is now `POST /v1/platform-billing/activate`.
 
