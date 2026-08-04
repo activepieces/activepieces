@@ -26,7 +26,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
-    [AppSystemProp.USE_CDN_FOR_BUNDLES]: 'false',
+    [AppSystemProp.USE_CDN_FOR_BUNDLES]: 'true',
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
