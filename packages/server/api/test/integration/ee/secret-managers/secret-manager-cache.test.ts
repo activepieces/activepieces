@@ -254,7 +254,7 @@ describe('Secret Manager Cache', () => {
             // Delete — clears cache
             await app!.inject({
                 method: 'DELETE',
-                url: `/v1/secret-managers/${connectionId}`,
+                url: `/api/v1/secret-managers/${connectionId}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 

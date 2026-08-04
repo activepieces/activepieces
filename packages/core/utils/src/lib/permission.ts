@@ -35,8 +35,9 @@ export enum RoleType {
 }
 
 export enum PlatformUsageMetric {
-    AI_CREDITS = 'ai-credits',
+    CREDITS = 'credits',
     ACTIVE_FLOWS = 'active-flows',
+    USERS = 'users',
 }
 
 export const SAFE_STRING_PATTERN = '^[^./]+$'

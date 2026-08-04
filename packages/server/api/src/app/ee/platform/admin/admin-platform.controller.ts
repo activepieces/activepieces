@@ -14,7 +14,7 @@ import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-se
 import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
 import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
 import { AgentConversationEntity } from '../../agent/agent-conversation-entity'
-import { chatAnalyticsBulkSync } from '../../agent/agent-sync-job'
+import { chatAnalyticsBulkSync } from '../../agent/chat-analytics-sync'
 import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
@@ -59,6 +59,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         await adminPlatformService(req.log).retryRuns(req.body)
         return res.status(StatusCodes.OK).send()
     })
+
 
     app.post('/platforms/apply-license-key', ApplyLicenseKeyByEmailRequest, async (req, res) => {
         await adminPlatformService(req.log).applyLicenseKeyByEmail(req.body)

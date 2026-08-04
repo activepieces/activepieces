@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils'
 import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, OpenAICompatibleProviderConfig } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -48,14 +48,14 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
         case AIProviderName.MISTRAL: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             if (options.mistralViaOpenRouter) {
-                return createOpenRouter({ apiKey }).chat(modelId, options.openRouterSettings) as LanguageModel
+                return createOpenRouterChatModel({ apiKey, modelId, options })
             }
             return createOpenAICompatible({ name: 'mistral', baseURL: MISTRAL_BASE_URL, apiKey }).chatModel(modelId)
         }
         case AIProviderName.OPENROUTER:
         case AIProviderName.ACTIVEPIECES: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenRouter({ apiKey }).chat(modelId, options.openRouterSettings) as LanguageModel
+            return createOpenRouterChatModel({ apiKey, modelId, options })
         }
         case AIProviderName.CLOUDFLARE_GATEWAY:
             throw new Error('Cloudflare Gateway routing is caller-specific and is not handled by the shared language-model factory')
@@ -64,6 +64,17 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
             throw new Error(`Unsupported provider: ${exhaustiveCheck}`)
         }
     }
+}
+
+function createOpenRouterChatModel({ apiKey, modelId, options }: {
+    apiKey: string
+    modelId: string
+    options: LanguageModelOptions
+}): LanguageModel {
+    return createOpenRouter({
+        apiKey,
+        ...spreadIfDefined('headers', options.extraHeaders),
+    }).chat(modelId, options.openRouterSettings) as LanguageModel
 }
 
 export function buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders }: {

@@ -8,6 +8,7 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { userService } from '../../user/user-service'
@@ -17,7 +18,8 @@ import { agentApprovalGate } from './agent-approval-gate'
 import { agentCompaction } from './agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from './agent-file-utils'
 import { agentHelpers } from './agent-helpers'
-import { chatAnalyticsTelemetry } from './agent-sync-job'
+import { chatAnalyticsTelemetry } from './chat-analytics-sync'
+import { chatUsageTracker } from './chat-usage-tracker'
 import { agentMcp } from './mcp/agent-mcp'
 import { agentPrompt } from './prompt/agent-prompt'
 import { executeCrossProjectTool } from './tools/agent-tools'
@@ -396,8 +398,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const saveResult = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
-        if (saveResult.affected === 0) {
-            log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveAgentMessages: no row updated — conversation deleted or superseded by a newer run')
+        const saveLanded = saveResult.affected !== 0
+        if (!saveLanded) {
+            log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveAgentMessages: no row updated — conversation deleted or superseded by a newer run; skipping analytics and usage tracking')
         }
         log.info({
             conversation: { id: input.conversationId },
@@ -408,11 +411,11 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             titlePresent: !isNil(input.title),
         }, '[agentRpc#saveAgentMessages] Conversation persisted')
 
-        if (input.messages.length > 0) {
+        if (saveLanded && input.messages.length > 0) {
             const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
             if (conversation) {
                 chatAnalyticsTelemetry(log).sendConversationUpdate({ conversation })
-                chatAnalyticsTelemetry(log).sendMessageBillingEvent({ conversation })
+                rejectedPromiseHandler(chatUsageTracker(log).track({ conversation, runId: input.runId }), log)
             }
         }
     },

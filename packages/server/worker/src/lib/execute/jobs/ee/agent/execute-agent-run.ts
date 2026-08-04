@@ -53,6 +53,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const webSearchActive = !dryRun && !tavilySearchActive && agentAiUtils.supportsWebSearch(provider)
         const model = agentAiUtils.createChatModel({
             provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
+            metadata: { platformId, conversationId, runId },
             webSearchEnabled: webSearchActive,
         })
         const fastModel = agentAiUtils.createChatModel({
@@ -293,7 +294,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             log.error({ error: err, conversation: { id: conversationId } }, '[executeAgentRun] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const isCreditError = isCreditExhaustedError(errorMessage)
-            const errorCode = isCreditError ? ErrorCode.AI_CREDIT_LIMIT_EXCEEDED : undefined
+            const errorCode = isCreditError ? ErrorCode.QUOTA_EXCEEDED : undefined
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
