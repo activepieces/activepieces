@@ -1,9 +1,9 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { DatabaseSync, StatementSync } from 'node:sqlite'
 import { isNil } from '@activepieces/core-utils'
 import { ExecutionMode, RUN_STATE_STORE_DIR_PREFIX, StepOutput } from '@activepieces/shared'
-import { DatabaseSync, StatementSync } from 'node:sqlite'
 
 type PreparedStatements = {
     put: StatementSync
