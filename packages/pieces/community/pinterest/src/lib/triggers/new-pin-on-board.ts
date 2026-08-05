@@ -29,7 +29,14 @@ const polling: Polling<
     let bookmark: string | undefined = undefined;
     let pins: any[] = [];
     let pageCount = 0;
-    const maxPages = 10; // Limit to prevent excessive API calls
+    // A page cap may only be applied when there is no checkpoint to page
+    // towards. Once a checkpoint exists the loop must run until it reaches a pin
+    // at or before it (the breaks below): stopping early would return the newest
+    // pins, let pollingHelper advance the checkpoint to their timestamp, and
+    // leave the unread older pages permanently behind it. The board is finite
+    // and older pins exist, so that condition is always reached.
+    const maxSamplePages = 10;
+    const isSample = !lastFetchEpochMS;
     const initialPageSize = 25; // Smaller initial page size for faster response
 
     do {
@@ -87,7 +94,7 @@ const polling: Polling<
           }
 
           // Rate limiting awareness - add delay between requests
-          if (bookmark && pageCount < maxPages) {
+          if (bookmark) {
             await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms delay
           }
         } else {
@@ -98,7 +105,7 @@ const polling: Polling<
         console.error(`Error fetching pins for board ${board_id}:`, error);
         break; // Stop pagination on error
       }
-    } while (bookmark && pageCount < maxPages);
+    } while (bookmark && (!isSample || pageCount < maxSamplePages));
 
     // Sort by creation date (newest first) for consistent ordering
     pins.sort(
