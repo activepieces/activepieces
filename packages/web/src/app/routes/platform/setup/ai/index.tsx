@@ -1,53 +1,38 @@
-import { AIProviderName } from '@activepieces/core-utils';
-import {
-  AIProviderWithoutSensitiveData,
-  PlatformRole,
-} from '@activepieces/shared';
+import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
-import { MessageSquare } from 'lucide-react';
+import { Bot, ChartColumn, Eye, Route } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
-import { CenteredPage } from '@/app/components/centered-page';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SUPPORTED_AI_PROVIDERS, AiProviderInfo } from '@/features/agents';
-import {
-  aiProviderQueries,
-  aiProviderMutations,
-} from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { userHooks } from '@/hooks/user-hooks';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
-import { ModelRoutingSection } from './routing/model-routing-section';
-import { AIProviderCard } from './universal-pieces/ai-provider-card';
-
-const ACTIVEPIECES_LOGO_URL =
-  'https://cdn.activepieces.com/pieces/activepieces.png';
+import { ScenarioSwitcher } from './mock/scenario-switcher';
+import { useScenario } from './mock/use-scenario';
+import { PreviewTab } from './preview-tab';
+import { ProvidersTab } from './providers-tab';
+import { RoutingTab } from './routing-tab';
+import { UsageTab } from './usage-tab';
 
 export default function AIProvidersPage() {
-  const { data: providers, refetch } = aiProviderQueries.useAiProviders();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { scenario, scenarioId, setScenarioId } = useScenario();
 
-  const { mutateAsync: deleteProvider } =
-    aiProviderMutations.useDeleteAiProvider({
-      onSuccess: () => refetch(),
-    });
+  const rawTab = searchParams.get('tab');
+  const activeTab = isTabValue(rawTab) ? rawTab : 'providers';
 
-  const { mutateAsync: toggleChatProvider } =
-    aiProviderMutations.useToggleChatProvider({
-      onSuccess: () => refetch(),
-    });
-
-  const configuredProviders = providers ?? [];
-  const chatProvider = providers?.find((p) => p.enabledForChat);
+  const setTab = (tab: TabValue) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === 'providers') {
+      newParams.delete('tab');
+    } else {
+      newParams.set('tab', tab);
+    }
+    setSearchParams(newParams, { replace: true });
+  };
 
   return (
     <LockedFeatureGuard
@@ -58,113 +43,75 @@ export default function AIProvidersPage() {
         'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
       )}
     >
-      <CenteredPage
-        title={t('AI Providers')}
-        description={
-          allowWrite
-            ? t(
-                'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
-              )
-            : t(
-                'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
-              )
-        }
-      >
-        {allowWrite && configuredProviders.length > 0 && (
-          <>
-            <ChatProviderSelector
-              providers={configuredProviders}
-              providerInfos={SUPPORTED_AI_PROVIDERS}
-              selectedProviderId={chatProvider?.id ?? null}
-              onSelect={(providerId, displayName) =>
-                toggleChatProvider({ providerId, displayName })
-              }
-            />
-            <ModelRoutingSection />
-          </>
+      <DashboardPageHeader
+        title={t('AI')}
+        description={t(
+          'Connect providers, route models by tier, and keep AI spend under control',
         )}
-
-        <div className="flex flex-col gap-4">
-          {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
-            const config = providers?.find(
-              (p) => p.provider === providerDef.provider,
-            );
-
-            return (
-              <AIProviderCard
-                key={providerDef.provider}
-                providerInfo={providerDef}
-                providerConfig={config}
-                onDelete={(id) => deleteProvider(id)}
-                onSave={() => refetch()}
-                allowWrite={allowWrite}
-              />
-            );
-          })}
-        </div>
-      </CenteredPage>
+      />
+      <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            const next = TAB_VALUES.find((candidate) => candidate === value);
+            if (next) {
+              setTab(next);
+            }
+          }}
+          className="flex flex-col flex-1 min-h-0 min-w-0"
+        >
+          <TabsList
+            variant="outline"
+            className="border-b w-full rounded-none justify-start shrink-0"
+          >
+            <TabsTrigger variant="outline" value="providers">
+              <Bot className="size-4 mr-2" />
+              {t('Providers')}
+            </TabsTrigger>
+            <TabsTrigger variant="outline" value="routing">
+              <Route className="size-4 mr-2" />
+              {t('Model Routing')}
+            </TabsTrigger>
+            <TabsTrigger variant="outline" value="usage">
+              <ChartColumn className="size-4 mr-2" />
+              {t('Usage & Limits')}
+            </TabsTrigger>
+            <TabsTrigger variant="outline" value="preview">
+              <Eye className="size-4 mr-2" />
+              {t('Preview')}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="providers" className="flex-1 min-h-0 mt-0">
+            <div className="mx-auto w-full max-w-3xl py-6">
+              <ProvidersTab key={scenarioId} scenario={scenario} />
+            </div>
+          </TabsContent>
+          <TabsContent value="routing" className="flex-1 min-h-0 mt-0">
+            <div className="mx-auto w-full max-w-3xl py-6">
+              <RoutingTab key={scenarioId} scenario={scenario} />
+            </div>
+          </TabsContent>
+          <TabsContent value="usage" className="flex-1 min-h-0 mt-0">
+            <div className="w-full py-6">
+              <UsageTab key={scenarioId} scenario={scenario} />
+            </div>
+          </TabsContent>
+          <TabsContent value="preview" className="flex-1 min-h-0 mt-0">
+            <div className="w-full py-6">
+              <PreviewTab key={scenarioId} scenario={scenario} />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+      <ScenarioSwitcher scenarioId={scenarioId} onChange={setScenarioId} />
     </LockedFeatureGuard>
   );
 }
 
-function ChatProviderSelector({
-  providers,
-  providerInfos,
-  selectedProviderId,
-  onSelect,
-}: {
-  providers: AIProviderWithoutSensitiveData[];
-  providerInfos: AiProviderInfo[];
-  selectedProviderId: string | null;
-  onSelect: (providerId: string, displayName: string) => void;
-}) {
-  const getLogoUrl = (providerName: string) =>
-    providerInfos.find((p) => p.provider === providerName)?.logoUrl ??
-    (providerName === AIProviderName.ACTIVEPIECES
-      ? ACTIVEPIECES_LOGO_URL
-      : undefined);
-
-  return (
-    <div className="flex items-center gap-3 rounded-lg border bg-card p-4 mb-6">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted shrink-0">
-        <MessageSquare className="size-4 text-muted-foreground" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium leading-none">{t('Chat Provider')}</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {t('Select which AI provider powers the chat feature')}
-        </p>
-      </div>
-      <Select
-        value={selectedProviderId ?? undefined}
-        onValueChange={(value) => {
-          const provider = providers.find((p) => p.id === value);
-          if (provider) onSelect(provider.id, provider.name);
-        }}
-      >
-        <SelectTrigger className="w-52">
-          <SelectValue placeholder={t('Select provider')} />
-        </SelectTrigger>
-        <SelectContent>
-          {providers.map((provider) => {
-            const logoUrl = getLogoUrl(provider.provider);
-            return (
-              <SelectItem key={provider.id} value={provider.id}>
-                <div className="flex items-center gap-2">
-                  {logoUrl && (
-                    <img
-                      src={logoUrl}
-                      alt={provider.provider}
-                      className="size-4 object-contain"
-                    />
-                  )}
-                  <span>{provider.name}</span>
-                </div>
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </div>
-  );
+function isTabValue(value: string | null): value is TabValue {
+  return TAB_VALUES.some((tab) => tab === value);
 }
+
+const TAB_VALUES = ['providers', 'routing', 'usage', 'preview'] as const;
+
+type TabValue = (typeof TAB_VALUES)[number];
