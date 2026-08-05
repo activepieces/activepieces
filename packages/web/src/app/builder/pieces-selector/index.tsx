@@ -128,7 +128,7 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 300);
+  const listHeight = Math.min(listHeightRef.current, 300) - pieceSelectorUtils.PIECE_SELECTOR_CLIPPING_THRESHOLD_PX;
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
