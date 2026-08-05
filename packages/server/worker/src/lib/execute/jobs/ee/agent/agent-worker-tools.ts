@@ -7,6 +7,7 @@ import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
 
 const MAX_BATCH_SIZE = 100
+const MAX_CALLS_PER_CONFIGURED_TOOL = 20
 const MAX_IDENTICAL_ACTION_FAILURES = 2
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 // Context-lean cap: large reads (e.g. a 1.4MB Attio query) are offloaded to a file at the chat
@@ -1448,6 +1449,7 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
     runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata }) => Promise<{ result: unknown }>
     log: FastifyBaseLogger
 }): ToolSet {
+    const callsMade = new Map<string, number>()
     return Object.fromEntries(tools.map((configured) => [
         configured.toolName,
         tool({
@@ -1456,6 +1458,12 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
                 instruction: z.string().describe('What this action should do, including any values it needs, in plain language'),
             }),
             execute: async ({ instruction }) => {
+                const made = (callsMade.get(configured.toolName) ?? 0) + 1
+                callsMade.set(configured.toolName, made)
+                if (made > MAX_CALLS_PER_CONFIGURED_TOOL) {
+                    log.warn({ tool: { name: configured.toolName }, made }, '[configuredPieceTool] Refused, this turn has already run it enough times')
+                    return { content: [{ type: 'text', text: `You have already run "${configured.toolName}" ${MAX_CALLS_PER_CONFIGURED_TOOL} times this turn, which is the limit. Do not try again; tell the user what is left to do.` }] }
+                }
                 const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata }))
                 if (error) {
                     const reachedTheServer = String(error).includes('handler threw')
