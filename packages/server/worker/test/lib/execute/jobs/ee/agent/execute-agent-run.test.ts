@@ -70,10 +70,13 @@ describe('stepResultFrom', () => {
         expect(result.steps).toEqual([])
     })
 
-    it('caps a block so an unbounded answer cannot be written into the resume payload', () => {
-        const result = stepResultFrom({ prompt: 'do it', uiParts: [text('x'.repeat(80_000))], timestamp: at })
+    it('drops the steps that would push the result past what a resume payload should carry', () => {
+        const many = Array.from({ length: 40 }, () => text('x'.repeat(10_000)))
 
-        expect(result.steps[0]).toEqual({ type: 'MARKDOWN', markdown: 'x'.repeat(51_200) })
+        const result = stepResultFrom({ prompt: 'do it', uiParts: many, timestamp: at })
+
+        expect(result.steps.length).toBeLessThan(many.length)
+        expect(JSON.stringify(result.steps).length).toBeLessThanOrEqual(262_144)
     })
 })
 
