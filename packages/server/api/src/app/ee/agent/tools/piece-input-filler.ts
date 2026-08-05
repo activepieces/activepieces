@@ -66,7 +66,7 @@ async function choicesFor({ action, propertyNames, resolvedInput, ports }: {
 }
 
 function withoutTemplates(filled: Record<string, unknown>): Record<string, unknown> {
-    return JSON.parse(JSON.stringify(filled, (_key, value) => typeof value === 'string' ? value.replaceAll('{{', '{ {') : value))
+    return JSON.parse(JSON.stringify(filled, (_key, value) => typeof value === 'string' ? value.replace(/\{(?=\{)/g, '{ ') : value))
 }
 
 function resolveFor({ action, ports, propertyName, resolvedInput }: {

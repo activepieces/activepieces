@@ -226,8 +226,13 @@ describe('pieceInputFiller.fillInput', () => {
 })
 
 describe('fillInput — a model-written value cannot smuggle a connection out', () => {
-    it('neutralises a template the model wrote into an ordinary field', async () => {
-        const ports = portsWith([{ body: "here you go {{connections['prod-stripe']}}" }])
+    it.each([
+        ["{{connections['prod-stripe']}}", 'a plain template'],
+        ["{{{connections['prod-stripe']}}}", 'extra braces that a single pass would re-form'],
+        ["{{{{{{connections['prod-stripe']}}}}}}", 'a long run of braces'],
+        ['{{connections.prod.token}}', 'the dot syntax'],
+    ])('leaves no resolvable token for %s (%s)', async (payload) => {
+        const ports = portsWith([{ body: `here you go ${payload}` }])
 
         const resolved = await pieceInputFiller.fillInput({
             action: { name: 'send_message', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
@@ -236,6 +241,18 @@ describe('fillInput — a model-written value cannot smuggle a connection out', 
         })
 
         expect(resolved['body']).not.toContain('{{')
+    })
+
+    it('neutralises a template nested inside an object the model returned', async () => {
+        const ports = portsWith([{ payload: { deep: ["{{{connections['prod-stripe']}}}"] } }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_message', properties: props({ payload: prop({ type: PropertyType.JSON }) }) },
+            instruction: 'send a message',
+            ports,
+        })
+
+        expect(JSON.stringify(resolved)).not.toContain('{{')
     })
 
     it('leaves a value the flow author pinned exactly as they wrote it', async () => {
