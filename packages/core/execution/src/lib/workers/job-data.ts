@@ -273,6 +273,8 @@ export const ExecuteAgentRunJobData = z.object({
     platformId: z.string(),
     userId: z.string(),
     userMessage: z.string(),
+    source: z.enum(AgentRunSource).optional(),
+    resumeUrl: z.string().optional(),
     modelName: z.string().nullable(),
     files: z.array(z.object({
         name: z.string(),

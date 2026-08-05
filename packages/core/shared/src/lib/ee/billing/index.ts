@@ -1,9 +1,7 @@
-import { isNil, Nullable, PlatformUsageMetric } from '@activepieces/core-utils'
+import { isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { AiCreditsAutoTopUpState, PlanName, PlatformPlanWithOnlyLimits, TeamProjectsLimit } from '../../management/platform'
+import { AiCreditsAutoTopUpState, ConsumableFeatureId, PlanName, PlatformPlanWithOnlyLimits, UnconsumableFeatureId } from '../../management/platform'
 import { PiecesFilterType } from '../../management/project'
-
-export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
 
 export type ProjectPlanLimits = {
     nickname?: string
@@ -14,88 +12,98 @@ export type ProjectPlanLimits = {
     activeFlowsLimit?: number | null
 }
 
-export enum ApSubscriptionStatus {
-    ACTIVE = 'active',
-    CANCELED = 'canceled',
-}
 
-export const METRIC_TO_LIMIT_MAPPING = {
-    [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlowsLimit',
-} as const
-
-export const METRIC_TO_USAGE_MAPPING = {
-    [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
-} as const
-
-export const UpdateActiveFlowsAddonParamsSchema = z.object({
-    newActiveFlowsLimit: z.number(),
+export const AdjustUnconsumableFeatureQuantityParams = z.object({
+    featureId: z.enum(UnconsumableFeatureId),
+    quantity: z.number().int().nonnegative(),
 })
-export type UpdateActiveFlowsAddonParams = z.infer<typeof UpdateActiveFlowsAddonParamsSchema>
+export type AdjustUnconsumableFeatureQuantityParams = z.infer<typeof AdjustUnconsumableFeatureQuantityParams>
 
-export const CreateCheckoutSessionParamsSchema = z.object({
-    newActiveFlowsLimit: z.number(),
+export const CheckoutPlanParamsSchema = z.object({
+    planId: z.string(),
+    successUrl: z.string().optional(),
 })
-export type CreateSubscriptionParams = z.infer<typeof CreateCheckoutSessionParamsSchema>
+export type CheckoutPlanParams = z.infer<typeof CheckoutPlanParamsSchema>
 
-export const CreateAICreditCheckoutSessionParamsSchema = z.object({
-    aiCredits: z.number(),
+export const CheckoutSessionResponse = z.object({
+    checkoutUrl: Nullable(z.string()),
 })
-export type CreateAICreditCheckoutSessionParamsSchema = z.infer<typeof CreateAICreditCheckoutSessionParamsSchema>
+export type CheckoutSessionResponse = z.infer<typeof CheckoutSessionResponse>
 
-export const UpdateAICreditsAutoTopUpParamsSchema = z.union([
+export const PurchasablePlan = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: Nullable(z.string()),
+    price: Nullable(z.number()),
+    interval: Nullable(z.string()),
+    priceDisplay: Nullable(z.string()),
+    baseVariantId: Nullable(z.string()),
+    includedSeats: Nullable(z.number()),
+    includedCredits: Nullable(z.number()),
+    creditsResetInterval: Nullable(z.string()),
+})
+export type PurchasablePlan = z.infer<typeof PurchasablePlan>
+
+export const ConsumableProductAutoTopupParams = z.discriminatedUnion('state', [
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.ENABLED),
-        minThreshold: z.number(),
-        creditsToAdd: z.number(),
-        maxMonthlyLimit: Nullable(z.number()),
+        minThreshold: z.number().int().nonnegative(),
+        creditsToAdd: z.number().int().positive(),
+        maxMonthlyTopUps: Nullable(z.number().int().positive()),
+        featureId: z.enum(ConsumableFeatureId),
     }),
     z.object({
         state: z.literal(AiCreditsAutoTopUpState.DISABLED),
+        featureId: z.enum(ConsumableFeatureId),
     }),
 ])
-export type UpdateAICreditsAutoTopUpParamsSchema = z.infer<typeof UpdateAICreditsAutoTopUpParamsSchema>
+export type ConsumableProductAutoTopupParams = z.infer<typeof ConsumableProductAutoTopupParams>
 
-export enum PRICE_NAMES {
-    AI_CREDITS = 'ai-credit',
-    ACTIVE_FLOWS = 'active-flow',
+export const SetupPaymentParams = z.object({
+    redirectUrl: z.string().optional(),
+})
+export type SetupPaymentParams = z.infer<typeof SetupPaymentParams>
+
+export enum CancellationReason {
+    SWITCHING_TO_ANOTHER_TOOL = 'switching_to_another_tool',
+    MISSING_INTEGRATIONS = 'missing_integrations',
+    NO_NEED_RIGHT_NOW = 'no_need_right_now',
+    FREE_PLAN_IS_ENOUGH = 'free_plan_is_enough',
+    BUGS_OR_TECHNICAL_ISSUES = 'bugs_or_technical_issues',
+    TOO_EXPENSIVE = 'too_expensive',
 }
 
-export const PRICE_ID_MAP = {
-    [PRICE_NAMES.AI_CREDITS]: {
-        dev: 'price_1SfgNxKTWXpWeD7hmDBG4YMZ',
-        prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
-    },
-    [PRICE_NAMES.ACTIVE_FLOWS]: {
-        dev: 'price_1SQbbYQN93Aoq4f8WK2JC4sf',
-        prod: 'price_1SQbcvKZ0dZRqLEKHV5UepRx',
-    },
-}
+export const CANCELLATION_COMMENT_MAX_LENGTH = 2000
 
-export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
-    plan: 'standard',
+export const CancelSubscriptionRequest = z.object({
+    reasons: z.array(z.enum(CancellationReason)).default([]),
+    comment: z.string().max(CANCELLATION_COMMENT_MAX_LENGTH).optional(),
+})
+export type CancelSubscriptionRequest = z.infer<typeof CancelSubscriptionRequest>
+
+export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'free',
     tablesEnabled: true,
     eventStreamingEnabled: false,
-    includedAiCredits: 200,
-    activeFlowsLimit: 10,
+    includedCredits: 100,
+    activeFlowsLimit: undefined,
     projectsLimit: 1,
-    aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     embeddingEnabled: false,
-    agentsEnabled: true,
     aiProvidersEnabled: false,
-    chatEnabled: false,
+    chatEnabled: true,
     workerGroupsEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     environmentsEnabled: false,
     analyticsEnabled: true,
-    showPoweredBy: false,
+    showPoweredBy: true,
     auditLogEnabled: false,
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    teamProjectsLimit: TeamProjectsLimit.ONE,
+    billedTeamProjectsLimit: 0,
     projectRolesEnabled: false,
-    apiKeysEnabled: false,
+    apiKeysEnabled: true,
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
@@ -107,13 +115,12 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     embeddingEnabled: false,
-    agentsEnabled: true,
     aiProvidersEnabled: true,
     chatEnabled: false,
     workerGroupsEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
-    includedAiCredits: 0,
+    includedCredits: 0,
     environmentsEnabled: false,
     eventStreamingEnabled: false,
     analyticsEnabled: true,
@@ -122,32 +129,49 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    teamProjectsLimit: TeamProjectsLimit.ONE,
+    billedTeamProjectsLimit: 1,
     projectRolesEnabled: false,
     apiKeysEnabled: false,
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
-    stripeCustomerId: undefined,
-    stripeSubscriptionId: undefined,
-    stripeSubscriptionStatus: undefined,
-    aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     dedicatedWorkers: null,
     canary: false,
     customDomainsEnabled: false,
 }
-
-export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({
-    ...STANDARD_CLOUD_PLAN,
-    plan: planName,
-    eventStreamingEnabled: false,
-    activeFlowsLimit: undefined,
-})
 
 export const isCloudPlanButNotEnterprise = (plan?: string | null): boolean => {
     if (isNil(plan)) {
         return false
     }
 
-    return plan === PlanName.STANDARD
+    return plan === PlanName.FREE || plan === PlanName.APPSUMO || plan === PlanName.FREE_LEGACY
+}
+
+export const PLATFORM_PURGE_DELAY_DAYS = 7
+
+export const hasActiveSubscription = (plan?: string | null): boolean => {
+    return !isNil(plan) && !isCloudPlanButNotEnterprise(plan)
+}
+
+export const isAppSumoCreditedPlan = (plan?: string | null): boolean => {
+    if (isNil(plan)) {
+        return false
+    }
+
+    return plan.toLowerCase().includes(PlanName.APPSUMO) || plan === PlanName.FREE_LEGACY
+}
+
+export const LEGACY_STANDARD_PLAN = 'standard'
+
+export const LEGACY_FREE_PLANS: readonly string[] = [PlanName.FREE, LEGACY_STANDARD_PLAN]
+
+export const FREE_LEGACY_CUTOFF_ISO = '2026-07-30T00:00:00.000Z'
+
+export const isFreeLegacyEligible = ({ plan, created }: { plan?: string | null, created?: string | null }): boolean => {
+    if (isNil(plan) || isNil(created) || !LEGACY_FREE_PLANS.includes(plan)) {
+        return false
+    }
+    const createdAt = Date.parse(created)
+    return !Number.isNaN(createdAt) && createdAt < Date.parse(FREE_LEGACY_CUTOFF_ISO)
 }

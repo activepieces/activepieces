@@ -1,5 +1,9 @@
-import { isNil } from '@activepieces/core-utils';
-import { ACTIVEPIECES_CHAT_TIERS, aiProviderUtils } from '@activepieces/shared';
+import { AIProviderName, isNil } from '@activepieces/core-utils';
+import {
+  ACTIVEPIECES_CHAT_TIERS,
+  aiProviderUtils,
+  CHAT_CREDITS_PER_TOOL_CALL,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowDown,
@@ -27,23 +31,19 @@ const TIER_CONFIG: Record<
   string,
   {
     icon: React.ComponentType<{ className?: string }>;
-    displayLabel: string;
     description: string;
   }
 > = {
   fast: {
     icon: Equal,
-    displayLabel: 'Fast',
     description: 'Quick replies for simple tasks',
   },
   smart: {
     icon: Lightbulb,
-    displayLabel: 'Expert',
     description: 'Best for everyday use',
   },
   premium: {
     icon: Rocket,
-    displayLabel: 'Heavy',
     description: 'Highest quality, a bit slower',
   },
 };
@@ -57,6 +57,8 @@ function useModelOptions(): ModelOption[] {
     return ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
       id: tier.id,
       ...TIER_CONFIG[tier.id],
+      displayLabel: tier.label,
+      creditWeight: tier.creditWeight,
     }));
   }
   return curatedModels.map((model) => ({
@@ -64,6 +66,7 @@ function useModelOptions(): ModelOption[] {
     icon: Sparkles,
     displayLabel: model.label,
     description: null,
+    creditWeight: null,
   }));
 }
 
@@ -77,6 +80,8 @@ export function ChatModelSelector({
   const [open, setOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const listRef = useRef<HTMLDivElement>(null);
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const showCredits = chatProvider?.provider === AIProviderName.ACTIVEPIECES;
 
   const options = useModelOptions();
   const selectedOption =
@@ -159,9 +164,19 @@ export function ChatModelSelector({
                     <Icon className="size-4 text-foreground" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5">
-                    <span className="text-sm font-medium">
-                      {t(option.displayLabel)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {t(option.displayLabel)}
+                      </span>
+                      {showCredits && !isNil(option.creditWeight) && (
+                        <span className="text-xs text-muted-foreground">
+                          {t(
+                            '{count, plural, =1 {1 credit} other {# credits}}',
+                            { count: option.creditWeight },
+                          )}
+                        </span>
+                      )}
+                    </div>
                     {option.description && (
                       <span className="text-xs text-muted-foreground">
                         {t(option.description)}
@@ -178,6 +193,14 @@ export function ChatModelSelector({
               );
             })}
           </div>
+          {showCredits && (
+            <div className="border-t px-3 py-2 text-xs text-muted-foreground">
+              {t(
+                'Per message, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
+                { count: CHAT_CREDITS_PER_TOOL_CALL },
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
@@ -206,4 +229,5 @@ type ModelOption = {
   icon: React.ComponentType<{ className?: string }>;
   displayLabel: string;
   description: string | null;
+  creditWeight: number | null;
 };
