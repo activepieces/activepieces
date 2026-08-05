@@ -138,7 +138,7 @@ export const platformRoutes = [
     path: '/platform/setup/ai',
     element: (
       <PlatformLayout>
-        <PageTitle title="AI Hub">
+        <PageTitle title="AI Center">
           <SuspenseWrapper>
             <AIProvidersPage />
           </SuspenseWrapper>

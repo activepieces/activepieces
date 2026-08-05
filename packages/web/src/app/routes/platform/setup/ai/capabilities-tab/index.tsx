@@ -1,20 +1,19 @@
 import { AiToolCapability, AiToolProvider } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Globe, Image, LucideIcon, Pencil, Search, Trash } from 'lucide-react';
+import {
+  Globe,
+  Image,
+  LucideIcon,
+  Search,
+  Settings2,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/custom/item';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
 import {
@@ -40,12 +39,22 @@ export function CapabilitiesTab({ scenario }: { scenario: MockScenario }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
-        {t(
-          'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
-        )}
-      </p>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <div className="flex items-baseline gap-2">
+          <h2 className="text-base font-semibold tracking-tight">
+            {t('Assistant capabilities')}
+          </h2>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {AI_TOOL_CATALOG.length}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {t(
+            'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
+          )}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {AI_TOOL_CATALOG.map((capabilityInfo) => (
           <CapabilityCard
             key={capabilityInfo.capability}
@@ -101,48 +110,103 @@ function CapabilityCard({
   )?.name;
 
   return (
-    <Item variant="outline">
-      <ItemMedia variant="icon">
-        <Icon className="size-4 text-muted-foreground" />
-      </ItemMedia>
-      <ItemContent>
-        <ItemTitle>
-          <span className="flex items-center gap-2">
+    <div className="group flex flex-col rounded-lg border bg-card">
+      <div className="flex items-start gap-3 p-4 pb-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
+          <Icon className="size-4 text-muted-foreground" />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <p className="truncate text-sm font-medium leading-none">
             {capabilityInfo.name}
-            {providerName && <Badge variant="outline">{providerName}</Badge>}
-          </span>
-        </ItemTitle>
-        <ItemDescription>{capabilityInfo.description}</ItemDescription>
-      </ItemContent>
-      <ItemActions>
-        {config && (
-          <Switch checked={config.enabled} onCheckedChange={onToggle} />
-        )}
-        <AiCapabilityDialog capabilityInfo={capabilityInfo} onSaved={onSetUp}>
-          {config ? (
-            <Button variant="ghost" size="icon">
-              <Pencil className="size-4" />
-            </Button>
-          ) : (
-            <Button variant="basic">{t('Set up')}</Button>
-          )}
-        </AiCapabilityDialog>
-        {config && (
-          <ConfirmationDeleteDialog
-            title={t('Disconnect {name}', { name: capabilityInfo.name })}
-            message={t(
-              'This removes the saved API key and disables this capability.',
+          </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span
+                className={cn('size-1.5 rounded-full', {
+                  'bg-success-500': config?.enabled,
+                  'bg-muted-foreground/40': config && !config.enabled,
+                  'border border-muted-foreground/50': !config,
+                })}
+              />
+              {!config
+                ? t('Not connected')
+                : config.enabled
+                ? t('Active')
+                : t('Turned off')}
+            </span>
+            {providerName && (
+              <>
+                <span aria-hidden>·</span>
+                <span>{providerName}</span>
+              </>
             )}
-            entityName={capabilityInfo.name}
-            mutationFn={async () => onDelete()}
-          >
-            <Button variant="ghost" size="icon">
-              <Trash className="size-4" />
-            </Button>
-          </ConfirmationDeleteDialog>
+          </div>
+        </div>
+        {config && (
+          <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+            <AiCapabilityDialog
+              capabilityInfo={capabilityInfo}
+              onSaved={onSetUp}
+            >
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+              >
+                <Settings2 className="size-4" />
+              </Button>
+            </AiCapabilityDialog>
+            <ConfirmationDeleteDialog
+              title={t('Disconnect {name}', { name: capabilityInfo.name })}
+              message={t(
+                'This removes the saved API key and disables this capability.',
+              )}
+              entityName={capabilityInfo.name}
+              mutationFn={async () => onDelete()}
+            >
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </ConfirmationDeleteDialog>
+          </div>
         )}
-      </ItemActions>
-    </Item>
+      </div>
+      <p className="px-4 pb-4 text-sm text-muted-foreground">
+        {capabilityInfo.description}
+      </p>
+      <div className="mt-auto flex items-center justify-between gap-4 border-t px-4 py-2.5">
+        {config ? (
+          <>
+            <span className="text-xs text-muted-foreground">
+              {config.enabled
+                ? t('Available to the assistant')
+                : t('Hidden from the assistant')}
+            </span>
+            <Switch checked={config.enabled} onCheckedChange={onToggle} />
+          </>
+        ) : (
+          <>
+            <span className="truncate text-xs text-muted-foreground">
+              {capabilityInfo.providers
+                .map((provider) => provider.name)
+                .join(' · ')}
+            </span>
+            <AiCapabilityDialog
+              capabilityInfo={capabilityInfo}
+              onSaved={onSetUp}
+            >
+              <Button variant="outline" size="sm">
+                {t('Connect')}
+              </Button>
+            </AiCapabilityDialog>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 

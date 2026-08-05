@@ -59,7 +59,7 @@ export function PlatformSidebar() {
   const setupItems = [
     {
       to: '/platform/setup/ai',
-      label: t('AI Hub'),
+      label: t('AI Center'),
       icon: SparklesIcon,
     },
     {

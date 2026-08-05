@@ -47,7 +47,7 @@ export default function AIProvidersPage() {
         <div className="flex w-full max-w-5xl flex-col min-h-0 px-6">
           <div className="flex flex-col gap-1 pt-6 pb-5">
             <h1 className="text-2xl font-semibold tracking-tight">
-              {t('AI Hub')}
+              {t('AI Center')}
             </h1>
             <p className="text-sm text-muted-foreground">
               {t(
