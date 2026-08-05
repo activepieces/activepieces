@@ -1,134 +1,130 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   Property,
   OAuth2PropertyValue,
-  AppConnectionValueForAuthProperty,
+  Store,
+  isNil,
 } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-  HttpMethod,
-  getAccessTokenOrThrow,
-} from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { adAccountIdDropdown, boardIdDropdown } from '../common/props';
 import { newPinOnBoardTriggerOutputSchema } from '../output-schemas';
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof pinterestAuth>,
-  Record<string, any>
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ propsValue, auth, lastFetchEpochMS }) => {
-    const { board_id, ad_account_id, creative_types } = propsValue;
-    let bookmark: string | undefined = undefined;
-    let pins: any[] = [];
-    let pageCount = 0;
-    // A page cap may only be applied when there is no checkpoint to page
-    // towards. Once a checkpoint exists the loop must run until it reaches a pin
-    // at or before it (the breaks below): stopping early would return the newest
-    // pins, let pollingHelper advance the checkpoint to their timestamp, and
-    // leave the unread older pages permanently behind it. The board is finite
-    // and older pins exist, so that condition is always reached.
-    const maxSamplePages = 10;
-    const isSample = !lastFetchEpochMS;
-    const initialPageSize = 25; // Smaller initial page size for faster response
+const PAGE_SIZE = 25;
 
-    do {
-      pageCount++;
-      // Build query parameters
-      const searchParams = new URLSearchParams();
-      searchParams.append('page_size', initialPageSize.toString());
-      if (bookmark) {
-        searchParams.append('bookmark', bookmark);
-      }
+// Bounds the requests one poll can make; a larger backlog drains across polls.
+const MAX_PAGES_PER_POLL = 10;
+const MAX_SAMPLE_PAGES = 10;
 
-      if (ad_account_id) {
-        searchParams.append('ad_account_id', ad_account_id);
-      }
+const LAST_POLL_KEY = 'lastPoll';
+const PENDING_BOOKMARK_KEY = 'pendingBookmark';
+const PENDING_MAX_EPOCH_KEY = 'pendingMaxEpoch';
 
-      // Add creative_types filter if specified
-      if (creative_types && creative_types.length > 0) {
-        creative_types.forEach((type: string) => {
-          searchParams.append('creative_types', type);
-        });
-      }
-
-      const queryString = searchParams.toString();
-      const path = `/boards/${board_id}/pins${
-        queryString ? `?${queryString}` : ''
-      }`;
-      try {
-        const response = await makeRequest(
-          getAccessTokenOrThrow(auth as OAuth2PropertyValue),
-          HttpMethod.GET,
-          path
-        );
-        const items = response.items || [];
-        bookmark = response.bookmark;
-
-        // If this is not the first run, filter items by timestamp immediately
-        if (lastFetchEpochMS) {
-          const newItems = items.filter(
-            (item: any) => dayjs(item.created_at).valueOf() > lastFetchEpochMS
-          );
-
-          pins = pins.concat(newItems);
-
-          // Break early if no new items found in this page
-          if (newItems.length === 0) {
-            break;
-          }
-
-          // Break early if we found items older than last fetch
-          const hasOldItems = items.some(
-            (item: any) => dayjs(item.created_at).valueOf() <= lastFetchEpochMS
-          );
-          if (hasOldItems) {
-            break;
-          }
-
-          // Rate limiting awareness - add delay between requests
-          if (bookmark) {
-            await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms delay
-          }
-        } else {
-          // First run - collect all items
-          pins = pins.concat(items);
-        }
-      } catch (error) {
-        // Returning the pages read so far would let pollingHelper advance
-        // `lastPoll` to the newest pin it did receive (it stores the max epoch
-        // of the returned items), stranding the still-qualifying pins on the
-        // pages we never reached permanently behind the checkpoint. Failing the
-        // poll leaves the checkpoint untouched, so the next run retries the
-        // whole window — the same hazard the comment above the loop describes.
-        //
-        // A sample run has no checkpoint to corrupt, so best-effort is fine.
-        if (!isSample) {
-          throw error;
-        }
-        console.error(`Error fetching pins for board ${board_id}:`, error);
-        break;
-      }
-    } while (bookmark && (!isSample || pageCount < maxSamplePages));
-
-    // Sort by creation date (newest first) for consistent ordering
-    pins.sort(
-      (a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf()
-    );
-
-    return pins.map((item) => ({
-      epochMilliSeconds: dayjs(item.created_at).valueOf(),
-      data: item,
-    }));
-  },
+type PinsPage = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  items: any[];
+  bookmark?: string;
 };
+
+type SweepProps = {
+  board_id: string;
+  ad_account_id?: string;
+  creative_types?: string[];
+};
+
+async function fetchPage(
+  accessToken: string,
+  { board_id, ad_account_id, creative_types }: SweepProps,
+  bookmark: string | undefined
+): Promise<PinsPage> {
+  const searchParams = new URLSearchParams();
+  searchParams.append('page_size', PAGE_SIZE.toString());
+  if (bookmark) {
+    searchParams.append('bookmark', bookmark);
+  }
+  if (ad_account_id) {
+    searchParams.append('ad_account_id', ad_account_id);
+  }
+  if (creative_types && creative_types.length > 0) {
+    creative_types.forEach((type) => {
+      searchParams.append('creative_types', type);
+    });
+  }
+
+  const response = await makeRequest(
+    accessToken,
+    HttpMethod.GET,
+    `/boards/${board_id}/pins?${searchParams.toString()}`
+  );
+  return { items: response.items || [], bookmark: response.bookmark };
+}
+
+type SweepResult = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pins: any[];
+  maxEpoch: number;
+  /** Reached the checkpoint or ran out of bookmark, so nothing older is unread. */
+  complete: boolean;
+  nextBookmark?: string;
+};
+
+async function sweep(
+  accessToken: string,
+  props: SweepProps,
+  lastPoll: number,
+  startBookmark: string | undefined,
+  carriedMaxEpoch: number
+): Promise<SweepResult> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pins: any[] = [];
+  let maxEpoch = carriedMaxEpoch;
+  let bookmark = startBookmark;
+  let pageCount = 0;
+
+  for (;;) {
+    const page = await fetchPage(accessToken, props, bookmark);
+    pageCount++;
+    bookmark = page.bookmark;
+
+    for (const item of page.items) {
+      const epoch = dayjs(item.created_at).valueOf();
+      maxEpoch = Math.max(maxEpoch, epoch);
+      if (epoch > lastPoll) {
+        pins.push(item);
+      }
+    }
+
+    // Everything past this point is already seen, whatever the bookmark says.
+    const reachedCheckpoint = page.items.some(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (item: any) => dayjs(item.created_at).valueOf() <= lastPoll
+    );
+    if (reachedCheckpoint || isNil(bookmark)) {
+      return { pins, maxEpoch, complete: true };
+    }
+
+    if (pageCount >= MAX_PAGES_PER_POLL) {
+      return { pins, maxEpoch, complete: false, nextBookmark: bookmark };
+    }
+
+    // Rate limiting awareness
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
+async function readCheckpoint(store: Store): Promise<number> {
+  const stored = await store.get<number>(LAST_POLL_KEY);
+  if (!isNil(stored)) {
+    return stored;
+  }
+  // onEnable seeds this; fall back to watching from now rather than failing.
+  const now = Date.now();
+  await store.put(LAST_POLL_KEY, now);
+  return now;
+}
 
 export const newPinOnBoard = createTrigger({
   auth: pinterestAuth,
@@ -193,17 +189,82 @@ export const newPinOnBoard = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    const accessToken = getAccessTokenOrThrow(
+      context.auth as OAuth2PropertyValue
+    );
+    const props = context.propsValue as SweepProps;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pins: any[] = [];
+    let bookmark: string | undefined = undefined;
+    let pageCount = 0;
+
+    do {
+      const page = await fetchPage(accessToken, props, bookmark);
+      pins.push(...page.items);
+      bookmark = page.bookmark;
+      pageCount++;
+    } while (bookmark && pageCount < MAX_SAMPLE_PAGES && pins.length < 5);
+
+    return pins
+      .sort(
+        (a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf()
+      )
+      .slice(0, 5);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await context.store.put(LAST_POLL_KEY, Date.now());
+    await context.store.delete(PENDING_BOOKMARK_KEY);
+    await context.store.delete(PENDING_MAX_EPOCH_KEY);
   },
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await context.store.delete(PENDING_BOOKMARK_KEY);
+    await context.store.delete(PENDING_MAX_EPOCH_KEY);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const { store } = context;
+    const accessToken = getAccessTokenOrThrow(
+      context.auth as OAuth2PropertyValue
+    );
+    const props = context.propsValue as SweepProps;
+
+    const lastPoll = await readCheckpoint(store);
+    const pendingBookmark = await store.get<string>(PENDING_BOOKMARK_KEY);
+    const carriedMaxEpoch =
+      (await store.get<number>(PENDING_MAX_EPOCH_KEY)) ?? lastPoll;
+
+    let result: SweepResult;
+    try {
+      result = await sweep(
+        accessToken,
+        props,
+        lastPoll,
+        pendingBookmark ?? undefined,
+        carriedMaxEpoch
+      );
+    } catch (error) {
+      // A resume bookmark can expire between polls; retry from the newest page.
+      // Safe because the checkpoint has not moved. Anything else propagates.
+      if (isNil(pendingBookmark)) {
+        throw error;
+      }
+      await store.delete(PENDING_BOOKMARK_KEY);
+      await store.delete(PENDING_MAX_EPOCH_KEY);
+      result = await sweep(accessToken, props, lastPoll, undefined, lastPoll);
+    }
+
+    if (result.complete) {
+      await store.put(LAST_POLL_KEY, Math.max(lastPoll, result.maxEpoch));
+      await store.delete(PENDING_BOOKMARK_KEY);
+      await store.delete(PENDING_MAX_EPOCH_KEY);
+    } else {
+      // Checkpoint stays put: older pins may still qualify, and advancing now
+      // would leave them permanently behind it. Next poll resumes here.
+      await store.put(PENDING_BOOKMARK_KEY, result.nextBookmark);
+      await store.put(PENDING_MAX_EPOCH_KEY, result.maxEpoch);
+    }
+
+    return result.pins.sort(
+      (a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf()
+    );
   },
 });
