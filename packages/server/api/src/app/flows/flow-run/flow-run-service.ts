@@ -21,6 +21,7 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
+import { redactSensitiveStepOutputs } from './step-output-redactor'
 import { waitpointService } from './waitpoint/waitpoint-service'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
@@ -422,12 +423,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
-        let steps = {}
+        let steps: Record<string, StepOutput> = {}
         let internalError: RunInternalError | undefined = undefined
         if (!isNil(flowRun.logsFileId)) {
             const stateFile = await readLogsFile(log, flowRun.logsFileId, flowRun.projectId)
             if (!isNil(stateFile)) {
-                steps = stateFile.executionState.steps
+                steps = redactSensitiveStepOutputs(stateFile.executionState.steps)
                 internalError = stateFile.internalError
             }
         }

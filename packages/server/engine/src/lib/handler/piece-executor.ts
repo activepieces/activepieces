@@ -13,6 +13,7 @@ import { createContextStore } from '../piece-context/store'
 import { waitpointClient } from '../piece-context/waitpoint-client'
 import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
+import { collectSensitiveOutputPaths } from '../variables/output-sensitive-paths'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor, failStep } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -151,6 +152,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const testSingleStepMode = !isNil(constants.stepNameToTest)
         const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(backwardCompatibleContext)
+        const sensitiveOutputPaths = collectSensitiveOutputPaths(pieceAction.outputSchema, output)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
         const webhookResponse = getResponse(params.hookResponse)
@@ -176,19 +178,19 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             if (isNil(params.hookResponse.response)) {
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
-            const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
+            const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime).setSensitiveOutputPaths(sensitiveOutputPaths)
             return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             })
         }
         if (params.hookResponse.type === 'paused') {
-            const paused = stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)
+            const paused = stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime).setSensitiveOutputPaths(sensitiveOutputPaths)
             return (await newExecutionContext.upsertStep(action.name, paused))
                 .incrementStepsExecuted()
                 .setVerdict({ status: FlowRunStatus.PAUSED })
         }
-        const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
+        const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime).setSensitiveOutputPaths(sensitiveOutputPaths)
         return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))

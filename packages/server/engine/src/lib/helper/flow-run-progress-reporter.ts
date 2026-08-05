@@ -221,6 +221,7 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
         success: isSuccess,
         input: stepOutput.input,
         output: stepOutput.output,
+        sensitiveOutputPaths: stepOutput.sensitiveOutputPaths,
         standardError: isSuccess ? '' : (stepOutput.errorMessage ?? ''),
         standardOutput: '',
     }

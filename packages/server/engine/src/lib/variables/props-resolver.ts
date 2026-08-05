@@ -1,7 +1,7 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
 import { applyFunctionToValues, extractMustacheTokens, isNil, isString, tryCatch } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { FormulaEvaluationError } from '@activepieces/shared'
+import { FormulaEvaluationError, SENSITIVE_VALUE_REDACTED } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CreateScriptSessionParams, ScriptSession } from '../core/code/code-sandbox-common'
@@ -43,6 +43,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
             }
             const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
             const currentState = await executionState.currentState(Array.from(referencedStepNames))
+            const sensitiveStepPaths = buildSensitiveStepPaths(executionState)
             const scriptSession = createSharedScriptSession(() => ({
                 scriptContext: { ...currentState },
                 functions: { flattenNestedKeys },
@@ -54,6 +55,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     apiUrl,
                     currentState,
                     scriptSession,
+                    sensitiveStepPaths,
                 }
                 const resolvedInput = await applyFunctionToValues<T>(
                     unresolvedInput,
@@ -84,7 +86,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
 }
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'scriptSession'>,
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'scriptSession' | 'sensitiveStepPaths'>,
     contextVersion: ContextVersion | undefined,
 ) => {
     const resolvedValues: Record<string, unknown> = {}
@@ -111,6 +113,46 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 }
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
+
+function buildSensitiveStepPaths(executionState: FlowExecutorContext): Record<string, string[]> {
+    const map: Record<string, string[]> = {}
+    for (const [name, step] of Object.entries(executionState.steps)) {
+        if (step.sensitiveOutputPaths && step.sensitiveOutputPaths.length > 0) {
+            map[name] = step.sensitiveOutputPaths
+        }
+    }
+    return map
+}
+
+function isSensitiveStepReference(variableName: string, sensitiveStepPaths: Record<string, string[]>): boolean {
+    const normalized = normalizeVariablePath(variableName)
+    const match = normalized.match(/^([^.]+)\.output(?:\.(.+))?$/)
+    if (isNil(match)) {
+        return false
+    }
+    const stepName = match[1]
+    const subpath = match[2]
+    const paths = sensitiveStepPaths[stepName]
+    if (isNil(paths) || paths.length === 0) {
+        return false
+    }
+    if (isNil(subpath) || subpath === '') {
+        return true
+    }
+    return paths.some((path) => pathsIntersect(subpath, path))
+}
+
+function pathsIntersect(a: string, b: string): boolean {
+    return a === b || a.startsWith(`${b}.`) || b.startsWith(`${a}.`)
+}
+
+function normalizeVariablePath(variableName: string): string {
+    return variableName
+        .replace(/\[(\d+)\]/g, '.$1')
+        .replace(/\['([^']+)'\]/g, '.$1')
+        .replace(/\["([^"]+)"\]/g, '.$1')
+        .trim()
+}
 
 function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
     const referencedSteps = new Set<string>()
@@ -139,10 +181,10 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
  */
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
-    const { input, currentState, engineToken, projectId, apiUrl, censoredInput, scriptSession } = params
+    const { input, currentState, engineToken, projectId, apiUrl, censoredInput, scriptSession, sensitiveStepPaths } = params
 
     if (formulaEvaluator.containsWrapper(input)) {
-        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, scriptSession, contextVersion: params.contextVersion }
+        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, scriptSession, contextVersion: params.contextVersion, sensitiveStepPaths }
         const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
         const { result, error } = formulaEvaluator.evaluate({ expression: preResolvedExpr, sampleData: preResolvedVars })
         if (error) {
@@ -159,6 +201,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         currentState,
         censoredInput,
         scriptSession,
+        sensitiveStepPaths,
     }
     const inputContainsOnlyOneTokenToResolve =
         tokensThatNeedResolving.length === 1 &&
@@ -188,12 +231,15 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
 }
 
 async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
-    const { variableName, currentState, scriptSession } = params
+    const { variableName, currentState, scriptSession, censoredInput, sensitiveStepPaths } = params
     if (variableName.startsWith(VARIABLES)) {
         return handleVariable(params)
     }
     if (variableName.startsWith(CONNECTIONS)) {
         return handleConnection(params)
+    }
+    if (censoredInput && sensitiveStepPaths && isSensitiveStepReference(variableName, sensitiveStepPaths)) {
+        return SENSITIVE_VALUE_REDACTED
     }
     return evalInScope(variableName, { ...currentState }, { flattenNestedKeys }, scriptSession)
 }
@@ -205,7 +251,7 @@ async function handleVariable(params: ResolveSingleTokenParams): Promise<unknown
         return ''
     }
     if (censoredInput) {
-        return '**REDACTED**'
+        return SENSITIVE_VALUE_REDACTED
     }
     return createVariableResolver({ engineToken, projectId, apiUrl }).obtain(name)
 }
@@ -228,7 +274,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
         return ''
     }
     if (censoredInput) {
-        return '**REDACTED**'
+        return SENSITIVE_VALUE_REDACTED
     }
     const connection = await createConnectionResolver({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
@@ -358,7 +404,7 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
     return []
 }
 
-type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion' | 'scriptSession'>
+type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion' | 'scriptSession' | 'sensitiveStepPaths'>
 
 async function preResolveFormulaVars({ expression, resolveOptions }: {
     expression: string
@@ -398,6 +444,7 @@ type ResolveSingleTokenParams = {
     censoredInput: boolean
     contextVersion: ContextVersion | undefined
     scriptSession?: SharedScriptSession
+    sensitiveStepPaths?: Record<string, string[]>
 }
 
 type ResolveInputInternalParams = {
@@ -409,6 +456,7 @@ type ResolveInputInternalParams = {
     currentState: Record<string, unknown>
     contextVersion: ContextVersion | undefined
     scriptSession?: SharedScriptSession
+    sensitiveStepPaths?: Record<string, string[]>
 }
 
 type SharedScriptSession = {

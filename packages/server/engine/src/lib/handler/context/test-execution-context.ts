@@ -76,6 +76,7 @@ export const testExecutionContext = {
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,
                         ...spreadIfDefined('output', sampleData?.[step.name]),
+                        ...spreadIfDefined('sensitiveOutputPaths', step.settings?.sampleData?.sensitiveOutputPaths),
                     }))
                     break
             }
