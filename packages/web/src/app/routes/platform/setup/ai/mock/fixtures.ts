@@ -26,6 +26,37 @@ const BUILT_IN_TIER_DESCRIPTIONS: Record<BuiltInTierId, string> = {
   premium: 'Highest quality, a bit slower',
 };
 
+const GENERATED_PROJECT_NAMES = [
+  'Growth Experiments',
+  'Finance Reporting',
+  'HR Onboarding',
+  'Legal Intake',
+  'Data Pipeline',
+  'Design Requests',
+  'Partner Portal',
+  'Churn Prevention',
+  'Lead Scoring',
+  'Invoice Processing',
+  'Recruiting Bot',
+  'Docs Assistant',
+  'QA Automation',
+  'Localization',
+  'Social Scheduler',
+  'Inventory Sync',
+  'Security Alerts',
+  'Customer Feedback',
+  'Product Analytics',
+  'Email Triage',
+  'Meeting Notes',
+  'Compliance Checks',
+  'Vendor Management',
+  'Field Operations',
+  'Knowledge Base',
+  'Revenue Ops',
+  'Support Escalations',
+  'Content Studio',
+];
+
 export const MODEL_CATALOG: ModelFacts[] = [
   model({
     id: 'gpt-5.2',
@@ -521,37 +552,6 @@ function generatedUsage(): MockProjectAiUsage[] {
     };
   });
 }
-
-const GENERATED_PROJECT_NAMES = [
-  'Growth Experiments',
-  'Finance Reporting',
-  'HR Onboarding',
-  'Legal Intake',
-  'Data Pipeline',
-  'Design Requests',
-  'Partner Portal',
-  'Churn Prevention',
-  'Lead Scoring',
-  'Invoice Processing',
-  'Recruiting Bot',
-  'Docs Assistant',
-  'QA Automation',
-  'Localization',
-  'Social Scheduler',
-  'Inventory Sync',
-  'Security Alerts',
-  'Customer Feedback',
-  'Product Analytics',
-  'Email Triage',
-  'Meeting Notes',
-  'Compliance Checks',
-  'Vendor Management',
-  'Field Operations',
-  'Knowledge Base',
-  'Revenue Ops',
-  'Support Escalations',
-  'Content Studio',
-];
 
 export type MockScenarioId = (typeof MOCK_SCENARIO_IDS)[number];
 
