@@ -43,15 +43,17 @@ export default function AIProvidersPage() {
         'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
       )}
     >
-      <div className="flex flex-col gap-1 px-6 pt-6 pb-5">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('AI Hub')}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t(
-            'Everything AI on your platform — providers, model routing, assistant capabilities, and spend.',
-          )}
-        </p>
-      </div>
-      <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
+      <div className="mx-auto w-full max-w-5xl flex flex-col flex-1 min-h-0 px-6">
+        <div className="flex flex-col gap-1 pt-6 pb-5">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('AI Hub')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t(
+              'Everything AI on your platform — providers, model routing, assistant capabilities, and spend.',
+            )}
+          </p>
+        </div>
         <Tabs
           value={activeTab}
           onValueChange={(value) => {
@@ -64,7 +66,7 @@ export default function AIProvidersPage() {
         >
           <TabsList
             variant="outline"
-            className="border-b w-full rounded-none justify-start shrink-0 gap-2 px-6"
+            className="border-b w-full rounded-none justify-start shrink-0 gap-2"
           >
             <TabsTrigger
               variant="outline"
@@ -108,27 +110,27 @@ export default function AIProvidersPage() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="providers" className="flex-1 min-h-0 mt-0">
-            <div className="w-full max-w-5xl px-6 py-6">
+            <div className="w-full py-6">
               <ProvidersTab key={scenarioId} scenario={scenario} />
             </div>
           </TabsContent>
           <TabsContent value="capabilities" className="flex-1 min-h-0 mt-0">
-            <div className="w-full max-w-5xl px-6 py-6">
+            <div className="w-full py-6">
               <CapabilitiesTab key={scenarioId} scenario={scenario} />
             </div>
           </TabsContent>
           <TabsContent value="routing" className="flex-1 min-h-0 mt-0">
-            <div className="w-full max-w-5xl px-6 py-6">
+            <div className="w-full py-6">
               <RoutingTab key={scenarioId} scenario={scenario} />
             </div>
           </TabsContent>
           <TabsContent value="usage" className="flex-1 min-h-0 mt-0">
-            <div className="w-full px-6 py-6">
+            <div className="w-full py-6">
               <UsageTab key={scenarioId} scenario={scenario} />
             </div>
           </TabsContent>
           <TabsContent value="preview" className="flex-1 min-h-0 mt-0">
-            <div className="w-full px-6 py-6">
+            <div className="w-full py-6">
               <PreviewTab key={scenarioId} scenario={scenario} />
             </div>
           </TabsContent>
