@@ -20,6 +20,14 @@ One execution instance per flow version, trigger → terminal state. 12 statuses
 - `failedStep` JSONB snapshot powers filtered retries, error search, failure emails, jump-to-failed-step.
 - Paid editions emit AI usage billing (`ai_usage_per_run`) on terminal runs.
 
+### Action Runs
+A single piece action or code step executed directly, outside any flow, synchronously — the unit behind MCP `ap_run_action` and the chat action/code tools. Execution only; nothing is persisted yet. Vocabulary for the job lifecycle, which four distinct stages share one overloaded word:
+- **Never started** — a *proof that nothing could have written*, not a lifecycle stage. **Sound** (never true when a write was possible), deliberately **not complete** (may be false when nothing in fact ran). Two independent producers feed it: the sandbox refusing a run whose deadline already passed, and the API proving the job was never dequeued. *Avoid:* "didn't run", "not executed" — both invite reading it as a stage and weakening it.
+- **Dequeued** — the app moved the job `wait → active` and owns it. Marked durably by BullMQ's `processedOn`. Precedes delivery to a worker, so it is **not** evidence that user code ran. *Avoid:* "picked up", "claimed".
+- **Dispatched** — handed to a live worker connection (`jobAssignmentTracker`). In-memory and per-app-instance, so it is not durable evidence.
+- **Started** — the engine began executing the step. The only stage at which a side effect becomes possible, and the one stage the platform cannot observe directly.
+- Because only *dequeued* is durably observable, `neverStarted` is derived from its absence — which is why the flag is sound but incomplete.
+
 ### Triggers
 Defines how/when a flow starts. Registered as a `TriggerSource` (unique per projectId/flowId/simulate); dedup state in Redis.
 - 4 strategies: POLLING (BullMQ cron + Redis INCR dedup on `__DEDUPE_KEY_PROPERTY`), WEBHOOK (external push), APP_WEBHOOK (routed via `AppEventRouting` table, e.g. Slack/GitHub), MANUAL.
