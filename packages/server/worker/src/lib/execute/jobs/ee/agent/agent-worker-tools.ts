@@ -1,7 +1,8 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentPhase, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
 
@@ -1437,6 +1438,30 @@ export type AgentEventEmitter = {
     emitBuildPlan(data: BuildPlanEvent): void
 }
 
+function createConfiguredPieceTools({ tools, runPieceTool, log }: {
+    tools: AgentPieceTool[]
+    runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        tool({
+            description: `Run the "${configured.pieceMetadata.actionName}" action of ${normalizePieceName(configured.pieceMetadata.pieceName)}. Describe what you want it to do in plain language; its inputs are worked out from your instruction and the fields already pinned on this step.`,
+            inputSchema: z.object({
+                instruction: z.string().describe('What this action should do, including any values it needs, in plain language'),
+            }),
+            execute: async ({ instruction }) => {
+                const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata }))
+                if (error) {
+                    log.warn({ error, tool: { name: configured.toolName } }, '[configuredPieceTool] Action failed')
+                    return { content: [{ type: 'text', text: `That action failed: ${error instanceof Error ? error.message : 'unknown error'}` }] }
+                }
+                return truncateLargeResult(data.result)
+            },
+        }),
+    ]))
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
@@ -1457,6 +1482,7 @@ export const agentWorkerTools = {
     createThinkingTools,
     createPhaseTools,
     createBuildPlanTools,
+    createConfiguredPieceTools,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,

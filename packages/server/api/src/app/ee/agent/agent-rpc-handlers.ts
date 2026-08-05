@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -25,6 +25,7 @@ import { chatUsageTracker } from './chat-usage-tracker'
 import { agentMcp } from './mcp/agent-mcp'
 import { agentPrompt } from './prompt/agent-prompt'
 import { executeCrossProjectTool } from './tools/agent-tools'
+import { pieceToolRunner } from './tools/piece-tool-runner'
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
@@ -485,6 +486,31 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             return
         }
         log.info(resumeFields, '[agentRpc#resumeFlowStep] Handed the result back to the flow')
+    },
+
+    async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
+        }
+        const providerConfig = await agentHelpers.resolveChatProvider({ platformId: conversation.platformId, log })
+        const model = agentAiUtils.createChatModel({
+            provider: providerConfig.provider,
+            auth: providerConfig.auth as Record<string, unknown>,
+            config: providerConfig.config as Record<string, unknown>,
+            modelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider }),
+        })
+        const { result } = await pieceToolRunner.runFromInstruction({
+            piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName },
+            instruction: input.instruction,
+            model,
+            projectId: conversation.projectId,
+            platformId: conversation.platformId,
+            log,
+            ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
+        })
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        return { result }
     },
 
     async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {

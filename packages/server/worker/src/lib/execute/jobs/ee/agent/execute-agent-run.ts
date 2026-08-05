@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentPhase, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentPhase, AgentPieceTool, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
@@ -149,6 +149,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
                 source,
+                ...spreadIfDefined('configuredPieceTools', data.tools),
             })
 
             const thinkingStartTime = Date.now()
@@ -389,7 +390,7 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
 }
 
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, configuredPieceTools }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -409,6 +410,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     discoveryOnly: boolean
     emailEnabled: boolean
     abortSignal: AbortSignal
+    configuredPieceTools?: AgentPieceTool[]
     source: AgentRunSource
 }) {
     const brokenConnectors = new Set<string>()
@@ -553,7 +555,15 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         : {}
 
     const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
-    return source === AgentRunSource.CHAT ? allTools : omit(allTools, UNATTENDED_FORBIDDEN_TOOLS)
+    if (source === AgentRunSource.CHAT) {
+        return allTools
+    }
+    const configuredTools = agentWorkerTools.createConfiguredPieceTools({
+        tools: configuredPieceTools ?? [],
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece }),
+        log,
+    })
+    return { ...omit(allTools, UNATTENDED_FORBIDDEN_TOOLS), ...configuredTools }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
