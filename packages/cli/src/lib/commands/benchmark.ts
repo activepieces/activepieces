@@ -14,8 +14,8 @@ export const benchmarkCommand = new Command('benchmark')
     .option('--concurrency <c>', 'Concurrent connections (default: auto = sum of worker execution slots)')
     .option('--api-key <key>', 'Platform API key (Bearer). Or set AP_API_KEY.')
     .option('--body <json>', 'JSON request body sent to the webhook', '{"test":true}')
-    .option('--with-http', 'Insert an HTTP piece step (external call via httpbin.org) into the benchmark flow; falls back to the standard flow if the HTTP piece is not on the server')
-    .option('--http-delay <seconds>', 'Response delay of the HTTP step\'s external call, in seconds (used with --with-http)', '1')
+    .option('--with-http', 'Insert an HTTP piece step into the benchmark flow, calling the deployment\'s own delay endpoint (/v1/health/diagnostics/delay); falls back to the standard flow if the HTTP piece or the endpoint is not on the server')
+    .option('--http-delay <seconds>', 'Response delay of the HTTP step\'s call, in seconds, max 10 (used with --with-http)', '1')
     .option('--json', 'Emit machine-readable JSON output')
     .action(async (opts) => {
         const config = benchmarkUtils.normalizeOptions(opts);
@@ -114,6 +114,9 @@ function normalizeOptions(opts: Record<string, string | boolean | undefined>): B
     }
     const url = String(opts.url);
     const httpDelaySeconds = optionalPositiveInt(opts.httpDelay, '--http-delay') ?? DEFAULT_HTTP_DELAY_SECONDS;
+    if (httpDelaySeconds > MAX_HTTP_DELAY_SECONDS) {
+        throw new Error(`--http-delay must be <= ${MAX_HTTP_DELAY_SECONDS} (the server caps the delay endpoint), got ${httpDelaySeconds}`);
+    }
     return {
         url: url.endsWith('/') ? url.slice(0, -1) : url,
         requests,
@@ -498,17 +501,21 @@ async function collectProjectLimits({ client, projectId, rateLimiterEnabled }: C
 }
 
 async function createBenchmarkFlow({ client, projectId, config }: { client: AxiosInstance; projectId: string; config: BenchmarkConfig }): Promise<string> {
-    const [webhookVersion, mapperVersion, httpVersion] = await Promise.all([
+    const [webhookVersion, mapperVersion, httpVersion, delayEndpointAvailable] = await Promise.all([
         resolvePieceVersion(client, WEBHOOK_PIECE),
         resolvePieceVersion(client, DATA_MAPPER_PIECE),
         config.withHttp ? tryResolvePieceVersion(client, HTTP_PIECE) : Promise.resolve(null),
+        config.withHttp ? probeDelayEndpoint(client) : Promise.resolve(false),
     ]);
     if (config.withHttp && httpVersion === null) {
         console.error(chalk.yellow(`Piece ${HTTP_PIECE} not available on server; falling back to the standard flow without an HTTP step.`));
     }
-    const httpStep = httpVersion === null ? undefined : { version: httpVersion, delaySeconds: config.httpDelaySeconds };
+    if (config.withHttp && httpVersion !== null && !delayEndpointAvailable) {
+        console.error(chalk.yellow(`Server has no ${HTTP_DELAY_PATH} endpoint (predates it); falling back to the standard flow without an HTTP step.`));
+    }
+    const httpStep = httpVersion === null || !delayEndpointAvailable ? undefined : { version: httpVersion, url: `${config.url}${HTTP_DELAY_PATH}`, delaySeconds: config.httpDelaySeconds };
     if (httpStep) {
-        log(config, `HTTP step enabled: GET ${HTTP_DELAY_URL_BASE}${httpStep.delaySeconds} (external call, ~${httpStep.delaySeconds}s delay)`);
+        log(config, `HTTP step enabled: GET ${config.url}${HTTP_DELAY_PATH}?seconds=${httpStep.delaySeconds} (the deployment's own delay endpoint, ~${httpStep.delaySeconds}s per call)`);
     }
 
     const created = await client.post('/api/v1/flows', { displayName: 'Benchmark Flow', projectId });
@@ -538,6 +545,11 @@ async function tryResolvePieceVersion(client: AxiosInstance, name: string): Prom
     const res = await client.get(`/api/v1/pieces/${encodeURIComponent(name)}`);
     const version: string | undefined = res.data?.version;
     return version ? `~${version}` : null;
+}
+
+async function probeDelayEndpoint(client: AxiosInstance): Promise<boolean> {
+    const res = await client.get(HTTP_DELAY_PATH, { params: { seconds: 0 } }).catch(() => null);
+    return res?.status === 200;
 }
 
 async function postOperation(client: AxiosInstance, flowId: string, operation: unknown): Promise<void> {
@@ -586,10 +598,10 @@ function buildImportRequest({ webhookVersion, mapperVersion, httpStep }: { webho
             pieceVersion: httpStep.version,
             actionName: 'send_request',
             input: {
-                url: `${HTTP_DELAY_URL_BASE}${httpStep.delaySeconds}`,
+                url: httpStep.url,
                 method: 'GET',
                 headers: {},
-                queryParams: {},
+                queryParams: { seconds: String(httpStep.delaySeconds) },
                 authType: 'NONE',
                 authFields: {},
                 body_type: 'none',
@@ -969,10 +981,12 @@ function log(config: BenchmarkConfig, message: string): void {
 const WEBHOOK_PIECE = '@activepieces/piece-webhook';
 const DATA_MAPPER_PIECE = '@activepieces/piece-data-mapper';
 const HTTP_PIECE = '@activepieces/piece-http';
-// httpbin.org/delay/{n} responds after n seconds (capped server-side at 10). Workers call it
-// directly, so --with-http benchmarks the I/O-bound flow shape: engine waiting on an external API.
-const HTTP_DELAY_URL_BASE = 'https://httpbin.org/delay/';
+// The deployment's own delay endpoint (health.module.ts) responds after ?seconds= (capped
+// server-side at 10). Workers call it like any external API, so --with-http benchmarks the
+// I/O-bound flow shape without depending on a rate-limited public delay service.
+const HTTP_DELAY_PATH = '/api/v1/health/diagnostics/delay';
 const DEFAULT_HTTP_DELAY_SECONDS = 1;
+const MAX_HTTP_DELAY_SECONDS = 10;
 const DEFAULT_CONCURRENCY = 10;
 const EPHEMERAL_PROJECT_MAX_CONCURRENCY = 1000;
 const NETWORK_PROBES = 20;
@@ -1017,7 +1031,7 @@ type BenchmarkConfig = {
     httpDelaySeconds: number;
 };
 
-type HttpStepConfig = { version: string; delaySeconds: number };
+type HttpStepConfig = { version: string; url: string; delaySeconds: number };
 
 type AuthResult = { token: string };
 

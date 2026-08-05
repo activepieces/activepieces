@@ -107,6 +107,20 @@ export const GetDiagnosticsQuery = z.object({
     recentFailures: z.enum(['true', 'false']).optional(),
 })
 
+// In-deployment stand-in for a slow external API: responds after `seconds`. Lets the benchmark's
+// HTTP-piece flow measure the I/O-bound shape without depending on a rate-limited public service.
+// Capped so a public unauthenticated route can't be asked to hold connections indefinitely.
+export const MAX_DIAGNOSTICS_DELAY_SECONDS = 10
+
+export const DiagnosticsDelayQuery = z.object({
+    seconds: z.coerce.number().min(0).max(MAX_DIAGNOSTICS_DELAY_SECONDS).optional(),
+})
+
+export const DiagnosticsDelayResponse = z.object({
+    ok: z.boolean(),
+    delaySeconds: z.number(),
+})
+
 export type ReleaseHealth = z.infer<typeof ReleaseHealth>
 export type GetSystemHealthChecksResponse = z.infer<typeof GetSystemHealthChecksResponse>
 export type InfraCheck = z.infer<typeof InfraCheck>
@@ -114,5 +128,7 @@ export type DeploymentConfig = z.infer<typeof DeploymentConfig>
 export type DiagnosticsWorker = z.infer<typeof DiagnosticsWorker>
 export type DiagnosticsRecentFailure = z.infer<typeof DiagnosticsRecentFailure>
 export type GetDiagnosticsQuery = z.infer<typeof GetDiagnosticsQuery>
+export type DiagnosticsDelayQuery = z.infer<typeof DiagnosticsDelayQuery>
+export type DiagnosticsDelayResponse = z.infer<typeof DiagnosticsDelayResponse>
 export type AppInstance = z.infer<typeof AppInstance>
 export type GetDiagnosticsResponse = z.infer<typeof GetDiagnosticsResponse>
