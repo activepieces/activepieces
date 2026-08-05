@@ -1,10 +1,10 @@
 import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
 import {
   BatchProgressData,
-  ChatMessageFeedback,
-  ChatToolName,
-  ChatToolOutputs,
-  chatToolClassification,
+  AgentMessageFeedback,
+  AgentToolName,
+  AgentToolOutputs,
+  agentToolClassification,
 } from '@activepieces/shared';
 import {
   DynamicToolUIPart,
@@ -14,7 +14,7 @@ import {
   UIMessage,
 } from 'ai';
 
-export type ChatUIMessage = UIMessage & { feedback?: ChatMessageFeedback };
+export type ChatUIMessage = UIMessage & { feedback?: AgentMessageFeedback };
 
 export type AnyToolPart = ToolUIPart | DynamicToolUIPart;
 
@@ -82,7 +82,7 @@ function isReadOnlyExecuteAction(part: AnyToolPart): boolean {
       : undefined;
   if (!actionName) return false;
   const actionInput = isObject(input?.input) ? input.input : undefined;
-  return chatToolClassification.isReadOnlyActionCall({
+  return agentToolClassification.isReadOnlyActionCall({
     actionName,
     input: actionInput,
   });
@@ -115,11 +115,11 @@ function parseToolOutput(part: AnyToolPart): ToolOutput {
   return { state: 'success', data: parsed };
 }
 
-function parseTypedToolOutput<T extends ChatToolName>(
+function parseTypedToolOutput<T extends AgentToolName>(
   part: AnyToolPart,
   _toolName: T,
-): TypedToolOutput<ChatToolOutputs[T]> {
-  return parseToolOutput(part) as TypedToolOutput<ChatToolOutputs[T]>;
+): TypedToolOutput<AgentToolOutputs[T]> {
+  return parseToolOutput(part) as TypedToolOutput<AgentToolOutputs[T]>;
 }
 
 function isThinkingStatusTool(name: string): boolean {
