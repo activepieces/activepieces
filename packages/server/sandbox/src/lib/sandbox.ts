@@ -1,6 +1,7 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { PiecePackage } from '@activepieces/shared'
+import { cacheUtils } from './cache/cache-paths'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { createResolver } from './resolver'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
@@ -100,6 +101,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 }))
         },
         async prewarm({ log, apiClient, publicApiUrl, flow }: PreWarmSandboxParams): Promise<void> {
+            void cacheUtils(basePath).deleteStaleRunStateDirs(log)
             if (isNil(apiClient) || isNil(publicApiUrl)) {
                 return
             }
