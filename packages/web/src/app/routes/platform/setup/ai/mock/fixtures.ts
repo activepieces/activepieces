@@ -1,5 +1,31 @@
 import { AIProviderName } from '@activepieces/core-utils';
 
+const PROVIDER_USAGE_DASHBOARDS: Partial<Record<AIProviderName, string>> = {
+  [AIProviderName.OPENAI]: 'https://platform.openai.com/usage',
+  [AIProviderName.ANTHROPIC]: 'https://console.anthropic.com/settings/usage',
+  [AIProviderName.GOOGLE]: 'https://aistudio.google.com/usage',
+  [AIProviderName.OPENROUTER]: 'https://openrouter.ai/activity',
+  [AIProviderName.MISTRAL]: 'https://console.mistral.ai/usage',
+  [AIProviderName.AZURE]:
+    'https://portal.azure.com/#view/Microsoft_Azure_CostManagement',
+  [AIProviderName.BEDROCK]:
+    'https://console.aws.amazon.com/cost-management/home',
+  [AIProviderName.CLOUDFLARE_GATEWAY]:
+    'https://dash.cloudflare.com/?to=/:account/ai/ai-gateway',
+};
+
+const BUILT_IN_TIER_NAMES: Record<BuiltInTierId, string> = {
+  fast: 'Fast',
+  smart: 'Expert',
+  premium: 'Heavy',
+};
+
+const BUILT_IN_TIER_DESCRIPTIONS: Record<BuiltInTierId, string> = {
+  fast: 'Quick replies for simple tasks',
+  smart: 'Best for everyday use',
+  premium: 'Highest quality, a bit slower',
+};
+
 export const MODEL_CATALOG: ModelFacts[] = [
   model({
     id: 'gpt-5.2',
@@ -471,31 +497,6 @@ function standardUsage(): MockProjectAiUsage[] {
   ];
 }
 
-const PROVIDER_USAGE_DASHBOARDS: Partial<Record<AIProviderName, string>> = {
-  [AIProviderName.OPENAI]: 'https://platform.openai.com/usage',
-  [AIProviderName.ANTHROPIC]: 'https://console.anthropic.com/settings/usage',
-  [AIProviderName.GOOGLE]: 'https://aistudio.google.com/usage',
-  [AIProviderName.OPENROUTER]: 'https://openrouter.ai/activity',
-  [AIProviderName.MISTRAL]: 'https://console.mistral.ai/usage',
-  [AIProviderName.AZURE]:
-    'https://portal.azure.com/#view/Microsoft_Azure_CostManagement',
-  [AIProviderName.BEDROCK]:
-    'https://console.aws.amazon.com/cost-management/home',
-  [AIProviderName.CLOUDFLARE_GATEWAY]:
-    'https://dash.cloudflare.com/?to=/:account/ai/ai-gateway',
-};
-
-const BUILT_IN_TIER_NAMES: Record<BuiltInTierId, string> = {
-  fast: 'Fast',
-  smart: 'Expert',
-  premium: 'Heavy',
-};
-
-const BUILT_IN_TIER_DESCRIPTIONS: Record<BuiltInTierId, string> = {
-  fast: 'Quick replies for simple tasks',
-  smart: 'Best for everyday use',
-  premium: 'Highest quality, a bit slower',
-};
 
 export type MockScenarioId = (typeof MOCK_SCENARIO_IDS)[number];
 
