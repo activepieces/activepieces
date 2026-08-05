@@ -1,6 +1,7 @@
 import { reoonEmailVerifyAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { VerifyEmailMode, verifySingleEmail } from '../common/send-util';
+import { verifyEmailActionOutputSchema } from '../output-schemas';
 
 export const verifyEmailAddress = createAction({
   auth: reoonEmailVerifyAuth,
@@ -13,6 +14,7 @@ export const verifyEmailAddress = createAction({
       'Verifies a single email address synchronously via Reoon and returns deliverability and risk signals (valid / invalid / disposable / role-based, etc.). Use this for one address at a time and when you need the result immediately; for many addresses use Create Bulk Email Verification instead. Each call consumes Reoon verification credits, and Power mode (more accurate, slower) costs more than Quick mode.',
     idempotent: true,
   },
+  outputSchema: verifyEmailActionOutputSchema,
   props: {
     email: Property.ShortText({
       displayName: 'Email',

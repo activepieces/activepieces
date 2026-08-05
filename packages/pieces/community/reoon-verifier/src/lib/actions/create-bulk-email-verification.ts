@@ -1,6 +1,7 @@
 import { reoonEmailVerifyAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { verifyEmails } from '../common/send-util';
+import { createBulkEmailVerificationActionOutputSchema } from '../output-schemas';
 
 export const createBulkEmailVerification = createAction({
   auth: reoonEmailVerifyAuth,
@@ -13,6 +14,7 @@ export const createBulkEmailVerification = createAction({
       'Submits a named batch of email addresses to Reoon for asynchronous bulk verification and returns a task_id used to poll for results. Use this instead of single-email verify when validating many addresses at once; results are not immediate — afterward call Get Bulk Email Verification Result with the returned task_id. Each address verified consumes Reoon credits.',
     idempotent: false,
   },
+  outputSchema: createBulkEmailVerificationActionOutputSchema,
   props: {
     taskName: Property.ShortText({
       displayName: 'Task Name',
