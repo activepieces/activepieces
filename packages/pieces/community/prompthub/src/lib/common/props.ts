@@ -1,5 +1,4 @@
 import { Property } from '@activepieces/pieces-framework';
-import z, { ZodTypeAny } from 'zod';
 
 export const listProjectsProps = {
   teamId: Property.Number({ 
@@ -111,33 +110,6 @@ export const runPromptProps = {
     description: 'Request timeout in seconds (max 600).',
     required: false 
   }),
-};
-
-export const listProjectsSchema: Record<string, ZodTypeAny> = {
-  teamId: z.number().int().positive(),
-  group: z.string().optional(),
-  
-};
-
-export const getProjectHeadSchema: Record<string, ZodTypeAny> = {
-  projectId: z.number().int().positive(),
-  branch: z.string().optional(),
-  variables: z.record(z.any()).optional(),
-  fallback: z.boolean().optional(),
-};
-
-export const runPromptSchema: Record<string, ZodTypeAny> = {
-  projectId: z.number().int().positive(),
-  branch: z.string().optional(),
-  hash: z.string().optional(),
-  variables: z.record(z.any()).optional(),
-  messages: z.array(z.object({
-    role: z.enum(['system', 'user', 'assistant']),
-    content: z.string(),
-  })).optional(),
-  prompt: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
-  timeoutSeconds: z.number().int().positive().max(600).optional(),
 };
 
 export function sanitizeVariables(vars: Record<string, unknown>): Record<string, string | number | boolean | null> {
