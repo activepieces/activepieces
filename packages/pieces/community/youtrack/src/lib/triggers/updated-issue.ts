@@ -5,25 +5,50 @@ import { youtrackAuth } from '../auth';
 import { ISSUE_FIELDS, flattenIssue, youtrackApiCall } from '../common';
 import { updatedIssueTriggerOutputSchema } from '../output-schemas';
 
+const PAGE_SIZE = 50;
+/** Ceiling of 500 issues per poll, so a stale checkpoint cannot page forever. */
+const MAX_PAGES = 10;
+
 const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   // No date filter in the query: YouTrack search syntax has no `{after <epoch>}`
-  // form (it 400s), and pollingHelper already drops items at or below
-  // `lastFetchEpochMS`. Issues whose `updated` still equals `created` have never
-  // been modified, so they belong to the New Issue trigger only.
-  items: async ({ auth }) => {
-    const response = await youtrackApiCall<Array<Record<string, unknown>>>({
-      baseUrl: auth.props.baseUrl,
-      token: auth.props.apiToken,
-      method: HttpMethod.GET,
-      path: '/issues',
-      queryParams: {
-        fields: ISSUE_FIELDS,
-        query: 'sort by: updated desc',
-        '$top': '50',
-      },
-    });
-    return (response.body || [])
+  // form (it 400s), so the cutoff is pollingHelper's, which drops items at or
+  // below `lastFetchEpochMS`. Because that cutoff is client-side, a single page
+  // would silently lose events whenever more than PAGE_SIZE issues are updated
+  // between two polls. Page backwards until we reach an issue at or before the
+  // checkpoint. Paging is decided on the raw batch, before the never-modified
+  // filter below, so filtered-out rows cannot cut the window short.
+  //
+  // Issues whose `updated` still equals `created` have never been modified, so
+  // they belong to the New Issue trigger only.
+  items: async ({ auth, lastFetchEpochMS }) => {
+    const collected: Array<Record<string, unknown>> = [];
+
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const response = await youtrackApiCall<Array<Record<string, unknown>>>({
+        baseUrl: auth.props.baseUrl,
+        token: auth.props.apiToken,
+        method: HttpMethod.GET,
+        path: '/issues',
+        queryParams: {
+          fields: ISSUE_FIELDS,
+          query: 'sort by: updated desc',
+          '$skip': String(page * PAGE_SIZE),
+          '$top': String(PAGE_SIZE),
+        },
+      });
+
+      const batch = response.body || [];
+      collected.push(...batch);
+
+      // No checkpoint yet (Test Trigger passes 0) — one page is enough.
+      if (lastFetchEpochMS <= 0) break;
+      // Exhausted the project, or paged back past the checkpoint.
+      if (batch.length < PAGE_SIZE) break;
+      if (batch.some((issue) => ((issue['updated'] as number) || 0) <= lastFetchEpochMS)) break;
+    }
+
+    return collected
       .filter((issue) => issue['updated'] !== issue['created'])
       .map((issue) => ({
         epochMilliSeconds: (issue['updated'] as number) || 0,
