@@ -17,6 +17,7 @@ const BINARY_CONTENT_TYPE_PATTERNS = [
     /^application\/zip$/,
     /^application\/gzip$/,
     /^application\/octet-stream$/,
+    /^text\/csv$/,
 ]
 
 export function isBinaryContentType(contentType: string | undefined): boolean {

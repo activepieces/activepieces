@@ -6,6 +6,8 @@ export const sendMessage = createAction({
   name: 'send_message',
   displayName: 'Send Message',
   description: 'Send a LinkedIn message to a profile, optionally with a media attachment.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a LinkedIn direct message from the connected account to a recipient profile URL, optionally attaching a media link. Use it for outreach or replies to an existing thread; Send Connection Request is the right action when the recipient cannot be messaged yet, and Get Conversation loads the thread context first. Requires the account ID, the recipient profile URL, and message text. Not idempotent: every call delivers another message, so retries duplicate it.', idempotent: false },
   props: {
     accountId: accountIdProp,
     profileUrl: Property.ShortText({

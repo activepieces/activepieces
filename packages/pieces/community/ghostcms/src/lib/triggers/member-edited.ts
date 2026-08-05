@@ -34,7 +34,11 @@ export const memberEdited = createTrigger({
     }
   },
   async run(context) {
-    return [context.payload.body];
+    const payload = context.payload.body as any;
+    if (payload.event != 'member.edited') {
+      return [];
+    }
+    return [payload];
   },
 
   sampleData: {

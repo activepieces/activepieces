@@ -7,6 +7,7 @@ import {
 import { discordAuth } from '../auth';
 import { ExecutionType } from '@activepieces/pieces-framework';
 import { discordCommon } from '../common';
+import { discordSendApprovalMessageActionOutputSchema } from '../output-schemas';
 
 export const discordSendApprovalMessage = createAction({
   auth: discordAuth,
@@ -16,6 +17,7 @@ export const discordSendApprovalMessage = createAction({
   audience: 'both',
   aiMetadata: { description: 'Posts a message with a single button linking to a confirmation page where a human chooses Approve or Disapprove to a Discord channel, then pauses the flow until they respond and resumes with the decision. Use as a human-in-the-loop approval gate before an agent proceeds with a consequential step. Blocks until a response arrives; each call posts a new approval message, so it is not idempotent.', idempotent: false },
   displayName: 'Request Approval in a Channel',
+  outputSchema: discordSendApprovalMessageActionOutputSchema,
   props: {
     content: Property.LongText({
       displayName: 'Message',

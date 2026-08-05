@@ -6,14 +6,16 @@ import {
 import { discordAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { discordCommon } from '../common';
+import { discordRoleActionOutputSchema } from '../output-schemas';
 
 export const discordCreateGuildRole = createAction({
   auth: discordAuth,
   name: 'createGuildRole',
   displayName: 'Create guild role',
   description: 'Creates a new role on the specified guild',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new role in a guild with the given name and optional color, hoist, and mentionable settings, identified by guild ID. Use to provision a role before assigning it to members. Requires the bot to have Manage Roles permission; not idempotent, since each call creates a separate role even with the same name.', idempotent: false },
+  outputSchema: discordRoleActionOutputSchema,
   props: {
     guild_id: discordCommon.guilds,
     role_name: Property.ShortText({

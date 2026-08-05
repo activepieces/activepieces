@@ -40,7 +40,7 @@ import { PiecesCardList } from './pieces-card-list';
 
 const getTabsList = (
   operationType: FlowOperationType,
-  agentsEnabled: boolean,
+  aiAndAgentsAvailable: boolean,
 ) => {
   const baseTabs = [
     {
@@ -65,7 +65,7 @@ const getTabsList = (
     FlowOperationType.UPDATE_ACTION,
   ].includes(operationType);
 
-  if (replaceOrAddAction && agentsEnabled) {
+  if (replaceOrAddAction && aiAndAgentsAvailable) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
@@ -128,7 +128,9 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 300);
+  const listHeight =
+    Math.min(listHeightRef.current, 300) -
+    pieceSelectorUtils.PIECE_SELECTOR_CLIPPING_THRESHOLD;
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -147,9 +149,7 @@ const PieceSelectorContent = ({
   const tabsList = pieceSelectorCustomization.buildResolvedTabs({
     availableBuiltinTabs: getTabsList(
       operation.type,
-      platform.plan.agentsEnabled &&
-        !isNil(aiProviders) &&
-        aiProviders.length > 0,
+      !isNil(aiProviders) && aiProviders.length > 0,
     ),
     config: platform.pieceSelectorConfig,
   });
@@ -158,14 +158,16 @@ const PieceSelectorContent = ({
   return (
     <Popover
       open={isOpen}
-      modal={true}
+      modal={false}
       onOpenChange={(open) => {
-        if (!open) {
-          clearSearch();
-          setOpenedPieceSelectorStepNameOrAddButtonId(null);
-          if (isForEmptyTrigger) {
-            deselectStep();
-          }
+        if (open) {
+          setOpenedPieceSelectorStepNameOrAddButtonId(id);
+          return;
+        }
+        clearSearch();
+        setOpenedPieceSelectorStepNameOrAddButtonId(null);
+        if (isForEmptyTrigger) {
+          deselectStep();
         }
       }}
     >
@@ -196,6 +198,11 @@ const PieceSelectorContent = ({
         <PopoverContent
           onContextMenu={(e) => {
             e.stopPropagation();
+          }}
+          onInteractOutside={(e) => {
+            if (e.detail.originalEvent.type === 'focusin') {
+              e.preventDefault();
+            }
           }}
           className="w-[340px] md:w-[600px] p-0 shadow-lg"
           onClick={(e) => {

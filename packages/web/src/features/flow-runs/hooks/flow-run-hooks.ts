@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { useManagePlanDialogStore } from '@/features/billing';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -158,6 +159,8 @@ export const flowRunMutations = {
               closeButton: true,
               dismissible: true,
             });
+          } else if (apError.code === ErrorCode.QUOTA_EXCEEDED) {
+            useManagePlanDialogStore.getState().openDialog();
           }
           return;
         }

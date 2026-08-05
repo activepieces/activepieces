@@ -19,6 +19,12 @@ export const insertRowAtTopAction = createAction({
 	name: 'insert-row-at-top',
 	displayName: 'Add Row at Top',
 	description: 'Inserts a new row at the top of a worksheet, just below the header row.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Inserts a blank row near the top of a worksheet and writes the supplied values into it, shifting every existing row below it down by one; the insertion point defaults to just under row 1 but can be moved with Insert After Row. Use when newest-first ordering matters — prefer Add Row to append at the bottom, which is cheaper and does not renumber existing rows. Not idempotent: each call inserts another row and shifts the rest down again.',
+		idempotent: false,
+	},
 	props: {
 		...commonProps,
 		first_row_headers: isFirstRowHeaderProp(),

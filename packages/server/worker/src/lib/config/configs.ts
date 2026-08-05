@@ -27,6 +27,7 @@ function getSocketUrl(): { url: string, path: string } {
 export enum WorkerSystemProp {
     FRONTEND_URL = 'AP_FRONTEND_URL',
     CONTAINER_TYPE = 'AP_CONTAINER_TYPE',
+    ENVIRONMENT = 'AP_ENVIRONMENT',
     WORKER_TOKEN = 'AP_WORKER_TOKEN',
     PORT = 'AP_PORT',
     LOG_FILE = 'AP_LOG_FILE',

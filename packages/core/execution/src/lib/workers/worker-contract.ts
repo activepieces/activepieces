@@ -3,8 +3,8 @@ import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
-import { ChatAgentEvent } from './chat-agent-events'
-import { ChatPromptOverride } from './job-data'
+import { AgentEvent } from './agent-events'
+import { AgentPromptOverride, AgentRunSource } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -82,33 +82,36 @@ export type WorkerToApiContract = {
     recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
-    sendChatEvent(input: SendChatEventRequest): Promise<void>
-    getChatConfig(input: GetChatConfigRequest): Promise<ChatConfigResponse>
-    saveChatMessages(input: SaveChatMessagesRequest): Promise<void>
-    saveChatFile(input: SaveChatFileRequest): Promise<SaveChatFileResponse>
-    updateChatProgress(input: UpdateChatProgressRequest): Promise<void>
-    heartbeatChatConversation(input: HeartbeatChatConversationRequest): Promise<void>
+    sendAgentEvent(input: SendAgentEventRequest): Promise<void>
+    getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
+    saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void>
+    saveAgentFile(input: SaveAgentFileRequest): Promise<SaveAgentFileResponse>
+    updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void>
+    heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
-    executeChatTool(input: ExecuteChatToolRequest): Promise<ExecuteChatToolResponse>
-    sendChatEmail(input: SendChatEmailRequest): Promise<SendChatEmailResponse>
+    executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
+    resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
+    sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
 }
 
-export type SendChatEventRequest = {
+export type SendAgentEventRequest = {
     userId: string
     conversationId: string
     runId?: string
-    event: ChatAgentEvent
+    event: AgentEvent
 }
 
-export type GetChatConfigRequest = {
+export type GetAgentConfigRequest = {
     conversationId: string
     runId?: string
     platformId: string
     userId: string
+    source?: AgentRunSource
+    projectId?: string | null
     userMessage: string
     modelName: string | null
     files?: Array<{ name: string, mimeType: string, data: string }>
-    promptOverride?: ChatPromptOverride
+    promptOverride?: AgentPromptOverride
     dryRun?: boolean
 }
 
@@ -118,13 +121,13 @@ export type ResolvedAiToolConfig = {
     config?: Record<string, unknown>
 }
 
-export type ChatAiToolsConfig = {
+export type AgentAiToolsConfig = {
     webSearch?: ResolvedAiToolConfig
     webScraping?: ResolvedAiToolConfig
     imageGeneration?: ResolvedAiToolConfig
 }
 
-export type ChatConfigResponse = {
+export type AgentConfigResponse = {
     provider: string
     auth: Record<string, unknown>
     providerConfig: Record<string, unknown>
@@ -138,12 +141,13 @@ export type ChatConfigResponse = {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
     guides: Record<string, string>
-    aiTools: ChatAiToolsConfig
+    aiTools: AgentAiToolsConfig
     emailEnabled: boolean
     userEmail: string
+    source: AgentRunSource
 }
 
-export type SaveChatMessagesRequest = {
+export type SaveAgentMessagesRequest = {
     conversationId: string
     runId?: string
     messages: unknown[]
@@ -152,7 +156,7 @@ export type SaveChatMessagesRequest = {
     modelName?: string
 }
 
-export type SaveChatFileRequest = {
+export type SaveAgentFileRequest = {
     platformId: string
     projectId?: string
     conversationId: string
@@ -161,19 +165,19 @@ export type SaveChatFileRequest = {
     fileName?: string
 }
 
-export type SaveChatFileResponse = {
+export type SaveAgentFileResponse = {
     fileId: string
     url: string
 }
 
-export type UpdateChatProgressRequest = {
+export type UpdateAgentProgressRequest = {
     conversationId: string
     runId?: string
     uiMessages: unknown[]
     messages?: unknown[]
 }
 
-export type HeartbeatChatConversationRequest = {
+export type HeartbeatAgentConversationRequest = {
     conversationId: string
     runId?: string
 }
@@ -184,19 +188,27 @@ export type UpdateProjectContextRequest = {
     projectId: string | null
 }
 
-export type ExecuteChatToolRequest = {
+export type ExecuteAgentToolRequest = {
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
+    source: AgentRunSource
     conversationId?: string
 }
 
-export type ExecuteChatToolResponse = {
+export type ResumeFlowStepRequest = {
+    conversationId: string
+    flowRunId: string
+    waitpointId: string
+    output: unknown
+}
+
+export type ExecuteAgentToolResponse = {
     result: unknown
 }
 
-export type SendChatEmailRequest = {
+export type SendAgentEmailRequest = {
     conversationId: string
     runId?: string
     platformId: string
@@ -207,7 +219,7 @@ export type SendChatEmailRequest = {
     gateId?: string
 }
 
-export type SendChatEmailResponse = {
+export type SendAgentEmailResponse = {
     sent: boolean
     message: string
     blockedRecipients?: string[]

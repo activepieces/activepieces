@@ -9,12 +9,13 @@ import {
 } from '../common';
 
 export const generateEmbeddings = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'generate_embeddings',
   displayName: 'Generate Embeddings',
   description:
     'Generate vector embeddings from text using Amazon Titan Embed, Cohere Embed, or Amazon Nova Multimodal Embeddings models.',
+  aiMetadata: { description: 'Converts one text string into a numeric embedding vector using a Bedrock embedding model (Amazon Titan Embed, Cohere Embed, Nova Multimodal, or TwelveLabs), returning the vector and its dimension count; the request shape is adapted per model family, so Vector Dimensions, Normalize, and Embedding Purpose only take effect on the families that support them. Pick this for semantic search, similarity, or clustering pipelines rather than Ask Bedrock, which returns prose. Handles a single text per call - loop for batches - and requires an embedding-capable model enabled in the connected AWS region. Deterministic stateless inference, so repeat calls with the same input are idempotent.', idempotent: true },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',

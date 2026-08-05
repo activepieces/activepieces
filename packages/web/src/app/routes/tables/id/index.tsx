@@ -37,6 +37,7 @@ const ApTableEditorPage = () => {
     fields,
     records,
     setLockedByOtherUser,
+    reorderField,
   ] = useTableState((state) => [
     state.selectedRecords,
     state.setSelectedRecords,
@@ -46,6 +47,7 @@ const ApTableEditorPage = () => {
     state.fields,
     state.records,
     state.setLockedByOtherUser,
+    state.reorderField,
   ]);
 
   // the lock lives in the table state provider, above the take-over refresh
@@ -105,6 +107,15 @@ const ApTableEditorPage = () => {
   const columns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);
 
+  const handleColumnsReorder = (sourceKey: string, targetKey: string) => {
+    const sourceIndex = fields.findIndex((field) => field.uuid === sourceKey);
+    const targetIndex = fields.findIndex((field) => field.uuid === targetKey);
+    if (sourceIndex === -1 || targetIndex === -1) {
+      return;
+    }
+    reorderField(sourceIndex, targetIndex);
+  };
+
   const handleBack = () => {
     navigate(`/projects/${projectId}/automations`);
   };
@@ -129,6 +140,7 @@ const ApTableEditorPage = () => {
               rowKeyGetter={(row: Row) => row.id}
               selectedRows={selectedRecords}
               onSelectedRowsChange={setSelectedRecords}
+              onColumnsReorder={handleColumnsReorder}
               className={cn(
                 'scroll-smooth w-full !h-full bg-muted/30 !border-0',
                 theme === 'dark' ? 'rdg-dark' : 'rdg-light',

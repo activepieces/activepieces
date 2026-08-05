@@ -36,11 +36,12 @@ interface AgentCreateResponse {
 }
 
 export const agentCreate = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'agent-create',
   displayName: 'Create Agent',
   description: 'Creates a new agent in the database for the user.',
+  aiMetadata: { description: 'Registers a new reusable Straico agent, a stored persona pairing a custom system prompt with a default chat LLM and optional tags, and returns its id for later prompting. Use it once when a persona should persist across runs; prefer Ask AI for a throwaway completion, Update Agent to change one that already exists, and Add RAG to Agent afterwards to ground it in documents. Requires a name, description, custom prompt and default LLM; it does not attach any knowledge base by itself. Not idempotent: each call creates another agent, duplicate names included.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

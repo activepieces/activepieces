@@ -54,8 +54,8 @@ export const generateEinvoice = createAction({
   description: 'Generate a hybrid e-invoice PDF (Factur-X / ZUGFeRD, EN 16931) from a visual layout plus structured invoice data.',
   aiMetadata: {
     description:
-      'Generates a hybrid e-invoice PDF (Factur-X / ZUGFeRD, EN 16931) by embedding structured invoice XML into a visual PDF layout. EN 16931 requires payment terms or a due date, a seller tax ID for VAT category S, and consistent totals. Idempotent: the same input yields the same PDF.',
-    idempotent: true,
+      'Generates a hybrid e-invoice PDF (Factur-X / ZUGFeRD, EN 16931) by embedding structured invoice XML into a visual PDF layout. EN 16931 requires payment terms or a due date, a seller tax ID for VAT category S, and consistent totals. Not idempotent: each call performs a fresh generation on PolyDoc that produces a new file and consumes account credits, and the cloud-storage and webhook delivery modes send the file to an external destination.',
+    idempotent: false,
   },
   props: {
     sourceType: sourceTypeProp('html'),

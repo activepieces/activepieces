@@ -1,6 +1,7 @@
 import { isNil, ProjectId } from '@activepieces/core-utils'
 import { FileType, FlowOperationRequest, FlowOperationType, flowStructureUtil, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager } from 'typeorm'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowService } from '../flow/flow.service'
@@ -10,6 +11,7 @@ type OnApplyOperationParams = {
     projectId: ProjectId
     flowVersion: FlowVersion
     operation: FlowOperationRequest
+    entityManager?: EntityManager
 }
 
 
@@ -18,16 +20,21 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
         projectId,
         flowVersion,
         operation,
+        entityManager,
     }: OnApplyOperationParams): Promise<void> {
         try {
             await handleSampleDataDeletion(projectId, flowVersion, operation, log)
             await handleUpdateTriggerWebhookSimulation(projectId, flowVersion, operation, log)
-            await handleUpdateFlowLastModified(projectId, flowVersion, log)
         }
         catch (e) {
             // Ignore error and continue the operation peacefully
             exceptionHandler.handle(e, log)
         }
+        await flowService(log).updateLastModified({
+            flowId: flowVersion.flowId,
+            projectId,
+            entityManager,
+        })
     },
 })
 
@@ -108,8 +115,4 @@ async function handleUpdateTriggerWebhookSimulation(projectId: ProjectId, flowVe
             ignoreError: true,
         })
     }
-}
-
-async function handleUpdateFlowLastModified(projectId: ProjectId, flowVersion: FlowVersion, log: FastifyBaseLogger): Promise<void> {
-    await flowService(log).updateLastModified(flowVersion.flowId, projectId)
 }

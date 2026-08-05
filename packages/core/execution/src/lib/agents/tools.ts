@@ -1,15 +1,10 @@
+import { AgentToolType, FieldControlMode, KnowledgeBaseSourceType, McpAuthType, McpProtocol } from '@activepieces/core-piece-types'
 import { z } from 'zod'
 
-export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
-
-export enum FieldControlMode {
-    AGENT_DECIDE = 'agent-decide',
-    CHOOSE_YOURSELF = 'choose-yourself',
-    LEAVE_EMPTY = 'leave-empty',
-}
+export { AgentToolType, FieldControlMode, KnowledgeBaseSourceType, McpAuthType, McpProtocol, TASK_COMPLETION_TOOL_NAME } from '@activepieces/core-piece-types'
 
 export const PredefinedInputField = z.object({
-    mode: z.nativeEnum(FieldControlMode),
+    mode: z.enum(FieldControlMode),
     value: z.unknown(),
 })
 export type PredefinedInputField = z.infer<typeof PredefinedInputField>
@@ -19,31 +14,6 @@ export const PredefinedInputsStructure = z.object({
     fields: z.record(z.string(), PredefinedInputField),
 })
 export type PredefinedInputsStructure = z.infer<typeof PredefinedInputsStructure>
-
-export enum AgentToolType {
-    PIECE = 'PIECE',
-    FLOW = 'FLOW',
-    MCP = 'MCP',
-    KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
-}
-
-export enum KnowledgeBaseSourceType {
-    FILE = 'FILE',
-    TABLE = 'TABLE',
-}
-
-export enum McpProtocol {
-    SSE = 'sse',
-    STREAMABLE_HTTP = 'streamable-http',
-    SIMPLE_HTTP = 'http',
-}
-
-export enum McpAuthType {
-    NONE = 'none',
-    ACCESS_TOKEN = 'access_token',
-    API_KEY = 'api_key',
-    HEADERS = 'headers',
-}
 
 const AgentToolBase = {
     toolName: z.string().min(1),
