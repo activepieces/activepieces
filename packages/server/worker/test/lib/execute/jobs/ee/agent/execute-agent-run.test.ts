@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { stepOutcomeFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
+import { stepResultFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-step-result'
 import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 describe('decideLoopAction', () => {
@@ -45,29 +45,34 @@ describe('shouldRetryStream', () => {
     })
 })
 
-describe('stepOutcomeFrom', () => {
+describe('stepResultFrom', () => {
     const text = (value: string) => ({ type: 'text' as const, text: value })
+    const at = '2026-08-05T00:00:00.000Z'
 
-    it('hands back the agent text when the turn finished properly', () => {
-        expect(stepOutcomeFrom({ uiParts: [text('done')], truncatedAfterRetries: false, budgetExceeded: false }))
-            .toEqual({ success: true, output: 'done' })
+    it('projects the transcript into the step blocks the run viewer reads', () => {
+        const result = stepResultFrom({ prompt: 'do it', uiParts: [text('done')], timestamp: at })
+
+        expect(result.status).toBe('COMPLETED')
+        expect(result.prompt).toBe('do it')
+        expect(result.steps).toEqual([{ type: 'MARKDOWN', markdown: 'done' }])
     })
 
-    it('reports a truncated turn as a failure rather than passing off a half answer', () => {
-        const outcome = stepOutcomeFrom({ uiParts: [text('half an ans')], truncatedAfterRetries: true, budgetExceeded: false })
+    it('keeps the partial answer when the turn did not finish, and says it failed', () => {
+        const result = stepResultFrom({ prompt: 'do it', uiParts: [text('half')], timestamp: at, failure: 'ran out of room' })
 
-        expect(outcome.success).toBe(false)
+        expect(result.status).toBe('FAILED')
+        expect(result.steps).toHaveLength(2)
     })
 
-    it('reports a turn stopped on budget as a failure', () => {
-        const outcome = stepOutcomeFrom({ uiParts: [text('partial')], truncatedAfterRetries: false, budgetExceeded: true })
+    it('drops empty text so a blank block never reaches the flow', () => {
+        const result = stepResultFrom({ prompt: 'do it', uiParts: [text('   ')], timestamp: at })
 
-        expect(outcome.success).toBe(false)
+        expect(result.steps).toEqual([])
     })
 
-    it('caps the answer so an unbounded one cannot be written into the resume payload', () => {
-        const outcome = stepOutcomeFrom({ uiParts: [text('x'.repeat(80_000))], truncatedAfterRetries: false, budgetExceeded: false })
+    it('caps a block so an unbounded answer cannot be written into the resume payload', () => {
+        const result = stepResultFrom({ prompt: 'do it', uiParts: [text('x'.repeat(80_000))], timestamp: at })
 
-        expect(outcome.success && outcome.output.length).toBe(51_200)
+        expect(result.steps[0]).toEqual({ type: 'MARKDOWN', markdown: 'x'.repeat(51_200) })
     })
 })
