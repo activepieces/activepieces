@@ -1,7 +1,14 @@
 import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { ISSUE_FIELDS, flattenIssue, youtrackApiCall, requireYoutrackAuth } from '../common';
+import {
+  ISSUE_FIELDS,
+  flattenIssue,
+  youtrackApiCall,
+  requireYoutrackAuth,
+  getYoutrackUserTimeZoneId,
+  formatYoutrackDateTimeLiteral,
+} from '../common';
 import { newIssueTriggerOutputSchema } from '../output-schemas';
 
 const PAGE_SIZE = 50;
@@ -41,10 +48,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
     }
 
     // `created: <datetime> .. *` filters server-side; YouTrack rejects the
-    // `{after <epoch>}` form but accepts an ISO range, honoured to the second.
+    // `{after <epoch>}` form but accepts a range literal, parsed in the token
+    // user's profile time zone (there is no way to mark it UTC), so the
+    // checkpoint is rendered in that zone rather than assumed to be UTC.
     // Ascending order walks forward from the checkpoint, so a backlog bigger
     // than MAX_PAGES resumes in place next poll instead of being skipped.
-    const since = new Date(lastFetchEpochMS).toISOString().slice(0, 19);
+    const timeZoneId = await getYoutrackUserTimeZoneId(baseUrl, apiToken);
+    const since = formatYoutrackDateTimeLiteral(lastFetchEpochMS, timeZoneId);
     const query = `created: ${since} .. * sort by: created asc`;
 
     const collected: Array<Record<string, unknown>> = [];

@@ -55,6 +55,56 @@ export function requireYoutrackAuth(auth: unknown): {
   return { baseUrl: props.baseUrl, apiToken: props.apiToken };
 }
 
+// YouTrack's query date-time literal has no UTC/offset marker and is parsed
+// against the token user's profile time zone, not UTC. Polls must render the
+// checkpoint as it would appear in that zone, or an offset behind UTC skips
+// issues created inside the gap.
+export async function getYoutrackUserTimeZoneId(
+  baseUrl: string,
+  token: string,
+): Promise<string | null> {
+  try {
+    const response = await youtrackApiCall<{
+      profiles?: { general?: { timezone?: { id?: string } } };
+    }>({
+      baseUrl,
+      token,
+      method: HttpMethod.GET,
+      path: '/users/me',
+      queryParams: { fields: 'profiles(general(timezone(id)))' },
+    });
+    return response.body?.profiles?.general?.timezone?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function formatYoutrackDateTimeLiteral(
+  epochMs: number,
+  timeZoneId: string | null,
+): string {
+  const date = new Date(epochMs);
+  if (!timeZoneId) {
+    return date.toISOString().slice(0, 19);
+  }
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timeZoneId,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).formatToParts(date);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
+    return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}`;
+  } catch {
+    return date.toISOString().slice(0, 19);
+  }
+}
+
 export function flattenObject(
   obj: Record<string, unknown>,
   prefix = '',

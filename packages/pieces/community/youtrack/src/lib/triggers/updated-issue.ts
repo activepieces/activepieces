@@ -1,17 +1,26 @@
 import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { ISSUE_FIELDS, flattenIssue, youtrackApiCall, requireYoutrackAuth } from '../common';
+import {
+  ISSUE_FIELDS,
+  flattenIssue,
+  youtrackApiCall,
+  requireYoutrackAuth,
+  getYoutrackUserTimeZoneId,
+  formatYoutrackDateTimeLiteral,
+} from '../common';
 import { updatedIssueTriggerOutputSchema } from '../output-schemas';
 
 const PAGE_SIZE = 50;
 /** At most 500 issues per poll; any remainder is picked up by the next poll. */
 const MAX_PAGES = 10;
+// A workflow that runs on issue creation (auto-assign, default state) bumps
+// `updated` within milliseconds of `created`. A strict !== would fire this
+// trigger for a brand-new issue that New Issue already reported.
+const CREATED_VS_UPDATED_EPSILON_MS = 2000;
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  // Issues whose `updated` still equals `created` have never been modified, so
-  // they belong to the New Issue trigger only.
   items: async ({ auth, lastFetchEpochMS }) => {
     const { baseUrl, apiToken } = requireYoutrackAuth(auth);
 
@@ -31,9 +40,19 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
       return response.body || [];
     };
 
+    // Never-modified issues belong to New Issue only; the epsilon absorbs
+    // creation-time workflow edits so they are not double-reported.
     const toEvents = (issues: Array<Record<string, unknown>>) =>
       issues
-        .filter((issue) => issue['updated'] !== issue['created'])
+        .filter((issue) => {
+          const created = issue['created'] as number | undefined;
+          const updated = issue['updated'] as number | undefined;
+          return (
+            typeof created === 'number' &&
+            typeof updated === 'number' &&
+            updated - created > CREATED_VS_UPDATED_EPSILON_MS
+          );
+        })
         .map((issue) => ({
           epochMilliSeconds: (issue['updated'] as number) || 0,
           data: flattenIssue(issue),
@@ -45,10 +64,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
     }
 
     // `updated: <datetime> .. *` filters server-side; YouTrack rejects the
-    // `{after <epoch>}` form but accepts an ISO range, honoured to the second.
+    // `{after <epoch>}` form but accepts a range literal, parsed in the token
+    // user's profile time zone (there is no way to mark it UTC), so the
+    // checkpoint is rendered in that zone rather than assumed to be UTC.
     // Ascending order walks forward from the checkpoint, so a backlog bigger
     // than MAX_PAGES resumes in place next poll instead of being skipped.
-    const since = new Date(lastFetchEpochMS).toISOString().slice(0, 19);
+    const timeZoneId = await getYoutrackUserTimeZoneId(baseUrl, apiToken);
+    const since = formatYoutrackDateTimeLiteral(lastFetchEpochMS, timeZoneId);
     const query = `updated: ${since} .. * sort by: updated asc`;
 
     const collected: Array<Record<string, unknown>> = [];
