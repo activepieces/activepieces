@@ -6,6 +6,7 @@ import { ExecutionType } from '@activepieces/pieces-framework';
 import { markdownDescription } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { delayForActionOutputSchema } from '../output-schemas';
 
 enum TimeUnit {
   SECONDS = 'seconds',
@@ -53,6 +54,7 @@ export const delayForAction = createAction({
       required: true,
     }),
   },
+  outputSchema: delayForActionOutputSchema,
   async run(ctx) {
     await propsValidation.validateZod(ctx.propsValue, {
       delayFor: z.number().check(z.minimum(0)),

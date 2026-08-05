@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { markdownDescription } from '../common';
+import { delayUntilActionOutputSchema } from '../output-schemas';
 
 export const delayUntilAction = createAction({
   audience: 'both',
@@ -29,6 +30,7 @@ export const delayUntilAction = createAction({
       required: true,
     }),
   },
+  outputSchema: delayUntilActionOutputSchema,
   async run(ctx) {
     const delayTill = new Date(ctx.propsValue.delayUntilTimestamp);
     const delayInMs = delayTill.getTime() - Date.now();
