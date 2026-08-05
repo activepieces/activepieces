@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, tryCatch, unique } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -107,7 +107,7 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     if (!isNil(tier)) {
         return tier.modelId
     }
-    return aiProviderUtils.isKnownChatModelId({ modelId: selectedModel }) ? selectedModel : null
+    return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
 // Round one of the chat turn runs on the fastest tier so its first token streams in ~400ms
@@ -115,6 +115,11 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
 // regardless of which tier the user picked for the main turn.
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
+}
+
+async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId }))
+    return result.error ? null : result.data
 }
 
 async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
@@ -217,6 +222,7 @@ export const agentHelpers = {
     resolveModelIdForProvider,
     resolveModelIdForAnalytics,
     resolveFastModelId,
+    resolveChatProviderName,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,

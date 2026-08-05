@@ -1,0 +1,114 @@
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
+import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
+import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const RUNS_URL = '/api/v1/agents/runs'
+
+let app: FastifyInstance
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+describe('POST /v1/agents/runs', () => {
+    it('writes nothing before publishing, so an interrupted request cannot strand a conversation', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-that-is-not-a-user',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: { instruction: 'send a summary email', resumeUrl: 'https://example.com/resume/abc' },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const { conversationId } = response.json()
+
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+        expect(conversation).toBeNull()
+    })
+
+    it('ignores a project sent in the body and uses the one the engine token is scoped to', async () => {
+        const ctx = await createTestContext(app)
+        const other = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-1',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: { instruction: 'do a thing', resumeUrl: 'https://example.com/resume/abc', projectId: other.project.id },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().conversationId).toEqual(expect.any(String))
+    })
+
+    it('keeps flow-step runs out of the owner\'s chat list', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-3',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: { instruction: 'do a thing', resumeUrl: 'https://example.com/resume/abc' },
+        })
+
+        const list = await ctx.post('/v1/agents/conversations', { title: 'a real chat' })
+        expect([StatusCodes.OK, StatusCodes.CREATED]).toContain(list.statusCode)
+        const listed = await ctx.get('/v1/agents/conversations')
+        const sources = listed.json().data.map((c: { title: string | null }) => c.title)
+        expect(sources).toEqual(['a real chat'])
+    })
+
+    it('refuses a signed-in user, because only a running flow may start one', async () => {
+        const ctx = await createTestContext(app)
+
+        const response = await ctx.post('/v1/agents/runs', {
+            instruction: 'do a thing',
+            resumeUrl: 'https://example.com/resume/abc',
+        })
+
+        expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response.statusCode)
+    })
+
+    it('rejects a request with no instruction', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-2',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: { instruction: '', resumeUrl: 'https://example.com/resume/abc' },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+    })
+})

@@ -105,6 +105,8 @@ export type GetAgentConfigRequest = {
     runId?: string
     platformId: string
     userId: string
+    source?: AgentRunSource
+    projectId?: string | null
     userMessage: string
     modelName: string | null
     files?: Array<{ name: string, mimeType: string, data: string }>

@@ -4,7 +4,7 @@ icon: 💬
 
 # Chat
 
-A platform-level AI chat assistant that manages Activepieces projects via natural language. Streams LLM responses over WebSocket and exposes project resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations persist per-user with compaction, attachments, multi-project context, and two-phase tool gating. EE/Cloud only (not registered in CE).
+A platform-level AI chat assistant that manages Activepieces projects via natural language. Streams LLM responses over WebSocket and exposes project resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations persist per-user with cross-session memory (personal instructions + remembered facts injected into every turn), compaction, attachments, multi-project context, and two-phase tool gating. EE/Cloud only (not registered in CE).
 
 ### Execution model (read first)
 The chat LLM loop runs in the **worker**, not the API. Send path: `chat-controller.ts` (`POST /conversations/:id/messages`) enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job → worker `execute-chat-agent.ts` calls `getChatConfig` RPC, assembles tools, runs `run-chat-turn.ts` (shared `streamText()` DI loop) → chunks stream back via `sendChatEvent` RPC → websocket `CHAT_MESSAGE_CHUNK` (filtered by `runId`) → frontend reducer. `chat-service.ts` only does conversation CRUD + persistence.
@@ -12,6 +12,7 @@ The chat LLM loop runs in the **worker**, not the API. Send path: `chat-controll
 ### Entities & services
 - **ChatConversation** — per-user, per-platform, optionally per-project; `status` STREAMING/IDLE/ERROR, `activeRunId`, `messages` (ModelMessage[] JSONB), `uiMessages`, `summary`/`summarizedUpToIndex` for compaction.
 - **ChatRolloutUser** (`chat_rollout_user`) — cloud rollout cohort; `chattedAt` drives the cap.
+- **UserChatMemory** (`user_chat_memory`) — one row per (platformId, userId): `instructions` (nullable text) + `memories` (jsonb string[]); capped at 50 facts × 280 chars and 4000 chars of instructions (`chatHelpers.capMemories`).
 - Tool logic in `ee/chat/`; shared tool phase/classification in `core/shared/.../ee/chat/`.
 
 ### How it works
@@ -19,6 +20,8 @@ The chat LLM loop runs in the **worker**, not the API. Send path: `chat-controll
 - **Two-phase gating** — `discovery` vs `build`; a denylist hides build-only tools during discovery to shrink the surface. `ap_set_phase` flips it; auto-widens if a build tool fires.
 - **Gates** (Redis pub/sub, 5-min timeout): display-tool cards, ad-hoc action preview, and the test-flow write gate. Flow build + publish are NOT gated.
 - Web access: provider-native search rides the configured LLM credential (Anthropic `web_search_20250305`, Google grounding, OpenRouter `web` plugin); `ap_fetch_url` works everywhere.
+- **Cross-session memory**: instructions + facts injected into every turn (`buildMemoryNote` in `chat-rpc-handlers.ts`). Writes go through `chatMemoryAi.applyInstruction` — an LLM reconcile on the fast-tier model (add/forget, dedupe, supersede contradictions; non-AI fallbacks so it never hard-fails) — used by both the `ap_remember` tool and the `/v1/chat/memory[/import|/instruct]` endpoints; concurrent saves are merged under a `pessimistic_write` lock. UI lives in the settings hub (`packages/web/src/app/components/settings-hub/`).
+- **Billing & credit gating**: `POST /conversations/:id/messages` gates pre-enqueue — `assertCreditsAndAppSumoNotExceeded` blocks ALL chat (any provider) on the platform's credit/AppSumo balance (`QUOTA_EXCEEDED`), next to a per-user rate limit (40 messages / 10 min, HTTP 429). After each turn `chatUsageTracker.track` meters Autumn credits with `creditValue = creditWeight + billableToolCalls` (tier's weight for the managed ACTIVEPIECES provider, default 2; 1 for BYO), idempotency key `{conversationId}:chat:{turnIndex}` (`CreditUsageSource.CHAT`), plus the AppSumo meter on AppSumo plans; it then emits the PostHog `chat_message` billing event (skipped when the platform has no license key — the Autumn tracking always runs). `chat-tool-billing.ts` decides which tool calls bill: every `mcp__` tool plus a fixed set (`ap_web_search`, `ap_scrape_url`, `ap_generate_image`, `ap_execute_action`, `ap_explore_data`, `ap_run_code`).
 
 ### Turn liveness — three independent timers (get this right)
 A turn is kept alive / reclaimed by three separate mechanisms in `execute-chat-agent.ts`; confusing them causes "chat randomly stops" bugs:
@@ -41,7 +44,7 @@ A turn is kept alive / reclaimed by three separate mechanisms in `execute-chat-a
 ### Key files
 Entry point: `chatModule`, the Fastify plugin registered in `packages/server/api/src/app/app.ts`.
 
-- `packages/server/api/src/app/ee/chat/` — the API module: controller, service, helpers, approval gate, compaction, rollout, console sync, entities, plus `tools/`, `mcp/`, `prompt/`, `history/` subdirs
+- `packages/server/api/src/app/ee/chat/` — the API module: controller, service, helpers, approval gate, compaction, rollout, console sync, billing (`chat-usage-tracker.ts`, `chat-tool-billing.ts`), memory (`chat-memory-ai.ts`, `user-chat-memory-entity.ts`), entities, plus `tools/`, `mcp/`, `prompt/`, `history/` subdirs
 - `packages/server/worker/src/lib/execute/jobs/ee/chat/` — where the LLM loop actually runs: `execute-chat-agent.ts` job handler (+ the three liveness timers + `streamChunksToClient` idle watchdog), `run-chat-turn.ts` DI streaming loop, `chat-worker-tools.ts` tool defs
 - `packages/server/utils/src/chat-ai-utils.ts` — the `chatAiUtils` bag: `createChatModel` per provider, `supportsWebSearch`/`buildWebSearchTools`, `collapseStaleToolOutputs` history hygiene
 - `packages/core/shared/src/lib/ee/chat/` — shared zod schemas and types, `tool-phases.ts` gating, `tool-classification.ts`, `chat-visibility.ts`
@@ -49,4 +52,4 @@ Entry point: `chatModule`, the Fastify plugin registered in `packages/server/api
 - `packages/web/src/app/routes/chat-with-ai/` — the chat page, chat box, conversation list, and `components/` cards
 - `packages/web/src/features/chat/` — API client, Zustand store, `use-chat.ts`, `chunk-reducer.ts`, streaming and voice hooks
 
-Paths verified 2026-07-19. An earlier version pointed at `ee/chat/chat-model-factory.ts` and `ee/chat/chat-history-hygiene.ts`; both were folded into `packages/server/utils/src/chat-ai-utils.ts`.
+Paths verified 2026-07-26. An earlier version pointed at `ee/chat/chat-model-factory.ts` and `ee/chat/chat-history-hygiene.ts`; both were folded into `packages/server/utils/src/chat-ai-utils.ts`.
