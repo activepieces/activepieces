@@ -3,7 +3,8 @@ import { CodeArtifact } from '@activepieces/sandbox'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { DEFAULT_MCP_DATA, EngineOperationType, EngineResponseStatus, ExecuteActionJobData, FlowActionType, WorkerJobType } from '@activepieces/shared'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
-import { isSandboxTimeout, sandboxTimeoutNeverStarted } from '../utils/sandbox-helpers'
+import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { buildSynchronousResult } from '../utils/synchronous-result'
 
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_ACTION,
@@ -41,19 +42,13 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                 return {
                     kind: JobResultKind.SYNCHRONOUS,
                     status: EngineResponseStatus.TIMEOUT,
-                    response: { success: false, input: {}, output: null, neverStarted: sandboxTimeoutNeverStarted(error) },
+                    response: { success: false, input: {}, output: null, neverStarted: error.error.params.neverStarted === true },
                 }
             }
             throw error
         }
 
-        return {
-            kind: JobResultKind.SYNCHRONOUS,
-            status: result.status,
-            response: result.response,
-            errorMessage: result.error,
-            logs: result.logs,
-        }
+        return buildSynchronousResult(result)
     },
 }
 

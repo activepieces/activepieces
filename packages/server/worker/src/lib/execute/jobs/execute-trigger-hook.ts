@@ -3,6 +3,7 @@ import { EngineOperationType, EngineResponseStatus, ExecuteTriggerHookJobData, F
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { buildSynchronousResult } from '../utils/synchronous-result'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, SynchronousJobResult> = {
@@ -58,12 +59,6 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
             throw error
         }
 
-        return {
-            kind: JobResultKind.SYNCHRONOUS,
-            status: result.status,
-            response: result.response,
-            errorMessage: result.error,
-            logs: result.logs,
-        }
+        return buildSynchronousResult(result)
     },
 }
