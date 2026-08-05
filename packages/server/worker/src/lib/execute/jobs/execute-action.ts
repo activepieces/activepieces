@@ -5,8 +5,6 @@ import { DEFAULT_MCP_DATA, EngineOperationType, EngineResponseStatus, ExecuteAct
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout, sandboxTimeoutNeverStarted } from '../utils/sandbox-helpers'
 
-const ACTION_RUN_TIMEOUT_SECONDS = 120
-
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_ACTION,
     async execute(ctx: JobContext, data: ExecuteActionJobData): Promise<SynchronousJobResult> {
@@ -16,6 +14,7 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
             throw new Error(`Unexpected resolve outcome "${resolved.kind}" for action-run action job`)
         }
 
+        const timeoutInSeconds = Math.ceil((data.expiresAt - Date.now()) / 1000)
         const { data: result, error } = await tryCatch(async () => {
             return ctx.runtime.execute({
                 workerIndex: ctx.workerIndex,
@@ -28,10 +27,10 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                     engineToken: ctx.engineToken,
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
-                    timeoutInSeconds: ACTION_RUN_TIMEOUT_SECONDS,
+                    timeoutInSeconds,
                     ...spreadIfDefined('flowVersionId', codeNamespace),
                 },
-                timeoutInSeconds: ACTION_RUN_TIMEOUT_SECONDS,
+                timeoutInSeconds,
                 expiresAt: data.expiresAt,
                 provision: { ...resolved.provision, ...spreadIfDefined('flowVersionId', codeNamespace) },
             })

@@ -7,7 +7,6 @@ import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { ActionRunOutcome, deriveActionRunOutcome, EngineActionResponse } from './action-run-outcome'
 
 const ACTION_RUN_BUDGET_MS = 120 * 1000
-const WATCHER_GRACE_MS = 10 * 1000
 
 export const actionRunService = (log: FastifyBaseLogger) => ({
     async run({ projectId, platformId, step }: RunParams): Promise<ActionRunResult> {
@@ -27,7 +26,7 @@ export const actionRunService = (log: FastifyBaseLogger) => ({
             step: validatedStep,
             piece,
             expiresAt: Date.now() + ACTION_RUN_BUDGET_MS,
-        }, log, id, ACTION_RUN_BUDGET_MS + WATCHER_GRACE_MS))
+        }, log, id))
 
         const outcome = deriveActionRunOutcome({ result })
         const neverStarted = outcome.neverStarted || await cancelledBeforeStarting({ outcome, result, id, projectId, platformId, log })
