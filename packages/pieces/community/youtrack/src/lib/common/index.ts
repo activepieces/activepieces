@@ -40,11 +40,8 @@ export async function youtrackApiCall<T extends HttpMessageBody>({
   });
 }
 
-/**
- * Triggers read `auth.props` directly. When no connection is selected on the
- * step, `auth` is undefined and that dereference throws a bare TypeError, which
- * tells the user nothing. Fail with the actual problem instead.
- */
+// Without this, a missing connection surfaces as a bare TypeError from
+// dereferencing auth.props.
 export function requireYoutrackAuth(auth: unknown): {
   baseUrl: string;
   apiToken: string;
@@ -98,13 +95,8 @@ export function flattenObject(
   return result;
 }
 
-/**
- * YouTrack requires `customFields` to be an array. The builder's JSON editor
- * starts out as `{}`, which is truthy, so forwarding the raw value makes the API
- * fail with a 500 "IssueCustomFieldMegaProxy cannot be cast to java.util.List".
- * Empty values are omitted; a non-empty non-array is a user mistake worth
- * reporting clearly instead of letting it surface as a Java cast error.
- */
+// customFields must be an array. The builder's JSON editor starts as {}, which
+// is truthy, and forwarding it makes YouTrack 500 with a Java cast error.
 export function normalizeCustomFields(value: unknown): unknown[] | undefined {
   if (value === null || value === undefined) {
     return undefined;
@@ -121,13 +113,8 @@ export function normalizeCustomFields(value: unknown): unknown[] | undefined {
   );
 }
 
-/**
- * Reduces one custom field value to a scalar. YouTrack returns a different
- * `$type` per field kind: enum/state/version/owned values carry `name`, user
- * values `fullName`/`login`, text values `text`, period values `presentation`
- * (with `minutes`), and simple fields (integer, float, string, date) come back
- * as a bare primitive. Multi-value fields arrive as an array.
- */
+// Reduces a custom field to a scalar. The $type varies per field kind: enum and
+// state carry name, users fullName/login, text text, period presentation.
 function customFieldValue(value: unknown): unknown {
   if (value === null || value === undefined) {
     return null;
@@ -157,12 +144,8 @@ function customFieldValue(value: unknown): unknown {
   return value;
 }
 
-/**
- * Flattens an issue the same way as {@link flattenObject}, except `customFields`
- * becomes a `{ fieldName: value }` map instead of being collapsed to a list of
- * field *names* — the generic flattener discards every custom field value,
- * which is where an issue's Priority, State and Assignee live.
- */
+// Like flattenObject, but customFields becomes a { fieldName: value } map. The
+// generic flattener keeps only field names, dropping Priority, State, Assignee.
 export function flattenIssue(
   issue: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -183,14 +166,7 @@ export function flattenIssue(
   return result;
 }
 
-// -----------------------------------------------------------------------------
-// Shared Dropdowns
-// -----------------------------------------------------------------------------
-
-/**
- * Surfaces the real reason a dropdown could not load instead of a generic
- * message, otherwise a wrong URL and an expired token look identical.
- */
+// Without the real reason, a wrong URL and an expired token look identical.
 export function dropdownError(prefix: string, error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return { disabled: true, options: [], placeholder: prefix + ': ' + message };
@@ -325,10 +301,6 @@ export const userDropdown = Property.Dropdown({
     }
   },
 });
-
-// -----------------------------------------------------------------------------
-// Standard issue fields string
-// -----------------------------------------------------------------------------
 
 export const ISSUE_FIELDS =
   'id,idReadable,summary,description,created,updated,resolved,' +

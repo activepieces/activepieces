@@ -1,14 +1,7 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-/**
- * Every Math Helper action returns a bare number rather than an object, so each
- * schema is a single whole-output field: `value: ''` resolves to the entire
- * step output and contributes no path segment.
- *
- * This shape is what `describeWholeOutputSchema` (server MCP utils) recognises —
- * exactly one field, `value: ''`, no `children`/`listItems` — so agents get a
- * one-line description of the result instead of a bogus `result` path.
- */
+// Every action returns a bare number, so each schema is a single whole-output
+// field: value: '' resolves to the entire step output and adds no path segment.
 const wholeNumberOutput = (
   key: string,
   label: string,

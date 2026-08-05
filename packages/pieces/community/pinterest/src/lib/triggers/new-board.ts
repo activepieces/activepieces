@@ -77,13 +77,9 @@ const polling: Polling<
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       } catch (error) {
-        // Returning the pages read so far would let pollingHelper advance
-        // `lastPoll` to the newest board it did receive, stranding the still-
-        // qualifying boards on the pages we never reached permanently behind
-        // the checkpoint. Fail the poll so the checkpoint is left untouched and
-        // the next run retries the whole window.
-        //
-        // A sample run has no checkpoint to corrupt, so best-effort is fine.
+        // Returning a partial read would advance the checkpoint to the newest
+        // board seen, stranding the unread older ones behind it. Sample runs
+        // have no checkpoint, so best-effort is fine there.
         if (lastFetchEpochMS) {
           throw error;
         }

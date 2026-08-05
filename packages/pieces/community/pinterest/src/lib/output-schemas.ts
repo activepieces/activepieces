@@ -1,14 +1,7 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-// -----------------------------------------------------------------------------
-// Shared field sets
-// -----------------------------------------------------------------------------
-
-/**
- * A Pinterest Board. Verified identical across `POST /boards`,
- * `PATCH /boards/{id}`, `GET /search/boards` items and `GET /boards`
- * (the New Board trigger).
- */
+// Board shape is identical across POST /boards, PATCH /boards/{id},
+// GET /search/boards items and GET /boards.
 const boardFields: OutputSchema['fields'] = [
   { key: 'id', label: 'Board ID' },
   { key: 'name', label: 'Name' },
@@ -28,8 +21,7 @@ const boardFields: OutputSchema['fields'] = [
     label: 'Media',
     children: [
       { key: 'image_cover_url', label: 'Cover Image', format: 'image' },
-      // Array of plain URL strings — no inner fields to describe, so it is left
-      // undescribed and drilled generically as a list.
+      // Plain URL strings; left undescribed so it drills as a list.
       { key: 'pin_thumbnail_urls', label: 'Pin Thumbnails' },
     ],
   },
@@ -41,10 +33,8 @@ const boardFields: OutputSchema['fields'] = [
   },
 ];
 
-/**
- * A Pinterest Pin. Verified identical across `POST /pins`,
- * `GET /search/pins` items and `GET /boards/{id}/pins` (the New Pin trigger).
- */
+// Pin shape is identical across POST /pins, GET /search/pins items and
+// GET /boards/{id}/pins.
 const pinFields: OutputSchema['fields'] = [
   { key: 'id', label: 'Pin ID' },
   { key: 'title', label: 'Title' },
@@ -63,8 +53,7 @@ const pinFields: OutputSchema['fields'] = [
     label: 'Media',
     children: [
       { key: 'media_type', label: 'Media Type' },
-      // Keyed by image size ("150x150", "600x", ...), so the entries are data
-      // rather than a fixed schema.
+      // Keyed by image size ("150x150", "600x", ...), so the keys are data.
       {
         key: 'images',
         label: 'Images',
@@ -87,10 +76,6 @@ const pinFields: OutputSchema['fields'] = [
   { key: 'created_at', label: 'Created At', format: 'datetime' },
 ];
 
-// -----------------------------------------------------------------------------
-// Boards
-// -----------------------------------------------------------------------------
-
 export const createBoardActionOutputSchema: OutputSchema = { fields: boardFields };
 export const updateBoardActionOutputSchema: OutputSchema = { fields: boardFields };
 
@@ -109,10 +94,6 @@ export const findBoardByNameActionOutputSchema: OutputSchema = {
     },
   ],
 };
-
-// -----------------------------------------------------------------------------
-// Pins
-// -----------------------------------------------------------------------------
 
 export const createPinActionOutputSchema: OutputSchema = { fields: pinFields };
 
@@ -143,17 +124,10 @@ export const deletePinActionOutputSchema: OutputSchema = {
   ],
 };
 
-// -----------------------------------------------------------------------------
-// Triggers — one Board / Pin per event
-// -----------------------------------------------------------------------------
-
 export const newBoardTriggerOutputSchema: OutputSchema = { fields: boardFields };
 export const newPinOnBoardTriggerOutputSchema: OutputSchema = { fields: pinFields };
 
-/**
- * One follower per event, from `GET /user_account/followers`. The endpoint
- * returns only these two fields — no id, avatar or display name.
- */
+// GET /user_account/followers returns only these two fields.
 export const newFollowerTriggerOutputSchema: OutputSchema = {
   fields: [
     { key: 'username', label: 'Username' },

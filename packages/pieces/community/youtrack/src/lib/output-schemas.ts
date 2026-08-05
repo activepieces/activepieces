@@ -1,14 +1,7 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-// -----------------------------------------------------------------------------
-// Shared field sets
-// -----------------------------------------------------------------------------
-
-/**
- * An issue as returned by `flattenIssue`: nested objects are flattened to
- * underscore-joined keys, and `customFields` is a `{ fieldName: value }` map
- * whose keys vary per project — hence `dynamicKey`.
- */
+// Shape returned by flattenIssue: nested objects become underscore-joined keys,
+// and customFields keys vary per project, hence dynamicKey.
 const issueFields: OutputSchema['fields'] = [
   { key: 'idReadable', label: 'Issue ID' },
   { key: 'summary', label: 'Summary' },
@@ -79,10 +72,6 @@ const activityFields: OutputSchema['fields'] = [
   { key: 'comment_text', label: 'Comment Text' },
 ];
 
-// -----------------------------------------------------------------------------
-// Issues
-// -----------------------------------------------------------------------------
-
 export const createIssueActionOutputSchema: OutputSchema = { fields: issueFields };
 export const getIssueActionOutputSchema: OutputSchema = { fields: issueFields };
 export const updateIssueActionOutputSchema: OutputSchema = { fields: issueFields };
@@ -94,10 +83,6 @@ export const searchIssuesActionOutputSchema: OutputSchema = {
   ],
 };
 
-// -----------------------------------------------------------------------------
-// Comments
-// -----------------------------------------------------------------------------
-
 export const addCommentActionOutputSchema: OutputSchema = { fields: commentFields };
 
 export const listCommentsActionOutputSchema: OutputSchema = {
@@ -106,10 +91,6 @@ export const listCommentsActionOutputSchema: OutputSchema = {
     { key: 'comments', label: 'Comments', value: '', listItems: commentListFields },
   ],
 };
-
-// -----------------------------------------------------------------------------
-// Tags
-// -----------------------------------------------------------------------------
 
 export const createTagActionOutputSchema: OutputSchema = {
   fields: [
@@ -146,10 +127,6 @@ export const removeTagFromIssueActionOutputSchema: OutputSchema = {
   fields: [{ key: 'success', label: 'Success', format: 'boolean' }],
 };
 
-// -----------------------------------------------------------------------------
-// Attachments
-// -----------------------------------------------------------------------------
-
 export const listAttachmentsActionOutputSchema: OutputSchema = {
   itemLabel: '{name}',
   fields: [
@@ -183,10 +160,6 @@ export const deleteAttachmentActionOutputSchema: OutputSchema = {
   fields: [{ key: 'success', label: 'Success', format: 'boolean' }],
 };
 
-// -----------------------------------------------------------------------------
-// History, commands, team
-// -----------------------------------------------------------------------------
-
 export const getIssueHistoryActionOutputSchema: OutputSchema = {
   itemLabel: '{author_name}: {type}',
   fields: [
@@ -216,10 +189,6 @@ export const addUserToTeamActionOutputSchema: OutputSchema = {
     { key: 'login', label: 'Login' },
   ],
 };
-
-// -----------------------------------------------------------------------------
-// Triggers — one flattened issue per event
-// -----------------------------------------------------------------------------
 
 export const newIssueTriggerOutputSchema: OutputSchema = { fields: issueFields };
 export const updatedIssueTriggerOutputSchema: OutputSchema = { fields: issueFields };

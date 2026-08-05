@@ -1,4 +1,3 @@
-// Trigger: Updated Issue
 import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
@@ -45,14 +44,10 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
       return toEvents(await fetchPage('sort by: updated desc', 0));
     }
 
-    // Normal poll. `updated: <datetime> .. *` filters server-side (YouTrack has
-    // no `{after <epoch>}` form — that 400s — but does accept an ISO datetime
-    // range, honoured to the second), and ascending order walks the window from
-    // the checkpoint forward. That combination is what makes this lossless: the
-    // checkpoint only ever advances over issues actually returned, so a backlog
-    // larger than MAX_PAGES simply resumes at the same place on the next poll
-    // instead of being skipped. Truncating to whole seconds rounds the boundary
-    // down, so the window is inclusive rather than one that could miss an issue.
+    // `updated: <datetime> .. *` filters server-side; YouTrack rejects the
+    // `{after <epoch>}` form but accepts an ISO range, honoured to the second.
+    // Ascending order walks forward from the checkpoint, so a backlog bigger
+    // than MAX_PAGES resumes in place next poll instead of being skipped.
     const since = new Date(lastFetchEpochMS).toISOString().slice(0, 19);
     const query = `updated: ${since} .. * sort by: updated asc`;
 
