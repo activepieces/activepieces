@@ -66,50 +66,50 @@ export function TierCard({
 
   return (
     <div className="group flex flex-col rounded-lg border bg-card">
-      <div className="flex items-center gap-2 p-4 pb-3">
+      <div className="flex h-14 items-center gap-2.5 px-5 pt-5 pb-2">
         <TierCardIcon tierId={tier.id} />
         <p className="text-sm font-medium leading-none">{tier.name}</p>
-        {!tier.builtIn && (
-          <Badge
-            variant="outline"
-            className="border-primary/25 bg-primary/5 text-primary"
-          >
-            {t('Custom')}
-          </Badge>
-        )}
         <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
           {tier.description}
         </p>
         {!tier.builtIn && (
-          <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-            {onDetailsChange && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground"
-                onClick={() => setEditOpen(true)}
-              >
-                <Pencil className="size-4" />
-              </Button>
-            )}
-            {onDelete && (
-              <ConfirmationDeleteDialog
-                title={t('Delete custom tier')}
-                message={t(
-                  'Anything still using this tier falls back to the default tier. Flows keep working.',
-                )}
-                entityName={tier.name}
-                mutationFn={async () => onDelete()}
-              >
+          <div className="relative flex h-8 items-center justify-end">
+            <Badge
+              variant="outline"
+              className="border-primary/25 bg-primary/5 text-primary group-focus-within:invisible group-hover:invisible"
+            >
+              {t('Custom')}
+            </Badge>
+            <div className="invisible absolute right-0 flex items-center gap-0.5 group-focus-within:visible group-hover:visible">
+              {onDetailsChange && (
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground"
+                  onClick={() => setEditOpen(true)}
                 >
-                  <Trash2 className="size-4" />
+                  <Pencil className="size-4" />
                 </Button>
-              </ConfirmationDeleteDialog>
-            )}
+              )}
+              {onDelete && (
+                <ConfirmationDeleteDialog
+                  title={t('Delete custom tier')}
+                  message={t(
+                    'Anything still using this tier falls back to the default tier. Flows keep working.',
+                  )}
+                  entityName={tier.name}
+                  mutationFn={async () => onDelete()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </ConfirmationDeleteDialog>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -121,9 +121,11 @@ export function TierCard({
           onSave={onDetailsChange}
         />
       )}
-      <div className="flex flex-col gap-4 px-4 pb-4">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium">{t('Model')}</span>
+      <div className="flex flex-col gap-5 px-5 pb-5 pt-2">
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('Model')}
+          </span>
           <TierModelPicker
             tiers={[]}
             models={models}
@@ -137,8 +139,8 @@ export function TierCard({
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-1.5 text-xs font-medium">
+        <div className="flex flex-col gap-2">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             {t('Fallbacks')}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -154,8 +156,8 @@ export function TierCard({
           {BACKUP_KEYS.map((slotKey, index) => {
             const slot = tier.slots[slotKey];
             return (
-              <div key={slotKey} className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
+              <div key={slotKey} className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2.5">
                   <span className="w-4 text-center text-xs text-muted-foreground tabular-nums">
                     {index + 1}
                   </span>
