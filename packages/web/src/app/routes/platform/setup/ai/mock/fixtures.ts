@@ -408,6 +408,7 @@ function builtInTier({
 function standardUsage(): MockProjectAiUsage[] {
   return [
     {
+      id: 'proj-marketing',
       projectId: 'proj-marketing',
       projectName: 'Marketing Ops',
       creditsUsed: 3_240,
@@ -416,6 +417,7 @@ function standardUsage(): MockProjectAiUsage[] {
       lastActivity: '2026-08-05T09:12:00.000Z',
     },
     {
+      id: 'proj-support',
       projectId: 'proj-support',
       projectName: 'Customer Support',
       creditsUsed: 8_910,
@@ -424,6 +426,7 @@ function standardUsage(): MockProjectAiUsage[] {
       lastActivity: '2026-08-05T07:48:00.000Z',
     },
     {
+      id: 'proj-sales',
       projectId: 'proj-sales',
       projectName: 'Sales Automation',
       creditsUsed: 1_120,
@@ -432,6 +435,7 @@ function standardUsage(): MockProjectAiUsage[] {
       lastActivity: '2026-08-04T18:30:00.000Z',
     },
     {
+      id: 'proj-internal',
       projectId: 'proj-internal',
       projectName: 'Internal Tools',
       creditsUsed: 460,
@@ -505,6 +509,7 @@ export type MockProviderStatus = {
 };
 
 export type MockProjectAiUsage = {
+  id: string;
   projectId: string;
   projectName: string;
   creditsUsed: number;
