@@ -120,7 +120,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             void tryCatch(() => ctx.apiClient.heartbeatAgentConversation({ conversationId, runId }))
         }
         const heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
-        let answerDeliveryAttempted = false
+        let answer: unknown
 
         try {
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
@@ -264,8 +264,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryOnceThenThrow({ operation: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', log })
 
-            answerDeliveryAttempted = true
-            await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: true, output: agentTextFrom(turn.uiParts) }, log })
+            answer = { success: true, output: agentTextFrom(turn.uiParts) }
+            await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, log })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -297,9 +297,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
-            if (!answerDeliveryAttempted) {
-                await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: clientMessage }, log }))
-            }
+            await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? { success: false, error: clientMessage }, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateAgentProgress) and only flips status, so an errored turn keeps
