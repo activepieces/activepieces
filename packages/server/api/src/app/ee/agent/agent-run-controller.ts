@@ -25,12 +25,11 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
         }
-        const requestedTools = tools ?? []
-        const unsupported = unique(requestedTools.filter((tool) => tool.type !== AgentToolType.PIECE).map((tool) => tool.type))
+        const pieceTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.PIECE)
+        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => type !== AgentToolType.PIECE)
         if (unsupported.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions` } })
         }
-        const pieceTools = requestedTools.filter((tool) => tool.type === AgentToolType.PIECE)
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 

@@ -1,7 +1,9 @@
 import { AgentResult, AgentStepBlock, AgentTaskStatus, ContentBlockType, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, ToolCallStatus, ToolCallType } from '@activepieces/shared'
+import { agentWorkerTools } from './agent-worker-tools'
 
 const MAX_BLOCK_LENGTH = 51_200
-const MAX_RESULT_LENGTH = 262_144
+const MAX_BLOCKS = 200
+const OUTPUT_LIMITS = { maxStringLength: 8_192, maxArrayItems: 50 }
 
 export function stepResultFrom({ prompt, uiParts, timestamp, failure }: {
     prompt: string
@@ -9,7 +11,7 @@ export function stepResultFrom({ prompt, uiParts, timestamp, failure }: {
     timestamp: string
     failure?: string
 }): AgentResult {
-    const steps = withinBudget(uiParts.flatMap((part) => toStepBlocks({ part, timestamp })))
+    const steps = uiParts.flatMap((part) => toStepBlocks({ part, timestamp })).slice(0, MAX_BLOCKS)
     const anyToolFailed = uiParts.some((part) => part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.ERROR)
     if (failure === undefined) {
         return { prompt, steps, status: anyToolFailed ? AgentTaskStatus.FAILED : AgentTaskStatus.COMPLETED }
@@ -19,20 +21,6 @@ export function stepResultFrom({ prompt, uiParts, timestamp, failure }: {
         steps: [...steps, { type: ContentBlockType.MARKDOWN, markdown: failure }],
         status: AgentTaskStatus.FAILED,
     }
-}
-
-function withinBudget(steps: AgentStepBlock[]): AgentStepBlock[] {
-    const kept: AgentStepBlock[] = []
-    let spent = 0
-    for (const step of steps) {
-        spent += JSON.stringify(step).length
-        if (spent > MAX_RESULT_LENGTH) {
-            kept.push({ type: ContentBlockType.MARKDOWN, markdown: `The remaining ${steps.length - kept.length} steps were left out because the result grew too large to hand back.` })
-            return kept
-        }
-        kept.push(step)
-    }
-    return kept
 }
 
 function toStepBlocks({ part, timestamp }: { part: PersistedAgentPart, timestamp: string }): AgentStepBlock[] {
@@ -48,7 +36,7 @@ function toStepBlocks({ part, timestamp }: { part: PersistedAgentPart, timestamp
                 toolName: part.toolName,
                 toolCallId: part.toolCallId,
                 input: part.input,
-                output: part.status === PersistedToolCallStatus.ERROR ? { failed: true, error: part.errorText ?? 'The action failed' } : part.output,
+                output: agentWorkerTools.shrinkLargeValue(failureOrOutput(part), OUTPUT_LIMITS),
                 status: ToolCallStatus.COMPLETED,
                 startTime: timestamp,
                 endTime: timestamp,
@@ -56,4 +44,10 @@ function toStepBlocks({ part, timestamp }: { part: PersistedAgentPart, timestamp
         default:
             return []
     }
+}
+
+function failureOrOutput(part: { status: PersistedToolCallStatus, errorText?: string, output?: unknown }): unknown {
+    return part.status === PersistedToolCallStatus.ERROR
+        ? { failed: true, error: part.errorText ?? 'The action failed' }
+        : part.output
 }

@@ -493,17 +493,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
         }
-        const providerConfig = await agentHelpers.resolveChatProvider({ platformId: conversation.platformId, log })
-        const model = agentAiUtils.createChatModel({
-            provider: providerConfig.provider,
-            auth: providerConfig.auth as Record<string, unknown>,
-            config: providerConfig.config as Record<string, unknown>,
-            modelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider }),
-        })
         const { result } = await pieceToolRunner.runFromInstruction({
+            model: await agentHelpers.resolveFastModel({ platformId: conversation.platformId, log }),
             piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName },
             instruction: input.instruction,
-            model,
             projectId: conversation.projectId,
             platformId: conversation.platformId,
             log,
