@@ -28,7 +28,6 @@ export type SavePayloadRequest = {
 export type GetPieceRequest = {
     name: string
     version?: string
-    projectId?: string
     platformId?: string
 }
 

@@ -177,7 +177,6 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return pieceMetadataService(log).get({
                 name: input.name,
                 version: input.version,
-                projectId: input.projectId,
                 platformId: input.platformId,
             })
         },
