@@ -149,7 +149,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
                 source,
-                ...spreadIfDefined('configuredPieceTools', data.tools),
+                configuredPieceTools: data.tools ?? [],
             })
 
             const thinkingStartTime = Date.now()
@@ -270,7 +270,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), ...spreadIfDefined('failure', incompleteReason({ truncatedAfterRetries, budgetExceeded })) })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -399,7 +399,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     discoveryOnly: boolean
     emailEnabled: boolean
     abortSignal: AbortSignal
-    configuredPieceTools?: AgentPieceTool[]
+    configuredPieceTools: AgentPieceTool[]
     source: AgentRunSource
 }) {
     const brokenConnectors = new Set<string>()
@@ -548,11 +548,12 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         return allTools
     }
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
-        tools: configuredPieceTools ?? [],
+        tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
         runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece }),
         log,
     })
-    return { ...omit(allTools, UNATTENDED_FORBIDDEN_TOOLS), ...configuredTools }
+    const unattendedTools = omit(allTools, UNATTENDED_FORBIDDEN_TOOLS)
+    return { ...configuredTools, ...unattendedTools }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {

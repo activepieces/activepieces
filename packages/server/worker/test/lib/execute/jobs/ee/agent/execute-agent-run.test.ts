@@ -76,3 +76,27 @@ describe('stepResultFrom', () => {
         expect(result.steps[0]).toEqual({ type: 'MARKDOWN', markdown: 'x'.repeat(51_200) })
     })
 })
+
+describe('stepResultFrom — a failed tool call must not read as success', () => {
+    const at = '2026-08-05T00:00:00.000Z'
+    const failedCall = {
+        type: 'tool-call' as const,
+        toolCallId: 'call-1',
+        toolName: 'send_email',
+        input: { to: 'a@b.c' },
+        status: 'error' as const,
+        errorText: 'mailbox full',
+    }
+
+    it('marks the whole result failed when any tool call errored', () => {
+        const result = stepResultFrom({ prompt: 'send it', uiParts: [failedCall], timestamp: at })
+
+        expect(result.status).toBe('FAILED')
+    })
+
+    it('carries the error text so a later step can see what went wrong', () => {
+        const result = stepResultFrom({ prompt: 'send it', uiParts: [failedCall], timestamp: at })
+
+        expect(JSON.stringify(result.steps[0])).toContain('mailbox full')
+    })
+})

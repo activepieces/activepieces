@@ -183,6 +183,11 @@ function looksLikeMcpContentParts(array: unknown[]): boolean {
     return array.every((element) => isObject(element) && typeof element['type'] === 'string')
 }
 
+function humanizedPieceName(piece: string): string {
+    const stripped = piece.replace('@activepieces/piece-', '').replace(/^piece-/, '')
+    return stripped.split(/[-_]/).filter((word) => word.length > 0).map((word) => word[0].toUpperCase() + word.slice(1)).join(' ')
+}
+
 function normalizePieceName(piece: string): string {
     if (piece.startsWith('@')) return piece
     const stripped = piece.startsWith('piece-') ? piece.slice('piece-'.length) : piece
@@ -1446,15 +1451,19 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
     return Object.fromEntries(tools.map((configured) => [
         configured.toolName,
         tool({
-            description: `Run the "${configured.pieceMetadata.actionName}" action of ${normalizePieceName(configured.pieceMetadata.pieceName)}. Describe what you want it to do in plain language; its inputs are worked out from your instruction and the fields already pinned on this step.`,
+            description: `Run the "${configured.pieceMetadata.actionName}" action of ${humanizedPieceName(configured.pieceMetadata.pieceName)}. Say what you want it to do in plain language, including any values it needs. Its inputs are worked out from what you say here, and any field the flow author already pinned on this step keeps their value whatever you say. Returns whatever the action returns, or an explanation if it failed.`,
             inputSchema: z.object({
                 instruction: z.string().describe('What this action should do, including any values it needs, in plain language'),
             }),
             execute: async ({ instruction }) => {
                 const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata }))
                 if (error) {
-                    log.warn({ error, tool: { name: configured.toolName } }, '[configuredPieceTool] Action failed')
-                    return { content: [{ type: 'text', text: `That action failed: ${error instanceof Error ? error.message : 'unknown error'}` }] }
+                    log.warn({ error, tool: { name: configured.toolName } }, '[configuredPieceTool] Action threw')
+                    return { content: [{ type: 'text', text: `That action failed: ${String(error)}` }] }
+                }
+                if (!isSuccessResult(data.result)) {
+                    log.warn({ tool: { name: configured.toolName } }, '[configuredPieceTool] Action reported a failure')
+                    return { content: [{ type: 'text', text: `That action failed: ${extractUserFacingError({ result: data.result })}` }] }
                 }
                 return truncateLargeResult(data.result)
             },
