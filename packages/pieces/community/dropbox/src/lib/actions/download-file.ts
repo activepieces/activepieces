@@ -38,13 +38,13 @@ export const dropboxDownloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType:'arraybuffer'
+      responseType:'stream'
     });
 
     return {
       file: await context.files.write({
         fileName: fileName,
-        data: Buffer.from(result.body)
+        data: result.body
       })
     }
   },

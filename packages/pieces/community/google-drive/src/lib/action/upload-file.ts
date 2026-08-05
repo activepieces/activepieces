@@ -1,5 +1,4 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Readable } from 'stream';
 import mime from 'mime-types';
 import { drive as googleDrive } from '@googleapis/drive';
 import { googleDriveAuth, createGoogleClient } from '../auth';
@@ -23,6 +22,7 @@ export const googleDriveUploadFile = createAction({
       displayName: 'File',
       description: 'The file URL or base64 to upload',
       required: true,
+      streaming: true,
     }),
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
@@ -44,7 +44,7 @@ export const googleDriveUploadFile = createAction({
       },
       media: {
         mimeType,
-        body: Readable.from(Buffer.from(fileData.base64, 'base64')),
+        body: fileData.body,
       },
       supportsAllDrives: context.propsValue.include_team_drives ?? false,
       fields: 'id, name, mimeType, kind',
