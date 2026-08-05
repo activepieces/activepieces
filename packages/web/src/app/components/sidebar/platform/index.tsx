@@ -4,7 +4,6 @@ import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
-import { BotIcon } from '@/components/icons/bot';
 import {
   ChevronLeftIcon,
   ChevronLeftIconHandle,
@@ -60,12 +59,7 @@ export function PlatformSidebar() {
   const setupItems = [
     {
       to: '/platform/setup/ai',
-      label: t('AI Providers'),
-      icon: BotIcon,
-    },
-    {
-      to: '/platform/setup/ai-capabilities',
-      label: t('AI Capabilities'),
+      label: t('AI Hub'),
       icon: SparklesIcon,
     },
     {

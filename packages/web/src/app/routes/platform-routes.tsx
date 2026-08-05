@@ -42,9 +42,6 @@ const SSOPage = React.lazy(() =>
   import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
 );
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
-const AiCapabilitiesPage = React.lazy(
-  () => import('./platform/setup/ai-capabilities'),
-);
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const BrandingPage = React.lazy(() =>
   import('./platform/setup/branding').then((m) => ({
@@ -141,7 +138,7 @@ export const platformRoutes = [
     path: '/platform/setup/ai',
     element: (
       <PlatformLayout>
-        <PageTitle title="AI">
+        <PageTitle title="AI Hub">
           <SuspenseWrapper>
             <AIProvidersPage />
           </SuspenseWrapper>
@@ -151,15 +148,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/setup/ai-capabilities',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="AI Capabilities">
-          <SuspenseWrapper>
-            <AiCapabilitiesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/platform/setup/ai?tab=capabilities" replace />,
   },
   {
     path: '/platform/setup/mcp',
