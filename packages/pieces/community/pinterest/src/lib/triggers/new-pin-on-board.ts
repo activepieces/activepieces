@@ -98,7 +98,7 @@ const polling: Polling<
         console.error(`Error fetching pins for board ${board_id}:`, error);
         break; // Stop pagination on error
       }
-    } while (bookmark);
+    } while (bookmark && pageCount < maxPages);
 
     // Sort by creation date (newest first) for consistent ordering
     pins.sort(
