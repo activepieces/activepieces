@@ -1,7 +1,7 @@
 import { FlowRunId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
-import { AppConnectionValue } from '@activepieces/core-piece-types'
+import { AppConnectionType, AppConnectionValue } from '@activepieces/core-piece-types'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
@@ -69,6 +69,7 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
 export type ExecuteResolveConnectionIdentifierOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
     auth: AppConnectionValue
+    connectionType: AppConnectionType
 }
 
 export type ExecuteRefreshTokenAuthOperation = ExecuteValidateAuthOperation

@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { AppConnectionValue, EngineOperationType, EngineResponseStatus, ExecuteResolveConnectionIdentifierJobData, WorkerJobType } from '@activepieces/shared'
+import { EngineOperationType, EngineResponseStatus, ExecuteResolveConnectionIdentifierJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 
@@ -20,7 +20,8 @@ export const resolveConnectionIdentifierJob: JobHandler<ExecuteResolveConnection
                 operationType: EngineOperationType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
                 operation: {
                     piece: data.piece,
-                    auth: data.connectionValue as AppConnectionValue,
+                    auth: data.connectionValue,
+                    connectionType: data.connectionType,
                     platformId: data.platformId,
                     engineToken: ctx.engineToken,
                     internalApiUrl: ctx.internalApiUrl,

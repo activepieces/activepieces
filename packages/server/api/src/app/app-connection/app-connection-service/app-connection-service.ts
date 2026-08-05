@@ -624,19 +624,23 @@ const resolveConnectionAccountIdentifier = async ({
     platformId: string
     log: FastifyBaseLogger
 }): Promise<string | undefined> => {
-    if (
-        connectionType !== AppConnectionType.OAUTH2 &&
-        connectionType !== AppConnectionType.CLOUD_OAUTH2 &&
-        connectionType !== AppConnectionType.PLATFORM_OAUTH2
-    ) {
+    if (connectionType === AppConnectionType.NO_AUTH) {
         return undefined
     }
-    const emailFromToken = emailFromTokenResponse('data' in auth ? auth.data : undefined)
-    if (!isNil(emailFromToken)) {
-        return emailFromToken
+    if (OAUTH_CONNECTION_TYPES.includes(connectionType)) {
+        const emailFromToken = emailFromTokenResponse('data' in auth ? auth.data : undefined)
+        if (!isNil(emailFromToken)) {
+            return emailFromToken
+        }
     }
-    return engineResolveConnectionIdentifier({ pieceName, projectId, platformId, auth }, log)
+    return engineResolveConnectionIdentifier({ pieceName, projectId, platformId, auth, connectionType }, log)
 }
+
+const OAUTH_CONNECTION_TYPES = [
+    AppConnectionType.OAUTH2,
+    AppConnectionType.CLOUD_OAUTH2,
+    AppConnectionType.PLATFORM_OAUTH2,
+]
 
 // OIDC providers expose the sign-in email under different claims: Google uses
 // `email`; Microsoft/Azure AD usually put it in `preferred_username` (the UPN)
@@ -839,14 +843,14 @@ const declaresConnectionIdentifier = (auth: PieceMetadata['auth']): boolean => {
 const RESOLVE_IDENTIFIER_TIMEOUT_MS = 15000
 
 const engineResolveConnectionIdentifier = async (
-    params: EngineValidateAuthParams,
+    params: EngineResolveConnectionIdentifierParams,
     log: FastifyBaseLogger,
 ): Promise<string | undefined> => {
     const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return undefined
     }
-    const { pieceName, auth, projectId, platformId } = params
+    const { pieceName, auth, projectId, platformId, connectionType } = params
     const { data: identifier } = await tryCatch(async () => {
         const pieceMetadata = await pieceMetadataService(log).getOrThrow({
             name: pieceName,
@@ -865,6 +869,7 @@ const engineResolveConnectionIdentifier = async (
             projectId,
             platformId,
             connectionValue: auth,
+            connectionType,
             jobType: WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
         }, log)
         const timeoutPromise = new Promise<undefined>((resolve) => {
@@ -1048,6 +1053,10 @@ type EngineValidateAuthParams = {
     projectId: ProjectId | undefined
     platformId: string
     auth: AppConnectionValue
+}
+
+type EngineResolveConnectionIdentifierParams = EngineValidateAuthParams & {
+    connectionType: AppConnectionType
 }
 
 type ReplaceParams = {

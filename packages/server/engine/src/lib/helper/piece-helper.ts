@@ -149,6 +149,7 @@ export const pieceHelper = {
         const server = buildServerContext(params)
         return resolveConnectionIdentifier({
             authValue: params.auth,
+            connectionType: params.connectionType,
             pieceAuth: piece.auth,
             server,
         })
@@ -297,21 +298,19 @@ const validateAuth = async ({
 const resolveConnectionIdentifier = async ({
     server,
     authValue,
+    connectionType,
     pieceAuth,
-}: ValidateAuthParams): Promise<ExecuteResolveConnectionIdentifierResponse> => {
+}: ResolveConnectionIdentifierParams): Promise<ExecuteResolveConnectionIdentifierResponse> => {
     if (isNil(pieceAuth)) {
         return { identifier: undefined }
     }
     const usedPieceAuth = getAuthPropertyForValue({
-        authValueType: authValue.type,
+        authValueType: connectionType,
         pieceAuth,
     })
     if (isNil(usedPieceAuth)) {
         return { identifier: undefined }
     }
-    // A cloud/platform OAuth claim result can reach the engine without a `type`
-    // field on the value, so dispatch on the piece's own declared auth type (always
-    // present) and narrow the value structurally rather than by authValue.type.
     switch (usedPieceAuth.type) {
         case PropertyType.OAUTH2: {
             if (!('access_token' in authValue)) {
@@ -351,6 +350,10 @@ type ValidateAuthParams = {
     }
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
+}
+
+type ResolveConnectionIdentifierParams = ValidateAuthParams & {
+    connectionType: AppConnectionType
 }
 
 function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: string, publicApiUrl: string }) {
