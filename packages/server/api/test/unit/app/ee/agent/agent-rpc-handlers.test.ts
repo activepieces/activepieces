@@ -51,8 +51,7 @@ type QueryBuilderMock = {
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
-        resolveChatProvider: () => ({ provider: 'openai', auth: {}, config: {} }),
-        resolveFastModelId: () => 'gpt-4o-mini',
+        resolveFastModel: () => ({}),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
             save: mockSave,
