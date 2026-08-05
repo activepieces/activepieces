@@ -494,8 +494,64 @@ function standardUsage(): MockProjectAiUsage[] {
       isEstimate: true,
       lastActivity: '2026-08-01T11:05:00.000Z',
     },
+    ...generatedUsage(),
   ];
 }
+
+function generatedUsage(): MockProjectAiUsage[] {
+  return GENERATED_PROJECT_NAMES.map((projectName, index) => {
+    const seed = index + 3;
+    const creditsUsed = ((seed * 731) % 9_000) + 150;
+    const hasLimit = seed % 3 !== 0;
+    const limit = hasLimit
+      ? Math.ceil(creditsUsed / 1_000) * 1_000 + ((seed % 4) + 1) * 2_000
+      : null;
+    const daysAgo = seed % 11;
+    const lastActivity = new Date(
+      Date.parse('2026-08-05T10:00:00.000Z') - daysAgo * 86_400_000,
+    ).toISOString();
+    return {
+      id: `proj-gen-${index}`,
+      projectId: `proj-gen-${index}`,
+      projectName,
+      creditsUsed,
+      limit,
+      isEstimate: seed % 4 !== 0,
+      lastActivity,
+    };
+  });
+}
+
+const GENERATED_PROJECT_NAMES = [
+  'Growth Experiments',
+  'Finance Reporting',
+  'HR Onboarding',
+  'Legal Intake',
+  'Data Pipeline',
+  'Design Requests',
+  'Partner Portal',
+  'Churn Prevention',
+  'Lead Scoring',
+  'Invoice Processing',
+  'Recruiting Bot',
+  'Docs Assistant',
+  'QA Automation',
+  'Localization',
+  'Social Scheduler',
+  'Inventory Sync',
+  'Security Alerts',
+  'Customer Feedback',
+  'Product Analytics',
+  'Email Triage',
+  'Meeting Notes',
+  'Compliance Checks',
+  'Vendor Management',
+  'Field Operations',
+  'Knowledge Base',
+  'Revenue Ops',
+  'Support Escalations',
+  'Content Studio',
+];
 
 export type MockScenarioId = (typeof MOCK_SCENARIO_IDS)[number];
 
