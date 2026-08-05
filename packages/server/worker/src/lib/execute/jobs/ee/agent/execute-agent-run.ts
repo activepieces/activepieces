@@ -297,7 +297,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
         }
         catch (err) {
-            await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: err instanceof Error ? err.message : 'The agent run failed' }, log })
+            await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: err instanceof Error ? err.message : 'The agent run failed' }, log }))
             log.error({ error: err, conversation: { id: conversationId } }, '[executeAgentRun] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const isCreditError = isCreditExhaustedError(errorMessage)
@@ -360,10 +360,19 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
     if (isNil(flowRunId) || isNil(waitpointId)) {
         return
     }
-    const { error } = await tryCatch(() => ctx.apiClient.resumeFlowStep({ conversationId, flowRunId, waitpointId, output }))
-    if (error) {
-        log.error({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not hand the result back; the step waits for its own timeout')
+    const resume = () => ctx.apiClient.resumeFlowStep({ conversationId, flowRunId, waitpointId, output })
+    const { error } = await tryCatch(resume)
+    if (isNil(error)) {
+        return
     }
+    log.warn({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] First resume attempt failed, retrying')
+    await new Promise((resolve) => setTimeout(resolve, 1_000))
+    const { error: retryError } = await tryCatch(resume)
+    if (isNil(retryError)) {
+        return
+    }
+    log.error({ error: retryError, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not release the step; failing the job so it is not recorded as done')
+    throw retryError
 }
 
 function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source }: {
