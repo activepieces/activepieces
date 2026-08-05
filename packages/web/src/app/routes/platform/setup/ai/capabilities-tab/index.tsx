@@ -19,6 +19,7 @@ import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
 import {
   AI_TOOL_CATALOG,
   AiToolCapabilityInfo,
+  AiToolProviderInfo,
 } from '../../ai-capabilities/catalog';
 import { MockScenario } from '../mock/fixtures';
 
@@ -105,9 +106,9 @@ function CapabilityCard({
   onSetUp: () => void;
 }) {
   const Icon = CAPABILITY_ICON[capabilityInfo.capability];
-  const providerName = capabilityInfo.providers.find(
+  const connectedProvider = capabilityInfo.providers.find(
     (provider) => provider.id === config?.provider,
-  )?.name;
+  );
 
   return (
     <div className="group flex flex-col rounded-lg border bg-card">
@@ -134,10 +135,10 @@ function CapabilityCard({
                 ? t('Active')
                 : t('Turned off')}
             </span>
-            {providerName && (
+            {connectedProvider && (
               <>
                 <span aria-hidden>·</span>
-                <span>{providerName}</span>
+                <ProviderLink provider={connectedProvider} />
               </>
             )}
           </div>
@@ -190,10 +191,13 @@ function CapabilityCard({
           </>
         ) : (
           <>
-            <span className="truncate text-xs text-muted-foreground">
-              {capabilityInfo.providers
-                .map((provider) => provider.name)
-                .join(' · ')}
+            <span className="flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
+              {capabilityInfo.providers.map((provider, index) => (
+                <span key={provider.id} className="flex items-center gap-1.5">
+                  {index > 0 && <span aria-hidden>·</span>}
+                  <ProviderLink provider={provider} />
+                </span>
+              ))}
             </span>
             <AiCapabilityDialog
               capabilityInfo={capabilityInfo}
@@ -207,6 +211,19 @@ function CapabilityCard({
         )}
       </div>
     </div>
+  );
+}
+
+function ProviderLink({ provider }: { provider: AiToolProviderInfo }) {
+  return (
+    <a
+      href={provider.signupUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="underline-offset-2 transition-colors hover:text-foreground hover:underline"
+    >
+      {provider.name}
+    </a>
   );
 }
 
