@@ -54,6 +54,7 @@ import { STATIC_PAGES } from '../../global-search/static-pages';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
+import { SidebarAiUsage } from '../sidebar-ai-usage';
 import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
@@ -327,6 +328,8 @@ export function ProjectDashboardSidebar({
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
+          {/* ponytail: prototype mock — remove */}
+          {state === 'expanded' && <SidebarAiUsage used={3240} limit={10000} />}
           {state === 'expanded' && <DelayedSidebarUsageLimits />}
           <SidebarPlatformAdminLink />
           <SidebarUser />

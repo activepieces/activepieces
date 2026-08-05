@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Check, ChevronsUpDown, Layers } from 'lucide-react';
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -14,7 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
 import { TIER_CONFIG } from '@/features/agents/tier-config';
 import { cn } from '@/lib/utils';
@@ -82,38 +82,38 @@ export function TierModelPicker({
           <CommandEmpty>{t('Nothing found.')}</CommandEmpty>
           <div className="max-h-80 overflow-auto">
             {tiers.length > 0 && (
-            <CommandGroup heading={t('Tiers (recommended)')}>
-              {tiers.map((tier) => (
-                <CommandItem
-                  key={tier.id}
-                  value={`tier-${tier.id} ${tier.name}`}
-                  onSelect={() => {
-                    onChange({ kind: 'tier', id: tier.id });
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <TierIcon
-                    tierId={tier.id}
-                    className="size-4 shrink-0 text-muted-foreground"
-                  />
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-sm">{tier.name}</span>
-                    <span className="text-xs text-muted-foreground truncate">
-                      {tier.description}
-                    </span>
-                  </div>
-                  <Check
-                    className={cn(
-                      'ml-auto size-4 shrink-0',
-                      value?.kind === 'tier' && value.id === tier.id
-                        ? 'opacity-100'
-                        : 'opacity-0',
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
+              <CommandGroup heading={t('Tiers (recommended)')}>
+                {tiers.map((tier) => (
+                  <CommandItem
+                    key={tier.id}
+                    value={`tier-${tier.id} ${tier.name}`}
+                    onSelect={() => {
+                      onChange({ kind: 'tier', id: tier.id });
+                      setOpen(false);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <TierIcon
+                      tierId={tier.id}
+                      className="size-4 shrink-0 text-muted-foreground"
+                    />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="text-sm">{tier.name}</span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {tier.description}
+                      </span>
+                    </div>
+                    <Check
+                      className={cn(
+                        'ml-auto size-4 shrink-0',
+                        value?.kind === 'tier' && value.id === tier.id
+                          ? 'opacity-100'
+                          : 'opacity-0',
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             )}
             <CommandGroup
               heading={
@@ -183,7 +183,11 @@ function TierIcon({
   return <Icon className={className} />;
 }
 
-function providerLogoOf({ provider }: { provider: string }): string | undefined {
+function providerLogoOf({
+  provider,
+}: {
+  provider: string;
+}): string | undefined {
   if (provider === 'activepieces') {
     return 'https://cdn.activepieces.com/pieces/activepieces.png';
   }

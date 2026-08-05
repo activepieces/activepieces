@@ -109,7 +109,9 @@ export function UsageTab({ scenario }: { scenario: MockScenario }) {
         emptyStateTextDescription={t(
           'Usage appears here as soon as a project runs chat, agents, or AI steps.',
         )}
-        emptyStateIcon={<ChartColumn className="size-10 text-muted-foreground" />}
+        emptyStateIcon={
+          <ChartColumn className="size-10 text-muted-foreground" />
+        }
       />
       <SetLimitDialog
         open={editingRow !== undefined}

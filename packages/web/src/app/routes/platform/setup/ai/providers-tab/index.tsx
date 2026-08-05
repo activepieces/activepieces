@@ -193,9 +193,7 @@ function ConfiguredProviderRow({
             ) : (
               <Badge variant="success">{t('Active')}</Badge>
             )}
-            {isChatProvider && (
-              <Badge variant="outline">{t('Chat')}</Badge>
-            )}
+            {isChatProvider && <Badge variant="outline">{t('Chat')}</Badge>}
           </span>
         </ItemTitle>
         <ItemDescription>

@@ -5,7 +5,9 @@ import { Braces, ExternalLink, Eye, Image } from 'lucide-react';
 export function ModelFactsRow({ model }: { model: AiModelFacts }) {
   return (
     <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-      <span>{t('{context} ctx', { context: formatTokens(model.contextWindow) })}</span>
+      <span>
+        {t('{context} ctx', { context: formatTokens(model.contextWindow) })}
+      </span>
       <span aria-hidden>·</span>
       <span>
         {t('${input} / ${output} per 1M', {

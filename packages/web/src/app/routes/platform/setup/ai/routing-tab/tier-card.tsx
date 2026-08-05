@@ -26,7 +26,9 @@ export function TierCard({
   onDelete?: () => void;
 }) {
   const [showReplaceNote, setShowReplaceNote] = useState(false);
-  const mainFacts = models.find((model) => model.id === tier.slots.main.modelId);
+  const mainFacts = models.find(
+    (model) => model.id === tier.slots.main.modelId,
+  );
 
   const handleChange = ({
     slotKey,

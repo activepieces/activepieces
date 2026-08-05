@@ -15,6 +15,7 @@ import {
   Clock,
   Hash,
   Link2,
+  Sparkles,
 } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
@@ -104,6 +105,29 @@ export const projectsTableColumns = ({
         );
       },
     },
+    {
+      id: 'aiUsage',
+      size: 130,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('AI Usage')}
+          icon={Sparkles}
+          className="w-full"
+        />
+      ),
+      cell: ({ row }) => {
+        const { used, limit } = mockAiUsage(row.original.id);
+        return (
+          <div className="text-left tabular-nums">
+            <span className="font-medium">{used.toLocaleString()}</span>
+            <span className="text-muted-foreground">
+              {` / ${limit === null ? t('Unlimited') : limit.toLocaleString()}`}
+            </span>
+          </div>
+        );
+      },
+    },
   ];
 
   if (platform.plan.embeddingEnabled) {
@@ -170,3 +194,17 @@ export const projectsTableColumns = ({
 
   return columns;
 };
+
+// ponytail: prototype mock — remove
+function mockAiUsage(projectId: string): {
+  used: number;
+  limit: number | null;
+} {
+  const seed = [...projectId].reduce(
+    (acc, char) => acc + char.charCodeAt(0),
+    0,
+  );
+  const used = (seed % 90) * 100 + 400;
+  const limit = seed % 3 === 0 ? null : Math.ceil(used / 1000) * 1000 + 2000;
+  return { used, limit };
+}

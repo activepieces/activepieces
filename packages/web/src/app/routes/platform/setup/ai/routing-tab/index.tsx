@@ -68,7 +68,9 @@ export function RoutingTab({ scenario }: { scenario: MockScenario }) {
   if (tiers.length === 0) {
     return (
       <div className="flex flex-col items-start gap-1 rounded-lg border border-dashed p-6">
-        <p className="text-sm font-medium">{t('No routing to configure yet')}</p>
+        <p className="text-sm font-medium">
+          {t('No routing to configure yet')}
+        </p>
         <p className="text-sm text-muted-foreground">
           {t(
             'Enable at least one AI provider first — routing defaults are derived from your providers.',
@@ -131,9 +133,7 @@ export function RoutingTab({ scenario }: { scenario: MockScenario }) {
             onSlotChange={({ slotKey, modelId }) =>
               updateSlot({ tierId: tier.id, slotKey, modelId })
             }
-            onDelete={
-              tier.builtIn ? undefined : () => deleteTier(tier.id)
-            }
+            onDelete={tier.builtIn ? undefined : () => deleteTier(tier.id)}
           />
         ))}
       </div>

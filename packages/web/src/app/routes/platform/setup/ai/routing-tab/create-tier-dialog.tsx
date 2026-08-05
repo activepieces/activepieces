@@ -62,7 +62,10 @@ function CreateTierForm({
   const [backup2, setBackup2] = useState<string | null>(null);
 
   const complete =
-    name.trim().length > 0 && main !== null && backup1 !== null && backup2 !== null;
+    name.trim().length > 0 &&
+    main !== null &&
+    backup1 !== null &&
+    backup2 !== null;
 
   const slotValue = (modelId: string | null): TierModelValue | null =>
     modelId === null ? null : { kind: 'model', id: modelId };
@@ -139,7 +142,12 @@ function CreateTierForm({
           type="button"
           disabled={!complete}
           onClick={() => {
-            if (!complete || main === null || backup1 === null || backup2 === null) {
+            if (
+              !complete ||
+              main === null ||
+              backup1 === null ||
+              backup2 === null
+            ) {
               return;
             }
             onCreate({

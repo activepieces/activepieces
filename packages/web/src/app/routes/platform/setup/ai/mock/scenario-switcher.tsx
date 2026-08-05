@@ -21,7 +21,9 @@ export function ScenarioSwitcher({
   return (
     <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg border bg-card p-2 shadow-md">
       <FlaskConical className="size-4 text-muted-foreground shrink-0" />
-      <span className="text-xs text-muted-foreground">{t('Demo scenario')}</span>
+      <span className="text-xs text-muted-foreground">
+        {t('Demo scenario')}
+      </span>
       <Select
         value={scenarioId}
         onValueChange={(value) => {

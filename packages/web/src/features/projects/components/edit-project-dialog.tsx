@@ -6,6 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -106,6 +107,7 @@ const EditProjectForm = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
+  const [aiCreditsLimit, setAiCreditsLimit] = useState('');
 
   const currentConnectionExternalIds = globalConnections
     .filter((connection) => connection.projectIds.includes(projectId))
@@ -189,6 +191,25 @@ const EditProjectForm = ({
               )}
             />
           )}
+
+        {/* ponytail: prototype mock — remove */}
+        <div className="space-y-2">
+          <Label htmlFor="aiCreditsLimit">{t('AI Credits Limit')}</Label>
+          <FormDescription>
+            {t(
+              'Monthly cap on AI credits for this project. Leave empty for no limit.',
+            )}
+          </FormDescription>
+          <Input
+            id="aiCreditsLimit"
+            type="number"
+            min={1}
+            value={aiCreditsLimit}
+            onChange={(event) => setAiCreditsLimit(event.target.value)}
+            placeholder={t('No limit')}
+            className="rounded-sm"
+          />
+        </div>
 
         {globalConnectionsEnabled && (
           <FormField

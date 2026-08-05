@@ -214,7 +214,10 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
           description: 'Long-context contract work',
           builtIn: false,
           slots: {
-            main: { provider: AIProviderName.GOOGLE, modelId: 'gemini-3.0-pro' },
+            main: {
+              provider: AIProviderName.GOOGLE,
+              modelId: 'gemini-3.0-pro',
+            },
             backup1: {
               provider: AIProviderName.OPENAI,
               modelId: 'gpt-5.2',
@@ -228,7 +231,11 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
       ],
     },
     usage: standardUsage(),
-    currentProject: { name: 'Marketing Ops', creditsUsed: 3_240, limit: 10_000 },
+    currentProject: {
+      name: 'Marketing Ops',
+      creditsUsed: 3_240,
+      limit: 10_000,
+    },
   },
   defaults: {
     id: 'defaults',
@@ -271,7 +278,11 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
       })),
     },
     usage: standardUsage(),
-    currentProject: { name: 'Marketing Ops', creditsUsed: 3_240, limit: 10_000 },
+    currentProject: {
+      name: 'Marketing Ops',
+      creditsUsed: 3_240,
+      limit: 10_000,
+    },
   },
   'limit-reached': {
     id: 'limit-reached',
@@ -283,11 +294,13 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
     chatProvider: AIProviderName.ANTHROPIC,
     routing: { isDefault: false, tiers: builtInTiers() },
     usage: standardUsage().map((row, index) =>
-      index === 0
-        ? { ...row, creditsUsed: row.limit ?? row.creditsUsed }
-        : row,
+      index === 0 ? { ...row, creditsUsed: row.limit ?? row.creditsUsed } : row,
     ),
-    currentProject: { name: 'Marketing Ops', creditsUsed: 10_000, limit: 10_000 },
+    currentProject: {
+      name: 'Marketing Ops',
+      creditsUsed: 10_000,
+      limit: 10_000,
+    },
   },
 };
 
@@ -318,7 +331,10 @@ function builtInTiers({
     return [
       builtInTier({
         id: 'fast',
-        main: { provider: AIProviderName.ANTHROPIC, modelId: 'claude-haiku-4-5' },
+        main: {
+          provider: AIProviderName.ANTHROPIC,
+          modelId: 'claude-haiku-4-5',
+        },
         backup1: {
           provider: AIProviderName.ANTHROPIC,
           modelId: 'claude-haiku-4-5',
@@ -330,7 +346,10 @@ function builtInTiers({
       }),
       builtInTier({
         id: 'smart',
-        main: { provider: AIProviderName.ANTHROPIC, modelId: 'claude-sonnet-4-6' },
+        main: {
+          provider: AIProviderName.ANTHROPIC,
+          modelId: 'claude-sonnet-4-6',
+        },
         backup1: {
           provider: AIProviderName.ANTHROPIC,
           modelId: 'claude-sonnet-4-6',
@@ -342,7 +361,10 @@ function builtInTiers({
       }),
       builtInTier({
         id: 'premium',
-        main: { provider: AIProviderName.ANTHROPIC, modelId: 'claude-opus-4.8' },
+        main: {
+          provider: AIProviderName.ANTHROPIC,
+          modelId: 'claude-opus-4.8',
+        },
         backup1: {
           provider: AIProviderName.ANTHROPIC,
           modelId: 'claude-opus-4.8',
@@ -366,7 +388,10 @@ function builtInTiers({
     }),
     builtInTier({
       id: 'smart',
-      main: { provider: AIProviderName.ANTHROPIC, modelId: 'claude-sonnet-4-6' },
+      main: {
+        provider: AIProviderName.ANTHROPIC,
+        modelId: 'claude-sonnet-4-6',
+      },
       backup1: { provider: AIProviderName.OPENAI, modelId: 'gpt-5.2' },
       backup2: {
         provider: AIProviderName.OPENROUTER,
@@ -452,9 +477,12 @@ const PROVIDER_USAGE_DASHBOARDS: Partial<Record<AIProviderName, string>> = {
   [AIProviderName.GOOGLE]: 'https://aistudio.google.com/usage',
   [AIProviderName.OPENROUTER]: 'https://openrouter.ai/activity',
   [AIProviderName.MISTRAL]: 'https://console.mistral.ai/usage',
-  [AIProviderName.AZURE]: 'https://portal.azure.com/#view/Microsoft_Azure_CostManagement',
-  [AIProviderName.BEDROCK]: 'https://console.aws.amazon.com/cost-management/home',
-  [AIProviderName.CLOUDFLARE_GATEWAY]: 'https://dash.cloudflare.com/?to=/:account/ai/ai-gateway',
+  [AIProviderName.AZURE]:
+    'https://portal.azure.com/#view/Microsoft_Azure_CostManagement',
+  [AIProviderName.BEDROCK]:
+    'https://console.aws.amazon.com/cost-management/home',
+  [AIProviderName.CLOUDFLARE_GATEWAY]:
+    'https://dash.cloudflare.com/?to=/:account/ai/ai-gateway',
 };
 
 const BUILT_IN_TIER_NAMES: Record<BuiltInTierId, string> = {
