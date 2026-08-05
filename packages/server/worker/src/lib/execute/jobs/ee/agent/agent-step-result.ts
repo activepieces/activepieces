@@ -36,7 +36,7 @@ function toStepBlocks({ part, timestamp }: { part: PersistedAgentPart, timestamp
                 toolName: part.toolName,
                 toolCallId: part.toolCallId,
                 input: part.input,
-                output: agentWorkerTools.shrinkLargeValue(failureOrOutput(part), OUTPUT_LIMITS),
+                output: agentWorkerTools.shrinkLargeValue(part.status === PersistedToolCallStatus.ERROR ? { failed: true, error: part.errorText ?? 'The action failed' } : part.output, OUTPUT_LIMITS),
                 status: ToolCallStatus.COMPLETED,
                 startTime: timestamp,
                 endTime: timestamp,
@@ -46,8 +46,3 @@ function toStepBlocks({ part, timestamp }: { part: PersistedAgentPart, timestamp
     }
 }
 
-function failureOrOutput(part: { status: PersistedToolCallStatus, errorText?: string, output?: unknown }): unknown {
-    return part.status === PersistedToolCallStatus.ERROR
-        ? { failed: true, error: part.errorText ?? 'The action failed' }
-        : part.output
-}

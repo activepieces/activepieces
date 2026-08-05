@@ -184,11 +184,6 @@ function looksLikeMcpContentParts(array: unknown[]): boolean {
     return array.every((element) => isObject(element) && typeof element['type'] === 'string')
 }
 
-function humanizedPieceName(piece: string): string {
-    const stripped = piece.replace('@activepieces/piece-', '').replace(/^piece-/, '')
-    return stripped.split(/[-_]/).filter((word) => word.length > 0).map((word) => word[0].toUpperCase() + word.slice(1)).join(' ')
-}
-
 function normalizePieceName(piece: string): string {
     if (piece.startsWith('@')) return piece
     const stripped = piece.startsWith('piece-') ? piece.slice('piece-'.length) : piece
@@ -1453,7 +1448,7 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
     return Object.fromEntries(tools.map((configured) => [
         configured.toolName,
         tool({
-            description: `Run the "${configured.pieceMetadata.actionName}" action of ${humanizedPieceName(configured.pieceMetadata.pieceName)}. Say what you want it to do in plain language, including any values it needs. Its inputs are worked out from what you say here, and any field the flow author already pinned on this step keeps their value whatever you say. Returns whatever the action returns, or an explanation if it failed.`,
+            description: `Run the "${configured.pieceMetadata.actionName}" action of ${configured.pieceMetadata.pieceName.replace('@activepieces/piece-', '')}. Describe what it should do, including any values it needs; the inputs are worked out from that. Fields the flow author pinned keep their value whatever you ask for. Returns the action's own output, or why it failed.`,
             inputSchema: z.object({
                 instruction: z.string().describe('What this action should do, including any values it needs, in plain language'),
             }),
