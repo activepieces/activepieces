@@ -40,7 +40,7 @@ export const prompthub = createPiece({
   description:
     'Integrate with PromptHub projects, retrieve heads, and run prompts.',
   auth: prompthubAuth,
-  minimumSupportedRelease: '0.63.0',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/prompthub.png',
   authors: ['sparkybug'],
   actions: [

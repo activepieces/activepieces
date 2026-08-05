@@ -48,7 +48,7 @@ export const senjaAuth = PieceAuth.SecretText({
 export const senja = createPiece({
   displayName: 'Senja',
   description: 'Collect, manage, and share testimonials with Senja.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/senja.png',
   categories: [PieceCategory.MARKETING],
   auth: senjaAuth,

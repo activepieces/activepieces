@@ -49,7 +49,7 @@ export const reoonEmailVerifyAuth = PieceAuth.SecretText({
 export const reoonEmailVerify = createPiece({
   displayName: 'Reoon Email Verifier',
   auth: reoonEmailVerifyAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.87.0',
   categories: [PieceCategory.MARKETING],
   logoUrl: 'https://cdn.activepieces.com/pieces/reoon-verifier.png',
   description:
