@@ -329,6 +329,10 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeAgentTool(input)
         },
 
+        async resumeFlowStep(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).resumeFlowStep(input)
+        },
+
         async sendAgentEmail(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendAgentEmail(input)
         },

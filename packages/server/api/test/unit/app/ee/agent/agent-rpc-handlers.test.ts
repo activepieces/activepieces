@@ -1,5 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
+    mockGetFlowRun: vi.fn(),
+    mockResumeFromWaitpoint: vi.fn().mockResolvedValue({ stale: false }),
+}))
+
+vi.mock('../../../../../src/app/flows/flow-run/flow-run-service', () => ({
+    flowRunService: () => ({ getOneOrThrow: mockGetFlowRun }),
+}))
+
+vi.mock('../../../../../src/app/flows/flow-run/waitpoint/resume-service', () => ({
+    resumeService: () => ({ resumeFromWaitpoint: mockResumeFromWaitpoint }),
+}))
+
 const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
     mockSave: vi.fn(),
     mockSet: vi.fn(),
@@ -296,5 +309,55 @@ describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a
             conversationId: 'conv-1',
             source: 'FLOW_STEP',
         } as never)).rejects.toThrow()
+    })
+})
+
+describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a flow', () => {
+    async function resume(conversation: unknown) {
+        mockResumeFromWaitpoint.mockClear()
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue(conversation)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        return agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: { success: true },
+        })
+    }
+
+    it('releases the waitpoint for a flow-step run, scoped to that run\'s own project', async () => {
+        await resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+
+        expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-1', projectId: 'proj-1' })
+        expect(mockResumeFromWaitpoint).toHaveBeenCalledWith({
+            flowRunId: 'run-1',
+            waitpointId: 'wp-1',
+            resumePayload: { body: { success: true }, headers: {}, queryParams: {} },
+        })
+    })
+
+    it('sends an empty queryParams, so this path can never approve anything', async () => {
+        await resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+
+        const { resumePayload } = mockResumeFromWaitpoint.mock.calls[0][0]
+        expect(resumePayload.queryParams).toEqual({})
+    })
+
+    it('refuses when the conversation is a chat', async () => {
+        await expect(resume({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('refuses when the conversation does not exist', async () => {
+        await expect(resume(null)).rejects.toThrow()
+
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so the run lookup is never left unscoped', async () => {
+        await expect(resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+
+        expect(mockGetFlowRun).not.toHaveBeenCalled()
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
     })
 })
