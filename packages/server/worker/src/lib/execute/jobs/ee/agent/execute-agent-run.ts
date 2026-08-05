@@ -35,6 +35,7 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_c
 
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code']
 const MAX_ANSWER_LENGTH = 51_200
+const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
@@ -266,7 +267,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
             }
-            await retryOnceThenThrow({ operation: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', log })
+            await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
             answer = stepOutcomeFrom({ uiParts, truncatedAfterRetries, budgetExceeded })
 
@@ -378,31 +379,15 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
         }
         return
     }
-    await retryOnceThenThrow({
-        operation: () => ctx.apiClient.resumeFlowStep({ conversationId, flowRunId, waitpointId, output }),
+    await retryWithBackoff({
+        fn: () => ctx.apiClient.resumeFlowStep({ conversationId, flowRunId, waitpointId, output }),
+        maxAttempts: DELIVERY_MAX_ATTEMPTS,
         description: 'Handing the result back to the flow',
+        throwOnExhausted: true,
         log: log.child({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }),
     })
 }
 
-async function retryOnceThenThrow({ operation, description, log }: {
-    operation: () => Promise<unknown>
-    description: string
-    log: JobContext['log']
-}): Promise<void> {
-    const { error } = await tryCatch(operation)
-    if (isNil(error)) {
-        return
-    }
-    log.warn({ error }, `[executeAgentRun] ${description} failed, retrying`)
-    await new Promise((resolve) => setTimeout(resolve, 1_000))
-    const { error: retryError } = await tryCatch(operation)
-    if (isNil(retryError)) {
-        return
-    }
-    log.error({ error: retryError }, `[executeAgentRun] ${description} failed again, failing the job`)
-    throw retryError
-}
 
 function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source }: {
     ctx: JobContext
@@ -726,16 +711,21 @@ function waitForAbort(signal: AbortSignal): Promise<void> {
     })
 }
 
-async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
-    fn: () => Promise<void>
+async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, description = 'Operation', throwOnExhausted = false, log }: {
+    fn: () => Promise<unknown>
     maxAttempts?: number
+    description?: string
+    throwOnExhausted?: boolean
     log?: { warn: (obj: Record<string, unknown>, msg: string) => void }
 }): Promise<void> {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const { error } = await tryCatch(fn)
         if (!error) return
         if (attempt === maxAttempts) {
-            log?.warn({ error, attempt }, 'All retry attempts exhausted')
+            log?.warn({ error, attempt }, `[executeAgentRun] ${description} failed after every attempt`)
+            if (throwOnExhausted) {
+                throw error
+            }
             return
         }
         await delayWithJitter(RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1))
