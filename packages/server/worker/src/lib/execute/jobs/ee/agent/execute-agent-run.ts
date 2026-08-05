@@ -226,6 +226,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
+                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: 'The agent run was stopped before it finished' }, log })
                 await sendEventWithRetry({
                     event: { type: AgentEventType.FINISHED, data: { conversationId } },
                 })
