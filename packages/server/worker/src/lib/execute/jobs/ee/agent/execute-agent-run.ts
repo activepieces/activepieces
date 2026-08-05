@@ -34,6 +34,7 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code']
+const MAX_ANSWER_LENGTH = 51_200
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
@@ -103,9 +104,11 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
         }
 
-        const cancelCheckInterval = setInterval(() => {
-            checkCancelled().catch(() => {})
-        }, 3_000)
+        const cancelCheckInterval = source === AgentRunSource.CHAT
+            ? setInterval(() => {
+                checkCancelled().catch(() => {})
+            }, 3_000)
+            : undefined
 
         // Continuous liveness signal for the entire turn — covers long tool/LLM steps and
         // approval waits alike, not just gaps between AI-SDK steps. Refreshes connected
@@ -120,7 +123,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             void tryCatch(() => ctx.apiClient.heartbeatAgentConversation({ conversationId, runId }))
         }
         const heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
-        let answer: unknown
+        let answer: StepOutcome | undefined
 
         try {
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
@@ -226,7 +229,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
-                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: 'The agent run was stopped before it finished' }, log })
+                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: 'The agent run was stopped before it finished' }, source, log })
                 await sendEventWithRetry({
                     event: { type: AgentEventType.FINISHED, data: { conversationId } },
                 })
@@ -265,8 +268,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryOnceThenThrow({ operation: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', log })
 
-            answer = { success: true, output: agentTextFrom(turn.uiParts) }
-            await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, log })
+            answer = stepOutcomeFrom({ uiParts, truncatedAfterRetries, budgetExceeded })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -298,7 +300,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
-            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? { success: false, error: clientMessage }, log }))
+            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? { success: false, error: clientMessage }, source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateAgentProgress) and only flips status, so an errored turn keeps
@@ -334,8 +336,23 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
         }
 
+        await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, source, log })
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
+}
+
+export function stepOutcomeFrom({ uiParts, truncatedAfterRetries, budgetExceeded }: {
+    uiParts: PersistedAgentPart[]
+    truncatedAfterRetries: boolean
+    budgetExceeded: boolean
+}): StepOutcome {
+    if (truncatedAfterRetries) {
+        return { success: false, error: 'The response reached the output limit before the agent finished' }
+    }
+    if (budgetExceeded) {
+        return { success: false, error: 'The run reached its usage limit and was stopped' }
+    }
+    return { success: true, output: agentTextFrom(uiParts).slice(0, MAX_ANSWER_LENGTH) }
 }
 
 function agentTextFrom(parts: PersistedAgentPart[]): string {
@@ -346,21 +363,25 @@ function agentTextFrom(parts: PersistedAgentPart[]): string {
         .trim()
 }
 
-async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output, log }: {
+async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output, source, log }: {
     ctx: JobContext
     conversationId: string
     flowRunId?: string
     waitpointId?: string
     output: unknown
+    source: AgentRunSource
     log: JobContext['log']
 }): Promise<void> {
     if (isNil(flowRunId) || isNil(waitpointId)) {
+        if (source === AgentRunSource.FLOW_STEP) {
+            log.error({ flowRun: isNil(flowRunId) ? undefined : { id: flowRunId }, waitpoint: isNil(waitpointId) ? undefined : { id: waitpointId } }, '[executeAgentRun] Flow-step run has nothing to release; the flow will stay paused')
+        }
         return
     }
     await retryOnceThenThrow({
         operation: () => ctx.apiClient.resumeFlowStep({ conversationId, flowRunId, waitpointId, output }),
         description: 'Handing the result back to the flow',
-        log: log.child({ flowRun: { id: flowRunId } }),
+        log: log.child({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }),
     })
 }
 
@@ -721,3 +742,7 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, log }: {
     }
 }
 
+
+export type StepOutcome =
+    | { success: true, output: string }
+    | { success: false, error: string }

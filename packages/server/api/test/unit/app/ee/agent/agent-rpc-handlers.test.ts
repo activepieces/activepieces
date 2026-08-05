@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
     mockGetFlowRun: vi.fn(),
-    mockResumeFromWaitpoint: vi.fn().mockResolvedValue(undefined),
+    mockResumeFromWaitpoint: vi.fn().mockResolvedValue({ stale: false }),
 }))
 
 vi.mock('../../../../../src/app/flows/flow-run/flow-run-service', () => ({
@@ -328,7 +328,18 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
         await resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
 
         expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-1', projectId: 'proj-1' })
-        expect(mockResumeFromWaitpoint).toHaveBeenCalledTimes(1)
+        expect(mockResumeFromWaitpoint).toHaveBeenCalledWith({
+            flowRunId: 'run-1',
+            waitpointId: 'wp-1',
+            resumePayload: { body: { success: true }, headers: {}, queryParams: {} },
+        })
+    })
+
+    it('sends an empty queryParams, so this path can never approve anything', async () => {
+        await resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+
+        const { resumePayload } = mockResumeFromWaitpoint.mock.calls[0][0]
+        expect(resumePayload.queryParams).toEqual({})
     })
 
     it('refuses when the conversation is a chat', async () => {
