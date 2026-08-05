@@ -4,6 +4,7 @@ import {
   PiecePropValueSchema,
   OAuth2PropertyValue,
   AppConnectionValueForAuthProperty,
+  isNil,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -21,7 +22,7 @@ const polling: Polling<
   Record<string, any>
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth }) => {
+  items: async ({ auth, lastItemId }) => {
     let bookmark: string | undefined = undefined;
     let followers: any[] = [];
     let pageCount = 0;
@@ -57,6 +58,18 @@ const polling: Polling<
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       } catch (error) {
+        // Returning the pages read so far would let pollingHelper store the
+        // newest follower it did receive as `lastItem`. On the next poll that id
+        // is found on page one, so everything after it counts as already seen
+        // and the followers on the pages we never reached are never emitted.
+        // Fail the poll instead, leaving `lastItem` untouched.
+        //
+        // A first/sample run has no `lastItem` to corrupt, so best-effort is
+        // fine. isNil rather than truthiness: the id is a username, and an empty
+        // string is a real checkpoint that must not be treated as a first run.
+        if (!isNil(lastItemId)) {
+          throw error;
+        }
         console.error('Error fetching followers:', error);
         break;
       }

@@ -102,8 +102,19 @@ const polling: Polling<
           pins = pins.concat(items);
         }
       } catch (error) {
+        // Returning the pages read so far would let pollingHelper advance
+        // `lastPoll` to the newest pin it did receive (it stores the max epoch
+        // of the returned items), stranding the still-qualifying pins on the
+        // pages we never reached permanently behind the checkpoint. Failing the
+        // poll leaves the checkpoint untouched, so the next run retries the
+        // whole window — the same hazard the comment above the loop describes.
+        //
+        // A sample run has no checkpoint to corrupt, so best-effort is fine.
+        if (!isSample) {
+          throw error;
+        }
         console.error(`Error fetching pins for board ${board_id}:`, error);
-        break; // Stop pagination on error
+        break;
       }
     } while (bookmark && (!isSample || pageCount < maxSamplePages));
 
