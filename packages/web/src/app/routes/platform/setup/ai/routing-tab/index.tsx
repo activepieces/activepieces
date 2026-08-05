@@ -59,6 +59,22 @@ export function RoutingTab({ scenario }: { scenario: MockScenario }) {
     setTiers((current) => current.filter((tier) => tier.id !== tierId));
   };
 
+  const updateTierDetails = ({
+    tierId,
+    name,
+    description,
+  }: {
+    tierId: string;
+    name: string;
+    description: string;
+  }) => {
+    setTiers((current) =>
+      current.map((tier) =>
+        tier.id === tierId ? { ...tier, name, description } : tier,
+      ),
+    );
+  };
+
   const resetToDefaults = () => {
     setTiers(SCENARIOS.defaults.routing.tiers);
     setIsDefault(true);
@@ -142,6 +158,12 @@ export function RoutingTab({ scenario }: { scenario: MockScenario }) {
               updateSlot({ tierId: tier.id, slotKey, modelId })
             }
             onDelete={tier.builtIn ? undefined : () => deleteTier(tier.id)}
+            onDetailsChange={
+              tier.builtIn
+                ? undefined
+                : ({ name, description }) =>
+                    updateTierDetails({ tierId: tier.id, name, description })
+            }
           />
         ))}
       </div>

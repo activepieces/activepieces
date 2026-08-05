@@ -100,6 +100,14 @@ export function TierModelPicker({
                     }}
                     className="cursor-pointer"
                   >
+                    <Check
+                      className={cn(
+                        'size-4 shrink-0',
+                        value?.kind === 'tier' && value.id === tier.id
+                          ? 'opacity-100'
+                          : 'opacity-0',
+                      )}
+                    />
                     <TierIcon
                       tierId={tier.id}
                       className="size-4 shrink-0 text-muted-foreground"
@@ -110,14 +118,6 @@ export function TierModelPicker({
                         {tier.description}
                       </span>
                     </div>
-                    <Check
-                      className={cn(
-                        'ml-auto size-4 shrink-0',
-                        value?.kind === 'tier' && value.id === tier.id
-                          ? 'opacity-100'
-                          : 'opacity-0',
-                      )}
-                    />
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -144,6 +144,12 @@ export function TierModelPicker({
                       'opacity-60': disabledReason !== undefined,
                     })}
                   >
+                    <Check
+                      className={cn(
+                        'size-4 shrink-0',
+                        selected ? 'opacity-100' : 'opacity-0',
+                      )}
+                    />
                     {providerLogoOf({ provider: model.provider }) && (
                       <img
                         src={providerLogoOf({ provider: model.provider })}
@@ -170,12 +176,6 @@ export function TierModelPicker({
                     {disabledReason === undefined && (
                       <ModelCapabilityIcons model={model} />
                     )}
-                    <Check
-                      className={cn(
-                        'size-4 shrink-0',
-                        selected ? 'opacity-100' : 'opacity-0',
-                      )}
-                    />
                   </CommandItem>
                 );
               })}

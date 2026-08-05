@@ -1,10 +1,20 @@
 import { t } from 'i18next';
-import { CircleCheck, Info, Layers, Trash2 } from 'lucide-react';
+import { CircleCheck, Info, Layers, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Tooltip,
   TooltipContent,
@@ -23,13 +33,16 @@ export function TierCard({
   models,
   onSlotChange,
   onDelete,
+  onDetailsChange,
 }: {
   tier: MockTier;
   models: ModelFacts[];
   onSlotChange: (change: { slotKey: SlotKey; modelId: string }) => void;
   onDelete?: () => void;
+  onDetailsChange?: (details: { name: string; description: string }) => void;
 }) {
   const [showReplaceNote, setShowReplaceNote] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const mainFacts = models.find(
     (model) => model.id === tier.slots.main.modelId,
   );
@@ -56,29 +69,58 @@ export function TierCard({
       <div className="flex items-center gap-2 p-4 pb-3">
         <TierCardIcon tierId={tier.id} />
         <p className="text-sm font-medium leading-none">{tier.name}</p>
+        {!tier.builtIn && (
+          <Badge
+            variant="outline"
+            className="border-primary/25 bg-primary/5 text-primary"
+          >
+            {t('Custom')}
+          </Badge>
+        )}
         <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
           {tier.description}
         </p>
-        {!tier.builtIn && <Badge variant="outline">{t('Custom')}</Badge>}
-        {!tier.builtIn && onDelete && (
-          <ConfirmationDeleteDialog
-            title={t('Delete custom tier')}
-            message={t(
-              'Anything still using this tier falls back to the default tier. Flows keep working.',
+        {!tier.builtIn && (
+          <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+            {onDetailsChange && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="size-4" />
+              </Button>
             )}
-            entityName={tier.name}
-            mutationFn={async () => onDelete()}
-          >
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-focus-within:opacity-100 group-hover:opacity-100"
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </ConfirmationDeleteDialog>
+            {onDelete && (
+              <ConfirmationDeleteDialog
+                title={t('Delete custom tier')}
+                message={t(
+                  'Anything still using this tier falls back to the default tier. Flows keep working.',
+                )}
+                entityName={tier.name}
+                mutationFn={async () => onDelete()}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </ConfirmationDeleteDialog>
+            )}
+          </div>
         )}
       </div>
+      {onDetailsChange && (
+        <EditTierDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          tier={tier}
+          onSave={onDetailsChange}
+        />
+      )}
       <div className="flex flex-col gap-4 px-4 pb-4">
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-medium">{t('Model')}</span>
@@ -142,6 +184,84 @@ export function TierCard({
         </div>
       </div>
     </div>
+  );
+}
+
+function EditTierDialog({
+  open,
+  onOpenChange,
+  tier,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  tier: MockTier;
+  onSave: (details: { name: string; description: string }) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <EditTierForm
+          key={open ? tier.id : 'closed'}
+          tier={tier}
+          onSave={(details) => {
+            onSave(details);
+            onOpenChange(false);
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditTierForm({
+  tier,
+  onSave,
+}: {
+  tier: MockTier;
+  onSave: (details: { name: string; description: string }) => void;
+}) {
+  const [name, setName] = useState(tier.name);
+  const [description, setDescription] = useState(tier.description);
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{t('Edit tier')}</DialogTitle>
+        <DialogDescription>
+          {t('Rename this tier — its models and fallbacks stay unchanged.')}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="edit-tier-name">{t('Name')}</Label>
+          <Input
+            id="edit-tier-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="edit-tier-description">{t('Description')}</Label>
+          <Input
+            id="edit-tier-description"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          type="button"
+          disabled={name.trim().length === 0}
+          onClick={() =>
+            onSave({ name: name.trim(), description: description.trim() })
+          }
+        >
+          {t('Save')}
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
 
