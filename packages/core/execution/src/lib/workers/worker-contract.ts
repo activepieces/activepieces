@@ -4,7 +4,7 @@ import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { AgentEvent } from './agent-events'
-import { AgentPromptOverride } from './job-data'
+import { AgentPromptOverride, AgentRunSource } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -90,6 +90,7 @@ export type WorkerToApiContract = {
     heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
+    resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
 }
 
@@ -105,6 +106,8 @@ export type GetAgentConfigRequest = {
     runId?: string
     platformId: string
     userId: string
+    source?: AgentRunSource
+    projectId?: string | null
     userMessage: string
     modelName: string | null
     files?: Array<{ name: string, mimeType: string, data: string }>
@@ -141,6 +144,7 @@ export type AgentConfigResponse = {
     aiTools: AgentAiToolsConfig
     emailEnabled: boolean
     userEmail: string
+    source: AgentRunSource
 }
 
 export type SaveAgentMessagesRequest = {
@@ -189,7 +193,15 @@ export type ExecuteAgentToolRequest = {
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
+    source: AgentRunSource
     conversationId?: string
+}
+
+export type ResumeFlowStepRequest = {
+    conversationId: string
+    flowRunId: string
+    waitpointId: string
+    output: unknown
 }
 
 export type ExecuteAgentToolResponse = {

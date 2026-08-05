@@ -45,11 +45,12 @@ function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boo
     return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
 }
 
-function createChatModel({ provider, auth, config, modelId, webSearchEnabled = false }: {
+function createChatModel({ provider, auth, config, modelId, metadata, webSearchEnabled = false }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
+    metadata?: ChatModelMetadata
     webSearchEnabled?: boolean
 }): LanguageModel {
     if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
@@ -70,8 +71,23 @@ function createChatModel({ provider, auth, config, modelId, webSearchEnabled = f
         options: {
             openRouterSettings: openRouterModelSettings(provider, webSearchEnabled),
             mistralViaOpenRouter: true,
+            ...spreadIfDefined('extraHeaders', managedProviderMetadataHeaders({ provider, metadata })),
         },
     })
+}
+
+function managedProviderMetadataHeaders({ provider, metadata }: {
+    provider: AIProviderName
+    metadata?: ChatModelMetadata
+}): Record<string, string> | undefined {
+    if (isNil(metadata) || provider !== AIProviderName.ACTIVEPIECES) {
+        return undefined
+    }
+    return {
+        'x-ap-platform-id': metadata.platformId,
+        'x-ap-conversation-id': metadata.conversationId,
+        ...spreadIfDefined('x-ap-run-id', metadata.runId),
+    }
 }
 
 /**
@@ -478,3 +494,11 @@ export const agentAiUtils = {
 }
 
 export type { ContentPartLike }
+
+type ChatModelMetadata = {
+    platformId: string
+    conversationId: string
+    runId?: string
+}
+
+export type { ChatModelMetadata }

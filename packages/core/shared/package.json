@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.123.0",
+  "version": "0.128.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -26,6 +26,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@activepieces/core-piece-types": "workspace:*",
     "@types/node": "24.11.0",
     "@types/semver": "7.5.6",
     "vitest": "3.2.6"

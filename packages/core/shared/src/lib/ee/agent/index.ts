@@ -1,4 +1,4 @@
-import { AgentPromptOverride } from '@activepieces/core-execution'
+import { AgentPromptOverride, AgentRunSource } from '@activepieces/core-execution'
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -194,11 +194,14 @@ export enum AgentConversationStatus {
     ERROR = 'ERROR',
 }
 
+export { AgentRunSource }
+
 export const AgentConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
     projectId: Nullable(z.string()),
     userId: z.string(),
+    source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
     status: z.nativeEnum(AgentConversationStatus).default(AgentConversationStatus.IDLE),
@@ -242,6 +245,9 @@ export const UpdateAgentMemoryRequest = z.object({
     memories: z.optional(z.array(z.string())),
 })
 export type UpdateAgentMemoryRequest = z.infer<typeof UpdateAgentMemoryRequest>
+
+export const CHAT_BYOK_CREDIT_WEIGHT = 1
+export const CHAT_CREDITS_PER_TOOL_CALL = 1
 
 export const ImportAgentMemoryRequest = z.object({
     text: z.string(),

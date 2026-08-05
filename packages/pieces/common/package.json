@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/pieces-common",
-  "version": "0.12.6",
+  "version": "0.12.7",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",

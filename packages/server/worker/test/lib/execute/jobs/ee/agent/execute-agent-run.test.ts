@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { stepOutcomeFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
 import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 describe('decideLoopAction', () => {
@@ -41,5 +42,32 @@ describe('shouldRetryStream', () => {
 
     it('never retries once visible output was already streamed (avoids duplicate content)', () => {
         expect(shouldRetryStream({ producedVisibleOutput: true, streamRetries: 0 })).toBe(false)
+    })
+})
+
+describe('stepOutcomeFrom', () => {
+    const text = (value: string) => ({ type: 'text' as const, text: value })
+
+    it('hands back the agent text when the turn finished properly', () => {
+        expect(stepOutcomeFrom({ uiParts: [text('done')], truncatedAfterRetries: false, budgetExceeded: false }))
+            .toEqual({ success: true, output: 'done' })
+    })
+
+    it('reports a truncated turn as a failure rather than passing off a half answer', () => {
+        const outcome = stepOutcomeFrom({ uiParts: [text('half an ans')], truncatedAfterRetries: true, budgetExceeded: false })
+
+        expect(outcome.success).toBe(false)
+    })
+
+    it('reports a turn stopped on budget as a failure', () => {
+        const outcome = stepOutcomeFrom({ uiParts: [text('partial')], truncatedAfterRetries: false, budgetExceeded: true })
+
+        expect(outcome.success).toBe(false)
+    })
+
+    it('caps the answer so an unbounded one cannot be written into the resume payload', () => {
+        const outcome = stepOutcomeFrom({ uiParts: [text('x'.repeat(80_000))], truncatedAfterRetries: false, budgetExceeded: false })
+
+        expect(outcome.success && outcome.output.length).toBe(51_200)
     })
 })

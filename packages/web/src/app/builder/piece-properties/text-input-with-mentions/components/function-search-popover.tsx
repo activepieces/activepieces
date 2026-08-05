@@ -41,6 +41,7 @@ export function FunctionSearchPopover({
   const [hoveredFn, setHoveredFn] = useState<ApFunction | null>(null);
   const [hoverItemRect, setHoverItemRect] = useState<DOMRect | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   const filtered = query
     ? AP_FUNCTIONS.filter((fn) =>
@@ -77,6 +78,24 @@ export function FunctionSearchPopover({
     window.addEventListener('keydown', handler, true);
     return () => window.removeEventListener('keydown', handler, true);
   }, [filtered, activeIdx, onSelect, onClose]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target;
+      if (!(target instanceof globalThis.Node)) {
+        return;
+      }
+      if (popoverRef.current?.contains(target)) {
+        return;
+      }
+      if (editorRef.current?.contains(target)) {
+        return;
+      }
+      onClose();
+    };
+    document.addEventListener('mousedown', handler, true);
+    return () => document.removeEventListener('mousedown', handler, true);
+  }, [editorRef, onClose]);
 
   const editorRect = editorRef.current?.getBoundingClientRect();
   const popoverTop = editorRect ? editorRect.bottom + 4 : position.top;
@@ -125,6 +144,7 @@ export function FunctionSearchPopover({
   if (!query) {
     return createPortal(
       <div
+        ref={popoverRef}
         className="fixed z-9998 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
@@ -140,6 +160,7 @@ export function FunctionSearchPopover({
   if (filtered.length === 0) {
     return createPortal(
       <div
+        ref={popoverRef}
         className="fixed z-9998 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
@@ -155,6 +176,7 @@ export function FunctionSearchPopover({
   return createPortal(
     <>
       <div
+        ref={popoverRef}
         className="fixed z-999 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >

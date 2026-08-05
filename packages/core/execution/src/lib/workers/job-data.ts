@@ -251,6 +251,11 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
+export enum AgentRunSource {
+    CHAT = 'CHAT',
+    FLOW_STEP = 'FLOW_STEP',
+}
+
 export const AgentPromptOverride = z.object({
     system: z.string().optional(),
     projectSelected: z.string().optional(),
@@ -268,6 +273,9 @@ export const ExecuteAgentRunJobData = z.object({
     platformId: z.string(),
     userId: z.string(),
     userMessage: z.string(),
+    source: z.enum(AgentRunSource).optional(),
+    flowRunId: z.string().optional(),
+    waitpointId: z.string().optional(),
     modelName: z.string().nullable(),
     files: z.array(z.object({
         name: z.string(),
