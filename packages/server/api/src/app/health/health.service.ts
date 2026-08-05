@@ -1,5 +1,5 @@
 import { apVersionUtil, systemUsage, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, apId, ErrorCode, FAILED_STATES, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, RunEnvironment, tryCatch, unique } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, ErrorCode, FAILED_STATES, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, RunEnvironment, spreadIfDefined, tryCatch, unique } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../database/database-connection'
@@ -98,6 +98,8 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
                     cpuUsagePercentage: worker.information.cpuUsagePercentage,
                     ramUsagePercentage: worker.information.ramUsagePercentage,
                     serverPingMs: worker.information.serverPingMs ?? null,
+                    ...spreadIfDefined('cpuStealPercentage', worker.information.cpuStealPercentage),
+                    ...spreadIfDefined('cpuThrottledPercentage', worker.information.cpuThrottledPercentage),
                     status: worker.status,
                 })),
             },

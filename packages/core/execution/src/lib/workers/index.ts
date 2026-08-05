@@ -57,6 +57,8 @@ export const MachineInformation = z.object({
     totalCpuCores: z.number(),
     ip: z.string(),
     serverPingMs: z.number().optional(),
+    cpuStealPercentage: z.number().optional(),
+    cpuThrottledPercentage: z.number().optional(),
     sandboxes: z.array(SandboxInformation).default([]),
 })
 

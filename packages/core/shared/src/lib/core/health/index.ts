@@ -48,6 +48,8 @@ export const DiagnosticsWorker = z.object({
     cpuUsagePercentage: z.number(),
     ramUsagePercentage: z.number(),
     serverPingMs: z.number().nullable(),
+    cpuStealPercentage: z.number().optional(),
+    cpuThrottledPercentage: z.number().optional(),
     status: z.string(),
 })
 
