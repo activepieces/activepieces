@@ -862,6 +862,54 @@ describe('Props resolver', () => {
         expect(errors).toEqual({})
     })
 
+    test('cross-step: root-level reference to a sensitive upstream output redacts the reference in censoredInput but resolvedInput keeps the real value', async () => {
+        const state = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { SecretString: 'sk-real', Name: 'my-secret' },
+            sensitiveOutputPaths: ['SecretString'],
+        }))
+        const { resolvedInput, censoredInput } = await propsResolverService.resolve({
+            unresolvedInput: 'Bearer {{step_1.output.SecretString}} for {{step_1.output.Name}}',
+            executionState: state,
+        })
+        expect(resolvedInput).toEqual('Bearer sk-real for my-secret')
+        expect(censoredInput).toEqual('Bearer **REDACTED** for my-secret')
+    })
+
+    test('cross-step: sibling step inside the same loop iteration produces a sensitive output — a later sibling gets **REDACTED** in censoredInput', async () => {
+        const state = (await FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
+            type: FlowActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [
+                    {
+                        step_4: GenericStepOutput.create({
+                            type: FlowActionType.PIECE,
+                            status: StepOutputStatus.SUCCEEDED,
+                            input: {},
+                            output: { SecretString: 'sk-loop-secret' },
+                            sensitiveOutputPaths: ['SecretString'],
+                        }),
+                    },
+                ],
+                item: 1,
+                index: 0,
+            },
+        }))).setCurrentPath(StepExecutionPath.empty().loopIteration({
+            loopName: 'step_3',
+            iteration: 0,
+        }))
+        const { resolvedInput, censoredInput } = await propsResolverService.resolve({
+            unresolvedInput: 'Bearer {{step_4.output.SecretString}}',
+            executionState: state,
+        })
+        expect(resolvedInput).toEqual('Bearer sk-loop-secret')
+        expect(censoredInput).toEqual('Bearer **REDACTED**')
+    })
+
 })
 
 describe('Array Flatter Processor', () => {

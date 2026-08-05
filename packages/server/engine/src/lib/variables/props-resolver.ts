@@ -1,7 +1,7 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
 import { applyFunctionToValues, extractMustacheTokens, isNil, isString, tryCatch } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { FormulaEvaluationError, SENSITIVE_VALUE_REDACTED } from '@activepieces/shared'
+import { FlowActionType, FormulaEvaluationError, SENSITIVE_VALUE_REDACTED, StepOutput } from '@activepieces/shared'
 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CreateScriptSessionParams, ScriptSession } from '../core/code/code-sandbox-common'
@@ -115,13 +115,27 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 export type PropsResolver = ReturnType<typeof createPropsResolver>
 
 function buildSensitiveStepPaths(executionState: FlowExecutorContext): Record<string, string[]> {
-    const map: Record<string, string[]> = {}
-    for (const [name, step] of Object.entries(executionState.steps)) {
-        if (step.sensitiveOutputPaths && step.sensitiveOutputPaths.length > 0) {
-            map[name] = step.sensitiveOutputPaths
+    const layers: Array<Record<string, StepOutput>> = [executionState.steps]
+    let target: Record<string, StepOutput> = executionState.steps
+    for (const [stepName, iteration] of executionState.currentPath.path) {
+        const step = target[stepName]
+        if (isNil(step) || step.type !== FlowActionType.LOOP_ON_ITEMS || isNil(step.output)) {
+            break
         }
+        const iterationOutput = step.output.iterations[iteration]
+        if (isNil(iterationOutput)) {
+            break
+        }
+        target = iterationOutput
+        layers.push(target)
     }
-    return map
+    return Object.fromEntries(
+        layers.flatMap((layer) =>
+            Object.entries(layer)
+                .filter(([, step]) => !isNil(step.sensitiveOutputPaths) && step.sensitiveOutputPaths.length > 0)
+                .map(([name, step]) => [name, step.sensitiveOutputPaths] as const),
+        ),
+    )
 }
 
 function isSensitiveStepReference(variableName: string, sensitiveStepPaths: Record<string, string[]>): boolean {
