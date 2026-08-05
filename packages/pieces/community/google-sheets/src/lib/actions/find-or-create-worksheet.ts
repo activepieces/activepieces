@@ -9,6 +9,12 @@ export const findOrCreateWorksheetAction = createAction({
 	name: 'find-or-create-worksheet',
 	displayName: 'Find or Create Worksheet',
 	description: 'Look up a worksheet by title in a spreadsheet; if not found, create it with optional headers.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Looks up a worksheet (tab) by exact, case-sensitive title inside a spreadsheet and returns it, or creates that tab — optionally seeding a header row — when no tab with the title exists, flagging which happened. Use instead of Create Worksheet when the tab may already exist, since Create Worksheet adds a duplicate tab regardless. Idempotent — a second call with the same title returns the existing tab rather than creating another, and the headers are written only on creation.',
+		idempotent: true,
+	},
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
 		spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The spreadsheet to look in.'),

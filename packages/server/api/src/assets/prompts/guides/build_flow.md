@@ -31,6 +31,24 @@ Every assumption you make becomes an editable line in the closing brief (below) 
 ## Most automations are simple — don't over-build
 The majority are 2–5 linear steps: a schedule or form/webhook trigger and a couple of actions. Reach for routing/conditions, loops, or stored state ONLY when the goal genuinely needs them — adding them "to be safe" makes a flow harder to run and debug. Match the shape to the real requirement, nothing more. (Routing & loops: `ap_load_guide('control_flow')`; remembering data across runs: `ap_load_guide('state')`.)
 
+**Exception — reprocessing safety is never "over-building".** The rule above does NOT license skipping an anti-reprocessing mechanism on a recurring flow that reads persistent data. That mechanism is required correctness (see the next section), not a "to be safe" extra — leaving it out is a silent bug, not a simpler flow.
+
+## Recurring flows must not reprocess
+**Before you build, answer one question: does this run more than once, and does it read data that persists between runs?** If a scheduled/recurring flow reads a source that keeps its data (a sheet, a Table, an inbox, any record set), that source holds the SAME rows again on the next run. A flow shaped `read-all → act → done` will redo run N's work on run N+1 — re-sending, re-paying, re-notifying. This is the #1 silent logic bug: it validates fine, a single test run looks perfect, and the damage only appears on the second run.
+
+Worked failure: "summarize each employee's hours from my sheet and tell me what to pay them", on a weekly schedule. `read sheet → summarize → email` is correct for ONE week — but nothing marks anyone paid, so every week it re-pays everyone for hours already paid. Correct flow for the wrong problem. The fix below (Activepieces Tables ledger): read the sheet → drop rows whose key is already in a `Paid Log` table → pay only the new ones → record their keys in `Paid Log`.
+
+If the flow is recurring AND reads persistent data, commit to exactly ONE of these (each maps to a primitive the platform already has — don't hand-roll):
+- **A "new item" trigger that dedups for you** — prefer this when the source HAS such a trigger. Use its *New Record / New Row / New Email* trigger (Tables **New Record** is a real webhook; app polling triggers dedup via `lastPoll`/`lastItem`) instead of a schedule + a stateless "get all rows" read. The trigger fires once per new item and never re-sees old ones. (`ap_load_guide('tables')` / the app's triggers.)
+- **An Activepieces Tables ledger (dedup against a table you own)** — the default when the source is external or read-only (a Google Sheet, an inbox) and you should NOT mutate it, or when there's no new-item trigger. Create an AP Table (e.g. `Paid Log`, `Processed Orders`) that records the keys you've already handled. Each run: (1) read the source; (2) build a **stable dedup key** per item (e.g. `worker + shift date`, `order_id`, `message_id`); (3) `find-records` the ledger and keep only items whose key is NOT already there; (4) act on just those new items; (5) `create-records` their keys into the ledger so the next run skips them. This syncs "what's been done" into Activepieces and makes the flow idempotent without touching the user's source. `ap_load_guide('tables')`.
+- **A processed-flag filter + write-back** — when you DO own the source: read only unprocessed rows (`find-records`/"get rows" filtered on e.g. `status = pending` or `paid = false`), then after acting flip that field with `update-record`/update-row. Without the write-back the filter is meaningless.
+- **Delete or archive after processing** — remove/move the row once handled so the next read can't see it.
+- **A stored high-water mark** — persist the last-processed id/timestamp in **Store** (`ap_load_guide('state')`) and filter the read to items newer than it.
+
+Also reason through the rest of the cleanup surface, not just the happy path: a **stable dedup key** (so the same real-world item isn't counted as new after an edit), **partial-run recovery** (only mark an item done AFTER its action succeeds, so a mid-run crash reprocesses just the unfinished ones — put the mark/record step immediately after the action), and **ledger growth** (a dedup table grows forever — prune or archive old keys on a retention window if volume is high). Match the depth to the real volume; don't build a retention job for a table that gains 5 rows a week.
+
+Skipping this on a recurring-over-persistent-data flow is not allowed. If you genuinely can't determine a safe mechanism, that's one of the rare cases to ask the user via `ap_show_questions`.
+
 ## Prefer the built-in pieces (no connection needed)
 Activepieces ships pieces that need no external app or connection; registry search often misses them (the form piece is literally named **Human Input**). For a generic ask, map the user's words → piece directly instead of asking them to name a third-party tool:
 
@@ -105,6 +123,7 @@ Wire the **specific fields** a step consumes, never an entire upstream output. A
 3. **Verify the OUTPUT, not the status.** Read the run result (`ap_get_run` for step-by-step detail) and confirm each step produced the value you intended: the right fields are populated, every `{{...}}` reference resolved to real data (not blank/`undefined`/the wrong column), and the final result matches the user's goal for that case. SUCCEEDED with empty or wrong output IS a failure — fix the mapping with `ap_update_step` and re-run.
 4. **Loop until every case genuinely passes.** Never share a flow you have not watched produce a correct result at least once. (Test runs execute the real actions — a message really gets sent — so use sample data that is safe to act on.)
 5. **Be honest about mock vs. real.** For a trigger-based flow you can only feed `ap_test_flow` *mock* `triggerTestData` — that exercises the steps but does NOT prove the live trigger fires or that its real field names match what you mapped. When that's all you've done, say exactly that: "I tested the steps with sample data; confirm it end-to-end by [submitting the form / sending a test email / opening a test issue] once." **Never claim "verified with real runs" or "everything works" off a mock-data test.** Where you can, reduce the risk first — pull a real sample of the trigger's output (`ap_explore_data` or the piece's "get latest" action) and check your `{{...}}` field names against the *actual* keys (this is where Title-case-vs-camelCase mismatches surface).
+6. **For a recurring flow over persistent data, test the SECOND run — one run can't reveal reprocessing.** A single `ap_test_flow` will look perfect even when the flow re-does its work every run, because the bug lives *between* runs. So run `ap_test_flow` **twice against the same state** and read both results: run 2 must NOT re-handle what run 1 already handled (with a processed-flag/high-water-mark it should now find nothing to do; with a dedup trigger the old item shouldn't fire again). **Identical output on both runs is the reprocessing bug, not a pass** — e.g. two runs both emitting the full payroll summary means you'd pay twice. If run 2 reprocesses, the anti-reprocessing mechanism is missing or wrong — fix it and re-test both runs.
 
 ## Reflect against the user's goal before sharing
 Before you share the link, check the built flow against what the user actually asked for — this is where good becomes great. Re-read their request and every constraint they stated in this conversation, and confirm each is satisfied:
@@ -112,6 +131,7 @@ Before you share the link, check the built flow against what the user actually a
 - Is every constraint present as a real step or field (e.g. "only senior, EU-based" → an actual filter/condition, not skipped)?
 - Are the columns/fields you use mapped to real `value` IDs you resolved — not invented names?
 - Does the output go where they wanted, in the form they wanted?
+- **If it's recurring:** does run N+1 avoid redoing run N's work — and is the anti-reprocessing mechanism (dedup trigger / processed-flag + write-back / delete-after / high-water mark) actually present as a real step or filter, not just assumed? A recurring flow reading persistent data with no such mechanism is not done.
 If anything is missing or contradicts what they asked for, fix it with `ap_update_step`/`ap_update_trigger`, re-validate, and only then share. Don't hand over a flow that quietly drops part of the goal.
 
 ## Show the result so the user can trust it — and brief the assumptions
@@ -119,7 +139,7 @@ When you hand back, show what you actually verified — concrete tested results,
 
 Then close with the **brief**: enumerate the specific business assumptions you made — each phrased so the user can change it (the categories you chose, who each case routes to, the thresholds, the destination) — and the obvious next improvements. Offer `ap_show_quick_replies` chips to tweak the top one or two (e.g. "Rename a category", "Change who gets Billing"). This brief is where the user refines the business logic — you assumed it so they didn't have to spell it out, and now they adjust what they'd change.
 
-**Done when**: flow created, all steps validated, **tested with representative cases and the actual outputs verified correct (not just SUCCEEDED), with those results shown to the user**, reflected against the user's goal and gaps fixed, the build card moved to `phase: 'done'` with the `flowId`, and link shared.
+**Done when**: flow created, all steps validated, **tested with representative cases and the actual outputs verified correct (not just SUCCEEDED), with those results shown to the user** (and for a recurring flow over persistent data, the two-run test passed — run 2 did not reprocess), reflected against the user's goal and gaps fixed, the build card moved to `phase: 'done'` with the `flowId`, and link shared.
 
 ## Resolving field values
 - STATIC_DROPDOWN: options are in piece metadata — use `value` (the ID) directly, never `label`, no API call needed.
@@ -154,4 +174,5 @@ Then close with the **brief**: enumerate the specific business assumptions you m
 1. Ensure the one-time task's project is selected via `ap_select_project`.
 2. Pick the starting event: new/incoming items → app trigger if available; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?". Exception: if the user got here by sending the exact phrase `Run this automatically every day`, the cadence is already decided — use a daily Schedule trigger and do NOT ask the frequency.
 3. Reuse the same app, action, connection, and inputs from the one-time task.
-4. Build per this guide.
+4. **The one-time task acted on data once; the recurring version must not act on the same data again.** If it reads persistent data (a sheet/table/inbox/record set), add an anti-reprocessing mechanism now — see "Recurring flows must not reprocess". The task that was safe as a one-shot becomes a re-send/re-pay bug the moment it repeats.
+5. Build per this guide.

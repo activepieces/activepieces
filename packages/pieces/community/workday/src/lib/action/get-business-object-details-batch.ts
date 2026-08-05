@@ -12,6 +12,12 @@ export const getBusinessObjectDetailsBatch = createAction({
 	displayName: 'Get Business Object Details (Batch)',
 	description:
 		'Retrieves details for one or more business objects by ID in a single step.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Fetches the full record for one or more Workday business objects by ID in a single step, after selecting the module (Recruiting, Onboarding, or HR Services & Time Tracking) and an object type such as Job Requisition, Candidate, or Worker, or supplying a custom REST path instead. Use when the record IDs are already known; use Search Business Object (Batch) to find records by criteria. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		...sharedModuleProps,
 		objectIds: objectIdsProperty,

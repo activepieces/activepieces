@@ -1,11 +1,12 @@
 {
   "name": "@activepieces/core-utils",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   },
   "dependencies": {
     "deepmerge-ts": "7.1.0",
@@ -16,7 +17,8 @@
   },
   "devDependencies": {
     "@types/node": "24.11.0",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "vitest": "3.2.6"
   },
   "typings": "./dist/src/index.d.ts"
 }

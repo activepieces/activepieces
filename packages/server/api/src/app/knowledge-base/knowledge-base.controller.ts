@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApMultipartFile, ErrorCode, Permission, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ApMultipartFile, ErrorCode, isMultipartFile, Permission, tryCatch } from '@activepieces/core-utils'
 import { FileCompression, FileType, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { fileService } from '../file/file.service'
+import { attachMultipartFieldsToBody } from '../helper/multipart-body'
 import { knowledgeBaseService } from './knowledge-base.service'
 
 const KB_PRINCIPALS = [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE] as const
@@ -24,7 +25,15 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
     })
 
     fastify.post('/upload', UploadKnowledgeBaseFileRequest, async (request, reply) => {
-        const file = request.body.file as ApMultipartFile
+        const { file, displayName } = request.body
+        if (!isMultipartFile(file)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'File is required',
+                },
+            })
+        }
         if (!KB_ALLOWED_MIME_TYPES.includes(file.mimetype ?? '')) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -46,7 +55,7 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
         const kbFile = await knowledgeBaseService(request.log).createFile({
             projectId: request.projectId,
             fileId: savedFile.id,
-            displayName: request.body.displayName,
+            displayName,
         })
 
         const { data: chunks, error } = await tryCatch(
@@ -156,17 +165,21 @@ const UploadKnowledgeBaseFileRequest = {
             type: ProjectResourceType.QUERY,
         }),
     },
+    // The whole body is consumed up front so `displayName` is found regardless of whether the
+    // client appends it before or after the file part — reading it off the file part's `fields`
+    // only sees fields that happened to arrive first.
+    preValidation: attachMultipartFieldsToBody,
     schema: {
         tags: ['knowledge-base'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         consumes: ['multipart/form-data'],
         description: 'Upload a file and create a knowledge base file record',
-        querystring: z.object({
-            projectId: z.string(),
-        }),
         body: z.object({
             file: ApMultipartFile,
             displayName: z.string(),
+        }),
+        querystring: z.object({
+            projectId: z.string(),
         }),
     },
 }

@@ -54,6 +54,7 @@ function makeProject(
     icon: { color: 'BLUE' as never },
     externalId: null,
     releasesEnabled: false,
+    notifyFlowOwnerOnFailure: false,
     metadata: null,
     plan: {
       id: `plan${id}`,

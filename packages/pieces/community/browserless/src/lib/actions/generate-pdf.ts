@@ -8,7 +8,7 @@ export const generatePdf = createAction({
     displayName: 'Generate PDF',
     description: 'Convert a web page to PDF',
     audience: 'both',
-    aiMetadata: { description: 'Renders content in a headless browser and returns it as a PDF file. Source the content either from a page URL or from a raw HTML string (provide exactly one, not both). Use to produce a printable PDF of a page or supplied markup, with control over paper format, orientation, margins, and headers/footers. Read-only: re-running with the same input re-renders an equivalent PDF without side effects.', idempotent: true },
+    aiMetadata: { description: 'Renders content in a headless browser and returns it as a PDF file. Source the content either from a page URL or from a raw HTML string (provide exactly one, not both). Use to produce a printable PDF of a page or supplied markup, with control over paper format, orientation, margins, and headers/footers. Not idempotent: each call runs a fresh headless-browser render, so repeating it produces a new PDF of the page or markup as it renders at that moment.', idempotent: false },
     auth: browserlessAuth,
     props: {
         url: Property.ShortText({

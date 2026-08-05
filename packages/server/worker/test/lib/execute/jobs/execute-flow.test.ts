@@ -191,7 +191,8 @@ describe('executeFlowJob', () => {
         })
 
         it('marks run as FAILED and completes the job (OK) when the flow is disabled', async () => {
-            const ctx = makeMockContext({ resolveResult: { kind: 'disabled' } })
+            const failedStep = { name: 'step_1', displayName: 'HTTP', message: 'The piece @activepieces/piece-http@1.0.0 is not installed' }
+            const ctx = makeMockContext({ resolveResult: { kind: 'disabled', failedStep } })
             const data = makeResumeJobData({ executionType: ExecutionType.BEGIN })
 
             const result = await executeFlowJob.execute(ctx, data)
@@ -199,7 +200,7 @@ describe('executeFlowJob', () => {
             expect(result.kind).toBe(JobResultKind.FIRE_AND_FORGET)
             expect(result.status).toBe(EngineResponseStatus.OK)
             expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
-                expect.objectContaining({ status: FlowRunStatus.FAILED }),
+                expect.objectContaining({ status: FlowRunStatus.FAILED, failedStep }),
             )
             expect(ctx.runtime.execute).not.toHaveBeenCalled()
         })

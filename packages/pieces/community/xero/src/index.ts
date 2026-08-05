@@ -26,6 +26,9 @@ import { xeroFindContact } from './lib/actions/find-contact';
 import { xeroFindInvoice } from './lib/actions/find-invoice';
 import { xeroFindItem } from './lib/actions/find-item';
 import { xeroFindPurchaseOrder } from './lib/actions/find-purchase-order';
+import { xeroGetInvoiceHistory } from './lib/actions/get-invoice-history';
+import { xeroCreateBankTransaction } from './lib/actions/create-bank-transaction';
+import { xeroFindOrCreateContact } from './lib/actions/find-or-create-contact';
 import { xeroNewContact } from './lib/triggers/new-contact';
 import { xeroNewOrUpdatedContact } from './lib/triggers/new-or-updated-contact';
 import { xeroNewSalesInvoice } from './lib/triggers/new-sales-invoice';
@@ -99,6 +102,9 @@ export const xero = createPiece({
     xeroFindInvoice,
     xeroFindItem,
     xeroFindPurchaseOrder,
+    xeroGetInvoiceHistory,
+    xeroCreateBankTransaction,
+    xeroFindOrCreateContact,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.xero.com/api.xro/2.0',
       auth: xeroAuth,

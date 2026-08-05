@@ -10,6 +10,7 @@ import { pinoLogging } from '../helper/logger'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { shouldBlockRunOnCredits } from '../platform/billing-provider'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
@@ -85,6 +86,12 @@ export const webhookService = {
         }
         const { flow } = flowExecutionResult
 
+        // data() consumes the request body stream (streaming any file straight to storage), which
+        // can only be read once. The handshake check and the payload resolution below both need it,
+        // so memoize — a second call would stream an empty body and hand the run a 0-byte file URL.
+        let resolvedDataPromise: Promise<EventPayload> | undefined
+        const resolveData = (): Promise<EventPayload> => (resolvedDataPromise ??= data(flow.projectId))
+
         wideEvent.set({
             webhook: {
                 flowFound: true,
@@ -100,7 +107,7 @@ export const webhookService = {
         // re-verification). Checking before the DISABLED guard handles both cases.
         if (!isNil(flowExecutionResult.handshakeConfiguration)) {
             const response = await webhookHandshake.handleHandshakeRequest({
-                payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
+                payload: (payload ?? await resolveData()) as TriggerPayload,
                 handshakeConfiguration: flowExecutionResult.handshakeConfiguration,
                 flowId: flow.id,
                 flowVersionId: flowVersionIdToRun,
@@ -136,7 +143,7 @@ export const webhookService = {
 
         pinoLogger.info('Adding webhook job to queue')
 
-        const resolvedPayload = payload ?? await data(flow.projectId)
+        const resolvedPayload = payload ?? await resolveData()
 
         const payloadSize = payloadOffloader.getPayloadSizeInBytes(resolvedPayload)
         if (payloadSize > MAX_PAYLOAD_SIZE_BYTES) {
@@ -259,6 +266,32 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         wideEvent.set({ webhook: { flowDisabled: true } })
         return {
             status: StatusCodes.NOT_FOUND,
+            body: {},
+            headers: {},
+        }
+    }
+
+    const creditsExhausted = await shouldBlockRunOnCredits({
+        platformId,
+        environment: runEnvironment,
+        log: logger,
+    })
+
+    if (creditsExhausted) {
+        const flowVersion = await flowVersionRepo().findOneBy({ id: flowVersionIdToRun })
+        assertNotNullOrUndefined(flowVersion, 'flowVersion')
+        const quotaExceededRun = await flowRunService(logger).createQuotaExceededRun({
+            flowVersion,
+            payload,
+            projectId,
+            environment: runEnvironment,
+            parentRunId,
+            failParentOnFailure,
+            shouldExecuteTriggerOnRetry: true,
+        })
+        wideEvent.set({ flowRun: { id: quotaExceededRun.id }, webhook: { quotaExceeded: true } })
+        return {
+            status: StatusCodes.PAYMENT_REQUIRED,
             body: {},
             headers: {},
         }

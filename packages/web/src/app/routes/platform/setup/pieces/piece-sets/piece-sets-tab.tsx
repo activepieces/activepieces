@@ -1,4 +1,4 @@
-import { PieceSet } from '@activepieces/shared';
+import { PieceSelectionMode, PieceSet } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -70,17 +70,13 @@ export const PieceSetsTab = () => {
         ),
       },
       {
-        accessorKey: 'externalId',
+        accessorKey: 'key',
         header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('External ID')}
-            icon={Hash}
-          />
+          <DataTableColumnHeader column={column} title={t('Key')} icon={Hash} />
         ),
         cell: ({ row }) =>
-          row.original.externalId ? (
-            <span className="font-mono text-sm">{row.original.externalId}</span>
+          row.original.key ? (
+            <span className="font-mono text-sm">{row.original.key}</span>
           ) : (
             <span className="text-muted-foreground">—</span>
           ),
@@ -97,7 +93,7 @@ export const PieceSetsTab = () => {
         ),
         cell: ({ row }) => {
           const includesNewPieces =
-            row.original.config.pieces.mode === 'include_all';
+            row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
           return (
             <Badge variant={includesNewPieces ? 'success' : 'outline'}>
               {includesNewPieces ? t('Yes') : t('No')}
@@ -206,7 +202,7 @@ export const PieceSetsTab = () => {
           }}
           id={editingSet.id}
           currentName={editingSet.name}
-          currentExternalId={editingSet.externalId ?? null}
+          currentKey={editingSet.key ?? null}
         />
       )}
     </>

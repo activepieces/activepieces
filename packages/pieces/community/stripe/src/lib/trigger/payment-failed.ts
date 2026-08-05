@@ -4,6 +4,7 @@ import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isEmpty } from '@activepieces/pieces-framework';
 
+import { chargeOutputSchema } from '../output-schemas';
 export const stripePaymentFailed = createTrigger({
   auth: stripeAuth,
   name: 'payment_failed',
@@ -14,6 +15,7 @@ export const stripePaymentFailed = createTrigger({
       'Fires when a charge fails in Stripe (the charge.failed event), emitting the failed charge including its failure code and message. Use to react to declined payments, such as alerting the customer or triggering a retry/dunning flow.',
   },
   props: {},
+  outputSchema: chargeOutputSchema,
   sampleData: {
     id: 'ch_3MWMPQKZ0dZRqLEK063rxD7q',
     object: 'charge',

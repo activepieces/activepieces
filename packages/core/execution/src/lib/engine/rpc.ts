@@ -10,6 +10,8 @@ type RpcSocket = {
     timeout(ms: number): { emitWithAck(event: string, ...args: unknown[]): Promise<unknown> }
 }
 
+type NotifySocket = Pick<RpcSocket, 'emit'>
+
 export function createRpcClient<T extends Contract>(
     socket: RpcSocket,
     timeoutMs: number,
@@ -53,7 +55,7 @@ export function createRpcServer<T extends Contract>(
 }
 
 export function createNotifyClient<T extends Contract>(
-    socket: RpcSocket,
+    socket: NotifySocket,
 ): T {
     return new Proxy({} as T, {
         get(_target, method: string) {

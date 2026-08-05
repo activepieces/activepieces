@@ -113,6 +113,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
 
 const initSmtpClient = (): Transporter => {
     const smtpPort = Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT))
+    const rejectUnauthorized = system.getBoolean(AppSystemProp.SMTP_TLS_REJECT_UNAUTHORIZED) ?? true
     return nodemailer.createTransport({
         host: system.getOrThrow(AppSystemProp.SMTP_HOST),
         port: smtpPort,
@@ -120,6 +121,9 @@ const initSmtpClient = (): Transporter => {
         auth: {
             user: system.getOrThrow(AppSystemProp.SMTP_USERNAME),
             pass: system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
+        },
+        tls: {
+            rejectUnauthorized,
         },
     })
 }
@@ -133,6 +137,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'issue-created': `[${vars.projectName}] Flow has an issue "${vars.flowName}" ⚠️`,
         'scim-user-welcome': 'Welcome! Your account has been created 🎉',
         'chat-notification': vars.subject,
+        'platform-deleted': 'Your platform has been deleted',
     }
 
     return templateToSubject[templateName]

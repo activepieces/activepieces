@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { ApEdition, FileCompression, FileLocation, FileType, FilteredPieceBehavior, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformPieceFilterRequestBody, UpdatePlatformRequestBody, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,7 +8,7 @@ import { system } from '../../../../src/app/helper/system/system'
 import { systemJobsQueue } from '../../../../src/app/helper/system-jobs/system-job'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import { checkIfSolutionExistsInDb, createMockConnection, createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockSolutionAndSave, createMockUser, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { checkIfSolutionExistsInDb, createMockApiKey, createMockConnection, createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockSolutionAndSave, createMockUser, createMockUserIdentity, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -35,11 +35,8 @@ async function waitForDeletionJobs(jobIds: string[], timeoutMs = 60000) {
     }
 }
 
-function deletionJobIds(platformId: string, projectIds: string[]) {
-    return [
-        ...projectIds.map((id) => `hard-delete-project-${id}`),
-        `hard-delete-platform-${platformId}`,
-    ]
+function deletionJobIds(platformId: string) {
+    return [`hard-delete-platform-${platformId}`]
 }
 
 beforeAll(async () => {
@@ -101,37 +98,11 @@ describe('Platform API', () => {
             expect(responseBody.emailAuthEnabled).toBe(requestBody.emailAuthEnabled)
             expect(responseBody.name).toBe('updated name')
             expect(responseBody.primaryColor).toBe('updated primary color')
-            expect(responseBody.filteredPieceNames).toBeUndefined()
-            expect(responseBody.filteredPieceBehavior).toBeUndefined()
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({
                 saml: null,
             })
             expect(responseBody.cloudAuthEnabled).toBe(false)
-        }),
-
-        it('rejects piece filter fields that moved to the dedicated piece-filter endpoint', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: {
-                    filteredPieceNames: ['@activepieces/piece-slack'],
-                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-                },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
-            expect(response?.body).toContain('pieceFilterMovedToDedicatedEndpoint')
         }),
 
         it('updates the platform logo icons', async () => {
@@ -604,18 +575,15 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(23)
+            expect(Object.keys(responseBody).length).toBe(24)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
+            expect(responseBody.billingEnforced).toBe(false)
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.themeColors).toBeNull()
             expect(responseBody.pieceSelectorConfig).toBeNull()
-            expect(responseBody.filteredPieceNames).toBeUndefined()
-            expect(responseBody.filteredPieceBehavior).toBeUndefined()
-            expect(responseBody.filteredActionNames).toBeUndefined()
-            expect(responseBody.filteredTriggerNames).toBeUndefined()
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
@@ -728,13 +696,13 @@ describe('Platform API', () => {
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD,
+                    plan: PlanName.FREE,
                 },
             })
             const secondAccount = await mockAndSaveBasicSetup(
                 {
                     plan: {
-                        plan: PlanName.STANDARD,
+                        plan: PlanName.FREE,
                     },
                 },
             )
@@ -759,7 +727,7 @@ describe('Platform API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            await waitForDeletionJobs(deletionJobIds(firstAccount.mockPlatform.id, [firstAccount.mockProject.id]))
+            await waitForDeletionJobs(deletionJobIds(firstAccount.mockPlatform.id))
             const secondSolutionExists = await checkIfSolutionExistsInDb(secondSolution)
             expect(secondSolutionExists).toBe(true)
             const ownerSolutionExists = await checkIfSolutionExistsInDb(ownerSolution)
@@ -796,13 +764,13 @@ describe('Platform API', () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD,
+                    plan: PlanName.FREE,
                 },
             })
             const secondAccount = await mockAndSaveBasicSetup(
                 {
                     plan: {
-                        plan: PlanName.STANDARD,
+                        plan: PlanName.FREE,
                     },
                 },
             )
@@ -825,11 +793,73 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         }),
+        it('cuts off every member, flow and api key before the purge runs', async () => {
+            if (!isCloud) return
+            // arrange
+            const account = await mockAndSaveBasicSetup({
+                plan: { plan: PlanName.FREE },
+            })
+            const secondMember = createMockUser({
+                platformId: account.mockPlatform.id,
+                platformRole: PlatformRole.ADMIN,
+            })
+            await db.save('user_identity', createMockUserIdentity({ id: secondMember.identityId }))
+            await db.save('user', secondMember)
+
+            const apiKey = createMockApiKey({ platformId: account.mockPlatform.id })
+            await db.save('api_key', apiKey)
+
+            const flowVersionId = apId()
+            const enabledFlow = createMockFlow({
+                projectId: account.mockProject.id,
+                status: FlowStatus.ENABLED,
+                publishedVersionId: null,
+                operationStatus: FlowOperationStatus.NONE,
+            })
+            await databaseConnection().getRepository('flow').save([enabledFlow])
+            await databaseConnection().getRepository('flow_version').save([createMockFlowVersion({
+                id: flowVersionId,
+                flowId: enabledFlow.id,
+            })])
+            await databaseConnection().getRepository('flow').update(enabledFlow.id, { publishedVersionId: flowVersionId })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: account.mockOwner.id,
+                platform: { id: account.mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/platforms/${account.mockPlatform.id}`,
+                headers: { authorization: `Bearer ${testToken}` },
+            })
+
+            // assert — everything below is true before the delayed purge job runs
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+
+            const owner = await db.findOneBy<User>('user', { id: account.mockOwner.id })
+            expect(owner?.status).toBe(UserStatus.INACTIVE)
+
+            const otherMember = await db.findOneBy<User>('user', { id: secondMember.id })
+            expect(otherMember?.status).toBe(UserStatus.INACTIVE)
+
+            const savedFlow = await db.findOneBy<Flow>('flow', { id: enabledFlow.id })
+            expect(savedFlow?.status).toBe(FlowStatus.DISABLED)
+
+            const savedApiKey = await db.findOneBy('api_key', { id: apiKey.id })
+            expect(savedApiKey).toBeNull()
+
+            const platform = await db.findOneBy('platform', { id: account.mockPlatform.id })
+            expect(platform).not.toBeNull()
+        }),
+
         it('deletes platform, project, user, and connections atomically', async () => {
             if (!isCloud) return
 
             const account = await mockAndSaveBasicSetup({
-                plan: { plan: PlanName.STANDARD },
+                plan: { plan: PlanName.FREE },
             })
 
             const connection = createMockConnection(
@@ -851,7 +881,7 @@ describe('Platform API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            await waitForDeletionJobs(deletionJobIds(account.mockPlatform.id, [account.mockProject.id]))
+            await waitForDeletionJobs(deletionJobIds(account.mockPlatform.id))
 
             const platform = await db.findOneBy('platform', { id: account.mockPlatform.id })
             expect(platform).toBeNull()
@@ -873,7 +903,7 @@ describe('Platform API', () => {
             if (!isCloud) return
 
             const account = await mockAndSaveBasicSetup({
-                plan: { plan: PlanName.STANDARD },
+                plan: { plan: PlanName.FREE },
             })
 
             const flowVersionId = apId()
@@ -920,7 +950,7 @@ describe('Platform API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            await waitForDeletionJobs(deletionJobIds(account.mockPlatform.id, [account.mockProject.id]))
+            await waitForDeletionJobs(deletionJobIds(account.mockPlatform.id))
 
             const savedEnabledFlow = await db.findOneBy('flow', { id: enabledFlow.id })
             expect(savedEnabledFlow).toBeNull()
@@ -946,12 +976,12 @@ describe('Platform API', () => {
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD,
+                    plan: PlanName.FREE,
                 },
             })
             const secondPlatform = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD,
+                    plan: PlanName.FREE,
                 },
             })
             const secondUser = createMockUser({
@@ -975,7 +1005,7 @@ describe('Platform API', () => {
             })
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            await waitForDeletionJobs(deletionJobIds(firstAccount.mockPlatform.id, [firstAccount.mockProject.id]))
+            await waitForDeletionJobs(deletionJobIds(firstAccount.mockPlatform.id))
             const userIdentityExists = await db.findOneBy('user_identity', { id: firstAccount.mockUserIdentity.id })
             expect(userIdentityExists).not.toBeNull()
         })
@@ -1119,93 +1149,6 @@ describe('Platform API', () => {
                 url: `/api/v1/platforms/assets/${apId()}`,
             })
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
-        })
-    })
-
-    describe('platform piece filter endpoint', () => {
-        it('returns the platform-wide piece/component killswitch', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    filteredPieceNames: ['blocked-piece'],
-                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-                    filteredActionNames: { 'my-piece': ['blocked_action'] },
-                    filteredTriggerNames: {},
-                },
-            })
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/platform-piece-filter',
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            const responseBody = response?.json()
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.filteredPieceNames).toStrictEqual(['blocked-piece'])
-            expect(responseBody.filteredPieceBehavior).toBe(FilteredPieceBehavior.BLOCKED)
-            expect(responseBody.filteredActionNames).toStrictEqual({ 'my-piece': ['blocked_action'] })
-            expect(responseBody.filteredTriggerNames).toStrictEqual({})
-        })
-
-        it('updates the platform-wide piece/component killswitch', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {},
-            })
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            const requestBody: UpdatePlatformPieceFilterRequestBody = {
-                filteredPieceNames: ['piece-1'],
-                filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
-                filteredActionNames: { 'piece-1': ['hidden_action'] },
-                filteredTriggerNames: { 'piece-1': ['hidden_trigger'] },
-            }
-
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/platform-piece-filter',
-                headers: { authorization: `Bearer ${token}` },
-                body: requestBody,
-            })
-
-            const responseBody = response?.json()
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.filteredPieceNames).toStrictEqual(['piece-1'])
-            expect(responseBody.filteredPieceBehavior).toBe(FilteredPieceBehavior.ALLOWED)
-            expect(responseBody.filteredActionNames).toStrictEqual({ 'piece-1': ['hidden_action'] })
-            expect(responseBody.filteredTriggerNames).toStrictEqual({ 'piece-1': ['hidden_trigger'] })
-        })
-
-        it('rejects non-admin platform members', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {},
-            })
-            const { mockUser: mockMember } = await mockBasicUser({
-                user: {
-                    platformId: mockPlatform.id,
-                    platformRole: PlatformRole.MEMBER,
-                },
-            })
-            const token = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockMember.id,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/platform-piece-filter',
-                headers: { authorization: `Bearer ${token}` },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })

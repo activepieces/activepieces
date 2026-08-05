@@ -220,8 +220,8 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
-      "@activepieces/piece-call-rounded": [
-        "packages/pieces/community/call-rounded/src/index.ts"
+      "@activepieces/piece-rounded-studio": [
+        "packages/pieces/community/rounded-studio/src/index.ts"
       ],
       "@activepieces/piece-camb-ai": [
         "packages/pieces/community/camb-ai/src/index.ts"
@@ -803,6 +803,7 @@
         "packages/pieces/community/mautic/src/index.ts"
       ],
       "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
+      "@activepieces/piece-mcp-client": ["packages/pieces/community/mcp-client/src/index.ts"],
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
@@ -839,6 +840,9 @@
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-teams-bot": [
+        "packages/pieces/community/microsoft-teams-bot/src/index.ts"
       ],
       "@activepieces/piece-microsoft-todo": [
         "packages/pieces/community/microsoft-todo/src/index.ts"
@@ -1026,6 +1030,9 @@
       ],
       "@activepieces/piece-productboard": [
         "packages/pieces/community/productboard/src/index.ts"
+      ],
+      "@activepieces/piece-produktly": [
+        "packages/pieces/community/produktly/src/index.ts"
       ],
       "@activepieces/piece-promotekit": [
         "packages/pieces/community/promotekit/src/index.ts"
@@ -1550,6 +1557,7 @@
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
+      "@activepieces/ai-providers": ["packages/core/ai-providers/src/index.ts"],
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
@@ -1883,7 +1891,7 @@
       "@activepieces/piece-omnihr": [
         "packages/pieces/community/omnihr/src/index.ts"
       ],
-      "@activepieces/piece-clicdog": [
+      "@activepieces/piece-clicdata": [
         "packages/pieces/community/clicdata/src/index.ts"
       ],
       "@activepieces/piece-katana": [

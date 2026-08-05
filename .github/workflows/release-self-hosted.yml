@@ -12,6 +12,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish_rc_release:
+        description: 'Publish a GitHub Release for RC tags too (ignored for final tags)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   # Preflight: build the image and run functional smoke tests + the perf-regression
@@ -27,6 +32,27 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
+
+      # package.json is the single runtime source of truth for the release version
+      # (apVersionUtil.getCurrentRelease reads it), and it is baked into the image from the
+      # checked-out source. The `tag` input is free-text, so a mistyped tag would publish an
+      # image whose real version disagrees with its tag/git-tag/GitHub-release — invisible until
+      # it is mixed with a correctly-built peer and the worker↔app version gate silently
+      # withholds jobs. Fail closed here. Hotfix/rc suffixes (0.79.2-hotfix.1, 0.79.2-rc.1) are
+      # deploy-only and are not in package.json, so compare against the base X.Y.Z only.
+      - name: Verify tag matches package.json
+        # TAG is passed via env (not inlined as ${{ inputs.tag }} in the script) to avoid shell
+        # expression injection — a crafted tag would otherwise run as shell in the run block.
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          PACKAGE_VERSION="$(jq -r .version package.json)"
+          TAG_BASE="${TAG%%-*}"
+          if [ "$TAG_BASE" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Release tag '$TAG' (base '$TAG_BASE') does not match package.json version '$PACKAGE_VERSION'. Bump package.json or fix the tag before releasing."
+            exit 1
+          fi
+          echo "Release tag base '$TAG_BASE' matches package.json version '$PACKAGE_VERSION'."
 
       - name: Fail if tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
@@ -67,10 +93,11 @@ jobs:
           git push origin ${{ inputs.tag }} --force
 
       - name: Create or update changelog via release-drafter
+        if: ${{ !contains(inputs.tag, '-rc') || inputs.publish_rc_release }}
         uses: release-drafter/release-drafter@v7
         with:
           commitish: ${{ github.ref_name }}
-          prerelease: false
+          prerelease: ${{ contains(inputs.tag, '-rc') }}
           tag: ${{ inputs.tag }}
           name: ${{ inputs.tag }}
           version: ${{ inputs.tag }}
@@ -87,3 +114,69 @@ jobs:
         with:
           image: ghcr.io/activepieces/activepieces:${{ inputs.tag }}
           version: ${{ inputs.tag }}
+
+  sync-version-to-main:
+    needs: release
+    if: ${{ !cancelled() && needs.release.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          token: ${{ secrets.CROWDIN_PRS }}
+
+      - name: Check if main version is behind release
+        id: compare
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          TAG_BASE="${TAG%%-*}"
+          MAIN_VERSION="$(jq -r .version package.json)"
+          HIGHEST="$(printf '%s\n%s\n' "$MAIN_VERSION" "$TAG_BASE" | sort -V | tail -1)"
+          if [ "$HIGHEST" = "$MAIN_VERSION" ]; then
+            echo "main version $MAIN_VERSION is not behind released $TAG_BASE, nothing to sync."
+          else
+            echo "main version $MAIN_VERSION is behind released $TAG_BASE, opening sync PR."
+            echo "tag_base=$TAG_BASE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push version sync branch
+        if: steps.compare.outputs.tag_base != ''
+        env:
+          TAG: ${{ inputs.tag }}
+          TAG_BASE: ${{ steps.compare.outputs.tag_base }}
+        run: |
+          git config --local user.email "abdulyki+automatedcommits@activepieces.com"
+          git config --local user.name "automated-commits-ap"
+          npm pkg set version="$TAG_BASE"
+          sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
+          grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
+          git checkout -b "automated/sync-version-$TAG_BASE"
+          git add package.json docker-compose.yml
+          git commit -m "chore(release): sync version to $TAG_BASE after off-cycle release"
+          git push -f origin "automated/sync-version-$TAG_BASE"
+
+      - name: Open sync PR
+        if: steps.compare.outputs.tag_base != ''
+        env:
+          GH_TOKEN: ${{ secrets.CROWDIN_PRS }}
+          TAG: ${{ inputs.tag }}
+          TAG_BASE: ${{ steps.compare.outputs.tag_base }}
+        run: |
+          BRANCH="automated/sync-version-$TAG_BASE"
+          BODY="The self-hosted release \`$TAG\` was published from a branch whose version bump is not on \`main\`. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin so the next weekly release does not read a stale version. Merge before the next release-candidate cut (Thursday 5 PM UTC). See GIT-1595."
+          PR_NUMBER="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$PR_NUMBER" ]; then
+            echo "An open sync PR from $BRANCH already exists, refreshing its body for $TAG."
+            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" -X PATCH -f body="$BODY"
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(release): sync version to $TAG_BASE after off-cycle release" \
+              --body "$BODY" \
+              --label skip-changelog \
+              --label automated
+          fi

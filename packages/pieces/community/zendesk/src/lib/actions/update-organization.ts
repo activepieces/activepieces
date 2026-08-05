@@ -10,12 +10,6 @@ import {
 import { zendeskAuth } from '../..';
 import { organizationIdDropdown, groupIdDropdown } from '../common/props';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const updateOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'update-organization',

@@ -38,7 +38,7 @@ const seedDevUser = async (): Promise<void> => {
     const response = await authenticationService(log).signUp({
         email: DEV_EMAIL,
         password: DEV_PASSWORD,
-        firstName: 'Ash',
+        firstName: 'Dev',
         lastName: 'User',
         trackEvents: false,
         platformId: null,

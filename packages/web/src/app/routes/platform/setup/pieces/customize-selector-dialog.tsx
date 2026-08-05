@@ -100,7 +100,6 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
   );
   const { pieces } = piecesHooks.usePieces({
     includeHidden: true,
-    includeTags: false,
   });
   const saveMutation = platformPiecesMutations.useUpdatePieceSelectorConfig({
     platformId: platform.id,

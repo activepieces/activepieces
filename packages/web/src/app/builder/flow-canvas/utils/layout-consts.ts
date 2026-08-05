@@ -13,6 +13,7 @@ import { ApNodeType, CanvasOrientation } from './types';
 const ARC_LENGTH = FLOW_CANVAS_ARC;
 const HORIZONTAL_LAYOUT_SPACE_BETWEEN_STEPS = 80;
 const HORIZONTAL_STEP_SIZE = 80;
+const HORIZONTAL_STEP_LABEL_WIDTH = 150;
 // extra room on branch entry lines so the label can sit on the line next to the add button
 const HORIZONTAL_BRANCH_LABEL_SPACE = 70;
 // horizontal view spaces router branches 20px wider apart than vertical
@@ -71,6 +72,7 @@ export const flowCanvasLayoutConsts = {
   ARC_LENGTH,
   ORIENTATION_LAYOUT,
   STEP_NODE_SIZE,
+  HORIZONTAL_STEP_LABEL_WIDTH,
   NODE_SELECTION_RECT_CLASS_NAME,
   doesNodeAffectBoundingBox: doesNodeAffectBoundingBoxWidth,
 };

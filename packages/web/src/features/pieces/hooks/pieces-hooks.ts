@@ -36,6 +36,7 @@ import {
 } from '@/features/pieces/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
@@ -77,7 +78,6 @@ type UseMultiplePiecesProps = {
 type UsePiecesProps = {
   searchQuery?: string;
   includeHidden?: boolean;
-  includeTags?: boolean;
   isTableQuery?: boolean;
   skipProjectFilter?: boolean;
 };
@@ -97,12 +97,19 @@ export const piecesHooks = {
         piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
       staleTime: Infinity,
       enabled,
+      retry: (failureCount, error) => {
+        if (isPieceNotFoundError(error)) {
+          return false;
+        }
+        return failureCount < 3;
+      },
     });
     return {
       pieceModel: query.data,
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
       isError: query.isError,
+      isNotFound: query.isError && isPieceNotFoundError(query.error),
       refetch: query.refetch,
     };
   },
@@ -123,6 +130,7 @@ export const piecesHooks = {
       pieceModel: pieceQuery.pieceModel,
       isLoading: pieceQuery.isLoading,
       isSuccess: pieceQuery.isSuccess,
+      isNotFound: pieceQuery.isNotFound,
       refetch: pieceQuery.refetch,
     };
   },
@@ -163,7 +171,6 @@ export const piecesHooks = {
   usePieces: ({
     searchQuery,
     includeHidden = false,
-    includeTags = false,
     isTableQuery = false,
     skipProjectFilter = false,
   }: UsePiecesProps) => {
@@ -185,7 +192,6 @@ export const piecesHooks = {
           projectId,
           searchQuery,
           includeHidden,
-          includeTags,
           locale: i18n.language as LocalesEnum,
         }),
       staleTime: searchQuery ? 0 : Infinity,
@@ -459,6 +465,9 @@ export const piecesMutations = {
     });
   },
 };
+
+const isPieceNotFoundError = (error: unknown) =>
+  api.isError(error) && error.response?.status === 404;
 
 const filterOutPiecesWithNoSuggestions = (
   stepsMetadata: StepMetadataWithSuggestions[],

@@ -4,11 +4,12 @@ import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces
 import { transcribeAudioActionOutputSchema } from '../output-schemas';
 
 export const transcribeAudio = createAction({
-  audience: 'human',
+  audience: 'both',
 	auth: groqAuth,
 	name: 'transcribe-audio',
 	displayName: 'Transcribe Audio',
 	description: 'Transcribes audio into text in the input language.',
+	aiMetadata: { description: 'Runs Groq speech-to-text (Whisper) over an uploaded audio file and returns the spoken content transcribed in its original language; a response-format prop switches between plain text, JSON, and verbose JSON with segment timings. Choose this over the sibling Translate Audio action whenever the transcript must stay in the language that was spoken, since Translate Audio always renders English. Requires an audio file (flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, webm) and a Whisper model, with an optional ISO-639-1 language hint that improves accuracy; not idempotent: each call re-runs the model and may return slightly different text.', idempotent: false },
 	props: {
 		file: Property.File({
 			displayName: 'Audio File',

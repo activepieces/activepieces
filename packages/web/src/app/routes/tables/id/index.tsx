@@ -11,6 +11,7 @@ import {
   ApTableFooter,
   ApTableHeader,
   useTableState,
+  useTableLock,
   useTableColumns,
   mapRecordsToRows,
   Row,
@@ -19,7 +20,6 @@ import {
 } from '@/features/tables';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { useResourceLock } from '@/hooks/use-resource-lock';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -36,8 +36,8 @@ const ApTableEditorPage = () => {
     createRecord,
     fields,
     records,
-    table,
     setLockedByOtherUser,
+    reorderField,
   ] = useTableState((state) => [
     state.selectedRecords,
     state.setSelectedRecords,
@@ -46,13 +46,13 @@ const ApTableEditorPage = () => {
     state.createRecord,
     state.fields,
     state.records,
-    state.table,
     state.setLockedByOtherUser,
+    state.reorderField,
   ]);
 
-  const { lockedBy, takeOver } = useResourceLock({
-    resourceId: table.id,
-  });
+  // the lock lives in the table state provider, above the take-over refresh
+  // remount boundary, so refreshing never releases the just-acquired lock
+  const { lockedBy, takeOver } = useTableLock();
 
   useEffect(() => {
     setLockedByOtherUser(!!lockedBy);
@@ -107,6 +107,15 @@ const ApTableEditorPage = () => {
   const columns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);
 
+  const handleColumnsReorder = (sourceKey: string, targetKey: string) => {
+    const sourceIndex = fields.findIndex((field) => field.uuid === sourceKey);
+    const targetIndex = fields.findIndex((field) => field.uuid === targetKey);
+    if (sourceIndex === -1 || targetIndex === -1) {
+      return;
+    }
+    reorderField(sourceIndex, targetIndex);
+  };
+
   const handleBack = () => {
     navigate(`/projects/${projectId}/automations`);
   };
@@ -131,6 +140,7 @@ const ApTableEditorPage = () => {
               rowKeyGetter={(row: Row) => row.id}
               selectedRows={selectedRecords}
               onSelectedRowsChange={setSelectedRecords}
+              onColumnsReorder={handleColumnsReorder}
               className={cn(
                 'scroll-smooth w-full !h-full bg-muted/30 !border-0',
                 theme === 'dark' ? 'rdg-dark' : 'rdg-light',

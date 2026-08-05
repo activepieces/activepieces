@@ -1,8 +1,10 @@
+import { PassThrough } from 'node:stream';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 import { HttpError } from './http-error';
 import { HttpHeaders } from './http-headers';
 import { HttpMessageBody } from './http-message-body';
+import { HttpMethod } from './http-method';
 import { HttpRequest } from './http-request';
 import { HttpRequestBody } from './http-request-body';
 import { HttpResponse } from './http-response';
@@ -39,7 +41,9 @@ export class FetchHttpClient extends BaseHttpClient {
     const followRedirects = request.followRedirects ?? true;
     const retries = request.retries ?? 0;
 
-    const { body, extraHeaders, isStream } = serializeBody(request.body, headers);
+    const { body, extraHeaders, isStream } = acceptsRequestBody(request.method)
+      ? serializeBody(request.body, headers)
+      : { body: undefined, extraHeaders: {}, isStream: false };
     const finalHeaders = normalizeHeaders({ ...headers, ...extraHeaders });
 
     const response = await sendWithRetries(async () => {
@@ -87,6 +91,10 @@ export class FetchHttpClient extends BaseHttpClient {
   }
 }
 
+function acceptsRequestBody(method: HttpMethod): boolean {
+  return method !== HttpMethod.GET && method !== HttpMethod.HEAD;
+}
+
 function serializeBody(
   body: HttpRequestBody | undefined,
   headers: HttpHeaders
@@ -94,9 +102,11 @@ function serializeBody(
   if (isNil(body)) {
     return { body: undefined, extraHeaders: {}, isStream: false };
   }
-  // node `form-data` instance: a Readable stream that owns its multipart boundary.
   if (isNodeFormData(body)) {
-    return { body: body as unknown as BodyInit, extraHeaders: body.getHeaders(), isStream: true };
+    const stream = new PassThrough();
+    body.on('error', (error) => stream.destroy(error));
+    body.pipe(stream);
+    return { body: stream as unknown as BodyInit, extraHeaders: body.getHeaders(), isStream: true };
   }
   // Already a wire-ready body — pass through untouched.
   if (
@@ -172,7 +182,7 @@ function normalizeHeaders(headers: HttpHeaders): Record<string, string> {
     if (value === undefined) {
       continue;
     }
-    result[key] = Array.isArray(value) ? value.join(', ') : value;
+    result[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : value;
   }
   return result;
 }
@@ -190,7 +200,8 @@ function isNodeFormData(body: unknown): body is NodeFormData {
     typeof body === 'object' &&
     body !== null &&
     typeof (body as NodeFormData).getHeaders === 'function' &&
-    typeof (body as NodeFormData).pipe === 'function'
+    typeof (body as NodeFormData).pipe === 'function' &&
+    typeof (body as NodeFormData).on === 'function'
   );
 }
 
@@ -201,6 +212,7 @@ function isNil(value: unknown): value is null | undefined {
 type NodeFormData = {
   getHeaders: () => Record<string, string>;
   pipe: (...args: unknown[]) => unknown;
+  on: (event: 'error', listener: (error: Error) => void) => unknown;
 };
 
 type ResponseType = NonNullable<HttpRequest['responseType']>;

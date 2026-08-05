@@ -1,5 +1,5 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, FilteredPieceBehavior, OPEN_SOURCE_PLAN, Platform, PlatformPieceFilter, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformPieceFilterRequestBody, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
+import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'
@@ -11,6 +11,7 @@ import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
+import { billingProvider } from './billing-provider'
 import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
@@ -53,12 +54,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
-            filteredPieceNames: [],
-            filteredActionNames: {},
-            filteredTriggerNames: {},
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
-            filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             federatedAuthProviders: { saml: null },
             cloudAuthEnabled: true,
             pinnedPieces: [],
@@ -72,6 +69,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
             id: ownerId,
             platformId: savedPlatform.id,
         })
+
+        await platformPlanService(log).onPlatformCreated(savedPlatform.id)
 
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
@@ -190,26 +189,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
     async getOne(id: PlatformId): Promise<PlatformWithoutFederatedAuth | null> {
         return platformRepo().findOneBy({ id })
     },
-    async getPieceFilter(id: PlatformId): Promise<PlatformPieceFilter> {
-        const platform = await this.getOneOrThrow(id)
-        return {
-            filteredPieceNames: platform.filteredPieceNames,
-            filteredPieceBehavior: platform.filteredPieceBehavior,
-            filteredActionNames: platform.filteredActionNames,
-            filteredTriggerNames: platform.filteredTriggerNames,
-        }
-    },
-    async updatePieceFilter({ id, ...params }: UpdatePieceFilterParams): Promise<PlatformPieceFilter> {
-        const platform = await this.getOneOrThrow(id)
-        await platformRepo().save({
-            ...platform,
-            ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
-            ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
-            ...spreadIfDefined('filteredActionNames', params.filteredActionNames),
-            ...spreadIfDefined('filteredTriggerNames', params.filteredTriggerNames),
-        })
-        return this.getPieceFilter(id)
-    },
     async getOneWithFederatedAuthOrThrow(id: PlatformId): Promise<Platform> {
         return platformRepo()
             .createQueryBuilder('platform')
@@ -256,15 +235,17 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        const [samlConfigured, usage, plan] = await Promise.all([
+        const [samlConfigured, usage, plan, billingEnforced] = await Promise.all([
             this.hasSamlConfigured(id),
             getUsage(log, platform),
             getPlan(log, platform),
+            getBillingEnforced(log, id),
         ])
         return {
             ...platform,
             federatedAuthProviders: { saml: samlConfigured ? {} : null },
             usage,
+            billingEnforced,
             plan,
         }
     },
@@ -278,13 +259,23 @@ async function getUsage(log: FastifyBaseLogger, platform: PlatformWithoutFederat
     return platformPlanService(log).getUsage(platform.id)
 }
 
+async function getBillingEnforced(log: FastifyBaseLogger, platformId: PlatformId): Promise<boolean | undefined> {
+    if (system.getEdition() === ApEdition.COMMUNITY) {
+        return undefined
+    }
+    const { data, error } = await tryCatch(() => billingProvider.get(log).isBillingEnforced(platformId))
+    if (!isNil(error)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to resolve billing enforcement for the platform payload')
+        return undefined
+    }
+    return data ?? undefined
+}
+
 async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return {
             ...OPEN_SOURCE_PLAN,
-            stripeSubscriptionStartDate: 0,
-            stripeSubscriptionEndDate: 0,
         }
     }
     return platformPlanService(log).getOrCreateForPlatform(platform.id)
@@ -318,10 +309,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     favIconUrl?: string
     ssoDomain?: string | null
     ssoDomainVerification?: SsoDomainVerification | null
-}
-
-type UpdatePieceFilterParams = UpdatePlatformPieceFilterRequestBody & {
-    id: PlatformId
 }
 
 type CreatePlatformWithProjectParams = {

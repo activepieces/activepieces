@@ -80,6 +80,10 @@ export const PieceMetadataEntity =
               nullable: true,
               array: true,
           },
+          deprecated: {
+              type: Boolean,
+              nullable: true,
+          },
           packageType: {
               type: String,
               nullable: false,

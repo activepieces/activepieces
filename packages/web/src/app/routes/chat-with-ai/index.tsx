@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation } from '@activepieces/shared';
+import { AgentConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
@@ -207,7 +207,7 @@ export function ChatWithAIPage() {
   const cachedTitle = useMemo(() => {
     if (conversationTitle) return conversationTitle;
     if (!selectedConversationId) return null;
-    const cached = queryClient.getQueryData<SeekPage<ChatConversation>>([
+    const cached = queryClient.getQueryData<SeekPage<AgentConversation>>([
       'chat-conversations',
     ]);
     return (

@@ -14,18 +14,18 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { flagsHooks } from './flags-hooks';
 
 export const platformHooks = {
-  useDeleteAccount: () => {
+  useDeletePlatform: () => {
     const navigate = useNavigate();
     return useMutation({
       mutationFn: async () => {
-        await platformApi.deleteAccount();
+        await platformApi.deletePlatform();
       },
       onSuccess: () => {
-        toast.success(t('Account deleted successfully'));
+        toast.success(t('Platform deleted successfully'));
         navigate('/sign-in');
       },
       onError: () => {
-        toast.error(t('Failed to delete account. Please try again.'));
+        toast.error(t('Failed to delete platform. Please try again.'));
       },
     });
   },
@@ -34,7 +34,7 @@ export const platformHooks = {
     const query = useSuspenseQuery({
       queryKey: ['platform', currentPlatformId],
       queryFn: platformApi.getCurrentPlatform,
-      staleTime: Infinity,
+      staleTime: 10 * 1000,
     });
     return {
       platform: query.data,
@@ -55,7 +55,7 @@ export const platformHooks = {
     return useMutation({
       mutationFn: async (tempLicenseKey: string) => {
         if (tempLicenseKey.trim() === '') return;
-        await platformApi.verifyLicenseKey(tempLicenseKey.trim());
+        await platformApi.activateLicenseKey(tempLicenseKey.trim());
       },
       onSuccess: () => {
         queryClient.invalidateQueries({
@@ -63,6 +63,9 @@ export const platformHooks = {
         });
         queryClient.invalidateQueries({
           queryKey: flagsHooks.queryKey,
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['platform-billing-subscription'],
         });
         toast.success(t('License activated successfully!'));
       },

@@ -67,8 +67,10 @@ To achieve this, the backend will generate a signed token that contains all the 
     | lastName          | Last name of the user                            |
     | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**, **ADMIN**)           |
     | exp               | Expiry timestamp for the token (Unix timestamp)  |
-    | piecesFilterType  | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
-    | piecesTags        | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
+    | version           | Token payload version. Use `"v4"` to assign a piece set via `pieceSet`, or `"v3"` for the legacy `piecesTags` approach |
+    | pieceSet          | (v4) Key of the piece set to assign to the project, check [customize pieces](/embedding/customize-pieces)  |
+    | piecesFilterType  | (v3, legacy) Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
+    | piecesTags        | (v3, legacy) Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
     | tasks             | Customize the tasks limit for your user's project |
     | aiCredits         | Customize the ai credits limit for your user's project |
     | concurrencyPoolKey   | Pool identifier. Projects sharing the same key share the same concurrency limit. Must be used with `concurrencyPoolLimit`. See [Manage Concurrency](/admin-guide/guides/manage-concurrency) |

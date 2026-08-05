@@ -1,7 +1,6 @@
 import { apDayjs } from '@activepieces/server-utils'
 import { ApEdition, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { databaseConnection } from '../database/database-connection'
 import { distributedLock } from '../database/redis-connections'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -9,8 +8,9 @@ import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { platformService } from '../platform/platform.service'
+import { OPENAI_3_SMALL_MODEL_VERSION } from './embedder'
 import { isToolSearchEnabled } from './tool-search-flag'
-import { ReindexScope, toolSearchReindexService, toolSearchTableExists } from './tool-search-reindex.service'
+import { ReindexScope, toolSearchIndexCoverage, toolSearchReindexService, toolSearchTableExists } from './tool-search-reindex.service'
 
 // One global lock TTL; RedLock auto-extends it while the reconcile runs, so this only needs to be
 // comfortably larger than a single embed round-trip — a full re-embed (model swap) keeps extending.
@@ -62,7 +62,7 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
                 timeoutInSeconds: REINDEX_LOCK_TIMEOUT_SECONDS,
                 fn: async () => {
                     if (shouldSkipReindexOnCloud()) {
-                        log.info('[toolSearchReindexJob] Cloud edition without AP_OPENAI_API_KEY — skipping reindex; on cloud we never fall back to the oldest platform (keyword floor serves).')
+                        log.warn('[toolSearchReindexJob] Cloud edition without AP_OPENAI_API_KEY — a reconcile was requested but cannot run; set AP_OPENAI_API_KEY to fund embedding (keyword floor serves meanwhile).')
                         return
                     }
                     // Embedding is funded by AP_OPENAI_API_KEY when set; otherwise (self-host only) by
@@ -98,34 +98,40 @@ export const toolSearchReindexJob = (log: FastifyBaseLogger) => ({
     },
 
     /**
-     * Cold-start path: schedule the first global reconcile if the index has never been built. The
-     * steady-state hook (piece-sync) only fires on a catalog delta, so on a deployment whose
-     * piece_metadata is already populated, flipping AP_TOOL_SEARCH_ENABLED on would otherwise leave
-     * the index empty until the next upstream piece add/delete. Covers both the fresh-deploy and the
-     * already-populated-deploy cases.
+     * Boot reconcile: (re)build the index when it is empty OR only partially embedded. The steady-state
+     * hook (piece-sync) only fires on a catalog delta, so without this a deployment whose piece_metadata
+     * is already populated would leave the index unbuilt after AP_TOOL_SEARCH_ENABLED is flipped on — and
+     * a build that failed midway (embedder rate-limited, leaving rows with NULL embeddings) would never
+     * retry until the next piece add/delete. Covers fresh-deploy, already-populated-deploy, and
+     * partial-build recovery.
      *
-     * No-op unless the flag is on AND the index is empty: once any row exists the index is considered
-     * built and the sync hook owns deltas from there — so a re-run at every boot is a cheap single
-     * SELECT … LIMIT 1 with no side effects. Called fire-and-forget at boot (after register()); it
-     * must never throw fatally, so any DB error surfaces through rejectedPromiseHandler, not boot.
+     * No-op once the index is fully embedded: the coverage read is a single cheap aggregate, so re-running
+     * at every boot has no side effects. Called fire-and-forget at boot (after register()); it must never
+     * throw fatally, so any DB error surfaces through rejectedPromiseHandler, not boot.
      */
-    async backfillIfEmpty(): Promise<void> {
+    async backfillIfNeeded(): Promise<void> {
         if (!isToolSearchEnabled()) {
             return
         }
         if (shouldSkipReindexOnCloud()) {
-            log.info('[toolSearchReindexJob#backfillIfEmpty] Cloud edition without AP_OPENAI_API_KEY — skipping cold-start backfill; on cloud we never fall back to the oldest platform (keyword floor serves).')
+            log.warn('[toolSearchReindexJob#backfillIfNeeded] Cloud edition without AP_OPENAI_API_KEY — tool-search is enabled but cannot build its index; set AP_OPENAI_API_KEY to fund embedding (keyword floor serves meanwhile).')
             return
         }
         if (!await toolSearchTableExists()) {
-            log.info('[toolSearchReindexJob#backfillIfEmpty] tool_search_index is absent (pgvector not installed) — skipping backfill; keyword floor serves.')
+            log.info('[toolSearchReindexJob#backfillIfNeeded] tool_search_index is absent (pgvector not installed) — skipping backfill; keyword floor serves.')
             return
         }
-        const existing = await databaseConnection().query('SELECT 1 FROM "tool_search_index" LIMIT 1')
-        if (!isNil(existing) && existing.length > 0) {
+        const coverage = await toolSearchIndexCoverage(OPENAI_3_SMALL_MODEL_VERSION)
+        if (coverage.total > 0 && coverage.pending === 0) {
+            log.info(coverage, '[toolSearchReindexJob#backfillIfNeeded] Tool-search index fully built — nothing to reconcile.')
             return
         }
-        log.info('[toolSearchReindexJob#backfillIfEmpty] Tool-search enabled with an empty index — scheduling a one-time global reconcile (cold-start backfill).')
+        if (coverage.total === 0) {
+            log.info(coverage, '[toolSearchReindexJob#backfillIfNeeded] Tool-search enabled with an empty index — scheduling the initial global reconcile (cold-start backfill).')
+        }
+        else {
+            log.warn(coverage, '[toolSearchReindexJob#backfillIfNeeded] Tool-search index partially embedded (a prior build left rows unembedded) — scheduling a global reconcile to finish it.')
+        }
         await this.enqueue({ type: 'all' })
     },
 })

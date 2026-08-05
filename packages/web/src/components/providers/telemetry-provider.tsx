@@ -1,11 +1,18 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApFlagId, TelemetryEvent } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  pickTelemetryPii,
+  TelemetryEvent,
+} from '@activepieces/shared';
 import posthog from 'posthog-js';
 import React, { useEffect, useRef } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { errorReporting } from '@/lib/error-reporting';
 
 interface TelemetryProviderProps {
@@ -14,7 +21,7 @@ interface TelemetryProviderProps {
 
 const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
-  const initializedUserEmail = useRef<string | null>(null);
+  const identifiedKey = useRef<string | null>(null);
 
   const { data: telemetryEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TELEMETRY_ENABLED,
@@ -25,6 +32,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: flagEnvironment } = flagsHooks.useFlag<string>(
     ApFlagId.ENVIRONMENT,
   );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { embedState } = useEmbedding();
 
   const posthogInitialized = useRef(false);
 
@@ -32,16 +41,14 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (posthogInitialized.current) {
       return;
     }
-    // Skip init entirely (not just capture) when telemetry is off, or for embedded
-    // sessions — the /embed route or any iframe, since an embed can navigate to
-    // non-/embed routes. Those are customers' end-users, not our funnel.
     const isEmbedded =
-      window.location.pathname.startsWith('/embed') ||
-      window.self !== window.top;
-    if (!telemetryEnabled || isEmbedded) {
+      embedState.isEmbedded || window.location.pathname.startsWith('/embed');
+    if (!telemetryEnabled || isEmbedded || isNil(edition)) {
       return;
     }
     posthogInitialized.current = true;
+
+    const isCloud = edition === ApEdition.CLOUD;
 
     posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
       // Same-origin reverse proxy (/ingest) so ad blockers don't drop ingestion.
@@ -50,31 +57,49 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       // Adopt the identity cookie the marketing site sets on `.activepieces.com`.
       cross_subdomain_cookie: true,
       // Limit autocapture to the auth funnel; the rest of the app doesn't need it.
-      autocapture: {
-        url_allowlist: [
-          /\/sign-up/,
-          /\/sign-in/,
-          /\/verify-email/,
-          /\/forget-password/,
-          /\/reset-password/,
-          /\/invitation/,
-          /\/authenticate/,
-        ],
-      },
+      autocapture: isCloud
+        ? {
+            url_allowlist: [
+              /\/sign-up/,
+              /\/sign-in/,
+              /\/verify-email/,
+              /\/forget-password/,
+              /\/reset-password/,
+              /\/invitation/,
+              /\/authenticate/,
+            ],
+          }
+        : false,
       capture_pageview: 'history_change',
       capture_pageleave: true,
-      capture_dead_clicks: true,
-      rageclick: true,
-      enable_heatmaps: true,
+      capture_dead_clicks: isCloud,
+      rageclick: isCloud,
+      enable_heatmaps: isCloud,
       person_profiles: 'identified_only',
       persistence: 'localStorage+cookie',
-      disable_session_recording: false,
+      disable_session_recording: true,
       enable_recording_console_log: false,
+      session_recording: {
+        maskAllInputs: true,
+      },
     });
 
     // Tag events so the shared project separates product from marketing traffic.
     posthog.register({ source_site: 'product' });
-  }, [telemetryEnabled]);
+
+    acquisitionUtils.stashAcquisitionParams();
+
+    if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
+      posthog.startSessionRecording();
+    }
+  }, [telemetryEnabled, embedState.isEmbedded, edition]);
+
+  useEffect(() => {
+    if (!posthogInitialized.current) {
+      return;
+    }
+    posthog.register({ activepiecesEdition: edition ?? ApEdition.COMMUNITY });
+  }, [telemetryEnabled, edition, embedState.isEmbedded]);
 
   useEffect(() => {
     errorReporting.init();
@@ -82,17 +107,16 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   }, []);
 
   useDeepCompareEffect(() => {
-    if (isNil(currentUser)) {
+    if (isNil(currentUser) || !telemetryEnabled) {
       return;
     }
-
-    if (
-      telemetryEnabled &&
-      currentUser?.email !== initializedUserEmail.current
-    ) {
-      initTelemetry();
+    const identityKey = `${currentUser.id}:${edition ?? ''}`;
+    if (identityKey === identifiedKey.current) {
+      return;
     }
-  }, [telemetryEnabled, currentUser]);
+    identifiedKey.current = identityKey;
+    initTelemetry();
+  }, [telemetryEnabled, currentUser, edition]);
 
   const initTelemetry = () => {
     if (isNil(currentUser)) {
@@ -101,24 +125,29 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     const currentVersion = flagCurrentVersion || '0.0.0';
     const environment = flagEnvironment || '0.0.0';
 
-    posthog.identify(currentUser.id, {
-      email: currentUser.email,
-      firstName: currentUser.firstName,
-      lastName: currentUser.lastName,
-      activepiecesVersion: currentVersion,
-      activepiecesEnvironment: environment,
-    });
+    posthog.identify(
+      currentUser.id,
+      {
+        ...pickTelemetryPii({
+          edition: edition ?? ApEdition.COMMUNITY,
+          email: currentUser.email,
+          firstName: currentUser.firstName,
+          lastName: currentUser.lastName,
+        }),
+        activepiecesVersion: currentVersion,
+        activepiecesEnvironment: environment,
+      },
+      acquisitionUtils.getAcquisitionParams(),
+    );
 
     if (currentUser.platformId) {
       posthog.group('platform', currentUser.platformId);
     }
-
-    initializedUserEmail.current = currentUser.email;
   };
 
   const reset = () => {
     posthog.reset();
-    initializedUserEmail.current = null;
+    identifiedKey.current = null;
   };
 
   const capture = (event: TelemetryEvent) => {
@@ -133,6 +162,16 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     </TelemetryContext.Provider>
   );
 };
+
+const RECORDING_SAMPLE_RATE = 0.1;
+
+function isInRecordingSample(distinctId: string): boolean {
+  let hash = 5381;
+  for (let i = 0; i < distinctId.length; i++) {
+    hash = (hash * 33) ^ distinctId.charCodeAt(i);
+  }
+  return (hash >>> 0) / 0xffffffff < RECORDING_SAMPLE_RATE;
+}
 
 interface TelemetryContextType {
   capture: (event: TelemetryEvent) => void;

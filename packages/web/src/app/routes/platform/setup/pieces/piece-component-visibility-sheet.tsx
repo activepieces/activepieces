@@ -22,10 +22,6 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
-import {
-  platformPiecesMutations,
-  platformPieceFilterQueries,
-} from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
 type PieceComponentVisibilitySheetProps = {
@@ -33,7 +29,7 @@ type PieceComponentVisibilitySheetProps = {
   pieceDisplayName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  pieceSet?: PieceSet;
+  pieceSet: PieceSet;
 };
 
 type ComponentItem =
@@ -74,7 +70,6 @@ function PieceComponentVisibilitySheetContent({
   onOpenChange,
   pieceSet,
 }: PieceComponentVisibilitySheetProps) {
-  const { pieceFilter } = platformPieceFilterQueries.usePlatformPieceFilter();
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: pieceName,
     enabled: open,
@@ -90,49 +85,28 @@ function PieceComponentVisibilitySheetContent({
   );
 
   const originalMode: VisibilityMode =
-    pieceSet &&
-    (pieceName in pieceSet.config.selectedActions ||
-      pieceName in pieceSet.config.selectedTriggers)
+    pieceName in pieceSet.config.selectedActions ||
+    pieceName in pieceSet.config.selectedTriggers
       ? 'selected'
       : 'all';
 
   const originalHiddenActions = useMemo(() => {
-    if (!pieceSet) {
-      return pieceFilter.filteredActionNames[pieceName] ?? [];
-    }
     if (originalMode !== 'selected') {
       return [];
     }
     const selected = pieceSet.config.selectedActions[pieceName] ?? [];
     return allActionNames.filter((n) => !selected.includes(n));
-  }, [
-    pieceSet,
-    pieceFilter.filteredActionNames,
-    pieceName,
-    originalMode,
-    allActionNames,
-  ]);
+  }, [pieceSet, pieceName, originalMode, allActionNames]);
 
   const originalHiddenTriggers = useMemo(() => {
-    if (!pieceSet) {
-      return pieceFilter.filteredTriggerNames[pieceName] ?? [];
-    }
     if (originalMode !== 'selected') {
       return [];
     }
     const selected = pieceSet.config.selectedTriggers[pieceName] ?? [];
     return allTriggerNames.filter((n) => !selected.includes(n));
-  }, [
-    pieceSet,
-    pieceFilter.filteredTriggerNames,
-    pieceName,
-    originalMode,
-    allTriggerNames,
-  ]);
+  }, [pieceSet, pieceName, originalMode, allTriggerNames]);
 
-  const [mode, setMode] = useState<VisibilityMode>(
-    pieceSet ? originalMode : 'selected',
-  );
+  const [mode, setMode] = useState<VisibilityMode>(originalMode);
   const [touchedHiddenActions, setTouchedHiddenActions] = useState<
     string[] | null
   >(null);
@@ -157,16 +131,10 @@ function PieceComponentVisibilitySheetContent({
       return typeof updater === 'function' ? updater(current) : updater;
     });
 
-  const { mutate: setPieceComponentVisibility, isPending: isPlatformSaving } =
-    platformPiecesMutations.useSetPieceComponentVisibility({
-      filteredActionNames: pieceFilter.filteredActionNames,
-      filteredTriggerNames: pieceFilter.filteredTriggerNames,
-    });
-
   const { mutate: updatePieceSet, isPending: isPieceSetPending } =
     pieceSetMutations.useUpdatePieceSet();
 
-  const isMutating = isPlatformSaving || isPieceSetPending;
+  const isMutating = isPieceSetPending;
 
   const allActions = useMemo<ComponentItem[]>(() => {
     if (!pieceModel) return [];
@@ -232,23 +200,10 @@ function PieceComponentVisibilitySheetContent({
     JSON.stringify([...localHiddenTriggers].sort()) !==
       JSON.stringify([...originalHiddenTriggers].sort());
 
-  const isDirty = pieceSet
-    ? mode !== originalMode || (mode === 'selected' && hiddenChanged)
-    : hiddenChanged;
+  const isDirty =
+    mode !== originalMode || (mode === 'selected' && hiddenChanged);
 
   const handleSave = () => {
-    if (!pieceSet) {
-      setPieceComponentVisibility(
-        {
-          pieceName,
-          hiddenActions: localHiddenActions,
-          hiddenTriggers: localHiddenTriggers,
-        },
-        { onSuccess: () => onOpenChange(false) },
-      );
-      return;
-    }
-
     if (mode === 'all') {
       updatePieceSet(
         {
@@ -296,41 +251,34 @@ function PieceComponentVisibilitySheetContent({
       <SheetHeader className="px-6 py-4 border-b shrink-0">
         <SheetTitle className="text-base">{t('Actions & triggers')}</SheetTitle>
         <SheetDescription>
-          {pieceSet
-            ? t('For {name} in this piece set', { name: pieceDisplayName })
-            : t(
-                'Control which actions and triggers are available in the flow builder for {name}',
-                { name: pieceDisplayName },
-              )}
+          {t('For {name} in this piece set', { name: pieceDisplayName })}
         </SheetDescription>
       </SheetHeader>
 
-      {pieceSet && (
-        <div className="px-6 pt-4 pb-3 border-b shrink-0 flex flex-col gap-2.5">
-          <Tabs
-            value={mode}
-            onValueChange={(value) => setMode(value as VisibilityMode)}
-          >
-            <TabsList className="w-full">
-              <TabsTrigger value="all" className="flex-1">
-                {t('All actions & triggers')}
-              </TabsTrigger>
-              <TabsTrigger value="selected" className="flex-1">
-                {t('Only selected')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <p className="text-xs text-muted-foreground">
-            {mode === 'all'
-              ? t(
-                  'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
-                )
-              : t(
-                  'Only the checked items below are available. New actions and triggers added to this piece later stay hidden until you check them here.',
-                )}
-          </p>
-        </div>
-      )}
+      <div className="px-6 pt-4 pb-3 border-b shrink-0 flex flex-col gap-2.5">
+        <Tabs
+          value={mode}
+          onValueChange={(value) => setMode(value as VisibilityMode)}
+        >
+          <TabsList className="w-full">
+            <TabsTrigger value="all" className="flex-1">
+              {t('All actions & triggers')}
+            </TabsTrigger>
+            <TabsTrigger value="selected" className="flex-1">
+              {t('Only selected')}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <p className="text-xs text-muted-foreground">
+          {mode === 'all'
+            ? t(
+                'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
+              )
+            : t(
+                'Only the checked items below are available. New actions and triggers added to this piece later stay hidden until you check them here.',
+              )}
+        </p>
+      </div>
 
       {showCheckboxes && (
         <div className="px-6 pt-3 flex items-center gap-2.5 shrink-0">

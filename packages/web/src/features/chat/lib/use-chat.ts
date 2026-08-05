@@ -3,14 +3,14 @@ import {
   ActionPreviewEvent,
   ActionReceiptEvent,
   BuildPlanEvent,
-  ChatAllowedMimeType,
+  AgentAllowedMimeType,
   FileProducedEvent,
   ImageGeneratedEvent,
-  ChatConversationStatus,
-  ChatHistoryMessage,
+  AgentConversationStatus,
+  AgentHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
   DEFAULT_CHAT_TIER_ID,
-  PersistedChatMessage,
+  PersistedAgentMessage,
   ToolProgressEvent,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -20,7 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { chatDebug } from '@/lib/chat-debug-logger';
 
-import { chatApi } from './chat-api';
+import { chatApi, type PendingGate } from './chat-api';
 import {
   chatBuildUtils,
   chatStoreSelectors,
@@ -50,7 +50,7 @@ function restoreReceiptsIntoStore({
   data,
   setState,
 }: {
-  data: PersistedChatMessage[] | ChatHistoryMessage[];
+  data: PersistedAgentMessage[] | AgentHistoryMessage[];
   setState: SetChatStore;
 }): void {
   const receipts = chatUtils.extractReceiptsFromHistory(data);
@@ -89,12 +89,9 @@ function restoreReceiptsIntoStore({
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
 
-function buildToolCallMetaFromGate(gate: {
-  gateId: string;
-  toolName: string;
-  displayName: string;
-  toolInput: Record<string, unknown>;
-}): Record<string, ToolCallMeta> {
+function buildToolCallMetaFromGate(
+  gate: PendingGate,
+): Record<string, ToolCallMeta> {
   if (chatPartUtils.isDisplayTool(gate.toolName)) {
     return {};
   }
@@ -135,15 +132,63 @@ function buildToolCallMetaFromGate(gate: {
   return actionPreview ? { [gate.gateId]: { actionPreview } } : {};
 }
 
+// History only persists resolved tool calls, so a live pending gate loses its `input-available`
+// part on remount — without it the store selectors find no anchor and the card disappears.
+function buildGatePart(gate: PendingGate) {
+  return {
+    type: 'dynamic-tool' as const,
+    toolCallId: gate.gateId,
+    toolName: gate.toolName,
+    title: gate.displayName,
+    state: 'input-available' as const,
+    input: gate.toolInput,
+  };
+}
+
+function appendGatePart({
+  messages,
+  gate,
+}: {
+  messages: ChatUIMessage[];
+  gate: PendingGate;
+}): ChatUIMessage[] {
+  const alreadyAnchored = messages.some((m) =>
+    m.parts.some(
+      (part) => 'toolCallId' in part && part.toolCallId === gate.gateId,
+    ),
+  );
+  if (alreadyAnchored) return messages;
+  // Anchor on the current turn, always at the tail. When the tail is the user's just-sent
+  // message (the worker is blocked on the gate before persisting its assistant turn), open a
+  // fresh trailing assistant message rather than attaching to an earlier, already-finished turn.
+  const last = messages[messages.length - 1];
+  if (last?.role === 'assistant') {
+    const next = [...messages];
+    next[next.length - 1] = {
+      ...last,
+      parts: [...last.parts, buildGatePart(gate)],
+    };
+    return next;
+  }
+  return [
+    ...messages,
+    {
+      id: `gate-${gate.gateId}`,
+      role: 'assistant',
+      parts: [buildGatePart(gate)],
+    },
+  ];
+}
+
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
-function isAllowedMimeType(value: string): value is ChatAllowedMimeType {
+function isAllowedMimeType(value: string): value is AgentAllowedMimeType {
   return ALLOWED_MIME_SET.has(value);
 }
 
 function fileToBase64(
   file: File,
-): Promise<{ name: string; mimeType: ChatAllowedMimeType; data: string }> {
+): Promise<{ name: string; mimeType: AgentAllowedMimeType; data: string }> {
   return new Promise((resolve, reject) => {
     const mimeType = file.type || 'application/octet-stream';
     if (!isAllowedMimeType(mimeType)) {
@@ -237,7 +282,7 @@ export function useAgentChat({
   optimisticUserMessageRef.current = optimisticUserMessage;
 
   const pendingFilesRef = useRef<
-    { name: string; mimeType: ChatAllowedMimeType; data: string }[] | undefined
+    { name: string; mimeType: AgentAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
@@ -408,7 +453,7 @@ export function useAgentChat({
         { conversation: { id: convId }, errorCode, error: errorMessage },
         'stream error',
       );
-      if (errorCode === ErrorCode.AI_CREDIT_LIMIT_EXCEEDED) {
+      if (errorCode === ErrorCode.QUOTA_EXCEEDED) {
         onCreditsExhaustedRef.current?.();
         settleStreamRef.current(convId, { suppressNoReply: true });
         return;
@@ -420,7 +465,7 @@ export function useAgentChat({
         const conv = await chatApi.getConversation(convId);
         if (isNil(conv) || conversationIdRef.current !== convId) return;
 
-        if (conv.status !== ChatConversationStatus.STREAMING) {
+        if (conv.status !== AgentConversationStatus.STREAMING) {
           settleStreamRef.current(convId);
         }
       });
@@ -678,7 +723,7 @@ export function useAgentChat({
         );
         stopStream();
         setOptimisticUserMessage(null);
-        if (api.isApError(sendError, ErrorCode.AI_CREDIT_LIMIT_EXCEEDED)) {
+        if (api.isApError(sendError, ErrorCode.QUOTA_EXCEEDED)) {
           onCreditsExhaustedRef.current?.();
           updateSendStatus({ type: 'idle' });
         } else {
@@ -739,7 +784,7 @@ export function useAgentChat({
       });
       modelNameRef.current = convResult.data.modelName ?? null;
       setModelNameState(convResult.data.modelName ?? null);
-      if (convResult.data.status === ChatConversationStatus.STREAMING) {
+      if (convResult.data.status === AgentConversationStatus.STREAMING) {
         const lastAssistantIdx = mapped.findLastIndex(
           (m) => m.role === 'assistant',
         );
@@ -756,21 +801,9 @@ export function useAgentChat({
         const baseParts = isCurrentStreamingResponse
           ? mapped[lastAssistantIdx].parts
           : undefined;
-        const displayGatePart =
-          gate && chatPartUtils.isDisplayTool(gate.toolName)
-            ? {
-                type: 'dynamic-tool' as const,
-                toolCallId: gate.gateId,
-                toolName: gate.toolName,
-                title: gate.displayName,
-                state: 'input-available' as const,
-                input: gate.toolInput,
-              }
-            : undefined;
+        const gatePart = gate ? buildGatePart(gate) : undefined;
         startStream(id, {
-          initialParts: displayGatePart
-            ? [...(baseParts ?? []), displayGatePart]
-            : baseParts,
+          initialParts: gatePart ? [...(baseParts ?? []), gatePart] : baseParts,
         });
         if (gate) {
           store.setState((prev) => ({
@@ -811,7 +844,7 @@ export function useAgentChat({
         const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
         applyQuickRepliesToStore({ setState: store.setState, data: restored });
       }
-      if (convResult.status !== ChatConversationStatus.STREAMING) {
+      if (convResult.status !== AgentConversationStatus.STREAMING) {
         setIsPollingForAgentReply(false);
       } else {
         const hasBlockingCard = chatStoreSelectors.hasBlockingCard({
@@ -829,6 +862,9 @@ export function useAgentChat({
                 ...buildToolCallMetaFromGate(gate),
               },
             }));
+            setPersistedMessages((prev) =>
+              appendGatePart({ messages: prev, gate }),
+            );
           }
         }
       }

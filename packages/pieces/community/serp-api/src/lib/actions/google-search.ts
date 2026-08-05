@@ -6,15 +6,16 @@ import { GOOGLE_DOMAIN_OPTIONS } from '../constants/google-domains';
 import { LANGUAGE_OPTIONS } from '../constants/languages';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleSearchConfig, SerpApiEngine } from '../types';
+import { googleSearchOutputSchema } from '../output-schemas';
 
 export const googleSearch = createAction({
   auth: serpApiAuth,
   name: 'google_search',
   displayName: 'Google Search',
   description: 'Retrieves organic search results for specific keywords with advanced filtering options for SEO monitoring and competitor analysis.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Runs a Google web search via SerpApi and returns organic results for a query. Use to look up current web information, check rankings, or research a topic with controls for location, language, country, device, and pagination. Read-only and idempotent; requires the search query and a SerpApi API key.', idempotent: true },
-
+  outputSchema: googleSearchOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

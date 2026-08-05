@@ -5,6 +5,8 @@ import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { downloadFile } from '@/lib/dom-utils';
 
+import { impactRunsUtils } from '../lib/impact-runs-utils';
+
 type FlowDetailsHeaderProps = {
   report?: PlatformAnalyticsReport;
 };
@@ -13,12 +15,12 @@ export function FlowDetailsHeader({ report }: FlowDetailsHeaderProps) {
   const handleDownload = () => {
     if (!report || report.flows.length === 0) return;
 
+    const runsByFlow = impactRunsUtils.sumRunsByFlow(report.runs);
     const csvHeader =
       'Flow Name,Project Name,Runs,Time Saved Per Run (min),Total Time Saved (min)\n';
     const csvContent = report.flows
       .map((flow) => {
-        const runs =
-          report.runs.find((run) => run.flowId === flow.flowId)?.runs ?? 0;
+        const runs = runsByFlow.get(flow.flowId) ?? 0;
         const timeSavedPerRun = flow.timeSavedPerRun ?? 0;
         const minutesSaved = runs * timeSavedPerRun;
         return `"${flow.flowName}","${flow.projectId}",${runs},${timeSavedPerRun},${minutesSaved}`;

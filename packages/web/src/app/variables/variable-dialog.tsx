@@ -36,6 +36,7 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { variablesApi } from '@/features/variables/api/variables';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
 const FormSchema = z.object({
   name: z
@@ -171,9 +172,13 @@ function VariableForm(props: VariableFormProps) {
                   <div className="relative">
                     <Input
                       {...field}
-                      type={valueVisible ? 'text' : 'password'}
-                      autoComplete="new-password"
-                      className="pr-10"
+                      type="text"
+                      autoComplete="off"
+                      spellCheck={false}
+                      className={cn(
+                        'pr-10',
+                        !valueVisible && '[-webkit-text-security:disc]',
+                      )}
                       placeholder={
                         isEdit ? t('Enter new value') : t('Enter the value')
                       }

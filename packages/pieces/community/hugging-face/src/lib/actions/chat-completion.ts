@@ -5,12 +5,17 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const chatCompletion = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'chat_completion',
   auth: huggingFaceAuth,
   displayName: 'Chat Completion',
   description:
     'Generate assistant replies using chat-style LLMs - perfect for FAQ bots, support agents, and content generation',
+  aiMetadata: {
+    description:
+      'Runs a free-form chat completion against a Hugging Face instruct model (Llama, Mistral, Qwen and similar) and returns the assistant reply, in one of three conversation modes: a single user message, a multi-turn exchange assembled from a conversation-history array, or a template mode that prepends a canned persona system prompt. This is the only open-ended text generator in this piece - prefer text_summarization to condense a document, language_translation to move text between languages, and text_classification to assign labels from a fixed set. A user message is required in single and template modes; not idempotent: each call is a fresh sampled completion and the wording varies between runs.',
+    idempotent: false,
+  },
   props: {
     useCase: Property.StaticDropdown({
       displayName: 'Use Case',

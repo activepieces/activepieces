@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { PieceSet, PrincipalType } from '@activepieces/shared'
+import { PieceSelectionMode, PieceSet, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -41,7 +41,7 @@ async function setupPlatformWithoutPieceSets() {
     return { mockOwner, mockPlatform, token }
 }
 
-const emptyConfig = { pieces: { mode: 'include_all', exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
 
 describe('Piece Sets API', () => {
     describe('Feature Gate', () => {
@@ -106,16 +106,28 @@ describe('Piece Sets API', () => {
             expect(body.config).toEqual(emptyConfig)
         })
 
-        it('creates a piece set with externalId', async () => {
+        it('creates a piece set with an explicit key', async () => {
             const { token } = await setupPlatformWithPieceSets()
             const response = await app!.inject({
                 method: 'POST',
                 url: '/api/v1/piece-sets',
                 headers: { authorization: `Bearer ${token}` },
-                body: { name: 'Sales', externalId: 'sales-set' },
+                body: { name: 'Sales', key: 'sales-set' },
             })
             expect(response.statusCode).toBe(StatusCodes.CREATED)
-            expect(response.json<PieceSet>().externalId).toBe('sales-set')
+            expect(response.json<PieceSet>().key).toBe('sales-set')
+        })
+
+        it('auto-generates a key from the name when none is provided', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const response = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Sales Team' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CREATED)
+            expect(response.json<PieceSet>().key).toMatch(/^sales-team-[a-zA-Z0-9]+$/)
         })
     })
 
@@ -165,12 +177,12 @@ describe('Piece Sets API', () => {
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
-                    pieces: { mode: 'include_all', exceptions: ['@activepieces/piece-gmail'] },
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['@activepieces/piece-gmail'] },
                 },
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json<PieceSet>()
-            expect(body.config.pieces.mode).toBe('include_all')
+            expect(body.config.pieces.mode).toBe(PieceSelectionMode.INCLUDE_ALL)
             expect(body.config.pieces.exceptions).toContain('@activepieces/piece-gmail')
             expect(body.config.pieces.exceptions).not.toContain('@activepieces/piece-slack')
 
@@ -179,7 +191,7 @@ describe('Piece Sets API', () => {
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
                 body: {
-                    pieces: { mode: 'include_all', exceptions: [] },
+                    pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
                 },
             })
             expect(reenabledResponse.statusCode).toBe(StatusCodes.OK)
@@ -200,11 +212,11 @@ describe('Piece Sets API', () => {
                 method: 'POST',
                 url: `/api/v1/piece-sets/${id}`,
                 headers: { authorization: `Bearer ${token}` },
-                body: { pieces: { mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] } },
+                body: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] } },
             })
             expect(response.statusCode).toBe(StatusCodes.OK)
             const body = response.json<PieceSet>()
-            expect(body.config.pieces).toEqual({ mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] })
+            expect(body.config.pieces).toEqual({ mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] })
         })
 
         it('selecting actions on a piece stores the allow-list; other component maps stay empty', async () => {
@@ -229,6 +241,58 @@ describe('Piece Sets API', () => {
             const body = response.json<PieceSet>()
             expect(body.config.selectedActions['@activepieces/piece-slack']).toEqual(['send-message'])
             expect(body.config.selectedTriggers).toEqual({})
+        })
+
+        it('normalizes an empty-string key to a generated slug instead of storing it verbatim', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const makeSet = async (name: string) => (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name },
+            })).json<PieceSet>()
+
+            const updateKey = (id: string) => app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { key: '' },
+            })
+
+            const first = await makeSet('First')
+            const second = await makeSet('Second')
+
+            const firstResponse = await updateKey(first.id)
+            const secondResponse = await updateKey(second.id)
+
+            expect(firstResponse.statusCode).toBe(StatusCodes.OK)
+            expect(secondResponse.statusCode).toBe(StatusCodes.OK)
+            const firstKey = firstResponse.json<PieceSet>().key
+            const secondKey = secondResponse.json<PieceSet>().key
+            expect(firstKey).not.toBe('')
+            expect(secondKey).not.toBe('')
+            expect(firstKey).not.toBe(secondKey)
+        })
+
+        it('returns 409 (not 500) when updating to a key already used on the platform', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            const makeSet = async (name: string, key: string) => (await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name, key },
+            })).json<PieceSet>()
+
+            await makeSet('Taken', 'shared-key')
+            const other = await makeSet('Other', 'other-key')
+
+            const response = await app!.inject({
+                method: 'POST',
+                url: `/api/v1/piece-sets/${other.id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { key: 'shared-key' },
+            })
+            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         })
 
         it('resetting a piece to "all" removes its selection key', async () => {
@@ -270,7 +334,7 @@ describe('Piece Sets API', () => {
                 id: apId(),
                 platformId: mockPlatform.id,
                 name: 'Default',
-                externalId: null,
+                key: null,
                 isDefault: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
@@ -290,7 +354,7 @@ describe('Piece Sets API', () => {
                 id: apId(),
                 platformId: mockPlatform.id,
                 name: 'Default',
-                externalId: null,
+                key: null,
                 isDefault: true,
                 generatedForProjectId: null,
                 config: emptyConfig,
@@ -336,7 +400,7 @@ describe('Piece Sets API', () => {
                 method: 'POST',
                 url: `/api/v1/piece-sets/${original.id}`,
                 headers: { authorization: `Bearer ${token}` },
-                body: { pieces: { mode: 'exclude_all', exceptions: ['@activepieces/piece-slack'] } },
+                body: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: ['@activepieces/piece-slack'] } },
             })
 
             const response = await app!.inject({
@@ -349,10 +413,12 @@ describe('Piece Sets API', () => {
             const clone = response.json<PieceSet>()
             expect(clone.name).toBe('Original (Copy)')
             expect(clone.isDefault).toBe(false)
-            expect(clone.externalId).toBeNull()
+            // A clone gets its own auto-generated key rather than inheriting the original's.
+            expect(clone.key).not.toBe(original.key)
+            expect(clone.key).not.toBeNull()
             expect(clone.generatedForProjectId).toBeNull()
             expect(clone.id).not.toBe(original.id)
-            expect(clone.config.pieces.mode).toBe('exclude_all')
+            expect(clone.config.pieces.mode).toBe(PieceSelectionMode.EXCLUDE_ALL)
             expect(clone.config.pieces.exceptions).toContain('@activepieces/piece-slack')
         })
     })
@@ -422,7 +488,7 @@ describe('Piece Sets API', () => {
                 id: apId(),
                 platformId: mockPlatform.id,
                 name: 'Default',
-                externalId: null,
+                key: null,
                 isDefault: true,
                 generatedForProjectId: null,
                 config: emptyConfig,

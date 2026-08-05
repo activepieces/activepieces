@@ -376,6 +376,48 @@ describe('AppConnection CE API', () => {
         })
     })
 
+    describeWithAuth('GET /v1/app-connections/:id', () => app!, (setup) => {
+        it('should get a connection by id without sensitive data', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const createResponse = await ctx.post('/v1/app-connections', {
+                externalId: 'get-by-id-test',
+                displayName: 'Get Me',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 'my-secret' },
+                pieceVersion: mockPiece.version,
+            })
+            const connectionId = createResponse?.json().id
+
+            const response = await ctx.get(`/v1/app-connections/${connectionId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.id).toBe(connectionId)
+            expect(body.externalId).toBe('get-by-id-test')
+            expect(body.value).toBeUndefined()
+            expect(body.flowIds).toEqual([])
+        })
+
+        it('should return 404 for a non-existent connection', async () => {
+            const ctx = await setup()
+
+            const response = await ctx.get(`/v1/app-connections/${apId()}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
     describe('GET /v1/app-connections (Isolation)', () => {
         it('should isolate connections between projects', async () => {
             const ctx1 = await createTestContext(app!)
@@ -407,6 +449,34 @@ describe('AppConnection CE API', () => {
             const body = response?.json()
             const ids = body.data.map((c: Record<string, string>) => c.externalId)
             expect(ids).not.toContain('isolation-test')
+        })
+
+        it('should not get a connection from another project', async () => {
+            const ctx1 = await createTestContext(app!)
+            const ctx2 = await createTestContext(app!)
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx1.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const createResponse = await ctx1.post('/v1/app-connections', {
+                externalId: 'cross-project-get',
+                displayName: 'Project 1 Connection',
+                pieceName: mockPiece.name,
+                projectId: ctx1.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPiece.version,
+            })
+            const connectionId = createResponse?.json().id
+
+            const response = await ctx2.get(`/v1/app-connections/${connectionId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
