@@ -8,6 +8,10 @@
 ### STAGE 1: Build (toolchain lives here only, never in the final image) ###
 FROM node:24.14.0-bullseye-slim AS build
 
+# redis-memory-server is a test-only dep; its postinstall compiles Redis from source
+# (needs cmake since Redis 8 became "stable") and has no place in an image build.
+ENV REDISMS_DISABLE_POSTINSTALL=1
+
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
