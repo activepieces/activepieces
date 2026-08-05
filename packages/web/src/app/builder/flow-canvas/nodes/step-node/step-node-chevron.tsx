@@ -2,6 +2,8 @@ import { ChevronDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
+import { flowScreenshotUtils } from '../../utils/flow-screenshot-utils';
+
 const StepNodeChevron = ({
   onClickOverride,
 }: {
@@ -9,6 +11,7 @@ const StepNodeChevron = ({
 }) => {
   return (
     <Button
+      {...{ [flowScreenshotUtils.SCREENSHOT_EXCLUDE_ATTRIBUTE]: 'ignore-me' }}
       variant="ghost"
       size="sm"
       className="p-1 size-7 "
