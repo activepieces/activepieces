@@ -1,3 +1,4 @@
+import { apId } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -31,7 +32,7 @@ describe('POST /v1/agents/runs', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'send a summary email', resumeUrl: 'https://example.com/resume/abc' },
+            body: { instruction: 'send a summary email', flowRunId: apId(), waitpointId: apId() },
         })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
@@ -54,7 +55,7 @@ describe('POST /v1/agents/runs', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'do a thing', resumeUrl: 'https://example.com/resume/abc', projectId: other.project.id },
+            body: { instruction: 'do a thing', flowRunId: apId(), waitpointId: apId(), projectId: other.project.id },
         })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
@@ -73,7 +74,7 @@ describe('POST /v1/agents/runs', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'do a thing', resumeUrl: 'https://example.com/resume/abc' },
+            body: { instruction: 'do a thing', flowRunId: apId(), waitpointId: apId() },
         })
 
         const list = await ctx.post('/v1/agents/conversations', { title: 'a real chat' })
@@ -88,7 +89,7 @@ describe('POST /v1/agents/runs', () => {
 
         const response = await ctx.post('/v1/agents/runs', {
             instruction: 'do a thing',
-            resumeUrl: 'https://example.com/resume/abc',
+            flowRunId: apId(), waitpointId: apId(),
         })
 
         expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response.statusCode)
@@ -106,7 +107,25 @@ describe('POST /v1/agents/runs', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: '', resumeUrl: 'https://example.com/resume/abc' },
+            body: { instruction: '', flowRunId: apId(), waitpointId: apId() },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+    })
+
+    it('rejects a waitpoint that is not an id, so nothing unbounded reaches the queue', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-4',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: { instruction: 'do a thing', flowRunId: apId(), waitpointId: 'x'.repeat(5_000) },
         })
 
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
