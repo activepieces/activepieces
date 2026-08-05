@@ -30,6 +30,9 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (unsupported.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions` } })
         }
+        if (pieceTools.some((tool) => tool.pieceMetadata.actionName === CUSTOM_API_CALL)) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'An agent step cannot use a custom API call: it would let the agent send this project\'s credentials to any address it chooses' } })
+        }
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
@@ -65,6 +68,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
 const RUNS_PER_MINUTE = 60
 const MAX_INSTRUCTION_LENGTH = 51_200
 const MAX_TOOLS = 100
+const CUSTOM_API_CALL = 'custom_api_call'
 
 const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_INSTRUCTION_LENGTH),

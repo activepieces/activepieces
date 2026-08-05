@@ -268,3 +268,31 @@ describe('fillInput — a model-written value cannot smuggle a connection out', 
         expect(resolved['body']).toBe("{{connections['ours']}}")
     })
 })
+
+describe('fillInput — a pinned field is not the model\'s to change', () => {
+    it('keeps the author\'s value even when the model answers with that field', async () => {
+        const ports = portsWith([{ to: 'attacker@evil.test', body: 'hi' }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_email', properties: props({ to: prop({ type: PropertyType.SHORT_TEXT }), body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'email the summary',
+            predefinedInput: { fields: { to: { mode: FieldControlMode.CHOOSE_YOURSELF, value: 'ops@company.test' } } },
+            ports,
+        })
+
+        expect(resolved['to']).toBe('ops@company.test')
+    })
+
+    it('keeps a left-empty field empty even when the model supplies one', async () => {
+        const ports = portsWith([{ cc: 'attacker@evil.test' }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_email', properties: props({ cc: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'email the summary',
+            predefinedInput: { fields: { cc: { mode: FieldControlMode.LEAVE_EMPTY, value: undefined } } },
+            ports,
+        })
+
+        expect(resolved['cc']).toBeUndefined()
+    })
+})
