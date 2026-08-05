@@ -9,6 +9,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
+import { runActionInput } from '../../../mcp/tools/ap-run-action'
 import { ActionRunOffload, executeCodeActionRun, executePieceActionRun, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
@@ -247,7 +248,8 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return { remembered: true }
         }
         case 'ap_discover_action_auth': {
-            const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
+            const { pieceName } = runActionInput.pick({ pieceName: true }).parse(toolInput)
+            const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
             // Sticky connection: if the user already chose a connection for this piece this
             // conversation, reuse it instead of popping another picker for the next action.
             if (conversationId) {
@@ -262,7 +264,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                     }
                 }
             }
-            const discoveryResult = await findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
+            const discoveryResult = await findConnectionsForPiece({ pieceName, projects, platformId, log })
 
             if (conversationId && 'pickConnection' in discoveryResult && discoveryResult.pickConnection) {
                 await agentApprovalGate.storeAvailableConnections({
@@ -281,7 +283,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_revalidate_connection': {
-            const externalId = toolInput.connectionExternalId as string
+            const { connectionExternalId: externalId } = runActionInput.pick({ connectionExternalId: true }).required().parse(toolInput)
             let projectId: string | undefined
             if (conversationId) {
                 const conversation = await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
@@ -319,8 +321,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return runAgentCode({ toolInput, projects, platformId, userId, conversationId, log })
         }
         case 'ap_explore_data': {
-            const actionName = toolInput.actionName as string
-            const exploreInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : undefined
+            const { actionName, input: exploreInput } = runActionInput.parse(toolInput)
             if (!agentToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return agentToolClassification.readOnlyRejection(actionName)
             }
@@ -403,8 +404,7 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
     requireWritePermission?: boolean
     log: FastifyBaseLogger
 }): Promise<unknown> {
-    const pieceName = toolInput.pieceName as string
-    const actionName = toolInput.actionName as string
+    const { pieceName, actionName, input: parsedInput } = runActionInput.parse(toolInput)
 
     const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
     let connectionExternalId: string | undefined
@@ -433,18 +433,11 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         }
     }
 
-    let parsedInput = toolInput.input
-    if (typeof parsedInput === 'string') {
-        const parsed = parseToJsonIfPossible(parsedInput)
-        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-            parsedInput = parsed as Record<string, unknown>
-        }
-    }
     const result = await executePieceActionRun({
         projectId: resolvedProjectId,
         pieceName,
         actionName,
-        input: parsedInput as Record<string, unknown> | undefined,
+        input: parsedInput,
         connectionExternalId,
         ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,

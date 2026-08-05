@@ -2,7 +2,7 @@ import { formatPieceError, isNil, isObject, tryCatch, tryCatchSync, tryParseFrie
 import { CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { actionRunService } from '../../action-run/action-run.service'
+import { ActionRunResult, actionRunService } from '../../action-run/action-run.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
@@ -257,20 +257,14 @@ export async function executePieceActionRun({
         }
     }
 
-    const outcome: ActionRunOutcome = {
-        succeeded: actionRun.status === FlowRunStatus.SUCCEEDED,
-        output: actionRun.output,
-        errorMessage: actionRun.errorMessage,
-    }
-
     if (offload !== undefined) {
-        const offloaded = await maybeOffloadLargeResult({ outcome, actionName: action.name, displayName: action.displayName, offload })
+        const offloaded = await maybeOffloadLargeResult({ outcome: actionRun, actionName: action.name, displayName: action.displayName, offload })
         if (offloaded !== null) {
             return offloaded
         }
     }
 
-    const formatted = formatPieceActionRunResult({ outcome, runId: actionRun.id, displayName: action.displayName, actionName: action.name })
+    const formatted = formatPieceActionRunResult({ outcome: actionRun, runId: actionRun.id, displayName: action.displayName, actionName: action.name })
     return {
         content: [{ type: 'text', text: formatted.text }],
         ...(formatted.errorSummary !== undefined ? { structuredContent: { errorSummary: formatted.errorSummary } } : {}),
@@ -421,12 +415,12 @@ function slimCustomApiCallOutput(output: unknown): { payload: unknown, statusNot
 // handler, which returns a compact preview + fileId in place of the blob. Returns null to fall
 // through to normal formatting (result small, empty, failed, or persistence declined/failed).
 async function maybeOffloadLargeResult({ outcome, actionName, displayName, offload }: {
-    outcome: ActionRunOutcome
+    outcome: ActionRunResult
     actionName: string
     displayName: string
     offload: ActionRunOffload
 }): Promise<McpToolResult | null> {
-    if (!outcome.succeeded) {
+    if (outcome.status !== FlowRunStatus.SUCCEEDED) {
         return null
     }
     const { payload, statusNote } = actionName === 'custom_api_call'
@@ -451,12 +445,12 @@ async function maybeOffloadLargeResult({ outcome, actionName, displayName, offlo
 }
 
 function formatPieceActionRunResult({ outcome, runId, displayName, actionName }: {
-    outcome: ActionRunOutcome
+    outcome: ActionRunResult
     runId: string
     displayName: string
     actionName?: string
 }): PieceActionRunResult {
-    if (outcome.succeeded) {
+    if (outcome.status === FlowRunStatus.SUCCEEDED) {
         const { payload, statusNote } = actionName === 'custom_api_call'
             ? slimCustomApiCallOutput(outcome.output)
             : { payload: outcome.output, statusNote: '' }
@@ -578,12 +572,6 @@ function isStepDataExpired(run: FlowRun): boolean {
     }
     const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
     return isOutsideRetentionWindow(run.created, retentionDays)
-}
-
-type ActionRunOutcome = {
-    succeeded: boolean
-    output: unknown
-    errorMessage?: string | null
 }
 
 export type CodeActionRunResult = {
