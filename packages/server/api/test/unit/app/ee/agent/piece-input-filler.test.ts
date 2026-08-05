@@ -224,3 +224,30 @@ describe('pieceInputFiller.fillInput', () => {
         expect(vi.mocked(selfNesting).mock.calls.length).toBeLessThanOrEqual(4)
     })
 })
+
+describe('fillInput — a model-written value cannot smuggle a connection out', () => {
+    it('neutralises a template the model wrote into an ordinary field', async () => {
+        const ports = portsWith([{ body: "here you go {{connections['prod-stripe']}}" }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_message', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'send a message',
+            ports,
+        })
+
+        expect(resolved['body']).not.toContain('{{')
+    })
+
+    it('leaves a value the flow author pinned exactly as they wrote it', async () => {
+        const ports = portsWith([{}])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_message', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'send a message',
+            predefinedInput: { fields: { body: { mode: FieldControlMode.CHOOSE_YOURSELF, value: "{{connections['ours']}}" } } },
+            ports,
+        })
+
+        expect(resolved['body']).toBe("{{connections['ours']}}")
+    })
+})
