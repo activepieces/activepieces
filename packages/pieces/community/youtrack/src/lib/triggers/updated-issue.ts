@@ -6,26 +6,17 @@ import { ISSUE_FIELDS, flattenIssue, youtrackApiCall, requireYoutrackAuth } from
 import { updatedIssueTriggerOutputSchema } from '../output-schemas';
 
 const PAGE_SIZE = 50;
-/** Ceiling of 500 issues per poll, so a stale checkpoint cannot page forever. */
+/** At most 500 issues per poll; any remainder is picked up by the next poll. */
 const MAX_PAGES = 10;
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  // No date filter in the query: YouTrack search syntax has no `{after <epoch>}`
-  // form (it 400s), so the cutoff is pollingHelper's, which drops items at or
-  // below `lastFetchEpochMS`. Because that cutoff is client-side, a single page
-  // would silently lose events whenever more than PAGE_SIZE issues are updated
-  // between two polls. Page backwards until we reach an issue at or before the
-  // checkpoint. Paging is decided on the raw batch, before the never-modified
-  // filter below, so filtered-out rows cannot cut the window short.
-  //
   // Issues whose `updated` still equals `created` have never been modified, so
   // they belong to the New Issue trigger only.
   items: async ({ auth, lastFetchEpochMS }) => {
     const { baseUrl, apiToken } = requireYoutrackAuth(auth);
-    const collected: Array<Record<string, unknown>> = [];
 
-    for (let page = 0; page < MAX_PAGES; page++) {
+    const fetchPage = async (query: string, skip: number) => {
       const response = await youtrackApiCall<Array<Record<string, unknown>>>({
         baseUrl,
         token: apiToken,
@@ -33,28 +24,46 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
         path: '/issues',
         queryParams: {
           fields: ISSUE_FIELDS,
-          query: 'sort by: updated desc',
-          '$skip': String(page * PAGE_SIZE),
+          query,
+          '$skip': String(skip),
           '$top': String(PAGE_SIZE),
         },
       });
+      return response.body || [];
+    };
 
-      const batch = response.body || [];
-      collected.push(...batch);
+    const toEvents = (issues: Array<Record<string, unknown>>) =>
+      issues
+        .filter((issue) => issue['updated'] !== issue['created'])
+        .map((issue) => ({
+          epochMilliSeconds: (issue['updated'] as number) || 0,
+          data: flattenIssue(issue),
+        }));
 
-      // No checkpoint yet (Test Trigger passes 0) — one page is enough.
-      if (lastFetchEpochMS <= 0) break;
-      // Exhausted the project, or paged back past the checkpoint.
-      if (batch.length < PAGE_SIZE) break;
-      if (batch.some((issue) => ((issue['updated'] as number) || 0) <= lastFetchEpochMS)) break;
+    // Test Trigger passes no checkpoint: newest-first sample, a single page.
+    if (lastFetchEpochMS <= 0) {
+      return toEvents(await fetchPage('sort by: updated desc', 0));
     }
 
-    return collected
-      .filter((issue) => issue['updated'] !== issue['created'])
-      .map((issue) => ({
-        epochMilliSeconds: (issue['updated'] as number) || 0,
-        data: flattenIssue(issue),
-      }));
+    // Normal poll. `updated: <datetime> .. *` filters server-side (YouTrack has
+    // no `{after <epoch>}` form — that 400s — but does accept an ISO datetime
+    // range, honoured to the second), and ascending order walks the window from
+    // the checkpoint forward. That combination is what makes this lossless: the
+    // checkpoint only ever advances over issues actually returned, so a backlog
+    // larger than MAX_PAGES simply resumes at the same place on the next poll
+    // instead of being skipped. Truncating to whole seconds rounds the boundary
+    // down, so the window is inclusive rather than one that could miss an issue.
+    const since = new Date(lastFetchEpochMS).toISOString().slice(0, 19);
+    const query = `updated: ${since} .. * sort by: updated asc`;
+
+    const collected: Array<Record<string, unknown>> = [];
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const batch = await fetchPage(query, page * PAGE_SIZE);
+      collected.push(...batch);
+      if (batch.length < PAGE_SIZE) break;
+    }
+
+    return toEvents(collected);
   },
 };
 
