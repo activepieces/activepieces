@@ -1,5 +1,5 @@
 import { AIProviderName, chunk, isNil, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, ApEdition, PersistedAgentMessage, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
+import { AgentConversation, AgentRunSource, ApEdition, PersistedAgentMessage, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
@@ -47,8 +47,11 @@ async function syncConversations({ conversations, log }: {
         return { pushed: 0, skipped: conversations.length, failed: 0 }
     }
 
+    const skippedBySource = conversations.length
+    conversations = conversations.filter((conversation) => conversation.source === AgentRunSource.CHAT)
+
     if (conversations.length === 0) {
-        return { pushed: 0, skipped: 0, failed: 0 }
+        return { pushed: 0, skipped: skippedBySource, failed: 0 }
     }
 
     const platformIds = [...new Set(conversations.map((c) => c.platformId))]

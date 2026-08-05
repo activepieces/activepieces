@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+    mockSave: vi.fn(),
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
+            save: mockSave,
             createQueryBuilder: (): QueryBuilderMock => {
                 const builder: QueryBuilderMock = {
                     update: () => builder,
@@ -99,6 +101,7 @@ describe('agentRpcHandlers.saveAgentMessages — no-shrink guard against context
     beforeEach(() => {
         mockSet.mockClear()
         mockFindOneBy.mockReset()
+        mockFindOneBy.mockResolvedValue(null)
     })
 
     it('refuses to overwrite messages with a SHORTER history (the aborted-turn clobber)', async () => {
@@ -202,5 +205,96 @@ describe('agentRpcHandlers.executeAgentTool — chat-only tools are refused off 
 
     it('lets a CHAT run through to the normal handler', async () => {
         await expect(callExecuteAgentTool({ toolName: '__cancel_check', source: 'CHAT' })).resolves.toEqual({ result: false })
+    })
+})
+
+async function callUpdateProjectContext(input: { conversationId: string, runId?: string, projectId: string | null }): Promise<void> {
+    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+    await agentRpcHandlers(noopLogger as never).updateProjectContext(input as never)
+}
+
+describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its own project', () => {
+    beforeEach(() => {
+        mockSet.mockClear()
+    })
+
+    it('refuses to move a flow-step run to another project', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        await expect(callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })).rejects.toThrow()
+        expect(mockSet).not.toHaveBeenCalled()
+    })
+
+    it('allows a flow-step run to reaffirm the project it already belongs to', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-own' })
+
+        expect(mockSet).toHaveBeenCalled()
+    })
+
+    it('leaves chat runs free to switch project, which is a feature there', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'CHAT', projectId: 'proj-own' })
+
+        await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })
+
+        expect(mockSet).toHaveBeenCalled()
+    })
+})
+
+async function callGetAgentConfigFor(input: Record<string, unknown>): Promise<unknown> {
+    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+    return agentRpcHandlers(noopLogger as never).getAgentConfig(input as never)
+}
+
+describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conversation on first use', () => {
+    beforeEach(() => {
+        mockSave.mockClear()
+        mockFindOneBy.mockReset()
+    })
+
+    it('creates the row with the owner and project the job carried', async () => {
+        mockFindOneBy.mockResolvedValue(null)
+        mockSave.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', messages: [] })
+
+        await callGetAgentConfigFor({
+            conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
+            userMessage: 'do a thing', modelName: null,
+            source: 'FLOW_STEP', projectId: 'proj-1',
+        }).catch(() => undefined)
+
+        expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({
+            id: 'conv-1',
+            source: 'FLOW_STEP',
+            projectId: 'proj-1',
+            userId: 'owner-1',
+        }))
+    })
+
+    it('does not create a second row when the run is retried', async () => {
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', messages: [] })
+
+        await callGetAgentConfigFor({
+            conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
+            userMessage: 'do a thing', modelName: null,
+            source: 'FLOW_STEP', projectId: 'proj-1',
+        }).catch(() => undefined)
+
+        expect(mockSave).not.toHaveBeenCalled()
+    })
+})
+
+describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a flow-step target', () => {
+    it('refuses ap_remember for a flow-step run', async () => {
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).executeAgentTool({
+            toolName: 'ap_remember',
+            toolInput: { memory: 'the owner likes concise replies' },
+            platformId: 'plat-1',
+            userId: 'owner-1',
+            conversationId: 'conv-1',
+            source: 'FLOW_STEP',
+        } as never)).rejects.toThrow()
     })
 })
