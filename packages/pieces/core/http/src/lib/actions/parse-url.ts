@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { parseUrlActionOutputSchema } from '../output-schemas';
 
 export const parseUrl = createAction({
   audience: 'both',
@@ -19,6 +20,7 @@ export const parseUrl = createAction({
       defaultValue: true,
     }),
   },
+  outputSchema: parseUrlActionOutputSchema,
   async run(context) {
     const { url, returnArrays } = context.propsValue;
 
