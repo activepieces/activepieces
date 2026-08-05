@@ -11,7 +11,7 @@ import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-select
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
-const PLATFORM_LEVEL_TOOL_SET = new Set(PLATFORM_LEVEL_TOOL_NAMES)
+const PLATFORM_LEVEL_TOOL_SET = new Set<string>(PLATFORM_LEVEL_TOOL_NAMES)
 const MCP_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server

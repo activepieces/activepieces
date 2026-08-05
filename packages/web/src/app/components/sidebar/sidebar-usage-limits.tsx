@@ -1,134 +1,172 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronRight, Info } from 'lucide-react';
-import React from 'react';
+import { ArrowUpCircle, Coins, SquareArrowOutUpRight } from 'lucide-react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  AutoRechargeConfigDialog,
+  billingQueries,
+  billingUtils,
+  useManagePlanDialogStore,
+} from '@/features/billing';
+import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
+
+const AMBER_THRESHOLD = 70;
+const RED_THRESHOLD = 90;
+const SIDEBAR_DATE_FORMAT = 'MMM D, YYYY';
 
 const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const currentUser = userHooks.useCurrentUser();
-  const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
+  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const [autoRechargeOpen, setAutoRechargeOpen] = useState(false);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  if (edition !== ApEdition.CLOUD) {
+  const usage = platform.usage;
+  const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
+  const isPaid = billingUtils.isPaidPlan(platform.plan.plan);
+
+  const creditsRemaining = usage?.creditsRemaining ?? null;
+  const isUnlimited = isNil(creditsRemaining);
+  const creditsUsed = Math.round(usage?.creditsUsed ?? 0);
+  const total = isUnlimited ? 0 : creditsUsed + Math.round(creditsRemaining);
+  const percentUsed = billingUtils.percentUsed({ used: creditsUsed, total });
+
+  const inWarning = !isUnlimited && percentUsed >= AMBER_THRESHOLD;
+  const canManage = isPlatformAdmin && inWarning;
+  const needsSubscription = canManage && isPaid;
+
+  const { data: info } = billingQueries.usePlatformSubscription(
+    platform.id,
+    needsSubscription,
+  );
+  const creditsFeature = info?.creditsFeature;
+  const autoRechargeEnabled = creditsFeature?.autoTopUp?.enabled ?? false;
+  const isTrial = !isNil(info?.trialEndsAt);
+
+  if (edition === ApEdition.COMMUNITY) {
     return null;
   }
 
-  if (isNil(project)) {
+  if (isNil(project) || isNil(usage)) {
     return (
-      <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
-        <div className="flex flex-col gap-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Skeleton className="size-4" />
-                <Skeleton className="w-20 h-4" />
-              </div>
-              <Skeleton className="w-16 h-4" />
-            </div>
-          ))}
+      <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
+        <div className="flex items-center justify-between">
+          <Skeleton className="w-24 h-4" />
+          <Skeleton className="w-14 h-4" />
         </div>
+        <Skeleton className="w-20 h-3" />
       </div>
     );
   }
 
+  if (isNil(creditsRemaining)) {
+    return null;
+  }
+
+  const displayedCredits = Math.round(creditsRemaining);
+  const creditsText =
+    displayedCredits >= 1_000_000
+      ? formatUtils.formatNumberCompact(displayedCredits)
+      : formatUtils.formatNumber(displayedCredits);
+
+  const resetLine = billingUtils.resolveCreditsReset({
+    creditsNextResetAt: usage.creditsNextResetAt,
+    creditsResetInterval: info?.creditsResetInterval,
+    nextBillingDate: info?.nextBillingDate,
+    isPaid,
+    dateFormat: SIDEBAR_DATE_FORMAT,
+  });
+  const showUpgradeButton = canManage && (!isPaid || isTrial);
+  const showAutoRechargeButton =
+    canManage && isPaid && !isTrial && !isNil(creditsFeature);
+  const showBillingButton =
+    isPlatformAdmin && !showUpgradeButton && !showAutoRechargeButton;
   return (
-    <div className="flex flex-col w-full p-2.5 bg-background rounded-md border">
-      <div className="flex flex-col gap-1.5">
-        <UsageRow name={t('Runs')} isUnlimited={true} />
-        <UsageRow
-          name={t('AI Credits')}
-          value={Math.round(platform.usage?.aiCreditsRemaining ?? 0)}
-          suffix={t('remaining')}
-          tooltip={t(
-            'Used when running AI pieces with Activepieces as the provider instead of your own API keys.',
-          )}
-        />
-        <UsageRow
-          name={t('Active Flows')}
-          value={platform.usage?.activeFlows ?? 0}
-          max={platform?.plan.activeFlowsLimit}
-        />
-        {isPlatformAdmin && (
-          <Link
-            to="/platform/setup/billing"
-            className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground mt-3 w-fit"
-          >
-            <span>{t('Manage Plan')}</span>
-            <ChevronRight className="size-4" />
+    <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-baseline gap-1 min-w-0">
+          <span className="text-sm font-semibold truncate">{creditsText}</span>
+          <span className="text-xs text-muted-foreground">{t('credits')}</span>
+        </div>
+        <Badge className={cn('shrink-0', creditsBadgeClass(percentUsed))}>
+          {t('{percent}% used', { percent: percentUsed })}
+        </Badge>
+      </div>
+      <div className="flex items-center gap-2">
+        {!isNil(resetLine) && (
+          <span className="min-w-0 truncate text-xs text-muted-foreground">
+            {resetLine.label} {resetLine.value}
+          </span>
+        )}
+        <span className="grow"></span>
+        {showBillingButton && (
+          <Link to="/platform/setup/billing">
+            <Button variant="link" size="xs">
+              {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
+            </Button>
           </Link>
         )}
       </div>
+
+      {showUpgradeButton && (
+        <Button
+          variant="basic"
+          size="sm"
+          className="w-full border"
+          onClick={openManagePlanDialog}
+        >
+          <ArrowUpCircle className="size-4" />
+          {t('Upgrade plan')}
+        </Button>
+      )}
+
+      {showAutoRechargeButton && (
+        <>
+          <Button
+            variant="basic"
+            size="sm"
+            className="w-full border"
+            onClick={() => setAutoRechargeOpen(true)}
+          >
+            <Coins className="size-4" />
+            {autoRechargeEnabled
+              ? t('Edit auto recharge')
+              : t('Enable auto recharge')}
+          </Button>
+          <AutoRechargeConfigDialog
+            key={autoRechargeOpen ? 'auto-open' : 'auto-closed'}
+            isOpen={autoRechargeOpen}
+            onOpenChange={setAutoRechargeOpen}
+            feature={creditsFeature}
+          />
+        </>
+      )}
     </div>
   );
 });
 
-type UsageRowProps = {
-  name: string;
-  value?: number | null;
-  max?: number | null;
-  isUnlimited?: boolean;
-  suffix?: string;
-  tooltip?: string;
-};
-
-const UsageRow = ({
-  name,
-  value,
-  max,
-  isUnlimited,
-  suffix,
-  tooltip,
-}: UsageRowProps) => {
-  const hasMax = !isNil(max);
-
-  return (
-    <div className="flex items-center justify-between gap-2 w-full text-xs">
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">•</span>
-        <span className="truncate font-medium">{name}</span>
-        {tooltip && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="size-3.5 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-[220px]">
-              <p className="text-sm">{tooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-      <div className="flex items-center gap-2 text-foreground">
-        {isUnlimited ? (
-          <span className="text-muted-foreground">{t('Unlimited')}</span>
-        ) : suffix ? (
-          <span>
-            {formatUtils.formatNumber(value ?? 0)} {suffix}
-          </span>
-        ) : (
-          <span>
-            {formatUtils.formatNumber(value ?? 0)} /{' '}
-            {hasMax ? formatUtils.formatNumber(max) : t('Unlimited')}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-};
+function creditsBadgeClass(percentUsed: number): string {
+  if (percentUsed >= RED_THRESHOLD) {
+    return flowRunUtils.getStatusContainerClassName('error');
+  }
+  if (percentUsed >= AMBER_THRESHOLD) {
+    return flowRunUtils.getStatusContainerClassName('warning');
+  }
+  return flowRunUtils.getStatusContainerClassName('default');
+}
 
 SidebarUsageLimits.displayName = 'UsageLimitsButton';
 export default SidebarUsageLimits;

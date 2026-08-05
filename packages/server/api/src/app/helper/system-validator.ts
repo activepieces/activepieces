@@ -149,11 +149,10 @@ const systemPropValidators: {
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: booleanValidator,
     [AppSystemProp.APPSUMO_TOKEN]: stringValidator,
+    [AppSystemProp.AUTUMN_CONSOLE_URL]: urlValidator,
     [AppSystemProp.FILE_STORAGE_LOCATION]: enumValidator(Object.values(FileLocation)),
     [AppSystemProp.FIREBASE_ADMIN_CREDENTIALS]: stringValidator,
     [AppSystemProp.FIREBASE_HASH_PARAMETERS]: stringValidator,
-    [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
-    [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.WORKERS]: numberValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
@@ -172,9 +171,6 @@ const systemPropValidators: {
     [AppSystemProp.CLOUDFLARE_API_BASE]: stringValidator,
     [AppSystemProp.CLOUDFLARE_SAAS_FALLBACK_ORIGIN]: stringValidator,
     [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
-
-    // Secret Manager
-    [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
 
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,

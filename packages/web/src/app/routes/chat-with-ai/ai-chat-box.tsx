@@ -298,11 +298,10 @@ function ChatBoxContent({
               isEmpty ? t('Ask, build, or run a task...') : undefined
             }
             banner={
-              showBanner ? (
+              showBanner && !hasBlockingCard ? (
                 <CreditsBanner
                   creditsExhausted={credits.creditsExhausted}
                   creditsWarning={credits.creditsWarning}
-                  daysUntilReset={credits.daysUntilReset}
                   onDismiss={credits.dismissCreditsWarning}
                 />
               ) : null
