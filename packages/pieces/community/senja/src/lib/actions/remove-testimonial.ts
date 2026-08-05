@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall } from '../common';
+import { deleteTestimonialActionOutputSchema } from '../output-schemas';
 
 export const removeTestimonialAction = createAction({
   auth: senjaAuth,
@@ -10,6 +11,7 @@ export const removeTestimonialAction = createAction({
   description: 'Permanently delete a testimonial from your Senja project. This action cannot be undone.',
   audience: 'ai',
   aiMetadata: { description: 'Permanently deletes a Senja testimonial by ID; this cannot be undone and there is no archive or recovery. Use only when removal is explicitly intended. Requires the testimonial ID (resolve via Find Testimonials). Destructive — a repeat call targets a now-missing record and returns 404.', idempotent: false },
+  outputSchema: deleteTestimonialActionOutputSchema,
   props: {
     id: Property.ShortText({
       displayName: 'Testimonial ID',
