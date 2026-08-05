@@ -2,7 +2,7 @@
 import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { youtrackAuth } from '../auth';
-import { ISSUE_FIELDS, flattenIssue, youtrackApiCall } from '../common';
+import { ISSUE_FIELDS, flattenIssue, youtrackApiCall, requireYoutrackAuth } from '../common';
 import { updatedIssueTriggerOutputSchema } from '../output-schemas';
 
 const PAGE_SIZE = 50;
@@ -22,12 +22,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
   // Issues whose `updated` still equals `created` have never been modified, so
   // they belong to the New Issue trigger only.
   items: async ({ auth, lastFetchEpochMS }) => {
+    const { baseUrl, apiToken } = requireYoutrackAuth(auth);
     const collected: Array<Record<string, unknown>> = [];
 
     for (let page = 0; page < MAX_PAGES; page++) {
       const response = await youtrackApiCall<Array<Record<string, unknown>>>({
-        baseUrl: auth.props.baseUrl,
-        token: auth.props.apiToken,
+        baseUrl,
+        token: apiToken,
         method: HttpMethod.GET,
         path: '/issues',
         queryParams: {

@@ -40,6 +40,24 @@ export async function youtrackApiCall<T extends HttpMessageBody>({
   });
 }
 
+/**
+ * Triggers read `auth.props` directly. When no connection is selected on the
+ * step, `auth` is undefined and that dereference throws a bare TypeError, which
+ * tells the user nothing. Fail with the actual problem instead.
+ */
+export function requireYoutrackAuth(auth: unknown): {
+  baseUrl: string;
+  apiToken: string;
+} {
+  const props = (auth as { props?: { baseUrl?: string; apiToken?: string } })?.props;
+  if (!props?.baseUrl || !props?.apiToken) {
+    throw new Error(
+      'No YouTrack connection selected. Choose a connection on this step before running it.',
+    );
+  }
+  return { baseUrl: props.baseUrl, apiToken: props.apiToken };
+}
+
 export function flattenObject(
   obj: Record<string, unknown>,
   prefix = '',
