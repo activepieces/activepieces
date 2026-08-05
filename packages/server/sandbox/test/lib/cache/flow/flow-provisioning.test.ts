@@ -148,5 +148,11 @@ describe('flowProvisioning.resolve', () => {
 
         expect(resolved.kind).toBe('disabled')
         expect(disableFlow).toHaveBeenCalledWith({ flowId: 'flow1', projectId: 'p1' })
+        if (resolved.kind === 'disabled') {
+            expect(resolved.failedStep?.name).toBe('step_1')
+            expect(resolved.failedStep?.displayName).toBe('HTTP')
+            expect(resolved.failedStep?.message).toContain('@activepieces/piece-http@^1.0.0')
+            expect(resolved.failedStep?.message).toContain('turned off')
+        }
     })
 })

@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { Alert, AlertChannel, ApEdition, FailedStep, flowStructureUtil, ListAlertsParams, ProjectType } from '@activepieces/shared'
 
@@ -8,6 +8,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
+import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -51,6 +52,10 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         const project = await projectService(log).getOneOrThrow(issueToAlert.projectId)
         const flowVersion = await flowVersionService(log).getOneOrThrow(issueToAlert.flowVersionId)
 
+        const flowOwnerEmail = project.notifyFlowOwnerOnFailure
+            ? await getFlowOwnerEmail({ log, flowId: issueToAlert.flowId, projectId: issueToAlert.projectId })
+            : undefined
+
         const failedStepNumber = flowStructureUtil.getStepNumber(flowVersion.trigger, failedStep.name)
         const alertsInfo: IssueParams = {
             flowVersionId: flowVersion.id,
@@ -66,6 +71,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             failedStepDisplayName: failedStep.displayName,
             failedStepNumber: failedStepNumber > 0 ? failedStepNumber : undefined,
             failedStepMessage: failedStep.message,
+            flowOwnerEmail,
         }
 
         await sendAlertOnFlowFailure(log, alertsInfo)
@@ -139,6 +145,23 @@ export const alertsService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function getFlowOwnerEmail({ log, flowId, projectId }: { log: FastifyBaseLogger, flowId: string, projectId: string }): Promise<string | undefined> {
+    const { data: email, error } = await tryCatch(async () => {
+        const flow = await flowService(log).getOne({ id: flowId, projectId })
+        if (isNil(flow) || isNil(flow.ownerId)) {
+            return undefined
+        }
+        const owner = await userService(log).getOneOrFail({ id: flow.ownerId })
+        const identity = await userIdentityService(log).getOneOrFail({ id: owner.identityId })
+        return identity.email.toLowerCase()
+    })
+    if (error) {
+        log.warn({ error, flow: { id: flowId }, project: { id: projectId } }, '[alertsService#getFlowOwnerEmail] failed to resolve flow owner email')
+        return undefined
+    }
+    return email ?? undefined
+}
+
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
     const { flowRunId, projectId } = params
 
@@ -170,6 +193,7 @@ type IssueParams = {
     failedStepDisplayName: string
     failedStepNumber?: number
     failedStepMessage?: string
+    flowOwnerEmail?: string
 }
 
 type IssueToAlert = {

@@ -11,12 +11,6 @@ import { zendeskAuth } from '../..';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_new_organization_webhook';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 interface ZendeskOrganization {
   id: number;
   name: string;

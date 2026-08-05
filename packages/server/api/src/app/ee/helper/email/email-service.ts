@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil, unique } from '@activepieces/core-utils'
 import { AlertChannel, ApEdition, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../helper/domain-helper'
@@ -96,6 +96,23 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async sendPlatformDeleted({ platformId, email, purgeDate }: SendPlatformDeletedArgs): Promise<void> {
+        log.info({
+            message: '[emailService#sendPlatformDeleted] sending platform deleted email',
+            platform: { id: platformId },
+        })
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'platform-deleted',
+                vars: {
+                    purgeDate,
+                },
+            },
+        })
+    },
+
     async sendIssueCreatedNotification({
         projectId,
         projectName,
@@ -106,6 +123,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         failedStepDisplayName,
         failedStepNumber,
         failedStepMessage,
+        flowOwnerEmail,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
@@ -119,7 +137,11 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const alertEmails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = unique([
+            ...alertEmails,
+            ...(isNil(flowOwnerEmail) ? [] : [flowOwnerEmail]),
+        ].map((email) => email.toLowerCase()))
 
         if (emails.length === 0) {
             return
@@ -264,6 +286,12 @@ type SendScimUserWelcomeArgs = {
     platformId: string
 }
 
+type SendPlatformDeletedArgs = {
+    platformId: string
+    email: string
+    purgeDate: string
+}
+
 type SendChatNotificationArgs = {
     platformId: string
     to: string[]
@@ -283,4 +311,5 @@ type IssueCreatedArgs = {
     failedStepDisplayName: string
     failedStepNumber?: number
     failedStepMessage?: string
+    flowOwnerEmail?: string
 }

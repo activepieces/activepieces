@@ -1,9 +1,13 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ACTIVEPIECES_CHAT_TIERS, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from '@activepieces/pieces-framework';
 
 type AIModelType = 'text' | 'image';
+
+function managedModelLabel(modelId: string): string | undefined {
+  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)?.label;
+}
 
 type AIPropsParams<T extends AIModelType> = {
   modelType: T;
@@ -74,10 +78,13 @@ export const aiProps = <T extends AIModelType>({
       return {
         placeholder: 'Select AI Model',
         disabled: false,
-        options: allModels.filter(model => model.type === modelType).map(model => ({
-          label: model.name,
-          value: model.id,
-        })),
+        options: allModels
+          .filter(model => model.type === modelType)
+          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedModelLabel(model.id) !== undefined)
+          .map(model => ({
+            label: provider === AIProviderName.ACTIVEPIECES ? (managedModelLabel(model.id) ?? model.name) : model.name,
+            value: model.id,
+          })),
       };
     },
   }),

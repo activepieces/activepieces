@@ -1,7 +1,9 @@
 import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
+import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
 import { Badge } from '@/components/ui/badge';
+import { isStepFileUrl } from '@/lib/dom-utils';
 import { formatUtils } from '@/lib/format-utils';
 import { pathUtils } from '@/lib/path-utils';
 
@@ -83,6 +85,10 @@ function FormatSingleValue({
 }) {
   if (isNil(value) || value === '') {
     return <span className="text-muted-foreground italic">{t('empty')}</span>;
+  }
+
+  if (isStepFileUrl(value)) {
+    return <StepFileDownloadButton fileUrl={value} />;
   }
 
   const stringValue = String(value);

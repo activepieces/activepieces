@@ -4,13 +4,15 @@ import {
 } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
 import { airtableAuth } from '../auth';
+import { createRecordActionOutputSchema } from '../output-schemas';
 
 export const airtableCreateRecordAction = createAction({
   auth: airtableAuth,
   name: 'airtable_create_record',
   displayName: 'Create Airtable Record',
   description: 'Adds a record into an airtable',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: createRecordActionOutputSchema,
   aiMetadata: {
     description:
       'Creates a new record in an Airtable table from a set of field values, resolving any linked-record/attachment fields before insert. Use to append a row to a base. Requires a base and table; each call appends a distinct record, so it is not idempotent.',

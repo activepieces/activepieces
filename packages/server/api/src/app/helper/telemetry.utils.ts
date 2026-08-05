@@ -15,10 +15,14 @@ function getPostHog(): PostHog {
     if (!posthogInstance) {
         posthogInstance = new PostHog('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
             host: 'https://us.i.posthog.com',
+            maxQueueSize: BILLING_EVENTS_MAX_QUEUE_SIZE,
         })
     }
     return posthogInstance
 }
+
+export const BILLING_EVENTS_FLUSH_BATCH_SIZE = 10_000
+const BILLING_EVENTS_MAX_QUEUE_SIZE = 20_000
 
 export const telemetry = (log: FastifyBaseLogger) => ({
     async identify(identity: UserIdentity, user?: User, projectId?: ProjectId): Promise<void> {
@@ -83,6 +87,11 @@ export function captureBillingEvent({ licenseKey, event, properties }: CaptureBi
         event,
         properties,
     })
+}
+export async function flushBillingEvents(): Promise<void> {
+    if (posthogInstance !== null) {
+        await posthogInstance.flush()
+    }
 }
 
 export async function shutdownTelemetry(): Promise<void> {
@@ -153,8 +162,9 @@ export type ChatMessageProperties = {
     toolsUsed: number
 }
 
-type CaptureBillingEventParams = { licenseKey: string } & (
+export type BillingEventPayload =
     | { event: BillingEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
     | { event: BillingEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
     | { event: BillingEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
-)
+
+type CaptureBillingEventParams = { licenseKey: string } & BillingEventPayload

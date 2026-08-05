@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation } from '@activepieces/shared';
+import { AgentConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
@@ -41,13 +41,10 @@ export function AIChatBox({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
-  const { data: providers, isLoading: isLoadingProviders } =
-    aiProviderQueries.useAiProviders();
+  const { data: chatProvider, isLoading: isLoadingProviders } =
+    aiProviderQueries.useChatProvider();
 
-  const chatProvider = providers?.find((p) => p.enabledForChat);
-  const hasChatProvider = Boolean(chatProvider);
-
-  if (!isLoadingProviders && !hasChatProvider) {
+  if (!isLoadingProviders && !chatProvider) {
     return <SetupRequiredState />;
   }
 
@@ -170,7 +167,7 @@ function ChatBoxContent({
     !hasSentMessage;
 
   const cachedConversations = queryClient.getQueryData<
-    SeekPage<ChatConversation>
+    SeekPage<AgentConversation>
   >(['chat-conversations']);
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 
@@ -301,11 +298,10 @@ function ChatBoxContent({
               isEmpty ? t('Ask, build, or run a task...') : undefined
             }
             banner={
-              showBanner ? (
+              showBanner && !hasBlockingCard ? (
                 <CreditsBanner
                   creditsExhausted={credits.creditsExhausted}
                   creditsWarning={credits.creditsWarning}
-                  daysUntilReset={credits.daysUntilReset}
                   onDismiss={credits.dismissCreditsWarning}
                 />
               ) : null

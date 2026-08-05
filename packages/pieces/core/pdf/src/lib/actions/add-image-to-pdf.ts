@@ -4,10 +4,11 @@ import { getTargetPages, mapVisualToIntrinsic } from '../common';
 import mime from 'mime-types';
 
 export const addImageToPdf = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'addImageToPdf',
   displayName: 'Add Image to PDF',
   description: 'Stamps one or more images (PNG or JPG) at exact pixel distances from the top-left corner.',
+  aiMetadata: { description: 'Stamps one or more PNG or JPEG images onto an existing PDF at exact point offsets from the top-left corner, each item targeting either a single page or every page. Use it for signatures, logos or watermarks — prefer Add Text to PDF for text, and Image to PDF to turn an image into a standalone document. Each image must have a positive scale and fit entirely within the page bounds, otherwise the call fails; the input file is never modified and repeating the call produces the same stamped content, so idempotent.', idempotent: true },
   props: {
     file: Property.File({
       displayName: 'PDF File or URL',

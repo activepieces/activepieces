@@ -20,7 +20,7 @@ const NoResultsFound = () => {
       </div>
       <div className="flex flex-col gap-1">
         <div className="text-sm font-medium text-foreground">
-          {t('No pieces found')}
+          {t('No results found')}
         </div>
         <div className="text-xs text-muted-foreground">
           {t('Try a different search term')}

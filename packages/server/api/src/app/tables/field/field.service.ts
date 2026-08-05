@@ -11,8 +11,10 @@ const fieldRepo = repoFactory<Field>(FieldEntity)
 export const fieldService = {
     async create({ request, projectId }: CreateParams): Promise<Field> {
         await this.validateCount({ projectId, tableId: request.tableId })
+        const maxPosition = await fieldRepo().maximum('position', { projectId, tableId: request.tableId })
         const field = await fieldRepo().save({
             ...request,
+            position: request.position ?? (maxPosition ?? -1) + 1,
             projectId,
             id: apId(),
             externalId: request.externalId ?? apId(),
@@ -20,7 +22,7 @@ export const fieldService = {
         return field
     },
 
-    async createFromState({ projectId, field, tableId }: CreateFromStateParams): Promise<Field> {
+    async createFromState({ projectId, field, tableId, position }: CreateFromStateParams): Promise<Field> {
         switch (field.type) {
             case FieldType.STATIC_DROPDOWN: {
                 assertNotNullOrUndefined(field.data, 'Data is required for static dropdown field')
@@ -32,6 +34,7 @@ export const fieldService = {
                         tableId,
                         data: field.data,
                         externalId: field.externalId,
+                        position,
                     },
                 })
             }
@@ -45,6 +48,7 @@ export const fieldService = {
                         type: field.type,
                         tableId,
                         externalId: field.externalId,
+                        position,
                     },
                 })
             }
@@ -63,6 +67,7 @@ export const fieldService = {
         return fieldRepo().find({
             where: { projectId, tableId },
             order: {
+                position: 'ASC',
                 created: 'ASC',
             },
         })
@@ -72,6 +77,7 @@ export const fieldService = {
         const fields = await fieldRepo().find({
             where: { projectId, tableId: In(tableIds) },
             order: {
+                position: 'ASC',
                 created: 'ASC',
             },
         })
@@ -111,13 +117,31 @@ export const fieldService = {
     },
 
     async update({ id, projectId, request }: UpdateParams): Promise<Field> {
-        await fieldRepo().update({
-            id,
-            projectId,
-        }, {
-            name: request.name,
-        })
+        if (!isNil(request.name)) {
+            await fieldRepo().update({
+                id,
+                projectId,
+            }, {
+                name: request.name,
+            })
+        }
         return this.getById({ id, projectId })
+    },
+
+    async reorder({ projectId, tableId, fieldIds }: ReorderParams): Promise<Field[]> {
+        await fieldRepo().query(
+            `
+            UPDATE "field" AS f
+            SET "position" = ordering.ord - 1
+            FROM unnest($1::text[]) WITH ORDINALITY AS ordering(id, ord)
+            WHERE f."id" = ordering.id
+              AND f."projectId" = $2
+              AND f."tableId" = $3
+              AND f."position" IS DISTINCT FROM ordering.ord - 1
+            `,
+            [fieldIds, projectId, tableId],
+        )
+        return this.getAll({ projectId, tableId })
     },
 
     async count({ projectId, tableId }: CountParams): Promise<number> {
@@ -125,9 +149,9 @@ export const fieldService = {
             where: { projectId, tableId },
         })
     },
-    async validateCount(params: CountParams): Promise<void> {
-        const countRes = await this.count(params)
-        if (countRes + 1 > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
+    async validateCount({ projectId, tableId, insertCount = 1 }: ValidateCountParams): Promise<void> {
+        const countRes = await this.count({ projectId, tableId })
+        if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: `Max fields per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)}`,
@@ -146,6 +170,7 @@ type CreateFromStateParams = {
     projectId: string
     field: FieldState
     tableId: string
+    position?: number
 }
 
 type GetAllParams = {
@@ -174,7 +199,19 @@ type UpdateParams = {
     request: UpdateFieldRequest
 }
 
+type ReorderParams = {
+    projectId: string
+    tableId: string
+    fieldIds: string[]
+}
+
 type CountParams = {
     projectId: string
     tableId: string
+}
+
+type ValidateCountParams = {
+    projectId: string
+    tableId: string
+    insertCount?: number
 }

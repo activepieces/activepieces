@@ -1,4 +1,4 @@
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
+import { ActionBase, PieceAuth, TriggerBase } from '@activepieces/pieces-framework'
 import { apId, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
@@ -34,6 +34,8 @@ const fakeEmbedder: ToolSearchEmbedder = {
     embed: (texts) => Promise.resolve(texts.map(bagOfWords)),
 }
 
+const pieceAuth = PieceAuth.SecretText({ displayName: 'API Key', required: true })
+
 function action(over: Pick<ActionBase, 'name' | 'displayName' | 'description'> & { requireAuth?: boolean, audience?: ActionBase['audience'] }): ActionBase {
     return { name: over.name, displayName: over.displayName, description: over.description, props: {}, requireAuth: over.requireAuth ?? true, audience: over.audience }
 }
@@ -56,6 +58,7 @@ async function seedCatalog(): Promise<void> {
         name: '@activepieces/piece-slack',
         displayName: 'Slack',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { send_channel_message: action({ name: 'send_channel_message', displayName: 'Send Channel Message', description: 'Send a message to a Slack channel' }) },
@@ -65,6 +68,7 @@ async function seedCatalog(): Promise<void> {
         name: '@activepieces/piece-google-calendar',
         displayName: 'Google Calendar',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { create_event: action({ name: 'create_event', displayName: 'Create Event', description: 'Create a new event in a Google Calendar' }) },
@@ -74,6 +78,7 @@ async function seedCatalog(): Promise<void> {
         name: '@activepieces/piece-gmail',
         displayName: 'Gmail',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { send_email: action({ name: 'send_email', displayName: 'Send Email', description: 'Send an email via Gmail' }) },
@@ -129,6 +134,56 @@ describe('Tool Search Engine (Phase 1)', () => {
         // 3 actions (slack, calendar, gmail) + 1 trigger (slack/new_message)
         expect(result.objectsIndexed).toBe(4)
         expect(await indexRowCount()).toBe(4)
+    })
+
+    it('defaults requiresConnection to true when requireAuth is absent (legacy piece_metadata)', async () => {
+        // Simulates a piece_metadata row written before requireAuth became a required boolean: the stored
+        // JSON has no requireAuth key, so it reads back as undefined. Before the `?? true` coalesce this
+        // bound NULL into the NOT NULL requiresConnection column, aborting the whole upsert (index unbuilt).
+        const legacyAction = { name: 'legacy_action', displayName: 'Legacy Action', description: 'Send a message to a Slack channel', props: {} } as unknown as ActionBase
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-legacy',
+            displayName: 'Legacy',
+            version: '1.0.0',
+            auth: pieceAuth,
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { legacy_action: legacyAction },
+            triggers: {},
+        }))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        expect(result.status).toBe('done')
+        expect(result.objectsIndexed).toBe(1)
+        const [row] = await databaseConnection().query(
+            'SELECT "requiresConnection" FROM "tool_search_index" WHERE "pieceName" = $1 AND "objectName" = $2',
+            ['@activepieces/piece-legacy', 'legacy_action'],
+        )
+        expect(row.requiresConnection).toBe(true)
+    })
+
+    it('indexes an auth-less piece as requiresConnection false even though requireAuth is true', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-math-helper',
+            displayName: 'Math Helper',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { addition: action({ name: 'addition', displayName: 'Addition', description: 'Add two numbers together', requireAuth: true }) },
+            triggers: { new_number: trigger({ name: 'new_number', displayName: 'New Number', description: 'Triggers when a new number is produced' }) },
+        }))
+
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const rows = await databaseConnection().query(
+            'SELECT "objectName", "requiresConnection" FROM "tool_search_index" WHERE "pieceName" = $1 ORDER BY "objectName"',
+            ['@activepieces/piece-math-helper'],
+        )
+        expect(rows).toEqual([
+            { objectName: 'addition', requiresConnection: false },
+            { objectName: 'new_number', requiresConnection: false },
+        ])
     })
 
     it('searchActions ranks the semantically closest action first and returns the tiered envelope', async () => {
@@ -708,6 +763,23 @@ describe('Tool Search Engine (Phase 5 — keyword floor / degradation)', () => {
         expect(results.length).toBeGreaterThan(0)
         expect(results.every((r) => r.pieceName === '@activepieces/piece-slack')).toBe(true)
     })
+
+    it('returns audience:"ai" actions in the keyword floor — the search engine sees the full audience, not the human view', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-agent-tools',
+            displayName: 'Agent Tools',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_ai_message: action({ name: 'send_ai_message', displayName: 'Send AI Message', description: 'Send a message to a channel', audience: 'ai' }) },
+            triggers: {},
+        }))
+
+        const { results, mode } = await toolSearchService(log).searchActions('send message', { limit: 5 })
+
+        expect(mode).toBe('keyword')
+        expect(results.some((r) => r.actionName === 'send_ai_message')).toBe(true)
+    })
 })
 
 // Two pieces each carrying both an action and a trigger, so the trigger-side query path can be
@@ -717,6 +789,7 @@ async function seedTriggerCatalog(): Promise<void> {
         name: '@activepieces/piece-slack',
         displayName: 'Slack',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { send_channel_message: action({ name: 'send_channel_message', displayName: 'Send Channel Message', description: 'Send a message to a Slack channel' }) },
@@ -726,6 +799,7 @@ async function seedTriggerCatalog(): Promise<void> {
         name: '@activepieces/piece-google-calendar',
         displayName: 'Google Calendar',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { create_event: action({ name: 'create_event', displayName: 'Create Event', description: 'Create a new event in a Google Calendar' }) },

@@ -109,6 +109,12 @@ export class InvalidCronExpressionError extends ExecutionError {
     }
 }
 
+export class InvalidScheduleIntervalError extends ExecutionError {
+    constructor(intervalMs: number, cause?: unknown) {
+        super('InvalidScheduleIntervalError', formatMessage(`Invalid schedule interval: ${intervalMs} ms`), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class FormulaEvaluationError extends ExecutionError {
     constructor({ expression, message, cause }: { expression: string, message: string, cause?: unknown }) {
         super('FormulaEvaluationError', formatMessage(`Formula error: ${message} (expression: ${expression})`), ExecutionErrorType.USER, cause)

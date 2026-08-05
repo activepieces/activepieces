@@ -56,6 +56,7 @@ export const MachineInformation = z.object({
     totalAvailableRamInBytes: z.number(),
     totalCpuCores: z.number(),
     ip: z.string(),
+    serverPingMs: z.number().optional(),
     sandboxes: z.array(SandboxInformation).default([]),
 })
 

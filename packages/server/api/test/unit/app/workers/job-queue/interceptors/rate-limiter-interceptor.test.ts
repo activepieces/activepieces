@@ -351,8 +351,8 @@ describe('rateLimiterInterceptor', () => {
             const platformId = `plat-${crypto.randomUUID()}`
             const jobData = createFlowJobData({ platformId })
 
-            // Set plan to STANDARD (limit=5)
-            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.STANDARD)
+            // Set plan to FREE (limit=5)
+            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.FREE)
 
             // Fill 5 slots
             for (let i = 0; i < 5; i++) {
@@ -362,6 +362,56 @@ describe('rateLimiterInterceptor', () => {
 
             // 6th should be rejected
             const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-6', jobData, job: createMockJob(), log: mockLog })
+            expect(result.verdict).toBe(InterceptorVerdict.REJECT)
+        })
+
+        it.each([
+            [PlanName.PLUS, 15],
+            [PlanName.PLUS_ANNUAL, 15],
+            [PlanName.PLUS_CHAT, 15],
+            [PlanName.TEAM, 15],
+            [PlanName.TEAM_ANNUAL, 15],
+            [PlanName.APPSUMO, 15],
+            [PlanName.ENTERPRISE, 30],
+        ])('should allow %s up to %i concurrent jobs and reject beyond it', async (planName, limit) => {
+            vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
+                return 0
+            })
+            const platformId = `plat-${crypto.randomUUID()}`
+            const jobData = createFlowJobData({ platformId })
+
+            await distributedStore.put(getPlatformPlanNameKey(platformId), planName)
+
+            for (let i = 0; i < limit; i++) {
+                const r = await rateLimiterInterceptor.preDispatch({ jobId: `job-${i}`, jobData, job: createMockJob(), log: mockLog })
+                expect(r.verdict).toBe(InterceptorVerdict.ALLOW)
+            }
+
+            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-overflow', jobData, job: createMockJob(), log: mockLog })
+            expect(result.verdict).toBe(InterceptorVerdict.REJECT)
+        })
+
+        it('should treat an unrecognised (legacy or bespoke) plan id as enterprise', async () => {
+            vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
+                return 0
+            })
+            const platformId = `plat-${crypto.randomUUID()}`
+            const jobData = createFlowJobData({ platformId })
+
+            await distributedStore.put(getPlatformPlanNameKey(platformId), 'old_embed_enterprise')
+
+            for (let i = 0; i < 30; i++) {
+                const r = await rateLimiterInterceptor.preDispatch({ jobId: `job-${i}`, jobData, job: createMockJob(), log: mockLog })
+                expect(r.verdict).toBe(InterceptorVerdict.ALLOW)
+            }
+
+            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-overflow', jobData, job: createMockJob(), log: mockLog })
             expect(result.verdict).toBe(InterceptorVerdict.REJECT)
         })
 
@@ -375,8 +425,8 @@ describe('rateLimiterInterceptor', () => {
             const platformId = `plat-${crypto.randomUUID()}`
             const jobData = createFlowJobData({ platformId })
 
-            // Set plan to STANDARD — should be ignored on COMMUNITY
-            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.STANDARD)
+            // Set plan to FREE — should be ignored on COMMUNITY
+            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.FREE)
 
             // Should use default (100), so 6 jobs should all pass
             for (let i = 0; i < 6; i++) {

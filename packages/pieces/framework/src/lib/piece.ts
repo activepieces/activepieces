@@ -31,6 +31,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
     public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
+    public readonly deprecated?: boolean,
   ) {
     if (!isValidSimpleSemver(minimumSupportedRelease) || isSemverLessThan(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
       this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION;
@@ -52,6 +53,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
+      deprecated: this.deprecated,
       contextInfo: this.getContextInfo?.()
     };
   }
@@ -96,6 +98,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthPrope
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
+    params.deprecated,
   );
 };
 
@@ -113,6 +116,7 @@ type CreatePieceParams<
   actions: Action[];
   triggers: Trigger[];
   categories?: PieceCategory[];
+  deprecated?: boolean;
 };
 
 type PieceEventProcessors = {

@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, LocalesEnum } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -12,6 +12,7 @@ import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
+import { filterActionsByAudience } from './utils'
 
 export const pieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -52,13 +53,12 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             orderBy: query.orderBy,
             suggestionType: query.suggestionType,
             locale: query.locale as LocalesEnum | undefined,
+            audience: query.audience,
         })
-        return pieceMetadataSummary.map((piece) => {
-            return {
-                ...piece,
-                i18n: undefined,
-            }
-        })
+        return pieceMetadataSummary.map((piece) => ({
+            ...piece,
+            i18n: undefined,
+        }))
     })
 
     app.get(
@@ -78,7 +78,8 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 locale: req.query.locale as LocalesEnum | undefined,
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
-            return isNil(policy) ? piece : policy.filterPieceComponents(piece)
+            const visiblePiece = isNil(policy) ? piece : policy.filterPieceComponents(piece)
+            return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
 
@@ -97,7 +98,8 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 locale: req.query.locale as LocalesEnum | undefined,
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
-            return isNil(policy) ? piece : policy.filterPieceComponents(piece)
+            const visiblePiece = isNil(policy) ? piece : policy.filterPieceComponents(piece)
+            return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
 
@@ -151,6 +153,13 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 
 function getPlatformId(principal: Principal): string | undefined {
     return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
+}
+
+function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter | undefined): PieceMetadataModel {
+    return {
+        ...piece,
+        actions: filterActionsByAudience(piece.actions, audience),
+    }
 }
 
 const RegistryPiecesRequest = {

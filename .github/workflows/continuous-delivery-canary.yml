@@ -3,8 +3,9 @@ name: Continuous Delivery — Canary
 on:
   workflow_dispatch:
   workflow_call:
-  schedule:
-    - cron: '0 9 * * *'  # Daily 9 AM UTC
+  # schedule:
+    # - cron: '0 9 * * *'  # Daily 9 AM UTC — scheduled runs always use the default branch,
+    #                        so this reverted canary to main and undid branch deployments
 
 jobs:
   build-image:

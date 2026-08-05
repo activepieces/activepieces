@@ -73,6 +73,7 @@ function ensureDispatcher(queueName: string, worker: BullMQWorker, log: FastifyB
         queueName,
         worker,
         dequeue: tryDequeue,
+        onOrphanedJob: returnJobToQueue,
         log,
     })
     dispatchers.set(queueName, dispatcher)

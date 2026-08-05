@@ -1,10 +1,10 @@
-import { isNil, PlatformId, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, PlatformId, STEP_NAME_REGEX, UserId } from '@activepieces/core-utils'
 import {
     PieceAuthProperty,
     piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
-import { CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
+import { CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -109,6 +109,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 }
                 break
             case FlowOperationType.IMPORT_FLOW:{
+                assertImportedStepNamesAreSafe(clonedRequest.request.trigger)
                 const notes = clonedRequest.request.notes
                 if (!isNil(notes)) {
                     clonedRequest.request.notes = notes.map(note => ({
@@ -124,6 +125,16 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
         return clonedRequest
     },
 })
+
+function assertImportedStepNamesAreSafe(trigger: FlowTrigger): void {
+    const invalidStep = flowStructureUtil.getAllSteps(trigger).find((step) => !STEP_NAME_REGEX.test(step.name))
+    if (!isNil(invalidStep)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Invalid step name: "${invalidStep.name}"` },
+        })
+    }
+}
 
 async function validateAction({ settings, platformId, log }: ValidateActionParams): Promise<ValidationResult> {
     if (

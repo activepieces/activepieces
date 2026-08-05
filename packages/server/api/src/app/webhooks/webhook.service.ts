@@ -10,6 +10,7 @@ import { pinoLogging } from '../helper/logger'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { shouldBlockRunOnCredits } from '../platform/billing-provider'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
@@ -265,6 +266,32 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         wideEvent.set({ webhook: { flowDisabled: true } })
         return {
             status: StatusCodes.NOT_FOUND,
+            body: {},
+            headers: {},
+        }
+    }
+
+    const creditsExhausted = await shouldBlockRunOnCredits({
+        platformId,
+        environment: runEnvironment,
+        log: logger,
+    })
+
+    if (creditsExhausted) {
+        const flowVersion = await flowVersionRepo().findOneBy({ id: flowVersionIdToRun })
+        assertNotNullOrUndefined(flowVersion, 'flowVersion')
+        const quotaExceededRun = await flowRunService(logger).createQuotaExceededRun({
+            flowVersion,
+            payload,
+            projectId,
+            environment: runEnvironment,
+            parentRunId,
+            failParentOnFailure,
+            shouldExecuteTriggerOnRetry: true,
+        })
+        wideEvent.set({ flowRun: { id: quotaExceededRun.id }, webhook: { quotaExceeded: true } })
+        return {
+            status: StatusCodes.PAYMENT_REQUIRED,
             body: {},
             headers: {},
         }
