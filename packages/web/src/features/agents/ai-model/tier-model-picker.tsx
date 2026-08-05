@@ -81,6 +81,7 @@ export function TierModelPicker({
           <CommandInput placeholder={t('Search tiers and models...')} />
           <CommandEmpty>{t('Nothing found.')}</CommandEmpty>
           <div className="max-h-80 overflow-auto">
+            {tiers.length > 0 && (
             <CommandGroup heading={t('Tiers (recommended)')}>
               {tiers.map((tier) => (
                 <CommandItem
@@ -113,7 +114,12 @@ export function TierModelPicker({
                 </CommandItem>
               ))}
             </CommandGroup>
-            <CommandGroup heading={t('Specific model (advanced)')}>
+            )}
+            <CommandGroup
+              heading={
+                tiers.length > 0 ? t('Specific model (advanced)') : t('Models')
+              }
+            >
               {models.map((model) => {
                 const disabledReason = disabledModels[model.id];
                 return (
