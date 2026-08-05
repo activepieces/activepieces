@@ -5,6 +5,24 @@ icon: "hammer"
 ---
 
 
+## 0.87.0
+
+### What has changed?
+
+#### YouTrack issue steps return custom field values instead of field names
+The YouTrack piece previously returned `customFields` as a comma-joined string of field *names* — for example `"Priority, State, Assignee"` — and discarded every value. An issue's Priority, State, Assignee and Estimation were therefore unreachable in a flow.
+
+`customFields` is now an object mapping each field name to its value:
+
+```json
+{ "Priority": "Critical", "State": "Open", "Estimation": "2h" }
+```
+
+This affects the **Get Issue**, **Create Issue**, **Update Issue** and **Search Issues** actions, and the **New Issue** and **Updated Issue** triggers.
+
+### Do you need to take action?
+- Only if you have a flow that references `customFields` from a YouTrack step. Change the reference to name the field you want, e.g. `{{step.customFields.Priority}}` instead of `{{step.customFields}}`. A reference to the bare `customFields` now yields an object rather than text.
+
 ## 0.86.0
 
 ### What has changed?
