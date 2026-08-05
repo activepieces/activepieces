@@ -37,6 +37,14 @@ Public read-only endpoints returning UI metadata for flows whose trigger is `@ac
 - `GET /v1/human-input/form/:flowId` and `/chat/:flowId` — return title, input schema, platform branding (white-labeled). `useDraft=true` loads the draft version.
 - Gotcha: these endpoints only return the UI definition; the actual submission goes through the WEBHOOK endpoint. Unpublished flows 404 unless `useDraft=true`.
 
+### Subflows
+A **Subflow** is a flow invoked by another flow rather than by its own external trigger — reached by a webhook POST to `/v1/webhooks/:flowId`, never a dedicated transport. Vocabulary from `@activepieces/piece-subflows`:
+- **Callable Flow** — the trigger that makes a flow callable; carries the parent's `data` payload and an optional `callbackUrl`. *Avoid:* child flow, nested flow, sub-workflow.
+- **Call Flow** — the action that invokes one subflow once, optionally waiting on a waitpoint for its `Respond` callback.
+- **Subflow fan-out** — many calls dispatched from one parent step (e.g. one per CSV batch), fire-and-forget, no waiting per call. *Avoid:* scatter, broadcast.
+- **Batch** — the rows carried by one fan-out call: `{ batchIndex, headers, rows, extraData }`. *Avoid:* chunk, csv table, sub-table, shard.
+- Parent linkage is two headers (`x-parent-run-id`, `x-fail-parent-on-failure`); fan-out sets the latter false. Streaming bounds memory, not time — the step is still capped by `FLOW_TIMEOUT_SECONDS`.
+
 ### Folders
 Lightweight per-project grouping for flows and tables. Name unique case-insensitively per project.
 - `folder` entity (displayName, projectId, displayOrder). List returns `numberOfFlows`/`numberOfTables` via correlated subqueries. Create is an upsert by name.
@@ -53,6 +61,7 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 - **Flow Runs** — the status state machine and RunTimeline phases
 - **Triggers** — POLLING / WEBHOOK / APP_WEBHOOK / MANUAL
 - **Human Input** — forms, approvals, the resume confirmation page
+- **Subflows** — flow-calls-flow: Callable Flow, Call Flow, streaming fan-out
 - **Folders** — flow organization; the uncategorized sentinel
 - **Templates** — OFFICIAL / CUSTOM / SHARED blueprints
 - **Variables** — project-scoped values referenced from steps

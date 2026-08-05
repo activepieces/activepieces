@@ -11,10 +11,11 @@ type FieldInfo = {
 };
 
 export const findRecords = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'tables-find-records',
   displayName: 'Find Records',
   description: 'Find records in a table with filters.',
+  aiMetadata: { description: 'Queries rows in an Activepieces Table, optionally narrowing them with a list of column/operator/value filter conditions and an optional row limit. This is the main way to read or search a table and to resolve the record IDs needed by Get Record, Update Record, or Delete Record(s); use Get Record when the record ID is already known. Requires the table ID; with no filters it returns every row, and filter values are type-checked against the column, so number and date columns reject unparseable values; read-only and idempotent.', idempotent: true },
   auth: PieceAuth.None(),
   props: {
     table_id: tablesCommon.table_id,

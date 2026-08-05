@@ -13,6 +13,7 @@ function buildLogger(): ApLogger {
         params: {
             serviceName: 'activepieces-worker',
             version: apVersionUtil.getCurrentRelease(),
+            environment: system.get(WorkerSystemProp.ENVIRONMENT),
             logLevel,
             logPretty,
             sampleRateInfo,

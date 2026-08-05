@@ -29,4 +29,4 @@ An outbound webhook subscribing to a chosen subset of Application Events at PLAT
 
 ## Related
 
-Application Events feed Audit Events in [Authentication & Security](../authentication/index.md). Webhooks are TriggerSources that start flows in [Automation Core](../automation-core/index.md).
+Application Events feed Audit Events in [Data, Storage & Observability](../data-storage-observability/index.md). Webhooks are TriggerSources that start flows in [Flows & Execution](../flows-execution/index.md).

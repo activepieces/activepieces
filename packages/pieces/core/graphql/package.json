@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-graphql",
-  "version": "0.0.15",
+  "version": "0.0.17",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {

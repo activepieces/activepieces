@@ -8,6 +8,7 @@ import { Error, Success } from '@/features/billing';
 import { PlatformLayout } from '../components/platform-layout';
 
 const SettingsBilling = React.lazy(() => import('./platform/billing'));
+const SettingsUsage = React.lazy(() => import('./platform/usage'));
 const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
@@ -46,9 +47,9 @@ const AiCapabilitiesPage = React.lazy(
   () => import('./platform/setup/ai-capabilities'),
 );
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
-const BrandingPage = React.lazy(() =>
-  import('./platform/setup/branding').then((m) => ({
-    default: m.BrandingPage,
+const GeneralPage = React.lazy(() =>
+  import('./platform/setup/general').then((m) => ({
+    default: m.GeneralPage,
   })),
 );
 const GlobalConnectionsTable = React.lazy(() =>
@@ -222,16 +223,20 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/branding',
+    path: '/platform/setup/general',
     element: (
       <PlatformLayout>
-        <PageTitle title="Branding">
+        <PageTitle title="General">
           <SuspenseWrapper>
-            <BrandingPage />
+            <GeneralPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
+  },
+  {
+    path: '/platform/setup/branding',
+    element: <Navigate to="/platform/setup/general" replace />,
   },
   {
     path: '/platform/setup/billing',
@@ -240,6 +245,18 @@ export const platformRoutes = [
         <PageTitle title="Billing">
           <SuspenseWrapper>
             <SettingsBilling />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/setup/usage',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Usage">
+          <SuspenseWrapper>
+            <SettingsUsage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

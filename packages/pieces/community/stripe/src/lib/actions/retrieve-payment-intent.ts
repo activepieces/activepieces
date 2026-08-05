@@ -7,13 +7,14 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeRetrievePaymentIntent = createAction({
   name: 'retrieve_payment_intent',
   auth: stripeAuth,
   displayName: 'Find Payment (by Payment Intent ID)',
   description:
     'Retrieves the details of a payment by its unique Payment Intent ID.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches the full details of a single payment by its PaymentIntent ID (e.g., pi_...). Use when you have the exact ID and need the payment\'s current status, amount, or associated charge. Read-only and idempotent.',
@@ -22,6 +23,7 @@ export const stripeRetrievePaymentIntent = createAction({
   props: {
     payment_intent_id: stripeCommon.paymentIntent, 
   },
+  outputSchema: paymentIntentOutputSchema,
   async run(context) {
     const { payment_intent_id } = context.propsValue;
 

@@ -137,6 +137,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'issue-created': `[${vars.projectName}] Flow has an issue "${vars.flowName}" ⚠️`,
         'scim-user-welcome': 'Welcome! Your account has been created 🎉',
         'chat-notification': vars.subject,
+        'platform-deleted': 'Your platform has been deleted',
     }
 
     return templateToSubject[templateName]

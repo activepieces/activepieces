@@ -73,6 +73,10 @@ type ChatNotificationTemplateData = BaseEmailTemplateData<'chat-notification', {
     senderEmail: string
 }>
 
+type PlatformDeletedTemplateData = BaseEmailTemplateData<'platform-deleted', {
+    purgeDate: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | ProjectMemberAddedEmailTemplateData
@@ -81,6 +85,7 @@ export type EmailTemplateData =
   | IssueCreatedTemplateData
   | ScimUserWelcomeTemplateData
   | ChatNotificationTemplateData
+  | PlatformDeletedTemplateData
 
 type SendArgs = {
     emails: string[]
