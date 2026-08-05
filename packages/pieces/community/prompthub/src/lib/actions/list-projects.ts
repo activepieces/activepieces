@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { PromptHubClient } from '../common/client';
 import { listProjectsProps } from '../common/props';
+import { listProjectsActionOutputSchema } from '../output-schemas';
 import { prompthubAuth } from '../..';
 
 export const listProjects = createAction({
@@ -10,6 +11,7 @@ export const listProjects = createAction({
   aiMetadata: { description: 'List the prompt projects belonging to a PromptHub team, each with its head revision and group assignments. Use this to discover available projects and their IDs before reading a head or running a prompt; optional group/model/provider filters narrow the results. Read-only and idempotent. Requires the numeric team ID.', idempotent: true },
   props: listProjectsProps,
   auth: prompthubAuth,
+  outputSchema: listProjectsActionOutputSchema,
   async run({ auth, propsValue }) {
     const client = new PromptHubClient(auth.secret_text);
     const result = await client.listProjects(propsValue['teamId'], {

@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { PromptHubClient } from '../common/client';
 import { runPromptProps, sanitizeVariables } from '../common/props';
+import { runPromptActionOutputSchema } from '../output-schemas';
 import { prompthubAuth } from '../..';
 
 export const runPrompt = createAction({
@@ -10,6 +11,7 @@ export const runPrompt = createAction({
   aiMetadata: { description: 'Execute a PromptHub project against its configured LLM and return the model completion. Use this to actually run a managed prompt rather than just read it; you can pin a specific version via branch or hash, supply variables for interpolation, and pass chat messages or an override prompt for the request. Not idempotent — each call invokes the model and incurs a new generation. Requires the numeric project ID.', idempotent: false },
   props: runPromptProps,
   auth: prompthubAuth,
+  outputSchema: runPromptActionOutputSchema,
   async run({ auth, propsValue }) {
     const client = new PromptHubClient(auth.secret_text);
     const body: Record<string, any> = {};

@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { PromptHubClient } from '../common/client';
 import { getProjectHeadProps, sanitizeVariables } from '../common/props';
+import { getProjectHeadActionOutputSchema } from '../output-schemas';
 import { prompthubAuth } from '../..';
 
 export const getProjectHead = createAction({
@@ -10,6 +11,7 @@ export const getProjectHead = createAction({
   aiMetadata: { description: 'Fetch the head (production-ready) revision of a PromptHub project, returning its prompt text, system message, model/provider configuration, and variables. Use this to read a project\'s current prompt without executing it; an optional branch targets a non-default branch and supplied variables can be interpolated into the returned request. Read-only and idempotent. Requires the numeric project ID.', idempotent: true },
   props: getProjectHeadProps,
   auth: prompthubAuth,
+  outputSchema: getProjectHeadActionOutputSchema,
   async run({ auth, propsValue }) {
     const client = new PromptHubClient(auth.secret_text);
     const q: Record<string, any> = {};
