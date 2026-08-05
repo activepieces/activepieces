@@ -15,6 +15,12 @@ enum TimeUnit {
   DAYS = 'days',
 }
 
+// Shared by run() and test() so Test Step cannot report success for an amount
+// that a real run would reject.
+const propsSchema = {
+  delayFor: z.number().check(z.minimum(0)),
+};
+
 export const delayForAction = createAction({
   audience: 'both',
   name: 'delayFor',
@@ -56,9 +62,7 @@ export const delayForAction = createAction({
   },
   outputSchema: delayForActionOutputSchema,
   async run(ctx) {
-    await propsValidation.validateZod(ctx.propsValue, {
-      delayFor: z.number().check(z.minimum(0)),
-    });
+    await propsValidation.validateZod(ctx.propsValue, propsSchema);
 
     const unit = ctx.propsValue.unit ?? TimeUnit.SECONDS;
     const delayInMs = calculateDelayInMs(ctx.propsValue.delayFor, unit);
@@ -87,6 +91,8 @@ export const delayForAction = createAction({
     }
   },
   async test(ctx) {
+    await propsValidation.validateZod(ctx.propsValue, propsSchema);
+
     const unit = ctx.propsValue.unit ?? TimeUnit.SECONDS;
     return {
       delayForInMs: calculateDelayInMs(ctx.propsValue.delayFor, unit),
