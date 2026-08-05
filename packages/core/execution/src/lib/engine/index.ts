@@ -10,3 +10,5 @@ export enum ExecutionMode {
     UNSANDBOXED = 'UNSANDBOXED',
     SANDBOX_CODE_AND_PROCESS = 'SANDBOX_CODE_AND_PROCESS',
 }
+
+export const RUN_STATE_STORE_DIR_PREFIX = 'store-'

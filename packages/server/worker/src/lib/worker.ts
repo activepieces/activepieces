@@ -1,7 +1,7 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { createLogger } from 'evlog'
@@ -143,6 +143,7 @@ export const worker = {
         }
         startSandboxInfoSampling()
         startPollWatchdog()
+        void cacheUtils(sandboxConfig.getCacheBasePath()).deleteStaleRunStateDirs(logger)
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 

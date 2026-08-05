@@ -482,7 +482,7 @@ describe('flow operation invariants', () => {
         })
 
         beforeEach(() => {
-            runStateStore.init({ runId: 'run-1', flowVersionId: 'fv-1' })
+            runStateStore.init({ runId: 'run-1' })
         })
 
         afterEach(() => {

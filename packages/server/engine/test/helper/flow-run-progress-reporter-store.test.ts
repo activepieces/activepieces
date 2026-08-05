@@ -116,7 +116,7 @@ describe('flowRunProgressReporter backup with runStateStore', () => {
     beforeEach(() => {
         mockUpload.mockClear()
         mockUploadRunLog.mockClear()
-        runStateStore.init({ runId: 'test-run-id', flowVersionId: 'test-flow-version-id' })
+        runStateStore.init({ runId: 'test-run-id' })
     })
 
     afterEach(() => {

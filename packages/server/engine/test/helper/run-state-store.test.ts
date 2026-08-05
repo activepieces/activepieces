@@ -1,12 +1,16 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { FlowActionType, GenericStepOutput, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { FlowActionType, GenericStepOutput, RUN_STATE_STORE_DIR_PREFIX, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { runStateStore } from '../../src/lib/helper/run-state-store'
 
 const ROOT_PATH = '[]'
 const RUN_ID = 'test-run-id'
-const FLOW_VERSION_ID = 'test-flow-version-id'
+
+function sqliteFilePath(): string {
+    const datedDir = `${RUN_STATE_STORE_DIR_PREFIX}${new Date().toISOString().slice(0, 10)}`
+    return path.join(process.env.AP_FLOWS_CACHE_PATH!, datedDir, `${RUN_ID}.sqlite`)
+}
 
 function makeStepOutput(output: unknown): StepOutput {
     return GenericStepOutput.create({
@@ -29,7 +33,7 @@ describe('runStateStore', () => {
     })
 
     beforeEach(() => {
-        runStateStore.init({ runId: RUN_ID, flowVersionId: FLOW_VERSION_ID })
+        runStateStore.init({ runId: RUN_ID })
     })
 
     afterEach(() => {
@@ -67,14 +71,14 @@ describe('runStateStore', () => {
             expect(runStateStore.isInitialized()).toBe(true)
         })
 
-        test('creates the sqlite file under the flow version directory', () => {
-            const expectedPath = path.join(process.env.AP_FLOWS_CACHE_PATH!, FLOW_VERSION_ID, `${RUN_ID}.sqlite`)
+        test('creates the sqlite file under the dated store directory', () => {
+            const expectedPath = sqliteFilePath()
             expect(fs.existsSync(expectedPath)).toBe(true)
         })
 
         test('re-init with the same run id without dispose succeeds and starts empty', () => {
             putStep({ name: 'step_1', output: { a: 1 } })
-            runStateStore.init({ runId: RUN_ID, flowVersionId: FLOW_VERSION_ID })
+            runStateStore.init({ runId: RUN_ID })
             expect(runStateStore.isInitialized()).toBe(true)
             expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeUndefined()
             putStep({ name: 'step_2', output: { b: 2 } })
@@ -83,9 +87,9 @@ describe('runStateStore', () => {
 
         test('init succeeds over a leftover stale file from a killed run', () => {
             runStateStore.dispose()
-            const filePath = path.join(process.env.AP_FLOWS_CACHE_PATH!, FLOW_VERSION_ID, `${RUN_ID}.sqlite`)
+            const filePath = sqliteFilePath()
             fs.writeFileSync(filePath, 'not a sqlite database')
-            runStateStore.init({ runId: RUN_ID, flowVersionId: FLOW_VERSION_ID })
+            runStateStore.init({ runId: RUN_ID })
             expect(runStateStore.isInitialized()).toBe(true)
             putStep({ name: 'step_1', output: { a: 1 } })
             expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeDefined()
@@ -96,7 +100,7 @@ describe('runStateStore', () => {
             const savedCachePath = process.env.AP_FLOWS_CACHE_PATH
             delete process.env.AP_FLOWS_CACHE_PATH
             try {
-                expect(() => runStateStore.init({ runId: RUN_ID, flowVersionId: FLOW_VERSION_ID })).not.toThrow()
+                expect(() => runStateStore.init({ runId: RUN_ID })).not.toThrow()
                 expect(runStateStore.isInitialized()).toBe(false)
                 expect(() => putStep({ name: 'step_1', output: { a: 1 } })).not.toThrow()
                 expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeUndefined()
@@ -157,7 +161,7 @@ describe('runStateStore', () => {
 
     describe('dispose', () => {
         test('deletes the sqlite file and marks the store uninitialized', () => {
-            const sqlitePath = path.join(process.env.AP_FLOWS_CACHE_PATH!, FLOW_VERSION_ID, `${RUN_ID}.sqlite`)
+            const sqlitePath = sqliteFilePath()
             runStateStore.dispose()
             expect(fs.existsSync(sqlitePath)).toBe(false)
             expect(runStateStore.isInitialized()).toBe(false)
@@ -166,7 +170,7 @@ describe('runStateStore', () => {
         test('allows re-initializing with the same run id', () => {
             putStep({ name: 'step_1', output: { a: 1 } })
             runStateStore.dispose()
-            runStateStore.init({ runId: RUN_ID, flowVersionId: FLOW_VERSION_ID })
+            runStateStore.init({ runId: RUN_ID })
             expect(runStateStore.isInitialized()).toBe(true)
             expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeUndefined()
         })

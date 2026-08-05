@@ -86,8 +86,8 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
-                if (operationType === EngineOperationType.EXECUTE_FLOW && 'flowRunId' in operation && 'flowVersion' in operation) {
-                    runStateStore.init({ runId: operation.flowRunId, flowVersionId: operation.flowVersion.id })
+                if (operationType === EngineOperationType.EXECUTE_FLOW && 'flowRunId' in operation) {
+                    runStateStore.init({ runId: operation.flowRunId })
                 }
                 flowRunProgressReporter.init()
                 try {

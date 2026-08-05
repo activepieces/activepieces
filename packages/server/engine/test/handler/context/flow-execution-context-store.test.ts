@@ -20,7 +20,7 @@ describe('FlowExecutorContext with runStateStore', () => {
     })
 
     beforeEach(() => {
-        runStateStore.init({ runId: 'test-run-id', flowVersionId: 'test-flow-version-id' })
+        runStateStore.init({ runId: 'test-run-id' })
     })
 
     afterEach(() => {

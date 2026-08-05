@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { isNil } from '@activepieces/core-utils'
-import { ExecutionMode, StepOutput } from '@activepieces/shared'
+import { ExecutionMode, RUN_STATE_STORE_DIR_PREFIX, StepOutput } from '@activepieces/shared'
 import { DatabaseSync, StatementSync } from 'node:sqlite'
 
 type PreparedStatements = {
@@ -16,10 +16,10 @@ let dbPath: string | null = null
 let statements: PreparedStatements | null = null
 
 export const runStateStore = {
-    init({ runId, flowVersionId }: { runId: string, flowVersionId: string }): void {
+    init({ runId }: { runId: string }): void {
         runStateStore.dispose()
         try {
-            const base = getBasePath(flowVersionId)
+            const base = getBasePath()
             fs.mkdirSync(base, { recursive: true })
             const filePath = path.join(base, `${runId}.sqlite`)
             fs.rmSync(filePath, { force: true })
@@ -107,9 +107,10 @@ export const runStateStore = {
     },
 }
 
-function getBasePath(flowVersionId: string): string {
+function getBasePath(): string {
     const executionMode = process.env.AP_EXECUTION_MODE as ExecutionMode | undefined
     const isSandboxed = executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
     const base = isSandboxed ? os.tmpdir() : process.env.AP_FLOWS_CACHE_PATH!
-    return path.join(base, flowVersionId)
+    const utcDate = new Date().toISOString().slice(0, 10)
+    return path.join(base, `${RUN_STATE_STORE_DIR_PREFIX}${utcDate}`)
 }
