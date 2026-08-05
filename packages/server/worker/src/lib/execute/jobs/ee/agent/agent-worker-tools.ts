@@ -1458,8 +1458,11 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
             execute: async ({ instruction }) => {
                 const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata }))
                 if (error) {
-                    log.warn({ error, tool: { name: configured.toolName } }, '[configuredPieceTool] Action threw')
-                    return { content: [{ type: 'text', text: `That action failed: ${String(error)}` }] }
+                    const reachedTheServer = String(error).includes('handler threw')
+                    log.warn({ error, tool: { name: configured.toolName }, reachedTheServer }, '[configuredPieceTool] Action did not return a result')
+                    return { content: [{ type: 'text', text: reachedTheServer
+                        ? `That action failed: ${String(error)}`
+                        : `That action was sent but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
                 }
                 if (!isSuccessResult(data.result)) {
                     log.warn({ tool: { name: configured.toolName } }, '[configuredPieceTool] Action reported a failure')
