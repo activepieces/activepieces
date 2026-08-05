@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const listMonitors = createAction({
+export const listMonitorsAi = createAction({
   auth: pubrioAuth,
-  name: 'list_monitors',
+  name: 'list_monitors_ai',
   displayName: 'List Monitors',
-  description: 'List all monitors with pagination',
-  audience: 'human',
+  description: 'List the account signal monitors',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'List the account\'s signal monitors with paging and ordering (by created_at, updated_at, or name). Read-only and repeatable. Use to enumerate existing monitors or find a monitor_id to pass to Update, Delete, Test Run, or Reveal Monitor Signature.',
+      'List the account\'s signal monitors (paged, orderable by created/updated/name). Read-only and repeatable. Use to enumerate monitors and obtain the `monitor_id` you pass to Get/Update/Delete/Duplicate/Test-Run Monitor.',
     idempotent: true,
   },
   props: {
