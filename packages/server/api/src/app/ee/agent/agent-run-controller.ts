@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
+import { projectStatusService } from '../../project/project-status.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentHelpers } from './agent-helpers'
 
@@ -25,6 +26,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
         }
+        await projectStatusService(request.log).assertIsActive({ projectId })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 

@@ -88,6 +88,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 ...request.body,
                 externalId: ownThePlatform ? request.body.externalId : undefined,
                 executionDataRetentionDays: ownThePlatform ? request.body.executionDataRetentionDays : undefined,
+                status: ownThePlatform ? request.body.status : undefined,
             },
         })
     })

@@ -10,6 +10,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  Ban,
   CircleAlert,
   CircleCheck,
   CircleX,
@@ -222,6 +223,11 @@ export const flowRunUtils = {
           variant: 'default',
           Icon: CircleX,
         };
+      case FlowRunStatus.PROJECT_INACTIVE:
+        return {
+          variant: 'default',
+          Icon: Ban,
+        };
       case FlowRunStatus.SUCCEEDED:
         return {
           variant: 'success',
@@ -241,6 +247,9 @@ export const flowRunUtils = {
   getStatusLabelOverride(status: FlowRunStatus): string | null {
     if (status === FlowRunStatus.QUOTA_EXCEEDED) {
       return t('Out of credits');
+    }
+    if (status === FlowRunStatus.PROJECT_INACTIVE) {
+      return t('Project inactive');
     }
     return null;
   },

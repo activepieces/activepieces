@@ -26,6 +26,11 @@ export enum ProjectType {
     PERSONAL = 'PERSONAL',
 }
 
+export enum ProjectStatus {
+    ACTIVE = 'ACTIVE',
+    INACTIVE = 'INACTIVE',
+}
+
 
 
 export type ProjectPlanId = string
@@ -55,6 +60,7 @@ export const Project = z.object({
     platformId: ApId,
     maxConcurrentJobs: Nullable(z.number()),
     type: z.nativeEnum(ProjectType),
+    status: z.enum(ProjectStatus),
     icon: ProjectIcon,
     externalId: Nullable(z.string()),
     releasesEnabled: z.boolean(),

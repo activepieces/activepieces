@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
-import { ColorName, Project, ProjectIcon, ProjectType } from '@activepieces/shared'
+import { ColorName, Project, ProjectIcon, ProjectStatus, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { system } from '../helper/system/system'
@@ -7,6 +7,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { userService } from '../user/user-service'
 import { projectHooks, ProjectPostCreateContext } from './project-hooks'
 import { projectRepo } from './project-repo'
+import { projectStatusService } from './project-status.service'
 import { projectWorkerGroupService } from './project-worker-group.service'
 
 export { projectRepo }
@@ -19,6 +20,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             id: apId(),
             ...rest,
             icon,
+            status: ProjectStatus.ACTIVE,
             releasesEnabled: false,
             notifyFlowOwnerOnFailure: false,
         }
@@ -72,6 +74,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
 
         const baseUpdate = {
             ...spreadIfDefined('externalId', externalId),
+            ...spreadIfDefined('status', request.status),
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             ...spreadIfDefined('notifyFlowOwnerOnFailure', request.notifyFlowOwnerOnFailure),
             ...spreadIfDefined('metadata', request.metadata),
@@ -89,6 +92,9 @@ export const projectService = (log: FastifyBaseLogger) => ({
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         if (request.workerGroupId !== undefined) {
             await projectWorkerGroupService(log).invalidate({ projectId })
+        }
+        if (request.status !== undefined) {
+            await projectStatusService(log).invalidate({ projectId })
         }
         return this.getOneOrThrow(projectId)
     },
@@ -286,6 +292,7 @@ type UpdateTeamProjectParams = {
     type: ProjectType.TEAM
     displayName?: string
     externalId?: string
+    status?: ProjectStatus
     releasesEnabled?: boolean
     notifyFlowOwnerOnFailure?: boolean
     metadata?: Metadata
@@ -299,6 +306,7 @@ type UpdateTeamProjectParams = {
 type UpdatePersonalProjectParams = {
     type: ProjectType.PERSONAL
     externalId?: string
+    status?: ProjectStatus
     releasesEnabled?: boolean
     notifyFlowOwnerOnFailure?: boolean
     metadata?: Metadata

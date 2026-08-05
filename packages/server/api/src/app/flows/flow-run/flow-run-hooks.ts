@@ -11,6 +11,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowRunAiUsageTracker } from './flow-run-ai-usage-tracker'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
+const ADMISSION_BLOCKED_STATUSES: FlowRunStatus[] = [FlowRunStatus.QUOTA_EXCEEDED, FlowRunStatus.PROJECT_INACTIVE]
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
         if (!isFlowRunStateTerminal({
@@ -51,7 +52,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         if (error) {
             log.warn({ error, flowRun: { id: flowRun.id } }, 'Failed to capture AI usage event')
         }
-        if (flowRun.environment === RunEnvironment.PRODUCTION && flowRun.status !== FlowRunStatus.QUOTA_EXCEEDED) {
+        if (flowRun.environment === RunEnvironment.PRODUCTION && !ADMISSION_BLOCKED_STATUSES.includes(flowRun.status)) {
             const { error: creditError } = await tryCatch(() => trackProductionRunCredit(log, flowRun))
             if (creditError) {
                 log.warn({ error: creditError, flowRun: { id: flowRun.id } }, 'Failed to track production run credit')

@@ -1,8 +1,9 @@
 import { Metadata, Nullable, OptionalArrayFromQuery, SAFE_STRING_PATTERN } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { PiecesFilterType, ProjectIcon, ProjectType } from './project'
+import { PiecesFilterType, ProjectIcon, ProjectStatus, ProjectType } from './project'
 
 export const UpdateProjectPlatformRequest = z.object({
+    status: z.enum(ProjectStatus).optional(),
     releasesEnabled: z.boolean().optional(),
     notifyFlowOwnerOnFailure: z.boolean().optional(),
     displayName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),

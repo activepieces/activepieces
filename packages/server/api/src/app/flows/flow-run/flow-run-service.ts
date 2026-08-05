@@ -15,6 +15,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
+import { projectStatusService } from '../../project/project-status.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -133,6 +134,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
+
+        await projectStatusService(log).assertRunIsAllowed({
+            projectId: oldFlowRun.projectId,
+            environment: oldFlowRun.environment,
+        })
 
         await assertRunCreditsNotExceeded({
             platformId: project.platformId,
@@ -318,10 +324,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return newFlowRun
     },
 
-    async createQuotaExceededRun({ flowVersion, payload, projectId, environment, parentRunId, failParentOnFailure, triggeredBy, shouldExecuteTriggerOnRetry }: CreateQuotaExceededRunParams): Promise<FlowRun> {
+    async createAdmissionBlockedRun({ status, flowVersion, payload, projectId, environment, parentRunId, failParentOnFailure, triggeredBy, shouldExecuteTriggerOnRetry }: CreateAdmissionBlockedRunParams): Promise<FlowRun> {
         const now = new Date().toISOString()
         const logsFileId = apId()
-        await persistQuotaExceededTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry })
+        await persistAdmissionBlockedTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry })
         const flowRun: FlowRun = {
             id: apId(),
             projectId,
@@ -330,7 +336,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             environment,
             parentRunId,
             failParentOnFailure: failParentOnFailure ?? true,
-            status: FlowRunStatus.QUOTA_EXCEEDED,
+            status,
             created: now,
             updated: now,
             startTime: now,
@@ -341,7 +347,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             triggeredBy,
         }
         await runsMetadataQueue(log).add(flowRun)
-        log.info({ flowRun: { id: flowRun.id }, flow: { id: flowVersion.flowId }, project: { id: projectId } }, 'Flow run admitted as QUOTA_EXCEEDED')
+        log.info({ flowRun: { id: flowRun.id, status }, flow: { id: flowVersion.flowId }, project: { id: projectId } }, 'Flow run admitted without being queued')
         return flowRun
     },
 
@@ -383,13 +389,15 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const triggerPayload = {}
         const platformId = await projectService(log).getPlatformId(projectId)
 
-        const creditsExhausted = await shouldBlockRunOnCredits({
+        const projectInactive = await projectStatusService(log).shouldBlockRun({ projectId, environment: RunEnvironment.PRODUCTION })
+        const creditsExhausted = !projectInactive && await shouldBlockRunOnCredits({
             platformId,
             environment: RunEnvironment.PRODUCTION,
             log,
         })
-        if (creditsExhausted) {
-            return this.createQuotaExceededRun({
+        if (projectInactive || creditsExhausted) {
+            return this.createAdmissionBlockedRun({
+                status: projectInactive ? FlowRunStatus.PROJECT_INACTIVE : FlowRunStatus.QUOTA_EXCEEDED,
                 flowVersion,
                 payload: triggerPayload,
                 projectId,
@@ -715,7 +723,7 @@ async function readLogsFile(log: FastifyBaseLogger, logsFileId: string, projectI
     return JSON.parse(result.data.toString('utf-8'))
 }
 
-async function persistQuotaExceededTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry }: PersistQuotaExceededTriggerLogParams): Promise<void> {
+async function persistAdmissionBlockedTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry }: PersistAdmissionBlockedTriggerLogParams): Promise<void> {
     const triggerStep = GenericStepOutput.create({
         input: {},
         type: flowVersion.trigger.type,
@@ -831,7 +839,8 @@ export type AddToQueueParams = AddToQueueParamsCommon & (
 )
 
 
-type CreateQuotaExceededRunParams = {
+type CreateAdmissionBlockedRunParams = {
+    status: FlowRunStatus.QUOTA_EXCEEDED | FlowRunStatus.PROJECT_INACTIVE
     flowVersion: FlowVersion
     payload: unknown
     projectId: ProjectId
@@ -842,7 +851,7 @@ type CreateQuotaExceededRunParams = {
     shouldExecuteTriggerOnRetry: boolean
 }
 
-type PersistQuotaExceededTriggerLogParams = {
+type PersistAdmissionBlockedTriggerLogParams = {
     log: FastifyBaseLogger
     flowVersion: FlowVersion
     projectId: ProjectId

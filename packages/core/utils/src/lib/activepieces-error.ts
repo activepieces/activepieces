@@ -40,6 +40,7 @@ export type ApErrorParams =
     | OpenAiFailedErrorParams
     | PauseMetadataMissingErrorParams
     | PermissionDeniedErrorParams
+    | ProjectIsInactiveErrorParams
     | QuotaExceededParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
@@ -210,6 +211,13 @@ export type UserIsInActiveErrorParams = BaseErrorParams<
 ErrorCode.USER_IS_INACTIVE,
 {
     email: string
+}
+>
+
+export type ProjectIsInactiveErrorParams = BaseErrorParams<
+ErrorCode.PROJECT_IS_INACTIVE,
+{
+    projectId: string
 }
 >
 
@@ -540,6 +548,7 @@ export enum ErrorCode {
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
     PERMISSION_DENIED = 'PERMISSION_DENIED',
+    PROJECT_IS_INACTIVE = 'PROJECT_IS_INACTIVE',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',

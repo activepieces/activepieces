@@ -1,12 +1,13 @@
-import { FlowStatus, RunEnvironment } from '@activepieces/shared'
+import { FlowRunStatus, FlowStatus, RunEnvironment } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WebhookFlowVersionToRun } from '../../../../src/app/webhooks/webhook.service'
 
-const { mockShouldBlockRunOnCredits, mockStart, mockCreateQuotaExceededRun, mockFindOneBy, mockOneTimeListener } = vi.hoisted(() => ({
+const { mockShouldBlockRunOnCredits, mockIsProjectInactive, mockStart, mockCreateAdmissionBlockedRun, mockFindOneBy, mockOneTimeListener } = vi.hoisted(() => ({
     mockShouldBlockRunOnCredits: vi.fn(),
+    mockIsProjectInactive: vi.fn(),
     mockStart: vi.fn(),
-    mockCreateQuotaExceededRun: vi.fn(),
+    mockCreateAdmissionBlockedRun: vi.fn(),
     mockFindOneBy: vi.fn(),
     mockOneTimeListener: vi.fn(),
 }))
@@ -28,10 +29,14 @@ vi.mock('../../../../src/app/platform/billing-provider', () => ({
     shouldBlockRunOnCredits: mockShouldBlockRunOnCredits,
 }))
 
+vi.mock('../../../../src/app/project/project-status.service', () => ({
+    projectStatusService: () => ({ shouldBlockRun: mockIsProjectInactive }),
+}))
+
 vi.mock('../../../../src/app/flows/flow-run/flow-run-service', () => ({
     flowRunService: () => ({
         start: mockStart,
-        createQuotaExceededRun: mockCreateQuotaExceededRun,
+        createAdmissionBlockedRun: mockCreateAdmissionBlockedRun,
     }),
 }))
 
@@ -109,13 +114,14 @@ async function callSyncWebhook() {
     } as never)
 }
 
-describe('sync webhook credit gate', () => {
+describe('sync webhook admission gates', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockFindOneBy.mockResolvedValue({ id: 'ver-1', flowId: 'flow-1' })
-        mockCreateQuotaExceededRun.mockResolvedValue({ id: 'run-quota' })
+        mockCreateAdmissionBlockedRun.mockResolvedValue({ id: 'run-blocked' })
         mockStart.mockResolvedValue({ id: 'run-1' })
         mockOneTimeListener.mockResolvedValue({ status: StatusCodes.OK, body: { ok: true }, headers: {} })
+        mockIsProjectInactive.mockResolvedValue(false)
     })
 
     it('answers 402 instead of running the flow when the platform is out of credits', async () => {
@@ -132,22 +138,59 @@ describe('sync webhook credit gate', () => {
 
         await callSyncWebhook()
 
-        expect(mockCreateQuotaExceededRun).toHaveBeenCalledTimes(1)
-        expect(mockCreateQuotaExceededRun.mock.calls[0][0]).toMatchObject({
+        expect(mockCreateAdmissionBlockedRun).toHaveBeenCalledTimes(1)
+        expect(mockCreateAdmissionBlockedRun.mock.calls[0][0]).toMatchObject({
+            status: FlowRunStatus.QUOTA_EXCEEDED,
             projectId: 'proj-1',
             environment: RunEnvironment.PRODUCTION,
             shouldExecuteTriggerOnRetry: true,
         })
-        expect(mockCreateQuotaExceededRun.mock.calls[0][0].payload).toBeDefined()
+        expect(mockCreateAdmissionBlockedRun.mock.calls[0][0].payload).toBeDefined()
     })
 
-    it('runs the flow and returns the engine response when the gate lets it through', async () => {
+    it('answers 403 and never reaches the credit gate when the project is inactive', async () => {
+        mockIsProjectInactive.mockResolvedValue(true)
+
+        const response = await callSyncWebhook()
+
+        expect(response.status).toBe(StatusCodes.FORBIDDEN)
+        expect(mockStart).not.toHaveBeenCalled()
+        expect(mockShouldBlockRunOnCredits).not.toHaveBeenCalled()
+    })
+
+    it('asks the project gate about the production environment only', async () => {
+        mockShouldBlockRunOnCredits.mockResolvedValue(false)
+
+        await callSyncWebhook()
+
+        expect(mockIsProjectInactive.mock.calls[0][0]).toMatchObject({
+            projectId: 'proj-1',
+            environment: RunEnvironment.PRODUCTION,
+        })
+    })
+
+    it('persists the trigger payload as a retryable run when the project is inactive', async () => {
+        mockIsProjectInactive.mockResolvedValue(true)
+
+        await callSyncWebhook()
+
+        expect(mockCreateAdmissionBlockedRun).toHaveBeenCalledTimes(1)
+        expect(mockCreateAdmissionBlockedRun.mock.calls[0][0]).toMatchObject({
+            status: FlowRunStatus.PROJECT_INACTIVE,
+            projectId: 'proj-1',
+            environment: RunEnvironment.PRODUCTION,
+            shouldExecuteTriggerOnRetry: true,
+        })
+        expect(mockCreateAdmissionBlockedRun.mock.calls[0][0].payload).toBeDefined()
+    })
+
+    it('runs the flow and returns the engine response when both gates let it through', async () => {
         mockShouldBlockRunOnCredits.mockResolvedValue(false)
 
         const response = await callSyncWebhook()
 
         expect(mockStart).toHaveBeenCalledTimes(1)
-        expect(mockCreateQuotaExceededRun).not.toHaveBeenCalled()
+        expect(mockCreateAdmissionBlockedRun).not.toHaveBeenCalled()
         expect(response.status).toBe(StatusCodes.OK)
         expect(response.body).toEqual({ ok: true })
     })

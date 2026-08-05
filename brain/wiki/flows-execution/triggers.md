@@ -25,6 +25,7 @@ Triggers define how and when a flow starts. The module handles registration, eve
 - **Renewal jobs** re-register expiring webhook pieces via the ON_RENEW hook.
 - **`*/X` cron is not "every X minutes"** — it means "minutes divisible by X", so it double-fires at :00 and :X for X > 30 and gaps unevenly when X doesn't divide 60. Use `INTERVAL`/`intervalMs` for a rolling interval; reserve cron for wall-clock schedules. This bit the default poll schedule until GIT-1632.
 - **Trigger health** (`triggerRunStats`): Redis key `trigger_run:{platformId}:{pieceName}:{date}:{status}`, 14-day retention, shown in Platform Admin (Cloud).
+- **An inactive project drops polling ticks but keeps its schedulers.** `projectInactiveInterceptor` (first in the `job-broker` chain, ahead of the zombie check) `DISCARD`s `EXECUTE_POLLING` jobs while `project.status === INACTIVE` and deliberately does *not* call `removeRepeatingJob` — the opposite of `zombiePollingInterceptor`, which removes it. Discarding rather than delaying is what makes this safe: the BullMQ scheduler keeps producing a job every interval, so delaying would pile up duplicates, whereas a dropped tick costs nothing (`lastPoll` never advances, so the first tick after reactivation catches everything up). Consequence: reactivation needs no republish, and there is no polling backlog to drain. `RENEW_WEBHOOK` is exempt — see the Projects page.
 
 ### Editions
 All four strategies available in CE/EE/Cloud. Cloud additionally surfaces trigger health stats in Platform Admin.

@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowRunStatus, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
@@ -19,6 +19,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
+import { projectStatusService } from '../../project/project-status.service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerRunStats } from '../../trigger/trigger-run/trigger-run-stats'
@@ -103,16 +104,19 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const platformId = await projectService(log).getPlatformId(projectId)
             const filterPayloads = await dedupeService.filterUniquePayloads(flowVersionId, payloads)
 
-            const creditsExhausted = await shouldBlockRunOnCredits({
+            const projectInactive = await projectStatusService(log).shouldBlockRun({ projectId, environment })
+            const creditsExhausted = !projectInactive && await shouldBlockRunOnCredits({
                 platformId,
                 environment,
                 log,
             })
+            const blockedStatus = projectInactive ? FlowRunStatus.PROJECT_INACTIVE : FlowRunStatus.QUOTA_EXCEEDED
 
             const flowRuns = await Promise.all(
                 filterPayloads.map((payload) =>
-                    creditsExhausted
-                        ? flowRunService(log).createQuotaExceededRun({
+                    projectInactive || creditsExhausted
+                        ? flowRunService(log).createAdmissionBlockedRun({
+                            status: blockedStatus,
                             flowVersion,
                             payload,
                             projectId,

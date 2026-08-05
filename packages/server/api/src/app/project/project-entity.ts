@@ -9,6 +9,7 @@ import {
     PieceSet,
     Platform,
     Project,
+    ProjectStatus,
     Record,
     Table,
     TableWebhook,
@@ -54,6 +55,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         type: {
             type: String,
             nullable: false,
+        },
+        status: {
+            type: String,
+            nullable: false,
+            default: ProjectStatus.ACTIVE,
         },
         platformId: {
             ...ApIdSchema,

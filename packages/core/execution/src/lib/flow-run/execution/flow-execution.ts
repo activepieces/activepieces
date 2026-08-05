@@ -5,6 +5,7 @@ import { StreamStepProgress } from '../../engine/engine-operation'
 export enum FlowRunStatus {
     FAILED = 'FAILED',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
+    PROJECT_INACTIVE = 'PROJECT_INACTIVE',
     INTERNAL_ERROR = 'INTERNAL_ERROR',
     PAUSED = 'PAUSED',
     QUEUED = 'QUEUED',
@@ -66,6 +67,7 @@ export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status
         case FlowRunStatus.TIMEOUT:
         case FlowRunStatus.FAILED:
         case FlowRunStatus.QUOTA_EXCEEDED:
+        case FlowRunStatus.PROJECT_INACTIVE:
         case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
         case FlowRunStatus.LOG_SIZE_EXCEEDED:
         case FlowRunStatus.CANCELED:

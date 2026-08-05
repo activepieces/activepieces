@@ -1,5 +1,5 @@
 import { Permission, RoleType } from '@activepieces/core-utils'
-import { ApiKeyResponseWithValue, DefaultProjectRole, FlowStatus, Platform, PlatformRole, PrincipalType, Project, ProjectType, UpdateProjectPlatformRequest, User } from '@activepieces/shared'
+import { ApiKeyResponseWithValue, DefaultProjectRole, FlowStatus, Platform, PlatformRole, PrincipalType, Project, ProjectStatus, ProjectType, UpdateProjectPlatformRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -473,6 +473,98 @@ describe('Project API', () => {
             const responseBody = response?.json()
             expect(responseBody.displayName).toBe(request.displayName)
             expect(responseBody.executionDataRetentionDays).toBeNull()
+        })
+
+        it('sets and clears status as platform owner with api key', async () => {
+            const { mockProject, mockApiKey } = await createProjectAndPlatformAndApiKey()
+
+            const deactivateResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: { status: ProjectStatus.INACTIVE },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(deactivateResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(deactivateResponse?.json().status).toBe(ProjectStatus.INACTIVE)
+
+            const reactivateResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: { status: ProjectStatus.ACTIVE },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(reactivateResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(reactivateResponse?.json().status).toBe(ProjectStatus.ACTIVE)
+        })
+
+        it('rejects an unknown status value', async () => {
+            const { mockProject, mockApiKey } = await createProjectAndPlatformAndApiKey()
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: { status: 'PAUSED' },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('ignores status when the caller is not a platform admin', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+            const { mockUser: memberUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            const role = createMockProjectRole({
+                platformId: mockPlatform.id,
+                type: RoleType.DEFAULT,
+                name: DefaultProjectRole.EDITOR,
+                permissions: [Permission.WRITE_PROJECT],
+            })
+            await db.save('project_role', role)
+
+            const membership = createMockProjectMember({
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                userId: memberUser.id,
+                projectRoleId: role.id,
+            })
+            await db.save('project_member', membership)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: memberUser.id,
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const request: UpdateProjectPlatformRequest = {
+                displayName: faker.animal.bird(),
+                status: ProjectStatus.INACTIVE,
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/projects/' + mockProject.id,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+            expect(responseBody.displayName).toBe(request.displayName)
+            expect(responseBody.status).toBe(ProjectStatus.ACTIVE)
         })
 
         it('Fails if user is not platform owner', async () => {

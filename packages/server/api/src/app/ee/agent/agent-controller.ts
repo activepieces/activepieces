@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
+import { projectStatusService } from '../../project/project-status.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentApprovalGate } from './agent-approval-gate'
 import { agentHelpers } from './agent-helpers'
@@ -150,6 +151,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             await agentApprovalGate.clearPendingGate({ conversationId })
         }
 
+        await projectStatusService(log).assertIsActive({ projectId: conversation.projectId })
         await assertChatProviderConfigured({ platformId, log })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 

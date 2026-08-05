@@ -1,6 +1,6 @@
 import { apId, assertNotNullOrUndefined, FlowVersionId, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowStatus, LATEST_JOB_DATA_SCHEMA_VERSION, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
+import { EngineHttpResponse, EventPayload, ExecutionType, Flow, FlowRun, FlowRunStatus, FlowStatus, LATEST_JOB_DATA_SCHEMA_VERSION, RunEnvironment, StreamStepProgress, TriggerPayload, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowExecutionCache } from '../flows/flow/flow-execution-cache'
@@ -11,6 +11,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { shouldBlockRunOnCredits } from '../platform/billing-provider'
+import { projectStatusService } from '../project/project-status.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
@@ -205,8 +206,44 @@ export const webhookService = {
     },
 }
 
+async function createProjectInactiveRun(params: ProjectInactiveRunParams): Promise<FlowRun> {
+    const { flowVersionIdToRun, payload, projectId, runEnvironment, parentRunId, failParentOnFailure, logger } = params
+    const flowVersion = await flowVersionRepo().findOneBy({ id: flowVersionIdToRun })
+    assertNotNullOrUndefined(flowVersion, 'flowVersion')
+    return flowRunService(logger).createAdmissionBlockedRun({
+        status: FlowRunStatus.PROJECT_INACTIVE,
+        flowVersion,
+        payload,
+        projectId,
+        environment: runEnvironment,
+        parentRunId,
+        failParentOnFailure,
+        shouldExecuteTriggerOnRetry: true,
+    })
+}
+
 async function handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
     const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure, platformId } = params
+
+    if (execute && await projectStatusService(logger).shouldBlockRun({ projectId: flow.projectId, environment: runEnvironment })) {
+        const blockedRun = await createProjectInactiveRun({
+            flowVersionIdToRun,
+            payload,
+            projectId: flow.projectId,
+            runEnvironment,
+            parentRunId,
+            failParentOnFailure,
+            logger,
+        })
+        wideEvent.set({ flowRun: { id: blockedRun.id }, webhook: { projectInactive: true } })
+        return {
+            status: StatusCodes.FORBIDDEN,
+            body: {},
+            headers: {
+                [webhookHeader]: webhookRequestId,
+            },
+        }
+    }
 
     const jobPayload = await payloadOffloader.offloadPayload(logger, payload, flow.projectId, platformId)
 
@@ -271,6 +308,24 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         }
     }
 
+    if (await projectStatusService(logger).shouldBlockRun({ projectId, environment: runEnvironment })) {
+        const blockedRun = await createProjectInactiveRun({
+            flowVersionIdToRun,
+            payload,
+            projectId,
+            runEnvironment,
+            parentRunId,
+            failParentOnFailure,
+            logger,
+        })
+        wideEvent.set({ flowRun: { id: blockedRun.id }, webhook: { projectInactive: true } })
+        return {
+            status: StatusCodes.FORBIDDEN,
+            body: {},
+            headers: {},
+        }
+    }
+
     const creditsExhausted = await shouldBlockRunOnCredits({
         platformId,
         environment: runEnvironment,
@@ -280,7 +335,8 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
     if (creditsExhausted) {
         const flowVersion = await flowVersionRepo().findOneBy({ id: flowVersionIdToRun })
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
-        const quotaExceededRun = await flowRunService(logger).createQuotaExceededRun({
+        const quotaExceededRun = await flowRunService(logger).createAdmissionBlockedRun({
+            status: FlowRunStatus.QUOTA_EXCEEDED,
             flowVersion,
             payload,
             projectId,
@@ -356,6 +412,16 @@ type HandleWebhookParams = {
     parentRunId?: string
     failParentOnFailure: boolean
     timeoutMs?: number
+}
+
+type ProjectInactiveRunParams = {
+    flowVersionIdToRun: FlowVersionId
+    payload: unknown
+    projectId: ProjectId
+    runEnvironment: RunEnvironment
+    parentRunId?: string
+    failParentOnFailure: boolean
+    logger: FastifyBaseLogger
 }
 
 type AsyncWebhookParams = {
