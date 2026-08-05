@@ -497,7 +497,6 @@ function standardUsage(): MockProjectAiUsage[] {
   ];
 }
 
-
 export type MockScenarioId = (typeof MOCK_SCENARIO_IDS)[number];
 
 export type BuiltInTierId = 'fast' | 'smart' | 'premium';
