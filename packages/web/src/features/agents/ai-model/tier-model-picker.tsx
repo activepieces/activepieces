@@ -19,7 +19,11 @@ import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
 import { TIER_CONFIG } from '@/features/agents/tier-config';
 import { cn } from '@/lib/utils';
 
-import { AiModelFacts, ModelFactsRow } from './model-facts-row';
+import {
+  AiModelFacts,
+  ModelCapabilityIcons,
+  ModelFactsRow,
+} from './model-facts-row';
 
 export function TierModelPicker({
   tiers,
@@ -76,7 +80,10 @@ export function TierModelPicker({
           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-96" align="start">
+      <PopoverContent
+        className="p-0 w-[var(--radix-popover-trigger-width)]"
+        align="start"
+      >
         <Command>
           <CommandInput placeholder={t('Search tiers and models...')} />
           <CommandEmpty>{t('Nothing found.')}</CommandEmpty>
@@ -122,6 +129,8 @@ export function TierModelPicker({
             >
               {models.map((model) => {
                 const disabledReason = disabledModels[model.id];
+                const selected =
+                  value?.kind === 'model' && value.id === model.id;
                 return (
                   <CommandItem
                     key={`${model.provider}-${model.id}`}
@@ -131,7 +140,7 @@ export function TierModelPicker({
                       onChange({ kind: 'model', id: model.id });
                       setOpen(false);
                     }}
-                    className={cn('cursor-pointer items-start', {
+                    className={cn('cursor-pointer items-center gap-2 py-2', {
                       'opacity-60': disabledReason !== undefined,
                     })}
                   >
@@ -139,11 +148,17 @@ export function TierModelPicker({
                       <img
                         src={providerLogoOf({ provider: model.provider })}
                         alt={model.provider}
-                        className="size-4 object-contain shrink-0 mt-0.5"
+                        className="size-4 shrink-0 object-contain"
                       />
                     )}
-                    <div className="flex flex-col flex-1 min-w-0 gap-0.5">
-                      <span className="text-sm">{model.name}</span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span
+                        className={cn('truncate text-sm', {
+                          'font-medium': selected,
+                        })}
+                      >
+                        {model.name}
+                      </span>
                       {disabledReason === undefined ? (
                         <ModelFactsRow model={model} />
                       ) : (
@@ -152,12 +167,13 @@ export function TierModelPicker({
                         </span>
                       )}
                     </div>
+                    {disabledReason === undefined && (
+                      <ModelCapabilityIcons model={model} />
+                    )}
                     <Check
                       className={cn(
-                        'ml-auto size-4 shrink-0',
-                        value?.kind === 'model' && value.id === model.id
-                          ? 'opacity-100'
-                          : 'opacity-0',
+                        'size-4 shrink-0',
+                        selected ? 'opacity-100' : 'opacity-0',
                       )}
                     />
                   </CommandItem>

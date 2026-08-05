@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -82,13 +81,23 @@ export function RoutingTab({ scenario }: { scenario: MockScenario }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start gap-3">
-        <p className="text-sm text-muted-foreground flex-1">
-          {t(
-            'Each tier runs its Main model and falls over to Backup 1, then Backup 2, when a provider fails. Backups must support everything the Main model supports.',
-          )}
-        </p>
-        <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-end justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-base font-semibold tracking-tight">
+              {t('Tiers')}
+            </h2>
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {tiers.length}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {t(
+              'Pick the model behind each tier — fallbacks take over automatically when it fails.',
+            )}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           {!isDefault && (
             <ConfirmationDeleteDialog
               title={t('Reset to defaults')}
@@ -101,13 +110,13 @@ export function RoutingTab({ scenario }: { scenario: MockScenario }) {
             >
               <Button variant="outline" size="sm" type="button">
                 <RotateCcw className="size-4 mr-2" />
-                {t('Reset to defaults')}
+                {t('Reset')}
               </Button>
             </ConfirmationDeleteDialog>
           )}
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="size-4 mr-2" />
-            {t('Add custom tier')}
+            {t('New tier')}
           </Button>
         </div>
       </div>
@@ -115,16 +124,15 @@ export function RoutingTab({ scenario }: { scenario: MockScenario }) {
       {isDefault && (
         <Alert>
           <Info className="size-4" />
-          <AlertDescription className="flex items-center gap-2">
+          <AlertDescription>
             {t(
-              'Using defaults derived from your chat provider. Change any slot to customize.',
+              'Using defaults derived from your chat provider — change any model to customize.',
             )}
-            <Badge variant="outline">{t('Using defaults')}</Badge>
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {tiers.map((tier) => (
           <TierCard
             key={tier.id}

@@ -1,11 +1,15 @@
 import { t } from 'i18next';
-import { Info, Layers, Trash } from 'lucide-react';
+import { CircleCheck, Info, Layers, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   TierModelPicker,
   TierModelValue,
@@ -29,6 +33,7 @@ export function TierCard({
   const mainFacts = models.find(
     (model) => model.id === tier.slots.main.modelId,
   );
+  const backupReasons = backupDisabledReasons({ mainFacts, models });
 
   const handleChange = ({
     slotKey,
@@ -47,11 +52,11 @@ export function TierCard({
   };
 
   return (
-    <div className="rounded-lg border bg-card p-4 flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+    <div className="group flex flex-col rounded-lg border bg-card">
+      <div className="flex items-center gap-2 p-4 pb-3">
         <TierCardIcon tierId={tier.id} />
         <p className="text-sm font-medium leading-none">{tier.name}</p>
-        <p className="text-xs text-muted-foreground truncate flex-1">
+        <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
           {tier.description}
         </p>
         {!tier.builtIn && <Badge variant="outline">{t('Custom')}</Badge>}
@@ -64,64 +69,78 @@ export function TierCard({
             entityName={tier.name}
             mutationFn={async () => onDelete()}
           >
-            <Button variant="ghost" size="sm">
-              <Trash className="size-4 text-destructive" />
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-focus-within:opacity-100 group-hover:opacity-100"
+            >
+              <Trash2 className="size-4" />
             </Button>
           </ConfirmationDeleteDialog>
         )}
       </div>
-      <div className="flex flex-col gap-2">
-        {SLOT_KEYS.map((slotKey) => {
-          const slot = tier.slots[slotKey];
-          return (
-            <div key={slotKey} className="flex flex-col gap-1">
-              <div className="grid grid-cols-[5.5rem_1fr] items-center gap-3">
-                <span
-                  className={
-                    slotKey === 'main'
-                      ? 'text-xs font-medium'
-                      : 'text-xs text-muted-foreground'
-                  }
-                >
-                  {SLOT_LABELS[slotKey]()}
-                </span>
-                <TierModelPicker
-                  compact
-                  tiers={[]}
-                  models={models}
-                  disabledModels={
-                    slotKey === 'main'
-                      ? {}
-                      : backupDisabledReasons({ mainFacts, models })
-                  }
-                  value={{ kind: 'model', id: slot.modelId }}
-                  onChange={(value) => handleChange({ slotKey, value })}
-                />
-              </div>
-              {slot.providerDeleted && (
-                <div className="grid grid-cols-[5.5rem_1fr] gap-3">
-                  <span />
-                  <p className="text-xs text-destructive">
-                    {t(
-                      'This provider was removed from the platform — this backup is skipped at run time.',
-                    )}
-                  </p>
+      <div className="flex flex-col gap-4 px-4 pb-4">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium">{t('Model')}</span>
+          <TierModelPicker
+            tiers={[]}
+            models={models}
+            value={{ kind: 'model', id: tier.slots.main.modelId }}
+            onChange={(value) => handleChange({ slotKey: 'main', value })}
+          />
+          {showReplaceNote && (
+            <p className="flex items-center gap-1.5 text-xs text-success-700 dark:text-success-300">
+              <CircleCheck className="size-3.5 shrink-0" />
+              {t('Everything on this tier switched — flows keep working.')}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="flex items-center gap-1.5 text-xs font-medium">
+            {t('Fallbacks')}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="size-3.5 cursor-default text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[260px]">
+                {t(
+                  'Tried in order when the model’s provider fails. A fallback must support everything the model supports — others are grayed out.',
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </span>
+          {BACKUP_KEYS.map((slotKey, index) => {
+            const slot = tier.slots[slotKey];
+            return (
+              <div key={slotKey} className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-4 text-center text-xs text-muted-foreground tabular-nums">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <TierModelPicker
+                      compact
+                      tiers={[]}
+                      models={models}
+                      disabledModels={backupReasons}
+                      value={{ kind: 'model', id: slot.modelId }}
+                      onChange={(value) => handleChange({ slotKey, value })}
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
-          );
-        })}
+                {slot.providerDeleted && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-4" />
+                    <p className="text-xs text-destructive">
+                      {t('This provider was removed — skipped at run time.')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      {showReplaceNote && (
-        <Alert>
-          <Info className="size-4" />
-          <AlertDescription>
-            {t(
-              'Everything using this tier switches instantly. Existing flows keep working — no edits needed.',
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   );
 }
@@ -129,7 +148,7 @@ export function TierCard({
 function TierCardIcon({ tierId }: { tierId: string }) {
   const builtIn = Object.entries(TIER_CONFIG).find(([key]) => key === tierId);
   const Icon = builtIn ? builtIn[1].icon : Layers;
-  return <Icon className="size-4 text-muted-foreground shrink-0" />;
+  return <Icon className="size-4 shrink-0 text-muted-foreground" />;
 }
 
 export function backupDisabledReasons({
@@ -145,30 +164,22 @@ export function backupDisabledReasons({
   const reasons: Record<string, string> = {};
   for (const candidate of models) {
     if (mainFacts.imageGeneration && !candidate.imageGeneration) {
-      reasons[candidate.id] = t(
-        'Can’t generate images like the Main model can',
-      );
+      reasons[candidate.id] = t('Can’t generate images like the main model');
       continue;
     }
     if (mainFacts.vision && !candidate.vision) {
-      reasons[candidate.id] = t('Can’t read images like the Main model can');
+      reasons[candidate.id] = t('Can’t read images like the main model');
       continue;
     }
     if (mainFacts.embeddings && !candidate.embeddings) {
-      reasons[candidate.id] = t(
-        'Doesn’t support embeddings like the Main model does',
-      );
+      reasons[candidate.id] = t('No embeddings, unlike the main model');
     }
   }
   return reasons;
 }
 
+const BACKUP_KEYS = ['backup1', 'backup2'] as const;
+
 export const SLOT_KEYS = ['main', 'backup1', 'backup2'] as const;
 
 export type SlotKey = (typeof SLOT_KEYS)[number];
-
-const SLOT_LABELS: Record<SlotKey, () => string> = {
-  main: () => t('Main'),
-  backup1: () => t('Backup 1'),
-  backup2: () => t('Backup 2'),
-};

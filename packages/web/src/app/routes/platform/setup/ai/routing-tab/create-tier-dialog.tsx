@@ -84,7 +84,7 @@ function CreateTierForm({
         <DialogTitle>{t('New custom tier')}</DialogTitle>
         <DialogDescription>
           {t(
-            'A custom tier works exactly like the built-in ones: it runs its Main model and falls over to the backups. Backups must support everything the Main model supports.',
+            'Works like the built-in tiers — fallbacks take over when the model fails.',
           )}
         </DialogDescription>
       </DialogHeader>
@@ -108,7 +108,7 @@ function CreateTierForm({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label>{t('Main')}</Label>
+          <Label>{t('Model')}</Label>
           <TierModelPicker
             tiers={[]}
             models={models}
@@ -117,7 +117,7 @@ function CreateTierForm({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label>{t('Backup 1')}</Label>
+          <Label>{t('Fallback 1')}</Label>
           <TierModelPicker
             tiers={[]}
             models={models}
@@ -127,7 +127,7 @@ function CreateTierForm({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label>{t('Backup 2')}</Label>
+          <Label>{t('Fallback 2')}</Label>
           <TierModelPicker
             tiers={[]}
             models={models}
