@@ -222,15 +222,19 @@ async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
     return isNil(denial) ? null : denial.content.map((part) => part.text).join(' ')
 }
 
-async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, log }: {
+async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, confinedToProjectId, log }: {
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
     conversationId?: string
+    confinedToProjectId?: string | null
     log: FastifyBaseLogger
 }): Promise<unknown> {
-    const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    const allProjects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    const projects = isNil(confinedToProjectId)
+        ? allProjects
+        : allProjects.filter((p) => p.id === confinedToProjectId)
     const availableProjectIds = projects.map((p) => p.id)
 
     switch (toolName) {
