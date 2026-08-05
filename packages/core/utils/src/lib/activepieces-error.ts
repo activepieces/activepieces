@@ -346,6 +346,8 @@ export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
     metric: PlatformUsageMetric
+    usage?: number
+    limit?: number
 }
 >
 

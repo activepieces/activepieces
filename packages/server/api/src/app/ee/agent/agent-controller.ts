@@ -1,18 +1,19 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AgentConversationStatus, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
-import { platformAiCreditsService } from '../platform/platform-plan/platform-ai-credits.service'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { agentApprovalGate } from './agent-approval-gate'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
 import { agentService } from './agent-service'
-import { chatAnalyticsTelemetry } from './agent-sync-job'
+import { chatAnalyticsTelemetry } from './chat-analytics-sync'
+import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
 import { findConnectionsForPiece } from './tools/agent-tools'
 
@@ -111,16 +112,16 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
 
         await assertAgentMessageRateLimitNotExceeded({ platformId, userId, log })
 
-        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped). Until the
-        // one-time free-credit decision is settled, attempt the grant — driven by needsCreditDecision
-        // (not the one-shot firstChat) so a transient top-up failure is retried on a later message.
-        // Awaited before the credit check below so the managed key is created (and topped up) once.
+        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
         const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
-        if (needsCreditDecision) {
-            await maybeGrantFreeChatCredits({ platformId, userId, log })
-        }
         // Refresh the console rollout funnel snapshot (chatted count just changed).
         chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
+        if (needsCreditDecision) {
+            const { error } = await tryCatch(() => chatPlanGrant.grant({ userId, platformId, log }))
+            if (!isNil(error)) {
+                log.warn({ error, platform: { id: platformId }, user: { id: userId } }, '[agentController] Chat plan grant failed; continuing to the credit gate')
+            }
+        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -149,7 +150,8 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             await agentApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertChatProviderUsable({ platformId, log })
+        await assertChatProviderConfigured({ platformId, log })
+        await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({
             id: apId(),
@@ -277,29 +279,13 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
 
 }
 
-const FREE_CHAT_CREDIT_USD = 10
-
-async function maybeGrantFreeChatCredits({ platformId, userId, log }: { platformId: string, userId: string, log: FastifyBaseLogger }): Promise<void> {
-    // Claim first so the decision is settled exactly once across concurrent messages and paid users
-    // stop re-checking after this point (needsCreditDecision becomes false). A losing/duplicate
-    // caller exits immediately.
-    const claimed = await chatRolloutService.claimFreeCreditGrant({ userId })
-    if (!claimed) {
-        return
-    }
-    // Everything after the claim is best-effort and must never fail the user's message. Any error —
-    // the plan lookup or the top-up — rolls the claim back so a later message retries
-    // (needsCreditDecision goes true again). Paid platforms (license key) keep the claim with no
-    // grant owed, so they stop re-checking.
-    const { error } = await tryCatch(async () => {
-        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (isNil(plan.licenseKey)) {
-            await platformAiCreditsService(log).grantFreeChatCredits({ platformId, amountUsd: FREE_CHAT_CREDIT_USD })
-        }
-    })
-    if (!isNil(error)) {
-        await tryCatch(() => chatRolloutService.releaseFreeCreditGrant({ userId }))
-        log.error({ error, platform: { id: platformId }, user: { id: userId } }, '[agentController] Failed to grant free chat credits')
+async function assertChatProviderConfigured({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const provider = await aiProviderService(log).getChatProviderName({ platformId })
+    if (isNil(provider)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: platformId, entityType: 'ChatAiProvider' },
+        })
     }
 }
 
@@ -319,24 +305,6 @@ async function assertAgentMessageRateLimitNotExceeded({ platformId, userId, log 
         throw new ActivepiecesError({
             code: ErrorCode.CHAT_MESSAGE_LIMIT_EXCEEDED,
             params: { limit: CHAT_MESSAGES_PER_WINDOW, windowSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS },
-        })
-    }
-}
-
-async function assertChatProviderUsable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const chatProvider = await agentHelpers.resolveChatProvider({ platformId, log })
-    if (chatProvider.provider !== AIProviderName.ACTIVEPIECES) {
-        return
-    }
-    const usage = await platformAiCreditsService(log).getUsage(platformId)
-    if (usage.usageRemaining <= 0) {
-        log.warn({ usage: usage.usage, limit: usage.limit }, '[agentController] AI credits exhausted, rejecting message')
-        throw new ActivepiecesError({
-            code: ErrorCode.AI_CREDIT_LIMIT_EXCEEDED,
-            params: {
-                usage: usage.usage,
-                limit: usage.limit,
-            },
         })
     }
 }

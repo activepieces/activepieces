@@ -21,6 +21,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: '{}',
+    [AppSystemProp.AUTUMN_CONSOLE_URL]: 'https://console.activepieces.com',
     [AppSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [AppSystemProp.PORT]: '3000',
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',

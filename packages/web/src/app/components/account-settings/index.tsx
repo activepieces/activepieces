@@ -20,7 +20,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { userHooks, userMutations } from '@/hooks/user-hooks';
 
-import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
 import ThemeToggle from './theme-toggle';
 
@@ -121,7 +120,6 @@ export function AccountSettingsDialog({
               <ThemeToggle />
               <LanguageToggle />
             </div>
-            <DeleteAccount />
           </div>
         </ScrollArea>
         <DialogFooter />
