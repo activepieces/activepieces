@@ -9,7 +9,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { ActionRunOffload, executeActionRunAction, executeActionRunCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { ActionRunOffload, executeCodeActionRun, executePieceActionRun, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -313,7 +313,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
         }
         case 'ap_execute_action': {
-            return runAgentAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
+            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }
         case 'ap_run_code': {
             return runAgentCode({ toolInput, projects, platformId, userId, conversationId, log })
@@ -324,7 +324,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!agentToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return agentToolClassification.readOnlyRejection(actionName)
             }
-            return runAgentAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -393,7 +393,7 @@ function buildActionRunOffload({ projectId, platformId, pieceName, actionName, l
     }
 }
 
-async function runAgentAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
+async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -440,7 +440,7 @@ async function runAgentAdhocAction({ toolInput, projects, availableProjectIds, c
             parsedInput = parsed as Record<string, unknown>
         }
     }
-    const result = await executeActionRunAction({
+    const result = await executePieceActionRun({
         projectId: resolvedProjectId,
         pieceName,
         actionName,
@@ -531,7 +531,7 @@ async function runAgentCode({ toolInput, projects, platformId, userId, conversat
         input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
     }
 
-    const result = await executeActionRunCode({ projectId, code, packageJson, input, log })
+    const result = await executeCodeActionRun({ projectId, code, packageJson, input, log })
 
     if (result.status !== 'succeeded') {
         const reason = result.errorMessage ?? (result.status === 'timeout' ? 'Code is still running after 120s.' : 'Code execution failed.')

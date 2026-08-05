@@ -5,7 +5,7 @@ import { DEFAULT_MCP_DATA, EngineOperationType, EngineResponseStatus, ExecuteAct
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout, sandboxTimeoutNeverStarted } from '../utils/sandbox-helpers'
 
-const ACTION_RUN_ACTION_TIMEOUT_SECONDS = 120
+const ACTION_RUN_TIMEOUT_SECONDS = 120
 
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_ACTION,
@@ -28,10 +28,10 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                     engineToken: ctx.engineToken,
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
-                    timeoutInSeconds: ACTION_RUN_ACTION_TIMEOUT_SECONDS,
+                    timeoutInSeconds: ACTION_RUN_TIMEOUT_SECONDS,
                     ...spreadIfDefined('flowVersionId', codeNamespace),
                 },
-                timeoutInSeconds: ACTION_RUN_ACTION_TIMEOUT_SECONDS,
+                timeoutInSeconds: ACTION_RUN_TIMEOUT_SECONDS,
                 expiresAt: data.expiresAt,
                 provision: { ...resolved.provision, ...spreadIfDefined('flowVersionId', codeNamespace) },
             })

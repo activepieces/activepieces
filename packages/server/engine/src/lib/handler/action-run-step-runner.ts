@@ -4,7 +4,7 @@ import { FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 
 export const actionRunStepRunner = {
-    async run({ step, operation }: RunActionRunStepParams): Promise<StepOutput> {
+    async run({ step, operation }: ActionRunStepParams): Promise<StepOutput> {
         const executionState = await flowExecutor.getExecutorForAction(step.type).handle({
             action: step,
             executionState: FlowExecutorContext.empty(),
@@ -14,7 +14,7 @@ export const actionRunStepRunner = {
     },
 }
 
-type RunActionRunStepParams = {
+type ActionRunStepParams = {
     step: PieceAction | CodeAction
     operation: BaseEngineOperation & { flowVersionId?: string }
 }

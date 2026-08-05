@@ -3,7 +3,7 @@ import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { McpToolResult } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { executeActionRunAction } from '../../../mcp/tools/flow-run-utils'
+import { executePieceActionRun } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { pieceInputFiller, ResolveProperty } from './piece-input-filler'
@@ -20,7 +20,7 @@ async function runFromInstruction({ piece, instruction, predefinedInput, model, 
         },
     })
 
-    const result = await executeActionRunAction({
+    const result = await executePieceActionRun({
         projectId,
         pieceName: piece.pieceName,
         actionName: piece.actionName,
