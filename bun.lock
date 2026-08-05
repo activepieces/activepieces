@@ -10225,7 +10225,7 @@
     },
     "packages/pieces/core/date-helper": {
       "name": "@activepieces/piece-date-helper",
-      "version": "0.1.32",
+      "version": "0.1.33",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10241,7 +10241,7 @@
     },
     "packages/pieces/core/delay": {
       "name": "@activepieces/piece-delay",
-      "version": "0.3.32",
+      "version": "0.3.33",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
