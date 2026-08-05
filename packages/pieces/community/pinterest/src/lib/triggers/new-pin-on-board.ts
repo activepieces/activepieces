@@ -13,7 +13,7 @@ import { pinterestAuth } from '../common/auth';
 import { adAccountIdDropdown, boardIdDropdown } from '../common/props';
 import { newPinOnBoardTriggerOutputSchema } from '../output-schemas';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 100; // Pinterest's documented max is 250.
 
 // Bounds the requests one poll can make; a larger backlog drains across polls.
 const MAX_PAGES_PER_POLL = 10;
@@ -71,6 +71,8 @@ type SweepResult = {
   nextBookmark?: string;
 };
 
+// Assumes GET /boards/{id}/pins returns newest-first, matching observed
+// behaviour; Pinterest's API reference does not document a sort order.
 async function sweep(
   accessToken: string,
   props: SweepProps,
