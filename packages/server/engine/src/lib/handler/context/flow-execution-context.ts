@@ -228,7 +228,7 @@ export class FlowExecutorContext {
     }
 }
 
-async function maybeSliceOutput(value: unknown, engineApi?: EngineApiConfig): Promise<{ ref: LogSliceRef } | undefined> {
+async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
     if (isNil(value) || isNil(engineApi)) {
         return undefined
     }
@@ -311,4 +311,9 @@ export type StepView = {
 type SliceCache = {
     get(key: string): Promise<unknown> | undefined
     set(params: { key: string, value: Promise<unknown>, sizeBytes: number }): void
+}
+
+type MaybeSliceOutputParams = {
+    value: unknown
+    engineApi?: EngineApiConfig
 }
