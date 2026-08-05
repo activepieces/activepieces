@@ -469,14 +469,14 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async resumeFlowStep(input: ResumeFlowStepRequest): Promise<void> {
         const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (conversation?.source !== AgentRunSource.FLOW_STEP) {
+        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can resume a flow' } })
         }
-        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId ?? '' })
+        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
         await resumeService(log).resumeFromWaitpoint({
             flowRunId: flowRun.id,
             waitpointId: input.waitpointId,
-            resumePayload: { body: input.output, headers: {}, queryParams: {} },
+            resumePayload: { body: sanitizeObjectForPostgresql(input.output), headers: {}, queryParams: {} },
         })
         log.info({ conversation: { id: input.conversationId }, flowRun: { id: flowRun.id } }, '[agentRpc#resumeFlowStep] Handed the result back to the flow')
     },

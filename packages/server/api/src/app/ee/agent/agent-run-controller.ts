@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, ErrorCode } from '@activepieces/core-utils'
 import { AgentRunSource, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -61,8 +61,8 @@ const MAX_INSTRUCTION_LENGTH = 51_200
 
 const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_INSTRUCTION_LENGTH),
-    flowRunId: z.string(),
-    waitpointId: z.string(),
+    flowRunId: ApId,
+    waitpointId: ApId,
     modelName: z.string().optional(),
 })
 

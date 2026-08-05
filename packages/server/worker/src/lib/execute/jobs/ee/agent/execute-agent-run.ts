@@ -261,16 +261,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
             }
-            const { error: saveError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(savePayload))
-            if (saveError) {
-                log.warn({ error: saveError, conversation: { id: conversationId } }, 'First saveAgentMessages attempt failed, retrying')
-                await new Promise((resolve) => setTimeout(resolve, 1_000))
-                const { error: retryError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(savePayload))
-                if (retryError) {
-                    log.error({ error: retryError, conversation: { id: conversationId } }, 'saveAgentMessages retry also failed')
-                    throw retryError
-                }
-            }
+            await retryOnceThenThrow({ operation: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', log })
 
             await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: true, output: agentTextFrom(turn.uiParts) }, log })
 
@@ -297,7 +288,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
         }
         catch (err) {
-            await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: err instanceof Error ? err.message : 'The agent run failed' }, log }))
             log.error({ error: err, conversation: { id: conversationId } }, '[executeAgentRun] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const isCreditError = isCreditExhaustedError(errorMessage)
@@ -305,6 +295,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
+            await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: clientMessage }, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateAgentProgress) and only flips status, so an errored turn keeps
@@ -360,18 +351,29 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
     if (isNil(flowRunId) || isNil(waitpointId)) {
         return
     }
-    const resume = () => ctx.apiClient.resumeFlowStep({ conversationId, flowRunId, waitpointId, output })
-    const { error } = await tryCatch(resume)
+    await retryOnceThenThrow({
+        operation: () => ctx.apiClient.resumeFlowStep({ conversationId, flowRunId, waitpointId, output }),
+        description: 'Handing the result back to the flow',
+        log: log.child({ flowRun: { id: flowRunId } }),
+    })
+}
+
+async function retryOnceThenThrow({ operation, description, log }: {
+    operation: () => Promise<unknown>
+    description: string
+    log: JobContext['log']
+}): Promise<void> {
+    const { error } = await tryCatch(operation)
     if (isNil(error)) {
         return
     }
-    log.warn({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] First resume attempt failed, retrying')
+    log.warn({ error }, `[executeAgentRun] ${description} failed, retrying`)
     await new Promise((resolve) => setTimeout(resolve, 1_000))
-    const { error: retryError } = await tryCatch(resume)
+    const { error: retryError } = await tryCatch(operation)
     if (isNil(retryError)) {
         return
     }
-    log.error({ error: retryError, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not release the step; failing the job so it is not recorded as done')
+    log.error({ error: retryError }, `[executeAgentRun] ${description} failed again, failing the job`)
     throw retryError
 }
 
