@@ -298,7 +298,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
-            await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? { success: false, error: clientMessage }, log }))
+            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? { success: false, error: clientMessage }, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateAgentProgress) and only flips status, so an errored turn keeps
@@ -316,7 +316,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // already been delivered to the user. Complete the job (OK); re-throwing would mark it
             // INTERNAL_ERROR and fail+retry it (pointlessly — the user is still out of credits) and page.
             if (isCreditError) {
-                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+                if (isNil(releaseError)) {
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+                }
+                throw releaseError
             }
             throw err
         }
