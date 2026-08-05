@@ -90,6 +90,7 @@ export type WorkerToApiContract = {
     heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
+    resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
 }
 
@@ -194,6 +195,13 @@ export type ExecuteAgentToolRequest = {
     userId: string
     source: AgentRunSource
     conversationId?: string
+}
+
+export type ResumeFlowStepRequest = {
+    conversationId: string
+    flowRunId: string
+    waitpointId: string
+    output: unknown
 }
 
 export type ExecuteAgentToolResponse = {

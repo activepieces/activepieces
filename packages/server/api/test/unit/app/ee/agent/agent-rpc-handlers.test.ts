@@ -298,3 +298,23 @@ describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a
         } as never)).rejects.toThrow()
     })
 })
+
+describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a flow', () => {
+    it('refuses when the conversation is a chat', async () => {
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: { success: true },
+        })).rejects.toThrow()
+    })
+
+    it('refuses when the conversation does not exist', async () => {
+        mockFindOneBy.mockResolvedValue(null)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'nope', flowRunId: 'run-1', waitpointId: 'wp-1', output: { success: true },
+        })).rejects.toThrow()
+    })
+})

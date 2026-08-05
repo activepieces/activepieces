@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentPhase, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentPhase, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
@@ -38,7 +38,7 @@ const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code']
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
     async execute(ctx: JobContext, data: ExecuteAgentRunJobData): Promise<FireAndForgetJobResult> {
-        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource } = data
+        const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
         const config = await ctx.apiClient.getAgentConfig({
@@ -272,6 +272,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 }
             }
 
+            await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: true, output: agentTextFrom(turn.uiParts) }, log })
+
             if (autoTitle) {
                 await sendEventWithRetry({
                     event: { type: AgentEventType.TITLE_UPDATE, data: { title: autoTitle } },
@@ -295,6 +297,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
         }
         catch (err) {
+            await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: err instanceof Error ? err.message : 'The agent run failed' }, log })
             log.error({ error: err, conversation: { id: conversationId } }, '[executeAgentRun] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const isCreditError = isCreditExhaustedError(errorMessage)
@@ -336,6 +339,31 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
+}
+
+function agentTextFrom(parts: PersistedAgentPart[]): string {
+    return parts
+        .filter((part) => part.type === PersistedAgentPartType.TEXT)
+        .map((part) => part.text)
+        .join('\n')
+        .trim()
+}
+
+async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output, log }: {
+    ctx: JobContext
+    conversationId: string
+    flowRunId?: string
+    waitpointId?: string
+    output: unknown
+    log: JobContext['log']
+}): Promise<void> {
+    if (isNil(flowRunId) || isNil(waitpointId)) {
+        return
+    }
+    const { error } = await tryCatch(() => ctx.apiClient.resumeFlowStep({ conversationId, flowRunId, waitpointId, output }))
+    if (error) {
+        log.error({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not hand the result back; the step waits for its own timeout')
+    }
 }
 
 function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source }: {

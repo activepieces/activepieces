@@ -13,7 +13,7 @@ const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     app.post('/runs', StartAgentRunRoute, async (request, reply) => {
-        const { instruction, modelName, resumeUrl } = request.body
+        const { instruction, modelName, flowRunId, waitpointId } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -46,7 +46,8 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 userMessage: instruction,
                 modelName: modelName ?? null,
                 source: AgentRunSource.FLOW_STEP,
-                resumeUrl,
+                flowRunId,
+                waitpointId,
             },
         })
 
@@ -56,10 +57,12 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
 }
 
 const RUNS_PER_MINUTE = 60
+const MAX_INSTRUCTION_LENGTH = 51_200
 
 const StartAgentRunRequest = z.object({
-    instruction: z.string().min(1),
-    resumeUrl: z.string().url(),
+    instruction: z.string().min(1).max(MAX_INSTRUCTION_LENGTH),
+    flowRunId: z.string(),
+    waitpointId: z.string(),
     modelName: z.string().optional(),
 })
 

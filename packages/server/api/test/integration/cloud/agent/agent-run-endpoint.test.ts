@@ -31,7 +31,7 @@ describe('POST /v1/agents/runs', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'send a summary email', resumeUrl: 'https://example.com/resume/abc' },
+            body: { instruction: 'send a summary email', flowRunId: 'run-1', waitpointId: 'wp-1' },
         })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
@@ -54,7 +54,7 @@ describe('POST /v1/agents/runs', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'do a thing', resumeUrl: 'https://example.com/resume/abc', projectId: other.project.id },
+            body: { instruction: 'do a thing', flowRunId: 'run-1', waitpointId: 'wp-1', projectId: other.project.id },
         })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
@@ -73,7 +73,7 @@ describe('POST /v1/agents/runs', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'do a thing', resumeUrl: 'https://example.com/resume/abc' },
+            body: { instruction: 'do a thing', flowRunId: 'run-1', waitpointId: 'wp-1' },
         })
 
         const list = await ctx.post('/v1/agents/conversations', { title: 'a real chat' })
@@ -88,7 +88,7 @@ describe('POST /v1/agents/runs', () => {
 
         const response = await ctx.post('/v1/agents/runs', {
             instruction: 'do a thing',
-            resumeUrl: 'https://example.com/resume/abc',
+            flowRunId: 'run-1', waitpointId: 'wp-1',
         })
 
         expect([StatusCodes.UNAUTHORIZED, StatusCodes.FORBIDDEN]).toContain(response.statusCode)
@@ -106,7 +106,7 @@ describe('POST /v1/agents/runs', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: '', resumeUrl: 'https://example.com/resume/abc' },
+            body: { instruction: '', flowRunId: 'run-1', waitpointId: 'wp-1' },
         })
 
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
