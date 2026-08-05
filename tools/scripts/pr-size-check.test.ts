@@ -28,6 +28,16 @@ describe('resolveRenamePath', () => {
     })
 })
 
+describe('diffRange', () => {
+    it('diffs the merge commit parents on a PR checkout so stacked PRs only count their own changes', () => {
+        expect(prSizeCheck.diffRange({ baseRef: 'feat/base', parentCount: 2 })).toBe('HEAD^1...HEAD^2')
+    })
+
+    it('falls back to the base ref on a non-merge (local) checkout', () => {
+        expect(prSizeCheck.diffRange({ baseRef: 'main', parentCount: 1 })).toBe('origin/main...HEAD')
+    })
+})
+
 describe('bucketFor', () => {
     it('folds engine, worker and execution into one bucket', () => {
         const areas = [

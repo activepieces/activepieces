@@ -63,7 +63,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
         case WorkerJobType.EXECUTE_TOKEN_REFRESH:
             return 'critical'
-        case WorkerJobType.EXECUTE_CHAT_AGENT:
+        case WorkerJobType.EXECUTE_AGENT_RUN:
         case WorkerJobType.EXECUTE_ACTION:
             return 'high'
     }
@@ -80,7 +80,7 @@ export enum WorkerJobType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EVENT_DESTINATION = 'EVENT_DESTINATION',
-    EXECUTE_CHAT_AGENT = 'EXECUTE_CHAT_AGENT',
+    EXECUTE_AGENT_RUN = 'EXECUTE_AGENT_RUN',
     EXECUTE_TOKEN_REFRESH = 'EXECUTE_TOKEN_REFRESH',
     EXECUTE_ACTION = 'EXECUTE_ACTION',
 }
@@ -92,7 +92,7 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_PROPERTY,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-    WorkerJobType.EXECUTE_CHAT_AGENT,
+    WorkerJobType.EXECUTE_AGENT_RUN,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
     WorkerJobType.EXECUTE_ACTION,
 ] as const
@@ -273,37 +273,44 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
-export const ChatPromptOverride = z.object({
+export enum AgentRunSource {
+    CHAT = 'CHAT',
+    FLOW_STEP = 'FLOW_STEP',
+}
+
+export const AgentPromptOverride = z.object({
     system: z.string().optional(),
     projectSelected: z.string().optional(),
     noProject: z.string().optional(),
     guides: z.record(z.string(), z.string()).optional(),
 })
-export type ChatPromptOverride = z.infer<typeof ChatPromptOverride>
+export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
 
-export const ExecuteChatAgentJobData = z.object({
+export const ExecuteAgentRunJobData = z.object({
     schemaVersion: z.number(),
-    jobType: z.literal(WorkerJobType.EXECUTE_CHAT_AGENT),
+    jobType: z.literal(WorkerJobType.EXECUTE_AGENT_RUN),
     conversationId: z.string(),
     runId: z.string().optional(),
     projectId: z.string().nullable(),
     platformId: z.string(),
     userId: z.string(),
     userMessage: z.string(),
+    source: z.enum(AgentRunSource).optional(),
+    resumeUrl: z.string().optional(),
     modelName: z.string().nullable(),
     files: z.array(z.object({
         name: z.string(),
         mimeType: z.string(),
         data: z.string(),
     })).optional(),
-    promptOverride: ChatPromptOverride.optional(),
+    promptOverride: AgentPromptOverride.optional(),
     dryRun: z.boolean().optional(),
     // Measurement mode: run real discovery (research/get-props/resolve/reads) but neutralize
     // ap_execute_action and auto-resolve approval gates, so the eval harness can measure how the
     // agent navigates to a runnable call with zero side effects and no approval stalls.
     discoveryOnly: z.boolean().optional(),
 })
-export type ExecuteChatAgentJobData = z.infer<typeof ExecuteChatAgentJobData>
+export type ExecuteAgentRunJobData = z.infer<typeof ExecuteAgentRunJobData>
 
 export const EventDestinationJobData = z.object({
     schemaVersion: z.number(),
@@ -324,7 +331,7 @@ export const JobData = z.union([
     WebhookJobData,
     UserInteractionJobData,
     EventDestinationJobData,
-    ExecuteChatAgentJobData,
+    ExecuteAgentRunJobData,
 ])
 export type JobData = z.infer<typeof JobData>
 export type JobPayload = z.infer<typeof JobPayload>

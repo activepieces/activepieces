@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ChatConversation, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, AgentConversation, AgentRunSource, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -13,8 +13,8 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
 import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
-import { ChatConversationEntity } from '../../chat/chat-conversation-entity'
-import { chatAnalyticsBulkSync } from '../../chat/chat-sync-job'
+import { AgentConversationEntity } from '../../agent/agent-conversation-entity'
+import { chatAnalyticsBulkSync } from '../../agent/chat-analytics-sync'
 import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 
@@ -60,6 +60,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         return res.status(StatusCodes.OK).send()
     })
 
+
     app.post('/platforms/apply-license-key', ApplyLicenseKeyByEmailRequest, async (req, res) => {
         await adminPlatformService(req.log).applyLicenseKeyByEmail(req.body)
         return res.status(StatusCodes.OK).send()
@@ -86,8 +87,9 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
         const PAGE_SIZE = 100
-        const conversationRepo = repoFactory(ChatConversationEntity)
-        const totalCount = await conversationRepo().count()
+        const conversationRepo = repoFactory(AgentConversationEntity)
+        const chatOnly = { source: AgentRunSource.CHAT }
+        const totalCount = await conversationRepo().countBy(chatOnly)
         const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
         req.log.info({ totalCount, totalPages }, 'Starting bulk chat analytics sync')
@@ -96,7 +98,8 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         let failed = 0
 
         for (let page = 0; page < totalPages; page++) {
-            const conversations: ChatConversation[] = await conversationRepo().find({
+            const conversations: AgentConversation[] = await conversationRepo().find({
+                where: chatOnly,
                 skip: page * PAGE_SIZE,
                 take: PAGE_SIZE,
                 order: { created: 'ASC' },
