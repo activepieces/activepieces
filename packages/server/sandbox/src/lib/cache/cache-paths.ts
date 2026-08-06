@@ -16,6 +16,10 @@ export const cacheUtils = (basePath: string) => ({
         return path.resolve(this.getGlobalCachePathLatestVersion(), 'codes')
     },
 
+    getActionRunCodeCachePath(): string {
+        return path.resolve(this.getGlobalCodeCachePath(), ACTION_RUN_CODE_DIR)
+    },
+
     getGlobalCachePiecesPath(): string {
         return path.resolve(this.getGlobalCachePathLatestVersion(), 'pieces-metadata')
     },
@@ -75,7 +79,9 @@ export const cacheUtils = (basePath: string) => ({
 
 const RUN_STATE_RETENTION_MS = 2 * 24 * 60 * 60 * 1000
 
-export const LATEST_CACHE_VERSION = 'v12'
+export const LATEST_CACHE_VERSION = 'v13'
+
+export const ACTION_RUN_CODE_DIR = 'action-runs'
 
 export enum CacheState {
     READY = 'READY',

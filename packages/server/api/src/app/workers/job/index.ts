@@ -1,5 +1,4 @@
 import {
-    EngineOperationType,
     isNil,
     JobData,
     RunEnvironment,
@@ -75,21 +74,6 @@ export const SubmitPayloadsRequest = z.object({
 
 export type SubmitPayloadsRequest = z.infer<typeof SubmitPayloadsRequest>
 
-
-
-
-export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
-    switch (operationType) {
-        case EngineOperationType.EXECUTE_FLOW:
-            return flowTimeoutSandbox
-        case EngineOperationType.EXECUTE_PROPERTY:
-        case EngineOperationType.EXECUTE_VALIDATE_AUTH:
-        case EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH:
-        case EngineOperationType.EXTRACT_PIECE_METADATA:
-        case EngineOperationType.EXECUTE_TRIGGER_HOOK:
-            return triggerTimeoutSandbox
-    }
-}
 
 export type WorkerGroupAssignment = {
     scope: WorkerGroupScope

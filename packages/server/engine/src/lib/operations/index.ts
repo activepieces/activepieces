@@ -1,11 +1,13 @@
 import { inspect } from 'util'
 import { formatPieceError, tryCatch } from '@activepieces/core-utils'
-import { EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, ExecutionError, ExecutionErrorType, TriggerHookType } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, ExecuteActionOperation, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteResolveConnectionIdentifierOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, ExecutionError, ExecutionErrorType, TriggerHookType } from '@activepieces/shared'
+import { actionOperation } from './action.operation'
 import { authRefreshOperation } from './auth-refresh.operation'
 import { authValidationOperation } from './auth-validation.operation'
 import { flowOperation } from './flow.operation'
 import { pieceMetadataOperation } from './piece-metadata.operation'
 import { propertyOperation } from './property.operation'
+import { resolveConnectionIdentifierOperation } from './resolve-connection-identifier.operation'
 import { triggerHookOperation } from './trigger-hook.operation'
 
 
@@ -18,6 +20,9 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             case EngineOperationType.EXECUTE_FLOW: {
                 return flowOperation.execute(operation as ExecuteFlowOperation)
             }
+            case EngineOperationType.EXECUTE_ACTION: {
+                return actionOperation.execute(operation as ExecuteActionOperation)
+            }
             case EngineOperationType.EXECUTE_PROPERTY: {
                 return propertyOperation.execute(operation as ExecutePropsOptions)
             }
@@ -26,6 +31,9 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             }
             case EngineOperationType.EXECUTE_VALIDATE_AUTH: {
                 return authValidationOperation.execute(operation as ExecuteValidateAuthOperation)
+            }
+            case EngineOperationType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER: {
+                return resolveConnectionIdentifierOperation.execute(operation as ExecuteResolveConnectionIdentifierOperation)
             }
             case EngineOperationType.EXECUTE_REFRESH_TOKEN_AUTH: {
                 return authRefreshOperation.execute(operation as ExecuteRefreshTokenAuthOperation)

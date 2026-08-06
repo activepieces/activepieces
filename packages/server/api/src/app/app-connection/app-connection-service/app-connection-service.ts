@@ -1,5 +1,6 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, unique, UserId } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
+import { PieceMetadata } from '@activepieces/pieces-framework'
+import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
@@ -8,6 +9,7 @@ import { projectMemberService } from '../../ee/projects/project-members/project-
 import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
+import { jwtUtils } from '../../helper/jwt-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
@@ -24,6 +26,7 @@ import {
     AppConnectionSchema,
 } from '../app-connection.entity'
 import { appConnectionHandler } from './app-connection.handler'
+import { mergeConnectionMetadata } from './connection-metadata'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 export const appConnectionsRepo = repoFactory(AppConnectionEntity)
@@ -71,6 +74,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
         })
 
+        const accountIdentifier = await resolveConnectionAccountIdentifier({
+            connectionType: type,
+            auth: validatedConnectionValue,
+            pieceName,
+            projectId: projectIds[0],
+            platformId,
+            log,
+        })
+        const connectionMetadata = mergeConnectionMetadata({
+            requestMetadata: metadata,
+            existingMetadata: existingConnection?.metadata,
+            accountIdentifier,
+        })
+
         const newId = existingConnection?.id ?? apId()
         const connection = {
             displayName,
@@ -84,7 +101,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope,
             projectIds,
             platformId,
-            ...spreadIfDefined('metadata', metadata),
+            ...spreadIfDefined('metadata', connectionMetadata),
             ...spreadIfDefined('preSelectForNewProjects', preSelectForNewProjects),
             pieceVersion,
         }
@@ -114,10 +131,19 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
         }
 
+        const storedMetadata = isNil(request.metadata)
+            ? undefined
+            : (await appConnectionsRepo().findOneByOrFail(filter)).metadata
+        const storedAccountIdentifier = storedMetadata?.['accountIdentifier']
+
         await appConnectionsRepo().update(filter, {
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
-            ...spreadIfDefined('metadata', request.metadata),
+            ...(isNil(request.metadata) ? {} : spreadIfDefined('metadata', mergeConnectionMetadata({
+                requestMetadata: request.metadata,
+                existingMetadata: storedMetadata,
+                accountIdentifier: typeof storedAccountIdentifier === 'string' ? storedAccountIdentifier : undefined,
+            }))),
             ...spreadIfDefined('preSelectForNewProjects', request.preSelectForNewProjects),
         })
 
@@ -578,6 +604,73 @@ async function assertProjectIds(projectIds: ProjectId[], platformId: string): Pr
         })
     }
 }
+// The generic path decodes the OIDC id_token / email claim from the token
+// response — this covers every provider that returns one (Google, Microsoft, …).
+// Anything provider-specific (Slack's workspace/user) lives in the piece's own
+// getConnectionIdentifier hook, resolved via the engine. Best-effort — never
+// throws, returns undefined on any miss.
+const resolveConnectionAccountIdentifier = async ({
+    connectionType,
+    auth,
+    pieceName,
+    projectId,
+    platformId,
+    log,
+}: {
+    connectionType: AppConnectionType
+    auth: AppConnectionValue
+    pieceName: string
+    projectId: ProjectId | undefined
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<string | undefined> => {
+    if (connectionType === AppConnectionType.NO_AUTH) {
+        return undefined
+    }
+    if (OAUTH_CONNECTION_TYPES.includes(connectionType)) {
+        const emailFromToken = emailFromTokenResponse('data' in auth ? auth.data : undefined)
+        if (!isNil(emailFromToken)) {
+            return emailFromToken
+        }
+    }
+    return engineResolveConnectionIdentifier({ pieceName, projectId, platformId, auth, connectionType }, log)
+}
+
+const OAUTH_CONNECTION_TYPES = [
+    AppConnectionType.OAUTH2,
+    AppConnectionType.CLOUD_OAUTH2,
+    AppConnectionType.PLATFORM_OAUTH2,
+]
+
+// OIDC providers expose the sign-in email under different claims: Google uses
+// `email`; Microsoft/Azure AD usually put it in `preferred_username` (the UPN)
+// or `upn`. Fall back to those, but only when they actually look like an email.
+const pickEmailClaim = (claims: Record<string, unknown> | undefined): string | undefined => {
+    if (isNil(claims)) {
+        return undefined
+    }
+    const directEmail = claims['email'] ?? claims['mail']
+    if (typeof directEmail === 'string' && directEmail.length > 0) {
+        return directEmail
+    }
+    return ['preferred_username', 'upn', 'unique_name']
+        .map((key) => claims[key])
+        .find((value): value is string => typeof value === 'string' && value.includes('@'))
+}
+
+const emailFromTokenResponse = (data: Record<string, unknown> | undefined): string | undefined => {
+    const emailFromData = pickEmailClaim(data)
+    if (!isNil(emailFromData)) {
+        return emailFromData
+    }
+    const idToken = data?.['id_token']
+    if (typeof idToken !== 'string') {
+        return undefined
+    }
+    const { data: decoded } = tryCatchSync(() => jwtUtils.decode<Record<string, unknown>>({ jwt: idToken }))
+    return pickEmailClaim(decoded?.payload)
+}
+
 const validateConnectionValue = async (
     params: ValidateConnectionValueParams,
     log: FastifyBaseLogger,
@@ -731,6 +824,63 @@ const engineValidateAuth = async (
             },
         })
     }
+}
+
+// The hook is a function, so it cannot survive metadata serialization — without
+// the flag Piece.metadata() derives from it, every OAuth connect would pay a
+// sandbox round-trip to ask a piece that has nothing to answer with.
+const declaresConnectionIdentifier = (auth: PieceMetadata['auth']): boolean => {
+    if (isNil(auth)) {
+        return false
+    }
+    return (Array.isArray(auth) ? auth : [auth]).some((single) => single.hasConnectionIdentifier === true)
+}
+
+// Unlike engineValidateAuth this is best-effort: resolving a display label must
+// never fail — or delay — the connection upsert, so any error/failure collapses
+// to undefined and the engine round-trip is capped by RESOLVE_IDENTIFIER_TIMEOUT_MS
+// (the watcher's own safety timeout is 5 minutes, far too long to block a Save on).
+const RESOLVE_IDENTIFIER_TIMEOUT_MS = 15000
+
+const engineResolveConnectionIdentifier = async (
+    params: EngineResolveConnectionIdentifierParams,
+    log: FastifyBaseLogger,
+): Promise<string | undefined> => {
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return undefined
+    }
+    const { pieceName, auth, projectId, platformId, connectionType } = params
+    const { data: identifier } = await tryCatch(async () => {
+        const pieceMetadata = await pieceMetadataService(log).getOrThrow({
+            name: pieceName,
+            version: undefined,
+            platformId,
+        })
+        if (!declaresConnectionIdentifier(pieceMetadata.auth)) {
+            log.debug({ piece: { name: pieceName, version: pieceMetadata.version } }, 'Piece auth declares no getConnectionIdentifier, skipping engine round-trip')
+            return undefined
+        }
+        const enginePromise = userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteResolveConnectionIdentifierResponse>>({
+            piece: await getPiecePackageWithoutArchive(log, platformId, {
+                pieceName,
+                pieceVersion: pieceMetadata.version,
+            }),
+            projectId,
+            platformId,
+            connectionValue: auth,
+            connectionType,
+            jobType: WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
+        }, log)
+        const timeoutPromise = new Promise<undefined>((resolve) => {
+            setTimeout(() => resolve(undefined), RESOLVE_IDENTIFIER_TIMEOUT_MS).unref()
+        })
+        const engineResponse = await Promise.race([enginePromise, timeoutPromise])
+        return !isNil(engineResponse) && engineResponse.status === EngineResponseStatus.OK
+            ? engineResponse.response.identifier
+            : undefined
+    })
+    return identifier ?? undefined
 }
 
 async function fetchFlowIdsForConnections(
@@ -903,6 +1053,10 @@ type EngineValidateAuthParams = {
     projectId: ProjectId | undefined
     platformId: string
     auth: AppConnectionValue
+}
+
+type EngineResolveConnectionIdentifierParams = EngineValidateAuthParams & {
+    connectionType: AppConnectionType
 }
 
 type ReplaceParams = {
