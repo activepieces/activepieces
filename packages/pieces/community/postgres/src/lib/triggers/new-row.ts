@@ -188,11 +188,13 @@ export const newRow = createTrigger({
         return await pollingHelper.test(polling, context);
     },
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, context);
+        const { store, auth, propsValue } = context;
+        await pollingHelper.onEnable(polling, { store, propsValue, auth });
     },
 
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, context);
+        const { store, auth, propsValue } = context;
+        await pollingHelper.onDisable(polling, { store, propsValue, auth });
     },
 
     async run(context) {
