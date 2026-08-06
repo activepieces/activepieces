@@ -23,6 +23,9 @@ export const businessCentralAuth = PieceAuth.OAuth2({
   scope: [
     'https://api.businesscentral.dynamics.com/user_impersonation',
     'https://api.businesscentral.dynamics.com/Financials.ReadWrite.All',
+    'openid',
+    'email',
+    'profile',
   ],
   prompt: 'omit',
   authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
