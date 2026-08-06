@@ -200,6 +200,7 @@ export const ExecuteTriggerHookJobData = z.object({
     test: z.boolean(),
     hookType: z.nativeEnum(TriggerHookType),
     triggerPayload: TriggerPayload.optional(),
+    isRepublish: z.boolean().optional(),
     requestId: z.string(),
     webserverId: z.string(),
 })
