@@ -57,7 +57,7 @@ async function buildContextWithLoop(): Promise<FlowExecutorContext> {
     return ctx.setCurrentPath(StepExecutionPath.empty())
 }
 
-async function runBackupAndParseUploadedLog(ctx: FlowExecutorContext): Promise<Record<string, unknown>> {
+async function runBackup(ctx: FlowExecutorContext): Promise<Buffer | Readable> {
     await flowRunProgressReporter.sendUpdate({
         engineConstants: generateMockEngineConstants({ logsFileId: 'logs-1' }),
         flowExecutorContext: ctx,
@@ -65,13 +65,27 @@ async function runBackupAndParseUploadedLog(ctx: FlowExecutorContext): Promise<R
     await flowRunProgressReporter.backup()
 
     expect(mockUpload).toHaveBeenCalledTimes(1)
-    const uploaded = mockUpload.mock.calls[0][0].data as Readable
-    const chunks: Buffer[] = []
-    for await (const chunk of uploaded) {
-        chunks.push(chunk)
+    return mockUpload.mock.calls[0][0].data
+}
+
+async function parseUploadedLog(uploaded: Buffer | Readable): Promise<Record<string, unknown>> {
+    let compressed: Buffer
+    if (uploaded instanceof Readable) {
+        const chunks: Buffer[] = []
+        for await (const chunk of uploaded) {
+            chunks.push(chunk)
+        }
+        compressed = Buffer.concat(chunks)
     }
-    const serialized = await zstdDecompress(Buffer.concat(chunks))
+    else {
+        compressed = uploaded
+    }
+    const serialized = await zstdDecompress(compressed)
     return JSON.parse(serialized.toString('utf-8'))
+}
+
+async function runBackupAndParseUploadedLog(ctx: FlowExecutorContext): Promise<Record<string, unknown>> {
+    return parseUploadedLog(await runBackup(ctx))
 }
 
 const expectedLog = {
@@ -142,5 +156,34 @@ describe('flowRunProgressReporter backup with runStateStore', () => {
 
         const parsed = await runBackupAndParseUploadedLog(ctx)
         expect(parsed).toEqual(expectedLog)
+    })
+
+    test('backup uploads a buffered log when the state is below the size threshold', async () => {
+        const ctx = await buildContextWithLoop()
+        const uploaded = await runBackup(ctx)
+        expect(uploaded).toBeInstanceOf(Buffer)
+        expect(await parseUploadedLog(uploaded)).toEqual(expectedLog)
+    })
+
+    test('backup streams the log when the state exceeds the size threshold', async () => {
+        const ctx = new FlowExecutorContext({ ...(await buildContextWithLoop()), logSizeBytes: 5 * 1024 * 1024 })
+        const uploaded = await runBackup(ctx)
+        expect(uploaded).toBeInstanceOf(Readable)
+        expect(await parseUploadedLog(uploaded)).toEqual(expectedLog)
+    })
+
+    test('backup serializes the in-memory copy when a step fell back to memory over a stale store row', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        let ctx = FlowExecutorContext.empty()
+        ctx = await ctx.upsertStep('trigger_1', makePieceStep({ input: { key: 'in' }, output: { version: 1 } }))
+        vi.spyOn(runStateStore, 'put').mockImplementationOnce(() => {
+            throw new Error('disk full')
+        })
+        vi.spyOn(runStateStore, 'deleteStep').mockImplementationOnce(() => undefined)
+        ctx = await ctx.upsertStep('trigger_1', makePieceStep({ input: { key: 'in' }, output: { version: 2 } }))
+        vi.restoreAllMocks()
+
+        const parsed = await runBackupAndParseUploadedLog(ctx) as { executionState: { steps: Record<string, { output: unknown }> } }
+        expect(parsed.executionState.steps.trigger_1.output).toEqual({ version: 2 })
     })
 })

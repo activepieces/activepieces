@@ -159,6 +159,43 @@ describe('runStateStore', () => {
         })
     })
 
+    describe('deleteStep', () => {
+        test('removes an existing row', () => {
+            putStep({ name: 'step_1', output: { a: 1 } })
+            runStateStore.deleteStep({ name: 'step_1', stepPath: ROOT_PATH })
+            expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeUndefined()
+            expect(runStateStore.getStepSize({ name: 'step_1', stepPath: ROOT_PATH })).toBeUndefined()
+        })
+
+        test('is a no-op when not initialized', () => {
+            runStateStore.dispose()
+            expect(() => runStateStore.deleteStep({ name: 'step_1', stepPath: ROOT_PATH })).not.toThrow()
+        })
+    })
+
+    describe('slices', () => {
+        test('round-trips slice json', () => {
+            runStateStore.putSlice({ fileId: 'file-1', json: '{"big":"payload"}' })
+            expect(runStateStore.getSliceJson({ fileId: 'file-1' })).toEqual('{"big":"payload"}')
+        })
+
+        test('replaces an existing slice for the same file id', () => {
+            runStateStore.putSlice({ fileId: 'file-1', json: '{"version":1}' })
+            runStateStore.putSlice({ fileId: 'file-1', json: '{"version":2}' })
+            expect(runStateStore.getSliceJson({ fileId: 'file-1' })).toEqual('{"version":2}')
+        })
+
+        test('returns undefined for a missing file id', () => {
+            expect(runStateStore.getSliceJson({ fileId: 'missing' })).toBeUndefined()
+        })
+
+        test('put and get are safe no-ops when not initialized', () => {
+            runStateStore.dispose()
+            expect(() => runStateStore.putSlice({ fileId: 'file-1', json: '{}' })).not.toThrow()
+            expect(runStateStore.getSliceJson({ fileId: 'file-1' })).toBeUndefined()
+        })
+    })
+
     describe('dispose', () => {
         test('deletes the sqlite file and marks the store uninitialized', () => {
             const sqlitePath = sqliteFilePath()
