@@ -502,7 +502,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             log,
             ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
         })
-        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: input.piece.predefinedInput?.auth }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
         return { result }
     },
 

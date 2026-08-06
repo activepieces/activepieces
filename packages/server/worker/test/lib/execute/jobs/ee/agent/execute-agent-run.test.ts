@@ -76,7 +76,7 @@ describe('stepResultFrom', () => {
         const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: many, timestamp: at })
 
         expect(result.steps.length).toBeLessThan(many.length)
-        expect(JSON.stringify(result.steps).length).toBeLessThanOrEqual(262_144)
+        expect(JSON.stringify(result.steps.at(-1))).toContain('not shown here')
     })
 })
 

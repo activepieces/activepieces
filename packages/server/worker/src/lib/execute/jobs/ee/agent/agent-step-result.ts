@@ -24,10 +24,14 @@ export function stepResultFrom({ prompt, uiParts, timestamp, tools, failure }: {
 
 function withinBudget(steps: AgentStepBlock[]): AgentStepBlock[] {
     let spent = 0
-    return steps.filter((step) => {
+    const kept = steps.filter((step) => {
         spent += JSON.stringify(step).length
         return spent <= MAX_RESULT_LENGTH
     })
+    if (kept.length === steps.length) {
+        return kept
+    }
+    return [...kept, { type: ContentBlockType.MARKDOWN, markdown: `The last ${steps.length - kept.length} steps are not shown here because the result grew too large. The full transcript has them.` }]
 }
 
 function toStepBlocks({ part, timestamp, configured }: { part: PersistedAgentPart, timestamp: string, configured: Map<string, AgentPieceTool['pieceMetadata']> }): AgentStepBlock[] {
