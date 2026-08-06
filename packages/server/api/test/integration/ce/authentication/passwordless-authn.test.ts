@@ -201,6 +201,32 @@ describe('Passwordless Authentication API', () => {
             expect(await databaseConnection().getRepository('user').count()).toBe(1)
         })
 
+        it('creates one platform even when the other onboarding route races the name step', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+
+            const viaNameStep = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+            const viaPlatformRoute = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { name: 'Ahmad' },
+            })
+
+            expect(viaNameStep?.statusCode).toBe(StatusCodes.OK)
+            expect(viaPlatformRoute?.statusCode).toBe(StatusCodes.OK)
+            expect(viaPlatformRoute?.json()?.platformId).toBe(viaNameStep?.json()?.platformId)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        })
+
         it('sets the USER_CREATED flag only once a code is verified', async () => {
             await requestCode(EMAIL)
             const otp = await storedOtp(EMAIL)
