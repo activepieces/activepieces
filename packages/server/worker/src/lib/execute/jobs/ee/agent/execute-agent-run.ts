@@ -34,7 +34,7 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 // `agent-evals` run could still execute ap_run_code against the developer's project.
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action']
 const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
@@ -231,7 +231,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
-                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), failure: 'The agent run was stopped before it finished' }), source, log })
+                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], failure: 'The agent run was stopped before it finished' }), source, log })
                 await sendEventWithRetry({
                     event: { type: AgentEventType.FINISHED, data: { conversationId } },
                 })
@@ -270,7 +270,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: data.tools ?? [], failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -302,7 +302,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
-            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), failure: clientMessage }), source, log }))
+            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], failure: clientMessage }), source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateAgentProgress) and only flips status, so an errored turn keeps

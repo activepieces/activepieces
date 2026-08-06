@@ -30,7 +30,7 @@ import { pieceToolRunner } from './tools/piece-tool-runner'
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action']
 
 const MAX_EMAIL_RECIPIENTS = 10
 const MAX_EMAIL_SUBJECT_LENGTH = 300
@@ -495,7 +495,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
         const { result, resolvedInput } = await pieceToolRunner.runFromInstruction({
             model: await agentHelpers.resolveFastModel({ platformId: conversation.platformId, log }),
-            piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName },
+            piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
             instruction: input.instruction,
             projectId: conversation.projectId,
             platformId: conversation.platformId,

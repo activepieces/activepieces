@@ -30,6 +30,10 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (unsupported.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions` } })
         }
+        const reserved = pieceTools.filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX)).map((tool) => tool.toolName)
+        if (reserved.length > 0) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `A tool cannot be named ${unique(reserved).join(' or ')}: names starting with "${BUILT_IN_TOOL_PREFIX}" belong to the agent's own tools` } })
+        }
         if (pieceTools.some((tool) => tool.pieceMetadata.actionName === CUSTOM_API_CALL)) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'An agent step cannot use a custom API call: it would let the agent send this project\'s credentials to any address it chooses' } })
         }
@@ -69,6 +73,7 @@ const RUNS_PER_MINUTE = 60
 const MAX_INSTRUCTION_LENGTH = 51_200
 const MAX_TOOLS = 100
 const CUSTOM_API_CALL = 'custom_api_call'
+const BUILT_IN_TOOL_PREFIX = 'ap_'
 
 const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_INSTRUCTION_LENGTH),

@@ -29,7 +29,7 @@ async function fillInput({ action, instruction, predefinedInput, ports }: FillIn
             schema,
             prompt: extractionPrompt({ instruction, propertyNames, resolvedInput, choices }),
         })
-        resolvedInput = { ...resolvedInput, ...withoutTemplates(filled), ...pinned }
+        resolvedInput = { ...resolvedInput, ...omit(withoutTemplates(filled), ['auth']), ...pinned }
     }
     return resolvedInput
 }

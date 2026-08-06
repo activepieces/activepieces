@@ -296,3 +296,30 @@ describe('fillInput — a pinned field is not the model\'s to change', () => {
         expect(resolved['cc']).toBeUndefined()
     })
 })
+
+describe('fillInput — the model does not get to choose the connection', () => {
+    it('drops an auth the model wrote when the author pinned none', async () => {
+        const ports = portsWith([{ auth: 'someone-elses-connection', body: 'hi' }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_email', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'email the summary',
+            ports,
+        })
+
+        expect(resolved['auth']).toBeUndefined()
+    })
+
+    it('keeps the connection the author pinned', async () => {
+        const ports = portsWith([{ auth: 'someone-elses-connection' }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_email', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'email the summary',
+            predefinedInput: { auth: 'ours', fields: {} },
+            ports,
+        })
+
+        expect(resolved['auth']).toBe('ours')
+    })
+})

@@ -345,7 +345,7 @@ describe('agentRpcHandlers.executePieceTool — only a flow-step run may run a c
         expect(mockRunFromInstruction).toHaveBeenCalledTimes(1)
         const call = mockRunFromInstruction.mock.calls[0][0]
         expect(call.projectId).toBe('proj-1')
-        expect(call.piece).toEqual({ pieceName: '@activepieces/piece-gmail', actionName: 'send_email' })
+        expect(call.piece).toEqual({ pieceName: '@activepieces/piece-gmail', actionName: 'send_email', pieceVersion: '0.1.0' })
     })
 
     it('refuses when the conversation is a chat', async () => {
