@@ -34,7 +34,7 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 // `agent-evals` run could still execute ap_run_code against the developer's project.
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {

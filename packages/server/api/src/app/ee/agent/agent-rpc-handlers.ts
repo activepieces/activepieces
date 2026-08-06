@@ -30,7 +30,7 @@ import { pieceToolRunner } from './tools/piece-tool-runner'
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 
 const MAX_EMAIL_RECIPIENTS = 10
 const MAX_EMAIL_SUBJECT_LENGTH = 300
