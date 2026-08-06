@@ -1,8 +1,8 @@
 import { CreateOtpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
-import { securityAccess } from '../../../core/security/authorization/fastify-security'
-import { platformUtils } from '../../../platform/platform.utils'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformUtils } from '../../platform/platform.utils'
 import { otpService } from './otp-service'
 
 export const otpController: FastifyPluginAsyncZod = async (app) => {

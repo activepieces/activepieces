@@ -52,7 +52,7 @@ describe('Enterprise Local Authn API', () => {
             const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.verified).toBe(true)
             const otp = await db.findOneBy('otp', { id: mockOtp.id })
-            expect(otp?.state).toBe(OtpState.CONFIRMED)
+            expect(otp).toBeNull()
         })
 
         it('Fails if OTP is wrong', async () => {

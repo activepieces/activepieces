@@ -25,9 +25,15 @@ type FormValues = z.infer<typeof FormValues>;
 
 type SamlLoginFormProps = {
   onBack: () => void;
+  // The auth card supplies its own back affordance, so it opts out of this
+  // one rather than showing two.
+  showBackButton?: boolean;
 };
 
-export const SamlLoginForm = ({ onBack }: SamlLoginFormProps) => {
+export const SamlLoginForm = ({
+  onBack,
+  showBackButton = true,
+}: SamlLoginFormProps) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(FormValues),
     defaultValues: { email: '' },
@@ -92,10 +98,12 @@ export const SamlLoginForm = ({ onBack }: SamlLoginFormProps) => {
         >
           {t('Continue')}
         </Button>
-        <Button variant="ghost" type="button" onClick={onBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t('Back to sign in')}
-        </Button>
+        {showBackButton && (
+          <Button variant="ghost" type="button" onClick={onBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t('Back to sign in')}
+          </Button>
+        )}
       </form>
     </Form>
   );
