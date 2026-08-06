@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, ErrorCode, unique } from '@activepieces/core-utils'
-import { AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, WorkerJobType } from '@activepieces/shared'
+import { AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -13,7 +13,7 @@ const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     app.post('/runs', StartAgentRunRoute, async (request, reply) => {
-        const { instruction, modelName, flowRunId, waitpointId, tools } = request.body
+        const { instruction, modelName, flowRunId, waitpointId, tools, structuredOutput } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -61,6 +61,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 flowRunId,
                 waitpointId,
                 tools: pieceTools,
+                structuredOutput,
             },
         })
 
@@ -74,12 +75,14 @@ const MAX_INSTRUCTION_LENGTH = 51_200
 const MAX_TOOLS = 100
 const CUSTOM_API_CALL = 'custom_api_call'
 const BUILT_IN_TOOL_PREFIX = 'ap_'
+const MAX_OUTPUT_FIELDS = 50
 
 const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_INSTRUCTION_LENGTH),
     flowRunId: ApId,
     waitpointId: ApId,
     tools: z.array(AgentTool).max(MAX_TOOLS).optional(),
+    structuredOutput: z.array(AgentOutputField).max(MAX_OUTPUT_FIELDS).optional(),
     modelName: z.string().optional(),
 })
 

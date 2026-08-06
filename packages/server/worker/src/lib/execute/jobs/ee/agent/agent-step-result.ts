@@ -2,23 +2,25 @@ import { AgentPieceTool, AgentResult, AgentStepBlock, AgentTaskStatus, ContentBl
 
 const MAX_RESULT_LENGTH = 262_144
 
-export function stepResultFrom({ prompt, uiParts, timestamp, tools, failure }: {
+export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOutput, failure }: {
     prompt: string
     uiParts: PersistedAgentPart[]
     timestamp: string
     tools: AgentPieceTool[]
+    structuredOutput?: Record<string, unknown>
     failure?: string
 }): AgentResult {
     const configured = new Map(tools.map((tool) => [tool.toolName, tool.pieceMetadata]))
     const steps = withinBudget(uiParts.flatMap((part) => toStepBlocks({ part, timestamp, configured })))
     const anyToolFailed = uiParts.some((part) => part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.ERROR)
     if (failure === undefined) {
-        return { prompt, steps, status: anyToolFailed ? AgentTaskStatus.FAILED : AgentTaskStatus.COMPLETED }
+        return { prompt, steps, status: anyToolFailed ? AgentTaskStatus.FAILED : AgentTaskStatus.COMPLETED, ...(structuredOutput === undefined ? {} : { structuredOutput }) }
     }
     return {
         prompt,
         steps: [...steps, { type: ContentBlockType.MARKDOWN, markdown: failure }],
         status: AgentTaskStatus.FAILED,
+        ...(structuredOutput === undefined ? {} : { structuredOutput }),
     }
 }
 

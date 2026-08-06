@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
@@ -1476,6 +1476,33 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
     ]))
 }
 
+function createStructuredOutputTool({ fields, capture }: {
+    fields: AgentOutputField[]
+    capture: (output: Record<string, unknown>) => void
+}): ToolSet {
+    return {
+        [TASK_COMPLETION_TOOL_NAME]: tool({
+            description: 'Call this as your final action, once the task is done or you cannot continue, to report the result in the shape the flow expects. Nothing you write outside this tool reaches the rest of the flow.',
+            inputSchema: z.object({ output: z.object(Object.fromEntries(fields.map((field) => [field.displayName, schemaForOutputField(field)]))) }),
+            execute: async ({ output }) => {
+                capture(output)
+                return { content: [{ type: 'text', text: 'Result recorded.' }] }
+            },
+        }),
+    }
+}
+
+function schemaForOutputField(field: AgentOutputField): z.ZodType {
+    switch (field.type) {
+        case AgentOutputFieldType.NUMBER:
+            return z.number().describe(field.description ?? field.displayName)
+        case AgentOutputFieldType.BOOLEAN:
+            return z.boolean().describe(field.description ?? field.displayName)
+        default:
+            return z.string().describe(field.description ?? field.displayName)
+    }
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
@@ -1497,6 +1524,7 @@ export const agentWorkerTools = {
     createPhaseTools,
     createBuildPlanTools,
     createConfiguredPieceTools,
+    createStructuredOutputTool,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,
