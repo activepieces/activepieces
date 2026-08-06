@@ -1,4 +1,4 @@
-import { ApId, isNil } from '@activepieces/core-utils'
+import { ApId, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
 import { EventDestinationJobData, ExecuteAgentRunJobData, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, TriggerSourceScheduleType, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
@@ -95,6 +95,24 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }, '[jobQueue#removeOneTimeJob] job not found in queue')
     },
 
+    async cancelAndReportNeverStarted({ jobId, platformId, projectId, jobType }: RemoveOneTimeJobParams): Promise<boolean> {
+        const queueName = await getQueueName({ platformId, projectId, jobType }, log)
+        const queue = await ensureQueueExists({ log, queueName })
+        const job = await queue.getJob(jobId)
+        if (isNil(job)) {
+            log.info({ job: { id: jobId }, queueName }, '[jobQueue#cancelAndReportNeverStarted] job not found')
+            return false
+        }
+        const everDequeued = !isNil(job.processedOn)
+        const { error } = await tryCatch(() => job.remove())
+        if (error) {
+            log.info({ job: { id: jobId, everDequeued }, queueName, error: String(error) }, '[jobQueue#cancelAndReportNeverStarted] a worker holds the job')
+            return false
+        }
+        log.info({ job: { id: jobId, everDequeued }, queueName }, '[jobQueue#cancelAndReportNeverStarted] removed the abandoned job')
+        return !everDequeued
+    },
+
     async getOrCreateQueue({ queueName }: { queueName: string }): Promise<Queue> {
         return ensureQueueExists({ log, queueName })
     },
@@ -178,6 +196,7 @@ const USER_INTERACTION_JOB_TYPES = new Set([
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
+    WorkerJobType.EXECUTE_ACTION,
 ])
 
 export function isUserInteractionJob(jobType: WorkerJobType): boolean {

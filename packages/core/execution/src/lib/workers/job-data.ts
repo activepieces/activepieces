@@ -4,6 +4,7 @@ import { isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
+import { CodeActionSchema, PieceActionSchema } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { AppConnectionType, AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
@@ -64,6 +65,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_TOKEN_REFRESH:
             return 'critical'
         case WorkerJobType.EXECUTE_AGENT_RUN:
+        case WorkerJobType.EXECUTE_ACTION:
             return 'high'
     }
 }
@@ -82,6 +84,7 @@ export enum WorkerJobType {
     EVENT_DESTINATION = 'EVENT_DESTINATION',
     EXECUTE_AGENT_RUN = 'EXECUTE_AGENT_RUN',
     EXECUTE_TOKEN_REFRESH = 'EXECUTE_TOKEN_REFRESH',
+    EXECUTE_ACTION = 'EXECUTE_ACTION',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -94,6 +97,7 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_AGENT_RUN,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
     WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
+    WorkerJobType.EXECUTE_ACTION,
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
@@ -250,6 +254,22 @@ export const ExecuteExtractPieceMetadataJobData = z.object({
 })
 export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPieceMetadataJobData>
 
+export const ActionRunStep = z.discriminatedUnion('type', [PieceActionSchema, CodeActionSchema])
+export type ActionRunStep = z.infer<typeof ActionRunStep>
+
+export const ExecuteActionJobData = z.object({
+    jobType: z.literal(WorkerJobType.EXECUTE_ACTION),
+    projectId: z.string(),
+    platformId: z.string(),
+    schemaVersion: z.number(),
+    step: ActionRunStep,
+    piece: z.optional(PiecePackage),
+    expiresAt: z.number(),
+    requestId: z.string(),
+    webserverId: z.string(),
+})
+export type ExecuteActionJobData = z.infer<typeof ExecuteActionJobData>
+
 export const UserInteractionJobData = z.union([
     ExecuteValidateAuthJobData,
     ExecuteResolveConnectionIdentifierJobData,
@@ -257,6 +277,7 @@ export const UserInteractionJobData = z.union([
     ExecuteTriggerHookJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
+    ExecuteActionJobData,
 ])
 export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
@@ -267,6 +288,7 @@ export const UserInteractionJobDataWithoutWatchingInformation = z.union([
     ExecuteTriggerHookJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteActionJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 
