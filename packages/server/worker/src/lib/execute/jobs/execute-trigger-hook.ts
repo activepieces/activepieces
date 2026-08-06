@@ -38,6 +38,7 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
                     flowVersion,
                     webhookUrl: getWebhookUrl(ctx.publicApiUrl, data.flowId, data.test),
                     triggerPayload: isNil(data.triggerPayload) ? undefined : { type: 'inline', value: data.triggerPayload },
+                    isRepublish: data.isRepublish,
                     test: data.test,
                     projectId: data.projectId,
                     platformId: data.platformId,

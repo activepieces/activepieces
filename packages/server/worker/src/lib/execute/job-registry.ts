@@ -9,6 +9,7 @@ import { executeValidationJob } from './jobs/execute-validation'
 import { executeWebhookJob } from './jobs/execute-webhook'
 import { extractPieceInfoJob } from './jobs/extract-piece-info'
 import { renewWebhookJob } from './jobs/renew-webhook'
+import { resolveConnectionIdentifierJob } from './jobs/resolve-connection-identifier'
 import { JobHandler } from './types'
 
 export async function getHandler(jobType: WorkerJobType): Promise<JobHandler<JobData>> {
@@ -37,6 +38,7 @@ const registry: Partial<Record<WorkerJobType, JobHandler>> = {
     [WorkerJobType.EXECUTE_TRIGGER_HOOK]: executeTriggerHookJob,
     [WorkerJobType.EXECUTE_PROPERTY]: executePropertyJob,
     [WorkerJobType.EXECUTE_VALIDATION]: executeValidationJob,
+    [WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER]: resolveConnectionIdentifierJob,
     [WorkerJobType.EXECUTE_TOKEN_REFRESH]: executeTokenRefreshJob,
     [WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION]: extractPieceInfoJob,
     [WorkerJobType.EVENT_DESTINATION]: eventDestinationJob,
