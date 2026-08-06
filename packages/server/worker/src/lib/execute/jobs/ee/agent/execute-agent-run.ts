@@ -1,9 +1,10 @@
 import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentPhase, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
+import { stepResultFrom } from './agent-step-result'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
 import { delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
 
@@ -33,8 +34,7 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 // `agent-evals` run could still execute ap_run_code against the developer's project.
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code']
-const MAX_ANSWER_LENGTH = 51_200
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
@@ -124,7 +124,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             void tryCatch(() => ctx.apiClient.heartbeatAgentConversation({ conversationId, runId }))
         }
         const heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
-        let answer: StepOutcome | undefined
+        let answer: AgentResult | undefined
 
         try {
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
@@ -149,6 +149,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 emailEnabled: config.emailEnabled,
                 abortSignal: abortController.signal,
                 source,
+                configuredPieceTools: data.tools ?? [],
             })
 
             const thinkingStartTime = Date.now()
@@ -230,7 +231,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
-                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: { success: false, error: 'The agent run was stopped before it finished' }, source, log })
+                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], failure: 'The agent run was stopped before it finished' }), source, log })
                 await sendEventWithRetry({
                     event: { type: AgentEventType.FINISHED, data: { conversationId } },
                 })
@@ -269,7 +270,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepOutcomeFrom({ uiParts, truncatedAfterRetries, budgetExceeded })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: data.tools ?? [], failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -301,7 +302,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
-            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? { success: false, error: clientMessage }, source, log }))
+            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], failure: clientMessage }), source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateAgentProgress) and only flips status, so an errored turn keeps
@@ -342,27 +343,16 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     },
 }
 
-export function stepOutcomeFrom({ uiParts, truncatedAfterRetries, budgetExceeded }: {
-    uiParts: PersistedAgentPart[]
-    truncatedAfterRetries: boolean
-    budgetExceeded: boolean
-}): StepOutcome {
+function incompleteReason({ truncatedAfterRetries, budgetExceeded }: { truncatedAfterRetries: boolean, budgetExceeded: boolean }): string | undefined {
     if (truncatedAfterRetries) {
-        return { success: false, error: 'The response reached the output limit before the agent finished' }
+        return 'The response reached the output limit before the agent finished'
     }
     if (budgetExceeded) {
-        return { success: false, error: 'The run reached its usage limit and was stopped' }
+        return 'The run reached its usage limit and was stopped'
     }
-    return { success: true, output: agentTextFrom(uiParts).slice(0, MAX_ANSWER_LENGTH) }
+    return undefined
 }
 
-function agentTextFrom(parts: PersistedAgentPart[]): string {
-    return parts
-        .filter((part) => part.type === PersistedAgentPartType.TEXT)
-        .map((part) => part.text)
-        .join('\n')
-        .trim()
-}
 
 async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output, source, log }: {
     ctx: JobContext
@@ -389,7 +379,7 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
 }
 
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, configuredPieceTools }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -409,6 +399,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     discoveryOnly: boolean
     emailEnabled: boolean
     abortSignal: AbortSignal
+    configuredPieceTools: AgentPieceTool[]
     source: AgentRunSource
 }) {
     const brokenConnectors = new Set<string>()
@@ -553,7 +544,16 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         : {}
 
     const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
-    return source === AgentRunSource.CHAT ? allTools : omit(allTools, UNATTENDED_FORBIDDEN_TOOLS)
+    if (source === AgentRunSource.CHAT) {
+        return allTools
+    }
+    const configuredTools = agentWorkerTools.createConfiguredPieceTools({
+        tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece }),
+        log,
+    })
+    const unattendedTools = omit(allTools, UNATTENDED_FORBIDDEN_TOOLS)
+    return { ...configuredTools, ...unattendedTools }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
@@ -732,7 +732,3 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, descript
     }
 }
 
-
-export type StepOutcome =
-    | { success: true, output: string }
-    | { success: false, error: string }
