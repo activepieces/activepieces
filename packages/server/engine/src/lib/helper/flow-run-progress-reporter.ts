@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream'
-import { createZstdCompress } from 'node:zlib'
+import { promisify } from 'node:util'
+import { createZstdCompress, zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext } from '@activepieces/pieces-framework'
@@ -16,6 +17,10 @@ import { stateJsonStreamer } from './state-json-streamer'
 
 const stateLock = new Mutex()
 const LOG_UPLOAD_ATTEMPTS = 3
+const LOG_UPLOAD_RETRY_DELAY_MS = 1000
+const LOG_BUFFER_UPLOAD_THRESHOLD_BYTES = 4 * 1024 * 1024
+
+const zstdCompress = promisify(zstdCompressCallback)
 
 const SNAPSHOT_FLUSH_INTERVAL_MS = 15000
 let latestUpdateParams: UpdateStepProgressParams | null = null
@@ -213,16 +218,23 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
 }
 
 async function uploadLogsFromStore({ engineConstants, flowExecutorContext, logsFileId }: UploadLogsFromStoreParams): Promise<void> {
+    const shouldBuffer = flowExecutorContext.logSizeBytes < LOG_BUFFER_UPLOAD_THRESHOLD_BYTES
+    const buffered = shouldBuffer
+        ? await zstdCompress(Array.from(stateJsonStreamer.stream(flowExecutorContext)).join(''))
+        : undefined
     let lastError: unknown
     for (let attempt = 0; attempt < LOG_UPLOAD_ATTEMPTS; attempt++) {
-        const compressed = Readable.from(stateJsonStreamer.stream(flowExecutorContext)).pipe(createZstdCompress())
+        if (attempt > 0) {
+            await setTimeout(attempt * LOG_UPLOAD_RETRY_DELAY_MS)
+        }
+        const data = buffered ?? Readable.from(stateJsonStreamer.stream(flowExecutorContext)).pipe(createZstdCompress())
         const { error } = await tryCatch(() => engineFileApi.upload({
             engineToken: engineConstants.engineToken,
             apiUrl: engineConstants.internalApiUrl,
             fileId: logsFileId,
             type: FileType.FLOW_RUN_LOG,
             compression: FileCompression.ZSTD,
-            data: compressed,
+            data,
         }))
         if (isNil(error)) {
             return
