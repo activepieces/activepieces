@@ -15,6 +15,6 @@ export const microsoft365PeopleAuth = PieceAuth.OAuth2({
   authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   required: true,
-  scope: ['Contacts.ReadWrite', 'offline_access'],
+  scope: ['Contacts.ReadWrite', 'offline_access', 'openid', 'email', 'profile'],
   prompt: 'omit',
 });

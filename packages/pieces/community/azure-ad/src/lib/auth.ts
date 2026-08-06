@@ -9,13 +9,13 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 // permissions; the preset only narrows what is *requested* at connection time.
 // Tiers are additive: each includes the scopes of the tier above it.
 const PERMISSION_PRESETS = {
-  readOnly: 'User.Read.All Directory.Read.All offline_access',
+  readOnly: 'User.Read.All Directory.Read.All offline_access openid email profile',
   userManagement:
-    'User.Read.All User.ReadWrite.All User.RevokeSessions.All Directory.Read.All offline_access',
+    'User.Read.All User.ReadWrite.All User.RevokeSessions.All Directory.Read.All offline_access openid email profile',
   userGroupManagement:
-    'User.Read.All User.ReadWrite.All User.RevokeSessions.All Group.ReadWrite.All Directory.Read.All offline_access',
+    'User.Read.All User.ReadWrite.All User.RevokeSessions.All Group.ReadWrite.All Directory.Read.All offline_access openid email profile',
   fullManagement:
-    'User.Read.All User.ReadWrite.All Group.ReadWrite.All Directory.Read.All LicenseAssignment.ReadWrite.All User.RevokeSessions.All offline_access',
+    'User.Read.All User.ReadWrite.All Group.ReadWrite.All Directory.Read.All LicenseAssignment.ReadWrite.All User.RevokeSessions.All offline_access openid email profile',
 } as const;
 
 const authDescription = `

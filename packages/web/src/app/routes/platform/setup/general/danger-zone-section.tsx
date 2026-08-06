@@ -1,9 +1,9 @@
+import { hasActiveSubscription } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { billingUtils } from '@/features/billing';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { DeletePlatformDialog } from './delete-platform-dialog';
@@ -11,7 +11,7 @@ import { DeletePlatformDialog } from './delete-platform-dialog';
 export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const hasSubscription = billingUtils.isPaidPlan(platform.plan.plan);
+  const hasSubscription = hasActiveSubscription(platform.plan.plan);
 
   return (
     <div className="flex flex-col gap-3">
