@@ -1,10 +1,10 @@
-import { apId, FlowRunId, isNil } from '@activepieces/core-utils'
+import { apId, FlowRunId, isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineHttpResponse, ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, ResumeReason, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { distributedLock } from '../../../database/redis-connections'
 import { projectService } from '../../../project/project-service'
-import { engineResponseWatcher } from '../../../workers/engine-response-watcher'
+import { engineResponseWatcher, registerListener } from '../../../workers/engine-response-watcher'
 import { addToQueue, findFlowRunOrThrow, flowRunService, WEBHOOK_TIMEOUT_MS } from '../flow-run-service'
 import { flowRunSideEffects } from '../flow-run-side-effects'
 import { waitpointService } from './waitpoint-service'
@@ -86,15 +86,31 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         }
 
         const syncServerId = engineResponseWatcher(log).getServerId()
-        const { stale } = await this.resumeFromWaitpoint({
+        const pending = registerListener<EngineHttpResponse>({
+            requestId: correlationId,
+            timeoutMs: WEBHOOK_TIMEOUT_MS,
+            defaultResponse: {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            },
+            log,
+        })
+        const { data, error } = await tryCatch(() => this.resumeFromWaitpoint({
             flowRunId: runId,
             waitpointId,
             resumePayload: payload,
             workerHandlerId: syncServerId,
             httpRequestId: correlationId,
-        })
+        }))
 
-        if (stale) {
+        if (error) {
+            pending.cancel()
+            throw error
+        }
+
+        if (data.stale) {
+            pending.cancel()
             return {
                 status: StatusCodes.GONE,
                 body: { message: 'This link has expired. The action may have already been processed.' },
@@ -102,11 +118,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
-            status: StatusCodes.NO_CONTENT,
-            body: {},
-            headers: {},
-        })
+        return pending.response
     },
 
     async legacySyncResume({ runId, payload, correlationId }: LegacySyncResumeParams): Promise<EngineHttpResponse> {
@@ -119,11 +131,15 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             }
         }
         const syncServerId = engineResponseWatcher(log).getServerId()
-        await enqueueResume({ flowRun, resumePayload: payload, workerHandlerId: syncServerId, httpRequestId: correlationId }, log)
-        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(correlationId, true, WEBHOOK_TIMEOUT_MS, {
-            status: StatusCodes.NO_CONTENT,
-            body: {},
-            headers: {},
+        return engineResponseWatcher(log).waitForResponse<EngineHttpResponse>({
+            requestId: correlationId,
+            timeoutMs: WEBHOOK_TIMEOUT_MS,
+            defaultResponse: {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            },
+            enqueue: () => enqueueResume({ flowRun, resumePayload: payload, workerHandlerId: syncServerId, httpRequestId: correlationId }, log),
         })
     },
 })

@@ -3,12 +3,12 @@ import { StatusCodes } from 'http-status-codes'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WebhookFlowVersionToRun } from '../../../../src/app/webhooks/webhook.service'
 
-const { mockShouldBlockRunOnCredits, mockStart, mockCreateQuotaExceededRun, mockFindOneBy, mockOneTimeListener } = vi.hoisted(() => ({
+const { mockShouldBlockRunOnCredits, mockStart, mockCreateQuotaExceededRun, mockFindOneBy, mockWaitForResponse } = vi.hoisted(() => ({
     mockShouldBlockRunOnCredits: vi.fn(),
     mockStart: vi.fn(),
     mockCreateQuotaExceededRun: vi.fn(),
     mockFindOneBy: vi.fn(),
-    mockOneTimeListener: vi.fn(),
+    mockWaitForResponse: vi.fn(),
 }))
 
 vi.mock('@activepieces/server-utils', () => ({
@@ -58,7 +58,7 @@ vi.mock('../../../../src/app/flows/flow/flow-execution-cache', () => ({
 vi.mock('../../../../src/app/workers/engine-response-watcher', () => ({
     engineResponseWatcher: () => ({
         getServerId: vi.fn().mockReturnValue('worker-1'),
-        oneTimeListener: mockOneTimeListener,
+        waitForResponse: mockWaitForResponse,
     }),
 }))
 
@@ -115,7 +115,10 @@ describe('sync webhook credit gate', () => {
         mockFindOneBy.mockResolvedValue({ id: 'ver-1', flowId: 'flow-1' })
         mockCreateQuotaExceededRun.mockResolvedValue({ id: 'run-quota' })
         mockStart.mockResolvedValue({ id: 'run-1' })
-        mockOneTimeListener.mockResolvedValue({ status: StatusCodes.OK, body: { ok: true }, headers: {} })
+        mockWaitForResponse.mockImplementation(async ({ enqueue }: { enqueue: () => Promise<unknown> }) => {
+            await enqueue()
+            return { status: StatusCodes.OK, body: { ok: true }, headers: {} }
+        })
     })
 
     it('answers 402 instead of running the flow when the platform is out of credits', async () => {

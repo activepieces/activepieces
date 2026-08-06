@@ -297,31 +297,34 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         }
     }
 
-    const createdRun = await flowRunService(logger).start({
-        platformId,
-        environment: runEnvironment,
-        flowId: flow.id,
-        flowVersionId: flowVersionIdToRun,
-        payload,
-        workerHandlerId,
-        projectId,
-        executeTrigger: true,
-        httpRequestId: webhookRequestId,
-        executionType: ExecutionType.BEGIN,
-        streamStepProgress: StreamStepProgress.NONE,
-        parentRunId,
-        failParentOnFailure,
+    return engineResponseWatcher(logger).waitForResponse<EngineHttpResponse>({
+        requestId: webhookRequestId,
+        timeoutMs: timeoutMs ?? WEBHOOK_TIMEOUT_MS,
+        defaultResponse: {
+            status: StatusCodes.REQUEST_TIMEOUT,
+            body: {},
+            headers: {},
+        },
+        enqueue: async () => {
+            const createdRun = await flowRunService(logger).start({
+                platformId,
+                environment: runEnvironment,
+                flowId: flow.id,
+                flowVersionId: flowVersionIdToRun,
+                payload,
+                workerHandlerId,
+                projectId,
+                executeTrigger: true,
+                httpRequestId: webhookRequestId,
+                executionType: ExecutionType.BEGIN,
+                streamStepProgress: StreamStepProgress.NONE,
+                parentRunId,
+                failParentOnFailure,
+            })
+            wideEvent.set({ flowRun: { id: createdRun.id } })
+            params.onRunCreated?.(createdRun)
+        },
     })
-
-    wideEvent.set({ flowRun: { id: createdRun.id } })
-    params.onRunCreated?.(createdRun)
-
-    const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {
-        status: StatusCodes.REQUEST_TIMEOUT,
-        body: {},
-        headers: {},
-    })
-    return listenerResult
 }
 
 async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute'>): Promise<void> {

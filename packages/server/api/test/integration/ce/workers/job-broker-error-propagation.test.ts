@@ -1,7 +1,7 @@
 import { apId } from '@activepieces/core-utils'
 import { EngineResponseStatus, LATEST_JOB_DATA_SCHEMA_VERSION, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { engineResponseWatcher } from '../../../../src/app/workers/engine-response-watcher'
+import { engineResponseWatcher, registerListener } from '../../../../src/app/workers/engine-response-watcher'
 import { jobBroker } from '../../../../src/app/workers/job-queue/job-broker'
 import { jobQueue, JobType } from '../../../../src/app/workers/job-queue/job-queue'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
@@ -48,12 +48,12 @@ describe('Job broker error propagation', () => {
         const polledJob = await jobBroker(app.log).poll()
         expect(polledJob).not.toBeNull()
 
-        const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
+        const listenerPromise = registerListener({
             requestId,
-            true,
-            5000,
-            undefined,
-        )
+            timeoutMs: 5000,
+            defaultResponse: undefined,
+            log: app.log,
+        }).response
 
         await jobBroker(app.log).completeJob({
             jobId,
@@ -99,12 +99,12 @@ describe('Job broker error propagation', () => {
         const polledJob = await jobBroker(app.log).poll()
         expect(polledJob).not.toBeNull()
 
-        const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
+        const listenerPromise = registerListener({
             requestId,
-            true,
-            5000,
-            undefined,
-        )
+            timeoutMs: 5000,
+            defaultResponse: undefined,
+            log: app.log,
+        }).response
 
         await jobBroker(app.log).completeJob({
             jobId,
@@ -149,12 +149,12 @@ describe('Job broker error propagation', () => {
         const polledJob = await jobBroker(app.log).poll()
         expect(polledJob).not.toBeNull()
 
-        const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
+        const listenerPromise = registerListener({
             requestId,
-            true,
-            5000,
-            undefined,
-        )
+            timeoutMs: 5000,
+            defaultResponse: undefined,
+            log: app.log,
+        }).response
 
         await jobBroker(app.log).completeJob({
             jobId,
@@ -200,12 +200,12 @@ describe('Job broker error propagation', () => {
         const polledJob = await jobBroker(app.log).poll()
         expect(polledJob).not.toBeNull()
 
-        const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
+        const listenerPromise = registerListener({
             requestId,
-            true,
-            5000,
-            undefined,
-        )
+            timeoutMs: 5000,
+            defaultResponse: undefined,
+            log: app.log,
+        }).response
 
         await jobBroker(app.log).completeJob({
             jobId,
@@ -252,12 +252,12 @@ describe('Job broker error propagation', () => {
         const polledJob = await jobBroker(app.log).poll()
         expect(polledJob).not.toBeNull()
 
-        const listenerPromise = engineResponseWatcher(app.log).oneTimeListener(
+        const listenerPromise = registerListener({
             requestId,
-            true,
-            5000,
-            undefined,
-        )
+            timeoutMs: 5000,
+            defaultResponse: undefined,
+            log: app.log,
+        }).response
 
         await jobBroker(app.log).completeJob({
             jobId,

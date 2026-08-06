@@ -10,20 +10,24 @@ const WATCHER_GRACE_MS = 10 * 1000
 export const userInteractionWatcher = {
     submitAndWaitForResponse: async <T>(request: UserInteractionJobDataWithoutWatchingInformation, log: FastifyBaseLogger, requestId?: string): Promise<T> => {
         const id = requestId ?? apId()
-        await jobQueue(log).add({
-            id,
-            type: JobType.ONE_TIME,
-            data: {
-                ...request,
-                requestId: id,
-                webserverId: engineResponseWatcher(log).getServerId(),
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            },
-        })
         const timeoutMs = request.jobType === WorkerJobType.EXECUTE_ACTION
             ? (request.expiresAt - Date.now()) + WATCHER_GRACE_MS
             : WATCHER_SAFETY_TIMEOUT_MS
-        const result = await engineResponseWatcher(log).oneTimeListener<T>(id, true, timeoutMs, undefined)
+        const result = await engineResponseWatcher(log).waitForResponse<T | undefined>({
+            requestId: id,
+            timeoutMs,
+            defaultResponse: undefined,
+            enqueue: () => jobQueue(log).add({
+                id,
+                type: JobType.ONE_TIME,
+                data: {
+                    ...request,
+                    requestId: id,
+                    webserverId: engineResponseWatcher(log).getServerId(),
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                },
+            }),
+        })
         if (isNil(result)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,
