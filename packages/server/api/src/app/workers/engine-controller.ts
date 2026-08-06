@@ -50,7 +50,6 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
             version: request.query.version,
             archiveId: request.query.archiveId,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
         })
         if (resolution.type === 'not-found') {
             return reply.status(StatusCodes.NOT_FOUND).send()
