@@ -1,6 +1,7 @@
 import { OtpState, OtpType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -160,6 +161,44 @@ describe('Passwordless Authentication API', () => {
             expect(platform?.name).toBe("Ahmad's")
             const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
             expect(project?.displayName).toBe("Ahmad's Project")
+        })
+
+        it('consumes one code exactly once, even when two confirmations race it', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            const confirm = () => otpService(app!.log).confirm({
+                identityId: identity!.id,
+                type: OtpType.EMAIL_LOGIN,
+                value: otp!.value,
+            })
+
+            const verdicts = await Promise.all([confirm(), confirm()])
+
+            expect(verdicts.filter((verdict) => verdict)).toHaveLength(1)
+        })
+
+        it('creates one platform for one identity, even when the name step is submitted twice', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const completeSignUp = () => app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            const first = await completeSignUp()
+            const second = await completeSignUp()
+
+            expect(first?.statusCode).toBe(StatusCodes.OK)
+            expect(second?.statusCode).toBe(StatusCodes.OK)
+            expect(second?.json()?.platformId).toBe(first?.json()?.platformId)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await databaseConnection().getRepository('project').count()).toBe(1)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
         })
 
         it('sets the USER_CREATED flag only once a code is verified', async () => {

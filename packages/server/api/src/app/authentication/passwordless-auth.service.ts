@@ -2,6 +2,7 @@ import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { ApFlagId, AuthenticationResponse, OtpType, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { distributedLock } from '../database/redis-connections'
 import { flagService } from '../flags/flag.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
@@ -114,12 +115,27 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
 
     async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
-        const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
-        await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
-        return platformService(log).createPlatformWithProject({
-            identityId,
-            name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
-            invalidatePreviousTokens: false,
+        return distributedLock(log).runExclusive({
+            key: `complete-sign-up-${identityId}`,
+            timeoutInSeconds: 30,
+            fn: async () => {
+                const existingUsers = await userService(log).getByIdentityId({ identityId })
+                const platformUser = existingUsers.find((user) => !isNil(user.platformId))
+                if (!isNil(platformUser) && !isNil(platformUser.platformId)) {
+                    return authenticationUtils(log).getProjectAndToken({
+                        userId: platformUser.id,
+                        platformId: platformUser.platformId,
+                        projectId: null,
+                    })
+                }
+                const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
+                await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
+                return platformService(log).createPlatformWithProject({
+                    identityId,
+                    name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
+                    invalidatePreviousTokens: false,
+                })
+            },
         })
     },
 })

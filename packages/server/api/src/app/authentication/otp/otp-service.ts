@@ -68,8 +68,7 @@ export const otpService = (log: FastifyBaseLogger) => ({
         const otpMatches = otp.value === value
         const verdict = otpIsNotExpired && otpMatches && otpIsPending
         if (verdict) {
-            await repo().delete({ id: otp.id })
-            return true
+            return consumeOtp(otp.id)
         }
         const attempts = await countFailedAttempt(otp.id)
         if (attempts >= MAX_ATTEMPTS) {
@@ -79,6 +78,14 @@ export const otpService = (log: FastifyBaseLogger) => ({
         return false
     },
 })
+
+async function consumeOtp(otpId: string): Promise<boolean> {
+    const rows: { id: string }[] = await repo().query(
+        'DELETE FROM "otp" WHERE "id" = $1 RETURNING "id"',
+        [otpId],
+    )
+    return rows.length === 1
+}
 
 async function countFailedAttempt(otpId: string): Promise<number> {
     const rows: { attempts: number }[] = await repo().query(
