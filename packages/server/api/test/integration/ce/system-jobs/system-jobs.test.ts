@@ -206,6 +206,31 @@ describe('System Jobs', () => {
         expect(newAfter.length).toBeGreaterThanOrEqual(1)
     })
 
+    it('should remove deprecated legacy schedulers without throwing on delayed instances', async () => {
+        const deprecatedName = 'expire-pending-sso-domains'
+        
+        // Seed exactly how an old scheduler without an id was inserted
+        await systemJobsQueue.add(deprecatedName, {} as never, {
+            repeat: { pattern: '* * * * *', tz: 'UTC' },
+        })
+
+        const before = await systemJobsQueue.getJobSchedulers()
+        const matchBefore = before.filter(s => s.name === deprecatedName)
+        expect(matchBefore.length).toBeGreaterThanOrEqual(1)
+
+        // Init calls removeDeprecatedJobs which should clean it up without throwing
+        await schedule.init()
+
+        const after = await systemJobsQueue.getJobSchedulers()
+        const matchAfter = after.filter(s => s.name === deprecatedName)
+        expect(matchAfter).toHaveLength(0)
+
+        // Also ensure no left-over delayed instances in the queue
+        const remainingJobs = await systemJobsQueue.getJobs()
+        const delayedMatches = remainingJobs.filter(j => j.name === deprecatedName)
+        expect(delayedMatches).toHaveLength(0)
+    })
+
     it('should not match job when jobId exists but name differs', async () => {
         const jobId = 'test-name-guard'
 

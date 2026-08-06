@@ -127,7 +127,7 @@ async function removeDeprecatedJobs(log: FastifyBaseLogger): Promise<void> {
     const isDeprecated = (name: string): boolean => !knownJobNames.includes(name) && deprecatedJobs.some(d => name.startsWith(d))
 
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
-    const deprecatedSchedulers = allSystemJobs.filter(f => !isNil(f.name) && isDeprecated(f.name))
+    const deprecatedSchedulers = allSystemJobs.filter(f => !isNil(f.key) && !isNil(f.name) && isDeprecated(f.name))
     const legacySchedulers = allSystemJobs.filter(f =>
         knownJobNames.includes(f.name) && f.key.includes('::'),
     )
@@ -138,7 +138,7 @@ async function removeDeprecatedJobs(log: FastifyBaseLogger): Promise<void> {
     )
 
     const oneTimeJobs = await systemJobsQueue.getJobs()
-    const deprecatedOneTimeJobs = oneTimeJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && isDeprecated(f.name))
+    const deprecatedOneTimeJobs = oneTimeJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && isDeprecated(f.name) && isNil(f.repeatJobKey))
     const oneTimeJobResults = await Promise.allSettled(
         deprecatedOneTimeJobs.map(job => job.remove()),
     )
