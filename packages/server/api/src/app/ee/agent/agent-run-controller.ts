@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, ErrorCode, unique } from '@activepieces/core-utils'
-import { AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, WorkerJobType } from '@activepieces/shared'
+import { AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -30,7 +30,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (unsupported.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions` } })
         }
-        const reserved = pieceTools.filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX)).map((tool) => tool.toolName)
+        const reserved = pieceTools.filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || tool.toolName === TASK_COMPLETION_TOOL_NAME).map((tool) => tool.toolName)
         if (reserved.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `A tool cannot be named ${unique(reserved).join(' or ')}: names starting with "${BUILT_IN_TOOL_PREFIX}" belong to the agent's own tools` } })
         }

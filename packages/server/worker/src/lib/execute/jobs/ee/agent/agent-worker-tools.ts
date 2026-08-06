@@ -1476,6 +1476,12 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
     ]))
 }
 
+// Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
+export type TaintState = { tainted: boolean }
+
+export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
+export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
+
 function createStructuredOutputTool({ fields, capture }: {
     fields: AgentOutputField[]
     capture: (output: Record<string, unknown>) => void
@@ -1502,12 +1508,6 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
             return z.string().describe(field.description ?? field.displayName)
     }
 }
-
-// Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
-export type TaintState = { tainted: boolean }
-
-export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
-export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
 
 export const agentWorkerTools = {
     createEventEmitter,
