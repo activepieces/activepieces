@@ -9,6 +9,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
+import { downloadTableActionOutputSchema } from '../output-schemas';
 
 export const downloadTable = createAction({
   audience: 'both',
@@ -27,6 +28,7 @@ export const downloadTable = createAction({
       defaultValue: true,
     }),
   },
+  outputSchema: downloadTableActionOutputSchema,
   async run(context) {
     const { table_id: tableExternalId, include_headers: includeHeaders } =
       context.propsValue;

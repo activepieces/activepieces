@@ -2,6 +2,7 @@ import { createAction, MarkdownVariant, PieceAuth, Property } from '@activepiece
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { CreateRecordsRequest } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
+import { createRecordsActionOutputSchema } from '../output-schemas';
 
 export const createRecords = createAction({
   audience: 'both',
@@ -57,6 +58,7 @@ export const createRecords = createAction({
       required: false,
     }),
   },
+  outputSchema: createRecordsActionOutputSchema,
   async run(context) {
     const { table_id: tableExternalId, values, records: rawRecords } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
