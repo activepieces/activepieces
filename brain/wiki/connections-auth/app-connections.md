@@ -25,6 +25,7 @@ Encrypted credential records (OAuth2 tokens, API keys, basic/custom auth, OIDC p
 - Replace: platform/global connections can be the source, but `deleteSourceConnection` on a platform source → `403`; deleting a project source while a published version still references it → `409`. Draft versions always updated; published only when requested.
 - Deleting a connection does NOT cascade to flows; they fail at runtime with a validation error.
 - Global (platform-scope) connections require `globalConnectionsEnabled`; bulk-delete in the project UI skips them client-side.
+- `metadata.accountIdentifier` (the "which account is this" label) must be **rewritten on every upsert, never left untouched** — `spreadIfDefined` omits the column and TypeORM `upsert(connection, ['id'])` then leaves the old value in place, so a reconnect that fails to resolve would keep labelling the connection with an account it no longer authenticates as. `mergeConnectionMetadata` also strips the key from caller-supplied `metadata`, because `metadata` is a caller-owned jsonb bag: without that, any `WRITE_APP_CONNECTION` holder can forge the label. Note `POST /:id` (update) still replaces the whole bag.
 
 ### Key files
 Entry point: `appConnectionService`, exported from the app-connection service and reached through `appConnectionModule`, registered in `packages/server/api/src/app/app.ts`.
