@@ -13,11 +13,11 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **Side effects**: Separated into `*-side-effects.ts` files, called explicitly after mutations.
 - **Multi-server**: Use `distributedLock`, BullMQ deduplication, or `FOR UPDATE SKIP LOCKED` for concurrent operations.
 - **Managed PostgreSQL**: No custom extensions. Use `sanitizeObjectForPostgresql()` for external data.
-- **Before modifying a module**: Read its subsystem page in `brain/wiki/<area>/` (and that area's `index.md` glossary) for domain language, entities, services, and integration details.
+- **Before modifying a module**: Read its subsystem page in `brain/<area>/` (and that area's `index.md` glossary) for domain language, entities, services, and integration details.
 - **Cross-cutting libraries live in `packages/core/*`**, ordered thin → thick: `core-utils`, `core-piece-types`, `core-formula`, `core-execution` (thin, bundleable, framework-agnostic) and `core/shared` (the one thick, app-level member — **keeps the name `@activepieces/shared`**, carries DB/EE/management schemas + heavy deps). Pieces and the engine may import the thin members but **never** `@activepieces/shared`; pieces get what they need via `@activepieces/pieces-framework`. See `.claude/rules/core-packages.md`.
-| `brain/wiki/<area>/index.md` | 9 areas | First stop for an unfamiliar subsystem | Area glossary + list of its pages |
-| `brain/wiki/<area>/*.md` | one page per subsystem | When Claude explores that subsystem | Entity schemas, services, data flows, gotchas |
-| `brain/decisions/*.md` | numbered, flat | When Claude needs the *why* behind a design | One hard-to-reverse call each |
+| `brain/<area>/index.md` | 9 areas | First stop for an unfamiliar subsystem | Area glossary + list of its pages |
+| `brain/<area>/*.md` | one page per subsystem | When Claude explores that subsystem | Entity schemas, services, data flows, gotchas |
+| `brain/decisions/*.md` | numbered, under `decisions/` | When Claude needs the *why* behind a design | One hard-to-reverse call each |
 | `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety) |
 | `.agents/skills/` | one folder each | When invoked | Investigations, not conventions — `/debug-failed-run`, `/triage-*`, `/piece-builder`. Code shapes and conventions live in the wiki, not here. |
 - **Exported types and constants must be placed at the end of the file**, after all logic (functions, hooks, components, classes, etc.). This keeps the logic front and centre when reading a file, and groups the public contract at a predictable location.
@@ -134,9 +134,9 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 Durable company context lives in `brain/` and syncs to Craftspace both ways. Read it BEFORE
 answering how this project works — its decisions, vocabulary, and gotchas are already written down.
 
-- `brain/wiki/` — how things work. Folders nest: `wiki/area/index.md` is the page for `area`,
+- `brain/` — the whole tree, one folder per page. `brain/area/index.md` is the page for `area`,
   and a leaf beside it is that page's child. Grep here first.
-- `brain/decisions/` — numbered, flat, one hard-to-reverse call each, newest number last.
+- `brain/decisions/` — numbered, one hard-to-reverse call each, newest number last. `index.md` is its own page.
 - `.agents/skills/` — repeatable procedures, one folder per skill (`.claude/skills` symlinks onto it).
 
 ## Writing back
