@@ -7,7 +7,7 @@ import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, E
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
-import { assertSafePathSegment } from '../utils/path-safety'
+import { assertSafeCodeNamespace, assertSafePathSegment } from '../utils/path-safety'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
 function assertSandboxPathUnderRoot(mount: SandboxMount): void {
@@ -30,7 +30,7 @@ function buildCodeMount({ flowVersionId, reusable, basePath }: { flowVersionId: 
         }
     }
     if (!isNil(flowVersionId)) {
-        assertSafePathSegment(flowVersionId, 'flowVersionId')
+        assertSafeCodeNamespace(flowVersionId)
         return {
             hostPath: path.join(codeCachePath, flowVersionId),
             sandboxPath: `/root/codes/${flowVersionId}`,

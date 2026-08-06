@@ -24,6 +24,9 @@ export const newProject = createTrigger({
     self: 'https://instance.atlassian.net/rest/api/3/project/10000',
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('projectIds'))) {
+      return;
+    }
     const projects = await getProjects(context.auth);
     const ids = projects.map((p) => p.id);
     await context.store.put('projectIds', JSON.stringify(ids));
