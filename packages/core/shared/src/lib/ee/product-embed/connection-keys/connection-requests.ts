@@ -23,6 +23,7 @@ export const UpsertApiKeyConnectionFromToken = z.object({
     appCredentialId: z.string(),
     apiKey: z.string(),
     token: z.string(),
+    pieceVersion: z.string().optional(),
 })
 
 export type UpsertApiKeyConnectionFromToken = z.infer<typeof UpsertApiKeyConnectionFromToken>
@@ -33,6 +34,7 @@ export const UpsertOAuth2ConnectionFromToken = z.object({
     token: z.string(),
     code: z.string(),
     redirectUrl: z.string(),
+    pieceVersion: z.string().optional(),
 })
 
 export type UpsertOAuth2ConnectionFromToken = z.infer<typeof UpsertOAuth2ConnectionFromToken>

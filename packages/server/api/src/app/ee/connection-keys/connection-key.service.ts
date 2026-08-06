@@ -73,6 +73,7 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
                     externalId: `${appCredential.appName}_${connectionName}`,
                     displayName: `${appCredential.appName}_${connectionName}`,
                     pieceName: finalAppName,
+                    pieceVersion: apiRequest.pieceVersion,
                     type: AppConnectionType.SECRET_TEXT,
                     value: {
                         type: AppConnectionType.SECRET_TEXT,
@@ -90,6 +91,7 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
                     externalId: `${appCredential.appName}_${connectionName}`,
                     displayName: `${appCredential.appName}_${connectionName}`,
                     pieceName: finalAppName,
+                    pieceVersion: apiRequest.pieceVersion,
                     type: AppConnectionType.OAUTH2,
                     value: {
                         type: AppConnectionType.OAUTH2,
