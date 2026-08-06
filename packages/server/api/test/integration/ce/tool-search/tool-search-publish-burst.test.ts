@@ -15,8 +15,7 @@ let app: FastifyInstance
 let stub: Server
 let stubPort: number
 let embedCalls = 0
-
-const EMBED_DELAY_MS = 600
+let onNextEmbedCall: (() => Promise<void>) | null = null
 
 function startEmbeddingStub(): Promise<void> {
     stub = createServer((req, res) => {
@@ -25,16 +24,26 @@ function startEmbeddingStub(): Promise<void> {
         req.on('end', () => {
             const inputs: string[] = JSON.parse(body).input
             embedCalls++
-            const data = inputs.map((text, index) => ({
-                object: 'embedding',
-                index,
-                embedding: Array.from({ length: OPENAI_3_SMALL_DIMENSIONS }, (_, d) =>
-                    ((text.charCodeAt(d % text.length) % 13) + 1) / 100),
-            }))
-            setTimeout(() => {
+            const hook = onNextEmbedCall
+            onNextEmbedCall = null
+            const respond = (): void => {
+                const data = inputs.map((text, index) => ({
+                    object: 'embedding',
+                    index,
+                    embedding: Array.from({ length: OPENAI_3_SMALL_DIMENSIONS }, (_, d) =>
+                        ((text.charCodeAt(d % text.length) % 13) + 1) / 100),
+                }))
                 res.writeHead(200, { 'content-type': 'application/json' })
                 res.end(JSON.stringify({ object: 'list', data, model: 'text-embedding-3-small', usage: { prompt_tokens: 1, total_tokens: 1 } }))
-            }, EMBED_DELAY_MS)
+            }
+            if (hook) {
+                hook().then(respond).catch((error) => {
+                    res.writeHead(500, { 'content-type': 'text/plain' })
+                    res.end(String(error))
+                })
+                return
+            }
+            respond()
         })
     })
     return new Promise((resolve) => {
@@ -92,6 +101,10 @@ async function waitForReconcileToSettle(timeoutMs = 60_000): Promise<void> {
     const deadline = Date.now() + timeoutMs
     let idleStreak = 0
     while (Date.now() < deadline) {
+        const failedJobs = await systemJobsQueue.getJobs(['failed'], 0, 5)
+        if (failedJobs.length > 0) {
+            throw new Error(`reindex job failed — ${JSON.stringify(failedJobs.map((j) => j.failedReason))}`)
+        }
         const counts = await systemJobsQueue.getJobCounts('active', 'waiting', 'prioritized')
         const busy = (counts.active ?? 0) + (counts.waiting ?? 0) + (counts.prioritized ?? 0)
         idleStreak = busy === 0 ? idleStreak + 1 : 0
@@ -130,11 +143,12 @@ afterAll(async () => {
 
 describe('Tool Search — publish burst through the real enqueue → BullMQ → reindex path', () => {
     it('indexes every piece of a burst that lands while the reconcile is running', async () => {
-        await publish('first', '1.0.0', 'Original first description')
-        await new Promise((resolve) => setTimeout(resolve, 400))
-
         const stragglers = ['second', 'third', 'fourth', 'fifth', 'sixth']
-        await Promise.all(stragglers.map((name) => publish(name, '1.0.0', `Original ${name} description`)))
+        onNextEmbedCall = async (): Promise<void> => {
+            await Promise.all(stragglers.map((name) => publish(name, '1.0.0', `Original ${name} description`)))
+        }
+
+        await publish('first', '1.0.0', 'Original first description')
 
         await waitForReconcileToSettle()
 
@@ -148,10 +162,12 @@ describe('Tool Search — publish burst through the real enqueue → BullMQ → 
     }, 300_000)
 
     it('refreshes descriptions republished mid-reconcile — no stale text survives (runs after the burst test and republishes its pieces)', async () => {
-        await publish('first', '1.0.1', 'Rewritten first description')
-        await new Promise((resolve) => setTimeout(resolve, 400))
         const stragglers = ['second', 'third', 'fourth']
-        await Promise.all(stragglers.map((name) => publish(name, '1.0.1', `Rewritten ${name} description`)))
+        onNextEmbedCall = async (): Promise<void> => {
+            await Promise.all(stragglers.map((name) => publish(name, '1.0.1', `Rewritten ${name} description`)))
+        }
+
+        await publish('first', '1.0.1', 'Rewritten first description')
 
         await waitForReconcileToSettle()
 
