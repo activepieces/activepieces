@@ -16,6 +16,6 @@ export const oneNoteAuth = PieceAuth.OAuth2({
   authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   required: true,
-  scope: ['Notes.ReadWrite', 'User.Read', 'offline_access'],
+  scope: ['Notes.ReadWrite', 'User.Read', 'offline_access', 'openid', 'email', 'profile'],
   prompt: 'omit',
 });
