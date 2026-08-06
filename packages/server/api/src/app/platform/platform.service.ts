@@ -81,22 +81,20 @@ export const platformService = (log: FastifyBaseLogger) => ({
             key: `create-platform-${identityId}`,
             timeoutInSeconds: 30,
             fn: async () => {
-                const existing = isFirstPlatform ? await findPlatformUserForIdentity({ identityId, log }) : null
-                if (!isNil(existing) && !isNil(existing.platformId)) {
-                    return authenticationUtils(log).getProjectAndToken({
-                        userId: existing.id,
-                        platformId: existing.platformId,
-                        projectId: null,
-                    })
+                const existingUsers = isFirstPlatform ? await userService(log).getByIdentityId({ identityId }) : []
+                const linkedUser = existingUsers.find((user) => !isNil(user.platformId))
+                if (!isNil(linkedUser) && !isNil(linkedUser.platformId)) {
+                    return finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, log })
                 }
-                const newUser = await userService(log).create({
-                    identityId,
-                    platformRole: PlatformRole.ADMIN,
-                    platformId: null,
-                })
+                const newUser = existingUsers.find((user) => isNil(user.platformId))
+                    ?? await userService(log).create({
+                        identityId,
+                        platformRole: PlatformRole.ADMIN,
+                        platformId: null,
+                    })
                 const platform = await this.create({ ownerId: newUser.id, name })
                 const defaultProject = await projectService(log).create({
-                    displayName: /['’]s$/.test(name) ? `${name} Project` : `${name}'s Project`,
+                    displayName: personalProjectName(name),
                     ownerId: newUser.id,
                     platformId: platform.id,
                     type: ProjectType.PERSONAL,
@@ -266,9 +264,29 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function findPlatformUserForIdentity({ identityId, log }: FindPlatformUserParams): Promise<User | null> {
-    const users = await userService(log).getByIdentityId({ identityId })
-    return users.find((user) => !isNil(user.platformId)) ?? null
+function personalProjectName(platformName: string): string {
+    return /['’]s$/.test(platformName) ? `${platformName} Project` : `${platformName}'s Project`
+}
+
+async function finishExistingPlatform({ user, platformId, name, log }: FinishExistingPlatformParams): Promise<AuthenticationResponse> {
+    const hasProjects = await projectService(log).userHasProjects({
+        platformId,
+        userId: user.id,
+        isPrivileged: userService(log).isUserPrivileged(user),
+    })
+    const project = hasProjects
+        ? null
+        : await projectService(log).create({
+            displayName: personalProjectName(name),
+            ownerId: user.id,
+            platformId,
+            type: ProjectType.PERSONAL,
+        })
+    return authenticationUtils(log).getProjectAndToken({
+        userId: user.id,
+        platformId,
+        projectId: project?.id ?? null,
+    })
 }
 
 async function getUsage(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformUsage | undefined> {
@@ -338,8 +356,10 @@ type CreatePlatformWithProjectParams = {
     isFirstPlatform: boolean
 }
 
-type FindPlatformUserParams = {
-    identityId: string
+type FinishExistingPlatformParams = {
+    user: User
+    platformId: PlatformId
+    name: string
     log: FastifyBaseLogger
 }
 
