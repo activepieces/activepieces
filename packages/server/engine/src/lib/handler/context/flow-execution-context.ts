@@ -130,42 +130,19 @@ export class FlowExecutorContext {
                 errorMessage: truncated.errorMessage,
             })
         }
-        const stepPath = JSON.stringify(this.currentPath.path)
-        if (runStateStore.isInitialized() && finalized.type !== FlowActionType.LOOP_ON_ITEMS) {
-            const previousSizeBytes = runStateStore.getStepSize({ name: stepName, stepPath })
-            const nextSizeBytes = sizeofUtils.recursiveSizeof(finalized)
-            const { error: putError } = tryCatchSync(() => runStateStore.put({ name: stepName, stepPath, stepOutput: finalized, sizeBytes: nextSizeBytes }))
-            if (isNil(putError)) {
-                const stripped = new GenericStepOutput({
-                    type: finalized.type,
-                    status: finalized.status,
-                    input: undefined,
-                    outputType: finalized.outputType,
-                    duration: finalized.duration,
-                    errorMessage: finalized.errorMessage,
-                })
-                const steps = executionJournal.upsertStep({ stepName, stepOutput: stripped, path: this.currentPath.path, steps: this.steps })
-                return new FlowExecutorContext({
-                    ...this,
-                    steps,
-                    logSizeBytes: this.logSizeBytes + sizeofUtils.upsertStepDeltaFromSize({ stepName, previousSizeBytes, nextSizeBytes }),
-                })
-            }
-            console.warn(`[runStateStore] put failed for step ${stepName}, keeping it in memory`, putError)
-            runStateStore.deleteStep({ name: stepName, stepPath })
-            const steps = executionJournal.upsertStep({ stepName, stepOutput: finalized, path: this.currentPath.path, steps: this.steps })
-            return new FlowExecutorContext({
-                ...this,
-                steps,
-                logSizeBytes: this.logSizeBytes + sizeofUtils.upsertStepDeltaFromSize({ stepName, previousSizeBytes, nextSizeBytes }),
+        const offloaded = offloadStepToStore({ stepName, stepPath: JSON.stringify(this.currentPath.path), finalized })
+        const logSizeDelta = offloaded
+            ? offloaded.logSizeDelta
+            : sizeofUtils.upsertStepDelta({
+                stepName,
+                previousStep: executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps }),
+                nextStep: finalized,
             })
-        }
-        const previousStep = executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps })
-        const steps = executionJournal.upsertStep({ stepName, stepOutput: finalized, path: this.currentPath.path, steps: this.steps })
+        const steps = executionJournal.upsertStep({ stepName, stepOutput: offloaded?.journalStep ?? finalized, path: this.currentPath.path, steps: this.steps })
         return new FlowExecutorContext({
             ...this,
             steps,
-            logSizeBytes: this.logSizeBytes + sizeofUtils.upsertStepDelta({ stepName, previousStep, nextStep: finalized }),
+            logSizeBytes: this.logSizeBytes + logSizeDelta,
         })
     }
 
@@ -237,6 +214,31 @@ export class FlowExecutorContext {
         }
         return stepMaps
     }
+}
+
+function offloadStepToStore({ stepName, stepPath, finalized }: OffloadStepToStoreParams): OffloadedStep | undefined {
+    if (!runStateStore.isInitialized() || finalized.type === FlowActionType.LOOP_ON_ITEMS) {
+        return undefined
+    }
+    const previousSizeBytes = runStateStore.getStepSize({ name: stepName, stepPath })
+    const nextSizeBytes = sizeofUtils.recursiveSizeof(finalized)
+    const logSizeDelta = sizeofUtils.upsertStepDeltaFromSize({ stepName, previousSizeBytes, nextSizeBytes })
+    const { error: putError } = tryCatchSync(() => runStateStore.put({ name: stepName, stepPath, stepOutput: finalized, sizeBytes: nextSizeBytes }))
+    if (!isNil(putError)) {
+        console.warn(`[runStateStore] put failed for step ${stepName}, keeping it in memory`, putError)
+        runStateStore.deleteStep({ name: stepName, stepPath })
+        return { journalStep: finalized, logSizeDelta }
+    }
+    // no output no input
+    const stripped = new GenericStepOutput({
+        type: finalized.type,
+        status: finalized.status,
+        input: undefined,
+        outputType: finalized.outputType,
+        duration: finalized.duration,
+        errorMessage: finalized.errorMessage,
+    })
+    return { journalStep: stripped, logSizeDelta }
 }
 
 async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
@@ -331,4 +333,15 @@ export type StepView = {
 type MaybeSliceOutputParams = {
     value: unknown
     engineApi?: EngineApiConfig
+}
+
+type OffloadStepToStoreParams = {
+    stepName: string
+    stepPath: string
+    finalized: BaseStepOutput
+}
+
+type OffloadedStep = {
+    journalStep: BaseStepOutput
+    logSizeDelta: number
 }
