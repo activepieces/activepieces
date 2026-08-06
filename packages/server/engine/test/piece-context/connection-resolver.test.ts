@@ -26,6 +26,11 @@ describe('connection-resolver service', () => {
 
     beforeEach(() => {
         vi.restoreAllMocks()
+        vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     it('V1 happy path returns connection.value', async () => {
@@ -108,17 +113,57 @@ describe('connection-resolver service', () => {
         await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionExpiredError)
     })
 
-    it('throws ConnectionLoadingError on non-404 error', async () => {
-        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 500 }))
+    it('retries a transient network failure and resolves', async () => {
+        const connection = makeConnection()
+        const fetchSpy = vi.spyOn(global, 'fetch')
+            .mockRejectedValueOnce(new TypeError('fetch failed'))
+            .mockResolvedValue(new Response(
+                JSON.stringify(connection),
+                { status: 200, headers: { 'Content-Type': 'application/json' } },
+            ))
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
-        await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionLoadingError)
+        const result = await drainRetries(resolver.obtain('my-connection'))
+
+        expect(result).toEqual(connection.value)
+        expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
 
-    it('throws FetchError on network failure', async () => {
-        vi.spyOn(global, 'fetch').mockRejectedValue(new TypeError('fetch failed'))
+    it('retries a transient 500 and resolves', async () => {
+        const connection = makeConnection()
+        const fetchSpy = vi.spyOn(global, 'fetch')
+            .mockResolvedValueOnce(new Response(null, { status: 500 }))
+            .mockResolvedValue(new Response(
+                JSON.stringify(connection),
+                { status: 200, headers: { 'Content-Type': 'application/json' } },
+            ))
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
-        await expect(resolver.obtain('my-connection')).rejects.toThrow(FetchError)
+        const result = await drainRetries(resolver.obtain('my-connection'))
+
+        expect(result).toEqual(connection.value)
+        expect(fetchSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('throws ConnectionLoadingError when 500 outlives the retries', async () => {
+        const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 500 }))
+
+        const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await expect(drainRetries(resolver.obtain('my-connection'))).rejects.toThrow(ConnectionLoadingError)
+        expect(fetchSpy).toHaveBeenCalledTimes(4)
+    })
+
+    it('throws FetchError when the network failure outlives the retries', async () => {
+        const fetchSpy = vi.spyOn(global, 'fetch').mockRejectedValue(new TypeError('fetch failed'))
+
+        const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await expect(drainRetries(resolver.obtain('my-connection'))).rejects.toThrow(FetchError)
+        expect(fetchSpy).toHaveBeenCalledTimes(4)
     })
 })
+
+async function drainRetries<T>(pending: Promise<T>): Promise<T> {
+    pending.catch(() => undefined)
+    await vi.runAllTimersAsync()
+    return pending
+}

@@ -49,22 +49,22 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const inserted = waitpoint.id === id
         if (inserted) {
             log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
-            if (params.type === PauseType.DELAY && !isNil(params.resumeDateTime)) {
-                await systemJobsSchedule(log).upsertJob({
-                    job: {
-                        name: SystemJobName.RESUME_DELAY_WAITPOINT,
-                        data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: id },
-                        jobId: `resume-delay-${params.flowRunId}`,
-                    },
-                    schedule: {
-                        type: 'one-time',
-                        date: dayjs(params.resumeDateTime),
-                    },
-                })
-            }
         }
         else {
             log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+        }
+        if (params.type === PauseType.DELAY && !isNil(params.resumeDateTime)) {
+            await systemJobsSchedule(log).upsertJob({
+                job: {
+                    name: SystemJobName.RESUME_DELAY_WAITPOINT,
+                    data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: waitpoint.id },
+                    jobId: `resume-delay-${params.flowRunId}`,
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: dayjs(params.resumeDateTime),
+                },
+            })
         }
         return { inserted, waitpoint }
     },
