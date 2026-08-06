@@ -24,6 +24,9 @@ function* stepEntries(steps: Readonly<Record<string, StepOutput>>, pathPrefix: A
         if (step.type === FlowActionType.LOOP_ON_ITEMS && !isNil(step.output)) {
             yield [name, streamLoopStep({ step, output: step.output, name, pathPrefix })]
         }
+        else if (step.output !== undefined) {
+            yield [name, JSON.stringify(step)]
+        }
         else {
             yield [name, runStateStore.getStepOutputJson({ name, stepPath: JSON.stringify(pathPrefix) }) ?? JSON.stringify(step)]
         }

@@ -143,4 +143,19 @@ describe('flowRunProgressReporter backup with runStateStore', () => {
         const parsed = await runBackupAndParseUploadedLog(ctx)
         expect(parsed).toEqual(expectedLog)
     })
+
+    test('backup serializes the in-memory copy when a step fell back to memory over a stale store row', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        let ctx = FlowExecutorContext.empty()
+        ctx = await ctx.upsertStep('trigger_1', makePieceStep({ input: { key: 'in' }, output: { version: 1 } }))
+        vi.spyOn(runStateStore, 'put').mockImplementationOnce(() => {
+            throw new Error('disk full')
+        })
+        vi.spyOn(runStateStore, 'deleteStep').mockImplementationOnce(() => undefined)
+        ctx = await ctx.upsertStep('trigger_1', makePieceStep({ input: { key: 'in' }, output: { version: 2 } }))
+        vi.restoreAllMocks()
+
+        const parsed = await runBackupAndParseUploadedLog(ctx) as { executionState: { steps: Record<string, { output: unknown }> } }
+        expect(parsed.executionState.steps.trigger_1.output).toEqual({ version: 2 })
+    })
 })

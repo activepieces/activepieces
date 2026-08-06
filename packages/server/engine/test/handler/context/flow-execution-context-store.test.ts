@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { FlowActionType, GenericStepOutput, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { FlowActionType, GenericStepOutput, LoopStepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../../src/lib/handler/context/flow-execution-context'
 import { runStateStore } from '../../../src/lib/helper/run-state-store'
 
@@ -13,6 +13,18 @@ function makePieceStep(output: unknown): GenericStepOutput<FlowActionType.PIECE,
         output,
     })
 }
+
+function makeSliceStep(fileId: string): GenericStepOutput<FlowActionType.PIECE, unknown> {
+    return new GenericStepOutput({
+        type: FlowActionType.PIECE,
+        status: StepOutputStatus.SUCCEEDED,
+        input: {},
+        output: { fileId, size: 123, url: `http://api/v1/files/${fileId}` },
+        outputType: StepOutputType.SLICE,
+    })
+}
+
+const ENGINE_API = { engineToken: 'token', internalApiUrl: 'http://api/' }
 
 describe('FlowExecutorContext with runStateStore', () => {
     beforeAll(() => {
@@ -96,5 +108,91 @@ describe('FlowExecutorContext with runStateStore', () => {
         expect(ctx.getStepOutput('step_1')?.output).toEqual({ scope: 'loop' })
         expect(ctx.getStepOutput('step_1', [])?.output).toEqual({ scope: 'root' })
         expect(await ctx.getStepView('step_1')).toEqual({ output: { scope: 'loop' }, error: undefined })
+    })
+
+    describe('slice materialization', () => {
+        afterEach(() => {
+            vi.unstubAllGlobals()
+            vi.restoreAllMocks()
+        })
+
+        test('getStepView downloads a slice once and serves later reads from the store', async () => {
+            const payload = { big: 'x'.repeat(100) }
+            const fetchSpy = vi.fn().mockImplementation(async () => new Response(JSON.stringify(payload)))
+            vi.stubGlobal('fetch', fetchSpy)
+
+            let ctx = FlowExecutorContext.empty({ engineApi: ENGINE_API })
+            ctx = await ctx.upsertStep('step_1', makeSliceStep('slice-1'))
+
+            expect(await ctx.getStepView('step_1')).toEqual({ output: payload, error: undefined })
+            expect(await ctx.getStepView('step_1')).toEqual({ output: payload, error: undefined })
+            expect(fetchSpy).toHaveBeenCalledTimes(1)
+            expect(runStateStore.getSliceJson({ fileId: 'slice-1' })).toEqual(JSON.stringify(payload))
+        })
+
+        test('concurrent reads of the same slice share one in-flight download', async () => {
+            const payload = { value: 42 }
+            const fetchSpy = vi.fn().mockImplementation(async () => new Response(JSON.stringify(payload)))
+            vi.stubGlobal('fetch', fetchSpy)
+
+            let ctx = FlowExecutorContext.empty({ engineApi: ENGINE_API })
+            ctx = await ctx.upsertStep('step_1', makeSliceStep('slice-2'))
+
+            const [first, second] = await Promise.all([ctx.getStepView('step_1'), ctx.getStepView('step_1')])
+            expect(first).toEqual({ output: payload, error: undefined })
+            expect(second).toEqual({ output: payload, error: undefined })
+            expect(fetchSpy).toHaveBeenCalledTimes(1)
+        })
+
+        test('a failed download is retried instead of cached', async () => {
+            const payload = { value: 'recovered' }
+            const fetchSpy = vi.fn()
+                .mockImplementationOnce(async () => new Response('gone', { status: 404 }))
+                .mockImplementation(async () => new Response(JSON.stringify(payload)))
+            vi.stubGlobal('fetch', fetchSpy)
+
+            let ctx = FlowExecutorContext.empty({ engineApi: ENGINE_API })
+            ctx = await ctx.upsertStep('step_1', makeSliceStep('slice-3'))
+
+            await expect(ctx.getStepView('step_1')).rejects.toThrow()
+            expect(await ctx.getStepView('step_1')).toEqual({ output: payload, error: undefined })
+        })
+    })
+
+    describe('store put failure', () => {
+        afterEach(() => {
+            vi.restoreAllMocks()
+        })
+
+        test('upsertStep keeps the full step in memory and deletes the stale store row', async () => {
+            vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+            let ctx = await FlowExecutorContext.empty().upsertStep('step_1', makePieceStep({ version: 1 }))
+            expect(ctx.steps.step_1.output).toBeUndefined()
+
+            vi.spyOn(runStateStore, 'put').mockImplementationOnce(() => {
+                throw new Error('disk full')
+            })
+            ctx = await ctx.upsertStep('step_1', makePieceStep({ version: 2 }))
+
+            expect(ctx.steps.step_1.output).toEqual({ version: 2 })
+            expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: '[]' })).toBeUndefined()
+            expect(ctx.getStepOutput('step_1')?.output).toEqual({ version: 2 })
+            expect(await ctx.getStepView('step_1')).toEqual({ output: { version: 2 }, error: undefined })
+        })
+
+        test('the in-memory step wins over a stale store row when the delete also fails', async () => {
+            vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+            let ctx = await FlowExecutorContext.empty().upsertStep('step_1', makePieceStep({ version: 1 }))
+
+            vi.spyOn(runStateStore, 'put').mockImplementationOnce(() => {
+                throw new Error('disk full')
+            })
+            vi.spyOn(runStateStore, 'deleteStep').mockImplementationOnce(() => undefined)
+            ctx = await ctx.upsertStep('step_1', makePieceStep({ version: 2 }))
+
+            expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: '[]' })?.output).toEqual({ version: 1 })
+            expect(ctx.getStepOutput('step_1')?.output).toEqual({ version: 2 })
+            expect(await ctx.getStepView('step_1')).toEqual({ output: { version: 2 }, error: undefined })
+        })
     })
 })

@@ -2,13 +2,16 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { DatabaseSync, StatementSync } from 'node:sqlite'
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
 import { ExecutionMode, RUN_STATE_STORE_DIR_PREFIX, StepOutput } from '@activepieces/shared'
 
 type PreparedStatements = {
     put: StatementSync
     getStepOutput: StatementSync
     getStepSize: StatementSync
+    deleteStep: StatementSync
+    putSlice: StatementSync
+    getSlice: StatementSync
 }
 
 let db: DatabaseSync | null = null
@@ -31,12 +34,19 @@ export const runStateStore = {
                     output     BLOB    NOT NULL,
                     size_bytes INTEGER NOT NULL,
                     PRIMARY KEY (name, path)
+                );
+                CREATE TABLE slices (
+                    file_id TEXT PRIMARY KEY,
+                    output  BLOB NOT NULL
                 )
             `)
             statements = {
                 put: db.prepare('INSERT OR REPLACE INTO steps (name, path, output, size_bytes) VALUES (?, ?, jsonb(?), ?)'),
                 getStepOutput: db.prepare('SELECT json(output) AS output FROM steps WHERE name = ? AND path = ?'),
                 getStepSize: db.prepare('SELECT size_bytes FROM steps WHERE name = ? AND path = ?'),
+                deleteStep: db.prepare('DELETE FROM steps WHERE name = ? AND path = ?'),
+                putSlice: db.prepare('INSERT OR REPLACE INTO slices (file_id, output) VALUES (?, jsonb(?))'),
+                getSlice: db.prepare('SELECT json(output) AS output FROM slices WHERE file_id = ?'),
             }
             dbPath = filePath
         }
@@ -60,25 +70,52 @@ export const runStateStore = {
         statements.put.run(name, stepPath, JSON.stringify(stepOutput), sizeBytes)
     },
 
+    deleteStep({ name, stepPath }: { name: string, stepPath: string }): void {
+        const prepared = statements
+        if (isNil(prepared)) {
+            return
+        }
+        tryCatchSync(() => prepared.deleteStep.run(name, stepPath))
+    },
+
     getStepOutput({ name, stepPath }: { name: string, stepPath: string }): StepOutput | undefined {
         const json = runStateStore.getStepOutputJson({ name, stepPath })
         return isNil(json) ? undefined : JSON.parse(json)
     },
 
     getStepOutputJson({ name, stepPath }: { name: string, stepPath: string }): string | undefined {
-        if (isNil(statements)) {
+        const prepared = statements
+        if (isNil(prepared)) {
             return undefined
         }
-        const row = statements.getStepOutput.get(name, stepPath) as { output: string } | undefined
+        const { data: row } = tryCatchSync(() => prepared.getStepOutput.get(name, stepPath) as { output: string } | undefined)
         return row?.output
     },
 
     getStepSize({ name, stepPath }: { name: string, stepPath: string }): number | undefined {
-        if (isNil(statements)) {
+        const prepared = statements
+        if (isNil(prepared)) {
             return undefined
         }
-        const row = statements.getStepSize.get(name, stepPath) as { size_bytes: number } | undefined
+        const { data: row } = tryCatchSync(() => prepared.getStepSize.get(name, stepPath) as { size_bytes: number } | undefined)
         return row?.size_bytes
+    },
+
+    putSlice({ fileId, json }: { fileId: string, json: string }): void {
+        const prepared = statements
+        if (isNil(prepared)) {
+            return
+        }
+        tryCatchSync(() => prepared.putSlice.run(fileId, json))
+    },
+
+    getSliceJson({ fileId }: { fileId: string }): string | undefined {
+        const prepared = statements
+        if (isNil(prepared)) {
+            return undefined
+        }
+        const { data: row } = tryCatchSync(() => prepared.getSlice.get(fileId) as { output: string } | undefined)
+        return row?.output
     },
 
     isInitialized(): boolean {
