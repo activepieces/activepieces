@@ -50,11 +50,6 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             }
             const provisionMs = Date.now() - provisionStartedAt
 
-            if (remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt }) <= 0) {
-                await manager.release(log)
-                throw deadlinePassedError(`while provisioning (provisionMs=${provisionMs})`)
-            }
-
             try {
                 let bootMs = 0
                 let runMs = 0
@@ -78,7 +73,14 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                         bootMs = Date.now() - bootStartedAt
                         const runTimeoutInSeconds = remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt })
                         if (runTimeoutInSeconds <= 0) {
-                            throw deadlinePassedError(`while starting the sandbox (provisionMs=${provisionMs}, bootMs=${bootMs})`)
+                            throw new ActivepiecesError({
+                                code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
+                                params: {
+                                    standardOutput: '',
+                                    standardError: `Caller deadline passed while starting the sandbox (provisionMs=${provisionMs}, bootMs=${bootMs}), the operation was never started`,
+                                    neverStarted: true,
+                                },
+                            })
                         }
                         const runStartedAt = Date.now()
                         const runResult = await wideEvent.timed({
@@ -144,17 +146,6 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))
         },
     }
-}
-
-function deadlinePassedError(phase: string): ActivepiecesError {
-    return new ActivepiecesError({
-        code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
-        params: {
-            standardOutput: '',
-            standardError: `Caller deadline passed ${phase}, the operation was never started`,
-            neverStarted: true,
-        },
-    })
 }
 
 function remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt }: { timeoutInSeconds: number, expiresAt?: number }): number {

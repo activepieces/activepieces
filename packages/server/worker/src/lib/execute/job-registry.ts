@@ -10,6 +10,7 @@ import { executeValidationJob } from './jobs/execute-validation'
 import { executeWebhookJob } from './jobs/execute-webhook'
 import { extractPieceInfoJob } from './jobs/extract-piece-info'
 import { renewWebhookJob } from './jobs/renew-webhook'
+import { resolveConnectionIdentifierJob } from './jobs/resolve-connection-identifier'
 import { JobHandler } from './types'
 
 export async function getHandler(jobType: WorkerJobType): Promise<JobHandler<JobData>> {
@@ -38,6 +39,7 @@ const registry: Partial<Record<WorkerJobType, JobHandler>> = {
     [WorkerJobType.EXECUTE_TRIGGER_HOOK]: executeTriggerHookJob,
     [WorkerJobType.EXECUTE_PROPERTY]: executePropertyJob,
     [WorkerJobType.EXECUTE_VALIDATION]: executeValidationJob,
+    [WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER]: resolveConnectionIdentifierJob,
     [WorkerJobType.EXECUTE_TOKEN_REFRESH]: executeTokenRefreshJob,
     [WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION]: extractPieceInfoJob,
     [WorkerJobType.EVENT_DESTINATION]: eventDestinationJob,
@@ -45,10 +47,10 @@ const registry: Partial<Record<WorkerJobType, JobHandler>> = {
 }
 
 // Heavy handlers are loaded on first use so their dependency graph never enters worker memory unless
-// such a job actually runs. The chat agent drags the whole ai-sdk cluster (@ai-sdk/*, ai, mcp) — by
+// such a job actually runs. The agent run drags the whole ai-sdk cluster (@ai-sdk/*, ai, mcp) — by
 // far the largest weight — so deferring its evaluation keeps a flow-only worker's idle RSS small.
 const lazyLoaders: Partial<Record<WorkerJobType, () => Promise<JobHandler>>> = {
-    [WorkerJobType.EXECUTE_CHAT_AGENT]: async () => (await import('./jobs/ee/chat/execute-chat-agent')).executeChatAgentJob,
+    [WorkerJobType.EXECUTE_AGENT_RUN]: async () => (await import('./jobs/ee/agent/execute-agent-run')).executeAgentRunJob,
 }
 
 const lazyCache = new Map<WorkerJobType, JobHandler>()

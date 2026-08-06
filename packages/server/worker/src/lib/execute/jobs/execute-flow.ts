@@ -5,6 +5,7 @@ import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, E
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
+import { isSandboxTimeout } from '../utils/sandbox-helpers'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -88,11 +89,11 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
+            if (isSandboxTimeout(e)) {
+                await reportFlowStatus({ ctx, data, status: FlowRunStatus.TIMEOUT })
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.TIMEOUT }
+            }
             if (e instanceof ActivepiecesError) {
-                if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
-                    await reportFlowStatus({ ctx, data, status: FlowRunStatus.TIMEOUT })
-                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.TIMEOUT }
-                }
                 if (e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE) {
                     await reportFlowStatus({ ctx, data, status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED })
                     return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.MEMORY_ISSUE }

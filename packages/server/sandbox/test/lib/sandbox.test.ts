@@ -75,7 +75,7 @@ function buildExecuteParams(workerIndex: number, expiresAt?: number) {
     } as never
 }
 
-describe('createSandboxRuntime concurrency', () => {
+describe('createSandboxRuntime', () => {
     beforeEach(() => {
         acquiredBoxIds.length = 0
         runTimeouts.length = 0
@@ -83,6 +83,11 @@ describe('createSandboxRuntime concurrency', () => {
         managerCalls.invalidate = 0
         bootAdvanceMs = 0
         vi.clearAllMocks()
+        vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     it('builds N boxes (one manager per workerIndex)', async () => {
@@ -112,11 +117,10 @@ describe('createSandboxRuntime concurrency', () => {
         expect((error as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
     })
 
-    it('clamps the run to what is left of the caller deadline', async () => {
-        const runtime = createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
-        await runtime.execute(buildExecuteParams(0, Date.now() + 30 * 1000))
-        expect(runTimeouts[0]).toBeGreaterThan(25)
-        expect(runTimeouts[0]).toBeLessThanOrEqual(30)
+    it('defaults to a single box when concurrency is omitted', async () => {
+        const { createSandboxManager } = await import('../../src/lib/sandbox-manager')
+        createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
+        expect(createSandboxManager).toHaveBeenCalledTimes(1)
     })
 
     it('keeps the given timeout when there is no caller deadline', async () => {
@@ -125,48 +129,23 @@ describe('createSandboxRuntime concurrency', () => {
         expect(runTimeouts).toEqual([60])
     })
 
-    it('never starts the operation once the caller deadline has passed', async () => {
+    it.each([
+        { label: 'no boot time consumed', deadlineMs: 30 * 1000, bootAdvance: 0, expectedTimeoutInSeconds: 30 },
+        { label: 'boot consumes part of the budget', deadlineMs: 60 * 1000, bootAdvance: 40 * 1000, expectedTimeoutInSeconds: 20 },
+    ])('clamps the run to what is left of the caller deadline ($label)', async ({ deadlineMs, bootAdvance, expectedTimeoutInSeconds }) => {
+        bootAdvanceMs = bootAdvance
         const runtime = createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
-        const error = await runtime.execute(buildExecuteParams(0, Date.now() - 1000)).catch((e: unknown) => e)
-        expect((error as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_EXECUTION_TIMEOUT)
-        expect(runTimeouts).toEqual([])
-        expect((error as ActivepiecesError).error.params).toMatchObject({ neverStarted: true })
+        await runtime.execute(buildExecuteParams(0, Date.now() + deadlineMs))
+        expect(runTimeouts).toEqual([expectedTimeoutInSeconds])
     })
 
-    it('defaults to a single box when concurrency is omitted', async () => {
-        const { createSandboxManager } = await import('../../src/lib/sandbox-manager')
-        createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
-        expect(createSandboxManager).toHaveBeenCalledTimes(1)
-    })
-})
-
-describe('createSandboxRuntime caller deadline vs sandbox boot', () => {
-    beforeEach(() => {
-        acquiredBoxIds.length = 0
-        runTimeouts.length = 0
-        managerCalls.release = 0
-        managerCalls.invalidate = 0
-        bootAdvanceMs = 0
-        vi.clearAllMocks()
-        vi.useFakeTimers({ shouldAdvanceTime: true })
-    })
-
-    afterEach(() => {
-        vi.useRealTimers()
-    })
-
-    it('subtracts the sandbox boot time from the run budget', async () => {
-        bootAdvanceMs = 40 * 1000
+    it.each([
+        { label: 'deadline already passed before boot', deadlineMs: -1000, bootAdvance: 0 },
+        { label: 'boot consumed the whole deadline', deadlineMs: 60 * 1000, bootAdvance: 70 * 1000 },
+    ])('never starts the operation once the caller deadline has passed ($label)', async ({ deadlineMs, bootAdvance }) => {
+        bootAdvanceMs = bootAdvance
         const runtime = createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
-        await runtime.execute(buildExecuteParams(0, Date.now() + 60 * 1000))
-        expect(runTimeouts[0]).toBeGreaterThan(15)
-        expect(runTimeouts[0]).toBeLessThanOrEqual(20)
-    })
-
-    it('never sends the operation when boot consumed the whole deadline', async () => {
-        bootAdvanceMs = 70 * 1000
-        const runtime = createSandboxRuntime({ basePath: '/tmp', getSettings: () => ({} as never), log })
-        const error = await runtime.execute(buildExecuteParams(0, Date.now() + 60 * 1000)).catch((e: unknown) => e)
+        const error = await runtime.execute(buildExecuteParams(0, Date.now() + deadlineMs)).catch((e: unknown) => e)
         expect((error as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_EXECUTION_TIMEOUT)
         expect((error as ActivepiecesError).error.params).toMatchObject({ neverStarted: true })
         expect(runTimeouts).toEqual([])

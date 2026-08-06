@@ -3,9 +3,8 @@ import { actionRunCache, CodeArtifact } from '@activepieces/sandbox'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { DEFAULT_MCP_DATA, EngineOperationType, EngineResponseStatus, ExecuteActionJobData, FlowActionType, WorkerJobType } from '@activepieces/shared'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
-import { isSandboxTimeout, sandboxTimeoutNeverStarted } from '../utils/sandbox-helpers'
-
-const ACTION_RUN_ACTION_TIMEOUT_SECONDS = 120
+import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { buildSynchronousResult } from '../utils/synchronous-result'
 
 export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_ACTION,
@@ -16,6 +15,7 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
             throw new Error(`Unexpected resolve outcome "${resolved.kind}" for action-run action job`)
         }
 
+        const timeoutInSeconds = Math.ceil((data.expiresAt - Date.now()) / 1000)
         const { data: result, error } = await tryCatch(async () => {
             return ctx.runtime.execute({
                 workerIndex: ctx.workerIndex,
@@ -28,10 +28,10 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                     engineToken: ctx.engineToken,
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
-                    timeoutInSeconds: ACTION_RUN_ACTION_TIMEOUT_SECONDS,
+                    timeoutInSeconds,
                     ...spreadIfDefined('flowVersionId', codeNamespace),
                 },
-                timeoutInSeconds: ACTION_RUN_ACTION_TIMEOUT_SECONDS,
+                timeoutInSeconds,
                 expiresAt: data.expiresAt,
                 provision: { ...resolved.provision, ...spreadIfDefined('flowVersionId', codeNamespace) },
             })
@@ -42,19 +42,13 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
                 return {
                     kind: JobResultKind.SYNCHRONOUS,
                     status: EngineResponseStatus.TIMEOUT,
-                    response: { success: false, input: {}, output: null, neverStarted: sandboxTimeoutNeverStarted(error) },
+                    response: { success: false, input: {}, output: null, neverStarted: error.error.params.neverStarted === true },
                 }
             }
             throw error
         }
 
-        return {
-            kind: JobResultKind.SYNCHRONOUS,
-            status: result.status,
-            response: result.response,
-            errorMessage: result.error,
-            logs: result.logs,
-        }
+        return buildSynchronousResult(result)
     },
 }
 

@@ -1,7 +1,7 @@
 import { FlowRunId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
-import { AppConnectionValue } from '@activepieces/core-piece-types'
+import { AppConnectionType, AppConnectionValue } from '@activepieces/core-piece-types'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { CodeAction, PieceAction } from '../flows/actions/action'
@@ -17,6 +17,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+    EXECUTE_RESOLVE_CONNECTION_IDENTIFIER = 'EXECUTE_RESOLVE_CONNECTION_IDENTIFIER',
     EXECUTE_REFRESH_TOKEN_AUTH = 'EXECUTE_REFRESH_TOKEN_AUTH',
 }
 
@@ -37,6 +38,7 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
+    | ExecuteResolveConnectionIdentifierOperation
     | ExecuteRefreshTokenAuthOperation
 
 
@@ -65,6 +67,12 @@ export type BaseEngineOperation = {
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
     auth: AppConnectionValue
+}
+
+export type ExecuteResolveConnectionIdentifierOperation = Omit<BaseEngineOperation, 'projectId'> & {
+    piece: PiecePackage
+    auth: AppConnectionValue
+    connectionType: AppConnectionType
 }
 
 export type ExecuteRefreshTokenAuthOperation = ExecuteValidateAuthOperation
@@ -144,6 +152,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     triggerPayload?: JobPayload
     appWebhookUrl?: string
     webhookSecret?: string | Record<string, string>
+    isRepublish?: boolean
 }
 
 
@@ -298,6 +307,10 @@ type InvalidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseO
 export type ExecuteValidateAuthResponse =
     | ValidExecuteValidateAuthResponseOutput
     | InvalidExecuteValidateAuthResponseOutput
+
+export type ExecuteResolveConnectionIdentifierResponse = {
+    identifier: string | undefined
+}
 
 
 export type EngineResponse<T = unknown> = {

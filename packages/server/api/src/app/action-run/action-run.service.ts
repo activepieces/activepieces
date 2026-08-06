@@ -7,7 +7,6 @@ import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { ActionRunOutcome, deriveActionRunOutcome, EngineActionResponse } from './action-run-outcome'
 
 const ACTION_RUN_BUDGET_MS = 120 * 1000
-const WATCHER_GRACE_MS = 10 * 1000
 
 export const actionRunService = (log: FastifyBaseLogger) => ({
     async run({ projectId, platformId, step }: RunParams): Promise<ActionRunResult> {
@@ -27,10 +26,10 @@ export const actionRunService = (log: FastifyBaseLogger) => ({
             step: validatedStep,
             piece,
             expiresAt: Date.now() + ACTION_RUN_BUDGET_MS,
-        }, log, id, ACTION_RUN_BUDGET_MS + WATCHER_GRACE_MS))
+        }, log, id))
 
         const outcome = deriveActionRunOutcome({ result })
-        const neverStarted = outcome.neverStarted || await cancelledBeforeStarting({ outcome, result, id, projectId, platformId, log })
+        const neverStarted = outcome.neverStarted || await abandonedWithoutStarting({ outcome, result, id, projectId, platformId, log })
         log.info({ actionRun: { id, status: outcome.status, neverStarted } }, '[actionRunService#run] completed')
         return { id, ...outcome, neverStarted }
     },
@@ -47,11 +46,11 @@ function parseStep(step: PieceAction | CodeAction): ActionRunStep {
     return parsed.data
 }
 
-async function cancelledBeforeStarting({ outcome, result, id, projectId, platformId, log }: CancelledBeforeStartingParams): Promise<boolean> {
+async function abandonedWithoutStarting({ outcome, result, id, projectId, platformId, log }: AbandonedWithoutStartingParams): Promise<boolean> {
     if (outcome.status !== FlowRunStatus.TIMEOUT || !isNil(result.data)) {
         return false
     }
-    const { data: cancelled, error } = await tryCatch(() => jobQueue(log).cancelIfNotStarted({
+    const { data: neverStarted, error } = await tryCatch(() => jobQueue(log).cancelAndReportNeverStarted({
         jobId: id,
         platformId,
         projectId,
@@ -61,7 +60,7 @@ async function cancelledBeforeStarting({ outcome, result, id, projectId, platfor
         log.warn({ actionRun: { id }, error: String(error) }, '[actionRunService#run] could not determine whether the job started')
         return false
     }
-    return cancelled
+    return neverStarted
 }
 
 type RunParams = {
@@ -70,7 +69,7 @@ type RunParams = {
     step: PieceAction | CodeAction
 }
 
-type CancelledBeforeStartingParams = {
+type AbandonedWithoutStartingParams = {
     outcome: ActionRunOutcome
     result: Result<EngineActionResponse, unknown>
     id: string

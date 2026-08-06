@@ -2,7 +2,7 @@ import { formatPieceError, isNil, isObject, tryCatch, tryCatchSync, tryParseFrie
 import { CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { actionRunService } from '../../action-run/action-run.service'
+import { ActionRunResult, actionRunService } from '../../action-run/action-run.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService, isOutsideRetentionWindow } from '../../flows/flow-run/flow-run-service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
@@ -19,7 +19,7 @@ const MAX_WAIT_MS = 120_000
 // 300 chars, so the agent never saw it. Keep the head but allow enough to carry the real guidance.
 const ERROR_SUMMARY_MAX_LENGTH = 900
 
-type ActionRunActionResult = {
+type PieceActionRunResult = {
     text: string
     errorSummary?: string
 }
@@ -111,7 +111,7 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
     return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }], structuredContent: { usedMockTriggerData } }
 }
 
-export async function executeActionRunAction({
+export async function executePieceActionRun({
     projectId,
     pieceName,
     pieceVersion,
@@ -223,7 +223,7 @@ export async function executeActionRunAction({
         step,
     }))
     if (runError) {
-        log.error({ error: runError, project: { id: projectId } }, 'executeActionRunAction failed')
+        log.error({ error: runError, project: { id: projectId } }, 'executePieceActionRun failed')
         return mcpUtils.mcpToolError('Failed to run action', runError)
     }
 
@@ -257,27 +257,21 @@ export async function executeActionRunAction({
         }
     }
 
-    const outcome: ActionRunOutcome = {
-        succeeded: actionRun.status === FlowRunStatus.SUCCEEDED,
-        output: actionRun.output,
-        errorMessage: actionRun.errorMessage,
-    }
-
     if (offload !== undefined) {
-        const offloaded = await maybeOffloadLargeResult({ outcome, actionName: action.name, displayName: action.displayName, offload })
+        const offloaded = await maybeOffloadLargeResult({ outcome: actionRun, actionName: action.name, displayName: action.displayName, offload })
         if (offloaded !== null) {
             return offloaded
         }
     }
 
-    const formatted = formatActionRunActionResult({ outcome, runId: actionRun.id, displayName: action.displayName, actionName: action.name })
+    const formatted = formatPieceActionRunResult({ outcome: actionRun, runId: actionRun.id, displayName: action.displayName, actionName: action.name })
     return {
         content: [{ type: 'text', text: formatted.text }],
         ...(formatted.errorSummary !== undefined ? { structuredContent: { errorSummary: formatted.errorSummary } } : {}),
     }
 }
 
-export async function executeActionRunCode({
+export async function executeCodeActionRun({
     projectId,
     code,
     packageJson,
@@ -289,7 +283,7 @@ export async function executeActionRunCode({
     packageJson?: string
     input?: Record<string, unknown>
     log: FastifyBaseLogger
-}): Promise<ActionRunCodeResult> {
+}): Promise<CodeActionRunResult> {
     const { data: project, error: projectError } = await tryCatch(
         () => projectService(log).getOneOrThrow(projectId),
     )
@@ -322,14 +316,14 @@ export async function executeActionRunCode({
         step,
     }))
     if (runError) {
-        log.error({ error: runError, project: { id: projectId } }, 'executeActionRunCode failed')
+        log.error({ error: runError, project: { id: projectId } }, 'executeCodeActionRun failed')
         return { status: 'internal_error', errorMessage: 'Failed to run code.' }
     }
 
     return mapCodeResult(actionRun)
 }
 
-function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknown, errorMessage?: string | null, neverStarted?: boolean }): ActionRunCodeResult {
+function mapCodeResult(run: { id: string, status: FlowRunStatus, output?: unknown, errorMessage?: string | null, neverStarted?: boolean }): CodeActionRunResult {
     switch (run.status) {
         case FlowRunStatus.SUCCEEDED:
             return { status: 'succeeded', runId: run.id, output: run.output }
@@ -421,12 +415,12 @@ function slimCustomApiCallOutput(output: unknown): { payload: unknown, statusNot
 // handler, which returns a compact preview + fileId in place of the blob. Returns null to fall
 // through to normal formatting (result small, empty, failed, or persistence declined/failed).
 async function maybeOffloadLargeResult({ outcome, actionName, displayName, offload }: {
-    outcome: ActionRunOutcome
+    outcome: ActionRunResult
     actionName: string
     displayName: string
     offload: ActionRunOffload
 }): Promise<McpToolResult | null> {
-    if (!outcome.succeeded) {
+    if (outcome.status !== FlowRunStatus.SUCCEEDED) {
         return null
     }
     const { payload, statusNote } = actionName === 'custom_api_call'
@@ -450,13 +444,13 @@ async function maybeOffloadLargeResult({ outcome, actionName, displayName, offlo
     return { content: [{ type: 'text', text }] }
 }
 
-function formatActionRunActionResult({ outcome, runId, displayName, actionName }: {
-    outcome: ActionRunOutcome
+function formatPieceActionRunResult({ outcome, runId, displayName, actionName }: {
+    outcome: ActionRunResult
     runId: string
     displayName: string
     actionName?: string
-}): ActionRunActionResult {
-    if (outcome.succeeded) {
+}): PieceActionRunResult {
+    if (outcome.status === FlowRunStatus.SUCCEEDED) {
         const { payload, statusNote } = actionName === 'custom_api_call'
             ? slimCustomApiCallOutput(outcome.output)
             : { payload: outcome.output, statusNote: '' }
@@ -580,13 +574,7 @@ function isStepDataExpired(run: FlowRun): boolean {
     return isOutsideRetentionWindow(run.created, retentionDays)
 }
 
-type ActionRunOutcome = {
-    succeeded: boolean
-    output: unknown
-    errorMessage?: string | null
-}
-
-export type ActionRunCodeResult = {
+export type CodeActionRunResult = {
     status: 'succeeded' | 'failed' | 'timeout' | 'internal_error'
     output?: unknown
     errorMessage?: string

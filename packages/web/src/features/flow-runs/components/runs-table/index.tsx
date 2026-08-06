@@ -198,7 +198,9 @@ export const RunsTable = () => {
           accessorKey: 'status',
           options: Object.values(FlowRunStatus).map((status) => {
             return {
-              label: formatUtils.convertEnumToHumanReadable(status),
+              label:
+                flowRunUtils.getStatusLabelOverride(status) ??
+                formatUtils.convertEnumToHumanReadable(status),
               value: status,
               icon: flowRunUtils.getStatusIcon(status).Icon,
             };

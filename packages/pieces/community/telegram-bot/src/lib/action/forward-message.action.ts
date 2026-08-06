@@ -9,7 +9,7 @@ export const telegramForwardMessageAction = createAction({
   name: 'forward_message',
   displayName: 'Forward Message',
   description: 'Forward a message from one chat to another',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Forwards an existing message from a source chat (from_chat_id) to a target chat (chat_id), preserving its original sender attribution. Use to relay content the bot can access between chats. Not idempotent: each call creates a new forwarded message in the target chat.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),

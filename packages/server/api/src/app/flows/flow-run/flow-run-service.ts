@@ -1,17 +1,19 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../database/redis-connections'
+import { fileCompressor } from '../../file/file-compressor'
 import { fileService, getEffectiveExecutionDataRetentionDays } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
@@ -131,6 +133,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
+
+        await assertRunCreditsNotExceeded({
+            platformId: project.platformId,
+            environment: oldFlowRun.environment,
+            log,
+        })
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP: {
@@ -310,6 +318,33 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return newFlowRun
     },
 
+    async createQuotaExceededRun({ flowVersion, payload, projectId, environment, parentRunId, failParentOnFailure, triggeredBy, shouldExecuteTriggerOnRetry }: CreateQuotaExceededRunParams): Promise<FlowRun> {
+        const now = new Date().toISOString()
+        const logsFileId = apId()
+        await persistQuotaExceededTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry })
+        const flowRun: FlowRun = {
+            id: apId(),
+            projectId,
+            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion.id,
+            environment,
+            parentRunId,
+            failParentOnFailure: failParentOnFailure ?? true,
+            status: FlowRunStatus.QUOTA_EXCEEDED,
+            created: now,
+            updated: now,
+            startTime: now,
+            finishTime: now,
+            logsFileId,
+            tags: [],
+            steps: {},
+            triggeredBy,
+        }
+        await runsMetadataQueue(log).add(flowRun)
+        log.info({ flowRun: { id: flowRun.id }, flow: { id: flowVersion.flowId }, project: { id: projectId } }, 'Flow run admitted as QUOTA_EXCEEDED')
+        return flowRun
+    },
+
     async test({ projectId, flowVersionId, parentRunId, stepNameToTest, triggeredBy }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
@@ -346,6 +381,26 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
         const triggerPayload = {}
+        const platformId = await projectService(log).getPlatformId(projectId)
+
+        const creditsExhausted = await shouldBlockRunOnCredits({
+            platformId,
+            environment: RunEnvironment.PRODUCTION,
+            log,
+        })
+        if (creditsExhausted) {
+            return this.createQuotaExceededRun({
+                flowVersion,
+                payload: triggerPayload,
+                projectId,
+                environment: RunEnvironment.PRODUCTION,
+                parentRunId: undefined,
+                failParentOnFailure: undefined,
+                triggeredBy,
+                shouldExecuteTriggerOnRetry: false,
+            })
+        }
+
         const flowRun = await queueOrCreateInstantly({
             projectId,
             flowId: flowVersion.flowId,
@@ -362,7 +417,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             workerHandlerId: undefined,
             httpRequestId: undefined,
-            platformId: await projectService(log).getPlatformId(projectId),
+            platformId,
             executeTrigger: false,
             streamStepProgress: StreamStepProgress.WEBSOCKET,
             sampleData: undefined,
@@ -660,6 +715,35 @@ async function readLogsFile(log: FastifyBaseLogger, logsFileId: string, projectI
     return JSON.parse(result.data.toString('utf-8'))
 }
 
+async function persistQuotaExceededTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry }: PersistQuotaExceededTriggerLogParams): Promise<void> {
+    const triggerStep = GenericStepOutput.create({
+        input: {},
+        type: flowVersion.trigger.type,
+        status: shouldExecuteTriggerOnRetry ? StepOutputStatus.FAILED : StepOutputStatus.SUCCEEDED,
+        output: payload,
+    })
+    const outputFile: ExecutioOutputFile = {
+        executionState: {
+            steps: { [flowVersion.trigger.name]: triggerStep },
+            tags: [],
+        },
+    }
+    const data = await fileCompressor.compress({
+        data: await logSerializer.serialize(outputFile),
+        compression: FileCompression.ZSTD,
+    })
+    const platformId = await projectService(log).getPlatformId(projectId)
+    await fileService(log).save({
+        fileId: logsFileId,
+        projectId,
+        platformId,
+        type: FileType.FLOW_RUN_LOG,
+        data,
+        size: data.length,
+        compression: FileCompression.ZSTD,
+    })
+}
+
 async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogger): Promise<FlowRun> {
     const now = new Date().toISOString()
     const flowRun: FlowRun = {
@@ -746,6 +830,26 @@ export type AddToQueueParams = AddToQueueParamsCommon & (
     | { executionType: ExecutionType.RESUME, resumeReason: ResumeReason }
 )
 
+
+type CreateQuotaExceededRunParams = {
+    flowVersion: FlowVersion
+    payload: unknown
+    projectId: ProjectId
+    environment: RunEnvironment
+    parentRunId?: FlowRunId
+    failParentOnFailure: boolean | undefined
+    triggeredBy?: string
+    shouldExecuteTriggerOnRetry: boolean
+}
+
+type PersistQuotaExceededTriggerLogParams = {
+    log: FastifyBaseLogger
+    flowVersion: FlowVersion
+    projectId: ProjectId
+    payload: unknown
+    logsFileId: string
+    shouldExecuteTriggerOnRetry: boolean
+}
 
 type StartParams = {
     flowId: FlowId

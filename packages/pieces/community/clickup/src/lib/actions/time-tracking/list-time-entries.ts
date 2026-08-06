@@ -1,0 +1,112 @@
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import dayjs from 'dayjs';
+import qs from 'qs';
+import { clickupAuth } from '../../auth';
+import { callClickUpApi, clickupCommon } from '../../common';
+import { ClickupTask } from '../../common/models';
+import { listTimeEntriesOutputSchema } from '../../output-schemas';
+
+export const clickupListTimeEntries = createAction({
+  auth: clickupAuth,
+  name: 'clickup_list_time_entries',
+  displayName: 'List Time Entries',
+  description: 'Retrieves time entries filtered by start and end date.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'List tracked time entries across a ClickUp workspace, optionally narrowed by date range, assignee, and a single scope (task, list, folder, or space). Pick this to report on or audit logged time over a period; use Get Time Entry for one known entry ID or Get Running Time Entry for the timer in progress. Read-only and idempotent; scope filters are mutually exclusive (task takes precedence over list, folder, then space).',
+    idempotent: true,
+  },
+  outputSchema: listTimeEntriesOutputSchema,
+  props: {
+    workspace_id: clickupCommon.workspace_id(true),
+
+    start_date: Property.DateTime({
+      displayName: 'Start date',
+      description: '',
+      required: false,
+    }),
+    end_date: Property.DateTime({
+      displayName: 'End date',
+      required: false,
+    }),
+
+    space_id: clickupCommon.space_id(false),
+    folder_id: clickupCommon.folder_id(false),
+    list_id: clickupCommon.list_id(false),
+    task_id: clickupCommon.task_id(false, 'Task'),
+
+    assignee: clickupCommon.assignee_id(
+      false,
+      'Assignee Id',
+      'ID of assignee for Clickup Task'
+    ),
+
+    include_task_tags: Property.Checkbox({
+      displayName: 'Include task tags',
+      description:
+        'Include task tags in the response for time entries associated with tasks.',
+      required: false,
+      defaultValue: false,
+    }),
+    include_location_names: Property.Checkbox({
+      displayName: 'Include location names',
+      description:
+        'Include the names of the List, Folder, and Space along with the list_id, folder_id, and space_id.',
+      required: false,
+      defaultValue: false,
+    }),
+  },
+  async run(context) {
+    const { task_id, list_id, folder_id, space_id, workspace_id, ...params } =
+      context.propsValue;
+    const auth = getAccessTokenOrThrow(context.auth);
+
+    // `assignee` is a multi-select (array), but an agent may pass a single
+    // scalar id. Normalize to an array before joining so a scalar input does
+    // not crash with `.join is not a function`.
+    const assigneeList =
+      params.assignee == null
+        ? undefined
+        : Array.isArray(params.assignee)
+        ? params.assignee
+        : [params.assignee];
+
+    const query: Record<string, unknown> = {
+      assignee: assigneeList?.join(','),
+      include_task_tags: params.include_task_tags,
+      include_location_names: params.include_location_names,
+    };
+
+    if (params.start_date)
+      query['start_date'] = dayjs(params.start_date).valueOf();
+
+    if (params.end_date) query['end_date'] = dayjs(params.end_date).valueOf();
+
+    if (task_id) {
+      query['task_id'] = task_id;
+    } else if (list_id) {
+      query['list_id'] = list_id;
+    } else if (folder_id) {
+      query['project_id'] = folder_id;
+    } else if (space_id) {
+      query['space_id'] = space_id;
+    }
+
+    return (
+      await callClickUpApi<ClickupTask>(
+        HttpMethod.GET,
+        `team/${workspace_id}/time_entries?${decodeURIComponent(
+          qs.stringify(query)
+        )}`,
+        auth,
+        undefined,
+        undefined,
+        {
+          'Content-Type': 'application/json',
+        }
+      )
+    ).body;
+  },
+});

@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
 import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -11,6 +11,7 @@ import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
+import { billingProvider } from './billing-provider'
 import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
@@ -68,6 +69,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
             id: ownerId,
             platformId: savedPlatform.id,
         })
+
+        await platformPlanService(log).onPlatformCreated(savedPlatform.id)
 
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
@@ -232,15 +235,17 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        const [samlConfigured, usage, plan] = await Promise.all([
+        const [samlConfigured, usage, plan, billingEnforced] = await Promise.all([
             this.hasSamlConfigured(id),
             getUsage(log, platform),
             getPlan(log, platform),
+            getBillingEnforced(log, id),
         ])
         return {
             ...platform,
             federatedAuthProviders: { saml: samlConfigured ? {} : null },
             usage,
+            billingEnforced,
             plan,
         }
     },
@@ -254,13 +259,23 @@ async function getUsage(log: FastifyBaseLogger, platform: PlatformWithoutFederat
     return platformPlanService(log).getUsage(platform.id)
 }
 
+async function getBillingEnforced(log: FastifyBaseLogger, platformId: PlatformId): Promise<boolean | undefined> {
+    if (system.getEdition() === ApEdition.COMMUNITY) {
+        return undefined
+    }
+    const { data, error } = await tryCatch(() => billingProvider.get(log).isBillingEnforced(platformId))
+    if (!isNil(error)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to resolve billing enforcement for the platform payload')
+        return undefined
+    }
+    return data ?? undefined
+}
+
 async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return {
             ...OPEN_SOURCE_PLAN,
-            stripeSubscriptionStartDate: 0,
-            stripeSubscriptionEndDate: 0,
         }
     }
     return platformPlanService(log).getOrCreateForPlatform(platform.id)

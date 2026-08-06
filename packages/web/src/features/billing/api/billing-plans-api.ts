@@ -1,9 +1,14 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
-  UpdateActiveFlowsAddonParams,
-  CreateSubscriptionParams,
-  CreateAICreditCheckoutSessionParamsSchema,
-  UpdateAICreditsAutoTopUpParamsSchema,
+  ConsumableProductAutoTopupParams,
   PlatformBillingInformation,
+  ProjectCreditUsage,
+  PurchasablePlan,
+  CheckoutPlanParams,
+  CheckoutSessionResponse,
+  SetupPaymentParams,
+  AdjustUnconsumableFeatureQuantityParams,
+  CancelSubscriptionRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -12,32 +17,58 @@ export const platformBillingApi = {
   getSubscriptionInfo() {
     return api.get<PlatformBillingInformation>('/v1/platform-billing/info');
   },
+  refreshSubscriptionInfo() {
+    return api.post<PlatformBillingInformation>(
+      '/v1/platform-billing/refresh',
+      {},
+    );
+  },
+  listPlans() {
+    return api.get<PurchasablePlan[]>('/v1/platform-billing/plans');
+  },
+  checkout(params: CheckoutPlanParams) {
+    return api.post<CheckoutSessionResponse>(
+      '/v1/platform-billing/checkout',
+      params,
+    );
+  },
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
   },
-  updateActiveFlowsLimits(params: UpdateActiveFlowsAddonParams) {
-    return api.post<string>(
-      '/v1/platform-billing/update-active-flows-addon',
-      params,
-    );
+  cancel(request: CancelSubscriptionRequest) {
+    return api.post<void>('/v1/platform-billing/cancel', request);
   },
-  createSubscription(params: CreateSubscriptionParams) {
-    return api.post<string>(
-      '/v1/platform-billing/create-checkout-session',
-      params,
-    );
+  reactivate() {
+    return api.post<void>('/v1/platform-billing/reactivate', {});
   },
-  createAICreditCheckoutSession(
-    params: CreateAICreditCheckoutSessionParamsSchema,
+  adjustUnconsumableFeatureQuantity(
+    params: AdjustUnconsumableFeatureQuantityParams,
   ) {
-    return api.post<{ stripeCheckoutUrl: string }>(
-      '/v1/platform-billing/ai-credits/create-checkout-session',
+    return api.post<{ paymentUrl: string | null }>(
+      '/v1/platform-billing/unconsumable-feature-quantity',
       params,
     );
   },
-  updateAutoTopUp(params: UpdateAICreditsAutoTopUpParamsSchema) {
-    return api.post<{ stripeCheckoutUrl?: string }>(
-      '/v1/platform-billing/ai-credits/auto-topup',
+  updateAutoTopUp(params: ConsumableProductAutoTopupParams) {
+    return api.post<object>(
+      '/v1/platform-billing/consumable-product-topups/auto-topup',
+      params,
+    );
+  },
+  setupPayment(params: SetupPaymentParams) {
+    return api.post<{ url: string | null }>(
+      '/v1/platform-billing/setup-payment',
+      params,
+    );
+  },
+  getProjectsUsage(params: {
+    startDate?: string;
+    endDate?: string;
+    cursor?: string;
+    limit?: number;
+  }) {
+    return api.get<SeekPage<ProjectCreditUsage>>(
+      '/v1/platform-billing/projects-usage',
       params,
     );
   },
