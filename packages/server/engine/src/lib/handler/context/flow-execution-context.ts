@@ -129,6 +129,7 @@ export class FlowExecutorContext {
                 outputType: sliced ? StepOutputType.SLICE : undefined,
                 duration: truncated.duration,
                 errorMessage: truncated.errorMessage,
+                sensitiveOutputPaths: truncated.sensitiveOutputPaths,
             })
         }
         const previousStep = executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps })

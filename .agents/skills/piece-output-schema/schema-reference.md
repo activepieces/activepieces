@@ -17,6 +17,7 @@ export type OutputSchemaField = {
   dynamicKey?: boolean;     // this field's value is a map with opaque/variable keys
   labelKey?: string;        // for listItems/dynamicKey: which inner field labels each entry
   currency?: string;        // with format: 'currency'
+  sensitive?: boolean;      // redact this leaf on serve — see "Sensitive fields"
   children?: OutputSchemaField[];  // describe an OBJECT value's fields (relative paths)
   listItems?: OutputSchemaField[]; // describe ARRAY items' fields (relative paths)
 };
@@ -134,6 +135,24 @@ Apply a `format` wherever the value's meaning fits one. Observed usage across th
 | `html` | HTML body content |
 | `duration` | elapsed time |
 | `currency` | monetary amounts — pair with `currency: 'USD'` |
+
+## Sensitive fields
+
+Set `sensitive: true` on any leaf whose value is a secret (API token, password, private key). The engine collects the concrete paths (`sensitiveOutputPaths`) after `run()` returns, using the schema plus the real output — array leaves get materialised per-index (`accounts.0.accessToken`, `accounts.1.accessToken`, …). The run-details endpoint, sample-data serve, and cross-step `censoredInput` all swap those paths to `**REDACTED**` on the way out. The engine's variable resolver, piece `run()` invocations, and resume points read the raw value directly, so downstream steps still receive the real secret — only the UI is scrubbed.
+
+```ts
+{
+  fields: [
+    { key: 'SecretString', sensitive: true },
+    { key: 'accounts', listItems: [
+      { key: 'id' },
+      { key: 'accessToken', sensitive: true },  // masked at every index
+    ]},
+  ],
+}
+```
+
+Guarantee is **UI visibility only**, not encryption at rest — see decision [`brain/decisions/000017-sensitive-piece-io-is-piece-declared-and-scrubbed-on-serve.md`](../../../brain/decisions/000017-sensitive-piece-io-is-piece-declared-and-scrubbed-on-serve.md).
 
 ## Shared field-sets
 

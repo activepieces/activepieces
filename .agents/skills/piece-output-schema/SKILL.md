@@ -59,6 +59,7 @@ Write the schema in `packages/pieces/community/<piece>/src/lib/output-schemas.ts
 - **Maps with opaque/variable keys** (e.g. per-calendar busy times) → `dynamicKey: true`.
 - Add **`labelKey`** to lists/maps so items show a meaningful label; **`itemLabel`** for top-level arrays.
 - **Reuse shared field-sets** — factor a repeated object shape (e.g. `taskFields`, a Drive `fileFields`) into a `const` and reference it from every action/trigger that returns it.
+- **Mark secrets `sensitive: true`** — any leaf that carries an API token, password, or PII (`SecretString`, `accessToken`, `privateKey`). Redaction applies to the run panel, data selector, and downstream steps' Input tab; the raw value still reaches downstream `run()` calls and outbound requests. See [Sensitive fields](./schema-reference.md#sensitive-fields).
 
 ### Step 5 — Validate every path
 For each field, confirm its path (`value ?? key`) resolves against the captured JSON **at the correct scope** (top-level against the root; children against the parent object; listItems against one array item). A path that doesn't resolve is a dead field. Re-capture if the shape is ambiguous. When many schemas are involved, verify them adversarially (one checker per schema against its real payload).

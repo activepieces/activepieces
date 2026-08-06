@@ -10,10 +10,12 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
         const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion.trigger)
         const sampleDataFile = await saveSampleData(params, log)
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
+        const existingPaths = clonedStep.settings.sampleData?.sensitiveOutputPaths
         return {
             sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
             sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
             lastTestDate: dayjs().toISOString(),
+            sensitiveOutputPaths: params.type === SampleDataFileType.OUTPUT ? params.sensitiveOutputPaths : existingPaths,
         }
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {
@@ -145,4 +147,5 @@ type SaveSampleDataParams = {
     stepName: string
     payload: unknown
     type: SampleDataFileType
+    sensitiveOutputPaths?: string[]
 }

@@ -1,5 +1,6 @@
 import { isNil, stringifyNullOrUndefined } from '@activepieces/core-utils';
 import {
+  applySensitivePaths,
   FlowAction,
   FlowActionType,
   FlowOperationType,
@@ -26,6 +27,7 @@ export type UpdateSampleDataParams = {
   stepName: string;
   input?: unknown;
   output?: unknown;
+  sensitiveOutputPaths?: string[];
 };
 
 export type RunState = {
@@ -195,6 +197,7 @@ export const createRunState = (
               stepName: stepName,
               output: response.output,
               input: response.input,
+              sensitiveOutputPaths: response.sensitiveOutputPaths,
             });
           }
           if (!response.success) {
@@ -278,7 +281,12 @@ export const createRunState = (
       });
     },
     stepTestListeners: {},
-    updateSampleData: ({ stepName, input, output }: UpdateSampleDataParams) => {
+    updateSampleData: ({
+      stepName,
+      input,
+      output,
+      sensitiveOutputPaths,
+    }: UpdateSampleDataParams) => {
       const { setSampleDataLocally, applyOperation, flowVersion } = get();
       const step = flowStructureUtil.getStep(stepName, flowVersion.trigger);
       if (isNil(step)) {
@@ -300,10 +308,11 @@ export const createRunState = (
         };
       });
 
+      const displayOutput = applySensitivePaths(output, sensitiveOutputPaths);
       setSampleDataLocally({
         stepName: step.name,
         type: 'output',
-        value: output,
+        value: displayOutput,
       });
       const payload = isNil(output) ? stringifyNullOrUndefined(output) : output;
       applyOperation({
@@ -312,6 +321,7 @@ export const createRunState = (
           stepName: step.name,
           payload,
           type: SampleDataFileType.OUTPUT,
+          sensitiveOutputPaths,
         },
       });
       if (!isNil(input)) {

@@ -27,6 +27,7 @@ export type OutputSchemaField = {
    */
   labelKey?: string;
   currency?: string;
+  sensitive?: boolean;
   children?: OutputSchemaField[];
   listItems?: OutputSchemaField[];
 };
