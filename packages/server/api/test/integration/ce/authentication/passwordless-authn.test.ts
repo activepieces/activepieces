@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { createMockPlatform } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -251,6 +252,38 @@ describe('Passwordless Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        })
+
+        it('adopts a platform whose owner link never landed instead of building a second one', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            const strandedUserId = apId()
+            await databaseConnection().getRepository('user').save({
+                id: strandedUserId,
+                identityId: identity!.id,
+                platformId: null,
+                platformRole: PlatformRole.ADMIN,
+                status: UserStatus.ACTIVE,
+            })
+            await databaseConnection().getRepository('platform').save(
+                createMockPlatform({ ownerId: strandedUserId }),
+            )
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
+            const relinked = await databaseConnection().getRepository('user').findOneBy({ id: strandedUserId })
+            expect(relinked?.platformId).toBe(response?.json()?.platformId)
         })
 
         it('repairs a platform left without a project instead of wedging the identity', async () => {

@@ -86,7 +86,18 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 if (!isNil(linkedUser) && !isNil(linkedUser.platformId)) {
                     return finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, log })
                 }
-                const newUser = existingUsers.find((user) => isNil(user.platformId))
+                const unlinkedUser = existingUsers.find((user) => isNil(user.platformId))
+                const orphanedPlatform = isNil(unlinkedUser) ? null : await platformRepo().findOneBy({ ownerId: unlinkedUser.id })
+                if (!isNil(unlinkedUser) && !isNil(orphanedPlatform)) {
+                    await userService(log).addOwnerToPlatform({ id: unlinkedUser.id, platformId: orphanedPlatform.id })
+                    return finishExistingPlatform({
+                        user: await userService(log).getOneOrFail({ id: unlinkedUser.id }),
+                        platformId: orphanedPlatform.id,
+                        name,
+                        log,
+                    })
+                }
+                const newUser = unlinkedUser
                     ?? await userService(log).create({
                         identityId,
                         platformRole: PlatformRole.ADMIN,
