@@ -18,6 +18,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
                 retryInterval: 1,
             },
             engineToken: params?.engineToken ?? 'engineToken',
+            internalEngineToken: params?.internalEngineToken ?? 'internalEngineToken',
             projectId: params?.projectId ?? 'projectId',
             triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
             streamStepProgress: params?.streamStepProgress ?? StreamStepProgress.NONE,
@@ -129,6 +130,7 @@ export function buildMockBeginExecuteFlowOperation(
     return {
         projectId: 'projectId',
         engineToken: 'engineToken',
+        internalEngineToken: 'internalEngineToken',
         internalApiUrl: 'http://127.0.0.1:3000/',
         publicApiUrl: 'http://127.0.0.1:4200/api/',
         timeoutInSeconds: 10,

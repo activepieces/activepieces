@@ -96,6 +96,7 @@ const systemPropValidators: {
     [AppSystemProp.DB_TYPE]: enumValidator(Object.values(DatabaseType)),
     [AppSystemProp.DEV_PIECES]: stringValidator,
     [AppSystemProp.ENCRYPTION_KEY]: stringValidator,
+    [AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING]: booleanValidator,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: numberValidator,

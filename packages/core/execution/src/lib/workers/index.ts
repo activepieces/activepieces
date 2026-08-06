@@ -83,6 +83,7 @@ export const ConsumeJobRequest = z.object({
     jobData: JobData,
     attempsStarted: z.number(),
     engineToken: z.string(),
+    internalEngineToken: z.string().optional(),
     token: z.string(),
     queueName: z.string(),
 })

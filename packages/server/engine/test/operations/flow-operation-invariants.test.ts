@@ -89,6 +89,7 @@ function makeBeginOperation(overrides?: Partial<BeginExecuteFlowOperation>): Beg
     return {
         projectId: 'proj-1',
         engineToken: 'test-token',
+        internalEngineToken: 'test-internal-engine-token',
         internalApiUrl: 'http://localhost:3000/',
         publicApiUrl: 'http://localhost:4200/api/',
         timeoutInSeconds: 600,
@@ -158,6 +159,7 @@ function makeResumeOperation(overrides?: Partial<ResumeExecuteFlowOperation>): R
     return {
         projectId: 'proj-1',
         engineToken: 'test-token',
+        internalEngineToken: 'test-internal-engine-token',
         internalApiUrl: 'http://localhost:3000/',
         publicApiUrl: 'http://localhost:4200/api/',
         timeoutInSeconds: 600,

@@ -128,6 +128,7 @@ function buildFlowOperation(
         timeoutInSeconds,
         platformId: data.platformId,
         engineToken: ctx.engineToken,
+        internalEngineToken: ctx.internalEngineToken,
         internalApiUrl: ctx.internalApiUrl,
         publicApiUrl: ctx.publicApiUrl,
     }

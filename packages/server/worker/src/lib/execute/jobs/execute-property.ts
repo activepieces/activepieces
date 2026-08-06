@@ -31,6 +31,7 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
                     searchValue: data.searchValue,
                     platformId: data.platformId,
                     engineToken: ctx.engineToken,
+                    internalEngineToken: ctx.internalEngineToken,
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
                     timeoutInSeconds,

@@ -24,6 +24,13 @@ export type GetAppConnectionForWorkerRequestQuery = z.infer<
     typeof GetAppConnectionForWorkerRequestQuery
 >
 
+export const GetAppConnectionForWorkerRequestQuerystring = z.object({
+    requestingPieceName: z.string().optional(),
+})
+export type GetAppConnectionForWorkerRequestQuerystring = z.infer<
+    typeof GetAppConnectionForWorkerRequestQuerystring
+>
+
 export const ListGlobalConnectionsRequestQuery = ListAppConnectionsRequestQuery.omit({ projectId: true })
 export type ListGlobalConnectionsRequestQuery = z.infer<typeof ListGlobalConnectionsRequestQuery>
 

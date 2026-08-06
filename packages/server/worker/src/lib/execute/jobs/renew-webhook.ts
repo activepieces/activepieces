@@ -38,6 +38,7 @@ export const renewWebhookJob: JobHandler<RenewWebhookJobData, FireAndForgetJobRe
                 projectId: data.projectId,
                 platformId: data.platformId,
                 engineToken: ctx.engineToken,
+                internalEngineToken: ctx.internalEngineToken,
                 internalApiUrl: ctx.internalApiUrl,
                 publicApiUrl: ctx.publicApiUrl,
                 timeoutInSeconds,

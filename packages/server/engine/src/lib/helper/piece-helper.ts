@@ -44,8 +44,10 @@ export const pieceHelper = {
                 apiUrl: constants.internalApiUrl,
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
+                internalEngineToken: constants.internalEngineToken,
                 contextVersion: piece.getContextInfo?.().version,
                 stepNames: constants.stepNames,
+                requestingPieceName: operation.pieceName,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
@@ -70,9 +72,11 @@ export const pieceHelper = {
                 connections: utils.createConnectionManager({
                     projectId: constants.projectId,
                     engineToken: constants.engineToken,
+                    internalEngineToken: constants.internalEngineToken,
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
                     contextVersion: piece.getContextInfo?.().version,
+                    requestingPieceName: operation.pieceName,
                 }),
             }
           

@@ -4,10 +4,12 @@ import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGenerateEngineToken = vi.fn().mockResolvedValue('engine-token')
+const mockGenerateInternalEngineToken = vi.fn().mockResolvedValue('internal-engine-token')
 
 vi.mock('../../../../../src/app/authentication/lib/access-token-manager', () => ({
     accessTokenManager: () => ({
         generateEngineToken: mockGenerateEngineToken,
+        generateInternalEngineToken: mockGenerateInternalEngineToken,
     }),
 }))
 

@@ -58,6 +58,7 @@ export type EngineStderr = z.infer<typeof EngineStderr>
 export type BaseEngineOperation = {
     projectId: ProjectId
     engineToken: string
+    internalEngineToken?: string
     internalApiUrl: string
     publicApiUrl: string
     timeoutInSeconds: number

@@ -4,6 +4,8 @@ import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis-connections'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { system } from '../../helper/system/system'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
@@ -145,12 +147,17 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         projectId: migratedData.projectId as string,
         platformId: migratedData.platformId,
     })
+    const enforceConnectionPieceBinding = system.getBoolean(AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING) ?? false
+    const internalEngineToken = enforceConnectionPieceBinding
+        ? await accessTokenManager(log).generateInternalEngineToken({ jobId })
+        : undefined
 
     return {
         jobId,
         jobData: migratedData,
         attempsStarted: job.attemptsMade,
         engineToken,
+        internalEngineToken,
         token,
         queueName,
     }

@@ -49,8 +49,10 @@ export const testExecutionContext = {
                         apiUrl,
                         projectId,
                         engineToken,
+                        internalEngineToken: engineConstants.internalEngineToken,
                         contextVersion: LATEST_CONTEXT_VERSION,
                         stepNames: engineConstants.stepNames,
+                        requestingPieceName: undefined,
                     }).resolve<{ items: unknown[] }>({
                         unresolvedInput: step.settings,
                         executionState: flowExecutionContext,

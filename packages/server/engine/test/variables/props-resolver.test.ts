@@ -1,6 +1,6 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
 import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
-import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
@@ -9,9 +9,11 @@ import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 const propsResolverService = createPropsResolver({
     projectId: 'PROJECT_ID',
     engineToken: 'WORKER_TOKEN',
+    internalEngineToken: 'INTERNAL_ENGINE_TOKEN',
     apiUrl: 'http://127.0.0.1:3000',
     contextVersion: LATEST_CONTEXT_VERSION,
     stepNames: ['trigger', 'step_1', 'step_2', 'step_3', 'step_4', 'step_5', 'step_6', 'step_7', 'step_8'],
+    requestingPieceName: undefined,
 })
 
 const buildExecutionState = async (): Promise<FlowExecutorContext> => {
@@ -862,6 +864,70 @@ describe('Props resolver', () => {
         expect(errors).toEqual({})
     })
 
+})
+
+describe('Props resolver: requestingPieceName threading (connection-piece-binding)', () => {
+    const mockConnectionResponse = () => new Response(
+        JSON.stringify({
+            id: 'c1',
+            pieceName: '@activepieces/piece-slack',
+            status: AppConnectionStatus.ACTIVE,
+            value: { type: AppConnectionType.SECRET_TEXT, secret_text: 'shh' },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+    )
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('passes requestingPieceName through for a plain connection reference', async () => {
+        const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue(mockConnectionResponse())
+        const resolverWithPiece = createPropsResolver({
+            projectId: 'PROJECT_ID',
+            engineToken: 'WORKER_TOKEN',
+            internalEngineToken: 'INTERNAL_ENGINE_TOKEN',
+            apiUrl: 'http://127.0.0.1:3000',
+            contextVersion: LATEST_CONTEXT_VERSION,
+            stepNames: [],
+            requestingPieceName: '@activepieces/piece-slack',
+        })
+
+        await resolverWithPiece.resolve({ unresolvedInput: '{{connections[\'c1\']}}', executionState: FlowExecutorContext.empty() })
+
+        const calledUrl = fetchMock.mock.calls[0][0]
+        expect(calledUrl).toContain('requestingPieceName=%40activepieces%2Fpiece-slack')
+    })
+
+    it('passes requestingPieceName through for a connection reference nested inside an AP formula expression', async () => {
+        const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue(mockConnectionResponse())
+        const resolverWithPiece = createPropsResolver({
+            projectId: 'PROJECT_ID',
+            engineToken: 'WORKER_TOKEN',
+            internalEngineToken: 'INTERNAL_ENGINE_TOKEN',
+            apiUrl: 'http://127.0.0.1:3000',
+            contextVersion: LATEST_CONTEXT_VERSION,
+            stepNames: [],
+            requestingPieceName: '@activepieces/piece-slack',
+        })
+
+        await resolverWithPiece.resolve({
+            unresolvedInput: formulaEvaluator.wrap('uppercase({{connections[\'c1\'].secret_text}})'),
+            executionState: FlowExecutorContext.empty(),
+        })
+
+        const calledUrl = fetchMock.mock.calls[0][0]
+        expect(calledUrl).toContain('requestingPieceName=%40activepieces%2Fpiece-slack')
+    })
+
+    it('omits requestingPieceName when the resolver was created without one (Code/Loop/Router steps)', async () => {
+        const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue(mockConnectionResponse())
+
+        await propsResolverService.resolve({ unresolvedInput: '{{connections[\'c1\']}}', executionState: FlowExecutorContext.empty() })
+
+        const calledUrl = fetchMock.mock.calls[0][0]
+        expect(calledUrl).not.toContain('requestingPieceName')
+    })
 })
 
 describe('Array Flatter Processor', () => {

@@ -19,6 +19,7 @@ type EngineConstantsParams = {
     internalApiUrl: string
     retryConstants: RetryConstants
     engineToken: string
+    internalEngineToken?: string
     projectId: ProjectId
     streamStepProgress: StreamStepProgress
     workerHandlerId: string | null
@@ -60,6 +61,7 @@ export class EngineConstants {
     public readonly internalApiUrl: string
     public readonly retryConstants: RetryConstants
     public readonly engineToken: string
+    public readonly internalEngineToken?: string
     public readonly projectId: ProjectId
     public readonly streamStepProgress: StreamStepProgress
     public readonly workerHandlerId: string | null
@@ -105,6 +107,7 @@ export class EngineConstants {
         this.retryConstants = params.retryConstants
         this.triggerPieceName = params.triggerPieceName
         this.engineToken = params.engineToken
+        this.internalEngineToken = params.internalEngineToken
         this.projectId = params.projectId
         this.streamStepProgress = params.streamStepProgress
         this.workerHandlerId = params.workerHandlerId
@@ -162,13 +165,15 @@ export class EngineConstants {
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
         })
     }
-    public getPropsResolver(contextVersion: ContextVersion | undefined): PropsResolver {
+    public getPropsResolver(contextVersion: ContextVersion | undefined, requestingPieceName?: string): PropsResolver {
         return createPropsResolver({
             projectId: this.projectId,
             engineToken: this.engineToken,
+            internalEngineToken: this.internalEngineToken,
             apiUrl: this.internalApiUrl,
             contextVersion,
             stepNames: this.stepNames,
+            requestingPieceName,
         })
     }
     private async getProject(): Promise<Project> {
@@ -199,6 +204,7 @@ function sharedFields(input: SharedFieldsSource) {
         publicApiUrl: input.publicApiUrl,
         internalApiUrl: ensureTrailingSlash(input.internalApiUrl),
         engineToken: input.engineToken,
+        internalEngineToken: input.internalEngineToken,
         projectId: input.projectId,
         timeoutInSeconds: input.timeoutInSeconds,
         platformId: input.platformId,
@@ -232,6 +238,7 @@ type SharedFieldsSource = {
     publicApiUrl: string
     internalApiUrl: string
     engineToken: string
+    internalEngineToken?: string
     projectId: ProjectId
     timeoutInSeconds: number
     platformId: PlatformId
