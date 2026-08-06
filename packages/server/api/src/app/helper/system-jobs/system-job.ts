@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
@@ -35,7 +35,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         systemJobsQueue = new Queue(SYSTEM_JOB_QUEUE, queueConfig)
         await systemJobsQueue.waitUntilReady()
 
-        const { error } = await tryCatch(async () => removeDeprecatedJobs())
+        const { error } = await tryCatch(async () => removeDeprecatedJobs(log))
         if (!isNil(error)) {
             log.error({ error }, '[systemJob#init] Error removing deprecated jobs')
         }
@@ -106,7 +106,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
     },
 })
 
-async function removeDeprecatedJobs(): Promise<void> {
+async function removeDeprecatedJobs(log: FastifyBaseLogger): Promise<void> {
     const deprecatedJobs = [
         'trigger-data-cleaner',
         'logs-cleanup-trigger',
@@ -123,26 +123,31 @@ async function removeDeprecatedJobs(): Promise<void> {
         'trial-tracker',
         'ai-credit-update-check',
     ]
-    const allSystemJobs = await systemJobsQueue.getJobSchedulers()
     const knownJobNames = Object.values(SystemJobName) as string[]
-    const deprecatedSchedulers = allSystemJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
+    const isDeprecated = (name: string): boolean => !knownJobNames.includes(name) && deprecatedJobs.some(d => name.startsWith(d))
+
+    const allSystemJobs = await systemJobsQueue.getJobSchedulers()
+    const deprecatedSchedulers = allSystemJobs.filter(f => !isNil(f.name) && isDeprecated(f.name))
     const legacySchedulers = allSystemJobs.filter(f =>
         knownJobNames.includes(f.name) && f.key.includes('::'),
     )
-    await Promise.all(
+    const schedulerResults = await Promise.allSettled(
         [...deprecatedSchedulers, ...legacySchedulers].map(job =>
             systemJobsQueue.removeJobScheduler(job.id ?? job.key),
         ),
     )
 
     const oneTimeJobs = await systemJobsQueue.getJobs()
-    const deprecatedOneTimeJobs = oneTimeJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
-    await Promise.all(
-        deprecatedOneTimeJobs.map(job => {
-            assertNotNullOrUndefined(job.id, 'Job id is required')
-            return job.remove()
-        }),
+    const deprecatedOneTimeJobs = oneTimeJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && isDeprecated(f.name))
+    const oneTimeJobResults = await Promise.allSettled(
+        deprecatedOneTimeJobs.map(job => job.remove()),
     )
+
+    for (const result of [...schedulerResults, ...oneTimeJobResults]) {
+        if (result.status === 'rejected') {
+            log.warn({ error: result.reason }, '[systemJob#removeDeprecatedJobs] Failed to remove a deprecated job')
+        }
+    }
 }
 
 const configureJobOptions = ({ date, jobId, customConfig }: { date: Dayjs, jobId: string, customConfig?: JobsOptions }): JobsOptions => {
