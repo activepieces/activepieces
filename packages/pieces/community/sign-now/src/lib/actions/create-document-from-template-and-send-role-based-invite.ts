@@ -97,7 +97,7 @@ export const createDocumentFromTemplateAndSendRoleBasedInviteAction = createActi
     }),
     expiration_days: Property.Number({
       displayName: 'Expiration Days',
-      description: 'Number of days before the invite expires (3–180). Defaults to 30.',
+      description: 'Number of days before the invite expires (1-180). Defaults to 30.',
       required: false,
     }),
     language: Property.StaticDropdown({
