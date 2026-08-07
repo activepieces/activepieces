@@ -19,9 +19,14 @@ export const chatSubmissionTriggerOutputSchema: OutputSchema = {
   fields: [
     { key: 'sessionId', label: 'Session ID' },
     { key: 'message', label: 'Message' },
-    // An array of URL strings, not objects: `format` applies to leaf values, so
-    // there is nothing here for it to describe.
-    { key: 'files', label: 'Files', description: 'Attached file URLs.' },
+    // An array of URL strings, not objects: the viewer applies a field's format
+    // to each item of a primitive list, so `url` renders every one as a link.
+    {
+      key: 'files',
+      label: 'Files',
+      format: 'url',
+      description: 'Attached file URLs.',
+    },
   ],
 };
 
