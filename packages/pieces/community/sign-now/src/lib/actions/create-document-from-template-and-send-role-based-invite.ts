@@ -183,7 +183,7 @@ export const createDocumentFromTemplateAndSendRoleBasedInviteAction = createActi
     }
     if (cc_subject) inviteBody['cc_subject'] = cc_subject;
     if (cc_message) inviteBody['cc_message'] = cc_message;
-    if (expiration_days) inviteBody['expiration_days'] = expiration_days;
+    if (expiration_days) inviteBody['general_expiration_days'] = expiration_days;
     if (language) inviteBody['language'] = language;
 
     try {
