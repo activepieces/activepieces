@@ -180,6 +180,7 @@ describe('POST /v1/agents/runs', () => {
                 instruction: 'do a thing',
                 flowRunId: apId(),
                 waitpointId: apId(),
+                structuredOutput: [{ displayName: 'summary', type: 'text' }],
                 tools: [{
                     type: 'PIECE',
                     toolName: 'updateTaskStatus',
@@ -189,6 +190,33 @@ describe('POST /v1/agents/runs', () => {
         })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('allows that name when the step has no output fields, since no completion tool is installed', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-8',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: {
+                instruction: 'do a thing',
+                flowRunId: apId(),
+                waitpointId: apId(),
+                tools: [{
+                    type: 'PIECE',
+                    toolName: 'updateTaskStatus',
+                    pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' },
+                }],
+            },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
     })
 
     it('rejects a waitpoint that is not an id, so nothing unbounded reaches the queue', async () => {

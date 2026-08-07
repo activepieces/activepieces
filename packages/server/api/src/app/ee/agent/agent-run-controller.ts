@@ -30,7 +30,8 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (unsupported.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions` } })
         }
-        const reserved = pieceTools.filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || tool.toolName === TASK_COMPLETION_TOOL_NAME).map((tool) => tool.toolName)
+        const usesCompletionTool = (structuredOutput?.length ?? 0) > 0
+        const reserved = pieceTools.filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || (usesCompletionTool && tool.toolName === TASK_COMPLETION_TOOL_NAME)).map((tool) => tool.toolName)
         if (reserved.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `A tool cannot be named ${unique(reserved).join(' or ')}: names starting with "${BUILT_IN_TOOL_PREFIX}" belong to the agent's own tools` } })
         }
