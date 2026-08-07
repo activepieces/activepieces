@@ -36,7 +36,7 @@ async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef
     const metadata = await pieceMetadataService(log).getOrThrow({
         platformId,
         name: piece.pieceName,
-        version: undefined,
+        version: piece.pieceVersion,
     })
     const action = metadata.actions[piece.actionName]
     if (isNil(action)) {
@@ -79,6 +79,7 @@ export const pieceToolRunner = {
 export type PieceActionRef = {
     pieceName: string
     actionName: string
+    pieceVersion?: string
 }
 
 export type RunFromInstructionParams = {

@@ -113,6 +113,57 @@ describe('POST /v1/agents/runs', () => {
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
     })
 
+    it('refuses a tool kind it cannot run yet instead of dropping it silently', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-5',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: {
+                instruction: 'do a thing',
+                flowRunId: apId(),
+                waitpointId: apId(),
+                tools: [{ type: 'FLOW', toolName: 'call_sub_flow', externalFlowId: 'flow-1' }],
+            },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('FLOW')
+    })
+
+    it('accepts the piece tools configured on the step', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-6',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: {
+                instruction: 'send the summary',
+                flowRunId: apId(),
+                waitpointId: apId(),
+                tools: [{
+                    type: 'PIECE',
+                    toolName: 'send_email',
+                    pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' },
+                }],
+            },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+    })
+
     it('rejects a waitpoint that is not an id, so nothing unbounded reaches the queue', async () => {
         const ctx = await createTestContext(app)
         const engineToken = await accessTokenManager(app.log).generateEngineToken({

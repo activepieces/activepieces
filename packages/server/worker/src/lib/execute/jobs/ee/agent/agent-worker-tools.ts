@@ -1,11 +1,13 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentPhase, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
 
 const MAX_BATCH_SIZE = 100
+const MAX_CONFIGURED_TOOL_CALLS = 50
 const MAX_IDENTICAL_ACTION_FAILURES = 2
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 // Context-lean cap: large reads (e.g. a 1.4MB Attio query) are offloaded to a file at the chat
@@ -1437,6 +1439,43 @@ export type AgentEventEmitter = {
     emitBuildPlan(data: BuildPlanEvent): void
 }
 
+function createConfiguredPieceTools({ tools, runPieceTool, log }: {
+    tools: AgentPieceTool[]
+    runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        tool({
+            description: `Run the "${configured.pieceMetadata.actionName}" action of ${configured.pieceMetadata.pieceName.replace('@activepieces/piece-', '')}. Describe what it should do, including any values it needs; the inputs are worked out from that. Fields the flow author pinned keep their value whatever you ask for. Returns the action's own output, or why it failed.`,
+            inputSchema: z.object({
+                instruction: z.string().describe('What this action should do, including any values it needs, in plain language'),
+            }),
+            execute: async ({ instruction }) => {
+                callsMade += 1
+                if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                    log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredPieceTool] Refused, this run has already run enough actions')
+                    return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
+                }
+                const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata }))
+                if (error) {
+                    const reachedTheServer = String(error).includes('handler threw')
+                    log.warn({ error, tool: { name: configured.toolName }, reachedTheServer }, '[configuredPieceTool] Action did not return a result')
+                    return { content: [{ type: 'text', text: reachedTheServer
+                        ? `That action failed: ${String(error)}`
+                        : `That action was sent but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
+                }
+                if (!isSuccessResult(data.result)) {
+                    log.warn({ tool: { name: configured.toolName } }, '[configuredPieceTool] Action reported a failure')
+                    return { content: [{ type: 'text', text: `That action failed: ${extractUserFacingError({ result: data.result })}` }] }
+                }
+                return truncateLargeResult(data.result)
+            },
+        }),
+    ]))
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
@@ -1457,6 +1496,7 @@ export const agentWorkerTools = {
     createThinkingTools,
     createPhaseTools,
     createBuildPlanTools,
+    createConfiguredPieceTools,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,
