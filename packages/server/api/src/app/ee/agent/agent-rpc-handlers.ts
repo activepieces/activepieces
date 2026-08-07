@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -8,6 +8,7 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
+import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { resumeService } from '../../flows/flow-run/waitpoint/resume-service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
@@ -467,6 +468,17 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
         await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates: { projectId: input.projectId } })
         log.info({ conversation: { id: input.conversationId }, project: input.projectId ? { id: input.projectId } : undefined }, '[agentRpc#updateProjectContext] Project context updated')
+    },
+
+    async updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void> {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can report step progress' } })
+        }
+        engineRunCallbackService(log).updateStepProgress({
+            projectId: conversation.projectId,
+            request: { projectId: conversation.projectId, runId: input.flowRunId, output: sanitizeObjectForPostgresql(input.output) },
+        })
     },
 
     async resumeFlowStep(input: ResumeFlowStepRequest): Promise<void> {

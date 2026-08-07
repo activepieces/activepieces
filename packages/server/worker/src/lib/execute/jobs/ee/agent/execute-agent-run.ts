@@ -206,6 +206,13 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                             maxAttempts: 2,
                             log,
                         })
+                        if (!isNil(flowRunId)) {
+                            void tryCatch(() => ctx.apiClient.updateFlowStepProgress({
+                                conversationId,
+                                flowRunId,
+                                output: stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: data.tools ?? [] }),
+                            }))
+                        }
                     },
                 },
             })

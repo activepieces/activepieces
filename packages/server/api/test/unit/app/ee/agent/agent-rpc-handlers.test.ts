@@ -361,6 +361,22 @@ describe('agentRpcHandlers.executePieceTool — only a flow-step run may run a c
     })
 })
 
+describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may report progress', () => {
+    async function report(conversation: unknown) {
+        mockFindOneBy.mockResolvedValue(conversation)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        return agentRpcHandlers(noopLogger as never).updateFlowStepProgress({ conversationId: 'conv-1', flowRunId: 'run-1', output: { steps: [] } })
+    }
+
+    it('refuses when the conversation is a chat', async () => {
+        await expect(report({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+    })
+
+    it('refuses a flow-step run with no project', async () => {
+        await expect(report({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+    })
+})
+
 describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a flow', () => {
     async function resume(conversation: unknown) {
         mockResumeFromWaitpoint.mockClear()
