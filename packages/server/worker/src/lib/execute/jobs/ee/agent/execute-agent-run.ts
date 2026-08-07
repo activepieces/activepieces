@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
@@ -127,6 +127,33 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let answer: AgentResult | undefined
         const structured: { output?: Record<string, unknown> } = {}
 
+        // One send in flight at a time, latest wins. Each snapshot is the whole transcript, so a
+        // stale one landing last would erase newer entries from the builder.
+        let sending = false
+        let queued: PersistedAgentPart[] | undefined
+        const reportProgress = (uiParts: PersistedAgentPart[]) => {
+            if (isNil(flowRunId)) {
+                return
+            }
+            queued = uiParts
+            if (sending) {
+                return
+            }
+            sending = true
+            void (async () => {
+                while (!isNil(queued)) {
+                    const parts = queued
+                    queued = undefined
+                    await tryCatch(() => ctx.apiClient.updateFlowStepProgress({
+                        conversationId,
+                        flowRunId,
+                        output: stepResultFrom({ prompt: userMessage, uiParts: parts, timestamp: new Date().toISOString(), tools: data.tools ?? [] }),
+                    }))
+                }
+                sending = false
+            })()
+        }
+
         try {
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
             const taintState: TaintState = { tainted: source === AgentRunSource.FLOW_STEP }
@@ -206,13 +233,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                             maxAttempts: 2,
                             log,
                         })
-                        if (!isNil(flowRunId)) {
-                            void tryCatch(() => ctx.apiClient.updateFlowStepProgress({
-                                conversationId,
-                                flowRunId,
-                                output: stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: data.tools ?? [] }),
-                            }))
-                        }
+                        reportProgress(uiParts)
                     },
                 },
             })
