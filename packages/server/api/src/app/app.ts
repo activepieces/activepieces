@@ -224,6 +224,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
     // unembedded). Fire-and-forget — a no-op once fully built, and must never block or fail boot.
     rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfNeeded(), app.log)
+    await toolSearchReindexJob(app.log).scheduleRecurringReconcile()
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
