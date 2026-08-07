@@ -36,6 +36,14 @@ In the AI piece, picking the Activepieces-provided AI now lists only the named t
 ### Do you need to take action?
 - Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
 
+#### Delay Until now fails on a timestamp that has already passed
+The Delay piece's "Delay Until" action used to continue straight to the next step when its target date/time was already in the past. It now fails the step instead, with a message naming the timestamp that was rejected. A timestamp that cannot be parsed at all is also rejected now, in both a real run and Test Step — previously an unparseable value produced an invalid date, waited no time at all, and reported success, so a flow meant to wait silently did not.
+
+This only affects the start of a delay. A paused run resuming from its waitpoint is unaffected: on resume the target is in the past by definition, and that path is checked before the new validation.
+
+### Do you need to take action?
+- Only if a flow's "Delay Until" step computes its target rather than using a fixed date — for example from a trigger field or a Date Helper result — and that value can resolve to the past. Those runs now fail where they previously continued. Clamp the value to the future, or guard the step with a condition that skips the delay when the target has passed.
+
 ## 0.86.0
 
 ### What has changed?
