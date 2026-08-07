@@ -61,7 +61,15 @@ export async function getTemporaryCredentials({
   }
   const { token } = (await response.json()) as { token: string };
 
-  const sts = new STSClient({ region: auth.region });
+  if (!AWS_REGION_REGEX.test(auth.region ?? '')) {
+    throw new Error(`Invalid AWS region: ${auth.region}`);
+  }
+
+  const sts = new STSClient({
+    region: auth.region,
+    maxAttempts: 2,
+    requestHandler: { requestTimeout: STS_REQUEST_TIMEOUT_MS, connectionTimeout: STS_CONNECT_TIMEOUT_MS },
+  });
   const { Credentials } = await sts.send(
     new AssumeRoleWithWebIdentityCommand({
       RoleArn: auth.roleArn,
@@ -96,6 +104,10 @@ function sweepExpiredCredentials() {
 const DEFAULT_STS_DURATION_SECONDS = 3600;
 const CREDENTIALS_EXPIRY_MARGIN_MS = 5 * 60 * 1000;
 const credentialsCache = new Map<string, CachedCredentials>();
+
+const AWS_REGION_REGEX = /^[a-z]{2}(-[a-z]+)+-\d$/;
+const STS_REQUEST_TIMEOUT_MS = 10_000;
+const STS_CONNECT_TIMEOUT_MS = 5_000;
 
 export const MIN_STS_DURATION_SECONDS = 900;
 export const MAX_STS_DURATION_SECONDS = 43200;

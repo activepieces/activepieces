@@ -10,7 +10,7 @@ export const BasePieceAuthSchema = z.object({
 export type BasePieceAuthSchema<AuthValueSchema> = {
   displayName: string;
   description?: string;
-  validate?: (params: { auth: AuthValueSchema; server: Omit<ServerContext, 'token'> }) => Promise<
+  validate?: (params: { auth: AuthValueSchema; server: ServerContext }) => Promise<
     | { valid: true }
     | {
     valid: false;

@@ -3,6 +3,7 @@ import {
   SecretsManagerClient,
   ListSecretsCommand,
 } from '@aws-sdk/client-secrets-manager';
+import { getTemporaryCredentials } from './client';
 
 const secretsOidcDescription = `
 Connect your AWS account using an IAM Role via OIDC — no permanent keys required.
@@ -220,7 +221,7 @@ export const awsSecretsManagerOidcAuth = PieceAuth.OIDC({
       required: true,
     }),
   },
-  validate: async ({ auth }) => {
+  validate: async ({ auth, server }) => {
     if (!auth.roleArn) {
       return { valid: false, error: 'Role ARN is required for IAM Role authentication.' };
     }
@@ -228,12 +229,24 @@ export const awsSecretsManagerOidcAuth = PieceAuth.OIDC({
     if (!arnRegex.test(auth.roleArn)) {
       return { valid: false, error: 'Invalid IAM Role ARN format. Expected: arn:aws:iam::123456789012:role/RoleName' };
     }
-    return { valid: true };
+    try {
+      await getTemporaryCredentials({ auth: { roleArn: auth.roleArn, region: auth.region }, server });
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: formatAssumeRoleError(error) };
+    }
   },
   required: true,
 });
 
 export const awsSecretsManagerCombinedAuth = [awsSecretsManagerAuth, awsSecretsManagerOidcAuth];
+
+function formatAssumeRoleError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.name && error.name !== 'Error' ? `${error.name}: ${error.message}` : error.message;
+  }
+  return 'Failed to assume the IAM role. Check the role ARN and trust policy.';
+}
 
 export type SecretsAccessKeyAuthProps = {
   accessKeyId: string;

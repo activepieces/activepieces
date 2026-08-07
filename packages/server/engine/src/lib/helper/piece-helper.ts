@@ -11,6 +11,7 @@ import {
     PiecePropertyMap,
     pieceTranslation,
     PropertyType,
+    ServerContext,
     StaticPropsValue } from '@activepieces/pieces-framework'
 import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteResolveConnectionIdentifierOperation, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -55,9 +56,8 @@ export const pieceHelper = {
             const ctx = {
                 searchValue: operation.searchValue,
                 server: {
+                    ...buildServerContext({ internalApiUrl: constants.internalApiUrl, publicApiUrl: operation.publicApiUrl }),
                     token: constants.engineToken,
-                    apiUrl: constants.internalApiUrl,
-                    publicUrl: operation.publicApiUrl,
                 },
                 project: {
                     id: constants.projectId,
@@ -131,7 +131,7 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
-        const server = buildServerContext(params)
+        const server = { ...buildServerContext(params), token: params.engineToken }
         return  validateAuth({
             authValue: params.auth,
             pieceAuth: piece.auth,
@@ -344,19 +344,17 @@ const resolveConnectionIdentifier = async ({
 }
 
 type ValidateAuthParams = {
-    server: {
-        apiUrl: string
-        publicUrl: string
-    }
+    server: ServerContext
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
 }
 
-type ResolveConnectionIdentifierParams = ValidateAuthParams & {
+type ResolveConnectionIdentifierParams = Omit<ValidateAuthParams, 'server'> & {
+    server: Omit<ServerContext, 'token'>
     connectionType: AppConnectionType
 }
 
-function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: string, publicApiUrl: string }) {
+function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: string, publicApiUrl: string }): Omit<ServerContext, 'token'> {
     return {
         apiUrl: internalApiUrl.endsWith('/') ? internalApiUrl : internalApiUrl + '/',
         publicUrl: publicApiUrl,
