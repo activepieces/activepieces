@@ -4301,7 +4301,7 @@
     },
     "packages/pieces/community/hubspot": {
       "name": "@activepieces/piece-hubspot",
-      "version": "0.8.8",
+      "version": "0.8.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4605,7 +4605,7 @@
     },
     "packages/pieces/community/jira-cloud": {
       "name": "@activepieces/piece-jira-cloud",
-      "version": "0.3.9",
+      "version": "0.3.10",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4624,7 +4624,7 @@
     },
     "packages/pieces/community/jira-data-center": {
       "name": "@activepieces/piece-jira-data-center",
-      "version": "0.0.5",
+      "version": "0.0.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8125,7 +8125,7 @@
     },
     "packages/pieces/community/sign-now": {
       "name": "@activepieces/piece-sign-now",
-      "version": "0.0.5",
+      "version": "0.0.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
