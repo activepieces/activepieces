@@ -19,7 +19,9 @@ export const chatSubmissionTriggerOutputSchema: OutputSchema = {
   fields: [
     { key: 'sessionId', label: 'Session ID' },
     { key: 'message', label: 'Message' },
-    { key: 'files', label: 'Files', format: 'url' },
+    // An array of URL strings, not objects: `format` applies to leaf values, so
+    // there is nothing here for it to describe.
+    { key: 'files', label: 'Files', description: 'Attached file URLs.' },
   ],
 };
 
