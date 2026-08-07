@@ -294,7 +294,7 @@ async function buildInputProperty(
   owner: string,
   repo: string
 ) {
-  const displayName = key;
+  const displayName = `[Workflow Input]: ${key}`;
   const description = buildInputDescription(def);
   const required = def.required ?? false;
   const defaultValue =
