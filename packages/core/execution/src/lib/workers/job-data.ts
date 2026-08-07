@@ -9,6 +9,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { AppConnectionType, AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
 import { AgentPieceTool } from '../agents/tools'
+import { AgentOutputField } from '../agents'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
 
@@ -319,6 +320,7 @@ export const ExecuteAgentRunJobData = z.object({
     flowRunId: z.string().optional(),
     waitpointId: z.string().optional(),
     tools: z.array(AgentPieceTool).optional(),
+    structuredOutput: z.array(AgentOutputField).optional(),
     modelName: z.string().nullable(),
     files: z.array(z.object({
         name: z.string(),

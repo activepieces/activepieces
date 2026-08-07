@@ -131,3 +131,26 @@ describe('stepResultFrom — a configured action keeps its identity in the run v
         expect(result.steps[0]).toMatchObject({ toolCallType: 'UNKNOWN' })
     })
 })
+
+describe('stepResultFrom — structured output reaches the flow', () => {
+    const at = '2026-08-07T00:00:00.000Z'
+
+    it('carries the structured result the agent reported', () => {
+        const result = stepResultFrom({ prompt: 'summarise', uiParts: [], timestamp: at, tools: [], structuredOutput: { sentiment: 'positive', score: 8 } })
+
+        expect(result.structuredOutput).toEqual({ sentiment: 'positive', score: 8 })
+    })
+
+    it('carries it even when the run failed, so a later step is not left guessing', () => {
+        const result = stepResultFrom({ prompt: 'summarise', uiParts: [], timestamp: at, tools: [], structuredOutput: { score: 1 }, failure: 'ran out of room' })
+
+        expect(result.structuredOutput).toEqual({ score: 1 })
+        expect(result.status).toBe('FAILED')
+    })
+
+    it('omits the key entirely when the step configured no fields', () => {
+        const result = stepResultFrom({ prompt: 'summarise', uiParts: [], timestamp: at, tools: [] })
+
+        expect(result).not.toHaveProperty('structuredOutput')
+    })
+})
