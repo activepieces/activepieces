@@ -11,15 +11,10 @@ const recordFields: OutputSchema['fields'] = [
   {
     key: 'cells',
     label: 'Cells',
-    description: 'Cell values keyed by field ID.',
+    description:
+      'Cell values keyed by field ID. Each entry carries fieldName, value, created and updated.',
     dynamicKey: true,
     labelKey: 'fieldName',
-    children: [
-      { key: 'fieldName', label: 'Field Name' },
-      { key: 'value', label: 'Value' },
-      { key: 'created', label: 'Created', format: 'datetime' },
-      { key: 'updated', label: 'Updated', format: 'datetime' },
-    ],
   },
 ];
 
