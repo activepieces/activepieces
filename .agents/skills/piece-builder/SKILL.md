@@ -15,6 +15,8 @@ description: Builds Activepieces pieces (integrations) with actions and triggers
 
 **Golden rule for existing-piece modes:** the piece you're editing is the source of truth, not these templates. If the piece already has a helper, a particular auth access pattern, or a way of shaping output, follow *that*. Reach into the reference files only for a pattern the piece doesn't already demonstrate.
 
+**The one carve-out — framework calls that drop data.** Matching the piece is right for style, wrong for a call that silently loses information. If the piece you're touching calls `pollingHelper` with a hand-picked subset (`{ store, auth, propsValue }`) instead of the whole `context`, fix it to pass `context` while you're in there, in every trigger in that piece — see the rule in `trigger-patterns.md`. Two reasons to do it here rather than wait for a repo-wide codemod: you are already bumping the version and rebuilding this piece, so the fix ships for free and gets tested alongside your actual change; and the pieces people edit are the pieces people use, so fixing on touch reaches the ones that matter first without one unreviewable ~300-piece PR that forces a version bump on pieces nobody is running.
+
 ## Workflow (new piece)
 
 ### Step 1: RESEARCH

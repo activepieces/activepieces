@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { issueDropdown, youtrackApiCall } from '../common';
+import { downloadAttachmentActionOutputSchema } from '../output-schemas';
 
 export const downloadAttachmentAction = createAction({
   auth: youtrackAuth,
   name: 'download_attachment',
+  outputSchema: downloadAttachmentActionOutputSchema,
   displayName: 'Download Attachment',
   description: 'Downloads an attachment from an issue and returns it as a Base64-encoded string. Use this with the "Upload to Drive" or "Send Email" actions in your flow.',
   audience: 'both',
@@ -22,18 +24,23 @@ export const downloadAttachmentAction = createAction({
     const { baseUrl, apiToken } = context.auth.props;
     const base = baseUrl.replace(/\/+$/, '');
 
-    const metaResponse = await youtrackApiCall<{ url?: string; name?: string; size?: number; contentType?: string }>({
+    const metaResponse = await youtrackApiCall<{ url?: string; name?: string; size?: number; mimeType?: string }>({
       baseUrl,
       token: apiToken,
       method: HttpMethod.GET,
       path: '/issues/' + context.propsValue.issue + '/attachments/' + context.propsValue.attachmentId,
-      queryParams: { fields: 'id,name,url,size,contentType' },
+      queryParams: { fields: 'id,name,url,size,mimeType' },
     });
     const meta = metaResponse.body;
 
     // fetch() is used here because the download URL may point to an external CDN and
     // the response must be consumed as an ArrayBuffer, which httpClient does not support.
-    const downloadUrl = meta.url || (base + '/api/issues/' + context.propsValue.issue + '/attachments/' + context.propsValue.attachmentId + '/file');
+    // YouTrack returns `url` as an instance-relative path (/api/files/<id>?sign=...),
+    // which fetch() cannot parse, so resolve it against the instance URL.
+    const resolvedUrl = meta.url
+      ? (/^https?:\/\//.test(meta.url) ? meta.url : base + meta.url)
+      : undefined;
+    const downloadUrl = resolvedUrl ?? (base + '/api/issues/' + context.propsValue.issue + '/attachments/' + context.propsValue.attachmentId + '/file');
     const fileResponse = await fetch(downloadUrl, {
       method: HttpMethod.GET,
       headers: { 'Authorization': 'Bearer ' + apiToken },
@@ -42,7 +49,7 @@ export const downloadAttachmentAction = createAction({
 
     const buffer = await fileResponse.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
-    const contentType = meta.contentType || fileResponse.headers.get('content-type') || 'application/octet-stream';
+    const contentType = meta.mimeType || fileResponse.headers.get('content-type') || 'application/octet-stream';
 
     return {
       attachment_id: context.propsValue.attachmentId,

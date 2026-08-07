@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall, mapTestimonial } from '../common';
+import { testimonialActionOutputSchema } from '../output-schemas';
 
 export const updateTestimonialAction = createAction({
   auth: senjaAuth,
   name: 'update_testimonial',
   displayName: 'Update Testimonial',
   description: 'Approve, unapprove, or update tags on an existing testimonial.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates an existing Senja testimonial identified by ID, changing its approval status and/or adding or removing tags. Use to publish/unpublish a testimonial or manage its tags. Requires the testimonial ID and at least one of approval status, tags to add, or tags to remove, or the call fails. Idempotent — applying the same change yields the same final state.', idempotent: true },
+  outputSchema: testimonialActionOutputSchema,
   props: {
     id: Property.ShortText({
       displayName: 'Testimonial ID',
@@ -58,13 +60,13 @@ export const updateTestimonialAction = createAction({
       );
     }
 
-    const response = await senjaApiCall<Record<string, unknown>>({
+    const response = await senjaApiCall<{ testimonial: Record<string, unknown> }>({
       token: context.auth.secret_text,
       method: HttpMethod.PATCH,
       path: `/testimonials/${id}`,
       body,
     });
 
-    return mapTestimonial({ testimonial: response.body });
+    return mapTestimonial({ testimonial: response.body.testimonial });
   },
 });

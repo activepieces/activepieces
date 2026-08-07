@@ -378,4 +378,5 @@ export const pieceSelectorUtils = {
   removeHiddenActions,
   getStepNameFromOperationType,
   isManualTrigger: isManualPieceTrigger,
+  PIECE_SELECTOR_CLIPPING_THRESHOLD: 20 as const,
 };
