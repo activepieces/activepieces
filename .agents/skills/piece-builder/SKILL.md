@@ -62,6 +62,7 @@ The condensed rules in this file (Quick Auth Reference, Quick Piece Definition T
 | When you reach for it | Open this file |
 |---|---|
 | Wiring auth beyond the Quick Auth Reference table | `auth-patterns.md` |
+| A connection needs a human-readable label in the UI (account email, workspace name) | `auth-patterns.md` (Connection Identifier) |
 | Your first action in this piece (full file shape) | `action-patterns.md` |
 | A trigger — polling, webhook, handshake, or renewal | `trigger-patterns.md` |
 | A prop type you haven't used (dropdowns, dynamic, arrays, files) | `props-patterns.md` |
