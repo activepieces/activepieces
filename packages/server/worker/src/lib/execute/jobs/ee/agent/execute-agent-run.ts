@@ -2,7 +2,6 @@ import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryC
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
-import { Mutex } from 'async-mutex'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
@@ -37,9 +36,6 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_c
 
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const DELIVERY_MAX_ATTEMPTS = 5
-// A stalled progress update must not hold the lock the terminal snapshot queues behind. Past this
-// the lock is released; if the abandoned call ever lands, the builder has already stopped listening.
-const PROGRESS_TIMEOUT_MS = 5_000
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
@@ -131,44 +127,25 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let answer: AgentResult | undefined
         const structured: { output?: Record<string, unknown> } = {}
 
-        const progressLock = new Mutex()
-        let latestParts: PersistedAgentPart[] | undefined
+        let progressSequence = 0
         let warnedOnProgress = false
-        // Every snapshot is the whole transcript, so a stale one landing last would take newer
-        // entries back off the builder. One send at a time, and the newest snapshot wins.
-        let progressClosed = false
-        const reportFinal = (output: AgentResult) => {
+        const pushProgress = (output: AgentResult, final: boolean) => {
             if (isNil(flowRunId)) {
                 return
             }
-            progressClosed = true
-            void progressLock.runExclusive(() => tryCatch(() => ctx.apiClient.updateFlowStepProgress({ conversationId, flowRunId, output })))
-        }
-        const reportProgress = (uiParts: PersistedAgentPart[]) => {
-            if (isNil(flowRunId) || progressClosed) {
-                return
-            }
-            latestParts = uiParts
-            void progressLock.runExclusive(async () => {
-                const parts = latestParts
-                if (isNil(parts)) {
-                    return
-                }
-                latestParts = undefined
-                const { error } = await tryCatch(() => Promise.race([
-                    ctx.apiClient.updateFlowStepProgress({
-                        conversationId,
-                        flowRunId,
-                        output: stepResultFrom({ prompt: userMessage, uiParts: parts, timestamp: new Date().toISOString(), tools: data.tools ?? [], stillRunning: true }),
-                    }),
-                    new Promise<void>((_resolve, reject) => setTimeout(() => reject(new Error('step progress timed out')), PROGRESS_TIMEOUT_MS)),
-                ]))
+            progressSequence += 1
+            const sequence = progressSequence
+            void tryCatch(async () => {
+                const { error } = await tryCatch(() => ctx.apiClient.updateFlowStepProgress({ conversationId, flowRunId, output, sequence, final }))
                 if (!isNil(error) && !warnedOnProgress) {
                     warnedOnProgress = true
                     log.warn({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not push step progress; the builder timeline may lag')
                 }
             })
         }
+        const reportFinal = (output: AgentResult) => pushProgress(output, true)
+        const reportProgress = (uiParts: PersistedAgentPart[]) =>
+            pushProgress(stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: data.tools ?? [], stillRunning: true }), false)
 
         try {
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
@@ -280,7 +257,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
-                progressClosed = true
                 const stoppedResult = stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: 'The agent run was stopped before it finished' })
                 reportFinal(stoppedResult)
                 await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stoppedResult, source, log })

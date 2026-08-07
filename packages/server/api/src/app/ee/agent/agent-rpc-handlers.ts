@@ -33,6 +33,10 @@ const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 
+// A snapshot replaces what came before it, so one that arrives late must not undo a newer one. The
+// entry is dropped once the run reports its final snapshot.
+const lastProgressSequence = new Map<string, number>()
+
 const MAX_EMAIL_RECIPIENTS = 10
 const MAX_EMAIL_SUBJECT_LENGTH = 300
 const MAX_EMAIL_BODY_LENGTH = 10_000
@@ -475,6 +479,13 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
             log.warn({ conversation: { id: input.conversationId }, flowRun: { id: input.flowRunId } }, '[agentRpc#updateFlowStepProgress] Refused progress for a run that is not a flow step')
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can report step progress' } })
+        }
+        if ((lastProgressSequence.get(input.conversationId) ?? 0) >= input.sequence) {
+            return
+        }
+        lastProgressSequence.set(input.conversationId, input.sequence)
+        if (input.final === true) {
+            lastProgressSequence.delete(input.conversationId)
         }
         const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
         engineRunCallbackService(log).updateStepProgress({

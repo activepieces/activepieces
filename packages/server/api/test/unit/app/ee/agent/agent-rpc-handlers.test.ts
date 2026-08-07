@@ -369,23 +369,36 @@ describe('agentRpcHandlers.executePieceTool — only a flow-step run may run a c
 })
 
 describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may report progress', () => {
+    let progressConversation = 0
     async function report(conversation: unknown) {
         mockUpdateStepProgress.mockClear()
         mockGetFlowRun.mockClear()
         mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
         mockFindOne.mockResolvedValue(conversation)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
-        return agentRpcHandlers(noopLogger as never).updateFlowStepProgress({ conversationId: 'conv-1', flowRunId: 'run-1', output: { steps: [] } })
+        return agentRpcHandlers(noopLogger as never).updateFlowStepProgress({ conversationId: `conv-${++progressConversation}`, flowRunId: 'run-1', output: { steps: [] }, sequence: 1 })
     }
 
     it('emits into the project the conversation belongs to, not one the caller named', async () => {
         await report({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
 
+        expect(mockUpdateStepProgress).toHaveBeenCalledTimes(1)
         expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-1', projectId: 'proj-1' })
-        expect(mockUpdateStepProgress).toHaveBeenCalledWith({
-            projectId: 'proj-1',
-            request: { projectId: 'proj-1', runId: 'run-1', output: { steps: [] } },
-        })
+    })
+
+    it('drops a snapshot older than one it already sent, so a late one cannot undo it', async () => {
+        const conversationId = 'conv-ordering'
+        mockUpdateStepProgress.mockClear()
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOne.mockResolvedValue({ id: conversationId, source: 'FLOW_STEP', projectId: 'proj-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        const handlers = agentRpcHandlers(noopLogger as never)
+
+        await handlers.updateFlowStepProgress({ conversationId, flowRunId: 'run-1', output: { n: 2 }, sequence: 2 })
+        await handlers.updateFlowStepProgress({ conversationId, flowRunId: 'run-1', output: { n: 1 }, sequence: 1 })
+
+        expect(mockUpdateStepProgress).toHaveBeenCalledTimes(1)
+        expect(mockUpdateStepProgress.mock.calls[0][0].request.output).toEqual({ n: 2 })
     })
 
     it('refuses when the conversation is a chat', async () => {
