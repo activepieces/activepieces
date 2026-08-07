@@ -37,6 +37,7 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_c
 
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const DELIVERY_MAX_ATTEMPTS = 5
+const PROGRESS_DRAIN_MS = 2_000
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
@@ -134,6 +135,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         // Every snapshot is the whole transcript, so a stale one landing last would take newer
         // entries back off the builder. One send at a time, and the newest snapshot wins.
         let progressClosed = false
+        // Let an in-flight snapshot land before the final result, so it cannot overwrite it, but
+        // never hold the flow for a best-effort update: past this the result goes out regardless.
+        const settleProgress = () => Promise.race([
+            progressLock.waitForUnlock(),
+            new Promise((resolve) => setTimeout(resolve, PROGRESS_DRAIN_MS)),
+        ])
         const reportProgress = (uiParts: PersistedAgentPart[]) => {
             if (isNil(flowRunId) || progressClosed) {
                 return
@@ -268,7 +275,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     }
                 }
                 progressClosed = true
-                await progressLock.waitForUnlock()
+                await settleProgress()
                 await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: 'The agent run was stopped before it finished' }), source, log })
                 await sendEventWithRetry({
                     event: { type: AgentEventType.FINISHED, data: { conversationId } },
@@ -341,7 +348,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
             progressClosed = true
-            await progressLock.waitForUnlock()
+            await settleProgress()
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: clientMessage }), source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
@@ -379,7 +386,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         }
 
         progressClosed = true
-        await progressLock.waitForUnlock()
+        await settleProgress()
         await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, source, log })
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
