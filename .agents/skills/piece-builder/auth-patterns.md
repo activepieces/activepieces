@@ -244,8 +244,8 @@ auth: PieceAuth.None(),
 ```
 
 When auth is `None`:
-- Do NOT add `auth:` to `createAction()` / `createTrigger()`
-- Do NOT reference `context.auth` in the `run` function
-- Dropdowns do NOT receive an `auth` parameter
+- Omit `auth:` from `createAction()` / `createTrigger()`
+- `context.auth` is unavailable in `run`
+- Dropdowns receive no `auth` parameter
 
 **Real example:** `packages/pieces/core/qrcode/src/index.ts`

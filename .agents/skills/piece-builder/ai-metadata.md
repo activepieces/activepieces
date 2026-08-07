@@ -62,7 +62,7 @@ It is written **for an agent choosing between hundreds of tools**, not for the b
 2. **When to pick it** over neighboring actions — name the materially different sibling or mode if one exists ("for bulk inserts prefer X", "use Y to search by email instead").
 3. **The key constraint** — required pairings, limits, side effects — and the retry behavior in prose ("safe to retry", "each call creates a new record").
 
-Do **not** describe the return shape (output contracts are a separate feature), do not embed worked examples, and do not pad — shorter wins for agent context.
+Keep it to the choose-me guidance — return shapes belong in output contracts (a separate feature), examples belong elsewhere, and padding costs agent context. Shorter wins.
 
 ### Deriving `idempotent`
 
