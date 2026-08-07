@@ -2113,6 +2113,9 @@
         "packages/pieces/custom/zroswiss/src/index.ts"
       ],
       "@zroswiss/piece-zroarb": ["packages/pieces/custom/zroarb/src/index.ts"],
+      "@zroswiss/piece-binance-zroswiss": [
+        "packages/pieces/custom/binance-zroswiss/src/index.ts"
+      ],
       "@zroswiss/piece-bitgo": ["packages/pieces/custom/bitgo/src/index.ts"],
       "@zroswiss/piece-uuid": ["packages/pieces/custom/uuid/src/index.ts"],
       "@zroswiss/piece-mural-pay": [
