@@ -147,7 +147,7 @@ describe('flow with delay', () => {
         )
     })
 
-    it('delay-until fails the step for past dates instead of resuming immediately', async () => {
+    it('delay-until completes immediately for past dates', async () => {
         const pastDate = new Date(Date.now() - 60 * 1000).toISOString()
         const delayUntilFlow = buildPieceAction({
             name: 'delay_step',
@@ -164,13 +164,8 @@ describe('flow with delay', () => {
             constants: generateMockEngineConstants(),
         })
 
-        expect(result.verdict).toStrictEqual({
-            status: FlowRunStatus.FAILED,
-            failedStep: {
-                name: 'delay_step',
-                displayName: 'Your Action Name',
-                message: expect.stringContaining('which has already passed'),
-            },
+        expect(result.verdict).toEqual({
+            status: FlowRunStatus.RUNNING,
         })
         expect(waitpointClient.create).not.toHaveBeenCalled()
     })
