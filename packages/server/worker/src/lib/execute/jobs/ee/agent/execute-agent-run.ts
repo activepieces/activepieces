@@ -37,6 +37,9 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_c
 
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const DELIVERY_MAX_ATTEMPTS = 5
+// A stalled progress update must not hold the lock the terminal snapshot queues behind. Past this
+// the lock is released; if the abandoned call ever lands, the builder has already stopped listening.
+const PROGRESS_TIMEOUT_MS = 5_000
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
@@ -152,11 +155,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     return
                 }
                 latestParts = undefined
-                const { error } = await tryCatch(() => ctx.apiClient.updateFlowStepProgress({
-                    conversationId,
-                    flowRunId,
-                    output: stepResultFrom({ prompt: userMessage, uiParts: parts, timestamp: new Date().toISOString(), tools: data.tools ?? [], stillRunning: true }),
-                }))
+                const { error } = await tryCatch(() => Promise.race([
+                    ctx.apiClient.updateFlowStepProgress({
+                        conversationId,
+                        flowRunId,
+                        output: stepResultFrom({ prompt: userMessage, uiParts: parts, timestamp: new Date().toISOString(), tools: data.tools ?? [], stillRunning: true }),
+                    }),
+                    new Promise<void>((_resolve, reject) => setTimeout(() => reject(new Error('step progress timed out')), PROGRESS_TIMEOUT_MS)),
+                ]))
                 if (!isNil(error) && !warnedOnProgress) {
                     warnedOnProgress = true
                     log.warn({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not push step progress; the builder timeline may lag')
