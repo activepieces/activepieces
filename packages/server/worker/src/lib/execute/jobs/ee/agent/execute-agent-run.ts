@@ -133,8 +133,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let warnedOnProgress = false
         // Every snapshot is the whole transcript, so a stale one landing last would take newer
         // entries back off the builder. One send at a time, and the newest snapshot wins.
+        let progressClosed = false
         const reportProgress = (uiParts: PersistedAgentPart[]) => {
-            if (isNil(flowRunId)) {
+            if (isNil(flowRunId) || progressClosed) {
                 return
             }
             latestParts = uiParts
@@ -266,6 +267,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
+                progressClosed = true
+                await progressLock.waitForUnlock()
                 await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: 'The agent run was stopped before it finished' }), source, log })
                 await sendEventWithRetry({
                     event: { type: AgentEventType.FINISHED, data: { conversationId } },
@@ -337,6 +340,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
+            progressClosed = true
+            await progressLock.waitForUnlock()
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: clientMessage }), source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
@@ -373,6 +378,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
         }
 
+        progressClosed = true
+        await progressLock.waitForUnlock()
         await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, source, log })
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },

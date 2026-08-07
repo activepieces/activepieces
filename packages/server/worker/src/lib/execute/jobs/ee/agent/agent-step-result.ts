@@ -27,10 +27,14 @@ export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOu
 
 function withinBudget(steps: AgentStepBlock[]): AgentStepBlock[] {
     let spent = 0
-    const kept = steps.filter((step) => {
+    const kept: AgentStepBlock[] = []
+    for (const step of steps) {
         spent += JSON.stringify(step).length
-        return spent <= MAX_RESULT_LENGTH
-    })
+        if (spent > MAX_RESULT_LENGTH) {
+            break
+        }
+        kept.push(step)
+    }
     if (kept.length === steps.length) {
         return kept
     }
