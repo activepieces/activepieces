@@ -202,7 +202,7 @@ Please note `OAuth2GrantType.CLIENT_CREDENTIALS` is also supported for service-b
 
 ### Connection Identifier
 
-Every auth type (`SecretText`, `BasicAuth`, `OAuth2`, `CustomAuth`) accepts an optional `getConnectionIdentifier` callback. It resolves a human-readable label for a connection — e.g. the account email, or Slack's "display-name (workspace)" — shown in the UI so users can tell which account a connection belongs to.
+Every auth type (`SecretText`, `BasicAuth`, `OAuth2`, `CustomAuth`) accepts an optional `getConnectionIdentifier` callback. It resolves a human-readable label for a connection (e.g. the account email, or Slack's "display-name (workspace)"), shown in the UI so users can tell which account a connection belongs to.
 
 **Example:**
 
@@ -225,5 +225,5 @@ PieceAuth.OAuth2({
 ```
 
 <Note>
-This is best-effort: it must never throw, and returning `undefined` is fine when no identifier can be resolved. For OAuth2 connections, Activepieces already derives an identifier from the token response's OIDC claims when present — only add `getConnectionIdentifier` when the provider needs custom handling (e.g. Slack's workspace + user lookup).
+This is best-effort: it must never throw, and returning `undefined` is fine when no identifier can be resolved. For OAuth2 connections, Activepieces already derives an identifier from the token response's OIDC claims when present. Only add `getConnectionIdentifier` when the provider needs custom handling (e.g. Slack's workspace + user lookup).
 </Note>
