@@ -39,7 +39,11 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
     );
   }
 
-  if (isError || isNil(pieceModel)) {
+  if (
+    isError ||
+    isNil(pieceModel) ||
+    Object.keys(pieceModel.actions).length === 0
+  ) {
     return (
       <div className="flex items-center justify-center h-full w-full">
         <p className="text-sm text-muted-foreground">
