@@ -1,6 +1,7 @@
 import path from 'path'
 import { isNil } from '@activepieces/core-utils'
 import {
+    AuthValidationServerContext,
     DropdownProperty,
     DynamicProperties,
     ExecutePropsResult,
@@ -131,7 +132,7 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
-        const server = { ...buildServerContext(params), token: params.engineToken }
+        const server = buildAuthValidationServerContext(params)
         return  validateAuth({
             authValue: params.auth,
             pieceAuth: piece.auth,
@@ -344,7 +345,7 @@ const resolveConnectionIdentifier = async ({
 }
 
 type ValidateAuthParams = {
-    server: ServerContext
+    server: AuthValidationServerContext
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
 }
@@ -358,5 +359,27 @@ function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: 
     return {
         apiUrl: internalApiUrl.endsWith('/') ? internalApiUrl : internalApiUrl + '/',
         publicUrl: publicApiUrl,
+    }
+}
+
+function buildAuthValidationServerContext({ internalApiUrl, publicApiUrl, engineToken }: { internalApiUrl: string, publicApiUrl: string, engineToken: string }): AuthValidationServerContext {
+    const server = buildServerContext({ internalApiUrl, publicApiUrl })
+    return {
+        ...server,
+        mintOidcToken: async ({ audience }) => {
+            const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${engineToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ audience }),
+            })
+            if (!response.ok) {
+                throw new EngineGenericError('OidcTokenRequestFailedError', `Failed to get OIDC token: ${response.statusText}`)
+            }
+            const { token } = await response.json() as { token: string }
+            return token
+        },
     }
 }

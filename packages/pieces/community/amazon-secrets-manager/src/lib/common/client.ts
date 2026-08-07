@@ -1,6 +1,6 @@
 import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { ServerContext } from '@activepieces/pieces-framework';
+import { AuthValidationServerContext, ServerContext } from '@activepieces/pieces-framework';
 import { SecretsAuthProps, SecretsOidcAuthProps } from './auth';
 
 const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
@@ -32,7 +32,7 @@ export async function getTemporaryCredentials({
   durationSeconds = DEFAULT_STS_DURATION_SECONDS,
 }: {
   auth: SecretsOidcAuthProps;
-  server: ServerContext;
+  server: ServerContext | AuthValidationServerContext;
   durationSeconds?: number;
 }) {
   if (!auth.roleArn) {
@@ -41,25 +41,17 @@ export async function getTemporaryCredentials({
   const clampedDuration = Math.min(Math.max(durationSeconds, MIN_STS_DURATION_SECONDS), MAX_STS_DURATION_SECONDS);
 
   // Scoped by server.token (unique per flow execution) so credentials are never reused
-  // across projects/tenants, only across steps within the same run.
-  const cacheKey = `${server.token}:${auth.roleArn}:${auth.region}:${clampedDuration}`;
-  const cached = credentialsCache.get(cacheKey);
-  if (cached && cached.expiresAtMS - Date.now() > CREDENTIALS_EXPIRY_MARGIN_MS) {
-    return cached.credentials;
+  // across projects/tenants, only across steps within the same run. Connection
+  // validation has no token and is a one-shot check, so it skips the cache.
+  const cacheKey = 'token' in server ? `${server.token}:${auth.roleArn}:${auth.region}:${clampedDuration}` : undefined;
+  if (cacheKey) {
+    const cached = credentialsCache.get(cacheKey);
+    if (cached && cached.expiresAtMS - Date.now() > CREDENTIALS_EXPIRY_MARGIN_MS) {
+      return cached.credentials;
+    }
   }
 
-  const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${server.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ audience: AWS_STS_AUDIENCE }),
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to get OIDC token: ${response.statusText}`);
-  }
-  const { token } = (await response.json()) as { token: string };
+  const token = await mintOidcToken({ server });
 
   if (!AWS_REGION_REGEX.test(auth.region ?? '')) {
     throw new Error(`Invalid AWS region: ${auth.region}`);
@@ -86,10 +78,31 @@ export async function getTemporaryCredentials({
     secretAccessKey: Credentials.SecretAccessKey,
     sessionToken: Credentials.SessionToken,
   };
-  const expiresAtMS = Credentials.Expiration?.getTime() ?? Date.now() + clampedDuration * 1000;
-  sweepExpiredCredentials();
-  credentialsCache.set(cacheKey, { credentials, expiresAtMS });
+  if (cacheKey) {
+    const expiresAtMS = Credentials.Expiration?.getTime() ?? Date.now() + clampedDuration * 1000;
+    sweepExpiredCredentials();
+    credentialsCache.set(cacheKey, { credentials, expiresAtMS });
+  }
   return credentials;
+}
+
+async function mintOidcToken({ server }: { server: ServerContext | AuthValidationServerContext }): Promise<string> {
+  if ('mintOidcToken' in server) {
+    return server.mintOidcToken({ audience: AWS_STS_AUDIENCE });
+  }
+  const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${server.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ audience: AWS_STS_AUDIENCE }),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to get OIDC token: ${response.statusText}`);
+  }
+  const { token } = (await response.json()) as { token: string };
+  return token;
 }
 
 function sweepExpiredCredentials() {

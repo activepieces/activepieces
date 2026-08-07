@@ -42,7 +42,7 @@ describe('piece-helper server context', () => {
         mockLoadPieceOrThrow.mockReset()
     })
 
-    it('passes the engine token to a piece auth validate hook', async () => {
+    it('gives the validate hook an OIDC-minting capability instead of the engine token', async () => {
         const validate = vi.fn().mockResolvedValue({ valid: true })
         mockLoadPieceOrThrow.mockResolvedValue({
             auth: { type: PropertyType.OIDC, validate },
@@ -52,11 +52,35 @@ describe('piece-helper server context', () => {
 
         expect(response).toEqual({ valid: true })
         expect(validate).toHaveBeenCalledTimes(1)
-        expect(validate.mock.calls[0][0].server).toEqual({
-            token: ENGINE_TOKEN,
-            apiUrl: 'http://127.0.0.1:3000/api/',
-            publicUrl: 'http://127.0.0.1:4200/api/',
+        const server = validate.mock.calls[0][0].server
+        expect(server.apiUrl).toBe('http://127.0.0.1:3000/api/')
+        expect(server.publicUrl).toBe('http://127.0.0.1:4200/api/')
+        expect(server.token).toBeUndefined()
+        expect(typeof server.mintOidcToken).toBe('function')
+    })
+
+    it('mints the OIDC token with the engine token, never handing it to the piece', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(
+            new Response(JSON.stringify({ token: 'signed-oidc-token' }), { status: 200 }),
+        )
+        vi.stubGlobal('fetch', fetchMock)
+        let minted: string | undefined
+        const validate = vi.fn().mockImplementation(async ({ server }) => {
+            minted = await server.mintOidcToken({ audience: 'sts.amazonaws.com' })
+            return { valid: true }
         })
+        mockLoadPieceOrThrow.mockResolvedValue({
+            auth: { type: PropertyType.OIDC, validate },
+        })
+
+        await pieceHelper.executeValidateAuth({ params: makeOperation(), devPieces: [] })
+
+        expect(minted).toBe('signed-oidc-token')
+        const [url, init] = fetchMock.mock.calls[0]
+        expect(url).toBe('http://127.0.0.1:3000/api/v1/worker/oidc-token')
+        expect(init.headers.Authorization).toBe(`Bearer ${ENGINE_TOKEN}`)
+        expect(JSON.parse(init.body)).toEqual({ audience: 'sts.amazonaws.com' })
+        vi.unstubAllGlobals()
     })
 
     it('withholds the engine token from the getConnectionIdentifier hook', async () => {
