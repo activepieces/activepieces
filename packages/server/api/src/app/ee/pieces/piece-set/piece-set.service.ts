@@ -10,7 +10,7 @@ import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { pieceSetConfig } from './piece-set-config'
 import { PieceSetEntity } from './piece-set.entity'
 
-export const pieceSetRepo = repoFactory<PieceSet>(PieceSetEntity)
+export const pieceSetRepo = repoFactory(PieceSetEntity)
 
 const MAX_PIECE_SET_PAGE_SIZE = 100
 
