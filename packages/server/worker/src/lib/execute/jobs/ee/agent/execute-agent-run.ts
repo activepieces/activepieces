@@ -2,6 +2,7 @@ import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryC
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
+import { Mutex } from 'async-mutex'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
@@ -127,31 +128,32 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let answer: AgentResult | undefined
         const structured: { output?: Record<string, unknown> } = {}
 
-        // One send in flight at a time, latest wins. Each snapshot is the whole transcript, so a
-        // stale one landing last would erase newer entries from the builder.
-        let sending = false
-        let queued: PersistedAgentPart[] | undefined
+        const progressLock = new Mutex()
+        let latestParts: PersistedAgentPart[] | undefined
+        let warnedOnProgress = false
+        // Every snapshot is the whole transcript, so a stale one landing last would take newer
+        // entries back off the builder. One send at a time, and the newest snapshot wins.
         const reportProgress = (uiParts: PersistedAgentPart[]) => {
             if (isNil(flowRunId)) {
                 return
             }
-            queued = uiParts
-            if (sending) {
-                return
-            }
-            sending = true
-            void (async () => {
-                while (!isNil(queued)) {
-                    const parts = queued
-                    queued = undefined
-                    await tryCatch(() => ctx.apiClient.updateFlowStepProgress({
-                        conversationId,
-                        flowRunId,
-                        output: stepResultFrom({ prompt: userMessage, uiParts: parts, timestamp: new Date().toISOString(), tools: data.tools ?? [] }),
-                    }))
+            latestParts = uiParts
+            void progressLock.runExclusive(async () => {
+                const parts = latestParts
+                if (isNil(parts)) {
+                    return
                 }
-                sending = false
-            })()
+                latestParts = undefined
+                const { error } = await tryCatch(() => ctx.apiClient.updateFlowStepProgress({
+                    conversationId,
+                    flowRunId,
+                    output: stepResultFrom({ prompt: userMessage, uiParts: parts, timestamp: new Date().toISOString(), tools: data.tools ?? [], stillRunning: true }),
+                }))
+                if (!isNil(error) && !warnedOnProgress) {
+                    warnedOnProgress = true
+                    log.warn({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not push step progress; the builder timeline may lag')
+                }
+            })
         }
 
         try {

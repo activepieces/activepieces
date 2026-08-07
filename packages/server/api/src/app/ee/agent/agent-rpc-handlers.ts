@@ -471,13 +471,15 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void> {
-        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        const conversation = await agentHelpers.conversationRepo().findOne({ where: { id: input.conversationId }, select: ['source', 'projectId'] })
         if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+            log.warn({ conversation: { id: input.conversationId }, flowRun: { id: input.flowRunId } }, '[agentRpc#updateFlowStepProgress] Refused progress for a run that is not a flow step')
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can report step progress' } })
         }
+        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
         engineRunCallbackService(log).updateStepProgress({
             projectId: conversation.projectId,
-            request: { projectId: conversation.projectId, runId: input.flowRunId, output: sanitizeObjectForPostgresql(input.output) },
+            request: { projectId: conversation.projectId, runId: flowRun.id, output: input.output },
         })
     },
 

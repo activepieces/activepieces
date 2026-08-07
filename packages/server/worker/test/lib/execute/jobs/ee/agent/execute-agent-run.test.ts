@@ -154,3 +154,11 @@ describe('stepResultFrom — structured output reaches the flow', () => {
         expect(result).not.toHaveProperty('structuredOutput')
     })
 })
+
+describe('stepResultFrom — a partial transcript is not a finished one', () => {
+    it('reports in progress while the run is still going, so the timeline does not say Done', () => {
+        const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [], timestamp: '2026-08-07T00:00:00.000Z', stillRunning: true })
+
+        expect(result.status).toBe('IN_PROGRESS')
+    })
+})

@@ -13,13 +13,14 @@ vi.mock('../../../../../src/app/flows/flow-run/waitpoint/resume-service', () => 
     resumeService: () => ({ resumeFromWaitpoint: mockResumeFromWaitpoint }),
 }))
 
-const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOne, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
     mockSave: vi.fn(),
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
     mockExecute: vi.fn().mockResolvedValue({ affected: 1 }),
     mockFindOneBy: vi.fn().mockResolvedValue(null),
+    mockFindOne: vi.fn().mockResolvedValue(null),
     mockTrack: vi.fn().mockResolvedValue(undefined),
     mockSendConversationUpdate: vi.fn(),
 }))
@@ -28,8 +29,13 @@ vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
     agentApprovalGate: {},
 }))
 
-const { mockRunFromInstruction } = vi.hoisted(() => ({
+const { mockRunFromInstruction, mockUpdateStepProgress } = vi.hoisted(() => ({
     mockRunFromInstruction: vi.fn().mockResolvedValue({ result: { ok: true }, resolvedInput: {} }),
+    mockUpdateStepProgress: vi.fn(),
+}))
+
+vi.mock('../../../../../src/app/flows/flow-run/engine-run-callback-service', () => ({
+    engineRunCallbackService: () => ({ updateStepProgress: mockUpdateStepProgress }),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/tools/piece-tool-runner', () => ({
@@ -54,6 +60,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
         resolveFastModel: () => ({}),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
+            findOne: mockFindOne,
             save: mockSave,
             createQueryBuilder: (): QueryBuilderMock => {
                 const builder: QueryBuilderMock = {
@@ -363,17 +370,34 @@ describe('agentRpcHandlers.executePieceTool — only a flow-step run may run a c
 
 describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may report progress', () => {
     async function report(conversation: unknown) {
-        mockFindOneBy.mockResolvedValue(conversation)
+        mockUpdateStepProgress.mockClear()
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOne.mockResolvedValue(conversation)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).updateFlowStepProgress({ conversationId: 'conv-1', flowRunId: 'run-1', output: { steps: [] } })
     }
 
+    it('emits into the project the conversation belongs to, not one the caller named', async () => {
+        await report({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+
+        expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-1', projectId: 'proj-1' })
+        expect(mockUpdateStepProgress).toHaveBeenCalledWith({
+            projectId: 'proj-1',
+            request: { projectId: 'proj-1', runId: 'run-1', output: { steps: [] } },
+        })
+    })
+
     it('refuses when the conversation is a chat', async () => {
         await expect(report({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+
+        expect(mockUpdateStepProgress).not.toHaveBeenCalled()
     })
 
     it('refuses a flow-step run with no project', async () => {
         await expect(report({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+
+        expect(mockUpdateStepProgress).not.toHaveBeenCalled()
     })
 })
 
