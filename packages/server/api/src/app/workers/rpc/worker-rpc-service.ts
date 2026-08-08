@@ -17,6 +17,7 @@ import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -102,23 +103,39 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const platformId = await projectService(log).getPlatformId(projectId)
             const filterPayloads = await dedupeService.filterUniquePayloads(flowVersionId, payloads)
 
+            const creditsExhausted = await shouldBlockRunOnCredits({
+                platformId,
+                environment,
+                log,
+            })
+
             const flowRuns = await Promise.all(
                 filterPayloads.map((payload) =>
-                    flowRunService(log).start({
-                        flowId: flowVersion.flowId,
-                        environment,
-                        flowVersionId,
-                        payload,
-                        projectId,
-                        platformId,
-                        httpRequestId,
-                        workerHandlerId: undefined,
-                        executionType: ExecutionType.BEGIN,
-                        streamStepProgress,
-                        executeTrigger: false,
-                        parentRunId,
-                        failParentOnFailure,
-                    }),
+                    creditsExhausted
+                        ? flowRunService(log).createQuotaExceededRun({
+                            flowVersion,
+                            payload,
+                            projectId,
+                            environment,
+                            parentRunId,
+                            failParentOnFailure,
+                            shouldExecuteTriggerOnRetry: false,
+                        })
+                        : flowRunService(log).start({
+                            flowId: flowVersion.flowId,
+                            environment,
+                            flowVersionId,
+                            payload,
+                            projectId,
+                            platformId,
+                            httpRequestId,
+                            workerHandlerId: undefined,
+                            executionType: ExecutionType.BEGIN,
+                            streamStepProgress,
+                            executeTrigger: false,
+                            parentRunId,
+                            failParentOnFailure,
+                        }),
                 ),
             )
             return flowRuns
@@ -310,6 +327,14 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const runId = typeof input.toolInput.runId === 'string' ? input.toolInput.runId : undefined
             const conversationId = input.conversationId ?? (typeof input.toolInput.conversationId === 'string' ? input.toolInput.conversationId : undefined)
             return agentRpcHandlers(agentRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeAgentTool(input)
+        },
+
+        async executePieceTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executePieceTool(input)
+        },
+
+        async resumeFlowStep(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).resumeFlowStep(input)
         },
 
         async sendAgentEmail(input) {

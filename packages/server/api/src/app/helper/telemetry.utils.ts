@@ -162,8 +162,9 @@ export type ChatMessageProperties = {
     toolsUsed: number
 }
 
-type CaptureBillingEventParams = { licenseKey: string } & (
+export type BillingEventPayload =
     | { event: BillingEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
     | { event: BillingEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
     | { event: BillingEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
-)
+
+type CaptureBillingEventParams = { licenseKey: string } & BillingEventPayload

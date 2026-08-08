@@ -156,6 +156,22 @@ describe('createSandbox', () => {
             })
         })
 
+        it('scopes code mount to a nested action-run namespace when non-reusable', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-action-run', { ...defaultOptions, reusable: false }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: 'action-runs/plat-xyz_deadbeef', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes/action-runs/plat-xyz_deadbeef',
+                sandboxPath: '/root/codes/action-runs/plat-xyz_deadbeef',
+                optional: true,
+            })
+        })
+
         it('mounts full codes directory when reusable even with flowVersionId', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
@@ -204,11 +220,16 @@ describe('createSandbox', () => {
             ['.'],
             ['..'],
             ['../etc'],
-            ['a/b'],
+            ['a/b/c'],
+            ['a//b'],
+            ['/a'],
+            ['a/'],
+            ['action-runs/..'],
+            ['action-runs/../../etc'],
             ['fv\\1'],
             ['fv\0null'],
             [''],
-        ])('rejects path traversal in flowVersionId: %s', async (flowVersionId) => {
+        ])('rejects an unsafe code namespace in flowVersionId: %s', async (flowVersionId) => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
             sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker)

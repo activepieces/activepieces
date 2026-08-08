@@ -96,6 +96,23 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async sendPlatformDeleted({ platformId, email, purgeDate }: SendPlatformDeletedArgs): Promise<void> {
+        log.info({
+            message: '[emailService#sendPlatformDeleted] sending platform deleted email',
+            platform: { id: platformId },
+        })
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'platform-deleted',
+                vars: {
+                    purgeDate,
+                },
+            },
+        })
+    },
+
     async sendIssueCreatedNotification({
         projectId,
         projectName,
@@ -267,6 +284,12 @@ type SendOtpArgs = {
 type SendScimUserWelcomeArgs = {
     email: string
     platformId: string
+}
+
+type SendPlatformDeletedArgs = {
+    platformId: string
+    email: string
+    purgeDate: string
 }
 
 type SendChatNotificationArgs = {

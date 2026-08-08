@@ -1,9 +1,9 @@
 import {
   httpClient,
-  HttpError,
   HttpHeaders,
   HttpRequest,
   QueryParams,
+  toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import {
   createAction,
@@ -149,7 +149,7 @@ export const query = createAction({
       return await httpClient.sendRequest(request);
     } catch (error) {
       if (failsafe) {
-        return (error as HttpError).errorMessage();
+        return toFailsafeOutput({ error, requestBody: request.body });
       }
 
       throw error;

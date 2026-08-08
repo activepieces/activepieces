@@ -4,7 +4,8 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
-import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
+import { JobContext, JobHandler, SynchronousJobResult } from '../types'
+import { buildSynchronousResult } from '../utils/synchronous-result'
 
 export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
@@ -29,12 +30,6 @@ export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData,
             provision: resolved.provision,
         })
 
-        return {
-            kind: JobResultKind.SYNCHRONOUS,
-            status: result.status,
-            response: result.response,
-            errorMessage: result.error,
-            logs: result.logs,
-        }
+        return buildSynchronousResult(result)
     },
 }

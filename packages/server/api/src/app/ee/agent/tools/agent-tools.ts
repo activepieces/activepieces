@@ -9,7 +9,8 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
-import { AdhocOffload, executeAdhocAction, executeAdhocCode, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
+import { runActionInput } from '../../../mcp/tools/ap-run-action'
+import { ActionRunOffload, executeCodeActionRun, executePieceActionRun, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
@@ -222,15 +223,19 @@ async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
     return isNil(denial) ? null : denial.content.map((part) => part.text).join(' ')
 }
 
-async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, log }: {
+async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, confinedToProjectId, log }: {
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
     conversationId?: string
+    confinedToProjectId?: string | null
     log: FastifyBaseLogger
 }): Promise<unknown> {
-    const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    const allProjects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    const projects = isNil(confinedToProjectId)
+        ? allProjects
+        : allProjects.filter((p) => p.id === confinedToProjectId)
     const availableProjectIds = projects.map((p) => p.id)
 
     switch (toolName) {
@@ -243,7 +248,8 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return { remembered: true }
         }
         case 'ap_discover_action_auth': {
-            const normalizedPiece = mcpUtils.normalizePieceName(toolInput.pieceName as string) ?? (toolInput.pieceName as string)
+            const { pieceName } = runActionInput.pick({ pieceName: true }).parse(toolInput)
+            const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
             // Sticky connection: if the user already chose a connection for this piece this
             // conversation, reuse it instead of popping another picker for the next action.
             if (conversationId) {
@@ -258,7 +264,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                     }
                 }
             }
-            const discoveryResult = await findConnectionsForPiece({ pieceName: toolInput.pieceName as string, projects, platformId, log })
+            const discoveryResult = await findConnectionsForPiece({ pieceName, projects, platformId, log })
 
             if (conversationId && 'pickConnection' in discoveryResult && discoveryResult.pickConnection) {
                 await agentApprovalGate.storeAvailableConnections({
@@ -277,7 +283,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return discoveryResult
         }
         case 'ap_revalidate_connection': {
-            const externalId = toolInput.connectionExternalId as string
+            const { connectionExternalId: externalId } = runActionInput.pick({ connectionExternalId: true }).required().parse(toolInput)
             let projectId: string | undefined
             if (conversationId) {
                 const conversation = await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
@@ -309,18 +315,17 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
         }
         case 'ap_execute_action': {
-            return runAgentAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
+            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
         }
         case 'ap_run_code': {
             return runAgentCode({ toolInput, projects, platformId, userId, conversationId, log })
         }
         case 'ap_explore_data': {
-            const actionName = toolInput.actionName as string
-            const exploreInput = isObject(toolInput.input) ? toolInput.input as Record<string, unknown> : undefined
+            const { actionName, input: exploreInput } = runActionInput.parse(toolInput)
             if (!agentToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return agentToolClassification.readOnlyRejection(actionName)
             }
-            return runAgentAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -355,13 +360,13 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 // A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
 // the model context with a compact shape preview + the fileId. The agent then processes the FULL
 // data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
-function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }: {
+function buildActionRunOffload({ projectId, platformId, pieceName, actionName, log }: {
     projectId: string
     platformId?: string
     pieceName: string
     actionName: string
     log: FastifyBaseLogger
-}): AdhocOffload | undefined {
+}): ActionRunOffload | undefined {
     if (isNil(platformId)) {
         return undefined
     }
@@ -389,7 +394,7 @@ function buildAdhocOffload({ projectId, platformId, pieceName, actionName, log }
     }
 }
 
-async function runAgentAdhocAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
+async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -399,8 +404,7 @@ async function runAgentAdhocAction({ toolInput, projects, availableProjectIds, c
     requireWritePermission?: boolean
     log: FastifyBaseLogger
 }): Promise<unknown> {
-    const pieceName = toolInput.pieceName as string
-    const actionName = toolInput.actionName as string
+    const { pieceName, actionName, input: parsedInput } = runActionInput.parse(toolInput)
 
     const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
     let connectionExternalId: string | undefined
@@ -429,20 +433,13 @@ async function runAgentAdhocAction({ toolInput, projects, availableProjectIds, c
         }
     }
 
-    let parsedInput = toolInput.input
-    if (typeof parsedInput === 'string') {
-        const parsed = parseToJsonIfPossible(parsedInput)
-        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-            parsedInput = parsed as Record<string, unknown>
-        }
-    }
-    const result = await executeAdhocAction({
+    const result = await executePieceActionRun({
         projectId: resolvedProjectId,
         pieceName,
         actionName,
-        input: parsedInput as Record<string, unknown> | undefined,
+        input: parsedInput,
         connectionExternalId,
-        ...spreadIfDefined('offload', buildAdhocOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
+        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
 
@@ -527,10 +524,10 @@ async function runAgentCode({ toolInput, projects, platformId, userId, conversat
         input.data = jsonValues.length === 1 ? jsonValues[0] : jsonValues
     }
 
-    const result = await executeAdhocCode({ projectId, code, packageJson, input, log })
+    const result = await executeCodeActionRun({ projectId, code, packageJson, input, log })
 
     if (result.status !== 'succeeded') {
-        const reason = result.status === 'timeout' ? 'Code is still running after 120s.' : result.errorMessage ?? 'Code execution failed.'
+        const reason = result.errorMessage ?? (result.status === 'timeout' ? 'Code is still running after 120s.' : 'Code execution failed.')
         return { text: `❌ ${reason}`, producedFiles: [] }
     }
 
