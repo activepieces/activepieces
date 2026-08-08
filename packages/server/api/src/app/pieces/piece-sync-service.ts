@@ -1,6 +1,6 @@
 import { groupBy, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { PieceSyncMode, PieceType } from '@activepieces/shared'
+import { PieceAudienceFilter, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -92,7 +92,11 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
     for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
         const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
         await Promise.all(currentBatch.map(async (piece) => {
-            const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
+            const queryParams = new URLSearchParams({ audience: PieceAudienceFilter.ALL })
+            if (piece.version) {
+                queryParams.append('version', piece.version)
+            }
+            const url = `${CLOUD_API_URL}/${piece.name}?${queryParams.toString()}`
             const response = await fetch(url)
             if (!response.ok) {
                 log.warn({ piece: { name: piece.name, version: piece.version }, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
