@@ -29,6 +29,9 @@ export const newIssueType = createTrigger({
     hierarchyLevel: 0,
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('issueTypeIds'))) {
+      return;
+    }
     const { projectId } = context.propsValue;
 
     const issueTypes = await getIssueTypes({

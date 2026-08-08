@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { DISPATCH_KEY_HEADER, FAIL_PARENT_ON_FAILURE_HEADER, FlowTriggerType, isNil, PARENT_RUN_ID_HEADER, PopulatedFlow } from "@activepieces/pieces-framework";
+import { DISPATCH_KEY_HEADER, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, FlowTriggerType, isNil, PARENT_RUN_ID_HEADER, PieceAuth, PopulatedFlow, Property } from "@activepieces/pieces-framework";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 
 export const callableFlowKey = (runId: string) => `callableFlow_${runId}`;
@@ -60,10 +60,67 @@ export async function findFlowByExternalIdOrThrow({
     return allFlows[0];
 }
 
-export async function dispatchChild({ apiUrl, flowId, payload, parentRunId, failParentOnFailure, callbackUrl, dispatchKey }: DispatchChildParams): Promise<unknown> {
+export async function findEnabledSubflowOrThrow({
+    flowsContext,
+    externalId,
+}: {
+    flowsContext: FlowsContext;
+    externalId: string | undefined;
+}): Promise<PopulatedFlow> {
+    const flow = await findFlowByExternalIdOrThrow({ flowsContext, externalId });
+    if (flow.status !== FlowStatus.ENABLED) {
+        throw new Error(JSON.stringify({
+            message: 'The selected subflow is disabled. Enable it before calling it from a parent flow.',
+            externalId,
+            flowName: flow.version.displayName,
+        }));
+    }
+    return flow;
+}
+
+export function subflowDropdown({
+    displayName,
+    description,
+}: {
+    displayName: string;
+    description: string;
+}) {
+    return Property.Dropdown<string>({
+        auth: PieceAuth.None(),
+        displayName,
+        description,
+        required: true,
+        refreshers: [],
+        options: async (_, context) => {
+            const flows = await listFlowsWithSubflowTrigger({
+                flowsContext: context.flows,
+            });
+            return {
+                options: flows.map((flow) => ({
+                    value: flow.externalId ?? flow.id,
+                    label:
+                        flow.status === FlowStatus.ENABLED
+                            ? flow.version.displayName
+                            : `${flow.version.displayName} (inactive)`,
+                })),
+            };
+        },
+    });
+}
+
+export async function dispatchToSubflow({
+    apiUrl,
+    flowId,
+    parentRunId,
+    failParentOnFailure,
+    data,
+    callbackUrl,
+    retries,
+    dispatchKey,
+}: DispatchToSubflowParams): Promise<unknown> {
     const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${apiUrl}v1/webhooks/${flowId}`,
+        url: `${apiUrl.replace(/\/$/, '')}/v1/webhooks/${flowId}`,
         headers: {
             'Content-Type': 'application/json',
             [PARENT_RUN_ID_HEADER]: parentRunId,
@@ -71,9 +128,10 @@ export async function dispatchChild({ apiUrl, flowId, payload, parentRunId, fail
             ...(isNil(dispatchKey) ? {} : { [DISPATCH_KEY_HEADER]: dispatchKey }),
         },
         body: {
-            data: payload,
+            data,
             callbackUrl,
         },
+        retries,
     });
     return response.body;
 }
@@ -83,12 +141,13 @@ type ListParams = {
     params?: ListFlowsContextParams
 }
 
-type DispatchChildParams = {
+type DispatchToSubflowParams = {
     apiUrl: string;
     flowId: string;
-    payload: unknown;
     parentRunId: string;
     failParentOnFailure: boolean;
+    data: unknown;
     callbackUrl?: string;
+    retries?: number;
     dispatchKey?: string;
 }

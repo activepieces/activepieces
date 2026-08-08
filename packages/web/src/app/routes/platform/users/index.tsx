@@ -12,6 +12,8 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/custom/data-table';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
+import { internalErrorToast } from '@/components/ui/sonner';
+import { useSeatLimitGuard } from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
 import {
   platformUserHooks,
@@ -35,6 +37,7 @@ export type UserRowData =
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
+  const { handleSeatLimitError, seatLimitDialog } = useSeatLimitGuard();
 
   const {
     data: usersData,
@@ -81,7 +84,14 @@ export default function UsersPage() {
     platformUserMutations.useDeleteInvitation({ onSuccess: refetch });
 
   const { mutate: updateUserStatus, isPending: isUpdatingStatus } =
-    platformUserMutations.useUpdateUserStatus({ onSuccess: refetch });
+    platformUserMutations.useUpdateUserStatus({
+      onSuccess: refetch,
+      onError: (error) => {
+        if (!handleSeatLimitError(error)) {
+          internalErrorToast();
+        }
+      },
+    });
 
   const handleDelete = (id: string, isInvitation: boolean) => {
     if (isInvitation) {
@@ -158,6 +168,7 @@ export default function UsersPage() {
         setOpen={setInviteOpen}
         onInviteSuccess={refetch}
       />
+      {seatLimitDialog}
     </LockedFeatureGuard>
   );
 }

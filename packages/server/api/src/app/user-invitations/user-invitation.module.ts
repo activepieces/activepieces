@@ -1,19 +1,20 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
 import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
+import { transaction } from '../core/db/transaction'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
+import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
-import { userInvitationsService } from './user-invitation.service'
+import { INVITATION_EXPIRY_SECONDS, userInvitationsService } from './user-invitation.service'
 
 export const invitationModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
@@ -36,15 +37,32 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         const status = await shouldAutoAcceptInvitation(request.principal, request.body, platformId, request.log) ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
         const projectRole = await getProjectRoleAndAssertIfFound(platformId, request.body)
 
-        const invitation = await userInvitationsService(request.log).create({
+        const invitationRecordParams = {
             email,
             type,
             platformId,
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
             projectRoleId: type === InvitationType.PLATFORM ? null : projectRole?.id ?? null,
-            invitationExpirySeconds: dayjs.duration(7, 'days').asSeconds(),
             status,
+        }
+
+        const wouldAddNewUser = await userInvitationsService(request.log).wouldAddNewUser({ email, platformId })
+        const userInvitationRecord = wouldAddNewUser
+            ? await transaction(async (entityManager) => {
+                const additionalSeatsNeeded = await userInvitationsService(request.log).countAdditionalSeatsNeeded({
+                    email,
+                    platformId,
+                    entityManager,
+                })
+                await platformPlanService(request.log).checkUsersExceededLimit({ platformId, entityManager, additionalSeatsNeeded })
+                return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
+            })
+            : await userInvitationsService(request.log).createInvitationRecord(invitationRecordParams)
+
+        const invitation = await userInvitationsService(request.log).finalizeInvitation({
+            userInvitation: userInvitationRecord,
+            invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
         })
         await reply.status(StatusCodes.CREATED).send(invitation)
     })

@@ -238,4 +238,10 @@ export const flowRunUtils = {
         };
     }
   },
+  getStatusLabelOverride(status: FlowRunStatus): string | null {
+    if (status === FlowRunStatus.QUOTA_EXCEEDED) {
+      return t('Out of credits');
+    }
+    return null;
+  },
 };

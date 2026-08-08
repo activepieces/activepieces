@@ -2,7 +2,10 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Control } from 'react-hook-form';
 
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/features/projects/stores/project-collection';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 import { FormField, FormItem, FormMessage } from '../../../components/ui/form';
@@ -28,7 +31,7 @@ export const ProjectSelector = ({
             options={
               projects?.map((project) => ({
                 value: project.id,
-                label: project.displayName,
+                label: getProjectName(project),
               })) ?? []
             }
             loading={!projects}

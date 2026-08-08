@@ -12,6 +12,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, DownloadIcon } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -32,6 +33,7 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSeatLimitGuard } from '@/features/billing';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
@@ -42,6 +44,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { HttpError } from '@/lib/api';
+import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
@@ -91,21 +94,36 @@ const FormSchema = z.object({
 
 type FormSchema = z.infer<typeof FormSchema>;
 
-export const InviteUserDialog = ({
+export const InviteUserDialog = (props: InviteUserDialogProps) => (
+  <ErrorBoundary
+    onError={(error, info) =>
+      errorReporting.report({
+        error,
+        componentStack: info.componentStack,
+        source: 'react-error-boundary',
+      })
+    }
+    fallbackRender={() => (
+      <InviteUserDialogFallback open={props.open} setOpen={props.setOpen} />
+    )}
+  >
+    <InviteUserDialogInternal {...props} />
+  </ErrorBoundary>
+);
+
+const InviteUserDialogInternal = ({
   open,
   setOpen,
   onInviteSuccess,
-}: {
-  open: boolean;
-  setOpen: (_open: boolean) => void;
-  onInviteSuccess?: () => void;
-}) => {
+}: InviteUserDialogProps) => {
   const { embedState } = useEmbedding();
   const [invitationResults, setInvitationResults] = useState<
     UserInvitationWithLink[]
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
+  const { handleSeatLimitError, ensureSeatsAvailable, seatLimitDialog } =
+    useSeatLimitGuard();
   const { data: isSmtpConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.SMTP_CONFIGURED,
   );
@@ -181,6 +199,9 @@ export const InviteUserDialog = ({
       onInviteSuccess?.();
     },
     onError: (error) => {
+      if (handleSeatLimitError(error)) {
+        return;
+      }
       toast.error(error.message || t('Failed to send invitations'), {
         duration: 4000,
       });
@@ -231,6 +252,10 @@ export const InviteUserDialog = ({
         type: 'required',
         message: t('Please select a project role'),
       });
+      return;
+    }
+
+    if (!ensureSeatsAvailable(data.emails.length)) {
       return;
     }
 
@@ -396,6 +421,7 @@ export const InviteUserDialog = ({
           </DialogContent>
         </Dialog>
       }
+      {seatLimitDialog}
     </>
   );
 };
@@ -492,3 +518,37 @@ function buildInviteToast({
   );
 }
 const escapeCsvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+function InviteUserDialogFallback({
+  open,
+  setOpen,
+}: {
+  open: boolean;
+  setOpen: (_open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-[420px]">
+        <DialogHeader>
+          <DialogTitle>{t('Something went wrong')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'An unexpected error occurred and this page could not be displayed. Your data is safe. Please reload the page to continue.',
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" onClick={() => window.location.reload()}>
+            {t('Reload page')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type InviteUserDialogProps = {
+  open: boolean;
+  setOpen: (_open: boolean) => void;
+  onInviteSuccess?: () => void;
+};

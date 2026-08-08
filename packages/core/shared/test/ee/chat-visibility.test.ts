@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ApEdition } from '../../src/lib/core/flag/flag'
-import { chatVisibility } from '../../src/lib/ee/chat/chat-visibility'
+import { chatVisibility } from '../../src/lib/ee/agent/chat-visibility'
 
 const base = {
     isEmbedded: false,

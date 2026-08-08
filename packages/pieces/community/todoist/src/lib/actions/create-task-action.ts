@@ -7,14 +7,16 @@ import {
 } from '../common/props';
 import { TodoistCreateTaskRequest } from '../common/models';
 import { todoistAuth } from '../..';
+import { createTaskActionOutputSchema } from '../output-schemas';
 
 export const todoistCreateTaskAction = createAction({
   auth: todoistAuth,
   name: 'create_task',
   displayName: 'Create Task',
   description: 'Create task',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new task in Todoist with content, optional description, labels, priority (1-4), and a natural-language or ISO due date. Use to add a to-do item; without a project_id it lands in the user\'s Inbox. Not idempotent: each call appends a separate task even if the content is identical.', idempotent: false },
+  outputSchema: createTaskActionOutputSchema,
   props: {
     project_id: todoistProjectIdDropdown(
       "Task project ID. If not set, task is put to user's Inbox."

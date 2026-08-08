@@ -4,8 +4,9 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { newReactionRemovedTriggerOutputSchema } from '../output-schemas';
 
 export const newReactionRemoved = createTrigger({
   auth: slackAuth,
@@ -17,6 +18,7 @@ export const newReactionRemoved = createTrigger({
       'Fires when an emoji reaction is removed from a message in the Slack workspace. Can be optionally filtered to specific emojis, a specific user, or specific channels. The event payload identifies the user who removed the reaction, the emoji name, and the message item it was removed from.',
   },
   props: {
+    webhookInfo: appWebhookSetupInfo,
     info: multiSelectChannelInfo,
     emojis: Property.Array({
       displayName: 'Emojis (E.g fire, smile)',
@@ -51,6 +53,7 @@ export const newReactionRemoved = createTrigger({
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
+  outputSchema: newReactionRemovedTriggerOutputSchema,
   onEnable: async (context) => {
     const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({

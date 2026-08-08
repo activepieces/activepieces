@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import { StepOutputType } from '@activepieces/shared'
 import { utils } from '../utils'
 
@@ -45,6 +46,21 @@ function isSliceRefShape(value: unknown): value is { size: number } {
     )
 }
 
+function upsertStepDelta({ stepName, previousStep, nextStep }: UpsertStepDeltaParams): number {
+    const nextSize = recursiveSizeof(nextStep)
+    if (isNil(previousStep)) {
+        return utils.sizeof(stepName) + 2 + nextSize
+    }
+    return nextSize - recursiveSizeof(previousStep)
+}
+
 export const sizeofUtils = {
     recursiveSizeof,
+    upsertStepDelta,
+}
+
+type UpsertStepDeltaParams = {
+    stepName: string
+    previousStep: unknown
+    nextStep: unknown
 }

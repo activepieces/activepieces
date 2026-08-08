@@ -5,10 +5,11 @@ import jimp from 'jimp';
 import * as mime from 'mime-types';
 
 export const convertImageFormat = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'convert_image_format',
   displayName: 'Image Conversion Helper',
   description: 'Converts a image to supported formats',
+  aiMetadata: { description: 'Converts an uploaded image file to JPEG, PNG, TIFF, BMP, or AVIF, transparently decoding HEIC/HEIF sources first. Use it when a downstream step needs one specific format - use compress_image to only shrink a file in place, or image_to_base64 to inline an image as a data URL. Requires an image file and one target format, and HEIC/HEIF sources are detected only from the file extension or name, so an extensionless HEIC may fail to decode; deterministic and idempotent for the same input.', idempotent: true },
   props: {
     image: Property.File({
       displayName: 'Image',

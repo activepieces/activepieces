@@ -1,12 +1,14 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { apId, createAction, FieldType, PieceAuth, Property, Table } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini';
+import { createTableActionOutputSchema } from '../output-schemas';
 
 export const createTable = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'tables-create-table',
   displayName: 'Create Table',
   description: 'Create a new table, optionally with fields.',
+  aiMetadata: { description: 'Creates a new Activepieces Table in the current project, optionally defining its columns up front - each field takes a name plus a type of text, number, date, or single select, with single-select choices supplied as one comma-separated string. Pick this when a flow needs somewhere to store data that does not exist yet. Only those four column types are supported; not idempotent, since each call creates another table and repeating it with the same name yields duplicates.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
     name: Property.ShortText({
@@ -43,6 +45,7 @@ export const createTable = createAction({
       },
     }),
   },
+  outputSchema: createTableActionOutputSchema,
   async run(context) {
     const { name, fields } = context.propsValue;
 

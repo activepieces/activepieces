@@ -101,6 +101,8 @@ export {
   PARENT_WAITPOINT_ID_HEADER,
   FAIL_PARENT_ON_FAILURE_HEADER,
   DISPATCH_KEY_HEADER,
+  ACTIVEPIECES_CHAT_TIERS,
+  DEFAULT_CHAT_TIER_ID,
 } from '@activepieces/core-piece-types';
 export type {
   McpAuthConfig,

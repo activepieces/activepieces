@@ -45,6 +45,9 @@ export const catchWebhook = createTrigger({
   displayName: 'Catch Webhook',
   description:
     'Receive incoming HTTP/webhooks using any HTTP method such as GET, POST, PUT, DELETE, etc.',
+  aiMetadata: {
+    description: 'Fires once for every request delivered to the unique webhook URL generated for this flow, under any HTTP method. Use it as the entry point for any system that can call a URL; Authentication must be set explicitly to None, Basic credentials, a shared header value, or an HMAC signature over the raw body, and requests that fail verification are silently dropped without starting a run. Appending /sync to the URL makes the caller wait for a Return Response action, while /test generates sample data without triggering the published flow.',
+  },
   props: {
     liveMarkdown: Property.MarkDown({
       value: liveMarkdown,

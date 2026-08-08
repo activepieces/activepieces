@@ -681,7 +681,7 @@ function renderReport(report: BenchmarkReport): void {
 
     console.log(chalk.bold('\nProject'));
     console.log(`  throwaway project (auto-created, deleted after) : ${report.project.id}`);
-    if (report.project.limits.available) {
+    if (report.project.limits.available === true) {
         const cap = report.project.limits.maxConcurrentJobs;
         const capLabel = cap === null ? 'unset (platform default)' : `${cap} concurrent jobs`;
         // The benchmark project is uncapped on purpose, so these numbers can't throttle THIS run — they are

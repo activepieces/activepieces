@@ -193,7 +193,7 @@ function buildTimeline({ existingFlowRun, runMetadata }: BuildTimelineParams): R
     })
 }
 
-async function markParentRunAsFailed({
+export async function markParentRunAsFailed({
     parentRunId,
     childRunId,
     projectId,
