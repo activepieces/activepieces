@@ -41,6 +41,26 @@ export class ConnectionExpiredError extends ExecutionError {
     }
 }
 
+export class ConnectionPieceBindingMismatchError extends ExecutionError {
+    constructor(connectionName: string, connectionPieceName: string | undefined, requestingPieceName: string | undefined, cause?: unknown) {
+        const message = requestingPieceName === undefined
+            ? `connection (${connectionName}) can't be used here: this platform restricts connections to the piece that created them, and this step type has no piece identity to bind to`
+            : `connection (${connectionName}) was created for "${connectionPieceName ?? 'a different piece'}" and can't be used by "${requestingPieceName}": this platform restricts each connection to the piece that created it`
+        super('ConnectionPieceBindingMismatch', formatMessage(message), ExecutionErrorType.USER, cause)
+    }
+}
+
+export class ConnectionBlockedForGenericPieceError extends ExecutionError {
+    constructor(connectionName: string, pieceName: string | undefined, cause?: unknown) {
+        super(
+            'ConnectionBlockedForGenericPiece',
+            formatMessage(`connection (${connectionName}) can't be used by "${pieceName ?? 'this piece'}": this platform blocks connection access for pieces without a single fixed destination`),
+            ExecutionErrorType.USER,
+            cause,
+        )
+    }
+}
+
 export class StorageLimitError extends ExecutionError {
 
     public maxStorageSizeInBytes: number

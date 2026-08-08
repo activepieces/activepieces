@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, EnginePrincipal, Principal, PrincipalType, UserStatus, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -36,6 +36,33 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
             key: secret,
             expiresInSeconds: dayjs.duration(retentionDays, 'day').asSeconds(),
         })
+    },
+
+    async generateInternalEngineToken({ jobId }: GenerateInternalEngineTokenParams): Promise<string> {
+        const secret = await jwtUtils.getJwtSecret()
+        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+        return jwtUtils.sign({
+            payload: { jobId, scope: INTERNAL_ENGINE_TOKEN_SCOPE },
+            key: secret,
+            expiresInSeconds: dayjs.duration(retentionDays, 'day').asSeconds(),
+        })
+    },
+
+    async verifyInternalEngineToken(token: string): Promise<InternalEngineTokenPayload | null> {
+        const secret = await jwtUtils.getJwtSecret()
+        try {
+            const decoded = await jwtUtils.decodeAndVerify<{ jobId?: string, scope?: string }>({
+                jwt: token,
+                key: secret,
+            })
+            if (decoded.scope !== INTERNAL_ENGINE_TOKEN_SCOPE || isNil(decoded.jobId)) {
+                return null
+            }
+            return { jobId: decoded.jobId }
+        }
+        catch {
+            return null
+        }
     },
 
     async generateWorkerToken(): Promise<string> {
@@ -124,4 +151,14 @@ type GenerateEngineTokenParams = {
     projectId: ProjectId
     jobId?: string
     platformId: PlatformId
+}
+
+const INTERNAL_ENGINE_TOKEN_SCOPE = 'connections-internal'
+
+type GenerateInternalEngineTokenParams = {
+    jobId: string
+}
+
+type InternalEngineTokenPayload = {
+    jobId: string
 }

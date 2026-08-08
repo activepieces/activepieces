@@ -44,6 +44,7 @@ export const executeTriggerHookJob: JobHandler<ExecuteTriggerHookJobData, Synchr
                     projectId: data.projectId,
                     platformId: data.platformId,
                     engineToken: ctx.engineToken,
+                    internalEngineToken: ctx.internalEngineToken,
                     internalApiUrl: ctx.internalApiUrl,
                     publicApiUrl: ctx.publicApiUrl,
                     timeoutInSeconds,

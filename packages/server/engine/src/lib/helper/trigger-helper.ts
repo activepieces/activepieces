@@ -34,6 +34,7 @@ export const triggerHelper = {
             projectId: constants.projectId,
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
+            internalEngineToken: constants.internalEngineToken,
             devPieces: constants.devPieces,
             propertySettings,
             stepNames: constants.stepNames,
@@ -66,8 +67,10 @@ export const triggerHelper = {
                 apiUrl: constants.internalApiUrl,
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
+                internalEngineToken: constants.internalEngineToken,
                 target: 'triggers',
                 contextVersion: piece.getContextInfo?.().version,
+                requestingPieceName: pieceName,
             }),
         }
         await pieceTrigger.onStart(context)
@@ -88,6 +91,7 @@ export const triggerHelper = {
             projectId: params.projectId,
             apiUrl: constants.internalApiUrl,
             engineToken: params.engineToken,
+            internalEngineToken: params.internalEngineToken,
             devPieces: constants.devPieces,
             propertySettings,
             stepNames: constants.stepNames,
@@ -156,8 +160,10 @@ export const triggerHelper = {
                 apiUrl: constants.internalApiUrl,
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
+                internalEngineToken: constants.internalEngineToken,
                 target: 'triggers',
                 contextVersion: piece.getContextInfo?.().version,
+                requestingPieceName: pieceName,
             }),
         }
         switch (params.hookType) {
@@ -256,7 +262,7 @@ type ExecuteTriggerParams = {
     constants: EngineConstants
 }
 
-async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, devPieces, stepNames }: PrepareTriggerExecutionParams) {
+async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, internalEngineToken, devPieces, stepNames }: PrepareTriggerExecutionParams) {
     const { piece, pieceTrigger } = await pieceLoader.getPieceAndTriggerOrThrow({
         pieceName,
         pieceVersion,
@@ -268,8 +274,10 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         apiUrl,
         projectId,
         engineToken,
+        internalEngineToken,
         contextVersion: piece.getContextInfo?.().version,
         stepNames,
+        requestingPieceName: pieceName,
     }).resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState: FlowExecutorContext.empty(),
@@ -293,6 +301,7 @@ type PrepareTriggerExecutionParams = {
     projectId: string
     apiUrl: string
     engineToken: string
+    internalEngineToken?: string
     devPieces: string[]
     stepNames: string[]
 }

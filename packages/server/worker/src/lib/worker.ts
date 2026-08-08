@@ -370,6 +370,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 workerIndex,
                 jobId: job.jobId,
                 engineToken: job.engineToken,
+                internalEngineToken: job.internalEngineToken,
                 internalApiUrl,
                 publicApiUrl,
                 log,

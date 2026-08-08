@@ -91,6 +91,8 @@ export type ApErrorParams =
     | ExecutionStateMissingParams
     | GenericErrorParams
     | SandboxCapacityExceededParams
+    | AppConnectionPieceBindingMismatchParams
+    | AppConnectionBlockedForGenericPieceParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -436,6 +438,17 @@ export type McpPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIE
     connectionId: string
 }>
 
+export type AppConnectionPieceBindingMismatchParams = BaseErrorParams<ErrorCode.APP_CONNECTION_PIECE_BINDING_MISMATCH, {
+    connectionExternalId: string
+    connectionPieceName: string
+    requestingPieceName?: string
+}>
+
+export type AppConnectionBlockedForGenericPieceParams = BaseErrorParams<ErrorCode.APP_CONNECTION_BLOCKED_FOR_PIECE, {
+    connectionExternalId: string
+    pieceName: string
+}>
+
 export type SubflowFailedParams = BaseErrorParams<ErrorCode.SUBFLOW_FAILED, {
     message: string
 }>
@@ -571,4 +584,6 @@ export enum ErrorCode {
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
     GENERIC_ERROR = 'GENERIC_ERROR',
+    APP_CONNECTION_PIECE_BINDING_MISMATCH = 'APP_CONNECTION_PIECE_BINDING_MISMATCH',
+    APP_CONNECTION_BLOCKED_FOR_PIECE = 'APP_CONNECTION_BLOCKED_FOR_PIECE',
 }

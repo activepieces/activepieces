@@ -24,6 +24,7 @@ function createFakeJob(id: string): ConsumeJobRequest {
         jobData: {} as ConsumeJobRequest['jobData'],
         attempsStarted: 0,
         engineToken: 'token',
+        internalEngineToken: 'internal-token',
         token: 'job-token',
         queueName: 'test-queue',
     }

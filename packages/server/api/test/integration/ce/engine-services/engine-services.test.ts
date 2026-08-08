@@ -1,12 +1,13 @@
 import { AddressInfo } from 'net'
 import { apId } from '@activepieces/core-utils'
 import { ContextVersion, StoreScope } from '@activepieces/pieces-framework'
-import { AppConnectionStatus, AppConnectionType, ConnectionExpiredError, ConnectionNotFoundError, FetchError, FlowStatus, FlowVersionState, PrincipalType } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, ConnectionBlockedForGenericPieceError, ConnectionExpiredError, ConnectionNotFoundError, ConnectionPieceBindingMismatchError, ExecutionErrorType, FetchError, FlowStatus, FlowVersionState, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { createConnectionResolver } from '../../../../../engine/src/lib/piece-context/connection-resolver'
 import { createFileUploader } from '../../../../../engine/src/lib/piece-context/file-uploader'
 import { createFlowsContext } from '../../../../../engine/src/lib/piece-context/flows'
 import { createContextStore } from '../../../../../engine/src/lib/piece-context/store'
+import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -36,6 +37,7 @@ afterAll(async () => {
 
 describe('Engine Services Integration', () => {
     let engineToken: string
+    let engineJobId: string
     let projectId: string
     let platformId: string
     let ownerId: string
@@ -45,10 +47,11 @@ describe('Engine Services Integration', () => {
         projectId = mockProject.id
         platformId = mockPlatform.id
         ownerId = mockOwner.id
+        engineJobId = apId()
 
         engineToken = await generateMockToken({
             type: PrincipalType.ENGINE,
-            id: apId(),
+            id: engineJobId,
             projectId,
             platform: { id: platformId },
         })
@@ -173,6 +176,7 @@ describe('Engine Services Integration', () => {
                 engineToken,
                 apiUrl,
                 contextVersion: ContextVersion.V1,
+                requestingPieceName: undefined,
             })
 
             const result = await connectionService.obtain(externalId)
@@ -209,6 +213,7 @@ describe('Engine Services Integration', () => {
                 engineToken,
                 apiUrl,
                 contextVersion: undefined,
+                requestingPieceName: undefined,
             })
 
             const result = await connectionService.obtain(externalId)
@@ -222,6 +227,7 @@ describe('Engine Services Integration', () => {
                 engineToken,
                 apiUrl,
                 contextVersion: ContextVersion.V1,
+                requestingPieceName: undefined,
             })
 
             await expect(connectionService.obtain('non-existent-id')).rejects.toThrow(ConnectionNotFoundError)
@@ -252,9 +258,198 @@ describe('Engine Services Integration', () => {
                 engineToken,
                 apiUrl,
                 contextVersion: ContextVersion.V1,
+                requestingPieceName: undefined,
             })
 
             await expect(connectionService.obtain(externalId)).rejects.toThrow(ConnectionExpiredError)
+        })
+    })
+
+    describe('connections.service — enforceConnectionPieceBinding (AP_ENFORCE_CONNECTION_PIECE_BINDING)', () => {
+        const ENV_VAR_NAME = 'AP_ENFORCE_CONNECTION_PIECE_BINDING'
+        let originalValue: string | undefined
+        let internalEngineToken: string
+
+        beforeEach(async () => {
+            originalValue = process.env[ENV_VAR_NAME]
+            internalEngineToken = await accessTokenManager(app!.log).generateInternalEngineToken({ jobId: engineJobId })
+        })
+
+        afterEach(() => {
+            if (originalValue === undefined) {
+                delete process.env[ENV_VAR_NAME]
+            }
+            else {
+                process.env[ENV_VAR_NAME] = originalValue
+            }
+        })
+
+        const saveConnection = async (pieceName: string): Promise<string> => {
+            const externalId = apId()
+            const connectionValue = {
+                type: AppConnectionType.SECRET_TEXT,
+                secret_text: 'binding-test-secret',
+            }
+            const encryptedValue = await encryptUtils.encryptObject(connectionValue)
+            const mockConn = createMockConnection({
+                platformId,
+                projectIds: [projectId],
+                externalId,
+                pieceName,
+                status: AppConnectionStatus.ACTIVE,
+            }, ownerId)
+            await db.save('app_connection', {
+                ...mockConn,
+                value: encryptedValue,
+            })
+            return externalId
+        }
+
+        it('flag off (default): mismatched requestingPieceName still succeeds (unchanged behavior)', async () => {
+            delete process.env[ENV_VAR_NAME]
+            const externalId = await saveConnection('@activepieces/piece-slack')
+
+            const connectionService = createConnectionResolver({
+                projectId,
+                engineToken,
+                apiUrl,
+                contextVersion: ContextVersion.V1,
+                requestingPieceName: '@activepieces/piece-http',
+            })
+
+            const result = await connectionService.obtain(externalId)
+            expect(result).toEqual({ type: AppConnectionType.SECRET_TEXT, secret_text: 'binding-test-secret' })
+        })
+
+        it('flag on + matching requestingPieceName: succeeds', async () => {
+            process.env[ENV_VAR_NAME] = 'true'
+            const externalId = await saveConnection('@activepieces/piece-slack')
+
+            const connectionService = createConnectionResolver({
+                projectId,
+                engineToken,
+                internalEngineToken,
+                apiUrl,
+                contextVersion: ContextVersion.V1,
+                requestingPieceName: '@activepieces/piece-slack',
+            })
+
+            const result = await connectionService.obtain(externalId)
+            expect(result).toEqual({ type: AppConnectionType.SECRET_TEXT, secret_text: 'binding-test-secret' })
+        })
+
+        it('flag on + mismatched requestingPieceName: throws ConnectionPieceBindingMismatchError as a USER error', async () => {
+            process.env[ENV_VAR_NAME] = 'true'
+            const externalId = await saveConnection('@activepieces/piece-slack')
+
+            const connectionService = createConnectionResolver({
+                projectId,
+                engineToken,
+                internalEngineToken,
+                apiUrl,
+                contextVersion: ContextVersion.V1,
+                requestingPieceName: '@activepieces/piece-http',
+            })
+
+            const error = await connectionService.obtain(externalId).catch((caught: unknown) => caught)
+            expect(error).toBeInstanceOf(ConnectionPieceBindingMismatchError)
+            expect((error as ConnectionPieceBindingMismatchError).type).toBe(ExecutionErrorType.USER)
+        })
+
+        it('flag on + omitted requestingPieceName (Code/Loop/Router step): throws ConnectionPieceBindingMismatchError', async () => {
+            process.env[ENV_VAR_NAME] = 'true'
+            const externalId = await saveConnection('@activepieces/piece-slack')
+
+            const connectionService = createConnectionResolver({
+                projectId,
+                engineToken,
+                internalEngineToken,
+                apiUrl,
+                contextVersion: ContextVersion.V1,
+                requestingPieceName: undefined,
+            })
+
+            await expect(connectionService.obtain(externalId)).rejects.toThrow(ConnectionPieceBindingMismatchError)
+        })
+
+        it('flag on + connection bound to a generic-destination piece, even with matching requestingPieceName: still blocked', async () => {
+            process.env[ENV_VAR_NAME] = 'true'
+            const externalId = await saveConnection('@activepieces/piece-http')
+
+            const connectionService = createConnectionResolver({
+                projectId,
+                engineToken,
+                internalEngineToken,
+                apiUrl,
+                contextVersion: ContextVersion.V1,
+                requestingPieceName: '@activepieces/piece-http',
+            })
+
+            await expect(connectionService.obtain(externalId)).rejects.toThrow(ConnectionBlockedForGenericPieceError)
+        })
+
+        it('flag on + Read Connection piece requesting a connection bound to another piece: rejected, no exemption', async () => {
+            process.env[ENV_VAR_NAME] = 'true'
+            const externalId = await saveConnection('@activepieces/piece-slack')
+
+            const connectionService = createConnectionResolver({
+                projectId,
+                engineToken,
+                internalEngineToken,
+                apiUrl,
+                contextVersion: ContextVersion.V1,
+                requestingPieceName: '@activepieces/piece-connections',
+            })
+
+            await expect(connectionService.obtain(externalId)).rejects.toThrow(ConnectionPieceBindingMismatchError)
+        })
+
+        it('a piece calling the endpoint directly with its own context.server.token/apiUrl and a forged requestingPieceName, but no internal engine token, is rejected', async () => {
+            process.env[ENV_VAR_NAME] = 'true'
+            // Connection is genuinely bound to Slack. The "attacker" is some OTHER
+            // piece's `run()` code — e.g. a malicious/compromised community piece,
+            // or literally the HTTP piece — which has no legitimate relationship
+            // to this connection at all.
+            const externalId = await saveConnection('@activepieces/piece-slack')
+
+            // This is *exactly* what any piece's run() can already do today: every
+            // piece action receives `context.server.token` and `context.server.apiUrl`
+            // as part of the standard ActionContext (see e.g.
+            // packages/pieces/core/tables/src/lib/common/index.ts, which already
+            // makes raw authenticated calls to internal endpoints this same way).
+            // It does NOT go through createConnectionResolver()/props-resolver.ts at
+            // all — it's a raw fetch, identical in shape to what the engine's own
+            // trusted plumbing sends, except the piece gets to choose every field
+            // itself, including the one the binding check trusts — except the
+            // internal engine token, which is never handed to piece code.
+            const forgedRequestingPieceName = '@activepieces/piece-slack' // the attacker just needs to know/guess the bound piece name — it's not secret, it's visible in the connection list API
+            const response = await fetch(
+                `${apiUrl}v1/worker/app-connections/${externalId}?projectId=${projectId}&requestingPieceName=${encodeURIComponent(forgedRequestingPieceName)}`,
+                { headers: { Authorization: `Bearer ${engineToken}` } },
+            )
+
+            expect(response.status).toBe(400)
+            const body = await response.json() as { code?: string }
+            expect(body.code).toBe('APP_CONNECTION_PIECE_BINDING_MISMATCH')
+        })
+
+        it('legitimate engine path: the same raw fetch, with a valid internal engine token attached, still succeeds', async () => {
+            process.env[ENV_VAR_NAME] = 'true'
+            const externalId = await saveConnection('@activepieces/piece-slack')
+
+            const response = await fetch(
+                `${apiUrl}v1/worker/app-connections/${externalId}?projectId=${projectId}&requestingPieceName=${encodeURIComponent('@activepieces/piece-slack')}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${engineToken}`,
+                        'x-ap-internal-engine-token': internalEngineToken,
+                    },
+                },
+            )
+
+            expect(response.status).toBe(200)
+            const body = await response.json() as { value: unknown }
+            expect(body.value).toEqual({ type: AppConnectionType.SECRET_TEXT, secret_text: 'binding-test-secret' })
         })
     })
 

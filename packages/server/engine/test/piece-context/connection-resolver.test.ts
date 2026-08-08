@@ -1,12 +1,14 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AppConnectionStatus, AppConnectionType, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, FetchError } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, ConnectionBlockedForGenericPieceError, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ConnectionPieceBindingMismatchError, FetchError } from '@activepieces/shared'
 import { createConnectionResolver } from '../../src/lib/piece-context/connection-resolver'
 
 const RESOLVER_PARAMS = {
     projectId: 'project-123',
     apiUrl: 'http://localhost:3000/',
     engineToken: 'test-token',
+    internalEngineToken: 'test-internal-engine-token',
     contextVersion: ContextVersion.V1,
+    requestingPieceName: undefined,
 }
 
 function makeConnection({ status = AppConnectionStatus.ACTIVE, type = AppConnectionType.SECRET_TEXT, value = { type: AppConnectionType.SECRET_TEXT, secret_text: 'my-secret' } }: {
@@ -120,5 +122,80 @@ describe('connection-resolver service', () => {
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
         await expect(resolver.obtain('my-connection')).rejects.toThrow(FetchError)
+    })
+
+    it('does not append requestingPieceName to the URL when undefined', async () => {
+        const connection = makeConnection()
+        const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify(connection),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await resolver.obtain('my-connection')
+
+        expect(fetchMock.mock.calls[0][0]).not.toContain('requestingPieceName')
+    })
+
+    it('appends requestingPieceName to the URL when defined', async () => {
+        const connection = makeConnection()
+        const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify(connection),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, requestingPieceName: '@activepieces/piece-slack' })
+        await resolver.obtain('my-connection')
+
+        expect(fetchMock.mock.calls[0][0]).toContain('requestingPieceName=%40activepieces%2Fpiece-slack')
+    })
+
+    it('throws ConnectionPieceBindingMismatchError when the server reports a piece mismatch', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify({
+                code: 'APP_CONNECTION_PIECE_BINDING_MISMATCH',
+                params: { connectionPieceName: '@activepieces/piece-slack', requestingPieceName: '@activepieces/piece-http' },
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, requestingPieceName: '@activepieces/piece-http' })
+        await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionPieceBindingMismatchError)
+    })
+
+    it('throws ConnectionPieceBindingMismatchError with the no-identity message when requestingPieceName is undefined', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify({
+                code: 'APP_CONNECTION_PIECE_BINDING_MISMATCH',
+                params: { connectionPieceName: '@activepieces/piece-slack', requestingPieceName: undefined },
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await expect(resolver.obtain('my-connection')).rejects.toThrow(/has no piece identity to bind to/)
+    })
+
+    it('throws ConnectionBlockedForGenericPieceError when the server reports a generic-destination block', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify({
+                code: 'APP_CONNECTION_BLOCKED_FOR_PIECE',
+                params: { pieceName: '@activepieces/piece-http' },
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, requestingPieceName: '@activepieces/piece-http' })
+        await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionBlockedForGenericPieceError)
+    })
+
+    it('falls back to ConnectionLoadingError for an unrecognized error code', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify({ code: 'SOME_UNRELATED_ERROR' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionLoadingError)
     })
 })

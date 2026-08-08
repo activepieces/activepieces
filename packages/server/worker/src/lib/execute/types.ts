@@ -14,6 +14,7 @@ export type JobContext = {
     workerIndex: number
     jobId: string
     engineToken: string
+    internalEngineToken?: string
     internalApiUrl: string
     publicApiUrl: string
     log: ApLogger

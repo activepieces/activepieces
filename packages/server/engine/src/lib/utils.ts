@@ -61,7 +61,7 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const connection = await createConnectionResolver({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion }).obtain(key)
+                const connection = await createConnectionResolver({ projectId: params.projectId, engineToken: params.engineToken, internalEngineToken: params.internalEngineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion, requestingPieceName: params.requestingPieceName }).obtain(key)
                 if (params.target === 'actions') {
                     params.hookResponse.tags.push(`connection:${key}`)
                 }
@@ -92,4 +92,4 @@ export type HookResponse = {
 } | {
     type: 'none'
 })
-type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties', contextVersion: ContextVersion | undefined } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse, contextVersion: ContextVersion | undefined }
+type CreateConnectionManagerParams = { projectId: string, engineToken: string, internalEngineToken?: string, apiUrl: string, target: 'triggers' | 'properties', contextVersion: ContextVersion | undefined, requestingPieceName: string | undefined } | { projectId: string, engineToken: string, internalEngineToken?: string, apiUrl: string, target: 'actions', hookResponse: HookResponse, contextVersion: ContextVersion | undefined, requestingPieceName: string | undefined }
