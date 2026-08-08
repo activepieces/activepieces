@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
@@ -127,6 +127,26 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let answer: AgentResult | undefined
         const structured: { output?: Record<string, unknown> } = {}
 
+        let progressSequence = 0
+        let warnedOnProgress = false
+        const pushProgress = (output: AgentResult, final: boolean) => {
+            if (isNil(flowRunId)) {
+                return
+            }
+            progressSequence += 1
+            const sequence = progressSequence
+            void tryCatch(async () => {
+                const { error } = await tryCatch(() => ctx.apiClient.updateFlowStepProgress({ conversationId, flowRunId, output, sequence, final }))
+                if (!isNil(error) && !warnedOnProgress) {
+                    warnedOnProgress = true
+                    log.warn({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not push step progress; the builder timeline may lag')
+                }
+            })
+        }
+        const reportFinal = (output: AgentResult) => pushProgress(output, true)
+        const reportProgress = (uiParts: PersistedAgentPart[]) =>
+            pushProgress(stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: data.tools ?? [], stillRunning: true }), false)
+
         try {
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
             const taintState: TaintState = { tainted: source === AgentRunSource.FLOW_STEP }
@@ -206,6 +226,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                             maxAttempts: 2,
                             log,
                         })
+                        reportProgress(uiParts)
                     },
                 },
             })
@@ -236,7 +257,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
-                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: 'The agent run was stopped before it finished' }), source, log })
+                const stoppedResult = stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: 'The agent run was stopped before it finished' })
+                reportFinal(stoppedResult)
+                await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stoppedResult, source, log })
                 await sendEventWithRetry({
                     event: { type: AgentEventType.FINISHED, data: { conversationId } },
                 })
@@ -307,7 +330,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : errorMessage
-            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: clientMessage }), source, log }))
+            const failedResult = answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: data.tools ?? [], structuredOutput: structured.output, failure: clientMessage })
+            reportFinal(failedResult)
+            const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
             // saveAgentMessages handler's no-shrink guard preserves whatever was persisted
             // incrementally (updateAgentProgress) and only flips status, so an errored turn keeps
@@ -343,6 +368,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
         }
 
+        if (!isNil(answer)) {
+            reportFinal(answer)
+        }
         await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, source, log })
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
