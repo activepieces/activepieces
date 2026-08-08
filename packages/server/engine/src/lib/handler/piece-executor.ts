@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, SealFanInHook, SealFanInParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
+import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, SealFanInHook, SealFanInParams, SealFanInResult, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
@@ -138,7 +138,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 respond: createRespondHook(params),
                 createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
                 waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
-                sealFanIn: createSealFanInHook({ constants, stepName: action.name }),
+                sealFanIn: createSealFanInHook({ constants }),
             },
             project: {
                 id: constants.projectId,
@@ -290,6 +290,8 @@ function createWaitpointHook({ constants, stepName, hookParams }: { constants: E
             workerHandlerId: constants.workerHandlerId ?? undefined,
             httpRequestId: constants.httpRequestId ?? undefined,
             isFanIn: req.isFanIn,
+            intendedChildren: req.intendedChildren,
+            dispatchDigest: req.dispatchDigest,
         })
         return {
             ...result,
@@ -302,22 +304,16 @@ function createWaitpointHook({ constants, stepName, hookParams }: { constants: E
     }
 }
 
-function createSealFanInHook({ constants, stepName }: { constants: EngineConstants, stepName: string }): SealFanInHook {
-    return async (req: SealFanInParams): Promise<void> => {
-        await waitpointClient.create({
+function createSealFanInHook({ constants }: { constants: EngineConstants }): SealFanInHook {
+    return async (req: SealFanInParams): Promise<SealFanInResult> => {
+        return waitpointClient.seal({
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
-            flowRunId: constants.flowRunId,
+            waitpointId: req.waitpointId,
             projectId: constants.projectId,
-            stepName,
-            type: 'WEBHOOK',
-            version: 'V1',
-            isFanIn: true,
             expectedChildren: req.expectedChildren,
             failedToDispatch: req.failedToDispatch,
-            resumeDateTime: req.timeoutAt,
-            workerHandlerId: constants.workerHandlerId ?? undefined,
-            httpRequestId: constants.httpRequestId ?? undefined,
+            timeoutAt: req.timeoutAt,
         })
     }
 }

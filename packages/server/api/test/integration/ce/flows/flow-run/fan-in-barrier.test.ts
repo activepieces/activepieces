@@ -72,12 +72,13 @@ async function createChildren({ parentRunId, parentWaitpointId, statuses }: {
     return children
 }
 
-async function seedBarrier({ flowRunId, expectedChildren, status, resumePayload, stepName }: {
+async function seedBarrier({ flowRunId, expectedChildren, status, resumePayload, stepName, dispatchDigest }: {
     flowRunId: string
     expectedChildren?: number | null
     status?: WaitpointStatus
     resumePayload?: Waitpoint['resumePayload']
     stepName?: string
+    dispatchDigest?: string
 }) {
     const waitpoint = createMockWaitpoint({
         flowRunId,
@@ -87,12 +88,15 @@ async function seedBarrier({ flowRunId, expectedChildren, status, resumePayload,
         expectedChildren: expectedChildren ?? null,
         status: status ?? WaitpointStatus.PENDING,
         resumePayload: resumePayload ?? null,
+        dispatchDigest: dispatchDigest ?? null,
     })
     await db.save('waitpoint', waitpoint)
     return waitpoint
 }
 
-function createBarrier({ flowRunId }: { flowRunId: string }) {
+const DISPATCH_DIGEST = 'a'.repeat(64)
+
+function createBarrier({ flowRunId, dispatchDigest, intendedChildren }: { flowRunId: string, dispatchDigest?: string, intendedChildren?: number }) {
     return waitpointService(app.log).createForPause({
         flowRunId,
         projectId: ctx.project.id,
@@ -100,6 +104,8 @@ function createBarrier({ flowRunId }: { flowRunId: string }) {
         type: PauseType.WEBHOOK,
         version: 'V1',
         isFanIn: true,
+        dispatchDigest: dispatchDigest ?? DISPATCH_DIGEST,
+        intendedChildren,
     })
 }
 
@@ -255,11 +261,13 @@ describe('createFanInBarrier', () => {
     it('creates an unsealed barrier', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
 
-        const { inserted, waitpoint } = await createBarrier({ flowRunId: flowRun.id })
+        const { inserted, waitpoint, fanIn } = await createBarrier({ flowRunId: flowRun.id })
 
         expect(inserted).toBe(true)
         expect(waitpoint.isFanIn).toBe(true)
         expect(waitpoint.expectedChildren).toBeNull()
+        expect(waitpoint.dispatchDigest).toBe(DISPATCH_DIGEST)
+        expect(fanIn).toEqual({ sealed: false, expectedChildren: null, dispatchedIndices: [] })
     })
 
     it('reuses the existing barrier on an idempotent re-entry before anything was dispatched', async () => {
@@ -272,18 +280,68 @@ describe('createFanInBarrier', () => {
         expect(second.waitpoint.id).toBe(first.waitpoint.id)
     })
 
-    it('refuses to re-enter a barrier whose previous attempt already dispatched children', async () => {
+    it('rejects a fan-in create with no dispatch digest', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        const first = await createBarrier({ flowRunId: flowRun.id })
-        await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.RUNNING] })
 
-        await expect(createBarrier({ flowRunId: flowRun.id })).rejects.toThrow()
+        await expect(waitpointService(app.log).createForPause({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: 'fan_out',
+            type: PauseType.WEBHOOK,
+            version: 'V1',
+            isFanIn: true,
+        })).rejects.toThrow()
     })
 
-    it('refuses to re-enter a barrier whose previously dispatched children already finished', async () => {
+    it('rejects a pre-flight child count over AP_MAX_FAN_IN_CHILDREN before anything is dispatched', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        process.env.AP_MAX_FAN_IN_CHILDREN = '3'
+
+        try {
+            await expect(createBarrier({ flowRunId: flowRun.id, intendedChildren: 4 })).rejects.toThrow()
+            expect(await db.findOneBy('waitpoint', { flowRunId: flowRun.id })).toBeNull()
+        }
+        finally {
+            delete process.env.AP_MAX_FAN_IN_CHILDREN
+        }
+    })
+
+    it('re-enters a barrier whose children were dispatched from the same payload', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const first = await createBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED] })
+
+        const second = await createBarrier({ flowRunId: flowRun.id })
+
+        expect(second.inserted).toBe(false)
+        expect(second.waitpoint.id).toBe(first.waitpoint.id)
+        expect(second.fanIn).toEqual({ sealed: false, expectedChildren: null, dispatchedIndices: [] })
+    })
+
+    it('reports the dispatched indices of the children that already went', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const first = await createBarrier({ flowRunId: flowRun.id })
+        const children = await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING] })
+        await db.update('flow_run', children[0].id, { dispatchIndex: 4 })
+        await db.update('flow_run', children[1].id, { dispatchIndex: 0 })
+
+        const second = await createBarrier({ flowRunId: flowRun.id })
+
+        expect(second.fanIn?.dispatchedIndices).toEqual([0, 4])
+    })
+
+    it('refuses to re-enter a barrier whose payload digest changed', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const first = await createBarrier({ flowRunId: flowRun.id })
         await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.SUCCEEDED] })
+
+        await expect(createBarrier({ flowRunId: flowRun.id, dispatchDigest: 'b'.repeat(64) })).rejects.toThrow()
+    })
+
+    it('refuses to re-enter a barrier that has children but no stored digest', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
 
         await expect(createBarrier({ flowRunId: flowRun.id })).rejects.toThrow()
     })
@@ -326,28 +384,24 @@ describe('createFanInBarrier', () => {
 })
 
 describe('sealFanInBarrier', () => {
-    async function seal({ flowRunId, expectedChildren, failedToDispatch, resumeDateTime }: { flowRunId: string, expectedChildren: number, failedToDispatch?: number, resumeDateTime?: string }) {
-        return waitpointService(app.log).createForPause({
-            flowRunId,
+    async function seal({ waitpointId, expectedChildren, failedToDispatch, timeoutAt }: { waitpointId: string, expectedChildren: number, failedToDispatch?: number, timeoutAt?: string }) {
+        return waitpointService(app.log).sealFanInBarrier({
+            waitpointId,
             projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
             expectedChildren,
             failedToDispatch,
-            resumeDateTime,
+            timeoutAt: timeoutAt ?? dayjs().add(30, 'minute').toISOString(),
         })
     }
 
     it('rejects a seal that dispatched more children than AP_MAX_FAN_IN_CHILDREN allows', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await seedBarrier({ flowRunId: flowRun.id })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
         process.env.AP_MAX_FAN_IN_CHILDREN = '3'
 
         try {
-            await expect(seal({ flowRunId: flowRun.id, expectedChildren: 3, failedToDispatch: 1 })).rejects.toThrow()
-            const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, failedToDispatch: 1 })
+            await expect(seal({ waitpointId: barrier.id, expectedChildren: 3, failedToDispatch: 1 })).rejects.toThrow()
+            const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 2, failedToDispatch: 1 })
             expect(waitpoint.expectedChildren).toBe(2)
         }
         finally {
@@ -361,7 +415,7 @@ describe('sealFanInBarrier', () => {
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.RUNNING] })
         const timeoutAt = dayjs().add(30, 'minute').toISOString()
 
-        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, resumeDateTime: timeoutAt })
+        const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 2, timeoutAt })
 
         expect(waitpoint.id).toBe(barrier.id)
         expect(waitpoint.expectedChildren).toBe(2)
@@ -371,17 +425,33 @@ describe('sealFanInBarrier', () => {
         expect(job?.data.waitpointId).toBe(barrier.id)
     })
 
-    it('falls back to a short timeout when the seal carries none, so a forgotten timeout fails fast', async () => {
+    it('seals at the platform ceiling when no timeout is requested, and reports it back', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const barrier = await seedBarrier({ flowRunId: flowRun.id })
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
 
-        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 1 })
+        const { waitpoint, timeoutAt } = await waitpointService(app.log).sealFanInBarrier({
+            waitpointId: barrier.id,
+            projectId: ctx.project.id,
+            expectedChildren: 1,
+        })
 
-        expect(waitpoint.resumeDateTime).not.toBeNull()
-        expect(dayjs(waitpoint.resumeDateTime).isAfter(dayjs().add(55, 'minute'))).toBe(true)
-        expect(dayjs(waitpoint.resumeDateTime).isBefore(dayjs().add(65, 'minute'))).toBe(true)
-        expect(await systemJobsSchedule(app.log).getJob(resumeDelayJobId({ waitpointId: barrier.id }))).toBeDefined()
+        expect(dayjs(waitpoint.resumeDateTime).isAfter(dayjs().add(29, 'day'))).toBe(true)
+        expect(dayjs(waitpoint.resumeDateTime).isBefore(dayjs().add(31, 'day'))).toBe(true)
+        expect(dayjs(timeoutAt).isSame(dayjs(waitpoint.resumeDateTime))).toBe(true)
+    })
+
+    it('reports the effective deadline of a barrier that was already sealed', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
+        const first = await seal({ waitpointId: barrier.id, expectedChildren: 1, timeoutAt: dayjs().add(30, 'minute').toISOString() })
+
+        const second = await seal({ waitpointId: barrier.id, expectedChildren: 5, timeoutAt: dayjs().add(10, 'day').toISOString() })
+
+        expect(second.alreadySealed).toBe(true)
+        expect(second.waitpoint.expectedChildren).toBe(1)
+        expect(dayjs(second.timeoutAt).isSame(dayjs(first.timeoutAt))).toBe(true)
     })
 
     it('still clamps an explicitly requested timeout to the maximum pause duration', async () => {
@@ -390,9 +460,9 @@ describe('sealFanInBarrier', () => {
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
 
         const { waitpoint } = await seal({
-            flowRunId: flowRun.id,
+            waitpointId: barrier.id,
             expectedChildren: 1,
-            resumeDateTime: dayjs().add(400, 'day').toISOString(),
+            timeoutAt: dayjs().add(400, 'day').toISOString(),
         })
 
         expect(dayjs(waitpoint.resumeDateTime).isAfter(dayjs().add(29, 'day'))).toBe(true)
@@ -404,7 +474,7 @@ describe('sealFanInBarrier', () => {
         const barrier = await seedBarrier({ flowRunId: flowRun.id })
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED] })
 
-        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+        const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 2 })
 
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         const summary = waitpoint.resumePayload?.body as FanInSummary
@@ -417,7 +487,7 @@ describe('sealFanInBarrier', () => {
         const barrier = await seedBarrier({ flowRunId: flowRun.id })
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
 
-        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, failedToDispatch: 1 })
+        const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 2, failedToDispatch: 1 })
 
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         const summary = waitpoint.resumePayload?.body as FanInSummary
@@ -433,8 +503,8 @@ describe('sealFanInBarrier', () => {
             statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED],
         })
 
-        await createBarrier({ flowRunId: flowRun.id })
-        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 3, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+        const secondBarrier = await createBarrier({ flowRunId: flowRun.id })
+        const { waitpoint } = await seal({ waitpointId: secondBarrier.waitpoint.id, expectedChildren: 3 })
 
         expect(waitpoint.status).toBe(WaitpointStatus.PENDING)
     })
@@ -445,9 +515,9 @@ describe('sealFanInBarrier', () => {
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
 
         const { waitpoint } = await seal({
-            flowRunId: flowRun.id,
+            waitpointId: barrier.id,
             expectedChildren: 1,
-            resumeDateTime: dayjs().add(365, 'day').toISOString(),
+            timeoutAt: dayjs().add(365, 'day').toISOString(),
         })
 
         expect(dayjs(waitpoint.resumeDateTime).isBefore(dayjs().add(31, 'day'))).toBe(true)
@@ -460,9 +530,9 @@ describe('sealFanInBarrier', () => {
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
 
         const { waitpoint } = await seal({
-            flowRunId: flowRun.id,
+            waitpointId: barrier.id,
             expectedChildren: 1,
-            resumeDateTime: dayjs().subtract(10, 'day').toISOString(),
+            timeoutAt: dayjs().subtract(10, 'day').toISOString(),
         })
 
         expect(dayjs(waitpoint.resumeDateTime).isAfter(dayjs().subtract(1, 'minute'))).toBe(true)
@@ -470,9 +540,9 @@ describe('sealFanInBarrier', () => {
 
     it('rejects an invalid timeout', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        await seedBarrier({ flowRunId: flowRun.id })
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
 
-        await expect(seal({ flowRunId: flowRun.id, expectedChildren: 1, resumeDateTime: 'not-a-date' })).rejects.toThrow()
+        await expect(seal({ waitpointId: barrier.id, expectedChildren: 1, timeoutAt: 'not-a-date' })).rejects.toThrow()
     })
 
     it('leaves an already completed barrier untouched on a duplicate seal', async () => {
@@ -484,7 +554,7 @@ describe('sealFanInBarrier', () => {
             resumePayload: { body: { expected: 2, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, timedOut: false } },
         })
 
-        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 2, resumeDateTime: dayjs().add(5, 'minute').toISOString() })
+        const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 2, timeoutAt: dayjs().add(5, 'minute').toISOString() })
 
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         expect(waitpoint.resumePayload?.body).toEqual({ expected: 2, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, timedOut: false })
@@ -495,9 +565,9 @@ describe('sealFanInBarrier', () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const barrier = await seedBarrier({ flowRunId: flowRun.id })
         await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
-        await seal({ flowRunId: flowRun.id, expectedChildren: 10, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+        await seal({ waitpointId: barrier.id, expectedChildren: 10 })
 
-        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 1, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+        const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 1 })
 
         expect(waitpoint.expectedChildren).toBe(10)
         expect(waitpoint.status).toBe(WaitpointStatus.PENDING)
@@ -507,19 +577,19 @@ describe('sealFanInBarrier', () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const barrier = await seedBarrier({ flowRunId: flowRun.id })
         const [child] = await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
-        await seal({ flowRunId: flowRun.id, expectedChildren: 1, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+        await seal({ waitpointId: barrier.id, expectedChildren: 1 })
         await db.update('flow_run', child.id, { status: FlowRunStatus.SUCCEEDED })
 
-        const { waitpoint } = await seal({ flowRunId: flowRun.id, expectedChildren: 1, resumeDateTime: dayjs().add(30, 'minute').toISOString() })
+        const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 1 })
 
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         expect(waitpoint.expectedChildren).toBe(1)
     })
 
     it('throws when the barrier row no longer exists', async () => {
-        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        await createParentRun(FlowRunStatus.RUNNING)
 
-        await expect(seal({ flowRunId: flowRun.id, expectedChildren: 1 })).rejects.toThrow()
+        await expect(seal({ waitpointId: apId(), expectedChildren: 1 })).rejects.toThrow()
     })
 })
 
@@ -870,15 +940,11 @@ describe('timeout job lifecycle', () => {
         const { flowRun } = await createParentRun()
         const first = await seedBarrier({ flowRunId: flowRun.id })
         await createChildren({ parentWaitpointId: first.id, statuses: [FlowRunStatus.RUNNING] })
-        await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
+        await waitpointService(app.log).sealFanInBarrier({
+            waitpointId: first.id,
             projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
             expectedChildren: 1,
-            resumeDateTime: dayjs().add(60, 'minute').toISOString(),
+            timeoutAt: dayjs().add(60, 'minute').toISOString(),
         })
         expect(await systemJobsSchedule(app.log).getJob(resumeDelayJobId({ waitpointId: first.id }))).toBeDefined()
 
@@ -888,15 +954,11 @@ describe('timeout job lifecycle', () => {
 
         const second = await seedBarrier({ flowRunId: flowRun.id })
         await createChildren({ parentWaitpointId: second.id, statuses: [FlowRunStatus.RUNNING] })
-        await waitpointService(app.log).createForPause({
-            flowRunId: flowRun.id,
+        await waitpointService(app.log).sealFanInBarrier({
+            waitpointId: second.id,
             projectId: ctx.project.id,
-            stepName: 'fan_out',
-            type: PauseType.WEBHOOK,
-            version: 'V1',
-            isFanIn: true,
             expectedChildren: 1,
-            resumeDateTime: dayjs().add(60, 'minute').toISOString(),
+            timeoutAt: dayjs().add(60, 'minute').toISOString(),
         })
 
         const job = await systemJobsSchedule(app.log).getJob<SystemJobName.RESUME_DELAY_WAITPOINT>(resumeDelayJobId({ waitpointId: second.id }))

@@ -1,5 +1,5 @@
 import { ApId } from '@activepieces/core-utils'
-import { FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
+import { FanInBarrierState, FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
 
 enum WaitpointStatus {
     PENDING = 'PENDING',
@@ -35,6 +35,7 @@ type Waitpoint = {
     isFanIn: boolean
     expectedChildren: number | null
     failedToDispatch: number
+    dispatchDigest: string | null
 }
 
 type CreateForPauseParams = {
@@ -48,13 +49,14 @@ type CreateForPauseParams = {
     workerHandlerId?: string
     httpRequestId?: string
     isFanIn?: boolean
-    expectedChildren?: number
-    failedToDispatch?: number
+    intendedChildren?: number
+    dispatchDigest?: string
 }
 
 type CreateForPauseResult = {
     inserted: boolean
     waitpoint: Waitpoint
+    fanIn?: FanInBarrierState
 }
 
 type CompleteParams = {

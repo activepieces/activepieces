@@ -21,6 +21,7 @@ In-builder data transformation: users transform any text input using ~104 functi
 - Evaluation failure throws `FormulaEvaluationError` (an `ExecutionError`), so the step fails with a structured message instead of crashing the engine.
 - Type checker skips expression-operator args (e.g. `3 == 9`) to avoid false-positive errors on runtime-evaluated values.
 - Backward-compat hooks: `argCompatibility.defaultArgs` (fill missing trailing args from a default) and `deprecated: { replacement, removeAfter }` (strikethrough badge, still resolves at runtime). Never hard-remove a function; format bumps are handled by the `v\d+` wrapper (add `evaluateV2`, dispatch on captured version).
+- **Five registered functions are non-deterministic, not three**: `random()`, `random_int()`, `now()`, `today()`, and `relative_time()` (renders against the current clock). Any feature that reasons about resolved-props stability (e.g. fan-out re-entry against a persisted dispatch index) must count all five — and a static "is this expression deterministic" check is a hardcoded list that silently rots when a function like `uuid()` is added to `function-implementations.ts`. Prefer comparing resolved *values* (digest) over inspecting expression *content*.
 
 ### Key files
 Entry point: `formulaEvaluator`, exported from `packages/core/formula/src/lib/formula-evaluator.ts` and imported by the engine's `props-resolver.ts` as `@activepieces/core-formula`.

@@ -418,6 +418,7 @@ export const createMockWaitpoint = (waitpoint?: Partial<Waitpoint>): Waitpoint =
         isFanIn: waitpoint?.isFanIn ?? false,
         expectedChildren: waitpoint?.expectedChildren ?? null,
         failedToDispatch: waitpoint?.failedToDispatch ?? 0,
+        dispatchDigest: waitpoint?.dispatchDigest ?? null,
     }
 }
 

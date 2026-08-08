@@ -41,6 +41,16 @@ async function hasNonTerminalChild({ parentWaitpointId, projectId }: CountChildr
         .getExists()
 }
 
+async function listChildren({ parentWaitpointId, projectId }: CountChildrenParams, entityManager?: EntityManager): Promise<FanInChild[]> {
+    return flowRunRepo(entityManager)
+        .createQueryBuilder('flowRun')
+        .select(['"flowRun"."id" AS "id"', '"flowRun"."status" AS "status"', '"flowRun"."dispatchIndex" AS "dispatchIndex"'])
+        .where('"flowRun"."parentWaitpointId" = :parentWaitpointId', { parentWaitpointId })
+        .andWhere('"flowRun"."projectId" = :projectId', { projectId })
+        .orderBy('"flowRun"."dispatchIndex"', 'ASC')
+        .getRawMany<FanInChild>()
+}
+
 function isReleasable({ counts, barrier }: EvaluateBarrierParams): boolean {
     if (isNil(barrier.expectedChildren)) {
         return false
@@ -80,7 +90,13 @@ const EMPTY_COUNTS: FanInChildCounts = {
 
 const NON_TERMINAL_STATUSES = Object.values(FlowRunStatus).filter((status) => !isFlowRunStateTerminal({ status, ignoreInternalError: false }))
 
-export const fanInBarrier = { countChildren, hasNonTerminalChild, isReleasable, toSummary, hasAnyChildren }
+export const fanInBarrier = { countChildren, listChildren, hasNonTerminalChild, isReleasable, toSummary, hasAnyChildren }
+
+export type FanInChild = {
+    id: string
+    status: FlowRunStatus
+    dispatchIndex: number | null
+}
 
 export type FanInChildCounts = {
     succeeded: number

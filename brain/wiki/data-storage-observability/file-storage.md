@@ -31,6 +31,7 @@ The central service for persisting binary files, backing the execution engine an
 
 ### Gotchas
 - Cleanup job runs hourly (`30 */1 * * *`), deletes stale execution files past `EXECUTION_DATA_RETENTION_DAYS`; processes ~4000/iteration, deletes S3 keys in batches of 100.
+- **The retention clock is last-written, not created.** `fileService.save` sets `created: dayjs().toISOString()` on every call, and it upserts by `fileId` — so re-saving an existing file resets its expiry. TypeORM would normally exclude a `createDate: true` column from an UPDATE, but the `isCreateDate` skip is commented out of `SubjectChangedColumnsComputer.computeDiffColumns`, so the explicit value lands in the diff. This is why a run paused for weeks keeps its logs (each resume rewrites `logsFileId` and re-arms the clock), and why two files written at the same time but *finishing* at different times expire at different times.
 - S3 deletes send CRC32C checksum (OCI rejects the SDK-default CRC32). `S3_ENDPOINT` set → SDK checksum/aws-chunked encoding disabled for S3-compatible providers.
 - `S3_USE_SIGNED_URLS=true` redirects downloads to 7-day pre-signed URLs instead of streaming through the app.
 

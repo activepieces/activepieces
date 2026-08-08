@@ -25,7 +25,10 @@ A flow called by another flow. The child is a full `flow_run` in its own right, 
 - **Fan-in barrier** — the single waitpoint (`is_fan_in = true`) a parent pauses on while N dispatched children run. Children name their barrier via `flow_run.parentWaitpointId`, stamped from the `ap-parent-waitpoint-id` dispatch header. Release is a predicate re-derived from committed child state — `sealed ∧ no non-terminal child ∧ terminal ≥ expected` — never a counter and never a poll. See decision 000015.
 - **Seal** — the point where the dispatcher declares how many children it actually got accepted (`expectedChildren`) plus a `timeoutAt`. A barrier is unsealed and unreleasable until then; every seal gets a timeout job, and sealing is once-only so a replay can neither lower the expectation nor fail the run.
 - **Straggler** — a child still non-terminal when its barrier is released by timeout. Nothing cancels one today.
+- **Effective width** — how many fan-out children actually run at once: `min(batch count, concurrency limit)`. Smaller batches raise it until the cap (past that is pure overhead — the "knee"); larger batches drop it below the cap, which is how a user throttles a rate-limited downstream API.
+- **Sizing input** — a ceiling the user weighs when choosing a batch size (downstream tolerance, the knee formula, the 600s child timeout, retry blast radius), as distinct from a *cap* the platform enforces. Ceilings compose with a static default; targets ("aim for X") do not.
 - Gotcha: a barrier is **not** externally resumable. There are **four** external resume paths (the deprecated V0 `/requests/:requestId` pair reads no waitpoint at all) and all of them plus the confirmation page refuse `isFanIn`, so only the predicate and the timeout may release one.
+- Gotcha: no recursion/depth guard exists anywhere. A `Callable Flow` subflow can call itself, directly or through an indirection chain, unboundedly — nothing on the dispatch path or in the engine tracks call depth. Confirmed by grepping the engine and server for `depth`/`recursion`/`maxDepth`/`callStack`: zero hits outside test files.
 
 ### Triggers
 Defines how/when a flow starts. Registered as a `TriggerSource` (unique per projectId/flowId/simulate); dedup state in Redis.
@@ -59,6 +62,7 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 - **Flows** — the versioned trigger + action graph, DRAFT/LOCKED, publishing
 - **Flow Runs** — the status state machine, RunTimeline phases, waitpoints and the fan-in barrier
 - **Fan-in entry points** — what the first caller of the dormant barrier has to deal with
+- **Fan-out prior art** — how n8n / Make / Zapier / Temporal / Inngest / Trigger.dev handle batched fan-out, and which stated reasons transfer
 - **Triggers** — POLLING / WEBHOOK / APP_WEBHOOK / MANUAL
 - **Human Input** — forms, approvals, the resume confirmation page
 - **Folders** — flow organization; the uncategorized sentinel

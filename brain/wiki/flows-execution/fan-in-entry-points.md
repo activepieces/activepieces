@@ -11,6 +11,10 @@ barrier is shaped the way it is; everything here is downstream of that.
 **Binding constraint, settled: if it fans out, it must fan in.** No fire-and-forget fan-out action,
 ever. `callFlow.waitForResponse` (a single fire-and-forget call, not a fan-out) stays as it is.
 
+For how other platforms answered the same questions — concurrency scope, per-batch retry, quota, nesting — see
+[Fan-out prior art](./fan-out-prior-art.md). Most relevant here: **nothing in the industry re-attaches a
+retried child to a closed parent aggregate**, so the re-attachment problem below is one we are inventing.
+
 ### The two candidates
 
 **A. Stream CSV to Subflows.** Exists on `origin/feat/stream-csv-to-subflows` as a **fire-and-forget**
@@ -18,11 +22,12 @@ action (`packages/pieces/core/subflows/src/lib/actions/stream-csv-to-flow.ts` pl
 dispatcher in `lib/fan-out.ts`, `maxInFlight: 5`). It must be converted to fan in before it ships.
 Children go through `POST /v1/webhooks/:flowId` to a *separate* flow carrying a Callable Flow trigger.
 
-**B. Bulk Process step.** A new **`FlowActionType.BULK_PROCESS`** core action — a loop-shaped container
+**B. Process in Batches step.** A new **`FlowActionType.PROCESS_IN_BATCHES`** core action — a loop-shaped container
 whose nested body is a *section* of steps, batched out to child runs.
 
-- **Not** a `LOOP_ON_ITEMS` mode. Costs `LATEST_FLOW_SCHEMA_VERSION` 22→23 and a case in the ~45 files
-  that branch on `LOOP_ON_ITEMS`; buys honest semantics — a loop's output is per-iteration results, a
+- **Not** a `LOOP_ON_ITEMS` mode. Costs a case in ~43 live sites that branch on `LOOP_ON_ITEMS` — but
+  **no `LATEST_FLOW_SCHEMA_VERSION` bump**, an early assumption since overturned (see the bump gotcha on
+  [flows](./flows.md)); buys honest semantics — a loop's output is per-iteration results, a
   batched fan-out's is a fan-in summary, and conflating them is a silent output-shape change.
 - Children run the **parent's** `flowVersionId` starting at a section entry step. `flowExecutor.execute()`
   already starts from any action node (`packages/server/engine/src/lib/handler/flow-executor.ts`), and
@@ -30,8 +35,16 @@ whose nested body is a *section* of steps, batched out to child runs.
   publish-time sync problem, no orphans when the section is deleted. The body terminates itself
   (`nextAction` is null at the end of the nested chain), so no exit marker is needed.
 - **Section inputs**: statically extract the body's `{{ stepX.* }}` references at dispatch and resolve
-  them from the parent's live state, so only what is referenced travels. No such utility exists yet;
-  `flowStructureUtil.transferStep` already visits every string value and is the hook for it.
+  them from the parent's live state, so only what is referenced travels. **The utility already exists** —
+  `extractReferencedStepNames` in `packages/server/engine/src/lib/variables/props-resolver.ts` (substring
+  match of the flow's step names against the JSON-stringified unresolved input) feeding
+  `FlowExecutorContext.currentState(referencedStepNames)`, which is how *every* step in *every* run already
+  resolves. What is missing is only the union over a body section rather than one step's input; an earlier
+  version of this page wrongly said no utility existed and pointed at `flowStructureUtil.transferStep`.
+  A token can only resolve if its step name appears literally in the unresolved input, so that union is a
+  **provable superset** of what any body step could address — referenced-only is parity with a full
+  snapshot, not a narrowing of it. Code steps do not weaken this: `code-executor.ts` passes
+  `inputs: resolvedInput` (the step's declared `settings.input` only), so there is no broad context handle.
 - **Dispatch runs in the engine sandbox** against a new `POST /v1/flow-runs/dispatch`. These children
   cannot use `POST /v1/webhooks/:flowId` — that resolves the *published* version and runs a trigger.
   Rejected alternative: a server-side fan-out job (materialises the whole item list to storage and adds
@@ -46,8 +59,34 @@ whose nested body is a *section* of steps, batched out to child runs.
   pauses on a plain webhook waitpoint nothing resumes → a multi-day hang, not an error. The floor is
   piece-wide and framework-wide, so a runtime `typeof context.run.sealFanIn === 'function'` guard
   **before** creating the barrier or dispatching anything is the targeted alternative. **Does not apply
-  to `BULK_PROCESS`** — a core executor ships with the engine, so there is no piece-registry skew.
+  to `PROCESS_IN_BATCHES`** — a core executor ships with the engine, so there is no piece-registry skew.
 - **Bounded dispatch concurrency** — reuse `fan-out.ts` (`maxInFlight: 5`) from the CSV branch.
+- **Execution concurrency needs no new cap, and children are *not* exempt from the existing one.**
+  `rate-limiter-interceptor.ts` already limits per project — key is `concurrencyPool(projectId) ?? projectId`,
+  limit is plan-derived on Cloud (Standard 5 → Enterprise 30) or `AP_DEFAULT_CONCURRENT_JOBS_LIMIT` (5)
+  elsewhere, over-cap jobs are delayed and demoted to `lowest` rather than dropped. It keys on
+  `WorkerJobType.EXECUTE_FLOW`, which every fan-out child becomes, so a parent fanning out to 10k children
+  does **not** bypass its project's limit (n8n exempts sub-workflows; we do not). `RunEnvironment.TESTING` is
+  exempt, so test-step batches are unlimited. Flag `AP_PROJECT_RATE_LIMITER_ENABLED` defaults to `false`
+  self-hosted; the platform bound is physical either way — worker *is* the sandbox, so replica count caps it.
+- **Throughput has a knee at `batch count ≈ available concurrency`, so batch count is not a "bigger is
+  better" knob.** Below the knee slots idle and throughput is genuinely lost. Above it wall clock is **flat**
+  — 100 batches × 10 items and 5 batches × 200 items both take 200 item-times through 5 slots — while
+  overhead rises linearly: child `flow_run` rows, dispatches, barrier re-evaluations, and entries into the
+  shared `runs_metadata_<runId>` lock. Counter-pressure keeps the knee from being the whole answer: a failed
+  batch re-runs all of its items, and one batch must finish inside `FLOW_TIMEOUT_SECONDS`. Consequence for
+  sizing guidance: the ideal batch size is a function of array length *and* the project's concurrency, so it
+  cannot be baked into a static default. Consequence for single-worker installs: concurrency is 1, so a
+  batched fan-out buys no throughput at all there — only overhead and a barrier.
+- **Execution concurrency needs no new mechanism — but read its default before relying on it.**
+  `rateLimiterInterceptor` (`workers/job-queue/interceptors/`) already caps concurrent `EXECUTE_FLOW`
+  jobs on a key (`concurrencyPool(projectId) ?? projectId`) under a static plan-derived limit, and
+  queues rather than drops (`REJECT` → `moveToDelayed`, demoted to `lowest` priority). **Children are
+  not exempt** — every dispatched child becomes an `EXECUTE_FLOW` job, so a fan-out is metered like any
+  other run of that project. That is the opposite of n8n, which exempts sub-workflow executions
+  entirely (see [Fan-out prior art](./fan-out-prior-art.md)). Two gotchas: `AP_PROJECT_RATE_LIMITER_ENABLED`
+  defaults to **`false`**, so a self-hoster has no cap unless they set it; and `RunEnvironment.TESTING`
+  is skipped, so a test-step batch is never throttled.
 - **The child cap is `AP_MAX_FAN_IN_CHILDREN`, default 10000** (was a hardcoded 1000 in the zod schema;
   now an app system prop enforced in `waitpointService.sealFanInBarrier` against
   `expectedChildren + failedToDispatch`). A 1M-row batched fan-out at 100/batch still lands exactly on
@@ -57,7 +96,20 @@ whose nested body is a *section* of steps, batched out to child runs.
   timeout this week", or "which have stragglers". For a primitive whose failure mode is a multi-day
   silent hang, that is the gap to close before an entry point ships:
   `wideEvent.set({ fanIn: { barrierId, expectedChildren, releaseReason, stragglers, latencyMs } })` at
-  each release site costs almost nothing and makes it queryable in ClickHouse.
+  each release site. **Correction: not "almost nothing" — `wideEvent.set()` is a silent no-op outside an
+  active `wideEvent.run()` scope** (`packages/server/utils/src/wide-event.ts`, an `AsyncLocalStorage`
+  wrapper), and 3 of the 4 release sites have no such scope today: the predicate release
+  (`maybeResumeFanInBarrier`, in the `runsMetadataQueue` BullMQ worker) and both the timeout release and
+  the deadline sweep (`resume-delay-handler.ts` / `sweepOverdueDeadlines`, in the `systemJobsSchedule`
+  worker) never call `wideEvent.run(...)`. Only the partial-dispatch seal runs inside an HTTP request and
+  therefore inside a live wide event already. So the prerequisite is wrapping those two BullMQ workers in
+  `wideEvent.run()` — mirroring what `worker.ts:349` already does for job execution — not just adding
+  `.set()` calls. Also note the deadline sweep only re-arms the BullMQ job; it never itself releases the
+  barrier or computes child counts, so it isn't a "release" event in the same sense as the other three.
+  **Per-child observability is closer to free than this implied**, though: every batch child is a normal
+  `EXECUTE_FLOW` job, and `worker.ts:349` already wraps job execution in `wideEvent.run()` with
+  `flowRun.id`/`flow.id`/`project.id` seeded — it just doesn't carry `parentWaitpointId` yet, so
+  "all children of barrier X" is one field away from queryable, not a second event stream.
 - **`ap-parent-waitpoint-id` is stamped from an unauthenticated header with no ownership check.**
   `webhook-request-converter.ts` validates the *format* only — nothing checks the waitpoint exists, is
   `isFanIn`, is PENDING, or belongs to the flow's project. Cross-tenant is blocked by `countChildren`'s
@@ -70,13 +122,23 @@ whose nested body is a *section* of steps, batched out to child runs.
   `:`, because BullMQ rejects a custom job id containing `:` (`Custom Id cannot contain :`); `projectId` is
   a fixed-length 21-char `ApId`, so the prefix is still unambiguous and dedup keeps working within a
   project.
-- **Create and seal are one endpoint discriminated by the absence of a field.** In `waitpoint-service.ts`,
-  `isFanIn` plus a nil `expectedChildren` means create and a present one means seal. A caller that
-  sensibly tries create+seal in one call gets "The fan-in barrier for this step no longer exists" — an
-  error describing the opposite of what happened. `sealFanInBarrier` also re-finds the barrier by
-  `(flowRunId, stepName)` when the engine already holds its id. Resolve as `POST /v1/waitpoints/:id/seal`
-  **while nothing depends on the current shape**; after an entry point ships this is a breaking API
-  change. Same open question as "what does `POST /v1/waitpoints` return" below.
+- **Create and seal were one endpoint discriminated by the absence of a field — split, and now closed.**
+  `isFanIn` plus a nil `expectedChildren` meant create and a present one meant seal, so a caller that
+  sensibly tried create+seal in one call got "The fan-in barrier for this step no longer exists" — an
+  error describing the opposite of what happened. Now `POST /v1/waitpoints` creates and
+  `POST /v1/waitpoints/:id/seal` seals, addressed by id. Two things rode the split:
+  - **The ceiling ask is omission.** `PROCESS_IN_BATCHES` seals at `now + AP_PAUSED_FLOW_TIMEOUT_DAYS`, and
+    the sandbox cannot compute that value (the env var is deliberately not propagated in), so `timeoutAt`
+    on the seal request is **optional and omitting it means the ceiling**. It is deliberately *not*
+    "send a far-future date and let `clampFanInTimeout` clamp" — that fires the clamp warn on every
+    legitimate run and turns a misbehavior signal into noise. An earlier version of this page said the ask
+    had to be distinct from omission because a forgot-caller 1-hour fallback already claimed it; **no such
+    fallback exists in the code**, and once seal was its own endpoint `timeoutAt` was required there, so
+    omission was unclaimed. The seal response returns the effective post-clamp `timeoutAt` — the engine
+    could not previously learn its own deadline.
+  - **Create returns the barrier's re-entry state.** An optional `fanIn: { sealed, expectedChildren,
+    dispatchedIndices }` block, present only for fan-in creates, so the dispatcher can tell fresh from
+    "sealed, N expected" from "partially dispatched, these indices already went".
 
 ### The dispatch loop is not resumable
 
@@ -86,7 +148,7 @@ children plus either an unsealed barrier or a failed run. The dispatch key
 active; once it completes a replay would create duplicates, so `createFanInBarrier` throws instead.
 
 `parentWaitpointId` makes the real fix possible: **skip the indices this barrier already dispatched and
-send only the rest.** Two clauses have to hold, and neither of them separates CSV from `BULK_PROCESS`.
+send only the rest.** Two clauses have to hold, and neither of them separates CSV from `PROCESS_IN_BATCHES`.
 
 **1. The resume index must come from the set of dispatched indices, never from the child count.**
 Dispatch is concurrent (`maxInFlight: 5`) so completions land out of order, and child rows materialise
@@ -100,6 +162,15 @@ it to a BullMQ `jobId` and jobs are removed on completion — nothing persists i
 covers exactly the window the rows do not: index present → skip; index absent but job queued/active →
 dispatch and the key swallows it; index absent and job gone → genuinely needs dispatching.
 
+`flow_run.dispatchIndex` and `waitpoint.dispatchDigest` are **shipped columns**
+(`1821000000000-AddDispatchTrackingToFanIn`), and `fanInBarrier.listChildren` reads the set as rows —
+never a `COUNT` or a `MAX` — on the partial `idx_run_parent_waitpoint_id`, so no new index. **Nothing
+writes `dispatchIndex` yet.** The columns landed while the API window was still free; the writer is a
+`ap-dispatch-index` header threaded `webhook-request-converter` → `EXECUTE_WEBHOOK` job → worker →
+`submitPayloads` → `queueOrCreateInstantly`, which is additive and non-breaking, so it lands with the
+dispatcher. Until then `dispatchedIndices` is `[]` on every response — the empty array means "no
+dispatcher has run", not "no children were dispatched".
+
 **2. The source must be stable bytes.** Batching is *deterministic* — `fanOutBatches` derives
 `batchIndex` from position alone and `createCsvParser` is pure given the same `delimiter`, so the same
 bytes and the same `batchSize` always yield the same batch *k*. Re-entry therefore never seeks: it
@@ -110,9 +181,25 @@ and a pre-signed link expires, `latest.csv` changes, an export endpoint regenera
 Uploads and previous-step files are stored bytes and resume exactly as well as an items array, so the
 CSV caveat shrinks to rejecting (or warning on) non-stored sources.
 
-Open: what `POST /v1/waitpoints` returns, so the dispatcher can tell "fresh" from "sealed, N expected"
-from "partially dispatched, these indices already went". (Re-entry into an already-sealed barrier no
-longer hard-fails the run — the once-only seal made that a logged no-op.)
+For `PROCESS_IN_BATCHES` clause 2 is **enforced, not assumed**: the dispatcher sends a sha-256 of the
+dispatched payload (extracted seed union + resolved items) on `POST /v1/waitpoints`, it is persisted on
+the barrier at creation, and re-entry fails the parent on mismatch before dispatching further — match is
+what proves complement dispatch safe.
+
+**The server compares the digest, not the engine.** `createFanInBarrier` throws when a barrier that already
+has children is re-entered with a different digest; a stored `null` digest (a row predating the column)
+keeps the older, blunter "children present → throw". The server still never learns what the items are — it
+compares two opaque hashes. This inverts the original design, which had the server return the stored digest
+and the dispatcher compare: the guard is the only thing between a re-entering dispatcher and duplicate
+children, and a guard in the caller is one the caller can forget. Sending a digest is therefore mandatory
+for `isFanIn` creates.
+Expression-content inspection was rejected: a BEGIN redelivery re-executes the whole prefix (see the
+flow-runs page), so instability can enter through any non-idempotent upstream step, invisible to any
+static check — and the formula registry's non-deterministic function list is five, not three (see the
+formulas page).
+
+(Re-entry into an already-sealed barrier no longer hard-fails the run — the once-only seal made that a
+logged no-op. What `POST /v1/waitpoints` returns is settled above: the optional `fanIn` block.)
 
 ### Retry and resume both re-enter the dispatch loop, and the barrier is gone by then
 
@@ -126,6 +213,20 @@ present indices, skip the re-seal when already sealed. Normal release yields an 
   re-queueing, and re-entry discards a leftover COMPLETED barrier for the step. So "reuse the previous
   barrier" means keeping `isFanIn` rows COMPLETED instead of deleting them, exempting them from retry's
   wipe, and path-keying the discard. Resume also needs the row for its `resumePayload` summary.
+- **But barrier reuse is only needed to re-run a *subset* of children — and every constraint in this list is
+  a cost of it.** A retry that re-dispatches *all* children needs none of them: the wipe plus the
+  leftover-COMPLETED discard already hands the retry a **fresh** barrier, and because `parentWaitpointId` has
+  no FK the previous attempt's children stay attributed to the now-deleted barrier id, so they are invisible
+  to the new predicate. `countChildren` stays `COUNT(*)`, the deadline and the `<barrierId>-<index>` dispatch
+  keys are fresh, and the parent re-extracts each child's seed from its own restored state — which removes the
+  "persist the child's entry step and seeded prior-step state before any retry" prerequisite too. Only
+  path-keyed identity survives, for its own loop-iteration reason. The whole cost of subset-retry is that one
+  choice; price it there, not across six places.
+- **A mid-graph child is retryable by id, and `FROM_FAILED_STEP` on it is wrong.** Children are real
+  `flow_run` rows and `POST /v1/flow-runs/:id/retry` guards only the retention window, so anyone holding a
+  child's id can retry it — and since the strategy walks from the trigger rather than starting at the child's
+  entry step, it re-executes the parent flow's whole prefix inside the child. An entry point that dispatches
+  mid-graph children has to refuse retry for a run that started mid-graph.
 - **`flow_run.parentWaitpointId` has no FK** — a plain `varchar(21)`. The id keeps grouping children
   after the row is deleted, so attribution is durable even though the barrier is not.
 - **Path-keyed identity separates a retry from a new attempt.** Loop iteration N+1 is a different path
@@ -155,7 +256,7 @@ If a dispatch created the child row synchronously (QUEUED) before returning, the
 `sealed ∧ no non-terminal child`, and `expectedChildren`, `failedToDispatch` and `notStarted` all
 disappear, along with the whole "accepted but never materialised" class.
 
-**That comes free on the `BULK_PROCESS` path.** `POST /v1/flow-runs/dispatch` is a new endpoint, so it can
+**That comes free on the `PROCESS_IN_BATCHES` path.** `POST /v1/flow-runs/dispatch` is a new endpoint, so it can
 insert the row synchronously at no cost to the existing hot webhook path; `expectedChildren` then survives
 only for the CSV piece. Caveat: a pre-created QUEUED row that never runs relocates the hang rather than
 removing it, unless the job's failure paths mark it terminal.
@@ -186,7 +287,7 @@ entry point that can expose the choice to the user.
 
 Fan-out width is bounded by one sandboxed step's runtime (`FLOW_TIMEOUT_SECONDS`, 600s default, fixed on
 Cloud). Less binding than it sounds: at `maxInFlight: 5` and ~10ms per dispatch, 600s is on the order of
-300k batches, so for `BULK_PROCESS` the real ceiling is the items array fitting in engine memory, not
+300k batches, so for `PROCESS_IN_BATCHES` the real ceiling is the items array fitting in engine memory, not
 dispatch throughput. Serial dispatch is what does not scale.
 
 The earlier decision that rejected server-side dispatch for v1 as the wrong shape still stands — but it
@@ -196,6 +297,40 @@ decision when the entry point lands.** (It is cited in the review as "000015", w
 number — the server-side-dispatch decision is not in this repo, so find it in Craftspace before citing a
 number for it.)
 
+### Slice refs a barrier's children read cannot expire inside the barrier window — except one gap
+
+Three separate pieces compose into an invariant nothing states in one place: `clampFanInTimeout` caps every
+barrier deadline at `AP_PAUSED_FLOW_TIMEOUT_DAYS`, the startup validator (`system-validator.ts`) refuses to
+boot when that exceeds `AP_EXECUTION_DATA_RETENTION_DAYS`, and per-project retention overrides are floored
+at the paused-flow timeout (`project-service.ts`). So a `FLOW_RUN_LOG_SLICE` written at seal time outlives
+any barrier deadline. The gap: the slice clock starts at *write* and is never re-armed on resume (only the
+run log file is — see [file-storage](../data-storage-observability/file-storage.md)), so a parent paused
+between producing a large output and reaching the fan-out step erodes the margin. A child materializing an
+expired ref fails cleanly: the engine download path maps 404/410 to `EngineFileNotFoundError`, a USER-type
+step failure, never `INTERNAL_ERROR` (`engine-file-api.ts`).
+
+### The fan-in summary cannot enumerate its own healthy children
+
+The summary's `exceptions` array carries `childRunId` only for `failed` / `notStarted` / `failedToDispatch`
+batches — succeeded and still-running children have no ids anywhere the parent's output can reach, by
+design (per-batch entries for successes would scale the payload with N). Consequence for any parent-side
+surface that browses children (run-detail panel, ops tooling): it needs a children-enumeration query —
+child runs by `parentWaitpointId` plus the persisted dispatch index — and since list surfaces hide barrier
+children by default (`parentWaitpointId IS NULL`), that query is an explicit include, not the default list.
+A summary-only UI avoids the new surface but can never open a succeeded batch's logs.
+
+The query itself is cheap and needs **no new index**: the partial index the barrier work already shipped
+(`flow-run-entity.ts`, columns `['parentWaitpointId', 'projectId', 'status']`,
+`WHERE "parentWaitpointId" IS NOT NULL`) covers it — a listing helper is a sibling of `countChildren`
+selecting rows instead of a `GROUP BY`. Growing the summary to carry every child id is the wrong trade: it
+reverses the payload bound (failure count, not N) *and* the summary lives in the parent's log file, so it
+would grow that file with fan-out width.
+
+Related web-side consequence: a parent-side panel cannot reuse the loop-iteration output lookup
+(`extractStepOutput` → `executionJournal.getPathToStep`) for a fan-out container's body steps, because those
+outputs are not in the parent's `run.steps` at all — they live in each child's own log file, fetched by
+child run id. The loop *rail* presentation reuses fine; the data path underneath it does not.
+
 ### Past ~10k children the bottleneck stops being row reads
 
 Every child's terminal transition enters the shared `runs_metadata_<runId>` distributed lock in the
@@ -203,3 +338,23 @@ runs-metadata worker, a critical path used by every run on the instance. Neither
 existence probe, nor a join table touches this. The fix is to coalesce evaluation per barrier — a child
 enqueues a deduplicated job keyed on the barrier id instead of evaluating inline (BullMQ deduplication is
 already used in that worker). Only needed at or above the `AP_MAX_FAN_IN_CHILDREN` default of 10000.
+
+### Gotchas
+
+- **A rejected waitpoint call used to page oncall.** `waitpoint-client.ts` turned *every* non-ok response
+  into `EngineGenericError`, which is `ExecutionErrorType.ENGINE` → job `INTERNAL_ERROR` → pager. Both
+  server-side rejections a dispatcher can trigger are user-data conditions — a `dispatchDigest` mismatch and
+  an `intendedChildren` over `AP_MAX_FAN_IN_CHILDREN` — so a 1M-item array would have paged someone. The
+  client now maps 4xx to `WaitpointRejectedError` (`ExecutionErrorType.USER`, so a FAILED step carrying the
+  server's message) and keeps `EngineGenericError` for 5xx. Any new engine→server client should split the
+  same way rather than copying the old shape.
+- **`assertDelayWithinTimeout` in `piece-executor.ts` can never fire.** It compares against
+  `Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)`, and the sandbox env is built exhaustively in
+  `create-sandbox-for-job.ts` — that var is not in it, so the value is `NaN` and `diffInDays > NaN` is
+  always false. The guard has been dead since the sandbox env was locked down, and `PausedFlowTimeoutError`
+  would say "more than NaN days" if it ever did fire. It is *not* what bounds a fan-in deadline — the
+  server-side `clampFanInTimeout` is. Do not build on it without fixing it first.
+- **Nothing reads `packages/web/src/assets/img/piece/*.svg`.** Every core step's `logoUrl` in
+  `step-utils.tsx` points at `cdn.activepieces.com/pieces/new-core/`, so those repo files are provenance
+  only and a new core step's icon is an upload, not a merge. The CDN objects are the bare glyph (`loop.svg`
+  is 21×24, untiled); the 48×48 `rx="5"` tile formula applies to the repo copies.

@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { ActivepiecesError, ErrorCode, FlowRunStatus, PauseType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FanInBarrierState, FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
@@ -9,21 +9,17 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { legacyResumeDelayJobId, resumeDelayJobId, SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
-import { fanInBarrier } from './fan-in-barrier'
+import { fanInBarrier, FanInChild } from './fan-in-barrier'
 import { WaitpointEntity } from './waitpoint-entity'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 const SWEEP_BATCH_SIZE = 500
-const FAN_IN_DEFAULT_TIMEOUT_HOURS = 1
 
 export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
         if (params.isFanIn ?? false) {
-            if (isNil(params.expectedChildren)) {
-                return this.createFanInBarrier(params)
-            }
-            return { inserted: false, waitpoint: await this.sealFanInBarrier({ params }) }
+            return this.createFanInBarrier(params)
         }
 
         const preCompleted = await waitpointRepo().findOneBy({
@@ -81,19 +77,24 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async createFanInBarrier(params: CreateForPauseParams): Promise<CreateForPauseResult> {
+        const dispatchDigest = params.dispatchDigest
+        if (isNil(dispatchDigest)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'A fan-in barrier must be created with a dispatchDigest, so a dispatcher re-entering after a crash can prove it resolved the same payload before dispatching the rest.' },
+            })
+        }
+        if (!isNil(params.intendedChildren)) {
+            assertFanInChildrenWithinLimit({ dispatched: params.intendedChildren })
+        }
         return transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
             const existing = await repo.findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
             if (!isNil(existing) && existing.status === WaitpointStatus.PENDING) {
-                const counts = await fanInBarrier.countChildren({ parentWaitpointId: existing.id, projectId: params.projectId }, entityManager)
-                if (fanInBarrier.hasAnyChildren(counts)) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: { message: 'This fan-in step already dispatched subflows, so it cannot be started again — re-running the dispatch loop would create duplicate children. Retry the parent run from the beginning instead of retrying the step.' },
-                    })
-                }
-                log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id } }, '[waitpointService#createFanInBarrier] Barrier already exists for this step, reusing it')
-                return { inserted: false, waitpoint: existing }
+                const children = await fanInBarrier.listChildren({ parentWaitpointId: existing.id, projectId: params.projectId }, entityManager)
+                assertReEntryIsSafe({ existing, children, dispatchDigest })
+                log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id }, childCount: children.length }, '[waitpointService#createFanInBarrier] Barrier already exists for this step, reusing it')
+                return { inserted: false, waitpoint: existing, fanIn: toBarrierState({ barrier: existing, children }) }
             }
             if (!isNil(existing)) {
                 log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id } }, '[waitpointService#createFanInBarrier] Discarding a completed barrier left over from a previous execution of this step')
@@ -122,56 +123,60 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     isFanIn: true,
                     expectedChildren: null,
                     failedToDispatch: 0,
+                    dispatchDigest,
                 })
                 .orIgnore()
                 .execute()
 
             const waitpoint = await repo.findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
             log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: waitpoint.id } }, '[waitpointService#createFanInBarrier] Barrier created')
-            return { inserted: waitpoint.id === id, waitpoint }
+            return { inserted: waitpoint.id === id, waitpoint, fanIn: toBarrierState({ barrier: waitpoint, children: [] }) }
         })
     },
 
-    async sealFanInBarrier({ params }: SealFanInBarrierParams): Promise<Waitpoint> {
-        assertFanInChildrenWithinLimit(params)
-        const barrier = await waitpointRepo().findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
+    async sealFanInBarrier(params: SealFanInBarrierParams): Promise<SealFanInBarrierResult> {
+        assertFanInChildrenWithinLimit({ dispatched: params.expectedChildren + (params.failedToDispatch ?? 0) })
+        const barrier = await waitpointRepo().findOneBy({ id: params.waitpointId, projectId: params.projectId })
         if (isNil(barrier) || !barrier.isFanIn) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'The fan-in barrier for this step no longer exists, so the dispatched subflows cannot be waited on.' },
             })
         }
-        const timeoutAt = clampFanInTimeout({ requested: params.resumeDateTime, log })
+        const flowRunId = barrier.flowRunId
+        const alreadySealed = !isNil(barrier.expectedChildren)
+        const timeoutAt = clampFanInTimeout({ requested: params.timeoutAt, log })
         await waitpointRepo().update({ id: barrier.id, status: WaitpointStatus.PENDING, expectedChildren: IsNull() }, {
             expectedChildren: params.expectedChildren,
             failedToDispatch: params.failedToDispatch ?? 0,
             resumeDateTime: timeoutAt,
         })
-        if (!isNil(barrier.expectedChildren)) {
-            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: barrier.id }, expectedChildren: barrier.expectedChildren }, '[waitpointService#sealFanInBarrier] Barrier was already sealed; ignoring the re-seal and re-evaluating the release predicate against the original expectation')
+        if (alreadySealed) {
+            log.info({ flowRun: { id: flowRunId }, waitpoint: { id: barrier.id }, expectedChildren: barrier.expectedChildren }, '[waitpointService#sealFanInBarrier] Barrier was already sealed; ignoring the re-seal and re-evaluating the release predicate against the original expectation')
         }
         const sealed = await waitpointRepo().findOneByOrFail({ id: barrier.id })
+        const effectiveTimeoutAt = isNil(sealed.resumeDateTime) ? timeoutAt : dayjs(sealed.resumeDateTime).toISOString()
         if (sealed.status !== WaitpointStatus.PENDING) {
-            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: sealed.id } }, '[waitpointService#sealFanInBarrier] Barrier was already completed, leaving it untouched')
-            return sealed
+            log.info({ flowRun: { id: flowRunId }, waitpoint: { id: sealed.id } }, '[waitpointService#sealFanInBarrier] Barrier was already completed, leaving it untouched')
+            return { waitpoint: sealed, alreadySealed, timeoutAt: effectiveTimeoutAt }
         }
 
         const counts = await fanInBarrier.countChildren({ parentWaitpointId: sealed.id, projectId: params.projectId })
         if (fanInBarrier.isReleasable({ counts, barrier: sealed })) {
             const summary = fanInBarrier.toSummary({ counts, barrier: sealed, timedOut: false })
-            await this.complete({ flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: sealed.id, resumePayload: { body: summary, headers: {}, queryParams: {} } })
-            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: sealed.id } }, '[waitpointService#sealFanInBarrier] All children terminal at seal; completed barrier, PAUSED-upload reconciliation will resume')
-            return waitpointRepo().findOneByOrFail({ id: sealed.id })
+            await this.complete({ flowRunId, projectId: params.projectId, waitpointId: sealed.id, resumePayload: { body: summary, headers: {}, queryParams: {} } })
+            log.info({ flowRun: { id: flowRunId }, waitpoint: { id: sealed.id } }, '[waitpointService#sealFanInBarrier] All children terminal at seal; completed barrier, PAUSED-upload reconciliation will resume')
+            return { waitpoint: await waitpointRepo().findOneByOrFail({ id: sealed.id }), alreadySealed, timeoutAt: effectiveTimeoutAt }
         }
 
         await scheduleTimeoutJob({
-            flowRunId: params.flowRunId,
+            flowRunId,
             projectId: params.projectId,
             waitpointId: sealed.id,
-            resumeDateTime: timeoutAt,
+            resumeDateTime: effectiveTimeoutAt,
             log,
         })
-        return sealed
+        return { waitpoint: sealed, alreadySealed, timeoutAt: effectiveTimeoutAt }
     },
 
     async findFanInBarrierById({ waitpointId, projectId }: FindFanInBarrierByIdParams): Promise<Waitpoint | null> {
@@ -359,9 +364,8 @@ async function removeTimeoutJobs({ waitpointId, flowRunId, log }: RemoveTimeoutJ
     }
 }
 
-function assertFanInChildrenWithinLimit(params: CreateForPauseParams): void {
+function assertFanInChildrenWithinLimit({ dispatched }: AssertFanInChildrenWithinLimitParams): void {
     const maxChildren = system.getNumberOrThrow(AppSystemProp.MAX_FAN_IN_CHILDREN)
-    const dispatched = (params.expectedChildren ?? 0) + (params.failedToDispatch ?? 0)
     if (dispatched > maxChildren) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
@@ -370,12 +374,36 @@ function assertFanInChildrenWithinLimit(params: CreateForPauseParams): void {
     }
 }
 
+function assertReEntryIsSafe({ existing, children, dispatchDigest }: AssertReEntryIsSafeParams): void {
+    if (children.length === 0) {
+        return
+    }
+    if (isNil(existing.dispatchDigest)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'This fan-in step already dispatched subflows, so it cannot be started again — re-running the dispatch loop would create duplicate children. Retry the parent run from the beginning instead of retrying the step.' },
+        })
+    }
+    if (existing.dispatchDigest !== dispatchDigest) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'This fan-in step resolved a different payload than the one its already-dispatched subflows were built from, so the remaining children cannot be dispatched against it. Retry the parent run from the beginning.' },
+        })
+    }
+}
+
+function toBarrierState({ barrier, children }: ToBarrierStateParams): FanInBarrierState {
+    return {
+        sealed: !isNil(barrier.expectedChildren),
+        expectedChildren: barrier.expectedChildren,
+        dispatchedIndices: children.map((child) => child.dispatchIndex).filter((index): index is number => !isNil(index)),
+    }
+}
+
 function clampFanInTimeout({ requested, log }: ClampFanInTimeoutParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
     if (isNil(requested)) {
-        const fallback = dayjs().add(FAN_IN_DEFAULT_TIMEOUT_HOURS, 'hour').toISOString()
-        log.warn({ fallback }, '[waitpointService#clampFanInTimeout] Fan-in barrier sealed without a timeout, falling back to a short default so a caller that forgot one fails fast instead of hanging')
-        return fallback
+        return dayjs().add(maxDurationInDays, 'day').toISOString()
     }
     const requestedAt = dayjs(requested)
     if (!requestedAt.isValid()) {
@@ -397,7 +425,32 @@ function clampFanInTimeout({ requested, log }: ClampFanInTimeoutParams): string 
 }
 
 type SealFanInBarrierParams = {
-    params: CreateForPauseParams
+    waitpointId: string
+    projectId: string
+    expectedChildren: number
+    failedToDispatch?: number
+    timeoutAt?: string
+}
+
+type SealFanInBarrierResult = {
+    waitpoint: Waitpoint
+    alreadySealed: boolean
+    timeoutAt: string
+}
+
+type AssertFanInChildrenWithinLimitParams = {
+    dispatched: number
+}
+
+type AssertReEntryIsSafeParams = {
+    existing: Waitpoint
+    children: FanInChild[]
+    dispatchDigest: string
+}
+
+type ToBarrierStateParams = {
+    barrier: Waitpoint
+    children: FanInChild[]
 }
 
 type FindFanInBarrierByIdParams = {
@@ -420,6 +473,6 @@ type RemoveTimeoutJobsParams = {
 }
 
 type ClampFanInTimeoutParams = {
-    requested: string | undefined
+    requested?: string
     log: FastifyBaseLogger
 }

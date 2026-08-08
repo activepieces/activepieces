@@ -409,6 +409,7 @@ import { AddUserChatMemory1817000000000 } from './migration/postgres/18170000000
 import { AddFanInToWaitpoint1818000000000 } from './migration/postgres/1818000000000-AddFanInToWaitpoint'
 import { AddParentWaitpointIdToFlowRun1819000000000 } from './migration/postgres/1819000000000-AddParentWaitpointIdToFlowRun'
 import { AddResumeDeadlineIndexToWaitpoint1820000000000 } from './migration/postgres/1820000000000-AddResumeDeadlineIndexToWaitpoint'
+import { AddDispatchTrackingToFanIn1821000000000 } from './migration/postgres/1821000000000-AddDispatchTrackingToFanIn'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -833,6 +834,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddFanInToWaitpoint1818000000000,
         AddParentWaitpointIdToFlowRun1819000000000,
         AddResumeDeadlineIndexToWaitpoint1820000000000,
+        AddDispatchTrackingToFanIn1821000000000,
     ]
     return migrations
 }

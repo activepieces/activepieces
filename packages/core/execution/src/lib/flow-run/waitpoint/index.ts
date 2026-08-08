@@ -15,13 +15,37 @@ export const CreateWaitpointRequest = z.object({
     workerHandlerId: z.string().optional(),
     httpRequestId: z.string().optional(),
     isFanIn: z.boolean().optional(),
-    expectedChildren: z.number().int().nonnegative().optional(),
-    failedToDispatch: z.number().int().nonnegative().optional(),
+    intendedChildren: z.number().int().nonnegative().optional(),
+    dispatchDigest: z.string().optional(),
 })
 export type CreateWaitpointRequest = z.infer<typeof CreateWaitpointRequest>
+
+export const FanInBarrierState = z.object({
+    sealed: z.boolean(),
+    expectedChildren: z.number().int().nonnegative().nullable(),
+    dispatchedIndices: z.array(z.number().int().nonnegative()),
+})
+export type FanInBarrierState = z.infer<typeof FanInBarrierState>
 
 export const CreateWaitpointResponse = z.object({
     id: z.string(),
     resumeUrl: z.string(),
+    fanIn: FanInBarrierState.optional(),
 })
 export type CreateWaitpointResponse = z.infer<typeof CreateWaitpointResponse>
+
+export const SealFanInBarrierRequest = z.object({
+    projectId: z.string(),
+    expectedChildren: z.number().int().nonnegative(),
+    failedToDispatch: z.number().int().nonnegative().optional(),
+    timeoutAt: z.string().optional(),
+})
+export type SealFanInBarrierRequest = z.infer<typeof SealFanInBarrierRequest>
+
+export const SealFanInBarrierResponse = z.object({
+    expectedChildren: z.number().int().nonnegative(),
+    alreadySealed: z.boolean(),
+    released: z.boolean(),
+    timeoutAt: z.string(),
+})
+export type SealFanInBarrierResponse = z.infer<typeof SealFanInBarrierResponse>

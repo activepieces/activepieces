@@ -18,6 +18,7 @@ type FlowRunSchema = FlowRun & {
     flowVersion: FlowVersion
     logsFile: File
     triggeredByUser?: User
+    dispatchIndex?: number | null
     /** @deprecated kept for backwards compatibility, use waitpoint table instead, remove in 0.83.0 */
     pauseMetadata?: unknown
 }
@@ -43,6 +44,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
         parentWaitpointId: {
             ...ApIdSchema,
+            nullable: true,
+        },
+        dispatchIndex: {
+            type: Number,
             nullable: true,
         },
         failParentOnFailure: {

@@ -74,6 +74,11 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             nullable: false,
             default: 0,
         },
+        dispatchDigest: {
+            type: String,
+            length: 64,
+            nullable: true,
+        },
     },
     indices: [
         {
