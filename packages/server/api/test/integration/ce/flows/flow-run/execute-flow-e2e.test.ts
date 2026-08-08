@@ -815,7 +815,7 @@ describe('Execute Flow E2E', () => {
         )
     }, 180_000)
 
-    it('fails a wait-for-response subflow call once instead of re-invoking it when retry-on-failure is enabled', async () => {
+    it('retry-on-failure of a wait-for-response Call Flow retries the parent step and fails after maxAttempts without re-invoking the child subflow', async () => {
         const { parentFlow, parentFlowVersion, childFlow, mockPlatform, mockProject } = await setupSubflowFixtures({
             childAlwaysFails: true,
             retryOnFailure: true,
