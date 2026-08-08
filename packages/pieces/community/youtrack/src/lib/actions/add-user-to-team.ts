@@ -1,11 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { projectDropdown, userDropdown, flattenObject, youtrackApiCall } from '../common';
+import { addUserToTeamActionOutputSchema } from '../output-schemas';
 
 export const addUserToTeamAction = createAction({
   auth: youtrackAuth,
   name: 'add_user_to_team',
+  outputSchema: addUserToTeamActionOutputSchema,
   displayName: 'Add User to Project Team',
   description: 'Adds a user as a direct member of a project team, giving them access to the project.',
   audience: 'both',

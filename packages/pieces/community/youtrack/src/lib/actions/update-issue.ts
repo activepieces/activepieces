@@ -1,12 +1,14 @@
 // Action: Update Issue
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
-import { issueDropdown, ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
+import { youtrackAuth } from '../auth';
+import { issueDropdown, ISSUE_FIELDS, flattenIssue, normalizeCustomFields, youtrackApiCall } from '../common';
+import { updateIssueActionOutputSchema } from '../output-schemas';
 
 export const updateIssueAction = createAction({
   auth: youtrackAuth,
   name: 'update_issue',
+  outputSchema: updateIssueActionOutputSchema,
   displayName: 'Update Issue',
   description: 'Updates an existing issue - summary, description, or custom fields.',
   audience: 'both',
@@ -26,7 +28,8 @@ export const updateIssueAction = createAction({
     const body: Record<string, unknown> = {};
     if (context.propsValue.summary !== undefined && context.propsValue.summary !== '') body['summary'] = context.propsValue.summary;
     if (context.propsValue.description !== undefined && context.propsValue.description !== '') body['description'] = context.propsValue.description;
-    if (context.propsValue.customFieldsJson) body['customFields'] = context.propsValue.customFieldsJson;
+    const customFields = normalizeCustomFields(context.propsValue.customFieldsJson);
+    if (customFields) body['customFields'] = customFields;
     const response = await youtrackApiCall<Record<string, unknown>>({
       baseUrl,
       token: apiToken,
@@ -35,6 +38,6 @@ export const updateIssueAction = createAction({
       queryParams: { fields: ISSUE_FIELDS },
       body,
     });
-    return flattenObject(response.body);
+    return flattenIssue(response.body);
   },
 });

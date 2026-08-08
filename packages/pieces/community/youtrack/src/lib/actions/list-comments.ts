@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { issueDropdown, youtrackApiCall } from '../common';
+import { listCommentsActionOutputSchema } from '../output-schemas';
 
 export const listCommentsAction = createAction({
   auth: youtrackAuth,
   name: 'list_comments',
+  outputSchema: listCommentsActionOutputSchema,
   displayName: 'List Comments',
   description: 'Lists all comments on an issue with author details and timestamps.',
   audience: 'both',

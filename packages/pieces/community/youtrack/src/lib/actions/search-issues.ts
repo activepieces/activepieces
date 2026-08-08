@@ -1,25 +1,27 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
-import { ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
+import { youtrackAuth } from '../auth';
+import { ISSUE_FIELDS, dropdownError, flattenIssue, youtrackApiCall } from '../common';
+import { searchIssuesActionOutputSchema } from '../output-schemas';
 
 export const searchIssuesAction = createAction({
   auth: youtrackAuth,
   name: 'search_issues',
+  outputSchema: searchIssuesActionOutputSchema,
   displayName: 'Search Issues',
   description: 'Searches for issues using YouTrack query syntax. Returns flat rows for spreadsheets.',
   audience: 'both',
   aiMetadata: { description: 'Search issues using YouTrack query syntax (e.g. #unresolved, assignee: me, Priority: Critical), optionally scoped to one project. Leave both the project and query empty to list all accessible issues, or supply filters to narrow results. Use to find issues matching criteria before acting on them. Read-only and idempotent.', idempotent: true },
   props: {
     project: Property.Dropdown({
-      auth:youtrackAuth,
+      auth: youtrackAuth,
       displayName: 'Project',
       description: 'Optional: filter by project. Leave empty to search across all projects.',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-        const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
+        const { baseUrl, apiToken } = auth.props;
         try {
           const response = await youtrackApiCall<Array<{ id: string; name: string; shortName: string }>>({
             baseUrl,
@@ -35,8 +37,8 @@ export const searchIssuesAction = createAction({
               ...response.body.map((p) => ({ label: p.name + ' (' + p.shortName + ')', value: p.shortName })),
             ],
           };
-        } catch {
-          return { disabled: true, options: [], placeholder: 'Failed to load projects.' };
+        } catch (error) {
+          return dropdownError('Failed to load projects', error);
         }
       },
     }),
@@ -75,6 +77,6 @@ export const searchIssuesAction = createAction({
       path: '/issues',
       queryParams,
     });
-    return (response.body || []).map((item) => flattenObject(item));
+    return (response.body || []).map((item) => flattenIssue(item));
   },
 });
