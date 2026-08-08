@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
@@ -50,12 +51,13 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         log.debug({ sourceCode, name, codePath }, 'Processing code step')
 
         const currentHash = await cryptoUtils.hashObject(sourceCode)
+        const compiledStepPath = codeCache(codesFolderPath).compiledStepPath({ flowVersionId, stepName: name })
         const cache = cacheState(codePath)
         let buildStatus: CodeBuildStatus = 'success'
         const { cacheHit } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
-                return value !== currentHash
+                return value !== currentHash || !existsSync(compiledStepPath)
             },
             installFn: async () => {
                 const { code, packageJson } = sourceCode

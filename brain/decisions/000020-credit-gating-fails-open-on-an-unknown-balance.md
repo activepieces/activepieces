@@ -138,4 +138,4 @@ credit-gated on flow runs — usage is still tracked, only enforcement is off.
 - **Scheduling a refresh when the cache read failed.** The refresh needs the Redis that just failed, so
   its debounce cannot hold and each request would hit Postgres and Autumn directly. See above.
 - **Reading the balance from Autumn per request** (no cache): the request-path rule for all
-  entitlement reads, see `brain/wiki/platform/ee-platform-plans-billing.md`.
+  entitlement reads, see `brain/platform-editions-ee/ee-platform-plans-billing.md`.

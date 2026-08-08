@@ -1,7 +1,7 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
@@ -83,6 +83,9 @@ const POLL_WATCHDOG_INTERVAL_MS = 30_000
 let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
 
+let cacheSweepInterval: NodeJS.Timeout | null = null
+let cacheSweepFirstRunTimeout: NodeJS.Timeout | null = null
+
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         assertReleaseReadable()
@@ -142,6 +145,7 @@ export const worker = {
         }
         startSandboxInfoSampling()
         startPollWatchdog()
+        startCacheSweeper()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
@@ -150,6 +154,7 @@ export const worker = {
         pollLoopLiveness = []
         stopPollWatchdog()
         stopSandboxInfoSampling()
+        stopCacheSweeper()
         await drainInFlightJobs()
         if (runtime) {
             await runtime.shutdown(logger)
@@ -581,6 +586,37 @@ function findStalledPollLoop(): StalledPollLoop | undefined {
         return undefined
     }
     return { workerIndex, stalledForMs: now - pollLoopLiveness[workerIndex].iteratedAt }
+}
+
+function startCacheSweeper(): void {
+    if (!isNil(cacheSweepInterval) || !isNil(cacheSweepFirstRunTimeout)) {
+        return
+    }
+    cacheSweepFirstRunTimeout = setTimeout(() => {
+        cacheSweepFirstRunTimeout = null
+        void sweepActionRunCache()
+        cacheSweepInterval = setInterval(() => void sweepActionRunCache(), ACTION_RUN_CACHE_SWEEP_INTERVAL_MS)
+        cacheSweepInterval.unref()
+    }, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS)
+    cacheSweepFirstRunTimeout.unref()
+}
+
+function stopCacheSweeper(): void {
+    if (!isNil(cacheSweepFirstRunTimeout)) {
+        clearTimeout(cacheSweepFirstRunTimeout)
+        cacheSweepFirstRunTimeout = null
+    }
+    if (!isNil(cacheSweepInterval)) {
+        clearInterval(cacheSweepInterval)
+        cacheSweepInterval = null
+    }
+}
+
+async function sweepActionRunCache(): Promise<void> {
+    const { error } = await tryCatch(() => actionRunCache.sweep({ basePath: sandboxConfig.getCacheBasePath(), log: logger }))
+    if (error) {
+        logger.warn({ error }, 'Action-run code cache sweep failed')
+    }
 }
 
 function startPollWatchdog(): void {
