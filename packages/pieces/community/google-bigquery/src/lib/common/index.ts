@@ -10,7 +10,10 @@ import { JWT } from 'google-auth-library';
 
 export const BASE_URL = 'https://bigquery.googleapis.com/bigquery/v2';
 
-export const bigQueryScopes = ['https://www.googleapis.com/auth/bigquery'];
+export const bigQueryScopes = [
+  'https://www.googleapis.com/auth/bigquery',
+  'email',
+];
 
 export const bigQueryAuth = [
   PieceAuth.OAuth2({

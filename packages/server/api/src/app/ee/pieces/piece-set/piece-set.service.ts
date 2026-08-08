@@ -5,10 +5,12 @@ import { EntityManager, In, QueryFailedError } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { distributedLock } from '../../../database/redis-connections'
+import { buildPaginator } from '../../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { pieceSetConfig } from './piece-set-config'
 import { PieceSetEntity } from './piece-set.entity'
 
-export const pieceSetRepo = repoFactory<PieceSet>(PieceSetEntity)
+export const pieceSetRepo = repoFactory(PieceSetEntity)
 
 const MAX_PIECE_SET_PAGE_SIZE = 100
 
@@ -75,29 +77,20 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
 
     async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {
         const boundedLimit = Math.min(limit, MAX_PIECE_SET_PAGE_SIZE)
-        const qb = pieceSetRepo()
-            .createQueryBuilder('ps')
-            .where('ps.platformId = :platformId', { platformId })
-            .orderBy('ps.created', 'ASC')
-            .addOrderBy('ps.id', 'ASC')
-            .take(boundedLimit + 1)
-
-        if (cursor) {
-            qb.andWhere(
-                '(ps.created, ps.id) > (SELECT created, id FROM piece_set WHERE id = :cursorId AND "platformId" = :platformId)',
-                { cursorId: cursor, platformId },
-            )
-        }
-
-        const rows = await qb.getMany()
-        const hasMore = rows.length > boundedLimit
-        const data = hasMore ? rows.slice(0, boundedLimit) : rows
-
-        return {
-            data,
-            next: hasMore ? data[data.length - 1].id : null,
-            previous: cursor ? data[0]?.id ?? null : null,
-        }
+        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
+        const paginator = buildPaginator({
+            entity: PieceSetEntity,
+            query: {
+                limit: boundedLimit,
+                order: 'ASC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+        const { data, cursor: newCursor } = await paginator.paginate(
+            pieceSetRepo().createQueryBuilder('piece_set').where({ platformId }),
+        )
+        return paginationHelper.createPage<PieceSet>(data, newCursor)
     },
 
     async getOne({ id, platformId }: GetOneParams): Promise<PieceSet> {
