@@ -386,6 +386,21 @@ describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may r
         expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-1', projectId: 'proj-1' })
     })
 
+    it('drops a straggler that arrives after the final snapshot', async () => {
+        const conversationId = 'conv-final'
+        mockUpdateStepProgress.mockClear()
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOne.mockResolvedValue({ id: conversationId, source: 'FLOW_STEP', projectId: 'proj-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        const handlers = agentRpcHandlers(noopLogger as never)
+
+        await handlers.updateFlowStepProgress({ conversationId, flowRunId: 'run-1', output: { done: true }, sequence: 5, final: true })
+        await handlers.updateFlowStepProgress({ conversationId, flowRunId: 'run-1', output: { stale: true }, sequence: 4 })
+
+        expect(mockUpdateStepProgress).toHaveBeenCalledTimes(1)
+        expect(mockUpdateStepProgress.mock.calls[0][0].request.output).toEqual({ done: true })
+    })
+
     it('drops a snapshot older than one it already sent, so a late one cannot undo it', async () => {
         const conversationId = 'conv-ordering'
         mockUpdateStepProgress.mockClear()

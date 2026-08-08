@@ -34,8 +34,10 @@ const OWNER_SCOPED_TOOLS = ['ap_remember']
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 
 // A snapshot replaces what came before it, so one that arrives late must not undo a newer one. The
-// entry is dropped once the run reports its final snapshot.
+// final snapshot closes the run to everything, including a straggler still in flight, and the entry
+// is reclaimed once nothing can still be on its way.
 const lastProgressSequence = new Map<string, number>()
+const PROGRESS_GUARD_TTL_MS = 5 * 60 * 1_000
 
 const MAX_EMAIL_RECIPIENTS = 10
 const MAX_EMAIL_SUBJECT_LENGTH = 300
@@ -483,9 +485,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         if ((lastProgressSequence.get(input.conversationId) ?? 0) >= input.sequence) {
             return
         }
-        lastProgressSequence.set(input.conversationId, input.sequence)
+        lastProgressSequence.set(input.conversationId, input.final === true ? Number.MAX_SAFE_INTEGER : input.sequence)
         if (input.final === true) {
-            lastProgressSequence.delete(input.conversationId)
+            setTimeout(() => lastProgressSequence.delete(input.conversationId), PROGRESS_GUARD_TTL_MS).unref()
         }
         const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
         engineRunCallbackService(log).updateStepProgress({
