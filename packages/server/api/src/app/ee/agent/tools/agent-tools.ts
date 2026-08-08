@@ -605,8 +605,8 @@ function resolveConnectionInfo({ status, type, value }: { status: AppConnectionS
     if (hasRefreshToken) {
         return { status, grantedScopes }
     }
-    const claimedAtS = typeof value['claimed_at'] === 'number' ? value['claimed_at'] : 0
-    const expiresInS = typeof value['expires_in'] === 'number' ? value['expires_in'] : 0
+    const claimedAtS = Number(value['claimed_at']) || 0
+    const expiresInS = Number(value['expires_in']) || 0
     if (claimedAtS > 0 && expiresInS > 0) {
         const expiryMs = (claimedAtS + expiresInS - CLOCK_SKEW_BUFFER_S) * 1000
         if (Date.now() > expiryMs) {
