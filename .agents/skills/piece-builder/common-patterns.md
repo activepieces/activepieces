@@ -79,7 +79,7 @@ import {
   HttpResponse,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { myAppAuth } from '../..';
+import { myAppAuth } from '../auth';
 
 const BASE_URL = 'https://api.example.com/v1';
 
@@ -141,7 +141,7 @@ Then use in actions:
 
 ```typescript
 import { myAppCommon, myAppApiCall } from '../common';
-import { myAppAuth } from '../../';
+import { myAppAuth } from '../auth';
 
 export const listTasksAction = createAction({
   auth: myAppAuth,

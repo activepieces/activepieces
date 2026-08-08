@@ -7,7 +7,7 @@ Each action goes in its own file under `src/lib/actions/`:
 ```typescript
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { myAppAuth } from '../../';
+import { myAppAuth } from '../auth';
 
 export const createRecordAction = createAction({
   auth: myAppAuth,
