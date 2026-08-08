@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const searchNews = createAction({
+export const findNews = createAction({
   auth: pubrioAuth,
-  name: 'search_news',
-  displayName: 'Search News',
+  name: 'find_news',
+  displayName: 'Find News',
   description: 'Search company news and press releases',
-  audience: 'human',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Search company news articles and press releases by keyword, company domain, category, location, or publish date, with pagination (max 25 per page). Read-only and repeatable. Pick this for news/PR monitoring of companies; use Search Companies for firmographic discovery instead.',
+      'Search company news and press releases by keyword, company domain, category, location, or publish date; paged (max 25/page). Read-only and repeatable. Pick this for company news/PR monitoring; use Find Companies for firmographic discovery.',
     idempotent: true,
   },
   props: {

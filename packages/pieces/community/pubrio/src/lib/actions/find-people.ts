@@ -3,16 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const searchPeople = createAction({
+export const findPeople = createAction({
   auth: pubrioAuth,
-  name: 'search_people',
-  displayName: 'Search People',
-  description:
-    'Search business professionals by name, title, department, seniority, or company',
-  audience: 'human',
+  name: 'find_people',
+  displayName: 'Find People',
+  description: 'Search business professionals by criteria',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Search the people database for business professionals using filters such as name, job title, management level, department, location, employer company/domain, or LinkedIn URL, with paging (per_page max 25). Read-only and repeatable; results identify people but do not include contact details. Use to discover prospects, then pass a people_search_id to Reveal Contact (credit cost) or Lookup Person.',
+      'Search business professionals by name, title, management level, department, location, or employer; returns a paged list (max 25/page) with the `people_search_id` you pass to Enrich Person or Reveal Contact. Read-only and repeatable; results identify people but DO NOT include email/phone (use Reveal Contact for that, which costs credits).',
     idempotent: true,
   },
   props: {

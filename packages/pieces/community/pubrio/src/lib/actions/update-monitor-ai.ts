@@ -3,16 +3,16 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const updateMonitor = createAction({
+export const updateMonitorAi = createAction({
   auth: pubrioAuth,
-  name: 'update_monitor',
+  name: 'update_monitor_ai',
   displayName: 'Update Monitor',
-  description: 'Update an existing signal monitor',
-  audience: 'human',
+  description: 'Modify an existing signal monitor',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Modify the configuration of an existing signal monitor identified by monitor_id, changing only the fields you supply (name, signal types, destination, filters, frequency, active/paused state, etc.). Mutating: it overwrites the named settings on the live monitor, so re-running with the same inputs is safe but changes take effect immediately. Use to edit an already-created monitor; use Create Monitor to make a new one.',
-    idempotent: false,
+      'Modify an existing monitor (by `monitor_id` from List Monitors), changing only the fields you supply. Set `is_paused` true to stop a monitor or false to resume it; set `is_active` to enable/disable it. Takes effect immediately and re-sending the same values converges. Hard-deleting a monitor is not available on this API, so pausing (`is_paused: true`) is how you retire one.',
+    idempotent: true,
   },
   props: {
     monitor_id: Property.ShortText({

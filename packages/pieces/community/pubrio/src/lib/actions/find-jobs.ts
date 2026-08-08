@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const searchJobs = createAction({
+export const findJobs = createAction({
   auth: pubrioAuth,
-  name: 'search_jobs',
-  displayName: 'Search Jobs',
+  name: 'find_jobs',
+  displayName: 'Find Jobs',
   description: 'Search job postings across companies',
-  audience: 'human',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Search job postings across companies, filtering by keywords, job titles, posted-date ranges, locations (or excluded locations), and target companies/domains/LinkedIn URLs, with paging (per_page max 25). Read-only and repeatable. Use to find hiring signals or open roles, then pass a job_search_id to Lookup Job for full detail.',
+      'Search job postings across companies by keyword, title, posted-date, location, or target company/domain; paged (max 25/page). Read-only and repeatable. Use for hiring-signal discovery; the search rows carry a `job_search_id` for deeper human inspection.',
     idempotent: true,
   },
   props: {
