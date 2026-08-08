@@ -2,7 +2,6 @@ import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@
 import { cryptoUtils } from '@activepieces/server-utils'
 import { ApEdition, ApEnvironment, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -10,6 +9,7 @@ import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
+import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
@@ -107,6 +107,9 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             platformId,
             projectId: null,
         })
+    },
+    async resolvePreferredPlatformId({ identityId }: ResolvePreferredPlatformIdParams): Promise<string | null> {
+        return getPreferredPlatformId(identityId, log)
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.email, log) : params.predefinedPlatformId
@@ -248,6 +251,10 @@ async function getPreferredPlatformId(identityId: string, log: FastifyBaseLogger
 }
 
 
+
+type ResolvePreferredPlatformIdParams = {
+    identityId: string
+}
 
 type FederatedAuthnParams = {
     email: string

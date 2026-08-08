@@ -1,14 +1,15 @@
-import { apId, PlatformId } from '@activepieces/core-utils'
+import { apId, isNil, PlatformId } from '@activepieces/core-utils'
 import { OtpModel, OtpState, OtpType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
-import { repoFactory } from '../../../core/db/repo-factory'
-import { emailService } from '../../helper/email/email-service'
+import { repoFactory } from '../../core/db/repo-factory'
+import { emailService } from '../../ee/helper/email/email-service'
+import { userIdentityService } from '../user-identity/user-identity-service'
 import { otpGenerator } from './lib/otp-generator'
 import { OtpEntity } from './otp-entity'
 
 const TEN_MINUTES = 10 * 60 * 1000
+const MAX_ATTEMPTS = 5
 
 const repo = repoFactory(OtpEntity)
 
@@ -26,8 +27,14 @@ export const otpService = (log: FastifyBaseLogger) => ({
             identityId: userIdentity.id,
             type,
         })
-        const otpIsNotExpired = existingOtp && dayjs().diff(existingOtp.updated, 'milliseconds') < TEN_MINUTES
-        if (otpIsNotExpired) {
+        const otpIsNotExpired = !isNil(existingOtp) && dayjs().diff(existingOtp.updated, 'milliseconds') < TEN_MINUTES
+        if (otpIsNotExpired && existingOtp.state === OtpState.PENDING) {
+            await emailService(log).sendOtp({
+                platformId,
+                userIdentity,
+                otp: existingOtp.value,
+                type: existingOtp.type,
+            })
             return
         }
         const newOtp: Omit<OtpModel, 'created'> = {
@@ -35,8 +42,9 @@ export const otpService = (log: FastifyBaseLogger) => ({
             updated: dayjs().toISOString(),
             type,
             identityId: userIdentity.id,
-            value: otpGenerator.generate(),
+            value: otpGenerator.generate({ type }),
             state: OtpState.PENDING,
+            attempts: 0,
         }
         await repo().upsert(newOtp, ['identityId', 'type'])
         await emailService(log).sendOtp({
@@ -48,23 +56,44 @@ export const otpService = (log: FastifyBaseLogger) => ({
     },
 
     async confirm({ identityId, type, value }: ConfirmParams): Promise<boolean> {
-        const otp = await repo().findOneByOrFail({
+        const otp = await repo().findOneBy({
             identityId,
             type,
         })
+        if (isNil(otp)) {
+            return false
+        }
         const otpIsPending = otp.state === OtpState.PENDING
         const otpIsNotExpired = dayjs().diff(otp.updated, 'milliseconds') < TEN_MINUTES
         const otpMatches = otp.value === value
         const verdict = otpIsNotExpired && otpMatches && otpIsPending
         if (verdict) {
-            await repo().update(otp.id, {
-                state: OtpState.CONFIRMED,
-            })
+            return consumeOtp(otp.id)
         }
-
-        return verdict
+        const attempts = await countFailedAttempt(otp.id)
+        if (attempts >= MAX_ATTEMPTS) {
+            await repo().delete({ id: otp.id })
+            log.warn({ identityId, type }, '[otpService#confirm] attempt budget exhausted, credential discarded')
+        }
+        return false
     },
 })
+
+async function consumeOtp(otpId: string): Promise<boolean> {
+    const rows: { id: string }[] = await repo().query(
+        'DELETE FROM "otp" WHERE "id" = $1 RETURNING "id"',
+        [otpId],
+    )
+    return rows.length === 1
+}
+
+async function countFailedAttempt(otpId: string): Promise<number> {
+    const rows: { attempts: number }[] = await repo().query(
+        'UPDATE "otp" SET "attempts" = "attempts" + 1 WHERE "id" = $1 RETURNING "attempts"',
+        [otpId],
+    )
+    return rows[0]?.attempts ?? MAX_ATTEMPTS
+}
 
 type CreateParams = {
     platformId: PlatformId | null
