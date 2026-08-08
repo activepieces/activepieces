@@ -2,6 +2,7 @@ import { createAction, MarkdownVariant, PieceAuth, Property } from '@activepiece
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { CreateRecordsRequest } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
+import { createRecordsActionOutputSchema } from '../output-schemas';
 
 export const createRecords = createAction({
   audience: 'both',
@@ -57,14 +58,24 @@ export const createRecords = createAction({
       required: false,
     }),
   },
+  outputSchema: createRecordsActionOutputSchema,
   async run(context) {
     const { table_id: tableExternalId, values, records: rawRecords } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
     const tableFields = await tablesCommon.getTableFields({ tableId, context });
 
+    // Property.Json defaults to `{}` in the builder whenever the field is left
+    // untouched, so `!= null` alone can't tell "raw JSON provided" from
+    // "advanced field never touched" — a row with no keys means the latter.
+    const rawArray: Record<string, unknown>[] = Array.isArray(rawRecords)
+      ? rawRecords
+      : rawRecords != null
+      ? [rawRecords as Record<string, unknown>]
+      : [];
+    const hasRawRecords = rawArray.some((row) => Object.keys(row ?? {}).length > 0);
+
     let records: CreateRecordsRequest['records'];
-    if (rawRecords != null) {
-      const rawArray = Array.isArray(rawRecords) ? rawRecords : [rawRecords];
+    if (hasRawRecords) {
       records = toCells({ rows: rawArray, fieldIdByKey: (name) => tableFields.find((field) => field.name === name)?.id });
     } else {
       const formRecords = values['values'];

@@ -58,7 +58,7 @@ export const extractDateParts = createAction({
     }),
   },
   async run(context) {
-    
+
     const inputDate = context.propsValue.inputDate;
     const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const unitExtract = context.propsValue.unitExtract;
