@@ -1,7 +1,8 @@
-import { apId, assertEqual, createByteLruCache, isNil } from '@activepieces/core-utils'
+import { apId, assertEqual, isNil, tryCatchSync } from '@activepieces/core-utils'
 import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { engineFileApi } from '../../api/engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
+import { runStateStore } from '../../helper/run-state-store'
 import { sizeofUtils } from '../../helper/sizeof'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -9,9 +10,9 @@ const DEFAULT_THRESHOLD_KB = 32
 const SLICE_THRESHOLD_BYTES = Number(
     process.env.AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB ?? DEFAULT_THRESHOLD_KB,
 ) * 1024
-const SLICE_CACHE_BUDGET_BYTES = 64 * 1024 * 1024
-
 const EMPTY_STEPS_SIZE_BYTES = sizeofUtils.recursiveSizeof({})
+
+const inFlightSliceDownloads = new Map<string, Promise<unknown>>()
 
 export class FlowExecutorContext {
     tags: readonly string[]
@@ -21,7 +22,6 @@ export class FlowExecutorContext {
     stepNameToTest?: boolean
     stepsCount: number
     engineApi?: EngineApiConfig
-    resolvedStepOutputCache: SliceCache
     slicingEnabled: boolean
     logSizeBytes: number
 
@@ -39,7 +39,6 @@ export class FlowExecutorContext {
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
         this.stepsCount = copyFrom?.stepsCount ?? 0
         this.engineApi = copyFrom?.engineApi
-        this.resolvedStepOutputCache = copyFrom?.resolvedStepOutputCache ?? createByteLruCache({ budgetBytes: SLICE_CACHE_BUDGET_BYTES })
         this.slicingEnabled = copyFrom?.slicingEnabled ?? true
         this.logSizeBytes = copyFrom?.logSizeBytes ?? EMPTY_STEPS_SIZE_BYTES
     }
@@ -131,17 +130,29 @@ export class FlowExecutorContext {
                 errorMessage: truncated.errorMessage,
             })
         }
-        const previousStep = executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps })
-        const steps = executionJournal.upsertStep({ stepName, stepOutput: finalized, path: this.currentPath.path, steps: this.steps })
+        const offloaded = offloadStepToStore({ stepName, stepPath: JSON.stringify(this.currentPath.path), finalized })
+        const logSizeDelta = offloaded
+            ? offloaded.logSizeDelta
+            : sizeofUtils.upsertStepDelta({
+                stepName,
+                previousStep: executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps }),
+                nextStep: finalized,
+            })
+        const steps = executionJournal.upsertStep({ stepName, stepOutput: offloaded?.journalStep ?? finalized, path: this.currentPath.path, steps: this.steps })
         return new FlowExecutorContext({
             ...this,
             steps,
-            logSizeBytes: this.logSizeBytes + sizeofUtils.upsertStepDelta({ stepName, previousStep, nextStep: finalized }),
+            logSizeBytes: this.logSizeBytes + logSizeDelta,
         })
     }
 
     public getStepOutput(stepName: string, path?: StepExecutionPath['path']): StepOutput | undefined {
-        return executionJournal.getStep({ stepName, path: path ?? this.currentPath.path, steps: this.steps })
+        const step = executionJournal.getStep({ stepName, path: path ?? this.currentPath.path, steps: this.steps })
+        if (isNil(step) || step.type === FlowActionType.LOOP_ON_ITEMS || step.output !== undefined) {
+            return step
+        }
+        const stored = runStateStore.getStepOutput({ name: stepName, stepPath: JSON.stringify(path ?? this.currentPath.path) })
+        return stored ?? step
     }
 
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
@@ -171,42 +182,63 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-    public async currentState(referencedStepNames?: string[]): Promise<Record<string, unknown>> {
-        const referencedSteps = referencedStepNames
-            ? referencedStepNames.reduce((acc, stepName) => {
-                if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
-                return acc
-            }, {} as Record<string, StepOutput>)
-            : this.steps
+    public async getStepView(stepName: string): Promise<StepView | undefined> {
+        const stepMaps = this.stepMapsAlongPath()
+        for (let level = stepMaps.length - 1; level >= 0; level--) {
+            const stepPath = JSON.stringify(this.currentPath.path.slice(0, level))
+            const memoryStep = stepMaps[level][stepName]
+            const step = memoryStep?.output !== undefined
+                ? memoryStep
+                : runStateStore.getStepOutput({ name: stepName, stepPath }) ?? memoryStep
+            if (!isNil(step)) {
+                const output = await resolveStepOutput(step, this.engineApi)
+                const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
+                    ? { message: step.errorMessage }
+                    : undefined
+                return { output, error }
+            }
+        }
+        return undefined
+    }
 
-        let flattened: Record<string, unknown> = await extractStepView(referencedSteps, this.engineApi, this.resolvedStepOutputCache )
-        let targetMap = this.steps
-
-        for (const [stepName, iteration] of this.currentPath.path) {
-            const stepOutput = targetMap[stepName]
-            if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
+    private stepMapsAlongPath(): Array<Readonly<Record<string, StepOutput>>> {
+        const stepMaps: Array<Readonly<Record<string, StepOutput>>> = [this.steps]
+        let targetMap: Readonly<Record<string, StepOutput>> = this.steps
+        for (const [loopStepName, iteration] of this.currentPath.path) {
+            const stepOutput = targetMap[loopStepName]
+            if (!stepOutput?.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
                 throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]
-            flattened = {
-                ...flattened,
-                ...await extractStepView(targetMap, this.engineApi, this.resolvedStepOutputCache ),
-            }
+            stepMaps.push(targetMap)
         }
-        return flattened
+        return stepMaps
     }
 }
 
-async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<Record<string, unknown>> {
-    const result: Record<string, unknown> = {}
-    for (const [stepName, step] of Object.entries(steps)) {
-        const output = await resolveStepOutput(step, engineApi, cache)
-        const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
-            ? { message: step.errorMessage }
-            : undefined
-        result[stepName] = { output, error }
+function offloadStepToStore({ stepName, stepPath, finalized }: OffloadStepToStoreParams): OffloadedStep | undefined {
+    if (!runStateStore.isInitialized() || finalized.type === FlowActionType.LOOP_ON_ITEMS) {
+        return undefined
     }
-    return result
+    const previousSizeBytes = runStateStore.getStepSize({ name: stepName, stepPath })
+    const nextSizeBytes = sizeofUtils.recursiveSizeof(finalized)
+    const logSizeDelta = sizeofUtils.upsertStepDeltaFromSize({ stepName, previousSizeBytes, nextSizeBytes })
+    const { error: putError } = tryCatchSync(() => runStateStore.put({ name: stepName, stepPath, stepOutput: finalized, sizeBytes: nextSizeBytes }))
+    if (!isNil(putError)) {
+        console.warn(`[runStateStore] put failed for step ${stepName}, keeping it in memory`, putError)
+        runStateStore.deleteStep({ name: stepName, stepPath })
+        return { journalStep: finalized, logSizeDelta }
+    }
+    // no output no input
+    const stripped = new GenericStepOutput({
+        type: finalized.type,
+        status: finalized.status,
+        input: undefined,
+        outputType: finalized.outputType,
+        duration: finalized.duration,
+        errorMessage: finalized.errorMessage,
+    })
+    return { journalStep: stripped, logSizeDelta }
 }
 
 async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
@@ -232,7 +264,7 @@ async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): P
     return { ref: { fileId, size, url: readUrl } }
 }
 
-async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<unknown> {
+async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined): Promise<unknown> {
     if (step.outputType !== StepOutputType.SLICE) {
         return step.output
     }
@@ -240,14 +272,23 @@ async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | 
         throw new EngineGenericError('MissingEngineApiConfigError', 'Cannot materialize log slice ref without engine api config')
     }
     const ref = step.output as LogSliceRef
-    const existing = cache.get(ref.fileId)
-    if (!isNil(existing)) {
-        return existing
+    const cached = runStateStore.getSliceJson({ fileId: ref.fileId })
+    if (!isNil(cached)) {
+        return JSON.parse(cached)
     }
-    const promise = engineFileApi.download({ apiUrl: engineApi.internalApiUrl, engineToken: engineApi.engineToken, fileId: ref.fileId })
-        .then((bytes) => JSON.parse(new TextDecoder('utf-8').decode(bytes)))
-    cache.set({ key: ref.fileId, value: promise, sizeBytes: ref.size })
-    return promise
+    const inFlight = inFlightSliceDownloads.get(ref.fileId)
+    if (!isNil(inFlight)) {
+        return inFlight
+    }
+    const download = engineFileApi.download({ apiUrl: engineApi.internalApiUrl, engineToken: engineApi.engineToken, fileId: ref.fileId })
+        .then((bytes) => {
+            const json = new TextDecoder('utf-8').decode(bytes)
+            runStateStore.putSlice({ fileId: ref.fileId, json })
+            return JSON.parse(json)
+        })
+        .finally(() => inFlightSliceDownloads.delete(ref.fileId))
+    inFlightSliceDownloads.set(ref.fileId, download)
+    return download
 }
 
 function withTruncatedInput<T extends BaseStepOutput>(stepOutput: T): T {
@@ -284,12 +325,23 @@ export type FlowExecutorContextInit = {
     slicingEnabled?: boolean
 }
 
+export type StepView = {
+    output: unknown
+    error: { message: string } | undefined
+}
+
 type MaybeSliceOutputParams = {
     value: unknown
     engineApi?: EngineApiConfig
 }
 
-type SliceCache = {
-    get(key: string): Promise<unknown> | undefined
-    set(params: { key: string, value: Promise<unknown>, sizeBytes: number }): void
+type OffloadStepToStoreParams = {
+    stepName: string
+    stepPath: string
+    finalized: BaseStepOutput
+}
+
+type OffloadedStep = {
+    journalStep: BaseStepOutput
+    logSizeDelta: number
 }

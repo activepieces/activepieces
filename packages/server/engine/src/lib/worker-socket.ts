@@ -3,12 +3,14 @@ import {
     createNotifyClient,
     createRpcServer,
     EngineContract,
+    EngineOperationType,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
     WorkerNotifyContract,
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
 import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
+import { runStateStore } from './helper/run-state-store'
 import { execute } from './operations'
 
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
@@ -84,6 +86,9 @@ export const workerSocket = {
 
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
+                if (operationType === EngineOperationType.EXECUTE_FLOW && 'flowRunId' in operation) {
+                    runStateStore.init({ runId: operation.flowRunId })
+                }
                 flowRunProgressReporter.init()
                 try {
                     const response = await execute(operationType, operation)
@@ -91,6 +96,7 @@ export const workerSocket = {
                 }
                 finally {
                     await flowRunProgressReporter.shutdown()
+                    runStateStore.dispose()
                 }
             },
         })

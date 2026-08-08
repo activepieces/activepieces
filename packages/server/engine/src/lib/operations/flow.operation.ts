@@ -168,13 +168,8 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
     }
     flowContext = flowContext.addTags(input.executionState.tags)
     const isWaitpointResume = input.resumeReason === ResumeReason.WAITPOINT
-    for (const [step, output] of Object.entries(input.executionState.steps)) {
-        if (isStepRestorable({ status: output.status, isWaitpointResume })) {
-            const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
-            if (!isNil(newOutput)) {
-                flowContext = await flowContext.upsertStep(step, newOutput)
-            }
-        }
+    for (const [stepName, stepOutput] of Object.entries(input.executionState.steps)) {
+        flowContext = await restoreStep({ flowContext, stepName, stepOutput, isWaitpointResume })
     }
     return flowContext
 }
@@ -197,27 +192,24 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
 }
 
 
-async function insertSuccessStepsOrPausedRecursively({ stepOutput, isWaitpointResume }: InsertStepsParams): Promise<StepOutput | null> {
+async function restoreStep({ flowContext, stepName, stepOutput, isWaitpointResume }: RestoreStepParams): Promise<FlowExecutorContext> {
     if (!isStepRestorable({ status: stepOutput.status, isWaitpointResume })) {
-        return null
+        return flowContext
     }
-    if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
-        const loopOutput = new LoopStepOutput(stepOutput)
-        const iterations = loopOutput.output?.iterations ?? []
-        const newIterations: Record<string, StepOutput>[] = []
-        for (const iteration of iterations) {
-            const newSteps: Record<string, StepOutput> = {}
-            for (const [step, output] of Object.entries(iteration)) {
-                const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
-                if (!isNil(newOutput)) {
-                    newSteps[step] = newOutput
-                }
-            }
-            newIterations.push(newSteps)
+    if (stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
+        return flowContext.upsertStep(stepName, stepOutput)
+    }
+    const loopOutput = new LoopStepOutput(stepOutput)
+    const iterations = loopOutput.output?.iterations ?? []
+    let restoredContext = await flowContext.upsertStep(stepName, loopOutput.setIterations(iterations.map(() => ({}))))
+    const parentPath = restoredContext.currentPath
+    for (let iteration = 0; iteration < iterations.length; iteration++) {
+        restoredContext = restoredContext.setCurrentPath(parentPath.loopIteration({ loopName: stepName, iteration }))
+        for (const [nestedStepName, nestedStepOutput] of Object.entries(iterations[iteration])) {
+            restoredContext = await restoreStep({ flowContext: restoredContext, stepName: nestedStepName, stepOutput: nestedStepOutput, isWaitpointResume })
         }
-        return loopOutput.setIterations(newIterations)
     }
-    return stepOutput
+    return restoredContext.setCurrentPath(parentPath)
 }
 
 async function resolveExecuteFlowOperation(operation: ExecuteFlowOperation): Promise<ResolvedExecuteFlowOperation> {
@@ -294,7 +286,9 @@ type IsStepRestorableParams = {
     isWaitpointResume: boolean
 }
 
-type InsertStepsParams = {
+type RestoreStepParams = {
+    flowContext: FlowExecutorContext
+    stepName: string
     stepOutput: StepOutput
     isWaitpointResume: boolean
 }
