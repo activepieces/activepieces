@@ -20,6 +20,15 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 ...piecePackage,
                 platformId,
             }, log)
+            const conflictsWithOfficial = await pieceMetadataService(log).officialPieceExists({ name: pieceInformation.name })
+            if (conflictsWithOfficial) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `piece_name_conflicts_with_official name=${pieceInformation.name}`,
+                    },
+                })
+            }
             const archiveId = piecePackage.packageType === PackageType.ARCHIVE ? piecePackage.archiveId : undefined
             const savedPiece = await pieceMetadataService(log).create({
                 pieceMetadata: {

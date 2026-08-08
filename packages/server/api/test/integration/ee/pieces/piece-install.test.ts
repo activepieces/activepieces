@@ -12,6 +12,8 @@ import { MockInstance } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
+import { db } from '../../../helpers/db'
+import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -99,5 +101,42 @@ describe('POST /v1/pieces — private piece installation (EE)', () => {
         expect(saved.pieceType).toBe(PieceType.CUSTOM)
         expect(saved.packageType).toBe(PackageType.ARCHIVE)
         expect(saved.archiveId).toBeDefined()
+    })
+
+    it('rejects a custom piece whose name matches an official piece with 409 and persists nothing', async () => {
+        const ctx = await createTestContext(app!)
+
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: PIECE_NAME,
+            version: PIECE_VERSION,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+            platformId: undefined,
+        }))
+
+        const formData = new FormData()
+        formData.append(
+            'pieceArchive',
+            new Blob([tgzBuffer], { type: 'application/gzip' }),
+            'private-piece-test.tgz',
+        )
+        formData.append('pieceName', PIECE_NAME)
+        formData.append('pieceVersion', PIECE_VERSION)
+        formData.append('packageType', PackageType.ARCHIVE)
+        formData.append('scope', PieceScope.PLATFORM)
+
+        const response = await ctx.inject({
+            method: 'POST',
+            url: '/api/v1/pieces',
+            body: formData,
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+
+        const customPieces = await databaseConnection().getRepository('piece_metadata').findBy({
+            name: PIECE_NAME,
+            pieceType: PieceType.CUSTOM,
+        })
+        expect(customPieces).toHaveLength(0)
     })
 })
