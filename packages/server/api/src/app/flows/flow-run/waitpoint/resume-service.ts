@@ -11,16 +11,23 @@ import { waitpointService } from './waitpoint-service'
 import { Waitpoint, WaitpointResumePayload, WaitpointStatus } from './waitpoint-types'
 
 export const resumeService = (log: FastifyBaseLogger) => ({
-    async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
+    async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId, releasingFanInBarrier }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         return distributedLock(log).runExclusive({
             key: `runs_metadata_${flowRunId}`,
             timeoutInSeconds: 30,
-            fn: () => this.resumeFromWaitpointWithoutLock({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }),
+            fn: () => this.resumeFromWaitpointWithoutLock({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId, releasingFanInBarrier }),
         })
     },
 
-    async resumeFromWaitpointWithoutLock({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
+    async resumeFromWaitpointWithoutLock({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId, releasingFanInBarrier }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
+        if (!(releasingFanInBarrier ?? false)) {
+            const barrier = await waitpointService(log).findFanInBarrierById({ waitpointId, projectId: flowRun.projectId })
+            if (!isNil(barrier)) {
+                log.warn({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[resumeService#resumeFromWaitpointWithoutLock] Refused an external resume of a fan-in barrier; only the barrier predicate and its timeout may release it')
+                return { flowRun, stale: true }
+            }
+        }
         const processed = await waitpointService(log).handleResumeSignal({
             flowRunId,
             waitpointId,
@@ -47,7 +54,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                     log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeFromWaitpointWithoutLock] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; consuming waitpoint and enqueuing resume')
                     // Consume the stale COMPLETED waitpoint under the lock so it cannot
                     // poison the next createForPause call on a subsequent loop iteration
-                    await waitpointService(log).delete({ id: latestWaitpoint.id })
+                    await waitpointService(log).delete({ id: latestWaitpoint.id, projectId: latestWaitpoint.projectId })
                     await enqueueResume({
                         flowRun: currentFlowRun,
                         waitpoint: latestWaitpoint,
@@ -67,7 +74,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         if (flowRun.status !== FlowRunStatus.PAUSED) {
             return { flowRun, stale: true }
         }
-        if (await waitpointService(log).hasPendingFanInBarrier({ flowRunId })) {
+        if (await waitpointService(log).hasPendingFanInBarrier({ flowRunId, projectId: flowRun.projectId })) {
             log.warn({ flowRun: { id: flowRunId } }, '[resumeService#legacyResume] Refused an external resume of a fan-in barrier; only the barrier predicate and its timeout may release it')
             return { flowRun, stale: true }
         }
@@ -122,7 +129,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                 headers: {},
             }
         }
-        if (await waitpointService(log).hasPendingFanInBarrier({ flowRunId: runId })) {
+        if (await waitpointService(log).hasPendingFanInBarrier({ flowRunId: runId, projectId: flowRun.projectId })) {
             log.warn({ flowRun: { id: runId } }, '[resumeService#legacySyncResume] Refused an external resume of a fan-in barrier; only the barrier predicate and its timeout may release it')
             return {
                 status: StatusCodes.GONE,
@@ -187,6 +194,7 @@ type ResumeFromWaitpointParams = {
     resumePayload: WaitpointResumePayload
     workerHandlerId?: string
     httpRequestId?: string
+    releasingFanInBarrier?: boolean
 }
 
 type LegacyResumeParams = {

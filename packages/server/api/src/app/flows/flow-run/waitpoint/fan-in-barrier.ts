@@ -7,7 +7,7 @@ import { Waitpoint } from './waitpoint-types'
 
 const flowRunRepo = repoFactory(FlowRunEntity)
 
-async function countChildren({ parentWaitpointId, projectId }: CountChildrenParams, entityManager?: EntityManager): Promise<FanInChildCounts> {
+async function countChildren({ parentWaitpointId, projectId, entityManager }: ChildQueryParams): Promise<FanInChildCounts> {
     const rows = await flowRunRepo(entityManager)
         .createQueryBuilder('flowRun')
         .select('"flowRun"."status"', 'status')
@@ -32,7 +32,7 @@ async function countChildren({ parentWaitpointId, projectId }: CountChildrenPara
     }, EMPTY_COUNTS)
 }
 
-async function hasNonTerminalChild({ parentWaitpointId, projectId }: CountChildrenParams): Promise<boolean> {
+async function hasNonTerminalChild({ parentWaitpointId, projectId }: ChildQueryParams): Promise<boolean> {
     return flowRunRepo()
         .createQueryBuilder('flowRun')
         .where('"flowRun"."parentWaitpointId" = :parentWaitpointId', { parentWaitpointId })
@@ -41,7 +41,7 @@ async function hasNonTerminalChild({ parentWaitpointId, projectId }: CountChildr
         .getExists()
 }
 
-async function listChildren({ parentWaitpointId, projectId }: CountChildrenParams, entityManager?: EntityManager): Promise<FanInChild[]> {
+async function listChildren({ parentWaitpointId, projectId, entityManager }: ChildQueryParams): Promise<FanInChild[]> {
     return flowRunRepo(entityManager)
         .createQueryBuilder('flowRun')
         .select(['"flowRun"."id" AS "id"', '"flowRun"."status" AS "status"', '"flowRun"."dispatchIndex" AS "dispatchIndex"'])
@@ -76,10 +76,6 @@ function toSummary({ counts, barrier, timedOut }: ToSummaryParams): FanInSummary
     }
 }
 
-function hasAnyChildren(counts: FanInChildCounts): boolean {
-    return counts.stillRunning > 0 || counts.terminal > 0
-}
-
 const EMPTY_COUNTS: FanInChildCounts = {
     succeeded: 0,
     failed: 0,
@@ -90,7 +86,7 @@ const EMPTY_COUNTS: FanInChildCounts = {
 
 const NON_TERMINAL_STATUSES = Object.values(FlowRunStatus).filter((status) => !isFlowRunStateTerminal({ status, ignoreInternalError: false }))
 
-export const fanInBarrier = { countChildren, listChildren, hasNonTerminalChild, isReleasable, toSummary, hasAnyChildren }
+export const fanInBarrier = { countChildren, listChildren, hasNonTerminalChild, isReleasable, toSummary }
 
 export type FanInChild = {
     id: string
@@ -117,9 +113,10 @@ export type FanInSummary = {
     timedOut: boolean
 }
 
-type CountChildrenParams = {
+type ChildQueryParams = {
     parentWaitpointId: string
     projectId: string
+    entityManager?: EntityManager
 }
 
 type EvaluateBarrierParams = {

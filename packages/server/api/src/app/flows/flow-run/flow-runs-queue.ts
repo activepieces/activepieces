@@ -132,6 +132,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                         flowRunId: savedFlowRun.id,
                                         waitpointId: latestWaitpoint.id,
                                         resumePayload: latestWaitpoint.resumePayload,
+                                        releasingFanInBarrier: true,
                                     })
                                 }
                             }
@@ -221,7 +222,7 @@ export async function markParentRunAsFailed({
         queryParams: {},
     }
 
-    const existingWaitpoint = await waitpointService(log).findNonFanInByFlowRunId(parentRunId)
+    const existingWaitpoint = await waitpointService(log).findNonFanInByFlowRunId({ flowRunId: parentRunId, projectId: flowRun.projectId })
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,
@@ -258,6 +259,7 @@ export async function maybeResumeFanInBarrier({ parentWaitpointId, projectId, lo
             flowRunId: parentRun.id,
             waitpointId: barrier.id,
             resumePayload: barrier.resumePayload,
+            releasingFanInBarrier: true,
         })
         return
     }
@@ -273,18 +275,18 @@ export async function maybeResumeFanInBarrier({ parentWaitpointId, projectId, lo
     if (!fanInBarrier.isReleasable({ counts, barrier })) {
         return
     }
-    const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false })
-    const result = await waitpointService(log).complete({
-        flowRunId: parentRun.id,
+    const result = await waitpointService(log).completeFanInBarrier({
+        barrier,
         projectId: parentRun.projectId,
-        waitpointId: barrier.id,
-        resumePayload: { body: summary, headers: {}, queryParams: {} },
+        counts,
+        timedOut: false,
     })
     if (result.completedExisting && !isNil(result.waitpoint)) {
         await resumeService(log).resumeFromWaitpoint({
             flowRunId: parentRun.id,
             waitpointId: result.waitpoint.id,
             resumePayload: result.waitpoint.resumePayload,
+            releasingFanInBarrier: true,
         })
     }
 }

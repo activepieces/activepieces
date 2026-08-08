@@ -104,6 +104,7 @@ export type SystemJobSchedule = {
     close(): Promise<void>
 }
 
-export const resumeDelayJobId = ({ waitpointId }: { waitpointId: string }): string => `resume-delay-${waitpointId}`
-
-export const legacyResumeDelayJobId = ({ flowRunId }: { flowRunId: FlowRunId }): string => `resume-delay-${flowRunId}`
+export const systemJobIds = {
+    resumeDelay: ({ waitpointId }: { waitpointId: string }): string => `resume-delay-${waitpointId}`,
+    legacyResumeDelay: ({ flowRunId }: { flowRunId: FlowRunId }): string => `resume-delay-${flowRunId}`,
+}

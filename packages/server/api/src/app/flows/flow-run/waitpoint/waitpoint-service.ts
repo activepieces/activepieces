@@ -7,14 +7,12 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { legacyResumeDelayJobId, resumeDelayJobId, SystemJobName } from '../../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
-import { fanInBarrier, FanInChild } from './fan-in-barrier'
+import { fanInBarrier, FanInChild, FanInChildCounts } from './fan-in-barrier'
 import { WaitpointEntity } from './waitpoint-entity'
+import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
-const SWEEP_BATCH_SIZE = 500
 
 export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
@@ -65,7 +63,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
 
         log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
         if (params.type === PauseType.DELAY && !isNil(params.resumeDateTime)) {
-            await scheduleTimeoutJob({
+            await waitpointTimeoutJob.schedule({
                 flowRunId: params.flowRunId,
                 projectId: params.projectId,
                 waitpointId: id,
@@ -91,8 +89,8 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             const repo = waitpointRepo(entityManager)
             const existing = await repo.findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
             if (!isNil(existing) && existing.status === WaitpointStatus.PENDING) {
-                const children = await fanInBarrier.listChildren({ parentWaitpointId: existing.id, projectId: params.projectId }, entityManager)
-                assertReEntryIsSafe({ existing, children, dispatchDigest })
+                const children = await fanInBarrier.listChildren({ parentWaitpointId: existing.id, projectId: params.projectId, entityManager })
+                assertReEntryIsSafe({ children })
                 log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id }, childCount: children.length }, '[waitpointService#createFanInBarrier] Barrier already exists for this step, reusing it')
                 return { inserted: false, waitpoint: existing, fanIn: toBarrierState({ barrier: existing, children }) }
             }
@@ -163,13 +161,12 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
 
         const counts = await fanInBarrier.countChildren({ parentWaitpointId: sealed.id, projectId: params.projectId })
         if (fanInBarrier.isReleasable({ counts, barrier: sealed })) {
-            const summary = fanInBarrier.toSummary({ counts, barrier: sealed, timedOut: false })
-            await this.complete({ flowRunId, projectId: params.projectId, waitpointId: sealed.id, resumePayload: { body: summary, headers: {}, queryParams: {} } })
+            await this.completeFanInBarrier({ barrier: sealed, projectId: params.projectId, counts, timedOut: false })
             log.info({ flowRun: { id: flowRunId }, waitpoint: { id: sealed.id } }, '[waitpointService#sealFanInBarrier] All children terminal at seal; completed barrier, PAUSED-upload reconciliation will resume')
             return { waitpoint: await waitpointRepo().findOneByOrFail({ id: sealed.id }), alreadySealed, timeoutAt: effectiveTimeoutAt }
         }
 
-        await scheduleTimeoutJob({
+        await waitpointTimeoutJob.schedule({
             flowRunId,
             projectId: params.projectId,
             waitpointId: sealed.id,
@@ -187,46 +184,13 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return waitpoint
     },
 
-    async sweepOverdueDeadlines(): Promise<string[]> {
-        const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-        const overdue = await waitpointRepo()
-            .createQueryBuilder('waitpoint')
-            .innerJoin('flow_run', 'flowRun', '"flowRun"."id" = "waitpoint"."flowRunId"')
-            .where('"waitpoint"."status" = :status', { status: WaitpointStatus.PENDING })
-            .andWhere('"waitpoint"."resumeDateTime" < :now', { now: dayjs().toISOString() })
-            .andWhere('"waitpoint"."resumeDateTime" > :floor', { floor: dayjs().subtract(maxDurationInDays, 'day').toISOString() })
-            .andWhere('"flowRun"."status" = :runStatus', { runStatus: FlowRunStatus.PAUSED })
-            .orderBy('"waitpoint"."resumeDateTime"', 'DESC')
-            .limit(SWEEP_BATCH_SIZE)
-            .getMany()
-
-        const rearmed: string[] = []
-        for (const waitpoint of overdue) {
-            if (isNil(waitpoint.resumeDateTime)) {
-                continue
-            }
-            const existingJob = await systemJobsSchedule(log).getJob<SystemJobName.RESUME_DELAY_WAITPOINT>(resumeDelayJobId({ waitpointId: waitpoint.id }))
-            if (!isNil(existingJob) && await existingJob.isFailed()) {
-                log.warn({ flowRun: { id: waitpoint.flowRunId }, waitpoint: { id: waitpoint.id } }, '[waitpointService#sweepOverdueDeadlines] Deadline job exhausted its attempts, leaving it dead-lettered instead of re-arming it every tick')
-                continue
-            }
-            await scheduleTimeoutJob({
-                flowRunId: waitpoint.flowRunId,
-                projectId: waitpoint.projectId,
-                waitpointId: waitpoint.id,
-                resumeDateTime: waitpoint.resumeDateTime,
-                log,
-            })
-            rearmed.push(waitpoint.id)
-        }
-
-        if (rearmed.length > 0) {
-            log.info({ overdueCount: rearmed.length }, '[waitpointService#sweepOverdueDeadlines] Re-armed overdue waitpoint deadlines')
-        }
-        if (overdue.length >= SWEEP_BATCH_SIZE) {
-            log.warn({ overdueCount: overdue.length }, '[waitpointService#sweepOverdueDeadlines] Overdue backlog filled the sweep batch, the newest deadlines go first so a stuck prefix cannot starve them and the rest follow once these drain')
-        }
-        return rearmed
+    async completeFanInBarrier({ barrier, projectId, counts, timedOut }: CompleteFanInBarrierParams): Promise<CompleteResult> {
+        return this.complete({
+            flowRunId: barrier.flowRunId,
+            projectId,
+            waitpointId: barrier.id,
+            resumePayload: { body: fanInBarrier.toSummary({ counts, barrier, timedOut }), headers: {}, queryParams: {} },
+        })
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
@@ -278,7 +242,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Stale waitpointId, ignoring')
                 return false
             }
-            await removeTimeoutJobs({ waitpointId: waitpoint.id, flowRunId, log })
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })
             log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Resume triggered')
             return true
         }
@@ -312,21 +276,21 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return completed ?? waitpointRepo().findOneBy({ flowRunId })
     },
 
-    async hasPendingFanInBarrier({ flowRunId }: { flowRunId: string }): Promise<boolean> {
-        const barrier = await waitpointRepo().findOneBy({ flowRunId, isFanIn: true, status: WaitpointStatus.PENDING })
+    async hasPendingFanInBarrier({ flowRunId, projectId }: HasPendingFanInBarrierParams): Promise<boolean> {
+        const barrier = await waitpointRepo().findOneBy({ flowRunId, projectId, isFanIn: true, status: WaitpointStatus.PENDING })
         return !isNil(barrier)
     },
 
-    async findNonFanInByFlowRunId(flowRunId: string): Promise<Waitpoint | null> {
-        const completed = await waitpointRepo().findOneBy({ flowRunId, status: WaitpointStatus.COMPLETED, isFanIn: false })
-        return completed ?? waitpointRepo().findOneBy({ flowRunId, isFanIn: false })
+    async findNonFanInByFlowRunId({ flowRunId, projectId }: FindNonFanInByFlowRunIdParams): Promise<Waitpoint | null> {
+        const completed = await waitpointRepo().findOneBy({ flowRunId, projectId, status: WaitpointStatus.COMPLETED, isFanIn: false })
+        return completed ?? waitpointRepo().findOneBy({ flowRunId, projectId, isFanIn: false })
     },
 
-    async delete({ id }: { id: string }): Promise<void> {
-        const waitpoint = await waitpointRepo().findOneBy({ id })
-        await waitpointRepo().delete({ id })
+    async delete({ id, projectId }: DeleteWaitpointParams): Promise<void> {
+        const waitpoint = await waitpointRepo().findOneBy({ id, projectId })
+        await waitpointRepo().delete({ id, projectId })
         if (!isNil(waitpoint)) {
-            await removeTimeoutJobs({ waitpointId: waitpoint.id, flowRunId: waitpoint.flowRunId, log })
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId: waitpoint.flowRunId, log })
         }
         log.info({ waitpoint: { id } }, '[waitpointService#delete] Waitpoint deleted')
     },
@@ -335,34 +299,11 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const waitpoints = await waitpointRepo().findBy({ flowRunId })
         await waitpointRepo().delete({ flowRunId })
         for (const waitpoint of waitpoints) {
-            await removeTimeoutJobs({ waitpointId: waitpoint.id, flowRunId, log })
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })
         }
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })
-
-async function scheduleTimeoutJob({ flowRunId, projectId, waitpointId, resumeDateTime, log }: ScheduleTimeoutJobParams): Promise<void> {
-    await systemJobsSchedule(log).upsertJob({
-        job: {
-            name: SystemJobName.RESUME_DELAY_WAITPOINT,
-            data: { flowRunId, projectId, waitpointId },
-            jobId: resumeDelayJobId({ waitpointId }),
-        },
-        schedule: {
-            type: 'one-time',
-            date: dayjs(resumeDateTime),
-        },
-    })
-}
-
-async function removeTimeoutJobs({ waitpointId, flowRunId, log }: RemoveTimeoutJobsParams): Promise<void> {
-    await systemJobsSchedule(log).removeJob({ jobId: resumeDelayJobId({ waitpointId }) })
-    const legacyJobId = legacyResumeDelayJobId({ flowRunId })
-    const legacyJob = await systemJobsSchedule(log).getJob<SystemJobName.RESUME_DELAY_WAITPOINT>(legacyJobId)
-    if (!isNil(legacyJob) && legacyJob.data.waitpointId === waitpointId) {
-        await systemJobsSchedule(log).removeJob({ jobId: legacyJobId })
-    }
-}
 
 function assertFanInChildrenWithinLimit({ dispatched }: AssertFanInChildrenWithinLimitParams): void {
     const maxChildren = system.getNumberOrThrow(AppSystemProp.MAX_FAN_IN_CHILDREN)
@@ -374,22 +315,14 @@ function assertFanInChildrenWithinLimit({ dispatched }: AssertFanInChildrenWithi
     }
 }
 
-function assertReEntryIsSafe({ existing, children, dispatchDigest }: AssertReEntryIsSafeParams): void {
+function assertReEntryIsSafe({ children }: AssertReEntryIsSafeParams): void {
     if (children.length === 0) {
         return
     }
-    if (isNil(existing.dispatchDigest)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: { message: 'This fan-in step already dispatched subflows, so it cannot be started again — re-running the dispatch loop would create duplicate children. Retry the parent run from the beginning instead of retrying the step.' },
-        })
-    }
-    if (existing.dispatchDigest !== dispatchDigest) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: { message: 'This fan-in step resolved a different payload than the one its already-dispatched subflows were built from, so the remaining children cannot be dispatched against it. Retry the parent run from the beginning.' },
-        })
-    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: 'This fan-in step already dispatched subflows, so it cannot be started again — re-running the dispatch loop would create duplicate children. Retry the parent run from the beginning instead of retrying the step.' },
+    })
 }
 
 function toBarrierState({ barrier, children }: ToBarrierStateParams): FanInBarrierState {
@@ -443,9 +376,29 @@ type AssertFanInChildrenWithinLimitParams = {
 }
 
 type AssertReEntryIsSafeParams = {
-    existing: Waitpoint
     children: FanInChild[]
-    dispatchDigest: string
+}
+
+type CompleteFanInBarrierParams = {
+    barrier: Waitpoint
+    projectId: string
+    counts: FanInChildCounts
+    timedOut: boolean
+}
+
+type HasPendingFanInBarrierParams = {
+    flowRunId: string
+    projectId: string
+}
+
+type FindNonFanInByFlowRunIdParams = {
+    flowRunId: string
+    projectId: string
+}
+
+type DeleteWaitpointParams = {
+    id: string
+    projectId: string
 }
 
 type ToBarrierStateParams = {
@@ -456,20 +409,6 @@ type ToBarrierStateParams = {
 type FindFanInBarrierByIdParams = {
     waitpointId: string
     projectId: string
-}
-
-type ScheduleTimeoutJobParams = {
-    flowRunId: string
-    projectId: string
-    waitpointId: string
-    resumeDateTime: string
-    log: FastifyBaseLogger
-}
-
-type RemoveTimeoutJobsParams = {
-    waitpointId: string
-    flowRunId: string
-    log: FastifyBaseLogger
 }
 
 type ClampFanInTimeoutParams = {

@@ -74,7 +74,7 @@ import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
-import { waitpointService } from './flows/flow-run/waitpoint/waitpoint-service'
+import { sweepOverdueDeadlines } from './flows/flow-run/waitpoint/waitpoint-deadline-sweep'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
@@ -285,7 +285,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     systemJobHandlers.registerJobHandler(SystemJobName.WAITPOINT_DEADLINE_SWEEP, async () => {
-        await waitpointService(app.log).sweepOverdueDeadlines()
+        await sweepOverdueDeadlines({ log: app.log })
     })
     await systemJobsSchedule(app.log).upsertJob({
         job: {

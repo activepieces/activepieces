@@ -40,11 +40,11 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
     }
 
     const counts = await fanInBarrier.countChildren({ parentWaitpointId: waitpoint.id, projectId: data.projectId })
-    const result = await waitpointService(log).complete({
-        flowRunId: data.flowRunId,
+    const result = await waitpointService(log).completeFanInBarrier({
+        barrier: waitpoint,
         projectId: data.projectId,
-        waitpointId: waitpoint.id,
-        resumePayload: { body: fanInBarrier.toSummary({ counts, barrier: waitpoint, timedOut: true }), headers: {}, queryParams: {} },
+        counts,
+        timedOut: true,
     })
     if (!result.completedExisting) {
         log.warn({ flowRun: { id: data.flowRunId }, waitpoint: { id: waitpoint.id } },
@@ -54,6 +54,7 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
         flowRunId: data.flowRunId,
         waitpointId: waitpoint.id,
         resumePayload: result.waitpoint?.resumePayload ?? waitpoint.resumePayload,
+        releasingFanInBarrier: true,
     })
 }
 
