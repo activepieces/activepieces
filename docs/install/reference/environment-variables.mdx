@@ -46,6 +46,9 @@ Variables marked ❗ are required for a self-hosted production deployment.
   <Card title="Pieces & flows" icon="puzzle-piece" href="#pieces-&-flows">
     Piece syncing, polling, publish behavior.
   </Card>
+  <Card title="Tool search" icon="magnifying-glass" href="#tool-search">
+    Semantic action discovery for AI agents.
+  </Card>
 </CardGroup>
 
 ---
@@ -239,3 +242,15 @@ flow-authoring defaults.
 | `AP_TRIGGER_DEFAULT_POLL_INTERVAL` | Minutes between checks for new data on pieces with scheduled triggers (e.g. new Google Contacts). | `5` |
 | `AP_ENABLE_FLOW_ON_PUBLISH` | Automatically enable a flow when a new version is published. | `true` |
 | `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES` | Load translations for dev pieces (configured via `AP_DEV_PIECES`). Affects development mode only. | `false` |
+
+---
+
+### Tool search
+
+Semantic discovery of piece actions and triggers for AI agents connected
+through the MCP server. See [Tool Search](/mcp/tool-search) for how it works.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_TOOL_SEARCH_ENABLED` | Registers the `ap_search_actions` and `ap_search_triggers` MCP tools. Read live, so flipping it takes effect without a restart. | `false` |
+| `AP_OPENAI_API_KEY` | OpenAI API key that funds tool-search embeddings (indexing and queries). When unset, the platform's OpenAI [AI provider](/admin-guide/guides/setup-ai-providers) is used instead; with neither, tool search serves keyword matches rather than semantic ones. | `None` |
