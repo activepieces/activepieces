@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, PrincipalType, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, RequestEmailCodeRequest, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider, VerifyEmailCodeRequest } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { applicationEvents } from '../helper/application-events'
 import { networkUtils } from '../helper/network-utils'
@@ -12,6 +13,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
+import { passwordlessAuthService } from './passwordless-auth.service'
 
 export const authenticationController: FastifyPluginAsyncZod = async (
     app,
@@ -73,6 +75,66 @@ export const authenticationController: FastifyPluginAsyncZod = async (
         return response
     })
 
+    app.post('/otp/request', RequestEmailCodeRequestOptions, async (request, reply) => {
+        const platformId = await platformUtils.getPlatformIdForRequest(request)
+        await passwordlessAuthService(request.log).requestCode({
+            email: request.body.email,
+            platformId: platformId ?? null,
+        })
+        return reply.code(StatusCodes.NO_CONTENT).send()
+    })
+
+    app.post('/otp/verify', VerifyEmailCodeRequestOptions, async (request) => {
+        const platformId = await platformUtils.getPlatformIdForRequest(request)
+        const response = await passwordlessAuthService(request.log).verifyCode({
+            email: request.body.email,
+            code: request.body.code,
+            platformId: platformId ?? null,
+        })
+
+        if (!isNil(response.platformId)) {
+            applicationEvents(request.log).sendUserEvent({
+                platformId: response.platformId,
+                userId: response.id,
+                projectId: response.projectId ?? undefined,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_IN,
+                data: {},
+            })
+            rejectedPromiseHandler(telemetry(request.log).trackUser(response.id, {
+                name: TelemetryEventName.SIGNED_IN,
+                payload: {
+                    userId: response.id,
+                    platformId: response.platformId,
+                },
+            }, { platform: response.platformId }), request.log)
+        }
+
+        return response
+    })
+
+    app.post('/complete-sign-up', CompleteSignUpRequestOptions, async (request) => {
+        const response = await passwordlessAuthService(request.log).completeSignUp({
+            identityId: request.principal.id,
+            fullName: request.body.fullName,
+        })
+
+        if (!isNil(response.platformId)) {
+            applicationEvents(request.log).sendUserEvent({
+                platformId: response.platformId,
+                userId: response.id,
+                projectId: response.projectId ?? undefined,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, {
+                action: ApplicationEventName.USER_SIGNED_UP,
+                data: {},
+            })
+        }
+
+        return response
+    })
+
     app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {
         const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
         return authenticationService(request.log).switchPlatform({
@@ -110,6 +172,36 @@ const SignUpRequestOptions = {
     },
     schema: {
         body: SignUpRequest,
+    },
+}
+
+const CompleteSignUpRequestOptions = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.ONBOARDING]),
+        rateLimit: rateLimitOptions,
+    },
+    schema: {
+        body: CompleteSignUpRequest,
+    },
+}
+
+const RequestEmailCodeRequestOptions = {
+    config: {
+        security: securityAccess.public(),
+        rateLimit: rateLimitOptions,
+    },
+    schema: {
+        body: RequestEmailCodeRequest,
+    },
+}
+
+const VerifyEmailCodeRequestOptions = {
+    config: {
+        security: securityAccess.public(),
+        rateLimit: rateLimitOptions,
+    },
+    schema: {
+        body: VerifyEmailCodeRequest,
     },
 }
 
