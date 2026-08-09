@@ -12,7 +12,7 @@ import {
     pieceTranslation,
     PropertyType,
     StaticPropsValue } from '@activepieces/pieces-framework'
-import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
+import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteResolveConnectionIdentifierOperation, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 
 const DEFAULT_REFRESH_EXPIRES_IN_SECONDS = 3300
@@ -138,6 +138,21 @@ export const pieceHelper = {
             server,
         })
 
+    },
+
+    async executeResolveConnectionIdentifier(
+        { params, devPieces }: { params: ExecuteResolveConnectionIdentifierOperation, devPieces: string[] },
+    ): Promise<ExecuteResolveConnectionIdentifierResponse> {
+        const { piece: piecePackage } = params
+
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
+        const server = buildServerContext(params)
+        return resolveConnectionIdentifier({
+            authValue: params.auth,
+            connectionType: params.connectionType,
+            pieceAuth: piece.auth,
+            server,
+        })
     },
 
     async executeRefreshTokenAuth(
@@ -280,6 +295,54 @@ const validateAuth = async ({
     }
 }
 
+const resolveConnectionIdentifier = async ({
+    server,
+    authValue,
+    connectionType,
+    pieceAuth,
+}: ResolveConnectionIdentifierParams): Promise<ExecuteResolveConnectionIdentifierResponse> => {
+    if (isNil(pieceAuth)) {
+        return { identifier: undefined }
+    }
+    const usedPieceAuth = getAuthPropertyForValue({
+        authValueType: connectionType,
+        pieceAuth,
+    })
+    if (isNil(usedPieceAuth)) {
+        return { identifier: undefined }
+    }
+    switch (usedPieceAuth.type) {
+        case PropertyType.OAUTH2: {
+            if (!('access_token' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue, server }) }
+        }
+        case PropertyType.BASIC_AUTH: {
+            if (!('username' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue, server }) }
+        }
+        case PropertyType.SECRET_TEXT: {
+            if (!('secret_text' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue.secret_text, server }) }
+        }
+        case PropertyType.CUSTOM_AUTH:
+        case PropertyType.OIDC: {
+            if (!('props' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue.props, server }) }
+        }
+        default: {
+            return { identifier: undefined }
+        }
+    }
+}
+
 type ValidateAuthParams = {
     server: {
         apiUrl: string
@@ -287,6 +350,10 @@ type ValidateAuthParams = {
     }
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
+}
+
+type ResolveConnectionIdentifierParams = ValidateAuthParams & {
+    connectionType: AppConnectionType
 }
 
 function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: string, publicApiUrl: string }) {

@@ -178,6 +178,8 @@ function AppConnectionsPage() {
         ),
         cell: ({ row }) => {
           const isPlatformConnection = row.original.scope === 'PLATFORM';
+          const accountIdentifier =
+            appConnectionUtils.getConnectionAccountIdentifier(row.original);
           return (
             <div className="flex items-center gap-2 min-w-0">
               <CopyTextTooltip
@@ -192,9 +194,16 @@ function AppConnectionsPage() {
                   />
                 </span>
               </CopyTextTooltip>
-              <TextWithTooltip tooltipMessage={row.original.displayName}>
-                <span className="min-w-0">{row.original.displayName}</span>
-              </TextWithTooltip>
+              <div className="flex flex-col min-w-0">
+                <TextWithTooltip tooltipMessage={row.original.displayName}>
+                  <span className="min-w-0">{row.original.displayName}</span>
+                </TextWithTooltip>
+                {accountIdentifier && (
+                  <span className="truncate text-xs text-muted-foreground">
+                    {accountIdentifier}
+                  </span>
+                )}
+              </div>
               {isPlatformConnection && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -272,7 +281,9 @@ function AppConnectionsPage() {
               className="text-left underline cursor-pointer"
               onClick={() => {
                 navigate(
-                  `/flows?connectionExternalId=${row.original.externalId}`,
+                  `/automations?connection=${encodeURIComponent(
+                    row.original.externalId,
+                  )}`,
                 );
               }}
             >

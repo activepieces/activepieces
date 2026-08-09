@@ -1,5 +1,6 @@
 import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
+import { clearTableActionOutputSchema } from '../output-schemas';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const clearTable = createAction({
@@ -12,6 +13,7 @@ export const clearTable = createAction({
   props: {
     table_id: tablesCommon.table_id,
   },
+  outputSchema: clearTableActionOutputSchema,
   async run(context) {
     const { table_id: tableExternalId } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);

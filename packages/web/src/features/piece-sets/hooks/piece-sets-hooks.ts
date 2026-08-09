@@ -14,15 +14,20 @@ import { pieceSetsApi } from '../api/piece-sets-api';
 
 export const pieceSetKeys = {
   all: ['piece-sets'] as const,
+  page: (cursor: string | undefined, limit: number | undefined) =>
+    ['piece-sets', 'page', cursor ?? null, limit ?? null] as const,
   one: (id: string) => ['piece-sets', id] as const,
 };
 
 export const pieceSetQueries = {
-  usePieceSets: () => {
+  usePieceSets: ({
+    cursor,
+    limit,
+  }: { cursor?: string; limit?: number } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
     return useQuery({
-      queryKey: pieceSetKeys.all,
-      queryFn: () => pieceSetsApi.list(),
+      queryKey: pieceSetKeys.page(cursor, limit),
+      queryFn: () => pieceSetsApi.list({ cursor, limit }),
       enabled: platform.plan.managePiecesEnabled,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });

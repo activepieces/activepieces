@@ -3,10 +3,12 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { moduloActionOutputSchema } from '../output-schemas';
 
 export const modulo = createAction({
   audience: 'both',
   name: 'modulo_math',
+  outputSchema: moduloActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Modulo',
   description: 'Get the remainder of the first number divided by second number',

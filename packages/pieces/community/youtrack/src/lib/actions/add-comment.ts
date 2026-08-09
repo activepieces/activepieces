@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
-import { issueDropdown, youtrackApiCall } from '../common';
+import { youtrackAuth } from '../auth';
+import { dropdownError, issueDropdown, youtrackApiCall } from '../common';
+import { addCommentActionOutputSchema } from '../output-schemas';
 
 export const addCommentAction = createAction({
   auth: youtrackAuth,
   name: 'add_comment',
+  outputSchema: addCommentActionOutputSchema,
   displayName: 'Add Comment',
   description: 'Adds a comment to an issue. Supports Markdown formatting.',
   audience: 'both',
@@ -18,21 +20,23 @@ export const addCommentAction = createAction({
       required: true,
     }),
     visibleToGroup: Property.Dropdown({
-      auth:youtrackAuth,
+      auth: youtrackAuth,
       displayName: 'Visible to Group',
       description: 'Restrict comment visibility to a group. Leave empty for everyone.',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect your account first' };
-        const { baseUrl, apiToken } = auth as unknown as { baseUrl: string; apiToken: string };
+        const { baseUrl, apiToken } = auth.props;
         try {
           const response = await youtrackApiCall<Array<{ id: string; name: string }>>({
             baseUrl, token: apiToken, method: HttpMethod.GET,
             path: '/groups', queryParams: { fields: 'id,name' },
           });
           return { disabled: false, options: [{ label: '[Visible to everyone]', value: '' }, ...response.body.map((g) => ({ label: g.name, value: g.id }))] };
-        } catch { return { disabled: true, options: [], placeholder: 'Failed to load groups.' }; }
+        } catch (error) {
+          return dropdownError('Failed to load groups', error);
+        }
       },
     }),
   },

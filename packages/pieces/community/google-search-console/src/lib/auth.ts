@@ -19,6 +19,6 @@ export const googleSearchConsoleAuth = PieceAuth.OAuth2({
   13. Copy **Client ID** and **Client Secret**.`,
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',
-  scope: ['https://www.googleapis.com/auth/webmasters'],
+  scope: ['https://www.googleapis.com/auth/webmasters', 'email'],
   required: true,
 });
