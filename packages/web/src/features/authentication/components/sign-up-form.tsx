@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -44,6 +44,11 @@ import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
 import { passwordValidation } from '../utils/password-validation-utils';
+
+import {
+  TurnstileWidget,
+  useTurnstileSiteKey,
+} from './auth-landing/turnstile-widget';
 
 const SignUpForm = ({
   showCheckYourEmailNote,
@@ -108,6 +113,9 @@ const SignUpForm = ({
       }
     },
     onError: (error) => {
+      // The challenge token is single-use, so a refused attempt must be given a
+      // fresh one or every retry replays a token Cloudflare has already spent.
+      setCaptchaReset((count) => count + 1);
       if (api.isError(error)) {
         const errorCode: ErrorCode | undefined = (
           error.response?.data as { code: ErrorCode }
@@ -164,6 +172,15 @@ const SignUpForm = ({
     },
   });
 
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const handleCaptchaUnavailable = useCallback(
+    () => setCaptchaUnavailable(true),
+    [],
+  );
+  const captchaRequired = !isNil(useTurnstileSiteKey()) && !captchaUnavailable;
+
   const onSubmit: SubmitHandler<SignUpSchema> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
@@ -176,6 +193,7 @@ const SignUpForm = ({
       ...data,
       email: data.email.trim().toLowerCase(),
       trackEvents: true,
+      captchaToken,
     });
   };
 
@@ -356,8 +374,14 @@ const SignUpForm = ({
               {form.formState.errors.root.serverError.message}
             </FormMessage>
           )}
+          <TurnstileWidget
+            onToken={setCaptchaToken}
+            onUnavailable={handleCaptchaUnavailable}
+            resetSignal={captchaReset}
+          />
           <Button
             loading={isPending}
+            disabled={captchaRequired && isNil(captchaToken)}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
             data-testid="sign-up-button"
           >

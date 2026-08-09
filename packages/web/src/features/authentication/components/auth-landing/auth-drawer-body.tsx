@@ -468,6 +468,12 @@ function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
   const [captchaToken, setCaptchaToken] = useState<string | undefined>();
   const [captchaReset, setCaptchaReset] = useState(0);
   const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
+  // A new identity here would re-run the widget effect on every keystroke,
+  // tearing down a challenge the visitor may already have solved.
+  const handleCaptchaUnavailable = useCallback(
+    () => setCaptchaUnavailable(true),
+    [],
+  );
   // Fail open when the challenge cannot load. The server still refuses a
   // request with no token, so nothing is weakened — but the person gets a
   // reason instead of an arrow that never lights up.
@@ -542,7 +548,7 @@ function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
         />
         <TurnstileWidget
           onToken={setCaptchaToken}
-          onUnavailable={() => setCaptchaUnavailable(true)}
+          onUnavailable={handleCaptchaUnavailable}
           resetSignal={captchaReset}
         />
         {form?.formState?.errors?.root?.serverError && (
