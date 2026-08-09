@@ -224,7 +224,11 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const selectedModel = modelName ?? conversation.modelName ?? null
         const tier = agentHelpers.resolveTier({ tierId: selectedModel })
-        const resolvedModelId = agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
+        // Chat picks a tier and the tier picks the model. A flow step names the model itself, so
+        // running anything else would quietly ignore what the builder shows.
+        const resolvedModelId = isFlowStep && !isNil(modelName)
+            ? modelName
+            : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
