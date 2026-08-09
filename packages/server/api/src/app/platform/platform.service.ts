@@ -282,11 +282,6 @@ function personalProjectName(platformName: string): string {
 }
 
 async function finishExistingPlatform({ user, platformId, name, invalidatePreviousTokens, identityId, log }: FinishExistingPlatformParams): Promise<AuthenticationResponse> {
-    if (invalidatePreviousTokens) {
-        await userIdentityRepository().update(identityId, {
-            tokenVersion: nanoid(),
-        })
-    }
     const hasProjects = await projectService(log).userHasProjects({
         platformId,
         userId: user.id,
@@ -300,6 +295,11 @@ async function finishExistingPlatform({ user, platformId, name, invalidatePrevio
             platformId,
             type: ProjectType.PERSONAL,
         })
+    if (invalidatePreviousTokens) {
+        await userIdentityRepository().update(identityId, {
+            tokenVersion: nanoid(),
+        })
+    }
     return authenticationUtils(log).getProjectAndToken({
         userId: user.id,
         platformId,

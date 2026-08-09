@@ -286,6 +286,36 @@ describe('Passwordless Authentication API', () => {
             expect(relinked?.platformId).toBe(response?.json()?.platformId)
         })
 
+        it('still rotates the token version when the platform route recovers', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const before = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            const strandedUserId = apId()
+            await databaseConnection().getRepository('user').save({
+                id: strandedUserId,
+                identityId: before!.id,
+                platformId: null,
+                platformRole: PlatformRole.ADMIN,
+                status: UserStatus.ACTIVE,
+            })
+            await databaseConnection().getRepository('platform').save(
+                createMockPlatform({ ownerId: strandedUserId }),
+            )
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { name: 'Ahmad' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const after = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            expect(after?.tokenVersion).not.toBe(before?.tokenVersion)
+        })
+
         it('repairs a platform left without a project instead of wedging the identity', async () => {
             await requestCode(EMAIL)
             const otp = await storedOtp(EMAIL)
