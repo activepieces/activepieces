@@ -57,6 +57,9 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         if (isNil(identity)) {
             throw new ActivepiecesError({ code: ErrorCode.INVALID_OTP, params: {} })
         }
+        if (!isNil(platformId)) {
+            await assertPlatformAuthIsOpenTo({ email, platformId, log })
+        }
         const codeIsValid = await otpService(log).confirm({
             identityId: identity.id,
             type: OtpType.EMAIL_LOGIN,
@@ -77,7 +80,6 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         }), log)
 
         if (!isNil(platformId)) {
-            await assertPlatformAuthIsOpenTo({ email, platformId, log })
             const mayJoin = await mayJoinPlatform({ email, platformId, identity: verifiedIdentity, log })
             if (!mayJoin) {
                 throw new ActivepiecesError({
