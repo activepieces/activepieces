@@ -84,7 +84,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 const existingUsers = isFirstPlatform ? await userService(log).getByIdentityId({ identityId }) : []
                 const linkedUser = existingUsers.find((user) => !isNil(user.platformId))
                 if (!isNil(linkedUser) && !isNil(linkedUser.platformId)) {
-                    return finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, log })
+                    return finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, invalidatePreviousTokens, identityId, log })
                 }
                 const unlinkedUser = existingUsers.find((user) => isNil(user.platformId))
                 const orphanedPlatform = isNil(unlinkedUser) ? null : await platformRepo().findOneBy({ ownerId: unlinkedUser.id })
@@ -94,6 +94,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
                         user: await userService(log).getOneOrFail({ id: unlinkedUser.id }),
                         platformId: orphanedPlatform.id,
                         name,
+                        invalidatePreviousTokens,
+                        identityId,
                         log,
                     })
                 }
@@ -279,7 +281,12 @@ function personalProjectName(platformName: string): string {
     return /['’]s$/.test(platformName) ? `${platformName} Project` : `${platformName}'s Project`
 }
 
-async function finishExistingPlatform({ user, platformId, name, log }: FinishExistingPlatformParams): Promise<AuthenticationResponse> {
+async function finishExistingPlatform({ user, platformId, name, invalidatePreviousTokens, identityId, log }: FinishExistingPlatformParams): Promise<AuthenticationResponse> {
+    if (invalidatePreviousTokens) {
+        await userIdentityRepository().update(identityId, {
+            tokenVersion: nanoid(),
+        })
+    }
     const hasProjects = await projectService(log).userHasProjects({
         platformId,
         userId: user.id,
@@ -371,6 +378,8 @@ type FinishExistingPlatformParams = {
     user: User
     platformId: PlatformId
     name: string
+    invalidatePreviousTokens: boolean
+    identityId: string
     log: FastifyBaseLogger
 }
 
