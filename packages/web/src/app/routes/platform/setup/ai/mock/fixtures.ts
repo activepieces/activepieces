@@ -1,6 +1,8 @@
 import { AIProviderName } from '@activepieces/core-utils';
 
-const PROVIDER_USAGE_DASHBOARDS: Partial<Record<AIProviderName, string>> = {
+export const PROVIDER_USAGE_DASHBOARDS: Partial<
+  Record<AIProviderName, string>
+> = {
   [AIProviderName.OPENAI]: 'https://platform.openai.com/usage',
   [AIProviderName.ANTHROPIC]: 'https://console.anthropic.com/settings/usage',
   [AIProviderName.GOOGLE]: 'https://aistudio.google.com/usage',
@@ -255,10 +257,54 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
     id: 'configured',
     label: 'Configured',
     providers: [
-      providerStatus({ provider: AIProviderName.OPENAI }),
-      providerStatus({ provider: AIProviderName.ANTHROPIC }),
-      providerStatus({ provider: AIProviderName.GOOGLE }),
-      providerStatus({ provider: AIProviderName.OPENROUTER }),
+      providerStatus({
+        provider: AIProviderName.OPENAI,
+        lastUsedMinutesAgo: 8,
+      }),
+      providerStatus({
+        provider: AIProviderName.ANTHROPIC,
+        lastUsedMinutesAgo: 2,
+      }),
+      providerStatus({
+        provider: AIProviderName.GOOGLE,
+        lastUsedMinutesAgo: 45,
+      }),
+      providerStatus({
+        provider: AIProviderName.OPENROUTER,
+        lastUsedMinutesAgo: 180,
+      }),
+    ],
+    keys: [
+      providerKey({
+        id: 'key-openai',
+        provider: AIProviderName.OPENAI,
+        name: 'OpenAI',
+        lastUsedMinutesAgo: 8,
+      }),
+      providerKey({
+        id: 'key-anthropic-prod',
+        provider: AIProviderName.ANTHROPIC,
+        name: 'Anthropic – Prod',
+        lastUsedMinutesAgo: 2,
+      }),
+      providerKey({
+        id: 'key-anthropic-sandbox',
+        provider: AIProviderName.ANTHROPIC,
+        name: 'Anthropic – Sandbox',
+        lastUsedMinutesAgo: 35,
+      }),
+      providerKey({
+        id: 'key-google',
+        provider: AIProviderName.GOOGLE,
+        name: 'Google Gemini',
+        lastUsedMinutesAgo: 45,
+      }),
+      providerKey({
+        id: 'key-openrouter',
+        provider: AIProviderName.OPENROUTER,
+        name: 'OpenRouter',
+        lastUsedMinutesAgo: 180,
+      }),
     ],
     chatProvider: AIProviderName.ANTHROPIC,
     routing: {
@@ -297,7 +343,20 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
   defaults: {
     id: 'defaults',
     label: 'Fresh defaults',
-    providers: [providerStatus({ provider: AIProviderName.ANTHROPIC })],
+    providers: [
+      providerStatus({
+        provider: AIProviderName.ANTHROPIC,
+        lastUsedMinutesAgo: 15,
+      }),
+    ],
+    keys: [
+      providerKey({
+        id: 'key-anthropic',
+        provider: AIProviderName.ANTHROPIC,
+        name: 'Anthropic',
+        lastUsedMinutesAgo: 15,
+      }),
+    ],
     chatProvider: AIProviderName.ANTHROPIC,
     routing: {
       isDefault: true,
@@ -310,6 +369,7 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
     id: 'empty',
     label: 'Empty platform',
     providers: [],
+    keys: [],
     chatProvider: null,
     routing: { isDefault: true, tiers: [] },
     usage: [],
@@ -319,9 +379,40 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
     id: 'provider-down',
     label: 'Provider outage',
     providers: [
-      providerStatus({ provider: AIProviderName.OPENAI, down: true }),
-      providerStatus({ provider: AIProviderName.ANTHROPIC }),
-      providerStatus({ provider: AIProviderName.GOOGLE }),
+      providerStatus({
+        provider: AIProviderName.OPENAI,
+        down: true,
+        lastUsedMinutesAgo: 240,
+      }),
+      providerStatus({
+        provider: AIProviderName.ANTHROPIC,
+        lastUsedMinutesAgo: 5,
+      }),
+      providerStatus({
+        provider: AIProviderName.GOOGLE,
+        lastUsedMinutesAgo: 90,
+      }),
+    ],
+    keys: [
+      providerKey({
+        id: 'key-openai',
+        provider: AIProviderName.OPENAI,
+        name: 'OpenAI',
+        down: true,
+        lastUsedMinutesAgo: 240,
+      }),
+      providerKey({
+        id: 'key-anthropic',
+        provider: AIProviderName.ANTHROPIC,
+        name: 'Anthropic',
+        lastUsedMinutesAgo: 5,
+      }),
+      providerKey({
+        id: 'key-google',
+        provider: AIProviderName.GOOGLE,
+        name: 'Google Gemini',
+        lastUsedMinutesAgo: 90,
+      }),
     ],
     chatProvider: AIProviderName.OPENAI,
     routing: {
@@ -345,8 +436,28 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
     id: 'limit-reached',
     label: 'Limit reached',
     providers: [
-      providerStatus({ provider: AIProviderName.OPENAI }),
-      providerStatus({ provider: AIProviderName.ANTHROPIC }),
+      providerStatus({
+        provider: AIProviderName.OPENAI,
+        lastUsedMinutesAgo: 12,
+      }),
+      providerStatus({
+        provider: AIProviderName.ANTHROPIC,
+        lastUsedMinutesAgo: 3,
+      }),
+    ],
+    keys: [
+      providerKey({
+        id: 'key-openai',
+        provider: AIProviderName.OPENAI,
+        name: 'OpenAI',
+        lastUsedMinutesAgo: 12,
+      }),
+      providerKey({
+        id: 'key-anthropic',
+        provider: AIProviderName.ANTHROPIC,
+        name: 'Anthropic',
+        lastUsedMinutesAgo: 3,
+      }),
     ],
     chatProvider: AIProviderName.ANTHROPIC,
     routing: { isDefault: false, tiers: builtInTiers() },
@@ -368,16 +479,47 @@ function model(facts: ModelFacts): ModelFacts {
 function providerStatus({
   provider,
   down,
+  lastUsedMinutesAgo,
 }: {
   provider: AIProviderName;
   down?: boolean;
+  lastUsedMinutesAgo?: number;
 }): MockProviderStatus {
   return {
     provider,
     configured: true,
     down,
+    lastUsedAt:
+      lastUsedMinutesAgo === undefined
+        ? undefined
+        : new Date(Date.now() - lastUsedMinutesAgo * 60_000).toISOString(),
     usageDashboardUrl: PROVIDER_USAGE_DASHBOARDS[provider],
     monitorGuideUrl: `https://www.activepieces.com/docs/ai/monitor-usage/${provider}`,
+  };
+}
+
+function providerKey({
+  id,
+  provider,
+  name,
+  down,
+  lastUsedMinutesAgo,
+}: {
+  id: string;
+  provider: AIProviderName;
+  name: string;
+  down?: boolean;
+  lastUsedMinutesAgo?: number;
+}): MockProviderKey {
+  return {
+    id,
+    provider,
+    name,
+    down,
+    lastUsedAt:
+      lastUsedMinutesAgo === undefined
+        ? undefined
+        : new Date(Date.now() - lastUsedMinutesAgo * 60_000).toISOString(),
   };
 }
 
@@ -588,8 +730,17 @@ export type MockProviderStatus = {
   provider: AIProviderName;
   configured: boolean;
   down?: boolean;
+  lastUsedAt?: string;
   usageDashboardUrl?: string;
   monitorGuideUrl?: string;
+};
+
+export type MockProviderKey = {
+  id: string;
+  provider: AIProviderName;
+  name: string;
+  down?: boolean;
+  lastUsedAt?: string;
 };
 
 export type MockProjectAiUsage = {
@@ -606,6 +757,7 @@ export type MockScenario = {
   id: MockScenarioId;
   label: string;
   providers: MockProviderStatus[];
+  keys: MockProviderKey[];
   chatProvider: AIProviderName | null;
   routing: { isDefault: boolean; tiers: MockTier[] };
   usage: MockProjectAiUsage[];

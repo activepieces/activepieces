@@ -36,6 +36,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarSeparator,
+  SidebarTrigger,
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -208,20 +209,23 @@ export function PlatformSidebar() {
   ];
 
   return (
-    <Sidebar className="border-r-0!">
+    <Sidebar collapsible="icon" className="border-r-0!">
       <SidebarHeader className="pb-0">
-        <Link
-          to={defaultRoute}
-          className={cn(
-            buttonVariants({ variant: 'ghost' }),
-            'w-full justify-start gap-2 px-2',
-          )}
-          onMouseEnter={() => chevronRef.current?.startAnimation()}
-          onMouseLeave={() => chevronRef.current?.stopAnimation()}
-        >
-          <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
-          <span className="truncate text-sm">{t('Back to app')}</span>
-        </Link>
+        <div className="flex items-center gap-1 group-data-[collapsible=icon]:justify-center">
+          <Link
+            to={defaultRoute}
+            className={cn(
+              buttonVariants({ variant: 'ghost' }),
+              'flex-1 justify-start gap-2 px-2 group-data-[collapsible=icon]:hidden',
+            )}
+            onMouseEnter={() => chevronRef.current?.startAnimation()}
+            onMouseLeave={() => chevronRef.current?.stopAnimation()}
+          >
+            <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
+            <span className="truncate text-sm">{t('Back to app')}</span>
+          </Link>
+          <SidebarTrigger className="shrink-0" />
+        </div>
       </SidebarHeader>
       <div className="flex-1 overflow-y-auto">
         <SidebarContent className="gap-0">

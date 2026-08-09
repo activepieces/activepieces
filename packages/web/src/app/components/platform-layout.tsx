@@ -19,7 +19,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
     <AllowOnlyLoggedInUserOnlyGuard>
       <GlobalSearchProvider>
         {showPlatformAdminDashboard ? (
-          <SidebarProvider open={true}>
+          <SidebarProvider defaultOpen={true} hoverMode>
             <PlatformSidebar />
             <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
               <div className="flex-1 flex flex-col p-2 pt-3 pb-3 overflow-hidden">

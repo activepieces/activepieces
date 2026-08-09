@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
@@ -34,6 +35,14 @@ export default function AIProvidersPage() {
     setSearchParams(newParams, { replace: true });
   };
 
+  const navItems: { value: TabValue; label: string; icon: typeof Bot }[] = [
+    { value: 'providers', label: t('Providers'), icon: Bot },
+    { value: 'capabilities', label: t('Capabilities'), icon: WandSparkles },
+    { value: 'routing', label: t('Model Routing'), icon: Route },
+    { value: 'usage', label: t('Usage & Limits'), icon: ChartColumn },
+    { value: 'preview', label: t('Preview'), icon: Eye },
+  ];
+
   return (
     <LockedFeatureGuard
       featureKey="UNIVERSAL_AI"
@@ -43,101 +52,63 @@ export default function AIProvidersPage() {
         'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
       )}
     >
-      <div className="flex w-full flex-1 min-h-0 justify-center">
-        <div className="flex w-full max-w-5xl flex-col min-h-0 px-6">
-          <div className="flex flex-col gap-1 pt-6 pb-5">
-            <h1 className="text-2xl font-semibold tracking-tight">
+      <Tabs
+        value={activeTab}
+        orientation="vertical"
+        onValueChange={(value) => {
+          const next = TAB_VALUES.find((candidate) => candidate === value);
+          if (next) {
+            setTab(next);
+          }
+        }}
+        className="flex w-full flex-1 min-h-0"
+      >
+        <aside className="flex w-60 shrink-0 flex-col min-h-0 border-r">
+          <div className="flex flex-col gap-1 px-4 pt-6 pb-4">
+            <h1 className="text-lg font-semibold tracking-tight">
               {t('AI Center')}
             </h1>
-            <p className="text-sm text-muted-foreground">
-              {t(
-                'Everything AI on your platform — providers, model routing, assistant capabilities, and spend.',
-              )}
+            <p className="text-xs text-muted-foreground">
+              {t('Providers, model routing, capabilities & spend.')}
             </p>
           </div>
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) => {
-              const next = TAB_VALUES.find((candidate) => candidate === value);
-              if (next) {
-                setTab(next);
-              }
-            }}
-            className="flex flex-col flex-1 min-h-0 min-w-0"
-          >
-            <TabsList
-              variant="outline"
-              className="border-b w-full rounded-none justify-start shrink-0 gap-2"
-            >
+          <TabsList className="flex-col items-stretch h-auto gap-1 bg-transparent p-2">
+            {navItems.map((item) => (
               <TabsTrigger
-                variant="outline"
-                value="providers"
-                className="px-4 py-2.5"
+                key={item.value}
+                value={item.value}
+                className={cn(
+                  'w-full justify-start gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground',
+                  'hover:bg-sidebar-accent/60 hover:text-foreground',
+                  'data-[state=active]:bg-sidebar-accent data-[state=active]:font-medium data-[state=active]:text-foreground',
+                )}
               >
-                <Bot className="size-4 mr-2" />
-                {t('Providers')}
+                <item.icon className="size-4 shrink-0" />
+                {item.label}
               </TabsTrigger>
-              <TabsTrigger
-                variant="outline"
-                value="capabilities"
-                className="px-4 py-2.5"
-              >
-                <WandSparkles className="size-4 mr-2" />
-                {t('Capabilities')}
-              </TabsTrigger>
-              <TabsTrigger
-                variant="outline"
-                value="routing"
-                className="px-4 py-2.5"
-              >
-                <Route className="size-4 mr-2" />
-                {t('Model Routing')}
-              </TabsTrigger>
-              <TabsTrigger
-                variant="outline"
-                value="usage"
-                className="px-4 py-2.5"
-              >
-                <ChartColumn className="size-4 mr-2" />
-                {t('Usage & Limits')}
-              </TabsTrigger>
-              <TabsTrigger
-                variant="outline"
-                value="preview"
-                className="px-4 py-2.5"
-              >
-                <Eye className="size-4 mr-2" />
-                {t('Preview')}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="providers" className="flex-1 min-h-0 mt-0">
-              <div className="w-full py-6">
-                <ProvidersTab key={scenarioId} scenario={scenario} />
-              </div>
+            ))}
+          </TabsList>
+        </aside>
+        <div className="flex-1 min-w-0 overflow-auto">
+          <div className="w-full max-w-6xl px-8 py-6">
+            <TabsContent value="providers" className="mt-0">
+              <ProvidersTab key={scenarioId} scenario={scenario} />
             </TabsContent>
-            <TabsContent value="capabilities" className="flex-1 min-h-0 mt-0">
-              <div className="w-full py-6">
-                <CapabilitiesTab key={scenarioId} scenario={scenario} />
-              </div>
+            <TabsContent value="capabilities" className="mt-0">
+              <CapabilitiesTab key={scenarioId} scenario={scenario} />
             </TabsContent>
-            <TabsContent value="routing" className="flex-1 min-h-0 mt-0">
-              <div className="w-full py-6">
-                <RoutingTab key={scenarioId} scenario={scenario} />
-              </div>
+            <TabsContent value="routing" className="mt-0">
+              <RoutingTab key={scenarioId} scenario={scenario} />
             </TabsContent>
-            <TabsContent value="usage" className="flex-1 min-h-0 mt-0">
-              <div className="w-full py-6">
-                <UsageTab key={scenarioId} scenario={scenario} />
-              </div>
+            <TabsContent value="usage" className="mt-0">
+              <UsageTab key={scenarioId} scenario={scenario} />
             </TabsContent>
-            <TabsContent value="preview" className="flex-1 min-h-0 mt-0">
-              <div className="w-full py-6">
-                <PreviewTab key={scenarioId} scenario={scenario} />
-              </div>
+            <TabsContent value="preview" className="mt-0">
+              <PreviewTab key={scenarioId} scenario={scenario} />
             </TabsContent>
-          </Tabs>
+          </div>
         </div>
-      </div>
+      </Tabs>
       <ScenarioSwitcher scenarioId={scenarioId} onChange={setScenarioId} />
     </LockedFeatureGuard>
   );
