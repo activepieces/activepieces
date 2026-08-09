@@ -32,7 +32,17 @@ async function createViaRoute({ token, name }: { token: string, name: string }) 
     })
 }
 
-function createFirstPlatform(identityId: string) {
+async function createFirstPlatform(identityId: string) {
+    const { response } = await platformService(app!.log).createPlatformWithProject({
+        identityId,
+        name: 'Ahmad',
+        invalidatePreviousTokens: true,
+        isFirstPlatform: true,
+    })
+    return response
+}
+
+function provisionFirstPlatform(identityId: string) {
     return platformService(app!.log).createPlatformWithProject({
         identityId,
         name: 'Ahmad',
@@ -79,6 +89,17 @@ describe('First platform provisioning', () => {
         expect(await databaseConnection().getRepository('platform').count()).toBe(1)
         expect(await databaseConnection().getRepository('project').count()).toBe(1)
         expect(await databaseConnection().getRepository('user').count()).toBe(1)
+    })
+
+    it('tells exactly one of two racing callers that it provisioned the platform', async () => {
+        const identityId = await seedVerifiedIdentity()
+
+        const results = await Promise.all([
+            provisionFirstPlatform(identityId),
+            provisionFirstPlatform(identityId),
+        ])
+
+        expect(results.filter((result) => result.provisioned)).toHaveLength(1)
     })
 
     it('reuses a user left unlinked by an interrupted attempt instead of creating a second one', async () => {
