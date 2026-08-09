@@ -96,6 +96,11 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             tokenVersion: nanoid(),
         })
     },
+    async updateNames({ id, firstName, lastName }: UpdateNamesParams): Promise<UserIdentity> {
+        await userIdentityRepository().update(id, { firstName, lastName })
+        return this.getOneOrFail({ id })
+    },
+
     async verify(id: string): Promise<UserIdentity> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         if (user.verified) {
@@ -130,6 +135,12 @@ async function getIdentityByEmail(email: string): Promise<UserIdentity | null> {
 
 type GetOneOrFailParams = {
     id: string
+}
+
+type UpdateNamesParams = {
+    id: string
+    firstName: string
+    lastName: string
 }
 
 type UpdatePasswordParams = {
