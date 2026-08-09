@@ -39,6 +39,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             identityId,
             name: req.body.name,
             invalidatePreviousTokens: isOnboarding,
+            isFirstPlatform: isOnboarding,
         })
     })
 
