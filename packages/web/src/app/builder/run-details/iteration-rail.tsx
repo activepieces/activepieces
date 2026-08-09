@@ -85,7 +85,7 @@ const IterationRail = ({
           currentIndex={current}
         />
         {total > 1 && statuses.length > 0 && (
-          <div className="mt-1 flex max-h-[120px] w-9 flex-wrap content-start justify-center gap-0.5 overflow-y-auto">
+          <div className="mt-1 flex max-h-[120px] w-11 flex-wrap content-start justify-center gap-0.5 overflow-y-auto overflow-x-hidden p-1">
             {statuses.map((status, index) => (
               <Tooltip key={index}>
                 <TooltipTrigger asChild>
