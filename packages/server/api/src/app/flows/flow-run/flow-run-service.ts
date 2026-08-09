@@ -131,6 +131,14 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
+        if (!isNil(oldFlowRun.dispatchIndex)) {
+            const message = `The run ${flowRunId} started from a step inside its flow rather than from the trigger, so it cannot be retried. Retry the run that dispatched it instead.`
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message },
+            }, message)
+        }
+
         const project = await projectService(log).getOneOrThrow(oldFlowRun.projectId)
         const retentionDays = getEffectiveExecutionDataRetentionDays(project.executionDataRetentionDays)
         if (
