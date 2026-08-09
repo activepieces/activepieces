@@ -2,6 +2,7 @@ import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   ApFlagId,
   CreateOtpRequestBody,
+  MAX_FULL_NAME_LENGTH,
   OtpType,
   TelemetryEventName,
 } from '@activepieces/shared';
@@ -14,6 +15,7 @@ import {
   CircleAlert,
   Lightbulb,
   Mail,
+  User,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
@@ -59,6 +61,7 @@ import {
 } from '../third-party-logins';
 
 const CODE_LENGTH = 6;
+const VERIFIED_HOLD_MS = 1100;
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -78,7 +81,9 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
   // captured on the way to the code screen.
   // A stored onboarding token means the member verified their email but never
   // gave us a name, so resume there wherever they re-enter the app.
-  const [step, setStep] = useState<Step>('method');
+  const [step, setStep] = useState<Step>(
+    authenticationSession.isOnboarding() ? 'name' : 'method',
+  );
   const [samlOpen, setSamlOpen] = useState(false);
   // An invitation arrives as /sign-up?email=…, which that route forwards here
   // with the search intact. The address is the invitee's, and they have no
@@ -162,7 +167,6 @@ function AuthStep({
   setCheckEmailNote,
   invitedEmail,
 }: AuthStepProps) {
-  const navigate = useNavigate();
   const { data: emailAuthEnabledFlag } = flagsHooks.useFlag<boolean>(
     ApFlagId.EMAIL_AUTH_ENABLED,
   );
@@ -181,6 +185,16 @@ function AuthStep({
   const passwordlessAvailable = emailAuthEnabled && !!smtpConfigured;
   const showThirdParty = useShowThirdPartyProviders();
   const thirdParty = useThirdPartyAvailability();
+
+  // The confirmation is a beat, not a screen: hold it just long enough to read
+  // as "that worked" before the name question replaces it.
+  useEffect(() => {
+    if (step !== 'verified') {
+      return;
+    }
+    const timer = setTimeout(() => setStep('name'), VERIFIED_HOLD_MS);
+    return () => clearTimeout(timer);
+  }, [step, setStep]);
 
   if (samlOpen) {
     return (
@@ -280,13 +294,33 @@ function AuthStep({
     );
   }
 
+  if (step === 'verified') {
+    return (
+      <DrawerShell>
+        <VerifiedFlash />
+      </DrawerShell>
+    );
+  }
+
+  if (step === 'name') {
+    return (
+      <DrawerShell>
+        <Heading
+          title={t('What should we call you?')}
+          subtitle={t('This names your workspace and how we greet you.')}
+        />
+        <NameStep />
+      </DrawerShell>
+    );
+  }
+
   if (step === 'code') {
     return (
       <DrawerShell>
         <CodeStep
           email={emailForCode}
           onBack={() => setStep('method')}
-          onNeedsName={() => navigate('/create-platform')}
+          onNeedsName={() => setStep('verified')}
         />
       </DrawerShell>
     );
@@ -569,6 +603,125 @@ function ResetStep() {
   );
 }
 
+function VerifiedFlash() {
+  return (
+    <div className="flex flex-col items-center gap-4 py-10">
+      <motion.div
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+        className="flex size-16 items-center justify-center rounded-full bg-primary/10"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="size-8 text-primary"
+          aria-hidden
+        >
+          <motion.path
+            d="M20 6 9 17l-5-5"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.3, delay: 0.14, ease: 'easeOut' }}
+          />
+        </svg>
+      </motion.div>
+      <motion.p
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.2 }}
+        className="text-sm text-muted-foreground"
+      >
+        {t('Email verified')}
+      </motion.p>
+    </div>
+  );
+}
+
+function NameStep() {
+  const redirectAfterLogin = useRedirectAfterLogin();
+  const form = useForm<FullNameSchema>({
+    resolver: zodResolver(FullNameZodSchema),
+    defaultValues: { fullName: '' },
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
+  });
+
+  const { mutate, isPending } = authMutations.useCompleteSignUp({
+    onSuccess: (data) => {
+      authenticationSession.saveResponse(data, false);
+      redirectAfterLogin();
+    },
+    onError: () =>
+      form.setError('root.serverError', {
+        message: t('Something went wrong, please try again later'),
+      }),
+  });
+
+  const onSubmit: SubmitHandler<FullNameSchema> = (data) => {
+    form.clearErrors('root.serverError');
+    mutate({ fullName: data.fullName.trim() });
+  };
+
+  return (
+    <Form {...form}>
+      <form className="grid space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
+        <FormField
+          control={form.control}
+          name="fullName"
+          render={({ field }) => (
+            <FormItem className="grid space-y-2">
+              <div
+                className={cn(
+                  'rounded-xl border bg-background transition-colors duration-200',
+                  form.formState.errors.fullName &&
+                    'border-destructive/40 bg-destructive/[0.03]',
+                )}
+              >
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    {...field}
+                    autoFocus
+                    type="text"
+                    autoComplete="name"
+                    placeholder={t('Full Name')}
+                    className="h-12 border-0 bg-transparent pl-11 pr-4 text-[15px] shadow-none focus-visible:ring-0"
+                    data-testid="auth-full-name"
+                  />
+                </div>
+                {form.formState.errors.fullName && (
+                  <div className="flex items-center gap-2 border-t border-destructive/25 px-4 py-2.5 text-xs text-destructive animate-in fade-in duration-200">
+                    <CircleAlert className="size-3.5 shrink-0" />
+                    <p>{t('Tell us your name so we know what to call you.')}</p>
+                  </div>
+                )}
+              </div>
+            </FormItem>
+          )}
+        />
+        {form?.formState?.errors?.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
+        <Button
+          type="submit"
+          loading={isPending}
+          className="h-11 w-full rounded-lg"
+          data-testid="auth-name-continue"
+        >
+          {t('Continue')}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
 function CodeStep({ email, onBack, onNeedsName }: CodeStepProps) {
   const [code, setCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -812,6 +965,12 @@ const EmailZodSchema = z.object({
 
 type EmailSchema = z.infer<typeof EmailZodSchema>;
 
+const FullNameZodSchema = z.object({
+  fullName: z.string().trim().min(1).max(MAX_FULL_NAME_LENGTH),
+});
+
+type FullNameSchema = z.infer<typeof FullNameZodSchema>;
+
 type CodeStepProps = {
   email: string;
   onBack: () => void;
@@ -841,6 +1000,6 @@ type AuthStepProps = {
   invitedEmail: string;
 };
 
-type Step = 'method' | 'code' | 'password' | 'reset';
+type Step = 'method' | 'code' | 'verified' | 'name' | 'password' | 'reset';
 
 export type AuthMode = 'signin' | 'signup';

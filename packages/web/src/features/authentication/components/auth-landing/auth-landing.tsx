@@ -14,7 +14,9 @@ const NUDGE_STREAK_WINDOW_MS = 700;
 export function AuthLanding({ initialMode }: AuthLandingProps) {
   const { setForceLightMode } = useTheme();
   const redirectAfterLogin = useRedirectAfterLogin();
-  const signedIn = !isNil(authenticationSession.getToken());
+  const signedIn =
+    !isNil(authenticationSession.getToken()) &&
+    !authenticationSession.isOnboarding();
   const panelRef = useRef<HTMLElement | null>(null);
   const nudgeRef = useRef<{
     lastAt: number;
