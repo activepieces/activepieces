@@ -230,6 +230,27 @@ describe('Passwordless Authentication API', () => {
             expect(await databaseConnection().getRepository('user').count()).toBe(1)
         })
 
+        it('does not rename the account when completion is replayed', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const complete = (fullName: string) => app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName },
+            })
+            await complete('Ahmad Tash')
+
+            const replay = await complete('Someone Else')
+
+            expect(replay?.statusCode).toBe(StatusCodes.OK)
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            expect(identity?.firstName).toBe('Ahmad')
+            expect(identity?.lastName).toBe('Tash')
+        })
+
         it('sets the USER_CREATED flag only once a code is verified', async () => {
             await requestCode(EMAIL)
             const otp = await storedOtp(EMAIL)

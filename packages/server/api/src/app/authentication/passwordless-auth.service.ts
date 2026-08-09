@@ -114,16 +114,25 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         return authenticationUtils(log).getOnboardingResponse({ identityId: verifiedIdentity.id })
     },
 
-    async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<AuthenticationResponse> {
+    async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        const existingUsers = await userService(log).getByIdentityId({ identityId })
+        // Only the call that actually completes the sign-up may write the name or
+        // announce it. The onboarding token stays valid so an honest double
+        // submit still gets its session, and a replay must not rename an
+        // established account or raise a second sign-up.
+        const alreadySignedUp = existingUsers.some((user) => !isNil(user.platformId))
         const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
-        await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
-        return platformService(log).createPlatformWithProject({
+        if (!alreadySignedUp) {
+            await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
+        }
+        const response = await platformService(log).createPlatformWithProject({
             identityId,
             name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
             invalidatePreviousTokens: false,
             isFirstPlatform: true,
         })
+        return { response, signedUp: !alreadySignedUp }
     },
 })
 
@@ -150,6 +159,11 @@ async function mayJoinPlatform({ email, platformId, identity, log }: MayJoinPlat
 type RequestCodeParams = {
     email: string
     platformId: string | null
+}
+
+type CompleteSignUpResult = {
+    response: AuthenticationResponse
+    signedUp: boolean
 }
 
 type CompleteSignUpParams = {
