@@ -14,6 +14,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { RequestTrial } from '@/app/components/request-trial';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
@@ -21,6 +22,7 @@ import {
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { LockedAlert } from '@/components/custom/locked-alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +31,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
@@ -36,6 +39,8 @@ import { EditPieceSetDialog } from './edit-piece-set-dialog';
 
 export const PieceSetsTab = () => {
   const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
   const [editingSet, setEditingSet] = useState<PieceSet | null>(null);
@@ -120,6 +125,7 @@ export const PieceSetsTab = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  disabled={!isEnabled}
                   onClick={() => setEditingSet(row.original)}
                 >
                   <Settings2 className="size-4" />
@@ -132,6 +138,7 @@ export const PieceSetsTab = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  disabled={!isEnabled}
                   onClick={() => setDuplicatingSet(row.original)}
                 >
                   <Copy className="size-4" />
@@ -152,7 +159,7 @@ export const PieceSetsTab = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={row.original.isDefault}
+                disabled={!isEnabled || row.original.isDefault}
               >
                 <Trash2 className="size-4 text-destructive" />
               </Button>
@@ -161,11 +168,25 @@ export const PieceSetsTab = () => {
         ),
       },
     ],
-    [deleteSet, navigate, setDuplicatingSet, setEditingSet],
+    [deleteSet, isEnabled, navigate, setDuplicatingSet, setEditingSet],
   );
 
   return (
     <>
+      {!isEnabled && (
+        <LockedAlert
+          title={t('Piece Sets')}
+          description={t(
+            'Create a piece set to control which pieces are available to specific projects',
+          )}
+          button={
+            <RequestTrial
+              featureKey="ENTERPRISE_PIECES"
+              buttonVariant="basic"
+            />
+          }
+        />
+      )}
       <DataTable
         emptyStateTextTitle={t('No piece sets found')}
         emptyStateTextDescription={t(
@@ -189,7 +210,11 @@ export const PieceSetsTab = () => {
         isLoading={isLoading}
         clientFiltering={true}
         toolbarButtons={[
-          <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,
+          <CreatePieceSetDialog
+            key="create"
+            isEnabled={isEnabled}
+            onCreated={() => refetch()}
+          />,
         ]}
       />
       {duplicatingSet && (

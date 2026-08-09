@@ -4,11 +4,13 @@ import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { PieceSetPiecesTab } from './piece-set-pieces-tab';
@@ -35,6 +37,8 @@ function flipSelectionMode({
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isEnabled = platform.plan.managePiecesEnabled;
   const { data: pieceSet, isLoading } = pieceSetQueries.usePieceSet(id ?? '');
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({
     includeHidden: true,
@@ -57,6 +61,21 @@ const PieceSetDetailsPage = () => {
       },
     });
   };
+
+  if (!isEnabled) {
+    return (
+      <LockedFeatureGuard
+        featureKey="ENTERPRISE_PIECES"
+        locked={true}
+        lockTitle={t('Piece Sets')}
+        lockDescription={t(
+          'Create a piece set to control which pieces are available to specific projects',
+        )}
+      >
+        {null}
+      </LockedFeatureGuard>
+    );
+  }
 
   if (isLoading || !pieceSet) {
     return (
