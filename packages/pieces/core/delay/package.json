@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-delay",
-  "version": "0.3.32",
+  "version": "0.3.33",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

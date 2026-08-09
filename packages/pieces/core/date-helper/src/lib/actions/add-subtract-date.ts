@@ -12,6 +12,7 @@ import {
 } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { addSubtractDateActionOutputSchema } from '../output-schemas';
 
 export const addSubtractDateAction = createAction({
   audience: 'both',
@@ -77,6 +78,7 @@ export const addSubtractDateAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: addSubtractDateActionOutputSchema,
   async run(context) {
     // Ensure all dayjs plugins are properly extended
    
