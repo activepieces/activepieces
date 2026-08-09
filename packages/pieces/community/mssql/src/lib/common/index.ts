@@ -146,27 +146,56 @@ export async function mssqlGetTables(
   }));
 }
 
-// every primary key column, in key order -- composite keys included
+/**
+ * Columns that uniquely identify a row, in key order. Prefers the primary key,
+ * then the narrowest non-nullable unique index -- a unique constraint identifies
+ * a row just as well as a declared key, and plenty of tables have only one.
+ * Empty when the table has neither.
+ */
 export async function mssqlGetKeyColumns(
   pool: sql.ConnectionPool,
   table: MssqlTable
 ): Promise<string[]> {
   const result = await pool
     .request()
-    .input('table_schema', table.table_schema)
-    .input('table_name', table.table_name)
+    .input('qualified', `${table.table_schema}.${table.table_name}`)
     .query(
-      `SELECT c.COLUMN_NAME
-       FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS t
-       JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE c
-         ON c.CONSTRAINT_NAME = t.CONSTRAINT_NAME
-        AND c.TABLE_SCHEMA = t.TABLE_SCHEMA
-       WHERE t.CONSTRAINT_TYPE = 'PRIMARY KEY'
-         AND t.TABLE_SCHEMA = @table_schema
-         AND t.TABLE_NAME = @table_name
-       ORDER BY c.ORDINAL_POSITION`
+      `SELECT i.index_id, i.is_primary_key, c.name AS column_name,
+              ic.key_ordinal, c.is_nullable
+       FROM sys.indexes i
+       JOIN sys.index_columns ic
+         ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+       JOIN sys.columns c
+         ON c.object_id = i.object_id AND c.column_id = ic.column_id
+       WHERE i.object_id = OBJECT_ID(@qualified)
+         AND i.is_unique = 1
+         AND i.has_filter = 0
+         AND ic.is_included_column = 0
+       ORDER BY i.index_id, ic.key_ordinal`
     );
-  return (result.recordset ?? []).map((row) => row['COLUMN_NAME']);
+
+  const indexes = new Map<
+    number,
+    { isPrimary: boolean; nullable: boolean; columns: string[] }
+  >();
+  for (const row of result.recordset ?? []) {
+    const id = Number(row['index_id']);
+    const entry = indexes.get(id) ?? {
+      isPrimary: Boolean(row['is_primary_key']),
+      nullable: false,
+      columns: [],
+    };
+    entry.columns.push(row['column_name']);
+    if (row['is_nullable']) entry.nullable = true;
+    indexes.set(id, entry);
+  }
+
+  const candidates = [...indexes.values()].sort((a, b) => {
+    if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
+    if (a.nullable !== b.nullable) return a.nullable ? 1 : -1;
+    return a.columns.length - b.columns.length;
+  });
+  return candidates[0]?.columns ?? [];
 }
 
 // ORDER BY rejects these types, so they cannot be part of a tiebreaker

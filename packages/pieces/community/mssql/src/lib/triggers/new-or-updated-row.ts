@@ -83,9 +83,10 @@ const polling: Polling<
       // dedupe slices positionally on an exact id, so the ordering must be a
       // total order: rows tied on the chosen column (one multi-row INSERT gives
       // them all the same timestamp) would otherwise shift between polls and be
-      // dropped or replayed. The primary key breaks the tie; a table without one
-      // falls back to ordering on every sortable column, which leaves only
-      // wholly identical rows tied, and those are interchangeable anyway.
+      // dropped or replayed. A key breaks the tie. Without one, ordering falls
+      // back to every sortable column and identity is hashed over exactly those
+      // same columns -- hashing the whole row instead would hand different ids
+      // to rows that SQL cannot tell apart, reintroducing the shifting.
       const keyColumns = await mssqlGetKeyColumns(pool, table);
       const tieColumns =
         keyColumns.length > 0
@@ -114,7 +115,12 @@ const polling: Polling<
         const discriminator =
           keyColumns.length > 0
             ? keyColumns.map((c) => encodeValue(row[c]))
-            : [crypto.createHash('md5').update(JSON.stringify(row)).digest('hex')];
+            : [
+                crypto
+                  .createHash('md5')
+                  .update(JSON.stringify(tieColumns.map((c) => encodeValue(row[c]))))
+                  .digest('hex'),
+              ];
         return {
           id: JSON.stringify([encodeValue(row[order_by]), ...discriminator]),
           data: row,
@@ -139,7 +145,9 @@ export const newOrUpdatedRow = createTrigger({
     description: Property.MarkDown({
       value: `**How this works:** the trigger reads the most recent rows using the column you order by, then keeps polling until it reaches the last row it already saw.
       \n
-      Order by a **created** timestamp or an auto-incrementing **id** to catch new rows only. Order by a **last-modified** timestamp to catch edits too — but the column must change on every update, otherwise edits go unnoticed.`,
+      Order by a **created** timestamp or an auto-incrementing **id** to catch new rows only. Order by a **last-modified** timestamp to catch edits too — but the column must change on every update, otherwise edits go unnoticed.
+      \n
+      Works best on a table with a **primary key or unique constraint**, which lets rows sharing an order value be told apart. On a table with neither, rows that are identical in every column cannot be distinguished from one another, so a second identical row may not raise its own event.`,
     }),
     table: mssqlProps.table(),
     order_by: mssqlProps.column(
