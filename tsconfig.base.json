@@ -877,6 +877,9 @@
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
+      "@activepieces/piece-mssql": [
+        "packages/pieces/community/mssql/src/index.ts"
+      ],
       "@activepieces/piece-muna-ai": [
         "packages/pieces/community/muna-ai/src/index.ts"
       ],
