@@ -1,4 +1,4 @@
-import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
+import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
@@ -8,6 +8,7 @@ import {
   FlowRetryStrategy,
   FlowRun,
   FlowRunWithRetryError,
+  isFlowRunStateTerminal,
   PopulatedFlow,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -26,6 +27,9 @@ import { flowRunsApi } from '../api/flow-runs-api';
 
 export const flowRunKeys = {
   detail: (runId: string) => ['flow-run', runId] as const,
+  batchChildren: (barrierId: string) => ['batch-children', barrierId] as const,
+  batchChild: (barrierId: string, dispatchIndex: number) =>
+    ['batch-child', barrierId, dispatchIndex] as const,
 };
 
 const STATUS_CATEGORIES = [
@@ -88,6 +92,63 @@ export const flowRunQueries = {
       queryKey: flowRunKeys.detail(runId),
       queryFn: () => flowRunsApi.getPopulated(runId),
       refetchInterval: 7000,
+    }),
+  useBatchChildren: ({
+    barrierId,
+    limit,
+    enabled,
+  }: {
+    barrierId: string | null;
+    limit: number;
+    enabled: boolean;
+  }) =>
+    useQuery({
+      queryKey: flowRunKeys.batchChildren(barrierId ?? ''),
+      queryFn: () =>
+        flowRunsApi.list({
+          projectId: authenticationSession.getProjectId()!,
+          parentWaitpointId: barrierId!,
+          includeArchived: true,
+          limit,
+        }),
+      enabled: enabled && !isNil(barrierId),
+      refetchInterval: 7000,
+    }),
+  useBatchChild: ({
+    barrierId,
+    dispatchIndex,
+    enabled,
+  }: {
+    barrierId: string | null;
+    dispatchIndex: number;
+    enabled: boolean;
+  }) =>
+    useQuery({
+      queryKey: flowRunKeys.batchChild(barrierId ?? '', dispatchIndex),
+      queryFn: () =>
+        flowRunsApi.list({
+          projectId: authenticationSession.getProjectId()!,
+          parentWaitpointId: barrierId!,
+          dispatchIndex,
+          includeArchived: true,
+          limit: 1,
+        }),
+      enabled: enabled && !isNil(barrierId),
+      refetchInterval: 7000,
+    }),
+  useBatchChildRun: ({ childRunId }: { childRunId: string | null }) =>
+    useQuery({
+      queryKey: flowRunKeys.detail(childRunId ?? ''),
+      queryFn: () => flowRunsApi.getPopulated(childRunId!),
+      enabled: !isNil(childRunId),
+      refetchInterval: (query) =>
+        isNil(query.state.data) ||
+        isFlowRunStateTerminal({
+          status: query.state.data.status,
+          ignoreInternalError: false,
+        })
+          ? false
+          : 7000,
     }),
   useRunStats: () => {
     const projectId = authenticationSession.getProjectId()!;

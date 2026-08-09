@@ -1,5 +1,4 @@
 import { isNil } from '@activepieces/core-utils';
-import { StepOutputStatus } from '@activepieces/shared';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -12,7 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { iterationRailUtils } from './iteration-rail-utils';
+import { iterationRailUtils, RailDotStatus } from './iteration-rail-utils';
 
 const IterationRail = ({
   total,
@@ -85,7 +84,7 @@ const IterationRail = ({
           isIncreasing={false}
           currentIndex={current}
         />
-        {total > 1 && (
+        {total > 1 && statuses.length > 0 && (
           <div className="mt-1 flex max-h-[120px] w-9 flex-wrap content-start justify-center gap-0.5 overflow-y-auto">
             {statuses.map((status, index) => (
               <Tooltip key={index}>
@@ -154,7 +153,7 @@ export { IterationRail };
 export type IterationRailProps = {
   total: number;
   current: number;
-  statuses: StepOutputStatus[];
+  statuses: RailDotStatus[];
   onSelect: (index: number) => void;
   inputTooltip: string;
   itemLabel: (index: number) => string;

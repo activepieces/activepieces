@@ -10,6 +10,7 @@ import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
+import { BatchIterationInput } from '@/app/builder/run-details/batch-iteration-input';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { RightSideBarType } from '@/app/builder/types';
 import { stepsHooks } from '@/features/pieces';
@@ -152,6 +153,7 @@ const ApStepCanvasNode = React.memo(
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
         <LoopIterationInput stepName={step.name} />
+        <BatchIterationInput stepName={step.name} />
         <ApStepNodeStatusInRun stepName={step.name} />
         <ApStepNodeSkippedStatus stepName={step.name} />
         <ApStepNodeStatusInDraft stepName={step.name} />

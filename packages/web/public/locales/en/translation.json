@@ -2493,5 +2493,22 @@
   "Smaller batches run wider, up to what your workers can run at once.": "Smaller batches run wider, up to what your workers can run at once.",
   "Paste Inside Batch": "Paste Inside Batch",
   "Continue on Failure": "Continue on Failure",
-  "Lets the flow carry on when this step fails.": "Lets the flow carry on when this step fails."
+  "Lets the flow carry on when this step fails.": "Lets the flow carry on when this step fails.",
+  "Failed to dispatch": "Failed to dispatch",
+  "Never started": "Never started",
+  "Batch {batch} · items {from}–{to}": "Batch {batch} · items {from}–{to}",
+  "Show step logs for batch ({batch}/{total})": "Show step logs for batch ({batch}/{total})",
+  "This batch never started": "This batch never started",
+  "It was never picked up by a worker, so it has no logs of its own.": "It was never picked up by a worker, so it has no logs of its own.",
+  "This batch failed to dispatch": "This batch failed to dispatch",
+  "It was never handed to a worker, so it has no logs of its own.": "It was never handed to a worker, so it has no logs of its own.",
+  "This batch is still running": "This batch is still running",
+  "The parent finished without it, and its writes may still land.": "The parent finished without it, and its writes may still land.",
+  "Logs no longer available": "Logs no longer available",
+  "This batch ran, but its logs are past the retention window. The summary on the step above is what remains.": "This batch ran, but its logs are past the retention window. The summary on the step above is what remains.",
+  "Open this batch as a run": "Open this batch as a run",
+  "No batches dispatched": "No batches dispatched",
+  "Items resolved to an empty array, so nothing ran. The flow continued to the next step.": "Items resolved to an empty array, so nothing ran. The flow continued to the next step.",
+  "Batch {batch} of {step} in run": "Batch {batch} of {step} in run",
+  "Batch {batch} of a parent run": "Batch {batch} of a parent run"
 }

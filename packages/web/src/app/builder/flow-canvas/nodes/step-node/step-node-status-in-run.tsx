@@ -1,23 +1,42 @@
+import { isNil } from '@activepieces/core-utils';
+import { flowStructureUtil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { RouteOff } from 'lucide-react';
 
+import { batchRailUtils } from '@/app/builder/run-details/batch-rail-utils';
+import { useStepOutputInRun } from '@/app/builder/run-details/use-batch-logs';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
 import { StepNodeBadgeContainer } from './step-node-badge-container';
 
 const ApStepNodeStatusInRun = ({ stepName }: { stepName: string }) => {
-  const [run, loopIndexes] = useBuilderStateContext((state) => [
+  const [run, stepType] = useBuilderStateContext((state) => [
     state.run,
-    state.loopsIndexes,
+    flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type,
   ]);
-  const stepStatusInRun = useMemo(() => {
-    return flowCanvasUtils.getStepStatus(stepName, run, loopIndexes);
-  }, [stepName, run, loopIndexes]);
+  const { stepOutput } = useStepOutputInRun(stepName);
+  const stepStatusInRun = isNil(run) ? undefined : stepOutput?.status;
   if (!stepStatusInRun) {
     return null;
+  }
+  if (
+    batchRailUtils.isSkippedOnEmptyItems({
+      stepType,
+      stepOutput: stepOutput?.output,
+    })
+  ) {
+    return (
+      <StepNodeBadgeContainer>
+        <div
+          className={flowRunUtils.getStatusContainerClassName('default', true)}
+        >
+          <RouteOff className="size-3" />
+          <div>{t('Skipped')}</div>
+        </div>
+      </StepNodeBadgeContainer>
+    );
   }
   const { variant, text } = stepStatusInRun
     ? flowRunUtils.getStatusIconForStep(stepStatusInRun)

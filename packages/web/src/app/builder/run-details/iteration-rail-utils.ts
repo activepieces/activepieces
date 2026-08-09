@@ -12,32 +12,69 @@ function clampIndex({
   return Math.max(1, Math.min(Number.isNaN(parsed) ? 1 : parsed, total)) - 1;
 }
 
-function dotClassName(status: StepOutputStatus): string {
+function fromStepOutputStatus(status: StepOutputStatus): RailDotStatus {
   switch (status) {
     case StepOutputStatus.FAILED:
-      return 'bg-destructive';
+      return 'failed';
     case StepOutputStatus.RUNNING:
-      return 'bg-primary animate-pulse';
+      return 'running';
     case StepOutputStatus.PAUSED:
+      return 'paused';
+    case StepOutputStatus.STOPPED:
+      return 'stopped';
+    default:
+      return 'succeeded';
+  }
+}
+
+function dotClassName(status: RailDotStatus): string {
+  switch (status) {
+    case 'failed':
+      return 'bg-destructive';
+    case 'running':
+      return 'bg-primary animate-pulse';
+    case 'paused':
+    case 'failedToDispatch':
       return 'bg-warning';
+    case 'neverStarted':
+      return 'bg-muted';
     default:
       return 'bg-success';
   }
 }
 
-function statusLabel(status: StepOutputStatus): string {
+function statusLabel(status: RailDotStatus): string {
   switch (status) {
-    case StepOutputStatus.FAILED:
+    case 'failed':
       return t('Failed');
-    case StepOutputStatus.RUNNING:
+    case 'running':
       return t('Running');
-    case StepOutputStatus.PAUSED:
+    case 'paused':
       return t('Paused');
-    case StepOutputStatus.STOPPED:
+    case 'stopped':
       return t('Stopped');
+    case 'failedToDispatch':
+      return t('Failed to dispatch');
+    case 'neverStarted':
+      return t('Never started');
     default:
       return t('Succeeded');
   }
 }
 
-export const iterationRailUtils = { clampIndex, dotClassName, statusLabel };
+export const iterationRailUtils = {
+  MAX_RENDERED_DOTS: 100,
+  clampIndex,
+  dotClassName,
+  statusLabel,
+  fromStepOutputStatus,
+};
+
+export type RailDotStatus =
+  | 'succeeded'
+  | 'failed'
+  | 'running'
+  | 'paused'
+  | 'stopped'
+  | 'failedToDispatch'
+  | 'neverStarted';

@@ -8,29 +8,24 @@ import {
 import { t } from 'i18next';
 import { useMemo } from 'react';
 
-import { flowRunUtils } from '@/features/flow-runs';
-
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { IterationRail } from './iteration-rail';
+import { iterationRailUtils, RailDotStatus } from './iteration-rail-utils';
+import { useStepOutputInRun } from './use-batch-logs';
 
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
-  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes, stepType] =
-    useBuilderStateContext((state) => [
+  const [setLoopIndex, currentIndex, run, stepType] = useBuilderStateContext(
+    (state) => [
       state.setLoopIndex,
       state.loopsIndexes[stepName] ?? 0,
       state.run,
-      state.flowVersion,
-      state.loopsIndexes,
       flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type,
-    ]);
-  const stepOutput = useMemo(() => {
-    return run && run.steps
-      ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps)
-      : null;
-  }, [run, stepName, loopsIndexes, flowVersion.trigger]);
+    ],
+  );
+  const { stepOutput } = useStepOutputInRun(stepName);
 
-  const iterationStatuses = useMemo<StepOutputStatus[]>(() => {
+  const iterationStatuses = useMemo<RailDotStatus[]>(() => {
     if (
       !stepOutput ||
       stepOutput.type !== FlowActionType.LOOP_ON_ITEMS ||
@@ -38,7 +33,9 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     ) {
       return [];
     }
-    return stepOutput.output.iterations.map(getIterationStatus);
+    return stepOutput.output.iterations
+      .map(getIterationStatus)
+      .map(iterationRailUtils.fromStepOutputStatus);
   }, [stepOutput]);
   const totalIterations = iterationStatuses.length;
 

@@ -51,7 +51,7 @@ async function dispatchBatches({ action, executionState, constants }: ExecutePar
             return succeed({ action, executionState, stepOutput, output: { items: batches[0] ?? [] }, stepStartTime })
         }
         if (batches.length === 0 || isNil(bodyEntryStep)) {
-            return succeed({ action, executionState, stepOutput, output: emptySummary(), stepStartTime })
+            return succeed({ action, executionState, stepOutput, output: emptySummary({ totalItems: items.length, batchSize }), stepStartTime })
         }
 
         const seed = buildSeed({ action, executionState, constants })
@@ -105,7 +105,7 @@ async function dispatchBatches({ action, executionState, constants }: ExecutePar
         })
 
         const paused = stepOutput
-            .setOutput({ totalItems: items.length, batchSize, failedToDispatchIndices })
+            .setOutput({ barrierId: barrier.id, totalItems: items.length, batchSize, failedToDispatchIndices })
             .setStatus(StepOutputStatus.PAUSED)
             .setDuration(performance.now() - stepStartTime)
         return (await executionState.upsertStep(action.name, paused))
@@ -199,6 +199,9 @@ function assertNotScopedToEnclosingIteration({ stepName, executionState }: Asser
 
 function toBatchSummary({ released, pending }: ToBatchSummaryParams): BatchSummary {
     return {
+        barrierId: pending.barrierId,
+        totalItems: pending.totalItems,
+        batchSize: pending.batchSize,
         expected: released.expected,
         succeeded: released.succeeded,
         failed: released.failed,
@@ -238,8 +241,11 @@ function batchOutput(items: unknown[]): StepOutput {
     }).setOutput({ items })
 }
 
-function emptySummary(): BatchSummary {
+function emptySummary({ totalItems, batchSize }: EmptySummaryParams): BatchSummary {
     return {
+        barrierId: null,
+        totalItems,
+        batchSize,
         expected: 0,
         succeeded: 0,
         failed: 0,
@@ -271,6 +277,7 @@ async function succeed({ action, executionState, stepOutput, output, stepStartTi
 }
 
 const PendingBatches = z.object({
+    barrierId: z.string().nullable().default(null),
     totalItems: z.number().int().nonnegative(),
     batchSize: z.number().int().positive(),
     failedToDispatchIndices: z.array(z.number().int().nonnegative()),
@@ -283,6 +290,7 @@ const FRESH_BARRIER: FanInBarrierState = {
 }
 
 const NOTHING_PENDING: PendingBatches = {
+    barrierId: null,
     totalItems: 0,
     batchSize: 1,
     failedToDispatchIndices: [],
@@ -331,6 +339,11 @@ type ExceptionStatusParams = {
     pending: PendingBatches
 }
 
+type EmptySummaryParams = {
+    totalItems: number
+    batchSize: number
+}
+
 type DigestParams = {
     seed: Record<string, StepOutput>
     items: unknown[]
@@ -347,6 +360,9 @@ type SucceedParams = {
 export type BatchExceptionStatus = 'failed' | 'notStarted' | 'failedToDispatch'
 
 export type BatchSummary = {
+    barrierId: string | null
+    totalItems: number
+    batchSize: number
     expected: number
     succeeded: number
     failed: number

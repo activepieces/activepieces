@@ -15,7 +15,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info, ShieldAlert } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
-import { flowRunUtils } from '@/features/flow-runs';
 import { piecesHooks } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
@@ -39,24 +38,27 @@ import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
 
+import {
+  BatchLogsPanel,
+  BatchSkippedPanel,
+  EmptyStatePanel,
+} from './batch-logs-panel';
+import { batchRailUtils } from './batch-rail-utils';
 import { truncatedInputUtils } from './truncated-input-utils';
+import { useStepOutputInRun } from './use-batch-logs';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
 
 export const FlowStepInputOutput = () => {
-  const [run, loopsIndexes, flowVersion, selectedStep] = useBuilderStateContext(
-    (state) => [
-      state.run,
-      state.loopsIndexes,
-      state.flowVersion,
-      state.selectedStep
-        ? flowStructureUtil.getStepOrThrow(
-            state.selectedStep,
-            state.flowVersion.trigger,
-          )
-        : null,
-    ],
-  );
+  const [run, selectedStep] = useBuilderStateContext((state) => [
+    state.run,
+    state.selectedStep
+      ? flowStructureUtil.getStepOrThrow(
+          state.selectedStep,
+          state.flowVersion.trigger,
+        )
+      : null,
+  ]);
   const isAgent = isRunAgent(selectedStep);
   const isTrigger =
     !isNil(selectedStep) && flowStructureUtil.isTrigger(selectedStep.type);
@@ -68,15 +70,9 @@ export const FlowStepInputOutput = () => {
     (requestedTab === 'input' && isTrigger)
       ? 'output'
       : requestedTab;
-  const selectedStepOutput = useMemo(() => {
-    return run && selectedStep && run.steps
-      ? flowRunUtils.extractStepOutput(
-          selectedStep.name,
-          loopsIndexes,
-          run.steps,
-        )
-      : null;
-  }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
+  const { stepOutput: selectedStepOutput, batchLogs } = useStepOutputInRun(
+    selectedStep?.name,
+  );
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
   const isSlicedOutput =
     selectedStepOutput?.outputType === StepOutputType.SLICE;
@@ -96,6 +92,9 @@ export const FlowStepInputOutput = () => {
     selectedStep?.type === FlowTriggerType.PIECE
       ? selectedStep.settings.pieceVersion
       : undefined;
+  const { data: rententionDays } = flagsHooks.useFlag<number>(
+    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+  );
   const { pieceModel } = piecesHooks.usePiece({
     name: stepPieceName ?? '',
     version: stepPieceVersion,
@@ -110,13 +109,25 @@ export const FlowStepInputOutput = () => {
   if (!run) {
     return <></>;
   }
+
+  if (batchLogs.kind === 'loading') {
+    return <StepOutputSkeleton className="p-4" />;
+  }
+  if (batchLogs.kind !== 'notInABatch' && batchLogs.kind !== 'steps') {
+    return <BatchLogsPanel batchLogs={batchLogs} />;
+  }
+  if (
+    batchRailUtils.isSkippedOnEmptyItems({
+      stepType: selectedStep?.type,
+      stepOutput: selectedStepOutput?.output,
+    })
+  ) {
+    return <BatchSkippedPanel />;
+  }
   const isRunDone = isFlowRunStateTerminal({
     status: run.status,
     ignoreInternalError: true,
   });
-  const { data: rententionDays } = flagsHooks.useFlag<number>(
-    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
-  );
 
   if (
     run.status === FlowRunStatus.INTERNAL_ERROR &&
@@ -154,27 +165,12 @@ export const FlowStepInputOutput = () => {
 
   if (!selectedStepOutput || !selectedStep) {
     return (
-      <div className="flex flex-col h-full w-full">
-        <div className="flex items-center justify-end gap-1 px-3 py-2 shrink-0">
-          <StepDataPanelViewToggle />
-          <ClosePanelButton />
-        </div>
-        <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-          <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
-            <Info className="size-6" />
-          </div>
-          <div className="flex flex-col gap-1.5 max-w-[280px]">
-            <span className="text-sm font-medium text-foreground">
-              {t("This step didn't run")}
-            </span>
-            <span className="text-xs text-muted-foreground leading-relaxed">
-              {t(
-                'This step was skipped during this run, no input or output was captured.',
-              )}
-            </span>
-          </div>
-        </div>
-      </div>
+      <EmptyStatePanel
+        title={t("This step didn't run")}
+        description={t(
+          'This step was skipped during this run, no input or output was captured.',
+        )}
+      />
     );
   }
   const status: 'success' | 'failed' | 'testing' | 'idle' =

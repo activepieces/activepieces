@@ -68,6 +68,7 @@ export const FlowRun = z.object({
     flowId: z.string(),
     parentRunId: z.string().optional(),
     parentWaitpointId: z.string().optional(),
+    dispatchIndex: z.number().int().nullish(),
     failParentOnFailure: z.boolean(),
     triggeredBy: z.string().optional(),
     tags: z.array(z.string()).optional(),

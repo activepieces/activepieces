@@ -64,7 +64,7 @@ async function pausedStateFor({ stepName, totalItems, batchSize, failedToDispatc
         input: {},
         type: FlowActionType.PROCESS_IN_BATCHES,
         status: StepOutputStatus.PAUSED,
-    }).setOutput({ totalItems, batchSize, failedToDispatchIndices: failedToDispatchIndices ?? [] }))
+    }).setOutput({ barrierId: 'barrier-id', totalItems, batchSize, failedToDispatchIndices: failedToDispatchIndices ?? [] }))
 }
 
 describe('process in batches executor', () => {
@@ -117,6 +117,28 @@ describe('process in batches executor', () => {
             stepName: 'batches',
             dispatchDigest: expect.stringMatching(/^[a-f0-9]{64}$/),
         }))
+    })
+
+    it('pauses carrying the barrier id and the item sizing the run detail browses batches with', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3,4,5] }}',
+            batchSize: 2,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.steps['batches'].output).toEqual({
+            barrierId: 'barrier-id',
+            totalItems: 5,
+            batchSize: 2,
+            failedToDispatchIndices: [],
+        })
     })
 
     it('seals with the accepted child count and no deadline, so the platform bound applies', async () => {
@@ -228,6 +250,9 @@ describe('process in batches executor', () => {
 
         expect(result.verdict).toEqual({ status: FlowRunStatus.RUNNING })
         expect(result.steps['batches'].output).toEqual({
+            barrierId: null,
+            totalItems: 0,
+            batchSize: 2,
             expected: 0,
             succeeded: 0,
             failed: 0,
@@ -238,6 +263,19 @@ describe('process in batches executor', () => {
             timedOut: false,
             exceptions: [],
         })
+        expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('does not claim an empty items array when the container has no body', async () => {
+        const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1,2,3] }}', batchSize: 2 })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.steps['batches'].output).toMatchObject({ totalItems: 3, batchSize: 2, expected: 0 })
         expect(mockCreateWaitpoint).not.toHaveBeenCalled()
     })
 
@@ -450,6 +488,9 @@ describe('process in batches executor', () => {
 
         expect(result.verdict).toEqual({ status: FlowRunStatus.RUNNING })
         expect(result.steps['batches'].output).toEqual({
+            barrierId: 'barrier-id',
+            totalItems: 3,
+            batchSize: 1,
             expected: 3,
             succeeded: 3,
             failed: 0,

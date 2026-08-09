@@ -72,7 +72,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             .andWhere({ parentWaitpointId: params.parentWaitpointId ?? IsNull() })
 
         if (!isNil(params.parentWaitpointId)) {
-            query = query.andWhere({ dispatchIndex: Not(IsNull()) })
+            query = query.andWhere({ dispatchIndex: params.dispatchIndex ?? Not(IsNull()) })
         }
 
         if (!params.includeArchived) {
@@ -904,6 +904,7 @@ type ListParams = {
     includeArchived?: boolean
     environment?: RunEnvironment
     parentWaitpointId?: ApId
+    dispatchIndex?: number
 }
 
 type GetOneParams = {
