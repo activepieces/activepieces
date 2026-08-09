@@ -5,6 +5,7 @@ import {
   MssqlTable,
   mssqlConnect,
   mssqlGetColumns,
+  mssqlGetSortableColumns,
   mssqlGetTables,
 } from '.';
 
@@ -46,10 +47,13 @@ export const mssqlProps = {
         }
       },
     }),
+  // sortableOnly hides text/xml/geography and friends, which ORDER BY rejects --
+  // offering them lets someone pick a column that errors on every single poll
   column: <R extends boolean = true>(
     displayName: string,
     description: string,
-    required: R = true as R
+    required: R = true as R,
+    sortableOnly = false
   ) =>
     Property.Dropdown<string, R, typeof mssqlAuth>({
       auth: mssqlAuth,
@@ -74,10 +78,10 @@ export const mssqlProps = {
         }
         const pool = await mssqlConnect(auth as MssqlAuth);
         try {
-          const columns = await mssqlGetColumns(
-            pool,
-            table as { table_schema: string; table_name: string }
-          );
+          const target = table as { table_schema: string; table_name: string };
+          const columns = sortableOnly
+            ? await mssqlGetSortableColumns(pool, target)
+            : await mssqlGetColumns(pool, target);
           return {
             disabled: false,
             options: columns.map((column) => ({

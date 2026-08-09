@@ -227,11 +227,15 @@ export async function mssqlGetKeyColumns(
     indexes.set(id, entry);
   }
 
-  const candidates = [...indexes.values()].sort((a, b) => {
-    if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
-    if (a.nullable !== b.nullable) return a.nullable ? 1 : -1;
-    return a.columns.length - b.columns.length;
-  });
+  // Nullable candidates are dropped rather than merely deprioritised: a NULL key
+  // value makes every comparison against it UNKNOWN, which would silently drop
+  // the row from the cursor window instead of ordering it.
+  const candidates = [...indexes.values()]
+    .filter((index) => !index.nullable)
+    .sort((a, b) => {
+      if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
+      return a.columns.length - b.columns.length;
+    });
   return candidates[0]?.columns ?? [];
 }
 
