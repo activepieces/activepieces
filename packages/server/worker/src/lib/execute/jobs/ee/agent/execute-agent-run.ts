@@ -129,23 +129,23 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
         let progressSequence = 0
         let warnedOnProgress = false
-        const pushProgress = (output: AgentResult, final: boolean) => {
+        const pushProgress = (output: AgentResult) => {
             if (isNil(flowRunId)) {
                 return
             }
             progressSequence += 1
             const sequence = progressSequence
             void tryCatch(async () => {
-                const { error } = await tryCatch(() => ctx.apiClient.updateFlowStepProgress({ conversationId, flowRunId, output, sequence, final }))
+                const { error } = await tryCatch(() => ctx.apiClient.updateFlowStepProgress({ conversationId, flowRunId, output, sequence }))
                 if (!isNil(error) && !warnedOnProgress) {
                     warnedOnProgress = true
                     log.warn({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not push step progress; the builder timeline may lag')
                 }
             })
         }
-        const reportFinal = (output: AgentResult) => pushProgress(output, true)
+        const reportFinal = (output: AgentResult) => pushProgress(output)
         const reportProgress = (uiParts: PersistedAgentPart[]) =>
-            pushProgress(stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: data.tools ?? [], stillRunning: true }), false)
+            pushProgress(stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: data.tools ?? [], stillRunning: true }))
 
         try {
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }

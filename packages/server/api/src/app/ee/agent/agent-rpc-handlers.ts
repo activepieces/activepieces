@@ -33,11 +33,6 @@ const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 
-// A snapshot replaces what came before it, so one that arrives late must not undo a newer one. The
-// final snapshot closes the run to everything, including a straggler still in flight, and the entry
-// is reclaimed once nothing can still be on its way.
-const lastProgressSequence = new Map<string, number>()
-const PROGRESS_GUARD_TTL_MS = 5 * 60 * 1_000
 
 const MAX_EMAIL_RECIPIENTS = 10
 const MAX_EMAIL_SUBJECT_LENGTH = 300
@@ -482,22 +477,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             log.warn({ conversation: { id: input.conversationId }, flowRun: { id: input.flowRunId } }, '[agentRpc#updateFlowStepProgress] Refused progress for a run that is not a flow step')
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can report step progress' } })
         }
-        if ((lastProgressSequence.get(input.conversationId) ?? 0) >= input.sequence) {
-            return
-        }
         const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
-        // Claimed after the lookups, so nothing can await between the claim and the emit and let an
-        // older snapshot broadcast last.
-        if ((lastProgressSequence.get(input.conversationId) ?? 0) >= input.sequence) {
-            return
-        }
-        lastProgressSequence.set(input.conversationId, input.final === true ? Number.MAX_SAFE_INTEGER : input.sequence)
-        if (input.final === true) {
-            setTimeout(() => lastProgressSequence.delete(input.conversationId), PROGRESS_GUARD_TTL_MS).unref()
-        }
         engineRunCallbackService(log).updateStepProgress({
             projectId: conversation.projectId,
-            request: { projectId: conversation.projectId, runId: flowRun.id, output: input.output },
+            request: { projectId: conversation.projectId, runId: flowRun.id, output: input.output, sequence: input.sequence },
         })
     },
 

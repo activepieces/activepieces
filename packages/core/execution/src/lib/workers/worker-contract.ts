@@ -216,7 +216,6 @@ export type UpdateFlowStepProgressRequest = {
     flowRunId: string
     output: unknown
     sequence: number
-    final?: boolean
 }
 
 export type ResumeFlowStepRequest = {
