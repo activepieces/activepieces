@@ -132,8 +132,8 @@ export const noOpCodeSandbox: CodeSandbox = {
                 const fn = Function(...Object.keys(newContext), body)
                 return fn(...Object.values(newContext))
             },
-            setGlobal: async (key: string, value: unknown) => {
-                if (key in newContext) {
+            setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
+                if (noOverwrite && key in newContext) {
                     return
                 }
                 newContext[key] = value

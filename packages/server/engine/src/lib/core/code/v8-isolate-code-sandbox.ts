@@ -79,13 +79,15 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                     isolateContext,
                     code: script,
                 }),
-                setGlobal: async (key: string, value: unknown) => {
-                    let pendingSet = globalSets.get(key)
-                    if (pendingSet === undefined) {
-                        pendingSet = isolateContext.global.set(key, new ivm.ExternalCopy(JSON.parse(JSON.stringify(value))).copyInto())
-                        globalSets.set(key, pendingSet)
+                setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
+                    const pendingSet = globalSets.get(key)
+                    if (noOverwrite && pendingSet !== undefined) {
+                        await pendingSet
+                        return
                     }
-                    await pendingSet
+                    const newSet = isolateContext.global.set(key, new ivm.ExternalCopy(JSON.parse(JSON.stringify(value))).copyInto())
+                    globalSets.set(key, newSet)
+                    await newSet
                 },
                 dispose: () => isolate.dispose(),
             }

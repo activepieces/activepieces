@@ -39,6 +39,10 @@ describe.each(implementations)('%s createScriptSession', (_name, sandbox) => {
             await second
             expect(await session.run('concurrent')).toBe('first')
             await first
+            await session.setGlobal('step_1', { output: { price: 42 } }, false)
+            expect(await session.run('step_1.output.price')).toBe(42)
+            await session.setGlobal('existing', 3, false)
+            expect(await session.run('existing')).toBe(3)
         }
         finally {
             session.dispose()

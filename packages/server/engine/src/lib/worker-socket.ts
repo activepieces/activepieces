@@ -95,6 +95,8 @@ export const workerSocket = {
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
                 }
                 finally {
+                    // The reporter's final backup streams the run log out of the run state store,
+                    // so the store must outlive the reporter shutdown — never reorder these.
                     await flowRunProgressReporter.shutdown()
                     runStateStore.dispose()
                 }
