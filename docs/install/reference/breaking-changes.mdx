@@ -17,6 +17,12 @@ The step's inputs and its output shape are unchanged, so anything reading `struc
 
 An agent step running on the server can use the piece actions configured on it. Sub-flow, MCP and knowledge-base tools are not supported there yet, and a step configured with one is rejected rather than run without it. `custom_api_call` is also refused, because an unattended agent choosing a URL and method with your connection's credentials is not something we will do without a person watching.
 
+#### Max steps and web search are no longer step settings
+
+The Agent step used to offer a max-steps limit and a web-search toggle. Both are gone. The server applies its own ceiling on how many turns an agent takes, and web search follows what the platform has configured rather than the step.
+
+A step that had them set keeps running; the stored values are ignored. If you relied on a low max-steps to bound an agent, the server's ceiling is higher, so check any step where that mattered.
+
 #### What you need to do
 
 Nothing, unless you edit an agent step. Published flows pin their piece version and keep running the old path until you edit and re-lock them.
