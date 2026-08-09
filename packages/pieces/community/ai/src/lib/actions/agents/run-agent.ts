@@ -7,10 +7,11 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AgentPieceProps, AgentProviderModel, AgentResult, AgentTaskStatus, ContentBlockType } from '@activepieces/pieces-framework';
-import { buildWebSearchOptionsProperty } from '../../common/web-search';
+import { AgentPieceProps, AgentProviderModel, AgentResult } from '@activepieces/pieces-framework';
 
-const AGENT_STEP_TIMEOUT_MS = 30 * 60 * 1_000;
+// Backstop for a worker that dies with nothing to report. It has to outlive the server's own turn
+// budget, or it fires mid-run and throws away an answer that was still coming.
+const AGENT_STEP_TIMEOUT_MS = 3 * 60 * 60 * 1_000;
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -65,7 +66,7 @@ export const runAgent = createAction({
   name: 'run_agent',
   displayName: 'Run Agent',
   description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',
-  aiMetadata: { description: 'Runs an agent loop where the model reasons over your prompt and calls the tools you attach (piece actions, sub-flows, MCP servers, knowledge bases, optional web search), iterating until the task completes or Max Steps is reached. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Requires a prompt, an AI Model and a Max Steps cap; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
+  aiMetadata: { description: 'Runs an agent that reasons over your prompt and calls the piece actions you attach to this step, iterating until the task is done. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Sub-flow, MCP and knowledge-base tools are not supported on this step. Requires a prompt and an AI Model; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
     [AgentPieceProps.PROMPT]: Property.LongText({
@@ -101,37 +102,12 @@ export const runAgent = createAction({
         }),
       },
     }),
-    [AgentPieceProps.MAX_STEPS]: Property.Number({
-      displayName: 'Max steps',
-      description: 'The number of iterations the agent can do',
-      required: true,
-      defaultValue: 20,
-    }),
-    [AgentPieceProps.WEB_SEARCH]: Property.Checkbox({
-      displayName: 'Web Search',
-      required: false,
-      defaultValue: false,
-      description:
-        'Whether to use web search to find information for the AI to use.',
-    }),
-    [AgentPieceProps.WEB_SEARCH_OPTIONS]: buildWebSearchOptionsProperty(
-      (propsValue) => {
-        const aiProviderModel = propsValue['aiProviderModel'] as AgentProviderModel | undefined;
-        return { provider: aiProviderModel?.provider, model: aiProviderModel?.model };
-      },
-      ['webSearch', 'aiProviderModel'],
-      { showIncludeSources: false },
-    ),
   },
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
-      const result = context.resumePayload.body as AgentResult | undefined;
-      if (isNil(result) || isNil(result.status)) {
-        return {
-          prompt: context.propsValue.prompt,
-          steps: [{ type: ContentBlockType.MARKDOWN, markdown: 'The agent did not report a result before the step timed out.' }],
-          status: AgentTaskStatus.FAILED,
-        } as AgentResult;
+      const result = context.resumePayload?.body as AgentResult | undefined;
+      if (isNil(result)) {
+        throw new Error('The agent did not report a result before this step timed out');
       }
       return result;
     }
@@ -149,10 +125,11 @@ export const runAgent = createAction({
         instruction: context.propsValue.prompt,
         flowRunId: context.run.id,
         waitpointId: waitpoint.id,
-        tools: context.propsValue.agentTools ?? [],
-        ...(isNil(context.propsValue.structuredOutput) || context.propsValue.structuredOutput.length === 0
+        ...(isNil((context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model)
           ? {}
-          : { structuredOutput: context.propsValue.structuredOutput }),
+          : { modelName: (context.propsValue.aiProviderModel as AgentProviderModel).model }),
+        tools: context.propsValue.agentTools ?? [],
+        structuredOutput: context.propsValue.structuredOutput ?? [],
       },
     });
 
