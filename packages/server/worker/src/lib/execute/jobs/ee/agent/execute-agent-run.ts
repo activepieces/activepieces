@@ -583,12 +583,15 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     if (source === AgentRunSource.CHAT) {
         return allTools
     }
+    // Nobody is watching an unattended run, so anything that asks the user a question is not just
+    // useless, it ends the task: the agent reads the empty answer as a refusal and gives up.
+    const chatOnlyToolNames = [...Object.keys(displayTools), ...Object.keys(buildPlanTools), ...Object.keys(phaseTools), ...UNATTENDED_FORBIDDEN_TOOLS]
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
         runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece }),
         log,
     })
-    const unattendedTools = omit(allTools, UNATTENDED_FORBIDDEN_TOOLS)
+    const unattendedTools = omit(allTools, chatOnlyToolNames)
     const completionTool = structuredOutput.length === 0
         ? {}
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
