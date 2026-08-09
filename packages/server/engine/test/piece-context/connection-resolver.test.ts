@@ -160,8 +160,15 @@ describe('connection-resolver service', () => {
             })
         })
 
-        it('resolves for a step with no piece of its own even when enabled', async () => {
+        it('throws ConnectionPieceMismatchError for a step with no piece of its own when enabled', async () => {
             process.env.AP_ENFORCE_CONNECTION_PIECE_BINDING = 'true'
+            mockFetchReturning('@activepieces/piece-google-sheets')
+
+            const resolver = createConnectionResolver(RESOLVER_PARAMS)
+            await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionPieceMismatchError)
+        })
+
+        it('resolves for a step with no piece of its own when disabled', async () => {
             mockFetchReturning('@activepieces/piece-google-sheets')
 
             const resolver = createConnectionResolver(RESOLVER_PARAMS)

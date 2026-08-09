@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ConnectionPieceMismatchError, ExecutionError, FetchError } from '@activepieces/shared'
 import { utils } from '../utils'
@@ -54,7 +53,7 @@ const handleResponseError = ({ externalId, httpStatus }: HandleResponseErrorPara
 
 const assertPieceBinding = ({ externalId, pieceName, connection }: AssertPieceBindingParams): void => {
     const enforced = process.env.AP_ENFORCE_CONNECTION_PIECE_BINDING === 'true'
-    if (!enforced || isNil(pieceName) || connection.pieceName === pieceName) {
+    if (!enforced || connection.pieceName === pieceName) {
         return
     }
     throw new ConnectionPieceMismatchError(externalId, pieceName)

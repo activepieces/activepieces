@@ -40,8 +40,9 @@ container; workers receive it through settings.
 
 - Every connection-resolution path must pass the step's piece name — props resolver and the
   piece `connections` manager, covering actions, triggers, trigger hooks, and
-  dynamic/dropdown props. A future path that forgets it is silently unenforced.
-- **Code, loop and router steps have no piece and pass no name, so they are never gated.**
-  Turning the flag on does not stop a code step from reading any connection in the project.
-  A platform that wants a real boundary must also disable code steps.
+  dynamic/dropdown props. A missing name is a denial, so a path that forgets it loses all
+  connection access.
+- **Code, loop and router steps have no piece, so they lose connection access entirely.**
+  Deliberate — a code step runs arbitrary JS, so exempting it would leave the widest hole in
+  the boundary. Enabling the flag breaks flows that feed a connection into custom JS.
 - A worker on a stale `WorkerSettings` cache runs with the old value until it refetches.
