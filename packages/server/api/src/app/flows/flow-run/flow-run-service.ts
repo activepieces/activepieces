@@ -46,10 +46,15 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             entity: FlowRunEntity,
             query: {
                 limit: params.limit,
-                orderBy: [
-                    { field: 'created', order: Order.DESC },
-                    { field: 'id', order: Order.DESC },
-                ],
+                orderBy: isNil(params.parentWaitpointId)
+                    ? [
+                        { field: 'created', order: Order.DESC },
+                        { field: 'id', order: Order.DESC },
+                    ]
+                    : [
+                        { field: 'dispatchIndex', order: Order.ASC },
+                        { field: 'id', order: Order.ASC },
+                    ],
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -62,7 +67,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (!isNil(params.environment)) {
             whereClause.environment = params.environment
         }
-        let query = queryBuilderForFlowRun(flowRunRepo()).where(whereClause)
+        let query = queryBuilderForFlowRun(flowRunRepo())
+            .where(whereClause)
+            .andWhere({ parentWaitpointId: params.parentWaitpointId ?? IsNull() })
+
+        if (!isNil(params.parentWaitpointId)) {
+            query = query.andWhere({ dispatchIndex: Not(IsNull()) })
+        }
 
         if (!params.includeArchived) {
             query = query.andWhere({
@@ -547,6 +558,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 projectId: params.projectId,
                 environment: RunEnvironment.PRODUCTION,
                 archivedAt: IsNull(),
+                parentWaitpointId: IsNull(),
             })
             .groupBy('flow_run.status')
 
@@ -638,6 +650,7 @@ async function filterFlowRunsAndApplyFilters(
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId: params.projectId,
         environment: RunEnvironment.PRODUCTION,
+        parentWaitpointId: IsNull(),
     })
 
     if (!isNil(params.flowRunIds) && params.flowRunIds.length > 0) {
@@ -890,6 +903,7 @@ type ListParams = {
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
+    parentWaitpointId?: ApId
 }
 
 type GetOneParams = {
