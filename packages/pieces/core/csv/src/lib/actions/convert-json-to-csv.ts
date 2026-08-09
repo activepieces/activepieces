@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { flatten } from 'safe-flat';
 import { stringify } from "csv-stringify/sync";
+import { jsonToCsvActionOutputSchema } from '../output-schemas';
 
 const markdown = `
 **Notes**:
@@ -58,6 +59,7 @@ export const jsonToCsvAction = createAction({
       },
     }),
   },
+  outputSchema: jsonToCsvActionOutputSchema,
   async run(context) {
     const { json_array, delimiter_type } = context.propsValue;
     if (!Array.isArray(json_array)) {
