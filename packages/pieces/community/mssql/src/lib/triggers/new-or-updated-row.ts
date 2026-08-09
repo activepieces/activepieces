@@ -7,7 +7,13 @@ import {
 } from '@activepieces/pieces-framework';
 import crypto from 'crypto';
 import { mssqlAuth } from '../auth';
-import { MssqlTable, mssqlConnect, quoteId, quoteTable } from '../common';
+import {
+  MssqlTable,
+  mssqlConnect,
+  mssqlGetPrimaryKey,
+  quoteId,
+  quoteTable,
+} from '../common';
 import { mssqlProps } from '../common/props';
 
 type OrderDirection = 'ASC' | 'DESC';
@@ -51,15 +57,28 @@ const polling: Polling<
     const target = quoteTable(table);
     const column = quoteId(order_by);
 
-    // first run takes only the newest page; later runs walk back to the marker
-    const query = marker
-      ? `SELECT * FROM ${target} WHERE ${column} ${
-          order_direction === 'ASC' ? '<=' : '>='
-        } @marker ORDER BY ${column} ${order_direction}`
-      : `SELECT TOP (${PAGE_SIZE}) * FROM ${target} ORDER BY ${column} ${order_direction}`;
-
     const pool = await mssqlConnect(auth);
     try {
+      // dedupe slices positionally on an exact id, so the ordering must be a
+      // total order: rows tied on the chosen column (one multi-row INSERT gives
+      // them all the same timestamp) would otherwise shift between polls and be
+      // dropped or replayed. The primary key breaks the tie and makes the id
+      // unique; without one the row hash is the best available fallback.
+      const primaryKey = await mssqlGetPrimaryKey(pool, table);
+      // ordering by the key itself is already total, and repeating a column in
+      // ORDER BY is an error
+      const tieBreak =
+        primaryKey && primaryKey !== order_by
+          ? `, ${quoteId(primaryKey)} ${order_direction}`
+          : '';
+
+      // first run takes only the newest page; later runs walk back to the marker
+      const query = marker
+        ? `SELECT * FROM ${target} WHERE ${column} ${
+            order_direction === 'ASC' ? '<=' : '>='
+          } @marker ORDER BY ${column} ${order_direction}${tieBreak}`
+        : `SELECT TOP (${PAGE_SIZE}) * FROM ${target} ORDER BY ${column} ${order_direction}${tieBreak}`;
+
       const request = pool.request();
       if (marker) {
         request.input('marker', typedMarker(marker));
@@ -69,11 +88,10 @@ const polling: Polling<
         const value = row[order_by];
         const orderValue =
           value instanceof Date ? value.toISOString() : String(value);
-        const rowHash = crypto
-          .createHash('md5')
-          .update(JSON.stringify(row))
-          .digest('hex');
-        return { id: `${orderValue}|${rowHash}`, data: row };
+        const discriminator = primaryKey
+          ? String(row[primaryKey])
+          : crypto.createHash('md5').update(JSON.stringify(row)).digest('hex');
+        return { id: `${orderValue}|${discriminator}`, data: row };
       });
     } finally {
       await pool.close();

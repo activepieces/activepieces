@@ -146,6 +146,29 @@ export async function mssqlGetTables(
   }));
 }
 
+// single-column primary key, used as a tiebreaker so ordering is a total order
+export async function mssqlGetPrimaryKey(
+  pool: sql.ConnectionPool,
+  table: MssqlTable
+): Promise<string | undefined> {
+  const result = await pool
+    .request()
+    .input('table_schema', table.table_schema)
+    .input('table_name', table.table_name)
+    .query(
+      `SELECT c.COLUMN_NAME
+       FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS t
+       JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE c
+         ON c.CONSTRAINT_NAME = t.CONSTRAINT_NAME
+        AND c.TABLE_SCHEMA = t.TABLE_SCHEMA
+       WHERE t.CONSTRAINT_TYPE = 'PRIMARY KEY'
+         AND t.TABLE_SCHEMA = @table_schema
+         AND t.TABLE_NAME = @table_name`
+    );
+  const rows = result.recordset ?? [];
+  return rows.length === 1 ? rows[0]['COLUMN_NAME'] : undefined;
+}
+
 export async function mssqlGetColumns(
   pool: sql.ConnectionPool,
   table: MssqlTable
