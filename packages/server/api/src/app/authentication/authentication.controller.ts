@@ -115,12 +115,12 @@ export const authenticationController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/complete-sign-up', CompleteSignUpRequestOptions, async (request) => {
-        const response = await passwordlessAuthService(request.log).completeSignUp({
+        const { response, signedUp } = await passwordlessAuthService(request.log).completeSignUp({
             identityId: request.principal.id,
             fullName: request.body.fullName,
         })
 
-        if (!isNil(response.platformId)) {
+        if (signedUp && !isNil(response.platformId)) {
             applicationEvents(request.log).sendUserEvent({
                 platformId: response.platformId,
                 userId: response.id,
