@@ -147,6 +147,43 @@ export async function mssqlGetTables(
 }
 
 /**
+ * An ascending IDENTITY that is also the sole key of a unique index: a row added
+ * later always carries a higher value, so it cannot be stranded behind a cursor.
+ * Both conditions matter. IDENTITY(n, -1) is legal and counts downward, and
+ * IDENTITY alone is not unique -- a reseed or an IDENTITY_INSERT load can repeat
+ * values unless a unique index enforces otherwise.
+ */
+export async function mssqlGetIdentityColumn(
+  pool: sql.ConnectionPool,
+  table: MssqlTable
+): Promise<string | undefined> {
+  const result = await pool
+    .request()
+    .input('qualified', `${table.table_schema}.${table.table_name}`)
+    .query(
+      `SELECT c.name
+       FROM sys.identity_columns c
+       WHERE c.object_id = OBJECT_ID(@qualified)
+         AND c.increment_value > 0
+         AND EXISTS (
+           SELECT 1
+           FROM sys.indexes i
+           JOIN sys.index_columns ic
+             ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+            AND ic.is_included_column = 0
+           WHERE i.object_id = c.object_id
+             AND i.is_unique = 1
+             AND i.has_filter = 0
+             AND ic.column_id = c.column_id
+           GROUP BY i.index_id
+           HAVING COUNT(*) = 1
+         )`
+    );
+  const rows = result.recordset ?? [];
+  return rows.length === 1 ? rows[0]['name'] : undefined;
+}
+
+/**
  * Columns that uniquely identify a row, in key order. Prefers the primary key,
  * then the narrowest non-nullable unique index -- a unique constraint identifies
  * a row just as well as a declared key, and plenty of tables have only one.

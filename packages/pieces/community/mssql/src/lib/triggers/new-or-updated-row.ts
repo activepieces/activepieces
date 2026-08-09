@@ -10,6 +10,7 @@ import { mssqlAuth } from '../auth';
 import {
   MssqlTable,
   mssqlConnect,
+  mssqlGetIdentityColumn,
   mssqlGetKeyColumns,
   mssqlGetSortableColumns,
   quoteId,
@@ -87,16 +88,32 @@ const polling: Polling<
       // back to every sortable column and identity is hashed over exactly those
       // same columns -- hashing the whole row instead would hand different ids
       // to rows that SQL cannot tell apart, reintroducing the shifting.
-      const keyColumns = await mssqlGetKeyColumns(pool, table);
+      // An IDENTITY column is preferred over the declared key because it is
+      // monotonic: the cursor keeps the newest row seen, so a row added later
+      // that ties on the ordering column must sort ahead of it to be noticed.
+      // A non-monotonic key (a natural code, say) can place a new tied row
+      // behind the cursor, where it is indistinguishable from an old one.
+      const identity = await mssqlGetIdentityColumn(pool, table);
+      const keyColumns = identity
+        ? [identity]
+        : await mssqlGetKeyColumns(pool, table);
       const tieColumns =
         keyColumns.length > 0
           ? keyColumns
           : await mssqlGetSortableColumns(pool, table);
 
-      // repeating a column in ORDER BY is an error
-      const orderBy = [order_by, ...tieColumns.filter((c) => c !== order_by)]
-        .map((c) => `${quoteId(c)} ${order_direction}`)
-        .join(', ');
+      // The identity tiebreaker is pinned DESC rather than following
+      // order_direction: newest means highest identity whichever way the chosen
+      // column runs, and inheriting ASC would sort every newly inserted tied row
+      // behind the cursor, guaranteeing the misses this is meant to prevent.
+      // Repeating a column in ORDER BY is an error, hence the filter.
+      const tieDirection = identity ? 'DESC' : order_direction;
+      const orderBy = [
+        `${quoteId(order_by)} ${order_direction}`,
+        ...tieColumns
+          .filter((c) => c !== order_by)
+          .map((c) => `${quoteId(c)} ${tieDirection}`),
+      ].join(', ');
 
       // first run takes only the newest page; later runs walk back to the marker
       const hasMarker = marker !== undefined;
@@ -147,7 +164,9 @@ export const newOrUpdatedRow = createTrigger({
       \n
       Order by a **created** timestamp or an auto-incrementing **id** to catch new rows only. Order by a **last-modified** timestamp to catch edits too — but the column must change on every update, otherwise edits go unnoticed.
       \n
-      Works best on a table with a **primary key or unique constraint**, which lets rows sharing an order value be told apart. On a table with neither, rows that are identical in every column cannot be distinguished from one another, so a second identical row may not raise its own event.`,
+      Works best on a table with an **identity column, primary key or unique constraint**, which lets rows sharing an order value be told apart.
+      \n
+      Two limits worth knowing. If the table has no key at all, rows identical in every column cannot be told apart, so a second identical row may not raise its own event. And if rows can be added with an order value equal to one already seen *and* a key that sorts below it — possible when the key is a natural code rather than an identity — such a row can be missed. Ordering by an identity column, or on a table that has one, avoids both.`,
     }),
     table: mssqlProps.table(),
     order_by: mssqlProps.column(
