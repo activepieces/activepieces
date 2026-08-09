@@ -145,6 +145,27 @@ whose nested body is a *section* of steps, batched out to child runs.
     dispatchedIndices }` block, present only for fan-in creates, so the dispatcher can tell fresh from
     "sealed, N expected" from "partially dispatched, these indices already went".
 
+### The dispatch transport — `POST /v1/flow-runs/dispatch`, shipped
+
+Batch children **cannot** ride `POST /v1/webhooks/:flowId`: that resolves the *published* version and runs a
+trigger, while a batch child must run the **parent's** version from the body's entry step. So there is one new
+engine-only endpoint, and it is the only new endpoint the feature needs.
+
+- The request is `{ parentRunId, entryStepName, seedSteps, parentWaitpointId?, dispatchIndex, dispatchKey }`.
+  **Project scope comes from the engine principal, never the body** — the flow version, flow id and
+  environment are all derived from the parent run row, so a caller cannot point a child at another project.
+- The child row is **saved synchronously** (not through `runsMetadataQueue`, which is async), then queued;
+  if queueing throws, the row is deleted so a pre-created row can never hang as a permanently `QUEUED` child.
+- `entryStepName` rides on the **BEGIN** job data and operation, and the seed rides in the ordinary
+  `payload` slot (so it offloads to a file when large). In `flow.operation.ts` a BEGIN carrying an entry step
+  restores the seed instead of building a trigger step, then calls `flowExecutor.execute()` from that action —
+  the body chain ends itself, so the child terminates at the end of the section with no extra bookkeeping.
+- Queue job id is `` `${projectId}-${dispatchKey}` `` — the default queue is shared across platforms, so the
+  caller-supplied key alone would be a cross-tenant id, and the separator must be `-` (a custom BullMQ job id
+  rejects `:`).
+- Barrier attribution is validated at creation and **dropped** if it does not resolve in the project, rather
+  than failing the dispatch.
+
 ### The dispatch loop is not resumable
 
 If the dispatching step dies mid-loop (sandbox timeout, killed worker, flow timeout) you get orphaned
@@ -351,6 +372,17 @@ already used in that worker). Only needed at or above the `AP_MAX_FAN_IN_CHILDRE
   into an array gives you references the logger keeps merging into: an earlier `{ fanIn: { barrierId } }`
   silently grows the later release's `releaseReason`/`stragglers`, and one release reads as two. `structuredClone`
   the fields at capture time. (The merge itself is what you want in production — one `fanIn` group per event.)
+- **A pausing container executor must return early on `isCompleted`, or a *later* pause in the same run
+  re-runs it.** A waitpoint resume re-executes the whole flow from the trigger and each executor decides for
+  itself whether to skip; a step that already produced its output is skipped only because it checks. For
+  `PROCESS_IN_BATCHES` the cost of forgetting is not a duplicated read — it is a second full fan-out, with a
+  fresh barrier, every time anything downstream of the batch step pauses (an approval, a delay). Order matters:
+  `isPaused` (resume with the released summary) → `isCompleted` (do nothing) → dispatch.
+- **Seeded prior-step state goes through the same restore filter as a resume, which drops FAILED steps.**
+  `isStepRestorable` keeps FAILED only for waitpoint resumes, so seeding a child through that path silently
+  loses an upstream step that failed under continue-on-failure — the body's reference to it would resolve
+  empty rather than carrying the parent's value. The seed is not a resume: the parent already chose what
+  travels, so restore it whole (`keepFailedSteps`).
 - **A rejected waitpoint call used to page oncall.** `waitpoint-client.ts` turned *every* non-ok response
   into `EngineGenericError`, which is `ExecutionErrorType.ENGINE` → job `INTERNAL_ERROR` → pager. Both
   server-side rejections a dispatcher can trigger are user-data conditions — a `dispatchDigest` mismatch and

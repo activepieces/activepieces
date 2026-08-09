@@ -112,7 +112,7 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
 
-function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
+export function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
     const referencedSteps = new Set<string>()
     const stack: unknown[] = [input]
     while (stack.length > 0 && referencedSteps.size < stepNames.length) {

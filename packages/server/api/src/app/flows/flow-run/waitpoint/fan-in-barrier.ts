@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, isFlowRunStateTerminal } from '@activepieces/shared'
+import { FanInException, FanInSummary, FlowRunStatus, isFlowRunStateTerminal } from '@activepieces/shared'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { FlowRunEntity } from '../flow-run-entity'
@@ -124,23 +124,6 @@ export type FanInChildCounts = {
     canceled: number
     stillRunning: number
     terminal: number
-}
-
-export type FanInSummary = {
-    expected: number
-    succeeded: number
-    failed: number
-    canceled: number
-    stillRunning: number
-    notStarted: number
-    failedToDispatch: number
-    timedOut: boolean
-    exceptions: FanInException[]
-}
-
-export type FanInException = {
-    runId: string | null
-    dispatchIndex: number | null
 }
 
 export type FanInReleaseReason = 'predicate' | 'timeout' | 'seal'

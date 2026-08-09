@@ -147,6 +147,7 @@ const ExecuteFlowJobDataCommon = z.object({
 export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
     executionType: z.literal(ExecutionType.BEGIN),
     executeTrigger: z.boolean().optional(),
+    entryStepName: z.string().optional(),
 })
 export type BeginExecuteFlowJobData = z.infer<typeof BeginExecuteFlowJobData>
 

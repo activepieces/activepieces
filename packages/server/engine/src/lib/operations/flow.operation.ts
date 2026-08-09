@@ -119,6 +119,13 @@ const executeSingleStepOrFlow = async (input: ResolvedExecuteFlowOperation, cons
     if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
         return executionState
     }
+    if (input.executionType === ExecutionType.BEGIN && !isNil(input.entryStepName)) {
+        return flowExecutor.execute({
+            action: flowStructureUtil.getActionOrThrow(input.entryStepName, input.flowVersion.trigger),
+            executionState,
+            constants,
+        })
+    }
     return flowExecutor.executeFromTrigger({
         executionState,
         constants,
@@ -158,6 +165,9 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
 
 async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     if (input.executionType === ExecutionType.BEGIN) {
+        if (!isNil(input.entryStepName)) {
+            return restoreSteps({ steps: input.triggerPayload as Record<string, StepOutput>, flowContext, keepFailedSteps: true })
+        }
         const newPayload = await runOrReturnPayload(input, constants)
         return flowContext.upsertStep(input.flowVersion.trigger.name,
             GenericStepOutput.create({
@@ -166,17 +176,24 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
                 input: {},
             }).setOutput(newPayload))
     }
-    flowContext = flowContext.addTags(input.executionState.tags)
-    const isWaitpointResume = input.resumeReason === ResumeReason.WAITPOINT
-    for (const [step, output] of Object.entries(input.executionState.steps)) {
-        if (isStepRestorable({ status: output.status, isWaitpointResume })) {
-            const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume })
+    return restoreSteps({
+        steps: input.executionState.steps,
+        flowContext: flowContext.addTags(input.executionState.tags),
+        keepFailedSteps: input.resumeReason === ResumeReason.WAITPOINT,
+    })
+}
+
+async function restoreSteps({ steps, flowContext, keepFailedSteps }: RestoreStepsParams): Promise<FlowExecutorContext> {
+    let restored = flowContext
+    for (const [step, output] of Object.entries(steps ?? {})) {
+        if (isStepRestorable({ status: output.status, isWaitpointResume: keepFailedSteps })) {
+            const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume: keepFailedSteps })
             if (!isNil(newOutput)) {
-                flowContext = await flowContext.upsertStep(step, newOutput)
+                restored = await restored.upsertStep(step, newOutput)
             }
         }
     }
-    return flowContext
+    return restored
 }
 
 async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, constants: EngineConstants): Promise<TriggerPayload> {
@@ -297,4 +314,10 @@ type IsStepRestorableParams = {
 type InsertStepsParams = {
     stepOutput: StepOutput
     isWaitpointResume: boolean
+}
+
+type RestoreStepsParams = {
+    steps: Record<string, StepOutput>
+    flowContext: FlowExecutorContext
+    keepFailedSteps: boolean
 }

@@ -12,13 +12,12 @@ import {
     BaseColumnSchemaPart,
 } from '../../database/database-common'
 
-type FlowRunSchema = FlowRun & {
+type FlowRunSchema = FlowRunWithDispatchIndex & {
     project: Project
     flow: Flow
     flowVersion: FlowVersion
     logsFile: File
     triggeredByUser?: User
-    dispatchIndex?: number | null
     /** @deprecated kept for backwards compatibility, use waitpoint table instead, remove in 0.83.0 */
     pauseMetadata?: unknown
 }
@@ -203,3 +202,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
     },
 })
+
+export type FlowRunWithDispatchIndex = FlowRun & {
+    dispatchIndex?: number | null
+}

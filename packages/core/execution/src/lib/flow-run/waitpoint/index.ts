@@ -42,6 +42,25 @@ export const SealFanInBarrierRequest = z.object({
 })
 export type SealFanInBarrierRequest = z.infer<typeof SealFanInBarrierRequest>
 
+export const FanInException = z.object({
+    runId: z.string().nullable(),
+    dispatchIndex: z.number().int().nullable(),
+})
+export type FanInException = z.infer<typeof FanInException>
+
+export const FanInSummary = z.object({
+    expected: z.number().int().nonnegative(),
+    succeeded: z.number().int().nonnegative(),
+    failed: z.number().int().nonnegative(),
+    canceled: z.number().int().nonnegative(),
+    stillRunning: z.number().int().nonnegative(),
+    notStarted: z.number().int().nonnegative(),
+    failedToDispatch: z.number().int().nonnegative(),
+    timedOut: z.boolean(),
+    exceptions: z.array(FanInException),
+})
+export type FanInSummary = z.infer<typeof FanInSummary>
+
 export const SealFanInBarrierResponse = z.object({
     expectedChildren: z.number().int().nonnegative(),
     alreadySealed: z.boolean(),

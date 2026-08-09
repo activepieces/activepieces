@@ -129,6 +129,7 @@ export enum StreamStepProgress {
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
     triggerPayload: JobPayload
     executeTrigger: boolean
+    entryStepName?: string
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
