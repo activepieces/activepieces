@@ -56,6 +56,7 @@ RUN npm install -g --no-fund --no-audit esbuild@0.25.0 && npm cache clean --forc
 
 WORKDIR /app
 
+ENV NODE_ENV=production
 ENV AP_CONTAINER_TYPE=WORKER
 ENV AP_CACHE_BASE_PATH=/tmp/cache
 

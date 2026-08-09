@@ -416,6 +416,7 @@ import { AddResumeDeadlineIndexToWaitpoint1820000000000 } from './migration/post
 import { AddDispatchTrackingToFanIn1821000000000 } from './migration/postgres/1821000000000-AddDispatchTrackingToFanIn'
 import { AddUniqueDispatchIndexPerFanInBarrier1822000000000 } from './migration/postgres/1822000000000-AddUniqueDispatchIndexPerFanInBarrier'
 import { AddParentWaitpointIdToRunStatusCountIndex1823000000000 } from './migration/postgres/1823000000000-AddParentWaitpointIdToRunStatusCountIndex'
+import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -847,6 +848,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDispatchTrackingToFanIn1821000000000,
         AddUniqueDispatchIndexPerFanInBarrier1822000000000,
         AddParentWaitpointIdToRunStatusCountIndex1823000000000,
+        AddAuditEventPlatformIdCreatedIdIndex1820000000000,
     ]
     return migrations
 }

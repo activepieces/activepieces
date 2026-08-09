@@ -1,6 +1,6 @@
 import { apId, isNil } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, FanInBarrierState, FlowRunStatus, PauseType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FanInBarrierState, FlowRunStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
@@ -63,7 +63,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         }
 
         log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
-        if (params.type === PauseType.DELAY && !isNil(params.resumeDateTime)) {
+        if (!isNil(params.resumeDateTime)) {
             await waitpointTimeoutJob.schedule({
                 flowRunId: params.flowRunId,
                 projectId: params.projectId,

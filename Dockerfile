@@ -132,6 +132,8 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy frontend files
 COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
+ENV NODE_ENV=production
+
 LABEL service=activepieces
 
 # WORKER containers have no HTTP server; treat them as healthy (probe only the app).
