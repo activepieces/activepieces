@@ -61,7 +61,6 @@ import {
 } from '../third-party-logins';
 
 const CODE_LENGTH = 6;
-const VERIFIED_HOLD_MS = 1100;
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -928,6 +927,8 @@ function codeErrorMessage(error: HttpError): string {
   }
   return t('Something went wrong, please try again later');
 }
+
+const VERIFIED_HOLD_MS = 1100;
 
 const PERSONAL_EMAIL_DOMAINS = new Set([
   'gmail.com',
