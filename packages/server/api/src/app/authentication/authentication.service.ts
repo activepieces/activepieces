@@ -108,6 +108,9 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
+    async resolvePreferredPlatformId({ identityId }: ResolvePreferredPlatformIdParams): Promise<string | null> {
+        return getPreferredPlatformId(identityId, log)
+    },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.email, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
@@ -248,6 +251,10 @@ async function getPreferredPlatformId(identityId: string, log: FastifyBaseLogger
 }
 
 
+
+type ResolvePreferredPlatformIdParams = {
+    identityId: string
+}
 
 type FederatedAuthnParams = {
     email: string

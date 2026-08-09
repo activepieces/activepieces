@@ -35,6 +35,14 @@ type SignedUp = {
     projectId: ProjectId
 }
 
+type EmailCodeRequested = {
+    isNewIdentity: boolean
+}
+
+type EmailCodeVerified = {
+    needsNameStep: boolean
+}
+
 type QuotaAlert = {
     percentageUsed: number
 }
@@ -188,6 +196,8 @@ type SignedIn = {
 }
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
+    EMAIL_CODE_REQUESTED = 'email.code.requested',
+    EMAIL_CODE_VERIFIED = 'email.code.verified',
     QUOTA_ALERT = 'quota.alert',
     REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
     REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
@@ -239,6 +249,14 @@ type BaseTelemetryEvent<T, P> = {
 
 export type TelemetryEvent =
   | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_CODE_REQUESTED,
+  EmailCodeRequested
+  >
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_CODE_VERIFIED,
+  EmailCodeVerified
+  >
   | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
   | BaseTelemetryEvent<
   TelemetryEventName.REQUEST_TRIAL_CLICKED,
