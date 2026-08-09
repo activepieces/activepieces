@@ -2732,10 +2732,139 @@ describe('MCP Tools integration', () => {
         expect(flow.version.trigger.nextAction.firstLoopAction.name).toBe('step_2')
     })
 
-    it('ap_add_step / ap_build_flow / ap_validate_step_config — cannot create a batch step', async () => {
+    it('ap_build_flow — builds a batch step and nests a step into its body in one call', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
-        const flowId = await createFlowAndGetId(mcp, 'Batch Authoring Closed Test')
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Batch Build Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [
+                { type: FlowActionType.PROCESS_IN_BATCHES, displayName: 'Process in Batches', loopItems: '{{trigger.items}}', batchSize: 25 },
+                {
+                    type: FlowActionType.CODE,
+                    displayName: 'Inside Batch',
+                    sourceCode: 'export const code = async (inputs) => { return inputs }',
+                    parentStepName: 'step_1',
+                    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+                },
+            ],
+        })
+
+        expect(text(result)).not.toContain('❌')
+        expect(text(result)).not.toContain('Skipped')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: result.structuredContent.flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction).toMatchObject({
+            type: FlowActionType.PROCESS_IN_BATCHES,
+            name: 'step_1',
+            settings: { items: '{{trigger[\'output\'].items}}', batchSize: 25 },
+        })
+        expect(flow.version.trigger.nextAction.firstLoopAction.name).toBe('step_2')
+    })
+
+    it('ap_build_flow — a batch step without batchSize falls back to the default', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Batch Build Default Size Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PROCESS_IN_BATCHES, displayName: 'Process in Batches', loopItems: '{{trigger.items}}' }],
+        })
+
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: result.structuredContent.flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.settings).toMatchObject({ batchSize: DEFAULT_BATCH_SIZE })
+    })
+
+    it('ap_build_flow — refuses an unsupported error-handling flag before creating the flow', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const batchResult = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Batch Retry Guard Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PROCESS_IN_BATCHES, displayName: 'Process in Batches', loopItems: '{{trigger.items}}', retryOnFailure: true }],
+        })
+        expect(text(batchResult)).toContain('retryOnFailure is not supported')
+
+        const loopResult = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Loop Guard Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.LOOP_ON_ITEMS, displayName: 'My Loop', loopItems: '{{trigger.items}}', continueOnFailure: true }],
+        })
+        expect(text(loopResult)).toContain('❌')
+        expect(text(loopResult)).toContain(FlowActionType.LOOP_ON_ITEMS)
+
+        const list = await apListFlowsTool(mcp, mockLog).execute({})
+        expect(list.structuredContent?.count).toBe(0)
+    })
+
+    it('ap_validate_step_config — validates a batch step config', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const tool = apValidateStepConfigTool(mcp, mockLog)
+
+        const valid = await tool.execute({ stepType: FlowActionType.PROCESS_IN_BATCHES, loopItems: '{{trigger[\'output\'].items}}', batchSize: 25 })
+        expect(valid.structuredContent).toMatchObject({ valid: true })
+
+        const defaulted = await tool.execute({ stepType: FlowActionType.PROCESS_IN_BATCHES, loopItems: '{{trigger[\'output\'].items}}' })
+        expect(defaulted.structuredContent).toMatchObject({ valid: true })
+
+        const missingItems = await tool.execute({ stepType: FlowActionType.PROCESS_IN_BATCHES, batchSize: 25 })
+        expect(missingItems.structuredContent).toMatchObject({ valid: false })
+        expect(text(missingItems)).toContain('items')
+
+        const badSize = await tool.execute({ stepType: FlowActionType.PROCESS_IN_BATCHES, loopItems: '{{trigger[\'output\'].items}}', batchSize: 0 })
+        expect(badSize.structuredContent).toMatchObject({ valid: false })
+        expect(text(badSize)).toContain('batchSize')
+    })
+
+    it('ap_add_step — creates a batch step, rewriting loopItems and keeping batchSize', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Add Test')
+
+        const result = await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PROCESS_IN_BATCHES,
+            displayName: 'Process in Batches',
+            loopItems: '{{trigger.items}}',
+            batchSize: 25,
+        })
+
+        expect(text(result)).not.toContain('❌')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction).toMatchObject({
+            type: FlowActionType.PROCESS_IN_BATCHES,
+            name: 'step_1',
+            settings: { items: '{{trigger[\'output\'].items}}', batchSize: 25 },
+        })
+    })
+
+    it('ap_add_step — batch step without batchSize falls back to the default', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Add Default Size Test')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PROCESS_IN_BATCHES,
+            displayName: 'Process in Batches',
+            loopItems: '{{trigger.items}}',
+        })
+
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.settings).toMatchObject({ batchSize: DEFAULT_BATCH_SIZE })
+    })
+
+    it('ap_add_step — rejects a batchSize below 1', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Add Invalid Size Test')
 
         await expect(apAddStepTool(mcp, mockLog).execute({
             flowId,
@@ -2743,44 +2872,15 @@ describe('MCP Tools integration', () => {
             stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
             stepType: FlowActionType.PROCESS_IN_BATCHES,
             displayName: 'Process in Batches',
+            loopItems: '{{trigger.items}}',
+            batchSize: 0,
         })).rejects.toThrow()
-
-        const buildResult = await apBuildFlowTool({ mcp }, mockLog).execute({
-            flowName: 'Batch Build Flow',
-            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
-            steps: [{ type: FlowActionType.PROCESS_IN_BATCHES, displayName: 'Process in Batches' }],
-        })
-        expect(text(buildResult)).toContain('❌')
-
-        const validateResult = await apValidateStepConfigTool(mcp, mockLog).execute({
-            stepType: FlowActionType.PROCESS_IN_BATCHES,
-            input: {},
-        })
-        expect(text(validateResult)).toContain('❌')
     })
 
-    it('ap_build_flow — INSIDE_BATCH is not an accepted nesting location', async () => {
+    it('ap_update_step — edits a batch step\'s items and batchSize', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
-
-        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
-            flowName: 'Batch Location Closed Flow',
-            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
-            steps: [{
-                type: FlowActionType.CODE,
-                displayName: 'Nested',
-                parentStepName: 'step_1',
-                stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
-            }],
-        })
-
-        expect(text(result)).toContain('❌')
-    })
-
-    it('ap_update_step — cannot edit a batch step\'s settings', async () => {
-        const ctx = await createTestContext(app)
-        const mcp = makeMcp(ctx.project.id)
-        const flowId = await createFlowAndGetId(mcp, 'Batch Update Closed Test')
+        const flowId = await createFlowAndGetId(mcp, 'Batch Update Test')
 
         await addBatchStep({ mcp, platformId: ctx.platform.id, flowId, items: '{{trigger.items}}', batchSize: 25 })
 
@@ -2788,11 +2888,119 @@ describe('MCP Tools integration', () => {
             flowId,
             stepName: 'step_1',
             loopItems: '{{trigger.other}}',
+            batchSize: 5,
+        })
+
+        expect(text(result)).not.toContain('❌')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.settings).toMatchObject({ items: '{{trigger[\'output\'].other}}', batchSize: 5 })
+    })
+
+    it('ap_add_step — a batch step takes continueOnFailure but refuses retryOnFailure', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Error Handling Add Test')
+
+        const rejected = await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PROCESS_IN_BATCHES,
+            displayName: 'Process in Batches',
+            loopItems: '{{trigger.items}}',
+            retryOnFailure: true,
+        })
+        expect(text(rejected)).toContain('❌')
+        expect(text(rejected)).toContain('retryOnFailure is not supported')
+
+        const accepted = await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PROCESS_IN_BATCHES,
+            displayName: 'Process in Batches',
+            loopItems: '{{trigger.items}}',
+            continueOnFailure: true,
+        })
+        expect(text(accepted)).not.toContain('❌')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.settings.errorHandlingOptions).toMatchObject({
+            continueOnFailure: { value: true },
+            retryOnFailure: { value: false },
+        })
+    })
+
+    it('ap_add_step — refuses continueOnFailure on a step type that cannot carry it', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Loop Error Handling Add Test')
+
+        const result = await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.LOOP_ON_ITEMS,
+            displayName: 'My Loop',
+            loopItems: '{{trigger.items}}',
+            continueOnFailure: true,
         })
 
         expect(text(result)).toContain('❌')
-        expect(text(result)).toContain('LOOP_ON_ITEMS')
+        expect(text(result)).toContain(FlowActionType.LOOP_ON_ITEMS)
         const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
-        expect(flow.version.trigger.nextAction.settings).toMatchObject({ items: '{{trigger.items}}', batchSize: 25 })
+        expect(flow.version.trigger.nextAction).toBeUndefined()
+    })
+
+    it('ap_update_step — a batch step takes continueOnFailure but refuses retryOnFailure', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Error Handling Update Test')
+
+        await addBatchStep({ mcp, platformId: ctx.platform.id, flowId, items: '{{trigger.items}}' })
+
+        const rejected = await apUpdateStepTool(mcp, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            retryOnFailure: true,
+        })
+        expect(text(rejected)).toContain('retryOnFailure is not supported')
+
+        const accepted = await apUpdateStepTool(mcp, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            continueOnFailure: true,
+        })
+        expect(text(accepted)).not.toContain('❌')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.settings.errorHandlingOptions).toMatchObject({
+            continueOnFailure: { value: true },
+            retryOnFailure: { value: false },
+        })
+    })
+
+    it('ap_update_step — rejects batchSize on a non-batch step', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Size On Loop Test')
+
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.LOOP_ON_ITEMS,
+            displayName: 'My Loop',
+            loopItems: '{{trigger.items}}',
+        })
+
+        const result = await apUpdateStepTool(mcp, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            batchSize: 5,
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('PROCESS_IN_BATCHES')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.settings.batchSize).toBeUndefined()
     })
 })

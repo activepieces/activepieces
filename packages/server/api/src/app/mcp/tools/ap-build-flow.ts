@@ -1,5 +1,5 @@
 import { Permission } from '@activepieces/core-utils'
-import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
+import { DEFAULT_BATCH_SIZE, FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -8,7 +8,7 @@ import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
 const stepSpec = z.object({
-    type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS]),
+    type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.PROCESS_IN_BATCHES]),
     displayName: z.string(),
     pieceName: z.string().optional(),
     actionName: z.string().optional(),
@@ -17,14 +17,16 @@ const stepSpec = z.object({
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
     loopItems: z.string().optional(),
+    batchSize: z.coerce.number().int().min(1).optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
     parentStepName: z.string().optional().describe('Name of the parent step to nest this step inside (e.g. the loop step name). If omitted, step is added after the previous step.'),
     stepLocationRelativeToParent: z.enum([
         StepLocationRelativeToParent.AFTER,
         StepLocationRelativeToParent.INSIDE_LOOP,
+        StepLocationRelativeToParent.INSIDE_BATCH,
         StepLocationRelativeToParent.INSIDE_BRANCH,
-    ]).optional().default(StepLocationRelativeToParent.AFTER).describe('Where to place the step relative to parentStepName. Use INSIDE_LOOP for steps inside a loop.'),
+    ]).optional().default(StepLocationRelativeToParent.AFTER).describe('Where to place the step relative to parentStepName. Use INSIDE_LOOP for steps inside a loop, INSIDE_BATCH for steps inside the body of a PROCESS_IN_BATCHES step.'),
 })
 
 const buildFlowInput = z.object({
@@ -42,7 +44,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a NEW flow from scratch in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP. ROUTER steps are NOT supported here (branches and conditions cannot be configured in one call) — build the rest of the flow first, then add the router with ap_add_step and configure branches with ap_add_branch / ap_update_branch. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead. Prefer PIECE actions and inline formula expressions (in a free-text/value input — never a dropdown/option field — wrapped `ap-formula-v1::{…}::ap-formula-v1`) over CODE steps — only emit a CODE step when no piece fits AND the logic exceeds the inline formula functions (see the build_flow guide expression ladder).',
+        description: 'Create a NEW flow from scratch in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP; use INSIDE_BATCH the same way for the body of a PROCESS_IN_BATCHES step. ROUTER steps are NOT supported here (branches and conditions cannot be configured in one call) — build the rest of the flow first, then add the router with ap_add_step and configure branches with ap_add_branch / ap_update_branch. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead. Prefer PIECE actions and inline formula expressions (in a free-text/value input — never a dropdown/option field — wrapped `ap-formula-v1::{…}::ap-formula-v1`) over CODE steps — only emit a CODE step when no piece fits AND the logic exceeds the inline formula functions (see the build_flow guide expression ladder).',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({
@@ -51,7 +53,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration'),
-            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions. ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.'),
+            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside a loop or a batch body. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), PROCESS_IN_BATCHES (loopItems+batchSize, splits the list into batches and runs its body once per batch). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions. ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -67,6 +69,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     const stepAuthError = mcpUtils.validateAuth(step.auth)
                     if (stepAuthError) {
                         return stepAuthError
+                    }
+                    const errorHandlingError = mcpUtils.validateErrorHandlingSupport({ stepType: step.type, stepLabel: `"${step.displayName}"`, continueOnFailure: step.continueOnFailure, retryOnFailure: step.retryOnFailure })
+                    if (errorHandlingError) {
+                        return errorHandlingError
                     }
                 }
 
@@ -269,6 +275,18 @@ function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName }: 
                 displayName: step.displayName,
                 valid: false,
                 settings: { items: step.loopItems ?? '' },
+            }
+        case FlowActionType.PROCESS_IN_BATCHES:
+            return {
+                type: FlowActionType.PROCESS_IN_BATCHES,
+                name,
+                displayName: step.displayName,
+                valid: false,
+                settings: {
+                    items: step.loopItems ?? '',
+                    batchSize: step.batchSize ?? DEFAULT_BATCH_SIZE,
+                    errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure: step.continueOnFailure, retryOnFailure: step.retryOnFailure }),
+                },
             }
         default:
             return { type: step.type, name, displayName: step.displayName, valid: false, settings: {} }
