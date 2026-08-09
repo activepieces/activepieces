@@ -4,6 +4,7 @@ import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@ac
 import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini'
 import qs from 'qs';
+import { findRecordsActionOutputSchema } from '../output-schemas';
 type FieldInfo = {
   id: string;
   type: FieldType;
@@ -90,6 +91,7 @@ export const findRecords = createAction({
       },
     }),
   },
+  outputSchema: findRecordsActionOutputSchema,
   async run(context) {
     const { table_id: tableExternalId, limit, filters } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);

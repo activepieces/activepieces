@@ -12,6 +12,7 @@ import {
 } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { nextDayOfYearActionOutputSchema } from '../output-schemas';
 
 export const nextDayofYear = createAction({
   audience: 'both',
@@ -88,6 +89,7 @@ export const nextDayofYear = createAction({
       defaultValue: 'UTC',
     }),
   },
+  outputSchema: nextDayOfYearActionOutputSchema,
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       day: z.number().check(z.minimum(1), z.maximum(31)),

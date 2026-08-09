@@ -12,7 +12,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "mime-types": "2.1.35",
-    "nodemailer": "8.0.5",
+    "nodemailer": "9.0.1",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
