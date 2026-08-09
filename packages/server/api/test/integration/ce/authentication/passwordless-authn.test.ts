@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { platformService } from '../../../../src/app/platform/platform.service'
 import { createMockPlatform } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -314,6 +315,27 @@ describe('Passwordless Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const after = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
             expect(after?.tokenVersion).not.toBe(before?.tokenVersion)
+        })
+
+        it('rotates once when two first-platform creations race, so neither session is stranded', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            await verifyCode({ email: EMAIL, code: otp!.value })
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            const create = () => platformService(app!.log).createPlatformWithProject({
+                identityId: identity!.id,
+                name: 'Ahmad',
+                invalidatePreviousTokens: true,
+                isFirstPlatform: true,
+            })
+
+            const [first, second] = await Promise.all([create(), create()])
+
+            const after = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            const versionOf = (token: string) =>
+                JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).tokenVersion
+            expect(versionOf(first.token)).toBe(after?.tokenVersion)
+            expect(versionOf(second.token)).toBe(after?.tokenVersion)
         })
 
         it('repairs a platform left without a project instead of wedging the identity', async () => {
