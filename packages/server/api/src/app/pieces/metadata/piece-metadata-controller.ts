@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, LocalesEnum } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, EngineResponse, EngineResponseStatus, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -133,7 +133,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 versionId: req.body.flowVersionId,
             })
             const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { response } = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
+            const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineResponse<unknown>>({
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,
@@ -145,7 +145,18 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
             }, req.log)
-            return response
+            if (engineResponse.status !== EngineResponseStatus.OK) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                    params: {
+                        message: engineResponse.error ?? (engineResponse.status === EngineResponseStatus.TIMEOUT
+                            ? 'Engine timed out while resolving property options'
+                            : `Engine failed while resolving property options (${engineResponse.status})`),
+                        context: { status: engineResponse.status },
+                    },
+                })
+            }
+            return engineResponse.response
         },
     )
 
