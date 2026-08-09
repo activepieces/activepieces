@@ -13,7 +13,7 @@ import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
@@ -51,7 +51,6 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
 
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
-  const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
   const { capture } = useTelemetry();
@@ -135,10 +134,6 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
     });
     mutate(data);
   };
-
-  if (!userCreated) {
-    return <Navigate to="/sign-up" />;
-  }
 
   return (
     <>

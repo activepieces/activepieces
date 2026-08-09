@@ -155,6 +155,11 @@ function AuthStep({
   const { data: smtpConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.SMTP_CONFIGURED,
   );
+  const { data: userCreated } = flagsHooks.useFlag<boolean>(
+    ApFlagId.USER_CREATED,
+  );
+  const firstUser = userCreated === false;
+  const effectiveMode: AuthMode = firstUser ? 'signup' : mode;
   const emailAuthEnabled = emailAuthEnabledFlag ?? true;
   const passwordlessAvailable = emailAuthEnabled && !!smtpConfigured;
   const showThirdParty = useShowThirdPartyProviders();
@@ -193,13 +198,15 @@ function AuthStep({
       <DrawerShell>
         <Heading
           title={
-            mode === 'signup' ? t('Create your account') : t('Welcome back')
+            effectiveMode === 'signup'
+              ? t('Create your account')
+              : t('Welcome back')
           }
         />
         {showThirdParty && (
           <>
             <ThirdPartyLogin
-              isSignUp={mode === 'signup'}
+              isSignUp={effectiveMode === 'signup'}
               onSamlClick={() => setSamlOpen(true)}
             />
             <HorizontalSeparatorWithText className="my-5 text-muted-foreground">
@@ -207,7 +214,7 @@ function AuthStep({
             </HorizontalSeparatorWithText>
           </>
         )}
-        {mode === 'signup' ? (
+        {effectiveMode === 'signup' ? (
           <SignUpForm
             showCheckYourEmailNote={checkEmailNote}
             setShowCheckYourEmailNote={setCheckEmailNote}
@@ -215,7 +222,7 @@ function AuthStep({
         ) : (
           <SignInForm />
         )}
-        <ModeSwitch mode={mode} onSwitch={setMode} />
+        {!firstUser && <ModeSwitch mode={mode} onSwitch={setMode} />}
       </DrawerShell>
     );
   }
