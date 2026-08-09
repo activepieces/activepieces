@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
 import { mssqlConnect } from '../common';
 import { warningMarkdown } from '../common/props';
+import { runQueryActionOutputSchema } from '../output-schemas';
 
 export default createAction({
   auth: mssqlAuth,
@@ -35,6 +36,7 @@ export default createAction({
       defaultValue: 30000,
     }),
   },
+  outputSchema: runQueryActionOutputSchema,
   async run(context) {
     const { query, parameters, query_timeout } = context.propsValue;
     const pool = await mssqlConnect(context.auth, query_timeout);

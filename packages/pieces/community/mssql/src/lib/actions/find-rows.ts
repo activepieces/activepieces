@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
 import { MssqlTable, mssqlConnect, quoteId, quoteTable } from '../common';
 import { mssqlProps, warningMarkdown } from '../common/props';
+import { findRowsActionOutputSchema } from '../output-schemas';
 
 export default createAction({
   auth: mssqlAuth,
@@ -53,6 +54,7 @@ export default createAction({
       required: false,
     }),
   },
+  outputSchema: findRowsActionOutputSchema,
   async run(context) {
     const {
       table,

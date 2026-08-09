@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
 import { mssqlConnect, mssqlGetTables } from '../common';
+import { getTablesActionOutputSchema } from '../output-schemas';
 
 export default createAction({
   auth: mssqlAuth,
@@ -14,6 +15,7 @@ export default createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: getTablesActionOutputSchema,
   async run(context) {
     const pool = await mssqlConnect(context.auth);
     try {

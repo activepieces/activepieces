@@ -8,6 +8,7 @@ import {
   quoteTable,
 } from '../common';
 import { mssqlProps } from '../common/props';
+import { writeRowsActionOutputSchema } from '../output-schemas';
 
 export default createAction({
   auth: mssqlAuth,
@@ -32,6 +33,7 @@ export default createAction({
       required: true,
     }),
   },
+  outputSchema: writeRowsActionOutputSchema,
   async run(context) {
     const { table, search_column, search_value } = context.propsValue;
     const target = quoteTable(table as MssqlTable);
