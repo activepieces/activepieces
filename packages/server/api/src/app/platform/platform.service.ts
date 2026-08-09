@@ -76,7 +76,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
     },
-    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens, isFirstPlatform }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
+    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens, isFirstPlatform }: CreatePlatformWithProjectParams): Promise<CreatePlatformWithProjectResult> {
         return distributedLock(log).runExclusive({
             key: `create-platform-${identityId}`,
             timeoutInSeconds: 30,
@@ -84,13 +84,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 const existingUsers = isFirstPlatform ? await userService(log).getByIdentityId({ identityId }) : []
                 const linkedUser = existingUsers.find((user) => !isNil(user.platformId))
                 if (!isNil(linkedUser) && !isNil(linkedUser.platformId)) {
-                    return finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, invalidatePreviousTokens: false, identityId, log })
+                    const response = await finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, invalidatePreviousTokens: false, identityId, log })
+                    return { response, provisioned: false }
                 }
                 const unlinkedUser = existingUsers.find((user) => isNil(user.platformId))
                 const orphanedPlatform = isNil(unlinkedUser) ? null : await platformRepo().findOneBy({ ownerId: unlinkedUser.id })
                 if (!isNil(unlinkedUser) && !isNil(orphanedPlatform)) {
                     await userService(log).addOwnerToPlatform({ id: unlinkedUser.id, platformId: orphanedPlatform.id })
-                    return finishExistingPlatform({
+                    const response = await finishExistingPlatform({
                         user: await userService(log).getOneOrFail({ id: unlinkedUser.id }),
                         platformId: orphanedPlatform.id,
                         name,
@@ -98,6 +99,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                         identityId,
                         log,
                     })
+                    return { response, provisioned: true }
                 }
                 const newUser = unlinkedUser
                     ?? await userService(log).create({
@@ -122,11 +124,12 @@ export const platformService = (log: FastifyBaseLogger) => ({
                     user: newUser,
                     projectId: defaultProject.id,
                 })
-                return authenticationUtils(log).getProjectAndToken({
+                const response = await authenticationUtils(log).getProjectAndToken({
                     userId: newUser.id,
                     platformId: platform.id,
                     projectId: defaultProject.id,
                 })
+                return { response, provisioned: true }
             },
         })
     },
@@ -365,6 +368,11 @@ type UpdateParams = UpdatePlatformRequestBody & {
     favIconUrl?: string
     ssoDomain?: string | null
     ssoDomainVerification?: SsoDomainVerification | null
+}
+
+type CreatePlatformWithProjectResult = {
+    response: AuthenticationResponse
+    provisioned: boolean
 }
 
 type CreatePlatformWithProjectParams = {
