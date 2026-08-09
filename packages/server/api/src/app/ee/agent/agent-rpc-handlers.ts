@@ -157,20 +157,24 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
         const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, source: requestedSource, projectId: requestedProjectId } = input
 
-        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta, agentMemory] = await Promise.all([
+        // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
+        // anyway meant an owner without an MCP token or a user record failed the run outright.
+        const isFlowStep = requestedSource === AgentRunSource.FLOW_STEP
+
+        const [conversation, providerConfig, userProjects, enabledAiTools] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
             agentHelpers.resolveChatProvider({ platformId, log }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
-            agentMcp.getCredentials({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
-            userService(log).getMetaInformation({ id: userId }),
-            agentHelpers.getUserMemory({ platformId, userId }),
         ])
 
-        const isFlowStep = conversation.source === AgentRunSource.FLOW_STEP
-        const scopedMcpCredentials = isFlowStep ? { mcpServerUrl: null, mcpToken: null } : mcpCredentials
-        const runMemory = isFlowStep ? { instructions: null, memories: [] } : agentMemory
-        const runUserEmail = isFlowStep ? '' : userMeta.email
+        const [scopedMcpCredentials, runMemory, runUserEmail] = isFlowStep
+            ? [{ mcpServerUrl: null, mcpToken: null }, { instructions: null, memories: [] as string[] }, '']
+            : await Promise.all([
+                agentMcp.getCredentials({ platformId, userId, log }),
+                agentHelpers.getUserMemory({ platformId, userId }),
+                userService(log).getMetaInformation({ id: userId }).then((meta) => meta.email),
+            ])
 
         const scopedProjects = conversation.source === AgentRunSource.FLOW_STEP
             ? userProjects.filter((p) => p.id === conversation.projectId)
