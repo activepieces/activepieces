@@ -27,16 +27,36 @@ type Props = {
 
 const PAGE_SIZE = 5;
 
-// comparing the stored marker as text stops SQL Server using the column's index
-function typedMarker(marker: string): string | number | Date {
-  if (/^-?\d+(\.\d+)?$/.test(marker)) {
-    return Number(marker);
+// The cursor is JSON rather than delimiter-joined text. Joining invited two
+// bugs: an ordering value containing the delimiter truncated the marker, and
+// composite keys collided ("a~b","c" and "a","b~c" both give a~b~c). JSON also
+// preserves the value's type, so a text column holding "00123" comes back as
+// the string it is instead of being guessed into a number and bound as an INT
+// against an NVARCHAR column.
+type Encoded = unknown;
+
+function encodeValue(value: unknown): Encoded {
+  if (value instanceof Date) return { __d: value.toISOString() };
+  if (Buffer.isBuffer(value)) return { __b: value.toString('hex') };
+  return value ?? null;
+}
+
+function decodeValue(value: Encoded): unknown {
+  if (value !== null && typeof value === 'object') {
+    const tagged = value as Record<string, string>;
+    if ('__d' in tagged) return new Date(tagged['__d']);
+    if ('__b' in tagged) return Buffer.from(tagged['__b'], 'hex');
   }
-  const asDate = new Date(marker);
-  if (!Number.isNaN(asDate.getTime())) {
-    return asDate;
+  return value;
+}
+
+function decodeMarker(id: unknown): unknown {
+  try {
+    const parts = JSON.parse(String(id));
+    return Array.isArray(parts) ? decodeValue(parts[0]) : undefined;
+  } catch {
+    return undefined;
   }
-  return marker;
 }
 
 const polling: Polling<
@@ -52,9 +72,9 @@ const polling: Polling<
       );
     }
 
-    const marker = lastItemId
-      ? (lastItemId as string).split('|')[0]
-      : undefined;
+    const marker = lastItemId === null || lastItemId === undefined
+      ? undefined
+      : decodeMarker(lastItemId);
     const target = quoteTable(table);
     const column = quoteId(order_by);
 
@@ -78,26 +98,27 @@ const polling: Polling<
         .join(', ');
 
       // first run takes only the newest page; later runs walk back to the marker
-      const query = marker
+      const hasMarker = marker !== undefined;
+      const query = hasMarker
         ? `SELECT * FROM ${target} WHERE ${column} ${
             order_direction === 'ASC' ? '<=' : '>='
           } @marker ORDER BY ${orderBy}`
         : `SELECT TOP (${PAGE_SIZE}) * FROM ${target} ORDER BY ${orderBy}`;
 
       const request = pool.request();
-      if (marker) {
-        request.input('marker', typedMarker(marker));
+      if (hasMarker) {
+        request.input('marker', marker);
       }
       const result = await request.query<Record<string, unknown>>(query);
       return (result.recordset ?? []).map((row) => {
-        const value = row[order_by];
-        const orderValue =
-          value instanceof Date ? value.toISOString() : String(value);
         const discriminator =
           keyColumns.length > 0
-            ? keyColumns.map((c) => String(row[c])).join('~')
-            : crypto.createHash('md5').update(JSON.stringify(row)).digest('hex');
-        return { id: `${orderValue}|${discriminator}`, data: row };
+            ? keyColumns.map((c) => encodeValue(row[c]))
+            : [crypto.createHash('md5').update(JSON.stringify(row)).digest('hex')];
+        return {
+          id: JSON.stringify([encodeValue(row[order_by]), ...discriminator]),
+          data: row,
+        };
       });
     } finally {
       await pool.close();
