@@ -3,7 +3,7 @@ import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { McpToolResult } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { executeAdhocAction } from '../../../mcp/tools/flow-run-utils'
+import { executePieceActionRun } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { pieceInputFiller, ResolveProperty } from './piece-input-filler'
@@ -20,7 +20,7 @@ async function runFromInstruction({ piece, instruction, predefinedInput, model, 
         },
     })
 
-    const result = await executeAdhocAction({
+    const result = await executePieceActionRun({
         projectId,
         pieceName: piece.pieceName,
         actionName: piece.actionName,
@@ -36,7 +36,7 @@ async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef
     const metadata = await pieceMetadataService(log).getOrThrow({
         platformId,
         name: piece.pieceName,
-        version: undefined,
+        version: piece.pieceVersion,
     })
     const action = metadata.actions[piece.actionName]
     if (isNil(action)) {
@@ -79,6 +79,7 @@ export const pieceToolRunner = {
 export type PieceActionRef = {
     pieceName: string
     actionName: string
+    pieceVersion?: string
 }
 
 export type RunFromInstructionParams = {

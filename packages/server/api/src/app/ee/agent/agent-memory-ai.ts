@@ -3,7 +3,7 @@ import path from 'node:path'
 import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { GetAgentMemoryResponse } from '@activepieces/shared'
-import { generateText, LanguageModel } from 'ai'
+import { generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentHelpers } from './agent-helpers'
@@ -27,15 +27,6 @@ const MemoriesSchema = z.object({
     memories: z.array(z.string().catch('')).catch([]),
 })
 
-async function resolveModel(platformId: string, log: FastifyBaseLogger): Promise<LanguageModel> {
-    const providerConfig = await agentHelpers.resolveChatProvider({ platformId, log })
-    return agentAiUtils.createChatModel({
-        provider: providerConfig.provider,
-        auth: providerConfig.auth as Record<string, unknown>,
-        config: providerConfig.config as Record<string, unknown>,
-        modelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider }),
-    })
-}
 
 function parseJsonObject<T>(raw: string, schema: z.ZodType<T>): T | null {
     const start = raw.indexOf('{')
@@ -62,7 +53,7 @@ async function runMemoryLlm<T>({ platformId, instructions, prompt, schema, log }
     log: FastifyBaseLogger
 }): Promise<T | null> {
     const { data, error } = await tryCatch(async () => {
-        const { text: raw } = await generateText({ model: await resolveModel(platformId, log), instructions, prompt, telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-memory' }) })
+        const { text: raw } = await generateText({ model: await agentHelpers.resolveFastModel({ platformId, log }), instructions, prompt, telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-memory' }) })
         return parseJsonObject(raw, schema)
     })
     if (!isNil(error)) {

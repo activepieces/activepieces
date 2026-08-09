@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AdminRetryRunsRequestBody, AgentConversation, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, AgentConversation, AgentRunSource, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -88,7 +88,8 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
         const PAGE_SIZE = 100
         const conversationRepo = repoFactory(AgentConversationEntity)
-        const totalCount = await conversationRepo().count()
+        const chatOnly = { source: AgentRunSource.CHAT }
+        const totalCount = await conversationRepo().countBy(chatOnly)
         const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
         req.log.info({ totalCount, totalPages }, 'Starting bulk chat analytics sync')
@@ -98,6 +99,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 
         for (let page = 0; page < totalPages; page++) {
             const conversations: AgentConversation[] = await conversationRepo().find({
+                where: chatOnly,
                 skip: page * PAGE_SIZE,
                 take: PAGE_SIZE,
                 order: { created: 'ASC' },

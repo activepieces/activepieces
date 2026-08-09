@@ -1,15 +1,17 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentPhase, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
 
 const MAX_BATCH_SIZE = 100
+const MAX_CONFIGURED_TOOL_CALLS = 50
 const MAX_IDENTICAL_ACTION_FAILURES = 2
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 // Context-lean cap: large reads (e.g. a 1.4MB Attio query) are offloaded to a file at the chat
-// layer (runAgentAdhocAction) and only a preview + fileId reaches here, so this only needs to keep
+// layer (runAgentAction) and only a preview + fileId reaches here, so this only needs to keep
 // the occasional un-offloaded result (web scrape, mcp__ tool, code output) from flooding context.
 const MAX_RESULT_SIZE_BYTES = 128 * 1024
 const MIN_PREVIEW_ARRAY_LENGTH = 3
@@ -507,7 +509,7 @@ function createProgressGuard() {
         `✋ This exact action already ran successfully earlier in this turn (${actionName}) — it was NOT run again to avoid a duplicate side effect. Treat it as done; only repeat it if the user explicitly asks or the input changes.`
 
     return {
-        checkAdhocAction: ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): { content: { type: string, text: string }[] } | null => {
+        checkActionRun: ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): { content: { type: string, text: string }[] } | null => {
             const key = actionKey({ pieceName, actionName, input })
             if (succeededWrites.has(key)) {
                 return { content: [{ type: 'text', text: duplicateWriteText(actionName) }] }
@@ -517,7 +519,7 @@ function createProgressGuard() {
             }
             return null
         },
-        recordAdhocResult: ({ pieceName, actionName, input, success }: { pieceName: string, actionName: string, input: unknown, success: boolean }): void => {
+        recordActionRunResult: ({ pieceName, actionName, input, success }: { pieceName: string, actionName: string, input: unknown, success: boolean }): void => {
             const key = actionKey({ pieceName, actionName, input })
             if (success) {
                 failureCounts.delete(key)
@@ -588,7 +590,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             execute: async (toolInput, options) => {
                 const isBatch = toolInput.items && toolInput.items.length > 0
                 if (!isBatch) {
-                    const guardResult = progressGuard.checkAdhocAction({
+                    const guardResult = progressGuard.checkActionRun({
                         pieceName: toolInput.pieceName,
                         actionName: toolInput.actionName,
                         input: toolInput.input,
@@ -650,7 +652,7 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 }
                 const rawResult = await executeWithTimeout('ap_execute_action', toolInput)
                 const rawSuccess = isSuccessResult(rawResult)
-                progressGuard.recordAdhocResult({
+                progressGuard.recordActionRunResult({
                     pieceName: toolInput.pieceName,
                     actionName: toolInput.actionName,
                     input: toolInput.input,
@@ -1437,11 +1439,75 @@ export type AgentEventEmitter = {
     emitBuildPlan(data: BuildPlanEvent): void
 }
 
+function createConfiguredPieceTools({ tools, runPieceTool, log }: {
+    tools: AgentPieceTool[]
+    runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        tool({
+            description: `Run the "${configured.pieceMetadata.actionName}" action of ${configured.pieceMetadata.pieceName.replace('@activepieces/piece-', '')}. Describe what it should do, including any values it needs; the inputs are worked out from that. Fields the flow author pinned keep their value whatever you ask for. Returns the action's own output, or why it failed.`,
+            inputSchema: z.object({
+                instruction: z.string().describe('What this action should do, including any values it needs, in plain language'),
+            }),
+            execute: async ({ instruction }) => {
+                callsMade += 1
+                if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                    log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredPieceTool] Refused, this run has already run enough actions')
+                    return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
+                }
+                const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata }))
+                if (error) {
+                    const reachedTheServer = String(error).includes('handler threw')
+                    log.warn({ error, tool: { name: configured.toolName }, reachedTheServer }, '[configuredPieceTool] Action did not return a result')
+                    return { content: [{ type: 'text', text: reachedTheServer
+                        ? `That action failed: ${String(error)}`
+                        : `That action was sent but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
+                }
+                if (!isSuccessResult(data.result)) {
+                    log.warn({ tool: { name: configured.toolName } }, '[configuredPieceTool] Action reported a failure')
+                    return { content: [{ type: 'text', text: `That action failed: ${extractUserFacingError({ result: data.result })}` }] }
+                }
+                return truncateLargeResult(data.result)
+            },
+        }),
+    ]))
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
 export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
+
+function createStructuredOutputTool({ fields, capture }: {
+    fields: AgentOutputField[]
+    capture: (output: Record<string, unknown>) => void
+}): ToolSet {
+    return {
+        [TASK_COMPLETION_TOOL_NAME]: tool({
+            description: 'Call this as your final action, once the task is done or you cannot continue, to report the result in the shape the flow expects. Nothing you write outside this tool reaches the rest of the flow.',
+            inputSchema: z.object({ output: z.object(Object.fromEntries(fields.map((field) => [field.displayName, schemaForOutputField(field)]))) }),
+            execute: async ({ output }) => {
+                capture(output)
+                return { content: [{ type: 'text', text: 'Result recorded.' }] }
+            },
+        }),
+    }
+}
+
+function schemaForOutputField(field: AgentOutputField): z.ZodType {
+    switch (field.type) {
+        case AgentOutputFieldType.NUMBER:
+            return z.number().describe(field.description ?? field.displayName)
+        case AgentOutputFieldType.BOOLEAN:
+            return z.boolean().describe(field.description ?? field.displayName)
+        default:
+            return z.string().describe(field.description ?? field.displayName)
+    }
+}
 
 export const agentWorkerTools = {
     createEventEmitter,
@@ -1457,6 +1523,8 @@ export const agentWorkerTools = {
     createThinkingTools,
     createPhaseTools,
     createBuildPlanTools,
+    createConfiguredPieceTools,
+    createStructuredOutputTool,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,
