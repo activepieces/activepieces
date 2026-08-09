@@ -33,6 +33,10 @@ afterAll(async () => {
 })
 
 describe('POST /v1/pieces/options — engine failure propagation', () => {
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
     const setupCallable = async () => {
         const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup()
 
@@ -91,7 +95,7 @@ describe('POST /v1/pieces/options — engine failure propagation', () => {
     it('returns ENGINE_OPERATION_FAILURE + engine errorMessage when the property job fails', async () => {
         const { mockProject, mockFlow, mockFlowVersion, token } = await setupCallable()
 
-        const spy = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
+        vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
             status: EngineResponseStatus.INTERNAL_ERROR,
             response: undefined,
             error: 'Failed to fetch piece bundle @activepieces/piece-ai@0.4.0: 404 Not Found',
@@ -113,14 +117,12 @@ describe('POST /v1/pieces/options — engine failure propagation', () => {
         expect(body.code).toBe('ENGINE_OPERATION_FAILURE')
         expect(body.params.message).toContain('404 Not Found')
         expect(body.params.context.status).toBe(EngineResponseStatus.INTERNAL_ERROR)
-
-        spy.mockRestore()
     })
 
     it('returns a synthesized message on TIMEOUT (no engine errorMessage)', async () => {
         const { mockProject, mockFlow, mockFlowVersion, token } = await setupCallable()
 
-        const spy = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
+        vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
             status: EngineResponseStatus.TIMEOUT,
             response: {},
             error: undefined,
@@ -142,7 +144,5 @@ describe('POST /v1/pieces/options — engine failure propagation', () => {
         expect(body.code).toBe('ENGINE_OPERATION_FAILURE')
         expect(body.params.message).toMatch(/timed out/i)
         expect(body.params.context.status).toBe(EngineResponseStatus.TIMEOUT)
-
-        spy.mockRestore()
     })
 })
