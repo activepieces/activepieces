@@ -485,11 +485,16 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         if ((lastProgressSequence.get(input.conversationId) ?? 0) >= input.sequence) {
             return
         }
+        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
+        // Claimed after the lookups, so nothing can await between the claim and the emit and let an
+        // older snapshot broadcast last.
+        if ((lastProgressSequence.get(input.conversationId) ?? 0) >= input.sequence) {
+            return
+        }
         lastProgressSequence.set(input.conversationId, input.final === true ? Number.MAX_SAFE_INTEGER : input.sequence)
         if (input.final === true) {
             setTimeout(() => lastProgressSequence.delete(input.conversationId), PROGRESS_GUARD_TTL_MS).unref()
         }
-        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
         engineRunCallbackService(log).updateStepProgress({
             projectId: conversation.projectId,
             request: { projectId: conversation.projectId, runId: flowRun.id, output: input.output },

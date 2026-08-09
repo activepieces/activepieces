@@ -386,6 +386,29 @@ describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may r
         expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-1', projectId: 'proj-1' })
     })
 
+    it('drops an older snapshot that overtakes a newer one during the run lookup', async () => {
+        const conversationId = 'conv-overlap'
+        mockUpdateStepProgress.mockClear()
+        mockFindOne.mockResolvedValue({ id: conversationId, source: 'FLOW_STEP', projectId: 'proj-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        const handlers = agentRpcHandlers(noopLogger as never)
+
+        // The older call is admitted first, then stalls in the lookup while the newer one completes.
+        let releaseOlder: () => void = () => undefined
+        mockGetFlowRun.mockImplementationOnce(() => new Promise((resolve) => {
+            releaseOlder = () => resolve({ id: 'run-1' })
+        }))
+        mockGetFlowRun.mockImplementationOnce(() => Promise.resolve({ id: 'run-1' }))
+
+        const older = handlers.updateFlowStepProgress({ conversationId, flowRunId: 'run-1', output: { n: 1 }, sequence: 1 })
+        await handlers.updateFlowStepProgress({ conversationId, flowRunId: 'run-1', output: { n: 2 }, sequence: 2 })
+        releaseOlder()
+        await older
+
+        expect(mockUpdateStepProgress).toHaveBeenCalledTimes(1)
+        expect(mockUpdateStepProgress.mock.calls[0][0].request.output).toEqual({ n: 2 })
+    })
+
     it('drops a straggler that arrives after the final snapshot', async () => {
         const conversationId = 'conv-final'
         mockUpdateStepProgress.mockClear()
