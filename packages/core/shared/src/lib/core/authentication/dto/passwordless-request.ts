@@ -5,6 +5,7 @@ export const MAX_FULL_NAME_LENGTH = 100
 
 export const RequestEmailCodeRequest = z.object({
     email: EmailType,
+    captchaToken: z.string().trim().min(1).optional(),
 })
 
 export type RequestEmailCodeRequest = z.infer<typeof RequestEmailCodeRequest>

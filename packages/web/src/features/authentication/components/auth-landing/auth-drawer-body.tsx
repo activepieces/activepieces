@@ -62,6 +62,8 @@ import {
   useThirdPartyAvailability,
 } from '../third-party-logins';
 
+import { TurnstileWidget, useTurnstileSiteKey } from './turnstile-widget';
+
 const CODE_LENGTH = 6;
 
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -463,17 +465,27 @@ function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
   const showWorkEmailHint =
     formatUtils.emailRegex.test(email.trim()) && isPersonalEmail(email);
 
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
+  // Fail open when the challenge cannot load. The server still refuses a
+  // request with no token, so nothing is weakened — but the person gets a
+  // reason instead of an arrow that never lights up.
+  const captchaRequired = !isNil(useTurnstileSiteKey()) && !captchaUnavailable;
+
   const { mutate, isPending } = authMutations.useRequestEmailCode({
     onSuccess: () => onCodeSent(form.getValues().email.trim()),
-    onError: (error) =>
+    onError: (error) => {
+      setCaptchaReset((count) => count + 1);
       form.setError('root.serverError', {
         message: requestErrorMessage(error),
-      }),
+      });
+    },
   });
 
   const onSubmit: SubmitHandler<EmailSchema> = (data) => {
     form.clearErrors('root.serverError');
-    mutate({ email: data.email.trim() });
+    mutate({ email: data.email.trim(), captchaToken });
   };
 
   return (
@@ -508,6 +520,7 @@ function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
                   <Button
                     type="submit"
                     loading={isPending}
+                    disabled={captchaRequired && isNil(captchaToken)}
                     aria-label={t('Continue')}
                     data-testid="auth-continue"
                     className="absolute right-1.5 top-1/2 size-9 -translate-y-1/2 rounded-md p-0"
@@ -526,6 +539,11 @@ function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
               </div>
             </FormItem>
           )}
+        />
+        <TurnstileWidget
+          onToken={setCaptchaToken}
+          onUnavailable={() => setCaptchaUnavailable(true)}
+          resetSignal={captchaReset}
         />
         {form?.formState?.errors?.root?.serverError && (
           <FormMessage>
@@ -919,12 +937,21 @@ function requestErrorMessage(error: HttpError): string {
     if (errorCode === ErrorCode.EMAIL_AUTH_DISABLED) {
       return t('Email sign-in is disabled');
     }
+    if (errorCode === ErrorCode.VALIDATION && isCaptchaRejection(error)) {
+      return t('That verification expired. Please try again.');
+    }
   }
   return t('Something went wrong, please try again later');
 }
 
 function serverErrorCode(error: HttpError): string | undefined {
   return (error.response?.data as { code?: string })?.code;
+}
+
+function isCaptchaRejection(error: HttpError): boolean {
+  const params = (error.response?.data as { params?: { message?: string } })
+    ?.params;
+  return params?.message === 'captchaVerificationFailed';
 }
 
 function codeErrorMessage(error: HttpError): string {

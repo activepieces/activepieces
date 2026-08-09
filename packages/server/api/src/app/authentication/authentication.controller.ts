@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, RequestEmailCodeRequest, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider, VerifyEmailCodeRequest } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -13,6 +14,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
+import { turnstile } from './lib/turnstile'
 import { passwordlessAuthService } from './passwordless-auth.service'
 
 export const authenticationController: FastifyPluginAsyncZod = async (
@@ -21,6 +23,11 @@ export const authenticationController: FastifyPluginAsyncZod = async (
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
 
         const platformId = await platformUtils.getPlatformIdForRequest(request)
+        await turnstile.assertSolved({
+            token: request.body.captchaToken,
+            remoteIp: clientIp(request),
+            log: request.log,
+        })
         const signUpResponse = await authenticationService(request.log).signUp({
             ...request.body,
             provider: UserIdentityProvider.EMAIL,
@@ -80,6 +87,8 @@ export const authenticationController: FastifyPluginAsyncZod = async (
         await passwordlessAuthService(request.log).requestCode({
             email: request.body.email,
             platformId: platformId ?? null,
+            captchaToken: request.body.captchaToken,
+            remoteIp: clientIp(request),
         })
         return reply.code(StatusCodes.NO_CONTENT).send()
     })
@@ -185,6 +194,10 @@ const RequestEmailCodeRequestOptions = {
     schema: {
         body: RequestEmailCodeRequest,
     },
+}
+
+function clientIp(request: FastifyRequest): string {
+    return networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER))
 }
 
 const VerifyEmailCodeRequestOptions = {

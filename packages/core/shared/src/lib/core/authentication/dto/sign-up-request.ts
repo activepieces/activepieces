@@ -9,6 +9,7 @@ export const SignUpRequest = z.object({
     lastName: z.string().regex(new RegExp(SAFE_STRING_PATTERN)),
     trackEvents: z.boolean(),
     newsLetter: z.boolean(),
+    captchaToken: z.string().trim().min(1).optional(),
 })
 
 export type SignUpRequest = z.infer<typeof SignUpRequest>

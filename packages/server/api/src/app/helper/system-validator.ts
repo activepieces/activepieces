@@ -50,6 +50,7 @@ const systemPropValidators: {
     [key in SystemProp]: (value: string) => true | string
 } = {
     // AppSystemProp
+    [AppSystemProp.ALLOW_DISPOSABLE_EMAILS]: booleanValidator,
     [AppSystemProp.ALLOW_OPEN_SIGN_UP]: booleanValidator,
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
     [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
@@ -76,6 +77,8 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
 
     [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
+    [AppSystemProp.TURNSTILE_SECRET_KEY]: stringValidator,
+    [AppSystemProp.TURNSTILE_SITE_KEY]: stringValidator,
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.OTEL_QUEUE_METRICS_ENABLED]: booleanValidator,

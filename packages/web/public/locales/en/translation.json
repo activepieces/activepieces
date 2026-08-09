@@ -2322,5 +2322,7 @@
   "Full Name": "Full Name",
   "Tell us your name so we know what to call you.": "Tell us your name so we know what to call you.",
   "This names your workspace and how we greet you.": "This names your workspace and how we greet you.",
-  "What should we call you?": "What should we call you?"
+  "What should we call you?": "What should we call you?",
+  "The verification step could not load. Disable your ad blocker for this page, then reload.": "The verification step could not load. Disable your ad blocker for this page, then reload.",
+  "That verification expired. Please try again.": "That verification expired. Please try again."
 }
