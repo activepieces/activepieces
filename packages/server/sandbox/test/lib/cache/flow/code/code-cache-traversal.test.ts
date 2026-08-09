@@ -32,6 +32,23 @@ async function expectPathSegmentRejection(run: () => unknown, field: string): Pr
     }
 }
 
+async function expectNamespaceRejection(run: () => unknown): Promise<void> {
+    let thrown: unknown
+    try {
+        await run()
+    }
+    catch (error) {
+        thrown = error
+    }
+    if (!(thrown instanceof ActivepiecesError)) {
+        throw new Error(`expected an ActivepiecesError, got: ${String(thrown)}`)
+    }
+    expect(thrown.error.code).toBe(ErrorCode.VALIDATION)
+    if (thrown.error.code === ErrorCode.VALIDATION) {
+        expect(thrown.error.params.message).toContain('code namespace')
+    }
+}
+
 afterEach(async () => {
     for (const f of folders) {
         await rm(f, { recursive: true, force: true })
@@ -51,16 +68,26 @@ describe('code-cache stepName path traversal', () => {
         )
     })
 
-    it('rejects a traversal flowVersionId in stepDir and flowVersionDir', async () => {
+    it('rejects a traversal namespace in stepDir and flowVersionDir', async () => {
         const codesFolderPath = path.resolve(uniqueBase(), 'v12', 'codes')
-        await expectPathSegmentRejection(
-            () => codeCache(codesFolderPath).stepDir({ flowVersionId: '../../common', stepName: 'step_1' }),
-            'flowVersionId',
-        )
-        await expectPathSegmentRejection(
-            () => codeCache(codesFolderPath).flowVersionDir('../../common'),
-            'flowVersionId',
-        )
+        for (const namespace of ['../../common', '..', 'action-runs/..', 'action-runs/plat/hash']) {
+            await expectNamespaceRejection(
+                () => codeCache(codesFolderPath).stepDir({ flowVersionId: namespace, stepName: 'step_1' }),
+            )
+            await expectNamespaceRejection(
+                () => codeCache(codesFolderPath).flowVersionDir(namespace),
+            )
+        }
+    })
+
+    it('resolves an action-run namespace one level inside the codes folder', () => {
+        const codesFolderPath = path.resolve(uniqueBase(), 'v12', 'codes')
+        const resolved = path.resolve(codeCache(codesFolderPath).stepDir({
+            flowVersionId: 'action-runs/plat-xyz_deadbeef',
+            stepName: 'step_1',
+        }))
+        expect(resolved).toBe(path.resolve(codesFolderPath, 'action-runs', 'plat-xyz_deadbeef', 'step_1'))
+        expect(resolved.startsWith(path.resolve(codesFolderPath) + path.sep)).toBe(true)
     })
 
     it('rejects a traversal stepName in writeCompiledStep and writes nothing outside codes/', async () => {

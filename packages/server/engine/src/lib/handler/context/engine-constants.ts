@@ -1,6 +1,6 @@
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
 import { retryFetch } from '../../api/retry-fetch'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
@@ -31,6 +31,7 @@ type EngineConstantsParams = {
     timeoutInSeconds: number
     platformId: PlatformId
     stepNames: string[]
+    actionRunMode?: boolean
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -69,6 +70,7 @@ export class EngineConstants {
     public readonly stepNameToTest?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
+    public readonly actionRunMode: boolean
     private project: Project | null = null
 
     public get isRunningApTests(): boolean {
@@ -115,8 +117,9 @@ export class EngineConstants {
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
+        this.actionRunMode = params.actionRunMode ?? false
     }
-  
+
     public static fromExecuteFlowInput(input: ResolvedExecuteFlowOperation): EngineConstants {
         return new EngineConstants({
             ...sharedFields(input),
@@ -133,11 +136,13 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
+    public static fromExecuteActionInput(input: BaseEngineOperation & { flowVersionId?: string }): EngineConstants {
         return new EngineConstants({
             ...sharedFields(input),
             ...flowFields(undefined),
+            flowVersionId: input.flowVersionId ?? DEFAULT_MCP_DATA.flowVersionId,
             flowRunId: DEFAULT_MCP_DATA.flowRunId,
+            actionRunMode: true,
         })
     }
 

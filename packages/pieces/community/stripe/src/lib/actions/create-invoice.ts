@@ -2,12 +2,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 
+import { invoiceOutputSchema } from '../output-schemas';
 export const stripeCreateInvoice = createAction({
   name: 'create_invoice',
   auth: stripeAuth,
   displayName: 'Create Invoice',
   description: 'Create an Invoice in stripe',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a draft invoice in Stripe for an existing customer in the given currency. Use to bill a customer for pending invoice items. Requires a valid Stripe customer ID; not idempotent, as each call creates a separate invoice.',
@@ -30,6 +31,7 @@ export const stripeCreateInvoice = createAction({
       required: false,
     }),
   },
+  outputSchema: invoiceOutputSchema,
   async run(context) {
     const invoice = {
       customer: context.propsValue.customer_id,

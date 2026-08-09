@@ -1,6 +1,6 @@
-import { ApId, isNil } from '@activepieces/core-utils'
+import { ApId, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
-import { EventDestinationJobData, ExecuteChatAgentJobData, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, TriggerSourceScheduleType, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { EventDestinationJobData, ExecuteAgentRunJobData, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, TriggerSourceScheduleType, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -54,10 +54,11 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     delay: params.delay,
                     jobId: params.id,
                     ...(data.jobType === WorkerJobType.EVENT_DESTINATION ? { removeOnFail: true } : {}),
-                    ...(data.jobType === WorkerJobType.EXECUTE_CHAT_AGENT ? { attempts: 1 } : {}),
+                    ...(data.jobType === WorkerJobType.EXECUTE_AGENT_RUN ? { attempts: 1 } : {}),
                     ...isUserInteractionJob(data.jobType) ? {
                         attempts: 1,
                         removeOnComplete: { age: 300 },
+                        removeOnFail: true,
                     } : {},
                 })
             }
@@ -92,6 +93,24 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
             job: { id: jobId },
             queueName,
         }, '[jobQueue#removeOneTimeJob] job not found in queue')
+    },
+
+    async cancelAndReportNeverStarted({ jobId, platformId, projectId, jobType }: RemoveOneTimeJobParams): Promise<boolean> {
+        const queueName = await getQueueName({ platformId, projectId, jobType }, log)
+        const queue = await ensureQueueExists({ log, queueName })
+        const job = await queue.getJob(jobId)
+        if (isNil(job)) {
+            log.info({ job: { id: jobId }, queueName }, '[jobQueue#cancelAndReportNeverStarted] job not found')
+            return false
+        }
+        const everDequeued = !isNil(job.processedOn)
+        const { error } = await tryCatch(() => job.remove())
+        if (error) {
+            log.info({ job: { id: jobId, everDequeued }, queueName, error: String(error) }, '[jobQueue#cancelAndReportNeverStarted] a worker holds the job')
+            return false
+        }
+        log.info({ job: { id: jobId, everDequeued }, queueName }, '[jobQueue#cancelAndReportNeverStarted] removed the abandoned job')
+        return !everDequeued
     },
 
     async getOrCreateQueue({ queueName }: { queueName: string }): Promise<Queue> {
@@ -173,9 +192,11 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
 const USER_INTERACTION_JOB_TYPES = new Set([
     WorkerJobType.EXECUTE_PROPERTY,
     WorkerJobType.EXECUTE_VALIDATION,
+    WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
+    WorkerJobType.EXECUTE_ACTION,
 ])
 
 export function isUserInteractionJob(jobType: WorkerJobType): boolean {
@@ -251,6 +272,6 @@ type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> 
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteChatAgentJobData, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteAgentRunJobData, JobType.ONE_TIME>
 
 export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams

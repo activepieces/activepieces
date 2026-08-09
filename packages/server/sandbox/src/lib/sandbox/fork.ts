@@ -1,4 +1,5 @@
 import { fork } from 'child_process'
+import { engineNodeArgs } from './node-args'
 import { SandboxProcessMaker } from './types'
 
 export function simpleProcess(enginePath: string, codeDirectory: string): SandboxProcessMaker {
@@ -10,12 +11,7 @@ export function simpleProcess(enginePath: string, codeDirectory: string): Sandbo
                 // of memory" aborts) that never travels over the RPC socket. Without this, a hard
                 // engine crash surfaces only as an opaque "Worker exited with code 1 ... standardError=".
                 silent: true,
-                execArgv: [
-                    // IMPORTANT DO NOT REMOVE THIS ARGUMENT: https://github.com/laverdet/isolated-vm/issues/424
-                    '--no-node-snapshot',
-                    '--expose-gc',
-                    `--max-old-space-size=${params.resourceLimits.memoryLimitMb}`,
-                ],
+                execArgv: engineNodeArgs(params.resourceLimits),
                 env: {
                     ...params.env,
                     AP_BASE_CODE_DIRECTORY: codeDirectory,

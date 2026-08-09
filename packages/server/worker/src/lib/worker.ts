@@ -1,10 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
-import { apVersionUtil, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
-import { createLogger } from 'evlog'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -84,6 +83,9 @@ const POLL_WATCHDOG_INTERVAL_MS = 30_000
 let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
 
+let cacheSweepInterval: NodeJS.Timeout | null = null
+let cacheSweepFirstRunTimeout: NodeJS.Timeout | null = null
+
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         assertReleaseReadable()
@@ -143,6 +145,7 @@ export const worker = {
         }
         startSandboxInfoSampling()
         startPollWatchdog()
+        startCacheSweeper()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 
@@ -151,6 +154,7 @@ export const worker = {
         pollLoopLiveness = []
         stopPollWatchdog()
         stopSandboxInfoSampling()
+        stopCacheSweeper()
         await drainInFlightJobs()
         if (runtime) {
             await runtime.shutdown(logger)
@@ -180,9 +184,6 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     const concurrency = Number.isInteger(rawConcurrency) && rawConcurrency > 0 ? rawConcurrency : 1
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
-    }
-    if (concurrency === 1) {
-        await sandboxConfig.primeFullContainerMemory()
     }
     // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
     // along with its box (usually already done by the disconnect handler), so it fails fast and is
@@ -333,7 +334,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
     const jobData = JobData.parse(rawData)
     // Chat jobs reuse `runId` as the per-message chat run id (NOT a flow run);
     // map it to the `run`/`conversation` groups so chat logs correlate correctly.
-    const isChatJob = jobData.jobType === WorkerJobType.EXECUTE_CHAT_AGENT
+    const isAgentJob = jobData.jobType === WorkerJobType.EXECUTE_AGENT_RUN
     const jobLogger = createLogger({
         event: 'job.execute',
         job: { id: job.jobId, type: jobData.jobType },
@@ -341,8 +342,8 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('project', 'projectId' in jobData && jobData.projectId != null ? { id: jobData.projectId } : undefined),
         ...spreadIfDefined('platform', 'platformId' in jobData ? { id: jobData.platformId } : undefined),
         ...spreadIfDefined('flow', 'flowId' in jobData ? { id: jobData.flowId } : undefined),
-        ...spreadIfDefined('flowRun', !isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
-        ...spreadIfDefined('run', isChatJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('flowRun', !isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
+        ...spreadIfDefined('run', isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
         ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
     })
@@ -585,6 +586,37 @@ function findStalledPollLoop(): StalledPollLoop | undefined {
         return undefined
     }
     return { workerIndex, stalledForMs: now - pollLoopLiveness[workerIndex].iteratedAt }
+}
+
+function startCacheSweeper(): void {
+    if (!isNil(cacheSweepInterval) || !isNil(cacheSweepFirstRunTimeout)) {
+        return
+    }
+    cacheSweepFirstRunTimeout = setTimeout(() => {
+        cacheSweepFirstRunTimeout = null
+        void sweepActionRunCache()
+        cacheSweepInterval = setInterval(() => void sweepActionRunCache(), ACTION_RUN_CACHE_SWEEP_INTERVAL_MS)
+        cacheSweepInterval.unref()
+    }, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS)
+    cacheSweepFirstRunTimeout.unref()
+}
+
+function stopCacheSweeper(): void {
+    if (!isNil(cacheSweepFirstRunTimeout)) {
+        clearTimeout(cacheSweepFirstRunTimeout)
+        cacheSweepFirstRunTimeout = null
+    }
+    if (!isNil(cacheSweepInterval)) {
+        clearInterval(cacheSweepInterval)
+        cacheSweepInterval = null
+    }
+}
+
+async function sweepActionRunCache(): Promise<void> {
+    const { error } = await tryCatch(() => actionRunCache.sweep({ basePath: sandboxConfig.getCacheBasePath(), log: logger }))
+    if (error) {
+        logger.warn({ error }, 'Action-run code cache sweep failed')
+    }
 }
 
 function startPollWatchdog(): void {

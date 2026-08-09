@@ -63,7 +63,9 @@ You are working in the Activepieces web application (`packages/web`).
   );
   ```
 - **Always use `<FormField>` + `render` prop** — Wrap every field in `<FormField name="..." render={({ field }) => <FormItem>...</FormItem>} />`. Always include `<FormMessage />` inside `<FormItem>` to surface validation errors.
-- **Use `form.watch()` for conditional rendering** — When a field value controls what other fields or UI is shown, use `form.watch('fieldName')`. Do not mirror form values into separate `useState`.
+- **Subscribe to a field for conditional rendering; never read it with `form.getValues()`** — When a field value controls what other fields or UI is shown, subscribe to it. `form.getValues()` returns a non-reactive snapshot, so the derived UI keeps showing the old state until something unrelated happens to re-render the component. Do not mirror form values into separate `useState` either.
+  - In the component that calls `useForm`, use `form.watch('fieldName')`.
+  - In any component **below** that one (anything reaching the form through `useFormContext`), use `useWatch({ control: form.control, name: 'fieldName' })`. `form.watch()` does work there, but it re-renders the `useForm` owner and with it every `useFormContext` consumer in the form, not just the component that asked for the value.
 - **Use `form.setValue()` for cascading field updates** — When changing one field should reset or update related fields (e.g. selecting a provider resets its config), call `form.setValue()` inside the `onValueChange` handler.
 - **Server errors go to `root.serverError`** — Set API errors with `form.setError('root.serverError', { type: 'manual', message: '...' })`. Clear it at the top of `handleSubmit` with `form.clearErrors('root.serverError')`. Render it below the fields, outside `<ScrollArea>`.
 - **Wrap the `<form>` element in `<Form {...form}>`** — Always spread the form instance onto the Shadcn `<Form>` wrapper, and use `form.handleSubmit(handleSubmit)` on the native `<form>`. The submit button must be inside the `<form>` with `type="submit"`. Cancel buttons must always have `type="button"` to prevent accidental form submission.

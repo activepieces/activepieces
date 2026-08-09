@@ -3,10 +3,11 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { userId } from '../common/props';
+import { appWebhookSetupInfo, userId } from '../common/props';
 import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
 import { getTeamId, getUserId, SlackAuthValue } from '../common/auth-helpers';
+import { newCommandInDirectMessageTriggerOutputSchema } from '../output-schemas';
 
 export const newCommandInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
@@ -19,6 +20,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
       'Fires when a direct message (im channel) addressed to the bot contains one of the configured commands (e.g., "@bot help" or "@bot remind"). Only messages in DM channels matching the listed commands fire; bot messages and the user\'s own messages can be optionally ignored. The event payload includes the original message plus a parsed_command object with the recognized command and its arguments.',
   },
   props: {
+    info: appWebhookSetupInfo,
     user: userId(true),
     commands: Property.Array({
       displayName: 'Commands',
@@ -40,6 +42,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
+  outputSchema: newCommandInDirectMessageTriggerOutputSchema,
   onEnable: async (context) => {
     // Older OAuth2 has team_id, newer has team.id
     		const teamId = await getTeamId(context.auth as SlackAuthValue);

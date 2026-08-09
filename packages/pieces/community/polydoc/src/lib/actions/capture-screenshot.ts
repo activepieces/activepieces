@@ -29,8 +29,8 @@ export const captureScreenshot = createAction({
   description: 'Capture a screenshot of a URL, inline HTML, or a saved template.',
   aiMetadata: {
     description:
-      'Captures a screenshot (PNG, JPEG, or WebP) of a URL, an inline HTML string, or a saved PolyDoc template. Supports full-page capture, custom viewport, and base64 or file output. Idempotent: the same input yields the same image.',
-    idempotent: true,
+      'Captures a screenshot (PNG, JPEG, or WebP) of a URL, an inline HTML string, or a saved PolyDoc template. Supports full-page capture, custom viewport, and base64 or file output. Not idempotent: each call performs a fresh capture on PolyDoc that produces a new file and consumes account credits, and a URL capture reflects the page as it is at capture time.',
+    idempotent: false,
   },
   props: {
     sourceType: sourceTypeProp('url'),

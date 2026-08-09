@@ -1,6 +1,5 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { wideEvent } from '@activepieces/server-utils'
-import { parseError } from 'evlog'
+import { parseError, wideEvent } from '@activepieces/server-utils'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { exceptionHandler } from './exception-handler'

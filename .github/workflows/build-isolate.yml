@@ -1,0 +1,138 @@
+name: Build isolate sandbox binaries
+
+# The isolate binaries in packages/server/api/src/assets are prebuilt and committed.
+# They must be linked against the same libc as the runtime image, so they are built
+# inside that image rather than on the runner. Source is pinned to a commit SHA:
+# v1.10.1 is a lightweight tag and cannot be signature-verified.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ISOLATE_COMMIT: 2efddd8b135121a80d612d7570aecde65369f041
+  ISOLATE_VERSION: '1.10.1'
+  BUILDER_IMAGE: node:24.14.0-bullseye-slim
+  MAX_GLIBC: '2.31'
+
+jobs:
+  build:
+    name: ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            asset: isolate
+            elf_machine: x86-64
+            expected_sha256: 1c5b139cb17d8cc843c0bbfe98b39ab6da780e500148cb261f442bc677b34b0e
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            asset: isolate-arm
+            elf_machine: aarch64
+            expected_sha256: 621d7653e56243eb3750662454a4adf926d8a8af116b7f679500086be0639689
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build isolate inside the runtime base image
+        run: |
+          mkdir -p out
+          docker run --rm \
+            -e ISOLATE_COMMIT \
+            -e ASSET='${{ matrix.asset }}' \
+            -v "$PWD/out:/out" \
+            "$BUILDER_IMAGE" \
+            bash -eux -c '
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                gcc libc6-dev make libcap-dev git ca-certificates binutils file
+              git clone https://github.com/ioi/isolate /src
+              cd /src
+              git checkout "$ISOLATE_COMMIT"
+              make isolate BUILD_DATE=1970-01-01 BUILD_COMMIT="$ISOLATE_COMMIT"
+              cp isolate "/out/$ASSET"
+            '
+
+      - name: Verify the artifact
+        run: |
+          docker run --rm \
+            -e ISOLATE_COMMIT \
+            -e ISOLATE_VERSION \
+            -e MAX_GLIBC \
+            -e ELF_MACHINE='${{ matrix.elf_machine }}' \
+            -e EXPECTED_SHA256='${{ matrix.expected_sha256 }}' \
+            -e ASSET='${{ matrix.asset }}' \
+            -v "$PWD/out:/out" \
+            "$BUILDER_IMAGE" \
+            bash -euo pipefail -c '
+              apt-get update >/dev/null
+              apt-get install -y --no-install-recommends binutils file libcap2 >/dev/null
+
+              echo "--- file ---"
+              file /out/$ASSET
+              file /out/$ASSET | grep -q "$ELF_MACHINE" \
+                || { echo "FAIL: not $ELF_MACHINE"; exit 1; }
+
+              echo "--- runs, and reports the pinned source ---"
+              /out/$ASSET --version
+              /out/$ASSET --version | grep -q "$ISOLATE_VERSION" \
+                || { echo "FAIL: version is not $ISOLATE_VERSION"; exit 1; }
+              /out/$ASSET --version | grep -q "$ISOLATE_COMMIT" \
+                || { echo "FAIL: not built from $ISOLATE_COMMIT"; exit 1; }
+
+              echo "--- supports --open-files (absent before v1.9) ---"
+              /out/$ASSET --open-files=1024 --version >/dev/null 2>&1 \
+                || { echo "FAIL: --open-files rejected"; exit 1; }
+
+              echo "--- glibc floor must not exceed the runtime image ---"
+              floor=$(objdump -T /out/$ASSET | grep -o "GLIBC_[0-9.]*" | sed "s/GLIBC_//" | sort -uV | tail -1)
+              echo "highest required GLIBC: $floor (max allowed $MAX_GLIBC)"
+              [ "$(printf "%s\n%s\n" "$floor" "$MAX_GLIBC" | sort -V | tail -1)" = "$MAX_GLIBC" ] \
+                || { echo "FAIL: needs glibc $floor > $MAX_GLIBC"; exit 1; }
+
+              echo "--- sha256 ---"
+              sha256sum /out/$ASSET
+              if [ -n "$EXPECTED_SHA256" ]; then
+                echo "$EXPECTED_SHA256  /out/$ASSET" | sha256sum -c - \
+                  || { echo "FAIL: build is not reproducible against the pinned hash"; exit 1; }
+              fi
+            '
+
+      - name: Functionally verify the sandbox applies the limit
+        run: |
+          cp packages/server/api/src/assets/default.cf out/default.cf
+          docker run --rm --privileged \
+            -e ASSET='${{ matrix.asset }}' \
+            -v "$PWD/out:/out" \
+            "$BUILDER_IMAGE" \
+            bash -euo pipefail -c '
+              apt-get update >/dev/null
+              apt-get install -y --no-install-recommends libcap2 >/dev/null
+              install -D /out/default.cf /usr/local/etc/isolate
+              mkdir -p /var/local/lib/isolate
+
+              /out/$ASSET --box-id=0 --cleanup >/dev/null 2>&1 || true
+              /out/$ASSET --box-id=0 --init >/dev/null
+
+              # Differential: parsing the flag is not the same as applying it.
+              fallback=$(/out/$ASSET --box-id=0 --processes --run -- /bin/sh -c "ulimit -Sn" | head -1)
+              raised=$(/out/$ASSET --box-id=0 --processes --open-files=1024 --run -- /bin/sh -c "ulimit -Sn" | head -1)
+              /out/$ASSET --box-id=0 --cleanup >/dev/null 2>&1 || true
+
+              echo "isolate default: $fallback   with --open-files=1024: $raised"
+              [ "$fallback" = "64" ] \
+                || { echo "FAIL: expected isolate default of 64, got $fallback"; exit 1; }
+              [ "$raised" = "1024" ] \
+                || { echo "FAIL: --open-files parsed but not applied, got $raised"; exit 1; }
+            '
+          rm -f out/default.cf
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: out/${{ matrix.asset }}
+          if-no-files-found: error

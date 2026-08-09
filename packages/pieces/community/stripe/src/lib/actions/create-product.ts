@@ -7,12 +7,13 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { productOutputSchema } from '../output-schemas';
 export const stripeCreateProduct = createAction({
   name: 'create_product',
   auth: stripeAuth,
   displayName: 'Create Product',
   description: 'Create a new product object in Stripe.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new product object in Stripe (the catalog item that prices attach to), with optional description, images, URL, and metadata. Use before creating a price or when adding a sellable item. Not idempotent: each call creates a distinct product.',
@@ -54,6 +55,7 @@ export const stripeCreateProduct = createAction({
       required: false,
     }),
   },
+  outputSchema: productOutputSchema,
   async run(context) {
     const { name, description, active, images, url, metadata } =
       context.propsValue;
