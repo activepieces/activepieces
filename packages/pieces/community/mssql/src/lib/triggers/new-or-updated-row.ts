@@ -20,8 +20,7 @@ type Props = {
 
 const PAGE_SIZE = 5;
 
-// the marker is stored as a string, but comparing it against a numeric or
-// datetime column as text stops SQL Server using that column's index
+// comparing the stored marker as text stops SQL Server using the column's index
 function typedMarker(marker: string): string | number | Date {
   if (/^-?\d+(\.\d+)?$/.test(marker)) {
     return Number(marker);

@@ -1,8 +1,7 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-// Row fields are named but deliberately left undescribed. A described container
-// curates -- listing columns here would hide whichever columns the user's own
-// table actually has. Undescribed, the renderer drills each row generically.
+// row fields are named but left undescribed on purpose: describing a container
+// curates it, which would hide whichever columns the user's table actually has
 
 export const getTablesActionOutputSchema: OutputSchema = {
   itemLabel: '{full_name}',
@@ -56,7 +55,6 @@ export const findRowsActionOutputSchema: OutputSchema = {
   ],
 };
 
-// Update Rows and Delete Rows return the same shape.
 export const writeRowsActionOutputSchema: OutputSchema = {
   fields: [
     {

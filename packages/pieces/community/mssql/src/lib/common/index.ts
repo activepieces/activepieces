@@ -13,8 +13,7 @@ export type MssqlTable = {
   table_name: string;
 };
 
-// 334: OUTPUT without INTO is rejected on a table with enabled triggers, at
-// compile time, so nothing has been written when this fires
+// 334 fires at compile time, so nothing was written and a retry is safe
 export function isOutputBlockedByTrigger(e: unknown): boolean {
   return (e as { number?: number }).number === 334;
 }
@@ -62,8 +61,7 @@ export function buildConfig(auth: MssqlAuth, requestTimeoutMs?: number): sql.con
         'The connection string still contains the {your_password} placeholder from the Azure portal. Replace it with your actual password.'
       );
     }
-    // the parser drops Authentication= entirely and falls back to SQL auth, so
-    // an Entra string would fail as a bare "Login failed" instead of saying why
+    // the parser drops Authentication= and falls back to SQL auth silently
     const entra = trimmed.match(/Authentication\s*=\s*(Active Directory[^;]*)/i);
     if (entra) {
       throw new Error(
@@ -120,8 +118,7 @@ export async function mssqlConnect(
     await pool.connect();
   } catch (e) {
     await pool.close().catch(() => undefined);
-    // resolving an instance name is a UDP 1434 lookup that simply times out
-    // where that port is blocked, giving no clue which port to open
+    // instance lookup is a UDP 1434 call that just times out where blocked
     if (config.options?.instanceName) {
       throw new Error(
         `${

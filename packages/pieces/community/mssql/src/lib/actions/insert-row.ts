@@ -48,8 +48,7 @@ export default createAction({
       const result = await request.query<Record<string, unknown>>(query);
       return result.recordset?.[0] ?? {};
     } catch (e) {
-      // no silent retry here: dropping OUTPUT would lose the generated id,
-      // which is the whole reason to use this action over Run Query
+      // no retry without OUTPUT here: that would lose the generated id
       if (isOutputBlockedByTrigger(e)) {
         throw new Error(
           `${target} has enabled triggers, so SQL Server refuses to return the inserted row. Use the Run Query action with an "OUTPUT INSERTED.* INTO @table" clause instead.`
