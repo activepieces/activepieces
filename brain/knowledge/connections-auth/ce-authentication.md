@@ -13,15 +13,21 @@ The core (all-editions) auth layer: user identity creation, sign-in, and JWT ses
 - `accessTokenManager`: `generateToken` (7-day JWT), `generateEngineToken`/`generateWorkerToken` (long-lived), `verifyPrincipal` (checks tokenVersion + active status).
 
 ### How it works
-- Token is a short-lived JWT (7 days) signed with a shared secret. `PrincipalType`: USER, ENGINE, WORKER, SERVICE, UNKNOWN.
+- Token is a short-lived JWT (7 days) signed with a shared secret. `PrincipalType`: USER, ENGINE, WORKER, SERVICE, UNKNOWN, ONBOARDING.
 - Endpoints (all rate-limited via `API_RATE_LIMIT_AUTHN_*`): `POST /v1/authentication/sign-up`, `/sign-in`, `/switch-platform`.
-- First sign-up side effects: creates identity → User (PlatformRole.ADMIN) → Platform (`"<firstName>'s Platform"`) → default PERSONAL project; sends OTP on Cloud prod, auto-verifies otherwise; fires `USER_CREATED` flag + `SIGNED_UP` telemetry.
+- First sign-up side effects: creates identity → User (PlatformRole.ADMIN) → default PERSONAL project; sends OTP on Cloud prod, auto-verifies otherwise; fires `USER_CREATED` flag + `SIGNED_UP` telemetry.
+- **`signUp` has two arms and only one of them can create a platform.** When `params.platformId` is set (self-hosted, or a custom domain) the member joins that existing platform through `getOrCreateWithProject` and no platform is ever created or named. When it is nil (Cloud only) the identity is created first, then `getPreferredPlatformId` looks for a platform the identity already belongs to; finding none it returns an ONBOARDING response, and the member names the platform themselves at `/create-platform`. `getPreferredPlatformId` returns null on every non-Cloud edition. There is no `"<firstName>'s Platform"` autoname in production; that string lives only in `dev-seeds.ts`.
+- **ONBOARDING** is the pre-platform principal: `authenticationUtils.getOnboardingResponse` mints it with `platformId: null, projectId: null` for a verified identity that belongs to no platform yet, so the member can call `POST /v1/platforms` (`securityAccess.unscoped([ONBOARDING, USER])`) and land on `/create-platform`. It is Cloud-only in practice, because on self-hosted `platformUtils.getPlatformIdForRequest` falls back to `getOldestPlatform()` and there is always a platform to join. `accessTokenManager.assertUserSession` still revalidates it against `tokenVersion` + `verified`.
+- **Passwordless sign-in** (`EMAIL_LOGIN`) is a typed 6-digit code on the same OTP primitive, offered only when `ApFlagId.SMTP_CONFIGURED` is true, with password as the fallback path. See [000027](../decisions/000027-email-sign-in-is-a-typed-code-on-the-existing-otp-primitive.md) for the code-not-link, edition-reach and anti-enumeration reasoning.
 
 ### Gotchas
 - Email-auth checks and domain allow-listing guards are **skipped on Community** edition.
 - OTP verification only sent on Cloud production; CE/EE and Cloud-dev (`AP_ENVIRONMENT=development`) auto-verify the identity.
 - Telemetry PII (email/name) sent only on Cloud; CE/EE send non-PII fields (`pickTelemetryPii`). Sign-in telemetry covers password sign-in only, not SSO.
 - Sessions are invalidated by rotating `tokenVersion` on `UserIdentity`.
+- **A new unauthenticated endpoint must be added to `disallowedRoutes` in `packages/web/src/lib/api.ts`**, otherwise the SPA attaches whatever stale bearer token is still in storage and the call fails in exactly the situation the endpoint exists for.
+- **The three signup guards in `authentication-utils.ts` differ in what they leak.** `assertEmailAuthIsEnabled` and `assertDomainIsAllowed` describe platform configuration, so surfacing their errors is safe. `assertUserIsInvitedToPlatformOrProject` describes one address, so surfacing it turns any public auth endpoint into an invitation oracle. All three are also inert unless `plan.ssoEnabled`.
+- **A nil `projectId` on the principal means "go to /create-platform" in four separate places.** Anything that mints a platform-less session has to satisfy all of them, not just the route guard.
 
 ### Key files
 Entry point: `authenticationService`, a log-taking factory called per request from `authentication.controller.ts`, registered as `authenticationModule` in `app.ts`.
